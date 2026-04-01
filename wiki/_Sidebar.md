@@ -4,9 +4,14 @@
 - [🏠 Inicio](Home)
 - [🚀 Getting Started](Getting-Started)
 
+### 🏗️ Arquitectura
+- [🏗️ Architecture](Architecture)
+- [📦 Project Structure](Architecture#layers)
+
 ### 🔧 Tecnico
 - [⚙️ CI Pipeline](CI)
-- [📊 Godot Setup](Getting-Started#clonar-y-abrir)
+- [🔧 Troubleshooting](Troubleshooting)
+- [📡 GitHub Pages Deploy](GitHub-Pages-Deploy)
 
 ### 📖 Registro
 - [📝 Bitacora](Bitacora)

@@ -11,7 +11,9 @@
 | 🎯 Si necesitas | Donde ir | Tiempo |
 |---|---|---|
 | **Configurar entorno local** | [Getting Started](Getting-Started) | ~10 min |
+| **Entender arquitectura** | [Architecture](Architecture) | ~8 min |
 | **Entender el pipeline CI** | [CI](CI) | ~5 min |
+| **Solucionar un problema** | [Troubleshooting](Troubleshooting) | ~5 min |
 | **Ver cambios recientes** | [Bitacora](Bitacora) | ~2 min |
 
 ## 🏗️ Estructura del proyecto
