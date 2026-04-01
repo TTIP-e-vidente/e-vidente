@@ -1,4 +1,6 @@
-# Navegacion
+﻿# Navegacion
 
 - [Inicio](Home)
-- [Primeros pasos](Getting-Started)
+- [Getting Started](Getting-Started)
+- [CI](CI)
+- [Bitacora](Bitacora)
