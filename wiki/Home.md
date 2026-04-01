@@ -1,37 +1,46 @@
-﻿# e-vidente Wiki
+﻿# 🧠 e-vidente Wiki
 
-Documentacion tecnica y funcional del proyecto Godot e-vidente.
+**Documentacion tecnica y funcional del proyecto Godot e-vidente.**
 
-## Vista rapida
+> Un juego de puzzle educativo sobre alimentacion, restricciones alimentarias y conciencia nutricional.
 
-| Tema | Que cubre | Link |
+---
+
+## 🚀 Inicio rapido
+
+| 🎯 Si necesitas | Donde ir | Tiempo |
 |---|---|---|
-| Inicio del proyecto | Como preparar entorno y abrir el juego | [Getting Started](Getting-Started) |
-| Integracion continua | Que valida CI y como interpretar resultados | [CI](CI) |
-| Registro de cambios | Bitacora de avances y decisiones | [Bitacora](Bitacora) |
+| **Configurar entorno local** | [Getting Started](Getting-Started) | ~10 min |
+| **Entender el pipeline CI** | [CI](CI) | ~5 min |
+| **Ver cambios recientes** | [Bitacora](Bitacora) | ~2 min |
 
-## Mapa de contenido
+## 🏗️ Estructura del proyecto
 
-- Producto
-  - Vision general del proyecto
-  - Flujo de juego y escenas
-- Desarrollo
-  - Estructura del repositorio
-  - Flujo recomendado de trabajo
-- Calidad
-  - Guardrails no bloqueantes
-  - Build web y criterios de salida
+```
+e-vidente/
+├── project/          # Juego Godot 4.2
+│  ├── interface/     # Escenas y UI
+│  ├── items/         # Recursos de alimentos
+│  ├── niveles/       # Datos de escenarios
+│  └── resources/     # Configuracion
+├── wiki/             # Esta documentacion
+├── .github/          # CI/CD (GitHub Actions)
+└── README.md         # Overview
+```
 
-## Flujo recomendado
+## 📋 Flujo de trabajo
 
-1. Crear rama de trabajo.
-2. Realizar cambios en project/ y documentar en wiki cuando corresponda.
-3. Verificar export local cuando aplique.
-4. Abrir PR y revisar resultados de CI.
-5. Registrar decision o cambio importante en Bitacora.
+1. **Branch** → Crear rama de feature/fix
+2. **Develop** → Cambios en bloques pequenos
+3. **Document** → Actualizar wiki si aplica
+4. **Test locally** → Verificar en Godot
+5. **PR** → Crear pull request
+6. **CI Review** → Esperar validacion de pipeline
+7. **Register** → Agregar entrada en Bitacora si es funcional
 
-## Estado actual
+## ⚙️ Estado del proyecto
 
-- Wiki activa y en mantenimiento.
-- CI con validaciones de estructura, docs y build web.
-- Enfoque: entregar cambios pequenos, trazables y bien documentados.
+✅ **Wiki:** Activa y mantenida  
+✅ **CI:** Validaciones de estructura, docs y build web  
+✅ **Build:** Web export funcional  
+📝 **Foco:** Cambios pequenos, trazables, bien documentados

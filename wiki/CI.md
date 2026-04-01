@@ -1,55 +1,109 @@
-﻿# CI
+﻿# 🔄 CI Pipeline
 
-Esta pagina explica que hace el workflow de integracion continua en este repositorio.
+Documentacion del workflow de integracion continua (GitHub Actions).
 
-## Objetivo
+---
 
-Detectar problemas temprano sin bloquear iteraciones cuando el contexto del proyecto aun esta en evolucion.
+## 🎯 Objetivo
 
-## Workflow actual
+Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no disruptivas.
 
-Archivo: `.github/workflows/ci.yml`
+## ⚙️ Configuracion
 
-Se ejecuta en:
+**Archivo:** `.github/workflows/ci.yml`
 
-- push
-- pull_request
-- workflow_dispatch
+**Se ejecuta en:**
+- `push` (cualquier rama)
+- `pull_request` (cualquier rama)
+- `workflow_dispatch` (manual)
 
-### Jobs
+**Concurrencia:** Solo una ejecucion por rama activa (cancela anteriores)
 
-1. quality (non-blocking)
-- Valida estructura minima del repositorio.
-- Ejecuta ESLint solo si existe configuracion Node + ESLint.
-- Verifica baseline de documentacion (README, wiki/Home, wiki/Bitacora).
-- Emite recordatorio si hubo cambios en project/ sin cambios en wiki/.
-- Publica un resumen rapido en GITHUB_STEP_SUMMARY.
+---
 
-2. validate
-- Corre en contenedor `barichello/godot-ci:4.2`.
-- Hace checkout.
-- Usa cache para import data de Godot.
-- Ejecuta import headless del proyecto.
+## 📊 Pipeline de Jobs
 
-3. build-web
-- Depende de validate y quality.
-- Exporta build web a build/web.
-- Si Godot exporta en otra carpeta, intenta normalizar copia.
-- Verifica salida (html y paquete web) en modo no bloqueante.
+### 1️⃣ `quality` — Guardrails (Non-blocking) ⚠️
 
-## Que es bloqueante y que no
+**Que hace:**
+- ✓ Valida estructura minima del repo (directorios y archivos esperados)
+- ✓ Ejecuta ESLint si existe config Node + ESLint
+- ✓ Verifica documentacion base (README, wiki/Home, wiki/Bitacora)
+- ✓ Emite recordatorio si hubo cambios en `project/` sin cambios en `wiki/`
+- ✓ Genera resumen de calidad
 
-- quality: no bloquea (usa continue-on-error en pasos).
-- validate: bloqueante.
-- build-web: bloqueante en export principal; verificacion final es de advertencia.
+**Bloquea?** NO — todos los pasos usan `continue-on-error`
 
-## Como leer resultados
+**Warnings comunes:**
+- "Missing required file wiki/Bitacora.md" → crear el archivo
+- "Project files changed without wiki updates" → agregar entrada en Bitacora
 
-- Fallo en validate o build-web: requiere correccion antes de merge.
-- Warnings en quality: no frenan merge, pero indican deuda tecnica/documental.
+---
 
-## Mantenimiento recomendado
+### 2️⃣ `validate` — Godot Import (Blocking) ✅
 
-- Si cambias estructura del repo, actualizar listas REQUIRED_DIRS y REQUIRED_FILES.
-- Si adoptas lint JS/TS, mantener package.json y config ESLint validos.
-- Cuando cambies gameplay, escenas o assets en project/, sumar nota en Bitacora.
+**Que hace:**
+- Corre en contenedor `barichello/godot-ci:4.2`
+- Descarga proyecto
+- ReUtiliza cache de imports previos
+- Ejecuta import headless: `godot --headless --path project --editor --quit`
+
+**Bloquea?** SI — Si falla, detiene resto de pipeline
+
+**Razon de fallo comun:**
+- Archivos Godot (.tscn, .gd) con syntax invalido
+- Paths rotos en escenas
+
+---
+
+### 3️⃣ `build-web` — Export Web (Blocking) ✅
+
+**Dependencias:** Espera a `validate` + `quality`
+
+**Que hace:**
+- Importa proyecto (cached)
+- Exporta a preset "index" → `build/web/index.html`
+- Si Godot lo exporta a otro lugar, intenta copiar
+- Verifica salida (*.html + *.pck/zip existentes)
+
+**Bloquea?** SI en export; NO en verificacion final
+
+**Razon de fallo comun:**
+- `export_presets.cfg` sin preset "index"
+- Templates web faltantes en contenedor Godot
+
+---
+
+## 🟢 🟡 🔴 Como interpretar resultados
+
+| Estado | Significa | Accion |
+|---|---|---|
+| ✅ Todos pasan | Todo bien | Listo para merge |
+| ⚠️ quality warnings | Deuda documental | Considerar fix pero no bloquea |
+| ❌ validate falla | Error en proyecto Godot | Corregir antes de merge |
+| ❌ build-web falla | Export no funciona | Revisar export_presets.cfg |
+
+---
+
+## 🔧 Mantenimiento
+
+Si cambias estructura del repo:
+
+```bash
+# Editar .github/workflows/ci.yml
+# Actualizar listas REQUIRED_DIRS y REQUIRED_FILES
+
+REQUIRED_DIRS=(
+  ".github/workflows"
+  "project"
+  "project/interface"
+  # Agregar aqui si creas nuevas carpetas criticas
+)
+```
+
+Si adoptas linting:
+- Mantener `package.json` y config ESLint validos
+- Actualizar pasos de quality job
+
+Si changes gameplay/escenas:
+- Siempre sumar nota en `wiki/Bitacora.md`
