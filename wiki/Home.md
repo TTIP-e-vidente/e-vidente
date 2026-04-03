@@ -12,6 +12,7 @@
 |---|---|---|
 | **Configurar entorno local** | [Getting Started](Getting-Started) | ~10 min |
 | **Entender arquitectura** | [Architecture](Architecture) | ~8 min |
+| **Entender persistencia local** | [Persistencia Local](Persistencia-Local) | ~10 min |
 | **Entender el pipeline CI** | [CI](CI) | ~5 min |
 | **Solucionar un problema** | [Troubleshooting](Troubleshooting) | ~5 min |
 | **Ver cambios recientes** | [Bitacora](Bitacora) | ~2 min |
@@ -44,5 +45,6 @@ e-vidente/
 
 ✅ **Wiki:** Activa y mantenida  
 ✅ **CI:** Validaciones de estructura, docs y build web  
+✅ **Persistencia local:** Documentada y cubierta por tests headless  
 ✅ **Build:** Web export funcional  
 📝 **Foco:** Cambios pequenos, trazables, bien documentados

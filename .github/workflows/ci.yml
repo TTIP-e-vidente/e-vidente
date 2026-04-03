@@ -270,7 +270,13 @@ jobs:
             godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
       - name: Import project
-        run: godot --headless --path project --editor --quit || true
+        run: godot --headless --path project --editor --quit
+
+      - name: Run save manager smoke test
+        run: godot --headless --path project -s res://tests/save_manager_smoke_test.gd
+
+      - name: Run save manager validation test
+        run: godot --headless --path project -s res://tests/save_manager_validation_test.gd
 
   build-web:
     name: Build Web
@@ -298,7 +304,7 @@ jobs:
             godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
       - name: Import project
-        run: godot --headless --path project --editor --quit || true
+        run: godot --headless --path project --editor --quit
 
       - name: Export Web build
         shell: bash

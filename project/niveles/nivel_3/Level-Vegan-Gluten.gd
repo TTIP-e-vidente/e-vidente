@@ -1,6 +1,8 @@
 extends Level
 class_name LevelVeganGluten
 
+const TRACK_KEY := "veganismo_celiaquia"
+
 
 func _ready():
 	victory.hide()
@@ -17,6 +19,7 @@ func _victory():
 	adelante.disabled = false
 	ensenanza.show()
 	Global.items_level_vegan_gf[Global.current_level][6] = true
+	SaveManager.record_level_completed(TRACK_KEY, Global.current_level)
 
 func _on_adelante_pressed():
 	if Global.current_level <= 5: 

@@ -99,6 +99,14 @@ Render Update (UI + feedback visual)
 - Recetas: interfaz drag-drop para armar platos
 - Opciones: settings y estadísticas
 
+### 4. Local Persistence System
+- `SaveManager` funciona como autoload y orquesta sesion, guardado local e historial
+- `auth.tscn` resuelve registro/login sin backend
+- `archivero.tscn` actua como dashboard del perfil persistido
+- `Global` exporta e importa progreso para desacoplar runtime de almacenamiento
+
+Guia detallada: [Persistencia Local](Persistencia-Local)
+
 ---
 
 ## 🎮 Godot 4.2 Setup

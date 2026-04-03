@@ -28,7 +28,7 @@ texture = ExtResource("2_4l60g")
 [node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer"]
 offset_left = 123.0
 offset_top = 167.0
-offset_right = 1155.0
+offset_right = 760.0
 offset_bottom = 1675.0
 scale = Vector2(0.959998, 0.959998)
 script = ExtResource("3_c38ao")
@@ -53,6 +53,99 @@ file = "res://interface/libro.tscn"
 
 [node name="Node" type="Node" parent="CanvasLayer"]
 
+[node name="SessionPanel" type="PanelContainer" parent="."]
+offset_left = 781.0
+offset_top = 36.0
+offset_right = 1129.0
+offset_bottom = 430.0
+
+[node name="MarginContainer" type="MarginContainer" parent="SessionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="ProfileContent" type="VBoxContainer" parent="SessionPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Perfil local"
+
+[node name="AvatarPreview" type="TextureRect" parent="SessionPanel/MarginContainer/ProfileContent"]
+custom_minimum_size = Vector2(170, 170)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AvatarState" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Sin foto disponible"
+
+[node name="UsernameLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Usuario: -"
+
+[node name="EmailLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Mail: -"
+autowrap_mode = 3
+
+[node name="AgeLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Edad: -"
+
+[node name="ProgressLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Avance total: 0/18 capitulos"
+autowrap_mode = 3
+
+[node name="SaveStatusLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Ultimo guardado: sin datos"
+autowrap_mode = 3
+
+[node name="Guardar" type="Button" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Guardar ahora"
+
+[node name="CerrarSesion" type="Button" parent="SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+text = "Cerrar sesion"
+
+[node name="HistoryPanel" type="PanelContainer" parent="."]
+offset_left = 781.0
+offset_top = 447.0
+offset_right = 1129.0
+offset_bottom = 782.0
+
+[node name="MarginContainer" type="MarginContainer" parent="HistoryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="HistoryContent" type="VBoxContainer" parent="HistoryPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HistoryPanel/MarginContainer/HistoryContent"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Historial"
+
+[node name="HistoryText" type="RichTextLabel" parent="HistoryPanel/MarginContainer/HistoryContent"]
+custom_minimum_size = Vector2(280, 240)
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = false
+scroll_active = true
+text = "Todavia no hay eventos guardados."
+
 [node name="Atrás" type="Button" parent="."]
 offset_left = 14.0
 offset_top = 623.0
@@ -71,6 +164,8 @@ attenuation = 2.07053
 
 [connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_exited"]
+[connection signal="pressed" from="SessionPanel/MarginContainer/ProfileContent/Guardar" to="." method="_on_guardar_pressed"]
+[connection signal="pressed" from="SessionPanel/MarginContainer/ProfileContent/CerrarSesion" to="." method="_on_cerrar_sesion_pressed"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
 
 [editable path="CanvasLayer/ArchiveroContainer/celiaco-vegano2"]

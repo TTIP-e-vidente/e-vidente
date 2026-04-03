@@ -43,6 +43,16 @@ Orientado a cualquier persona interesada en aprender sobre alimentación y sus r
 <br>✅ Logros desbloqueables
 <br>✅ Persistencia de partidas
 
+## 💾 Persistencia local
+
+La demo ahora incluye guardado local sin backend ni servicios externos.
+
+<br>✅ Registro e inicio de sesión con usuario o mail
+<br>✅ Validación de contraseña mínima de 8 caracteres
+<br>✅ Persistencia local de usuario, edad, mail y avatar/foto
+<br>✅ Progreso por capítulos y resumen de avance por categoría
+<br>✅ Historial local de eventos relevantes dentro del Archivero
+
 ## 🎨 Estilo visual
 
 Inspirado en una estética “dibujada a mano” tipo cuaderno, con:

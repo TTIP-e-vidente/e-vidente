@@ -20,6 +20,8 @@ var playerCambiante : PlayerCambiante
 var is_dragging : Object
 var manager_level 
 var current_level = 1
+const LEVEL_STATUS_INDEX := 6
+const LEVELS_PER_BOOK := 6
 
 func items_segun_nivel(nivel):
 	if nivel.name == "Level": 
@@ -62,3 +64,72 @@ var items_level_vegan_gf = {
 					5: [4,2, ALMUERZO, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_9, almuerzo_cena, false],
 					6: [2,2, BEBIDA, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_7, bebida, false]
 					}
+
+
+func reset_progress() -> void:
+	_reset_book_progress(items_level)
+	_reset_book_progress(items_level_vegan)
+	_reset_book_progress(items_level_vegan_gf)
+	current_level = 1
+
+
+func export_progress() -> Dictionary:
+	return {
+		"current_level": current_level,
+		"celiaquia": _export_book_progress(items_level),
+		"veganismo": _export_book_progress(items_level_vegan),
+		"veganismo_celiaquia": _export_book_progress(items_level_vegan_gf)
+	}
+
+
+func import_progress(progress: Dictionary) -> void:
+	reset_progress()
+	if progress.is_empty():
+		return
+
+	current_level = clampi(int(progress.get("current_level", 1)), 1, LEVELS_PER_BOOK)
+	_import_book_progress(items_level, progress.get("celiaquia", []))
+	_import_book_progress(items_level_vegan, progress.get("veganismo", []))
+	_import_book_progress(items_level_vegan_gf, progress.get("veganismo_celiaquia", []))
+
+
+func get_progress_summary() -> Dictionary:
+	var celiaquia_completed := _count_completed_levels(items_level)
+	var vegan_completed := _count_completed_levels(items_level_vegan)
+	var vegan_gf_completed := _count_completed_levels(items_level_vegan_gf)
+	return {
+		"celiaquia": celiaquia_completed,
+		"veganismo": vegan_completed,
+		"veganismo_celiaquia": vegan_gf_completed,
+		"total": celiaquia_completed + vegan_completed + vegan_gf_completed,
+		"max_total": LEVELS_PER_BOOK * 3
+	}
+
+
+func _reset_book_progress(book: Dictionary) -> void:
+	for level_number in range(1, LEVELS_PER_BOOK + 1):
+		if book.has(level_number):
+			book[level_number][LEVEL_STATUS_INDEX] = false
+
+
+func _export_book_progress(book: Dictionary) -> Array:
+	var progress: Array = []
+	for level_number in range(1, LEVELS_PER_BOOK + 1):
+		progress.append(book.has(level_number) and bool(book[level_number][LEVEL_STATUS_INDEX]))
+	return progress
+
+
+func _import_book_progress(book: Dictionary, stored_progress: Variant) -> void:
+	if stored_progress is Array:
+		for level_index in range(min(stored_progress.size(), LEVELS_PER_BOOK)):
+			var level_number := level_index + 1
+			if book.has(level_number):
+				book[level_number][LEVEL_STATUS_INDEX] = bool(stored_progress[level_index])
+
+
+func _count_completed_levels(book: Dictionary) -> int:
+	var completed := 0
+	for level_number in range(1, LEVELS_PER_BOOK + 1):
+		if book.has(level_number) and bool(book[level_number][LEVEL_STATUS_INDEX]):
+			completed += 1
+	return completed

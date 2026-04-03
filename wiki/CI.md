@@ -40,19 +40,23 @@ Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no
 
 ---
 
-### 2️⃣ `validate` — Godot Import (Blocking) ✅
+### 2️⃣ `validate` — Godot Import + Save Tests (Blocking) ✅
 
 **Que hace:**
 - Corre en contenedor `barichello/godot-ci:4.2`
 - Descarga proyecto
 - ReUtiliza cache de imports previos
 - Ejecuta import headless: `godot --headless --path project --editor --quit`
+- Ejecuta smoke test de guardado local: `godot --headless --path project -s res://tests/save_manager_smoke_test.gd`
+- Ejecuta test de validaciones y recarga desde disco: `godot --headless --path project -s res://tests/save_manager_validation_test.gd`
 
 **Bloquea?** SI — Si falla, detiene resto de pipeline
 
 **Razon de fallo comun:**
 - Archivos Godot (.tscn, .gd) con syntax invalido
 - Paths rotos en escenas
+- El flujo de registro/login/guardado local deja de funcionar
+- Las validaciones del registro/login o la recarga del save quedaron inconsistentes
 
 ---
 
@@ -80,7 +84,7 @@ Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no
 |---|---|---|
 | ✅ Todos pasan | Todo bien | Listo para merge |
 | ⚠️ quality warnings | Deuda documental | Considerar fix pero no bloquea |
-| ❌ validate falla | Error en proyecto Godot | Corregir antes de merge |
+| ❌ validate falla | Error en proyecto Godot o en smoke test | Corregir antes de merge |
 | ❌ build-web falla | Export no funciona | Revisar export_presets.cfg |
 
 ---

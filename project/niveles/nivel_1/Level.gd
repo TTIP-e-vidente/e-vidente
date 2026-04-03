@@ -1,6 +1,8 @@
 extends Node
 class_name Level
 
+const TRACK_KEY := "celiaquia"
+
 @onready var background = $Background
 @onready var victory = $Victory
 @onready var adelante = $Adelante
@@ -27,6 +29,7 @@ func _victory():
 	adelante.disabled = false
 	ensenanza.show()
 	Global.items_level[Global.current_level][6] = true
+	SaveManager.record_level_completed(TRACK_KEY, Global.current_level)
 
 func _on_adelante_pressed():
 	if Global.current_level <= 5: 

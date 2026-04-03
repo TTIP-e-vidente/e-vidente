@@ -1,0 +1,181 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://interface/auth.gd" id="1_auth"]
+[ext_resource type="Texture2D" uid="uid://cwkostcg25hb0" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_bg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.980392, 0.956863, 0.901961, 0.941176)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.45)
+
+[node name="Auth" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_auth")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.356863, 0.670588, 0.596078, 1)
+
+[node name="BackgroundTexture" type="TextureRect" parent="Backdrop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="Card" type="PanelContainer" parent="."]
+offset_left = 144.0
+offset_top = 42.0
+offset_right = 1008.0
+offset_bottom = 758.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
+
+[node name="Content" type="VBoxContainer" parent="Card/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Card/MarginContainer/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Acceso local"
+
+[node name="Subtitle" type="Label" parent="Card/MarginContainer/Content"]
+layout_mode = 2
+text = "Registrate o inicia sesion para guardar progreso, historial, mail y foto del perfil."
+autowrap_mode = 3
+
+[node name="InfoLabel" type="Label" parent="Card/MarginContainer/Content"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Tabs" type="TabContainer" parent="Card/MarginContainer/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Registro" type="VBoxContainer" parent="Card/MarginContainer/Content/Tabs"]
+layout_mode = 2
+
+[node name="Form" type="VBoxContainer" parent="Card/MarginContainer/Content/Tabs/Registro"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="UsernameEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+placeholder_text = "Nombre de usuario"
+
+[node name="PasswordEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+placeholder_text = "Contrasena (minimo 8 caracteres)"
+secret = true
+
+[node name="AgeEdit" type="SpinBox" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+min_value = 1.0
+max_value = 120.0
+step = 1.0
+value = 10.0
+
+[node name="EmailEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+placeholder_text = "Mail"
+
+[node name="AvatarRow" type="HBoxContainer" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AvatarPathEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/Registro/Form/AvatarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+placeholder_text = "Avatar o foto"
+
+[node name="ChooseAvatarButton" type="Button" parent="Card/MarginContainer/Content/Tabs/Registro/Form/AvatarRow"]
+layout_mode = 2
+text = "Elegir foto"
+
+[node name="AvatarPreview" type="TextureRect" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+custom_minimum_size = Vector2(180, 180)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RegisterButton" type="Button" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+text = "Crear cuenta local"
+
+[node name="RegisterMessage" type="Label" parent="Card/MarginContainer/Content/Tabs/Registro/Form"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="IniciarSesion" type="VBoxContainer" parent="Card/MarginContainer/Content/Tabs"]
+layout_mode = 2
+
+[node name="Form" type="VBoxContainer" parent="Card/MarginContainer/Content/Tabs/IniciarSesion"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LoginIdentifierEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/IniciarSesion/Form"]
+layout_mode = 2
+placeholder_text = "Usuario o mail"
+
+[node name="LoginPasswordEdit" type="LineEdit" parent="Card/MarginContainer/Content/Tabs/IniciarSesion/Form"]
+layout_mode = 2
+placeholder_text = "Contrasena"
+secret = true
+
+[node name="LoginButton" type="Button" parent="Card/MarginContainer/Content/Tabs/IniciarSesion/Form"]
+layout_mode = 2
+text = "Iniciar sesion"
+
+[node name="LoginMessage" type="Label" parent="Card/MarginContainer/Content/Tabs/IniciarSesion/Form"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="Card/MarginContainer/Content"]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="Card/MarginContainer/Content/Footer"]
+layout_mode = 2
+text = "Volver"
+
+[node name="AvatarDialog" type="FileDialog" parent="."]
+access = 2
+file_mode = 0
+title = "Seleccionar foto de perfil"
+filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.webp ; WEBP")
+
+[connection signal="pressed" from="Card/MarginContainer/Content/Tabs/Registro/Form/AvatarRow/ChooseAvatarButton" to="." method="_on_choose_avatar_button_pressed"]
+[connection signal="pressed" from="Card/MarginContainer/Content/Tabs/Registro/Form/RegisterButton" to="." method="_on_register_button_pressed"]
+[connection signal="pressed" from="Card/MarginContainer/Content/Tabs/IniciarSesion/Form/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="Card/MarginContainer/Content/Footer/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="file_selected" from="AvatarDialog" to="." method="_on_avatar_dialog_file_selected"]
