@@ -422,6 +422,9 @@ func _default_save_data() -> Dictionary:
 			"created_at": "",
 			"updated_at": ""
 		},
+		"active_session_id": "",
+		"next_session_number": 1,
+		"sessions": {},
 		"save_meta": _default_save_meta(),
 		"resume_state": _default_resume_state(),
 		"progress": {},
@@ -439,7 +442,7 @@ func _default_save_meta() -> Dictionary:
 
 func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	if raw_data.has("users"):
-		return _migrate_legacy_save_data(raw_data)
+		raw_data = _migrate_legacy_save_data(raw_data)
 
 	var normalized := _default_save_data()
 	normalized["version"] = int(raw_data.get("version", SAVE_VERSION))
@@ -461,6 +464,27 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 		normalized["resume_state"] = _normalize_resume_state(raw_resume_state)
 
 	normalized["history"] = _normalize_history(raw_data.get("history", []))
+
+	var raw_sessions = raw_data.get("sessions", {})
+	if raw_sessions is Dictionary:
+		normalized["sessions"] = _normalize_sessions(raw_sessions)
+	else:
+		var migrated_session := _migrate_single_session_data(raw_data)
+		if not migrated_session.is_empty():
+			var migrated_session_id := str(migrated_session.get("id", "%s0001" % SESSION_ID_PREFIX))
+			var sessions := normalized.get("sessions", {})
+			sessions[migrated_session_id] = _normalize_session_data(migrated_session, migrated_session_id)
+			normalized["sessions"] = sessions
+			normalized["active_session_id"] = migrated_session_id
+			normalized["next_session_number"] = 2
+
+	var next_session_number := max(1, int(raw_data.get("next_session_number", normalized.get("next_session_number", 1))))
+	next_session_number = max(next_session_number, int(normalized.get("sessions", {}).size()) + 1)
+	normalized["next_session_number"] = next_session_number
+	normalized["active_session_id"] = _sanitize_active_session_id(
+		str(raw_data.get("active_session_id", normalized.get("active_session_id", ""))).strip_edges(),
+		normalized.get("sessions", {})
+	)
 
 	return normalized
 
@@ -496,6 +520,358 @@ func _normalize_resume_state(raw_resume_state: Dictionary) -> Dictionary:
 		}
 
 	return _default_resume_state()
+
+
+func _default_session_data(session_id: String = "", title: String = "", created_at: String = "") -> Dictionary:
+	var timestamp := created_at if not created_at.is_empty() else Time.get_datetime_string_from_system(false, true)
+	return {
+		"id": session_id,
+		"title": title,
+		"created_at": timestamp,
+		"updated_at": timestamp,
+		"progress": {},
+		"resume_state": _default_resume_state(),
+		"history": [],
+		"save_meta": _default_save_meta()
+	}
+
+
+func _normalize_session_data(raw_session: Dictionary, session_id: String = "") -> Dictionary:
+	var normalized_session_id := session_id if not session_id.is_empty() else str(raw_session.get("id", "")).strip_edges()
+	var created_at := str(raw_session.get("created_at", ""))
+	var title := str(raw_session.get("title", "")).strip_edges()
+	var normalized := _default_session_data(normalized_session_id, title, created_at)
+	if normalized["title"] == "":
+		normalized["title"] = _build_default_session_title_from_id(normalized_session_id)
+	normalized["updated_at"] = str(raw_session.get("updated_at", normalized.get("created_at", "")))
+
+	var raw_progress = raw_session.get("progress", {})
+	if raw_progress is Dictionary:
+		normalized["progress"] = raw_progress.duplicate(true)
+
+	var raw_resume_state = raw_session.get("resume_state", {})
+	if raw_resume_state is Dictionary:
+		normalized["resume_state"] = _normalize_resume_state(raw_resume_state)
+
+	var raw_history = raw_session.get("history", [])
+	normalized["history"] = _normalize_history(raw_history)
+
+	var raw_save_meta = raw_session.get("save_meta", {})
+	if raw_save_meta is Dictionary:
+		normalized["save_meta"] = _normalize_save_meta(raw_save_meta)
+
+	if normalized["updated_at"] == "":
+		normalized["updated_at"] = _session_updated_at(normalized)
+
+	return normalized
+
+
+func _normalize_sessions(raw_sessions: Variant) -> Dictionary:
+	var normalized_sessions := {}
+	if raw_sessions is Dictionary:
+		for raw_session_id in raw_sessions.keys():
+			var session_id := str(raw_session_id)
+			if not raw_sessions[session_id] is Dictionary:
+				continue
+			normalized_sessions[session_id] = _normalize_session_data(raw_sessions[session_id], session_id)
+	return normalized_sessions
+
+
+func _migrate_single_session_data(raw_data: Dictionary) -> Dictionary:
+	var migrated_progress = raw_data.get("progress", {})
+	var migrated_resume_state = raw_data.get("resume_state", {})
+	var migrated_history = raw_data.get("history", [])
+	var migrated_save_meta = raw_data.get("save_meta", {})
+
+	var candidate_session := {
+		"id": "%s0001" % SESSION_ID_PREFIX,
+		"title": _build_default_session_title(1),
+		"created_at": str(raw_data.get("profile", {}).get("created_at", "")),
+		"updated_at": str(migrated_save_meta.get("last_saved_at", "")),
+		"progress": migrated_progress,
+		"resume_state": migrated_resume_state,
+		"history": migrated_history,
+		"save_meta": migrated_save_meta
+	}
+	if not _session_can_resume(_normalize_session_data(candidate_session, str(candidate_session.get("id", "")))):
+		return {}
+	return candidate_session
+
+
+func _sanitize_active_session_id(active_session_id: String, sessions: Dictionary) -> String:
+	var clean_active_session_id := active_session_id.strip_edges()
+	if not clean_active_session_id.is_empty() and sessions.has(clean_active_session_id) and sessions[clean_active_session_id] is Dictionary:
+		return clean_active_session_id
+	return _find_most_recent_session_id(sessions)
+
+
+func _find_most_recent_session_id(sessions: Dictionary) -> String:
+	var selected_session_id := ""
+	var selected_updated_at := ""
+	for raw_session_id in sessions.keys():
+		var session_id := str(raw_session_id)
+		if not sessions[session_id] is Dictionary:
+			continue
+		var session := _normalize_session_data(sessions[session_id], session_id)
+		var updated_at := _session_updated_at(session)
+		if selected_session_id.is_empty() or updated_at > selected_updated_at:
+			selected_session_id = session_id
+			selected_updated_at = updated_at
+	return selected_session_id
+
+
+func _project_active_session_to_runtime() -> void:
+	var active_session := _get_active_session_data()
+	if active_session.is_empty():
+		save_data["progress"] = save_data.get("progress", {}) if save_data.get("progress", {}) is Dictionary else {}
+		save_data["history"] = _normalize_history(save_data.get("history", []))
+		save_data["resume_state"] = _normalize_resume_state(save_data.get("resume_state", {}))
+		save_data["save_meta"] = _normalize_save_meta(save_data.get("save_meta", {}))
+		return
+	save_data["progress"] = active_session.get("progress", {}).duplicate(true)
+	save_data["history"] = _normalize_history(active_session.get("history", []))
+	save_data["resume_state"] = _normalize_resume_state(active_session.get("resume_state", {}))
+	save_data["save_meta"] = _normalize_save_meta(active_session.get("save_meta", {}))
+
+
+func _get_active_session_data() -> Dictionary:
+	return _get_session_data(get_active_save_slot_id())
+
+
+func _get_session_data(session_id: String) -> Dictionary:
+	var sessions = save_data.get("sessions", {})
+	if not sessions is Dictionary:
+		return {}
+	var clean_session_id := session_id.strip_edges()
+	if clean_session_id.is_empty() or not sessions.has(clean_session_id) or not sessions[clean_session_id] is Dictionary:
+		return {}
+	return _normalize_session_data(sessions[clean_session_id], clean_session_id)
+
+
+func _get_session_resume_state(session_id: String) -> Dictionary:
+	var session := _get_session_data(session_id)
+	if session.is_empty():
+		return _default_resume_state()
+	return _resolve_resume_state(_normalize_resume_state(session.get("resume_state", {})))
+
+
+func _has_active_session() -> bool:
+	return not _get_active_session_data().is_empty()
+
+
+func _activate_session(session_id: String) -> bool:
+	var session := _get_session_data(session_id)
+	if session.is_empty():
+		return false
+	if str(save_data.get("active_session_id", "")) != str(session.get("id", "")):
+		save_data["active_session_id"] = str(session.get("id", ""))
+		_mark_dirty()
+	_project_active_session_to_runtime()
+	return true
+
+
+func _create_session(title: String = "", activate: bool = true) -> Dictionary:
+	var sessions = save_data.get("sessions", {})
+	if not sessions is Dictionary:
+		sessions = {}
+
+	var next_session_number := max(1, int(save_data.get("next_session_number", 1)))
+	var session_id := "%s%04d" % [SESSION_ID_PREFIX, next_session_number]
+	while sessions.has(session_id):
+		next_session_number += 1
+		session_id = "%s%04d" % [SESSION_ID_PREFIX, next_session_number]
+
+	var clean_title := title.strip_edges()
+	if clean_title.is_empty():
+		clean_title = _build_default_session_title(next_session_number)
+
+	var session := _default_session_data(session_id, clean_title)
+	var progress = save_data.get("progress", {})
+	if progress is Dictionary:
+		session["progress"] = progress.duplicate(true)
+	session["history"] = _normalize_history(save_data.get("history", []))
+	session["resume_state"] = _normalize_resume_state(save_data.get("resume_state", {}))
+	session["save_meta"] = _normalize_save_meta(save_data.get("save_meta", {}))
+	session["updated_at"] = _session_updated_at(session)
+
+	sessions[session_id] = session
+	save_data["sessions"] = sessions
+	save_data["next_session_number"] = next_session_number + 1
+	if activate:
+		save_data["active_session_id"] = session_id
+		_project_active_session_to_runtime()
+	_mark_dirty()
+	return session.duplicate(true)
+
+
+func _rename_active_session(title: String) -> void:
+	var clean_title := title.strip_edges()
+	if clean_title.is_empty() or not _has_active_session():
+		return
+	var active_session_id := get_active_save_slot_id()
+	var sessions = save_data.get("sessions", {})
+	if not sessions is Dictionary or not sessions.has(active_session_id) or not sessions[active_session_id] is Dictionary:
+		return
+	var session := _normalize_session_data(sessions[active_session_id], active_session_id)
+	if str(session.get("title", "")) == clean_title:
+		return
+	session["title"] = clean_title
+	sessions[active_session_id] = session
+	save_data["sessions"] = sessions
+	_mark_dirty()
+
+
+func _reset_runtime_session_projection() -> void:
+	save_data["progress"] = {}
+	save_data["history"] = []
+	save_data["resume_state"] = _default_resume_state()
+	save_data["save_meta"] = _default_save_meta()
+	_mark_dirty()
+
+
+func _sync_active_session_to_storage(save_meta: Dictionary) -> void:
+	var active_session_id := get_active_save_slot_id()
+	if active_session_id.is_empty():
+		return
+	var sessions = save_data.get("sessions", {})
+	if not sessions is Dictionary or not sessions.has(active_session_id) or not sessions[active_session_id] is Dictionary:
+		return
+
+	var session := _normalize_session_data(sessions[active_session_id], active_session_id)
+	var progress = save_data.get("progress", {})
+	if progress is Dictionary:
+		session["progress"] = progress.duplicate(true)
+	session["history"] = _normalize_history(save_data.get("history", []))
+	session["resume_state"] = _normalize_resume_state(save_data.get("resume_state", {}))
+	session["save_meta"] = save_meta.duplicate(true)
+	session["updated_at"] = _session_updated_at(session)
+	sessions[active_session_id] = session
+	save_data["sessions"] = sessions
+
+
+func _ensure_active_session_for_write(reason: String) -> void:
+	if _has_active_session():
+		return
+	if reason == "profile_updated" or reason == "legacy_migration":
+		return
+	if reason == "load_repair" and not _runtime_projection_has_session_content():
+		return
+	if reason != "load_repair" and not _runtime_projection_has_session_content():
+		return
+	_create_session("", true)
+
+
+func _build_default_session_title(session_number: int) -> String:
+	return "%s %d" % [SESSION_TITLE_PREFIX, session_number]
+
+
+func _build_default_session_title_from_id(session_id: String) -> String:
+	var clean_session_id := session_id.strip_edges()
+	if clean_session_id.begins_with(SESSION_ID_PREFIX):
+		var numeric_part := clean_session_id.trim_prefix(SESSION_ID_PREFIX)
+		if numeric_part.is_valid_int():
+			return _build_default_session_title(int(numeric_part))
+	return SESSION_TITLE_PREFIX
+
+
+func _build_session_summary(session: Dictionary) -> Dictionary:
+	var progress_summary := _summarize_progress_data(session.get("progress", {}))
+	var session_id := str(session.get("id", ""))
+	return {
+		"id": session_id,
+		"title": str(session.get("title", _build_default_session_title_from_id(session_id))),
+		"created_at": str(session.get("created_at", "")),
+		"updated_at": _session_updated_at(session),
+		"resume_hint": _format_resume_hint_from_state(_normalize_resume_state(session.get("resume_state", {}))),
+		"progress_summary": progress_summary,
+		"can_resume": _session_can_resume(session),
+		"is_active": session_id == get_active_save_slot_id()
+	}
+
+
+func _sort_save_slot_summaries(left: Dictionary, right: Dictionary) -> bool:
+	var left_updated_at := str(left.get("updated_at", ""))
+	var right_updated_at := str(right.get("updated_at", ""))
+	if left_updated_at == right_updated_at:
+		return str(left.get("title", "")) < str(right.get("title", ""))
+	return left_updated_at > right_updated_at
+
+
+func _summarize_progress_data(progress: Variant) -> Dictionary:
+	var progress_data := progress if progress is Dictionary else {}
+	var celiaquia_completed := _count_completed_progress_track(progress_data.get("celiaquia", []))
+	var vegan_completed := _count_completed_progress_track(progress_data.get("veganismo", []))
+	var vegan_gf_completed := _count_completed_progress_track(progress_data.get("veganismo_celiaquia", []))
+	return {
+		"celiaquia": celiaquia_completed,
+		"veganismo": vegan_completed,
+		"veganismo_celiaquia": vegan_gf_completed,
+		"total": celiaquia_completed + vegan_completed + vegan_gf_completed,
+		"max_total": Global.LEVELS_PER_BOOK * 3
+	}
+
+
+func _count_completed_progress_track(track_progress: Variant) -> int:
+	var completed := 0
+	if track_progress is Array:
+		for entry in track_progress:
+			if bool(entry):
+				completed += 1
+	return completed
+
+
+func _session_can_resume(session: Dictionary) -> bool:
+	if session.is_empty():
+		return false
+	var summary := _summarize_progress_data(session.get("progress", {}))
+	if int(summary.get("total", 0)) > 0:
+		return true
+	var resume_state := _normalize_resume_state(session.get("resume_state", {}))
+	if str(resume_state.get("context", RESUME_CONTEXT_HUB)) != RESUME_CONTEXT_HUB:
+		return true
+	var history = session.get("history", [])
+	if history is Array:
+		for entry in history:
+			if not entry is Dictionary:
+				continue
+			var metadata = entry.get("metadata", {})
+			if metadata is Dictionary and GAMEPLAY_HISTORY_TYPES.has(str(metadata.get("type", ""))):
+				return true
+	return false
+
+
+func _runtime_projection_has_session_content() -> bool:
+	return _session_can_resume({
+		"progress": save_data.get("progress", {}),
+		"resume_state": save_data.get("resume_state", {}),
+		"history": save_data.get("history", [])
+	})
+
+
+func _session_updated_at(session: Dictionary) -> String:
+	var updated_at := str(session.get("updated_at", ""))
+	if not updated_at.is_empty():
+		return updated_at
+	var save_meta = session.get("save_meta", {})
+	if save_meta is Dictionary:
+		updated_at = str(save_meta.get("last_saved_at", ""))
+	if not updated_at.is_empty():
+		return updated_at
+	return str(session.get("created_at", ""))
+
+
+func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
+	var context := str(resume_state.get("context", RESUME_CONTEXT_HUB))
+	var track_key := str(resume_state.get("track_key", ""))
+	var level_number := int(resume_state.get("level_number", 1))
+
+	match context:
+		RESUME_CONTEXT_LEVEL:
+			return "%s · capitulo %d" % [_track_label(track_key), level_number]
+		RESUME_CONTEXT_BOOK:
+			return "%s · seleccion de capitulos" % _track_label(track_key)
+		_:
+			return "el archivero"
 
 
 func _repair_resume_state() -> bool:
