@@ -6,9 +6,10 @@ Guia corta para iniciar desarrollo sobre e-vidente sin friccion.
 
 ## 📋 Requisitos previos
 
-- **Godot:** 4.2 o compatible  
+- **Godot:** 4.2 exacto  
 - **Git:** instalado y configurado  
 - **Acceso:** permisos en el repositorio (push/PR)  
+
 
 ## ⬇️ Clonar y abrir
 
@@ -17,13 +18,16 @@ Guia corta para iniciar desarrollo sobre e-vidente sin friccion.
 git clone https://github.com/TTIP-e-vidente/e-vidente.git
 cd e-vidente
 
-# 2. Abrir en Godot
+# 2. Activar hooks locales
+powershell -ExecutionPolicy Bypass -File scripts/setup-git-hooks.ps1
+
+# 3. Abrir en Godot
 # - Abrir Godot Hub o Godot Editor
 # - Project > Import  
 # - Navegar a: project/project.godot
 # - Select Version > Godot 4.2 → Import & Edit
 
-# 3. Godot completara importacion inicial (~1-2 min)
+# 4. Godot completara importacion inicial (~1-2 min)
 ```
 
 ## 🗂️ Directorio clave

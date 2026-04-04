@@ -1,6 +1,8 @@
 extends Node2D
 class_name LibroVegan
 
+const TRACK_KEY := "veganismo"
+
 @onready var background = $Background
 @onready var cap_2 = $VBoxContainer/Cap2
 @onready var cap_3 = $VBoxContainer/Cap3
@@ -10,6 +12,7 @@ class_name LibroVegan
 
 func _ready():
 	background.play()	
+	SaveManager.set_resume_to_book(TRACK_KEY)
 	cap_2.disabled = not Global.items_level_vegan[1][6]
 	cap_3.disabled = not Global.items_level_vegan[2][6]
 	cap_4.disabled = not Global.items_level_vegan[3][6]

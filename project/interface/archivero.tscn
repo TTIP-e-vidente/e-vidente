@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://qoge2msthra0"]
+[gd_scene load_steps=15 format=3 uid="uid://qoge2msthra0"]
 
 [ext_resource type="Script" path="res://interface/Archivero.gd" id="1_vbpnf"]
 [ext_resource type="Texture2D" uid="uid://cwkostcg25hb0" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_4l60g"]
@@ -8,6 +8,64 @@
 [ext_resource type="Texture2D" uid="uid://dwvlyxbf2glwa" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
 [ext_resource type="Texture2D" uid="uid://blgjs4a0fjm3t" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
 [ext_resource type="AudioStream" uid="uid://cyoeurg1stfx5" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="9_dbicon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawer_panel"]
+bg_color = Color(0.980392, 0.956863, 0.901961, 0.97)
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.22)
+shadow_color = Color(0, 0, 0, 0.12)
+shadow_size = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_button"]
+bg_color = Color(1, 1, 1, 0.92)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_muted_section"]
+bg_color = Color(1, 1, 1, 0.54)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button"]
+bg_color = Color(0.309804, 0.372549, 0.266667, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toggle_button"]
+bg_color = Color(0.980392, 0.956863, 0.901961, 0.94)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.18)
 
 [node name="Archivero" type="Node2D"]
 script = ExtResource("1_vbpnf")
@@ -53,97 +111,196 @@ file = "res://interface/libro.tscn"
 
 [node name="Node" type="Node" parent="CanvasLayer"]
 
-[node name="SessionPanel" type="PanelContainer" parent="."]
-offset_left = 781.0
-offset_top = 36.0
-offset_right = 1129.0
-offset_bottom = 430.0
+[node name="ProfileOverlayLayer" type="CanvasLayer" parent="."]
 
-[node name="MarginContainer" type="MarginContainer" parent="SessionPanel"]
+[node name="ProfileToggleButton" type="Button" parent="ProfileOverlayLayer"]
+offset_left = 1008.0
+offset_top = 18.0
+offset_right = 1088.0
+offset_bottom = 98.0
+tooltip_text = "guardado de partida"
+modulate = Color(1, 1, 1, 0.94)
+theme_override_styles/normal = SubResource("StyleBoxFlat_toggle_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_toggle_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_toggle_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_toggle_button")
+text = ""
+icon = ExtResource("9_dbicon")
+flat = true
+
+[node name="ProfileOverlay" type="Control" parent="ProfileOverlayLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backdrop" type="ColorRect" parent="ProfileOverlayLayer/ProfileOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.08)
+
+[node name="CloseProfileButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay"]
+offset_left = 980.0
+offset_top = 64.0
+offset_right = 1088.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.95)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
+text = "Cerrar"
+
+[node name="SessionPanel" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay"]
+offset_left = 756.0
+offset_top = 120.0
+offset_right = 1104.0
+offset_bottom = 438.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_drawer_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 18
 
-[node name="ProfileContent" type="VBoxContainer" parent="SessionPanel/MarginContainer"]
+[node name="ProfileContent" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
-[node name="Title" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="Title" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Perfil local"
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 20
+text = "Guardado de partida"
 
-[node name="AvatarPreview" type="TextureRect" parent="SessionPanel/MarginContainer/ProfileContent"]
-custom_minimum_size = Vector2(170, 170)
+[node name="Subtitle" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.84)
+theme_override_font_sizes/font_size = 14
+text = "Acceso rapido al save y al perfil local."
+autowrap_mode = 3
+
+[node name="SummaryPanel" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_muted_section")
+
+[node name="MarginContainer" type="MarginContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="SummaryContent" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AvatarPreview" type="TextureRect" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="AvatarState" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="AvatarState" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.82)
+theme_override_font_sizes/font_size = 14
 text = "Sin foto disponible"
 
-[node name="UsernameLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="UsernameLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 14
 text = "Usuario: -"
 
-[node name="EmailLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="EmailLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 14
 text = "Mail: -"
 autowrap_mode = 3
 
-[node name="AgeLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="AgeLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 14
 text = "Edad: -"
 
-[node name="ProgressLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="ProgressLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 14
 text = "Avance total: 0/18 capitulos"
 autowrap_mode = 3
 
-[node name="SaveStatusLabel" type="Label" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="SaveStatusLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.95)
+theme_override_font_sizes/font_size = 14
 text = "Ultimo guardado: sin datos"
 autowrap_mode = 3
 
-[node name="Guardar" type="Button" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="Guardar" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_primary_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_primary_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_primary_button")
 text = "Guardar ahora"
 
-[node name="CerrarSesion" type="Button" parent="SessionPanel/MarginContainer/ProfileContent"]
+[node name="CerrarSesion" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
-text = "Cerrar sesion"
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
+text = "Perfil local"
 
-[node name="HistoryPanel" type="PanelContainer" parent="."]
-offset_left = 781.0
-offset_top = 447.0
-offset_right = 1129.0
-offset_bottom = 782.0
+[node name="HistoryPanel" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay"]
+offset_left = 736.0
+offset_top = 450.0
+offset_right = 1104.0
+offset_bottom = 654.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_drawer_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="HistoryPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="ProfileOverlayLayer/ProfileOverlay/HistoryPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 18
 
-[node name="HistoryContent" type="VBoxContainer" parent="HistoryPanel/MarginContainer"]
+[node name="HistoryContent" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="HistoryPanel/MarginContainer/HistoryContent"]
+[node name="Title" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 18
 text = "Historial"
 
-[node name="HistoryText" type="RichTextLabel" parent="HistoryPanel/MarginContainer/HistoryContent"]
-custom_minimum_size = Vector2(280, 240)
+[node name="HistoryText" type="RichTextLabel" parent="ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent"]
+custom_minimum_size = Vector2(280, 150)
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = false
 scroll_active = true
+theme_override_colors/default_color = Color(0.278431, 0.25098, 0.184314, 0.92)
 text = "Todavia no hay eventos guardados."
 
 [node name="Atrás" type="Button" parent="."]
@@ -164,9 +321,12 @@ attenuation = 2.07053
 
 [connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_exited"]
-[connection signal="pressed" from="SessionPanel/MarginContainer/ProfileContent/Guardar" to="." method="_on_guardar_pressed"]
-[connection signal="pressed" from="SessionPanel/MarginContainer/ProfileContent/CerrarSesion" to="." method="_on_cerrar_sesion_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/Guardar" to="." method="_on_guardar_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/CerrarSesion" to="." method="_on_editar_perfil_pressed"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileToggleButton" to="." method="_on_profile_toggle_button_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/CloseProfileButton" to="." method="_on_close_profile_button_pressed"]
+[connection signal="gui_input" from="ProfileOverlayLayer/ProfileOverlay/Backdrop" to="." method="_on_profile_backdrop_gui_input"]
 
 [editable path="CanvasLayer/ArchiveroContainer/celiaco-vegano2"]
 [editable path="CanvasLayer/ArchiveroContainer/vegano"]

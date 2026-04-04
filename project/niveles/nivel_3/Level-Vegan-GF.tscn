@@ -38,6 +38,7 @@
 [ext_resource type="AudioStream" uid="uid://wvisbdda1ofu" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="36_sjxcj"]
 [ext_resource type="Texture2D" uid="uid://dip61dcjlq1dk" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="37_yw1kj"]
 [ext_resource type="Texture2D" uid="uid://cjvrmdv4j443i" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="38_w55qy"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-guardar.svg" id="39_saveicon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
 animations = [{
@@ -332,6 +333,24 @@ text = "
 icon = ExtResource("32_0bm5o")
 flat = true
 
+[node name="SaveProgressButton" type="Button" parent="."]
+offset_left = 1023.0
+offset_top = 18.0
+offset_right = 1111.0
+offset_bottom = 106.0
+tooltip_text = "Guardar progreso"
+icon = ExtResource("39_saveicon")
+flat = true
+
+[node name="SaveFeedbackLabel" type="Label" parent="."]
+offset_left = 860.0
+offset_top = 98.0
+offset_right = 1118.0
+offset_bottom = 132.0
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.92)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 2
+
 [node name="Ensenanza" type="Sprite2D" parent="."]
 visible = false
 self_modulate = Color(1, 1, 1, 0.921569)
@@ -356,5 +375,6 @@ attenuation = 2.07053
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entered"]
 [connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_exited"]
 [connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="pressed" from="SaveProgressButton" to="." method="_on_save_progress_button_pressed"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_pressed"]

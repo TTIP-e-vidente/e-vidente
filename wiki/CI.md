@@ -49,6 +49,8 @@ Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no
 - Ejecuta import headless: `godot --headless --path project --editor --quit`
 - Ejecuta smoke test de guardado local: `godot --headless --path project -s res://tests/save_manager_smoke_test.gd`
 - Ejecuta test de validaciones y recarga desde disco: `godot --headless --path project -s res://tests/save_manager_validation_test.gd`
+- Ejecuta test de contrato de señales del save: `godot --headless --path project -s res://tests/save_manager_signal_contract_test.gd`
+- Ejecuta test de migracion desde saves legacy: `godot --headless --path project -s res://tests/save_manager_legacy_migration_test.gd`
 
 **Bloquea?** SI — Si falla, detiene resto de pipeline
 

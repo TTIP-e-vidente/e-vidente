@@ -1,13 +1,16 @@
 extends Libro
 class_name LibroVeganGF
 
-func _ready():
-	background.play()
-	cap_2.disabled = not Global.items_level_vegan_gf[1][6]
-	cap_3.disabled = not Global.items_level_vegan_gf[2][6]
-	cap_4.disabled = not Global.items_level_vegan_gf[3][6]
-	cap_5.disabled = not Global.items_level_vegan_gf[4][6]
-	cap_6.disabled = not Global.items_level_vegan_gf[5][6]
+func _ready() -> void:
+	super._ready()
+
+
+func _get_track_key() -> String:
+	return "veganismo_celiaquia"
+
+
+func _get_book_progress() -> Dictionary:
+	return Global.items_level_vegan_gf
 	
 func _on_cap_1_pressed():
 	Global.current_level = 1

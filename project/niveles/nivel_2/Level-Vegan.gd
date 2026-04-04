@@ -1,14 +1,15 @@
 extends Level
 class_name LevelVegan
 
-const TRACK_KEY := "veganismo"
+const BOOK_TRACK_KEY := "veganismo"
 
 
 func _ready():
-	victory.hide()
-	adelante.disabled = true
-	background.play()
-	manager_level.setup(self)
+	super._ready()
+
+
+func _get_resume_track_key() -> String:
+	return BOOK_TRACK_KEY
 
 func _on_atrás_pressed():
 	get_tree().change_scene_to_file("res://interface/libro-vegan.tscn")
@@ -19,7 +20,7 @@ func _victory():
 	adelante.disabled = false
 	ensenanza.show()
 	Global.items_level_vegan[Global.current_level][6] = true
-	SaveManager.record_level_completed(TRACK_KEY, Global.current_level)
+	SaveManager.record_level_completed(_get_resume_track_key(), Global.current_level)
 	
 func _on_adelante_pressed():
 	if Global.current_level <= 5: 

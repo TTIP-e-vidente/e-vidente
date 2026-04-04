@@ -1,0 +1,70 @@
+#!/bin/sh
+
+set -eu
+
+. "$(dirname "$0")/lib/common.sh"
+
+cd_repo_root
+
+if [ "${SKIP_EVIDENTE_HOOKS:-0}" = "1" ]; then
+	exit 0
+fi
+
+staged_files="$(get_staged_files)"
+staged_statuses="$(get_staged_statuses)"
+
+if [ -z "$staged_files" ]; then
+	exit 0
+fi
+
+# Allow the one-time policy change that removes tracked .import files from the index.
+blocked_imports="$(printf '%s\n' "$staged_statuses" | grep -E '^[ACMR][[:space:]].*\.import$' || true)"
+blocked_godot_cache="$(printf '%s\n' "$staged_statuses" | grep -E '^[ACMR][[:space:]]project/\.godot/' || true)"
+project_settings_staged="$(printf '%s\n' "$staged_files" | grep -x 'project/project.godot' || true)"
+project_settings_invalid=""
+
+if [ -n "$project_settings_staged" ] && [ "${ALLOW_GODOT_ENGINE_CHANGE:-0}" != "1" ] && [ "${ALLOW_GODOT_IMPORT_COMMIT:-0}" != "1" ]; then
+	staged_project_file="$(git show :project/project.godot 2>/dev/null || true)"
+	if ! printf '%s\n' "$staged_project_file" | grep -q '^config/features=PackedStringArray("4\.2", "Forward Plus")$'; then
+		project_settings_invalid="1"
+	fi
+fi
+
+if [ -n "$blocked_imports" ] || [ -n "$blocked_godot_cache" ] || [ -n "$project_settings_invalid" ]; then
+	echo "Commit bloqueado: hay cambios de infraestructura Godot que conviene revisar."
+	echo
+
+	if [ -n "$blocked_imports" ]; then
+		echo "Archivos .import staged como altas o modificaciones:"
+		printf '%s\n' "$blocked_imports" | sed 's/^[ACMR][[:space:]]*/ - /'
+		echo
+	fi
+
+	if [ -n "$blocked_godot_cache" ]; then
+		echo "Cache de project/.godot staged:"
+		printf '%s\n' "$blocked_godot_cache" | sed 's/^[ACMR][[:space:]]*/ - /'
+		echo
+	fi
+
+	if [ -n "$project_settings_invalid" ]; then
+		echo "project/project.godot staged ya no declara Godot 4.2 como version del proyecto."
+		echo
+	fi
+
+	echo "Acciones sugeridas:"
+	echo " - si el cambio fue accidental, sacalo del stage y reabre el proyecto con Godot 4.2"
+	echo " - si estas migrando el engine a proposito, usa ALLOW_GODOT_ENGINE_CHANGE=1 o git commit --no-verify"
+	if [ -n "$blocked_imports" ]; then
+		echo " - si estas haciendo el commit unico para dejar de trackear .import, solo dejalos staged como borrados del indice"
+	fi
+	exit 1
+fi
+
+project_changes="$(printf '%s\n' "$staged_files" | grep -E '^project/' || true)"
+docs_changes="$(printf '%s\n' "$staged_files" | grep -E '^(wiki/|docs-local/|README\.md$)' || true)"
+
+if [ -n "$project_changes" ] && [ -z "$docs_changes" ]; then
+	print_warn "Hay cambios en project/ sin docs staged. Considera actualizar wiki/Bitacora.md o una nota tecnica."
+fi
+
+exit 0

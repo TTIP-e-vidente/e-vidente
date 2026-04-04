@@ -1,11 +1,10 @@
 extends SceneTree
 
 const TEST_USERNAME := "ci_save_user"
-const TEST_PASSWORD := "password123"
 const TEST_EMAIL := "ci_save_user@example.com"
 const TEST_AGE := 24
 const TEMP_AVATAR_PATH := "user://ci_avatar.png"
-const STORED_AVATAR_PATH := "user://avatars/ci_save_user.png"
+const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
 
 var failed := false
 
@@ -24,47 +23,63 @@ func _run() -> void:
 	_assert(avatar_error == OK, "No se pudo crear el avatar temporal para la prueba")
 
 	SaveManager.load_data()
-	var register_result := SaveManager.register_user(
+	_assert(SaveManager.is_authenticated(), "El perfil local deberia inicializarse automaticamente")
+
+	var profile_result := SaveManager.update_local_profile(
 		TEST_USERNAME,
-		TEST_PASSWORD,
 		TEST_AGE,
 		TEST_EMAIL,
 		temp_avatar_absolute
 	)
-	_assert(bool(register_result.get("ok", false)), "Registro local fallido: %s" % register_result.get("message", "sin detalle"))
-	_assert(SaveManager.is_authenticated(), "El usuario deberia quedar autenticado luego del registro")
+	_assert(bool(profile_result.get("ok", false)), "Actualizacion del perfil local fallida: %s" % profile_result.get("message", "sin detalle"))
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "No se genero el archivo local de guardado")
+	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
 	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "No se copio el avatar al almacenamiento local")
 	_assert(SaveManager.get_current_user_avatar_texture() != null, "No se pudo recargar el avatar desde user://")
+	var save_status := SaveManager.get_save_status()
+	_assert(str(save_status.get("last_saved_reason", "")) == "profile_updated", "El estado del save deberia registrar que se guardo un perfil actualizado")
 
-	var auth_scene := load("res://interface/auth.tscn")
-	_assert(auth_scene != null, "No se pudo cargar la escena de autenticacion")
-	if auth_scene != null:
-		var auth_instance := auth_scene.instantiate()
-		root.add_child(auth_instance)
+	var profile_scene: PackedScene = load("res://interface/auth.tscn") as PackedScene
+	_assert(profile_scene != null, "No se pudo cargar la escena del perfil local")
+	if profile_scene != null:
+		var profile_instance: Node = profile_scene.instantiate()
+		root.add_child(profile_instance)
 		await process_frame
-		auth_instance.queue_free()
+		profile_instance.queue_free()
 
-	Global.items_level[1][Global.LEVEL_STATUS_INDEX] = true
-	SaveManager.record_level_completed("celiaquia", 1)
-	SaveManager.logout()
-	_assert(not SaveManager.is_authenticated(), "Cerrar sesion no limpio la sesion actual")
-
-	var login_result := SaveManager.login_user(TEST_EMAIL, TEST_PASSWORD)
-	_assert(bool(login_result.get("ok", false)), "Login local fallido: %s" % login_result.get("message", "sin detalle"))
-	var progress_summary := Global.get_progress_summary()
-	_assert(int(progress_summary.get("celiaquia", 0)) == 1, "El progreso guardado no se restauro al volver a iniciar sesion")
-
-	var archivero_scene := load("res://interface/archivero.tscn")
+	var archivero_scene: PackedScene = load("res://interface/archivero.tscn") as PackedScene
 	_assert(archivero_scene != null, "No se pudo cargar la escena del Archivero")
+	var save_status_label: Label = null
+	var profile_toggle_button: Button = null
 	if archivero_scene != null:
-		var archivero_instance := archivero_scene.instantiate()
+		var archivero_instance: Node = archivero_scene.instantiate()
 		root.add_child(archivero_instance)
 		await process_frame
+		profile_toggle_button = archivero_instance.get_node("ProfileOverlayLayer/ProfileToggleButton")
+		_assert(profile_toggle_button != null, "Archivero deberia exponer un boton para abrir el perfil local")
+		if profile_toggle_button != null:
+			profile_toggle_button.emit_signal("pressed")
+			await process_frame
+		save_status_label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SaveStatusLabel")
+		_assert(save_status_label != null, "Archivero deberia exponer la etiqueta de estado de guardado")
+		_assert(save_status_label.text.contains("perfil actualizado"), "Archivero deberia mostrar el motivo del ultimo guardado al abrir")
+
+		Global.items_level[1][Global.LEVEL_STATUS_INDEX] = true
+		SaveManager.record_level_completed("celiaquia", 1)
+		SaveManager.record_manual_save()
+		await process_frame
+		_assert(save_status_label.text.contains("guardado manual"), "Archivero deberia refrescar automaticamente el estado del save despues de guardar")
+
+		Global.reset_progress()
+		SaveManager.load_data()
+		var progress_summary := Global.get_progress_summary()
+		_assert(int(progress_summary.get("celiaquia", 0)) == 1, "El progreso guardado no se restauro al recargar el save local")
+
 		archivero_instance.queue_free()
 
 	var history := SaveManager.get_current_user_history()
 	_assert(history.size() >= 3, "El historial local no registro suficientes eventos del flujo smoke test")
+	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "load_repair" or str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "El save deberia conservar metadata del ultimo guardado")
 
 	_cleanup_test_files()
 	await process_frame
@@ -80,8 +95,13 @@ func _create_temp_avatar(destination: String) -> int:
 
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
-	SaveManager.current_user_key = ""
-	for relative_path in [SaveManager.SAVE_PATH, TEMP_AVATAR_PATH, STORED_AVATAR_PATH]:
+	for relative_path in [
+		SaveManager.SAVE_PATH,
+		SaveManager.TEMP_SAVE_PATH,
+		SaveManager.BACKUP_SAVE_PATH,
+		TEMP_AVATAR_PATH,
+		STORED_AVATAR_PATH
+	]:
 		var absolute_path := ProjectSettings.globalize_path(relative_path)
 		if FileAccess.file_exists(absolute_path):
 			DirAccess.remove_absolute(absolute_path)

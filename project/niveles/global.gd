@@ -19,7 +19,7 @@ const PREPARA_VEGAN_GF = preload("res://assets-sistema/interfaz/prepara-vegan-gf
 var playerCambiante : PlayerCambiante
 var is_dragging : Object
 var manager_level 
-var current_level = 1
+var current_level: int = 1
 const LEVEL_STATUS_INDEX := 6
 const LEVELS_PER_BOOK := 6
 

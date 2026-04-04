@@ -1,13 +1,10 @@
 extends SceneTree
 
 const TEST_USERNAME := "validation_user"
-const TEST_PASSWORD := "password123"
 const TEST_EMAIL := "validation_user@example.com"
-const SECOND_USERNAME := "second_user"
-const SECOND_EMAIL := "second_user@example.com"
 const TEMP_AVATAR_PATH := "user://validation_avatar.png"
 const TEMP_AVATAR_INVALID_PATH := "user://validation_avatar.txt"
-const STORED_AVATAR_PATH := "user://avatars/validation_user.png"
+const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
 
 var failed := false
 
@@ -26,57 +23,81 @@ func _run() -> void:
 	_assert(_create_invalid_avatar(ProjectSettings.globalize_path(TEMP_AVATAR_INVALID_PATH)) == OK, "No se pudo crear el archivo avatar invalido")
 
 	SaveManager.load_data()
+	_assert(SaveManager.is_authenticated(), "El perfil local deberia inicializarse automaticamente")
 
-	var short_password := SaveManager.register_user(TEST_USERNAME, "short", 20, TEST_EMAIL, avatar_absolute)
-	_assert(not bool(short_password.get("ok", true)), "Deberia rechazar contrasena corta")
+	var short_name := SaveManager.update_local_profile("ab", 20, TEST_EMAIL, avatar_absolute)
+	_assert(not bool(short_name.get("ok", true)), "Deberia rechazar nombres visibles demasiado cortos")
 
-	var invalid_email := SaveManager.register_user(TEST_USERNAME, TEST_PASSWORD, 20, "mail-invalido", avatar_absolute)
+	var invalid_email := SaveManager.update_local_profile(TEST_USERNAME, 20, "mail-invalido", avatar_absolute)
 	_assert(not bool(invalid_email.get("ok", true)), "Deberia rechazar mail invalido")
 
-	var missing_avatar := SaveManager.register_user(TEST_USERNAME, TEST_PASSWORD, 20, TEST_EMAIL, "")
-	_assert(not bool(missing_avatar.get("ok", true)), "Deberia requerir avatar")
+	var invalid_age := SaveManager.update_local_profile(TEST_USERNAME, -1, TEST_EMAIL, avatar_absolute)
+	_assert(not bool(invalid_age.get("ok", true)), "Deberia rechazar edad negativa")
 
-	var invalid_avatar := SaveManager.register_user(TEST_USERNAME, TEST_PASSWORD, 20, TEST_EMAIL, ProjectSettings.globalize_path(TEMP_AVATAR_INVALID_PATH))
+	var invalid_avatar := SaveManager.update_local_profile(TEST_USERNAME, 20, TEST_EMAIL, ProjectSettings.globalize_path(TEMP_AVATAR_INVALID_PATH))
 	_assert(not bool(invalid_avatar.get("ok", true)), "Deberia rechazar avatar no valido")
 
-	var register_result := SaveManager.register_user(TEST_USERNAME, TEST_PASSWORD, 20, TEST_EMAIL, avatar_absolute)
-	_assert(bool(register_result.get("ok", false)), "Registro base fallido: %s" % register_result.get("message", "sin detalle"))
-	_assert(SaveManager.get_users_count() == 1, "Luego del primer registro deberia existir un usuario")
-	_assert(SaveManager.get_last_user_hint() == TEST_USERNAME, "El hint del ultimo usuario deberia quedar actualizado")
+	var update_result := SaveManager.update_local_profile(TEST_USERNAME, 20, TEST_EMAIL, avatar_absolute)
+	_assert(bool(update_result.get("ok", false)), "Actualizacion base del perfil fallida: %s" % update_result.get("message", "sin detalle"))
+	_assert(SaveManager.get_users_count() == 1, "Deberia existir un unico perfil local")
+	_assert(SaveManager.get_last_user_hint() == TEST_USERNAME, "El hint del perfil deberia quedar actualizado")
 
-	var duplicate_username := SaveManager.register_user(TEST_USERNAME, TEST_PASSWORD, 21, SECOND_EMAIL, avatar_absolute)
-	_assert(not bool(duplicate_username.get("ok", true)), "Deberia rechazar usuario duplicado")
-
-	var duplicate_email := SaveManager.register_user(SECOND_USERNAME, TEST_PASSWORD, 21, TEST_EMAIL, avatar_absolute)
-	_assert(not bool(duplicate_email.get("ok", true)), "Deberia rechazar mail duplicado")
-
+	Global.current_level = 2
 	Global.items_level[2][Global.LEVEL_STATUS_INDEX] = true
+	SaveManager.set_resume_to_level("celiaquia", Global.current_level)
 	SaveManager.record_manual_save()
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
+	_assert(FileAccess.file_exists(SaveManager.BACKUP_SAVE_PATH), "El guardado robusto deberia mantener un backup reciente")
+	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
+	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "El avatar persistido deberia existir tras actualizar el perfil")
+	var saved_status := SaveManager.get_save_status()
+	_assert(str(saved_status.get("last_saved_reason", "")) == "manual_save", "La metadata del save deberia registrar el guardado manual")
+	_assert(int(saved_status.get("write_count", 0)) > 0, "La metadata del save deberia llevar conteo de escrituras")
 
-	SaveManager.logout()
-	_assert(not SaveManager.is_authenticated(), "El logout deberia limpiar la sesion")
-	_assert(Global.get_progress_summary().get("total", -1) == 0, "El logout deberia resetear el progreso en memoria")
-
-	var wrong_password := SaveManager.login_user(TEST_EMAIL, "otra-pass")
-	_assert(not bool(wrong_password.get("ok", true)), "Deberia rechazar login con contrasena incorrecta")
-
-	var login_by_username := SaveManager.login_user(TEST_USERNAME, TEST_PASSWORD)
-	_assert(bool(login_by_username.get("ok", false)), "Deberia permitir login por username")
-	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "El avatar persistido deberia existir tras el registro")
+	Global.reset_progress()
+	var resume_state := SaveManager.load_progress_and_get_resume_state()
 	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "La recarga deberia restaurar progreso guardado")
+	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La recarga deberia recuperar el contexto del nivel guardado")
+	_assert(int(resume_state.get("level_number", 0)) == 2, "La recarga deberia recuperar el capitulo a retomar")
+	_assert(Global.current_level == 2, "La recarga deberia restaurar el capitulo actual para retomar")
+	SaveManager.record_level_completed("celiaquia", 2)
+	var next_resume_state := SaveManager.get_resume_state()
+	_assert(str(next_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "Completar un capitulo deberia mantener la reanudacion dentro del flujo de juego")
+	_assert(int(next_resume_state.get("level_number", 0)) == 3, "Completar un capitulo deberia dejar preparada la carga del siguiente")
+	SaveManager.set_resume_to_book("celiaquia", true)
+	var recovered_resume_state := SaveManager.get_resume_state()
+	_assert(str(recovered_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "El resume no deberia degradarse a selector de capitulos si existe una reanudacion jugable mas precisa")
+	_assert(int(recovered_resume_state.get("level_number", 0)) == 3, "La reanudacion deberia seguir apuntando al siguiente capitulo despues de una degradacion accidental")
+	SaveManager.record_manual_save()
 
 	SaveManager.load_data()
-	_assert(SaveManager.get_users_count() == 1, "La recarga desde disco deberia conservar el usuario")
+	_assert(SaveManager.get_users_count() == 1, "La recarga desde disco deberia conservar el perfil local")
 	_assert(SaveManager.get_last_user_hint() == TEST_USERNAME, "La recarga desde disco deberia conservar el ultimo usuario")
+	var repaired_resume_state := SaveManager.get_resume_state()
+	_assert(str(repaired_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La carga deberia reparar en disco un resume_state degradado")
+	_assert(int(repaired_resume_state.get("level_number", 0)) == 3, "La reparacion del save deberia conservar el siguiente capitulo listo para retomar")
+	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "load_repair", "La auto-reparacion del resume deberia registrarse como load_repair")
+
+	var new_game_result := SaveManager.start_new_game()
+	_assert(new_game_result, "Nueva partida deberia poder resetear y persistir el progreso actual")
+	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Nueva partida deberia reiniciar el progreso acumulado")
+	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "new_game", "Nueva partida deberia registrarse en la metadata del save")
+	_assert(str(SaveManager.get_resume_state().get("context", "")) == SaveManager.RESUME_CONTEXT_HUB, "Nueva partida deberia volver a dejar el resume en el Archivero")
+	_assert(SaveManager.can_resume_game(), "Una nueva partida ya creada deberia quedar disponible para retomar")
 
 	var broken_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.WRITE)
 	_assert(broken_file != null, "No se pudo abrir save_data.json para corrupcion controlada")
 	if broken_file != null:
 		broken_file.store_string("{ esto no es json }")
 	SaveManager.load_data()
-	_assert(SaveManager.get_users_count() == 0, "Un save corrupto deberia reiniciarse a estado vacio")
-	_assert(not SaveManager.is_authenticated(), "Luego de un save corrupto no deberia quedar sesion valida")
+	_assert(SaveManager.get_users_count() == 1, "Con backup disponible deberia conservarse un unico perfil local")
+	_assert(SaveManager.is_authenticated(), "Con backup disponible la persistencia deberia seguir activa")
+	_assert(SaveManager.get_current_user_profile().get("username", "") == TEST_USERNAME, "Con backup disponible deberia recuperarse el ultimo perfil valido")
+	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "Con backup disponible deberia recuperarse el progreso guardado")
+	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "La recuperacion deberia reescribir el save principal")
+	var recovered_status := SaveManager.get_save_status()
+	_assert(str(recovered_status.get("state", "")) == "recovered", "La metadata runtime deberia indicar que el save fue recuperado")
+	_assert(str(recovered_status.get("recovered_from", "")) == "backup", "La metadata runtime deberia indicar la fuente de recuperacion")
 
 	_cleanup_test_files()
 	await process_frame
@@ -100,13 +121,13 @@ func _create_invalid_avatar(destination: String) -> int:
 
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
-	SaveManager.current_user_key = ""
 	for relative_path in [
 		SaveManager.SAVE_PATH,
+		SaveManager.TEMP_SAVE_PATH,
+		SaveManager.BACKUP_SAVE_PATH,
 		TEMP_AVATAR_PATH,
 		TEMP_AVATAR_INVALID_PATH,
-		STORED_AVATAR_PATH,
-		"user://avatars/second_user.png"
+		STORED_AVATAR_PATH
 	]:
 		var absolute_path := ProjectSettings.globalize_path(relative_path)
 		if FileAccess.file_exists(absolute_path):
