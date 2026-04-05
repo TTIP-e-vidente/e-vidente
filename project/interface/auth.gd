@@ -190,6 +190,8 @@ func _format_save_reason(reason: String) -> String:
 			return "perfil actualizado"
 		"manual_save":
 			return "guardado manual"
+		"progress_reset":
+			return "progreso reiniciado"
 		"level_completed":
 			return "avance persistido"
 		"progress_sync":

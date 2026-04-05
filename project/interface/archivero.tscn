@@ -534,8 +534,13 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
 theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
 text = "Editar perfil"
 
-[node name="HistoryToggleButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
+[node name="SecondaryActionsRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HistoryToggleButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 42)
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 15
@@ -544,6 +549,18 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_action_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
 theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
 text = "Ver historial"
+
+[node name="ResetProgressButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 42)
+theme_override_colors/font_color = Color(0.568627, 0.184314, 0.141176, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
+text = "Reiniciar progreso"
 
 [node name="HistoryPanel" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay"]
 visible = false
@@ -630,12 +647,18 @@ stream = ExtResource("8_8uwu2")
 volume_db = -4.962
 attenuation = 2.07053
 
+[node name="ResetProgressDialog" type="ConfirmationDialog" parent="."]
+size = Vector2i(440, 220)
+title = "Reiniciar progreso"
+
 [connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_exited"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow/Guardar" to="." method="_on_guardar_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow/CerrarSesion" to="." method="_on_editar_perfil_pressed"]
-[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/HistoryToggleButton" to="." method="_on_history_toggle_button_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/HistoryToggleButton" to="." method="_on_history_toggle_button_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HeaderRow/CloseHistoryButton" to="." method="_on_history_close_button_pressed"]
+[connection signal="confirmed" from="ResetProgressDialog" to="." method="_on_reset_progress_dialog_confirmed"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileToggleButton" to="." method="_on_profile_toggle_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/CloseProfileButton" to="." method="_on_close_profile_button_pressed"]

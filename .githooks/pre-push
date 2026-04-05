@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -eu
+
+if [ "${SKIP_EVIDENTE_HOOKS:-}" = "1" ]; then
+	exit 0
+fi
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+VALIDATION_SCRIPT="$REPO_ROOT/scripts/run-godot-validation.sh"
+
+resolve_godot_command() {
+	if [ -n "${GODOT_COMMAND:-}" ] && command -v "$GODOT_COMMAND" >/dev/null 2>&1; then
+		printf '%s\n' "$GODOT_COMMAND"
+		return 0
+	fi
+
+	for candidate in godot godot4 godot4.2; do
+		if command -v "$candidate" >/dev/null 2>&1; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+if [ ! -f "$VALIDATION_SCRIPT" ]; then
+	echo "No se encontro scripts/run-godot-validation.sh. No se puede validar antes del push." >&2
+	exit 1
+fi
+
+if ! GODOT_EXECUTABLE=$(resolve_godot_command); then
+	echo "No se encontro Godot CLI. Instala Godot 4.2 CLI o exporta GODOT_COMMAND=/ruta/al/ejecutable." >&2
+	echo "Bypass puntual: SKIP_EVIDENTE_HOOKS=1 git push" >&2
+	exit 1
+fi
+
+echo "Ejecutando suite Godot antes del push..."
+sh "$VALIDATION_SCRIPT" --run "$GODOT_EXECUTABLE"

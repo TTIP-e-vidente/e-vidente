@@ -9,7 +9,9 @@ const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok
 @onready var close_profile_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
 @onready var session_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/SessionPanel
 @onready var history_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel
-@onready var history_toggle_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/HistoryToggleButton
+@onready var history_toggle_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/HistoryToggleButton
+@onready var reset_progress_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton
+@onready var reset_progress_dialog: ConfirmationDialog = $ResetProgressDialog
 @onready var avatar_preview: TextureRect = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview
 @onready var avatar_state: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarState
 @onready var username_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel
@@ -34,8 +36,12 @@ func _ready():
 	_connect_save_manager_signals()
 	profile_toggle_button.icon = SAVE_ICON_IDLE
 	profile_toggle_button.text = "Mi progreso"
+	reset_progress_dialog.title = "Reiniciar progreso"
+	reset_progress_dialog.dialog_text = "Esto borrara el avance guardado, el historial y las partidas retomables de este dispositivo. El perfil visible se conserva."
+	reset_progress_dialog.get_ok_button().text = "Reiniciar"
 	history_panel.visible = false
 	history_toggle_button.text = "Ver historial"
+	reset_progress_button.text = "Reiniciar progreso"
 	_sync_profile_overlay_state()
 	_refresh_dashboard()
 
@@ -130,6 +136,8 @@ func _format_save_reason(reason: String) -> String:
 			return "nivel completado"
 		"manual_save":
 			return "guardado manual"
+		"progress_reset":
+			return "progreso reiniciado"
 		"load_repair":
 			return "reparacion al cargar"
 		"legacy_migration":
@@ -230,6 +238,16 @@ func _on_history_toggle_button_pressed() -> void:
 
 func _on_history_close_button_pressed() -> void:
 	_set_history_panel_visible(false)
+
+
+func _on_reset_progress_button_pressed() -> void:
+	reset_progress_dialog.popup_centered(Vector2i(440, 220))
+
+
+func _on_reset_progress_dialog_confirmed() -> void:
+	_set_history_panel_visible(false)
+	SaveManager.reset_all_progress()
+	_refresh_dashboard()
 
 
 func _update_toggle_button_state(save_status: Dictionary) -> void:

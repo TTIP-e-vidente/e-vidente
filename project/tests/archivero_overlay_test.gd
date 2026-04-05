@@ -27,6 +27,9 @@ func _run() -> void:
 	SaveManager.load_data()
 	var profile_result: Dictionary = SaveManager.update_local_profile(TEST_USERNAME, TEST_AGE, TEST_EMAIL, "")
 	_assert(bool(profile_result.get("ok", false)), "No se pudo preparar el perfil local para el test del overlay")
+	Global.items_level[1][Global.LEVEL_STATUS_INDEX] = true
+	SaveManager.set_resume_to_level("celiaquia", 1)
+	SaveManager.record_manual_save()
 
 	var archivero_scene: PackedScene = load("res://interface/archivero.tscn") as PackedScene
 	_assert(archivero_scene != null, "No se pudo cargar la escena del Archivero")
@@ -38,16 +41,22 @@ func _run() -> void:
 		var profile_overlay: Control = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay")
 		var profile_toggle_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileToggleButton")
 		var close_profile_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/CloseProfileButton")
-		var history_toggle_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/HistoryToggleButton")
+		var history_toggle_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/HistoryToggleButton")
+		var reset_progress_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton")
+		var reset_progress_dialog: ConfirmationDialog = archivero_instance.get_node("ResetProgressDialog")
 		var history_panel: PanelContainer = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/HistoryPanel")
 		var username_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel")
+		var save_status_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel")
 
 		_assert(profile_overlay != null, "Archivero deberia exponer el overlay del perfil local")
 		_assert(profile_toggle_button != null, "Archivero deberia exponer el boton de acceso al perfil local")
 		_assert(close_profile_button != null, "Archivero deberia exponer el boton de cierre del perfil local")
 		_assert(history_toggle_button != null, "Archivero deberia exponer un acceso explicito al historial")
+		_assert(reset_progress_button != null, "Archivero deberia exponer un boton para reiniciar el progreso")
+		_assert(reset_progress_dialog != null, "Archivero deberia exponer un dialogo de confirmacion para reiniciar el progreso")
 		_assert(history_panel != null, "Archivero deberia exponer el panel de historial")
 		_assert(username_label != null, "Archivero deberia exponer el label de nombre del perfil")
+		_assert(save_status_label != null, "Archivero deberia exponer el label del estado de guardado")
 
 		_assert(not profile_overlay.visible, "El overlay del perfil deberia iniciar cerrado")
 		_assert(profile_toggle_button.visible, "El boton de abrir perfil deberia iniciar visible")
@@ -67,6 +76,14 @@ func _run() -> void:
 		history_toggle_button.emit_signal("pressed")
 		await process_frame
 		_assert(not history_panel.visible, "El historial deberia poder ocultarse nuevamente desde el mismo boton")
+		reset_progress_button.emit_signal("pressed")
+		await process_frame
+		_assert(reset_progress_dialog.visible, "El reinicio del progreso deberia pedir confirmacion explicita")
+		reset_progress_dialog.emit_signal("confirmed")
+		await process_frame
+		_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Confirmar el reinicio deberia limpiar el progreso jugable")
+		_assert(not SaveManager.can_resume_game(), "Confirmar el reinicio no deberia dejar una partida retomable")
+		_assert(save_status_label.text.contains("progreso reiniciado"), "El overlay deberia reflejar que el ultimo guardado fue un reinicio del progreso")
 
 		var close_by_backdrop := InputEventMouseButton.new()
 		close_by_backdrop.button_index = MOUSE_BUTTON_LEFT

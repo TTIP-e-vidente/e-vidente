@@ -269,29 +269,9 @@ jobs:
           restore-keys: |
             godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
-      - name: Import project
-        run: godot --headless --path project --editor --quit
-
-      - name: Run save manager smoke test
-        run: godot --headless --path project -s res://tests/save_manager_smoke_test.gd
-
-      - name: Run save manager validation test
-        run: godot --headless --path project -s res://tests/save_manager_validation_test.gd
-
-      - name: Run save manager signal contract test
-        run: godot --headless --path project -s res://tests/save_manager_signal_contract_test.gd
-
-      - name: Run save manager legacy migration test
-        run: godot --headless --path project -s res://tests/save_manager_legacy_migration_test.gd
-
-      - name: Run Archivero overlay test
-        run: godot --headless --path project -s res://tests/archivero_overlay_test.gd
-
-      - name: Run intro menu save test
-        run: godot --headless --path project -s res://tests/intro_menu_profile_test.gd
-
-      - name: Run level quick save test
-        run: godot --headless --path project -s res://tests/level_quick_save_test.gd
+      - name: Run Godot validation suite
+        shell: bash
+        run: sh scripts/run-godot-validation.sh --run godot
 
   build-web:
     name: Build Web

@@ -330,6 +330,25 @@ func record_manual_save() -> void:
 		progress_saved.emit(get_current_user_profile())
 
 
+func reset_all_progress() -> Dictionary:
+	var profile := get_current_user_profile()
+	save_data["sessions"] = {}
+	save_data["active_session_id"] = ""
+	save_data["next_session_number"] = 1
+	save_data["history"] = []
+	save_data["resume_state"] = _default_resume_state()
+	Global.reset_progress()
+	save_data["progress"] = Global.export_progress()
+	_mark_dirty()
+
+	if not _write_save_data(false, "progress_reset"):
+		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
+
+	progress_loaded.emit(profile)
+	progress_saved.emit(profile)
+	return {"ok": true, "message": "Se reinicio el progreso local.", "profile": profile}
+
+
 func start_new_game(title: String = "") -> bool:
 	load_data()
 	var title_validation := validate_session_title(title)
@@ -493,7 +512,8 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	var raw_sessions = raw_data.get("sessions", {})
 	if raw_data.has("sessions") and raw_sessions is Dictionary:
 		normalized["sessions"] = _normalize_sessions(raw_sessions)
-	else:
+
+	if normalized.get("sessions", {}).is_empty():
 		var migrated_session := _migrate_single_session_data(raw_data)
 		if not migrated_session.is_empty():
 			var migrated_session_id := str(migrated_session.get("id", "%s0001" % SESSION_ID_PREFIX))
@@ -1266,7 +1286,14 @@ func _read_save_data_from_path(path: String) -> Dictionary:
 
 	var file_contents := save_file.get_as_text()
 	save_file = null
-	var parsed_data = JSON.parse_string(file_contents)
+	if file_contents.strip_edges().is_empty():
+		return {"ok": false}
+
+	var json := JSON.new()
+	if json.parse(file_contents) != OK:
+		return {"ok": false}
+
+	var parsed_data = json.data
 	if parsed_data is Dictionary:
 		return {"ok": true, "data": parsed_data}
 	return {"ok": false}

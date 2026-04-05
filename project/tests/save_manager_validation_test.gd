@@ -129,6 +129,21 @@ func _run() -> void:
 	SaveManager.load_slot_and_get_resume_state(original_session_id)
 	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "Tras recuperar desde backup deberia poder cargarse la partida anterior")
 
+	var reset_result: Dictionary = SaveManager.reset_all_progress()
+	_assert(bool(reset_result.get("ok", false)), "Reiniciar el progreso local deberia persistirse correctamente")
+	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Reiniciar el progreso deberia limpiar todo el avance jugable")
+	_assert(not SaveManager.can_resume_game(), "Reiniciar el progreso no deberia dejar una partida retomable")
+	_assert(SaveManager.list_save_slots(true).is_empty(), "Reiniciar el progreso deberia borrar todas las sesiones guardadas")
+	_assert(SaveManager.get_current_user_history().is_empty(), "Reiniciar el progreso deberia limpiar el historial local")
+	_assert(str(SaveManager.get_current_user_profile().get("username", "")) == TEST_USERNAME, "Reiniciar el progreso no deberia borrar el perfil local")
+	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "progress_reset", "El save deberia registrar el reinicio del progreso")
+
+	SaveManager.load_data()
+	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "El progreso reiniciado deberia seguir limpio despues de recargar")
+	_assert(not SaveManager.can_resume_game(), "Despues de recargar no deberia reaparecer una partida retomable")
+	_assert(SaveManager.list_save_slots(true).is_empty(), "Despues de recargar no deberian reaparecer sesiones borradas")
+	_assert(str(SaveManager.get_current_user_profile().get("username", "")) == TEST_USERNAME, "El perfil local deberia seguir intacto despues de recargar")
+
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)

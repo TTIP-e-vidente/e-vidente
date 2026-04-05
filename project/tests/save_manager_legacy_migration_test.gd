@@ -69,6 +69,7 @@ func _run() -> void:
 		save_file.store_string(JSON.stringify(legacy_payload, "\t"))
 		save_file.flush()
 		save_file = null
+		await process_frame
 
 	SaveManager.load_data()
 
