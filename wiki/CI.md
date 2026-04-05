@@ -1,115 +1,106 @@
-﻿# 🔄 CI Pipeline
+﻿# CI Pipeline
 
-Documentacion del workflow de integracion continua (GitHub Actions).
+El workflow de CI busca dos cosas: detectar roturas temprano y mantener el repo en un estado publicable sin meter fricción innecesaria en el trabajo diario.
 
----
+## Archivo y disparadores
 
-## 🎯 Objetivo
+El workflow vive en `.github/workflows/ci.yml` y corre en tres casos:
 
-Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no disruptivas.
+- `push`
+- `pull_request`
+- `workflow_dispatch`
 
-## ⚙️ Configuracion
+También usa concurrencia por rama para cancelar ejecuciones viejas cuando entra un commit nuevo.
 
-**Archivo:** `.github/workflows/ci.yml`
+## Jobs actuales
 
-**Se ejecuta en:**
-- `push` (cualquier rama)
-- `pull_request` (cualquier rama)
-- `workflow_dispatch` (manual)
+### `quality`
 
-**Concurrencia:** Solo una ejecucion por rama activa (cancela anteriores)
+Es el job más liviano y no bloquea el pipeline.
 
----
+Revisa:
 
-## 📊 Pipeline de Jobs
+- estructura mínima del repo
+- documentación base (`README.md`, `wiki/Home.md`, `wiki/Bitacora.md`)
+- ESLint si el repo llegara a tener configuración Node válida
+- recordatorios cuando hay cambios en `project/` sin cambios en `wiki/`
 
-### 1️⃣ `quality` — Guardrails (Non-blocking) ⚠️
+Si falla algo acá, normalmente no es un error de runtime sino una deuda de documentación o de orden del repo.
 
-**Que hace:**
-- ✓ Valida estructura minima del repo (directorios y archivos esperados)
-- ✓ Ejecuta ESLint si existe config Node + ESLint
-- ✓ Verifica documentacion base (README, wiki/Home, wiki/Bitacora)
-- ✓ Emite recordatorio si hubo cambios en `project/` sin cambios en `wiki/`
-- ✓ Genera resumen de calidad
+### `validate`
 
-**Bloquea?** NO — todos los pasos usan `continue-on-error`
+Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.2`.
 
-**Warnings comunes:**
-- "Missing required file wiki/Bitacora.md" → crear el archivo
-- "Project files changed without wiki updates" → agregar entrada en Bitacora
+Hace lo siguiente:
 
----
+- importa el proyecto en modo headless
+- corre smoke test de guardado local
+- valida perfil, avatar y recarga desde disco
+- valida el contrato de señales de `SaveManager`
+- prueba la migración desde saves legacy
+- prueba el overlay de Archivero
+- prueba el flujo de Intro para crear y cargar partidas
+- prueba el guardado rápido desde nivel
 
-### 2️⃣ `validate` — Godot Import + Save Tests (Blocking) ✅
+Cuando falla, casi siempre el problema está en alguno de estos puntos:
 
-**Que hace:**
-- Corre en contenedor `barichello/godot-ci:4.2`
-- Descarga proyecto
-- ReUtiliza cache de imports previos
-- Ejecuta import headless: `godot --headless --path project --editor --quit`
-- Ejecuta smoke test de guardado local: `godot --headless --path project -s res://tests/save_manager_smoke_test.gd`
-- Ejecuta test de validaciones y recarga desde disco: `godot --headless --path project -s res://tests/save_manager_validation_test.gd`
-- Ejecuta test de contrato de señales del save: `godot --headless --path project -s res://tests/save_manager_signal_contract_test.gd`
-- Ejecuta test de migracion desde saves legacy: `godot --headless --path project -s res://tests/save_manager_legacy_migration_test.gd`
+- sintaxis GDScript o escenas rotas
+- rutas inválidas en `.tscn`
+- regresiones en persistencia local
+- cambios de UI que rompen el flujo que cubren los tests
 
-**Bloquea?** SI — Si falla, detiene resto de pipeline
+### `build-web`
 
-**Razon de fallo comun:**
-- Archivos Godot (.tscn, .gd) con syntax invalido
-- Paths rotos en escenas
-- El flujo de registro/login/guardado local deja de funcionar
-- Las validaciones del registro/login o la recarga del save quedaron inconsistentes
+Este job espera a `validate` y `quality`.
 
----
+Su trabajo es:
 
-### 3️⃣ `build-web` — Export Web (Blocking) ✅
+- importar el proyecto
+- exportar el preset `index`
+- normalizar la salida en `build/web/index.html`
+- verificar que haya artefactos de export razonables
+- subir `build/web` como artifact de GitHub Actions
 
-**Dependencias:** Espera a `validate` + `quality`
+El workflow actual no despliega a GitHub Pages. Hoy el resultado del build web queda como artifact descargable.
 
-**Que hace:**
-- Importa proyecto (cached)
-- Exporta a preset "index" → `build/web/index.html`
-- Si Godot lo exporta a otro lugar, intenta copiar
-- Verifica salida (*.html + *.pck/zip existentes)
+## Validacion local recomendada
 
-**Bloquea?** SI en export; NO en verificacion final
+Para no depender solo de CI, conviene correr localmente la misma suite antes de pushear.
 
-**Razon de fallo comun:**
-- `export_presets.cfg` sin preset "index"
-- Templates web faltantes en contenedor Godot
+En Windows:
 
----
-
-## 🟢 🟡 🔴 Como interpretar resultados
-
-| Estado | Significa | Accion |
-|---|---|---|
-| ✅ Todos pasan | Todo bien | Listo para merge |
-| ⚠️ quality warnings | Deuda documental | Considerar fix pero no bloquea |
-| ❌ validate falla | Error en proyecto Godot o en smoke test | Corregir antes de merge |
-| ❌ build-web falla | Export no funciona | Revisar export_presets.cfg |
-
----
-
-## 🔧 Mantenimiento
-
-Si cambias estructura del repo:
-
-```bash
-# Editar .github/workflows/ci.yml
-# Actualizar listas REQUIRED_DIRS y REQUIRED_FILES
-
-REQUIRED_DIRS=(
-  ".github/workflows"
-  "project"
-  "project/interface"
-  # Agregar aqui si creas nuevas carpetas criticas
-)
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1
 ```
 
-Si adoptas linting:
-- Mantener `package.json` y config ESLint validos
-- Actualizar pasos de quality job
+Si `godot` no esta en PATH:
 
-Si changes gameplay/escenas:
-- Siempre sumar nota en `wiki/Bitacora.md`
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.2-stable_win64.exe"
+```
+
+En shell:
+
+```bash
+sh scripts/run-godot-validation.sh --run godot
+```
+
+Y si queres incluir export web en Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -IncludeExport
+```
+
+## Cómo leer una falla
+
+- Si falla `quality`, suele ser una deuda de documentación o estructura.
+- Si falla `validate`, hay una rotura real en el proyecto o en los tests headless.
+- Si falla `build-web`, el export dejó de ser consistente y hay que revisar `export_presets.cfg` o la salida del preset.
+
+## Mantenimiento
+
+Si cambia la estructura del repo, hay que revisar las listas `REQUIRED_DIRS` y `REQUIRED_FILES` del job `quality`.
+
+Si cambia un flujo importante del juego, conviene sumar o ajustar un test headless en `project/tests/`.
+
+Si cambia el export web, hay que revisar tanto `export_presets.cfg` como la ruta final que usa el workflow para publicar el artifact.

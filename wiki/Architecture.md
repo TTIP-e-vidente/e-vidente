@@ -1,144 +1,88 @@
-# 🏗️ Architecture
+# Architecture
 
-Guia tecnica de la estructura interna del proyecto e-vidente.
+Esta página resume cómo está organizado el proyecto y dónde conviene tocar cada parte.
 
----
+## Estructura general
 
-## 📦 Layers
-
-### Game Layer (`project/`)
-El núcleo del juego: escenas, lógica, assets.
+La mayor parte del trabajo vive dentro de `project/`.
 
 ```
 project/
-├── interface/          # UI y escenas de navegacion
+├── interface/          # UI y escenas de navegación
 │  ├── evidente.tscn    # Escena principal
-│  ├── evidente.gd      # Controller principal
-│  ├── libro*.tscn      # Vistas de libro/recetas
-│  ├── opciones.tscn    # Settings/opciones
-│  └── *.gd             # Scripts de logica
+│  ├── evidente.gd      # Script principal
+│  ├── libro*.tscn      # Vistas de libro y recetas
+│  ├── opciones.tscn    # Menú de opciones
+│  └── *.gd             # Scripts de UI y flujo
 │
-├── items/              # Base de datos de alimentos
-│  ├── aceite.tres      # Recurso de alimento
-│  ├── banana.tres      # Recurso de alimento
-│  └── *.tres           # Cada alimento es un recurso
+├── items/              # Recursos de alimentos
+│  └── *.tres
 │
-├── niveles/            # Configuracion de escenarios
-│  └── [json/tres con niveles]
-│
-├── resources/          # Configuracion global
-│  └── [settings/constants]
-│
-├── assets-sistema/     # Sprites, sonidos, fuentes
-│  ├── iconos/
-│  ├── interfaz/
-│  ├── player/
-│  ├── preguntas/
-│  ├── sonidos/
-│  └── ensenanza/
-│
-├── project.godot       # Configuracion del proyecto
-└── export_presets.cfg  # Presets de export (web, desktop, etc)
+├── niveles/            # Datos y escenas de niveles
+├── resources/          # Configuración general
+├── assets-sistema/     # Sprites, sonido y material visual
+├── project.godot       # Configuración del proyecto
+└── export_presets.cfg  # Presets de export
 ```
 
-### Resource Format
+## Recursos de alimentos
 
-Cada alimento es un archivo `.tres` (TextResource):
+Cada alimento está definido como un `.tres`. Ahí vive la verdad del dato: si contiene gluten, si tiene lactosa, si es vegano y cualquier otra propiedad que el juego necesite consultar.
 
-```gdscript
-# aceite.tres
-[gd_resource type="Resource" script_class="Food"]
-resource_name = "Aceite"
+## Escena principal
 
-[resource]
-name = "Aceite"
-contains_gluten = false
-contains_lactose = false
-vegan = true
-# ... otras propiedades
-```
+`evidente.tscn` funciona como hub del juego. Desde ahí se cargan recursos, se coordinan transiciones entre vistas y se sostiene parte del estado general del recorrido.
 
-### Escena Principal
+## Flujo de datos
 
-`evidente.tscn` es el hub central que:
-- Carga en memoria base de alimentos
-- Maneja transiciones entre vistas
-- Controla logica de juego (puntos, rachas, etc)
-
----
-
-## 🔄 Data Flow
+El flujo general del juego es bastante directo:
 
 ```
-User Input
+Input del jugador
     ↓
-EventListener (en .gd)
+Script de escena
     ↓
-Game Logic (verificar validez de arrastre)
+Lógica de validación
     ↓
-Update State (puntos, items, inventory)
+Actualización de estado
     ↓
-Render Update (UI + feedback visual)
+Feedback visual y sonoro
 ```
 
----
+## Sistemas principales
 
-## 📊 Key Systems
+### Sistema de alimentos
 
-### 1. Food System
-- Cada alimento tiene propiedades: gluten, lactose, vegan, etc
-- Los `items/*.tres` definen la "verdad" del alimento
-- Las recetas son colecciones de items + condiciones
+- Los `items/*.tres` describen cada alimento.
+- Las recetas y reglas de validación se apoyan en esos datos.
 
-### 2. Level System
-- Niveles especifican: personaje, condiciones alimentarias, items disponibles
-- Punto de vittoria: preparar plato correcto según condiciones
+### Sistema de niveles
 
-### 3. UI System
-- Libro: vista de informacion (lectura)
-- Recetas: interfaz drag-drop para armar platos
-- Opciones: settings y estadísticas
+- Cada nivel define condiciones alimentarias, items disponibles y contexto del reto.
+- El objetivo es construir el plato correcto según esas restricciones.
 
-### 4. Local Persistence System
-- `SaveManager` funciona como autoload y orquesta sesion, guardado local e historial
-- `auth.tscn` resuelve registro/login sin backend
-- `archivero.tscn` actua como dashboard del perfil persistido
-- `Global` exporta e importa progreso para desacoplar runtime de almacenamiento
+### Sistema de interfaz
 
-Guia detallada: [Persistencia Local](Persistencia-Local)
+- `libro*.tscn` concentra la parte más informativa.
+- Las vistas de recetas resuelven el drag and drop y el feedback de juego.
+- `opciones.tscn` reúne ajustes y pantallas secundarias.
 
----
+### Sistema de persistencia local
 
-## 🎮 Godot 4.2 Setup
+- `SaveManager` funciona como autoload.
+- Guarda perfil local, historial, metadata y varias partidas por perfil.
+- `Global` exporta e importa progreso para separar runtime y almacenamiento.
+- `intro.tscn` y `archivero.tscn` son las dos vistas principales de ese flujo.
 
-**GDScript** para toda la lógica.
+Más detalle en [Persistencia Local](Persistencia-Local).
 
-**Nodes principales:**
-- `Control` para UI
-- `Node2D` para logica de juego
-- `TextureRect` para assets visuales
+## Stack técnico
 
----
+- Godot 4.2.
+- GDScript para la lógica del proyecto.
+- GitHub Actions para CI.
+- `barichello/godot-ci:4.2` para validación y export headless.
 
-## 🚀 Build & Export
+## Build y export
 
-**Web Export:** 
-- Preset: "index"
-- Output: `build/web/index.html`
-- Usado por CI y deployments
-
-**Local Testing:**
-```bash
-# En Godot Editor
-F5 o Play button
-```
-
----
-
-## 🔗 Dependencias Externas
-
-- **Godot 4.2:** Motor base
-- **barichello/godot-ci:4.2:** Contenedor para builds automaticos
-- **GitHub Actions:** CI/CD pipeline
-
-Sin dependencias NPM/package.json en el proyecto core.
+El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. Esa salida se verifica y se publica como artifact en la CI.
