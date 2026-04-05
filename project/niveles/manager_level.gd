@@ -17,9 +17,9 @@ func setup(nivel):
 	
 	level_resource.cantidadNegativos = nivelActual[Global.current_level][0]
 	level_resource.cantidadPositivos = nivelActual[Global.current_level][1]
-	level_resource.comida = nivelActual[Global.current_level][2]
-	level_resource.condicion = nivelActual[Global.current_level][3]
-	level_resource.ensenanza = nivelActual[Global.current_level][4]
+	level_resource.comida = Global.resolve_texture(nivelActual[Global.current_level][2])
+	level_resource.condicion = Global.resolve_texture(nivelActual[Global.current_level][3])
+	level_resource.ensenanza = Global.resolve_texture(nivelActual[Global.current_level][4])
 	
 	ensenanza.texture = level_resource.ensenanza
 	meal.texture = level_resource.comida

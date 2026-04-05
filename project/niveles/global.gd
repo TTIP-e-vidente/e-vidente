@@ -4,19 +4,40 @@ var almuerzo_cena = "ALMCENA"
 var desayuno_merienda = "DESAMER"
 var bebida = "BEBIDA"
 
-const DESAYUNO = preload("res://assets-sistema/interfaz/desayuno.png")
-const ALMUERZO = preload("res://assets-sistema/interfaz/almuerzo.png")
-const MERIENDA = preload("res://assets-sistema/interfaz/merienda.png")
-const CENA = preload("res://assets-sistema/interfaz/cena.png")
-const BEBIDA = preload("res://assets-sistema/interfaz/cena.png")
+const DESAYUNO_PATH := "res://assets-sistema/interfaz/desayuno.png"
+const ALMUERZO_PATH := "res://assets-sistema/interfaz/almuerzo.png"
+const MERIENDA_PATH := "res://assets-sistema/interfaz/merienda.png"
+const CENA_PATH := "res://assets-sistema/interfaz/cena.png"
+const BEBIDA_PATH := "res://assets-sistema/interfaz/cena.png"
 
-const PREPARA_CELIAQUIA = preload("res://assets-sistema/interfaz/prepara-celiaquia.png")
-const PREPARA_DIABETES = preload("res://assets-sistema/interfaz/prepara-diabetes.png")
-const PREPARA_VEGANE = preload("res://assets-sistema/interfaz/prepara-vegane.png")
-const PREPARA_VEGETARIANE = preload("res://assets-sistema/interfaz/prepara-vegetariane.png")
-const PREPARA_VEGAN_GF = preload("res://assets-sistema/interfaz/prepara-vegan-gf.png")
+const PREPARA_CELIAQUIA_PATH := "res://assets-sistema/interfaz/prepara-celiaquia.png"
+const PREPARA_DIABETES_PATH := "res://assets-sistema/interfaz/prepara-diabetes.png"
+const PREPARA_VEGANE_PATH := "res://assets-sistema/interfaz/prepara-vegane.png"
+const PREPARA_VEGETARIANE_PATH := "res://assets-sistema/interfaz/prepara-vegetariane.png"
+const PREPARA_VEGAN_GF_PATH := "res://assets-sistema/interfaz/prepara-vegan-gf.png"
 
-var playerCambiante : PlayerCambiante
+const ENSENANZA_CELIAQUIA_1_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png"
+const ENSENANZA_CELIAQUIA_2_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-2.png"
+const ENSENANZA_CELIAQUIA_3_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-3.png"
+const ENSENANZA_CELIAQUIA_4_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-4.png"
+const ENSENANZA_CELIAQUIA_5_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-5.png"
+const ENSENANZA_CELIAQUIA_6_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-6.png"
+const ENSENANZA_CELIAQUIA_7_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-7.png"
+const ENSENANZA_CELIAQUIA_8_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-8.png"
+const ENSENANZA_CELIAQUIA_9_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-9.png"
+
+const ENSENANZA_VEGAN_VEGETARIANE_1_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-1.png"
+const ENSENANZA_VEGAN_VEGETARIANE_2_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-2.png"
+const ENSENANZA_VEGAN_VEGETARIANE_3_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-3.png"
+const ENSENANZA_VEGAN_VEGETARIANE_4_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-4.png"
+const ENSENANZA_VEGAN_VEGETARIANE_5_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-5.png"
+const ENSENANZA_VEGAN_VEGETARIANE_6_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-6.png"
+const ENSENANZA_VEGAN_VEGETARIANE_7_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-7.png"
+const ENSENANZA_VEGAN_VEGETARIANE_8_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-8.png"
+
+var _texture_cache: Dictionary = {}
+
+var playerCambiante
 var is_dragging : Object
 var manager_level 
 var current_level: int = 1
@@ -39,31 +60,51 @@ func item_categoria(items, cate):
 	return items_categoria
 
 var items_level = {	
-					1: [1,1, ALMUERZO, PREPARA_CELIAQUIA, Ensenanzas.ENSENANZA_CELIAQUIA_1, almuerzo_cena, false], 
-					2: [2,3, DESAYUNO, PREPARA_CELIAQUIA,Ensenanzas.ENSENANZA_CELIAQUIA_2, desayuno_merienda, false],
-					3: [2,3, CENA, PREPARA_CELIAQUIA, Ensenanzas.ENSENANZA_CELIAQUIA_6, almuerzo_cena, false],
-					4: [3,3, DESAYUNO, PREPARA_CELIAQUIA,Ensenanzas.ENSENANZA_CELIAQUIA_8, desayuno_merienda, false],
-					5: [4,2, ALMUERZO, PREPARA_CELIAQUIA, Ensenanzas.ENSENANZA_CELIAQUIA_5, almuerzo_cena, false],
-					6: [1,3, BEBIDA, PREPARA_CELIAQUIA, Ensenanzas.ENSENANZA_CELIAQUIA_7, bebida, false]
+					1: _level_entry(1, 1, ALMUERZO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_1_PATH, almuerzo_cena), 
+					2: _level_entry(2, 3, DESAYUNO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_2_PATH, desayuno_merienda),
+					3: _level_entry(2, 3, CENA_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_6_PATH, almuerzo_cena),
+					4: _level_entry(3, 3, DESAYUNO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_8_PATH, desayuno_merienda),
+					5: _level_entry(4, 2, ALMUERZO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_5_PATH, almuerzo_cena),
+					6: _level_entry(1, 3, BEBIDA_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_7_PATH, bebida)
 					}
 
 var items_level_vegan = {	
-					1: [1,2, ALMUERZO, PREPARA_VEGANE, Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_1, almuerzo_cena, false], 
-					2: [2,2, DESAYUNO, PREPARA_VEGANE,Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_2, desayuno_merienda, false],
-					3: [2,3, CENA, PREPARA_VEGANE, Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_3, almuerzo_cena, false],
-					4: [2,4, DESAYUNO, PREPARA_VEGANE,Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_4, desayuno_merienda, false],
-					5: [4,2, ALMUERZO, PREPARA_VEGANE, Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_5, almuerzo_cena, false],
-					6: [1,3, BEBIDA, PREPARA_VEGANE, Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_6, bebida, false]
+					1: _level_entry(1, 2, ALMUERZO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_1_PATH, almuerzo_cena), 
+					2: _level_entry(2, 2, DESAYUNO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_2_PATH, desayuno_merienda),
+					3: _level_entry(2, 3, CENA_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_3_PATH, almuerzo_cena),
+					4: _level_entry(2, 4, DESAYUNO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_4_PATH, desayuno_merienda),
+					5: _level_entry(4, 2, ALMUERZO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_5_PATH, almuerzo_cena),
+					6: _level_entry(1, 3, BEBIDA_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_6_PATH, bebida)
 					}
 
 var items_level_vegan_gf = {	
-					1: [1,1, ALMUERZO, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_3, almuerzo_cena, false], 
-					2: [1,2, DESAYUNO, PREPARA_VEGAN_GF,Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_7, desayuno_merienda, false],
-					3: [2,4, CENA, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_4, almuerzo_cena, false],
-					4: [4,2, DESAYUNO, PREPARA_VEGAN_GF,Ensenanzaveganismo.ENSENANZA_VEGAN_VEGETARIANE_8, desayuno_merienda, false],
-					5: [4,2, ALMUERZO, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_9, almuerzo_cena, false],
-					6: [2,2, BEBIDA, PREPARA_VEGAN_GF, Ensenanzas.ENSENANZA_CELIAQUIA_7, bebida, false]
+					1: _level_entry(1, 1, ALMUERZO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_3_PATH, almuerzo_cena), 
+					2: _level_entry(1, 2, DESAYUNO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_VEGAN_VEGETARIANE_7_PATH, desayuno_merienda),
+					3: _level_entry(2, 4, CENA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_4_PATH, almuerzo_cena),
+					4: _level_entry(4, 2, DESAYUNO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_VEGAN_VEGETARIANE_8_PATH, desayuno_merienda),
+					5: _level_entry(4, 2, ALMUERZO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_9_PATH, almuerzo_cena),
+					6: _level_entry(2, 2, BEBIDA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_7_PATH, bebida)
 					}
+
+
+func _level_entry(cantidad_negativos: int, cantidad_positivos: int, comida_path: String, condicion_path: String, ensenanza_path: String, categoria: String) -> Array:
+	return [cantidad_negativos, cantidad_positivos, comida_path, condicion_path, ensenanza_path, categoria, false]
+
+
+func resolve_texture(texture_ref: Variant) -> Texture2D:
+	if texture_ref is Texture2D:
+		return texture_ref
+
+	var texture_path := str(texture_ref)
+	if texture_path.is_empty():
+		return null
+
+	if _texture_cache.has(texture_path):
+		return _texture_cache[texture_path]
+
+	var texture := load(texture_path) as Texture2D
+	_texture_cache[texture_path] = texture
+	return texture
 
 
 func reset_progress() -> void:

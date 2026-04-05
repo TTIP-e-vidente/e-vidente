@@ -15,12 +15,6 @@ var is_inside_droppable = false
 var info: Texture2D
 var textSprite: Texture2D
 
-func _ready():
-	area_2d.area_entered.connect(_on_area_2d_body_entered)
-	area_2d.mouse_entered.connect(_on_area_2d_mouse_entered)
-	area_2d.mouse_exited.connect(_on_area_2d_mouse_exited)
-	area_2d.area_exited.connect(_on_area_2d_body_exited)
-
 func setup(sprite, condicion, superficie, booleano, texturaInfo, categorias):
 	$Sprite2D.texture = sprite
 	textSprite = sprite

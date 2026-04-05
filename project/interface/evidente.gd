@@ -1,8 +1,6 @@
 extends Node2D
 class_name Intro
 
-var levelAJugar: PackedScene = preload("res://interface/evidente.tscn")
-
 @onready var anim = $"e-vidente/AnimatedSprite2D"
 @onready var background = $Background
 

@@ -68,8 +68,8 @@ func _format_saved_message(save_status: Dictionary) -> String:
 	var last_saved_at := str(save_status.get("last_saved_at", ""))
 	var saved_time := last_saved_at.get_slice(" ", 1)
 	if saved_time.is_empty():
-		return "Guardado listo"
-	return "Guardado %s" % saved_time
+		return "Progreso guardado"
+	return "Progreso guardado %s" % saved_time
 
 
 func _show_saved_state() -> void:
