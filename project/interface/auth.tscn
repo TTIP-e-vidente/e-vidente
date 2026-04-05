@@ -251,8 +251,8 @@ modulate = Color(1, 1, 1, 0.52)
 [node name="BackButton" type="Button" parent="."]
 offset_left = 22.0
 offset_top = 22.0
-offset_right = 94.0
-offset_bottom = 94.0
+offset_right = 114.0
+offset_bottom = 114.0
 flat = true
 icon = ExtResource("3_back")
 expand_icon = true
@@ -262,24 +262,29 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 90.0
-offset_top = 110.0
-offset_right = -90.0
-offset_bottom = -32.0
+offset_left = 16.0
+offset_top = 106.0
+offset_right = -16.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 0
 follow_focus = true
 
 [node name="MarginContainer" type="MarginContainer" parent="Card"]
 layout_mode = 2
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 32
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
 
 [node name="Content" type="VBoxContainer" parent="Card/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
 
 [node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
 layout_mode = 2
@@ -318,10 +323,10 @@ size_flags_horizontal = 3
 [node name="MainRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 18
+theme_override_constants/separation = 14
 
 [node name="SummaryPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow"]
-custom_minimum_size = Vector2(352, 0)
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_summary_panel")

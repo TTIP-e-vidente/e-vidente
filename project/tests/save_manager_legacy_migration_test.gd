@@ -67,6 +67,8 @@ func _run() -> void:
 	_assert(save_file != null, "No se pudo crear un save legado controlado")
 	if save_file != null:
 		save_file.store_string(JSON.stringify(legacy_payload, "\t"))
+		save_file.flush()
+		save_file = null
 
 	SaveManager.load_data()
 
