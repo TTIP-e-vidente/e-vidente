@@ -57,7 +57,7 @@ $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 
 $steps = @(
-    @{ Label = 'Import headless'; Arguments = @('--headless', '--path', 'project', '--import') },
+    @{ Label = 'Import headless'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') },
     @{ Label = 'Save manager smoke test'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_smoke_test.gd') },
     @{ Label = 'Save manager validation test'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_validation_test.gd') },
     @{ Label = 'Save manager signal contract test'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_signal_contract_test.gd') },

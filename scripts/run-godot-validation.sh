@@ -5,7 +5,7 @@ set -eu
 run_godot_validation() {
 	godot_cmd="${1:-godot}"
 
-	"$godot_cmd" --headless --path project --import
+	"$godot_cmd" --headless --path project --editor --quit
 	"$godot_cmd" --headless --path project -s res://tests/save_manager_smoke_test.gd
 	"$godot_cmd" --headless --path project -s res://tests/save_manager_validation_test.gd
 	"$godot_cmd" --headless --path project -s res://tests/save_manager_signal_contract_test.gd
