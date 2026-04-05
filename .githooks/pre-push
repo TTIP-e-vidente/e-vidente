@@ -9,15 +9,84 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 VALIDATION_SCRIPT="$REPO_ROOT/scripts/run-godot-validation.sh"
 
+normalize_candidate_path() {
+	raw_candidate="${1:-}"
+	if [ -z "$raw_candidate" ]; then
+		return 1
+	fi
+
+	case "$raw_candidate" in
+		[A-Za-z]:\\*|[A-Za-z]:/*)
+			if command -v cygpath >/dev/null 2>&1; then
+				cygpath -u "$raw_candidate"
+				return 0
+			fi
+			printf '%s\n' "$raw_candidate"
+			return 0
+			;;
+		*)
+			printf '%s\n' "$raw_candidate"
+			return 0
+			;;
+	esac
+}
+
+is_usable_command() {
+	raw_candidate="${1:-}"
+	if [ -z "$raw_candidate" ]; then
+		return 1
+	fi
+
+	candidate=$(normalize_candidate_path "$raw_candidate")
+	case "$candidate" in
+		*/*|*\\*)
+			[ -f "$candidate" ]
+			;;
+		*)
+			command -v "$candidate" >/dev/null 2>&1
+			;;
+	esac
+}
+
+find_local_godot_command() {
+	if [ -z "${LOCALAPPDATA:-}" ]; then
+		return 1
+	fi
+
+	local_appdata=$(normalize_candidate_path "$LOCALAPPDATA")
+	target_dir="$local_appdata/Programs/GodotCLI"
+	if [ ! -d "$target_dir" ]; then
+		return 1
+	fi
+
+	find "$target_dir" -maxdepth 1 -type f -name '*.exe' | sort | tail -n 1
+}
+
+try_candidate() {
+	raw_candidate="${1:-}"
+	if ! is_usable_command "$raw_candidate"; then
+		return 1
+	fi
+
+	normalize_candidate_path "$raw_candidate"
+	return 0
+}
+
 resolve_godot_command() {
-	if [ -n "${GODOT_COMMAND:-}" ] && command -v "$GODOT_COMMAND" >/dev/null 2>&1; then
-		printf '%s\n' "$GODOT_COMMAND"
+	if try_candidate "${GODOT_COMMAND:-}"; then
+		return 0
+	fi
+
+	if try_candidate "$(git config --get hooks.godotCommand 2>/dev/null || true)"; then
+		return 0
+	fi
+
+	if try_candidate "$(find_local_godot_command 2>/dev/null || true)"; then
 		return 0
 	fi
 
 	for candidate in godot godot4 godot4.2; do
-		if command -v "$candidate" >/dev/null 2>&1; then
-			printf '%s\n' "$candidate"
+		if try_candidate "$candidate"; then
 			return 0
 		fi
 	done
