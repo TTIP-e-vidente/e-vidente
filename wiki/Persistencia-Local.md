@@ -1,51 +1,47 @@
-# Persistencia Local
+# Persistencia local
 
-Resumen funcional de la persistencia local incorporada en e-vidente.
+La persistencia local guarda perfil, progreso y partidas sin depender de un backend ni de servicios externos.
 
----
+## Qué guarda
 
-## Que agrega
+- Un perfil local por dispositivo, con nombre, edad, mail y avatar.
+- Varias partidas dentro de ese perfil.
+- Progreso por recorrido.
+- El punto exacto desde el que conviene retomar.
+- Historial reciente de eventos de guardado y avance.
+- Metadata de escritura para saber cuándo se guardó y desde dónde se recuperó el save.
 
-La demo ahora guarda datos locales sin backend ni servicios externos.
+## Cómo se usa hoy
 
-Incluye:
-- perfil local unico por dispositivo
-- guardado de usuario, mail, edad y avatar
-- persistencia de progreso por recorrido
-- historial de eventos del perfil
-- guardado manual desde Archivero
+El juego trabaja con un perfil local único, pero ya no con una sola partida.
 
----
+Desde Intro se puede empezar una partida nueva o cargar una ya existente. Cada partida conserva su propio progreso, su historial y su `resume_state`. Eso permite volver a un punto anterior sin pisar el avance de otra sesión.
 
-## Flujo de uso
-
-La persistencia local forma parte del recorrido normal del jugador.
-
-El jugador entra directo al Archivero. Ahi puede consultar el perfil local, el resumen de avance y el historial asociado al dispositivo actual. Si necesita completar nombre, edad, mail o avatar, puede abrir el editor de perfil local. El progreso de los capitulos queda guardado en el dispositivo y se recupera automaticamente cuando vuelve a abrir el juego.
-
----
+Archivero muestra el perfil local, el resumen de la partida activa y el estado del último guardado. El guardado manual sigue disponible y el sistema también puede recuperar el save desde backup si el archivo principal queda corrupto.
 
 ## Piezas principales
 
-- `SaveManager` como autoload para manejar perfil local y persistencia
-- `auth.tscn` reutilizada como editor de perfil local
-- `archivero.tscn` como dashboard del perfil local
-- `Global` para exportar e importar progreso de juego
-- tests headless integrados en CI para evitar regresiones de perfil, avatar, progreso y recarga desde disco
+- `SaveManager` como autoload central de perfil, slots, guardado y recuperación.
+- `auth.tscn` como editor del perfil local.
+- `intro.tscn` como punto de entrada para crear o cargar partidas.
+- `archivero.tscn` como resumen del perfil y de la sesión activa.
+- `Global` para exportar e importar el progreso jugable.
 
----
+Internamente, `SaveManager` mantiene una sesión activa proyectada al runtime para no obligar al resto del juego a conocer el formato interno de slots. En disco se escribe un save principal, un archivo temporal y un backup.
 
-## Como lo verificamos
+## Cómo se valida
 
-La integracion se valida de dos maneras:
+La validación automática cubre tanto el formato del save como los flujos más sensibles:
 
-- import headless del proyecto Godot
-- tests de smoke y validacion sobre perfil local, avatar, progreso y recarga desde disco
+- import headless del proyecto
+- smoke test del guardado local
+- validaciones de perfil, avatar y recarga desde disco
+- contrato de señales de `SaveManager`
+- migración desde saves legacy
+- flujo de Archivero, Intro y guardado rápido dentro de nivel
 
-En CI eso corre dentro del job bloqueante `validate`, y `build-web` depende de ese resultado.
+Todo eso corre en el job `validate` de CI. El job `build-web` depende de que esa validación termine bien.
 
----
+## Alcance actual
 
-## Alcance y limite
-
-La persistencia es local al dispositivo actual. No hay sincronizacion entre equipos ni backend asociado.
+La persistencia sigue siendo local al dispositivo. No hay sincronización entre equipos ni cuentas remotas.
