@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <ellipse cx="32" cy="12" rx="18" ry="7" fill="#FFFDF7" stroke="#26231F" stroke-width="3.5"/>
-  <path d="M14 12V42C14 46.418 22.059 50 32 50C41.941 50 50 46.418 50 42V12" fill="#F7F1E3" stroke="#26231F" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M14 24C14 28.418 22.059 32 32 32C41.941 32 50 28.418 50 24" stroke="#26231F" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M14 36C14 40.418 22.059 44 32 44C41.941 44 50 40.418 50 36" stroke="#26231F" stroke-width="3.5" stroke-linecap="round"/>
-  <ellipse cx="32" cy="12" rx="8" ry="3" fill="#B8CD75" fill-opacity="0.9"/>
+  <rect x="11" y="8" width="42" height="48" rx="13" fill="#F7F1E3" stroke="#26231F" stroke-width="3.5"/>
+  <rect x="18" y="14" width="13" height="5" rx="2.5" fill="#B8CD75"/>
+  <circle cx="32" cy="31" r="13" fill="#FFFDF7" stroke="#26231F" stroke-width="3"/>
+  <circle cx="32" cy="27" r="5" fill="#B8CD75" stroke="#26231F" stroke-width="2.8"/>
+  <path d="M24 45C24 40.582 27.582 37 32 37C36.418 37 40 40.582 40 45V46H24V45Z" fill="#FFFDF7" stroke="#26231F" stroke-width="3" stroke-linejoin="round"/>
 </svg>

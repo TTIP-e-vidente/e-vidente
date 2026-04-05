@@ -41,25 +41,41 @@ func _process(delta):
 		elif Input.is_action_just_released("click") && Global.is_dragging == self:
 			Global.is_dragging = null
 			var tween = get_tree().create_tween()
-			if is_inside_droppable:
-				tween.tween_property(self, "position", get_global_mouse_position(), 0.5).set_ease(Tween.EASE_OUT)
+			if is_inside_droppable and is_instance_valid(body_ref):
+				tween.tween_property(self, "global_position", get_global_mouse_position(), 0.5).set_ease(Tween.EASE_OUT)
 				if body_ref == plato:
 					plato._react_food(self)
 			else:
 				tween.tween_property(self, "global_position", initialPos, 0.5).set_ease(Tween.EASE_OUT)
 
+func _handle_droppable_enter(target):
+	if target == null or !target.is_in_group("droppable"):
+		return
+	is_inside_droppable = true
+	body_ref = target
+	if target == plato:
+		plato.elementos.append_array(condiciones)
+
+func _handle_droppable_exit(target):
+	if target == null or !target.is_in_group("droppable"):
+		return
+	if target == plato:
+		condiciones.map(func(cond): plato.elementos.erase(cond))
+	if target == body_ref:
+		body_ref = null
+		is_inside_droppable = false
+
 func _on_area_2d_body_entered(body):
-	if body.is_in_group("droppable"):
-		is_inside_droppable = true
-		body_ref = body
-		if body == plato:
-			plato.elementos.append_array(self.condiciones)
+	_handle_droppable_enter(body)
 
 func _on_area_2d_body_exited(body):
-	if body.is_in_group("droppable"):
-		is_inside_droppable = false
-		if body == plato:
-			condiciones.map(func(cond): plato.elementos.erase(cond))
+	_handle_droppable_exit(body)
+
+func _on_area_2d_area_entered(area):
+	_handle_droppable_enter(area)
+
+func _on_area_2d_area_exited(area):
+	_handle_droppable_exit(area)
 
 func _on_area_2d_mouse_entered():
 	if !Global.is_dragging:
