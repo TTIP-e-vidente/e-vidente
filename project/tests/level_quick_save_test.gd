@@ -1,5 +1,7 @@
 extends SceneTree
 
+var SaveManager
+var Global
 var failed := false
 
 
@@ -9,6 +11,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	_resolve_singletons()
+	_assert(SaveManager != null, "No se encontro el autoload SaveManager")
+	_assert(Global != null, "No se encontro el autoload Global")
+	if failed:
+		quit(1)
+		return
 	_cleanup_test_files()
 	await process_frame
 
@@ -40,6 +48,13 @@ func _run() -> void:
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
+
+
+func _resolve_singletons() -> void:
+	if SaveManager == null:
+		SaveManager = root.get_node_or_null("/root/SaveManager")
+	if Global == null:
+		Global = root.get_node_or_null("/root/Global")
 
 
 func _cleanup_test_files() -> void:

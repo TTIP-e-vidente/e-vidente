@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://d3fl0wttpi5nj"]
+[gd_scene load_steps=11 format=3 uid="uid://d3fl0wttpi5nj"]
 
 [ext_resource type="Script" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="Texture2D" uid="uid://breggyu6leu5h" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
@@ -6,23 +6,49 @@
 [ext_resource type="Texture2D" uid="uid://g2fk0rtysasx" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
 [ext_resource type="Texture2D" uid="uid://cxeacdh5knce6" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
 [ext_resource type="AudioStream" uid="uid://cyoeurg1stfx5" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="7_dbicon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
-bg_color = Color(0.980392, 0.956863, 0.901961, 0.94)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+bg_color = Color(0.984314, 0.960784, 0.905882, 0.98)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.22)
-shadow_color = Color(0, 0, 0, 0.1)
-shadow_size = 14
+border_color = Color(0.203922, 0.247059, 0.172549, 0.2)
+shadow_color = Color(0, 0, 0, 0.2)
+shadow_size = 22
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialog_button"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_chip"]
+bg_color = Color(0.780392, 0.839216, 0.658824, 0.75)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_primary"]
+bg_color = Color(0.309804, 0.372549, 0.266667, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_secondary"]
 bg_color = Color(1, 1, 1, 0.92)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
@@ -32,19 +58,23 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
+border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialog_button_hover"]
-bg_color = Color(0.992157, 0.980392, 0.941176, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.2)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_summary"]
+bg_color = Color(1, 1, 1, 0.7)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.08)
 
 [node name="Intro" type="Node2D"]
 z_index = 4
@@ -99,88 +129,120 @@ theme_override_font_sizes/font_size = 60
 icon = ExtResource("5_nvq7f")
 flat = true
 
-[node name="SaveButton" type="Button" parent="."]
-offset_left = 1004.0
-offset_top = 20.0
-offset_right = 1088.0
-offset_bottom = 104.0
-tooltip_text = "guardado de partida"
-icon = ExtResource("7_dbicon")
-flat = true
-
-[node name="SaveFeedbackLabel" type="Label" parent="."]
-offset_left = 756.0
-offset_top = 112.0
-offset_right = 1088.0
-offset_bottom = 144.0
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.92)
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 2
+[node name="PlayBackdrop" type="ColorRect" parent="."]
+visible = false
+offset_right = 1153.0
+offset_bottom = 800.0
+color = Color(0.0823529, 0.0941176, 0.0862745, 0.22)
 
 [node name="PlayPanel" type="PanelContainer" parent="."]
 visible = false
-offset_left = 734.0
-offset_top = 168.0
-offset_right = 1026.0
-offset_bottom = 458.0
+offset_left = 634.0
+offset_top = 118.0
+offset_right = 1080.0
+offset_bottom = 438.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_play_panel")
 
 [node name="MarginContainer" type="MarginContainer" parent="PlayPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 22
+theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 22
+theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 22
 
 [node name="Content" type="VBoxContainer" parent="PlayPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
+
+[node name="HeaderRow" type="HBoxContainer" parent="PlayPanel/MarginContainer/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StatusChip" type="PanelContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_play_chip")
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+
+[node name="StatusBadge" type="Label" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.247059, 0.290196, 0.211765, 1)
+theme_override_font_sizes/font_size = 12
+text = "ULTIMA PARTIDA"
+
+[node name="Spacer" type="Control" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
+custom_minimum_size = Vector2(8, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
+custom_minimum_size = Vector2(92, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
+text = "Cerrar"
 
 [node name="Title" type="Label" parent="PlayPanel/MarginContainer/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 24
-text = "Jugar"
+theme_override_font_sizes/font_size = 30
+text = "Seguir jugando"
 
 [node name="Subtitle" type="Label" parent="PlayPanel/MarginContainer/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.9)
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.84)
 theme_override_font_sizes/font_size = 15
-text = "Empeza de cero o retoma el progreso guardado."
+text = "Retoma tu ultimo guardado o entra al selector de modos."
 autowrap_mode = 3
 
-[node name="NewGameButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
-custom_minimum_size = Vector2(0, 50)
+[node name="SummaryPanel" type="PanelContainer" parent="PlayPanel/MarginContainer/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_play_summary")
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/SummaryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ResumeSummary" type="Label" parent="PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_dialog_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_dialog_button_hover")
-text = "Nueva partida"
+theme_override_font_sizes/font_size = 15
+text = "Ultimo punto: el selector de modos"
+autowrap_mode = 3
 
-[node name="LoadGameButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
-custom_minimum_size = Vector2(0, 50)
+[node name="ContinueButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_primary")
+text = "Continuar ultima partida"
+
+[node name="ModeButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_dialog_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_dialog_button_hover")
-text = "Cargar partida"
-
-[node name="ClosePlayPanelButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
-custom_minimum_size = Vector2(0, 38)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.95)
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_dialog_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_dialog_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_dialog_button_hover")
-text = "Cancelar"
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
+text = "Ir al selector de modos"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("6_eoqxh")
@@ -190,7 +252,7 @@ attenuation = 2.07053
 [connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
 [connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
-[connection signal="pressed" from="SaveButton" to="." method="_on_save_pressed"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/NewGameButton" to="." method="_on_new_game_pressed"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/LoadGameButton" to="." method="_on_load_game_pressed"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ClosePlayPanelButton" to="." method="_on_close_play_panel_pressed"]
+[connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ContinueButton" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ModeButton" to="." method="_on_mode_pressed"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]

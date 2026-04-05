@@ -1,168 +1,110 @@
 extends Node2D
-@onready var background = $Background
+
+@onready var background: AudioStreamPlayer2D = $Background
+@onready var play_backdrop: ColorRect = $PlayBackdrop
 @onready var play_panel: PanelContainer = $PlayPanel
-@onready var save_button: Button = $SaveButton
-@onready var save_feedback_label: Label = $SaveFeedbackLabel
-@onready var play_panel_subtitle: Label = $PlayPanel/MarginContainer/Content/Subtitle
-@onready var new_game_button: Button = $PlayPanel/MarginContainer/Content/NewGameButton
-@onready var load_game_button: Button = $PlayPanel/MarginContainer/Content/LoadGameButton
+@onready var play_title: Label = $PlayPanel/MarginContainer/Content/Title
+@onready var play_badge: Label = $PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer/StatusBadge
+@onready var play_subtitle: Label = $PlayPanel/MarginContainer/Content/Subtitle
+@onready var resume_summary: Label = $PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer/ResumeSummary
+@onready var continue_button: Button = $PlayPanel/MarginContainer/Content/ContinueButton
+@onready var mode_button: Button = $PlayPanel/MarginContainer/Content/ModeButton
 
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
-const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-base-datos.svg")
-const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok.svg")
-const NEW_GAME_BUTTON_LABEL := "Nueva partida"
-const NEW_GAME_BUTTON_CONFIRM_LABEL := "Confirmar nueva partida"
+const CONTINUE_BUTTON_TEXT := "Continuar ultima partida"
+const MODE_BUTTON_TEXT := "Ir al selector de modos"
+const START_BUTTON_TEXT := "Empezar desde el selector"
 
-var save_feedback_revision := 0
-var new_game_confirmation_revision := 0
-var is_new_game_confirmation_pending := false
 
-func _ready():
+func _ready() -> void:
 	background.play()
-	_connect_save_manager_signals()
-	save_button.icon = SAVE_ICON_IDLE
 	_set_play_panel_visible(false)
-	save_feedback_label.text = ""
-	_refresh_play_panel_copy()
-	_update_save_button_state(SaveManager.get_save_status())
+	_refresh_play_panel()
 
 
-func _on_start_pressed():
-	save_feedback_label.text = ""
-	_refresh_play_panel_copy()
+func _on_start_pressed() -> void:
+	_refresh_play_panel()
 	_set_play_panel_visible(true)
 
 
-func _on_load_game_pressed() -> void:
-	_set_new_game_confirmation_state(false)
-	if not SaveManager.can_resume_game():
-		save_feedback_label.text = "Todavia no hay una partida para cargar."
-		_set_play_panel_visible(false)
-		return
+func _on_opciones_pressed() -> void:
+	get_tree().change_scene_to_file("res://interface/opciones.tscn")
+
+
+func _on_salir_pressed() -> void:
+	get_tree().quit()
+
+
+func _on_continue_pressed() -> void:
 	var resume_state := SaveManager.load_progress_and_get_resume_state(false)
 	_set_play_panel_visible(false)
 	get_tree().change_scene_to_file(str(resume_state.get("scene_path", ARCHIVERO_SCENE)))
 
 
-func _on_new_game_pressed() -> void:
-	if SaveManager.can_resume_game() and not is_new_game_confirmation_pending:
-		_set_new_game_confirmation_state(true)
-		save_feedback_label.text = "Esto reemplaza la partida actual. Volve a tocar para confirmar."
-		_schedule_new_game_confirmation_reset()
-		return
-
-	_set_new_game_confirmation_state(false)
-	if not SaveManager.start_new_game():
-		save_feedback_label.text = "No se pudo iniciar una nueva partida."
-		return
+func _on_mode_pressed() -> void:
+	_set_play_panel_visible(false)
 	get_tree().change_scene_to_file(ARCHIVERO_SCENE)
 
 
-func _on_close_play_panel_pressed() -> void:
+func _on_play_close_pressed() -> void:
 	_set_play_panel_visible(false)
 
 
-func _on_save_pressed() -> void:
-	SaveManager.record_manual_save()
-	var save_status := SaveManager.get_save_status()
-	var state := str(save_status.get("state", ""))
-	if state == "error":
-		save_feedback_label.text = "No se pudo guardar."
-		save_button.icon = SAVE_ICON_IDLE
-	else:
-		save_feedback_label.text = _format_saved_message(save_status)
-		_show_saved_state()
-	_refresh_play_panel_copy()
-
-func _on_opciones_pressed():
-	get_tree().change_scene_to_file("res://interface/opciones.tscn")
-
-func _on_salir_pressed():
-	get_tree().quit()
+func _on_play_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_set_play_panel_visible(false)
 
 
-func _set_play_panel_visible(visible: bool) -> void:
-	play_panel.visible = visible
-	if not visible:
-		_set_new_game_confirmation_state(false)
-		return
-	if SaveManager.can_resume_game():
-		load_game_button.grab_focus()
-		return
-	new_game_button.grab_focus()
+func _set_play_panel_visible(is_visible: bool) -> void:
+	play_backdrop.visible = is_visible
+	play_panel.visible = is_visible
 
 
-func _refresh_play_panel_copy() -> void:
-	if not play_panel.visible:
-		_set_new_game_confirmation_state(false)
-	if SaveManager.can_resume_game():
-		play_panel_subtitle.text = "Retoma %s o empeza una partida nueva." % SaveManager.get_resume_hint()
-		load_game_button.disabled = false
-		_update_save_button_state(SaveManager.get_save_status())
+func _refresh_play_panel() -> void:
+	var recent_save := _get_recent_save_summary()
+	var can_resume := not recent_save.is_empty()
+
+	continue_button.visible = can_resume
+	continue_button.disabled = not can_resume
+	continue_button.text = CONTINUE_BUTTON_TEXT
+
+	if can_resume:
+		play_badge.text = "ULTIMA PARTIDA"
+		play_title.text = "Seguir jugando"
+		play_subtitle.text = "Entrás directo al ultimo punto guardado, sin pasar por menus intermedios."
+		resume_summary.text = _format_recent_save_summary(recent_save)
+		mode_button.text = MODE_BUTTON_TEXT
 		return
 
-	play_panel_subtitle.text = "Empeza de cero. La opcion de cargar se activa cuando ya exista una partida."
-	load_game_button.disabled = true
-	_update_save_button_state(SaveManager.get_save_status())
+	play_badge.text = "PRIMERA PARTIDA"
+	play_title.text = "Empezar a jugar"
+	play_subtitle.text = "Todavia no hay una partida guardada en este equipo."
+	resume_summary.text = "Entrá al selector para empezar. Cuando avances y guardes, este acceso te va a llevar directo donde lo dejaste."
+	mode_button.text = START_BUTTON_TEXT
 
 
-func _format_saved_message(save_status: Dictionary) -> String:
-	var last_saved_at := str(save_status.get("last_saved_at", ""))
-	var saved_time := last_saved_at.get_slice(" ", 1)
-	if saved_time.is_empty():
-		return "Guardado listo"
-	return "Guardado %s" % saved_time
+func _get_recent_save_summary() -> Dictionary:
+	var slots := SaveManager.list_save_slots()
+	if slots.is_empty():
+		return {}
+	return slots[0]
 
 
-func _connect_save_manager_signals() -> void:
-	if not SaveManager.save_status_changed.is_connected(_on_save_status_changed):
-		SaveManager.save_status_changed.connect(_on_save_status_changed)
+func _format_recent_save_summary(save_summary: Dictionary) -> String:
+	var resume_hint := str(save_summary.get("resume_hint", "el selector de modos"))
+	var updated_at := str(save_summary.get("updated_at", ""))
+	var progress_summary: Dictionary = {}
+	var raw_progress_summary: Variant = save_summary.get("progress_summary", {})
+	var completed_levels := 0
+	var total_levels := 18
 
+	if raw_progress_summary is Dictionary:
+		progress_summary = raw_progress_summary
+		completed_levels = int(progress_summary.get("total", 0))
+		total_levels = int(progress_summary.get("max_total", 18))
 
-func _on_save_status_changed(save_status: Dictionary) -> void:
-	_update_save_button_state(save_status)
-
-
-func _update_save_button_state(save_status: Dictionary) -> void:
-	var tooltip_lines := ["guardado de partida"]
-	var last_saved_at := str(save_status.get("last_saved_at", ""))
-	if not last_saved_at.is_empty():
-		tooltip_lines.append("Ultimo guardado: %s" % last_saved_at)
-	if SaveManager.can_resume_game():
-		tooltip_lines.append("Retoma %s" % SaveManager.get_resume_hint())
-	save_button.tooltip_text = "\n".join(tooltip_lines)
-
-
-func _show_saved_state() -> void:
-	save_feedback_revision += 1
-	var revision := save_feedback_revision
-	save_button.icon = SAVE_ICON_OK
-	_reset_saved_icon_async(revision)
-
-
-func _set_new_game_confirmation_state(pending: bool) -> void:
-	is_new_game_confirmation_pending = pending
-	new_game_button.text = NEW_GAME_BUTTON_CONFIRM_LABEL if pending else NEW_GAME_BUTTON_LABEL
-
-
-func _schedule_new_game_confirmation_reset() -> void:
-	new_game_confirmation_revision += 1
-	var revision := new_game_confirmation_revision
-	_reset_new_game_confirmation_async(revision)
-
-
-func _reset_new_game_confirmation_async(revision: int) -> void:
-	await get_tree().create_timer(2.4).timeout
-	if not is_inside_tree() or revision != new_game_confirmation_revision or not is_new_game_confirmation_pending:
-		return
-	_set_new_game_confirmation_state(false)
-
-
-func _reset_saved_icon_async(revision: int) -> void:
-	await get_tree().create_timer(1.6).timeout
-	if not is_inside_tree() or revision != save_feedback_revision:
-		return
-	save_button.icon = SAVE_ICON_IDLE
-
-
-
+	var lines: Array[String] = ["Retomas en: %s" % resume_hint]
+	if not updated_at.is_empty():
+		lines.append("Guardado local: %s" % updated_at)
+	lines.append("Avance general: %d/%d capitulos" % [completed_levels, total_levels])
+	return "\n".join(lines)

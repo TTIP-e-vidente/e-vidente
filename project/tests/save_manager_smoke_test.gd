@@ -6,6 +6,8 @@ const TEST_AGE := 24
 const TEMP_AVATAR_PATH := "user://ci_avatar.png"
 const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
 
+var SaveManager
+var Global
 var failed := false
 
 
@@ -15,6 +17,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	_resolve_singletons()
+	_assert(SaveManager != null, "No se encontro el autoload SaveManager")
+	_assert(Global != null, "No se encontro el autoload Global")
+	if failed:
+		quit(1)
+		return
 	_cleanup_test_files()
 	await process_frame
 
@@ -25,7 +33,7 @@ func _run() -> void:
 	SaveManager.load_data()
 	_assert(SaveManager.is_authenticated(), "El perfil local deberia inicializarse automaticamente")
 
-	var profile_result := SaveManager.update_local_profile(
+	var profile_result: Dictionary = SaveManager.update_local_profile(
 		TEST_USERNAME,
 		TEST_AGE,
 		TEST_EMAIL,
@@ -36,7 +44,7 @@ func _run() -> void:
 	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
 	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "No se copio el avatar al almacenamiento local")
 	_assert(SaveManager.get_current_user_avatar_texture() != null, "No se pudo recargar el avatar desde user://")
-	var save_status := SaveManager.get_save_status()
+	var save_status: Dictionary = SaveManager.get_save_status()
 	_assert(str(save_status.get("last_saved_reason", "")) == "profile_updated", "El estado del save deberia registrar que se guardo un perfil actualizado")
 
 	var profile_scene: PackedScene = load("res://interface/auth.tscn") as PackedScene
@@ -60,7 +68,7 @@ func _run() -> void:
 		if profile_toggle_button != null:
 			profile_toggle_button.emit_signal("pressed")
 			await process_frame
-		save_status_label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SaveStatusLabel")
+		save_status_label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel")
 		_assert(save_status_label != null, "Archivero deberia exponer la etiqueta de estado de guardado")
 		_assert(save_status_label.text.contains("perfil actualizado"), "Archivero deberia mostrar el motivo del ultimo guardado al abrir")
 
@@ -72,18 +80,25 @@ func _run() -> void:
 
 		Global.reset_progress()
 		SaveManager.load_data()
-		var progress_summary := Global.get_progress_summary()
+		var progress_summary: Dictionary = Global.get_progress_summary()
 		_assert(int(progress_summary.get("celiaquia", 0)) == 1, "El progreso guardado no se restauro al recargar el save local")
 
 		archivero_instance.queue_free()
 
-	var history := SaveManager.get_current_user_history()
+	var history: Array = SaveManager.get_current_user_history()
 	_assert(history.size() >= 3, "El historial local no registro suficientes eventos del flujo smoke test")
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "load_repair" or str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "El save deberia conservar metadata del ultimo guardado")
 
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
+
+
+func _resolve_singletons() -> void:
+	if SaveManager == null:
+		SaveManager = root.get_node_or_null("/root/SaveManager")
+	if Global == null:
+		Global = root.get_node_or_null("/root/Global")
 
 
 func _create_temp_avatar(destination: String) -> int:

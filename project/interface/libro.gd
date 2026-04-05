@@ -28,7 +28,7 @@ func _get_book_progress() -> Dictionary:
 	return Global.items_level
 
 func _on_button_pressed():
-	get_tree().change_scene_to_file("res://niveles/intro.tscn")
+	get_tree().change_scene_to_file("res://interface/archivero.tscn")
 
 func _on_cap_1_pressed():
 	Global.current_level = 1

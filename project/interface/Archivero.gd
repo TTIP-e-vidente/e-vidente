@@ -7,14 +7,18 @@ const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok
 @onready var profile_overlay: Control = $ProfileOverlayLayer/ProfileOverlay
 @onready var profile_toggle_button: Button = $ProfileOverlayLayer/ProfileToggleButton
 @onready var close_profile_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
-@onready var avatar_preview: TextureRect = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarPreview
-@onready var avatar_state: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarState
-@onready var username_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/UsernameLabel
-@onready var email_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/EmailLabel
-@onready var age_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AgeLabel
-@onready var progress_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/ProgressLabel
-@onready var save_status_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SaveStatusLabel
-@onready var history_text: RichTextLabel = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HistoryText
+@onready var session_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/SessionPanel
+@onready var history_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel
+@onready var history_toggle_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/HistoryToggleButton
+@onready var avatar_preview: TextureRect = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview
+@onready var avatar_state: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarState
+@onready var username_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel
+@onready var email_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/EmailBadge/MarginContainer/EmailLabel
+@onready var age_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/AgeBadge/MarginContainer/AgeLabel
+@onready var progress_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel/MarginContainer/ProgressLabel
+@onready var save_status_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel
+@onready var resume_hint_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeHintLabel
+@onready var history_text: RichTextLabel = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HistoryBody/MarginContainer/HistoryText
 
 var start_position
 var archive_highlighted = false
@@ -29,6 +33,9 @@ func _ready():
 	background.play()
 	_connect_save_manager_signals()
 	profile_toggle_button.icon = SAVE_ICON_IDLE
+	profile_toggle_button.text = "Mi progreso"
+	history_panel.visible = false
+	history_toggle_button.text = "Ver historial"
 	_sync_profile_overlay_state()
 	_refresh_dashboard()
 
@@ -36,34 +43,36 @@ func _ready():
 func _refresh_dashboard() -> void:
 	var profile := SaveManager.get_current_user_profile()
 	var summary := Global.get_progress_summary()
+	var save_status := SaveManager.get_save_status()
+	var username := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
+	var email := _format_optional_text(str(profile.get("email", "")))
+	var age := _format_optional_number(int(profile.get("age", 0)))
 
-	username_label.text = "Perfil: %s" % profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
-	email_label.text = "Mail: %s" % profile.get("email", "-")
-	age_label.text = "Edad: %s" % str(profile.get("age", "-"))
-	progress_label.text = "Avance total: %d/%d capitulos\nCeliaquia: %d/6\nVeganismo: %d/6\nVeganismo + Celiaquia: %d/6" % [
+	username_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
+	email_label.text = "Mail: %s" % email
+	age_label.text = "Edad: %s" % age
+	progress_label.text = "%d de %d capitulos completos\nCeliaquia %d/6 | Veganismo %d/6 | Mixto %d/6" % [
 		summary.get("total", 0),
 		summary.get("max_total", 18),
 		summary.get("celiaquia", 0),
 		summary.get("veganismo", 0),
 		summary.get("veganismo_celiaquia", 0)
 	]
-	save_status_label.text = _format_save_status(SaveManager.get_save_status())
-	_update_toggle_button_state(SaveManager.get_save_status())
+	save_status_label.text = _format_save_status(save_status)
+	resume_hint_label.text = _format_resume_hint_label()
+	_update_toggle_button_state(save_status)
 
 	var avatar_texture := SaveManager.get_current_user_avatar_texture()
 	avatar_preview.texture = avatar_texture
-	avatar_state.text = "Foto local cargada" if avatar_texture != null else "Sin foto disponible"
+	avatar_state.text = "Avatar listo" if avatar_texture != null else "Avatar opcional"
 
 	var history := SaveManager.get_current_user_history()
 	if history.is_empty():
-		history_text.text = "Todavia no hay eventos guardados."
+		history_text.text = "Todavia no hay actividad guardada."
 		_sync_profile_overlay_state()
 		return
 
-	var lines: Array[String] = []
-	for entry in history:
-		lines.append("%s | %s" % [entry.get("timestamp", ""), entry.get("message", "")])
-	history_text.text = "\n".join(lines)
+	history_text.text = _format_history_text(history)
 	_sync_profile_overlay_state()
 
 
@@ -82,21 +91,31 @@ func _format_save_status(status: Dictionary) -> String:
 	var state := str(status.get("state", "idle"))
 	var last_saved_at := str(status.get("last_saved_at", "sin datos"))
 	var reason := _format_save_reason(str(status.get("last_saved_reason", "")))
-	var loaded_from := _format_save_source(str(status.get("last_loaded_from", "default")))
 	var recovered_from := str(status.get("recovered_from", ""))
 	var error_message := str(status.get("last_error", ""))
 
 	match state:
 		"error":
-			return "Estado del save: error\n%s" % ("Reintenta guardar." if error_message.is_empty() else error_message)
+			return "No se pudo guardar.\n%s" % ("Reintenta de nuevo." if error_message.is_empty() else error_message)
 		"recovered":
-			return "Save recuperado desde %s\nUltimo guardado: %s" % [_format_save_source(recovered_from), last_saved_at]
+			return "Se recupero una copia desde %s\nUltimo guardado: %s" % [_format_save_source(recovered_from), last_saved_at]
 		"dirty":
-			return "Hay cambios pendientes\nFuente cargada: %s" % loaded_from
+			return "Hay cambios sin guardar\nPresiona Guardar para conservarlos"
 		"saved":
-			return "Guardado OK: %s\nMotivo: %s" % [last_saved_at, reason]
+			return "Ultimo guardado: %s\n%s" % [last_saved_at, reason]
 		_:
-			return "Ultimo guardado: %s\nFuente cargada: %s" % [last_saved_at, loaded_from]
+			if last_saved_at == "sin datos" or last_saved_at.is_empty():
+				return "Todavia no hay guardado local\nUsa Guardar cuando quieras conservar este avance"
+			return "Ultimo guardado: %s\nListo para continuar" % last_saved_at
+
+
+func _format_history_text(history: Array) -> String:
+	var lines: Array[String] = []
+	for entry in history:
+		if not entry is Dictionary:
+			continue
+		lines.append("%s\n%s" % [entry.get("timestamp", ""), entry.get("message", "")])
+	return "\n\n".join(lines)
 
 
 func _format_save_reason(reason: String) -> String:
@@ -122,13 +141,26 @@ func _format_save_reason(reason: String) -> String:
 func _format_save_source(source: String) -> String:
 	match source:
 		"primary":
-			return "save principal"
+			return "tu guardado principal"
 		"temp":
-			return "archivo temporal"
+			return "un guardado temporal"
 		"backup":
-			return "backup"
+			return "una copia de respaldo"
 		_:
-			return "estado nuevo"
+			return "un estado nuevo"
+
+
+func _format_optional_text(value: String) -> String:
+	var clean_value := value.strip_edges()
+	if clean_value.is_empty():
+		return "sin dato"
+	return clean_value
+
+
+func _format_optional_number(value: int) -> String:
+	if value <= 0:
+		return "sin dato"
+	return str(value)
 
 
 func _on_save_manager_changed(status: Dictionary) -> void:
@@ -144,6 +176,7 @@ func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 
 func _set_profile_overlay_visible(visible: bool) -> void:
 	profile_overlay.visible = visible
+	_set_history_panel_visible(false)
 	_sync_profile_overlay_state()
 	if visible:
 		_refresh_dashboard()
@@ -191,14 +224,21 @@ func _on_editar_perfil_pressed() -> void:
 	get_tree().change_scene_to_file(PROFILE_SCENE)
 
 
+func _on_history_toggle_button_pressed() -> void:
+	_set_history_panel_visible(not history_panel.visible)
+
+
+func _on_history_close_button_pressed() -> void:
+	_set_history_panel_visible(false)
+
+
 func _update_toggle_button_state(save_status: Dictionary) -> void:
-	var tooltip_lines := ["guardado de partida"]
+	var tooltip_lines := ["Abrir guardado local"]
 	var last_saved_at := str(save_status.get("last_saved_at", ""))
 	if not last_saved_at.is_empty():
 		tooltip_lines.append("Ultimo guardado: %s" % last_saved_at)
-	if SaveManager.can_resume_game():
-		tooltip_lines.append("Retoma %s" % SaveManager.get_resume_hint())
 	profile_toggle_button.tooltip_text = "\n".join(tooltip_lines)
+	profile_toggle_button.text = "Mi progreso"
 
 
 func _show_saved_state() -> void:
@@ -220,3 +260,15 @@ func _reset_saved_icon_async(revision: int) -> void:
 	if not is_inside_tree() or revision != save_feedback_revision:
 		return
 	profile_toggle_button.icon = SAVE_ICON_IDLE
+
+
+func _format_resume_hint_label() -> String:
+	if SaveManager.can_resume_game():
+		return "Retoma en %s\nSegui desde ese punto cuando quieras." % SaveManager.get_resume_hint()
+	return "Todavia no hay un punto guardado\nCuando avances en una partida aparecera aca"
+
+
+func _set_history_panel_visible(is_visible: bool) -> void:
+	session_panel.visible = not is_visible
+	history_panel.visible = is_visible
+	history_toggle_button.text = "Volver al resumen" if is_visible else "Ver historial"

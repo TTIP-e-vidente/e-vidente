@@ -5,6 +5,8 @@ const TEST_EMAIL := "signal_user@example.com"
 const TEMP_AVATAR_PATH := "user://signal_avatar.png"
 const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
 
+var SaveManager
+var Global
 var failed := false
 var user_registered_count := 0
 var user_logged_in_count := 0
@@ -20,6 +22,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	_resolve_singletons()
+	_assert(SaveManager != null, "No se encontro el autoload SaveManager")
+	_assert(Global != null, "No se encontro el autoload Global")
+	if failed:
+		quit(1)
+		return
 	_cleanup_test_files()
 	await process_frame
 
@@ -29,7 +37,7 @@ func _run() -> void:
 	var avatar_absolute := ProjectSettings.globalize_path(TEMP_AVATAR_PATH)
 	_assert(_create_temp_avatar(avatar_absolute) == OK, "No se pudo crear el avatar del test de señales")
 
-	var profile_result := SaveManager.update_local_profile(TEST_USERNAME, 31, TEST_EMAIL, avatar_absolute)
+	var profile_result: Dictionary = SaveManager.update_local_profile(TEST_USERNAME, 31, TEST_EMAIL, avatar_absolute)
 	await process_frame
 	_assert(bool(profile_result.get("ok", false)), "La actualizacion del perfil deberia funcionar para probar señales")
 	_assert(user_registered_count == 1, "Actualizar el perfil deberia emitir user_registered una vez")
@@ -53,7 +61,7 @@ func _run() -> void:
 	_assert(user_logged_out_count == 1, "El logout deberia emitir user_logged_out")
 	_assert(_has_saved_reason("progress_sync"), "El logout deberia sincronizar el progreso antes de salir")
 
-	var login_result := SaveManager.login_user("", "")
+	var login_result: Dictionary = SaveManager.login_user("", "")
 	await process_frame
 	_assert(bool(login_result.get("ok", false)), "El login local simplificado deberia seguir funcionando")
 	_assert(user_logged_in_count == 2, "El login local deberia emitir user_logged_in nuevamente")
@@ -66,6 +74,13 @@ func _run() -> void:
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
+
+
+func _resolve_singletons() -> void:
+	if SaveManager == null:
+		SaveManager = root.get_node_or_null("/root/SaveManager")
+	if Global == null:
+		Global = root.get_node_or_null("/root/Global")
 
 
 func _connect_signals() -> void:

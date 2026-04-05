@@ -11,7 +11,7 @@ const SAVE_PATH := "user://save_data.json"
 const TEMP_SAVE_PATH := "user://save_data.tmp.json"
 const BACKUP_SAVE_PATH := "user://save_data.backup.json"
 const AVATARS_DIR := "user://avatars"
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const HISTORY_LIMIT := 25
 const DEFAULT_PROFILE_NAME := "Perfil local"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
@@ -30,6 +30,8 @@ const RESUME_CONTEXT_BOOK := "book"
 const RESUME_CONTEXT_LEVEL := "level"
 const SESSION_TITLE_PREFIX := "Partida"
 const SESSION_ID_PREFIX := "session_"
+const SESSION_TITLE_MIN_LENGTH := 3
+const SESSION_TITLE_MAX_LENGTH := 40
 const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
 
 var save_data: Dictionary = {}
@@ -233,6 +235,25 @@ func get_active_save_slot_summary() -> Dictionary:
 	return _build_session_summary(active_session)
 
 
+func validate_session_title(title: String) -> Dictionary:
+	var clean_title := _normalize_session_title_value(title)
+	if clean_title.is_empty():
+		return {"ok": true, "title": "", "message": ""}
+	if clean_title.length() < SESSION_TITLE_MIN_LENGTH:
+		return {
+			"ok": false,
+			"title": clean_title,
+			"message": "Usa al menos %d caracteres para identificar la partida." % SESSION_TITLE_MIN_LENGTH
+		}
+	if clean_title.length() > SESSION_TITLE_MAX_LENGTH:
+		return {
+			"ok": false,
+			"title": clean_title.left(SESSION_TITLE_MAX_LENGTH),
+			"message": "El nombre puede tener hasta %d caracteres." % SESSION_TITLE_MAX_LENGTH
+		}
+	return {"ok": true, "title": clean_title, "message": ""}
+
+
 func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
 	var current_resume_state := get_resume_state()
 	if not allow_level_downgrade and str(current_resume_state.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
@@ -311,15 +332,19 @@ func record_manual_save() -> void:
 
 func start_new_game(title: String = "") -> bool:
 	load_data()
+	var title_validation := validate_session_title(title)
+	if not bool(title_validation.get("ok", false)):
+		return false
+	var normalized_title := str(title_validation.get("title", ""))
 	var should_reuse_active_session := _has_active_session() and not _session_can_resume(_get_active_session_data())
 	if _has_active_session() and not should_reuse_active_session:
 		save_current_user_progress()
 
 	_reset_runtime_session_projection()
 	if should_reuse_active_session:
-		_rename_active_session(title)
+		_rename_active_session(normalized_title)
 	else:
-		_create_session(title, true)
+		_create_session(normalized_title, true)
 
 	Global.reset_progress()
 	save_current_user_progress(false)
@@ -466,19 +491,19 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	normalized["history"] = _normalize_history(raw_data.get("history", []))
 
 	var raw_sessions = raw_data.get("sessions", {})
-	if raw_sessions is Dictionary:
+	if raw_data.has("sessions") and raw_sessions is Dictionary:
 		normalized["sessions"] = _normalize_sessions(raw_sessions)
 	else:
 		var migrated_session := _migrate_single_session_data(raw_data)
 		if not migrated_session.is_empty():
 			var migrated_session_id := str(migrated_session.get("id", "%s0001" % SESSION_ID_PREFIX))
-			var sessions := normalized.get("sessions", {})
+			var sessions: Dictionary = normalized["sessions"]
 			sessions[migrated_session_id] = _normalize_session_data(migrated_session, migrated_session_id)
 			normalized["sessions"] = sessions
 			normalized["active_session_id"] = migrated_session_id
 			normalized["next_session_number"] = 2
 
-	var next_session_number := max(1, int(raw_data.get("next_session_number", normalized.get("next_session_number", 1))))
+	var next_session_number: int = max(1, int(raw_data.get("next_session_number", normalized.get("next_session_number", 1))))
 	next_session_number = max(next_session_number, int(normalized.get("sessions", {}).size()) + 1)
 	normalized["next_session_number"] = next_session_number
 	normalized["active_session_id"] = _sanitize_active_session_id(
@@ -539,7 +564,9 @@ func _default_session_data(session_id: String = "", title: String = "", created_
 func _normalize_session_data(raw_session: Dictionary, session_id: String = "") -> Dictionary:
 	var normalized_session_id := session_id if not session_id.is_empty() else str(raw_session.get("id", "")).strip_edges()
 	var created_at := str(raw_session.get("created_at", ""))
-	var title := str(raw_session.get("title", "")).strip_edges()
+	var title := _normalize_session_title_value(str(raw_session.get("title", "")))
+	if title.length() > SESSION_TITLE_MAX_LENGTH:
+		title = title.left(SESSION_TITLE_MAX_LENGTH)
 	var normalized := _default_session_data(normalized_session_id, title, created_at)
 	if normalized["title"] == "":
 		normalized["title"] = _build_default_session_title_from_id(normalized_session_id)
@@ -675,15 +702,17 @@ func _create_session(title: String = "", activate: bool = true) -> Dictionary:
 	if not sessions is Dictionary:
 		sessions = {}
 
-	var next_session_number := max(1, int(save_data.get("next_session_number", 1)))
+	var next_session_number: int = max(1, int(save_data.get("next_session_number", 1)))
 	var session_id := "%s%04d" % [SESSION_ID_PREFIX, next_session_number]
 	while sessions.has(session_id):
 		next_session_number += 1
 		session_id = "%s%04d" % [SESSION_ID_PREFIX, next_session_number]
 
-	var clean_title := title.strip_edges()
+	var clean_title := _normalize_session_title_value(title)
 	if clean_title.is_empty():
 		clean_title = _build_default_session_title(next_session_number)
+	elif clean_title.length() > SESSION_TITLE_MAX_LENGTH:
+		clean_title = clean_title.left(SESSION_TITLE_MAX_LENGTH)
 
 	var session := _default_session_data(session_id, clean_title)
 	var progress = save_data.get("progress", {})
@@ -705,9 +734,11 @@ func _create_session(title: String = "", activate: bool = true) -> Dictionary:
 
 
 func _rename_active_session(title: String) -> void:
-	var clean_title := title.strip_edges()
+	var clean_title := _normalize_session_title_value(title)
 	if clean_title.is_empty() or not _has_active_session():
 		return
+	if clean_title.length() > SESSION_TITLE_MAX_LENGTH:
+		clean_title = clean_title.left(SESSION_TITLE_MAX_LENGTH)
 	var active_session_id := get_active_save_slot_id()
 	var sessions = save_data.get("sessions", {})
 	if not sessions is Dictionary or not sessions.has(active_session_id) or not sessions[active_session_id] is Dictionary:
@@ -765,6 +796,15 @@ func _build_default_session_title(session_number: int) -> String:
 	return "%s %d" % [SESSION_TITLE_PREFIX, session_number]
 
 
+func _normalize_session_title_value(title: String) -> String:
+	var clean_title := title.strip_edges()
+	for whitespace in ["\n", "\r", "\t"]:
+		clean_title = clean_title.replace(whitespace, " ")
+	while clean_title.contains("  "):
+		clean_title = clean_title.replace("  ", " ")
+	return clean_title
+
+
 func _build_default_session_title_from_id(session_id: String) -> String:
 	var clean_session_id := session_id.strip_edges()
 	if clean_session_id.begins_with(SESSION_ID_PREFIX):
@@ -777,12 +817,16 @@ func _build_default_session_title_from_id(session_id: String) -> String:
 func _build_session_summary(session: Dictionary) -> Dictionary:
 	var progress_summary := _summarize_progress_data(session.get("progress", {}))
 	var session_id := str(session.get("id", ""))
+	var resume_state := _normalize_resume_state(session.get("resume_state", {}))
 	return {
 		"id": session_id,
 		"title": str(session.get("title", _build_default_session_title_from_id(session_id))),
 		"created_at": str(session.get("created_at", "")),
 		"updated_at": _session_updated_at(session),
-		"resume_hint": _format_resume_hint_from_state(_normalize_resume_state(session.get("resume_state", {}))),
+		"resume_hint": _format_resume_hint_from_state(resume_state),
+		"resume_context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
+		"resume_track_key": str(resume_state.get("track_key", "")),
+		"resume_level_number": int(resume_state.get("level_number", 1)),
 		"progress_summary": progress_summary,
 		"can_resume": _session_can_resume(session),
 		"is_active": session_id == get_active_save_slot_id()
@@ -798,7 +842,9 @@ func _sort_save_slot_summaries(left: Dictionary, right: Dictionary) -> bool:
 
 
 func _summarize_progress_data(progress: Variant) -> Dictionary:
-	var progress_data := progress if progress is Dictionary else {}
+	var progress_data: Dictionary = {}
+	if progress is Dictionary:
+		progress_data = progress
 	var celiaquia_completed := _count_completed_progress_track(progress_data.get("celiaquia", []))
 	var vegan_completed := _count_completed_progress_track(progress_data.get("veganismo", []))
 	var vegan_gf_completed := _count_completed_progress_track(progress_data.get("veganismo_celiaquia", []))
@@ -871,7 +917,7 @@ func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
 		RESUME_CONTEXT_BOOK:
 			return "%s · seleccion de capitulos" % _track_label(track_key)
 		_:
-			return "el archivero"
+			return "el selector de modos"
 
 
 func _repair_resume_state() -> bool:
@@ -1041,12 +1087,17 @@ func _write_save_data(force: bool = false, reason: String = "save") -> bool:
 	if not force and not has_unsaved_changes:
 		return true
 
+	_ensure_active_session_for_write(reason)
+
 	var payload := save_data.duplicate(true)
 	var save_meta := _normalize_save_meta(payload.get("save_meta", {}))
 	save_meta["last_saved_at"] = Time.get_datetime_string_from_system(false, true)
 	save_meta["last_saved_reason"] = reason
 	save_meta["write_count"] = int(save_meta.get("write_count", 0)) + 1
 	payload["save_meta"] = save_meta
+	save_data["save_meta"] = save_meta
+	_sync_active_session_to_storage(save_meta)
+	payload = save_data.duplicate(true)
 
 	var serialized := JSON.stringify(payload, "\t")
 

@@ -1,5 +1,7 @@
 extends SceneTree
 
+var SaveManager
+var Global
 var failed := false
 
 
@@ -9,6 +11,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	_resolve_singletons()
+	_assert(SaveManager != null, "No se encontro el autoload SaveManager")
+	_assert(Global != null, "No se encontro el autoload Global")
+	if failed:
+		quit(1)
+		return
 	_cleanup_test_files()
 	await process_frame
 
@@ -62,14 +70,14 @@ func _run() -> void:
 
 	SaveManager.load_data()
 
-	var profile := SaveManager.get_current_user_profile()
+	var profile: Dictionary = SaveManager.get_current_user_profile()
 	_assert(str(profile.get("username", "")) == "Perfil legado", "La migracion deberia tomar el usuario apuntado por last_user")
 	_assert(str(profile.get("email", "")) == "legado@example.com", "La migracion deberia conservar el mail del save legado")
 	_assert(int(profile.get("age", 0)) == 34, "La migracion deberia conservar la edad del save legado")
 	_assert(SaveManager.get_users_count() == 1, "Tras migrar deberia existir un unico perfil local")
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "legacy_migration", "La metadata deberia marcar que el save provino de una migracion")
 
-	var summary := Global.get_progress_summary()
+	var summary: Dictionary = Global.get_progress_summary()
 	_assert(int(summary.get("celiaquia", 0)) == 2, "La migracion deberia restaurar progreso de celiaquia")
 	_assert(int(summary.get("veganismo", 0)) == 1, "La migracion deberia restaurar progreso de veganismo")
 	_assert(SaveManager.get_current_user_history().size() == 1, "La migracion deberia conservar el historial legado")
@@ -83,12 +91,21 @@ func _run() -> void:
 		_assert(migrated_payload is Dictionary, "El save migrado deberia seguir siendo JSON valido")
 		if migrated_payload is Dictionary:
 			_assert(migrated_payload.has("profile"), "El save migrado deberia escribirse con el formato nuevo basado en profile")
+			_assert(migrated_payload.has("sessions"), "El save migrado deberia escribir las partidas en el contenedor de sesiones")
+			_assert(migrated_payload.has("active_session_id"), "El save migrado deberia conservar una sesion activa seleccionable")
 			_assert(not migrated_payload.has("users"), "El save migrado ya no deberia persistir el formato viejo users/last_user")
 			_assert(str(migrated_payload.get("save_meta", {}).get("last_saved_reason", "")) == "manual_save", "El save migrado deberia poder volver a guardarse con metadata nueva")
 
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
+
+
+func _resolve_singletons() -> void:
+	if SaveManager == null:
+		SaveManager = root.get_node_or_null("/root/SaveManager")
+	if Global == null:
+		Global = root.get_node_or_null("/root/Global")
 
 
 func _cleanup_test_files() -> void:

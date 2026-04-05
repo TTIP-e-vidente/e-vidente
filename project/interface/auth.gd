@@ -4,41 +4,42 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
-@onready var title_label: Label = $Card/MarginContainer/Content/Header/Title
-@onready var subtitle_label: Label = $Card/MarginContainer/Content/Header/Subtitle
-@onready var info_label: Label = $Card/MarginContainer/Content/Header/InfoLabel
+@onready var info_label: Label = $Card/MarginContainer/Content/HeaderRow/Header/InfoPanel/MarginContainer/InfoLabel
 @onready var current_profile_value: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/CurrentProfileValue
+@onready var current_profile_email: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer/PreviewEmailLabel
+@onready var current_profile_age: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer/PreviewAgeLabel
 @onready var summary_save_label: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/SummarySaveLabel
-@onready var register_username: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/UsernameEdit
-@onready var register_age: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AgeEdit
+@onready var avatar_placeholder: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame/AvatarPlaceholder
+@onready var register_username: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn/UsernameEdit
+@onready var register_age: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn/AgeEdit
 @onready var register_email: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailEdit
 @onready var avatar_path_edit: LineEdit = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/AvatarPathEdit
 @onready var choose_avatar_button: Button = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton
+@onready var clear_avatar_button: Button = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton
 @onready var register_message: Label = $Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/RegisterMessage
 @onready var avatar_preview: TextureRect = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame/AvatarPreview
-@onready var register_button: Button = $Card/MarginContainer/Content/Footer/RegisterButton
-@onready var back_button: Button = $Card/MarginContainer/Content/Footer/BackButton
+@onready var register_button: Button = $Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton
+@onready var back_button: Button = $BackButton
 @onready var avatar_dialog: FileDialog = $AvatarDialog
 
 
 func _ready() -> void:
 	var profile := SaveManager.get_current_user_profile()
-	title_label.text = "Perfil local"
-	subtitle_label.text = "El progreso se guarda en este dispositivo. Completa solo los datos que te sirvan."
 	info_label.text = _build_info_text()
 	register_username.placeholder_text = "Nombre visible (opcional)"
 	register_age.placeholder_text = "Edad (opcional)"
 	register_email.placeholder_text = "Mail (opcional)"
-	choose_avatar_button.text = "Elegir foto"
-	register_button.text = "Guardar y volver" if _get_return_scene() == INTRO_SCENE else "Guardar y volver al Archivero"
-	back_button.text = "Volver al menu" if _get_return_scene() == INTRO_SCENE else "Volver al Archivero"
+	register_button.text = "Guardar perfil"
+	back_button.text = ""
+	back_button.tooltip_text = "Volver al menu" if _get_return_scene() == INTRO_SCENE else "Volver al Archivero"
 	register_username.text = _profile_name_for_form(profile)
 	register_age.text = _age_for_form(profile)
 	register_email.text = str(profile.get("email", ""))
 	avatar_path_edit.text = str(profile.get("avatar_path", ""))
+	_connect_live_preview_signals()
+	_refresh_avatar_controls()
 	_refresh_summary(profile)
-	_set_feedback("Los cambios se guardan en este dispositivo.", true)
-	_update_avatar_preview(avatar_path_edit.text)
+	_set_feedback("Revisa la vista previa y guarda cuando este lista.", true)
 
 
 func _on_choose_avatar_button_pressed() -> void:
@@ -47,7 +48,14 @@ func _on_choose_avatar_button_pressed() -> void:
 
 func _on_avatar_dialog_file_selected(path: String) -> void:
 	avatar_path_edit.text = path
-	_update_avatar_preview(path)
+	_refresh_avatar_controls()
+	_refresh_live_preview()
+
+
+func _on_clear_avatar_button_pressed() -> void:
+	avatar_path_edit.text = ""
+	_refresh_avatar_controls()
+	_refresh_live_preview()
 
 
 func _on_register_button_pressed() -> void:
@@ -65,7 +73,13 @@ func _on_register_button_pressed() -> void:
 	var is_ok := bool(result.get("ok", false))
 	_set_feedback(str(result.get("message", "")), is_ok)
 	if is_ok:
-		_refresh_summary(SaveManager.get_current_user_profile())
+		var saved_profile := SaveManager.get_current_user_profile()
+		register_username.text = _profile_name_for_form(saved_profile)
+		register_age.text = _age_for_form(saved_profile)
+		register_email.text = str(saved_profile.get("email", ""))
+		avatar_path_edit.text = str(saved_profile.get("avatar_path", ""))
+		_refresh_avatar_controls()
+		_refresh_summary(saved_profile)
 	if result.get("ok", false):
 		_go_to_return_scene()
 
@@ -80,10 +94,21 @@ func _on_back_button_pressed() -> void:
 
 func _update_avatar_preview(path: String) -> void:
 	avatar_preview.texture = SaveManager.load_avatar_texture(path)
+	avatar_placeholder.visible = avatar_preview.texture == null
 
 
 func _build_info_text() -> String:
-	return "Hay un unico perfil local por dispositivo. No necesitas login ni registro para conservar avance, avatar e historial."
+	return "Edita solo lo que quieras mostrar. Todo queda guardado en este dispositivo y se refleja en Mi progreso."
+
+
+func _connect_live_preview_signals() -> void:
+	for field in [register_username, register_age, register_email]:
+		if not field.text_changed.is_connected(_on_profile_field_changed):
+			field.text_changed.connect(_on_profile_field_changed)
+
+
+func _on_profile_field_changed(_new_text: String) -> void:
+	_refresh_live_preview()
 
 
 func _profile_name_for_form(profile: Dictionary) -> String:
@@ -113,14 +138,52 @@ func _parse_age(value: String) -> Dictionary:
 
 
 func _refresh_summary(profile: Dictionary) -> void:
-	var profile_name := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME))
-	current_profile_value.text = profile_name
+	_apply_profile_preview(
+		str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)),
+		str(profile.get("email", "")),
+		_age_for_form(profile)
+	)
+	_update_avatar_preview(str(profile.get("avatar_path", "")))
 	var save_status := SaveManager.get_save_status()
 	var last_reason := str(save_status.get("last_saved_reason", ""))
 	if last_reason.is_empty():
 		summary_save_label.text = "Ultimo guardado: todavia no hay escrituras registradas."
 	else:
 		summary_save_label.text = "Ultimo guardado: %s" % _format_save_reason(last_reason)
+
+
+func _refresh_live_preview() -> void:
+	_apply_profile_preview(register_username.text, register_email.text, register_age.text)
+	_update_avatar_preview(avatar_path_edit.text)
+
+
+func _apply_profile_preview(profile_name: String, email: String, age_text: String) -> void:
+	var clean_name := profile_name.strip_edges()
+	current_profile_value.text = clean_name if not clean_name.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
+	current_profile_email.text = "Mail: %s" % _format_optional_preview_text(email)
+	current_profile_age.text = _format_preview_age(age_text)
+
+
+func _format_optional_preview_text(value: String) -> String:
+	var clean_value := value.strip_edges()
+	if clean_value.is_empty():
+		return "sin dato"
+	return clean_value
+
+
+func _format_preview_age(value: String) -> String:
+	var clean_value := value.strip_edges()
+	if clean_value.is_empty():
+		return "Edad: sin dato"
+	if not clean_value.is_valid_int() or int(clean_value) < 0:
+		return "Edad: revisar"
+	return "Edad: %s" % clean_value
+
+
+func _refresh_avatar_controls() -> void:
+	var has_avatar := not avatar_path_edit.text.strip_edges().is_empty()
+	choose_avatar_button.text = "Cambiar foto" if has_avatar else "Elegir foto"
+	clear_avatar_button.visible = has_avatar
 
 
 func _format_save_reason(reason: String) -> String:
