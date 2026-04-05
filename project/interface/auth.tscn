@@ -103,28 +103,36 @@ border_width_bottom = 1
 border_color = Color(0.309804, 0.372549, 0.266667, 0.14)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_field"]
-bg_color = Color(1, 0.996078, 0.984314, 0.98)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.72, 0.76, 1)
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_field_focus"]
-bg_color = Color(1, 0.988235, 0.952941, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.309804, 0.372549, 0.266667, 0.4)
+border_color = Color(0.309804, 0.46, 0.266667, 0.85)
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button"]
 bg_color = Color(0.309804, 0.372549, 0.266667, 1)
@@ -149,20 +157,20 @@ shadow_color = Color(0, 0, 0, 0.1)
 shadow_size = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary_button"]
-bg_color = Color(1, 1, 1, 0.88)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
-content_margin_left = 14.0
-content_margin_top = 8.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
+bg_color = Color(0.938, 0.938, 0.944, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.72, 0.76, 0.8)
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_frame"]
 bg_color = Color(0.867, 0.906, 0.8, 0.55)
@@ -241,10 +249,10 @@ stretch_mode = 6
 modulate = Color(1, 1, 1, 0.52)
 
 [node name="BackButton" type="Button" parent="."]
-offset_left = 24.0
-offset_top = 26.0
-offset_right = 80.0
-offset_bottom = 80.0
+offset_left = 22.0
+offset_top = 22.0
+offset_right = 94.0
+offset_bottom = 94.0
 flat = true
 icon = ExtResource("3_back")
 expand_icon = true
@@ -255,9 +263,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 90.0
-offset_top = 42.0
+offset_top = 110.0
 offset_right = -90.0
-offset_bottom = 0.0
+offset_bottom = -32.0
 grow_horizontal = 2
 grow_vertical = 2
 follow_focus = true
@@ -265,13 +273,13 @@ follow_focus = true
 [node name="MarginContainer" type="MarginContainer" parent="Card"]
 layout_mode = 2
 theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 12
+theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_bottom = 32
 
 [node name="Content" type="VBoxContainer" parent="Card/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 
 [node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
 layout_mode = 2
@@ -306,23 +314,6 @@ text = "Perfil de este equipo"
 [node name="Spacer" type="Control" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="InfoPanel" type="PanelContainer" parent="Card/MarginContainer/Content/HeaderRow/Header"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_info_panel")
-
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/HeaderRow/Header/InfoPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 10
-
-[node name="InfoLabel" type="Label" parent="Card/MarginContainer/Content/HeaderRow/Header/InfoPanel/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.95)
-theme_override_font_sizes/font_size = 15
-autowrap_mode = 3
 
 [node name="MainRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
 layout_mode = 2

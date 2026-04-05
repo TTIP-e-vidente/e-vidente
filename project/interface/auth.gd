@@ -4,7 +4,6 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
-@onready var info_label: Label = $Card/MarginContainer/Content/HeaderRow/Header/InfoPanel/MarginContainer/InfoLabel
 @onready var current_profile_value: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/CurrentProfileValue
 @onready var current_profile_email: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer/PreviewEmailLabel
 @onready var current_profile_age: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer/PreviewAgeLabel
@@ -25,7 +24,6 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 func _ready() -> void:
 	var profile := SaveManager.get_current_user_profile()
-	info_label.text = _build_info_text()
 	register_username.placeholder_text = "Nombre visible (opcional)"
 	register_age.placeholder_text = "Edad (opcional)"
 	register_email.placeholder_text = "Mail (opcional)"
