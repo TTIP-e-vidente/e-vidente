@@ -298,6 +298,15 @@ jobs:
           restore-keys: |
             godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
+      - name: Setup export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.local/share/godot/export_templates/
+          if [ ! -d ~/.local/share/godot/export_templates/4.6.2.stable ]; then
+            mv /root/.local/share/godot/export_templates/4.6.2.stable ~/.local/share/godot/export_templates/4.6.2.stable
+          fi
+
       - name: Import project
         run: godot --headless --path project --editor --quit
 
