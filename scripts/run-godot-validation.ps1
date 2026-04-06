@@ -22,10 +22,11 @@ function Resolve-GodotCommand {
     }
 
     $candidates = @(
+        'godot4.6',
         'godot',
         'godot4',
-        'godot4.2',
-        'Godot_v4.2-stable_win64.exe'
+        'Godot_v4.6.2-stable_win64.exe',
+        'Godot_v4.6-stable_win64.exe'
     )
 
     foreach ($candidate in $candidates) {

@@ -43,6 +43,12 @@ var manager_level
 var current_level: int = 1
 const LEVEL_STATUS_INDEX := 6
 const LEVELS_PER_BOOK := 6
+const TRACK_KEYS := ["celiaquia", "veganismo", "veganismo_celiaquia"]
+const PARTIAL_LEVEL_STATES_KEY := "partial_level_states"
+const PARTIAL_LEVEL_ITEMS_KEY := "items"
+const PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY := "placed_item_ids"
+
+var partial_level_states: Dictionary = _default_partial_level_states()
 
 func items_segun_nivel(nivel):
 	if nivel.name == "Level": 
@@ -112,6 +118,7 @@ func reset_progress() -> void:
 	_reset_book_progress(items_level_vegan)
 	_reset_book_progress(items_level_vegan_gf)
 	current_level = 1
+	partial_level_states = _default_partial_level_states()
 
 
 func export_progress() -> Dictionary:
@@ -119,7 +126,8 @@ func export_progress() -> Dictionary:
 		"current_level": current_level,
 		"celiaquia": _export_book_progress(items_level),
 		"veganismo": _export_book_progress(items_level_vegan),
-		"veganismo_celiaquia": _export_book_progress(items_level_vegan_gf)
+		"veganismo_celiaquia": _export_book_progress(items_level_vegan_gf),
+		PARTIAL_LEVEL_STATES_KEY: _export_partial_level_states()
 	}
 
 
@@ -132,6 +140,8 @@ func import_progress(progress: Dictionary) -> void:
 	_import_book_progress(items_level, progress.get("celiaquia", []))
 	_import_book_progress(items_level_vegan, progress.get("veganismo", []))
 	_import_book_progress(items_level_vegan_gf, progress.get("veganismo_celiaquia", []))
+	partial_level_states = _normalize_partial_level_states(progress.get(PARTIAL_LEVEL_STATES_KEY, {}))
+	_prune_partial_level_states()
 
 
 func get_progress_summary() -> Dictionary:
@@ -145,6 +155,49 @@ func get_progress_summary() -> Dictionary:
 		"total": celiaquia_completed + vegan_completed + vegan_gf_completed,
 		"max_total": LEVELS_PER_BOOK * 3
 	}
+
+
+func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
+	var clean_track_key := track_key.strip_edges()
+	if not TRACK_KEYS.has(clean_track_key):
+		return {}
+	var track_states = partial_level_states.get(clean_track_key, {})
+	if not track_states is Dictionary:
+		return {}
+	var clean_level_number := clampi(level_number, 1, LEVELS_PER_BOOK)
+	return _normalize_partial_level_state(track_states.get(str(clean_level_number), {}))
+
+
+func set_partial_level_state(track_key: String, level_number: int, state: Dictionary) -> void:
+	var clean_track_key := track_key.strip_edges()
+	if not TRACK_KEYS.has(clean_track_key):
+		return
+	var clean_level_number := clampi(level_number, 1, LEVELS_PER_BOOK)
+	var track_states = partial_level_states.get(clean_track_key, {})
+	if not track_states is Dictionary:
+		track_states = {}
+	if _is_level_completed(clean_track_key, clean_level_number):
+		track_states.erase(str(clean_level_number))
+		partial_level_states[clean_track_key] = track_states
+		return
+	var normalized_state := _normalize_partial_level_state(state)
+	if normalized_state.is_empty():
+		track_states.erase(str(clean_level_number))
+	else:
+		track_states[str(clean_level_number)] = normalized_state
+	partial_level_states[clean_track_key] = track_states
+
+
+func clear_partial_level_state(track_key: String, level_number: int) -> void:
+	var clean_track_key := track_key.strip_edges()
+	if not TRACK_KEYS.has(clean_track_key):
+		return
+	var clean_level_number := clampi(level_number, 1, LEVELS_PER_BOOK)
+	var track_states = partial_level_states.get(clean_track_key, {})
+	if not track_states is Dictionary:
+		track_states = {}
+	track_states.erase(str(clean_level_number))
+	partial_level_states[clean_track_key] = track_states
 
 
 func _reset_book_progress(book: Dictionary) -> void:
@@ -174,3 +227,126 @@ func _count_completed_levels(book: Dictionary) -> int:
 		if book.has(level_number) and bool(book[level_number][LEVEL_STATUS_INDEX]):
 			completed += 1
 	return completed
+
+
+func _default_partial_level_states() -> Dictionary:
+	return {
+		"celiaquia": {},
+		"veganismo": {},
+		"veganismo_celiaquia": {}
+	}
+
+
+func _export_partial_level_states() -> Dictionary:
+	var exported_states := {}
+	for track_key in TRACK_KEYS:
+		var raw_track_states = partial_level_states.get(track_key, {})
+		if not raw_track_states is Dictionary:
+			continue
+		var normalized_track_states := {}
+		for raw_level_key in raw_track_states.keys():
+			var clean_level_key := str(raw_level_key).strip_edges()
+			var normalized_state := _normalize_partial_level_state(raw_track_states[raw_level_key])
+			if clean_level_key.is_empty() or normalized_state.is_empty():
+				continue
+			normalized_track_states[clean_level_key] = normalized_state
+		if not normalized_track_states.is_empty():
+			exported_states[track_key] = normalized_track_states
+	return exported_states
+
+
+func _normalize_partial_level_states(raw_states: Variant) -> Dictionary:
+	var normalized_states := _default_partial_level_states()
+	if not raw_states is Dictionary:
+		return normalized_states
+	for track_key in TRACK_KEYS:
+		var raw_track_states = raw_states.get(track_key, {})
+		if not raw_track_states is Dictionary:
+			continue
+		var normalized_track_states := {}
+		for raw_level_key in raw_track_states.keys():
+			var clean_level_key := str(raw_level_key).strip_edges()
+			if not clean_level_key.is_valid_int():
+				continue
+			var clean_level_number := clampi(int(clean_level_key), 1, LEVELS_PER_BOOK)
+			var normalized_state := _normalize_partial_level_state(raw_track_states[raw_level_key])
+			if normalized_state.is_empty():
+				continue
+			normalized_track_states[str(clean_level_number)] = normalized_state
+		normalized_states[track_key] = normalized_track_states
+	return normalized_states
+
+
+func _normalize_partial_level_state(raw_state: Variant) -> Dictionary:
+	if not raw_state is Dictionary:
+		return {}
+	var raw_items = raw_state.get(PARTIAL_LEVEL_ITEMS_KEY, [])
+	var raw_placed_item_ids = raw_state.get(PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	var normalized_items: Array = []
+	var positive_item_ids := {}
+	if raw_items is Array:
+		for raw_item in raw_items:
+			if not raw_item is Dictionary:
+				continue
+			var item_path := str(raw_item.get("item_path", "")).strip_edges()
+			var instance_id := str(raw_item.get("instance_id", "")).strip_edges()
+			if item_path.is_empty() or instance_id.is_empty():
+				continue
+			var normalized_item := {
+				"item_path": item_path,
+				"instance_id": instance_id,
+				"is_positive": bool(raw_item.get("is_positive", false))
+			}
+			normalized_items.append(normalized_item)
+			if bool(normalized_item.get("is_positive", false)):
+				positive_item_ids[instance_id] = true
+	if normalized_items.is_empty():
+		return {}
+	var normalized_placed_item_ids: Array = []
+	if raw_placed_item_ids is Array:
+		for raw_item_id in raw_placed_item_ids:
+			var clean_item_id := str(raw_item_id).strip_edges()
+			if clean_item_id.is_empty() or normalized_placed_item_ids.has(clean_item_id):
+				continue
+			if positive_item_ids.has(clean_item_id):
+				normalized_placed_item_ids.append(clean_item_id)
+	return {
+		PARTIAL_LEVEL_ITEMS_KEY: normalized_items,
+		PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: normalized_placed_item_ids
+	}
+
+
+func _prune_partial_level_states() -> void:
+	for track_key in TRACK_KEYS:
+		var track_states = partial_level_states.get(track_key, {})
+		if not track_states is Dictionary:
+			partial_level_states[track_key] = {}
+			continue
+		for raw_level_key in track_states.keys():
+			var clean_level_key := str(raw_level_key).strip_edges()
+			if not clean_level_key.is_valid_int():
+				track_states.erase(raw_level_key)
+				continue
+			var level_number := clampi(int(clean_level_key), 1, LEVELS_PER_BOOK)
+			if _is_level_completed(track_key, level_number):
+				track_states.erase(raw_level_key)
+		partial_level_states[track_key] = track_states
+
+
+func _book_for_track(track_key: String) -> Dictionary:
+	match track_key:
+		"celiaquia":
+			return items_level
+		"veganismo":
+			return items_level_vegan
+		"veganismo_celiaquia":
+			return items_level_vegan_gf
+		_:
+			return {}
+
+
+func _is_level_completed(track_key: String, level_number: int) -> bool:
+	var book := _book_for_track(track_key)
+	if not book.has(level_number):
+		return false
+	return bool(book[level_number][LEVEL_STATUS_INDEX])

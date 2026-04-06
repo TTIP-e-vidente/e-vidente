@@ -4,6 +4,21 @@ var SaveManager
 var Global
 var failed := false
 
+const TEST_CASES := [
+	{
+		"scene_path": "res://niveles/nivel_1/Level.tscn",
+		"track_key": "celiaquia"
+	},
+	{
+		"scene_path": "res://niveles/nivel_2/level_vegan.tscn",
+		"track_key": "veganismo"
+	},
+	{
+		"scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
+		"track_key": "veganismo_celiaquia"
+	}
+]
+
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -19,35 +34,101 @@ func _run() -> void:
 		return
 	_cleanup_test_files()
 	await process_frame
-
-	SaveManager.load_data()
-	var level_scene: PackedScene = load("res://niveles/nivel_1/Level.tscn") as PackedScene
-	_assert(level_scene != null, "No se pudo cargar la escena del nivel para el test de guardado rapido")
-	if level_scene != null:
-		var level_instance: Node = level_scene.instantiate()
-		root.add_child(level_instance)
+	for test_case in TEST_CASES:
+		_cleanup_test_files()
 		await process_frame
-
-		var save_button: Button = level_instance.get_node("SaveProgressButton")
-		var save_feedback_label: Label = level_instance.get_node("SaveFeedbackLabel")
-
-		_assert(save_button != null, "El nivel deberia exponer un boton de guardado rapido")
-		_assert(save_feedback_label != null, "El nivel deberia exponer feedback visible al guardar")
-		_assert(save_button.tooltip_text.contains("Guardar"), "El boton de guardado rapido deberia explicar su funcion")
-
-		if save_button != null:
-			save_button.emit_signal("pressed")
-			await process_frame
-
-		_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado rapido del nivel deberia escribir el save principal")
-		_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "El guardado rapido del nivel deberia registrarse como guardado manual")
-		_assert(save_feedback_label.text.contains("guardado"), "El nivel deberia informar que el progreso quedo guardado")
-
-		level_instance.queue_free()
+		await _run_quick_save_case(test_case)
+		if failed:
+			break
 
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
+
+
+func _run_quick_save_case(test_case: Dictionary) -> void:
+	SaveManager.load_data()
+	Global.current_level = 2
+	var track_key := str(test_case.get("track_key", "")).strip_edges()
+	var scene_path := str(test_case.get("scene_path", "")).strip_edges()
+	var case_label := "%s (%s)" % [track_key, scene_path]
+	var level_scene: PackedScene = load(scene_path) as PackedScene
+	_assert(level_scene != null, "No se pudo cargar la escena %s para el test de guardado rapido" % case_label)
+	if level_scene == null:
+		return
+
+	var level_instance: Node = level_scene.instantiate()
+	root.add_child(level_instance)
+	await process_frame
+	_disable_level_audio(level_instance)
+
+	var save_button := level_instance.get_node_or_null("SaveProgressButton") as Button
+	var save_feedback_backdrop := level_instance.get_node_or_null("SaveFeedbackBackdrop") as PanelContainer
+	var save_feedback_title := level_instance.get_node_or_null("SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack/SaveFeedbackTitle") as Label
+	var save_feedback_label := level_instance.get_node_or_null("SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack/SaveFeedbackLabel") as Label
+	var manager_level = level_instance.get_node_or_null("ManagerLevel")
+	var plato = level_instance.get_node_or_null("Plato")
+
+	_assert(save_button != null, "%s deberia exponer un boton de guardado rapido" % case_label)
+	_assert(save_feedback_backdrop != null, "%s deberia exponer una tarjeta visual para el guardado local" % case_label)
+	_assert(save_feedback_title != null, "%s deberia exponer un titulo visible para el feedback de guardado" % case_label)
+	_assert(save_feedback_label != null, "%s deberia exponer feedback visible al guardar" % case_label)
+	_assert(manager_level != null, "%s deberia exponer el ManagerLevel para armar el escenario de prueba" % case_label)
+	_assert(plato != null, "%s deberia exponer el Plato para restaurar el guardado parcial" % case_label)
+	if save_button == null or save_feedback_backdrop == null or save_feedback_title == null or save_feedback_label == null or manager_level == null or plato == null:
+		level_instance.queue_free()
+		await process_frame
+		return
+
+	_assert(save_feedback_backdrop.clip_contents, "%s deberia contener visualmente el texto dentro del panel" % case_label)
+	_assert(save_feedback_backdrop.is_ancestor_of(save_feedback_title), "%s deberia montar el titulo dentro de la tarjeta visual" % case_label)
+	_assert(save_feedback_backdrop.is_ancestor_of(save_feedback_label), "%s deberia montar el detalle dentro de la tarjeta visual" % case_label)
+	_assert(save_button.tooltip_text.contains("Guardar"), "%s deberia explicar la funcion del guardado rapido" % case_label)
+
+	var positive_item = null
+	for item in manager_level.lista_items:
+		if item.esPositivo:
+			positive_item = item
+			break
+	_assert(positive_item != null, "%s deberia exponer al menos un item positivo para simular un guardado parcial" % case_label)
+	if positive_item == null:
+		level_instance.queue_free()
+		await process_frame
+		return
+
+	positive_item.restore_to_plate(plato.global_position)
+	plato.restore_positive_item(positive_item)
+	save_button.emit_signal("pressed")
+	await process_frame
+
+	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "%s deberia escribir el save principal" % case_label)
+	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "%s deberia registrarse como guardado manual" % case_label)
+	_assert(save_feedback_label.text.to_lower().contains("guardado"), "%s deberia informar que el progreso quedo guardado" % case_label)
+	_assert(save_feedback_backdrop.visible, "%s deberia mostrar el feedback dentro de una tarjeta visible" % case_label)
+	_assert(save_feedback_title.text.contains("Guardado"), "%s deberia tener un titulo descriptivo para el feedback" % case_label)
+	_assert(save_feedback_label.text.contains("plato"), "%s deberia informar cuantas comidas quedaron dentro del plato" % case_label)
+	_assert(Global.get_partial_level_state(track_key, Global.current_level).get("placed_item_ids", []).size() == 1, "%s deberia persistir la comida correcta ya colocada" % case_label)
+
+	level_instance.queue_free()
+	await process_frame
+
+	Global.reset_progress()
+	var resume_state: Dictionary = SaveManager.load_progress_and_get_resume_state()
+	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "%s deberia mantener la reanudacion dentro del nivel" % case_label)
+	_assert(str(resume_state.get("track_key", "")) == track_key, "%s deberia reanudar el track correcto" % case_label)
+	_assert(str(resume_state.get("scene_path", "")) == scene_path, "%s deberia reanudar en la escena correcta" % case_label)
+	_assert(int(resume_state.get("level_number", 0)) == 2, "%s deberia seguir apuntando al capitulo actual" % case_label)
+
+	var restored_level_instance: Node = level_scene.instantiate()
+	root.add_child(restored_level_instance)
+	await process_frame
+	_disable_level_audio(restored_level_instance)
+	var restored_plato = restored_level_instance.get_node_or_null("Plato")
+	_assert(restored_plato != null, "%s deberia exponer el Plato al recargar el guardado" % case_label)
+	if restored_plato != null:
+		_assert(restored_plato.cantAlimentosPos.keys().size() == 1, "%s deberia restaurar la comida correcta dentro del plato" % case_label)
+	restored_level_instance.queue_free()
+	await process_frame
 
 
 func _resolve_singletons() -> void:
@@ -68,6 +149,14 @@ func _cleanup_test_files() -> void:
 		if FileAccess.file_exists(absolute_path):
 			DirAccess.remove_absolute(absolute_path)
 	SaveManager.load_data()
+
+
+func _disable_level_audio(level_instance: Node) -> void:
+	var background_player := level_instance.get_node_or_null("Background") as AudioStreamPlayer2D
+	if background_player == null:
+		return
+	background_player.stop()
+	background_player.stream = null
 
 
 func _assert(condition: bool, message: String) -> void:

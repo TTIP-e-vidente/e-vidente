@@ -7,14 +7,22 @@ class_name PlayerCambiante
 @onready var adelante = $"../Adelante"
 @onready var ensenanza = $"../Ensenanza"
 var tipo: LevelItem.Condicion
+var _current_animation := "cagadodehambre"
 var current_animation = "cagadodehambre" : 
 	set(value):
-		current_animation = value
-		if anim != null: anim.play(current_animation)
+		_current_animation = value
+		if anim != null:
+			anim.play(_current_animation)
+	get:
+		return _current_animation
+var _abstract_state: Estado
 var abstract_state : Estado : 
 	set(new_state):
-		abstract_state = new_state
-		abstract_state.aplicar_animacion()
+		_abstract_state = new_state
+		if _abstract_state != null:
+			_abstract_state.aplicar_animacion()
+	get:
+		return _abstract_state
 @onready var sentir_hambre = $AbstractState/SentirHambre
 @onready var manager_level = $"../ManagerLevel"
 

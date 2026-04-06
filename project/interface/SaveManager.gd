@@ -312,6 +312,7 @@ func can_resume_game(session_id: String = "") -> bool:
 
 
 func record_level_completed(track_key: String, level_number: int) -> void:
+	Global.clear_partial_level_state(track_key, level_number)
 	set_resume_after_level_completed(track_key, level_number)
 	save_current_user_progress(false)
 	var message := "Completaste %s - capitulo %d" % [_track_label(track_key), level_number]

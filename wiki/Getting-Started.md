@@ -4,7 +4,7 @@ Esta guía sirve para levantar el proyecto por primera vez sin perder tiempo en 
 
 ## Requisitos
 
-- Godot 4.2 exacto.
+- Godot 4.6.2 estable.
 - Git instalado y configurado.
 - Acceso al repositorio para trabajar con ramas y pull requests.
 
@@ -23,7 +23,7 @@ Después, importar el proyecto en Godot:
 1. Abrir Godot Hub o el editor.
 2. Ir a `Project > Import`.
 3. Seleccionar `project/project.godot`.
-4. Abrirlo con Godot 4.2.
+4. Abrirlo con Godot 4.6.2.
 5. Esperar la importación inicial.
 
 ## Carpetas importantes

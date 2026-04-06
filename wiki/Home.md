@@ -16,7 +16,7 @@ e-vidente es un juego de puzzle educativo sobre alimentación, restricciones ali
 
 ```
 e-vidente/
-├── project/          # Juego Godot 4.2
+├── project/          # Juego Godot 4.6.2
 │  ├── interface/     # Escenas y UI
 │  ├── items/         # Recursos de alimentos
 │  ├── niveles/       # Datos de escenarios

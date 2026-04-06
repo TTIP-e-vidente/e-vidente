@@ -20,6 +20,7 @@ func _victory():
 	adelante.disabled = false
 	ensenanza.show()
 	Global.items_level_vegan[Global.current_level][6] = true
+	Global.clear_partial_level_state(_get_resume_track_key(), Global.current_level)
 	SaveManager.record_level_completed(_get_resume_track_key(), Global.current_level)
 	
 func _on_adelante_pressed():

@@ -252,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
-      image: barichello/godot-ci:4.2
+      image: barichello/godot-ci:4.6.2-stable
 
     steps:
       - name: Checkout
@@ -265,9 +265,9 @@ jobs:
           path: |
             project/.godot/imported
             project/.godot/editor
-          key: godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
+          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
           restore-keys: |
-            godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
+            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
       - name: Run Godot validation suite
         shell: bash
@@ -281,7 +281,7 @@ jobs:
       - quality
     timeout-minutes: 20
     container:
-      image: barichello/godot-ci:4.2
+      image: barichello/godot-ci:4.6.2-stable
 
     steps:
       - name: Checkout
@@ -294,9 +294,9 @@ jobs:
           path: |
             project/.godot/imported
             project/.godot/editor
-          key: godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
+          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
           restore-keys: |
-            godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
+            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
 
       - name: Import project
         run: godot --headless --path project --editor --quit

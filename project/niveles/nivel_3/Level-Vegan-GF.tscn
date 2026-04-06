@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3 uid="uid://bupuitrnp6shp"]
+[gd_scene load_steps=44 format=3 uid="uid://bupuitrnp6shp"]
 
 [ext_resource type="Script" path="res://niveles/nivel_3/Level-Vegan-Gluten.gd" id="1_wi3ev"]
 [ext_resource type="Texture2D" uid="uid://5jimpew4xl7m" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="2_f1fgs"]
@@ -156,6 +156,20 @@ animations = [{
 "name": &"retriston",
 "speed": 5.0
 }]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0nv70"]
+bg_color = Color(0.992157, 0.968627, 0.913725, 0.945098)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.270588, 0.239216, 0.172549, 0.141176)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+shadow_color = Color(0, 0, 0, 0.121569)
+shadow_size = 8
 
 [node name="Level-vegan-gf" type="Node"]
 script = ExtResource("1_wi3ev")
@@ -342,14 +356,41 @@ tooltip_text = "Guardar progreso"
 icon = ExtResource("39_saveicon")
 flat = true
 
-[node name="SaveFeedbackLabel" type="Label" parent="."]
-offset_left = 860.0
-offset_top = 98.0
-offset_right = 1118.0
-offset_bottom = 132.0
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.92)
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 2
+[node name="SaveFeedbackBackdrop" type="PanelContainer" parent="."]
+visible = false
+clip_contents = true
+mouse_filter = 2
+z_index = 20
+offset_left = 706.0
+offset_top = 18.0
+offset_right = 1003.0
+offset_bottom = 140.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_0nv70")
+
+[node name="SaveFeedbackPadding" type="MarginContainer" parent="SaveFeedbackBackdrop"]
+offset_right = 297.0
+offset_bottom = 122.0
+mouse_filter = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="SaveFeedbackStack" type="VBoxContainer" parent="SaveFeedbackBackdrop/SaveFeedbackPadding"]
+offset_right = 261.0
+offset_bottom = 93.0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="SaveFeedbackTitle" type="Label" parent="SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack"]
+theme_override_colors/font_color = Color(0.215686, 0.337255, 0.231373, 1)
+theme_override_font_sizes/font_size = 19
+text = "Guardado local"
+
+[node name="SaveFeedbackLabel" type="Label" parent="SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack"]
+theme_override_colors/font_color = Color(0.266667, 0.227451, 0.156863, 0.96)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
 
 [node name="Ensenanza" type="Sprite2D" parent="."]
 visible = false

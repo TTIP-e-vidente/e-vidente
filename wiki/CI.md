@@ -29,7 +29,7 @@ Si falla algo acá, normalmente no es un error de runtime sino una deuda de docu
 
 ### `validate`
 
-Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.2`.
+Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2-stable`.
 
 Hace lo siguiente:
 
@@ -76,7 +76,7 @@ powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1
 Si `godot` no esta en PATH:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.2-stable_win64.exe"
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
 ```
 
 En shell:

@@ -14,21 +14,38 @@ var categoria
 var is_inside_droppable = false
 var info: Texture2D
 var textSprite: Texture2D
+var item_resource_path := ""
+var save_instance_id := ""
 
-func setup(sprite, condicion, superficie, booleano, texturaInfo, categorias):
-	$Sprite2D.texture = sprite
-	textSprite = sprite
-	condiciones = condicion
+func setup(level_item: LevelItem, superficie, is_positive: bool, instance_id: String = ""):
+	textSprite = level_item.sprite
+	$Sprite2D.texture = textSprite
+	condiciones = level_item.condiciones.duplicate()
 	plato = superficie
-	esPositivo = booleano
-	info = texturaInfo
-	categoria = categorias
+	esPositivo = is_positive
+	info = level_item.info
+	categoria = level_item.categoria
+	item_resource_path = level_item.resource_path
+	save_instance_id = instance_id.strip_edges()
+	if save_instance_id.is_empty():
+		save_instance_id = item_resource_path.get_file().get_basename()
 
 func show_info():
 	$Sprite2D.texture = info
 	
 func show_texture():
 	$Sprite2D.texture = textSprite
+
+
+func set_home_position(target_position: Vector2) -> void:
+	global_position = target_position
+	initialPos = target_position
+
+
+func restore_to_plate(target_position: Vector2) -> void:
+	set_home_position(target_position)
+	body_ref = plato
+	is_inside_droppable = true
 
 func _process(delta):
 	if draggable:
