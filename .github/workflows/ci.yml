@@ -252,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
-      image: barichello/godot-ci:4.6.2-stable
+      image: barichello/godot-ci:4.6.2
 
     steps:
       - name: Checkout
@@ -281,7 +281,7 @@ jobs:
       - quality
     timeout-minutes: 20
     container:
-      image: barichello/godot-ci:4.6.2-stable
+      image: barichello/godot-ci:4.6.2
 
     steps:
       - name: Checkout

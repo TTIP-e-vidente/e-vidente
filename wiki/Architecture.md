@@ -81,7 +81,7 @@ Más detalle en [Persistencia Local](Persistencia-Local).
 - Godot 4.6.2.
 - GDScript para la lógica del proyecto.
 - GitHub Actions para CI.
-- `barichello/godot-ci:4.6.2-stable` para validación y export headless.
+- `barichello/godot-ci:4.6.2` para validación y export headless.
 
 ## Build y export
 

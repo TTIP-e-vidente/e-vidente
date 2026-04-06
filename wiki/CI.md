@@ -29,7 +29,7 @@ Si falla algo acá, normalmente no es un error de runtime sino una deuda de docu
 
 ### `validate`
 
-Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2-stable`.
+Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2`.
 
 Hace lo siguiente:
 
