@@ -1,4 +1,4 @@
-name: Godot CI
+name: CI
 
 on:
   push:
@@ -6,17 +6,17 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: godot-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality Guardrails (Non-Blocking)
+  guardrails:
+    name: Guardrails
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - name: Checkout
@@ -25,19 +25,18 @@ jobs:
           fetch-depth: 0
 
       - name: Validate repository structure
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
-          missing=0
 
           REQUIRED_DIRS=(
-            ".github/workflows"
             "project"
             "project/interface"
             "project/items"
             "project/niveles"
             "project/resources"
+            "project/tests"
+            "scripts"
             "wiki"
           )
 
@@ -45,81 +44,120 @@ jobs:
             "README.md"
             "project/project.godot"
             "project/export_presets.cfg"
+            "scripts/run-godot-validation.sh"
+            "scripts/run-godot-validation.ps1"
             "wiki/Home.md"
-            "wiki/Getting-Started.md"
+            "wiki/Bitacora.md"
+            "wiki/CI.md"
           )
+
+          MISSING_DIRS=""
+          MISSING_FILES=""
 
           for d in "${REQUIRED_DIRS[@]}"; do
             if [ ! -d "$d" ]; then
-              echo "::warning::Missing required directory: $d"
-              missing=1
+              MISSING_DIRS="$MISSING_DIRS- $d\n"
             fi
           done
 
           for f in "${REQUIRED_FILES[@]}"; do
             if [ ! -f "$f" ]; then
-              echo "::warning::Missing required file: $f"
-              missing=1
+              MISSING_FILES="$MISSING_FILES- $f\n"
             fi
           done
 
-          if [ "$missing" -eq 0 ]; then
-            echo "Repository structure looks good."
-          else
-            echo "Structure warnings found (non-blocking)."
+          if [ -n "$MISSING_DIRS" ] || [ -n "$MISSING_FILES" ]; then
+            echo "::error title=Guardrails: estructura invalida::Faltan rutas requeridas del repo. Revisar el resumen del paso."
+            {
+              echo "### Guardrails failed"
+              echo "- Motivo: faltan rutas requeridas del repo."
+              if [ -n "$MISSING_DIRS" ]; then
+                echo "- Directorios faltantes:"
+                printf '%b' "$MISSING_DIRS"
+              fi
+              if [ -n "$MISSING_FILES" ]; then
+                echo "- Archivos faltantes:"
+                printf '%b' "$MISSING_FILES"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$MISSING_DIRS" ]; then
+              echo "Directorios faltantes:"
+              printf '%b' "$MISSING_DIRS"
+            fi
+            if [ -n "$MISSING_FILES" ]; then
+              echo "Archivos faltantes:"
+              printf '%b' "$MISSING_FILES"
+            fi
+            exit 1
           fi
 
-      - name: Run ESLint if configured
-        continue-on-error: true
+      - name: Run ESLint when configured
         shell: bash
         run: |
           set -euo pipefail
 
           HAS_PACKAGE_JSON=0
+          HAS_NPM_LOCK=0
           HAS_ESLINT_CONFIG=0
 
           if [ -f package.json ]; then
             HAS_PACKAGE_JSON=1
           fi
 
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            HAS_NPM_LOCK=1
+          fi
+
           if [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f .eslintrc.cjs ] || [ -f .eslintrc.yaml ] || [ -f .eslintrc.yml ]; then
             HAS_ESLINT_CONFIG=1
           fi
 
-          if [ "$HAS_PACKAGE_JSON" -eq 1 ] && [ "$HAS_ESLINT_CONFIG" -eq 1 ]; then
-            echo "ESLint configuration detected. Running lint..."
-            npm ci
-            npx eslint . --max-warnings=9999
-          else
-            echo "::notice::Skipping ESLint: no Node/ESLint config detected in this repository."
+          if [ "$HAS_ESLINT_CONFIG" -eq 0 ]; then
+            echo "No hay configuracion ESLint en este repo."
+            exit 0
           fi
 
-      - name: Validate docs baseline
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [ -f README.md ] && [ -s README.md ]; then
-            echo "README.md present."
-          else
-            echo "::warning::README.md missing or empty"
+          if [ "$HAS_PACKAGE_JSON" -ne 1 ]; then
+            echo "::error title=Guardrails: ESLint incompleto::Hay configuracion de ESLint pero falta package.json"
+            {
+              echo "### Guardrails failed"
+              echo "- Motivo: el repo trae configuracion ESLint, pero no trae package.json."
+              echo "- Accion: completar el stack Node del repo o quitar la configuracion huérfana."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
-          if [ -f wiki/Home.md ] && [ -s wiki/Home.md ]; then
-            echo "wiki/Home.md present."
-          else
-            echo "::warning::wiki/Home.md missing or empty"
+          if [ "$HAS_NPM_LOCK" -ne 1 ]; then
+            echo "::error title=Guardrails: lockfile faltante::Hay configuracion de ESLint pero falta package-lock.json o npm-shrinkwrap.json"
+            {
+              echo "### Guardrails failed"
+              echo "- Motivo: ESLint esta configurado pero falta lockfile deterministico de npm."
+              echo "- Accion: generar y commitear package-lock.json o npm-shrinkwrap.json."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
-          if [ -f wiki/Bitacora.md ] && [ -s wiki/Bitacora.md ]; then
-            echo "wiki/Bitacora.md present."
-          else
-            echo "::warning::wiki/Bitacora.md missing or empty"
+          if ! npm ci --ignore-scripts; then
+            echo "::error title=Guardrails: npm ci fallo::No se pudieron instalar dependencias para correr ESLint. Revisar package.json y lockfile."
+            {
+              echo "### Guardrails failed"
+              echo "- Motivo: npm ci fallo antes de correr ESLint."
+              echo "- Accion: revisar consistencia entre package.json y lockfile."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
-      - name: Wiki update reminder (non-blocking)
-        continue-on-error: true
+          if ! npx eslint . --max-warnings=0; then
+            echo "::error title=Guardrails: ESLint fallo::ESLint encontro errores o warnings bloqueantes. Revisar la salida del paso."
+            {
+              echo "### Guardrails failed"
+              echo "- Motivo: ESLint encontro problemas bloqueantes."
+              echo "- Accion: corregir la salida reportada por ESLint."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Wiki reminder
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -160,91 +198,25 @@ jobs:
           echo "$CHANGED_FILES"
 
           if echo "$CHANGED_FILES" | grep -q '^project/'; then
-            if ! echo "$CHANGED_FILES" | grep -q '^wiki/'; then
-              echo "::warning::Project files changed without wiki updates. Consider updating wiki/Bitacora.md or wiki/Home.md"
+            if ! echo "$CHANGED_FILES" | grep -q '^wiki/Bitacora.md$'; then
+              echo "::warning::Cambios en project/ sin actualizar wiki/Bitacora.md. Revisar si falta registrar la decision tecnica."
             else
-              echo "Project and wiki changed together. Good."
+              echo "Project y Bitacora actualizados juntos."
             fi
           else
-            echo "No project/ changes detected."
+            echo "No hubo cambios en project/."
           fi
 
-      - name: Quality one-line summary
-        continue-on-error: true
+      - name: CI contract summary
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BEFORE: ${{ github.event.before }}
-          GITHUB_SHA: ${{ github.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-
-          REQUIRED_DIRS=(
-            ".github/workflows"
-            "project"
-            "project/interface"
-            "project/items"
-            "project/niveles"
-            "project/resources"
-            "wiki"
-          )
-
-          REQUIRED_FILES=(
-            "README.md"
-            "project/project.godot"
-            "project/export_presets.cfg"
-            "wiki/Home.md"
-            "wiki/Getting-Started.md"
-          )
-
-          missing_structure=0
-          for d in "${REQUIRED_DIRS[@]}"; do
-            [ -d "$d" ] || missing_structure=$((missing_structure + 1))
-          done
-          for f in "${REQUIRED_FILES[@]}"; do
-            [ -f "$f" ] || missing_structure=$((missing_structure + 1))
-          done
-
-          missing_docs=0
-          [ -s README.md ] || missing_docs=$((missing_docs + 1))
-          [ -s wiki/Home.md ] || missing_docs=$((missing_docs + 1))
-          [ -s wiki/Bitacora.md ] || missing_docs=$((missing_docs + 1))
-
-          eslint_status="skipped"
-          if [ -f package.json ] && ( [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f .eslintrc.cjs ] || [ -f .eslintrc.yaml ] || [ -f .eslintrc.yml ] ); then
-            eslint_status="configured"
-          fi
-
-          BASE_SHA=""
-          HEAD_SHA=""
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            BASE_SHA="$PR_BASE_SHA"
-            HEAD_SHA="$PR_HEAD_SHA"
-          else
-            BASE_SHA="$GITHUB_BEFORE"
-            HEAD_SHA="$GITHUB_SHA"
-          fi
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            BASE_SHA="HEAD~1"
-          fi
-          if [ -z "$HEAD_SHA" ]; then
-            HEAD_SHA="HEAD"
-          fi
-
-          changed_files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)
-          wiki_reminder="no"
-          if [ -n "$changed_files" ] && echo "$changed_files" | grep -q '^project/' && ! echo "$changed_files" | grep -q '^wiki/'; then
-            wiki_reminder="yes"
-          fi
-
-          summary="QUALITY SUMMARY | structure_missing=$missing_structure | docs_missing=$missing_docs | eslint=$eslint_status | wiki_update_reminder=$wiki_reminder"
-          echo "$summary"
-          echo "::notice::$summary"
           {
-            echo "### Quality"
-            echo "$summary"
+            echo "### CI contract"
+            echo "- Bloqueante: Guardrails y Core Validation."
+            echo "- Guardrails cubre estructura requerida y ESLint cuando este configurado."
+            echo "- Asistivo: Wiki reminder."
+            echo "- Sin export web en CI para mantener el gate enfocado."
           } >> "$GITHUB_STEP_SUMMARY"
 
   validate:
@@ -258,127 +230,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache Godot import data
-        continue-on-error: true
-        uses: actions/cache@v4
-        with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
-          restore-keys: |
-            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
-
       - name: Run Godot validation suite
-        shell: bash
-        run: sh scripts/run-godot-validation.sh --run godot
-
-  build-web:
-    name: Build Web
-    runs-on: ubuntu-latest
-    needs:
-      - validate
-      - quality
-    timeout-minutes: 20
-    container:
-      image: barichello/godot-ci:4.6.2
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache Godot import data
-        continue-on-error: true
-        uses: actions/cache@v4
-        with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
-          restore-keys: |
-            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
-
-      - name: Setup export templates
+        env:
+          EVIDENTE_VALIDATION_LOG_DIR: ${{ runner.temp }}/e-vidente-validation
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ~/.local/share/godot/export_templates/
-          if [ ! -d ~/.local/share/godot/export_templates/4.6.2.stable ]; then
-            mv /root/.local/share/godot/export_templates/4.6.2.stable ~/.local/share/godot/export_templates/4.6.2.stable
-          fi
+          sh scripts/run-godot-validation.sh --run godot
 
-      - name: Import project
-        run: godot --headless --path project --editor --quit
-
-      - name: Export Web build
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/build/web"
-          echo "=== Starting Godot web export ==="
-
-          if ! godot --headless --verbose --path project --export-release "index" "$GITHUB_WORKSPACE/build/web/index.html" 2>&1 | tee /tmp/godot-export.log; then
-            echo "=== Godot export failed ==="
-            echo "=== Last 200 lines of export log ==="
-            tail -200 /tmp/godot-export.log || true
-            echo "=== Candidate output dirs ==="
-            ls -la "$GITHUB_WORKSPACE/build/web" || true
-            ls -la "$GITHUB_WORKSPACE/project/export" || true
-            ls -la "$GITHUB_WORKSPACE/project/build/web" || true
-            exit 1
-          fi
-
-          # Some Godot setups still write to preset export_path instead of the CLI path.
-          if [ ! -f "$GITHUB_WORKSPACE/build/web/index.html" ]; then
-            for CANDIDATE in "$GITHUB_WORKSPACE/export" "$GITHUB_WORKSPACE/project/export" "$GITHUB_WORKSPACE/project/build/web"; do
-              if [ -f "$CANDIDATE/index.html" ]; then
-                echo "Copying export files from $CANDIDATE"
-                cp -a "$CANDIDATE/." "$GITHUB_WORKSPACE/build/web/"
-                break
-              fi
-            done
-          fi
-
-          echo "=== build/web final contents ==="
-          ls -la "$GITHUB_WORKSPACE/build/web"
-
-      - name: Verify export output
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "=== build/web contents ==="
-          ls -la build/web || { echo "::warning::build/web does not exist"; exit 0; }
-
-          HTML=$(find build/web -maxdepth 1 -type f -name '*.html' | head -1)
-          test -n "$HTML" || { echo "::warning::MISSING: no html file"; exit 0; }
-          echo "OK: $HTML"
-
-          if [ ! -f build/web/index.html ]; then
-            cp "$HTML" build/web/index.html
-            echo "Normalized html to build/web/index.html"
-          fi
-
-          PKG=$(find build/web -maxdepth 1 -type f \( -name '*.pck' -o -name '*.zip' \) | head -1)
-          if [ -n "$PKG" ]; then
-            echo "OK: $PKG"
-          else
-            echo "::warning::MISSING: no web package (*.pck/*.zip). Build marked as warning, not failure."
-          fi
-
-          WASM=$(find build/web -maxdepth 1 -type f -name '*.wasm*' | head -1)
-          if [ -n "$WASM" ]; then
-            echo "OK: $WASM"
-          else
-            echo "::warning::MISSING: no wasm file. Build marked as warning, not failure."
-          fi
-
-          echo "Checks completed (non-blocking mode)."
-
-      - name: Upload build artifact
+      - name: Upload validation log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e-vidente-web-${{ github.ref_name }}-${{ github.run_number }}
-          path: build/web
-          retention-days: 14
+          name: validation-logs-${{ github.run_number }}
+          path: ${{ runner.temp }}/e-vidente-validation
+          retention-days: 7
           if-no-files-found: warn
