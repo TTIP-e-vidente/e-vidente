@@ -39,7 +39,7 @@ Hace lo siguiente:
 - valida el contrato de señales de `SaveManager`
 - prueba la migración desde saves legacy
 - prueba el overlay de Archivero
-- prueba el flujo de Intro para crear y cargar partidas
+- prueba el flujo de Intro para continuar la ultima partida o ir al selector de modos
 - prueba el guardado rápido desde nivel
 
 Cuando falla, casi siempre el problema está en alguno de estos puntos:

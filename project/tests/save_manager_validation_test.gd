@@ -54,6 +54,13 @@ func _run() -> void:
 	_assert(bool(update_result.get("ok", false)), "Actualizacion base del perfil fallida: %s" % update_result.get("message", "sin detalle"))
 	_assert(SaveManager.get_users_count() == 1, "Deberia existir un unico perfil local")
 	_assert(SaveManager.get_last_user_hint() == TEST_USERNAME, "El hint del perfil deberia quedar actualizado")
+	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "El avatar persistido deberia existir tras actualizar el perfil")
+
+	var clear_avatar_result: Dictionary = SaveManager.update_local_profile(TEST_USERNAME, 20, TEST_EMAIL, "")
+	_assert(bool(clear_avatar_result.get("ok", false)), "Borrar el avatar local deberia persistirse correctamente")
+	_assert(str(SaveManager.get_current_user_profile().get("avatar_path", "")) == "", "Borrar el avatar deberia limpiar la ruta persistida")
+	_assert(SaveManager.get_current_user_avatar_texture() == null, "Borrar el avatar deberia dejar de exponer una textura cargable")
+	_assert(not FileAccess.file_exists(STORED_AVATAR_PATH), "Borrar el avatar deberia limpiar el archivo persistido del sandbox")
 
 	Global.current_level = 2
 	Global.items_level[2][Global.LEVEL_STATUS_INDEX] = true
@@ -62,7 +69,6 @@ func _run() -> void:
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
 	_assert(FileAccess.file_exists(SaveManager.BACKUP_SAVE_PATH), "El guardado robusto deberia mantener un backup reciente")
 	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
-	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "El avatar persistido deberia existir tras actualizar el perfil")
 	var saved_status: Dictionary = SaveManager.get_save_status()
 	_assert(str(saved_status.get("last_saved_reason", "")) == "manual_save", "La metadata del save deberia registrar el guardado manual")
 	_assert(int(saved_status.get("write_count", 0)) > 0, "La metadata del save deberia llevar conteo de escrituras")

@@ -1,11 +1,11 @@
 # Persistencia local
 
-La persistencia local guarda perfil, progreso y partidas sin depender de un backend ni de servicios externos.
+La persistencia local guarda perfil, progreso y la sesion activa sin depender de un backend ni de servicios externos.
 
 ## Qué guarda
 
 - Un perfil local por dispositivo, con nombre, edad, mail y avatar.
-- Varias partidas dentro de ese perfil.
+- La sesion activa, con soporte interno para separar partidas por perfil.
 - Progreso por recorrido.
 - El punto exacto desde el que conviene retomar.
 - Historial reciente de eventos de guardado y avance.
@@ -13,21 +13,21 @@ La persistencia local guarda perfil, progreso y partidas sin depender de un back
 
 ## Cómo se usa hoy
 
-El juego trabaja con un perfil local único, pero ya no con una sola partida.
+El juego trabaja con un perfil local único y hoy expone una sesion activa para continuar desde Intro.
 
-Desde Intro se puede empezar una partida nueva o cargar una ya existente. Cada partida conserva su propio progreso, su historial y su `resume_state`. Eso permite volver a un punto anterior sin pisar el avance de otra sesión.
+Desde Intro se puede retomar la ultima sesion guardada o entrar al selector de modos. Internamente el formato de save ya separa sesiones, pero esa seleccion multiple todavia no forma parte del flujo visible para la jugadora o el jugador.
 
-Archivero muestra el perfil local, el resumen de la partida activa y el estado del último guardado. El guardado manual sigue disponible y el sistema también puede recuperar el save desde backup si el archivo principal queda corrupto.
+Archivero muestra el perfil local, el resumen de la sesion activa y el estado del ultimo guardado. El guardado manual sigue disponible y el sistema tambien puede recuperar el save desde backup si el archivo principal queda corrupto.
 
 ## Piezas principales
 
-- `SaveManager` como autoload central de perfil, slots, guardado y recuperación.
+- `SaveManager` como autoload central de perfil, sesion activa, slots internos, guardado y recuperacion.
 - `auth.tscn` como editor del perfil local.
-- `intro.tscn` como punto de entrada para crear o cargar partidas.
-- `archivero.tscn` como resumen del perfil y de la sesión activa.
+- `intro.tscn` como punto de entrada para continuar la ultima sesion o ir al selector de modos.
+- `archivero.tscn` como resumen del perfil y de la sesion activa.
 - `Global` para exportar e importar el progreso jugable.
 
-Internamente, `SaveManager` mantiene una sesión activa proyectada al runtime para no obligar al resto del juego a conocer el formato interno de slots. En disco se escribe un save principal, un archivo temporal y un backup.
+Internamente, `SaveManager` mantiene una sesion activa proyectada al runtime para no obligar al resto del juego a conocer el formato interno de slots. En disco se escribe un save principal, un archivo temporal y un backup.
 
 ## Cómo se valida
 

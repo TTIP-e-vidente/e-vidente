@@ -120,6 +120,7 @@ func update_local_profile(username: String, age: int, email: String, avatar_sour
 	var clean_avatar_path := avatar_source_path.strip_edges()
 	var timestamp := Time.get_datetime_string_from_system(false, true)
 	var profile := get_current_user_profile()
+	var previous_avatar_path := str(profile.get("avatar_path", "")).strip_edges()
 
 	if clean_username.is_empty():
 		profile["username"] = DEFAULT_PROFILE_NAME
@@ -127,8 +128,16 @@ func update_local_profile(username: String, age: int, email: String, avatar_sour
 		profile["username"] = clean_username
 	profile["age"] = max(0, age)
 	profile["email"] = clean_email
-	if not clean_avatar_path.is_empty():
-		profile["avatar_path"] = _persist_avatar(current_user_key, clean_avatar_path)
+	if clean_avatar_path.is_empty():
+		_remove_managed_avatar(previous_avatar_path)
+		profile["avatar_path"] = ""
+	else:
+		var persisted_avatar_path := _persist_avatar(current_user_key, clean_avatar_path)
+		if persisted_avatar_path.is_empty():
+			return {"ok": false, "message": "No se pudo copiar la foto seleccionada al almacenamiento local."}
+		if persisted_avatar_path != previous_avatar_path:
+			_remove_managed_avatar(previous_avatar_path)
+		profile["avatar_path"] = persisted_avatar_path
 	profile["updated_at"] = timestamp
 	if str(profile.get("created_at", "")).is_empty():
 		profile["created_at"] = timestamp
@@ -1175,17 +1184,26 @@ func _persist_avatar(user_key: String, source_path: String) -> String:
 	var destination := "%s/%s.%s" % [AVATARS_DIR, _safe_file_key(user_key), extension]
 	var source_file := FileAccess.open(clean_source, FileAccess.READ)
 	if source_file == null:
-		return clean_source
+		return ""
 
 	var buffer := source_file.get_buffer(source_file.get_length())
 	source_file = null
 	var destination_file := FileAccess.open(destination, FileAccess.WRITE)
 	if destination_file == null:
-		return clean_source
+		return ""
 	destination_file.store_buffer(buffer)
 	destination_file.flush()
 	destination_file = null
 	return destination
+
+
+func _remove_managed_avatar(path: String) -> void:
+	var clean_path := path.strip_edges()
+	if clean_path.is_empty():
+		return
+	if not clean_path.begins_with("%s/" % AVATARS_DIR):
+		return
+	_remove_file_if_exists(clean_path)
 
 
 func _safe_file_key(raw_key: String) -> String:
