@@ -4,11 +4,11 @@
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_87m4u"]
 [ext_resource type="Script" uid="uid://duvddudum4o23" path="res://interface/ArchiveroContainer.gd" id="3_c38ao"]
 [ext_resource type="PackedScene" uid="uid://dvr7uw8f6eoc4" path="res://interface/container.tscn" id="4_wmw33"]
-[ext_resource type="Texture2D" uid="uid://bpfvxkfk8fkh0" path="res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png" id="5_fxxew"]
-[ext_resource type="Texture2D" uid="uid://csqe65wskucg8" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
+[ext_resource type="Texture2D" uid="uid://bvs8hdlfr5uvw" path="res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png" id="5_fxxew"]
+[ext_resource type="Texture2D" uid="uid://uw4y72etiy12" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
 [ext_resource type="Texture2D" uid="uid://bxj7u3eq3lvlf" path="res://assets-sistema/interfaz/archivero-keto.png" id="7_87m4u"]
-[ext_resource type="Texture2D" uid="uid://b5uwkgqlaqwop" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
-[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
 [ext_resource type="Texture2D" uid="uid://dw8fp7usajkmc" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="9_dbicon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toggle_button"]
@@ -185,15 +185,14 @@ flip_v = true
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2142776385]
 
 [node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=42028475]
-offset_left = 145.0
-offset_top = 193.99998
-offset_right = 1095.0
-offset_bottom = 1702.0
-scale = Vector2(0.959998, 0.959998)
+offset_left = 191.0
+offset_top = 126.0
+offset_right = 1141.0
+offset_bottom = 1634.0
+scale = Vector2(0.87999773, 0.87999773)
 script = ExtResource("3_c38ao")
 
 [node name="celiaco-vegano2" parent="CanvasLayer/ArchiveroContainer" unique_id=717777018 instance=ExtResource("4_wmw33")]
-custom_minimum_size = Vector2(950, 100)
 layout_mode = 2
 file = "res://interface/Libro-Vegan-GF.tscn"
 
@@ -202,7 +201,6 @@ scale = Vector2(0.8672384, 0.8658125)
 texture = ExtResource("5_fxxew")
 
 [node name="vegano" parent="CanvasLayer/ArchiveroContainer" unique_id=740166166 instance=ExtResource("4_wmw33")]
-custom_minimum_size = Vector2(950, 100)
 layout_mode = 2
 file = "res://interface/libro-vegan.tscn"
 
@@ -211,7 +209,6 @@ scale = Vector2(0.8835607, 0.8835607)
 texture = ExtResource("6_oto7i")
 
 [node name="celiaco" parent="CanvasLayer/ArchiveroContainer" unique_id=600098224 instance=ExtResource("4_wmw33")]
-custom_minimum_size = Vector2(950, 100)
 layout_mode = 2
 file = "res://interface/libro.tscn"
 
@@ -219,7 +216,6 @@ file = "res://interface/libro.tscn"
 scale = Vector2(0.91613203, 0.88955355)
 
 [node name="keto" parent="CanvasLayer/ArchiveroContainer" unique_id=1876210282 instance=ExtResource("4_wmw33")]
-custom_minimum_size = Vector2(950, 100)
 layout_mode = 2
 file = "res://interface/libro-keto.tscn"
 
