@@ -10,7 +10,7 @@ func _get_track_key() -> String:
 
 
 func _get_book_progress() -> Dictionary:
-	return Global.items_level_vegan_gf
+	return Global.items_level_keto
 	
 func _on_cap_1_pressed():
 	Global.current_level = 1

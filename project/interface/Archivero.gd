@@ -59,11 +59,12 @@ func _refresh_dashboard() -> void:
 	age_label.text = "Edad: %s" % age
 	progress_label.text = "%d de %d capitulos completos\nCeliaquia %d/6 | Veganismo %d/6 | Mixto %d/6" % [
 		summary.get("total", 0),
-		summary.get("max_total", 18),
+		summary.get("max_total", Global.LEVELS_PER_BOOK * Global.TRACK_KEYS.size()),
 		summary.get("celiaquia", 0),
 		summary.get("veganismo", 0),
 		summary.get("veganismo_celiaquia", 0)
 	]
+	progress_label.text = "%s | Keto %d/6" % [progress_label.text, summary.get("cetogenica", 0)]
 	save_status_label.text = _format_save_status(save_status)
 	resume_hint_label.text = _format_resume_hint_label()
 	_update_toggle_button_state(save_status)

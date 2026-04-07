@@ -24,7 +24,9 @@ func setup(nivel):
 	current_track_key = ""
 	if nivel != null and nivel.has_method("_get_resume_track_key"):
 		current_track_key = str(nivel._get_resume_track_key()).strip_edges()
-	nivelActual = Global.items_segun_nivel(get_parent())
+	nivelActual = Global.items_segun_track(current_track_key)
+	if nivelActual.is_empty():
+		nivelActual = Global.items_segun_nivel(get_parent())
 	
 	level_resource.cantidadNegativos = nivelActual[Global.current_level][0]
 	level_resource.cantidadPositivos = nivelActual[Global.current_level][1]

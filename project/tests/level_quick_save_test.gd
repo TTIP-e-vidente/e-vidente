@@ -16,6 +16,10 @@ const TEST_CASES := [
 	{
 		"scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
 		"track_key": "veganismo_celiaquia"
+	},
+	{
+		"scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
+		"track_key": "cetogenica"
 	}
 ]
 
@@ -79,6 +83,10 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 		level_instance.queue_free()
 		await process_frame
 		return
+	var expected_book: Dictionary = Global.items_segun_track(track_key)
+	_assert(not expected_book.is_empty(), "%s deberia resolver un track de progreso valido" % case_label)
+	if not expected_book.is_empty():
+		_assert(manager_level.nivelActual == expected_book, "%s deberia cargar el conjunto de datos correspondiente a su propio track" % case_label)
 
 	_assert(save_feedback_backdrop.clip_contents, "%s deberia contener visualmente el texto dentro del panel" % case_label)
 	_assert(save_feedback_backdrop.is_ancestor_of(save_feedback_title), "%s deberia montar el titulo dentro de la tarjeta visual" % case_label)

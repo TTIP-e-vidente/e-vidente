@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://01k1vysmbmcq"]
 
-[ext_resource type="Script" uid="uid://bhcyppnafk0fj" path="res://interface/Libro-Vegan-GF.gd" id="1_jagfa"]
+[ext_resource type="Script" path="res://interface/Libro-Keto.gd" id="1_jagfa"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_jagfa"]
 [ext_resource type="Texture2D" uid="uid://drjg4obv1g1wf" path="res://assets-sistema/interfaz/cap-1.png" id="3_hmfro"]
 [ext_resource type="Texture2D" uid="uid://d4km8n2ilsph3" path="res://assets-sistema/interfaz/cap-2.png" id="4_icqtb"]
@@ -14,7 +14,7 @@
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
 
-[node name="Libro-vegan-gf" type="Node2D" unique_id=71839841]
+[node name="Libro-Keto" type="Node2D" unique_id=71839841]
 position = Vector2(0, 1)
 script = ExtResource("1_jagfa")
 

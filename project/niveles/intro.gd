@@ -96,12 +96,12 @@ func _format_recent_save_summary(save_summary: Dictionary) -> String:
 	var progress_summary: Dictionary = {}
 	var raw_progress_summary: Variant = save_summary.get("progress_summary", {})
 	var completed_levels := 0
-	var total_levels := 18
+	var total_levels := Global.LEVELS_PER_BOOK * Global.TRACK_KEYS.size()
 
 	if raw_progress_summary is Dictionary:
 		progress_summary = raw_progress_summary
 		completed_levels = int(progress_summary.get("total", 0))
-		total_levels = int(progress_summary.get("max_total", 18))
+		total_levels = int(progress_summary.get("max_total", total_levels))
 
 	var lines: Array[String] = ["Retomas en: %s" % resume_hint]
 	if not updated_at.is_empty():

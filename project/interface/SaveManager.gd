@@ -18,12 +18,14 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const BOOK_SCENES := {
 	"celiaquia": "res://interface/libro.tscn",
 	"veganismo": "res://interface/libro-vegan.tscn",
-	"veganismo_celiaquia": "res://interface/Libro-Vegan-GF.tscn"
+	"veganismo_celiaquia": "res://interface/Libro-Vegan-GF.tscn",
+	"cetogenica": "res://interface/Libro-Keto.tscn"
 }
 const LEVEL_SCENES := {
 	"celiaquia": "res://niveles/nivel_1/Level.tscn",
 	"veganismo": "res://niveles/nivel_2/level_vegan.tscn",
-	"veganismo_celiaquia": "res://niveles/nivel_3/Level-Vegan-GF.tscn"
+	"veganismo_celiaquia": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
+	"cetogenica": "res://niveles/nivel_4/Level-Keto.tscn"
 }
 const RESUME_CONTEXT_HUB := "hub"
 const RESUME_CONTEXT_BOOK := "book"
@@ -878,12 +880,14 @@ func _summarize_progress_data(progress: Variant) -> Dictionary:
 	var celiaquia_completed := _count_completed_progress_track(progress_data.get("celiaquia", []))
 	var vegan_completed := _count_completed_progress_track(progress_data.get("veganismo", []))
 	var vegan_gf_completed := _count_completed_progress_track(progress_data.get("veganismo_celiaquia", []))
+	var keto_completed := _count_completed_progress_track(progress_data.get("cetogenica", []))
 	return {
 		"celiaquia": celiaquia_completed,
 		"veganismo": vegan_completed,
 		"veganismo_celiaquia": vegan_gf_completed,
-		"total": celiaquia_completed + vegan_completed + vegan_gf_completed,
-		"max_total": Global.LEVELS_PER_BOOK * 3
+		"cetogenica": keto_completed,
+		"total": celiaquia_completed + vegan_completed + vegan_gf_completed + keto_completed,
+		"max_total": Global.LEVELS_PER_BOOK * Global.TRACK_KEYS.size()
 	}
 
 
@@ -1398,5 +1402,7 @@ func _track_label(track_key: String) -> String:
 			return "Veganismo"
 		"veganismo_celiaquia":
 			return "Veganismo + Celiaquia"
+		"cetogenica":
+			return "Keto"
 		_:
 			return "Tu progreso"

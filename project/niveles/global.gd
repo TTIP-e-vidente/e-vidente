@@ -51,15 +51,28 @@ const PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY := "placed_item_ids"
 
 var partial_level_states: Dictionary = _default_partial_level_states()
 
-func items_segun_nivel(nivel):
-	if nivel.name == "Level": 
-		return items_level 
+func items_segun_nivel(nivel) -> Dictionary:
+	if nivel != null and nivel.has_method("_get_resume_track_key"):
+		var track_key := str(nivel._get_resume_track_key()).strip_edges()
+		var items_by_track := items_segun_track(track_key)
+		if not items_by_track.is_empty():
+			return items_by_track
+
+	if nivel == null:
+		return items_level_vegan_gf
+
+	if nivel.name == "Level":
+		return items_level
 	elif nivel.name == "Level-Keto":
 		return items_level_keto
-	elif nivel.name == "Level-Vegan": 
+	elif nivel.name == "Level-Vegan":
 		return items_level_vegan
 	else:
 		return items_level_vegan_gf
+
+
+func items_segun_track(track_key: String) -> Dictionary:
+	return _book_for_track(track_key)
 
 func item_categoria(items, cate):
 	var items_categoria = []
@@ -128,6 +141,7 @@ func reset_progress() -> void:
 	_reset_book_progress(items_level)
 	_reset_book_progress(items_level_vegan)
 	_reset_book_progress(items_level_vegan_gf)
+	_reset_book_progress(items_level_keto)
 	current_level = 1
 	partial_level_states = _default_partial_level_states()
 
@@ -138,6 +152,7 @@ func export_progress() -> Dictionary:
 		"celiaquia": _export_book_progress(items_level),
 		"veganismo": _export_book_progress(items_level_vegan),
 		"veganismo_celiaquia": _export_book_progress(items_level_vegan_gf),
+		"cetogenica": _export_book_progress(items_level_keto),
 
 		PARTIAL_LEVEL_STATES_KEY: _export_partial_level_states()
 	}
@@ -168,7 +183,7 @@ func get_progress_summary() -> Dictionary:
 		"veganismo_celiaquia": vegan_gf_completed,
 		"cetogenica": keto_completed,
 		"total": celiaquia_completed + vegan_completed + vegan_gf_completed + keto_completed,
-		"max_total": LEVELS_PER_BOOK * 3
+		"max_total": LEVELS_PER_BOOK * TRACK_KEYS.size()
 	}
 
 
