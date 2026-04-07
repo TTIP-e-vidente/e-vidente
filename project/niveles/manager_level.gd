@@ -206,5 +206,3 @@ func _ensure_level_references() -> bool:
 		push_error("ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual.")
 		return false
 	return true
-
-

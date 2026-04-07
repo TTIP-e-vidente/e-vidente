@@ -1,22 +1,22 @@
-[gd_scene load_steps=19 format=3 uid="uid://cn1wglsuyhhmi"]
+[gd_scene format=3 uid="uid://cn1wglsuyhhmi"]
 
-[ext_resource type="Script" path="res://interface/evidente.gd" id="1_6okih"]
-[ext_resource type="Texture2D" uid="uid://cwkostcg25hb0" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_omjb8"]
-[ext_resource type="Texture2D" uid="uid://bgnjx5tn4v3r3" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
-[ext_resource type="Texture2D" uid="uid://b8fubw0nfeh0f" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
-[ext_resource type="Texture2D" uid="uid://d1a0fkhu3cvls" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
-[ext_resource type="Texture2D" uid="uid://bkj6ntcxh7a4y" path="res://assets-sistema/intro/intro-3-3.png" id="6_2f6ov"]
-[ext_resource type="Texture2D" uid="uid://1c6heajtc2c4" path="res://assets-sistema/intro/intro-3-4.png" id="7_7i8j3"]
-[ext_resource type="Texture2D" uid="uid://4q1wskguxudo" path="res://assets-sistema/intro/intro-3-5.png" id="8_1o5dh"]
-[ext_resource type="Texture2D" uid="uid://dn88g0ecxshr5" path="res://assets-sistema/intro/intro-3.png" id="9_ythax"]
-[ext_resource type="Texture2D" uid="uid://2b8iwljy26d5" path="res://assets-sistema/intro/intro-4.png" id="10_qj1gl"]
-[ext_resource type="Texture2D" uid="uid://bupsljsgpx5o0" path="res://assets-sistema/intro/intro-5.png" id="11_0pita"]
-[ext_resource type="Texture2D" uid="uid://bc14t2s3uk0u0" path="res://assets-sistema/intro/intro-6.png" id="12_6vnxt"]
-[ext_resource type="Texture2D" uid="uid://darxagktopqxj" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
-[ext_resource type="Texture2D" uid="uid://dtp4txe10gky7" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
-[ext_resource type="Texture2D" uid="uid://c4r3iqo22dyhf" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
-[ext_resource type="Texture2D" uid="uid://7y0i1q16dcf2" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
-[ext_resource type="AudioStream" uid="uid://dmra0kv4xi827" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
+[ext_resource type="Script" uid="uid://h6ls8bqg44gf" path="res://interface/evidente.gd" id="1_6okih"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_0xe3y"]
+[ext_resource type="Texture2D" uid="uid://dqvp26olyxo8w" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
+[ext_resource type="Texture2D" uid="uid://nftxxd53lea0" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
+[ext_resource type="Texture2D" uid="uid://bjbllmp8jxqnl" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
+[ext_resource type="Texture2D" uid="uid://dyjjep66y6bc8" path="res://assets-sistema/intro/intro-3-3.png" id="6_2f6ov"]
+[ext_resource type="Texture2D" uid="uid://cd5lifphpoef7" path="res://assets-sistema/intro/intro-3-4.png" id="7_7i8j3"]
+[ext_resource type="Texture2D" uid="uid://b0xcllm73axj4" path="res://assets-sistema/intro/intro-3-5.png" id="8_1o5dh"]
+[ext_resource type="Texture2D" uid="uid://qjqwkvsud407" path="res://assets-sistema/intro/intro-3.png" id="9_ythax"]
+[ext_resource type="Texture2D" uid="uid://dwitshnu12d12" path="res://assets-sistema/intro/intro-4.png" id="10_qj1gl"]
+[ext_resource type="Texture2D" uid="uid://cmxh7vhnymods" path="res://assets-sistema/intro/intro-5.png" id="11_0pita"]
+[ext_resource type="Texture2D" uid="uid://c1gg0wn7l8ket" path="res://assets-sistema/intro/intro-6.png" id="12_6vnxt"]
+[ext_resource type="Texture2D" uid="uid://dueuwiu2wgnck" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
+[ext_resource type="Texture2D" uid="uid://et30kn2vhr8j" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
+[ext_resource type="Texture2D" uid="uid://cani7re3swj0e" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
+[ext_resource type="Texture2D" uid="uid://dvieosc1mn71b" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
+[ext_resource type="AudioStream" uid="uid://b3066err46pf6" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_8sp5d"]
 animations = [{
@@ -26,6 +26,9 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("4_bq8g4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_ythax")
 }, {
 "duration": 1.0,
 "texture": ExtResource("5_8f2pd")
@@ -38,9 +41,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("8_1o5dh")
-}, {
-"duration": 1.0,
-"texture": ExtResource("9_ythax")
 }, {
 "duration": 1.0,
 "texture": ExtResource("10_qj1gl")
@@ -65,31 +65,32 @@ animations = [{
 "speed": 3.0
 }]
 
-[node name="Evidente" type="Node2D"]
+[node name="Evidente" type="Node2D" unique_id=2014136037]
 script = ExtResource("1_6okih")
 
-[node name="FondoFicha" type="ColorRect" parent="."]
+[node name="FondoFicha" type="ColorRect" parent="." unique_id=272017395]
 offset_left = 5.0
 offset_right = 1158.0
 offset_bottom = 799.0
 mouse_filter = 2
 color = Color(1, 1, 0.996078, 0.988235)
 
-[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha"]
-position = Vector2(577, 407)
-scale = Vector2(1.09575, 1.09575)
-texture = ExtResource("2_omjb8")
+[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha" unique_id=2075574601]
+position = Vector2(566.99994, 416)
+rotation = 3.1415927
+scale = Vector2(0.35245946, 0.35245946)
+texture = ExtResource("2_0xe3y")
 
-[node name="e-vidente" type="Sprite2D" parent="."]
+[node name="e-vidente" type="Sprite2D" parent="." unique_id=1749502294]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="e-vidente"]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="e-vidente" unique_id=1458649195]
 position = Vector2(581, 402)
 scale = Vector2(0.877111, 0.877111)
 sprite_frames = SubResource("SpriteFrames_8sp5d")
 animation = &"intro"
 frame_progress = 0.219101
 
-[node name="go" type="Button" parent="."]
+[node name="go" type="Button" parent="." unique_id=1316116925]
 offset_left = 447.0
 offset_top = 577.0
 offset_right = 763.0
@@ -98,7 +99,7 @@ scale = Vector2(0.680001, 0.680001)
 icon = ExtResource("16_1sa43")
 flat = true
 
-[node name="Background" type="AudioStreamPlayer2D" parent="."]
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1876925266]
 stream = ExtResource("17_0xxjx")
 volume_db = -4.962
 attenuation = 2.07053

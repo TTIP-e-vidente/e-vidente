@@ -53,4 +53,3 @@ func _on_cap_5_pressed():
 func _on_cap_6_pressed():
 	Global.current_level = 6
 	get_tree().change_scene_to_file("res://niveles/nivel_1/Level.tscn")
-

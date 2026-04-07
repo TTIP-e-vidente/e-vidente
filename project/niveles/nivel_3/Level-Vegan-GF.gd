@@ -23,4 +23,3 @@ func _on_adelante_pressed():
 		get_tree().change_scene_to_file("res://niveles/nivel_3/Level-Vegan-GF.tscn")
 	else: 
 		get_tree().change_scene_to_file("res://niveles/intro.tscn")
-

@@ -1,33 +1,33 @@
-[gd_scene load_steps=12 format=3 uid="uid://l3m5yxitwlb2"]
+[gd_scene format=3 uid="uid://l3m5yxitwlb2"]
 
-[ext_resource type="Texture2D" uid="uid://cwkostcg25hb0" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="1_ugske"]
-[ext_resource type="Script" path="res://interface/Libro-Vegan-GF.gd" id="1_yus4y"]
-[ext_resource type="Texture2D" uid="uid://d2bdp16bgl7p8" path="res://assets-sistema/interfaz/cap-1.png" id="2_u4ry5"]
-[ext_resource type="Texture2D" uid="uid://d12obyfp3sruy" path="res://assets-sistema/interfaz/cap-2.png" id="3_3otwx"]
-[ext_resource type="Texture2D" uid="uid://iavu3mbffpmt" path="res://assets-sistema/interfaz/cap-3.png" id="4_fwnvr"]
-[ext_resource type="Texture2D" uid="uid://dlo1ym437o2kh" path="res://assets-sistema/interfaz/cap-4.png" id="5_5svku"]
-[ext_resource type="Texture2D" uid="uid://cw2t3rhpxdndl" path="res://assets-sistema/interfaz/cap-5.png" id="6_r3bdl"]
-[ext_resource type="Texture2D" uid="uid://cvfuav230k4hf" path="res://assets-sistema/interfaz/cap-6.png" id="7_0t5lr"]
-[ext_resource type="Texture2D" uid="uid://yank5dcbacjh" path="res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png" id="8_06r43"]
-[ext_resource type="AudioStream" uid="uid://cyoeurg1stfx5" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_mgqdr"]
+[ext_resource type="Script" uid="uid://bhcyppnafk0fj" path="res://interface/Libro-Vegan-GF.gd" id="1_yus4y"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_73ede"]
+[ext_resource type="Texture2D" uid="uid://drjg4obv1g1wf" path="res://assets-sistema/interfaz/cap-1.png" id="2_u4ry5"]
+[ext_resource type="Texture2D" uid="uid://d4km8n2ilsph3" path="res://assets-sistema/interfaz/cap-2.png" id="3_3otwx"]
+[ext_resource type="Texture2D" uid="uid://eeend5urmksa" path="res://assets-sistema/interfaz/cap-3.png" id="4_fwnvr"]
+[ext_resource type="Texture2D" uid="uid://bpkcfqo7ky6eb" path="res://assets-sistema/interfaz/cap-4.png" id="5_5svku"]
+[ext_resource type="Texture2D" uid="uid://5r1aj21nn82m" path="res://assets-sistema/interfaz/cap-5.png" id="6_r3bdl"]
+[ext_resource type="Texture2D" uid="uid://b4u430w1ifduc" path="res://assets-sistema/interfaz/cap-6.png" id="7_0t5lr"]
+[ext_resource type="Texture2D" uid="uid://d300vsr26vr4b" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="9_enasv"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_mgqdr"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
 
-[node name="Libro-vegan-gf" type="Node2D"]
+[node name="Libro-vegan-gf" type="Node2D" unique_id=1735901692]
 script = ExtResource("1_yus4y")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=808163009]
 offset_right = 1152.0
 offset_bottom = 800.0
-color = Color(0.623183, 0.999127, 0.762443, 1)
 
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
-position = Vector2(576, 400)
-scale = Vector2(1.01691, 1.08165)
-texture = ExtResource("1_ugske")
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1070730294]
+position = Vector2(577, 406)
+scale = Vector2(0.33670896, 0.33670896)
+texture = ExtResource("2_73ede")
+flip_v = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=371726806]
 texture_filter = 3
 offset_left = 474.0
 offset_top = 84.0
@@ -38,52 +38,51 @@ size_flags_stretch_ratio = 1.73
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Cap1" type="Button" parent="VBoxContainer"]
+[node name="Cap1" type="Button" parent="VBoxContainer" unique_id=611644631]
 layout_mode = 2
-size_flags_vertical = 3
 icon = ExtResource("2_u4ry5")
 flat = true
 
-[node name="Cap2" type="Button" parent="VBoxContainer"]
+[node name="Cap2" type="Button" parent="VBoxContainer" unique_id=1716142419]
 layout_mode = 2
 icon = ExtResource("3_3otwx")
 flat = true
 
-[node name="Cap3" type="Button" parent="VBoxContainer"]
+[node name="Cap3" type="Button" parent="VBoxContainer" unique_id=1198110980]
 layout_mode = 2
 icon = ExtResource("4_fwnvr")
 flat = true
 
-[node name="Cap4" type="Button" parent="VBoxContainer"]
+[node name="Cap4" type="Button" parent="VBoxContainer" unique_id=1753516608]
 layout_mode = 2
 icon = ExtResource("5_5svku")
 flat = true
 
-[node name="Cap5" type="Button" parent="VBoxContainer"]
+[node name="Cap5" type="Button" parent="VBoxContainer" unique_id=1512577718]
 layout_mode = 2
 icon = ExtResource("6_r3bdl")
 flat = true
 
-[node name="Cap6" type="Button" parent="VBoxContainer"]
+[node name="Cap6" type="Button" parent="VBoxContainer" unique_id=275937851]
 layout_mode = 2
 icon = ExtResource("7_0t5lr")
 flat = true
 
-[node name="Atras" type="Button" parent="."]
-offset_left = 27.0
-offset_top = 590.0
-offset_right = 252.0
-offset_bottom = 858.0
-scale = Vector2(0.698795, 0.626145)
+[node name="Atras" type="Button" parent="." unique_id=817380372]
+offset_left = 51.0
+offset_top = 639.00006
+offset_right = 276.0
+offset_bottom = 907.00006
+scale = Vector2(0.49879444, 0.44693744)
 icon = SubResource("CompressedTexture2D_5m2p2")
 flat = true
 
-[node name="Archivero" type="Sprite2D" parent="."]
-position = Vector2(608, 842)
-scale = Vector2(0.960001, 0.960001)
-texture = ExtResource("8_06r43")
+[node name="titulo-nivel" type="Sprite2D" parent="." unique_id=1323105259]
+position = Vector2(241, 122)
+scale = Vector2(0.5805599, 0.5805599)
+texture = ExtResource("9_enasv")
 
-[node name="Background" type="AudioStreamPlayer2D" parent="."]
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=2039067380]
 stream = ExtResource("10_mgqdr")
 volume_db = -4.962
 attenuation = 2.07053

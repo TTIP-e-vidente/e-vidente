@@ -15,6 +15,7 @@ const PREPARA_DIABETES_PATH := "res://assets-sistema/interfaz/prepara-diabetes.p
 const PREPARA_VEGANE_PATH := "res://assets-sistema/interfaz/prepara-vegane.png"
 const PREPARA_VEGETARIANE_PATH := "res://assets-sistema/interfaz/prepara-vegetariane.png"
 const PREPARA_VEGAN_GF_PATH := "res://assets-sistema/interfaz/prepara-vegan-gf.png"
+const PREPARA_KETO_PATH := "res://assets-sistema/interfaz/prepara-keto.png"
 
 const ENSENANZA_CELIAQUIA_1_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png"
 const ENSENANZA_CELIAQUIA_2_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-2.png"
@@ -43,7 +44,7 @@ var manager_level
 var current_level: int = 1
 const LEVEL_STATUS_INDEX := 6
 const LEVELS_PER_BOOK := 6
-const TRACK_KEYS := ["celiaquia", "veganismo", "veganismo_celiaquia"]
+const TRACK_KEYS := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
 const PARTIAL_LEVEL_STATES_KEY := "partial_level_states"
 const PARTIAL_LEVEL_ITEMS_KEY := "items"
 const PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY := "placed_item_ids"
@@ -53,6 +54,8 @@ var partial_level_states: Dictionary = _default_partial_level_states()
 func items_segun_nivel(nivel):
 	if nivel.name == "Level": 
 		return items_level 
+	elif nivel.name == "Level-Keto":
+		return items_level_keto
 	elif nivel.name == "Level-Vegan": 
 		return items_level_vegan
 	else:
@@ -92,6 +95,14 @@ var items_level_vegan_gf = {
 					6: _level_entry(2, 2, BEBIDA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_7_PATH, bebida)
 					}
 
+var items_level_keto = {	
+					1: _level_entry(1, 1, ALMUERZO_PATH, PREPARA_KETO_PATH, ENSENANZA_CELIAQUIA_3_PATH, almuerzo_cena), 
+					2: _level_entry(1, 2, DESAYUNO_PATH, PREPARA_KETO_PATH, ENSENANZA_VEGAN_VEGETARIANE_7_PATH, desayuno_merienda),
+					3: _level_entry(2, 4, CENA_PATH, PREPARA_KETO_PATH, ENSENANZA_CELIAQUIA_4_PATH, almuerzo_cena),
+					4: _level_entry(4, 2, DESAYUNO_PATH, PREPARA_KETO_PATH, ENSENANZA_VEGAN_VEGETARIANE_8_PATH, desayuno_merienda),
+					5: _level_entry(4, 2, ALMUERZO_PATH, PREPARA_KETO_PATH, ENSENANZA_CELIAQUIA_9_PATH, almuerzo_cena),
+					6: _level_entry(2, 2, BEBIDA_PATH, PREPARA_KETO_PATH, ENSENANZA_CELIAQUIA_7_PATH, bebida)
+					}
 
 func _level_entry(cantidad_negativos: int, cantidad_positivos: int, comida_path: String, condicion_path: String, ensenanza_path: String, categoria: String) -> Array:
 	return [cantidad_negativos, cantidad_positivos, comida_path, condicion_path, ensenanza_path, categoria, false]
@@ -127,6 +138,7 @@ func export_progress() -> Dictionary:
 		"celiaquia": _export_book_progress(items_level),
 		"veganismo": _export_book_progress(items_level_vegan),
 		"veganismo_celiaquia": _export_book_progress(items_level_vegan_gf),
+
 		PARTIAL_LEVEL_STATES_KEY: _export_partial_level_states()
 	}
 
@@ -140,6 +152,7 @@ func import_progress(progress: Dictionary) -> void:
 	_import_book_progress(items_level, progress.get("celiaquia", []))
 	_import_book_progress(items_level_vegan, progress.get("veganismo", []))
 	_import_book_progress(items_level_vegan_gf, progress.get("veganismo_celiaquia", []))
+	_import_book_progress(items_level_keto, progress.get("cetogenica", []))
 	partial_level_states = _normalize_partial_level_states(progress.get(PARTIAL_LEVEL_STATES_KEY, {}))
 	_prune_partial_level_states()
 
@@ -148,11 +161,13 @@ func get_progress_summary() -> Dictionary:
 	var celiaquia_completed := _count_completed_levels(items_level)
 	var vegan_completed := _count_completed_levels(items_level_vegan)
 	var vegan_gf_completed := _count_completed_levels(items_level_vegan_gf)
+	var keto_completed := _count_completed_levels(items_level_keto)
 	return {
 		"celiaquia": celiaquia_completed,
 		"veganismo": vegan_completed,
 		"veganismo_celiaquia": vegan_gf_completed,
-		"total": celiaquia_completed + vegan_completed + vegan_gf_completed,
+		"cetogenica": keto_completed,
+		"total": celiaquia_completed + vegan_completed + vegan_gf_completed + keto_completed,
 		"max_total": LEVELS_PER_BOOK * 3
 	}
 
@@ -233,7 +248,8 @@ func _default_partial_level_states() -> Dictionary:
 	return {
 		"celiaquia": {},
 		"veganismo": {},
-		"veganismo_celiaquia": {}
+		"veganismo_celiaquia": {},
+		"cetogenica": {}
 	}
 
 
@@ -341,6 +357,8 @@ func _book_for_track(track_key: String) -> Dictionary:
 			return items_level_vegan
 		"veganismo_celiaquia":
 			return items_level_vegan_gf
+		"cetogenica":
+			return items_level_keto
 		_:
 			return {}
 

@@ -1,5 +1,5 @@
 extends Libro
-class_name LibroVeganGF
+class_name LibroVeganGLF
 
 func _ready() -> void:
 	super._ready()
