@@ -65,6 +65,8 @@ func _run() -> void:
 			_assert(current_scene != null, "Volver atras desde el nivel deberia abrir el libro correspondiente")
 			if current_scene != null:
 				_assert(current_scene.scene_file_path == "res://interface/libro.tscn", "Volver atras desde el nivel cargado deberia abrir su libro")
+				var chapter_container: VBoxContainer = current_scene.get_node("VBoxContainer")
+				_assert(chapter_container.get_child_count() == Global.get_track_level_count("celiaquia"), "El libro deberia generar sus capitulos segun la cantidad definida para el track")
 				current_scene.call("_on_button_pressed")
 				await process_frame
 				await process_frame

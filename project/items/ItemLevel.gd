@@ -47,7 +47,7 @@ func restore_to_plate(target_position: Vector2) -> void:
 	body_ref = plato
 	is_inside_droppable = true
 
-func _process(delta):
+func _process(_delta):
 	if draggable:
 		if Input.is_action_just_pressed("click"):
 			initialPos = global_position
