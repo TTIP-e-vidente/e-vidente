@@ -1,82 +1,12 @@
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const GameTrackChapterDefinitionsScript := preload("res://niveles/helpers/catalog/GameTrackChapterDefinitions.gd")
+const GameContentCatalogValidatorScript := preload("res://niveles/helpers/catalog/GameContentCatalogValidator.gd")
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
 
-const DESAYUNO_PATH := "res://assets-sistema/interfaz/desayuno.png"
-const ALMUERZO_PATH := "res://assets-sistema/interfaz/almuerzo.png"
-const CENA_PATH := "res://assets-sistema/interfaz/cena.png"
-const BEBIDA_PATH := "res://assets-sistema/interfaz/cena.png"
-
-const PREPARA_CELIAQUIA_PATH := "res://assets-sistema/interfaz/prepara-celiaquia.png"
-const PREPARA_VEGANE_PATH := "res://assets-sistema/interfaz/prepara-vegane.png"
-const PREPARA_VEGAN_GF_PATH := "res://assets-sistema/interfaz/prepara-vegan-gf.png"
-
-const ENSENANZA_CELIAQUIA_1_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png"
-const ENSENANZA_CELIAQUIA_2_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-2.png"
-const ENSENANZA_CELIAQUIA_3_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-3.png"
-const ENSENANZA_CELIAQUIA_4_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-4.png"
-const ENSENANZA_CELIAQUIA_5_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-5.png"
-const ENSENANZA_CELIAQUIA_6_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-6.png"
-const ENSENANZA_CELIAQUIA_7_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-7.png"
-const ENSENANZA_CELIAQUIA_8_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-8.png"
-const ENSENANZA_CELIAQUIA_9_PATH := "res://assets-sistema/ensenanza/ensenanza-celiaquia-9.png"
-
-const ENSENANZA_VEGAN_VEGETARIANE_1_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-1.png"
-const ENSENANZA_VEGAN_VEGETARIANE_2_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-2.png"
-const ENSENANZA_VEGAN_VEGETARIANE_3_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-3.png"
-const ENSENANZA_VEGAN_VEGETARIANE_4_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-4.png"
-const ENSENANZA_VEGAN_VEGETARIANE_5_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-5.png"
-const ENSENANZA_VEGAN_VEGETARIANE_6_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-6.png"
-const ENSENANZA_VEGAN_VEGETARIANE_7_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-7.png"
-const ENSENANZA_VEGAN_VEGETARIANE_8_PATH := "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-8.png"
-
 var _texture_cache: Dictionary = {}
-
-var TRACK_CHAPTER_DEFINITIONS: Dictionary = {
-	"celiaquia": {
-		1: {"runs": [
-			_run_entry(1, 1, ALMUERZO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_1_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_run_entry(1, 1, DESAYUNO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_2_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_run_entry(2, 3, DESAYUNO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_2_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_run_entry(1, 2, BEBIDA_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_7_PATH, GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
-		3: {"runs": [_run_entry(2, 3, CENA_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_6_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		4: {"runs": [_run_entry(3, 3, DESAYUNO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_8_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
-		5: {"runs": [_run_entry(4, 2, ALMUERZO_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_5_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		6: {"runs": [_run_entry(1, 3, BEBIDA_PATH, PREPARA_CELIAQUIA_PATH, ENSENANZA_CELIAQUIA_7_PATH, GameTrackCatalog.CATEGORY_BEBIDA)]}
-	},
-	"veganismo": {
-		1: {"runs": [
-			_run_entry(1, 2, ALMUERZO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_1_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_run_entry(1, 1, DESAYUNO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_2_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_run_entry(2, 2, DESAYUNO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_2_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_run_entry(1, 2, BEBIDA_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_6_PATH, GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
-		3: {"runs": [_run_entry(2, 3, CENA_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_3_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		4: {"runs": [_run_entry(2, 4, DESAYUNO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_4_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
-		5: {"runs": [_run_entry(4, 2, ALMUERZO_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_5_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		6: {"runs": [_run_entry(1, 3, BEBIDA_PATH, PREPARA_VEGANE_PATH, ENSENANZA_VEGAN_VEGETARIANE_6_PATH, GameTrackCatalog.CATEGORY_BEBIDA)]}
-	},
-	"veganismo_celiaquia": {
-		1: {"runs": [
-			_run_entry(1, 1, ALMUERZO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_3_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_run_entry(1, 1, DESAYUNO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_VEGAN_VEGETARIANE_7_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_run_entry(1, 2, DESAYUNO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_VEGAN_VEGETARIANE_7_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_run_entry(1, 1, BEBIDA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_7_PATH, GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
-		3: {"runs": [_run_entry(2, 4, CENA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_4_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		4: {"runs": [_run_entry(4, 2, DESAYUNO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_VEGAN_VEGETARIANE_8_PATH, GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
-		5: {"runs": [_run_entry(4, 2, ALMUERZO_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_9_PATH, GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		6: {"runs": [_run_entry(2, 2, BEBIDA_PATH, PREPARA_VEGAN_GF_PATH, ENSENANZA_CELIAQUIA_7_PATH, GameTrackCatalog.CATEGORY_BEBIDA)]}
-	}
-}
+var _track_chapter_definitions: Dictionary = GameTrackChapterDefinitionsScript.build_track_chapter_definitions()
 
 var _track_books: Dictionary = _build_track_books()
 var items_level: Dictionary = _track_books.get("celiaquia", {})
@@ -95,7 +25,7 @@ func item_categoria(items, categoria: String) -> Array:
 
 
 func get_track_level_count(track_key: String, fallback: int = 0) -> int:
-	var chapters: Variant = TRACK_CHAPTER_DEFINITIONS.get(track_key, {})
+	var chapters: Variant = _track_chapter_definitions.get(track_key, {})
 	return chapters.size() if chapters is Dictionary and chapters.size() > 0 else fallback
 
 
@@ -114,10 +44,22 @@ func get_total_level_count(fallback: int = 0) -> int:
 
 
 func get_chapter_definition(track_key: String, level_number: int) -> Dictionary:
-	var chapters: Variant = TRACK_CHAPTER_DEFINITIONS.get(track_key, {})
+	var chapters: Variant = _track_chapter_definitions.get(track_key, {})
 	if not chapters is Dictionary or not chapters.has(level_number) or not chapters[level_number] is Dictionary:
 		return {}
 	return (chapters[level_number] as Dictionary).duplicate(true)
+
+
+func get_track_chapter_definitions() -> Dictionary:
+	return _track_chapter_definitions.duplicate(true)
+
+
+func get_validation_issues() -> Array[String]:
+	return GameContentCatalogValidatorScript.validate(_track_chapter_definitions)
+
+
+func is_valid() -> bool:
+	return get_validation_issues().is_empty()
 
 
 func get_chapter_run_count(track_key: String, level_number: int) -> int:
@@ -161,7 +103,7 @@ func _build_track_books() -> Dictionary:
 
 func _build_track_book(track_key: String) -> Dictionary:
 	var book: Dictionary = {}
-	var chapters: Variant = TRACK_CHAPTER_DEFINITIONS.get(track_key, {})
+	var chapters: Variant = _track_chapter_definitions.get(track_key, {})
 	if not chapters is Dictionary:
 		return book
 	var level_numbers: Array[int] = []
@@ -172,21 +114,3 @@ func _build_track_book(track_key: String) -> Dictionary:
 		var first_run: Dictionary = get_chapter_run(track_key, level_number, 1)
 		book[level_number] = [int(first_run.get("negative_count", 0)), int(first_run.get("positive_count", 0)), str(first_run.get("meal_texture_path", "")), str(first_run.get("condition_texture_path", "")), str(first_run.get("teaching_texture_path", "")), str(first_run.get("category", "")), false]
 	return book
-
-
-func _run_entry(negative_count: int, positive_count: int, meal_texture_path: String, condition_texture_path: String, teaching_texture_path: String, category: String) -> Dictionary:
-	var mechanic_payload: Dictionary = {
-		"negative_count": negative_count,
-		"positive_count": positive_count,
-		"category": category
-	}
-	return {
-		"mechanic_type": LevelMechanicTypes.PLATE_SORT,
-		"mechanic_payload": mechanic_payload,
-		"negative_count": negative_count,
-		"positive_count": positive_count,
-		"meal_texture_path": meal_texture_path,
-		"condition_texture_path": condition_texture_path,
-		"teaching_texture_path": teaching_texture_path,
-		"category": category
-	}

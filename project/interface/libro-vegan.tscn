@@ -89,10 +89,4 @@ stream = ExtResource("10_j0ohc")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="VBoxContainer/Cap1" to="." method="_on_cap_1_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap2" to="." method="_on_cap_2_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap3" to="." method="_on_cap_3_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap4" to="." method="_on_cap_4_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap5" to="." method="_on_cap_5_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap6" to="." method="_on_cap_6_pressed"]
-[connection signal="pressed" from="Atras" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="Atras" to="." method="_on_atras_pressed"]

@@ -94,28 +94,6 @@ func _open_level(level_number: int) -> void:
 func _go_back_to_archivero() -> void:
 	GameSceneRouter.go_to_archivero(get_tree())
 
-func _on_button_pressed():
-	_go_back_to_archivero()
-
-
 func _on_atras_pressed() -> void:
 	_go_back_to_archivero()
-
-func _on_cap_1_pressed():
-	_open_level(1)
-	
-func _on_cap_2_pressed():
-	_open_level(2)
-
-func _on_cap_3_pressed():
-	_open_level(3)
-
-func _on_cap_4_pressed():
-	_open_level(4)
-
-func _on_cap_5_pressed():
-	_open_level(5)
-	
-func _on_cap_6_pressed():
-	_open_level(6)
 
