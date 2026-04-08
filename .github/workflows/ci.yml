@@ -1,9 +1,23 @@
-name: Godot CI
+name: Godot CI - Guardrails, Core Validation and Optional Web Export
 
 on:
   push:
+    branches:
+      - main
+      - dev
   pull_request:
+    branches:
+      - main
+      - dev
+  schedule:
+    - cron: '0 5 * * *'
   workflow_dispatch:
+    inputs:
+      run_web_export:
+        description: "Run optional Web Export build"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: godot-${{ github.workflow }}-${{ github.ref }}
@@ -14,18 +28,17 @@ permissions:
 
 jobs:
   quality:
-    name: Quality Guardrails (Non-Blocking)
+    name: Guardrails: Structure, Docs and Optional ESLint
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Validate repository structure
-        continue-on-error: true
+      - name: Guardrail: Required repository structure
         shell: bash
         run: |
           set -euo pipefail
@@ -51,14 +64,14 @@ jobs:
 
           for d in "${REQUIRED_DIRS[@]}"; do
             if [ ! -d "$d" ]; then
-              echo "::warning::Missing required directory: $d"
+              echo "::error::Missing required directory: $d. Create it or update REQUIRED_DIRS in .github/workflows/ci.yml"
               missing=1
             fi
           done
 
           for f in "${REQUIRED_FILES[@]}"; do
             if [ ! -f "$f" ]; then
-              echo "::warning::Missing required file: $f"
+              echo "::error::Missing required file: $f. Create it or update REQUIRED_FILES in .github/workflows/ci.yml"
               missing=1
             fi
           done
@@ -66,10 +79,11 @@ jobs:
           if [ "$missing" -eq 0 ]; then
             echo "Repository structure looks good."
           else
-            echo "Structure warnings found (non-blocking)."
+            echo "::error::Repository structure guardrail failed. Fix missing required paths/files before merging."
+            exit 1
           fi
 
-      - name: Run ESLint if configured
+      - name: Guardrail: ESLint (runs only when configured)
         continue-on-error: true
         shell: bash
         run: |
@@ -87,15 +101,14 @@ jobs:
           fi
 
           if [ "$HAS_PACKAGE_JSON" -eq 1 ] && [ "$HAS_ESLINT_CONFIG" -eq 1 ]; then
-            echo "ESLint configuration detected. Running lint..."
+            echo "ESLint configuration detected. Running lint (non-blocking guardrail)..."
             npm ci
             npx eslint . --max-warnings=9999
           else
             echo "::notice::Skipping ESLint: no Node/ESLint config detected in this repository."
           fi
 
-      - name: Validate docs baseline
-        continue-on-error: true
+      - name: Guardrail: Required docs baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -103,23 +116,22 @@ jobs:
           if [ -f README.md ] && [ -s README.md ]; then
             echo "README.md present."
           else
-            echo "::warning::README.md missing or empty"
+            echo "::warning::README.md missing or empty. Add project overview and setup details."
           fi
 
           if [ -f wiki/Home.md ] && [ -s wiki/Home.md ]; then
             echo "wiki/Home.md present."
           else
-            echo "::warning::wiki/Home.md missing or empty"
+            echo "::warning::wiki/Home.md missing or empty. Add wiki entry point page."
           fi
 
           if [ -f wiki/Bitacora.md ] && [ -s wiki/Bitacora.md ]; then
             echo "wiki/Bitacora.md present."
           else
-            echo "::warning::wiki/Bitacora.md missing or empty"
+            echo "::warning::wiki/Bitacora.md missing or empty. Add/update changelog notes."
           fi
 
-      - name: Wiki update reminder (non-blocking)
-        continue-on-error: true
+      - name: Guardrail: Wiki reminder when project files change
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -161,7 +173,7 @@ jobs:
 
           if echo "$CHANGED_FILES" | grep -q '^project/'; then
             if ! echo "$CHANGED_FILES" | grep -q '^wiki/'; then
-              echo "::warning::Project files changed without wiki updates. Consider updating wiki/Bitacora.md or wiki/Home.md"
+              echo "::warning::Project files changed without wiki updates. Consider updating wiki/Bitacora.md or wiki/Home.md to keep docs aligned."
             else
               echo "Project and wiki changed together. Good."
             fi
@@ -169,7 +181,8 @@ jobs:
             echo "No project/ changes detected."
           fi
 
-      - name: Quality one-line summary
+      - name: Guardrail: Publish quality summary and annotations
+        if: always()
         continue-on-error: true
         shell: bash
         env:
@@ -242,65 +255,121 @@ jobs:
           summary="QUALITY SUMMARY | structure_missing=$missing_structure | docs_missing=$missing_docs | eslint=$eslint_status | wiki_update_reminder=$wiki_reminder"
           echo "$summary"
           echo "::notice::$summary"
+          if [ "$missing_structure" -gt 0 ]; then
+            echo "::error::Guardrail structure check found $missing_structure missing required paths/files."
+          fi
+          if [ "$missing_docs" -gt 0 ]; then
+            echo "::warning::Guardrail docs baseline found $missing_docs missing/empty required docs files."
+          fi
+          if [ "$wiki_reminder" = "yes" ]; then
+            echo "::warning::Project code changed without wiki updates. Review wiki/Bitacora.md or wiki/Home.md."
+          fi
           {
             echo "### Quality"
             echo "$summary"
           } >> "$GITHUB_STEP_SUMMARY"
 
   validate:
-    name: Core Validation
+    name: Core Validation: Godot tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     container:
-      image: barichello/godot-ci:4.2
+      image: barichello/godot-ci:4.6.2
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Cache Godot import data
+      - name: Validation: Restore Godot import cache
         continue-on-error: true
         uses: actions/cache@v4
         with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
+          path: project/.godot
+          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg', 'project/**/*.import', 'project/**/*.tscn', 'project/**/*.tres', 'project/**/*.res', 'project/**/*.uid', 'project/assets-sistema/**/*', 'project/items/**/*', 'project/resources/**/*') }}
           restore-keys: |
-            godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
+            godot-4.6.2-
 
-      - name: Import project
-        run: godot --headless --path project --editor --quit || true
+      - name: Validation (PR): Decide validation profile
+        if: github.event_name == 'pull_request'
+        id: pr_validation_profile
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          sh scripts/ci/detect-validation-profile.sh
+
+      - name: Validation (PR fast): Shared smoke suite for non-project changes
+        if: github.event_name == 'pull_request' && steps.pr_validation_profile.outputs.profile == 'pr-fast'
+        shell: bash
+        env:
+          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs
+        run: |
+          set -euo pipefail
+          sh scripts/run-godot-validation.sh --run pr-fast godot
+
+      - name: Validation (full): Shared Godot suite
+        if: github.event_name != 'pull_request' || steps.pr_validation_profile.outputs.profile == 'full'
+        shell: bash
+        env:
+          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs
+        run: |
+          set -euo pipefail
+          sh scripts/run-godot-validation.sh --run full godot
+
+      - name: Validation: Upload logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-validation-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
+          path: validation-logs
+          if-no-files-found: warn
+          retention-days: 14
 
   build-web:
-    name: Build Web
+    name: Optional Web Export Build (manual, main/dev)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_web_export == true && (github.ref_name == 'main' || github.ref_name == 'dev')
+    continue-on-error: true
     runs-on: ubuntu-latest
     needs:
       - validate
       - quality
     timeout-minutes: 20
     container:
-      image: barichello/godot-ci:4.2
+      image: barichello/godot-ci:4.6.2
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Godot import data
+      - name: Web Export: Restore Godot import cache
         continue-on-error: true
         uses: actions/cache@v4
         with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
+          path: project/.godot
+          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg', 'project/**/*.import', 'project/**/*.tscn', 'project/**/*.tres', 'project/**/*.res', 'project/**/*.uid', 'project/assets-sistema/**/*', 'project/items/**/*', 'project/resources/**/*') }}
           restore-keys: |
-            godot-4.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
+            godot-4.6.2-
 
-      - name: Import project
-        run: godot --headless --path project --editor --quit || true
+      - name: Web Export: Prepare export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.local/share/godot/export_templates/
+          if [ ! -d ~/.local/share/godot/export_templates/4.6.2.stable ]; then
+            mv /root/.local/share/godot/export_templates/4.6.2.stable ~/.local/share/godot/export_templates/4.6.2.stable
+          fi
 
-      - name: Export Web build
+      - name: Web Export: Import project before export
+        run: godot --headless --path project --editor --quit
+
+      - name: Web Export: Build release files
         shell: bash
         run: |
           set -euo pipefail
@@ -309,6 +378,7 @@ jobs:
 
           if ! godot --headless --verbose --path project --export-release "index" "$GITHUB_WORKSPACE/build/web/index.html" 2>&1 | tee /tmp/godot-export.log; then
             echo "=== Godot export failed ==="
+            echo "::error::Web export failed. Check /tmp/godot-export.log and verify export preset name 'index'."
             echo "=== Last 200 lines of export log ==="
             tail -200 /tmp/godot-export.log || true
             echo "=== Candidate output dirs ==="
@@ -332,7 +402,7 @@ jobs:
           echo "=== build/web final contents ==="
           ls -la "$GITHUB_WORKSPACE/build/web"
 
-      - name: Verify export output
+      - name: Web Export: Verify output files
         continue-on-error: true
         shell: bash
         run: |
@@ -353,22 +423,22 @@ jobs:
           if [ -n "$PKG" ]; then
             echo "OK: $PKG"
           else
-            echo "::warning::MISSING: no web package (*.pck/*.zip). Build marked as warning, not failure."
+            echo "::warning::MISSING: no web package (*.pck/*.zip). Optional build kept as warning; review export preset output paths."
           fi
 
           WASM=$(find build/web -maxdepth 1 -type f -name '*.wasm*' | head -1)
           if [ -n "$WASM" ]; then
             echo "OK: $WASM"
           else
-            echo "::warning::MISSING: no wasm file. Build marked as warning, not failure."
+            echo "::warning::MISSING: no wasm file. Optional build kept as warning; verify Web preset and export templates."
           fi
 
           echo "Checks completed (non-blocking mode)."
 
-      - name: Upload build artifact
+      - name: Web Export: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: e-vidente-web-${{ github.ref_name }}-${{ github.run_number }}
+          name: web-export-build-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
           path: build/web
           retention-days: 14
           if-no-files-found: warn
