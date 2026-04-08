@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://b4xs8eaqyqenp"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_ni1we"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_ni1we"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_r2vf4"]
-[ext_resource type="Texture2D" uid="uid://b2j3p27qettwf" path="res://assets-sistema/iconos/alimentos-info/fideos-arroz-aceite-info.png" id="2_sv443"]
-[ext_resource type="Texture2D" uid="uid://cnwlmxd2nqm1l" path="res://assets-sistema/iconos/fideos-arroz-aceite-0.png" id="3_h7e6g"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/fideos-arroz-aceite-info.png" id="2_sv443"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/fideos-arroz-aceite-0.png" id="3_h7e6g"]
 
 [resource]
 script = ExtResource("1_r2vf4")

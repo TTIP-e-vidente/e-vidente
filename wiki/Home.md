@@ -1,48 +1,42 @@
-﻿# 🧠 e-vidente Wiki
+﻿# Wiki de e-vidente
 
-**Documentacion tecnica y funcional del proyecto Godot e-vidente.**
+Esta wiki reúne la documentación técnica y funcional del proyecto.
 
-> Un juego de puzzle educativo sobre alimentacion, restricciones alimentarias y conciencia nutricional.
+e-vidente es un juego de puzzle educativo sobre alimentación, restricciones alimentarias y conciencia nutricional.
 
----
+## Por dónde empezar
 
-## 🚀 Inicio rapido
+- [Getting Started](Getting-Started): preparación del entorno y puesta en marcha local.
+- [Architecture](Architecture): estructura general del proyecto y ubicación de los sistemas principales.
+- [Persistencia Local](Persistencia-Local): perfil local, guardado de partidas y reanudación.
+- [CI](CI): validaciones automáticas y export web.
+- [Bitacora](Bitacora): cambios recientes y decisiones que conviene dejar registradas.
 
-| 🎯 Si necesitas | Donde ir | Tiempo |
-|---|---|---|
-| **Configurar entorno local** | [Getting Started](Getting-Started) | ~10 min |
-| **Entender arquitectura** | [Architecture](Architecture) | ~8 min |
-| **Entender el pipeline CI** | [CI](CI) | ~5 min |
-| **Solucionar un problema** | [Troubleshooting](Troubleshooting) | ~5 min |
-| **Ver cambios recientes** | [Bitacora](Bitacora) | ~2 min |
-
-## 🏗️ Estructura del proyecto
+## Estructura del proyecto
 
 ```
 e-vidente/
-├── project/          # Juego Godot 4.2
+├── project/          # Juego Godot 4.6.2
 │  ├── interface/     # Escenas y UI
 │  ├── items/         # Recursos de alimentos
 │  ├── niveles/       # Datos de escenarios
-│  └── resources/     # Configuracion
-├── wiki/             # Esta documentacion
-├── .github/          # CI/CD (GitHub Actions)
-└── README.md         # Overview
+│  └── resources/     # Configuración
+├── wiki/             # Documentación del proyecto
+├── .github/          # GitHub Actions
+└── README.md         # Resumen general del repo
 ```
 
-## 📋 Flujo de trabajo
+## Forma de trabajo
 
-1. **Branch** → Crear rama de feature/fix
-2. **Develop** → Cambios en bloques pequenos
-3. **Document** → Actualizar wiki si aplica
-4. **Test locally** → Verificar en Godot
-5. **PR** → Crear pull request
-6. **CI Review** → Esperar validacion de pipeline
-7. **Register** → Agregar entrada en Bitacora si es funcional
+1. Crear una rama para el cambio.
+2. Hacer cambios chicos y fáciles de revisar.
+3. Probar en Godot antes de abrir el PR.
+4. Si el cambio toca `project/` y afecta un flujo real, dejar una nota en [Bitacora](Bitacora).
+5. Revisar la CI y corregir cualquier fallo antes de mergear.
 
-## ⚙️ Estado del proyecto
+## Estado general
 
-✅ **Wiki:** Activa y mantenida  
-✅ **CI:** Validaciones de estructura, docs y build web  
-✅ **Build:** Web export funcional  
-📝 **Foco:** Cambios pequenos, trazables, bien documentados
+- La wiki funciona como documentación viva del repo.
+- La CI valida estructura, documentación, tests de guardado y export web.
+- La persistencia local está documentada y cubierta por tests headless.
+- El criterio general sigue siendo el mismo: cambios cortos, trazables y bien entendidos.

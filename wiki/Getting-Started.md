@@ -1,87 +1,77 @@
-﻿# 🚀 Getting Started
+﻿# Getting Started
 
-Guia corta para iniciar desarrollo sobre e-vidente sin friccion.
+Esta guía sirve para levantar el proyecto por primera vez sin perder tiempo en vueltas innecesarias.
 
----
+## Requisitos
 
-## 📋 Requisitos previos
+- Godot 4.6.2 estable.
+- Git instalado y configurado.
+- Acceso al repositorio para trabajar con ramas y pull requests.
 
-- **Godot:** 4.2 o compatible  
-- **Git:** instalado y configurado  
-- **Acceso:** permisos en el repositorio (push/PR)  
+## Clonar e importar el proyecto
 
-## ⬇️ Clonar y abrir
+Primero, clonar el repo y activar los hooks locales:
 
 ```bash
-# 1. Clonar
 git clone https://github.com/TTIP-e-vidente/e-vidente.git
 cd e-vidente
-
-# 2. Abrir en Godot
-# - Abrir Godot Hub o Godot Editor
-# - Project > Import  
-# - Navegar a: project/project.godot
-# - Select Version > Godot 4.2 → Import & Edit
-
-# 3. Godot completara importacion inicial (~1-2 min)
+powershell -ExecutionPolicy Bypass -File scripts/setup-git-hooks.ps1
 ```
 
-## 🗂️ Directorio clave
+Después, importar el proyecto en Godot:
 
-| Directorio | Proposito |
+1. Abrir Godot Hub o el editor.
+2. Ir a `Project > Import`.
+3. Seleccionar `project/project.godot`.
+4. Abrirlo con Godot 4.6.2.
+5. Esperar la importación inicial.
+
+## Carpetas importantes
+
+| Carpeta | Uso |
 |---|---|
-| `project/` | Juego Godot: escenas, scripts, recursos |
-| `project/interface/` | Escenas y logica de UI |
-| `project/items/` | Datos de alimentos (.tres) |
-| `project/niveles/` | Configuraciones de niveles/escenarios |
-| `project/resources/` | Configuracion general |
-| `wiki/` | Esta documentacion (Markdown) |
-| `.github/workflows/` | Pipeline de CI (GitHub Actions) |
+| `project/` | Juego Godot: escenas, scripts y recursos |
+| `project/interface/` | Escenas y lógica de UI |
+| `project/items/` | Datos de alimentos (`.tres`) |
+| `project/niveles/` | Configuración de niveles y escenarios |
+| `project/resources/` | Configuración general |
+| `wiki/` | Documentación del proyecto |
+| `.github/workflows/` | Workflow de CI |
 
-## 🔄 Flujo de trabajo recomendado
+## Flujo recomendado
 
-```
-1. git checkout -b feature/nombre
-   └─ Crear rama de trabajo
+1. Crear una rama de trabajo, por ejemplo `feature/nombre` o `fix/nombre`.
+2. Hacer cambios chicos y probarlos dentro del editor.
+3. Committear con un mensaje claro.
+4. Si el cambio afecta el juego o el flujo de trabajo, actualizar `wiki/Bitacora.md`.
+5. Abrir el pull request cuando el cambio ya esté probado.
 
-2. [Editar en Godot]
-   └─ Cambios pequenos y testados
+## Antes de abrir un PR
 
-3. git add . && git commit -m "Descripcion clara"
-   └─ Si tocaste project/, actualizar wiki/Bitacora.md
+- [ ] El proyecto abre en Godot sin errores críticos.
+- [ ] Las escenas modificadas funcionan como se esperaba.
+- [ ] Los cambios se probaron localmente.
+- [ ] La descripción del PR explica qué cambió y por qué.
+- [ ] Si hubo cambios relevantes en `project/`, quedó registro en `wiki/Bitacora.md`.
+- [ ] La CI pasa completa (`validate` y `build-web`).
 
-4. [Verificar en Godot]
-   └─ Abrir proyecto, revisar que no haya errores criticos
+## Problemas comunes
 
-5. git push origin feature/nombre
-   └─ Subir cambios
+### El proyecto no importa
 
-6. [Abrir PR en GitHub]
-   └─ Describir cambio en la PR
-```
+- Verificar que `project/project.godot` exista.
+- Borrar `.godot/` y volver a importar si la caché quedó en mal estado.
 
-## ✅ Checklist antes de PR
+### Faltan recursos
 
-- [ ] El proyecto abre en Godot sin errores criticos
-- [ ] Las escenas se ven como esperado
-- [ ] Probaste cambios funcionales localmente
-- [ ] La descripcion de la PR es clara
-- [ ] Si cambiaste `project/`, actualizaste `wiki/Bitacora.md`
-- [ ] CI pasa: validate ✅ + build-web ✅
+- Forzar una reimportación desde `Project > Tools > Reimport`.
 
-## 🐛 Troubleshooting
+### El export web no genera `index.html`
 
-### "Proyecto no importa"
-- Verifica que `project/project.godot` exista
-- Intenta borrar `.godot/` y re-importar
+- Revisar `export_presets.cfg`.
+- Verificar si la salida quedó en `build/web` o en alguna carpeta de export alternativa.
 
-### "Error: Missing resources"
-- Ejecutar import forzado: Godot → Project → Tools → Reimport
+### La CI marca falta de actualización en la wiki
 
-### "Export falla con index.html missing"
-- Revisar `export_presets.cfg` tiene ruta correcta
-- Ver resultado en `build/web` y en `project/export/`
-
-### "Warning de wiki en CI"
-- Tocaste archivos en `project/` sin cambios en wiki
-- Agregar breve entrada en `wiki/Bitacora.md`
+- Eso suele pasar cuando hubo cambios en `project/` sin reflejo en `wiki/`.
+- En ese caso, alcanza con dejar una nota breve en `wiki/Bitacora.md`.

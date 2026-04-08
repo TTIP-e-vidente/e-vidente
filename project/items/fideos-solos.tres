@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://clti7d5ri2t6k"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_aw11f"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_aw11f"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_oukuo"]
-[ext_resource type="Texture2D" uid="uid://dv3un0pakfgmh" path="res://assets-sistema/iconos/alimentos-info/fideos-aceite-info.png" id="2_1gcub"]
-[ext_resource type="Texture2D" uid="uid://cbxmu1tln1ra" path="res://assets-sistema/iconos/fideos-aceite-0.png" id="3_gfy62"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/fideos-aceite-info.png" id="2_1gcub"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/fideos-aceite-0.png" id="3_gfy62"]
 
 [resource]
 script = ExtResource("1_oukuo")

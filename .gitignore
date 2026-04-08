@@ -1,2 +1,11 @@
 # Godot 4+ specific ignores
-.godot/
+# Track uid_cache.bin so CI resolves UIDs without re-importing from scratch
+project/.godot/*
+!project/.godot/uid_cache.bin
+*.import
+
+# Local docs workspace
+docs-local/
+
+# Legacy local docs folder
+local-docs/

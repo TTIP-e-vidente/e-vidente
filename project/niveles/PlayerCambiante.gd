@@ -7,14 +7,22 @@ class_name PlayerCambiante
 @onready var adelante = $"../Adelante"
 @onready var ensenanza = $"../Ensenanza"
 var tipo: LevelItem.Condicion
+var _current_animation := "cagadodehambre"
 var current_animation = "cagadodehambre" : 
 	set(value):
-		current_animation = value
-		if anim != null: anim.play(current_animation)
+		_current_animation = value
+		if anim != null:
+			anim.play(_current_animation)
+	get:
+		return _current_animation
+var _abstract_state: Estado
 var abstract_state : Estado : 
 	set(new_state):
-		abstract_state = new_state
-		abstract_state.aplicar_animacion()
+		_abstract_state = new_state
+		if _abstract_state != null:
+			_abstract_state.aplicar_animacion()
+	get:
+		return _abstract_state
 @onready var sentir_hambre = $AbstractState/SentirHambre
 @onready var manager_level = $"../ManagerLevel"
 
@@ -32,6 +40,13 @@ func item_en_plato(item):
 	
 func item_sale_plato(item):
 	abstract_state.sale_item_plato(item, self)
+
+
+func prepare_for_next_run() -> void:
+	hambre.show()
+	abstract_state = sentir_hambre
+	current_animation = "cagadodehambre"
+
 
 func _on_animated_sprite_2d_animation_finished():
 	abstract_state.aplicar_animacion()

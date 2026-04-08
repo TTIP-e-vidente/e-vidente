@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://dvrgne3d0adf6"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_38nw1"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_38nw1"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_t74q8"]
-[ext_resource type="Texture2D" uid="uid://dwth276axnxnt" path="res://assets-sistema/iconos/alimentos-info/brownie-chocolate-info.png" id="2_idk6j"]
-[ext_resource type="Texture2D" uid="uid://cc01mqdg7n6it" path="res://assets-sistema/iconos/brownie-0.png" id="3_o87xi"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/brownie-chocolate-info.png" id="2_idk6j"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/brownie-0.png" id="3_o87xi"]
 
 [resource]
 script = ExtResource("1_t74q8")
