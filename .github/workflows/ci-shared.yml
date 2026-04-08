@@ -30,7 +30,7 @@ on:
 
 jobs:
   quality:
-    name: "Guardrails: Structure, Docs and Optional ESLint"
+    name: "Guardrails: Critical structure, soft docs hints and optional ESLint"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -46,42 +46,38 @@ jobs:
           set -euo pipefail
           missing=0
 
-          REQUIRED_DIRS=(
-            ".github/workflows"
+          CRITICAL_DIRS=(
             "project"
             "project/interface"
             "project/items"
             "project/niveles"
             "project/resources"
-            "wiki"
           )
 
-          REQUIRED_FILES=(
-            "README.md"
+          CRITICAL_FILES=(
             "project/project.godot"
-            "project/export_presets.cfg"
-            "wiki/Home.md"
-            "wiki/Getting-Started.md"
+            "scripts/run-godot-validation.sh"
+            "scripts/ci/detect-validation-profile.sh"
           )
 
-          for d in "${REQUIRED_DIRS[@]}"; do
+          for d in "${CRITICAL_DIRS[@]}"; do
             if [ ! -d "$d" ]; then
-              echo "::error::Missing required directory: $d. Create it or update REQUIRED_DIRS in .github/workflows/ci-shared.yml"
+              echo "::error::Missing critical directory: $d. Restore the runtime project structure or update CRITICAL_DIRS in .github/workflows/ci-shared.yml"
               missing=1
             fi
           done
 
-          for f in "${REQUIRED_FILES[@]}"; do
+          for f in "${CRITICAL_FILES[@]}"; do
             if [ ! -f "$f" ]; then
-              echo "::error::Missing required file: $f. Create it or update REQUIRED_FILES in .github/workflows/ci-shared.yml"
+              echo "::error::Missing critical file: $f. Restore the runtime validation entrypoint or update CRITICAL_FILES in .github/workflows/ci-shared.yml"
               missing=1
             fi
           done
 
           if [ "$missing" -eq 0 ]; then
-            echo "Repository structure looks good."
+            echo "Critical repository structure looks good."
           else
-            echo "::error::Repository structure guardrail failed. Fix missing required paths/files before merging."
+            echo "::error::Critical repository structure is incomplete. Fix missing runtime paths/files before merging."
             exit 1
           fi
 
@@ -110,7 +106,7 @@ jobs:
             echo "::notice::Skipping ESLint: no Node/ESLint config detected in this repository."
           fi
 
-      - name: "Guardrail: Required docs baseline"
+      - name: "Guardrail: Docs and optional export config hints"
         shell: bash
         run: |
           set -euo pipefail
@@ -127,10 +123,22 @@ jobs:
             echo "::warning::wiki/Home.md missing or empty. Add wiki entry point page."
           fi
 
+          if [ -f wiki/Getting-Started.md ] && [ -s wiki/Getting-Started.md ]; then
+            echo "wiki/Getting-Started.md present."
+          else
+            echo "::warning::wiki/Getting-Started.md missing or empty. Add onboarding notes for new contributors."
+          fi
+
           if [ -f wiki/Bitacora.md ] && [ -s wiki/Bitacora.md ]; then
             echo "wiki/Bitacora.md present."
           else
             echo "::warning::wiki/Bitacora.md missing or empty. Add/update changelog notes."
+          fi
+
+          if [ -f project/export_presets.cfg ] && [ -s project/export_presets.cfg ]; then
+            echo "project/export_presets.cfg present."
+          else
+            echo "::notice::project/export_presets.cfg missing or empty. Core validation will continue; manual web export will stay unavailable until this file exists."
           fi
 
       - name: "Guardrail: Wiki reminder when project files change"
@@ -196,36 +204,38 @@ jobs:
         run: |
           set -euo pipefail
 
-          REQUIRED_DIRS=(
-            ".github/workflows"
+          CRITICAL_DIRS=(
             "project"
             "project/interface"
             "project/items"
             "project/niveles"
             "project/resources"
-            "wiki"
           )
 
-          REQUIRED_FILES=(
-            "README.md"
+          CRITICAL_FILES=(
             "project/project.godot"
-            "project/export_presets.cfg"
-            "wiki/Home.md"
-            "wiki/Getting-Started.md"
+            "scripts/run-godot-validation.sh"
+            "scripts/ci/detect-validation-profile.sh"
           )
 
           missing_structure=0
-          for d in "${REQUIRED_DIRS[@]}"; do
+          for d in "${CRITICAL_DIRS[@]}"; do
             [ -d "$d" ] || missing_structure=$((missing_structure + 1))
           done
-          for f in "${REQUIRED_FILES[@]}"; do
+          for f in "${CRITICAL_FILES[@]}"; do
             [ -f "$f" ] || missing_structure=$((missing_structure + 1))
           done
 
           missing_docs=0
           [ -s README.md ] || missing_docs=$((missing_docs + 1))
           [ -s wiki/Home.md ] || missing_docs=$((missing_docs + 1))
+          [ -s wiki/Getting-Started.md ] || missing_docs=$((missing_docs + 1))
           [ -s wiki/Bitacora.md ] || missing_docs=$((missing_docs + 1))
+
+          export_config_status="present"
+          if [ ! -s project/export_presets.cfg ]; then
+            export_config_status="missing"
+          fi
 
           eslint_status="skipped"
           if [ -f package.json ] && ( [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f .eslintrc.cjs ] || [ -f .eslintrc.yaml ] || [ -f .eslintrc.yml ] ); then
@@ -254,14 +264,17 @@ jobs:
             wiki_reminder="yes"
           fi
 
-          summary="QUALITY SUMMARY | structure_missing=$missing_structure | docs_missing=$missing_docs | eslint=$eslint_status | wiki_update_reminder=$wiki_reminder"
+          summary="QUALITY SUMMARY | critical_structure_missing=$missing_structure | docs_missing=$missing_docs | export_presets=$export_config_status | eslint=$eslint_status | wiki_update_reminder=$wiki_reminder"
           echo "$summary"
           echo "::notice::$summary"
           if [ "$missing_structure" -gt 0 ]; then
-            echo "::error::Guardrail structure check found $missing_structure missing required paths/files."
+            echo "::error::Guardrail structure check found $missing_structure missing critical runtime paths/files."
           fi
           if [ "$missing_docs" -gt 0 ]; then
-            echo "::warning::Guardrail docs baseline found $missing_docs missing/empty required docs files."
+            echo "::warning::Guardrail docs baseline found $missing_docs missing/empty optional docs files."
+          fi
+          if [ "$export_config_status" = "missing" ]; then
+            echo "::notice::project/export_presets.cfg is missing or empty. Manual web export is optional and will remain unavailable until this file exists."
           fi
           if [ "$wiki_reminder" = "yes" ]; then
             echo "::warning::Project code changed without wiki updates. Review wiki/Bitacora.md or wiki/Home.md."
@@ -272,7 +285,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   validate:
-    name: "Core Validation: Godot tests"
+    name: "Core Validation: Import, catalog and save flows"
     runs-on: ubuntu-latest
     timeout-minutes: 25
     container:
@@ -323,6 +336,24 @@ jobs:
           EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs
         run: |
           set -euo pipefail
+          rm -rf "$GITHUB_WORKSPACE/validation-logs"
+
+          if sh scripts/run-godot-validation.sh --run full godot; then
+            exit 0
+          fi
+
+          failed_step="$(cat "$GITHUB_WORKSPACE/validation-logs/last_failed_step_id" 2>/dev/null || true)"
+          if [ "$failed_step" != "01-import-headless" ]; then
+            echo "::error::Full validation failed after the import phase. Review validation logs and the failing test hint above."
+            exit 1
+          fi
+
+          echo "::warning::Headless import failed on the first attempt. Clearing generated project/.godot state (keeping uid_cache.bin) and retrying once to rule out stale import cache state."
+          if [ -d project/.godot ]; then
+            find project/.godot -mindepth 1 -maxdepth 1 ! -name 'uid_cache.bin' -exec rm -rf {} +
+          fi
+
+          rm -rf "$GITHUB_WORKSPACE/validation-logs"
           sh scripts/run-godot-validation.sh --run full godot
 
       - name: "Validation: Upload logs artifact"
@@ -335,7 +366,7 @@ jobs:
           retention-days: 14
 
   build-web:
-    name: Optional Web Export Build (manual, main/dev)
+    name: Optional Web Export: manual only
     if: inputs.trigger_kind == 'workflow_dispatch' && inputs.run_web_export == true && (inputs.ref_name == 'main' || inputs.ref_name == 'dev')
     continue-on-error: true
     runs-on: ubuntu-latest
@@ -349,6 +380,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: "Web Export: Require export preset config"
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s project/export_presets.cfg ]; then
+            echo "project/export_presets.cfg present."
+          else
+            echo "::error::Manual web export requires project/export_presets.cfg. Add/update the export preset before rerunning with run_web_export=true."
+            exit 1
+          fi
 
       - name: "Web Export: Restore Godot import cache"
         continue-on-error: true

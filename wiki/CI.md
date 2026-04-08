@@ -4,21 +4,21 @@ La CI quedó armada para que falle solo cuando haya una rotura real del proyecto
 
 ## Archivo y disparadores
 
-La CI visible se reparte en dos workflows:
+La CI visible se reparte en dos workflows cortos y faciles de leer en GitHub:
 
-- `.github/workflows/ci.yml` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
-- `.github/workflows/ci-pr.yml` para `pull_request` apuntando a `main` o `dev`
+- `.github/workflows/ci.yml` con nombre visible `CI Branch` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
+- `.github/workflows/ci-pr.yml` con nombre visible `CI PR` para `pull_request` apuntando a `main` o `dev`
 
 Ambos llaman a `.github/workflows/ci-shared.yml`, que contiene la logica real de `guardrails`, `validate` y `build-web`.
 
 También cancela corridas viejas por rama para evitar ruido cuando entran commits nuevos.
 
-Esta separacion es intencional: cuando `dev` tiene una PR abierta a `main`, un mismo commit dispara dos eventos distintos (`push` y `pull_request`). Ahora los nombres visibles en GitHub diferencian mejor cada corrida en vez de verse duplicados.
+Esta separacion es intencional: cuando `dev` tiene una PR abierta a `main`, un mismo commit dispara dos eventos distintos (`push` y `pull_request`). Ahora los nombres visibles en GitHub diferencian mejor cada corrida en vez de verse duplicados opacos.
 
 ## Contrato actual
 
 - `guardrails` y `validate` son los dos gates bloqueantes.
-- `guardrails` cubre estructura del repo y ESLint cuando exista configuración.
+- `guardrails` bloquea solo por estructura runtime realmente critica; docs y configuraciones opcionales quedan como warnings o notices.
 - `validate` cubre import headless y regresiones jugables/persistencia.
 - El recordatorio sobre `wiki/Bitacora.md` sigue siendo asistivo y no rompe la corrida.
 
@@ -26,13 +26,18 @@ Esta separacion es intencional: cuando `dev` tiene una PR abierta a `main`, un m
 
 ### `guardrails`
 
-Este job sí bloquea, pero solo por reglas que dependen del repo y no de estado frágil del runner.
+Este job si bloquea, pero ahora solo por reglas que dependen del repo y rompen de verdad la validacion.
 
-Hoy cubre:
+Hoy cubre como bloqueo real:
 
-- estructura mínima requerida del proyecto
-- archivos base que el repo necesita para mantenerse consistente
-- ESLint, pero solo si el repo trae configuración y lockfile de npm válidos
+- estructura runtime minima del proyecto Godot
+- entrypoints criticos de la validacion compartida
+
+Como hints no bloqueantes cubre:
+
+- ESLint, pero solo si el repo trae configuracion y lockfile de npm validos
+- README, wiki base y `wiki/Getting-Started.md`
+- `project/export_presets.cfg`, que solo importa para el export web manual
 
 La idea es que si este job falla, el problema sea atribuible a una deuda real de estructura o calidad del código, no a exportadores ni a tooling lateral.
 
@@ -47,6 +52,8 @@ Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2` y usa la suite
 En `push`, `schedule` y PRs que tocan `project/` o la propia suite compartida, corre el perfil `full`.
 
 En PRs que solo cambian docs, metadata o infraestructura fuera de `project/`, baja a un perfil `pr-fast` con tres pruebas smoke para no gastar minutos al pedo.
+
+Si el import headless falla en la suite `full`, la CI limpia el estado generado de `project/.godot` (conservando `uid_cache.bin`) y reintenta una sola vez antes de dar la corrida por rota. Eso reduce falsos negativos por cache o estado importado viejo.
 
 Cubre:
 
@@ -69,9 +76,10 @@ La CI se simplificó con algunos criterios explícitos:
 
 - cache de `project/.godot` con key basada en imports, escenas, recursos y assets fuente relevantes
 - cuando una PR toca `project/`, la validación vuelve al perfil `full` y reimporta antes de correr la suite compartida
+- si el primer import falla, hay un reintento automatico con limpieza de estado generado para evitar fallas espurias
 - sin export web dentro del gate principal
 - ESLint solo corre si el repo realmente lo configuró y dejó lockfile determinístico
-- dos checks obligatorios y concretos: `guardrails` para disciplina del repo y `validate` para roturas funcionales
+- dos checks obligatorios y concretos: `guardrails` para roturas estructurales reales y `validate` para roturas funcionales
 
 ## Validación local recomendada
 

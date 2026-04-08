@@ -49,6 +49,9 @@ run_step() {
 	rm -f "$tmp_log"
 
 	if [ "$status" -ne 0 ]; then
+		if [ -n "$LOG_DIR" ]; then
+			printf '%s\n' "$step_id" > "$LOG_DIR/last_failed_step_id"
+		fi
 		echo ""
 		echo "FALLO: $label"
 		echo "Ayuda: $failure_hint"
@@ -116,6 +119,7 @@ run_godot_validation() {
 		mkdir -p "$LOG_DIR"
 		COMBINED_LOG="$LOG_DIR/validation.log"
 		: > "$COMBINED_LOG"
+		rm -f "$LOG_DIR/last_failed_step_id"
 	fi
 
 	case "$mode" in
