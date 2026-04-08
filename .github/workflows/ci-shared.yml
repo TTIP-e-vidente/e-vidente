@@ -1,3 +1,5 @@
+name: CI Shared Core (internal)
+
 on:
   workflow_call:
     inputs:
@@ -366,7 +368,7 @@ jobs:
           retention-days: 14
 
   build-web:
-    name: Optional Web Export: manual only
+    name: "Optional Web Export: manual only"
     if: inputs.trigger_kind == 'workflow_dispatch' && inputs.run_web_export == true && (inputs.ref_name == 'main' || inputs.ref_name == 'dev')
     continue-on-error: true
     runs-on: ubuntu-latest
