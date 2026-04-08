@@ -2,6 +2,8 @@ name: Godot CI - Quality, Core Validation and Web Export
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -262,9 +264,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache@v4
         with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
+          path: project/.godot
           key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
           restore-keys: |
             godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
@@ -312,9 +312,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache@v4
         with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
+          path: project/.godot
           key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
           restore-keys: |
             godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-

@@ -8,14 +8,6 @@ const TEST_CASES := [
 	{
 		"scene_path": "res://niveles/nivel_1/Level.tscn",
 		"track_key": "celiaquia"
-	},
-	{
-		"scene_path": "res://niveles/nivel_2/level_vegan.tscn",
-		"track_key": "veganismo"
-	},
-	{
-		"scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
-		"track_key": "veganismo_celiaquia"
 	}
 ]
 

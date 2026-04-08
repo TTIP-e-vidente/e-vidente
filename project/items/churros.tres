@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://x4438f3fnr4s"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_0nw8d"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_u0yb5"]
-[ext_resource type="Texture2D" uid="uid://b77sqbtvsoyo" path="res://assets-sistema/iconos/alimentos-info/churros-info.png" id="2_gtsu8"]
-[ext_resource type="Texture2D" uid="uid://d3gxmbw83olxd" path="res://assets-sistema/iconos/churros-0.png" id="3_o1icr"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_u0yb5"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/churros-info.png" id="2_gtsu8"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/churros-0.png" id="3_o1icr"]
 
 [resource]
 script = ExtResource("1_0nw8d")

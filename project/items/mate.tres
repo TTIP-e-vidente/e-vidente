@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://d0g3n3i23vmq4"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_7so11"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_jjyqe"]
-[ext_resource type="Texture2D" uid="uid://b8jkfpc18rova" path="res://assets-sistema/iconos/alimentos-info/mate-info.png" id="2_8pi4d"]
-[ext_resource type="Texture2D" uid="uid://33x6cg23gn2j" path="res://assets-sistema/iconos/mate-0.png" id="3_e67f8"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_jjyqe"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/mate-info.png" id="2_8pi4d"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/mate-0.png" id="3_e67f8"]
 
 [resource]
 script = ExtResource("1_7so11")

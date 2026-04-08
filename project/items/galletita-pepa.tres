@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://ck1y3r88w7x3s"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_f7u44"]
-[ext_resource type="Texture2D" uid="uid://2bd3d0uyjahk" path="res://assets-sistema/iconos/alimentos-info/galleta-pepa-info.png" id="1_sjo4e"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_f7u44"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/galleta-pepa-info.png" id="1_sjo4e"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_tc7f0"]
-[ext_resource type="Texture2D" uid="uid://dubohkpp3287h" path="res://assets-sistema/iconos/galleta-pepa-0.png" id="2_o1wr3"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/galleta-pepa-0.png" id="2_o1wr3"]
 
 [resource]
 script = ExtResource("1_tc7f0")

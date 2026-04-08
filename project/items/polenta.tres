@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://dby6k41bldoyp"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_2o81v"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_6nkey"]
-[ext_resource type="Texture2D" uid="uid://3qpa2i5b3qc2" path="res://assets-sistema/iconos/alimentos-info/polenta-info.png" id="2_swxcj"]
-[ext_resource type="Texture2D" uid="uid://cvjfmab78dhkd" path="res://assets-sistema/iconos/polenta-0.png" id="3_wlees"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_6nkey"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/polenta-info.png" id="2_swxcj"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/polenta-0.png" id="3_wlees"]
 
 [resource]
 script = ExtResource("1_2o81v")

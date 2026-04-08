@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://dvr7uw8f6eoc4"]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://interface/Container.gd" id="1_jr3v2"]
 
