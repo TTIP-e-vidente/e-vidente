@@ -247,103 +247,52 @@ jobs:
             echo "$summary"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  validate-shard-a:
-    name: Core Validation Shard A (Import + Save Basics)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    container:
-      image: barichello/godot-ci:4.6.2
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Restore Godot import cache
-        continue-on-error: true
-        uses: actions/cache@v4
-        with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
-          restore-keys: |
-            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
-
-      - name: Run validation shard A test suite
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/validation-logs-a"
-
-          godot --headless --path project --editor --quit 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-a/01-import-headless.log"
-          godot --headless --path project -s res://tests/content_catalog_validation_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-a/02-content-catalog-validation.log"
-          godot --headless --path project -s res://tests/save_manager_smoke_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-a/03-save-manager-smoke.log"
-          godot --headless --path project -s res://tests/save_manager_validation_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-a/04-save-manager-validation.log"
-          godot --headless --path project -s res://tests/save_manager_signal_contract_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-a/05-save-manager-signal-contract.log"
-
-      - name: Upload validation logs (shard A)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: core-validation-shard-a-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
-          path: validation-logs-a
-          if-no-files-found: warn
-          retention-days: 14
-
-  validate-shard-b:
-    name: Core Validation Shard B (Migration + UI Flow)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    container:
-      image: barichello/godot-ci:4.6.2
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Restore Godot import cache
-        continue-on-error: true
-        uses: actions/cache@v4
-        with:
-          path: |
-            project/.godot/imported
-            project/.godot/editor
-          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
-          restore-keys: |
-            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
-
-      - name: Run validation shard B test suite
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/validation-logs-b"
-
-          godot --headless --path project --editor --quit 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-b/01-import-headless.log"
-          godot --headless --path project -s res://tests/save_manager_legacy_migration_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-b/02-save-manager-legacy-migration.log"
-          godot --headless --path project -s res://tests/archivero_overlay_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-b/03-archivero-overlay.log"
-          godot --headless --path project -s res://tests/intro_menu_profile_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-b/04-intro-menu-profile.log"
-          godot --headless --path project -s res://tests/level_quick_save_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs-b/05-level-quick-save.log"
-
-      - name: Upload validation logs (shard B)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: core-validation-shard-b-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
-          path: validation-logs-b
-          if-no-files-found: warn
-          retention-days: 14
-
   validate:
-    name: Core Validation Gate (All Shards)
+    name: Core Validation
     runs-on: ubuntu-latest
-    needs:
-      - validate-shard-a
-      - validate-shard-b
+    timeout-minutes: 30
+    container:
+      image: barichello/godot-ci:4.6.2
 
     steps:
-      - name: Publish validation gate summary
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Godot import cache
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: |
+            project/.godot/imported
+            project/.godot/editor
+          key: godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-${{ github.sha }}
+          restore-keys: |
+            godot-4.6.2-${{ hashFiles('project/project.godot', 'project/export_presets.cfg') }}-
+
+      - name: Run full validation test suite
+        shell: bash
         run: |
-          echo "Core Validation shards completed successfully."
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/validation-logs"
+
+          godot --headless --path project --editor --quit 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/01-import-headless.log"
+          godot --headless --path project -s res://tests/content_catalog_validation_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/02-content-catalog-validation.log"
+          godot --headless --path project -s res://tests/save_manager_smoke_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/03-save-manager-smoke.log"
+          godot --headless --path project -s res://tests/save_manager_validation_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/04-save-manager-validation.log"
+          godot --headless --path project -s res://tests/save_manager_signal_contract_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/05-save-manager-signal-contract.log"
+          godot --headless --path project -s res://tests/save_manager_legacy_migration_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/06-save-manager-legacy-migration.log"
+          godot --headless --path project -s res://tests/archivero_overlay_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/07-archivero-overlay.log"
+          godot --headless --path project -s res://tests/intro_menu_profile_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/08-intro-menu-profile.log"
+          godot --headless --path project -s res://tests/level_quick_save_test.gd 2>&1 | tee "$GITHUB_WORKSPACE/validation-logs/09-level-quick-save.log"
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-validation-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
+          path: validation-logs
+          if-no-files-found: warn
+          retention-days: 14
 
   build-web:
     name: Web Export Build
