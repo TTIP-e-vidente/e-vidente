@@ -1,9 +1,12 @@
 extends Node
 
+@warning_ignore("unused_signal")
 signal user_registered(profile: Dictionary)
 signal user_logged_in(profile: Dictionary)
 signal user_logged_out()
+@warning_ignore("unused_signal")
 signal progress_saved(profile: Dictionary)
+@warning_ignore("unused_signal")
 signal progress_loaded(profile: Dictionary)
 signal save_status_changed(status: Dictionary)
 

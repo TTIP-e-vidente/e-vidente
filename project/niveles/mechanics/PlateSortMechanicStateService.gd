@@ -13,11 +13,15 @@ func build_partial_state(mechanic_type: String, current_run_index: int) -> Dicti
 		Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type
 	}
 	var mechanic_state: Dictionary = _build_mechanic_state()
-	if mechanic_state.is_empty() and current_run_index <= 1:
+	var raw_items: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
+	var items: Array = raw_items if raw_items is Array else []
+	if items.is_empty() and current_run_index <= 1:
 		return {}
+	var raw_placed_item_ids: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	var placed_item_ids: Array = raw_placed_item_ids if raw_placed_item_ids is Array else []
 	partial_state[Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY] = mechanic_state
-	partial_state[Global.PARTIAL_LEVEL_ITEMS_KEY] = mechanic_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
-	partial_state[Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY] = mechanic_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	partial_state[Global.PARTIAL_LEVEL_ITEMS_KEY] = items.duplicate(true)
+	partial_state[Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY] = placed_item_ids.duplicate(true)
 	return partial_state
 
 
@@ -74,8 +78,8 @@ func restore_saved_positive_items(saved_level_state: Dictionary) -> void:
 
 func extract_mechanic_state(saved_level_state: Dictionary) -> Dictionary:
 	var raw_mechanic_state: Variant = saved_level_state.get(Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY, {})
-	if raw_mechanic_state is Dictionary:
-		return raw_mechanic_state
+	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
+		return (raw_mechanic_state as Dictionary).duplicate(true)
 	return {
 		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, []),
 		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])

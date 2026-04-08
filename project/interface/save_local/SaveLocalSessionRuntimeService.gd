@@ -75,7 +75,6 @@ func create_session(title: String = "", activate: bool = true) -> Dictionary:
 	_manager.save_data["next_session_number"] = next_session_number + 1
 	if activate:
 		_manager.save_data["active_session_id"] = session_id
-		project_active_session_to_runtime()
 	_manager._mark_dirty()
 	return session.duplicate(true)
 
