@@ -8,7 +8,7 @@ func _init(manager):
 
 
 func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
-	var current_resume_state := get_resume_state()
+	var current_resume_state: Dictionary = get_resume_state()
 	if not allow_level_downgrade and str(current_resume_state.get("context", _manager.RESUME_CONTEXT_HUB)) == _manager.RESUME_CONTEXT_LEVEL:
 		return
 	set_resume_state({
@@ -44,12 +44,12 @@ func get_resume_state() -> Dictionary:
 
 
 func get_resume_hint(session_id: String = "") -> String:
-	var resume_state := get_resume_state() if session_id.strip_edges().is_empty() else _manager._get_session_resume_state(session_id)
+	var resume_state: Dictionary = get_resume_state() if session_id.strip_edges().is_empty() else _manager._get_session_resume_state(session_id)
 	return _manager._format_resume_hint_from_state(resume_state)
 
 
 func can_resume_game(session_id: String = "") -> bool:
-	var requested_session_id := session_id.strip_edges()
+	var requested_session_id: String = session_id.strip_edges()
 	if not requested_session_id.is_empty():
 		return _manager._session_can_resume(_manager._get_session_data(requested_session_id))
 	return not _manager.list_save_slots().is_empty()
@@ -71,7 +71,7 @@ func record_level_completed(track_key: String, level_number: int) -> void:
 
 func record_manual_save() -> void:
 	_manager.save_current_user_progress(false)
-	var resume_state := get_resume_state()
+	var resume_state: Dictionary = get_resume_state()
 	append_history("Guardado manual", {
 		"type": "manual_save",
 		"context": str(resume_state.get("context", _manager.RESUME_CONTEXT_HUB)),
@@ -98,8 +98,8 @@ func append_history(message: String, metadata: Dictionary = {}) -> void:
 
 
 func repair_resume_state() -> bool:
-	var stored_resume_state := _manager._normalize_resume_state(_manager.save_data.get("resume_state", {}))
-	var resolved_resume_state := _manager._resolve_resume_state(stored_resume_state)
+	var stored_resume_state: Dictionary = _manager._normalize_resume_state(_manager.save_data.get("resume_state", {}))
+	var resolved_resume_state: Dictionary = _manager._resolve_resume_state(stored_resume_state)
 	if stored_resume_state == resolved_resume_state:
 		return false
 	_manager.save_data["resume_state"] = resolved_resume_state
@@ -108,8 +108,8 @@ func repair_resume_state() -> bool:
 
 
 func set_resume_state(raw_resume_state: Dictionary) -> void:
-	var normalized_resume_state := _manager._normalize_resume_state(raw_resume_state)
-	var current_resume_state := _manager._normalize_resume_state(_manager.save_data.get("resume_state", {}))
+	var normalized_resume_state: Dictionary = _manager._normalize_resume_state(raw_resume_state)
+	var current_resume_state: Dictionary = _manager._normalize_resume_state(_manager.save_data.get("resume_state", {}))
 	_manager.save_data["resume_state"] = normalized_resume_state
 	if current_resume_state == normalized_resume_state:
 		return
