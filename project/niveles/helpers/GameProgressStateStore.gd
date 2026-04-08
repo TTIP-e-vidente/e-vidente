@@ -87,15 +87,16 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	track_states.erase(str(clean_level_number))
 	_manager.partial_level_states[clean_track_key] = track_states
 
+
 func _reset_book_progress(book: Dictionary, track_key: String) -> void:
 	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
 		if book.has(level_number):
-			book[level_number][_manager.LEVEL_STATUS_INDEX] = false
+			_set_book_level_completed(book, level_number, false)
 
 func _export_book_progress(book: Dictionary, track_key: String) -> Array:
 	var progress: Array = []
 	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
-		progress.append(book.has(level_number) and bool(book[level_number][_manager.LEVEL_STATUS_INDEX]))
+		progress.append(_is_book_level_completed(book, level_number))
 	return progress
 
 func _import_book_progress(book: Dictionary, track_key: String, stored_progress: Variant) -> void:
@@ -103,11 +104,27 @@ func _import_book_progress(book: Dictionary, track_key: String, stored_progress:
 		for level_index in range(min(stored_progress.size(), _manager.get_track_level_count(track_key))):
 			var level_number := level_index + 1
 			if book.has(level_number):
-				book[level_number][_manager.LEVEL_STATUS_INDEX] = bool(stored_progress[level_index])
+				_set_book_level_completed(book, level_number, bool(stored_progress[level_index]))
 
 func _count_completed_levels(book: Dictionary, track_key: String) -> int:
 	var completed := 0
 	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
-		if book.has(level_number) and bool(book[level_number][_manager.LEVEL_STATUS_INDEX]):
+		if _is_book_level_completed(book, level_number):
 			completed += 1
 	return completed
+
+
+func _is_book_level_completed(book: Dictionary, level_number: int) -> bool:
+	var raw_level_progress: Variant = book.get(level_number, {})
+	if not raw_level_progress is Dictionary:
+		return false
+	return bool((raw_level_progress as Dictionary).get(_manager.BOOK_LEVEL_COMPLETED_KEY, false))
+
+
+func _set_book_level_completed(book: Dictionary, level_number: int, completed: bool) -> void:
+	var raw_level_progress: Variant = book.get(level_number, {})
+	if not raw_level_progress is Dictionary:
+		return
+	var level_progress: Dictionary = raw_level_progress
+	level_progress[_manager.BOOK_LEVEL_COMPLETED_KEY] = completed
+	book[level_number] = level_progress
