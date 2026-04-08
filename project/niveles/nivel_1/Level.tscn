@@ -276,16 +276,16 @@ position = Vector2(6.2636, -3.13165)
 [node name="Condition" type="Sprite2D" parent="Globo texto"]
 
 [node name="PlayerCambiante" type="Sprite2D" parent="."]
-position = Vector2(920, 255)
+position = Vector2(882, 255)
 script = ExtResource("12_4i2s4")
 
 [node name="hambre" type="Sprite2D" parent="PlayerCambiante"]
-position = Vector2(-17, -104)
+position = Vector2(-128, -149)
 scale = Vector2(0.474684, 0.425234)
 texture = ExtResource("10_hom3g")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="PlayerCambiante"]
-position = Vector2(-155, 22)
+position = Vector2(-10.999977, -5)
 scale = Vector2(1.7094, 1.64714)
 sprite_frames = SubResource("SpriteFrames_oduul")
 animation = &"recontento"
