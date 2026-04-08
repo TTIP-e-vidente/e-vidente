@@ -68,12 +68,12 @@ static func _build_veganismo_celiaquia_definitions() -> Dictionary:
 
 static func _build_cetogenica_definitions() -> Dictionary:
 	return {
-		1: {"runs": [_build_plate_sort_run(1, 1, "almuerzo", "prepara_keto", "celiaquia_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		2: {"runs": [_build_plate_sort_run(1, 2, "desayuno", "prepara_keto", "vegan_vegetariane_7", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
-		3: {"runs": [_build_plate_sort_run(2, 4, "cena", "prepara_keto", "celiaquia_4", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		4: {"runs": [_build_plate_sort_run(4, 2, "desayuno", "prepara_keto", "vegan_vegetariane_8", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
-		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_keto", "celiaquia_9", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
-		6: {"runs": [_build_plate_sort_run(2, 2, "bebida", "prepara_keto", "celiaquia_7", GameTrackCatalog.CATEGORY_BEBIDA)]}
+		1: {"runs": [_build_plate_sort_run(1, 1, "almuerzo", "prepara_keto", "keto_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		2: {"runs": [_build_plate_sort_run(1, 2, "desayuno", "prepara_keto", "keto_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
+		3: {"runs": [_build_plate_sort_run(2, 4, "cena", "prepara_keto", "keto_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		4: {"runs": [_build_plate_sort_run(4, 2, "desayuno", "prepara_keto", "keto_4", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
+		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_keto", "keto_5", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		6: {"runs": [_build_plate_sort_run(2, 2, "bebida", "prepara_keto", "keto_6", GameTrackCatalog.CATEGORY_BEBIDA)]}
 	}
 
 
@@ -91,6 +91,7 @@ static func _build_plate_sort_run(negative_count: int, positive_count: int, meal
 		"mechanic_payload": mechanic_payload,
 		"negative_count": negative_count,
 		"positive_count": positive_count,
+		"teaching_key": teaching_key,
 		"meal_texture_path": meal_texture_path,
 		"condition_texture_path": condition_texture_path,
 		"teaching_texture_path": teaching_texture_path,

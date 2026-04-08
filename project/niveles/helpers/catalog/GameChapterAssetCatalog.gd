@@ -32,7 +32,13 @@ const TEACHING_TEXTURE_PATHS := {
 	"vegan_vegetariane_5": "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-5.png",
 	"vegan_vegetariane_6": "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-6.png",
 	"vegan_vegetariane_7": "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-7.png",
-	"vegan_vegetariane_8": "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-8.png"
+	"vegan_vegetariane_8": "res://assets-sistema/ensenanza/ensenanza-vegan-vegetariane-8.png",
+	"keto_1": "res://assets-sistema/ensenanza/ensenanza-keto-1.png",
+	"keto_2": "res://assets-sistema/ensenanza/ensenanza-keto-2.png",
+	"keto_3": "res://assets-sistema/ensenanza/ensenanza-keto-3.png",
+	"keto_4": "res://assets-sistema/ensenanza/ensenanza-keto-4.png",
+	"keto_5": "res://assets-sistema/ensenanza/ensenanza-keto-5.png",
+	"keto_6": "res://assets-sistema/ensenanza/ensenanza-keto-6.png"
 }
 
 

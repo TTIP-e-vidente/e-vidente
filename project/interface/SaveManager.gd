@@ -28,6 +28,7 @@ const SaveLocalStorageHelperScript := preload("res://interface/save_local/SaveLo
 const SaveLocalSessionHelperScript := preload("res://interface/save_local/SaveLocalSessionHelper.gd")
 const SaveDataNormalizerScript := preload("res://interface/save_local/SaveDataNormalizer.gd")
 const SaveLocalSessionStoreScript := preload("res://interface/save_local/SaveLocalSessionStore.gd")
+const SaveLocalResumeHistoryServiceScript := preload("res://interface/save_local/SaveLocalResumeHistoryService.gd")
 const SaveLocalWriteCoordinatorScript := preload("res://interface/save_local/SaveLocalWriteCoordinator.gd")
 
 var save_data: Dictionary = {}
@@ -39,6 +40,7 @@ var _storage_helper = SaveLocalStorageHelperScript.new()
 var _session_helper = SaveLocalSessionHelperScript.new()
 var _data_normalizer
 var _session_store
+var _resume_history_service
 var _write_coordinator
 var runtime_save_status := {
 	"state": "idle",
@@ -255,80 +257,43 @@ func validate_session_title(title: String) -> Dictionary:
 
 
 func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
-	var current_resume_state := get_resume_state()
-	if not allow_level_downgrade and str(current_resume_state.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
-		return
-	_set_resume_state({
-		"context": RESUME_CONTEXT_BOOK,
-		"track_key": track_key,
-		"scene_path": _get_book_scene_path(track_key),
-		"level_number": clampi(Global.current_level, 1, Global.get_track_level_count(track_key))
-	})
+	_ensure_runtime_services()
+	_resume_history_service.set_resume_to_book(track_key, allow_level_downgrade)
 
 
 func set_resume_to_level(track_key: String, level_number: int = -1) -> void:
-	var resolved_level: int = Global.current_level if level_number < 1 else level_number
-	_set_resume_state({
-		"context": RESUME_CONTEXT_LEVEL,
-		"track_key": track_key,
-		"scene_path": _get_level_scene_path(track_key),
-		"level_number": clampi(resolved_level, 1, Global.get_track_level_count(track_key))
-	})
+	_ensure_runtime_services()
+	_resume_history_service.set_resume_to_level(track_key, level_number)
 
 
 func set_resume_after_level_completed(track_key: String, level_number: int) -> void:
-	if level_number < Global.get_track_level_count(track_key):
-		set_resume_to_level(track_key, level_number + 1)
-		return
-	_set_resume_state(_default_resume_state())
+	_ensure_runtime_services()
+	_resume_history_service.set_resume_after_level_completed(track_key, level_number)
 
 
 func get_resume_state() -> Dictionary:
-	var raw_resume_state = save_data.get("resume_state", {})
-	if not raw_resume_state is Dictionary:
-		return _resolve_resume_state(_default_resume_state())
-	return _resolve_resume_state(_normalize_resume_state(raw_resume_state))
+	_ensure_runtime_services()
+	return _resume_history_service.get_resume_state()
 
 
 func get_resume_hint(session_id: String = "") -> String:
-	var resume_state := get_resume_state() if session_id.strip_edges().is_empty() else _get_session_resume_state(session_id)
-	return _format_resume_hint_from_state(resume_state)
+	_ensure_runtime_services()
+	return _resume_history_service.get_resume_hint(session_id)
 
 
 func can_resume_game(session_id: String = "") -> bool:
-	var requested_session_id := session_id.strip_edges()
-	if not requested_session_id.is_empty():
-		return _session_can_resume(_get_session_data(requested_session_id))
-	return not list_save_slots().is_empty()
+	_ensure_runtime_services()
+	return _resume_history_service.can_resume_game(session_id)
 
 
 func record_level_completed(track_key: String, level_number: int) -> void:
-	Global.clear_partial_level_state(track_key, level_number)
-	set_resume_after_level_completed(track_key, level_number)
-	save_current_user_progress(false)
-	var message := "Completaste %s - capitulo %d" % [_track_label(track_key), level_number]
-	_append_history(message, {
-		"type": "level_completed",
-		"track": track_key,
-		"level": level_number,
-		"session_id": get_active_save_slot_id()
-	})
-	if _write_save_data(false, "level_completed"):
-		progress_saved.emit(get_current_user_profile())
+	_ensure_runtime_services()
+	_resume_history_service.record_level_completed(track_key, level_number)
 
 
 func record_manual_save() -> void:
-	save_current_user_progress(false)
-	var resume_state := get_resume_state()
-	_append_history("Guardado manual", {
-		"type": "manual_save",
-		"context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
-		"track": str(resume_state.get("track_key", "")),
-		"level": int(resume_state.get("level_number", Global.current_level)),
-		"session_id": get_active_save_slot_id()
-	})
-	if _write_save_data(false, "manual_save"):
-		progress_saved.emit(get_current_user_profile())
+	_ensure_runtime_services()
+	_resume_history_service.record_manual_save()
 
 
 func reset_all_progress() -> Dictionary:
@@ -422,6 +387,8 @@ func _validate_profile(username: String, age: int, email: String, avatar_source_
 func _ensure_runtime_services() -> void:
 	if _session_store == null:
 		_session_store = SaveLocalSessionStoreScript.new(self)
+	if _resume_history_service == null:
+		_resume_history_service = SaveLocalResumeHistoryServiceScript.new(self)
 	if _write_coordinator == null:
 		_write_coordinator = SaveLocalWriteCoordinatorScript.new(self)
 
@@ -606,13 +573,8 @@ func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
 
 
 func _repair_resume_state() -> bool:
-	var stored_resume_state := _normalize_resume_state(save_data.get("resume_state", {}))
-	var resolved_resume_state := _resolve_resume_state(stored_resume_state)
-	if stored_resume_state == resolved_resume_state:
-		return false
-	save_data["resume_state"] = resolved_resume_state
-	_mark_dirty()
-	return true
+	_ensure_runtime_services()
+	return _resume_history_service.repair_resume_state()
 
 
 func _resolve_resume_state(normalized_resume_state: Dictionary) -> Dictionary:
@@ -662,16 +624,8 @@ func _write_save_data(force: bool = false, reason: String = "save") -> bool:
 
 
 func _append_history(message: String, metadata: Dictionary = {}) -> void:
-	var history: Array = save_data.get("history", [])
-	history.push_front({
-		"timestamp": Time.get_datetime_string_from_system(false, true),
-		"message": message,
-		"metadata": metadata
-	})
-	if history.size() > HISTORY_LIMIT:
-		history = history.slice(0, HISTORY_LIMIT)
-	save_data["history"] = history
-	_mark_dirty()
+	_ensure_runtime_services()
+	_resume_history_service.append_history(message, metadata)
 
 
 func _persist_avatar(user_key: String, source_path: String) -> String:
@@ -770,12 +724,8 @@ func _remove_file_if_exists(path: String) -> void:
 
 
 func _set_resume_state(raw_resume_state: Dictionary) -> void:
-	var normalized_resume_state := _normalize_resume_state(raw_resume_state)
-	var current_resume_state := _normalize_resume_state(save_data.get("resume_state", {}))
-	save_data["resume_state"] = normalized_resume_state
-	if current_resume_state == normalized_resume_state:
-		return
-	_mark_dirty()
+	_ensure_runtime_services()
+	_resume_history_service.set_resume_state(raw_resume_state)
 
 
 func _is_known_track(track_key: String) -> bool:
@@ -804,5 +754,3 @@ func _notify_save_status_changed() -> void:
 	save_status_changed.emit(get_save_status())
 
 
-func _track_label(track_key: String) -> String:
-	return Global.get_track_label(track_key)
