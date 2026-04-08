@@ -18,20 +18,15 @@ const START_BUTTON_TEXT := "Empezar desde el selector"
 
 func _ready() -> void:
 	background.play()
-	_set_play_panel_visible(false)
-	_refresh_play_panel()
+
 
 
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_file("res://niveles/selector.tscn")
+	get_tree().change_scene_to_file("res://interface/archivero.tscn")
 
 
 func _on_opciones_pressed() -> void:
-	get_tree().change_scene_to_file("res://interface/opciones.tscn")
-
-
-func _on_salir_pressed() -> void:
-	get_tree().quit()
+	get_tree().change_scene_to_file("res://preguntas/pregunta.tscn")
 
 
 func _on_continue_pressed() -> void:

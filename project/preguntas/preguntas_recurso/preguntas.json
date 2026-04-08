@@ -1,0 +1,89 @@
+[
+  {
+	"pregunta": "Para hacer un estudio de celiaquía,
+				tenes que dejar de comer cosas con gluten antes
+				del estudio de sangre / biopsia intestinal? ",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": false},
+	  {"texto": "No", "correcta": true}
+	]
+  },
+{
+	"pregunta": "El símbolo “Sin TACC” se modificó a “Sin gluten” 
+				porque se descubrió que, durante la cosecha en campos 
+				de trigo, el gluten se transfería a semillas de cebada, 
+				centeno y avena, y que al separarse correctamente las 
+				cosechas ya no era necesario excluirlas  
+				completamente de la dieta celíaca",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": true},
+	  {"texto": "No", "correcta": false}
+	]
+  },
+  {
+	"pregunta": "¿La celiaquía es una enfermedad autoinmune?",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": true},
+	  {"texto": "No", "correcta": false}
+	]
+  },
+  {
+	"pregunta": "¿El gluten está en el arroz?",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": false},
+	  {"texto": "No", "correcta": true}
+	]
+  },
+  {
+	"pregunta": "El cambio principal es que ahora se certifican 
+				productos que han pasado por procesos tecnológicos 
+				(enzimáticos/industriales) para eliminar el 
+				gluten de ingredientes como la cebada o el trigo, 
+				garantizando que el producto final sea seguro.",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": false},
+	  {"texto": "No", "correcta": true}
+	]
+  },
+  {
+	"pregunta": "¿El gluten está en el maíz?",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": false},
+	  {"texto": "No", "correcta": true}
+	]
+  },
+{
+	"pregunta": "¿El límite de seguridad para celíacos es de menos
+				de 10 partes por millón (ppm) de gluten por 
+				alimento lo que garantiza la seguridad de ingesta?",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": true},
+	  {"texto": "No", "correcta": false}
+	]
+  },
+{
+	"pregunta": "¿El trigo sarraceno no es apto para celíacos? 
+				Como dice su nombre está relacionado con el trigo
+				convencional y eso asegura que tiene gluten.",
+	"imagen": "",
+	"sonido": "",
+	"respuestas": [
+	  {"texto": "Sí", "correcta": false},
+	  {"texto": "No", "correcta": true}
+	]
+  }
+]

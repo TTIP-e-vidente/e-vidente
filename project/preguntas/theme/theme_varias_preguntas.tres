@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ThemePreg" format=3 uid="uid://yt3ganvy1l4o"]
+
+[ext_resource type="Script" uid="uid://bickgle2fn34j" path="res://preguntas/theme/theme.gd" id="1_8g5yt"]
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="2_cm4co"]
+[ext_resource type="Resource" uid="uid://j426x4c5xamn" path="res://preguntas/preguntas_recurso/eliminar_gluten.tres" id="3_vg0bl"]
+[ext_resource type="Resource" uid="uid://bhq5jsa0elcij" path="res://preguntas/preguntas_recurso/enfermedad_autoinmune.tres" id="4_w8ahy"]
+[ext_resource type="Resource" uid="uid://c0wxnu5tcwtf7" path="res://preguntas/preguntas_recurso/estudio_celiaquia.tres" id="5_6lu8l"]
+[ext_resource type="Resource" uid="uid://cm3tfv7x8qeri" path="res://preguntas/preguntas_recurso/gluten_arroz.tres" id="6_qk52g"]
+[ext_resource type="Resource" uid="uid://bj43l7m57efjm" path="res://preguntas/preguntas_recurso/limite_ingesta.tres" id="7_61di8"]
+[ext_resource type="Resource" uid="uid://b3tog7mlhv6jw" path="res://preguntas/preguntas_recurso/simbolo_tacc.tres" id="8_6rjb6"]
+[ext_resource type="Resource" uid="uid://bflq05lbck5hj" path="res://preguntas/preguntas_recurso/trigo_sarraceno.tres" id="9_k1frc"]
+[ext_resource type="Resource" uid="uid://clnkrv7b4md75" path="res://preguntas/preguntas_recurso/gluten_maiz.tres" id="10_4ve1t"]
+
+[resource]
+script = ExtResource("1_8g5yt")
+theme = Array[ExtResource("2_cm4co")]([ExtResource("3_vg0bl"), ExtResource("4_w8ahy"), ExtResource("5_6lu8l"), ExtResource("6_qk52g"), ExtResource("7_61di8"), ExtResource("8_6rjb6"), ExtResource("9_k1frc"), ExtResource("10_4ve1t")])
+metadata/_custom_type_script = "uid://bickgle2fn34j"

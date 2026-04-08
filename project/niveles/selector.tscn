@@ -1,12 +1,12 @@
-[gd_scene format=3 uid="uid://d3fl0wttpi5nj"]
+[gd_scene format=3 uid="uid://di3fv2eh00pko"]
 
-[ext_resource type="Script" uid="uid://bsm8k2aigcwvh" path="res://niveles/intro.gd" id="1_1l6ju"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_7djtf"]
-[ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
-[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
-[ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
-[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
+[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_6uvpc"]
+[ext_resource type="Texture2D" uid="uid://dat5d3t765v4l" path="res://assets-sistema/interfaz/selector-preguntas.png" id="4_g0ff0"]
+[ext_resource type="Texture2D" uid="uid://cd4i84fdabf0i" path="res://assets-sistema/interfaz/selector-recetas-png.png" id="5_fsij2"]
+[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="6_lo2a7"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
 content_margin_left = 4.0
@@ -80,7 +80,7 @@ corner_radius_bottom_left = 18
 [node name="Intro" type="Node2D" unique_id=933896845]
 z_index = 4
 position = Vector2(4, 0)
-script = ExtResource("1_1l6ju")
+script = ExtResource("1_g0ff0")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=281631034]
 process_priority = -1
@@ -91,12 +91,12 @@ offset_bottom = 800.0
 position = Vector2(573.52826, 402.14877)
 rotation = 3.1415927
 scale = Vector2(0.3337207, 0.32700717)
-texture = ExtResource("2_7djtf")
+texture = ExtResource("2_fsij2")
 
 [node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=960727714]
 position = Vector2(567, 183)
 scale = Vector2(0.43902442, 0.4390244)
-texture = ExtResource("3_dj2xn")
+texture = ExtResource("3_6uvpc")
 
 [node name="MenuBar" type="MenuBar" parent="." unique_id=1246973931]
 offset_left = 400.0
@@ -105,7 +105,7 @@ offset_right = 772.0
 offset_bottom = 649.0
 scale = Vector2(1.14996, 1.14996)
 
-[node name="Jugar" type="Button" parent="MenuBar" unique_id=45560783]
+[node name="Recetas" type="Button" parent="MenuBar" unique_id=45560783]
 layout_mode = 0
 offset_left = 16.695953
 offset_top = 126.09132
@@ -113,10 +113,10 @@ offset_right = 548.6959
 offset_bottom = 324.0913
 scale = Vector2(0.48045883, 0.4908836)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("2_68fep")
+icon = ExtResource("5_fsij2")
 flat = true
 
-[node name="Opciones" type="Button" parent="MenuBar" unique_id=2027374575]
+[node name="Preguntas" type="Button" parent="MenuBar" unique_id=2027374575]
 layout_mode = 0
 offset_left = 16.695953
 offset_top = 235.66034
@@ -124,10 +124,11 @@ offset_right = 548.6959
 offset_bottom = 433.66034
 scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("4_mji7j")
+icon = ExtResource("4_g0ff0")
 flat = true
 
 [node name="Salir" type="Button" parent="MenuBar" unique_id=1388647194]
+visible = false
 layout_mode = 0
 offset_left = 16.522324
 offset_top = 351.31653
@@ -135,7 +136,7 @@ offset_right = 548.52234
 offset_bottom = 549.3165
 scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("5_nvq7f")
+icon = ExtResource("6_lo2a7")
 flat = true
 
 [node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1688635768]
@@ -254,12 +255,12 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
 text = "Ir al selector de modos"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=412964845]
-stream = ExtResource("6_eoqxh")
+stream = ExtResource("7_5qkxe")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
-[connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
+[connection signal="pressed" from="MenuBar/Recetas" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="MenuBar/Preguntas" to="." method="_on_opciones_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
 [connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]

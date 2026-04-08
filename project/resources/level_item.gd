@@ -12,4 +12,3 @@ enum Condicion {KETO, CELIACO, VEGANO, DIABETICO, VEGETARIANO}
 @export var esPositivo:bool
 @export var info: Texture2D
 @export var categoria : String
-

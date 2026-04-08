@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://clnkrv7b4md75"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_tjy6e"]
+
+[resource]
+script = ExtResource("1_tjy6e")
+info_pregunta = "¿El gluten está en el maíz?"
+opciones = Array[String](["Si", "No"])
+correct = "No"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://j426x4c5xamn"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_041if"]
+
+[resource]
+script = ExtResource("1_041if")
+info_pregunta = "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnológicos (enzimáticos/industriales) para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro."
+opciones = Array[String](["Verdadero", "Falso"])
+correct = "Verdadero"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

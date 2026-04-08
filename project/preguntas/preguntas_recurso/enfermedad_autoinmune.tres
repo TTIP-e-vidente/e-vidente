@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://bhq5jsa0elcij"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_y1bc5"]
+
+[resource]
+script = ExtResource("1_y1bc5")
+info_pregunta = "¿La celiaquía es una enfermedad autoinmune?"
+opciones = Array[String](["Si", "No"])
+correct = "Si"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

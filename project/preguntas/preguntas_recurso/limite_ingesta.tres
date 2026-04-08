@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://bj43l7m57efjm"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_gfea7"]
+
+[resource]
+script = ExtResource("1_gfea7")
+info_pregunta = "El límite de seguridad para celíacos es de menosde 10 partes por millón (ppm) de gluten por alimento lo que garantiza la seguridad de ingesta"
+opciones = Array[String](["Verdadero", "Falso"])
+correct = "Verdadero"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"
