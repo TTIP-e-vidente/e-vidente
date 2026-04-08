@@ -1,39 +1,35 @@
-[gd_scene format=3 uid="uid://cmwx6cfolqn4e"]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="Script" uid="uid://bxu8tge6mbt4" path="res://interface/libro-vegan.gd" id="1_btrdt"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_pdbb6"]
-[ext_resource type="Texture2D" uid="uid://drjg4obv1g1wf" path="res://assets-sistema/interfaz/cap-1.png" id="3_i7a8u"]
-[ext_resource type="Texture2D" uid="uid://d4km8n2ilsph3" path="res://assets-sistema/interfaz/cap-2.png" id="4_ydatj"]
-[ext_resource type="Texture2D" uid="uid://eeend5urmksa" path="res://assets-sistema/interfaz/cap-3.png" id="5_12ycp"]
-[ext_resource type="Texture2D" uid="uid://bpkcfqo7ky6eb" path="res://assets-sistema/interfaz/cap-4.png" id="6_cfe55"]
-[ext_resource type="Texture2D" uid="uid://5r1aj21nn82m" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
-[ext_resource type="Texture2D" uid="uid://b4u430w1ifduc" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
-[ext_resource type="Texture2D" uid="uid://dhupe31oicot2" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="9_2tn5e"]
-[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
+[ext_resource type="Script" path="res://interface/libro-vegan.gd" id="1_btrdt"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_elh6m"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-1.png" id="3_i7a8u"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-2.png" id="4_ydatj"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-3.png" id="5_12ycp"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-4.png" id="6_cfe55"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="9_8b002"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
 
-[node name="Libro" type="Node2D" unique_id=1588542665]
+[node name="Libro" type="Node2D"]
 z_index = 4
 script = ExtResource("1_btrdt")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=573279401]
+[node name="ColorRect" type="ColorRect" parent="."]
 offset_right = 1152.0
 offset_bottom = 800.0
 
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=88095849]
-position = Vector2(576, 400)
-scale = Vector2(1.01691, 1.08165)
-
-[node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=1219770304]
+[node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
 position = Vector2(577.34393, 394.68747)
 scale = Vector2(0.33670896, 0.33670896)
-texture = ExtResource("2_pdbb6")
+texture = ExtResource("2_elh6m")
 flip_h = true
 flip_v = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1545068477]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 texture_filter = 3
 offset_left = 477.0
 offset_top = 80.0
@@ -44,37 +40,38 @@ size_flags_stretch_ratio = 1.73
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Cap1" type="Button" parent="VBoxContainer" unique_id=832460684]
+[node name="Cap1" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 icon = ExtResource("3_i7a8u")
 flat = true
 
-[node name="Cap2" type="Button" parent="VBoxContainer" unique_id=1167443029]
+[node name="Cap2" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 icon = ExtResource("4_ydatj")
 flat = true
 
-[node name="Cap3" type="Button" parent="VBoxContainer" unique_id=1248157344]
+[node name="Cap3" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 icon = ExtResource("5_12ycp")
 flat = true
 
-[node name="Cap4" type="Button" parent="VBoxContainer" unique_id=1196231613]
+[node name="Cap4" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 icon = ExtResource("6_cfe55")
 flat = true
 
-[node name="Cap5" type="Button" parent="VBoxContainer" unique_id=2006662884]
+[node name="Cap5" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 icon = ExtResource("7_6xkqp")
 flat = true
 
-[node name="Cap6" type="Button" parent="VBoxContainer" unique_id=520804956]
+[node name="Cap6" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 icon = ExtResource("8_vx58k")
 flat = true
 
-[node name="Atras" type="Button" parent="." unique_id=2057527716]
+[node name="Atras" type="Button" parent="."]
 offset_left = 57.0
 offset_top = 640.00006
 offset_right = 282.0
@@ -83,20 +80,14 @@ scale = Vector2(0.4865854, 0.43599772)
 icon = SubResource("CompressedTexture2D_b50jp")
 flat = true
 
-[node name="ArchiveroVegan" type="Sprite2D" parent="." unique_id=546635234]
+[node name="ArchiveroVegan" type="Sprite2D" parent="."]
 position = Vector2(205, 126.00001)
 scale = Vector2(0.5749733, 0.5749733)
-texture = ExtResource("9_2tn5e")
+texture = ExtResource("9_8b002")
 
-[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=983674402]
+[node name="Background" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("10_j0ohc")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="VBoxContainer/Cap1" to="." method="_on_cap_1_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap2" to="." method="_on_cap_2_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap3" to="." method="_on_cap_3_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap4" to="." method="_on_cap_4_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap5" to="." method="_on_cap_5_pressed"]
-[connection signal="pressed" from="VBoxContainer/Cap6" to="." method="_on_cap_6_pressed"]
-[connection signal="pressed" from="Atras" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="Atras" to="." method="_on_atras_pressed"]

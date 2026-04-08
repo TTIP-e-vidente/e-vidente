@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://dpvt2slo1ogpc"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_a2yss"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_jvt0n"]
-[ext_resource type="Texture2D" uid="uid://356e7ut8jmfu" path="res://assets-sistema/iconos/alimentos-info/pasta-frola-info.png" id="2_hg7do"]
-[ext_resource type="Texture2D" uid="uid://5wb7teycxwlx" path="res://assets-sistema/iconos/pasta-frola-0.png" id="3_dmsex"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_jvt0n"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/pasta-frola-info.png" id="2_hg7do"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/pasta-frola-0.png" id="3_dmsex"]
 
 [resource]
 script = ExtResource("1_a2yss")

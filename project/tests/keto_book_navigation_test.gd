@@ -26,6 +26,10 @@ func _run() -> void:
 		var keto_instance: Node = keto_scene.instantiate()
 		root.add_child(keto_instance)
 		await process_frame
+		var chapter_container := keto_instance.get_node_or_null("VBoxContainer") as VBoxContainer
+		_assert(chapter_container != null, "El libro de keto deberia exponer el contenedor de capitulos")
+		if chapter_container != null:
+			_assert(chapter_container.get_child_count() == Global.get_track_level_count("cetogenica"), "El libro de keto deberia reconstruir los capitulos segun el catalogo del track")
 
 		var cap_1 := keto_instance.get_node_or_null("VBoxContainer/Cap1") as Button
 		_assert(cap_1 != null, "El libro de keto deberia exponer el acceso al capitulo 1")
@@ -38,11 +42,13 @@ func _run() -> void:
 			if current_scene != null:
 				_assert(current_scene.scene_file_path == "res://niveles/nivel_4/Level-Keto.tscn", "Capitulo 1 de keto deberia abrir el nivel de keto")
 				var manager_level = current_scene.get_node_or_null("ManagerLevel")
-				var expected_book: Dictionary = Global.items_segun_track("cetogenica")
+				var expected_run: Dictionary = Global.get_chapter_run_definition("cetogenica", 1, 1)
 				_assert(manager_level != null, "El nivel de keto deberia exponer el ManagerLevel")
-				_assert(not expected_book.is_empty(), "Keto deberia resolver su track de progreso")
-				if manager_level != null and not expected_book.is_empty():
-					_assert(manager_level.nivelActual == expected_book, "Capitulo 1 de keto no deberia reutilizar los datos de otro modo")
+				_assert(not expected_run.is_empty(), "Keto deberia resolver su corrida inicial desde el catalogo")
+				if manager_level != null and not expected_run.is_empty():
+					_assert(manager_level.current_track_key == "cetogenica", "Capitulo 1 de keto deberia configurar ManagerLevel con el track correcto")
+					_assert(manager_level.current_run_data == expected_run, "Capitulo 1 de keto deberia cargar la corrida definida para cetogenica en el catalogo")
+					_assert(int(manager_level.get_total_runs()) == 1, "La integracion actual de keto deberia exponer una unica corrida por capitulo")
 
 		if current_scene != null:
 			current_scene.queue_free()

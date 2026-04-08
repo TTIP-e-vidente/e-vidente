@@ -72,7 +72,7 @@ func _run() -> void:
 		_assert(save_status_label != null, "Archivero deberia exponer la etiqueta de estado de guardado")
 		_assert(save_status_label.text.contains("perfil actualizado"), "Archivero deberia mostrar el motivo del ultimo guardado al abrir")
 
-		Global.items_level[1][Global.LEVEL_STATUS_INDEX] = true
+		Global.mark_level_completed("celiaquia", 1)
 		SaveManager.record_level_completed("celiaquia", 1)
 		SaveManager.record_manual_save()
 		await process_frame

@@ -3,6 +3,7 @@ extends Control
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
+const ProfileFormHelperScript := preload("res://interface/helpers/ProfileFormHelper.gd")
 
 @onready var current_profile_value: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/CurrentProfileValue
 @onready var current_profile_email: Label = $Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer/PreviewEmailLabel
@@ -21,6 +22,8 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 @onready var back_button: Button = $BackButton
 @onready var avatar_dialog: FileDialog = $AvatarDialog
 
+var _form_helper = ProfileFormHelperScript.new()
+
 
 func _ready() -> void:
 	var profile := SaveManager.get_current_user_profile()
@@ -30,8 +33,8 @@ func _ready() -> void:
 	register_button.text = "Guardar perfil"
 	back_button.text = ""
 	back_button.tooltip_text = "Volver al menu" if _get_return_scene() == INTRO_SCENE else "Volver al Archivero"
-	register_username.text = _profile_name_for_form(profile)
-	register_age.text = _age_for_form(profile)
+	register_username.text = _form_helper.profile_name_for_form(profile, SaveManager.DEFAULT_PROFILE_NAME)
+	register_age.text = _form_helper.age_for_form(profile)
 	register_email.text = str(profile.get("email", ""))
 	avatar_path_edit.text = str(profile.get("avatar_path", ""))
 	_connect_live_preview_signals()
@@ -58,7 +61,7 @@ func _on_clear_avatar_button_pressed() -> void:
 
 func _on_register_button_pressed() -> void:
 	_set_feedback("", true)
-	var age_result := _parse_age(register_age.text)
+	var age_result := _form_helper.parse_age(register_age.text)
 	if not bool(age_result.get("ok", false)):
 		_set_feedback(str(age_result.get("message", "Ingresa una edad valida o deja el campo vacio.")), false)
 		return
@@ -72,8 +75,8 @@ func _on_register_button_pressed() -> void:
 	_set_feedback(str(result.get("message", "")), is_ok)
 	if is_ok:
 		var saved_profile := SaveManager.get_current_user_profile()
-		register_username.text = _profile_name_for_form(saved_profile)
-		register_age.text = _age_for_form(saved_profile)
+		register_username.text = _form_helper.profile_name_for_form(saved_profile, SaveManager.DEFAULT_PROFILE_NAME)
+		register_age.text = _form_helper.age_for_form(saved_profile)
 		register_email.text = str(saved_profile.get("email", ""))
 		avatar_path_edit.text = str(saved_profile.get("avatar_path", ""))
 		_refresh_avatar_controls()
@@ -109,45 +112,10 @@ func _on_profile_field_changed(_new_text: String) -> void:
 	_refresh_live_preview()
 
 
-func _profile_name_for_form(profile: Dictionary) -> String:
-	var username := str(profile.get("username", ""))
-	if username == SaveManager.DEFAULT_PROFILE_NAME:
-		return ""
-	return username
-
-
-func _age_for_form(profile: Dictionary) -> String:
-	var age := int(profile.get("age", 0))
-	if age <= 0:
-		return ""
-	return str(age)
-
-
-func _parse_age(value: String) -> Dictionary:
-	var clean_value := value.strip_edges()
-	if clean_value.is_empty():
-		return {"ok": true, "value": 0}
-	if not clean_value.is_valid_int():
-		return {"ok": false, "message": "La edad debe ser un numero entero o quedar vacia."}
-	var parsed_age := int(clean_value)
-	if parsed_age < 0:
-		return {"ok": false, "message": "La edad no puede ser negativa."}
-	return {"ok": true, "value": parsed_age}
-
-
 func _refresh_summary(profile: Dictionary) -> void:
-	_apply_profile_preview(
-		str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)),
-		str(profile.get("email", "")),
-		_age_for_form(profile)
-	)
+	_apply_profile_preview(str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)), str(profile.get("email", "")), _form_helper.age_for_form(profile))
 	_update_avatar_preview(str(profile.get("avatar_path", "")))
-	var save_status := SaveManager.get_save_status()
-	var last_reason := str(save_status.get("last_saved_reason", ""))
-	if last_reason.is_empty():
-		summary_save_label.text = "Ultimo guardado: todavia no hay escrituras registradas."
-	else:
-		summary_save_label.text = "Ultimo guardado: %s" % _format_save_reason(last_reason)
+	summary_save_label.text = _form_helper.build_summary_save_text(SaveManager.get_save_status())
 
 
 func _refresh_live_preview() -> void:
@@ -156,50 +124,16 @@ func _refresh_live_preview() -> void:
 
 
 func _apply_profile_preview(profile_name: String, email: String, age_text: String) -> void:
-	var clean_name := profile_name.strip_edges()
-	current_profile_value.text = clean_name if not clean_name.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
-	current_profile_email.text = "Mail: %s" % _format_optional_preview_text(email)
-	current_profile_age.text = _format_preview_age(age_text)
-
-
-func _format_optional_preview_text(value: String) -> String:
-	var clean_value := value.strip_edges()
-	if clean_value.is_empty():
-		return "sin dato"
-	return clean_value
-
-
-func _format_preview_age(value: String) -> String:
-	var clean_value := value.strip_edges()
-	if clean_value.is_empty():
-		return "Edad: sin dato"
-	if not clean_value.is_valid_int() or int(clean_value) < 0:
-		return "Edad: revisar"
-	return "Edad: %s" % clean_value
+	var preview := _form_helper.build_preview(profile_name, email, age_text, SaveManager.DEFAULT_PROFILE_NAME)
+	current_profile_value.text = str(preview.get("username", SaveManager.DEFAULT_PROFILE_NAME))
+	current_profile_email.text = str(preview.get("email", "Mail: sin dato"))
+	current_profile_age.text = str(preview.get("age", "Edad: sin dato"))
 
 
 func _refresh_avatar_controls() -> void:
 	var has_avatar := not avatar_path_edit.text.strip_edges().is_empty()
 	choose_avatar_button.text = "Cambiar foto" if has_avatar else "Elegir foto"
 	clear_avatar_button.visible = has_avatar
-
-
-func _format_save_reason(reason: String) -> String:
-	match reason:
-		"profile_updated":
-			return "perfil actualizado"
-		"manual_save":
-			return "guardado manual"
-		"progress_reset":
-			return "progreso reiniciado"
-		"level_completed":
-			return "avance persistido"
-		"progress_sync":
-			return "sincronizacion de progreso"
-		"load_repair":
-			return "reparacion del save"
-		_:
-			return reason.replace("_", " ")
 
 
 func _set_feedback(message: String, success: bool) -> void:

@@ -27,7 +27,7 @@ func _run() -> void:
 	SaveManager.load_data()
 	var profile_result: Dictionary = SaveManager.update_local_profile(TEST_USERNAME, TEST_AGE, TEST_EMAIL, "")
 	_assert(bool(profile_result.get("ok", false)), "No se pudo preparar el perfil local para el test del overlay")
-	Global.items_level[1][Global.LEVEL_STATUS_INDEX] = true
+	Global.mark_level_completed("celiaquia", 1)
 	SaveManager.set_resume_to_level("celiaquia", 1)
 	SaveManager.record_manual_save()
 
@@ -38,6 +38,7 @@ func _run() -> void:
 		root.add_child(archivero_instance)
 		await process_frame
 
+		var archivero_container: VBoxContainer = archivero_instance.get_node("CanvasLayer/ArchiveroContainer")
 		var profile_overlay: Control = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay")
 		var profile_toggle_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileToggleButton")
 		var close_profile_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/CloseProfileButton")
@@ -48,6 +49,7 @@ func _run() -> void:
 		var username_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel")
 		var save_status_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel")
 
+		_assert(archivero_container != null, "Archivero deberia exponer el contenedor de modos")
 		_assert(profile_overlay != null, "Archivero deberia exponer el overlay del perfil local")
 		_assert(profile_toggle_button != null, "Archivero deberia exponer el boton de acceso al perfil local")
 		_assert(close_profile_button != null, "Archivero deberia exponer el boton de cierre del perfil local")
@@ -57,6 +59,7 @@ func _run() -> void:
 		_assert(history_panel != null, "Archivero deberia exponer el panel de historial")
 		_assert(username_label != null, "Archivero deberia exponer el label de nombre del perfil")
 		_assert(save_status_label != null, "Archivero deberia exponer el label del estado de guardado")
+		_assert(archivero_container.get_child_count() == Global.get_track_definitions().size(), "Archivero deberia construir una tarjeta por cada track definido en el catalogo")
 
 		_assert(not profile_overlay.visible, "El overlay del perfil deberia iniciar cerrado")
 		_assert(profile_toggle_button.visible, "El boton de abrir perfil deberia iniciar visible")

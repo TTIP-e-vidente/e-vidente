@@ -1,0 +1,26 @@
+name: PR
+run-name: "${{ format('{0} -> {1}', github.head_ref, github.base_ref) }}"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: godot-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pull-request-validation:
+    name: Checks
+    uses: ./.github/workflows/ci-shared.yml
+    with:
+      trigger_kind: pull_request
+      ref_name: ${{ github.head_ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      pr_base_sha: ${{ github.event.pull_request.base.sha }}
+      pr_head_sha: ${{ github.event.pull_request.head.sha }}
