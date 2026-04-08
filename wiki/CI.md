@@ -4,14 +4,16 @@ La CI quedó armada para que falle solo cuando haya una rotura real del proyecto
 
 ## Archivo y disparadores
 
-El workflow vive en `.github/workflows/ci.yml` y corre en:
+La CI visible se reparte en dos workflows:
 
-- `push` sobre `main` y `dev`
-- `pull_request` apuntando a `main` o `dev`
-- `schedule` nocturno
-- `workflow_dispatch`
+- `.github/workflows/ci.yml` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
+- `.github/workflows/ci-pr.yml` para `pull_request` apuntando a `main` o `dev`
+
+Ambos llaman a `.github/workflows/ci-shared.yml`, que contiene la logica real de `guardrails`, `validate` y `build-web`.
 
 También cancela corridas viejas por rama para evitar ruido cuando entran commits nuevos.
+
+Esta separacion es intencional: cuando `dev` tiene una PR abierta a `main`, un mismo commit dispara dos eventos distintos (`push` y `pull_request`). Ahora los nombres visibles en GitHub diferencian mejor cada corrida en vez de verse duplicados.
 
 ## Contrato actual
 
@@ -90,7 +92,7 @@ powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Godot
 En shell:
 
 ```bash
-sh scripts/run-godot-validation.sh --run godot
+sh scripts/run-godot-validation.sh --run full godot
 ```
 
 Si hace falta probar export web, conviene correrlo como validación manual aparte, no como parte del gate principal de CI.
