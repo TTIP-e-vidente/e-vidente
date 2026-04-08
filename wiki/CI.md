@@ -6,8 +6,8 @@ La CI quedó armada para que falle solo cuando haya una rotura real del proyecto
 
 La CI visible se reparte en dos workflows cortos y faciles de leer en GitHub:
 
-- `.github/workflows/ci.yml` con nombre visible `CI Branch` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
-- `.github/workflows/ci-pr.yml` con nombre visible `CI PR` para `pull_request` apuntando a `main` o `dev`
+- `.github/workflows/ci.yml` con nombre visible `CI` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
+- `.github/workflows/ci-pr.yml` con nombre visible `PR` para `pull_request` apuntando a `main` o `dev`
 
 Ambos llaman a `.github/workflows/ci-shared.yml`, que contiene la logica real de `guardrails`, `validate` y `build-web`.
 

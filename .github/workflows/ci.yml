@@ -1,5 +1,5 @@
-name: CI Branch
-run-name: "${{ github.event_name == 'push' && format('Push {0}: full validation', github.ref_name) || github.event_name == 'schedule' && 'Nightly: full validation' || (inputs.run_web_export && format('Manual {0}: validation + web export', github.ref_name)) || format('Manual {0}: validation only', github.ref_name) }}"
+name: CI
+run-name: "${{ github.event_name == 'push' && format('Commit {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && format('Manual {0} + web export', github.ref_name)) || format('Manual {0}', github.ref_name) }}"
 
 on:
   push:
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   branch-validation:
-    name: "${{ github.event_name == 'push' && format('Push {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && format('Manual {0} + web export', github.ref_name)) || format('Manual {0}', github.ref_name) }}"
+    name: "${{ github.event_name == 'push' && 'Commit' || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && 'Manual + web export') || 'Manual' }}"
     uses: ./.github/workflows/ci-shared.yml
     with:
       trigger_kind: ${{ github.event_name }}

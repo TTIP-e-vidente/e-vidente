@@ -1,5 +1,5 @@
-name: CI PR
-run-name: "${{ format('PR {0} -> {1}: validation', github.head_ref, github.base_ref) }}"
+name: PR
+run-name: "${{ format('{0} -> {1}', github.head_ref, github.base_ref) }}"
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   pull-request-validation:
-    name: "${{ format('PR {0} -> {1}', github.head_ref, github.base_ref) }}"
+    name: Checks
     uses: ./.github/workflows/ci-shared.yml
     with:
       trigger_kind: pull_request
