@@ -6,8 +6,9 @@ La CI quedó armada para que falle solo cuando haya una rotura real del proyecto
 
 El workflow vive en `.github/workflows/ci.yml` y corre en:
 
-- `push`
-- `pull_request`
+- `push` sobre `main` y `dev`
+- `pull_request` apuntando a `main` o `dev`
+- `schedule` nocturno
 - `workflow_dispatch`
 
 También cancela corridas viejas por rama para evitar ruido cuando entran commits nuevos.
@@ -41,6 +42,10 @@ Cuando falla, el propio paso intenta explicar el motivo con mensajes concretos: 
 
 Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2` y usa la suite compartida `scripts/run-godot-validation.sh`.
 
+En `push`, `schedule` y PRs que tocan `project/` o la propia suite compartida, corre el perfil `full`.
+
+En PRs que solo cambian docs, metadata o infraestructura fuera de `project/`, baja a un perfil `pr-fast` con tres pruebas smoke para no gastar minutos al pedo.
+
 Cubre:
 
 - import headless del proyecto
@@ -60,7 +65,8 @@ Además, este job sube un artifact `validation-logs-*` con un log combinado y lo
 
 La CI se simplificó con algunos criterios explícitos:
 
-- sin cache de `.godot/imported` ni `.godot/editor`, para evitar estado viejo o inconsistente entre corridas
+- cache de `project/.godot` con key basada en imports, escenas, recursos y assets fuente relevantes
+- cuando una PR toca `project/`, la validación vuelve al perfil `full` y reimporta antes de correr la suite compartida
 - sin export web dentro del gate principal
 - ESLint solo corre si el repo realmente lo configuró y dejó lockfile determinístico
 - dos checks obligatorios y concretos: `guardrails` para disciplina del repo y `validate` para roturas funcionales

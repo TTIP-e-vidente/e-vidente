@@ -71,17 +71,20 @@ run_step() {
 	echo "OK: $label"
 }
 
-run_godot_validation() {
-	GODOT_CMD="${1:-godot}"
-	LOG_DIR="${EVIDENTE_VALIDATION_LOG_DIR:-}"
-	COMBINED_LOG=""
+write_success_summary() {
+	mode="$1"
+	executed_steps="$2"
 
+	append_summary "### Validation"
+	append_summary "- Perfil: $mode"
+	append_summary "- Estado: OK"
+	append_summary "- Pasos ejecutados: $executed_steps"
 	if [ -n "$LOG_DIR" ]; then
-		mkdir -p "$LOG_DIR"
-		COMBINED_LOG="$LOG_DIR/validation.log"
-		: > "$COMBINED_LOG"
+		append_summary "- Artifact: logs de validacion por paso y log combinado"
 	fi
+}
 
+run_full_suite() {
 	run_step "01-import-headless" "Import headless" "Godot no pudo importar el proyecto en modo headless. Revisar errores de parseo, rutas res:// o autoloads." --headless --path project --editor --quit
 	run_step "02-content-catalog-validation" "Content catalog validation test" "Fallo la integridad del catalogo de contenido. Revisar tracks, capitulos, corridas y recursos res:// referenciados." --headless --path project -s res://tests/content_catalog_validation_test.gd
 	run_step "03-save-manager-smoke" "Save manager smoke test" "El smoke test basico de guardado fallo. Revisar persistencia minima y carga inicial de SaveManager." --headless --path project -s res://tests/save_manager_smoke_test.gd
@@ -92,16 +95,52 @@ run_godot_validation() {
 	run_step "08-intro-menu-profile" "Intro menu profile test" "Fallo el flujo del menu de inicio relacionado con perfil o continuar partida. Revisar intro.gd e intro.tscn." --headless --path project -s res://tests/intro_menu_profile_test.gd
 	run_step "09-level-quick-save" "Level quick save test" "Fallo el quick save dentro de niveles. Revisar persistencia parcial de items, restauracion y UI de guardado." --headless --path project -s res://tests/level_quick_save_test.gd
 
-	append_summary "### Validation"
-	append_summary "- Estado: OK"
-	append_summary "- Pasos ejecutados: import headless + 8 tests headless"
+	write_success_summary "full" "import headless + 8 tests headless"
+}
+
+run_pr_fast_suite() {
+	run_step "01-content-catalog-validation" "Content catalog validation test" "Fallo la integridad minima del catalogo de contenido. Revisar tracks, capitulos y recursos res:// referenciados." --headless --path project -s res://tests/content_catalog_validation_test.gd
+	run_step "02-save-manager-smoke" "Save manager smoke test" "El smoke test basico de guardado fallo. Revisar persistencia minima y carga inicial de SaveManager." --headless --path project -s res://tests/save_manager_smoke_test.gd
+	run_step "03-save-manager-signal-contract" "Save manager signal contract test" "Se rompio el contrato de señales de SaveManager. Revisar nombres de señales, payloads y puntos de emision." --headless --path project -s res://tests/save_manager_signal_contract_test.gd
+
+	write_success_summary "pr-fast" "3 tests headless"
+}
+
+run_godot_validation() {
+	mode="${1:-full}"
+	GODOT_CMD="${2:-godot}"
+	LOG_DIR="${EVIDENTE_VALIDATION_LOG_DIR:-}"
+	COMBINED_LOG=""
+
 	if [ -n "$LOG_DIR" ]; then
-		append_summary "- Artifact: logs de validacion por paso y log combinado"
+		mkdir -p "$LOG_DIR"
+		COMBINED_LOG="$LOG_DIR/validation.log"
+		: > "$COMBINED_LOG"
 	fi
+
+	case "$mode" in
+		full)
+			run_full_suite
+			;;
+		pr-fast)
+			run_pr_fast_suite
+			;;
+		*)
+			echo "Modo de validacion no soportado: $mode" >&2
+			exit 1
+			;;
+	esac
 }
 
 
 if [ "${1:-}" = "--run" ]; then
 	shift
-	run_godot_validation "$@"
+	mode="full"
+	case "${1:-}" in
+		full|pr-fast)
+			mode="$1"
+			shift
+			;;
+	esac
+	run_godot_validation "$mode" "${1:-godot}"
 fi
