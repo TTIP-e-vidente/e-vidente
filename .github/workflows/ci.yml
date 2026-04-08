@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   quality:
-    name: Guardrails: Structure, Docs and Optional ESLint
+    name: "Guardrails: Structure, Docs and Optional ESLint"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guardrail: Required repository structure
+      - name: "Guardrail: Required repository structure"
         shell: bash
         run: |
           set -euo pipefail
@@ -83,7 +83,7 @@ jobs:
             exit 1
           fi
 
-      - name: Guardrail: ESLint (runs only when configured)
+      - name: "Guardrail: ESLint (runs only when configured)"
         continue-on-error: true
         shell: bash
         run: |
@@ -108,7 +108,7 @@ jobs:
             echo "::notice::Skipping ESLint: no Node/ESLint config detected in this repository."
           fi
 
-      - name: Guardrail: Required docs baseline
+      - name: "Guardrail: Required docs baseline"
         shell: bash
         run: |
           set -euo pipefail
@@ -131,7 +131,7 @@ jobs:
             echo "::warning::wiki/Bitacora.md missing or empty. Add/update changelog notes."
           fi
 
-      - name: Guardrail: Wiki reminder when project files change
+      - name: "Guardrail: Wiki reminder when project files change"
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -181,7 +181,7 @@ jobs:
             echo "No project/ changes detected."
           fi
 
-      - name: Guardrail: Publish quality summary and annotations
+      - name: "Guardrail: Publish quality summary and annotations"
         if: always()
         continue-on-error: true
         shell: bash
@@ -270,7 +270,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   validate:
-    name: Core Validation: Godot tests
+    name: "Core Validation: Godot tests"
     runs-on: ubuntu-latest
     timeout-minutes: 25
     container:
@@ -282,7 +282,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validation: Restore Godot import cache
+      - name: "Validation: Restore Godot import cache"
         continue-on-error: true
         uses: actions/cache@v4
         with:
@@ -291,7 +291,7 @@ jobs:
           restore-keys: |
             godot-4.6.2-
 
-      - name: Validation (PR): Decide validation profile
+      - name: "Validation (PR): Decide validation profile"
         if: github.event_name == 'pull_request'
         id: pr_validation_profile
         shell: bash
@@ -305,7 +305,7 @@ jobs:
           set -euo pipefail
           sh scripts/ci/detect-validation-profile.sh
 
-      - name: Validation (PR fast): Shared smoke suite for non-project changes
+      - name: "Validation (PR fast): Shared smoke suite for non-project changes"
         if: github.event_name == 'pull_request' && steps.pr_validation_profile.outputs.profile == 'pr-fast'
         shell: bash
         env:
@@ -314,7 +314,7 @@ jobs:
           set -euo pipefail
           sh scripts/run-godot-validation.sh --run pr-fast godot
 
-      - name: Validation (full): Shared Godot suite
+      - name: "Validation (full): Shared Godot suite"
         if: github.event_name != 'pull_request' || steps.pr_validation_profile.outputs.profile == 'full'
         shell: bash
         env:
@@ -323,7 +323,7 @@ jobs:
           set -euo pipefail
           sh scripts/run-godot-validation.sh --run full godot
 
-      - name: Validation: Upload logs artifact
+      - name: "Validation: Upload logs artifact"
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -348,7 +348,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Web Export: Restore Godot import cache
+      - name: "Web Export: Restore Godot import cache"
         continue-on-error: true
         uses: actions/cache@v4
         with:
@@ -357,7 +357,7 @@ jobs:
           restore-keys: |
             godot-4.6.2-
 
-      - name: Web Export: Prepare export templates
+      - name: "Web Export: Prepare export templates"
         shell: bash
         run: |
           set -euo pipefail
@@ -366,10 +366,10 @@ jobs:
             mv /root/.local/share/godot/export_templates/4.6.2.stable ~/.local/share/godot/export_templates/4.6.2.stable
           fi
 
-      - name: Web Export: Import project before export
+      - name: "Web Export: Import project before export"
         run: godot --headless --path project --editor --quit
 
-      - name: Web Export: Build release files
+      - name: "Web Export: Build release files"
         shell: bash
         run: |
           set -euo pipefail
@@ -402,7 +402,7 @@ jobs:
           echo "=== build/web final contents ==="
           ls -la "$GITHUB_WORKSPACE/build/web"
 
-      - name: Web Export: Verify output files
+      - name: "Web Export: Verify output files"
         continue-on-error: true
         shell: bash
         run: |
@@ -435,7 +435,7 @@ jobs:
 
           echo "Checks completed (non-blocking mode)."
 
-      - name: Web Export: Upload build artifact
+      - name: "Web Export: Upload build artifact"
         uses: actions/upload-artifact@v4
         with:
           name: web-export-build-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
