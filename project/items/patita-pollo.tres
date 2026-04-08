@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://nfcbdkblmfvx"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_8oywv"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_cuqot"]
-[ext_resource type="Texture2D" uid="uid://6qrverfoxt07" path="res://assets-sistema/iconos/alimentos-info/patita-pollo-info.png" id="2_bl4po"]
-[ext_resource type="Texture2D" uid="uid://boew1xyvswho7" path="res://assets-sistema/iconos/patita-pollo-0.png" id="3_tr6n0"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_cuqot"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/patita-pollo-info.png" id="2_bl4po"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/patita-pollo-0.png" id="3_tr6n0"]
 
 [resource]
 script = ExtResource("1_8oywv")

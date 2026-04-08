@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "godot-best-practices": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "computedHash": "f4f741553ed4ad952312e0783f5a63a9755a442b9e8cfe670dd0c85cf273f268"
+    }
+  }
+}

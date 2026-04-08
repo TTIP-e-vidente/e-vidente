@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://ycco1624jrpg"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_3u5bh"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_4asyt"]
-[ext_resource type="Texture2D" uid="uid://dsry2imineyti" path="res://assets-sistema/iconos/alimentos-info/naranja-info.png" id="2_5fxax"]
-[ext_resource type="Texture2D" uid="uid://dh0qqq76i6uyu" path="res://assets-sistema/iconos/naranja-0.png" id="3_j121n"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_4asyt"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/naranja-info.png" id="2_5fxax"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/naranja-0.png" id="3_j121n"]
 
 [resource]
 script = ExtResource("1_3u5bh")

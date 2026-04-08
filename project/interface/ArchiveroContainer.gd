@@ -1,21 +1,27 @@
 extends VBoxContainer
 
-var archive_selected
-var mouse_on_placement = false
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
+const TRACK_CARD_SCENE := preload("res://interface/container.tscn")
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
+func _ready() -> void:
+	rebuild_track_cards()
 
 
-func _on_mouse_entered():
-	pass # Replace with function body.
+func rebuild_track_cards() -> void:
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
 
-
-func _on_mouse_exited():
-	pass # Replace with function body.
+	for track_definition in Global.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		var track_card := TRACK_CARD_SCENE.instantiate()
+		if track_card == null:
+			continue
+		track_card.name = "Track_%s" % track_key.replace("-", "_")
+		add_child(track_card)
+		if track_card is Control:
+			(track_card as Control).size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		if track_card.has_method("configure"):
+			track_card.call_deferred("configure", track_definition)

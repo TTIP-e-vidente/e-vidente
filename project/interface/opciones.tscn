@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://b2rea3e3dsg6c"]
+[gd_scene load_steps=6 format=3]
 
-[ext_resource type="Texture2D" uid="uid://cwkostcg25hb0" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="1_1hc87"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="1_1hc87"]
 [ext_resource type="Script" path="res://interface/opciones.gd" id="1_2m0nt"]
-[ext_resource type="Texture2D" uid="uid://cdxlfflnxpslr" path="res://assets-sistema/interfaz/opciones-info.png" id="2_r8s3h"]
-[ext_resource type="Texture2D" uid="uid://blgjs4a0fjm3t" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_uk3o2"]
-[ext_resource type="AudioStream" uid="uid://cyoeurg1stfx5" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/opciones-info.png" id="2_r8s3h"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_uk3o2"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
 
 [node name="Opciones" type="Node2D"]
 script = ExtResource("1_2m0nt")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://bri7a10em12dj"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://items/ItemLevel.gd" id="1_awvn7"]
 
@@ -20,7 +20,8 @@ collision_mask = 9
 shape = SubResource("CapsuleShape2D_h1eoe")
 
 [connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]
+[connection signal="area_exited" from="Area2D" to="." method="_on_area_2d_area_exited"]
 [connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]
 [connection signal="body_exited" from="Area2D" to="." method="_on_area_2d_body_exited"]
-[connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event"]
 [connection signal="mouse_entered" from="Area2D" to="." method="_on_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="Area2D" to="." method="_on_area_2d_mouse_exited"]

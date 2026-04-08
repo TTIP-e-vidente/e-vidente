@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://2ey1djhjdkhr"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_08nbc"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_753or"]
-[ext_resource type="Texture2D" uid="uid://cry77trd420ux" path="res://assets-sistema/iconos/alimentos-info/pescado-info.png" id="2_c8y0b"]
-[ext_resource type="Texture2D" uid="uid://drig365i8gpew" path="res://assets-sistema/iconos/pescado-0.png" id="3_voqrq"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_753or"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/pescado-info.png" id="2_c8y0b"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/pescado-0.png" id="3_voqrq"]
 
 [resource]
 script = ExtResource("1_08nbc")

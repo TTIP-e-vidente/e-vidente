@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://dhat87mbm5y6h"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_1bft1"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_spa43"]
-[ext_resource type="Texture2D" uid="uid://b264kqee4pj7s" path="res://assets-sistema/iconos/alimentos-info/helado-cucurucho-info.png" id="2_ix75y"]
-[ext_resource type="Texture2D" uid="uid://c240rmqurrf2n" path="res://assets-sistema/iconos/helado-cucurucho-0.png" id="3_gvh5p"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_spa43"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/helado-cucurucho-info.png" id="2_ix75y"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/helado-cucurucho-0.png" id="3_gvh5p"]
 
 [resource]
 script = ExtResource("1_1bft1")
