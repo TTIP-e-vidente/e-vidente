@@ -57,7 +57,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 	var scene_path := str(test_case.get("scene_path", "")).strip_edges()
 	var case_label := "%s (%s)" % [track_key, scene_path]
 	print("LEVEL QUICK SAVE TRACE: start %s" % case_label)
-	var expected_run_count := max(1, Global.get_chapter_run_count(track_key, Global.current_level))
+	var expected_run_count: int = max(1, Global.get_chapter_run_count(track_key, Global.current_level))
 	var level_scene: PackedScene = load(scene_path) as PackedScene
 	_assert(level_scene != null, "No se pudo cargar la escena %s para el test de guardado rapido" % case_label)
 	if level_scene == null:
