@@ -46,8 +46,6 @@ run_step() {
 		printf '\n\n' >> "$COMBINED_LOG"
 	fi
 
-	rm -f "$tmp_log"
-
 	if [ "$status" -ne 0 ]; then
 		failure_detail="$(grep -E 'FAILED:|FALLO:|Error:' "$tmp_log" | tail -n 1 || true)"
 		failure_excerpt="$(tail -n 20 "$tmp_log" | tr '\n' '|' | sed 's/[[:space:]]\+/ /g' | cut -c1-1500)"
@@ -88,9 +86,11 @@ run_step() {
 		if [ -n "$LOG_DIR" ]; then
 			append_summary "- Revisar artifact de logs de validacion para el detalle completo."
 		fi
+		rm -f "$tmp_log"
 		return "$status"
 	fi
 
+	rm -f "$tmp_log"
 	echo "OK: $label"
 }
 
