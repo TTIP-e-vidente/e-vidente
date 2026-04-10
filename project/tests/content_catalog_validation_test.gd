@@ -55,14 +55,16 @@ func _validate_track_level_resource(track_key: String, level_scene_path: String,
 		_assert(str(level_instance._get_resume_track_key()) == track_key, "La escena %s deberia estar alineada con el track %s" % [level_scene_path, track_key])
 	if manager_level.level_resource != null:
 		var level_resource = manager_level.level_resource
+		var positive_pool: Array = level_resource.get_positive_items(track_key)
+		var negative_pool: Array = level_resource.get_negative_items(track_key)
 		for level_number in range(1, expected_level_count + 1):
 			for run_index in range(1, catalog.get_chapter_run_count(track_key, level_number) + 1):
 				var run_definition: Dictionary = catalog.get_chapter_run(track_key, level_number, run_index)
 				var category := str(run_definition.get("category", ""))
 				var required_positive_count := int(run_definition.get("positive_count", 0))
 				var required_negative_count := int(run_definition.get("negative_count", 0))
-				var available_positive_items: Array = catalog.item_categoria(level_resource.itemsPositivos, category)
-				var available_negative_items: Array = catalog.item_categoria(level_resource.itemsNegativos, category)
+				var available_positive_items: Array = catalog.item_categoria(positive_pool, category)
+				var available_negative_items: Array = catalog.item_categoria(negative_pool, category)
 				_assert(available_positive_items.size() >= required_positive_count, "El track %s capitulo %d corrida %d necesita %d items positivos de categoria %s y la escena solo ofrece %d" % [track_key, level_number, run_index, required_positive_count, category, available_positive_items.size()])
 				_assert(available_negative_items.size() >= required_negative_count, "El track %s capitulo %d corrida %d necesita %d items negativos de categoria %s y la escena solo ofrece %d" % [track_key, level_number, run_index, required_negative_count, category, available_negative_items.size()])
 	level_instance.free()

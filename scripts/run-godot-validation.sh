@@ -110,16 +110,17 @@ write_success_summary() {
 run_full_suite() {
 	run_step "01-import-headless" "Import headless" "Godot no pudo importar el proyecto en modo headless. Revisar errores de parseo, rutas res:// o autoloads." --headless --path project --editor --quit
 	run_step "02-content-catalog-validation" "Content catalog validation test" "Fallo la integridad del catalogo de contenido. Revisar tracks, capitulos, corridas y recursos res:// referenciados." --headless --path project -s res://tests/content_catalog_validation_test.gd
-	run_step "03-keto-book-navigation" "Keto book navigation test" "Se rompio la integracion entre catalogo, libro y escena jugable de keto. Revisar Libro-Keto, rutas del track y ManagerLevel." --headless --path project -s res://tests/keto_book_navigation_test.gd
-	run_step "04-save-manager-smoke" "Save manager smoke test" "El smoke test basico de guardado fallo. Revisar persistencia minima y carga inicial de SaveManager." --headless --path project -s res://tests/save_manager_smoke_test.gd
-	run_step "05-save-manager-validation" "Save manager validation test" "Fallo una validacion de perfil o persistencia local. Revisar el contrato de datos que usa SaveManager." --headless --path project -s res://tests/save_manager_validation_test.gd
-	run_step "06-save-manager-signal-contract" "Save manager signal contract test" "Se rompio el contrato de señales de SaveManager. Revisar nombres de señales, payloads y puntos de emision." --headless --path project -s res://tests/save_manager_signal_contract_test.gd
-	run_step "07-save-manager-legacy-migration" "Save manager legacy migration test" "Fallo la migracion desde saves legacy. Revisar compatibilidad con datos viejos y creacion de session/resume." --headless --path project -s res://tests/save_manager_legacy_migration_test.gd
-	run_step "08-archivero-overlay" "Archivero overlay test" "Se rompio el flujo del overlay de Archivero. Revisar nodos, visibilidad o callbacks del panel de perfil." --headless --path project -s res://tests/archivero_overlay_test.gd
-	run_step "09-intro-menu-profile" "Intro menu profile test" "Fallo el flujo del menu de inicio relacionado con perfil o continuar partida. Revisar intro.gd e intro.tscn." --headless --path project -s res://tests/intro_menu_profile_test.gd
-	run_step "10-level-quick-save" "Level quick save test" "Fallo el quick save dentro de niveles. Revisar persistencia parcial de items, restauracion y UI de guardado." --headless --path project -s res://tests/level_quick_save_test.gd
+	run_step "03-track-item-pool-resolution" "Track item pool resolution test" "Fallo la clasificacion automatica de pools por track. Revisar metadata de items, condiciones y overrides por track." --headless --path project -s res://tests/track_item_pool_resolution_test.gd
+	run_step "04-track-book-navigation" "Track book navigation test" "Se rompio la integracion entre catalogo, libros y escenas jugables. Revisar rutas de tracks, escenas de libro y ManagerLevel." --headless --path project -s res://tests/track_book_navigation_test.gd
+	run_step "05-save-manager-smoke" "Save manager smoke test" "El smoke test basico de guardado fallo. Revisar persistencia minima y carga inicial de SaveManager." --headless --path project -s res://tests/save_manager_smoke_test.gd
+	run_step "06-save-manager-validation" "Save manager validation test" "Fallo una validacion de perfil o persistencia local. Revisar el contrato de datos que usa SaveManager." --headless --path project -s res://tests/save_manager_validation_test.gd
+	run_step "07-save-manager-signal-contract" "Save manager signal contract test" "Se rompio el contrato de señales de SaveManager. Revisar nombres de señales, payloads y puntos de emision." --headless --path project -s res://tests/save_manager_signal_contract_test.gd
+	run_step "08-save-manager-legacy-migration" "Save manager legacy migration test" "Fallo la migracion desde saves legacy. Revisar compatibilidad con datos viejos y creacion de session/resume." --headless --path project -s res://tests/save_manager_legacy_migration_test.gd
+	run_step "09-archivero-overlay" "Archivero overlay test" "Se rompio el flujo del overlay de Archivero. Revisar nodos, visibilidad o callbacks del panel de perfil." --headless --path project -s res://tests/archivero_overlay_test.gd
+	run_step "10-intro-menu-profile" "Intro menu profile test" "Fallo el flujo del menu de inicio relacionado con perfil o continuar partida. Revisar intro.gd e intro.tscn." --headless --path project -s res://tests/intro_menu_profile_test.gd
+	run_step "11-level-quick-save" "Level quick save test" "Fallo el quick save dentro de niveles. Revisar persistencia parcial de items, restauracion y UI de guardado." --headless --path project -s res://tests/level_quick_save_test.gd
 
-	write_success_summary "full" "import headless + 9 tests headless"
+	write_success_summary "full" "import headless + 10 tests headless"
 }
 
 run_pr_fast_suite() {

@@ -55,6 +55,9 @@ Feedback visual y sonoro
 
 - Los `items/*.tres` describen cada alimento.
 - Las recetas y reglas de validación se apoyan en esos datos.
+- Los pools jugables ahora se resuelven por track a partir del catalogo de items y del metadata del propio alimento.
+- Los foods nuevos pueden entrar automaticamente en celiaquia, veganismo y mixto si sus `condiciones` estan bien cargadas; para tracks ambiguos como cetogenica se puede usar `allowed_track_keys` o `blocked_track_keys` en el propio item.
+- Las listas gigantes dentro de `level_*.tres` siguen sirviendo como fallback y ponderacion legacy, pero agregar una comida nueva ya no deberia requerir editar esos recursos a mano.
 
 ### Sistema de niveles
 

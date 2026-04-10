@@ -2,7 +2,7 @@ extends RefCounted
 
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
+const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 
 
 static func validate(track_chapter_definitions: Dictionary) -> Array[String]:
@@ -67,8 +67,8 @@ static func _validate_run_definition(track_key: String, level_number: int, run_i
 		return
 	var run_definition: Dictionary = raw_run_definition
 	var teaching_key := str(run_definition.get("teaching_key", "")).strip_edges()
-	var mechanic_type := str(run_definition.get("mechanic_type", "")).strip_edges()
-	if mechanic_type != LevelMechanicTypes.PLATE_SORT:
+	var mechanic_type := LevelMechanicRegistry.normalize_mechanic_type(run_definition.get("mechanic_type", ""), "")
+	if not LevelMechanicRegistry.has_mechanic_type(mechanic_type):
 		issues.append("La corrida %d del capitulo %d en %s usa una mecanica desconocida: %s" % [run_index, level_number, track_key, mechanic_type])
 	if teaching_key.is_empty():
 		issues.append("La corrida %d del capitulo %d en %s no define teaching_key." % [run_index, level_number, track_key])

@@ -1,11 +1,15 @@
 extends RefCounted
 
 
+const LevelItemScript := preload("res://resources/level_item.gd")
+
 const DEFAULT_LEVEL_COUNT := 6
 const CATEGORY_ALMUERZO_CENA := "ALMCENA"
 const CATEGORY_DESAYUNO_MERIENDA := "DESAMER"
 const CATEGORY_DESAYUNO_MERIENDA_LEGACY := "DESAYMER"
 const CATEGORY_BEBIDA := "BEBIDA"
+const ITEM_POOL_STRATEGY_CONDITIONS := "conditions"
+const ITEM_POOL_STRATEGY_LEGACY := "legacy"
 const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
 const TRACK_DEFINITIONS := {
 	"celiaquia": {
@@ -15,6 +19,8 @@ const TRACK_DEFINITIONS := {
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia.png",
 		"book_scene_path": "res://interface/libro.tscn",
 		"level_scene_path": "res://niveles/nivel_1/Level.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.CELIACO],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
 	"veganismo": {
@@ -24,6 +30,8 @@ const TRACK_DEFINITIONS := {
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-veganismo.png",
 		"book_scene_path": "res://interface/libro-vegan.tscn",
 		"level_scene_path": "res://niveles/nivel_2/level_vegan.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
 	"veganismo_celiaquia": {
@@ -33,6 +41,8 @@ const TRACK_DEFINITIONS := {
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png",
 		"book_scene_path": "res://interface/Libro-Vegan-GF.tscn",
 		"level_scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.CELIACO, LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
 	"cetogenica": {
@@ -42,6 +52,8 @@ const TRACK_DEFINITIONS := {
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-keto.png",
 		"book_scene_path": "res://interface/Libro-Keto.tscn",
 		"level_scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_LEGACY,
+		"blocked_conditions": [],
 		"level_count": DEFAULT_LEVEL_COUNT
 	}
 }
@@ -93,6 +105,21 @@ static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEV
 	if track_definition.is_empty():
 		return fallback
 	return max(1, int(track_definition.get("level_count", fallback)))
+
+
+static func get_track_item_pool_strategy(track_key: String, fallback: String = ITEM_POOL_STRATEGY_LEGACY) -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("item_pool_strategy", fallback)).strip_edges()
+
+
+static func get_track_blocked_conditions(track_key: String) -> Array:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return []
+	var raw_conditions: Variant = track_definition.get("blocked_conditions", [])
+	return raw_conditions.duplicate() if raw_conditions is Array else []
 
 
 static func get_total_level_count() -> int:
