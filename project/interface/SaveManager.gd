@@ -577,5 +577,3 @@ func _emit_save_status(state: String, loaded_from: String = "", recovered_from: 
 
 func _notify_save_status_changed() -> void:
 	save_status_changed.emit(get_save_status())
-
-

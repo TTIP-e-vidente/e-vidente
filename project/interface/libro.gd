@@ -96,4 +96,3 @@ func _go_back_to_archivero() -> void:
 
 func _on_atras_pressed() -> void:
 	_go_back_to_archivero()
-

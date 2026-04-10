@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://cm3tfv7x8qeri"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_ks1ea"]
+
+[resource]
+script = ExtResource("1_ks1ea")
+info_pregunta = "¿El gluten está en el arroz?"
+opciones = Array[String](["Si", "No"])
+correct = "No"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

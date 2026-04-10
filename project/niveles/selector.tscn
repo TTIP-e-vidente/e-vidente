@@ -1,12 +1,12 @@
-[gd_scene format=3 uid="uid://r20wgxspx7pc"]
+[gd_scene format=3 uid="uid://di3fv2eh00pko"]
 
-[ext_resource type="Script" uid="uid://bsm8k2aigcwvh" path="res://niveles/intro.gd" id="1_1l6ju"]
-[ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
-[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
-[ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
-[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
+[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_6uvpc"]
+[ext_resource type="Texture2D" uid="uid://dat5d3t765v4l" path="res://assets-sistema/interfaz/selector-preguntas.png" id="4_g0ff0"]
+[ext_resource type="Texture2D" uid="uid://cd4i84fdabf0i" path="res://assets-sistema/interfaz/selector-recetas-png.png" id="5_fsij2"]
+[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="6_lo2a7"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
 content_margin_left = 4.0
@@ -77,34 +77,35 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
-[node name="Intro" type="Node2D" unique_id=1475314294]
+[node name="Intro" type="Node2D" unique_id=933896845]
 z_index = 4
 position = Vector2(4, 0)
-script = ExtResource("1_1l6ju")
+script = ExtResource("1_g0ff0")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1784597498]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=281631034]
 process_priority = -1
 offset_right = 1153.0
 offset_bottom = 800.0
 
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=395179224]
-position = Vector2(586, 397)
-scale = Vector2(0.3361547, 0.3361548)
-texture = ExtResource("2_dj2xn")
+[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=1225842932]
+position = Vector2(573.52826, 402.14877)
+rotation = 3.1415927
+scale = Vector2(0.3337207, 0.32700717)
+texture = ExtResource("2_fsij2")
 
-[node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=348476412]
+[node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=960727714]
 position = Vector2(567, 183)
 scale = Vector2(0.43902442, 0.4390244)
-texture = ExtResource("3_dj2xn")
+texture = ExtResource("3_6uvpc")
 
-[node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
+[node name="MenuBar" type="MenuBar" parent="." unique_id=1246973931]
 offset_left = 400.0
 offset_top = 153.0
 offset_right = 772.0
 offset_bottom = 649.0
 scale = Vector2(1.14996, 1.14996)
 
-[node name="Jugar" type="Button" parent="MenuBar" unique_id=1017891503]
+[node name="Recetas" type="Button" parent="MenuBar" unique_id=45560783]
 layout_mode = 0
 offset_left = 16.695953
 offset_top = 126.09132
@@ -112,10 +113,10 @@ offset_right = 548.6959
 offset_bottom = 324.0913
 scale = Vector2(0.48045883, 0.4908836)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("2_68fep")
+icon = ExtResource("5_fsij2")
 flat = true
 
-[node name="Opciones" type="Button" parent="MenuBar" unique_id=1136441667]
+[node name="Preguntas" type="Button" parent="MenuBar" unique_id=2027374575]
 layout_mode = 0
 offset_left = 16.695953
 offset_top = 235.66034
@@ -123,10 +124,11 @@ offset_right = 548.6959
 offset_bottom = 433.66034
 scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("4_mji7j")
+icon = ExtResource("4_g0ff0")
 flat = true
 
-[node name="Salir" type="Button" parent="MenuBar" unique_id=2110255214]
+[node name="Salir" type="Button" parent="MenuBar" unique_id=1388647194]
+visible = false
 layout_mode = 0
 offset_left = 16.522324
 offset_top = 351.31653
@@ -134,16 +136,16 @@ offset_right = 548.52234
 offset_bottom = 549.3165
 scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
-icon = ExtResource("5_nvq7f")
+icon = ExtResource("6_lo2a7")
 flat = true
 
-[node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1793042506]
+[node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1688635768]
 visible = false
 offset_right = 1153.0
 offset_bottom = 800.0
 color = Color(0.0823529, 0.0941176, 0.0862745, 0.22)
 
-[node name="PlayPanel" type="PanelContainer" parent="." unique_id=1807108230]
+[node name="PlayPanel" type="PanelContainer" parent="." unique_id=1662224480]
 visible = false
 offset_left = 634.0
 offset_top = 118.0
@@ -151,44 +153,44 @@ offset_right = 1080.0
 offset_bottom = 438.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_play_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel" unique_id=385017223]
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel" unique_id=1181874619]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 22
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 22
 
-[node name="Content" type="VBoxContainer" parent="PlayPanel/MarginContainer" unique_id=1527043566]
+[node name="Content" type="VBoxContainer" parent="PlayPanel/MarginContainer" unique_id=6173405]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="HeaderRow" type="HBoxContainer" parent="PlayPanel/MarginContainer/Content" unique_id=1277801703]
+[node name="HeaderRow" type="HBoxContainer" parent="PlayPanel/MarginContainer/Content" unique_id=2064356795]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="StatusChip" type="PanelContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1534612128]
+[node name="StatusChip" type="PanelContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1294554503]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_play_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip" unique_id=1625584775]
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip" unique_id=1798952591]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 6
 
-[node name="StatusBadge" type="Label" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer" unique_id=636275238]
+[node name="StatusBadge" type="Label" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer" unique_id=1973147570]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.247059, 0.290196, 0.211765, 1)
 theme_override_font_sizes/font_size = 12
 text = "ULTIMA PARTIDA"
 
-[node name="Spacer" type="Control" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1830366252]
+[node name="Spacer" type="Control" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1603156671]
 custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=526107238]
+[node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=2088248950]
 custom_minimum_size = Vector2(92, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
@@ -199,38 +201,38 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
 theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
 text = "Cerrar"
 
-[node name="Title" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=1344559426]
+[node name="Title" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=598294786]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 30
 text = "Seguir jugando"
 
-[node name="Subtitle" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=1808143858]
+[node name="Subtitle" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=860489170]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.84)
 theme_override_font_sizes/font_size = 15
 text = "Retoma tu ultimo guardado o entra al selector de modos."
 autowrap_mode = 3
 
-[node name="SummaryPanel" type="PanelContainer" parent="PlayPanel/MarginContainer/Content" unique_id=1653230167]
+[node name="SummaryPanel" type="PanelContainer" parent="PlayPanel/MarginContainer/Content" unique_id=1990493290]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_play_summary")
 
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/SummaryPanel" unique_id=2072564707]
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/SummaryPanel" unique_id=1021068703]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
-[node name="ResumeSummary" type="Label" parent="PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer" unique_id=2048303651]
+[node name="ResumeSummary" type="Label" parent="PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer" unique_id=1131992]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 15
 text = "Ultimo punto: el selector de modos"
 autowrap_mode = 3
 
-[node name="ContinueButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=701253602]
+[node name="ContinueButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=800336124]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -241,7 +243,7 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_play_primary")
 theme_override_styles/focus = SubResource("StyleBoxFlat_play_primary")
 text = "Continuar ultima partida"
 
-[node name="ModeButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=1341582939]
+[node name="ModeButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=1707256141]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
@@ -252,13 +254,13 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
 theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
 text = "Ir al selector de modos"
 
-[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
-stream = ExtResource("6_eoqxh")
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=412964845]
+stream = ExtResource("7_5qkxe")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
-[connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
+[connection signal="pressed" from="MenuBar/Recetas" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="MenuBar/Preguntas" to="." method="_on_opciones_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
 [connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]

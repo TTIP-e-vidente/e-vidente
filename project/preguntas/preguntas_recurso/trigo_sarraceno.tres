@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://bflq05lbck5hj"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_bqjyb"]
+
+[resource]
+script = ExtResource("1_bqjyb")
+info_pregunta = "El trigo sarraceno no es apto para celíacos. Tal como dice su nombre está relacionado con el trigoconvencional y eso asegura que tiene gluten."
+opciones = Array[String](["Verdadero", "Falso"])
+correct = "Falso"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

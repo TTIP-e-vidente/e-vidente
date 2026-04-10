@@ -1,7 +1,5 @@
 extends Node2D
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-
 @onready var background: AudioStreamPlayer2D = $Background
 @onready var play_backdrop: ColorRect = $PlayBackdrop
 @onready var play_panel: PanelContainer = $PlayPanel
@@ -20,31 +18,26 @@ const START_BUTTON_TEXT := "Empezar desde el selector"
 
 func _ready() -> void:
 	background.play()
-	_set_play_panel_visible(false)
-	_refresh_play_panel()
+
 
 
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_file("res://niveles/selector.tscn")
+	get_tree().change_scene_to_file("res://interface/archivero.tscn")
 
 
 func _on_opciones_pressed() -> void:
-	get_tree().change_scene_to_file("res://interface/opciones.tscn")
-
-
-func _on_salir_pressed() -> void:
-	get_tree().quit()
+	get_tree().change_scene_to_file("res://preguntas/pregunta.tscn")
 
 
 func _on_continue_pressed() -> void:
 	var resume_state := SaveManager.load_progress_and_get_resume_state(false)
 	_set_play_panel_visible(false)
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
+	get_tree().change_scene_to_file(str(resume_state.get("scene_path", ARCHIVERO_SCENE)))
 
 
 func _on_mode_pressed() -> void:
 	_set_play_panel_visible(false)
-	GameSceneRouter.go_to_archivero(get_tree())
+	get_tree().change_scene_to_file(ARCHIVERO_SCENE)
 
 
 func _on_play_close_pressed() -> void:
@@ -56,9 +49,9 @@ func _on_play_backdrop_gui_input(event: InputEvent) -> void:
 		_set_play_panel_visible(false)
 
 
-func _set_play_panel_visible(panel_visible: bool) -> void:
-	play_backdrop.visible = panel_visible
-	play_panel.visible = panel_visible
+func _set_play_panel_visible(is_visible: bool) -> void:
+	play_backdrop.visible = is_visible
+	play_panel.visible = is_visible
 
 
 func _refresh_play_panel() -> void:
