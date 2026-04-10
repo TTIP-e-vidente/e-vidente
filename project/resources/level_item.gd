@@ -43,4 +43,3 @@ func _contains_track_key(track_keys: PackedStringArray, raw_track_key: String) -
 		if str(track_key).strip_edges() == clean_track_key:
 			return true
 	return false
-
