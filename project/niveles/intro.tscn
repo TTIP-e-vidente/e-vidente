@@ -101,30 +101,33 @@ scale = Vector2(1.14996, 1.14996)
 
 [node name="Jugar" type="Button" parent="MenuBar"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = -3.0
-offset_right = 422.0
-offset_bottom = 150.0
+offset_left = 16.695953
+offset_top = 126.09132
+offset_right = 548.6959
+offset_bottom = 324.0913
+scale = Vector2(0.48045883, 0.4908836)
 theme_override_font_sizes/font_size = 60
 icon = ExtResource("2_68fep")
 flat = true
 
 [node name="Opciones" type="Button" parent="MenuBar"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 161.0
-offset_right = 422.0
-offset_bottom = 314.0
+offset_left = 16.695953
+offset_top = 235.66034
+offset_right = 548.6959
+offset_bottom = 433.66034
+scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
 icon = ExtResource("4_mji7j")
 flat = true
 
 [node name="Salir" type="Button" parent="MenuBar"]
 layout_mode = 0
-offset_left = 7.82637
-offset_top = 311.315
-offset_right = 286.826
-offset_bottom = 464.315
+offset_left = 16.522324
+offset_top = 351.31653
+offset_right = 548.52234
+offset_bottom = 549.3165
+scale = Vector2(0.48045886, 0.48045886)
 theme_override_font_sizes/font_size = 60
 icon = ExtResource("5_nvq7f")
 flat = true

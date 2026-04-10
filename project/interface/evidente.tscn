@@ -1,7 +1,7 @@
 [gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://interface/evidente.gd" id="1_6okih"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_omjb8"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_omjb8"]
 [ext_resource type="Texture2D" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
 [ext_resource type="Texture2D" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
 [ext_resource type="Texture2D" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
@@ -28,6 +28,9 @@ animations = [{
 "texture": ExtResource("4_bq8g4")
 }, {
 "duration": 1.0,
+"texture": ExtResource("9_ythax")
+}, {
+"duration": 1.0,
 "texture": ExtResource("5_8f2pd")
 }, {
 "duration": 1.0,
@@ -38,9 +41,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("8_1o5dh")
-}, {
-"duration": 1.0,
-"texture": ExtResource("9_ythax")
 }, {
 "duration": 1.0,
 "texture": ExtResource("10_qj1gl")
@@ -76,8 +76,9 @@ mouse_filter = 2
 color = Color(1, 1, 0.996078, 0.988235)
 
 [node name="ImagenFicha" type="Sprite2D" parent="FondoFicha"]
-position = Vector2(577, 407)
-scale = Vector2(1.09575, 1.09575)
+position = Vector2(566.99994, 416)
+rotation = 3.1415927
+scale = Vector2(0.35245946, 0.35245946)
 texture = ExtResource("2_omjb8")
 
 [node name="e-vidente" type="Sprite2D" parent="."]

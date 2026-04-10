@@ -10,7 +10,8 @@ static func build_track_chapter_definitions() -> Dictionary:
 	return {
 		"celiaquia": _build_celiaquia_definitions(),
 		"veganismo": _build_veganismo_definitions(),
-		"veganismo_celiaquia": _build_veganismo_celiaquia_definitions()
+		"veganismo_celiaquia": _build_veganismo_celiaquia_definitions(),
+		"cetogenica": _build_cetogenica_definitions()
 	}
 
 
@@ -65,6 +66,17 @@ static func _build_veganismo_celiaquia_definitions() -> Dictionary:
 	}
 
 
+static func _build_cetogenica_definitions() -> Dictionary:
+	return {
+		1: {"runs": [_build_plate_sort_run(1, 1, "almuerzo", "prepara_keto", "keto_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		2: {"runs": [_build_plate_sort_run(1, 2, "desayuno", "prepara_keto", "keto_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
+		3: {"runs": [_build_plate_sort_run(2, 4, "cena", "prepara_keto", "keto_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		4: {"runs": [_build_plate_sort_run(4, 2, "desayuno", "prepara_keto", "keto_4", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
+		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_keto", "keto_5", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		6: {"runs": [_build_plate_sort_run(2, 2, "bebida", "prepara_keto", "keto_6", GameTrackCatalog.CATEGORY_BEBIDA)]}
+	}
+
+
 static func _build_plate_sort_run(negative_count: int, positive_count: int, meal_key: String, condition_key: String, teaching_key: String, category: String) -> Dictionary:
 	var meal_texture_path := GameChapterAssetCatalog.get_meal_texture_path(meal_key)
 	var condition_texture_path := GameChapterAssetCatalog.get_condition_texture_path(condition_key)
@@ -79,6 +91,7 @@ static func _build_plate_sort_run(negative_count: int, positive_count: int, meal
 		"mechanic_payload": mechanic_payload,
 		"negative_count": negative_count,
 		"positive_count": positive_count,
+		"teaching_key": teaching_key,
 		"meal_texture_path": meal_texture_path,
 		"condition_texture_path": condition_texture_path,
 		"teaching_texture_path": teaching_texture_path,

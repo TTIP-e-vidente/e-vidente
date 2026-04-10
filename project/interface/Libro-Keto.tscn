@@ -1,0 +1,92 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://interface/Libro-Keto.gd" id="1_jagfa"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_jagfa"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-1.png" id="3_hmfro"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-2.png" id="4_icqtb"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-3.png" id="5_ngp6x"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-4.png" id="6_lev0w"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-5.png" id="7_xtfd8"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-6.png" id="8_pl0gl"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo_keto.png" id="9_83ahj"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_g76et"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
+load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
+
+[node name="Libro-Keto" type="Node2D" unique_id=71839841]
+position = Vector2(0, 1)
+script = ExtResource("1_jagfa")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1026954693]
+offset_right = 1152.0
+offset_bottom = 800.0
+
+[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=322121528]
+position = Vector2(577.34393, 394.68747)
+scale = Vector2(0.33670896, 0.33670896)
+texture = ExtResource("2_jagfa")
+flip_v = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1458987539]
+texture_filter = 3
+offset_left = 475.0
+offset_top = 193.0
+offset_right = 842.0001
+offset_bottom = 811.1935
+scale = Vector2(0.752857, 0.752857)
+size_flags_stretch_ratio = 1.73
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Cap1" type="Button" parent="VBoxContainer" unique_id=1092433385]
+z_index = 39
+layout_mode = 2
+icon = ExtResource("3_hmfro")
+flat = true
+
+[node name="Cap2" type="Button" parent="VBoxContainer" unique_id=1124889894]
+layout_mode = 2
+icon = ExtResource("4_icqtb")
+flat = true
+
+[node name="Cap3" type="Button" parent="VBoxContainer" unique_id=480325169]
+layout_mode = 2
+icon = ExtResource("5_ngp6x")
+flat = true
+
+[node name="Cap4" type="Button" parent="VBoxContainer" unique_id=1867769997]
+layout_mode = 2
+icon = ExtResource("6_lev0w")
+flat = true
+
+[node name="Cap5" type="Button" parent="VBoxContainer" unique_id=1065147856]
+layout_mode = 2
+icon = ExtResource("7_xtfd8")
+flat = true
+
+[node name="Cap6" type="Button" parent="VBoxContainer" unique_id=1223684536]
+layout_mode = 2
+icon = ExtResource("8_pl0gl")
+flat = true
+
+[node name="Atras" type="Button" parent="." unique_id=569336190]
+offset_left = 77.0
+offset_top = 643.0
+offset_right = 295.0
+offset_bottom = 853.5053
+scale = Vector2(0.43602213, 0.39069122)
+icon = SubResource("CompressedTexture2D_5m2p2")
+flat = true
+
+[node name="Archivero" type="Sprite2D" parent="." unique_id=203178137]
+position = Vector2(227, 142)
+scale = Vector2(0.41094047, 0.41094047)
+texture = ExtResource("9_83ahj")
+
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1512300098]
+stream = ExtResource("10_g76et")
+volume_db = -4.962
+attenuation = 2.07053
+
+[connection signal="pressed" from="Atras" to="." method="_on_atras_pressed"]

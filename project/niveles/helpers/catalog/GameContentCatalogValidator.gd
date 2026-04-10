@@ -66,9 +66,14 @@ static func _validate_run_definition(track_key: String, level_number: int, run_i
 		issues.append("La corrida %d del capitulo %d en %s no es un diccionario valido." % [run_index, level_number, track_key])
 		return
 	var run_definition: Dictionary = raw_run_definition
+	var teaching_key := str(run_definition.get("teaching_key", "")).strip_edges()
 	var mechanic_type := str(run_definition.get("mechanic_type", "")).strip_edges()
 	if mechanic_type != LevelMechanicTypes.PLATE_SORT:
 		issues.append("La corrida %d del capitulo %d en %s usa una mecanica desconocida: %s" % [run_index, level_number, track_key, mechanic_type])
+	if teaching_key.is_empty():
+		issues.append("La corrida %d del capitulo %d en %s no define teaching_key." % [run_index, level_number, track_key])
+	elif track_key == "cetogenica" and not teaching_key.begins_with("keto_"):
+		issues.append("La corrida %d del capitulo %d en %s deberia usar una teaching_key propia del track: %s" % [run_index, level_number, track_key, teaching_key])
 	var negative_count := int(run_definition.get("negative_count", -1))
 	var positive_count := int(run_definition.get("positive_count", -1))
 	if negative_count < 0 or positive_count < 0:
