@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://c0wxnu5tcwtf7"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_2wfx3"]
+
+[resource]
+script = ExtResource("1_2wfx3")
+info_pregunta = "Para hacer un estudio de celiaquía,tenes que dejar de comer cosas con gluten antesdel estudio de sangre / biopsia intestinal?"
+opciones = Array[String](["Si", "No"])
+correct = "Si"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"

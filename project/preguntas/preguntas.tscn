@@ -1,0 +1,109 @@
+[gd_scene format=3 uid="uid://ut4s77lyqogc"]
+
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_utwr4"]
+[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_bjkn4"]
+[ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_k4y3y"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_oq4xf"]
+
+[node name="Preguntas" type="Node2D" unique_id=653993520]
+
+[node name="Contenido" type="Control" parent="." unique_id=1424383837]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1156.0
+offset_bottom = 805.0
+size_flags_horizontal = 4
+
+[node name="Color Fondo" type="ColorRect" parent="Contenido" unique_id=25828125]
+layout_mode = 0
+offset_left = -12.0
+offset_top = -4.0
+offset_right = 1158.0
+offset_bottom = 804.0
+
+[node name="fondo" type="Sprite2D" parent="Contenido" unique_id=24097276]
+position = Vector2(575, 401.00003)
+scale = Vector2(0.33295324, 0.32512093)
+texture = ExtResource("1_utwr4")
+
+[node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
+position = Vector2(165, 98)
+scale = Vector2(0.46648043, 0.46648043)
+texture = ExtResource("2_bjkn4")
+
+[node name="fondoPregunta" type="Sprite2D" parent="Contenido" unique_id=1552939648]
+position = Vector2(582, 300)
+scale = Vector2(0.71999997, 1)
+texture = ExtResource("3_k4y3y")
+flip_h = true
+
+[node name="Informacion" type="VBoxContainer" parent="Contenido" unique_id=1312854159]
+layout_mode = 0
+offset_left = 303.0
+offset_top = 251.0
+offset_right = 1086.0
+offset_bottom = 382.0
+scale = Vector2(0.7199988, 3.0800006)
+
+[node name="Pregunta" type="Label" parent="Contenido/Informacion" unique_id=1328656126]
+layout_mode = 2
+
+[node name="Visual" type="Panel" parent="Contenido/Informacion" unique_id=1334384024]
+layout_mode = 2
+
+[node name="Imagen" type="TextureRect" parent="Contenido/Informacion/Visual" unique_id=1530920456]
+layout_mode = 0
+offset_left = -66.66677
+offset_top = 38.584396
+offset_right = 122.33323
+offset_bottom = 247.5844
+scale = Vector2(4.7051425, 0.33421043)
+expand_mode = 2
+
+[node name="Video" type="VideoStreamPlayer" parent="Contenido/Informacion/Visual" unique_id=846459775]
+visible = false
+layout_mode = 0
+offset_left = 167.0
+offset_top = -45.0
+offset_right = 282.0
+offset_bottom = 65.0
+
+[node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 454.0
+offset_right = 899.0
+offset_bottom = 682.0
+theme_override_constants/separation = 20
+
+[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Boton3" type="Button" parent="Contenido/Preguntas" unique_id=1531614447]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Boton4" type="Button" parent="Contenido/Preguntas" unique_id=450720334]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Atrás" type="Button" parent="Contenido" unique_id=1720405508]
+layout_mode = 0
+offset_left = 67.0
+offset_top = 639.00006
+offset_right = 296.0
+offset_bottom = 907.00006
+scale = Vector2(0.43999937, 0.38499945)
+text = "
+"
+icon = ExtResource("4_oq4xf")
+flat = true
+
+[node name="Audio" type="AudioStreamPlayer2D" parent="Contenido" unique_id=1701779833]

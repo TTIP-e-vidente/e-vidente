@@ -38,7 +38,7 @@ static func build_track_pools(track_key: String, legacy_positive_items: Array = 
 	}
 
 
-static func classify_item_for_track(track_key: String, item, legacy_positive_weights: Dictionary = {}, legacy_negative_weights: Dictionary = {}) -> String:
+static func classify_item_for_track(track_key: String, item: Variant, legacy_positive_weights: Dictionary = {}, legacy_negative_weights: Dictionary = {}) -> String:
 	return _resolve_item_classification(track_key, item, legacy_positive_weights, legacy_negative_weights)
 
 
@@ -74,13 +74,20 @@ static func _load_all_items() -> Array:
 	return items
 
 
-static func _resolve_item_classification(track_key: String, item, legacy_positive_weights: Dictionary, legacy_negative_weights: Dictionary) -> String:
-	if item.is_explicitly_blocked_for_track(track_key):
+static func _resolve_item_classification(track_key: String, item: Variant, legacy_positive_weights: Dictionary, legacy_negative_weights: Dictionary) -> String:
+	if item == null:
 		return NEGATIVE_ITEMS_KEY
-	if item.is_explicitly_allowed_for_track(track_key):
+
+	var clean_track_key := track_key.strip_edges()
+	if clean_track_key.is_empty():
+		return NEGATIVE_ITEMS_KEY
+
+	if item is Object and item.has_method("is_explicitly_blocked_for_track") and item.is_explicitly_blocked_for_track(clean_track_key):
+		return NEGATIVE_ITEMS_KEY
+	if item is Object and item.has_method("is_explicitly_allowed_for_track") and item.is_explicitly_allowed_for_track(clean_track_key):
 		return POSITIVE_ITEMS_KEY
 
-	var item_path := str(item.resource_path)
+	var item_path := str((item as Resource).resource_path) if item is Resource else ""
 	var in_legacy_positive := legacy_positive_weights.has(item_path)
 	var in_legacy_negative := legacy_negative_weights.has(item_path)
 	if in_legacy_positive and not in_legacy_negative:
@@ -88,8 +95,10 @@ static func _resolve_item_classification(track_key: String, item, legacy_positiv
 	if in_legacy_negative and not in_legacy_positive:
 		return NEGATIVE_ITEMS_KEY
 
-	if GameTrackCatalog.get_track_item_pool_strategy(track_key) == GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS:
-		return NEGATIVE_ITEMS_KEY if item.has_any_condition(GameTrackCatalog.get_track_blocked_conditions(track_key)) else POSITIVE_ITEMS_KEY
+	if GameTrackCatalog.get_track_item_pool_strategy(clean_track_key) == GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS:
+		if item is Object and item.has_method("has_any_condition"):
+			return NEGATIVE_ITEMS_KEY if item.has_any_condition(GameTrackCatalog.get_track_blocked_conditions(clean_track_key)) else POSITIVE_ITEMS_KEY
+		return NEGATIVE_ITEMS_KEY
 
 	return NEGATIVE_ITEMS_KEY
 

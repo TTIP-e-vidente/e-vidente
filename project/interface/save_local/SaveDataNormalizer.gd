@@ -116,4 +116,3 @@ func normalize_history(raw_history: Variant) -> Array:
 			if entry is Dictionary:
 				history.append(entry)
 	return history
-

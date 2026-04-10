@@ -13,12 +13,12 @@ func _initialize() -> void:
 func _run() -> void:
 	await process_frame
 
-	var celiac_safe_item := _make_item([])
-	var celiac_blocked_item := _make_item([LevelItemScript.Condicion.CELIACO])
-	var vegan_blocked_item := _make_item([LevelItemScript.Condicion.VEGETARIANO])
-	var keto_default_item := _make_item([])
-	var keto_allowed_item := _make_item([], PackedStringArray(["cetogenica"]))
-	var forced_negative_item := _make_item([], PackedStringArray(["celiaquia"]), PackedStringArray(["celiaquia"]))
+	var celiac_safe_item: Resource = _make_item([])
+	var celiac_blocked_item: Resource = _make_item([LevelItemScript.Condicion.CELIACO])
+	var vegan_blocked_item: Resource = _make_item([LevelItemScript.Condicion.VEGETARIANO])
+	var keto_default_item: Resource = _make_item([])
+	var keto_allowed_item: Resource = _make_item([], PackedStringArray(["cetogenica"]))
+	var forced_negative_item: Resource = _make_item([], PackedStringArray(["celiaquia"]), PackedStringArray(["celiaquia"]))
 
 	_assert(GameTrackItemPoolCatalog.classify_item_for_track("celiaquia", celiac_safe_item) == GameTrackItemPoolCatalog.POSITIVE_ITEMS_KEY, "Celiaquia deberia aceptar un item sin condicion bloqueante")
 	_assert(GameTrackItemPoolCatalog.classify_item_for_track("celiaquia", celiac_blocked_item) == GameTrackItemPoolCatalog.NEGATIVE_ITEMS_KEY, "Celiaquia deberia bloquear items con condicion CELIACO")
@@ -31,9 +31,11 @@ func _run() -> void:
 	quit(1 if failed else 0)
 
 
-func _make_item(raw_conditions: Array, allowed_tracks: PackedStringArray = PackedStringArray(), blocked_tracks: PackedStringArray = PackedStringArray()):
-	var item = LevelItemScript.new()
-	item.condiciones = raw_conditions.duplicate()
+func _make_item(raw_conditions: Array, allowed_tracks: PackedStringArray = PackedStringArray(), blocked_tracks: PackedStringArray = PackedStringArray()) -> Resource:
+	var item := LevelItemScript.new()
+	item.condiciones.clear()
+	for raw_condition in raw_conditions:
+		item.condiciones.append(int(raw_condition))
 	item.allowed_track_keys = allowed_tracks
 	item.blocked_track_keys = blocked_tracks
 	return item

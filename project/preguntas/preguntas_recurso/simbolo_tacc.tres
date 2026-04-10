@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Preguntas" format=3 uid="uid://b3tog7mlhv6jw"]
+
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="1_vc5ff"]
+
+[resource]
+script = ExtResource("1_vc5ff")
+info_pregunta = "El símbolo “Sin TACC” se modificó a “Sin gluten” porque se descubrió que, durante la cosecha en campos de trigo, el gluten se transfería a semillas de cebada, centeno y avena, y que al separarse correctamente las cosechas ya no era necesario excluirlas  completamente de la dieta celíaca"
+opciones = Array[String](["Verdadero", "Falso"])
+correct = "Verdadero"
+metadata/_custom_type_script = "uid://ntt7pkagfeul"
