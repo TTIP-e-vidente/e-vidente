@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://pr2efnsytisy"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_j0mej"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_j0mej"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_y78o8"]
-[ext_resource type="Texture2D" uid="uid://svgnapq1qbtf" path="res://assets-sistema/iconos/alimentos-info/falafel-info.png" id="2_2eoty"]
-[ext_resource type="Texture2D" uid="uid://cm21cs06eu1j3" path="res://assets-sistema/iconos/falafel-0.png" id="3_22xwn"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/falafel-info.png" id="2_2eoty"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/falafel-0.png" id="3_22xwn"]
 
 [resource]
 script = ExtResource("1_y78o8")

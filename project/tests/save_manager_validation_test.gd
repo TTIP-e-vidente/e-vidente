@@ -63,7 +63,7 @@ func _run() -> void:
 	_assert(not FileAccess.file_exists(STORED_AVATAR_PATH), "Borrar el avatar deberia limpiar el archivo persistido del sandbox")
 
 	Global.current_level = 2
-	Global.items_level[2][Global.LEVEL_STATUS_INDEX] = true
+	Global.mark_level_completed("celiaquia", 2)
 	SaveManager.set_resume_to_level("celiaquia", Global.current_level)
 	SaveManager.record_manual_save()
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")

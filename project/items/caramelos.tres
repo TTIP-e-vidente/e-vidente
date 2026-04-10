@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://dxdr24sr8j3t8"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_c4nhi"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_c4nhi"]
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_qpshn"]
-[ext_resource type="Texture2D" uid="uid://chhjsxxny3gp" path="res://assets-sistema/iconos/alimentos-info/caramelos-duros-info.png" id="2_rk2qo"]
-[ext_resource type="Texture2D" uid="uid://rxhah1lkyum" path="res://assets-sistema/iconos/caramelos-0.png" id="3_pfvun"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/caramelos-duros-info.png" id="2_rk2qo"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/caramelos-0.png" id="3_pfvun"]
 
 [resource]
 script = ExtResource("1_qpshn")

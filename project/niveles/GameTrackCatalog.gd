@@ -1,0 +1,198 @@
+extends RefCounted
+
+
+const LevelItemScript := preload("res://resources/level_item.gd")
+
+const DEFAULT_LEVEL_COUNT := 6
+const CATEGORY_ALMUERZO_CENA := "ALMCENA"
+const CATEGORY_DESAYUNO_MERIENDA := "DESAMER"
+const CATEGORY_DESAYUNO_MERIENDA_LEGACY := "DESAYMER"
+const CATEGORY_BEBIDA := "BEBIDA"
+const ITEM_POOL_STRATEGY_CONDITIONS := "conditions"
+const ITEM_POOL_STRATEGY_LEGACY := "legacy"
+const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
+const TRACK_DEFINITIONS := {
+	"celiaquia": {
+		"key": "celiaquia",
+		"label": "Celiaquia",
+		"summary_label": "Celiaquia",
+		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia.png",
+		"book_scene_path": "res://interface/libro.tscn",
+		"level_scene_path": "res://niveles/nivel_1/Level.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.CELIACO],
+		"level_count": DEFAULT_LEVEL_COUNT
+	},
+	"veganismo": {
+		"key": "veganismo",
+		"label": "Veganismo",
+		"summary_label": "Veganismo",
+		"archive_texture_path": "res://assets-sistema/interfaz/archivero-veganismo.png",
+		"book_scene_path": "res://interface/libro-vegan.tscn",
+		"level_scene_path": "res://niveles/nivel_2/level_vegan.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
+		"level_count": DEFAULT_LEVEL_COUNT
+	},
+	"veganismo_celiaquia": {
+		"key": "veganismo_celiaquia",
+		"label": "Veganismo + Celiaquia",
+		"summary_label": "Mixto",
+		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png",
+		"book_scene_path": "res://interface/Libro-Vegan-GF.tscn",
+		"level_scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.CELIACO, LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
+		"level_count": DEFAULT_LEVEL_COUNT
+	},
+	"cetogenica": {
+		"key": "cetogenica",
+		"label": "Cetogenica",
+		"summary_label": "Keto",
+		"archive_texture_path": "res://assets-sistema/interfaz/archivero-keto.png",
+		"book_scene_path": "res://interface/Libro-Keto.tscn",
+		"level_scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
+		"item_pool_strategy": ITEM_POOL_STRATEGY_LEGACY,
+		"blocked_conditions": [],
+		"level_count": DEFAULT_LEVEL_COUNT
+	}
+}
+const CATEGORY_DEFINITIONS := {
+	CATEGORY_ALMUERZO_CENA: {"code": CATEGORY_ALMUERZO_CENA, "label": "Almuerzo / Cena"},
+	CATEGORY_DESAYUNO_MERIENDA: {"code": CATEGORY_DESAYUNO_MERIENDA, "label": "Desayuno / Merienda"},
+	CATEGORY_BEBIDA: {"code": CATEGORY_BEBIDA, "label": "Bebida"}
+}
+
+
+static func get_track_keys() -> Array:
+	return TRACK_ORDER.duplicate()
+
+
+static func get_track_definitions() -> Array:
+	var definitions: Array = []
+	for track_key in TRACK_ORDER:
+		definitions.append(get_track_definition(track_key))
+	return definitions
+
+
+static func has_track(track_key: String) -> bool:
+	return TRACK_DEFINITIONS.has(track_key.strip_edges())
+
+
+static func get_track_definition(track_key: String) -> Dictionary:
+	var clean_track_key := track_key.strip_edges()
+	if not TRACK_DEFINITIONS.has(clean_track_key):
+		return {}
+	return (TRACK_DEFINITIONS[clean_track_key] as Dictionary).duplicate(true)
+
+
+static func get_track_label(track_key: String, fallback: String = "Tu progreso") -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("label", fallback))
+
+
+static func get_track_summary_label(track_key: String, fallback: String = "Tu progreso") -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("summary_label", track_definition.get("label", fallback)))
+
+
+static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return max(1, int(track_definition.get("level_count", fallback)))
+
+
+static func get_track_item_pool_strategy(track_key: String, fallback: String = ITEM_POOL_STRATEGY_LEGACY) -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("item_pool_strategy", fallback)).strip_edges()
+
+
+static func get_track_blocked_conditions(track_key: String) -> Array:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return []
+	var raw_conditions: Variant = track_definition.get("blocked_conditions", [])
+	return raw_conditions.duplicate() if raw_conditions is Array else []
+
+
+static func get_total_level_count() -> int:
+	var total_levels := 0
+	for track_key in TRACK_ORDER:
+		total_levels += get_track_level_count(track_key)
+	return total_levels
+
+
+static func get_book_scene_path(track_key: String, fallback: String = "") -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("book_scene_path", fallback))
+
+
+static func get_level_scene_path(track_key: String, fallback: String = "") -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("level_scene_path", fallback))
+
+
+static func get_track_labels() -> Dictionary:
+	var labels := {}
+	for track_key in TRACK_ORDER:
+		labels[track_key] = get_track_label(track_key)
+	return labels
+
+
+static func get_track_summary_labels() -> Dictionary:
+	var labels := {}
+	for track_key in TRACK_ORDER:
+		labels[track_key] = get_track_summary_label(track_key)
+	return labels
+
+
+static func get_book_scene_paths() -> Dictionary:
+	var paths := {}
+	for track_key in TRACK_ORDER:
+		paths[track_key] = get_book_scene_path(track_key)
+	return paths
+
+
+static func get_level_scene_paths() -> Dictionary:
+	var paths := {}
+	for track_key in TRACK_ORDER:
+		paths[track_key] = get_level_scene_path(track_key)
+	return paths
+
+
+static func get_track_level_counts() -> Dictionary:
+	var level_counts := {}
+	for track_key in TRACK_ORDER:
+		level_counts[track_key] = get_track_level_count(track_key)
+	return level_counts
+
+
+static func get_category_label(category_code: String, fallback: String = "Categoria") -> String:
+	var clean_category_code := normalize_category_code(category_code)
+	if not CATEGORY_DEFINITIONS.has(clean_category_code):
+		return fallback
+	return str((CATEGORY_DEFINITIONS[clean_category_code] as Dictionary).get("label", fallback))
+
+
+static func normalize_category_code(category_code: String) -> String:
+	var clean_category_code := category_code.strip_edges().to_upper()
+	match clean_category_code:
+		CATEGORY_DESAYUNO_MERIENDA_LEGACY:
+			return CATEGORY_DESAYUNO_MERIENDA
+		_:
+			return clean_category_code
+
+
+static func categories_match(left_category: String, right_category: String) -> bool:
+	return normalize_category_code(left_category) == normalize_category_code(right_category)

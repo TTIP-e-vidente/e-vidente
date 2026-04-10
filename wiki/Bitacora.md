@@ -4,6 +4,9 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-08 | quick-save/ci-push-branches
+Se endurecio la serializacion del quick save parcial para tolerar mejor estados `mechanic_state` vacios y seguir restaurando desde los campos de compatibilidad. Ademas la CI principal paso a correr en cada push de branch y se forzo la ejecucion de acciones JavaScript con Node 24 para adelantarse a la deprecacion de Node 20.
+
 ### 2026-04-06 | guardado parcial niveles/ci-4.6.2
 Se agrego guardado parcial por track y capitulo para restaurar alimentos correctos ya colocados en el plato. La UI del guardado rapido paso a una tarjeta contenida dentro de la escena y la suite headless ahora valida quick save para celiquia, veganismo y veganismo_celiaquia. Tambien se alineo la CI y el build web con Godot 4.6.2, incluyendo la imagen Docker correcta `barichello/godot-ci:4.6.2`.
 

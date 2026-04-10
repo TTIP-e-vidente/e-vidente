@@ -41,5 +41,12 @@ func item_en_plato(item):
 func item_sale_plato(item):
 	abstract_state.sale_item_plato(item, self)
 
+
+func prepare_for_next_run() -> void:
+	hambre.show()
+	abstract_state = sentir_hambre
+	current_animation = "cagadodehambre"
+
+
 func _on_animated_sprite_2d_animation_finished():
 	abstract_state.aplicar_animacion()

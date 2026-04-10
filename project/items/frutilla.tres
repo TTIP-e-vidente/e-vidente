@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3 uid="uid://60d58capsdxx"]
+[gd_resource type="Resource" script_class="LevelItem" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://resources/level_item.gd" id="1_6oyuh"]
-[ext_resource type="PackedScene" uid="uid://bri7a10em12dj" path="res://items/item_level.tscn" id="1_48hpf"]
-[ext_resource type="Texture2D" uid="uid://c8vta3ck7bt5a" path="res://assets-sistema/iconos/alimentos-info/frutilla-info.png" id="2_8e2x7"]
-[ext_resource type="Texture2D" uid="uid://brdvplvdyfbj" path="res://assets-sistema/iconos/frutilla-0.png" id="3_atj86"]
+[ext_resource type="PackedScene" path="res://items/item_level.tscn" id="1_48hpf"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/frutilla-info.png" id="2_8e2x7"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/frutilla-0.png" id="3_atj86"]
 
 [resource]
 script = ExtResource("1_6oyuh")

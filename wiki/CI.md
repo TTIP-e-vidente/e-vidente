@@ -1,71 +1,91 @@
 ﻿# CI Pipeline
 
-El workflow de CI busca dos cosas: detectar roturas temprano y mantener el repo en un estado publicable sin meter fricción innecesaria en el trabajo diario.
+La CI quedó armada para que falle solo cuando haya una rotura real del proyecto o una violación concreta de las guardas del repo.
 
 ## Archivo y disparadores
 
-El workflow vive en `.github/workflows/ci.yml` y corre en tres casos:
+La CI visible se reparte en dos workflows cortos y faciles de leer en GitHub:
 
-- `push`
-- `pull_request`
-- `workflow_dispatch`
+- `.github/workflows/ci.yml` con nombre visible `CI` para `push` sobre `main` y `dev`, `schedule` nocturno y `workflow_dispatch`
+- `.github/workflows/ci-pr.yml` con nombre visible `PR` para `pull_request` apuntando a `main` o `dev`
 
-También usa concurrencia por rama para cancelar ejecuciones viejas cuando entra un commit nuevo.
+Ambos llaman a `.github/workflows/ci-shared.yml`, que contiene la logica real de `guardrails`, `validate` y `build-web`.
+
+También cancela corridas viejas por rama para evitar ruido cuando entran commits nuevos.
+
+Esta separacion es intencional: el gate principal vive en PR y los pushes comunes de ramas de trabajo ya no disparan la suite completa. Los pushes que siguen corriendo son los que afectan ramas de integracion (`main` y `dev`), ademas del nightly y de la corrida manual.
+
+## Contrato actual
+
+- `guardrails` y `validate` son los dos gates bloqueantes.
+- `guardrails` bloquea solo por estructura runtime realmente critica; docs y configuraciones opcionales quedan como warnings o notices.
+- `validate` cubre import headless y regresiones jugables/persistencia.
+- El recordatorio sobre `wiki/Bitacora.md` sigue siendo asistivo y no rompe la corrida.
 
 ## Jobs actuales
 
-### `quality`
+### `guardrails`
 
-Es el job más liviano y no bloquea el pipeline.
+Este job si bloquea, pero ahora solo por reglas que dependen del repo y rompen de verdad la validacion.
 
-Revisa:
+Hoy cubre como bloqueo real:
 
-- estructura mínima del repo
-- documentación base (`README.md`, `wiki/Home.md`, `wiki/Bitacora.md`)
-- ESLint si el repo llegara a tener configuración Node válida
-- recordatorios cuando hay cambios en `project/` sin cambios en `wiki/`
+- estructura runtime minima del proyecto Godot
+- entrypoints criticos de la validacion compartida
 
-Si falla algo acá, normalmente no es un error de runtime sino una deuda de documentación o de orden del repo.
+Como hints no bloqueantes cubre:
+
+- ESLint, pero solo si el repo trae configuracion y lockfile de npm validos
+- README, wiki base y `wiki/Getting-Started.md`
+- `project/export_presets.cfg`, que solo importa para el export web manual
+
+La idea es que si este job falla, el problema sea atribuible a una deuda real de estructura o calidad del código, no a exportadores ni a tooling lateral.
+
+Dentro de este job también queda un recordatorio no bloqueante cuando cambia `project/` sin actualizar `wiki/Bitacora.md`.
+
+Cuando falla, el propio paso intenta explicar el motivo con mensajes concretos: estructura faltante, ESLint configurado sin `package.json`, lockfile ausente o errores reportados por ESLint.
 
 ### `validate`
 
-Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2`.
+Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2` y usa la suite compartida `scripts/run-godot-validation.sh`.
 
-Hace lo siguiente:
+En `schedule`, `workflow_dispatch` y en cambios de `push` o PR que tocan `project/` o la propia suite compartida, corre el perfil `full`.
 
-- importa el proyecto en modo headless
-- corre smoke test de guardado local
-- valida perfil, avatar y recarga desde disco
-- valida el contrato de señales de `SaveManager`
-- prueba la migración desde saves legacy
-- prueba el overlay de Archivero
-- prueba el flujo de Intro para continuar la ultima partida o ir al selector de modos
-- prueba el guardado rápido desde nivel
+En `push` o PRs que solo cambian docs, metadata o infraestructura fuera de `project/`, baja a un perfil `pr-fast` con tres pruebas smoke para no gastar minutos al pedo.
 
-Cuando falla, casi siempre el problema está en alguno de estos puntos:
+Si el import headless falla en la suite `full`, la CI limpia el estado generado de `project/.godot` (conservando `uid_cache.bin`) y reintenta una sola vez antes de dar la corrida por rota. Eso reduce falsos negativos por cache o estado importado viejo.
 
-- sintaxis GDScript o escenas rotas
-- rutas inválidas en `.tscn`
-- regresiones en persistencia local
-- cambios de UI que rompen el flujo que cubren los tests
+Cubre:
 
-### `build-web`
+- import headless del proyecto
+- integracion entre catalogo, libros y niveles jugables de todos los tracks
+- smoke test de guardado local
+- validación de persistencia y perfil
+- contrato de señales de `SaveManager`
+- migración de saves legacy
+- overlay de Archivero
+- flujo de Intro para perfil / continuidad
+- quick save en niveles
+- suficiencia real de pools de items por categoria para cada corrida del catalogo
 
-Este job espera a `validate` y `quality`.
+La idea es simple: si falla acá, hay una rotura real en código, escenas o tests del proyecto.
 
-Su trabajo es:
+Además, este job sube un artifact `validation-logs-*` con un log combinado y logs separados por paso para que sea evidente si falló el import headless, un test de `SaveManager`, el overlay de Archivero, Intro o quick save.
 
-- importar el proyecto
-- exportar el preset `index`
-- normalizar la salida en `build/web/index.html`
-- verificar que haya artefactos de export razonables
-- subir `build/web` como artifact de GitHub Actions
+## Decisiones de fiabilidad
 
-El workflow actual no despliega a GitHub Pages. Hoy el resultado del build web queda como artifact descargable.
+La CI se simplificó con algunos criterios explícitos:
 
-## Validacion local recomendada
+- cache de `project/.godot` con key basada en imports, escenas, recursos y assets fuente relevantes
+- cuando una PR toca `project/`, la validación vuelve al perfil `full` y reimporta antes de correr la suite compartida
+- si el primer import falla, hay un reintento automatico con limpieza de estado generado para evitar fallas espurias
+- sin export web dentro del gate principal
+- ESLint solo corre si el repo realmente lo configuró y dejó lockfile determinístico
+- dos checks obligatorios y concretos: `guardrails` para roturas estructurales reales y `validate` para roturas funcionales
 
-Para no depender solo de CI, conviene correr localmente la misma suite antes de pushear.
+## Validación local recomendada
+
+Para mantener paridad con CI, conviene correr la misma suite antes de pushear.
 
 En Windows:
 
@@ -73,7 +93,7 @@ En Windows:
 powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1
 ```
 
-Si `godot` no esta en PATH:
+Si `godot` no está en PATH:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
@@ -82,25 +102,21 @@ powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Godot
 En shell:
 
 ```bash
-sh scripts/run-godot-validation.sh --run godot
+sh scripts/run-godot-validation.sh --run full godot
 ```
 
-Y si queres incluir export web en Windows:
+Si hace falta probar export web, conviene correrlo como validación manual aparte, no como parte del gate principal de CI.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -IncludeExport
-```
+## Cómo leer una corrida
 
-## Cómo leer una falla
+- Si falla `guardrails`, hay un problema de estructura del repo o de calidad de código que sí queremos bloquear.
+- Si falla `validate`, rompimos algo real del proyecto.
+- Si aparece warning por `wiki/Bitacora.md`, hay una deuda de registro técnico, pero no bloquea merges.
 
-- Si falla `quality`, suele ser una deuda de documentación o estructura.
-- Si falla `validate`, hay una rotura real en el proyecto o en los tests headless.
-- Si falla `build-web`, el export dejó de ser consistente y hay que revisar `export_presets.cfg` o la salida del preset.
+La intención es que la corrida no diga solo "falló": tiene que indicar qué bloque se rompió y darte una pista accionable para empezar a revisar.
 
 ## Mantenimiento
 
-Si cambia la estructura del repo, hay que revisar las listas `REQUIRED_DIRS` y `REQUIRED_FILES` del job `quality`.
+Si cambia un flujo importante del juego, lo correcto es sumar o ajustar un test headless en `project/tests/` y mantener `scripts/run-godot-validation.sh` como fuente única de verdad para la validación funcional.
 
-Si cambia un flujo importante del juego, conviene sumar o ajustar un test headless en `project/tests/`.
-
-Si cambia el export web, hay que revisar tanto `export_presets.cfg` como la ruta final que usa el workflow para publicar el artifact.
+Si el repo incorpora frontend o tooling Node de forma estable, recién ahí conviene endurecer `guardrails` alrededor de ese stack, con lockfile y configuración explícita dentro del repo.
