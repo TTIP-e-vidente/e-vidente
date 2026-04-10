@@ -9,9 +9,9 @@ var is_dragging: Object
 var manager_level
 var current_level: int = 1
 
-const LEVEL_STATUS_INDEX := 6
 const LEVELS_PER_BOOK := GameTrackCatalog.DEFAULT_LEVEL_COUNT
 const TRACK_KEYS := GameTrackCatalog.TRACK_ORDER
+const BOOK_LEVEL_COMPLETED_KEY := GameLevelContentCatalogScript.BOOK_LEVEL_COMPLETED_KEY
 const PARTIAL_LEVEL_STATES_KEY := "partial_level_states"
 const PARTIAL_LEVEL_RUN_INDEX_KEY := "run_index"
 const PARTIAL_LEVEL_MECHANIC_TYPE_KEY := "mechanic_type"
@@ -24,17 +24,11 @@ const PARTIAL_LEVEL_IS_POSITIVE_KEY := "is_positive"
 
 var _content_catalog
 var _progress_store
-var items_level: Dictionary = {}
-var items_level_vegan: Dictionary = {}
-var items_level_vegan_gf: Dictionary = {}
 var partial_level_states: Dictionary = {}
 
 func _init() -> void:
 	_content_catalog = GameLevelContentCatalogScript.new()
 	_progress_store = GameProgressStateStoreScript.new(self)
-	items_level = _content_catalog.items_level
-	items_level_vegan = _content_catalog.items_level_vegan
-	items_level_vegan_gf = _content_catalog.items_level_vegan_gf
 	partial_level_states = _progress_store.build_default_partial_level_states()
 
 func get_track_definitions() -> Array:
@@ -102,7 +96,7 @@ func mark_level_completed(track_key: String, level_number: int) -> void:
 	var book := _book_for_track(track_key)
 	var clean_level_number := clampi(level_number, 1, get_track_level_count(track_key))
 	if book.has(clean_level_number):
-		book[clean_level_number][LEVEL_STATUS_INDEX] = true
+		book[clean_level_number][BOOK_LEVEL_COMPLETED_KEY] = true
 
 func is_level_unlocked(track_key: String, level_number: int) -> bool:
 	var clean_level_number := clampi(level_number, 1, get_track_level_count(track_key))
@@ -156,6 +150,7 @@ func _book_for_track(track_key: String) -> Dictionary:
 
 func _is_level_completed(track_key: String, level_number: int) -> bool:
 	var book := _book_for_track(track_key)
-	if not book.has(level_number):
+	var raw_level_progress: Variant = book.get(level_number, {})
+	if not raw_level_progress is Dictionary:
 		return false
-	return bool(book[level_number][LEVEL_STATUS_INDEX])
+	return bool((raw_level_progress as Dictionary).get(BOOK_LEVEL_COMPLETED_KEY, false))

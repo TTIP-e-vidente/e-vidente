@@ -3,15 +3,19 @@ extends RefCounted
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameTrackChapterDefinitionsScript := preload("res://niveles/helpers/catalog/GameTrackChapterDefinitions.gd")
 const GameContentCatalogValidatorScript := preload("res://niveles/helpers/catalog/GameContentCatalogValidator.gd")
-const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
+
+const BOOK_LEVEL_NEGATIVE_COUNT_KEY := "negative_count"
+const BOOK_LEVEL_POSITIVE_COUNT_KEY := "positive_count"
+const BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY := "meal_texture_path"
+const BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY := "condition_texture_path"
+const BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY := "teaching_texture_path"
+const BOOK_LEVEL_CATEGORY_KEY := "category"
+const BOOK_LEVEL_COMPLETED_KEY := "completed"
 
 var _texture_cache: Dictionary = {}
 var _track_chapter_definitions: Dictionary = GameTrackChapterDefinitionsScript.build_track_chapter_definitions()
 
 var _track_books: Dictionary = _build_track_books()
-var items_level: Dictionary = _track_books.get("celiaquia", {})
-var items_level_vegan: Dictionary = _track_books.get("veganismo", {})
-var items_level_vegan_gf: Dictionary = _track_books.get("veganismo_celiaquia", {})
 
 func item_categoria(items, categoria: String) -> Array:
 	if categoria.strip_edges().is_empty():
@@ -112,5 +116,13 @@ func _build_track_book(track_key: String) -> Dictionary:
 	level_numbers.sort()
 	for level_number in level_numbers:
 		var first_run: Dictionary = get_chapter_run(track_key, level_number, 1)
-		book[level_number] = [int(first_run.get("negative_count", 0)), int(first_run.get("positive_count", 0)), str(first_run.get("meal_texture_path", "")), str(first_run.get("condition_texture_path", "")), str(first_run.get("teaching_texture_path", "")), str(first_run.get("category", "")), false]
+		book[level_number] = {
+			BOOK_LEVEL_NEGATIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_NEGATIVE_COUNT_KEY, 0)),
+			BOOK_LEVEL_POSITIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_POSITIVE_COUNT_KEY, 0)),
+			BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY: str(first_run.get(BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY, "")),
+			BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY: str(first_run.get(BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY, "")),
+			BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY: str(first_run.get(BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY, "")),
+			BOOK_LEVEL_CATEGORY_KEY: str(first_run.get(BOOK_LEVEL_CATEGORY_KEY, "")),
+			BOOK_LEVEL_COMPLETED_KEY: false
+		}
 	return book

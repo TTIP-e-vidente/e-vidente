@@ -1,7 +1,7 @@
 [gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://interface/Archivero.gd" id="1_vbpnf"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_4l60g"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_4l60g"]
 [ext_resource type="Script" path="res://interface/ArchiveroContainer.gd" id="3_c38ao"]
 [ext_resource type="PackedScene" path="res://interface/container.tscn" id="4_wmw33"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png" id="5_fxxew"]
@@ -176,18 +176,19 @@ offset_bottom = 800.0
 
 [node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
 self_modulate = Color(1, 1, 1, 0.478431)
-position = Vector2(576, 400)
-scale = Vector2(1.01691, 1.08165)
+position = Vector2(576.90533, 431.00003)
+scale = Vector2(0.33626777, 0.35767576)
 texture = ExtResource("2_4l60g")
+flip_v = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer"]
-offset_left = 123.0
-offset_top = 167.0
-offset_right = 760.0
-offset_bottom = 1675.0
-scale = Vector2(0.959998, 0.959998)
+offset_left = 191.0
+offset_top = 126.0
+offset_right = 1141.0
+offset_bottom = 1634.0
+scale = Vector2(0.87999773, 0.87999773)
 script = ExtResource("3_c38ao")
 
 [node name="celiaco-vegano2" parent="CanvasLayer/ArchiveroContainer" instance=ExtResource("4_wmw33")]

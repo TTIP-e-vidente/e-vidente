@@ -6,7 +6,7 @@ const CATEGORY_ALMUERZO_CENA := "ALMCENA"
 const CATEGORY_DESAYUNO_MERIENDA := "DESAMER"
 const CATEGORY_DESAYUNO_MERIENDA_LEGACY := "DESAYMER"
 const CATEGORY_BEBIDA := "BEBIDA"
-const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia"]
+const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
 const TRACK_DEFINITIONS := {
 	"celiaquia": {
 		"key": "celiaquia",
@@ -33,6 +33,15 @@ const TRACK_DEFINITIONS := {
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png",
 		"book_scene_path": "res://interface/Libro-Vegan-GF.tscn",
 		"level_scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
+		"level_count": DEFAULT_LEVEL_COUNT
+	},
+	"cetogenica": {
+		"key": "cetogenica",
+		"label": "Cetogenica",
+		"summary_label": "Keto",
+		"archive_texture_path": "res://assets-sistema/interfaz/archivero-keto.png",
+		"book_scene_path": "res://interface/Libro-Keto.tscn",
+		"level_scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
 		"level_count": DEFAULT_LEVEL_COUNT
 	}
 }

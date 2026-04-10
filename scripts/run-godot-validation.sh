@@ -46,31 +46,51 @@ run_step() {
 		printf '\n\n' >> "$COMBINED_LOG"
 	fi
 
-	rm -f "$tmp_log"
-
 	if [ "$status" -ne 0 ]; then
+		failure_detail="$(grep -E 'FAILED:|FALLO:|Error:' "$tmp_log" | tail -n 1 || true)"
+		failure_excerpt="$(tail -n 20 "$tmp_log" | tr '\n' '|' | sed 's/[[:space:]]\+/ /g' | cut -c1-1500)"
 		if [ -n "$LOG_DIR" ]; then
 			printf '%s\n' "$step_id" > "$LOG_DIR/last_failed_step_id"
 		fi
 		echo ""
 		echo "FALLO: $label"
 		echo "Ayuda: $failure_hint"
+		if [ -n "$failure_detail" ]; then
+			echo "Detalle: $failure_detail"
+		fi
+		if [ -n "$failure_excerpt" ]; then
+			echo "Excerpt: $failure_excerpt"
+		fi
 		if [ -n "$LOG_DIR" ]; then
 			echo "Log del paso: $LOG_DIR/$step_id.log"
 			echo "Log completo: $COMBINED_LOG"
 		fi
 		if [ -n "${GITHUB_ACTIONS:-}" ]; then
 			printf '::error title=%s::%s\n' "$label" "$failure_hint"
+			if [ -n "$failure_detail" ]; then
+				printf '::error title=%s detalle::%s\n' "$label" "$failure_detail"
+			fi
+			if [ -n "$failure_excerpt" ]; then
+				printf '::error title=%s excerpt::%s\n' "$label" "$failure_excerpt"
+			fi
 		fi
 		append_summary "### Validation failed"
 		append_summary "- Paso: $label"
 		append_summary "- Ayuda: $failure_hint"
+		if [ -n "$failure_detail" ]; then
+			append_summary "- Detalle: $failure_detail"
+		fi
+		if [ -n "$failure_excerpt" ]; then
+			append_summary "- Excerpt: $failure_excerpt"
+		fi
 		if [ -n "$LOG_DIR" ]; then
 			append_summary "- Revisar artifact de logs de validacion para el detalle completo."
 		fi
+		rm -f "$tmp_log"
 		return "$status"
 	fi
 
+	rm -f "$tmp_log"
 	echo "OK: $label"
 }
 

@@ -1,14 +1,14 @@
 [gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://interface/libro-vegan.gd" id="1_btrdt"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_elh6m"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_elh6m"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-1.png" id="3_i7a8u"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-2.png" id="4_ydatj"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-3.png" id="5_12ycp"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-4.png" id="6_cfe55"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="9_8b002"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="9_8b002"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
@@ -21,12 +21,13 @@ script = ExtResource("1_btrdt")
 [node name="ColorRect" type="ColorRect" parent="."]
 offset_right = 1152.0
 offset_bottom = 800.0
-color = Color(0.623183, 0.999127, 0.762443, 1)
 
 [node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
-position = Vector2(576, 400)
-scale = Vector2(1.01691, 1.08165)
+position = Vector2(577.34393, 394.68747)
+scale = Vector2(0.33670896, 0.33670896)
 texture = ExtResource("2_elh6m")
+flip_h = true
+flip_v = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 texture_filter = 3
@@ -71,17 +72,17 @@ icon = ExtResource("8_vx58k")
 flat = true
 
 [node name="Atras" type="Button" parent="."]
-offset_left = 27.0
-offset_top = 590.0
-offset_right = 252.0
-offset_bottom = 858.0
-scale = Vector2(0.698795, 0.626145)
+offset_left = 57.0
+offset_top = 640.00006
+offset_right = 282.0
+offset_bottom = 908.00006
+scale = Vector2(0.4865854, 0.43599772)
 icon = SubResource("CompressedTexture2D_b50jp")
 flat = true
 
 [node name="ArchiveroVegan" type="Sprite2D" parent="."]
-position = Vector2(825, 855)
-scale = Vector2(0.960001, 0.960001)
+position = Vector2(205, 126.00001)
+scale = Vector2(0.5749733, 0.5749733)
 texture = ExtResource("9_8b002")
 
 [node name="Background" type="AudioStreamPlayer2D" parent="."]

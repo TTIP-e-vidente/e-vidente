@@ -99,7 +99,7 @@ func _normalize_mechanic_state(mechanic_type: String, raw_mechanic_state: Varian
 	var clean_mechanic_type: String = mechanic_type.strip_edges()
 	if clean_mechanic_type.is_empty() or clean_mechanic_type == LevelMechanicTypes.PLATE_SORT:
 		var plate_sort_source: Variant = raw_mechanic_state
-		if not plate_sort_source is Dictionary:
+		if not plate_sort_source is Dictionary or (plate_sort_source as Dictionary).is_empty():
 			plate_sort_source = {
 				_manager.PARTIAL_LEVEL_ITEMS_KEY: raw_state.get(_manager.PARTIAL_LEVEL_ITEMS_KEY, []),
 				_manager.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: raw_state.get(_manager.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])

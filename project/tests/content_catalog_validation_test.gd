@@ -26,6 +26,10 @@ func _run() -> void:
 			var chapter_definition: Dictionary = catalog.get_chapter_definition(track_key, level_number)
 			_assert(not chapter_definition.is_empty(), "El track %s deberia exponer el capitulo %d" % [track_key, level_number])
 			_assert(catalog.get_chapter_run_count(track_key, level_number) >= 1, "El capitulo %d del track %s deberia tener al menos una corrida" % [level_number, track_key])
+			if track_key == "cetogenica":
+				var runs: Array = chapter_definition.get("runs", [])
+				for run_definition in runs:
+					_assert(str((run_definition as Dictionary).get("teaching_key", "")).begins_with("keto_"), "Cetogenica deberia usar teaching keys propias en el catalogo")
 	quit(1 if failed else 0)
 
 

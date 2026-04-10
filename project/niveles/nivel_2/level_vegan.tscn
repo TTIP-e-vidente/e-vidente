@@ -1,7 +1,7 @@
 [gd_scene load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_2/Level-Vegan.gd" id="1_64ycw"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_6hd83"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="3_gaj1j"]
 [ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="4_mvmjh"]
 [ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="5_l4pa0"]
@@ -182,8 +182,8 @@ script = ExtResource("1_64ycw")
 
 [node name="TituloNivel" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(206, 47)
-scale = Vector2(1.31416, 1.31416)
+position = Vector2(233, 109)
+scale = Vector2(0.6068007, 0.6068007)
 texture = ExtResource("3_gaj1j")
 
 [node name="Victory" type="AnimatedSprite2D" parent="."]
@@ -209,14 +209,14 @@ shape = SubResource("RectangleShape2D_dgfld")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú"]
 position = Vector2(3.61649, -2.63898)
-scale = Vector2(0.675987, 1.02154)
+scale = Vector2(0.6667521, 0.91042554)
 texture = ExtResource("6_w25c5")
 
 [node name="Plato" parent="." instance=ExtResource("7_wtr41")]
 unique_name_in_owner = true
 z_index = 3
-position = Vector2(484, 433)
-scale = Vector2(1.27333, 1.23705)
+position = Vector2(544, 384)
+scale = Vector2(0.629, 0.65)
 
 [node name="Lupa" type="Area2D" parent="." groups=["droppable"]]
 light_mask = 8
@@ -231,23 +231,23 @@ modulate = Color(1, 1, 1, 0.882353)
 light_mask = 8
 visibility_layer = 8
 z_index = 4
-position = Vector2(975.643, 410.722)
+position = Vector2(1095.9999, 505.99994)
 rotation = -0.276803
-scale = Vector2(1.10134, 1.1147)
+scale = Vector2(0.3437685, 0.34793857)
 texture = ExtResource("9_busdo")
 
 [node name="ayudin" type="Sprite2D" parent="Lupa"]
 z_index = 3
-position = Vector2(970.643, 374.722)
+position = Vector2(1001.99994, 429.00003)
 rotation = -0.302794
-scale = Vector2(1.09019, 1.15035)
+scale = Vector2(0.36243123, 0.38243124)
 texture = ExtResource("10_rbgcf")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lupa"]
 light_mask = 8
 visibility_layer = 8
 z_index = 3
-position = Vector2(987.223, 373.098)
+position = Vector2(1021, 434.99997)
 rotation = -0.0939056
 shape = SubResource("CircleShape2D_wvg7e")
 
@@ -255,11 +255,10 @@ shape = SubResource("CircleShape2D_wvg7e")
 offset_right = 1152.0
 offset_bottom = 800.0
 mouse_filter = 2
-color = Color(0.623183, 0.999127, 0.762443, 1)
 
 [node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
-position = Vector2(576, 400)
-scale = Vector2(1.01691, 1.08165)
+position = Vector2(579.2062, 397.69672)
+scale = Vector2(0.33399412, 0.35525736)
 texture = ExtResource("2_6hd83")
 
 [node name="Globo texto" type="Sprite2D" parent="."]
@@ -273,16 +272,16 @@ position = Vector2(6.2636, -3.13165)
 [node name="Condition" type="Sprite2D" parent="Globo texto"]
 
 [node name="PlayerCambiante" type="Sprite2D" parent="."]
-position = Vector2(882, 255)
+position = Vector2(874, 223)
 script = ExtResource("12_xwbtl")
 
 [node name="hambre" type="Sprite2D" parent="PlayerCambiante"]
-position = Vector2(-17, -104)
+position = Vector2(-88, -118)
 scale = Vector2(0.474684, 0.425234)
 texture = ExtResource("13_dqdvd")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="PlayerCambiante"]
-position = Vector2(-155, 22)
+position = Vector2(15.000015, 29)
 scale = Vector2(1.7094, 1.64714)
 sprite_frames = SubResource("SpriteFrames_gh3ri")
 animation = &"retriston"

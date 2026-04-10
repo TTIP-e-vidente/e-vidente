@@ -1,17 +1,20 @@
 extends RefCounted
 
 const SaveSessionNormalizerScript := preload("res://interface/save_local/SaveSessionNormalizer.gd")
+const SaveLocalLegacyMigrationServiceScript := preload("res://interface/save_local/SaveLocalLegacyMigrationService.gd")
 
 var _profile_helper
 var _session_helper
 var _config: Dictionary = {}
 var _session_normalizer
+var _legacy_migration_service
 
 func _init(profile_helper, session_helper, config: Dictionary):
 	_profile_helper = profile_helper
 	_session_helper = session_helper
 	_config = config.duplicate(true)
 	_session_normalizer = SaveSessionNormalizerScript.new(session_helper, _config, Callable(self, "normalize_save_meta"), Callable(self, "normalize_history"))
+	_legacy_migration_service = SaveLocalLegacyMigrationServiceScript.new(_profile_helper, _config, Callable(self, "default_save_data"), Callable(self, "normalize_profile_data"), Callable(self, "normalize_save_meta"), Callable(self, "normalize_history"))
 
 func default_save_data() -> Dictionary:
 	return {
@@ -38,7 +41,7 @@ func default_save_meta() -> Dictionary:
 
 func normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	if raw_data.has("users"):
-		raw_data = migrate_legacy_save_data(raw_data)
+		raw_data = _legacy_migration_service.migrate_legacy_save_data(raw_data)
 	var normalized: Dictionary = default_save_data()
 	normalized["version"] = int(raw_data.get("version", int(_config.get("save_version", 1))))
 	var raw_profile: Variant = raw_data.get("profile", {})
@@ -98,33 +101,7 @@ func find_most_recent_session_id(sessions: Dictionary) -> String:
 	return _session_normalizer.find_most_recent_session_id(sessions)
 
 func migrate_legacy_save_data(raw_data: Dictionary) -> Dictionary:
-	var normalized: Dictionary = default_save_data()
-	var selected_user: Dictionary = {}
-	var raw_users: Variant = raw_data.get("users", {})
-	var last_user_key: String = str(raw_data.get("last_user", ""))
-	if raw_users is Dictionary:
-		if raw_users.has(last_user_key) and raw_users[last_user_key] is Dictionary:
-			selected_user = raw_users[last_user_key]
-		elif raw_users.size() > 0:
-			var first_key: Variant = raw_users.keys()[0]
-			if raw_users[first_key] is Dictionary:
-				selected_user = raw_users[first_key]
-	if selected_user.is_empty():
-		return normalized
-	normalized["profile"] = normalize_profile_data({
-		"username": selected_user.get("username", _config.get("default_profile_name", "Perfil local")),
-		"age": selected_user.get("age", 0),
-		"email": selected_user.get("email", ""),
-		"avatar_path": selected_user.get("avatar_path", ""),
-		"created_at": selected_user.get("created_at", ""),
-		"updated_at": selected_user.get("updated_at", "")
-	})
-	var migrated_progress: Variant = selected_user.get("progress", {})
-	if migrated_progress is Dictionary:
-		normalized["progress"] = migrated_progress
-	normalized["save_meta"] = normalize_save_meta({"last_saved_at": selected_user.get("updated_at", ""), "last_saved_reason": "legacy_migration", "write_count": 0})
-	normalized["history"] = normalize_history(selected_user.get("history", []))
-	return normalized
+	return _legacy_migration_service.migrate_legacy_save_data(raw_data)
 
 func normalize_profile_data(raw_profile: Dictionary) -> Dictionary:
 	return _profile_helper.normalize_profile_data(raw_profile, str(_config.get("default_profile_name", "Perfil local")))
