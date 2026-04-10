@@ -33,7 +33,9 @@ func _run() -> void:
 
 func _make_item(raw_conditions: Array, allowed_tracks: PackedStringArray = PackedStringArray(), blocked_tracks: PackedStringArray = PackedStringArray()) -> Resource:
 	var item := LevelItemScript.new()
-	item.condiciones = raw_conditions.duplicate()
+	item.condiciones.clear()
+	for raw_condition in raw_conditions:
+		item.condiciones.append(int(raw_condition))
 	item.allowed_track_keys = allowed_tracks
 	item.blocked_track_keys = blocked_tracks
 	return item
