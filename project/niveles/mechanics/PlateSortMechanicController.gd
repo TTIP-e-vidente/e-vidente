@@ -65,8 +65,8 @@ func _resolve_payload(run_data: Dictionary) -> Dictionary:
 
 
 func _spawn_random_items() -> void:
-	var lista_negativos: Array = _manager.level_resource.itemsNegativos.duplicate()
-	var lista_positivos: Array = _manager.level_resource.itemsPositivos.duplicate()
+	var lista_negativos: Array = _manager.level_resource.get_negative_items(_manager.current_track_key)
+	var lista_positivos: Array = _manager.level_resource.get_positive_items(_manager.current_track_key)
 	lista_negativos.shuffle()
 	lista_positivos.shuffle()
 	var payload: Dictionary = _manager.level_resource.mechanic_payload if _manager.level_resource.mechanic_payload is Dictionary else {}

@@ -1,8 +1,7 @@
 extends Node
 class_name ManagerLevel
 
-const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
-const PlateSortMechanicControllerScript := preload("res://niveles/mechanics/PlateSortMechanicController.gd")
+const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 
 @export var level_resource : LevelResource
 
@@ -30,6 +29,8 @@ func setup(nivel):
 	current_track_key = ""
 	if nivel != null and nivel.has_method("_get_resume_track_key"):
 		current_track_key = str(nivel._get_resume_track_key()).strip_edges()
+	if level_resource != null:
+		level_resource.clear_track_pool_cache()
 	var saved_level_state := Global.get_partial_level_state(current_track_key, Global.current_level)
 	current_run_index = _resolve_saved_run_index(saved_level_state)
 	_load_current_run(saved_level_state)
@@ -120,16 +121,11 @@ func _resolve_saved_run_index(saved_level_state: Dictionary) -> int:
 
 
 func _resolve_run_mechanic_type(run_data: Dictionary) -> String:
-	var mechanic_type: String = str(run_data.get("mechanic_type", LevelMechanicTypes.PLATE_SORT)).strip_edges()
-	if mechanic_type.is_empty():
-		return LevelMechanicTypes.PLATE_SORT
-	return mechanic_type
+	return LevelMechanicRegistry.normalize_mechanic_type(run_data.get("mechanic_type", ""))
 
 
 func _register_mechanics() -> void:
-	_mechanic_controllers = {
-		LevelMechanicTypes.PLATE_SORT: PlateSortMechanicControllerScript.new(self)
-	}
+	_mechanic_controllers = LevelMechanicRegistry.build_controllers(self)
 
 
 func _resolve_mechanic_controller(mechanic_type: String):

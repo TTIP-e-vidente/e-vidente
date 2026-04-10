@@ -58,7 +58,7 @@ Si el import headless falla en la suite `full`, la CI limpia el estado generado 
 Cubre:
 
 - import headless del proyecto
-- integracion entre catalogo, libro y nivel jugable de keto
+- integracion entre catalogo, libros y niveles jugables de todos los tracks
 - smoke test de guardado local
 - validación de persistencia y perfil
 - contrato de señales de `SaveManager`
