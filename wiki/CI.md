@@ -13,7 +13,7 @@ Ambos llaman a `.github/workflows/ci-shared.yml`, que contiene la logica real de
 
 También cancela corridas viejas por rama para evitar ruido cuando entran commits nuevos.
 
-Esta separacion es intencional: cuando `dev` tiene una PR abierta a `main`, un mismo commit dispara dos eventos distintos (`push` y `pull_request`). Ahora los nombres visibles en GitHub diferencian mejor cada corrida en vez de verse duplicados opacos.
+Esta separacion es intencional: el gate principal vive en PR y los pushes comunes de ramas de trabajo ya no disparan la suite completa. Los pushes que siguen corriendo son los que afectan ramas de integracion (`main` y `dev`), ademas del nightly y de la corrida manual.
 
 ## Contrato actual
 
@@ -49,15 +49,16 @@ Cuando falla, el propio paso intenta explicar el motivo con mensajes concretos: 
 
 Este job sí bloquea. Corre dentro de `barichello/godot-ci:4.6.2` y usa la suite compartida `scripts/run-godot-validation.sh`.
 
-En `push`, `schedule` y PRs que tocan `project/` o la propia suite compartida, corre el perfil `full`.
+En `schedule`, `workflow_dispatch` y en cambios de `push` o PR que tocan `project/` o la propia suite compartida, corre el perfil `full`.
 
-En PRs que solo cambian docs, metadata o infraestructura fuera de `project/`, baja a un perfil `pr-fast` con tres pruebas smoke para no gastar minutos al pedo.
+En `push` o PRs que solo cambian docs, metadata o infraestructura fuera de `project/`, baja a un perfil `pr-fast` con tres pruebas smoke para no gastar minutos al pedo.
 
 Si el import headless falla en la suite `full`, la CI limpia el estado generado de `project/.godot` (conservando `uid_cache.bin`) y reintenta una sola vez antes de dar la corrida por rota. Eso reduce falsos negativos por cache o estado importado viejo.
 
 Cubre:
 
 - import headless del proyecto
+- integracion entre catalogo, libro y nivel jugable de keto
 - smoke test de guardado local
 - validación de persistencia y perfil
 - contrato de señales de `SaveManager`
@@ -65,6 +66,7 @@ Cubre:
 - overlay de Archivero
 - flujo de Intro para perfil / continuidad
 - quick save en niveles
+- suficiencia real de pools de items por categoria para cada corrida del catalogo
 
 La idea es simple: si falla acá, hay una rotura real en código, escenas o tests del proyecto.
 

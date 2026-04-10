@@ -311,9 +311,9 @@ jobs:
           restore-keys: |
             godot-4.6.2-
 
-      - name: "Validation (PR): Decide validation profile"
-        if: inputs.trigger_kind == 'pull_request'
-        id: pr_validation_profile
+      - name: "Validation (diff-aware): Decide validation profile"
+        if: inputs.trigger_kind == 'pull_request' || inputs.trigger_kind == 'push'
+        id: validation_profile
         shell: bash
         env:
           EVENT_NAME: ${{ inputs.trigger_kind }}
@@ -325,8 +325,8 @@ jobs:
           set -euo pipefail
           sh scripts/ci/detect-validation-profile.sh
 
-      - name: "Validation (PR fast): Shared smoke suite for non-project changes"
-        if: inputs.trigger_kind == 'pull_request' && steps.pr_validation_profile.outputs.profile == 'pr-fast'
+      - name: "Validation (fast): Shared smoke suite for diff-light changes"
+        if: (inputs.trigger_kind == 'pull_request' || inputs.trigger_kind == 'push') && steps.validation_profile.outputs.profile == 'pr-fast'
         shell: bash
         env:
           EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs
@@ -335,7 +335,7 @@ jobs:
           sh scripts/run-godot-validation.sh --run pr-fast godot
 
       - name: "Validation (full): Shared Godot suite"
-        if: inputs.trigger_kind != 'pull_request' || steps.pr_validation_profile.outputs.profile == 'full'
+        if: inputs.trigger_kind == 'schedule' || inputs.trigger_kind == 'workflow_dispatch' || steps.validation_profile.outputs.profile == 'full' || steps.validation_profile.outputs.profile == ''
         shell: bash
         env:
           EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs

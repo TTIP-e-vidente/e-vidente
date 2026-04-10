@@ -4,7 +4,8 @@ run-name: "${{ github.event_name == 'push' && format('Commit {0}', github.ref_na
 on:
   push:
     branches:
-      - '**'
+      - main
+      - dev
   schedule:
     - cron: '0 5 * * *'
   workflow_dispatch:
