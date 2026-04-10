@@ -62,6 +62,7 @@ $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 $steps = @(
     @{ Label = 'Import headless'; Hint = 'Revisar errores de parseo, rutas res:// o autoloads.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') },
     @{ Label = 'Content catalog validation test'; Hint = 'Revisar integridad del catalogo de tracks, capitulos, corridas y recursos referenciados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/content_catalog_validation_test.gd') },
+    @{ Label = 'Keto book navigation test'; Hint = 'Revisar la integracion entre catalogo, libro y escena jugable de keto.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/keto_book_navigation_test.gd') },
     @{ Label = 'Save manager smoke test'; Hint = 'Revisar persistencia minima y carga inicial de SaveManager.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_smoke_test.gd') },
     @{ Label = 'Save manager validation test'; Hint = 'Revisar perfil local, validacion de datos y escritura/lectura de SaveManager.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_validation_test.gd') },
     @{ Label = 'Save manager signal contract test'; Hint = 'Revisar nombres de señales, payloads y puntos de emision.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_signal_contract_test.gd') },
