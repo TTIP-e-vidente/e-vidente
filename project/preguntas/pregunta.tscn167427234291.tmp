@@ -184,5 +184,4 @@ icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
 
-[connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atrás_pressed"]
 [connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]
