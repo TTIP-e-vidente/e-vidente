@@ -21,7 +21,8 @@ const ArchiveroUiHelperScript := preload("res://interface/helpers/ArchiveroUiHel
 @onready var age_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/AgeBadge/MarginContainer/AgeLabel
 @onready var progress_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel/MarginContainer/ProgressLabel
 @onready var save_status_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel
-@onready var resume_hint_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeHintLabel
+@onready var resume_hint_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel
+@onready var resume_now_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeNowButton
 @onready var history_text: RichTextLabel = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HistoryBody/MarginContainer/HistoryText
 
 var start_position
@@ -60,7 +61,10 @@ func _refresh_dashboard() -> void:
 	age_label.text = "Edad: %s" % _ui_helper.format_optional_number(int(profile.get("age", 0)))
 	progress_label.text = Global.format_progress_summary_text(summary)
 	save_status_label.text = _ui_helper.format_save_status(save_status)
-	resume_hint_label.text = _ui_helper.format_resume_hint_label(SaveManager.can_resume_game(), SaveManager.get_resume_hint())
+	var can_resume := SaveManager.can_resume_game()
+	resume_hint_label.text = _ui_helper.format_resume_hint_label(can_resume, SaveManager.get_resume_hint())
+	resume_now_button.visible = can_resume
+	resume_now_button.disabled = not can_resume
 	_update_toggle_button_state(save_status)
 
 	var avatar_texture := SaveManager.get_current_user_avatar_texture()
@@ -138,6 +142,14 @@ func _on_atrás_pressed():
 
 func _on_guardar_pressed() -> void:
 	SaveManager.record_manual_save()
+
+
+func _on_resume_now_button_pressed() -> void:
+	if not SaveManager.can_resume_game():
+		return
+	_set_profile_overlay_visible(false)
+	var resume_state: Dictionary = SaveManager.load_progress_and_get_resume_state(false)
+	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
 
 func _on_editar_perfil_pressed() -> void:
 	SaveManager.save_current_user_progress()

@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
 [ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="3_1lcvv"]
 [ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="4_ekkjv"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0m5ih"]
+[ext_resource type="Texture2D" uid="uid://d2dmdursy2ltm" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0m5ih"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_qkth7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="7_a14q0"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="8_jarw3"]

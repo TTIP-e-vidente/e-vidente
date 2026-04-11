@@ -17,14 +17,8 @@ static func build_track_chapter_definitions() -> Dictionary:
 
 static func _build_celiaquia_definitions() -> Dictionary:
 	return {
-		1: {"runs": [
-			_build_plate_sort_run(1, 1, "almuerzo", "prepara_celiaquia", "celiaquia_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_build_plate_sort_run(1, 1, "desayuno", "prepara_celiaquia", "celiaquia_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_build_plate_sort_run(2, 3, "desayuno", "prepara_celiaquia", "celiaquia_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_build_plate_sort_run(1, 2, "bebida", "prepara_celiaquia", "celiaquia_7", GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
+		1: {"runs": [_build_plate_sort_run(1, 1, "almuerzo", "prepara_celiaquia", "celiaquia_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		2: {"runs": [_build_plate_sort_run(2, 3, "desayuno", "prepara_celiaquia", "celiaquia_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		3: {"runs": [_build_plate_sort_run(2, 3, "cena", "prepara_celiaquia", "celiaquia_6", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
 		4: {"runs": [_build_plate_sort_run(3, 3, "desayuno", "prepara_celiaquia", "celiaquia_8", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_celiaquia", "celiaquia_5", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
@@ -34,14 +28,8 @@ static func _build_celiaquia_definitions() -> Dictionary:
 
 static func _build_veganismo_definitions() -> Dictionary:
 	return {
-		1: {"runs": [
-			_build_plate_sort_run(1, 2, "almuerzo", "prepara_vegane", "vegan_vegetariane_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_build_plate_sort_run(1, 1, "desayuno", "prepara_vegane", "vegan_vegetariane_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_build_plate_sort_run(2, 2, "desayuno", "prepara_vegane", "vegan_vegetariane_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_build_plate_sort_run(1, 2, "bebida", "prepara_vegane", "vegan_vegetariane_6", GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
+		1: {"runs": [_build_plate_sort_run(1, 2, "almuerzo", "prepara_vegane", "vegan_vegetariane_1", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		2: {"runs": [_build_plate_sort_run(2, 2, "desayuno", "prepara_vegane", "vegan_vegetariane_2", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		3: {"runs": [_build_plate_sort_run(2, 3, "cena", "prepara_vegane", "vegan_vegetariane_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
 		4: {"runs": [_build_plate_sort_run(2, 4, "desayuno", "prepara_vegane", "vegan_vegetariane_4", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_vegane", "vegan_vegetariane_5", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
@@ -51,14 +39,8 @@ static func _build_veganismo_definitions() -> Dictionary:
 
 static func _build_veganismo_celiaquia_definitions() -> Dictionary:
 	return {
-		1: {"runs": [
-			_build_plate_sort_run(1, 1, "almuerzo", "prepara_vegan_gf", "celiaquia_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA),
-			_build_plate_sort_run(1, 1, "desayuno", "prepara_vegan_gf", "vegan_vegetariane_7", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)
-		]},
-		2: {"runs": [
-			_build_plate_sort_run(1, 2, "desayuno", "prepara_vegan_gf", "vegan_vegetariane_7", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA),
-			_build_plate_sort_run(1, 1, "bebida", "prepara_vegan_gf", "celiaquia_7", GameTrackCatalog.CATEGORY_BEBIDA)
-		]},
+		1: {"runs": [_build_plate_sort_run(1, 1, "almuerzo", "prepara_vegan_gf", "celiaquia_3", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
+		2: {"runs": [_build_plate_sort_run(1, 2, "desayuno", "prepara_vegan_gf", "vegan_vegetariane_7", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		3: {"runs": [_build_plate_sort_run(2, 4, "cena", "prepara_vegan_gf", "celiaquia_4", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},
 		4: {"runs": [_build_plate_sort_run(4, 2, "desayuno", "prepara_vegan_gf", "vegan_vegetariane_8", GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA)]},
 		5: {"runs": [_build_plate_sort_run(4, 2, "almuerzo", "prepara_vegan_gf", "celiaquia_9", GameTrackCatalog.CATEGORY_ALMUERZO_CENA)]},

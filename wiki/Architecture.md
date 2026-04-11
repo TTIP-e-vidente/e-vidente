@@ -18,7 +18,8 @@ project/
 ├── items/              # Recursos de alimentos
 │  └── *.tres
 │
-├── niveles/            # Datos y escenas de niveles
+├── niveles/            # Catálogo, escenas y mecánicas de niveles
+├── preguntas/          # Modo quiz y recursos de preguntas
 ├── resources/          # Configuración general
 ├── assets-sistema/     # Sprites, sonido y material visual
 ├── project.godot       # Configuración del proyecto
@@ -31,7 +32,7 @@ Cada alimento está definido como un `.tres`. Ahí vive la verdad del dato: si c
 
 ## Escena principal
 
-`evidente.tscn` funciona como hub del juego. Desde ahí se cargan recursos, se coordinan transiciones entre vistas y se sostiene parte del estado general del recorrido.
+`evidente.tscn` es la escena de arranque configurada en `project.godot`. Funciona como portada y deriva a `intro.tscn`, que a su vez abre `selector.tscn` antes de entrar al flujo de recetas o preguntas.
 
 ## Flujo de datos
 
@@ -62,20 +63,33 @@ Feedback visual y sonoro
 ### Sistema de niveles
 
 - Cada nivel define condiciones alimentarias, items disponibles y contexto del reto.
-- El objetivo es construir el plato correcto según esas restricciones.
+- `GameTrackCatalog` centraliza los cuatro recorridos jugables: celiaquia, veganismo, veganismo + celiaquia y cetogenica.
+- La mecánica principal integrada hoy sigue siendo armar el plato correcto según esas restricciones.
 
 ### Sistema de interfaz
 
-- `libro*.tscn` concentra la parte más informativa.
+- `evidente.tscn`, `intro.tscn`, `selector.tscn`, `archivero.tscn` y `libro*.tscn` concentran la navegación principal.
 - Las vistas de recetas resuelven el drag and drop y el feedback de juego.
+- `selector.tscn` separa el flujo de recetas del modo preguntas.
+- `Archivero` concentra el resumen de guardado y el acceso visible al perfil local.
 - `opciones.tscn` reúne ajustes y pantallas secundarias.
+
+### Sistema de preguntas
+
+- `preguntas/` concentra un modo de quiz separado del loop principal de recetas.
+- El contenido se define con recursos `Preguntas` agrupados en `ThemePreg`.
+- La estructura ya contempla variantes de texto, imagen, audio y video para cada pregunta.
+- `selector.tscn` puede abrir `pregunta.tscn` como flujo aparte.
 
 ### Sistema de persistencia local
 
 - `SaveManager` funciona como autoload.
-- Guarda perfil local, historial, metadata y varias partidas por perfil.
+- Guarda perfil local, historial, metadata y una partida retomable en el flujo visible.
 - `Global` exporta e importa progreso para separar runtime y almacenamiento.
-- `intro.tscn` y `archivero.tscn` son las dos vistas principales de ese flujo.
+- `selector.tscn` y `archivero.tscn` son los puntos visibles principales del flujo de recetas.
+- La reanudacion claramente expuesta en UI hoy vive en el overlay de `Archivero`.
+
+Internamente el save mantiene una sesion activa y respaldo en disco, pero la documentacion funcional del juego asume un unico flujo de Guardar y Retomar.
 
 Más detalle en [Persistencia Local](Persistencia-Local).
 

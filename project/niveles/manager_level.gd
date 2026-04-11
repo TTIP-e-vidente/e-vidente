@@ -3,15 +3,20 @@ class_name ManagerLevel
 
 const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 
-@export var level_resource : LevelResource
+@export var level_resource: LevelResource
 
 @onready var plato: Plato = %Plato
 
-var posicion:Vector2
-var lista_items = []
-@onready var condition: Sprite2D = $"../Globo texto/Condition"
-@onready var meal: Sprite2D = $"../Globo texto/Meal"
-@onready var ensenanza: Sprite2D = $"../Ensenanza"
+var item_spawn_position: Vector2
+var spawned_items: Array = []
+var lista_items: Array:
+	get:
+		return spawned_items
+	set(value):
+		spawned_items = value
+@onready var condition_sprite: Sprite2D = $"../Globo texto/Condition"
+@onready var meal_sprite: Sprite2D = $"../Globo texto/Meal"
+@onready var teaching_sprite: Sprite2D = $"../Ensenanza"
 var current_track_key := ""
 var current_run_index := 1
 var current_run_data: Dictionary = {}
@@ -23,12 +28,13 @@ var _active_mechanic_controller = null
 func _ready() -> void:
 	_register_mechanics()
 
-func setup(nivel):
+
+func setup(level_scene: Node) -> void:
 	if not _ensure_level_references():
 		return
 	current_track_key = ""
-	if nivel != null and nivel.has_method("_get_resume_track_key"):
-		current_track_key = str(nivel._get_resume_track_key()).strip_edges()
+	if level_scene != null and level_scene.has_method("_get_resume_track_key"):
+		current_track_key = str(level_scene._get_resume_track_key()).strip_edges()
 	if level_resource != null:
 		level_resource.clear_track_pool_cache()
 	var saved_level_state := Global.get_partial_level_state(current_track_key, Global.current_level)
@@ -50,7 +56,7 @@ func get_current_run_index() -> int:
 
 func get_total_runs() -> int:
 	return max(1, Global.get_chapter_run_count(current_track_key, Global.current_level))
-	
+
 
 func build_partial_save_state() -> Dictionary:
 	if _active_mechanic_controller == null:
@@ -84,14 +90,15 @@ func get_positive_items_in_plate_count() -> int:
 
 
 func _layout_items() -> void:
-	if (level_resource.cantidadNegativos + level_resource.cantidadPositivos) < 5 :
-		posicion = Vector2(420,680) 
+	if (level_resource.cantidadNegativos + level_resource.cantidadPositivos) < 5:
+		item_spawn_position = Vector2(420, 680)
 	else:
-		posicion = Vector2(230,680)
-	for i in lista_items:
-		i.set_home_position(posicion)
-		posicion.x += 120
-	
+		item_spawn_position = Vector2(230, 680)
+	for item in spawned_items:
+		item.set_home_position(item_spawn_position)
+		item_spawn_position.x += 120
+
+
 func _load_current_run(saved_level_state: Dictionary) -> void:
 	_clear_current_mechanic_state()
 	current_run_data = Global.get_chapter_run_definition(current_track_key, Global.current_level, current_run_index)
@@ -150,14 +157,15 @@ func _instantiate_level_item(level_item: LevelItem, instance_id: String, is_posi
 		return null
 	new_item.setup(level_item, plato, is_positive, instance_id)
 	add_child(new_item)
-	lista_items.append(new_item)
+	spawned_items.append(new_item)
 	return new_item
 
+
 func _clear_spawned_items() -> void:
-	for item in lista_items:
+	for item in spawned_items:
 		if is_instance_valid(item):
 			item.queue_free()
-	lista_items = []
+	spawned_items = []
 	plato.elementos.clear()
 	plato.cantAlimentosPos.clear()
 	plato.cantAlimentosNeg.clear()
@@ -170,13 +178,13 @@ func _ensure_level_references() -> bool:
 		return false
 	if not is_instance_valid(plato):
 		plato = level_root.get_node_or_null("Plato") as Plato
-	if not is_instance_valid(meal):
-		meal = level_root.get_node_or_null("Globo texto/Meal") as Sprite2D
-	if not is_instance_valid(condition):
-		condition = level_root.get_node_or_null("Globo texto/Condition") as Sprite2D
-	if not is_instance_valid(ensenanza):
-		ensenanza = level_root.get_node_or_null("Ensenanza") as Sprite2D
-	if not is_instance_valid(plato) or not is_instance_valid(meal) or not is_instance_valid(condition) or not is_instance_valid(ensenanza):
+	if not is_instance_valid(meal_sprite):
+		meal_sprite = level_root.get_node_or_null("Globo texto/Meal") as Sprite2D
+	if not is_instance_valid(condition_sprite):
+		condition_sprite = level_root.get_node_or_null("Globo texto/Condition") as Sprite2D
+	if not is_instance_valid(teaching_sprite):
+		teaching_sprite = level_root.get_node_or_null("Ensenanza") as Sprite2D
+	if not is_instance_valid(plato) or not is_instance_valid(meal_sprite) or not is_instance_valid(condition_sprite) or not is_instance_valid(teaching_sprite):
 		push_error("ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual.")
 		return false
 	return true

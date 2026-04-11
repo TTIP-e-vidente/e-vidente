@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://btw41ex60ytny"]
 
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
+[ext_resource type="Texture2D" uid="uid://d2dmdursy2ltm" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
 [ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/preguntas_control.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
 [ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]

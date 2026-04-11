@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://cgqsye7obpa77" path="res://interface/opciones.gd" id="1_2m0nt"]
 [ext_resource type="Texture2D" uid="uid://cr1pjw52vos0x" path="res://assets-sistema/interfaz/opciones-info.png" id="2_r8s3h"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_uk3o2"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
 
 [node name="Opciones" type="Node2D" unique_id=254036246]
 script = ExtResource("1_2m0nt")

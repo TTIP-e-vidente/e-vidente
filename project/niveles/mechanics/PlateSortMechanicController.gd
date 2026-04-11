@@ -24,9 +24,9 @@ func configure_run(run_data: Dictionary, level_resource: LevelResource) -> void:
 	level_resource.comida = Global.resolve_texture(run_data.get("meal_texture_path", ""))
 	level_resource.condicion = Global.resolve_texture(run_data.get("condition_texture_path", ""))
 	level_resource.ensenanza = Global.resolve_texture(run_data.get("teaching_texture_path", ""))
-	_manager.ensenanza.texture = level_resource.ensenanza
-	_manager.meal.texture = level_resource.comida
-	_manager.condition.texture = level_resource.condicion
+	_manager.teaching_sprite.texture = level_resource.ensenanza
+	_manager.meal_sprite.texture = level_resource.comida
+	_manager.condition_sprite.texture = level_resource.condicion
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
