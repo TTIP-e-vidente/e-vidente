@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://r20wgxspx7pc"]
 
-[ext_resource type="Script" uid="uid://bsm8k2aigcwvh" path="res://niveles/intro.gd" id="1_1l6ju"]
+[ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
+[ext_resource type="Texture2D" uid="uid://d2dmdursy2ltm" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
 [ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
 [ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
 [ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
