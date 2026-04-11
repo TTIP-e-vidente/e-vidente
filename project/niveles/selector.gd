@@ -1,37 +1,17 @@
 extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const ArchiveroUiHelperScript := preload("res://interface/helpers/ArchiveroUiHelper.gd")
 
 @onready var background: AudioStreamPlayer2D = $Background
 @onready var play_backdrop: ColorRect = $PlayBackdrop
 @onready var play_panel: PanelContainer = $PlayPanel
-@onready var play_title: Label = $PlayPanel/MarginContainer/Content/Title
-@onready var play_badge: Label = $PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer/StatusBadge
-@onready var play_subtitle: Label = $PlayPanel/MarginContainer/Content/Subtitle
-@onready var resume_summary: Label = $PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer/ResumeSummary
-@onready var continue_button: Button = $PlayPanel/MarginContainer/Content/ContinueButton
-@onready var mode_button: Button = $PlayPanel/MarginContainer/Content/ModeButton
 
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const QUESTIONS_SCENE := "res://preguntas/pregunta.tscn"
 
-var _ui_helper = ArchiveroUiHelperScript.new()
-
 func _ready() -> void:
 	background.play()
-	_refresh_resume_overlay()
-
-
-func _refresh_resume_overlay() -> void:
-	var can_resume := SaveManager.can_resume_game()
-	_set_resume_overlay_visible(can_resume)
-	continue_button.disabled = not can_resume
-	if not can_resume:
-		resume_summary.text = "Todavia no hay un punto guardado"
-		return
-
-	resume_summary.text = _ui_helper.format_resume_hint_label(true, SaveManager.get_resume_hint())
+	_set_resume_overlay_visible(false)
 
 
 func _set_resume_overlay_visible(overlay_visible: bool) -> void:

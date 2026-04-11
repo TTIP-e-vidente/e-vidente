@@ -54,21 +54,18 @@ func _run() -> void:
 		if current_scene != null:
 			_assert(current_scene.scene_file_path == SELECTOR_SCENE, "Jugar deberia llevar al selector antes de retomar o cambiar de modo")
 			var selector_play_panel := current_scene.get_node_or_null("PlayPanel") as PanelContainer
-			var continue_button := current_scene.get_node_or_null("PlayPanel/MarginContainer/Content/ContinueButton") as Button
-			var mode_button := current_scene.get_node_or_null("PlayPanel/MarginContainer/Content/ModeButton") as Button
-			_assert(selector_play_panel != null, "El selector deberia exponer el panel de reanudacion cuando existe un save")
-			_assert(continue_button != null, "El selector deberia exponer un boton para continuar la partida guardada")
-			_assert(mode_button != null, "El selector deberia dejar elegir otro modo aunque exista un save")
+			var questions_button := current_scene.get_node_or_null("MenuBar/Preguntas") as Button
+			_assert(selector_play_panel != null, "El selector deberia seguir exponiendo el panel auxiliar aunque no lo abra automaticamente")
+			_assert(questions_button != null, "El selector deberia permitir elegir el modo preguntas aunque exista un save")
 			if selector_play_panel != null:
-				_assert(selector_play_panel.visible, "El selector deberia mostrar el panel de reanudacion al entrar con un save")
-			if continue_button != null:
-				continue_button.emit_signal("pressed")
+				_assert(not selector_play_panel.visible, "El selector no deberia mostrar el panel de reanudacion al entrar con un save")
+			if questions_button != null:
+				questions_button.emit_signal("pressed")
 				await process_frame
 				await process_frame
-				_assert(Global.current_level == 3, "Continuar desde el selector deberia restaurar el capitulo guardado")
-				_assert(current_scene != null, "Continuar desde el selector deberia abrir una escena jugable")
+				_assert(current_scene != null, "Elegir preguntas con un save existente deberia seguir abriendo la escena correspondiente")
 				if current_scene != null:
-					_assert(current_scene.scene_file_path == LEVEL_SCENE, "Continuar desde el selector deberia abrir el nivel guardado")
+					_assert(current_scene.scene_file_path == QUESTIONS_SCENE, "Elegir preguntas con un save existente deberia abrir la escena de preguntas")
 
 		_cleanup_test_files()
 		await process_frame
