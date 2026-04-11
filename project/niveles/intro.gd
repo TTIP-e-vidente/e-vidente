@@ -1,7 +1,7 @@
 extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const SELECTOR_SCENE := "res://niveles/selector.tscn"
 
 @onready var background: AudioStreamPlayer2D = $Background
 
@@ -11,11 +11,7 @@ func _ready() -> void:
 
 
 func _on_start_pressed() -> void:
-	if not SaveManager.can_resume_game():
-		GameSceneRouter.go_to_archivero(get_tree())
-		return
-	var resume_state: Dictionary = SaveManager.load_progress_and_get_resume_state(false)
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
+	get_tree().change_scene_to_file(SELECTOR_SCENE)
 
 
 func _on_opciones_pressed() -> void:

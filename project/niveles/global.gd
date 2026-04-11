@@ -107,12 +107,18 @@ func is_level_unlocked(track_key: String, level_number: int) -> bool:
 func format_progress_summary_text(summary: Dictionary = {}) -> String:
 	var resolved_summary := summary if not summary.is_empty() else get_progress_summary()
 	var lines: Array[String] = []
-	lines.append("%d de %d capitulos completos" % [int(resolved_summary.get("total", 0)), int(resolved_summary.get("max_total", get_total_level_count()))])
 	for track_definition in get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
 			continue
-		lines.append("%s %d/%d" % [str(track_definition.get("summary_label", track_definition.get("label", "Tu progreso"))), int(resolved_summary.get(track_key, 0)), get_track_level_count(track_key)])
+		var level_count: int = get_track_level_count(track_key)
+		var completed_levels: int = int(resolved_summary.get(track_key, 0))
+		var display_progress: int = _resolve_track_display_progress(track_key, level_count, completed_levels)
+		lines.append("%s %d/%d" % [
+			str(track_definition.get("summary_label", track_definition.get("label", "Tu progreso"))),
+			display_progress,
+			level_count
+		])
 	return "\n".join(lines)
 
 func item_categoria(items, cate):
@@ -154,3 +160,10 @@ func _is_level_completed(track_key: String, level_number: int) -> bool:
 	if not raw_level_progress is Dictionary:
 		return false
 	return bool((raw_level_progress as Dictionary).get(BOOK_LEVEL_COMPLETED_KEY, false))
+
+func _resolve_track_display_progress(track_key: String, level_count: int, completed_levels: int) -> int:
+	if level_count <= 0:
+		return 0
+	if completed_levels >= level_count:
+		return level_count
+	return clampi(completed_levels + 1, 1, level_count)

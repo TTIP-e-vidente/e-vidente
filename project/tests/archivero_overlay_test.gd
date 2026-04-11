@@ -28,7 +28,9 @@ func _run() -> void:
 	var profile_result: Dictionary = SaveManager.update_local_profile(TEST_USERNAME, TEST_AGE, TEST_EMAIL, "")
 	_assert(bool(profile_result.get("ok", false)), "No se pudo preparar el perfil local para el test del overlay")
 	Global.mark_level_completed("celiaquia", 1)
-	SaveManager.set_resume_to_level("celiaquia", 1)
+	Global.mark_level_completed("celiaquia", 2)
+	Global.mark_level_completed("veganismo", 1)
+	SaveManager.set_resume_to_level("celiaquia", 3)
 	SaveManager.record_manual_save()
 
 	var archivero_scene: PackedScene = load("res://interface/archivero.tscn") as PackedScene
@@ -47,6 +49,9 @@ func _run() -> void:
 		var reset_progress_dialog: ConfirmationDialog = archivero_instance.get_node("ResetProgressDialog")
 		var history_panel: PanelContainer = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/HistoryPanel")
 		var username_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel")
+		var progress_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel/MarginContainer/ProgressLabel")
+		var resume_hint_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel")
+		var resume_now_button: Button = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeNowButton")
 		var save_status_label: Label = archivero_instance.get_node("ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel")
 
 		_assert(archivero_container != null, "Archivero deberia exponer el contenedor de modos")
@@ -58,6 +63,9 @@ func _run() -> void:
 		_assert(reset_progress_dialog != null, "Archivero deberia exponer un dialogo de confirmacion para reiniciar el progreso")
 		_assert(history_panel != null, "Archivero deberia exponer el panel de historial")
 		_assert(username_label != null, "Archivero deberia exponer el label de nombre del perfil")
+		_assert(progress_label != null, "Archivero deberia exponer el resumen textual del progreso")
+		_assert(resume_hint_label != null, "Archivero deberia exponer el resumen de reanudacion")
+		_assert(resume_now_button != null, "Archivero deberia exponer un boton para retomar la partida desde el perfil")
 		_assert(save_status_label != null, "Archivero deberia exponer el label del estado de guardado")
 		_assert(archivero_container.get_child_count() == Global.get_track_definitions().size(), "Archivero deberia construir una tarjeta por cada track definido en el catalogo")
 
@@ -73,6 +81,10 @@ func _run() -> void:
 		_assert(not profile_toggle_button.visible, "El boton fijo deberia ocultarse cuando el overlay esta abierto")
 		_assert(close_profile_button.visible, "El boton de cierre deberia verse cuando el overlay esta abierto")
 		_assert(username_label.text.contains(TEST_USERNAME), "El overlay abierto deberia mostrar el nombre del perfil local preparado")
+		_assert(progress_label.text.contains("Celiaquia 3/6"), "El resumen deberia mostrar el siguiente capitulo disponible para celiaquia")
+		_assert(progress_label.text.contains("Veganismo 2/6"), "El resumen deberia mostrar el siguiente capitulo disponible para veganismo")
+		_assert(resume_hint_label.text.contains("Retoma en Celiaquia capitulo 3"), "El perfil deberia resumir el punto exacto de reanudacion")
+		_assert(resume_now_button.visible, "El boton de retomar deberia mostrarse cuando hay una partida disponible")
 		history_toggle_button.emit_signal("pressed")
 		await process_frame
 		_assert(history_panel.visible, "El historial deberia abrirse solo al tocar el boton correspondiente")

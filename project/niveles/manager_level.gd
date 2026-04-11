@@ -9,6 +9,11 @@ const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicReg
 
 var item_spawn_position: Vector2
 var spawned_items: Array = []
+var lista_items: Array:
+	get:
+		return spawned_items
+	set(value):
+		spawned_items = value
 @onready var condition_sprite: Sprite2D = $"../Globo texto/Condition"
 @onready var meal_sprite: Sprite2D = $"../Globo texto/Meal"
 @onready var teaching_sprite: Sprite2D = $"../Ensenanza"

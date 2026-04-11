@@ -1,5 +1,9 @@
 extends SceneTree
 
+const SELECTOR_SCENE := "res://niveles/selector.tscn"
+const QUESTIONS_SCENE := "res://preguntas/pregunta.tscn"
+const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
+
 var SaveManager
 var Global
 var failed := false
@@ -46,10 +50,25 @@ func _run() -> void:
 		play_button.emit_signal("pressed")
 		await process_frame
 		await process_frame
-		_assert(Global.current_level == 3, "Jugar deberia restaurar el capitulo guardado para retomar")
-		_assert(current_scene != null, "Jugar deberia abrir una escena jugable cuando existe un save")
+		_assert(current_scene != null, "Jugar deberia abrir el selector de modos cuando existe un save")
 		if current_scene != null:
-			_assert(current_scene.scene_file_path == "res://niveles/nivel_1/Level.tscn", "Jugar deberia abrir el nivel guardado en vez de mostrar un modal")
+			_assert(current_scene.scene_file_path == SELECTOR_SCENE, "Jugar deberia llevar al selector antes de retomar o cambiar de modo")
+			var selector_play_panel := current_scene.get_node_or_null("PlayPanel") as PanelContainer
+			var continue_button := current_scene.get_node_or_null("PlayPanel/MarginContainer/Content/ContinueButton") as Button
+			var mode_button := current_scene.get_node_or_null("PlayPanel/MarginContainer/Content/ModeButton") as Button
+			_assert(selector_play_panel != null, "El selector deberia exponer el panel de reanudacion cuando existe un save")
+			_assert(continue_button != null, "El selector deberia exponer un boton para continuar la partida guardada")
+			_assert(mode_button != null, "El selector deberia dejar elegir otro modo aunque exista un save")
+			if selector_play_panel != null:
+				_assert(selector_play_panel.visible, "El selector deberia mostrar el panel de reanudacion al entrar con un save")
+			if continue_button != null:
+				continue_button.emit_signal("pressed")
+				await process_frame
+				await process_frame
+				_assert(Global.current_level == 3, "Continuar desde el selector deberia restaurar el capitulo guardado")
+				_assert(current_scene != null, "Continuar desde el selector deberia abrir una escena jugable")
+				if current_scene != null:
+					_assert(current_scene.scene_file_path == LEVEL_SCENE, "Continuar desde el selector deberia abrir el nivel guardado")
 
 		_cleanup_test_files()
 		await process_frame
@@ -71,8 +90,24 @@ func _run() -> void:
 		await process_frame
 		_assert(current_scene != null, "Sin partida guardada, Jugar deberia abrir el selector de modos")
 		if current_scene != null:
-			_assert(current_scene.scene_file_path == "res://interface/archivero.tscn", "Sin persistencia previa, Jugar deberia llevar directo al Archivero")
+			_assert(current_scene.scene_file_path == SELECTOR_SCENE, "Sin persistencia previa, Jugar deberia llevar al selector")
+			var selector_play_panel := current_scene.get_node_or_null("PlayPanel") as PanelContainer
+			var questions_button := current_scene.get_node_or_null("MenuBar/Preguntas") as Button
+			_assert(selector_play_panel != null, "El selector deberia seguir exponiendo el panel auxiliar")
+			_assert(questions_button != null, "El selector deberia permitir elegir el modo preguntas")
+			if selector_play_panel != null:
+				_assert(not selector_play_panel.visible, "Sin save previo, el selector no deberia tapar la eleccion de modo")
+			if questions_button != null:
+				questions_button.emit_signal("pressed")
+				await process_frame
+				await process_frame
+				_assert(current_scene != null, "Elegir preguntas deberia abrir la escena correspondiente")
+				if current_scene != null:
+					_assert(current_scene.scene_file_path == QUESTIONS_SCENE, "Elegir preguntas deberia abrir la escena de preguntas")
 
+	if current_scene != null:
+		current_scene.queue_free()
+		await process_frame
 	_cleanup_test_files()
 	await process_frame
 	quit(1 if failed else 0)
