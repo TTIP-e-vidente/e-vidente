@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://di3fv2eh00pko"]
 
 [ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
+[ext_resource type="Texture2D" uid="uid://d2dmdursy2ltm" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
 [ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_6uvpc"]
 [ext_resource type="Texture2D" uid="uid://dat5d3t765v4l" path="res://assets-sistema/interfaz/selector-preguntas.png" id="4_g0ff0"]
 [ext_resource type="Texture2D" uid="uid://cd4i84fdabf0i" path="res://assets-sistema/interfaz/selector-recetas-png.png" id="5_fsij2"]
 [ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="6_lo2a7"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
@@ -278,4 +278,4 @@ flat = true
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/ModeButton" to="." method="_on_mode_pressed"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]

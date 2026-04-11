@@ -72,8 +72,8 @@ func format_optional_number(value: int) -> String:
 
 func format_resume_hint_label(can_resume: bool, resume_hint: String) -> String:
 	if can_resume:
-		return "Retoma en %s\nSegui desde ese punto cuando quieras." % resume_hint
-	return "Todavia no hay un punto guardado\nCuando avances en una partida aparecera aca"
+		return "Retoma en %s" % resume_hint
+	return "Todavia no hay un punto guardado"
 
 
 func build_toggle_tooltip(save_status: Dictionary) -> String:

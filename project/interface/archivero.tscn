@@ -492,7 +492,7 @@ text = "Ultimo guardado: sin datos"
 autowrap_mode = 3
 
 [node name="ResumeCard" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 126)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_status_card")
@@ -504,12 +504,28 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 12
 
-[node name="ResumeHintLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer"]
+[node name="ResumeContent" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ResumeHintLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
 theme_override_font_sizes/font_size = 14
 text = "Todavia no hay un punto guardado"
 autowrap_mode = 3
+
+[node name="ResumeNowButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent"]
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(0, 38)
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_action_button")
+theme_override_styles/focus = SubResource("StyleBoxFlat_action_button")
+text = "Retomar ahora"
 
 [node name="ActionsRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
@@ -659,6 +675,7 @@ title = "Reiniciar progreso"
 [connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_exited"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow/Guardar" to="." method="_on_guardar_pressed"]
+[connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeNowButton" to="." method="_on_resume_now_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow/CerrarSesion" to="." method="_on_editar_perfil_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/HistoryToggleButton" to="." method="_on_history_toggle_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]

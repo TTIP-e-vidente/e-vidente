@@ -36,7 +36,7 @@ func _run_track_case(track_definition: Dictionary) -> void:
 	var track_key := str(track_definition.get("key", "")).strip_edges()
 	var book_scene_path := str(track_definition.get("book_scene_path", "")).strip_edges()
 	var level_scene_path := str(track_definition.get("level_scene_path", "")).strip_edges()
-	var expected_level_count := Global.get_track_level_count(track_key)
+	var expected_level_count: int = int(Global.get_track_level_count(track_key))
 	var case_label := "%s (%s)" % [track_key, book_scene_path]
 	print("TRACK BOOK TEST TRACE: start %s" % case_label)
 

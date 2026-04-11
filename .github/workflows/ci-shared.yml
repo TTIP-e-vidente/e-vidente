@@ -302,6 +302,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: "Validation: Install Linux runtime libraries"
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends libfontconfig1
+          rm -rf /var/lib/apt/lists/*
+
       - name: "Validation: Restore Godot import cache"
         continue-on-error: true
         uses: actions/cache@v4
@@ -385,6 +393,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: "Web Export: Install Linux runtime libraries"
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends libfontconfig1
+          rm -rf /var/lib/apt/lists/*
 
       - name: "Web Export: Require export preset config"
         shell: bash

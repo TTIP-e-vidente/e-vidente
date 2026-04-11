@@ -131,8 +131,8 @@ func format_resume_hint_from_state(resume_state: Dictionary, resume_context_hub:
 
 	match context:
 		resume_context_level:
-			return "%s · capitulo %d" % [track_label, level_number]
+			return "%s capitulo %d" % [track_label, level_number]
 		resume_context_book:
-			return "%s · seleccion de capitulos" % track_label
+			return "%s seleccion de capitulos" % track_label
 		_:
 			return "el selector de modos"

@@ -19,7 +19,7 @@ func _run() -> void:
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		var level_scene_path := str(track_definition.get("level_scene_path", ""))
-		var expected_level_count := GameTrackCatalog.get_track_level_count(track_key)
+		var expected_level_count: int = int(GameTrackCatalog.get_track_level_count(track_key))
 		_assert(catalog.get_track_level_count(track_key, 0) == expected_level_count, "El track %s deberia exponer la misma cantidad de capitulos que GameTrackCatalog" % track_key)
 		_assert(ResourceLoader.exists(str(track_definition.get("book_scene_path", ""))), "El track %s deberia apuntar a una escena de libro existente" % track_key)
 		_assert(ResourceLoader.exists(level_scene_path), "El track %s deberia apuntar a una escena de nivel existente" % track_key)
