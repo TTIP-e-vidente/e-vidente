@@ -1,32 +1,35 @@
 # Persistencia local
 
-La persistencia local guarda perfil, progreso y el punto de reanudacion sin depender de un backend ni de servicios externos.
+La persistencia local guarda el perfil, el progreso y el punto de reanudación sin depender de un backend ni de servicios externos.
 
 ## Qué guarda
 
 - Un perfil local por dispositivo, con nombre, edad, mail y avatar.
-- La partida local actual y su punto exacto de reanudacion.
+- La partida local actual y su punto exacto de reanudación.
 - Progreso por recorrido: celiaquia, veganismo, veganismo + celiaquia y keto.
 - Historial reciente de eventos de guardado y avance.
 - Metadata de escritura para saber cuándo se guardó y desde dónde se recuperó el save.
 
 ## Cómo se usa hoy
 
-El flujo visible trabaja con una unica partida local retomable.
+El flujo visible se apoya en una única continuidad local retomable.
 
-Desde Intro, el acceso a Jugar toma una decision directa: si hay una partida retomable, la reanuda; si no, abre Archivero. No hay selector de slots, multiples guardados expuestos en la UI ni un menu intermedio para elegir partidas.
+Hoy `Intro` no reanuda de forma directa. `Jugar` abre `selector.tscn`, que separa el modo recetas del modo preguntas. Dentro del flujo de recetas, `Archivero` muestra el perfil local, el resumen del avance, el estado del último guardado y el botón visible de retomar.
 
-Archivero muestra el perfil local, el resumen del avance y el estado del ultimo guardado. El guardado manual sigue disponible y el sistema tambien puede recuperar el save desde backup si el archivo principal queda corrupto.
+No hay selector de slots ni múltiples guardados expuestos en la UI. Internamente sí existe soporte para sesiones, pero esa complejidad no se expone como feature visible.
+
+El guardado manual sigue disponible dentro del nivel, y el sistema puede recuperar el save desde backup si el archivo principal queda corrupto.
 
 ## Piezas principales
 
-- `SaveManager` como autoload central del perfil local, la partida activa, el guardado y la recuperacion.
+- `SaveManager` como autoload central del perfil local, la partida activa, el guardado y la recuperación.
 - `auth.tscn` como editor del perfil local.
-- `intro.tscn` como punto de entrada para retomar la ultima partida o abrir Archivero cuando todavia no hay avance guardado.
-- `archivero.tscn` como resumen del perfil, el avance y el estado del guardado.
+- `intro.tscn` como menú principal visible.
+- `selector.tscn` como separación entre recetas y preguntas.
+- `archivero.tscn` como resumen del perfil, el avance, el estado del guardado y el acceso visible a retomar.
 - `Global` para exportar e importar el progreso jugable.
 
-Internamente, `SaveManager` proyecta la partida activa al runtime y en disco escribe un save principal, un archivo temporal y un backup.
+Internamente, `SaveManager` proyecta la partida activa sobre el runtime y mantiene en disco un save principal, un archivo temporal y un backup.
 
 ## Cómo se valida
 
@@ -37,7 +40,7 @@ La validación automática cubre tanto el formato del save como los flujos más 
 - validaciones de perfil, avatar y recarga desde disco
 - contrato de señales de `SaveManager`
 - migración desde saves legacy
-- flujo de Archivero, Intro y guardado rápido dentro de nivel
+- flujo de Intro, Selector, Archivero y guardado rápido dentro de nivel
 
 Todo eso corre en el job `validate` de CI. El job `build-web` depende de que esa validación termine bien.
 

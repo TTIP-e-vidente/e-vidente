@@ -32,7 +32,7 @@ Cada alimento está definido como un `.tres`. Ahí vive la verdad del dato: si c
 
 ## Escena principal
 
-`evidente.tscn` funciona como hub del juego. Desde ahí se cargan recursos, se coordinan transiciones entre vistas y se sostiene parte del estado general del recorrido.
+`evidente.tscn` es la escena de arranque configurada en `project.godot`. Funciona como portada y deriva a `intro.tscn`, que a su vez abre `selector.tscn` antes de entrar al flujo de recetas o preguntas.
 
 ## Flujo de datos
 
@@ -68,9 +68,10 @@ Feedback visual y sonoro
 
 ### Sistema de interfaz
 
-- `intro.tscn`, `archivero.tscn` y `libro*.tscn` concentran la navegación principal.
+- `evidente.tscn`, `intro.tscn`, `selector.tscn`, `archivero.tscn` y `libro*.tscn` concentran la navegación principal.
 - Las vistas de recetas resuelven el drag and drop y el feedback de juego.
-- El rediseño reciente simplificó el acceso a jugar, el resumen de guardado y la edición del perfil local.
+- `selector.tscn` separa el flujo de recetas del modo preguntas.
+- `Archivero` concentra el resumen de guardado y el acceso visible al perfil local.
 - `opciones.tscn` reúne ajustes y pantallas secundarias.
 
 ### Sistema de preguntas
@@ -85,7 +86,8 @@ Feedback visual y sonoro
 - `SaveManager` funciona como autoload.
 - Guarda perfil local, historial, metadata y una partida retomable en el flujo visible.
 - `Global` exporta e importa progreso para separar runtime y almacenamiento.
-- `intro.tscn` y `archivero.tscn` son las dos vistas principales de ese flujo.
+- `selector.tscn` y `archivero.tscn` son los puntos visibles principales del flujo de recetas.
+- La reanudacion claramente expuesta en UI hoy vive en el overlay de `Archivero`.
 
 Internamente el save mantiene una sesion activa y respaldo en disco, pero la documentacion funcional del juego asume un unico flujo de Guardar y Retomar.
 
