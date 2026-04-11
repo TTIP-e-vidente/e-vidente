@@ -36,29 +36,20 @@ func _run() -> void:
 		var exit_button: Button = intro_instance.get_node("MenuBar/Salir")
 		var save_button: Node = intro_instance.get_node_or_null("SaveButton")
 		var play_panel: PanelContainer = intro_instance.get_node_or_null("PlayPanel")
-		var continue_button: Button = intro_instance.get_node_or_null("PlayPanel/MarginContainer/Content/ContinueButton")
-		var mode_button: Button = intro_instance.get_node_or_null("PlayPanel/MarginContainer/Content/ModeButton")
 
 		_assert(play_button != null, "Intro deberia seguir exponiendo el acceso principal a jugar")
 		_assert(options_button != null, "Intro deberia seguir exponiendo el acceso a opciones")
 		_assert(exit_button != null, "Intro deberia seguir exponiendo el acceso a salir")
 		_assert(save_button == null, "Intro ya no deberia mostrar el icono de guardado en el menu principal")
-		_assert(play_panel != null, "Intro deberia exponer un panel minimo para seguir jugando")
-		_assert(continue_button != null, "Intro deberia exponer el acceso para continuar la ultima partida")
-		_assert(mode_button != null, "Intro deberia exponer una salida clara al selector de modos")
-		_assert(not play_panel.visible, "El panel minimo deberia iniciar cerrado")
+		_assert(play_panel == null, "Intro ya no deberia exponer el modal intermedio para cargar partida")
 
 		play_button.emit_signal("pressed")
 		await process_frame
-		_assert(play_panel.visible, "Jugar deberia abrir el panel minimo antes de cambiar de escena")
-		_assert(continue_button.visible, "Con una partida guardada deberia verse la opcion de continuar")
-		continue_button.emit_signal("pressed")
 		await process_frame
-		await process_frame
-		_assert(Global.current_level == 3, "Cargar partida deberia restaurar el capitulo guardado para retomar")
-		_assert(current_scene != null, "Cargar partida deberia abrir una escena jugable")
+		_assert(Global.current_level == 3, "Jugar deberia restaurar el capitulo guardado para retomar")
+		_assert(current_scene != null, "Jugar deberia abrir una escena jugable cuando existe un save")
 		if current_scene != null:
-			_assert(current_scene.scene_file_path == "res://niveles/nivel_1/Level.tscn", "Cargar partida deberia abrir el nivel guardado en vez de volver al Archivero")
+			_assert(current_scene.scene_file_path == "res://niveles/nivel_1/Level.tscn", "Jugar deberia abrir el nivel guardado en vez de mostrar un modal")
 
 		_cleanup_test_files()
 		await process_frame
@@ -73,15 +64,9 @@ func _run() -> void:
 		root.add_child(fresh_intro_instance)
 		await process_frame
 		var fresh_play_button: Button = fresh_intro_instance.get_node("MenuBar/Jugar")
-		var fresh_play_panel: PanelContainer = fresh_intro_instance.get_node("PlayPanel")
-		var fresh_continue_button: Button = fresh_intro_instance.get_node("PlayPanel/MarginContainer/Content/ContinueButton")
-		var fresh_mode_button: Button = fresh_intro_instance.get_node("PlayPanel/MarginContainer/Content/ModeButton")
+		var fresh_play_panel: PanelContainer = fresh_intro_instance.get_node_or_null("PlayPanel")
+		_assert(fresh_play_panel == null, "Sin save previo, Intro tampoco deberia reconstruir el modal de continuar")
 		fresh_play_button.emit_signal("pressed")
-		await process_frame
-		_assert(fresh_play_panel.visible, "Sin save previo, Jugar deberia abrir el panel minimo")
-		_assert(not fresh_continue_button.visible, "Sin save previo no deberia verse la opcion de continuar")
-		_assert(fresh_mode_button.text.contains("Empezar"), "Sin save previo la accion secundaria deberia invitar a empezar")
-		fresh_mode_button.emit_signal("pressed")
 		await process_frame
 		await process_frame
 		_assert(current_scene != null, "Sin partida guardada, Jugar deberia abrir el selector de modos")
