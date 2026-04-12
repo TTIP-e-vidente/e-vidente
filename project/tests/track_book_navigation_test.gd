@@ -78,8 +78,8 @@ func _run_track_case(track_definition: Dictionary) -> void:
 			_assert(manager_level != null, "%s deberia exponer el ManagerLevel" % level_scene_path)
 			_assert(not expected_run.is_empty(), "%s deberia resolver la corrida inicial desde el catalogo" % case_label)
 			if manager_level != null and not expected_run.is_empty():
-				_assert(manager_level.current_track_key == track_key, "%s deberia configurar ManagerLevel con el track correcto" % case_label)
-				_assert(manager_level.current_run_data == expected_run, "%s deberia cargar la corrida inicial definida en el catalogo" % case_label)
+				_assert(manager_level.active_track_key == track_key, "%s deberia configurar ManagerLevel con el track correcto" % case_label)
+				_assert(manager_level.active_run_data == expected_run, "%s deberia cargar la corrida inicial definida en el catalogo" % case_label)
 				_assert(int(manager_level.get_total_runs()) == Global.get_chapter_run_count(track_key, 1), "%s deberia exponer la cantidad real de corridas del capitulo" % case_label)
 
 	if current_scene != null:

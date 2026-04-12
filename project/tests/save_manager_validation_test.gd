@@ -67,6 +67,13 @@ func _run() -> void:
 
 	Global.current_level = 2
 	Global.mark_level_completed("celiaquia", 2)
+	Global.set_progress_system_state(
+		"questions",
+		{
+			"best_streak": 4,
+			"exp": 120
+		}
+	)
 	SaveManager.set_resume_to_level("celiaquia", Global.current_level)
 	SaveManager.record_manual_save()
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
@@ -90,8 +97,11 @@ func _run() -> void:
 	_assert(int(saved_status.get("save_count", 0)) == 1, "El primer guardado jugable deberia crear una unica partida")
 
 	Global.reset_progress()
-	var resume_state: Dictionary = SaveManager.load_current_save_and_get_resume_state()
+	var resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "La recarga deberia restaurar progreso guardado")
+	var restored_question_progress: Dictionary = Global.get_progress_system_state("questions")
+	_assert(int(restored_question_progress.get("best_streak", 0)) == 4, "La recarga deberia restaurar estados de progreso adicionales como racha")
+	_assert(int(restored_question_progress.get("exp", 0)) == 120, "La recarga deberia restaurar estados de progreso adicionales como exp")
 	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La recarga deberia recuperar el contexto del nivel guardado")
 	_assert(int(resume_state.get("level_number", 0)) == 2, "La recarga deberia recuperar el capitulo a retomar")
 	_assert(Global.current_level == 2, "La recarga deberia restaurar el capitulo actual para retomar")
@@ -138,7 +148,8 @@ func _run() -> void:
 		SaveManager.can_resume_current_save(),
 		"La API nueva deberia indicar que el save actual es retomable"
 	)
-	var new_save_resume_state: Dictionary = SaveManager.load_current_save_and_get_resume_state()
+	_assert(Global.get_progress_system_state("questions").is_empty(), "Nueva partida deberia limpiar estados adicionales como preguntas, racha o exp")
+	var new_save_resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "La nueva partida deberia poder recargarse vacia")
 	_assert(str(new_save_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_HUB, "La nueva partida deberia reanudar desde el Archivero")
 
@@ -156,12 +167,13 @@ func _run() -> void:
 	var recovered_status: Dictionary = SaveManager.get_save_status()
 	_assert(str(recovered_status.get("state", "")) == "recovered", "La metadata runtime deberia indicar que el save fue recuperado")
 	_assert(str(recovered_status.get("recovered_from", "")) == "backup", "La metadata runtime deberia indicar la fuente de recuperacion")
-	SaveManager.load_current_save_and_get_resume_state()
+	SaveManager.reload_current_save_and_get_resume_state()
 	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "Tras recuperar desde backup deberia poder cargarse el snapshot recuperado")
 
 	var reset_result: Dictionary = SaveManager.reset_all_progress()
 	_assert(bool(reset_result.get("ok", false)), "Reiniciar el progreso local deberia persistirse correctamente")
 	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Reiniciar el progreso deberia limpiar todo el avance jugable")
+	_assert(Global.get_progress_system_state("questions").is_empty(), "Reiniciar el progreso deberia limpiar los estados adicionales")
 	_assert(not SaveManager.can_resume_current_save(), "Reiniciar el progreso no deberia dejar una partida retomable")
 	_assert(SaveManager.list_available_saves(true).is_empty(), "Reiniciar el progreso deberia borrar todos los saves retomables")
 	_assert(SaveManager.get_current_save_history().is_empty(), "Reiniciar el progreso deberia limpiar el historial local")

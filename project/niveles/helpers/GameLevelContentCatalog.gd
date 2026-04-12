@@ -1,8 +1,11 @@
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const GameTrackChapterCatalogScript := preload(
+const GameTrackChapterDefinitionsScript := preload(
 	"res://niveles/helpers/catalog/GameTrackChapterDefinitions.gd"
+)
+const GameChapterAssetCatalogScript := preload(
+	"res://niveles/helpers/catalog/GameChapterAssetCatalog.gd"
 )
 const GameContentCatalogValidatorScript := preload(
 	"res://niveles/helpers/catalog/GameContentCatalogValidator.gd"
@@ -16,29 +19,31 @@ const BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY := "teaching_texture_path"
 const BOOK_LEVEL_CATEGORY_KEY := "category"
 const BOOK_LEVEL_COMPLETED_KEY := "completed"
 
-var _texture_cache: Dictionary = {}
-var _track_chapter_catalog: Dictionary = (
-	GameTrackChapterCatalogScript.build_track_chapter_catalog()
-)
-
-var _track_books: Dictionary = _build_track_books()
+var _track_chapter_catalog: Dictionary = {}
+var _default_track_progress_templates: Dictionary = {}
 
 
+func _init() -> void:
+	_track_chapter_catalog = _build_track_chapter_catalog()
+	_default_track_progress_templates = _build_default_track_progress_templates()
 
-func item_categoria(items, categoria: String) -> Array:
-	if categoria.strip_edges().is_empty():
+
+func filter_items_by_category(items: Array, category_code: String) -> Array:
+	if category_code.strip_edges().is_empty():
 		return items.duplicate()
-	var items_categoria: Array = []
-	var normalized_category: String = GameTrackCatalog.normalize_category_code(categoria)
+	var filtered_items: Array = []
+	var normalized_category_code: String = GameTrackCatalog.normalize_category_code(
+		category_code
+	)
 	for item in items:
-		if GameTrackCatalog.categories_match(str(item.categoria), normalized_category):
-			items_categoria.append(item)
-	return items_categoria
+		if GameTrackCatalog.categories_match(str(item.categoria), normalized_category_code):
+			filtered_items.append(item)
+	return filtered_items
 
 
 func get_track_level_count(track_key: String, fallback: int = 0) -> int:
-	var chapters: Dictionary = _chapters_for_track(track_key)
-	return chapters.size() if not chapters.is_empty() else fallback
+	var track_chapter_catalog: Dictionary = _chapter_catalog_for_track(track_key)
+	return track_chapter_catalog.size() if not track_chapter_catalog.is_empty() else fallback
 
 
 func get_max_track_level_count(fallback: int = 0) -> int:
@@ -56,18 +61,33 @@ func get_total_level_count(fallback: int = 0) -> int:
 
 
 func get_chapter_definition(track_key: String, level_number: int) -> Dictionary:
-	var chapters: Dictionary = _chapters_for_track(track_key)
-	if not chapters.has(level_number) or not chapters[level_number] is Dictionary:
+	var track_chapter_catalog: Dictionary = _chapter_catalog_for_track(track_key)
+	if not track_chapter_catalog.has(level_number):
 		return {}
-	return (chapters[level_number] as Dictionary).duplicate(true)
+	var chapter_definition: Variant = track_chapter_catalog.get(level_number, {})
+	return chapter_definition.duplicate(true) if chapter_definition is Dictionary else {}
+
+
+func get_chapter_run_count(track_key: String, level_number: int) -> int:
+	return _chapter_runs_for_level(track_key, level_number).size()
+
+
+func get_chapter_run_definition(
+	track_key: String,
+	level_number: int,
+	run_index: int = 1
+) -> Dictionary:
+	var chapter_runs: Array = _chapter_runs_for_level(track_key, level_number)
+	if chapter_runs.is_empty():
+		return {}
+	var resolved_run_index := clampi(run_index, 1, chapter_runs.size()) - 1
+	var run_definition: Variant = chapter_runs[resolved_run_index]
+	return run_definition.duplicate(true) if run_definition is Dictionary else {}
 
 
 func get_track_chapter_catalog() -> Dictionary:
 	return _track_chapter_catalog.duplicate(true)
 
-
-func get_track_chapter_definitions() -> Dictionary:
-	return get_track_chapter_catalog()
 
 func get_validation_issues() -> Array[String]:
 	return GameContentCatalogValidatorScript.validate(_track_chapter_catalog)
@@ -77,75 +97,88 @@ func is_valid() -> bool:
 	return get_validation_issues().is_empty()
 
 
-func get_chapter_run_count(track_key: String, level_number: int) -> int:
-	var runs: Variant = get_chapter_definition(track_key, level_number).get("runs", [])
-	return runs.size() if runs is Array else 0
-
-
-func get_chapter_run(track_key: String, level_number: int, run_index: int = 1) -> Dictionary:
-	var chapter_definition: Dictionary = get_chapter_definition(track_key, level_number)
-	var runs: Variant = chapter_definition.get("runs", [])
-	if not runs is Array or runs.is_empty():
-		return {}
-	return (runs[clampi(run_index, 1, runs.size()) - 1] as Dictionary).duplicate(true)
 func resolve_texture(texture_ref: Variant) -> Texture2D:
-	if texture_ref is Texture2D:
-		return texture_ref
-	var texture_path: String = str(texture_ref)
-	if texture_path.is_empty():
-		return null
-	if _texture_cache.has(texture_path):
-		return _texture_cache[texture_path]
-	var texture: Texture2D = load(texture_path) as Texture2D
-	_texture_cache[texture_path] = texture
-	return texture
-func get_track_books() -> Dictionary:
-	return _track_books
+	return GameChapterAssetCatalogScript.resolve_texture(texture_ref)
 
 
-func book_for_track(track_key: String) -> Dictionary:
-	var book: Variant = _track_books.get(track_key, {})
-	return book if book is Dictionary else {}
+func build_default_track_progress_state() -> Dictionary:
+	return get_default_track_progress_templates()
 
 
-func _build_track_books() -> Dictionary:
-	var books: Dictionary = {}
+func build_default_track_progress_for_track(track_key: String) -> Dictionary:
+	return get_default_track_progress_template(track_key)
+
+
+func get_default_track_progress_templates() -> Dictionary:
+	return _default_track_progress_templates.duplicate(true)
+
+
+func get_default_track_progress_template(track_key: String) -> Dictionary:
+	var progress_template: Variant = _default_track_progress_templates.get(track_key, {})
+	return progress_template.duplicate(true) if progress_template is Dictionary else {}
+
+
+func _build_track_chapter_catalog() -> Dictionary:
+	return GameTrackChapterDefinitionsScript.build_track_chapter_catalog()
+
+
+func _build_default_track_progress_templates() -> Dictionary:
+	var default_track_progress_templates: Dictionary = {}
 	for track_key in GameTrackCatalog.get_track_keys():
-		books[track_key] = _build_track_book(track_key)
-	return books
+		default_track_progress_templates[track_key] = _build_default_track_progress_template(
+			track_key
+		)
+	return default_track_progress_templates
 
 
-func _build_track_book(track_key: String) -> Dictionary:
-	var book: Dictionary = {}
-	var chapters: Dictionary = _chapters_for_track(track_key)
-	if chapters.is_empty():
-		return book
-	for level_number in _sorted_level_numbers(chapters):
-		var first_run: Dictionary = get_chapter_run(track_key, level_number, 1)
-		book[level_number] = {
-			BOOK_LEVEL_NEGATIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_NEGATIVE_COUNT_KEY, 0)),
-			BOOK_LEVEL_POSITIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_POSITIVE_COUNT_KEY, 0)),
-			BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY: str(
-				first_run.get(BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY, "")
-			),
-			BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY: str(
-				first_run.get(BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY, "")
-			),
-			BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY: str(
-				first_run.get(BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY, "")
-			),
-			BOOK_LEVEL_CATEGORY_KEY: str(first_run.get(BOOK_LEVEL_CATEGORY_KEY, "")),
-			BOOK_LEVEL_COMPLETED_KEY: false
-		}
-	return book
-func _chapters_for_track(track_key: String) -> Dictionary:
-	var raw_chapters: Variant = _track_chapter_catalog.get(track_key, {})
-	return raw_chapters if raw_chapters is Dictionary else {}
+func _build_default_track_progress_template(track_key: String) -> Dictionary:
+	var default_track_progress_template: Dictionary = {}
+	var track_chapter_catalog: Dictionary = _chapter_catalog_for_track(track_key)
+	if track_chapter_catalog.is_empty():
+		return default_track_progress_template
+	for level_number in _sorted_level_numbers(track_chapter_catalog):
+		default_track_progress_template[level_number] = _build_level_progress_template(
+			track_key,
+			level_number
+		)
+	return default_track_progress_template
 
 
-func _sorted_level_numbers(chapters: Dictionary) -> Array[int]:
+func _build_level_progress_template(track_key: String, level_number: int) -> Dictionary:
+	var first_run: Dictionary = get_chapter_run_definition(track_key, level_number, 1)
+	return {
+		BOOK_LEVEL_NEGATIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_NEGATIVE_COUNT_KEY, 0)),
+		BOOK_LEVEL_POSITIVE_COUNT_KEY: int(first_run.get(BOOK_LEVEL_POSITIVE_COUNT_KEY, 0)),
+		BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY: str(
+			first_run.get(BOOK_LEVEL_MEAL_TEXTURE_PATH_KEY, "")
+		),
+		BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY: str(
+			first_run.get(BOOK_LEVEL_CONDITION_TEXTURE_PATH_KEY, "")
+		),
+		BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY: str(
+			first_run.get(BOOK_LEVEL_TEACHING_TEXTURE_PATH_KEY, "")
+		),
+		BOOK_LEVEL_CATEGORY_KEY: str(first_run.get(BOOK_LEVEL_CATEGORY_KEY, "")),
+		BOOK_LEVEL_COMPLETED_KEY: false
+	}
+
+
+func _chapter_catalog_for_track(track_key: String) -> Dictionary:
+	var raw_track_chapter_catalog: Variant = _track_chapter_catalog.get(track_key, {})
+	return raw_track_chapter_catalog if raw_track_chapter_catalog is Dictionary else {}
+
+
+func _chapter_runs_for_level(track_key: String, level_number: int) -> Array:
+	var raw_chapter_runs: Variant = get_chapter_definition(track_key, level_number).get(
+		"runs",
+		[]
+	)
+	return raw_chapter_runs if raw_chapter_runs is Array else []
+
+
+func _sorted_level_numbers(chapter_definitions: Dictionary) -> Array[int]:
 	var level_numbers: Array[int] = []
-	for raw_level_number in chapters.keys():
+	for raw_level_number in chapter_definitions.keys():
 		level_numbers.append(int(raw_level_number))
 	level_numbers.sort()
 	return level_numbers

@@ -45,7 +45,7 @@ func _get_track_pool(track_key: String) -> Dictionary:
 		}
 	if not _resolved_track_pools.has(clean_track_key):
 		_resolved_track_pools[clean_track_key] = (
-			GameTrackItemPoolResolver.resolve_track_pools(
+			GameTrackItemPoolResolver.build_item_pool_for_track(
 				clean_track_key,
 				itemsPositivos,
 				itemsNegativos

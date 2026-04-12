@@ -85,8 +85,8 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 		level_instance.queue_free()
 		await process_frame
 		return
-	_assert(str(manager_level.current_track_key) == track_key, "%s deberia inicializar ManagerLevel con el track correcto" % case_label)
-	_assert(not (manager_level.current_run_data as Dictionary).is_empty(), "%s deberia cargar una corrida valida al iniciar la escena" % case_label)
+	_assert(str(manager_level.active_track_key) == track_key, "%s deberia inicializar ManagerLevel con el track correcto" % case_label)
+	_assert(not (manager_level.active_run_data as Dictionary).is_empty(), "%s deberia cargar una corrida valida al iniciar la escena" % case_label)
 
 	_assert(save_feedback_backdrop.clip_contents, "%s deberia contener visualmente el texto dentro del panel" % case_label)
 	_assert(save_feedback_backdrop.is_ancestor_of(save_feedback_title), "%s deberia montar el titulo dentro de la tarjeta visual" % case_label)
@@ -95,7 +95,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 	_assert(int(manager_level.get_total_runs()) == expected_run_count, "%s deberia exponer la cantidad de corridas definida para el capitulo actual" % case_label)
 
 	var positive_item = null
-	for item in manager_level.lista_items:
+	for item in manager_level.level_items:
 		if item.esPositivo:
 			positive_item = item
 			break
@@ -129,7 +129,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 	await process_frame
 
 	Global.reset_progress()
-	var resume_state: Dictionary = SaveManager.load_current_save_and_get_resume_state()
+	var resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 	print("LEVEL QUICK SAVE TRACE: first reload %s context=%s level=%d" % [case_label, str(resume_state.get("context", "")), int(resume_state.get("level_number", 0))])
 	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "%s deberia mantener la reanudacion dentro del nivel" % case_label)
 	_assert(str(resume_state.get("track_key", "")) == track_key, "%s deberia reanudar el track correcto" % case_label)
@@ -163,7 +163,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 
 	if expected_run_count > 1:
 		Global.reset_progress()
-		var second_resume_state: Dictionary = SaveManager.load_current_save_and_get_resume_state()
+		var second_resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 		print("LEVEL QUICK SAVE TRACE: second reload %s context=%s level=%d" % [case_label, str(second_resume_state.get("context", "")), int(second_resume_state.get("level_number", 0))])
 		_assert(int(second_resume_state.get("level_number", 0)) == 2, "%s deberia seguir reanudando el mismo capitulo mientras queden corridas pendientes" % case_label)
 		var second_restored_level_instance: Node = level_scene.instantiate()

@@ -3,17 +3,28 @@ extends RefCounted
 const LevelItemScript := preload("res://resources/level_item.gd")
 
 const DEFAULT_LEVEL_COUNT := 6
+
+const TRACK_CELIAQUIA := "celiaquia"
+const TRACK_VEGANISMO := "veganismo"
+const TRACK_VEGANISMO_CELIAQUIA := "veganismo_celiaquia"
+const TRACK_CETOGENICA := "cetogenica"
+
 const CATEGORY_ALMUERZO_CENA := "ALMCENA"
 const CATEGORY_DESAYUNO_MERIENDA := "DESAMER"
 const CATEGORY_DESAYUNO_MERIENDA_LEGACY := "DESAYMER"
 const CATEGORY_BEBIDA := "BEBIDA"
 const ITEM_POOL_STRATEGY_CONDITIONS := "conditions"
 const ITEM_POOL_STRATEGY_LEGACY := "legacy"
-const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
+const TRACK_ORDER := [
+	TRACK_CELIAQUIA,
+	TRACK_VEGANISMO,
+	TRACK_VEGANISMO_CELIAQUIA,
+	TRACK_CETOGENICA
+]
 
 const TRACK_DEFINITIONS := {
-	"celiaquia": {
-		"key": "celiaquia",
+	TRACK_CELIAQUIA: {
+		"key": TRACK_CELIAQUIA,
 		"label": "Celiaquia",
 		"summary_label": "Celiaquia",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia.png",
@@ -25,8 +36,8 @@ const TRACK_DEFINITIONS := {
 		"blocked_conditions": [LevelItemScript.Condicion.CELIACO],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
-	"veganismo": {
-		"key": "veganismo",
+	TRACK_VEGANISMO: {
+		"key": TRACK_VEGANISMO,
 		"label": "Veganismo",
 		"summary_label": "Veganismo",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-veganismo.png",
@@ -41,8 +52,8 @@ const TRACK_DEFINITIONS := {
 		],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
-	"veganismo_celiaquia": {
-		"key": "veganismo_celiaquia",
+	TRACK_VEGANISMO_CELIAQUIA: {
+		"key": TRACK_VEGANISMO_CELIAQUIA,
 		"label": "Veganismo + Celiaquia",
 		"summary_label": "Mixto",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png",
@@ -58,8 +69,8 @@ const TRACK_DEFINITIONS := {
 		],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
-	"cetogenica": {
-		"key": "cetogenica",
+	TRACK_CETOGENICA: {
+		"key": TRACK_CETOGENICA,
 		"label": "Cetogenica",
 		"summary_label": "Keto",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-keto.png",
@@ -72,8 +83,12 @@ const TRACK_DEFINITIONS := {
 		"level_count": DEFAULT_LEVEL_COUNT
 	}
 }
+
 const CATEGORY_DEFINITIONS := {
-	CATEGORY_ALMUERZO_CENA: {"code": CATEGORY_ALMUERZO_CENA, "label": "Almuerzo / Cena"},
+	CATEGORY_ALMUERZO_CENA: {
+		"code": CATEGORY_ALMUERZO_CENA,
+		"label": "Almuerzo / Cena"
+	},
 	CATEGORY_DESAYUNO_MERIENDA: {
 		"code": CATEGORY_DESAYUNO_MERIENDA,
 		"label": "Desayuno / Merienda"
@@ -84,6 +99,7 @@ const CATEGORY_DEFINITIONS := {
 
 static func get_track_keys() -> Array:
 	return TRACK_ORDER.duplicate()
+
 
 static func get_track_definitions() -> Array:
 	var definitions: Array = []
@@ -104,42 +120,38 @@ static func get_track_definition(track_key: String) -> Dictionary:
 
 
 static func get_track_label(track_key: String, fallback: String = "Tu progreso") -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get("label", fallback))
+	return _get_track_string_field(track_key, "label", fallback)
 
 
 static func get_track_summary_label(track_key: String, fallback: String = "Tu progreso") -> String:
 	var track_definition := get_track_definition(track_key)
 	if track_definition.is_empty():
 		return fallback
-	return str(track_definition.get("summary_label", track_definition.get("label", fallback)))
+	return str(
+		track_definition.get(
+			"summary_label",
+			track_definition.get("label", fallback)
+		)
+	)
 
 
 static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return max(1, int(track_definition.get("level_count", fallback)))
+	return max(1, _get_track_int_field(track_key, "level_count", fallback))
 
 
 static func get_track_condition_texture_key(
 	track_key: String,
 	fallback: String = ""
 ) -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get("condition_texture_key", fallback)).strip_edges()
+	return _get_track_string_field(
+		track_key,
+		"condition_texture_key",
+		fallback
+	).strip_edges()
 
 
 static func get_track_teaching_key_prefixes(track_key: String) -> Array:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return []
-	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
-	return raw_prefixes.duplicate() if raw_prefixes is Array else []
+	return _get_track_array_field(track_key, "teaching_key_prefixes")
 
 
 static func teaching_key_belongs_to_track(track_key: String, teaching_key: String) -> bool:
@@ -154,22 +166,19 @@ static func teaching_key_belongs_to_track(track_key: String, teaching_key: Strin
 		if not prefix.is_empty() and clean_teaching_key.begins_with(prefix):
 			return true
 	return false
+
+
 static func get_track_item_pool_strategy(
 	track_key: String,
 	fallback: String = ITEM_POOL_STRATEGY_LEGACY
 ) -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get("item_pool_strategy", fallback)).strip_edges()
+	return _get_track_string_field(track_key, "item_pool_strategy", fallback).strip_edges()
 
 
 static func get_track_blocked_conditions(track_key: String) -> Array:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return []
-	var raw_conditions: Variant = track_definition.get("blocked_conditions", [])
-	return raw_conditions.duplicate() if raw_conditions is Array else []
+	return _get_track_array_field(track_key, "blocked_conditions")
+
+
 static func get_total_level_count() -> int:
 	var total_levels := 0
 	for track_key in TRACK_ORDER:
@@ -178,17 +187,11 @@ static func get_total_level_count() -> int:
 
 
 static func get_book_scene_path(track_key: String, fallback: String = "") -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get("book_scene_path", fallback))
+	return _get_track_string_field(track_key, "book_scene_path", fallback)
 
 
 static func get_level_scene_path(track_key: String, fallback: String = "") -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get("level_scene_path", fallback))
+	return _get_track_string_field(track_key, "level_scene_path", fallback)
 
 
 static func get_track_labels() -> Dictionary:
@@ -217,6 +220,8 @@ static func get_level_scene_paths() -> Dictionary:
 	for track_key in TRACK_ORDER:
 		paths[track_key] = get_level_scene_path(track_key)
 	return paths
+
+
 static func get_track_level_counts() -> Dictionary:
 	var level_counts := {}
 	for track_key in TRACK_ORDER:
@@ -228,7 +233,9 @@ static func get_category_label(category_code: String, fallback: String = "Catego
 	var clean_category_code := normalize_category_code(category_code)
 	if not CATEGORY_DEFINITIONS.has(clean_category_code):
 		return fallback
-	return str((CATEGORY_DEFINITIONS[clean_category_code] as Dictionary).get("label", fallback))
+	return str(
+		(CATEGORY_DEFINITIONS[clean_category_code] as Dictionary).get("label", fallback)
+	)
 
 
 static func normalize_category_code(category_code: String) -> String:
@@ -242,3 +249,33 @@ static func normalize_category_code(category_code: String) -> String:
 
 static func categories_match(left_category: String, right_category: String) -> bool:
 	return normalize_category_code(left_category) == normalize_category_code(right_category)
+
+
+static func _get_track_string_field(
+	track_key: String,
+	field_name: String,
+	fallback: String = ""
+) -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get(field_name, fallback))
+
+
+static func _get_track_int_field(
+	track_key: String,
+	field_name: String,
+	fallback: int
+) -> int:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return int(track_definition.get(field_name, fallback))
+
+
+static func _get_track_array_field(track_key: String, field_name: String) -> Array:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return []
+	var raw_values: Variant = track_definition.get(field_name, [])
+	return raw_values.duplicate() if raw_values is Array else []

@@ -4,162 +4,318 @@ const GamePartialLevelStateCodecScript := preload(
 	"res://niveles/helpers/GamePartialLevelStateCodec.gd"
 )
 
-var _manager
-var _partial_state_codec
-
-func _init(manager):
-	_manager = manager
-	_partial_state_codec = GamePartialLevelStateCodecScript.new(manager)
+var _global_state
+var _partial_level_state_codec
 
 
-func build_default_partial_level_states() -> Dictionary:
-	var default_states: Dictionary = {}
-	for track_key in _manager.TRACK_KEYS:
-		default_states[track_key] = {}
-	return default_states
+func _init(global_state):
+	_global_state = global_state
+	_partial_level_state_codec = GamePartialLevelStateCodecScript.new(global_state)
+
+
+func build_empty_partial_level_state_map() -> Dictionary:
+	var empty_partial_level_state_map: Dictionary = {}
+	for track_key in _global_state.TRACK_KEYS:
+		empty_partial_level_state_map[track_key] = {}
+	return empty_partial_level_state_map
+
+
+func build_empty_progress_system_state_map() -> Dictionary:
+	return {}
+
+
 func reset_progress() -> void:
-	for track_key in _manager.TRACK_KEYS:
-		_reset_book_progress(_manager.book_for_track(track_key), track_key)
-	_manager.current_level = 1
-	_manager.partial_level_states = build_default_partial_level_states()
+	_reset_campaign_progress_runtime()
+	_reset_partial_level_state_runtime()
+	_reset_progress_system_runtime()
 
 
 func export_progress() -> Dictionary:
-	var progress: Dictionary = {
-		"current_level": _manager.current_level,
-		_manager.PARTIAL_LEVEL_STATES_KEY: _partial_state_codec.export_partial_level_states(
-			_manager.partial_level_states
-		)
-	}
-	for track_key in _manager.TRACK_KEYS:
-		progress[track_key] = _export_book_progress(
-			_manager.book_for_track(track_key),
-			track_key
-		)
-	return progress
+	var progress_snapshot: Dictionary = _build_base_progress_snapshot()
+	_append_track_completion_snapshot(progress_snapshot)
+	_append_partial_level_snapshot(progress_snapshot)
+	_append_progress_system_snapshot(progress_snapshot)
+	return progress_snapshot
 
 
-func import_progress(progress: Dictionary) -> void:
+func import_progress(progress_snapshot: Dictionary) -> void:
 	reset_progress()
-	if progress.is_empty():
+	if progress_snapshot.is_empty():
 		return
-	_manager.current_level = clampi(
-		int(progress.get("current_level", 1)),
-		1,
-		_manager.get_max_track_level_count()
-	)
-	for track_key in _manager.TRACK_KEYS:
-		_import_book_progress(
-			_manager.book_for_track(track_key),
-			track_key,
-			progress.get(track_key, [])
-		)
-	_manager.partial_level_states = _partial_state_codec.normalize_partial_level_states(
-		progress.get(_manager.PARTIAL_LEVEL_STATES_KEY, {})
-	)
-	_partial_state_codec.prune_partial_level_states(_manager.partial_level_states)
+	_restore_current_level_number(progress_snapshot)
+	_restore_track_completion_snapshot(progress_snapshot)
+	_restore_partial_level_snapshot(progress_snapshot)
+	_restore_progress_system_snapshot(progress_snapshot)
 
 
 func get_progress_summary() -> Dictionary:
-	var summary: Dictionary = {"total": 0, "max_total": _manager.get_total_level_count()}
-	for track_key in _manager.TRACK_KEYS:
-		var completed_levels: int = _count_completed_levels(
-			_manager.book_for_track(track_key),
+	var progress_summary: Dictionary = {
+		"total": 0,
+		"max_total": _global_state.get_total_level_count()
+	}
+	for track_key in _global_state.TRACK_KEYS:
+		var completed_level_count: int = _count_completed_levels_for_track(
+			_global_state.get_campaign_progress_for_track(track_key),
 			track_key
 		)
-		summary[track_key] = completed_levels
-		summary["total"] = int(summary.get("total", 0)) + completed_levels
-	return summary
+		progress_summary[track_key] = completed_level_count
+		progress_summary["total"] = int(progress_summary.get("total", 0)) + completed_level_count
+	return progress_summary
+
+
 func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
-	var clean_track_key := _validated_track_key(track_key)
+	var clean_track_key := _resolve_track_key(track_key)
 	if clean_track_key.is_empty():
 		return {}
-	var track_states: Dictionary = _read_track_states(clean_track_key)
-	var clean_level_number := _clamp_level_number(clean_track_key, level_number)
-	return _partial_state_codec.normalize_partial_level_state(
-		track_states.get(str(clean_level_number), {})
+	var resolved_level_number := _resolve_level_number(clean_track_key, level_number)
+	var track_partial_state: Dictionary = _read_partial_level_state_for_track(clean_track_key)
+	return _partial_level_state_codec.normalize_partial_level_state(
+		track_partial_state.get(str(resolved_level_number), {})
 	)
 
 
 func set_partial_level_state(track_key: String, level_number: int, state: Dictionary) -> void:
-	var clean_track_key := _validated_track_key(track_key)
+	var clean_track_key := _resolve_track_key(track_key)
 	if clean_track_key.is_empty():
 		return
-	var clean_level_number := _clamp_level_number(clean_track_key, level_number)
-	var track_states: Dictionary = _read_track_states(clean_track_key)
-	if _manager.is_level_completed(clean_track_key, clean_level_number):
-		track_states.erase(str(clean_level_number))
-		_manager.partial_level_states[clean_track_key] = track_states
+	var resolved_level_number := _resolve_level_number(clean_track_key, level_number)
+	var track_partial_state: Dictionary = _read_partial_level_state_for_track(clean_track_key)
+	if _global_state.is_level_completed(clean_track_key, resolved_level_number):
+		track_partial_state.erase(str(resolved_level_number))
+		_global_state.partial_level_state_by_track[clean_track_key] = track_partial_state
 		return
-	var normalized_state: Dictionary = _partial_state_codec.normalize_partial_level_state(state)
+
+	var normalized_state: Dictionary = _partial_level_state_codec.normalize_partial_level_state(state)
 	if normalized_state.is_empty():
-		track_states.erase(str(clean_level_number))
+		track_partial_state.erase(str(resolved_level_number))
 	else:
-		track_states[str(clean_level_number)] = normalized_state
-	_manager.partial_level_states[clean_track_key] = track_states
+		track_partial_state[str(resolved_level_number)] = normalized_state
+	_global_state.partial_level_state_by_track[clean_track_key] = track_partial_state
 
 
 func clear_partial_level_state(track_key: String, level_number: int) -> void:
-	var clean_track_key := _validated_track_key(track_key)
+	var clean_track_key := _resolve_track_key(track_key)
 	if clean_track_key.is_empty():
 		return
-	var clean_level_number := _clamp_level_number(clean_track_key, level_number)
-	var track_states: Dictionary = _read_track_states(clean_track_key)
-	track_states.erase(str(clean_level_number))
-	_manager.partial_level_states[clean_track_key] = track_states
-func _reset_book_progress(book: Dictionary, track_key: String) -> void:
-	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
-		if book.has(level_number):
-			_set_book_level_completed(book, level_number, false)
-
-func _export_book_progress(book: Dictionary, track_key: String) -> Array:
-	var progress: Array = []
-	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
-		progress.append(_is_book_level_completed(book, level_number))
-	return progress
-
-func _import_book_progress(book: Dictionary, track_key: String, stored_progress: Variant) -> void:
-	if stored_progress is Array:
-		for level_index in range(
-			min(stored_progress.size(), _manager.get_track_level_count(track_key))
-		):
-			var level_number := level_index + 1
-			if book.has(level_number):
-				_set_book_level_completed(book, level_number, bool(stored_progress[level_index]))
-
-func _count_completed_levels(book: Dictionary, track_key: String) -> int:
-	var completed := 0
-	for level_number in range(1, _manager.get_track_level_count(track_key) + 1):
-		if _is_book_level_completed(book, level_number):
-			completed += 1
-	return completed
+	var resolved_level_number := _resolve_level_number(clean_track_key, level_number)
+	var track_partial_state: Dictionary = _read_partial_level_state_for_track(clean_track_key)
+	track_partial_state.erase(str(resolved_level_number))
+	_global_state.partial_level_state_by_track[clean_track_key] = track_partial_state
 
 
-func _is_book_level_completed(book: Dictionary, level_number: int) -> bool:
-	var raw_level_progress: Variant = book.get(level_number, {})
+func get_progress_system_state(system_key: String) -> Dictionary:
+	var clean_system_key := _resolve_progress_system_key(system_key)
+	if clean_system_key.is_empty():
+		return {}
+	if not _global_state.progress_system_state_by_key.has(clean_system_key):
+		_global_state.progress_system_state_by_key[clean_system_key] = {}
+	var stored_system_state: Variant = _global_state.progress_system_state_by_key.get(
+		clean_system_key,
+		{}
+	)
+	return stored_system_state if stored_system_state is Dictionary else {}
+
+
+func set_progress_system_state(system_key: String, system_state: Dictionary) -> void:
+	var clean_system_key := _resolve_progress_system_key(system_key)
+	if clean_system_key.is_empty():
+		return
+	if system_state.is_empty():
+		_global_state.progress_system_state_by_key.erase(clean_system_key)
+		return
+	_global_state.progress_system_state_by_key[clean_system_key] = system_state.duplicate(true)
+
+
+func clear_progress_system_state(system_key: String) -> void:
+	var clean_system_key := _resolve_progress_system_key(system_key)
+	if clean_system_key.is_empty():
+		return
+	_global_state.progress_system_state_by_key.erase(clean_system_key)
+
+
+func _reset_campaign_progress_runtime() -> void:
+	_global_state.campaign_progress_by_track = _global_state.build_default_campaign_progress_state()
+	_global_state.set_current_level_number(1)
+
+
+func _reset_partial_level_state_runtime() -> void:
+	_global_state.partial_level_state_by_track = build_empty_partial_level_state_map()
+
+
+func _reset_progress_system_runtime() -> void:
+	_global_state.progress_system_state_by_key = build_empty_progress_system_state_map()
+
+
+func _build_base_progress_snapshot() -> Dictionary:
+	return {"current_level": _global_state.get_current_level_number()}
+
+
+func _append_track_completion_snapshot(progress_snapshot: Dictionary) -> void:
+	for track_key in _global_state.TRACK_KEYS:
+		progress_snapshot[track_key] = _export_track_completion_flags(
+			_global_state.get_campaign_progress_for_track(track_key),
+			track_key
+		)
+
+
+func _append_partial_level_snapshot(progress_snapshot: Dictionary) -> void:
+	progress_snapshot[_global_state.PARTIAL_LEVEL_STATES_KEY] = (
+		_partial_level_state_codec.export_track_partial_level_states(
+			_global_state.partial_level_state_by_track
+		)
+	)
+
+
+func _append_progress_system_snapshot(progress_snapshot: Dictionary) -> void:
+	progress_snapshot[_global_state.PROGRESS_SYSTEM_STATES_KEY] = (
+		_export_progress_system_state_by_key()
+	)
+
+
+func _restore_current_level_number(progress_snapshot: Dictionary) -> void:
+	_global_state.set_current_level_number(
+		int(progress_snapshot.get("current_level", 1))
+	)
+
+
+func _restore_track_completion_snapshot(progress_snapshot: Dictionary) -> void:
+	for track_key in _global_state.TRACK_KEYS:
+		_restore_track_completion_flags(
+			_global_state.get_campaign_progress_for_track(track_key),
+			track_key,
+			progress_snapshot.get(track_key, [])
+		)
+
+
+func _restore_partial_level_snapshot(progress_snapshot: Dictionary) -> void:
+	_global_state.partial_level_state_by_track = (
+		_partial_level_state_codec.normalize_track_partial_level_states(
+			progress_snapshot.get(_global_state.PARTIAL_LEVEL_STATES_KEY, {})
+		)
+	)
+	_partial_level_state_codec.remove_completed_level_states(
+		_global_state.partial_level_state_by_track
+	)
+
+
+func _restore_progress_system_snapshot(progress_snapshot: Dictionary) -> void:
+	_global_state.progress_system_state_by_key = _normalize_progress_system_state_by_key(
+		progress_snapshot.get(_global_state.PROGRESS_SYSTEM_STATES_KEY, {})
+	)
+
+
+func _export_progress_system_state_by_key() -> Dictionary:
+	var exported_progress_system_state_by_key: Dictionary = {}
+	for raw_system_key in _global_state.progress_system_state_by_key.keys():
+		var clean_system_key := _resolve_progress_system_key(str(raw_system_key))
+		if clean_system_key.is_empty():
+			continue
+		var system_state: Variant = _global_state.progress_system_state_by_key.get(
+			raw_system_key,
+			{}
+		)
+		if not system_state is Dictionary:
+			continue
+		exported_progress_system_state_by_key[clean_system_key] = (
+			(system_state as Dictionary).duplicate(true)
+		)
+	return exported_progress_system_state_by_key
+
+
+func _normalize_progress_system_state_by_key(raw_progress_system_state_by_key: Variant) -> Dictionary:
+	if not raw_progress_system_state_by_key is Dictionary:
+		return build_empty_progress_system_state_map()
+	var normalized_progress_system_state_by_key: Dictionary = {}
+	for raw_system_key in raw_progress_system_state_by_key.keys():
+		var clean_system_key := _resolve_progress_system_key(str(raw_system_key))
+		if clean_system_key.is_empty():
+			continue
+		var system_state: Variant = raw_progress_system_state_by_key.get(raw_system_key, {})
+		if not system_state is Dictionary:
+			continue
+		normalized_progress_system_state_by_key[clean_system_key] = (
+			(system_state as Dictionary).duplicate(true)
+		)
+	return normalized_progress_system_state_by_key
+
+
+func _export_track_completion_flags(track_progress: Dictionary, track_key: String) -> Array:
+	var exported_completion_flags: Array = []
+	for level_number in range(1, _global_state.get_track_level_count(track_key) + 1):
+		exported_completion_flags.append(
+			_is_track_level_completed(track_progress, level_number)
+		)
+	return exported_completion_flags
+
+
+func _restore_track_completion_flags(
+	track_progress: Dictionary,
+	track_key: String,
+	stored_completion_flags: Variant
+) -> void:
+	if not stored_completion_flags is Array:
+		return
+	for level_index in range(
+		min(stored_completion_flags.size(), _global_state.get_track_level_count(track_key))
+	):
+		var level_number := level_index + 1
+		if not track_progress.has(level_number):
+			continue
+		_write_track_level_completion(
+			track_progress,
+			level_number,
+			bool(stored_completion_flags[level_index])
+		)
+
+
+func _count_completed_levels_for_track(track_progress: Dictionary, track_key: String) -> int:
+	var completed_level_count := 0
+	for level_number in range(1, _global_state.get_track_level_count(track_key) + 1):
+		if _is_track_level_completed(track_progress, level_number):
+			completed_level_count += 1
+	return completed_level_count
+
+
+func _is_track_level_completed(track_progress: Dictionary, level_number: int) -> bool:
+	var raw_level_progress: Variant = track_progress.get(level_number, {})
 	if not raw_level_progress is Dictionary:
 		return false
-	return bool((raw_level_progress as Dictionary).get(_manager.BOOK_LEVEL_COMPLETED_KEY, false))
+	return bool(
+		(raw_level_progress as Dictionary).get(_global_state.BOOK_LEVEL_COMPLETED_KEY, false)
+	)
 
 
-func _set_book_level_completed(book: Dictionary, level_number: int, completed: bool) -> void:
-	var raw_level_progress: Variant = book.get(level_number, {})
+func _write_track_level_completion(
+	track_progress: Dictionary,
+	level_number: int,
+	completed: bool
+) -> void:
+	var raw_level_progress: Variant = track_progress.get(level_number, {})
 	if not raw_level_progress is Dictionary:
 		return
 	var level_progress: Dictionary = raw_level_progress
-	level_progress[_manager.BOOK_LEVEL_COMPLETED_KEY] = completed
-	book[level_number] = level_progress
-func _validated_track_key(track_key: String) -> String:
+	level_progress[_global_state.BOOK_LEVEL_COMPLETED_KEY] = completed
+	track_progress[level_number] = level_progress
+
+
+func _resolve_track_key(track_key: String) -> String:
 	var clean_track_key := track_key.strip_edges()
-	if _manager.has_track(clean_track_key):
+	if _global_state.has_track(clean_track_key):
 		return clean_track_key
 	return ""
 
 
-func _clamp_level_number(track_key: String, level_number: int) -> int:
-	return clampi(level_number, 1, _manager.get_track_level_count(track_key))
+func _resolve_progress_system_key(system_key: String) -> String:
+	return system_key.strip_edges()
 
 
-func _read_track_states(track_key: String) -> Dictionary:
-	var raw_track_states: Variant = _manager.partial_level_states.get(track_key, {})
-	return raw_track_states if raw_track_states is Dictionary else {}
+func _resolve_level_number(track_key: String, level_number: int) -> int:
+	return clampi(level_number, 1, _global_state.get_track_level_count(track_key))
+
+
+func _read_partial_level_state_for_track(track_key: String) -> Dictionary:
+	var raw_track_partial_state: Variant = _global_state.partial_level_state_by_track.get(
+		track_key,
+		{}
+	)
+	return raw_track_partial_state if raw_track_partial_state is Dictionary else {}

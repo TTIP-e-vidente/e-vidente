@@ -26,9 +26,12 @@ func configure_run(run_data: Dictionary, level_resource: LevelResource) -> void:
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	if not _state_service.spawn_items_from_saved_state(saved_level_state):
-		_spawn_random_items()
-		_manager.lista_items.shuffle()
+	if _restore_saved_runtime_items(saved_level_state):
+		_manager.layout_runtime_items()
+		_state_service.restore_saved_positive_items(saved_level_state)
+		return
+	_spawn_random_items()
+	_manager.level_items.shuffle()
 	_manager.layout_runtime_items()
 	_state_service.restore_saved_positive_items(saved_level_state)
 
@@ -61,37 +64,67 @@ func _resolve_payload(run_data: Dictionary) -> Dictionary:
 
 
 func _spawn_random_items() -> void:
-	var lista_negativos: Array = _manager.level_resource.get_negative_items(
-		_manager.current_track_key
+	var category_code: String = _current_run_category()
+	var positive_candidates: Array = _resolve_spawn_candidates(true, category_code)
+	var negative_candidates: Array = _resolve_spawn_candidates(false, category_code)
+	_spawn_item_batch(
+		positive_candidates,
+		_manager.level_resource.cantidadPositivos,
+		true
 	)
-	var lista_positivos: Array = _manager.level_resource.get_positive_items(
-		_manager.current_track_key
+	_spawn_item_batch(
+		negative_candidates,
+		_manager.level_resource.cantidadNegativos,
+		false
 	)
-	lista_negativos.shuffle()
-	lista_positivos.shuffle()
-	var payload: Dictionary = (
+
+
+func _restore_saved_runtime_items(saved_level_state: Dictionary) -> bool:
+	return _state_service.spawn_items_from_saved_state(saved_level_state)
+
+
+func _current_run_category() -> String:
+	var run_payload: Dictionary = (
 		_manager.level_resource.mechanic_payload
 		if _manager.level_resource.mechanic_payload is Dictionary
 		else {}
 	)
-	var categoria_actual: String = str(payload.get("category", ""))
-	var filtrados_positivos: Array = _manager.filter_items_by_category(
-		lista_positivos,
-		categoria_actual
+	return str(run_payload.get("category", ""))
+
+
+func _resolve_spawn_candidates(is_positive: bool, category_code: String) -> Array:
+	var track_item_pool: Array = _shuffled_track_item_pool(is_positive)
+	return _manager.filter_items_by_category(track_item_pool, category_code)
+
+
+func _shuffled_track_item_pool(is_positive: bool) -> Array:
+	var track_item_pool: Array = (
+		_manager.level_resource.get_positive_items(_manager.active_track_key)
+		if is_positive
+		else _manager.level_resource.get_negative_items(_manager.active_track_key)
 	)
-	var filtrados_negativos: Array = _manager.filter_items_by_category(
-		lista_negativos,
-		categoria_actual
-	)
-	for index in range(_manager.level_resource.cantidadPositivos):
-		var raw_positive_item: Variant = filtrados_positivos.pop_front()
-		var positive_item: LevelItem = raw_positive_item as LevelItem
-		if positive_item == null:
+	track_item_pool.shuffle()
+	return track_item_pool
+
+
+func _spawn_item_batch(candidate_items: Array, item_count: int, is_positive: bool) -> void:
+	for item_index in range(item_count):
+		var level_item: LevelItem = _pop_next_level_item(candidate_items)
+		if level_item == null:
 			continue
-		_manager.spawn_level_item(positive_item, "positive_%d" % index, true)
-	for index in range(_manager.level_resource.cantidadNegativos):
-		var raw_negative_item: Variant = filtrados_negativos.pop_front()
-		var negative_item: LevelItem = raw_negative_item as LevelItem
-		if negative_item == null:
-			continue
-		_manager.spawn_level_item(negative_item, "negative_%d" % index, false)
+		_manager.spawn_level_item(
+			level_item,
+			_build_spawn_instance_id(is_positive, item_index),
+			is_positive
+		)
+
+
+func _pop_next_level_item(candidate_items: Array) -> LevelItem:
+	if candidate_items.is_empty():
+		return null
+	return candidate_items.pop_front() as LevelItem
+
+
+func _build_spawn_instance_id(is_positive: bool, item_index: int) -> String:
+	var item_group: String = "positive" if is_positive else "negative"
+	return "%s_%d" % [item_group, item_index]

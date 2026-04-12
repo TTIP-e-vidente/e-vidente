@@ -9,8 +9,8 @@ const ProfileFormHelperScript := preload("res://interface/helpers/ProfileFormHel
 @onready var summary_content: Control = (
 	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent
 )
-@onready var preview_meta_row: HBoxContainer = (
-	summary_content.get_node("PreviewMetaRow") as HBoxContainer
+@onready var preview_meta_row: VBoxContainer = (
+	summary_content.get_node("PreviewMetaRow") as VBoxContainer
 )
 @onready var form_content: Control = (
 	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent

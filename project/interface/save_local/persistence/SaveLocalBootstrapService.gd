@@ -110,20 +110,20 @@ func _finish_load_with_repair(
 
 
 func _data_normalizer():
-	return _manager.data_normalizer()
+	return _manager.get_save_data_normalizer()
 
 
 func _profile_service():
-	return _manager.profile_service()
+	return _manager.get_profile_service()
 
 
 func _resume_service():
-	return _manager.resume_service()
+	return _manager.get_resume_service()
 
 
 func _write_coordinator():
-	return _manager.write_coordinator()
+	return _manager.get_write_coordinator()
 
 
 func _storage_helper():
-	return _manager.storage_helper()
+	return _manager.get_storage_helper()

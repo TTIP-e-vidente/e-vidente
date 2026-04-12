@@ -7,26 +7,35 @@ func _init(manager):
 	_manager = manager
 
 
-func save_current_user_progress(write_to_disk: bool = true) -> void:
+func sync_runtime_progress_to_current_save() -> void:
 	var profile: Dictionary = _manager.get_current_user_profile()
 	_store_runtime_progress_snapshot(profile)
 	_write_coordinator().mark_dirty()
 
-	if write_to_disk and _write_coordinator().write_save_data(false, "progress_sync"):
+func persist_runtime_progress_to_current_save() -> void:
+	sync_runtime_progress_to_current_save()
+	if _write_coordinator().write_save_data(false, "progress_sync"):
 		_manager.progress_saved.emit(_manager.get_current_user_profile())
 
 
-func load_current_user_progress(should_emit_progress_signal: bool = true) -> void:
+func sync_runtime_progress_from_current_save() -> void:
 	Global.import_progress(_manager.save_data.get("progress", {}))
-	if should_emit_progress_signal:
-		_manager.progress_loaded.emit(_manager.get_current_user_profile())
 
 
-func load_current_save_and_get_resume_state(
-	should_emit_progress_signal: bool = false
-) -> Dictionary:
+func sync_runtime_progress_from_current_save_and_emit_signal() -> void:
+	sync_runtime_progress_from_current_save()
+	_manager.progress_loaded.emit(_manager.get_current_user_profile())
+
+
+func reload_current_save_and_get_resume_state() -> Dictionary:
 	_manager.load_data()
-	load_current_user_progress(should_emit_progress_signal)
+	sync_runtime_progress_from_current_save()
+	return _sync_global_level_with_resume_state(_manager.get_resume_state())
+
+
+func reload_current_save_and_get_resume_state_and_emit_signal() -> Dictionary:
+	_manager.load_data()
+	sync_runtime_progress_from_current_save_and_emit_signal()
 	return _sync_global_level_with_resume_state(_manager.get_resume_state())
 
 
@@ -84,12 +93,12 @@ func _emit_progress_refresh_signals() -> void:
 
 
 func _resume_service():
-	return _manager.resume_service()
+	return _manager.get_resume_service()
 
 
 func _write_coordinator():
-	return _manager.write_coordinator()
+	return _manager.get_write_coordinator()
 
 
 func _data_normalizer():
-	return _manager.data_normalizer()
+	return _manager.get_save_data_normalizer()

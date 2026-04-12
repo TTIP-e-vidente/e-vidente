@@ -50,7 +50,7 @@ func can_resume_current_save() -> bool:
 func record_level_completed(track_key: String, level_number: int) -> void:
 	Global.clear_partial_level_state(track_key, level_number)
 	set_resume_after_level_completed(track_key, level_number)
-	_manager.save_current_user_progress(false)
+	_manager.sync_runtime_progress_to_current_save()
 	append_history(
 		"Completaste %s - capitulo %d" % [Global.get_track_label(track_key), level_number],
 		{
@@ -63,7 +63,7 @@ func record_level_completed(track_key: String, level_number: int) -> void:
 
 
 func record_manual_save() -> void:
-	_manager.save_current_user_progress(false)
+	_manager.sync_runtime_progress_to_current_save()
 	var resume_state: Dictionary = get_resume_state()
 	append_history("Guardado manual", _build_manual_save_metadata(resume_state))
 	_persist_progress_event("manual_save")
@@ -275,12 +275,12 @@ func _build_history_entry(message: String, metadata: Dictionary) -> Dictionary:
 
 
 func _write_coordinator():
-	return _manager.write_coordinator()
+	return _manager.get_write_coordinator()
 
 
 func _data_normalizer():
-	return _manager.data_normalizer()
+	return _manager.get_save_data_normalizer()
 
 
 func _progress_state_helper():
-	return _manager.progress_state_helper()
+	return _manager.get_progress_state_helper()

@@ -13,8 +13,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96
 @export var track_key_override := ""
 @onready var background: AudioStreamPlayer2D = $Background
 @onready var victory: AnimatedSprite2D = $Victory
-@onready var adelante: Button = $Adelante
-@onready var ensenanza: Sprite2D = $Ensenanza
+@onready var next_chapter_button: Button = $Adelante
+@onready var teaching_sprite: Sprite2D = $Ensenanza
 @onready var manager_level: ManagerLevel = $ManagerLevel
 @onready var save_progress_button: Button = $SaveProgressButton
 @onready var save_feedback_backdrop: PanelContainer = $SaveFeedbackBackdrop
@@ -29,36 +29,38 @@ var save_feedback_timer: Timer
 
 
 func _ready() -> void:
-	_initialize_level_scene()
-	_setup_save_feedback()
+	_start_level_flow()
+	_configure_quick_save_feedback()
 
 
-func _initialize_level_scene() -> void:
-	_prepare_scene_for_play()
-	_start_level_audio()
-	_load_current_level_run()
-	_register_current_resume_point()
+func _start_level_flow() -> void:
+	_prepare_level_scene()
+	_play_level_audio()
+	_initialize_level_runtime()
+	_register_current_resume_target()
 
 
-func _prepare_scene_for_play() -> void:
+func _prepare_level_scene() -> void:
 	victory.hide()
-	adelante.disabled = true
+	next_chapter_button.disabled = true
 
 
-func _start_level_audio() -> void:
+func _play_level_audio() -> void:
 	background.play()
 
 
-func _load_current_level_run() -> void:
-	manager_level.setup(self)
+func _initialize_level_runtime() -> void:
+	manager_level.initialize_level_runtime(self)
 
 
-func _register_current_resume_point() -> void:
-	var track_key := _get_level_track_key()
-	SaveManager.set_resume_to_level(track_key, Global.current_level)
+func _register_current_resume_target() -> void:
+	SaveManager.set_resume_to_level(
+		_resolve_level_track_key(),
+		Global.current_level
+	)
 
 
-func _setup_save_feedback() -> void:
+func _configure_quick_save_feedback() -> void:
 	save_progress_button.icon = SAVE_ICON_IDLE
 	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
 	save_feedback_backdrop.visible = false
@@ -88,34 +90,46 @@ func _exit_tree() -> void:
 		background.stream = null
 
 
-func _on_atrás_pressed() -> void:
-	GameSceneRouter.go_to_track_book(get_tree(), _get_level_track_key())
+func _on_atras_pressed() -> void:
+	_return_to_track_book()
+
+
+func _return_to_track_book() -> void:
+	GameSceneRouter.go_to_track_book(get_tree(), _resolve_level_track_key())
 
 
 func _victory() -> void:
-	var track_key := _get_level_track_key()
-	_show_victory_feedback()
-	_mark_level_completed(track_key)
+	_complete_current_level()
 
 
-func _show_victory_feedback() -> void:
+func _complete_current_level() -> void:
+	var track_key := _resolve_level_track_key()
+	_show_level_completion_feedback()
+	_persist_level_completion(track_key)
+
+
+func _show_level_completion_feedback() -> void:
 	victory.show()
 	victory.play("victory")
-	adelante.disabled = false
-	ensenanza.show()
+	next_chapter_button.disabled = false
+	teaching_sprite.show()
 
 
-func _mark_level_completed(track_key: String) -> void:
+func _persist_level_completion(track_key: String) -> void:
 	Global.mark_level_completed(track_key, Global.current_level)
 	Global.clear_partial_level_state(track_key, Global.current_level)
 	SaveManager.record_level_completed(track_key, Global.current_level)
 
 
 func _on_adelante_pressed() -> void:
-	_go_to_next_scene(_get_level_track_key())
+	_continue_to_next_chapter()
 
 
-func _go_to_next_scene(track_key: String) -> void:
+func _continue_to_next_chapter() -> void:
+	_go_to_next_chapter_or_main_menu(_resolve_level_track_key())
+
+
+func _go_to_next_chapter_or_main_menu(track_key: String) -> void:
 	if Global.current_level >= Global.get_track_level_count(track_key):
 		GameSceneRouter.go_to_main_menu(get_tree())
 		return
@@ -123,18 +137,26 @@ func _go_to_next_scene(track_key: String) -> void:
 
 
 func _on_save_progress_button_pressed() -> void:
+	_save_current_level_progress()
+
+
+func _save_current_level_progress() -> void:
 	var partial_save_result: Dictionary = manager_level.store_partial_level_state(
-		_get_level_track_key()
+		_resolve_level_track_key()
 	)
 	SaveManager.record_manual_save()
-	_show_manual_save_feedback(partial_save_result)
+	_render_manual_save_feedback(partial_save_result)
 
 
-func _show_manual_save_feedback(partial_save_result: Dictionary) -> void:
+func _render_manual_save_feedback(partial_save_result: Dictionary) -> void:
 	var save_status := SaveManager.get_save_status()
 	var state := str(save_status.get("state", ""))
 	if state == "error":
-		_show_save_feedback("No se pudo guardar", _format_save_error_message(save_status), false)
+		_show_save_feedback(
+			"No se pudo guardar",
+			_format_save_error_message(save_status),
+			false
+		)
 		return
 	_show_save_feedback(
 		_format_save_title(partial_save_result),
@@ -143,17 +165,20 @@ func _show_manual_save_feedback(partial_save_result: Dictionary) -> void:
 	)
 
 
-func _get_level_track_key() -> String:
+func _resolve_level_track_key() -> String:
 	if not track_key_override.strip_edges().is_empty():
 		return track_key_override.strip_edges()
 	return DEFAULT_TRACK_KEY
 
 
 func _get_resume_track_key() -> String:
-	return _get_level_track_key()
+	return _resolve_level_track_key()
 
 
-func _format_saved_message(save_status: Dictionary, partial_save_result: Dictionary) -> String:
+func _format_saved_message(
+	save_status: Dictionary,
+	partial_save_result: Dictionary
+) -> String:
 	var last_saved_at := str(save_status.get("last_saved_at", ""))
 	var saved_time := last_saved_at.get_slice(" ", 1)
 	var lines: Array[String] = []
@@ -173,7 +198,9 @@ func _format_saved_message(save_status: Dictionary, partial_save_result: Diction
 		var singular_label := str(
 			partial_save_result.get("progress_unit_singular", "avance guardado")
 		)
-		var plural_label := str(partial_save_result.get("progress_unit_plural", singular_label))
+		var plural_label := str(
+			partial_save_result.get("progress_unit_plural", singular_label)
+		)
 		var progress_label := singular_label if progress_count == 1 else plural_label
 		lines.append("%d %s" % [progress_count, progress_label])
 	return "\n".join(lines)

@@ -141,8 +141,8 @@ func _can_keep_temp_snapshot_as_recovery_source() -> bool:
 
 
 func _data_normalizer():
-	return _manager.data_normalizer()
+	return _manager.get_save_data_normalizer()
 
 
 func _storage_helper():
-	return _manager.storage_helper()
+	return _manager.get_storage_helper()

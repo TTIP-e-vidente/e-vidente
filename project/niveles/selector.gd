@@ -18,7 +18,7 @@ func _set_resume_overlay_visible(overlay_visible: bool) -> void:
 	resume_panel.visible = overlay_visible
 
 func _on_start_pressed() -> void:
-	_open_recipe_hub()
+	_open_archivero()
 
 
 func _on_opciones_pressed() -> void:
@@ -30,7 +30,7 @@ func _on_salir_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
-	_resume_last_saved_flow()
+	_resume_current_save()
 
 
 func _on_play_backdrop_gui_input(event: InputEvent) -> void:
@@ -54,7 +54,7 @@ func _play_background_music() -> void:
 	background_music.play()
 
 
-func _open_recipe_hub() -> void:
+func _open_archivero() -> void:
 	GameSceneRouter.go_to_archivero(get_tree())
 
 
@@ -66,9 +66,9 @@ func _quit_game() -> void:
 	get_tree().quit()
 
 
-func _resume_last_saved_flow() -> void:
+func _resume_current_save() -> void:
 	if not SaveManager.can_resume_current_save():
 		_set_resume_overlay_visible(false)
 		return
-	var resume_state := SaveManager.load_current_save_and_get_resume_state(false)
+	var resume_state := SaveManager.reload_current_save_and_get_resume_state()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)

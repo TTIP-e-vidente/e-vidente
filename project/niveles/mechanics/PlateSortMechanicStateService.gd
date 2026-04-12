@@ -44,29 +44,15 @@ func build_partial_summary(partial_state: Dictionary) -> Dictionary:
 
 
 func spawn_items_from_saved_state(saved_level_state: Dictionary) -> bool:
-	var mechanic_state: Dictionary = extract_mechanic_state(saved_level_state)
-	var raw_items: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
-	if not raw_items is Array or raw_items.is_empty():
+	var saved_runtime_items: Array = _extract_saved_runtime_items(saved_level_state)
+	if saved_runtime_items.is_empty():
 		return false
-	for raw_item in raw_items:
-		if not raw_item is Dictionary:
-			_manager.clear_runtime_items()
-			return false
-		var item_path: String = str(
-			raw_item.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
-		).strip_edges()
-		var instance_id: String = str(
-			raw_item.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
-		).strip_edges()
-		var is_positive: bool = bool(raw_item.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false))
-		var level_item: LevelItem = load(item_path) as LevelItem
-		if level_item == null or instance_id.is_empty():
-			_manager.clear_runtime_items()
-			return false
-		if _manager.spawn_level_item(level_item, instance_id, is_positive) == null:
-			_manager.clear_runtime_items()
-			return false
-	return not _manager.lista_items.is_empty()
+	for saved_runtime_item in saved_runtime_items:
+		if _spawn_saved_runtime_item(saved_runtime_item):
+			continue
+		_manager.clear_runtime_items()
+		return false
+	return not _manager.level_items.is_empty()
 
 
 func restore_saved_positive_items(saved_level_state: Dictionary) -> void:
@@ -105,10 +91,35 @@ func extract_mechanic_state(saved_level_state: Dictionary) -> Dictionary:
 	}
 
 
+func _extract_saved_runtime_items(saved_level_state: Dictionary) -> Array:
+	var mechanic_state: Dictionary = extract_mechanic_state(saved_level_state)
+	var raw_items: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
+	return raw_items if raw_items is Array else []
+
+
+func _spawn_saved_runtime_item(saved_runtime_item: Variant) -> bool:
+	if not saved_runtime_item is Dictionary:
+		return false
+	var item_snapshot: Dictionary = saved_runtime_item
+	var item_path: String = str(
+		item_snapshot.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
+	).strip_edges()
+	var instance_id: String = str(
+		item_snapshot.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
+	).strip_edges()
+	if item_path.is_empty() or instance_id.is_empty():
+		return false
+	var level_item: LevelItem = load(item_path) as LevelItem
+	if level_item == null:
+		return false
+	var is_positive: bool = bool(item_snapshot.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false))
+	return _manager.spawn_level_item(level_item, instance_id, is_positive) != null
+
+
 func _build_mechanic_state() -> Dictionary:
 	var items: Array = []
 	var placed_item_ids: Array = []
-	for item in _manager.lista_items:
+	for item in _manager.level_items:
 		if not is_instance_valid(item):
 			continue
 		var item_path: String = str(item.item_resource_path).strip_edges()
@@ -129,7 +140,7 @@ func _build_mechanic_state() -> Dictionary:
 
 
 func _find_item_by_instance_id(instance_id: String):
-	for item in _manager.lista_items:
+	for item in _manager.level_items:
 		if not is_instance_valid(item):
 			continue
 		if str(item.save_instance_id) == instance_id:

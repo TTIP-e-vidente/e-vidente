@@ -52,7 +52,7 @@ func _run() -> void:
 	_assert(progress_saved_count == 1, "El guardado manual deberia emitir progress_saved una vez")
 	_assert(_has_saved_reason("manual_save"), "El guardado manual deberia reflejar manual_save en save_status_changed")
 
-	SaveManager.load_current_user_progress(true)
+	SaveManager.sync_runtime_progress_from_current_save_and_emit_signal()
 	await process_frame
 	_assert(progress_loaded_count == 2, "La carga explicita del progreso deberia volver a emitir progress_loaded")
 

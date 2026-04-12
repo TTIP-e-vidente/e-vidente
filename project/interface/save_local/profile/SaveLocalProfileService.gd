@@ -57,7 +57,7 @@ func update_local_profile(
 	_manager.save_data["profile"] = profile
 	_write_coordinator().mark_dirty()
 	_resume_service().append_history("Perfil local actualizado", {"type": "profile_updated"})
-	_manager.save_current_user_progress(false)
+	_manager.sync_runtime_progress_to_current_save()
 	if not _write_coordinator().write_save_data(false, "profile_updated"):
 		return {"ok": false, "message": "No se pudo escribir el perfil local en disco."}
 
@@ -159,16 +159,16 @@ func ensure_local_profile() -> bool:
 
 
 func _resume_service():
-	return _manager.resume_service()
+	return _manager.get_resume_service()
 
 
 func _write_coordinator():
-	return _manager.write_coordinator()
+	return _manager.get_write_coordinator()
 
 
 func _data_normalizer():
-	return _manager.data_normalizer()
+	return _manager.get_save_data_normalizer()
 
 
 func _profile_helper():
-	return _manager.profile_data_helper()
+	return _manager.get_profile_data_helper()
