@@ -12,25 +12,10 @@ const RUN_RESOURCE_KEYS := [
 
 static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 	var issues: Array[String] = []
-	_validate_scene_paths(issues)
 	_validate_unknown_tracks(track_chapter_catalog, issues)
-	_validate_track_definitions(track_chapter_catalog, issues)
-	return issues
-
-
-static func _validate_scene_paths(issues: Array[String]) -> void:
 	for track_definition in GameTrackCatalog.get_track_definitions():
-		var track_key := _get_track_key(track_definition)
-		_validate_resource_path(
-			str(track_definition.get("book_scene_path", "")),
-			"%s book scene" % track_key,
-			issues
-		)
-		_validate_resource_path(
-			str(track_definition.get("level_scene_path", "")),
-			"%s level scene" % track_key,
-			issues
-		)
+		_validate_track_definition(track_definition, track_chapter_catalog, issues)
+	return issues
 
 
 static func _validate_unknown_tracks(
@@ -38,41 +23,47 @@ static func _validate_unknown_tracks(
 	issues: Array[String]
 ) -> void:
 	for raw_track_key in track_chapter_catalog.keys():
-		var track_key := str(raw_track_key).strip_edges()
-		if not GameTrackCatalog.has_track(track_key):
-			issues.append("El catalogo de contenido define un track desconocido: %s" % track_key)
+		var track_key: String = str(raw_track_key).strip_edges()
+		if GameTrackCatalog.has_track(track_key):
+			continue
+		issues.append("El catalogo de contenido define un track desconocido: %s" % track_key)
 
 
-static func _validate_track_definitions(
+static func _validate_track_definition(
+	track_definition: Dictionary,
 	track_chapter_catalog: Dictionary,
 	issues: Array[String]
 ) -> void:
-	for track_definition in GameTrackCatalog.get_track_definitions():
-		var track_key := _get_track_key(track_definition)
-		var expected_level_count := max(
-			1,
-			int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
-		)
-		_validate_track_chapters(
-			track_key,
-			expected_level_count,
-			track_chapter_catalog.get(track_key, {}),
-			issues
-		)
-
-
-static func _validate_track_chapters(
-	track_key: String,
-	expected_level_count: int,
-	raw_chapters: Variant,
-	issues: Array[String]
-) -> void:
+	var track_key: String = _read_track_key(track_definition)
+	var expected_level_count: int = max(
+		1,
+		int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
+	)
+	_validate_track_scene_paths(track_definition, track_key, issues)
+	var raw_chapters: Variant = track_chapter_catalog.get(track_key, {})
 	if not raw_chapters is Dictionary:
 		issues.append("El track %s no expone un diccionario de capitulos valido." % track_key)
 		return
 	var chapters: Dictionary = raw_chapters
 	_validate_declared_chapters(track_key, chapters, expected_level_count, issues)
 	_validate_expected_chapters(track_key, chapters, expected_level_count, issues)
+
+
+static func _validate_track_scene_paths(
+	track_definition: Dictionary,
+	track_key: String,
+	issues: Array[String]
+) -> void:
+	_validate_resource_path(
+		str(track_definition.get("book_scene_path", "")),
+		"%s book scene" % track_key,
+		issues
+	)
+	_validate_resource_path(
+		str(track_definition.get("level_scene_path", "")),
+		"%s level scene" % track_key,
+		issues
+	)
 
 
 static func _validate_declared_chapters(
@@ -82,12 +73,13 @@ static func _validate_declared_chapters(
 	issues: Array[String]
 ) -> void:
 	for raw_level_number in chapters.keys():
-		var level_number := int(raw_level_number)
-		if level_number < 1 or level_number > expected_level_count:
-			issues.append(
-				"El track %s define un capitulo fuera de rango: %d"
-				% [track_key, level_number]
-			)
+		var level_number: int = int(raw_level_number)
+		if level_number >= 1 and level_number <= expected_level_count:
+			continue
+		issues.append(
+			"El track %s define un capitulo fuera de rango: %d"
+			% [track_key, level_number]
+		)
 
 
 static func _validate_expected_chapters(
@@ -143,70 +135,77 @@ static func _validate_run_definition(
 		return
 
 	var run_definition: Dictionary = raw_run_definition
-	var run_context := _format_run_context(track_key, level_number, run_index)
-	var negative_count := int(run_definition.get("negative_count", -1))
-	var positive_count := int(run_definition.get("positive_count", -1))
-	var category := GameTrackCatalog.normalize_category_code(
+	var run_context: String = _build_run_context(track_key, level_number, run_index)
+	var mechanic_type: String = LevelMechanicRegistry.normalize_mechanic_type(
+		run_definition.get("mechanic_type", ""),
+		""
+	)
+	var teaching_key: String = str(run_definition.get("teaching_key", "")).strip_edges()
+	var negative_count: int = int(run_definition.get("negative_count", -1))
+	var positive_count: int = int(run_definition.get("positive_count", -1))
+	var category: String = GameTrackCatalog.normalize_category_code(
 		str(run_definition.get("category", ""))
 	)
 
-	_validate_run_mechanic(run_definition, run_context, issues)
-	_validate_run_teaching_key(track_key, run_definition, run_context, issues)
-	_validate_run_counts(negative_count, positive_count, run_context, issues)
-	_validate_run_resource_paths(track_key, level_number, run_index, run_definition, issues)
-	_validate_run_category(category, run_context, issues)
+	_validate_run_mechanic(run_context, mechanic_type, issues)
+	_validate_run_teaching_key(track_key, run_context, teaching_key, issues)
+	_validate_run_counts(run_context, negative_count, positive_count, issues)
+	_validate_run_resources(track_key, level_number, run_index, run_definition, issues)
+	_validate_run_category(run_context, category, issues)
 	_validate_run_payload(
+		run_context,
 		run_definition,
 		negative_count,
 		positive_count,
 		category,
-		run_context,
 		issues
 	)
 
 
 static func _validate_run_mechanic(
-	run_definition: Dictionary,
 	run_context: String,
+	mechanic_type: String,
 	issues: Array[String]
 ) -> void:
-	var mechanic_type := LevelMechanicRegistry.normalize_mechanic_type(
-		run_definition.get("mechanic_type", ""),
-		""
-	)
-	if not LevelMechanicRegistry.has_mechanic_type(mechanic_type):
-		issues.append("%s usa una mecanica desconocida: %s" % [run_context, mechanic_type])
+	if LevelMechanicRegistry.has_mechanic_type(mechanic_type):
+		return
+	issues.append("%s usa una mecanica desconocida: %s" % [run_context, mechanic_type])
 
 
 static func _validate_run_teaching_key(
 	track_key: String,
-	run_definition: Dictionary,
 	run_context: String,
+	teaching_key: String,
 	issues: Array[String]
 ) -> void:
-	var teaching_key := str(run_definition.get("teaching_key", "")).strip_edges()
 	if teaching_key.is_empty():
 		issues.append("%s no define teaching_key." % run_context)
 		return
-	var track_definition := GameTrackCatalog.get_track_definition(track_key)
-	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
-	var allowed_prefixes: Array = raw_prefixes if raw_prefixes is Array else []
-	if allowed_prefixes.is_empty():
+	if _teaching_key_matches_track(track_key, teaching_key):
 		return
-	for raw_prefix in allowed_prefixes:
-		var prefix := str(raw_prefix).strip_edges()
-		if not prefix.is_empty() and teaching_key.begins_with(prefix):
-			return
 	issues.append(
 		"%s deberia usar una teaching_key propia del track: %s"
 		% [run_context, teaching_key]
 	)
 
 
+static func _teaching_key_matches_track(track_key: String, teaching_key: String) -> bool:
+	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
+	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
+	var allowed_prefixes: Array = raw_prefixes if raw_prefixes is Array else []
+	if allowed_prefixes.is_empty():
+		return true
+	for raw_prefix in allowed_prefixes:
+		var prefix: String = str(raw_prefix).strip_edges()
+		if not prefix.is_empty() and teaching_key.begins_with(prefix):
+			return true
+	return false
+
+
 static func _validate_run_counts(
+	run_context: String,
 	negative_count: int,
 	positive_count: int,
-	run_context: String,
 	issues: Array[String]
 ) -> void:
 	if negative_count < 0 or positive_count < 0:
@@ -215,7 +214,7 @@ static func _validate_run_counts(
 		issues.append("%s no tiene items configurados." % run_context)
 
 
-static func _validate_run_resource_paths(
+static func _validate_run_resources(
 	track_key: String,
 	level_number: int,
 	run_index: int,
@@ -223,7 +222,7 @@ static func _validate_run_resource_paths(
 	issues: Array[String]
 ) -> void:
 	for raw_resource_key in RUN_RESOURCE_KEYS:
-		var resource_key := str(raw_resource_key)
+		var resource_key: String = str(raw_resource_key)
 		_validate_resource_path(
 			str(run_definition.get(resource_key, "")),
 			"%s capitulo %d corrida %d %s"
@@ -233,20 +232,21 @@ static func _validate_run_resource_paths(
 
 
 static func _validate_run_category(
-	category: String,
 	run_context: String,
+	category: String,
 	issues: Array[String]
 ) -> void:
-	if GameTrackCatalog.get_category_label(category, "").is_empty():
-		issues.append("%s usa una categoria desconocida: %s" % [run_context, category])
+	if not GameTrackCatalog.get_category_label(category, "").is_empty():
+		return
+	issues.append("%s usa una categoria desconocida: %s" % [run_context, category])
 
 
 static func _validate_run_payload(
+	run_context: String,
 	run_definition: Dictionary,
 	negative_count: int,
 	positive_count: int,
 	category: String,
-	run_context: String,
 	issues: Array[String]
 ) -> void:
 	var raw_payload: Variant = run_definition.get("mechanic_payload", {})
@@ -272,11 +272,11 @@ static func _validate_run_payload(
 		)
 
 
-static func _get_track_key(track_definition: Dictionary) -> String:
+static func _read_track_key(track_definition: Dictionary) -> String:
 	return str(track_definition.get("key", "")).strip_edges()
 
 
-static func _format_run_context(track_key: String, level_number: int, run_index: int) -> String:
+static func _build_run_context(track_key: String, level_number: int, run_index: int) -> String:
 	return "La corrida %d del capitulo %d en %s" % [run_index, level_number, track_key]
 
 

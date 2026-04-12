@@ -37,14 +37,18 @@ func _register_book_resume_target() -> void:
 	SaveManager.set_resume_to_book(_active_track_key)
 
 
-func _resolve_configured_track_key() -> String:
-	if not track_key_override.strip_edges().is_empty():
-		return track_key_override.strip_edges()
-	return DEFAULT_TRACK_KEY
+func _get_track_key() -> String:
+	return ""
 
 
 func _resolve_book_track_key() -> String:
-	return _resolve_configured_track_key().strip_edges()
+	var configured_track_key: String = track_key_override.strip_edges()
+	if not configured_track_key.is_empty():
+		return configured_track_key
+	var scene_track_key: String = _get_track_key().strip_edges()
+	if not scene_track_key.is_empty():
+		return scene_track_key
+	return DEFAULT_TRACK_KEY
 
 
 func _refresh_chapter_button_lock_state() -> void:
