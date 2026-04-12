@@ -16,6 +16,7 @@ var current_level: int = 1
 const LEVELS_PER_BOOK := GameTrackCatalog.DEFAULT_LEVEL_COUNT
 const TRACK_KEYS := GameTrackCatalog.TRACK_ORDER
 const BOOK_LEVEL_COMPLETED_KEY := GameLevelContentCatalogScript.BOOK_LEVEL_COMPLETED_KEY
+const DEFAULT_PROGRESS_LABEL := "Tu progreso"
 const PARTIAL_LEVEL_STATES_KEY := "partial_level_states"
 const PROGRESS_SYSTEM_STATES_KEY := "progress_system_states"
 const PARTIAL_LEVEL_RUN_INDEX_KEY := "run_index"
@@ -42,32 +43,11 @@ func _init() -> void:
 	progress_system_state_by_key = _campaign_progress_store.build_empty_progress_system_state_map()
 
 
-func get_track_definitions() -> Array:
-	return GameTrackCatalog.get_track_definitions()
-
-
-func get_track_keys() -> Array:
-	return GameTrackCatalog.get_track_keys()
-
-
-func has_track(track_key: String) -> bool:
-	return GameTrackCatalog.has_track(track_key)
-
-
-func get_track_label(track_key: String) -> String:
-	return GameTrackCatalog.get_track_label(track_key, "Tu progreso")
-
-
-func get_track_summary_label(track_key: String) -> String:
-	return GameTrackCatalog.get_track_summary_label(track_key, "Tu progreso")
-
-
 func get_track_level_count(track_key: String = "") -> int:
-	var fallback_level_count := GameTrackCatalog.get_track_level_count(
+	return _content_catalog.get_track_level_count(
 		track_key,
-		LEVELS_PER_BOOK
+		GameTrackCatalog.get_track_level_count(track_key, LEVELS_PER_BOOK)
 	)
-	return _content_catalog.get_track_level_count(track_key, fallback_level_count)
 
 
 func get_max_track_level_count() -> int:
@@ -75,36 +55,7 @@ func get_max_track_level_count() -> int:
 
 
 func get_total_level_count() -> int:
-	return _content_catalog.get_total_level_count(
-		GameTrackCatalog.get_total_level_count()
-	)
-
-
-func get_book_scene_path(track_key: String) -> String:
-	return GameTrackCatalog.get_book_scene_path(track_key, "res://interface/archivero.tscn")
-
-
-func get_level_scene_path(track_key: String) -> String:
-	return GameTrackCatalog.get_level_scene_path(track_key, "res://interface/archivero.tscn")
-
-
-func get_track_book_scene_paths() -> Dictionary:
-	return GameTrackCatalog.get_book_scene_paths()
-
-
-func get_track_level_scene_paths() -> Dictionary:
-	return GameTrackCatalog.get_level_scene_paths()
-
-
-func get_track_labels() -> Dictionary:
-	return GameTrackCatalog.get_track_labels()
-
-
-func get_track_level_counts() -> Dictionary:
-	var level_counts: Dictionary = {}
-	for track_key in get_track_keys():
-		level_counts[track_key] = get_track_level_count(track_key)
-	return level_counts
+	return _content_catalog.get_total_level_count(GameTrackCatalog.get_total_level_count())
 
 
 func get_chapter_definition(track_key: String, level_number: int) -> Dictionary:
@@ -171,23 +122,33 @@ func is_level_unlocked(track_key: String, level_number: int) -> bool:
 
 
 func is_level_completed(track_key: String, level_number: int) -> bool:
-	var level_progress: Dictionary = _read_track_level_progress(track_key, level_number)
-	if level_progress.is_empty():
+	var track_progress := get_campaign_progress_for_track(track_key)
+	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
+	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
+	if not raw_level_progress is Dictionary:
 		return false
-	return bool(level_progress.get(BOOK_LEVEL_COMPLETED_KEY, false))
+	return bool((raw_level_progress as Dictionary).get(BOOK_LEVEL_COMPLETED_KEY, false))
 
 
 func format_progress_summary_text(summary: Dictionary = {}) -> String:
-	var progress_summary := _resolve_progress_summary_data(summary)
+	var progress_summary := summary if not summary.is_empty() else get_progress_summary()
 	var lines: Array[String] = []
-	for track_definition in get_track_definitions():
-		var progress_line := _format_track_progress_line(
-			track_definition,
-			progress_summary
-		)
-		if progress_line.is_empty():
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
 			continue
-		lines.append(progress_line)
+		var level_count: int = get_track_level_count(track_key)
+		var completed_level_count: int = int(progress_summary.get(track_key, 0))
+		var display_progress := 0
+		if level_count > 0:
+			display_progress = min(level_count, completed_level_count + 1)
+		var track_label := str(
+			track_definition.get(
+				"summary_label",
+				track_definition.get("label", DEFAULT_PROGRESS_LABEL)
+			)
+		)
+		lines.append("%s %d/%d" % [track_label, display_progress, level_count])
 	return "\n".join(lines)
 
 
@@ -235,39 +196,6 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	_campaign_progress_store.clear_partial_level_state(track_key, level_number)
 
 
-func _resolve_progress_summary_data(summary: Dictionary) -> Dictionary:
-	return summary if not summary.is_empty() else get_progress_summary()
-
-
-func _format_track_progress_line(
-	track_definition: Dictionary,
-	progress_summary: Dictionary
-) -> String:
-	var track_key := str(track_definition.get("key", "")).strip_edges()
-	if track_key.is_empty():
-		return ""
-	var level_count: int = get_track_level_count(track_key)
-	var completed_level_count: int = int(progress_summary.get(track_key, 0))
-	var display_progress: int = _resolve_track_progress_display_value(
-		level_count,
-		completed_level_count
-	)
-	return "%s %d/%d" % [
-		_resolve_track_summary_label(track_definition),
-		display_progress,
-		level_count
-	]
-
-
-func _resolve_track_summary_label(track_definition: Dictionary) -> String:
-	return str(
-		track_definition.get(
-			"summary_label",
-			track_definition.get("label", "Tu progreso")
-		)
-	)
-
-
 func _write_track_level_completion(
 	track_key: String,
 	level_number: int,
@@ -285,29 +213,11 @@ func _write_track_level_completion(
 	track_progress[resolved_level_number] = level_progress
 
 
-func _read_track_level_progress(track_key: String, level_number: int) -> Dictionary:
-	var track_progress := get_campaign_progress_for_track(track_key)
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	return raw_level_progress if raw_level_progress is Dictionary else {}
-
-
 func _resolve_track_level_number(track_key: String, level_number: int) -> int:
 	var clean_track_key := track_key.strip_edges()
 	var max_level_count := get_max_track_level_count()
-	if has_track(clean_track_key):
+	if GameTrackCatalog.has_track(clean_track_key):
 		max_level_count = get_track_level_count(clean_track_key)
 	if max_level_count <= 0:
 		return 1
 	return clampi(level_number, 1, max_level_count)
-
-
-func _resolve_track_progress_display_value(
-	level_count: int,
-	completed_level_count: int
-) -> int:
-	if level_count <= 0:
-		return 0
-	if completed_level_count >= level_count:
-		return level_count
-	return clampi(completed_level_count + 1, 1, level_count)

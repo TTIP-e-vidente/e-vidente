@@ -34,7 +34,10 @@ func _validate_track(track_definition: Dictionary, catalog) -> void:
 	var track_key := str(track_definition.get("key", "")).strip_edges()
 	var book_scene_path := str(track_definition.get("book_scene_path", ""))
 	var level_scene_path := str(track_definition.get("level_scene_path", ""))
-	var expected_level_count: int = int(GameTrackCatalog.get_track_level_count(track_key))
+	var expected_level_count := max(
+		1,
+		int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
+	)
 
 	_validate_track_metadata(
 		track_key,

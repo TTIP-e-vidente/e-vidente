@@ -2,7 +2,9 @@ extends RefCounted
 
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
-const PlateSortMechanicControllerScript := preload("res://niveles/mechanics/PlateSortMechanicController.gd")
+const PlateSortMechanicControllerScript := preload(
+	"res://niveles/mechanics/PlateSortMechanicController.gd"
+)
 
 const CONTROLLER_SCRIPTS := {
 	LevelMechanicTypes.PLATE_SORT: PlateSortMechanicControllerScript
@@ -13,7 +15,10 @@ static func get_default_mechanic_type() -> String:
 	return LevelMechanicTypes.PLATE_SORT
 
 
-static func normalize_mechanic_type(raw_mechanic_type: Variant, fallback: String = LevelMechanicTypes.PLATE_SORT) -> String:
+static func normalize_mechanic_type(
+	raw_mechanic_type: Variant,
+	fallback: String = LevelMechanicTypes.PLATE_SORT
+) -> String:
 	var clean_mechanic_type := str(raw_mechanic_type).strip_edges()
 	if clean_mechanic_type.is_empty():
 		return fallback

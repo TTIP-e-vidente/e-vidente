@@ -1,5 +1,7 @@
 extends RefCounted
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+
 var _manager
 
 
@@ -39,7 +41,7 @@ func get_current_resume_hint() -> String:
 		_manager.RESUME_CONTEXT_HUB,
 		_manager.RESUME_CONTEXT_BOOK,
 		_manager.RESUME_CONTEXT_LEVEL,
-		Global.get_track_labels()
+		_build_track_labels()
 	)
 
 
@@ -51,8 +53,13 @@ func record_level_completed(track_key: String, level_number: int) -> void:
 	Global.clear_partial_level_state(track_key, level_number)
 	set_resume_after_level_completed(track_key, level_number)
 	_manager.sync_runtime_progress_to_current_save()
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	var track_label := str(track_definition.get("label", track_key)).strip_edges()
 	append_history(
-		"Completaste %s - capitulo %d" % [Global.get_track_label(track_key), level_number],
+		"Completaste %s - capitulo %d" % [
+			track_label if not track_label.is_empty() else track_key,
+			level_number
+		],
 		{
 			"type": "level_completed",
 			"track": track_key,
@@ -115,19 +122,21 @@ func _should_keep_current_level_resume(allow_level_downgrade: bool) -> bool:
 
 
 func _build_book_resume_state(track_key: String) -> Dictionary:
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
 	return {
 		"context": _manager.RESUME_CONTEXT_BOOK,
 		"track_key": track_key,
-		"scene_path": Global.get_book_scene_path(track_key),
+		"scene_path": str(track_definition.get("book_scene_path", "")).strip_edges(),
 		"level_number": clampi(Global.current_level, 1, Global.get_track_level_count(track_key))
 	}
 
 
 func _build_level_resume_state(track_key: String, level_number: int) -> Dictionary:
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
 	return {
 		"context": _manager.RESUME_CONTEXT_LEVEL,
 		"track_key": track_key,
-		"scene_path": Global.get_level_scene_path(track_key),
+		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
 		"level_number": clampi(level_number, 1, Global.get_track_level_count(track_key))
 	}
 
@@ -180,12 +189,13 @@ func _resume_state_from_history_metadata(metadata: Dictionary) -> Dictionary:
 	var track_key: String = str(metadata.get("track", "")).strip_edges()
 	if context != _manager.RESUME_CONTEXT_LEVEL:
 		return {}
-	if not Global.has_track(track_key):
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	if track_definition.is_empty():
 		return {}
 	return {
 		"context": _manager.RESUME_CONTEXT_LEVEL,
 		"track_key": track_key,
-		"scene_path": Global.get_level_scene_path(track_key),
+		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
 		"level_number": clampi(
 			int(metadata.get("level", 1)),
 			1,
@@ -196,7 +206,8 @@ func _resume_state_from_history_metadata(metadata: Dictionary) -> Dictionary:
 
 func _resume_state_after_completed_level(metadata: Dictionary) -> Dictionary:
 	var track_key: String = str(metadata.get("track", "")).strip_edges()
-	if not Global.has_track(track_key):
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	if track_definition.is_empty():
 		return {}
 	var completed_level: int = clampi(
 		int(metadata.get("level", 1)),
@@ -210,9 +221,19 @@ func _resume_state_after_completed_level(metadata: Dictionary) -> Dictionary:
 	return {
 		"context": _manager.RESUME_CONTEXT_LEVEL,
 		"track_key": track_key,
-		"scene_path": Global.get_level_scene_path(track_key),
+		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
 		"level_number": completed_level + 1
 	}
+
+
+func _build_track_labels() -> Dictionary:
+	var labels := {}
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		labels[track_key] = str(track_definition.get("label", "")).strip_edges()
+	return labels
 
 
 func _is_saved_level_completed(track_key: String, level_number: int) -> bool:

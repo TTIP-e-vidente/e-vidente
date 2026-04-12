@@ -1,5 +1,7 @@
 extends Node
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+
 @warning_ignore("unused_signal")
 signal user_registered(profile: Dictionary)
 signal user_logged_in(profile: Dictionary)
@@ -198,8 +200,8 @@ func validate_save_name(title: String) -> Dictionary:
 func summarize_progress_data(progress: Variant) -> Dictionary:
 	return get_progress_state_helper().summarize_progress_data(
 		progress,
-		Global.get_track_keys(),
-		Global.get_track_level_counts()
+		GameTrackCatalog.get_track_keys(),
+		_build_track_level_counts()
 	)
 
 
@@ -313,7 +315,7 @@ func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
 		RESUME_CONTEXT_HUB,
 		RESUME_CONTEXT_BOOK,
 		RESUME_CONTEXT_LEVEL,
-		Global.get_track_labels()
+		_build_track_labels()
 	)
 
 
@@ -378,8 +380,48 @@ func _build_save_data_normalizer_context() -> Dictionary:
 		"resume_context_book": RESUME_CONTEXT_BOOK,
 		"resume_context_level": RESUME_CONTEXT_LEVEL,
 		"levels_per_book": Global.LEVELS_PER_BOOK,
-		"track_keys": Global.get_track_keys(),
-		"track_level_counts": Global.get_track_level_counts(),
-		"track_book_scene_paths": Global.get_track_book_scene_paths(),
-		"track_level_scene_paths": Global.get_track_level_scene_paths()
+		"track_keys": GameTrackCatalog.get_track_keys(),
+		"track_level_counts": _build_track_level_counts(),
+		"track_book_scene_paths": _build_track_book_scene_paths(),
+		"track_level_scene_paths": _build_track_level_scene_paths()
 	}
+
+
+func _build_track_level_counts() -> Dictionary:
+	var level_counts := {}
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		level_counts[track_key] = Global.get_track_level_count(track_key)
+	return level_counts
+
+
+func _build_track_labels() -> Dictionary:
+	var labels := {}
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		labels[track_key] = str(track_definition.get("label", "")).strip_edges()
+	return labels
+
+
+func _build_track_book_scene_paths() -> Dictionary:
+	var paths := {}
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		paths[track_key] = str(track_definition.get("book_scene_path", "")).strip_edges()
+	return paths
+
+
+func _build_track_level_scene_paths() -> Dictionary:
+	var paths := {}
+	for track_definition in GameTrackCatalog.get_track_definitions():
+		var track_key := str(track_definition.get("key", "")).strip_edges()
+		if track_key.is_empty():
+			continue
+		paths[track_key] = str(track_definition.get("level_scene_path", "")).strip_edges()
+	return paths

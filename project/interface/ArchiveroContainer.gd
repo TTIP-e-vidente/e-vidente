@@ -1,5 +1,6 @@
 extends VBoxContainer
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const TRACK_CARD_SCENE := preload("res://interface/container.tscn")
 
 
@@ -13,7 +14,7 @@ func rebuild_track_cards() -> void:
 
 func rebuild_track_cards_from_catalog() -> void:
 	_clear_existing_track_cards()
-	for track_definition in Global.get_track_definitions():
+	for track_definition in GameTrackCatalog.get_track_definitions():
 		_add_track_card(track_definition)
 
 

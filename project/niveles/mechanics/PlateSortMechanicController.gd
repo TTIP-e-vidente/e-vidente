@@ -18,7 +18,7 @@ func get_mechanic_type() -> String:
 
 
 func configure_run(run_data: Dictionary, level_resource: LevelResource) -> void:
-	var payload: Dictionary = _resolve_payload(run_data)
+	var payload: Dictionary = _read_run_payload(run_data)
 	level_resource.mechanic_type = get_mechanic_type()
 	level_resource.mechanic_payload = payload.duplicate(true)
 	level_resource.cantidadNegativos = int(payload.get("negative_count", 0))
@@ -26,14 +26,11 @@ func configure_run(run_data: Dictionary, level_resource: LevelResource) -> void:
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	if _restore_saved_runtime_items(saved_level_state):
-		_manager.layout_runtime_items()
-		_state_service.restore_saved_positive_items(saved_level_state)
+	if _restore_saved_items_and_layout(saved_level_state):
+		_restore_saved_plate_progress(saved_level_state)
 		return
-	_spawn_random_items()
-	_manager.level_items.shuffle()
-	_manager.layout_runtime_items()
-	_state_service.restore_saved_positive_items(saved_level_state)
+	_spawn_new_items_and_layout()
+	_restore_saved_plate_progress(saved_level_state)
 
 
 func build_partial_state() -> Dictionary:
@@ -52,10 +49,14 @@ func clear_runtime_state() -> void:
 	_manager.clear_runtime_items()
 
 
-func _resolve_payload(run_data: Dictionary) -> Dictionary:
+func _read_run_payload(run_data: Dictionary) -> Dictionary:
 	var raw_payload: Variant = run_data.get("mechanic_payload", {})
 	if raw_payload is Dictionary and not raw_payload.is_empty():
 		return (raw_payload as Dictionary).duplicate(true)
+	return _build_legacy_run_payload(run_data)
+
+
+func _build_legacy_run_payload(run_data: Dictionary) -> Dictionary:
 	return {
 		"negative_count": int(run_data.get("negative_count", 0)),
 		"positive_count": int(run_data.get("positive_count", 0)),
@@ -79,8 +80,21 @@ func _spawn_random_items() -> void:
 	)
 
 
-func _restore_saved_runtime_items(saved_level_state: Dictionary) -> bool:
-	return _state_service.spawn_items_from_saved_state(saved_level_state)
+func _restore_saved_items_and_layout(saved_level_state: Dictionary) -> bool:
+	if not _state_service.spawn_items_from_saved_state(saved_level_state):
+		return false
+	_manager.layout_runtime_items()
+	return true
+
+
+func _spawn_new_items_and_layout() -> void:
+	_spawn_random_items()
+	_manager.level_items.shuffle()
+	_manager.layout_runtime_items()
+
+
+func _restore_saved_plate_progress(saved_level_state: Dictionary) -> void:
+	_state_service.restore_saved_positive_items(saved_level_state)
 
 
 func _current_run_category() -> String:

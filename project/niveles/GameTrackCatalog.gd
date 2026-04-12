@@ -3,6 +3,7 @@ extends RefCounted
 const LevelItemScript := preload("res://resources/level_item.gd")
 
 const DEFAULT_LEVEL_COUNT := 6
+const DEFAULT_CATEGORY_LABEL := "Categoria"
 
 const TRACK_CELIAQUIA := "celiaquia"
 const TRACK_VEGANISMO := "veganismo"
@@ -104,132 +105,40 @@ static func get_track_keys() -> Array:
 static func get_track_definitions() -> Array:
 	var definitions: Array = []
 	for track_key in TRACK_ORDER:
-		definitions.append(get_track_definition(track_key))
+		definitions.append((TRACK_DEFINITIONS[track_key] as Dictionary).duplicate(true))
 	return definitions
 
 
 static func has_track(track_key: String) -> bool:
-	return TRACK_DEFINITIONS.has(track_key.strip_edges())
+	return TRACK_DEFINITIONS.has(_normalize_track_key(track_key))
 
 
 static func get_track_definition(track_key: String) -> Dictionary:
-	var clean_track_key := track_key.strip_edges()
+	var clean_track_key := _normalize_track_key(track_key)
 	if not TRACK_DEFINITIONS.has(clean_track_key):
 		return {}
 	return (TRACK_DEFINITIONS[clean_track_key] as Dictionary).duplicate(true)
 
 
-static func get_track_label(track_key: String, fallback: String = "Tu progreso") -> String:
-	return _get_track_string_field(track_key, "label", fallback)
-
-
-static func get_track_summary_label(track_key: String, fallback: String = "Tu progreso") -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(
-		track_definition.get(
-			"summary_label",
-			track_definition.get("label", fallback)
-		)
-	)
-
-
 static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
-	return max(1, _get_track_int_field(track_key, "level_count", fallback))
-
-
-static func get_track_condition_texture_key(
-	track_key: String,
-	fallback: String = ""
-) -> String:
-	return _get_track_string_field(
-		track_key,
-		"condition_texture_key",
-		fallback
-	).strip_edges()
-
-
-static func get_track_teaching_key_prefixes(track_key: String) -> Array:
-	return _get_track_array_field(track_key, "teaching_key_prefixes")
-
-
-static func teaching_key_belongs_to_track(track_key: String, teaching_key: String) -> bool:
-	var clean_teaching_key := teaching_key.strip_edges()
-	if clean_teaching_key.is_empty():
-		return false
-	var allowed_prefixes: Array = get_track_teaching_key_prefixes(track_key)
-	if allowed_prefixes.is_empty():
-		return true
-	for raw_prefix in allowed_prefixes:
-		var prefix := str(raw_prefix).strip_edges()
-		if not prefix.is_empty() and clean_teaching_key.begins_with(prefix):
-			return true
-	return false
-
-
-static func get_track_item_pool_strategy(
-	track_key: String,
-	fallback: String = ITEM_POOL_STRATEGY_LEGACY
-) -> String:
-	return _get_track_string_field(track_key, "item_pool_strategy", fallback).strip_edges()
-
-
-static func get_track_blocked_conditions(track_key: String) -> Array:
-	return _get_track_array_field(track_key, "blocked_conditions")
+	var track_definition := get_track_definition(track_key)
+	return max(1, int(track_definition.get("level_count", fallback)))
 
 
 static func get_total_level_count() -> int:
 	var total_levels := 0
-	for track_key in TRACK_ORDER:
-		total_levels += get_track_level_count(track_key)
+	for track_definition in get_track_definitions():
+		total_levels += max(
+			1,
+			int(track_definition.get("level_count", DEFAULT_LEVEL_COUNT))
+		)
 	return total_levels
 
 
-static func get_book_scene_path(track_key: String, fallback: String = "") -> String:
-	return _get_track_string_field(track_key, "book_scene_path", fallback)
-
-
-static func get_level_scene_path(track_key: String, fallback: String = "") -> String:
-	return _get_track_string_field(track_key, "level_scene_path", fallback)
-
-
-static func get_track_labels() -> Dictionary:
-	var labels := {}
-	for track_key in TRACK_ORDER:
-		labels[track_key] = get_track_label(track_key)
-	return labels
-
-
-static func get_track_summary_labels() -> Dictionary:
-	var labels := {}
-	for track_key in TRACK_ORDER:
-		labels[track_key] = get_track_summary_label(track_key)
-	return labels
-
-
-static func get_book_scene_paths() -> Dictionary:
-	var paths := {}
-	for track_key in TRACK_ORDER:
-		paths[track_key] = get_book_scene_path(track_key)
-	return paths
-
-
-static func get_level_scene_paths() -> Dictionary:
-	var paths := {}
-	for track_key in TRACK_ORDER:
-		paths[track_key] = get_level_scene_path(track_key)
-	return paths
-
-
-static func get_track_level_counts() -> Dictionary:
-	var level_counts := {}
-	for track_key in TRACK_ORDER:
-		level_counts[track_key] = get_track_level_count(track_key)
-	return level_counts
-
-
-static func get_category_label(category_code: String, fallback: String = "Categoria") -> String:
+static func get_category_label(
+	category_code: String,
+	fallback: String = DEFAULT_CATEGORY_LABEL
+) -> String:
 	var clean_category_code := normalize_category_code(category_code)
 	if not CATEGORY_DEFINITIONS.has(clean_category_code):
 		return fallback
@@ -251,31 +160,5 @@ static func categories_match(left_category: String, right_category: String) -> b
 	return normalize_category_code(left_category) == normalize_category_code(right_category)
 
 
-static func _get_track_string_field(
-	track_key: String,
-	field_name: String,
-	fallback: String = ""
-) -> String:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return str(track_definition.get(field_name, fallback))
-
-
-static func _get_track_int_field(
-	track_key: String,
-	field_name: String,
-	fallback: int
-) -> int:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return fallback
-	return int(track_definition.get(field_name, fallback))
-
-
-static func _get_track_array_field(track_key: String, field_name: String) -> Array:
-	var track_definition := get_track_definition(track_key)
-	if track_definition.is_empty():
-		return []
-	var raw_values: Variant = track_definition.get(field_name, [])
-	return raw_values.duplicate() if raw_values is Array else []
+static func _normalize_track_key(track_key: String) -> String:
+	return track_key.strip_edges()

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+
 const TEST_USERNAME := "overlay_user"
 const TEST_EMAIL := "overlay_user@example.com"
 const TEST_AGE := 21
@@ -67,7 +69,7 @@ func _run() -> void:
 		_assert(resume_hint_label != null, "Archivero deberia exponer el resumen de reanudacion")
 		_assert(resume_now_button != null, "Archivero deberia exponer un boton para retomar la partida desde el perfil")
 		_assert(save_status_label != null, "Archivero deberia exponer el label del estado de guardado")
-		_assert(archivero_container.get_child_count() == Global.get_track_definitions().size(), "Archivero deberia construir una tarjeta por cada track definido en el catalogo")
+		_assert(archivero_container.get_child_count() == GameTrackCatalog.get_track_definitions().size(), "Archivero deberia construir una tarjeta por cada track definido en el catalogo")
 
 		_assert(not profile_overlay.visible, "El overlay del perfil deberia iniciar cerrado")
 		_assert(profile_toggle_button.visible, "El boton de abrir perfil deberia iniciar visible")

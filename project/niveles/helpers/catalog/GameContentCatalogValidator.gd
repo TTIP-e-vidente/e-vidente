@@ -49,9 +49,13 @@ static func _validate_track_definitions(
 ) -> void:
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := _get_track_key(track_definition)
+		var expected_level_count := max(
+			1,
+			int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
+		)
 		_validate_track_chapters(
 			track_key,
-			GameTrackCatalog.get_track_level_count(track_key),
+			expected_level_count,
 			track_chapter_catalog.get(track_key, {}),
 			issues
 		)
@@ -184,11 +188,19 @@ static func _validate_run_teaching_key(
 	if teaching_key.is_empty():
 		issues.append("%s no define teaching_key." % run_context)
 		return
-	if not GameTrackCatalog.teaching_key_belongs_to_track(track_key, teaching_key):
-		issues.append(
-			"%s deberia usar una teaching_key propia del track: %s"
-			% [run_context, teaching_key]
-		)
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
+	var allowed_prefixes: Array = raw_prefixes if raw_prefixes is Array else []
+	if allowed_prefixes.is_empty():
+		return
+	for raw_prefix in allowed_prefixes:
+		var prefix := str(raw_prefix).strip_edges()
+		if not prefix.is_empty() and teaching_key.begins_with(prefix):
+			return
+	issues.append(
+		"%s deberia usar una teaching_key propia del track: %s"
+		% [run_context, teaching_key]
+	)
 
 
 static func _validate_run_counts(

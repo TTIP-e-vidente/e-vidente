@@ -19,11 +19,10 @@ static func build_item_pool_for_track(
 	var clean_track_key := _normalize_track_key(track_key)
 	if clean_track_key.is_empty():
 		return _build_legacy_fallback_pool(legacy_positive_items, legacy_negative_items)
-
-	var positive_items: Array = []
-	var negative_items: Array = []
 	var legacy_positive_item_weights := _build_item_weight_index(legacy_positive_items)
 	var legacy_negative_item_weights := _build_item_weight_index(legacy_negative_items)
+	var positive_items: Array = []
+	var negative_items: Array = []
 	for item in get_all_items():
 		if item == null:
 			continue
@@ -33,15 +32,24 @@ static func build_item_pool_for_track(
 			legacy_positive_item_weights,
 			legacy_negative_item_weights
 		)
-		_append_item_to_classified_pool(
-			classification,
-			item,
-			legacy_positive_item_weights,
-			legacy_negative_item_weights,
-			positive_items,
-			negative_items
-		)
-	return _build_classified_item_pool(positive_items, negative_items)
+		var item_path := _resolve_item_resource_path(item)
+		match classification:
+			POSITIVE_ITEMS_KEY:
+				_append_weighted_items(
+					positive_items,
+					item,
+					int(legacy_positive_item_weights.get(item_path, 1))
+				)
+			NEGATIVE_ITEMS_KEY:
+				_append_weighted_items(
+					negative_items,
+					item,
+					int(legacy_negative_item_weights.get(item_path, 1))
+				)
+	return {
+		POSITIVE_ITEMS_KEY: positive_items,
+		NEGATIVE_ITEMS_KEY: negative_items
+	}
 
 
 static func classify_item_for_track(
@@ -53,19 +61,50 @@ static func classify_item_for_track(
 	var clean_track_key := _normalize_track_key(track_key)
 	if item == null or clean_track_key.is_empty():
 		return NEGATIVE_ITEMS_KEY
+	var track_definition := GameTrackCatalog.get_track_definition(clean_track_key)
+	if (
+		item is Object
+		and item.has_method("is_explicitly_blocked_for_track")
+		and item.is_explicitly_blocked_for_track(clean_track_key)
+	):
+		return NEGATIVE_ITEMS_KEY
+	if (
+		item is Object
+		and item.has_method("is_explicitly_allowed_for_track")
+		and item.is_explicitly_allowed_for_track(clean_track_key)
+	):
+		return POSITIVE_ITEMS_KEY
 
-	var explicit_track_rule := _classify_by_explicit_track_rules(clean_track_key, item)
-	if not explicit_track_rule.is_empty():
-		return explicit_track_rule
+	var item_path := _resolve_item_resource_path(item)
+	var in_legacy_positive := legacy_positive_item_weights.has(item_path)
+	var in_legacy_negative := legacy_negative_item_weights.has(item_path)
+	if in_legacy_positive and not in_legacy_negative:
+		return POSITIVE_ITEMS_KEY
+	if in_legacy_negative and not in_legacy_positive:
+		return NEGATIVE_ITEMS_KEY
 
-	var legacy_pool_membership := _classify_by_legacy_pool_membership(
-		item,
-		legacy_positive_item_weights,
-		legacy_negative_item_weights
+	var uses_condition_strategy := (
+		str(
+			track_definition.get(
+				"item_pool_strategy",
+				GameTrackCatalog.ITEM_POOL_STRATEGY_LEGACY
+			)
+		).strip_edges()
+		== GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS
 	)
-	if not legacy_pool_membership.is_empty():
-		return legacy_pool_membership
-	return _classify_by_track_strategy(clean_track_key, item)
+	if not uses_condition_strategy:
+		return NEGATIVE_ITEMS_KEY
+	if not (item is Object and item.has_method("has_any_condition")):
+		return NEGATIVE_ITEMS_KEY
+	var raw_blocked_conditions: Variant = track_definition.get("blocked_conditions", [])
+	var blocked_conditions: Array = (
+		raw_blocked_conditions if raw_blocked_conditions is Array else []
+	)
+	return (
+		NEGATIVE_ITEMS_KEY
+		if item.has_any_condition(blocked_conditions)
+		else POSITIVE_ITEMS_KEY
+	)
 
 
 static func get_all_items() -> Array:
@@ -119,86 +158,8 @@ static func _build_legacy_fallback_pool(
 	}
 
 
-static func _append_item_to_classified_pool(
-	classification: String,
-	item: Variant,
-	legacy_positive_item_weights: Dictionary,
-	legacy_negative_item_weights: Dictionary,
-	positive_items: Array,
-	negative_items: Array
-) -> void:
-	var item_path := str((item as Resource).resource_path) if item is Resource else ""
-	match classification:
-		POSITIVE_ITEMS_KEY:
-			_append_weighted_items(
-				positive_items,
-				item,
-				int(legacy_positive_item_weights.get(item_path, 1))
-			)
-		NEGATIVE_ITEMS_KEY:
-			_append_weighted_items(
-				negative_items,
-				item,
-				int(legacy_negative_item_weights.get(item_path, 1))
-			)
-
-
-static func _build_classified_item_pool(
-	positive_items: Array,
-	negative_items: Array
-) -> Dictionary:
-	return {
-		POSITIVE_ITEMS_KEY: positive_items,
-		NEGATIVE_ITEMS_KEY: negative_items
-	}
-
-
-static func _classify_by_explicit_track_rules(track_key: String, item: Variant) -> String:
-	if (
-		item is Object
-		and item.has_method("is_explicitly_blocked_for_track")
-		and item.is_explicitly_blocked_for_track(track_key)
-	):
-		return NEGATIVE_ITEMS_KEY
-	if (
-		item is Object
-		and item.has_method("is_explicitly_allowed_for_track")
-		and item.is_explicitly_allowed_for_track(track_key)
-	):
-		return POSITIVE_ITEMS_KEY
-	return ""
-
-
-static func _classify_by_legacy_pool_membership(
-	item: Variant,
-	legacy_positive_item_weights: Dictionary,
-	legacy_negative_item_weights: Dictionary
-) -> String:
-	var item_path := str((item as Resource).resource_path) if item is Resource else ""
-	var in_legacy_positive := legacy_positive_item_weights.has(item_path)
-	var in_legacy_negative := legacy_negative_item_weights.has(item_path)
-	if in_legacy_positive and not in_legacy_negative:
-		return POSITIVE_ITEMS_KEY
-	if in_legacy_negative and not in_legacy_positive:
-		return NEGATIVE_ITEMS_KEY
-	return ""
-
-
-static func _classify_by_track_strategy(track_key: String, item: Variant) -> String:
-	if (
-		GameTrackCatalog.get_track_item_pool_strategy(track_key)
-		== GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS
-	):
-		if item is Object and item.has_method("has_any_condition"):
-			return (
-				NEGATIVE_ITEMS_KEY
-				if item.has_any_condition(
-					GameTrackCatalog.get_track_blocked_conditions(track_key)
-				)
-				else POSITIVE_ITEMS_KEY
-			)
-		return NEGATIVE_ITEMS_KEY
-	return NEGATIVE_ITEMS_KEY
+static func _resolve_item_resource_path(item: Variant) -> String:
+	return str((item as Resource).resource_path) if item is Resource else ""
 
 
 static func _build_item_weight_index(items: Array) -> Dictionary:
@@ -206,7 +167,7 @@ static func _build_item_weight_index(items: Array) -> Dictionary:
 	for item in items:
 		if item == null:
 			continue
-		var item_path := str(item.resource_path).strip_edges()
+		var item_path := _resolve_item_resource_path(item).strip_edges()
 		if item_path.is_empty():
 			continue
 		item_weight_index[item_path] = int(item_weight_index.get(item_path, 0)) + 1

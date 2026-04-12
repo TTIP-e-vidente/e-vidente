@@ -62,8 +62,9 @@ static func get_meal_texture_path(meal_key: String) -> String:
 
 
 static func get_condition_texture_path_for_track(track_key: String) -> String:
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
 	return get_condition_texture_path(
-		GameTrackCatalog.get_track_condition_texture_key(track_key)
+		str(track_definition.get("condition_texture_key", "")).strip_edges()
 	)
 
 
