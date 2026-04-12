@@ -11,24 +11,64 @@ const ArchiveroUiHelperScript := preload("res://interface/helpers/ArchiveroUiHel
 @onready var close_profile_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
 @onready var session_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/SessionPanel
 @onready var history_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel
-@onready var history_toggle_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/HistoryToggleButton
-@onready var reset_progress_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton
+@onready var profile_content: Control = (
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent
+)
+@onready var summary_content: Control = (
+	profile_content.get_node("SummaryPanel/MarginContainer/SummaryContent") as Control
+)
+@onready var secondary_actions_row: HBoxContainer = (
+	profile_content.get_node("SecondaryActionsRow") as HBoxContainer
+)
+@onready var status_row: HBoxContainer = (
+	profile_content.get_node("StatusRow") as HBoxContainer
+)
+@onready var history_content: Control = (
+	$ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent
+)
+@onready var history_toggle_button: Button = (
+	secondary_actions_row.get_node("HistoryToggleButton") as Button
+)
+@onready var reset_progress_button: Button = (
+	secondary_actions_row.get_node("ResetProgressButton") as Button
+)
 @onready var reset_progress_dialog: ConfirmationDialog = $ResetProgressDialog
-@onready var avatar_preview: TextureRect = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview
-@onready var avatar_state: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarState
-@onready var username_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel
-@onready var email_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/EmailBadge/MarginContainer/EmailLabel
-@onready var age_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/AgeBadge/MarginContainer/AgeLabel
-@onready var progress_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel/MarginContainer/ProgressLabel
-@onready var save_status_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/SaveCard/MarginContainer/SaveStatusLabel
-@onready var resume_hint_label: Label = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel
-@onready var resume_now_button: Button = $ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeNowButton
-@onready var history_text: RichTextLabel = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HistoryBody/MarginContainer/HistoryText
+@onready var avatar_preview: TextureRect = (
+	summary_content.get_node(
+		"AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview"
+	) as TextureRect
+)
+@onready var avatar_state: Label = (
+	summary_content.get_node("AvatarColumn/AvatarState") as Label
+)
+@onready var username_label: Label = (
+	summary_content.get_node("InfoColumn/UsernameLabel") as Label
+)
+@onready var email_label: Label = (
+	summary_content.get_node("InfoColumn/MetaRow/EmailBadge/MarginContainer/EmailLabel") as Label
+)
+@onready var age_label: Label = (
+	summary_content.get_node("InfoColumn/MetaRow/AgeBadge/MarginContainer/AgeLabel") as Label
+)
+@onready var progress_label: Label = (
+	summary_content.get_node("InfoColumn/ProgressPanel/MarginContainer/ProgressLabel") as Label
+)
+@onready var save_status_label: Label = (
+	status_row.get_node("SaveCard/MarginContainer/SaveStatusLabel") as Label
+)
+@onready var resume_hint_label: Label = (
+	status_row.get_node("ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel") as Label
+)
+@onready var resume_now_button: Button = (
+	status_row.get_node("ResumeCard/MarginContainer/ResumeContent/ResumeNowButton") as Button
+)
+@onready var history_text: RichTextLabel = (
+	history_content.get_node("HistoryBody/MarginContainer/HistoryText") as RichTextLabel
+)
 
 var start_position
 var archive_highlighted = false
 
-const PROFILE_SCENE := "res://interface/auth.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 
@@ -41,7 +81,10 @@ func _ready():
 	profile_toggle_button.icon = SAVE_ICON_IDLE
 	profile_toggle_button.text = "Mi progreso"
 	reset_progress_dialog.title = "Reiniciar progreso"
-	reset_progress_dialog.dialog_text = "Esto borrara el avance guardado, el historial y las partidas retomables de este dispositivo. El perfil visible se conserva."
+	reset_progress_dialog.dialog_text = (
+		"Esto borrara el avance guardado, el historial y las partidas retomables "
+		+ "de este dispositivo. El perfil visible se conserva."
+	)
 	reset_progress_dialog.get_ok_button().text = "Reiniciar"
 	history_panel.visible = false
 	history_toggle_button.text = "Ver historial"
@@ -61,8 +104,11 @@ func _refresh_dashboard() -> void:
 	age_label.text = "Edad: %s" % _ui_helper.format_optional_number(int(profile.get("age", 0)))
 	progress_label.text = Global.format_progress_summary_text(summary)
 	save_status_label.text = _ui_helper.format_save_status(save_status)
-	var can_resume := SaveManager.can_resume_game()
-	resume_hint_label.text = _ui_helper.format_resume_hint_label(can_resume, SaveManager.get_resume_hint())
+	var can_resume := SaveManager.can_resume_current_save()
+	resume_hint_label.text = _ui_helper.format_resume_hint_label(
+		can_resume,
+		SaveManager.get_current_resume_hint()
+	)
 	resume_now_button.visible = can_resume
 	resume_now_button.disabled = not can_resume
 	_update_toggle_button_state(save_status)
@@ -71,7 +117,7 @@ func _refresh_dashboard() -> void:
 	avatar_preview.texture = avatar_texture
 	avatar_state.text = "Avatar listo" if avatar_texture != null else "Avatar opcional"
 
-	var history := SaveManager.get_current_user_history()
+	var history := SaveManager.get_current_save_history()
 	if history.is_empty():
 		history_text.text = "Todavia no hay actividad guardada."
 		_sync_profile_overlay_state()
@@ -138,23 +184,23 @@ func _on_mouse_exited():
 
 func _on_atrás_pressed():
 	SaveManager.save_current_user_progress()
-	GameSceneRouter.go_to_intro(get_tree())
+	GameSceneRouter.go_to_main_menu(get_tree())
 
 func _on_guardar_pressed() -> void:
 	SaveManager.record_manual_save()
 
 
 func _on_resume_now_button_pressed() -> void:
-	if not SaveManager.can_resume_game():
+	if not SaveManager.can_resume_current_save():
 		return
 	_set_profile_overlay_visible(false)
-	var resume_state: Dictionary = SaveManager.load_progress_and_get_resume_state(false)
+	var resume_state: Dictionary = SaveManager.load_current_save_and_get_resume_state(false)
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
 
 func _on_editar_perfil_pressed() -> void:
 	SaveManager.save_current_user_progress()
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE)
-	get_tree().change_scene_to_file(PROFILE_SCENE)
+	GameSceneRouter.go_to_profile_editor(get_tree())
 
 func _on_history_toggle_button_pressed() -> void:
 	_set_history_panel_visible(not history_panel.visible)

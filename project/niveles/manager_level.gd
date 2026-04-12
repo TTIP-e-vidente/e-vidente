@@ -2,12 +2,13 @@ extends Node
 class_name ManagerLevel
 
 const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
+const LevelSceneRefsScript := preload("res://niveles/helpers/LevelSceneRefs.gd")
+const LevelItemRuntimeScript := preload("res://niveles/helpers/LevelItemRuntime.gd")
 
 @export var level_resource: LevelResource
 
 @onready var plato: Plato = %Plato
 
-var item_spawn_position: Vector2
 var spawned_items: Array = []
 var lista_items: Array:
 	get:
@@ -19,34 +20,48 @@ var lista_items: Array:
 @onready var teaching_sprite: Sprite2D = $"../Ensenanza"
 var current_track_key := ""
 var current_run_index := 1
-var current_run_data: Dictionary = {}
+var current_run_definition: Dictionary = {}
 var current_mechanic_type := ""
 var _mechanic_controllers: Dictionary = {}
 var _active_mechanic_controller = null
+var _scene_refs = null
+var _item_runtime = null
 
 
 func _ready() -> void:
+	_ensure_runtime_services()
 	_register_mechanics()
 
 
 func setup(level_scene: Node) -> void:
-	if not _ensure_level_references():
+	_ensure_runtime_services()
+	if not _bind_level_scene_nodes():
 		return
-	current_track_key = ""
-	if level_scene != null and level_scene.has_method("_get_resume_track_key"):
-		current_track_key = str(level_scene._get_resume_track_key()).strip_edges()
+	_initialize_runtime_from_scene(level_scene)
+
+
+func _initialize_runtime_from_scene(level_scene: Node) -> void:
+	current_track_key = _resolve_track_key_from_scene(level_scene)
+	_clear_track_pool_cache()
+	var saved_partial_state := _load_saved_partial_state()
+	current_run_index = _resolve_saved_run_index(saved_partial_state)
+	_load_active_run(saved_partial_state)
+
+
+func _clear_track_pool_cache() -> void:
 	if level_resource != null:
 		level_resource.clear_track_pool_cache()
-	var saved_level_state := Global.get_partial_level_state(current_track_key, Global.current_level)
-	current_run_index = _resolve_saved_run_index(saved_level_state)
-	_load_current_run(saved_level_state)
+
+
+func _load_saved_partial_state() -> Dictionary:
+	return Global.get_partial_level_state(current_track_key, Global.current_level)
 
 
 func advance_to_next_run() -> bool:
 	if current_run_index >= get_total_runs():
 		return false
 	current_run_index += 1
-	_load_current_run({Global.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index})
+	_load_active_run({Global.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index})
 	return true
 
 
@@ -58,19 +73,62 @@ func get_total_runs() -> int:
 	return max(1, Global.get_chapter_run_count(current_track_key, Global.current_level))
 
 
-func build_partial_save_state() -> Dictionary:
+func _load_active_run(saved_partial_state: Dictionary) -> void:
+	_clear_current_mechanic_state()
+	current_run_definition = _read_current_run_definition()
+	if current_run_definition.is_empty():
+		push_error(
+			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
+			% [current_track_key, Global.current_level, current_run_index]
+		)
+		return
+	if not _configure_current_run():
+		return
+	_active_mechanic_controller.restore_or_start(saved_partial_state)
+
+
+func _read_current_run_definition() -> Dictionary:
+	return Global.get_chapter_run_definition(
+		current_track_key,
+		Global.current_level,
+		current_run_index
+	)
+
+
+func _configure_current_run() -> bool:
+	_ensure_runtime_services()
+	current_mechanic_type = _resolve_run_mechanic_type(current_run_definition)
+	_active_mechanic_controller = _resolve_mechanic_controller(current_mechanic_type)
+	if _active_mechanic_controller == null:
+		push_error(
+			"ManagerLevel no encontro controlador para la mecanica '%s'."
+			% current_mechanic_type
+		)
+		return false
+	_active_mechanic_controller.configure_run(current_run_definition, level_resource)
+	_scene_refs.apply_run_visuals(level_resource, current_run_definition)
+	return true
+
+
+func build_partial_level_state() -> Dictionary:
 	if _active_mechanic_controller == null:
 		return {}
 	var partial_state: Dictionary = _active_mechanic_controller.build_partial_state()
 	if partial_state.is_empty():
 		return {}
 	partial_state[Global.PARTIAL_LEVEL_RUN_INDEX_KEY] = current_run_index
-	partial_state[Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(partial_state.get(Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, current_mechanic_type)).strip_edges()
+	partial_state[Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
+		partial_state.get(Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, current_mechanic_type)
+	).strip_edges()
 	return partial_state
 
 
+func build_partial_save_state() -> Dictionary:
+	return build_partial_level_state()
+
+
 func store_partial_level_state(track_key: String) -> Dictionary:
-	var partial_state: Dictionary = build_partial_save_state()
+	var partial_state: Dictionary = build_partial_level_state()
 	Global.set_partial_level_state(track_key, Global.current_level, partial_state)
 	var summary: Dictionary = {
 		"has_partial_state": not partial_state.is_empty(),
@@ -88,50 +146,45 @@ func get_positive_items_in_plate_count() -> int:
 		return 0
 	return _active_mechanic_controller.get_progress_count()
 
-
-func _layout_items() -> void:
-	if (level_resource.cantidadNegativos + level_resource.cantidadPositivos) < 5:
-		item_spawn_position = Vector2(420, 680)
-	else:
-		item_spawn_position = Vector2(230, 680)
-	for item in spawned_items:
-		item.set_home_position(item_spawn_position)
-		item_spawn_position.x += 120
+func filter_items_by_category(items: Array, category: String) -> Array:
+	return Global.item_categoria(items, category)
 
 
-func _load_current_run(saved_level_state: Dictionary) -> void:
-	_clear_current_mechanic_state()
-	current_run_data = Global.get_chapter_run_definition(current_track_key, Global.current_level, current_run_index)
-	if current_run_data.is_empty():
-		push_error("ManagerLevel no encontro datos para %s capitulo %d corrida %d." % [current_track_key, Global.current_level, current_run_index])
-		return
-	if not _apply_current_run_data():
-		return
-	_active_mechanic_controller.restore_or_start(saved_level_state)
+func spawn_level_item(level_item: LevelItem, instance_id: String, is_positive: bool):
+	_ensure_runtime_services()
+	return _item_runtime.instantiate_level_item(level_item, instance_id, is_positive)
 
 
-func _apply_current_run_data() -> bool:
-	level_resource.comida = Global.resolve_texture(current_run_data.get("meal_texture_path", ""))
-	level_resource.condicion = Global.resolve_texture(current_run_data.get("condition_texture_path", ""))
-	level_resource.ensenanza = Global.resolve_texture(current_run_data.get("teaching_texture_path", ""))
-	current_mechanic_type = _resolve_run_mechanic_type(current_run_data)
-	_active_mechanic_controller = _resolve_mechanic_controller(current_mechanic_type)
-	if _active_mechanic_controller == null:
-		push_error("ManagerLevel no encontro controlador para la mecanica '%s'." % current_mechanic_type)
-		return false
-	_active_mechanic_controller.configure_run(current_run_data, level_resource)
-	return true
+func clear_runtime_items() -> void:
+	_ensure_runtime_services()
+	_item_runtime.clear_spawned_items()
 
 
-func _resolve_saved_run_index(saved_level_state: Dictionary) -> int:
-	return clampi(int(saved_level_state.get(Global.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)), 1, get_total_runs())
+func layout_runtime_items() -> void:
+	_ensure_runtime_services()
+	_item_runtime.layout_items(level_resource)
+func _resolve_saved_run_index(saved_partial_state: Dictionary) -> int:
+	return clampi(
+		int(saved_partial_state.get(Global.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)),
+		1,
+		get_total_runs()
+	)
 
 
-func _resolve_run_mechanic_type(run_data: Dictionary) -> String:
-	return LevelMechanicRegistry.normalize_mechanic_type(run_data.get("mechanic_type", ""))
+func _resolve_track_key_from_scene(level_scene: Node) -> String:
+	if level_scene == null or not level_scene.has_method("_get_resume_track_key"):
+		return ""
+	return str(level_scene.call("_get_resume_track_key")).strip_edges()
+
+
+func _resolve_run_mechanic_type(run_definition: Dictionary) -> String:
+	return LevelMechanicRegistry.normalize_mechanic_type(
+		run_definition.get("mechanic_type", "")
+	)
 
 
 func _register_mechanics() -> void:
+	_ensure_runtime_services()
 	_mechanic_controllers = LevelMechanicRegistry.build_controllers(self)
 
 
@@ -148,43 +201,16 @@ func _clear_current_mechanic_state() -> void:
 	if _active_mechanic_controller != null:
 		_active_mechanic_controller.clear_runtime_state()
 		return
-	_clear_spawned_items()
+	clear_runtime_items()
 
 
-func _instantiate_level_item(level_item: LevelItem, instance_id: String, is_positive: bool):
-	var new_item = level_item.escena.instantiate()
-	if new_item == null:
-		return null
-	new_item.setup(level_item, plato, is_positive, instance_id)
-	add_child(new_item)
-	spawned_items.append(new_item)
-	return new_item
+func _bind_level_scene_nodes() -> bool:
+	_ensure_runtime_services()
+	return _scene_refs.ensure_level_references()
 
 
-func _clear_spawned_items() -> void:
-	for item in spawned_items:
-		if is_instance_valid(item):
-			item.queue_free()
-	spawned_items = []
-	plato.elementos.clear()
-	plato.cantAlimentosPos.clear()
-	plato.cantAlimentosNeg.clear()
-
-
-func _ensure_level_references() -> bool:
-	var level_root := get_parent()
-	if level_root == null:
-		push_error("ManagerLevel no encontro la escena de nivel contenedora.")
-		return false
-	if not is_instance_valid(plato):
-		plato = level_root.get_node_or_null("Plato") as Plato
-	if not is_instance_valid(meal_sprite):
-		meal_sprite = level_root.get_node_or_null("Globo texto/Meal") as Sprite2D
-	if not is_instance_valid(condition_sprite):
-		condition_sprite = level_root.get_node_or_null("Globo texto/Condition") as Sprite2D
-	if not is_instance_valid(teaching_sprite):
-		teaching_sprite = level_root.get_node_or_null("Ensenanza") as Sprite2D
-	if not is_instance_valid(plato) or not is_instance_valid(meal_sprite) or not is_instance_valid(condition_sprite) or not is_instance_valid(teaching_sprite):
-		push_error("ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual.")
-		return false
-	return true
+func _ensure_runtime_services() -> void:
+	if _scene_refs == null:
+		_scene_refs = LevelSceneRefsScript.new(self)
+	if _item_runtime == null:
+		_item_runtime = LevelItemRuntimeScript.new(self)

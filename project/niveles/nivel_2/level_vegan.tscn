@@ -1,6 +1,6 @@
 [gd_scene load_steps=45 format=3]
 
-[ext_resource type="Script" path="res://niveles/nivel_2/Level-Vegan.gd" id="1_64ycw"]
+[ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="3_gaj1j"]
 [ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="4_mvmjh"]
@@ -179,6 +179,7 @@ shadow_size = 8
 
 [node name="Level-Vegan" type="Node"]
 script = ExtResource("1_64ycw")
+track_key_override = "veganismo"
 
 [node name="TituloNivel" type="Sprite2D" parent="."]
 z_index = 1

@@ -1,13 +1,21 @@
 extends RefCounted
 
 
-func validate_profile(username: String, age: int, email: String, avatar_source_path: String) -> Dictionary:
+func validate_profile(
+	username: String,
+	age: int,
+	email: String,
+	avatar_source_path: String
+) -> Dictionary:
 	var clean_username := username.strip_edges()
 	var clean_email := email.strip_edges()
 	var clean_avatar_path := avatar_source_path.strip_edges()
 
 	if not clean_username.is_empty() and clean_username.length() < 3:
-		return {"ok": false, "message": "El nombre visible debe tener al menos 3 caracteres o quedar vacio."}
+		return {
+			"ok": false,
+			"message": "El nombre visible debe tener al menos 3 caracteres o quedar vacio."
+		}
 	if age < 0:
 		return {"ok": false, "message": "La edad no puede ser negativa."}
 	if not clean_email.is_empty() and not is_valid_email(clean_email):
@@ -81,7 +89,30 @@ func remove_managed_avatar(avatars_dir: String, path: String) -> void:
 
 func safe_file_key(raw_key: String) -> String:
 	var safe_key := raw_key.to_lower().strip_edges()
-	for character in [" ", "/", "\\", ":", ".", ",", ";", "\"", "'", "?", "!", "@", "#", "$", "%", "&", "(", ")", "[", "]", "{", "}"]:
+	for character in [
+		" ",
+		"/",
+		"\\",
+		":",
+		".",
+		",",
+		";",
+		"\"",
+		"'",
+		"?",
+		"!",
+		"@",
+		"#",
+		"$",
+		"%",
+		"&",
+		"(",
+		")",
+		"[",
+		"]",
+		"{",
+		"}"
+	]:
 		safe_key = safe_key.replace(character, "_")
 	return safe_key
 

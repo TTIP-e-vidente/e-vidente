@@ -1,6 +1,5 @@
 extends RefCounted
 
-
 const LevelItemScript := preload("res://resources/level_item.gd")
 
 const DEFAULT_LEVEL_COUNT := 6
@@ -11,12 +10,15 @@ const CATEGORY_BEBIDA := "BEBIDA"
 const ITEM_POOL_STRATEGY_CONDITIONS := "conditions"
 const ITEM_POOL_STRATEGY_LEGACY := "legacy"
 const TRACK_ORDER := ["celiaquia", "veganismo", "veganismo_celiaquia", "cetogenica"]
+
 const TRACK_DEFINITIONS := {
 	"celiaquia": {
 		"key": "celiaquia",
 		"label": "Celiaquia",
 		"summary_label": "Celiaquia",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia.png",
+		"condition_texture_key": "prepara_celiaquia",
+		"teaching_key_prefixes": ["celiaquia_"],
 		"book_scene_path": "res://interface/libro.tscn",
 		"level_scene_path": "res://niveles/nivel_1/Level.tscn",
 		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
@@ -28,10 +30,15 @@ const TRACK_DEFINITIONS := {
 		"label": "Veganismo",
 		"summary_label": "Veganismo",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-veganismo.png",
+		"condition_texture_key": "prepara_vegane",
+		"teaching_key_prefixes": ["vegan_vegetariane_"],
 		"book_scene_path": "res://interface/libro-vegan.tscn",
 		"level_scene_path": "res://niveles/nivel_2/level_vegan.tscn",
 		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
-		"blocked_conditions": [LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
+		"blocked_conditions": [
+			LevelItemScript.Condicion.VEGANO,
+			LevelItemScript.Condicion.VEGETARIANO
+		],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
 	"veganismo_celiaquia": {
@@ -39,10 +46,16 @@ const TRACK_DEFINITIONS := {
 		"label": "Veganismo + Celiaquia",
 		"summary_label": "Mixto",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png",
+		"condition_texture_key": "prepara_vegan_gf",
+		"teaching_key_prefixes": ["celiaquia_", "vegan_vegetariane_"],
 		"book_scene_path": "res://interface/Libro-Vegan-GF.tscn",
 		"level_scene_path": "res://niveles/nivel_3/Level-Vegan-GF.tscn",
 		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
-		"blocked_conditions": [LevelItemScript.Condicion.CELIACO, LevelItemScript.Condicion.VEGANO, LevelItemScript.Condicion.VEGETARIANO],
+		"blocked_conditions": [
+			LevelItemScript.Condicion.CELIACO,
+			LevelItemScript.Condicion.VEGANO,
+			LevelItemScript.Condicion.VEGETARIANO
+		],
 		"level_count": DEFAULT_LEVEL_COUNT
 	},
 	"cetogenica": {
@@ -50,6 +63,8 @@ const TRACK_DEFINITIONS := {
 		"label": "Cetogenica",
 		"summary_label": "Keto",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-keto.png",
+		"condition_texture_key": "prepara_keto",
+		"teaching_key_prefixes": ["keto_"],
 		"book_scene_path": "res://interface/Libro-Keto.tscn",
 		"level_scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
 		"item_pool_strategy": ITEM_POOL_STRATEGY_LEGACY,
@@ -59,14 +74,16 @@ const TRACK_DEFINITIONS := {
 }
 const CATEGORY_DEFINITIONS := {
 	CATEGORY_ALMUERZO_CENA: {"code": CATEGORY_ALMUERZO_CENA, "label": "Almuerzo / Cena"},
-	CATEGORY_DESAYUNO_MERIENDA: {"code": CATEGORY_DESAYUNO_MERIENDA, "label": "Desayuno / Merienda"},
+	CATEGORY_DESAYUNO_MERIENDA: {
+		"code": CATEGORY_DESAYUNO_MERIENDA,
+		"label": "Desayuno / Merienda"
+	},
 	CATEGORY_BEBIDA: {"code": CATEGORY_BEBIDA, "label": "Bebida"}
 }
 
 
 static func get_track_keys() -> Array:
 	return TRACK_ORDER.duplicate()
-
 
 static func get_track_definitions() -> Array:
 	var definitions: Array = []
@@ -107,7 +124,40 @@ static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEV
 	return max(1, int(track_definition.get("level_count", fallback)))
 
 
-static func get_track_item_pool_strategy(track_key: String, fallback: String = ITEM_POOL_STRATEGY_LEGACY) -> String:
+static func get_track_condition_texture_key(
+	track_key: String,
+	fallback: String = ""
+) -> String:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return fallback
+	return str(track_definition.get("condition_texture_key", fallback)).strip_edges()
+
+
+static func get_track_teaching_key_prefixes(track_key: String) -> Array:
+	var track_definition := get_track_definition(track_key)
+	if track_definition.is_empty():
+		return []
+	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
+	return raw_prefixes.duplicate() if raw_prefixes is Array else []
+
+
+static func teaching_key_belongs_to_track(track_key: String, teaching_key: String) -> bool:
+	var clean_teaching_key := teaching_key.strip_edges()
+	if clean_teaching_key.is_empty():
+		return false
+	var allowed_prefixes: Array = get_track_teaching_key_prefixes(track_key)
+	if allowed_prefixes.is_empty():
+		return true
+	for raw_prefix in allowed_prefixes:
+		var prefix := str(raw_prefix).strip_edges()
+		if not prefix.is_empty() and clean_teaching_key.begins_with(prefix):
+			return true
+	return false
+static func get_track_item_pool_strategy(
+	track_key: String,
+	fallback: String = ITEM_POOL_STRATEGY_LEGACY
+) -> String:
 	var track_definition := get_track_definition(track_key)
 	if track_definition.is_empty():
 		return fallback
@@ -120,8 +170,6 @@ static func get_track_blocked_conditions(track_key: String) -> Array:
 		return []
 	var raw_conditions: Variant = track_definition.get("blocked_conditions", [])
 	return raw_conditions.duplicate() if raw_conditions is Array else []
-
-
 static func get_total_level_count() -> int:
 	var total_levels := 0
 	for track_key in TRACK_ORDER:
@@ -169,8 +217,6 @@ static func get_level_scene_paths() -> Dictionary:
 	for track_key in TRACK_ORDER:
 		paths[track_key] = get_level_scene_path(track_key)
 	return paths
-
-
 static func get_track_level_counts() -> Dictionary:
 	var level_counts := {}
 	for track_key in TRACK_ORDER:

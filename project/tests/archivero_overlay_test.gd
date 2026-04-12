@@ -97,7 +97,7 @@ func _run() -> void:
 		reset_progress_dialog.emit_signal("confirmed")
 		await process_frame
 		_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Confirmar el reinicio deberia limpiar el progreso jugable")
-		_assert(not SaveManager.can_resume_game(), "Confirmar el reinicio no deberia dejar una partida retomable")
+		_assert(not SaveManager.can_resume_current_save(), "Confirmar el reinicio no deberia dejar una partida retomable")
 		_assert(save_status_label.text.contains("progreso reiniciado"), "El overlay deberia reflejar que el ultimo guardado fue un reinicio del progreso")
 
 		var close_by_backdrop := InputEventMouseButton.new()

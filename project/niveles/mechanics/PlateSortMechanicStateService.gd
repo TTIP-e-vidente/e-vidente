@@ -17,7 +17,10 @@ func build_partial_state(mechanic_type: String, current_run_index: int) -> Dicti
 	var items: Array = raw_items if raw_items is Array else []
 	if items.is_empty() and current_run_index <= 1:
 		return {}
-	var raw_placed_item_ids: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	var raw_placed_item_ids: Variant = mechanic_state.get(
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		[]
+	)
 	var placed_item_ids: Array = raw_placed_item_ids if raw_placed_item_ids is Array else []
 	partial_state[Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY] = mechanic_state
 	partial_state[Global.PARTIAL_LEVEL_ITEMS_KEY] = items.duplicate(true)
@@ -27,7 +30,10 @@ func build_partial_state(mechanic_type: String, current_run_index: int) -> Dicti
 
 func build_partial_summary(partial_state: Dictionary) -> Dictionary:
 	var mechanic_state: Dictionary = extract_mechanic_state(partial_state)
-	var raw_placed_item_ids: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	var raw_placed_item_ids: Variant = mechanic_state.get(
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		[]
+	)
 	var placed_item_count: int = raw_placed_item_ids.size() if raw_placed_item_ids is Array else 0
 	return {
 		"placed_positive_count": placed_item_count,
@@ -44,24 +50,31 @@ func spawn_items_from_saved_state(saved_level_state: Dictionary) -> bool:
 		return false
 	for raw_item in raw_items:
 		if not raw_item is Dictionary:
-			_manager._clear_spawned_items()
+			_manager.clear_runtime_items()
 			return false
-		var item_path: String = str(raw_item.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")).strip_edges()
-		var instance_id: String = str(raw_item.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")).strip_edges()
+		var item_path: String = str(
+			raw_item.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
+		).strip_edges()
+		var instance_id: String = str(
+			raw_item.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
+		).strip_edges()
 		var is_positive: bool = bool(raw_item.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false))
 		var level_item: LevelItem = load(item_path) as LevelItem
 		if level_item == null or instance_id.is_empty():
-			_manager._clear_spawned_items()
+			_manager.clear_runtime_items()
 			return false
-		if _manager._instantiate_level_item(level_item, instance_id, is_positive) == null:
-			_manager._clear_spawned_items()
+		if _manager.spawn_level_item(level_item, instance_id, is_positive) == null:
+			_manager.clear_runtime_items()
 			return false
 	return not _manager.lista_items.is_empty()
 
 
 func restore_saved_positive_items(saved_level_state: Dictionary) -> void:
 	var mechanic_state: Dictionary = extract_mechanic_state(saved_level_state)
-	var raw_placed_item_ids: Variant = mechanic_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	var raw_placed_item_ids: Variant = mechanic_state.get(
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		[]
+	)
 	if not raw_placed_item_ids is Array or raw_placed_item_ids.is_empty():
 		return
 	var items_in_plate: Array = []
@@ -77,12 +90,18 @@ func restore_saved_positive_items(saved_level_state: Dictionary) -> void:
 
 
 func extract_mechanic_state(saved_level_state: Dictionary) -> Dictionary:
-	var raw_mechanic_state: Variant = saved_level_state.get(Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY, {})
+	var raw_mechanic_state: Variant = saved_level_state.get(
+		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
+		{}
+	)
 	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
 		return (raw_mechanic_state as Dictionary).duplicate(true)
 	return {
 		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, []),
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(
+			Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+			[]
+		)
 	}
 
 
@@ -127,5 +146,8 @@ func _plate_position_for_index(index: int, total_items: int) -> Vector2:
 	var row: int = floori(float(index) / float(columns))
 	var column: int = index % columns
 	var horizontal_origin: float = float(columns - 1) / 2.0
-	var offset: Vector2 = Vector2((float(column) - horizontal_origin) * 78.0, float(row) * 48.0 - 12.0)
+	var offset: Vector2 = Vector2(
+		(float(column) - horizontal_origin) * 78.0,
+		float(row) * 48.0 - 12.0
+	)
 	return _manager.plato.global_position + offset

@@ -1,7 +1,9 @@
 extends Resource
 class_name LevelResource
 
-const GameTrackItemPoolCatalog := preload("res://niveles/helpers/catalog/GameTrackItemPoolCatalog.gd")
+const GameTrackItemPoolResolver := preload(
+	"res://niveles/helpers/catalog/GameTrackItemPoolCatalog.gd"
+)
 
 @export var itemsPositivos : Array[LevelItem]
 @export var itemsNegativos : Array[LevelItem]
@@ -17,11 +19,17 @@ var _resolved_track_pools: Dictionary = {}
 
 
 func get_positive_items(track_key: String = "") -> Array:
-	return _get_track_pool(track_key).get(GameTrackItemPoolCatalog.POSITIVE_ITEMS_KEY, itemsPositivos.duplicate())
+	return _get_track_pool(track_key).get(
+		GameTrackItemPoolResolver.POSITIVE_ITEMS_KEY,
+		itemsPositivos.duplicate()
+	)
 
 
 func get_negative_items(track_key: String = "") -> Array:
-	return _get_track_pool(track_key).get(GameTrackItemPoolCatalog.NEGATIVE_ITEMS_KEY, itemsNegativos.duplicate())
+	return _get_track_pool(track_key).get(
+		GameTrackItemPoolResolver.NEGATIVE_ITEMS_KEY,
+		itemsNegativos.duplicate()
+	)
 
 
 func clear_track_pool_cache() -> void:
@@ -32,9 +40,15 @@ func _get_track_pool(track_key: String) -> Dictionary:
 	var clean_track_key := track_key.strip_edges()
 	if clean_track_key.is_empty():
 		return {
-			GameTrackItemPoolCatalog.POSITIVE_ITEMS_KEY: itemsPositivos.duplicate(),
-			GameTrackItemPoolCatalog.NEGATIVE_ITEMS_KEY: itemsNegativos.duplicate()
+			GameTrackItemPoolResolver.POSITIVE_ITEMS_KEY: itemsPositivos.duplicate(),
+			GameTrackItemPoolResolver.NEGATIVE_ITEMS_KEY: itemsNegativos.duplicate()
 		}
 	if not _resolved_track_pools.has(clean_track_key):
-		_resolved_track_pools[clean_track_key] = GameTrackItemPoolCatalog.build_track_pools(clean_track_key, itemsPositivos, itemsNegativos)
+		_resolved_track_pools[clean_track_key] = (
+			GameTrackItemPoolResolver.resolve_track_pools(
+				clean_track_key,
+				itemsPositivos,
+				itemsNegativos
+			)
+		)
 	return (_resolved_track_pools[clean_track_key] as Dictionary).duplicate(true)

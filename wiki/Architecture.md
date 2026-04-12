@@ -32,7 +32,30 @@ Cada alimento está definido como un `.tres`. Ahí vive la verdad del dato: si c
 
 ## Escena principal
 
-`evidente.tscn` es la escena de arranque configurada en `project.godot`. Funciona como portada y deriva a `intro.tscn`, que a su vez abre `selector.tscn` antes de entrar al flujo de recetas o preguntas.
+`evidente.tscn` es la escena de arranque configurada en `project.godot`.
+
+No es el menu principal. Su rol actual es mas acotado: funciona como portada animada y deriva a `intro.tscn`.
+
+`intro.tscn` es el menu principal real. Desde ahi se abre `selector.tscn`, que decide si el jugador entra al flujo de recetas, al modo preguntas o reanuda el ultimo punto guardado.
+
+`GameSceneRouter.gd` concentra la navegacion principal entre escenas para que el recorrido se pueda seguir sin buscar `change_scene_to_file()` repartidos por todo el proyecto.
+
+## Cómo seguir el flujo en código
+
+Si queres reconstruir el recorrido completo leyendo el menor numero posible de archivos, hoy conviene seguir este orden:
+
+1. `interface/evidente.gd`: portada animada de arranque.
+2. `niveles/intro.gd`: menu principal.
+3. `niveles/selector.gd`: selector entre recetas, preguntas y continuar.
+4. `interface/Archivero.gd`: hub visible del save local y entrada al flujo de recetas.
+5. `interface/libro.gd`: selector de capitulos por track.
+6. `niveles/nivel_1/Level.gd`: shell comun de cualquier nivel jugable.
+7. `niveles/manager_level.gd`: orquestador runtime de la corrida activa.
+8. `niveles/mechanics/PlateSortMechanicController.gd`: mecanica jugable actual.
+9. `interface/SaveManager.gd`: persistencia local y resume.
+10. `niveles/global.gd`: metadata de tracks, catalogo y progreso en memoria.
+
+En la practica, casi todo el flujo visible de la app sale de esa cadena.
 
 ## Flujo de datos
 
@@ -68,11 +91,14 @@ Feedback visual y sonoro
 
 ### Sistema de interfaz
 
-- `evidente.tscn`, `intro.tscn`, `selector.tscn`, `archivero.tscn` y `libro*.tscn` concentran la navegación principal.
-- Las vistas de recetas resuelven el drag and drop y el feedback de juego.
-- `selector.tscn` separa el flujo de recetas del modo preguntas.
+- `evidente.tscn` es la portada animada.
+- `intro.tscn` es el menu principal.
+- `selector.tscn` separa recetas, preguntas y continuar.
+- `GameSceneRouter.gd` centraliza la navegacion principal.
 - `Archivero` concentra el resumen de guardado y el acceso visible al perfil local.
-- `opciones.tscn` reúne ajustes y pantallas secundarias.
+- `libro*.tscn` muestran los capitulos habilitados de cada track.
+- `Level.gd` y `ManagerLevel.gd` separan flujo visible de escena y armado runtime del nivel.
+- `opciones.tscn` reune ajustes y pantallas secundarias.
 
 ### Sistema de preguntas
 
@@ -83,13 +109,13 @@ Feedback visual y sonoro
 
 ### Sistema de persistencia local
 
-- `SaveManager` funciona como autoload.
-- Guarda perfil local, historial, metadata y una partida retomable en el flujo visible.
-- `Global` exporta e importa progreso para separar runtime y almacenamiento.
-- `selector.tscn` y `archivero.tscn` son los puntos visibles principales del flujo de recetas.
-- La reanudacion claramente expuesta en UI hoy vive en el overlay de `Archivero`.
-
-Internamente el save mantiene una sesion activa y respaldo en disco, pero la documentacion funcional del juego asume un unico flujo de Guardar y Retomar.
+- `SaveManager` funciona como autoload y es la unica fachada publica del save local.
+- El modelo activo ya no expone slots reales: persiste un unico save local con `profile`, `progress`, `history`, `resume_state` y `save_meta`.
+- `interface/save_local/data/` normaliza payloads viejos y absorbe compatibilidad con saves legacy.
+- `interface/save_local/progress/` resuelve progreso, historial y resume.
+- `interface/save_local/persistence/` carga, escribe y recupera el save en disco.
+- `Global` mantiene el progreso runtime en memoria; `SaveManager` lo serializa y lo restaura.
+- `selector.tscn`, `Archivero`, `auth.tscn` y `Level.gd` son los puntos visibles donde ese flujo aparece en pantalla.
 
 Más detalle en [Persistencia Local](Persistencia-Local).
 

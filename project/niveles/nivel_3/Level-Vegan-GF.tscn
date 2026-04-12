@@ -1,6 +1,6 @@
 [gd_scene load_steps=44 format=3]
 
-[ext_resource type="Script" path="res://niveles/nivel_3/Level-Vegan-Gluten.gd" id="1_wi3ev"]
+[ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_wi3ev"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="2_f1fgs"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="3_catwr"]
 [ext_resource type="Script" path="res://niveles/Menú.gd" id="4_eqa8u"]
@@ -173,6 +173,7 @@ shadow_size = 8
 
 [node name="Level-vegan-gf" type="Node"]
 script = ExtResource("1_wi3ev")
+track_key_override = "veganismo_celiaquia"
 
 [node name="TituloNivel" type="Sprite2D" parent="."]
 z_index = 1

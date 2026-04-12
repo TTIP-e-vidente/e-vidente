@@ -1,41 +1,36 @@
 extends Node2D
+class_name ModeSelector
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
 
-@onready var background: AudioStreamPlayer2D = $Background
-@onready var play_backdrop: ColorRect = $PlayBackdrop
-@onready var play_panel: PanelContainer = $PlayPanel
-
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
-const QUESTIONS_SCENE := "res://preguntas/pregunta.tscn"
+@onready var background_music: AudioStreamPlayer2D = $Background
+@onready var resume_backdrop: ColorRect = $PlayBackdrop
+@onready var resume_panel: PanelContainer = $PlayPanel
 
 func _ready() -> void:
-	background.play()
+	_play_background_music()
 	_set_resume_overlay_visible(false)
 
 
 func _set_resume_overlay_visible(overlay_visible: bool) -> void:
-	play_backdrop.visible = overlay_visible
-	play_panel.visible = overlay_visible
+	resume_backdrop.visible = overlay_visible
+	resume_panel.visible = overlay_visible
 
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_file(ARCHIVERO_SCENE)
+	_open_recipe_hub()
 
 
 func _on_opciones_pressed() -> void:
-	get_tree().change_scene_to_file(QUESTIONS_SCENE)
+	_open_questions_mode()
 
 
 func _on_salir_pressed() -> void:
-	get_tree().quit()
+	_quit_game()
 
 
 func _on_continue_pressed() -> void:
-	if not SaveManager.can_resume_game():
-		_set_resume_overlay_visible(false)
-		return
-	var resume_state := SaveManager.load_progress_and_get_resume_state(false)
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
+	_resume_last_saved_flow()
 
 
 func _on_play_backdrop_gui_input(event: InputEvent) -> void:
@@ -50,5 +45,30 @@ func _on_play_close_pressed() -> void:
 func _on_mode_pressed() -> void:
 	_set_resume_overlay_visible(false)
 
+
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_intro(get_tree())
+	GameSceneRouter.go_to_main_menu(get_tree())
+
+
+func _play_background_music() -> void:
+	background_music.play()
+
+
+func _open_recipe_hub() -> void:
+	GameSceneRouter.go_to_archivero(get_tree())
+
+
+func _open_questions_mode() -> void:
+	GameSceneRouter.go_to_questions(get_tree())
+
+
+func _quit_game() -> void:
+	get_tree().quit()
+
+
+func _resume_last_saved_flow() -> void:
+	if not SaveManager.can_resume_current_save():
+		_set_resume_overlay_visible(false)
+		return
+	var resume_state := SaveManager.load_current_save_and_get_resume_state(false)
+	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)

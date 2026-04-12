@@ -1,5 +1,7 @@
 extends Node
 
+const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 @export var quiz: ThemePreg
 @export var correcto: Color
 @export var incorrecto : Color
@@ -39,10 +41,10 @@ func load_quiz() -> void:
 		
 func _respuesta_boton(boton) -> void:
 	if pregunta_actual.correct == boton.text:
-		boton.modulate = Color(0, 1, 0) # verde
+		boton.modulate = Color(0, 1, 0)
 		puntaje +=1
 	else:
-		boton.modulate = Color(1, 0, 0) # rojo
+		boton.modulate = Color(1, 0, 0)
 	
 	_siguiente_pregunta()
 	
@@ -76,4 +78,4 @@ func _on_jugar_nuevamente_pressed() -> void:
 
 
 func _on_atrás_pressed() -> void:
-	get_tree().change_scene_to_file("res://niveles/selector.tscn")
+	GameSceneRouter.go_to_mode_selector(get_tree())

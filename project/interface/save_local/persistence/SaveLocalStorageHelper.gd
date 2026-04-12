@@ -1,19 +1,32 @@
 extends RefCounted
 
-
-func load_available_save_data(save_path: String, temp_save_path: String, backup_save_path: String) -> Dictionary:
+func load_available_save_data(
+	save_path: String,
+	temp_save_path: String,
+	backup_save_path: String
+) -> Dictionary:
 	for candidate_path in [save_path, temp_save_path, backup_save_path]:
 		var candidate := read_save_data_from_path(candidate_path)
 		if bool(candidate.get("ok", false)):
 			return {
 				"ok": true,
 				"data": candidate.get("data", {}),
-				"source": save_source_from_path(candidate_path, save_path, temp_save_path, backup_save_path)
+				"source": save_source_from_path(
+					candidate_path,
+					save_path,
+					temp_save_path,
+					backup_save_path
+				)
 			}
 	return {"ok": false}
 
 
-func save_source_from_path(path: String, save_path: String, temp_save_path: String, backup_save_path: String) -> String:
+func save_source_from_path(
+	path: String,
+	save_path: String,
+	temp_save_path: String,
+	backup_save_path: String
+) -> String:
 	match path:
 		save_path:
 			return "primary"

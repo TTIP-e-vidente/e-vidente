@@ -69,7 +69,7 @@ func _run() -> void:
 	for index in range(SaveManager.HISTORY_LIMIT + 7):
 		SaveManager.record_manual_save()
 	await process_frame
-	_assert(SaveManager.get_current_user_history().size() == SaveManager.HISTORY_LIMIT, "El historial deberia respetar el limite maximo configurado")
+	_assert(SaveManager.get_current_save_history().size() == SaveManager.HISTORY_LIMIT, "El historial deberia respetar el limite maximo configurado")
 
 	_cleanup_test_files()
 	await process_frame

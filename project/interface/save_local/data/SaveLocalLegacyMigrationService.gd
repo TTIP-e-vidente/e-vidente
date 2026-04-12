@@ -2,29 +2,26 @@ extends RefCounted
 
 var _profile_helper
 var _config: Dictionary = {}
-var _default_save_data: Callable
-var _normalize_profile_data: Callable
-var _normalize_save_meta: Callable
-var _normalize_history: Callable
+var _data_normalizer_ref
 
 
-func _init(profile_helper, config: Dictionary, default_save_data: Callable, normalize_profile_data: Callable, normalize_save_meta: Callable, normalize_history: Callable):
+func _init(profile_helper, config: Dictionary, data_normalizer_ref):
 	_profile_helper = profile_helper
 	_config = config.duplicate(true)
-	_default_save_data = default_save_data
-	_normalize_profile_data = normalize_profile_data
-	_normalize_save_meta = normalize_save_meta
-	_normalize_history = normalize_history
+	_data_normalizer_ref = data_normalizer_ref
 
 
 func migrate_legacy_save_data(raw_data: Dictionary) -> Dictionary:
-	var normalized: Dictionary = _default_save_data.call()
+	var normalized: Dictionary = _data_normalizer().default_save_data()
 	var selected_user: Dictionary = _resolve_selected_legacy_user(raw_data)
 	if selected_user.is_empty():
 		return normalized
 
-	normalized["profile"] = _normalize_profile_data.call({
-		"username": selected_user.get("username", _config.get("default_profile_name", "Perfil local")),
+	var default_profile_name: String = str(
+		_config.get("default_profile_name", "Perfil local")
+	)
+	normalized["profile"] = _data_normalizer().normalize_profile_data({
+		"username": selected_user.get("username", default_profile_name),
 		"age": selected_user.get("age", 0),
 		"email": selected_user.get("email", ""),
 		"avatar_path": selected_user.get("avatar_path", ""),
@@ -36,12 +33,12 @@ func migrate_legacy_save_data(raw_data: Dictionary) -> Dictionary:
 	if migrated_progress is Dictionary:
 		normalized["progress"] = migrated_progress
 
-	normalized["save_meta"] = _normalize_save_meta.call({
+	normalized["save_meta"] = _data_normalizer().normalize_save_meta({
 		"last_saved_at": selected_user.get("updated_at", ""),
 		"last_saved_reason": "legacy_migration",
 		"write_count": 0
 	})
-	normalized["history"] = _normalize_history.call(selected_user.get("history", []))
+	normalized["history"] = _data_normalizer().normalize_history(selected_user.get("history", []))
 	return normalized
 
 
@@ -57,3 +54,7 @@ func _resolve_selected_legacy_user(raw_data: Dictionary) -> Dictionary:
 			if raw_users[first_key] is Dictionary:
 				selected_user = raw_users[first_key]
 	return selected_user
+
+
+func _data_normalizer():
+	return _data_normalizer_ref.get_ref()

@@ -85,7 +85,7 @@ func _run() -> void:
 
 		archivero_instance.queue_free()
 
-	var history: Array = SaveManager.get_current_user_history()
+	var history: Array = SaveManager.get_current_save_history()
 	_assert(history.size() >= 3, "El historial local no registro suficientes eventos del flujo smoke test")
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "load_repair" or str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "El save deberia conservar metadata del ultimo guardado")
 

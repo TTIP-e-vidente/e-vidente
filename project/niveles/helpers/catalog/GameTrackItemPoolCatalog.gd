@@ -11,7 +11,11 @@ static var _cached_items: Array = []
 static var _items_loaded := false
 
 
-static func build_track_pools(track_key: String, legacy_positive_items: Array = [], legacy_negative_items: Array = []) -> Dictionary:
+static func resolve_track_pools(
+	track_key: String,
+	legacy_positive_items: Array = [],
+	legacy_negative_items: Array = []
+) -> Dictionary:
 	var clean_track_key := track_key.strip_edges()
 	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
 		return {
@@ -26,20 +30,65 @@ static func build_track_pools(track_key: String, legacy_positive_items: Array = 
 	for item in get_all_items():
 		if item == null:
 			continue
-		var classification := classify_item_for_track(clean_track_key, item, legacy_positive_weights, legacy_negative_weights)
+		var classification := classify_item_for_track(
+			clean_track_key,
+			item,
+			legacy_positive_weights,
+			legacy_negative_weights
+		)
 		match classification:
 			POSITIVE_ITEMS_KEY:
-				_append_weighted_item(positive_items, item, int(legacy_positive_weights.get(item.resource_path, 1)))
+				_append_weighted_item(
+					positive_items,
+					item,
+					int(legacy_positive_weights.get(item.resource_path, 1))
+				)
 			NEGATIVE_ITEMS_KEY:
-				_append_weighted_item(negative_items, item, int(legacy_negative_weights.get(item.resource_path, 1)))
+				_append_weighted_item(
+					negative_items,
+					item,
+					int(legacy_negative_weights.get(item.resource_path, 1))
+				)
 	return {
 		POSITIVE_ITEMS_KEY: positive_items,
 		NEGATIVE_ITEMS_KEY: negative_items
 	}
 
 
-static func classify_item_for_track(track_key: String, item: Variant, legacy_positive_weights: Dictionary = {}, legacy_negative_weights: Dictionary = {}) -> String:
-	return _resolve_item_classification(track_key, item, legacy_positive_weights, legacy_negative_weights)
+static func build_track_pools(
+	track_key: String,
+	legacy_positive_items: Array = [],
+	legacy_negative_items: Array = []
+) -> Dictionary:
+	return resolve_track_pools(track_key, legacy_positive_items, legacy_negative_items)
+
+
+static func resolve_item_classification(
+	track_key: String,
+	item: Variant,
+	legacy_positive_weights: Dictionary = {},
+	legacy_negative_weights: Dictionary = {}
+) -> String:
+	return _resolve_item_classification(
+		track_key,
+		item,
+		legacy_positive_weights,
+		legacy_negative_weights
+	)
+
+
+static func classify_item_for_track(
+	track_key: String,
+	item: Variant,
+	legacy_positive_weights: Dictionary = {},
+	legacy_negative_weights: Dictionary = {}
+) -> String:
+	return resolve_item_classification(
+		track_key,
+		item,
+		legacy_positive_weights,
+		legacy_negative_weights
+	)
 
 
 static func get_all_items() -> Array:
@@ -74,7 +123,12 @@ static func _load_all_items() -> Array:
 	return items
 
 
-static func _resolve_item_classification(track_key: String, item: Variant, legacy_positive_weights: Dictionary, legacy_negative_weights: Dictionary) -> String:
+static func _resolve_item_classification(
+	track_key: String,
+	item: Variant,
+	legacy_positive_weights: Dictionary,
+	legacy_negative_weights: Dictionary
+) -> String:
 	if item == null:
 		return NEGATIVE_ITEMS_KEY
 
@@ -82,9 +136,17 @@ static func _resolve_item_classification(track_key: String, item: Variant, legac
 	if clean_track_key.is_empty():
 		return NEGATIVE_ITEMS_KEY
 
-	if item is Object and item.has_method("is_explicitly_blocked_for_track") and item.is_explicitly_blocked_for_track(clean_track_key):
+	if (
+		item is Object
+		and item.has_method("is_explicitly_blocked_for_track")
+		and item.is_explicitly_blocked_for_track(clean_track_key)
+	):
 		return NEGATIVE_ITEMS_KEY
-	if item is Object and item.has_method("is_explicitly_allowed_for_track") and item.is_explicitly_allowed_for_track(clean_track_key):
+	if (
+		item is Object
+		and item.has_method("is_explicitly_allowed_for_track")
+		and item.is_explicitly_allowed_for_track(clean_track_key)
+	):
 		return POSITIVE_ITEMS_KEY
 
 	var item_path := str((item as Resource).resource_path) if item is Resource else ""
@@ -95,9 +157,18 @@ static func _resolve_item_classification(track_key: String, item: Variant, legac
 	if in_legacy_negative and not in_legacy_positive:
 		return NEGATIVE_ITEMS_KEY
 
-	if GameTrackCatalog.get_track_item_pool_strategy(clean_track_key) == GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS:
+	if (
+		GameTrackCatalog.get_track_item_pool_strategy(clean_track_key)
+		== GameTrackCatalog.ITEM_POOL_STRATEGY_CONDITIONS
+	):
 		if item is Object and item.has_method("has_any_condition"):
-			return NEGATIVE_ITEMS_KEY if item.has_any_condition(GameTrackCatalog.get_track_blocked_conditions(clean_track_key)) else POSITIVE_ITEMS_KEY
+			return (
+				NEGATIVE_ITEMS_KEY
+				if item.has_any_condition(
+					GameTrackCatalog.get_track_blocked_conditions(clean_track_key)
+				)
+				else POSITIVE_ITEMS_KEY
+			)
 		return NEGATIVE_ITEMS_KEY
 
 	return NEGATIVE_ITEMS_KEY
@@ -116,5 +187,5 @@ static func _count_items_by_path(items: Array) -> Dictionary:
 
 
 static func _append_weighted_item(target_items: Array, item, weight: int) -> void:
-	for _index in range(max(1, weight)):
+	for unused_index in range(max(1, weight)):
 		target_items.append(item)

@@ -1,8 +1,7 @@
 extends RefCounted
 
-
-func validate_session_title(title: String, min_length: int, max_length: int) -> Dictionary:
-	var clean_title: String = normalize_session_title_value(title)
+func validate_save_name(title: String, min_length: int, max_length: int) -> Dictionary:
+	var clean_title: String = _normalize_save_name(title)
 	if clean_title.is_empty():
 		return {"ok": true, "title": "", "message": ""}
 	if clean_title.length() < min_length:
@@ -37,7 +36,17 @@ func default_resume_state(resume_context_hub: String, archivero_scene: String) -
 	}
 
 
-func normalize_resume_state(raw_resume_state: Dictionary, book_scenes: Dictionary, level_scenes: Dictionary, track_level_counts: Dictionary, archivero_scene: String, resume_context_hub: String, resume_context_book: String, resume_context_level: String, default_level_count: int) -> Dictionary:
+func normalize_resume_state(
+	raw_resume_state: Dictionary,
+	book_scenes: Dictionary,
+	level_scenes: Dictionary,
+	track_level_counts: Dictionary,
+	archivero_scene: String,
+	resume_context_hub: String,
+	resume_context_book: String,
+	resume_context_level: String,
+	default_level_count: int
+) -> Dictionary:
 	var track_key: String = str(raw_resume_state.get("track_key", "")).strip_edges()
 	var context: String = str(raw_resume_state.get("context", resume_context_hub)).strip_edges()
 	var level_count: int = max(1, int(track_level_counts.get(track_key, default_level_count)))
@@ -63,11 +72,7 @@ func normalize_resume_state(raw_resume_state: Dictionary, book_scenes: Dictionar
 	return default_resume_state(resume_context_hub, archivero_scene)
 
 
-func build_default_session_title(session_title_prefix: String, session_number: int) -> String:
-	return "%s %d" % [session_title_prefix, session_number]
-
-
-func normalize_session_title_value(title: String) -> String:
+func _normalize_save_name(title: String) -> String:
 	var clean_title: String = title.strip_edges()
 	for whitespace in ["\n", "\r", "\t"]:
 		clean_title = clean_title.replace(whitespace, " ")
@@ -76,16 +81,11 @@ func normalize_session_title_value(title: String) -> String:
 	return clean_title
 
 
-func build_default_session_title_from_id(session_title_prefix: String, session_id_prefix: String, session_id: String) -> String:
-	var clean_session_id: String = session_id.strip_edges()
-	if clean_session_id.begins_with(session_id_prefix):
-		var numeric_part: String = clean_session_id.trim_prefix(session_id_prefix)
-		if numeric_part.is_valid_int():
-			return build_default_session_title(session_title_prefix, int(numeric_part))
-	return session_title_prefix
-
-
-func summarize_progress_data(progress: Variant, track_keys: Array, track_level_counts: Dictionary) -> Dictionary:
+func summarize_progress_data(
+	progress: Variant,
+	track_keys: Array,
+	track_level_counts: Dictionary
+) -> Dictionary:
 	var progress_data: Dictionary = {}
 	var summary: Dictionary = {
 		"total": 0,
@@ -98,7 +98,10 @@ func summarize_progress_data(progress: Variant, track_keys: Array, track_level_c
 		var completed_levels: int = count_completed_progress_track(progress_data.get(track_key, []))
 		summary[track_key] = completed_levels
 		summary["total"] = int(summary.get("total", 0)) + completed_levels
-		summary["max_total"] = int(summary.get("max_total", 0)) + max(0, int(track_level_counts.get(track_key, 0)))
+		summary["max_total"] = int(summary.get("max_total", 0)) + max(
+			0,
+			int(track_level_counts.get(track_key, 0))
+		)
 	return summary
 
 
@@ -111,19 +114,25 @@ func count_completed_progress_track(track_progress: Variant) -> int:
 	return completed
 
 
-func session_updated_at(session: Dictionary) -> String:
-	var updated_at: String = str(session.get("updated_at", ""))
+func last_updated_at(state_data: Dictionary) -> String:
+	var updated_at: String = str(state_data.get("updated_at", ""))
 	if not updated_at.is_empty():
 		return updated_at
-	var save_meta: Variant = session.get("save_meta", {})
+	var save_meta: Variant = state_data.get("save_meta", {})
 	if save_meta is Dictionary:
 		updated_at = str(save_meta.get("last_saved_at", ""))
 	if not updated_at.is_empty():
 		return updated_at
-	return str(session.get("created_at", ""))
+	return str(state_data.get("created_at", ""))
 
 
-func format_resume_hint_from_state(resume_state: Dictionary, resume_context_hub: String, resume_context_book: String, resume_context_level: String, track_labels: Dictionary) -> String:
+func format_resume_hint_from_state(
+	resume_state: Dictionary,
+	resume_context_hub: String,
+	resume_context_book: String,
+	resume_context_level: String,
+	track_labels: Dictionary
+) -> String:
 	var context: String = str(resume_state.get("context", resume_context_hub))
 	var track_key: String = str(resume_state.get("track_key", ""))
 	var level_number: int = int(resume_state.get("level_number", 1))

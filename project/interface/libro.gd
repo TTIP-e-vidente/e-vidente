@@ -6,6 +6,7 @@ const CHAPTER_BUTTON_DUPLICATE_FLAGS := 14
 
 @onready var background = $Background
 @onready var chapter_container: VBoxContainer = $VBoxContainer
+@export var track_key_override := ""
 
 var _chapter_button_icons: Array[Texture2D] = []
 var _chapter_button_template: Button
@@ -20,6 +21,8 @@ func _ready() -> void:
 
 
 func _get_track_key() -> String:
+	if not track_key_override.strip_edges().is_empty():
+		return track_key_override.strip_edges()
 	return "celiaquia"
 
 
