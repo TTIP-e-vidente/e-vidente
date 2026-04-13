@@ -23,15 +23,10 @@ func configure_run(run_data: Dictionary, level_resource) -> void:
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	var restored_runtime_items: bool = bool(
-		_plate_sort_state_service.restore_items(saved_level_state)
-	)
-	if not restored_runtime_items:
-		_spawn_items_for_run()
-		_level_manager.level_items.shuffle()
+	if not _try_restore_saved_runtime_items(saved_level_state):
+		_start_new_runtime_items()
 
-	_layout_runtime_items()
-	_restore_items_in_plate(saved_level_state)
+	_finish_runtime_setup(saved_level_state)
 
 
 func build_partial_state() -> Dictionary:
@@ -51,6 +46,20 @@ func get_progress_count() -> int:
 
 func clear_runtime_state() -> void:
 	_level_manager.clear_runtime_items()
+
+
+func _try_restore_saved_runtime_items(saved_level_state: Dictionary) -> bool:
+	return bool(_plate_sort_state_service.restore_items(saved_level_state))
+
+
+func _start_new_runtime_items() -> void:
+	_spawn_runtime_items_for_current_run()
+	_shuffle_runtime_items()
+
+
+func _finish_runtime_setup(saved_level_state: Dictionary) -> void:
+	_layout_runtime_items()
+	_restore_items_in_plate(saved_level_state)
 
 
 func _apply_run_payload_to_level_resource(
@@ -83,13 +92,17 @@ func _restore_items_in_plate(saved_level_state: Dictionary) -> void:
 	_plate_sort_state_service.restore_items_in_plate(saved_level_state)
 
 
-func _spawn_items_for_run() -> void:
+func _spawn_runtime_items_for_current_run() -> void:
 	var level_resource = _level_manager.level_resource
 	var track_key: String = _level_manager.active_track_key
 	var category_code: String = _read_run_category_code(level_resource)
 
 	_spawn_positive_items(level_resource, track_key, category_code)
 	_spawn_negative_items(level_resource, track_key, category_code)
+
+
+func _shuffle_runtime_items() -> void:
+	_level_manager.level_items.shuffle()
 
 
 func _read_run_category_code(level_resource) -> String:
