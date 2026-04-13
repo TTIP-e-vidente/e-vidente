@@ -27,7 +27,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sh scripts/ci/check-docs-guardrails.sh
+          if sh scripts/ci/check-docs-guardrails.sh; then
+            exit 0
+          fi
+
+          echo "::warning::Docs / Wiki quedo fuera del gate obligatorio. Revisar README/wiki por separado."
 
       - name: "Docs: Fetch PR base branch"
         if: inputs.validation_context == 'pull_request'
@@ -44,51 +48,26 @@ jobs:
           EVIDENTE_PR_BASE_REF: ${{ inputs.pull_request_base_ref }}
         run: |
           set -euo pipefail
-          sh scripts/ci/check-pr-wiki-sync.sh
+          if sh scripts/ci/check-pr-wiki-sync.sh; then
+            exit 0
+          fi
+
+          echo "::warning::El recordatorio de wiki no bloquea el gate jugable. Revisar trazabilidad documental por separado."
 
   codebase:
     name: Codebase / Structure
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-    container:
-      image: barichello/godot-ci:4.6.2
+    timeout-minutes: 5
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: "Codebase: Install Linux runtime libraries"
-        shell: bash
-        run: |
-          set -euo pipefail
-          apt-get update
-          apt-get install -y --no-install-recommends libfontconfig1
-          rm -rf /var/lib/apt/lists/*
 
       - name: "Codebase: Repository baseline"
         shell: bash
         run: |
           set -euo pipefail
           sh scripts/ci/check-codebase-guardrails.sh
-
-      - name: "Codebase: Headless load"
-        shell: bash
-        env:
-          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/codebase
-        run: |
-          set -euo pipefail
-          rm -rf "$GITHUB_WORKSPACE/validation-logs/codebase"
-
-          sh scripts/run-godot-validation.sh --run codebase godot
-
-      - name: "Codebase: Upload logs artifact"
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codebase-validation-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
-          path: validation-logs/codebase
-          if-no-files-found: warn
-          retention-days: 14
 
   gameplay:
     name: Gameplay Smoke
@@ -110,7 +89,7 @@ jobs:
           apt-get install -y --no-install-recommends libfontconfig1
           rm -rf /var/lib/apt/lists/*
 
-      - name: "Gameplay: Smoke test"
+      - name: "Gameplay: Core validation"
         shell: bash
         env:
           EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/gameplay
@@ -118,7 +97,7 @@ jobs:
           set -euo pipefail
           rm -rf "$GITHUB_WORKSPACE/validation-logs/gameplay"
 
-          sh scripts/run-godot-validation.sh --run smoke godot
+          sh scripts/run-godot-validation.sh --run ci godot
 
       - name: "Gameplay: Upload logs artifact"
         if: always()

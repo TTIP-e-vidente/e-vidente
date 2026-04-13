@@ -73,10 +73,11 @@ func _spawn_runtime_items_for_current_run() -> void:
 	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
 	var category_code: String = str(payload.get("category", ""))
 
-	var positive_items: Array = _get_shuffled_track_items(
+	var positive_items: Array = _level_manager.filter_items_by_category(
 		level_resource.get_positive_items(track_key),
 		category_code
 	)
+	positive_items.shuffle()
 	_spawn_items_from_pool(
 		positive_items,
 		level_resource.cantidadPositivos,
@@ -84,10 +85,11 @@ func _spawn_runtime_items_for_current_run() -> void:
 		true
 	)
 
-	var negative_items: Array = _get_shuffled_track_items(
+	var negative_items: Array = _level_manager.filter_items_by_category(
 		level_resource.get_negative_items(track_key),
 		category_code
 	)
+	negative_items.shuffle()
 	_spawn_items_from_pool(
 		negative_items,
 		level_resource.cantidadNegativos,
