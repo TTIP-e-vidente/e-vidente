@@ -1,5 +1,7 @@
 param(
     [string]$GodotCommand,
+    [ValidateSet('ci', 'full', 'smoke', 'codebase', 'guardrails', 'pr-fast')]
+    [string]$Mode = 'ci',
     [switch]$IncludeExport
 )
 
@@ -59,11 +61,25 @@ function Invoke-GodotStep {
 $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 
-$steps = @(
-    @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') },
-    @{ Label = 'Content catalog validation test'; Hint = 'Revisar integridad del catalogo y de las escenas declaradas por track.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/content_catalog_validation_test.gd') },
-    @{ Label = 'Vertical slice smoke test'; Hint = 'Revisar el flujo minimo Intro -> Selector -> Archivero -> Libro -> Level.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
-)
+function Get-ValidationSteps {
+    param([string]$ValidationMode)
+
+    $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') }
+    $catalogStep = @{ Label = 'Content catalog validation test'; Hint = 'Revisar integridad del catalogo y de las escenas declaradas por track.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/content_catalog_validation_test.gd') }
+    $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Archivero -> Libro -> Gameplay.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
+
+    switch ($ValidationMode) {
+        'codebase' { return @($importStep) }
+        'guardrails' { return @($importStep) }
+        'smoke' { return @($smokeStep) }
+        'ci' { return @($importStep, $smokeStep) }
+        'pr-fast' { return @($importStep, $smokeStep) }
+        'full' { return @($importStep, $catalogStep, $smokeStep) }
+        default { throw "Modo de validacion no soportado: $ValidationMode" }
+    }
+}
+
+$steps = Get-ValidationSteps -ValidationMode $Mode
 
 Push-Location $repoRoot
 try {

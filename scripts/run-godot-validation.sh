@@ -46,8 +46,12 @@ run_step() {
 		printf '\n\n' >> "$COMBINED_LOG"
 	fi
 
+	failure_detail="$(grep -E 'SCRIPT ERROR:|Parse Error:|Compile Error:|Failed to load script|FAILED:|FALLO:' "$tmp_log" | tail -n 1 || true)"
+	if [ "$status" -eq 0 ] && [ -n "$failure_detail" ]; then
+		status=1
+	fi
+
 	if [ "$status" -ne 0 ]; then
-		failure_detail="$(grep -E 'FAILED:|FALLO:|Error:' "$tmp_log" | tail -n 1 || true)"
 		failure_excerpt="$(tail -n 20 "$tmp_log" | tr '\n' '|' | sed 's/[[:space:]]\+/ /g' | cut -c1-1500)"
 		echo ""
 		echo "FALLO: $label"
@@ -104,26 +108,69 @@ write_success_summary() {
 	fi
 }
 
-run_core_suite() {
+run_import_headless() {
 	run_step \
 		"01-import-headless" \
 		"Import headless" \
 		"Godot no pudo abrir el proyecto en limpio. Revisar parseo, autoloads y rutas res://." \
 		--headless --path project --editor --quit
+}
+
+
+run_content_catalog_validation() {
 	run_step \
 		"02-content-catalog-validation" \
 		"Content catalog validation test" \
 		"Fallo la integridad del catalogo y de las escenas declaradas por track." \
 		--headless --path project -s res://tests/content_catalog_validation_test.gd
+}
+
+
+run_gameplay_smoke() {
 	run_step \
 		"03-vertical-slice-smoke" \
-		"Vertical slice smoke test" \
-		"Se rompio el flujo minimo Intro -> Selector -> Archivero -> Libro -> Level." \
+		"Gameplay smoke test" \
+		"Se rompio el flujo minimo Splash -> Intro -> Selector -> Archivero -> Libro -> Gameplay." \
 		--headless --path project -s res://tests/vertical_slice_smoke_test.gd
+}
+
+
+run_codebase_suite() {
+	run_import_headless
+
+	write_success_summary \
+		"codebase" \
+		"import headless"
+}
+
+
+run_smoke_suite() {
+	run_gameplay_smoke
+
+	write_success_summary \
+		"smoke" \
+		"gameplay smoke"
+}
+
+
+run_ci_suite() {
+	run_import_headless
+	run_gameplay_smoke
 
 	write_success_summary \
 		"ci" \
-		"import headless + content catalog validation + vertical slice smoke"
+		"import headless + gameplay smoke"
+}
+
+
+run_full_suite() {
+	run_import_headless
+	run_content_catalog_validation
+	run_gameplay_smoke
+
+	write_success_summary \
+		"full" \
+		"import headless + content catalog validation + gameplay smoke"
 }
 
 run_godot_validation() {
@@ -139,8 +186,17 @@ run_godot_validation() {
 	fi
 
 	case "$mode" in
-		ci|full|pr-fast)
-			run_core_suite
+		codebase|guardrails)
+			run_codebase_suite
+			;;
+		smoke)
+			run_smoke_suite
+			;;
+		ci|pr-fast)
+			run_ci_suite
+			;;
+		full)
+			run_full_suite
 			;;
 		*)
 			echo "Modo de validacion no soportado: $mode" >&2
@@ -154,7 +210,7 @@ if [ "${1:-}" = "--run" ]; then
 	shift
 	mode="ci"
 	case "${1:-}" in
-		ci|full|pr-fast)
+		ci|full|pr-fast|smoke|codebase|guardrails)
 			mode="$1"
 			shift
 			;;

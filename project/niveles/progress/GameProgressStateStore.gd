@@ -1,9 +1,4 @@
 extends RefCounted
-## Store central del progreso jugable.
-##
-## Mantiene el progreso de campaña, el estado parcial por nivel y los estados
-## auxiliares de sistemas de progreso, delegando la normalización del save
-## parcial en GamePartialLevelStateCodec.
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GamePartialLevelStateCodecScript := preload(
@@ -91,7 +86,7 @@ func get_partial_level_state(track_key: String, level_number: int) -> Dictionary
 	if normalized_track_key.is_empty() or not GameTrackCatalog.has_track(normalized_track_key):
 		return {}
 
-	var max_level_number := _global_state.get_track_level_count(normalized_track_key)
+	var max_level_number: int = _global_state.get_track_level_count(normalized_track_key)
 	if max_level_number <= 0:
 		return {}
 
@@ -113,7 +108,7 @@ func set_partial_level_state(track_key: String, level_number: int, state: Dictio
 	if normalized_track_key.is_empty() or not GameTrackCatalog.has_track(normalized_track_key):
 		return
 
-	var max_level_number := _global_state.get_track_level_count(normalized_track_key)
+	var max_level_number: int = _global_state.get_track_level_count(normalized_track_key)
 	if max_level_number <= 0:
 		return
 
@@ -131,7 +126,7 @@ func set_partial_level_state(track_key: String, level_number: int, state: Dictio
 		_global_state.partial_level_state_by_track[normalized_track_key] = track_levels
 		return
 
-	var partial_level_state := _partial_level_state_codec.normalize_level_state(state)
+	var partial_level_state: Dictionary = _partial_level_state_codec.normalize_level_state(state)
 	if partial_level_state.is_empty():
 		track_levels.erase(str(resolved_level_number))
 	else:
@@ -144,7 +139,7 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	if normalized_track_key.is_empty() or not GameTrackCatalog.has_track(normalized_track_key):
 		return
 
-	var max_level_number := _global_state.get_track_level_count(normalized_track_key)
+	var max_level_number: int = _global_state.get_track_level_count(normalized_track_key)
 	if max_level_number <= 0:
 		return
 
@@ -208,7 +203,7 @@ func _normalize_system_states(raw_system_states: Variant) -> Dictionary:
 
 func _build_track_completion_flags(track_key: String) -> Array:
 	var flags: Array = []
-	var level_count := _global_state.get_track_level_count(track_key)
+	var level_count: int = _global_state.get_track_level_count(track_key)
 	for level_number in range(1, level_count + 1):
 		flags.append(_global_state.is_level_completed(track_key, level_number))
 	return flags
@@ -218,8 +213,8 @@ func _load_track_completion_flags(track_key: String, stored_flags: Variant) -> v
 	if not stored_flags is Array:
 		return
 
-	var track_progress := _global_state.get_campaign_progress_for_track(track_key)
-	var level_count := _global_state.get_track_level_count(track_key)
+	var track_progress: Dictionary = _global_state.get_campaign_progress_for_track(track_key)
+	var level_count: int = _global_state.get_track_level_count(track_key)
 	for level_index in range(min(stored_flags.size(), level_count)):
 		var level_number := level_index + 1
 		_set_level_completed_flag(track_progress, level_number, bool(stored_flags[level_index]))
@@ -227,7 +222,7 @@ func _load_track_completion_flags(track_key: String, stored_flags: Variant) -> v
 
 func _count_completed_levels(track_key: String) -> int:
 	var count := 0
-	var level_count := _global_state.get_track_level_count(track_key)
+	var level_count: int = _global_state.get_track_level_count(track_key)
 	for level_number in range(1, level_count + 1):
 		if _global_state.is_level_completed(track_key, level_number):
 			count += 1

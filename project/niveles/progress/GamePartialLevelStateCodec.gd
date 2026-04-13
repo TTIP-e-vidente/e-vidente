@@ -43,7 +43,7 @@ func normalize_track_states(raw_states: Variant) -> Dictionary:
 		var normalized_track_levels: Dictionary = {}
 
 		if raw_track_levels is Dictionary:
-			var max_level_number := _global_state.get_track_level_count(track_key)
+			var max_level_number: int = _global_state.get_track_level_count(track_key)
 			for raw_key in raw_track_levels.keys():
 				var level_key := str(raw_key).strip_edges()
 				if not level_key.is_valid_int():
@@ -67,7 +67,7 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 
 	var raw_state: Dictionary = raw_level_state
 
-	var run_index := max(
+	var run_index: int = max(
 		1,
 		int(raw_state.get(_global_state.PARTIAL_LEVEL_RUN_INDEX_KEY, 1))
 	)
@@ -79,7 +79,7 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 		{}
 	)
 
-	var normalized_mechanic_state := _normalize_mechanic_state(
+	var normalized_mechanic_state: Dictionary = _normalize_mechanic_state(
 		raw_state,
 		mechanic_type,
 		raw_mechanic_state
@@ -116,7 +116,7 @@ func remove_completed_states(partial_level_states: Dictionary) -> void:
 			continue
 
 		var pending_track_levels: Dictionary = {}
-		var max_level_number := _global_state.get_track_level_count(track_key)
+		var max_level_number: int = _global_state.get_track_level_count(track_key)
 
 		for raw_key in raw_track_levels.keys():
 			var level_key := str(raw_key).strip_edges()
@@ -174,12 +174,12 @@ func _normalize_plate_sort_mechanic_state(
 		}
 
 	var positive_item_ids: Dictionary = {}
-	var normalized_items := _normalize_plate_sort_items(
+	var normalized_items: Array = _normalize_plate_sort_items(
 		raw_plate_sort_state,
 		positive_item_ids
 	)
 
-	var normalized_placed_item_ids := _normalize_plate_sort_placed_item_ids(
+	var normalized_placed_item_ids: Array = _normalize_plate_sort_placed_item_ids(
 		raw_plate_sort_state,
 		positive_item_ids
 	)

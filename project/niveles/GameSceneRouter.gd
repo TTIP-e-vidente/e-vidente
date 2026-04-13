@@ -53,7 +53,9 @@ static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
 
 static func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
 	if level_number > 0:
-		Global.set_current_level_number(level_number, track_key)
+		var global_state := _get_global_state(tree)
+		if global_state != null:
+			global_state.set_current_level_number(level_number, track_key)
 	_change_scene_to_path(tree, _resolve_track_scene_path(track_key, LEVEL_SCENE_PATH_KEY))
 
 
@@ -74,3 +76,9 @@ static func _resolve_track_scene_path(track_key: String, scene_path_key: String)
 
 static func _change_scene_to_path(tree: SceneTree, scene_path: String) -> void:
 	tree.change_scene_to_file(scene_path)
+
+
+static func _get_global_state(tree: SceneTree) -> Node:
+	if tree == null:
+		return null
+	return tree.get_root().get_node_or_null("Global")

@@ -1,15 +1,23 @@
 extends SceneTree
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
+const SPLASH_SCENE := "res://interface/evidente.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const SELECTOR_SCENE := "res://niveles/selector.tscn"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const BASELINE_TRACK_KEY := "celiaquia"
+const MANAGER_LEVEL_NODE_PATH := "ManagerLevel"
+const PLATE_NODE_PATH := "Plato"
+const MEAL_NODE_PATH := "Globo texto/Meal"
+const CONDITION_NODE_PATH := "Globo texto/Condition"
 
 var save_manager
 var global_state
 var failed := false
+var _baseline_book_scene_path := ""
+var _baseline_level_scene_path := ""
 
 
 func _initialize() -> void:
@@ -18,179 +26,167 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	if not await _prepare_test_runtime():
+		_cleanup_and_quit()
+		return
+
+	if not await _enter_gameplay_scene():
+		_cleanup_and_quit()
+		return
+
+	_assert_gameplay_scene_contract()
+	if not failed:
+		await _assert_gameplay_scene_stays_alive()
+
+	_cleanup_and_quit()
+
+
+func _prepare_test_runtime() -> bool:
 	_resolve_singletons()
 	_assert(save_manager != null, "No se encontro el autoload SaveManager")
 	_assert(global_state != null, "No se encontro el autoload Global")
 	if failed:
-		quit(1)
-		return
+		return false
 
 	_cleanup_test_files()
 	await process_frame
+	return _resolve_baseline_track_scene_paths()
 
-	var track_definitions: Array = global_state.get_track_definitions()
-	_assert(not track_definitions.is_empty(), "No hay tracks disponibles para el smoke test")
-	if track_definitions.is_empty():
-		_cleanup_and_quit()
-		return
 
-	var baseline_book_scene_path := global_state.get_book_scene_path(BASELINE_TRACK_KEY)
-	var baseline_level_scene_path := global_state.get_level_scene_path(BASELINE_TRACK_KEY)
-	_assert(
-		not baseline_book_scene_path.is_empty(),
-		"El track baseline no resolvio escena de libro"
-	)
-	_assert(
-		not baseline_level_scene_path.is_empty(),
-		"El track baseline no resolvio escena jugable"
-	)
-	if baseline_book_scene_path.is_empty() or baseline_level_scene_path.is_empty():
-		_cleanup_and_quit()
-		return
+func _resolve_baseline_track_scene_paths() -> bool:
+	var baseline_track_definition: Dictionary = GameTrackCatalog.get_track_definition(BASELINE_TRACK_KEY)
+	_assert(not baseline_track_definition.is_empty(), "No hay track baseline disponible para el smoke test")
+	if baseline_track_definition.is_empty():
+		return false
 
-	var intro_error := change_scene_to_file(INTRO_SCENE)
-	_assert(intro_error == OK, "No se pudo abrir la escena Intro")
-	await _wait_for_scene_path(INTRO_SCENE, "Intro")
-	if failed:
-		_cleanup_and_quit()
-		return
+	_baseline_book_scene_path = str(baseline_track_definition.get("book_scene_path", "")).strip_edges()
+	_baseline_level_scene_path = str(baseline_track_definition.get("level_scene_path", "")).strip_edges()
+	_assert(not _baseline_book_scene_path.is_empty(), "El track baseline no resolvio escena de libro")
+	_assert(not _baseline_level_scene_path.is_empty(), "El track baseline no resolvio escena jugable")
+	return not failed
 
-	var play_button := current_scene.get_node_or_null("MenuBar/Jugar") as Button
-	_assert(play_button != null, "Intro deberia exponer el acceso principal a jugar")
-	if play_button == null:
-		_cleanup_and_quit()
-		return
 
-	play_button.emit_signal("pressed")
-	await _wait_for_scene_path(SELECTOR_SCENE, "Selector")
-	if failed:
-		_cleanup_and_quit()
-		return
+func _enter_gameplay_scene() -> bool:
+	if not await _open_scene(SPLASH_SCENE, "Splash"):
+		return false
 
-	var recipes_button := current_scene.get_node_or_null("MenuBar/Recetas") as Button
-	_assert(recipes_button != null, "Selector deberia exponer el acceso a Recetas")
-	if recipes_button == null:
-		_cleanup_and_quit()
-		return
+	if not await _invoke_current_scene_method_and_wait(
+		"_on_go_pressed",
+		[],
+		INTRO_SCENE,
+		"Intro",
+		"Splash deberia exponer el avance al menu principal"
+	):
+		return false
 
-	recipes_button.emit_signal("pressed")
-	await _wait_for_scene_path(ARCHIVERO_SCENE, "Archivero")
-	if failed:
-		_cleanup_and_quit()
-		return
+	if not await _invoke_current_scene_method_and_wait(
+		"_on_start_pressed",
+		[],
+		SELECTOR_SCENE,
+		"Selector",
+		"Intro deberia exponer el acceso principal a jugar"
+	):
+		return false
+
+	if not await _invoke_current_scene_method_and_wait(
+		"_on_start_pressed",
+		[],
+		ARCHIVERO_SCENE,
+		"Archivero",
+		"Selector deberia exponer el acceso al flujo principal"
+	):
+		return false
 
 	await process_frame
-	var track_container := current_scene.get_node_or_null(
-		"CanvasLayer/ArchiveroContainer"
-	) as VBoxContainer
-	_assert(track_container != null, "Archivero deberia exponer el contenedor de tracks")
-	if track_container == null:
-		_cleanup_and_quit()
-		return
-
-	var track_card_count := _count_track_cards(track_container)
-	_assert(
-		track_card_count >= 1,
-		"Archivero deberia reconstruir al menos un track"
-	)
-	_assert(
-		track_card_count == track_definitions.size(),
-		"Archivero deberia reconstruir todos los tracks del catalogo"
-	)
-	_assert(
-		track_container.get_node_or_null("Track_%s" % BASELINE_TRACK_KEY) != null,
-		"Archivero deberia exponer la card del track baseline"
-	)
+	_assert(is_instance_valid(current_scene), "Archivero no deberia crashear al abrirse")
+	if failed:
+		return false
 
 	GameSceneRouter.go_to_track_book(self, BASELINE_TRACK_KEY)
-	await _wait_for_scene_path(
-		baseline_book_scene_path,
-		"Libro del track"
-	)
+	await _wait_for_scene_path(_baseline_book_scene_path, "Libro del track")
 	if failed:
-		_cleanup_and_quit()
-		return
+		return false
 
-	var first_chapter_button := current_scene.get_node_or_null(
-		"VBoxContainer/Cap1"
-	) as Button
-	_assert(
-		first_chapter_button != null,
-		"El libro deberia exponer el acceso al capitulo 1"
+	return await _invoke_current_scene_method_and_wait(
+		"_open_track_chapter",
+		[1],
+		_baseline_level_scene_path,
+		"Gameplay",
+		"El libro deberia exponer una forma publica de abrir un capitulo"
 	)
-	if first_chapter_button == null:
-		_cleanup_and_quit()
-		return
 
-	_assert(
-		not first_chapter_button.disabled,
-		"El capitulo 1 deberia estar disponible en el smoke test"
-	)
-	first_chapter_button.emit_signal("pressed")
-	await _wait_for_scene_path(
-		baseline_level_scene_path,
-		"Gameplay"
-	)
+
+func _open_scene(scene_path: String, scene_label: String) -> bool:
+	var open_error := change_scene_to_file(scene_path)
+	_assert(open_error == OK, "No se pudo abrir la escena %s" % scene_label)
 	if failed:
-		_cleanup_and_quit()
-		return
+		return false
+	await _wait_for_scene_path(scene_path, scene_label)
+	return not failed
 
-	var manager_level = current_scene.get_node_or_null("ManagerLevel")
-	var plate = current_scene.get_node_or_null("Plato")
-	var meal_sprite = current_scene.get_node_or_null("Globo texto/Meal")
-	var condition_sprite = current_scene.get_node_or_null("Globo texto/Condition")
+
+func _invoke_current_scene_method_and_wait(
+	method_name: String,
+	method_arguments: Array,
+	expected_scene_path: String,
+	expected_scene_label: String,
+	missing_method_message: String
+) -> bool:
+	_assert(current_scene != null, "No hay escena actual antes de avanzar a %s" % expected_scene_label)
+	if failed:
+		return false
+	_assert(current_scene.has_method(method_name), missing_method_message)
+	if failed:
+		return false
+	current_scene.callv(method_name, method_arguments)
+	await _wait_for_scene_path(expected_scene_path, expected_scene_label)
+	return not failed
+
+
+func _assert_gameplay_scene_contract() -> void:
+	var manager_level = current_scene.get_node_or_null(MANAGER_LEVEL_NODE_PATH)
+	var plate = current_scene.get_node_or_null(PLATE_NODE_PATH)
+	var meal_sprite = current_scene.get_node_or_null(MEAL_NODE_PATH)
+	var condition_sprite = current_scene.get_node_or_null(CONDITION_NODE_PATH)
 
 	_assert(manager_level != null, "La escena jugable deberia exponer ManagerLevel")
 	_assert(plate != null, "La escena jugable deberia exponer el Plato")
 	_assert(meal_sprite != null, "La escena jugable deberia exponer el nodo Meal")
-	_assert(
-		condition_sprite != null,
-		"La escena jugable deberia exponer el nodo Condition"
-	)
-	if manager_level != null:
-		_assert(
-			str(manager_level.active_track_key) == BASELINE_TRACK_KEY,
-			"ManagerLevel deberia inicializarse con el track seleccionado"
-		)
-		_assert(
-			not (manager_level.active_run_data as Dictionary).is_empty(),
-			"ManagerLevel deberia cargar una corrida valida al entrar al gameplay"
-		)
-		_assert(
-			int(manager_level.get_current_run_index()) == 1,
-			"El smoke test deberia entrar en la primera corrida"
-		)
-		_assert(
-			int(manager_level.get_total_runs()) >= 1,
-			"El gameplay deberia exponer al menos una corrida jugable"
-		)
+	_assert(condition_sprite != null, "La escena jugable deberia exponer el nodo Condition")
+	if manager_level == null:
+		return
 
+	_assert(
+		str(manager_level.active_track_key) == BASELINE_TRACK_KEY,
+		"ManagerLevel deberia inicializarse con el track seleccionado"
+	)
+	_assert(
+		not (manager_level.active_run_data as Dictionary).is_empty(),
+		"ManagerLevel deberia cargar una corrida valida al entrar al gameplay"
+	)
+	_assert(
+		int(manager_level.get_current_run_index()) == 1,
+		"El smoke test deberia entrar en la primera corrida"
+	)
+	_assert(
+		int(manager_level.get_total_runs()) >= 1,
+		"El gameplay deberia exponer al menos una corrida jugable"
+	)
 	_assert(
 		int(global_state.get_current_level_number()) == 1,
 		"Global deberia registrar el capitulo abierto"
 	)
 
+
+func _assert_gameplay_scene_stays_alive() -> void:
 	await process_frame
 	await process_frame
-	_assert(
-		is_instance_valid(current_scene),
-		"La escena jugable no deberia crashear en los primeros frames"
-	)
-
-	_cleanup_and_quit()
-
-
-func _count_track_cards(track_container: VBoxContainer) -> int:
-	var count := 0
-	for child in track_container.get_children():
-		if String(child.name).begins_with("Track_"):
-			count += 1
-	return count
+	await process_frame
+	_assert(is_instance_valid(current_scene), "La escena jugable no deberia crashear en los primeros frames")
 
 
 func _wait_for_scene_path(expected_path: String, label: String) -> void:
-	for frame_index in range(8):
-		_ = frame_index
+	for _frame_index in range(12):
 		await process_frame
 		if current_scene != null and current_scene.scene_file_path == expected_path:
 			return

@@ -15,47 +15,58 @@ No hay validación diff-aware, no hay nightly y no hay export web dentro del gat
 
 ## Checks obligatorios
 
-- `Guardrails`
-- `Core Validation`
+- `Docs / Wiki`
+- `Codebase / Structure`
+- `Gameplay Smoke`
 
-Los dos bloquean merge. Con eso alcanza por ahora.
+Los tres bloquean merge. La idea es que cada job responda una sola pregunta.
 
-## `Guardrails`
+## `Docs / Wiki`
 
-Este job corta solo por problemas básicos del repo:
+Este job solo revisa que exista la documentación mínima del proyecto:
+
+- `README.md`
+- `wiki/Home.md`
+- `wiki/Getting-Started.md`
+- `wiki/CI.md`
+- `wiki/Architecture.md`
+- `wiki/Bitacora.md`
+
+No intenta validar calidad de redacción, links o consistencia fina. Si falla, debería ser porque desapareció documentación base o quedó vacía.
+
+## `Codebase / Structure`
+
+Este job corta solo por problemas técnicos básicos del slice:
 
 - estructura crítica del repo
-- escenas y archivos mínimos del slice jugable
+- escenas y archivos mínimos del flujo jugable
 - entrypoints del runner de validación
 - ESLint solo si existe configuración real y lockfile pinneado
+- carga headless del proyecto con `godot --headless --path project --editor --quit`
 
-No revisa docs, no mira la wiki y no suma warnings de relleno. Si falla, debería ser por algo que realmente dejó mal parado al repo.
+No corre tests de catálogo ni integración fina.
 
-## `Core Validation`
+## `Gameplay Smoke`
 
-Este job corre en `barichello/godot-ci:4.6.2` y usa `scripts/run-godot-validation.sh`.
+Este job corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `scripts/run-godot-validation.sh --run smoke godot`.
 
-Hoy el gate obligatorio quedó en tres pasos:
+El smoke test hace una pasada corta del flujo principal:
 
-- `godot --headless --path project --editor --quit`
-- `res://tests/content_catalog_validation_test.gd`
-- `res://tests/vertical_slice_smoke_test.gd`
-
-El smoke test hace un recorrido corto por el flujo principal del slice:
-
+- Splash
 - Intro
 - Selector
 - Archivero
-- Libro del primer track
-- Capítulo 1
+- Libro del track baseline
+- Apertura del capítulo 1
 - Entrada al gameplay
 
-Valida que la escena jugable cargue, que `ManagerLevel` tenga una corrida activa y que el slice no se caiga en los primeros frames. No intenta probar todo el juego. Solo confirma que el camino principal sigue vivo.
+Valida que la escena jugable cargue, que `ManagerLevel` tenga track y corrida activa, y que el slice no se caiga en los primeros frames. No intenta probar drag and drop, save/resume profundo ni navegación fina de todos los tracks.
 
 ## Qué quedó afuera del gate principal
 
 Estos tests siguen sirviendo, pero ya no bloquean cada PR:
 
+- `res://tests/content_catalog_validation_test.gd`
 - save/local profile
 - señales de `SaveManager`
 - migraciones legacy
@@ -80,24 +91,31 @@ La apuesta acá es que cada corrida se parezca lo más posible a un checkout lim
 En Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci
 ```
 
 Si `godot` no está en PATH:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
 ```
 
 En shell:
 
 ```bash
 sh scripts/run-godot-validation.sh --run ci godot
+
+Si querés correr solo una parte:
+
+- `sh scripts/run-godot-validation.sh --run codebase godot`
+- `sh scripts/run-godot-validation.sh --run smoke godot`
+- `sh scripts/run-godot-validation.sh --run full godot`
 ```
 
 ## Cómo leer un test
 
-- si falla `Guardrails`, revisar estructura base o tooling 
-- si falla `Core Validation`, revisar parseo, catálogo o flujo mínimo del juego
+- si falla `Docs / Wiki`, revisar documentación base del repo
+- si falla `Codebase / Structure`, revisar estructura base, tooling o carga headless
+- si falla `Gameplay Smoke`, revisar el flujo mínimo jugable del slice
 - si hace falta más profundidad, correr manualmente los tests específicos de `project/tests/`
 

@@ -1,8 +1,4 @@
 extends LevelMechanicController
-## Controller de la mecanica plate sort.
-##
-## Prepara la corrida actual y decide si debe restaurar el runtime desde un
-## save parcial o generar los items nuevos para la corrida.
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
 const PlateSortMechanicStateServiceScript := preload(
@@ -72,9 +68,9 @@ func _extract_run_payload(run_data: Dictionary) -> Dictionary:
 
 
 func _spawn_items_for_run() -> void:
-	var level_resource := _level_manager.level_resource
+	var level_resource: LevelResource = _level_manager.level_resource
 	var track_key: String = _level_manager.active_track_key
-	var raw_payload = level_resource.mechanic_payload
+	var raw_payload: Variant = level_resource.mechanic_payload
 	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
 	var category_code: String = str(payload.get("category", ""))
 
