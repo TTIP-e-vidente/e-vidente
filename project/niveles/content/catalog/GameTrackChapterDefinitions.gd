@@ -191,37 +191,25 @@ const CHAPTERS_BY_TRACK := {
 
 
 static func build_track_chapter_catalog() -> Dictionary:
-	return {
-		GameTrackCatalog.TRACK_CELIAQUIA: _build_chapters_for_track(
-			GameTrackCatalog.TRACK_CELIAQUIA
-		),
-		GameTrackCatalog.TRACK_VEGANISMO: _build_chapters_for_track(
-			GameTrackCatalog.TRACK_VEGANISMO
-		),
-		GameTrackCatalog.TRACK_VEGANISMO_CELIAQUIA: _build_chapters_for_track(
-			GameTrackCatalog.TRACK_VEGANISMO_CELIAQUIA
-		),
-		GameTrackCatalog.TRACK_CETOGENICA: _build_chapters_for_track(
-			GameTrackCatalog.TRACK_CETOGENICA
-		)
-	}
+	var chapters_by_track: Dictionary = {}
+	for track_key in GameTrackCatalog.get_track_keys():
+		var track_chapters: Dictionary = {}
+		var raw_chapters: Variant = CHAPTERS_BY_TRACK.get(track_key, [])
+		var chapter_list: Array = raw_chapters if raw_chapters is Array else []
 
+		for chapter_index in range(chapter_list.size()):
+			var raw_chapter_data: Variant = chapter_list[chapter_index]
+			if not raw_chapter_data is Dictionary:
+				continue
 
-static func _build_chapters_for_track(track_key: String) -> Dictionary:
-	var chapters: Dictionary = {}
-	var raw_chapters: Variant = CHAPTERS_BY_TRACK.get(track_key, [])
-	var chapter_list: Array = raw_chapters if raw_chapters is Array else []
-	var level_number: int = 1
+			var chapter_number: int = chapter_index + 1
+			track_chapters[chapter_number] = {
+				"runs": [_build_run_definition(track_key, raw_chapter_data)]
+			}
 
-	for chapter_data in chapter_list:
-		if not chapter_data is Dictionary:
-			continue
-		chapters[level_number] = {
-			"runs": [_build_run_definition(track_key, chapter_data)]
-		}
-		level_number += 1
+		chapters_by_track[track_key] = track_chapters
 
-	return chapters
+	return chapters_by_track
 
 
 static func _build_run_definition(track_key: String, chapter_data: Dictionary) -> Dictionary:
