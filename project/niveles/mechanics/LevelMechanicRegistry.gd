@@ -2,7 +2,7 @@ extends RefCounted
 
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
-const PlateSortMechanicControllerScript := preload(
+const PLATE_SORT_MECHANIC_CONTROLLER_PATH := (
 	"res://niveles/mechanics/PlateSortMechanicController.gd"
 )
 
@@ -28,6 +28,40 @@ static func has_mechanic_type(raw_mechanic_type: Variant) -> bool:
 
 
 static func build_controllers(level_manager) -> Dictionary:
-	return {
-		DEFAULT_MECHANIC_TYPE: PlateSortMechanicControllerScript.new(level_manager)
-	}
+	var controllers: Dictionary = {}
+	_register_controller(
+		controllers,
+		DEFAULT_MECHANIC_TYPE,
+		PLATE_SORT_MECHANIC_CONTROLLER_PATH,
+		level_manager
+	)
+	return controllers
+
+
+static func _register_controller(
+	controllers: Dictionary,
+	mechanic_type: String,
+	controller_script_path: String,
+	level_manager
+) -> void:
+	var controller_script: Variant = load(controller_script_path)
+	if controller_script == null:
+		push_error(
+			(
+				"LevelMechanicRegistry no pudo cargar el controlador '%s' en %s."
+			)
+			% [mechanic_type, controller_script_path]
+		)
+		return
+
+	var controller = controller_script.new(level_manager)
+	if controller == null:
+		push_error(
+			(
+				"LevelMechanicRegistry no pudo instanciar el controlador '%s' en %s."
+			)
+			% [mechanic_type, controller_script_path]
+		)
+		return
+
+	controllers[mechanic_type] = controller

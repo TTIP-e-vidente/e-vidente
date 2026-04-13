@@ -18,22 +18,20 @@ func get_mechanic_type() -> String:
 
 
 func configure_run(run_data: Dictionary, level_resource) -> void:
-	var run_payload := _extract_run_payload(run_data)
-
-	level_resource.mechanic_type = get_mechanic_type()
-	level_resource.mechanic_payload = run_payload.duplicate(true)
-	level_resource.cantidadNegativos = int(run_payload.get("negative_count", 0))
-	level_resource.cantidadPositivos = int(run_payload.get("positive_count", 0))
+	var run_payload: Dictionary = _extract_run_payload(run_data)
+	_apply_run_payload_to_level_resource(level_resource, run_payload)
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	var restored_saved_items: bool = _plate_sort_state_service.restore_items(saved_level_state)
-	if not restored_saved_items:
+	var restored_runtime_items: bool = bool(
+		_plate_sort_state_service.restore_items(saved_level_state)
+	)
+	if not restored_runtime_items:
 		_spawn_items_for_run()
 		_level_manager.level_items.shuffle()
 
-	_level_manager.layout_runtime_items()
-	_plate_sort_state_service.restore_items_in_plate(saved_level_state)
+	_layout_runtime_items()
+	_restore_items_in_plate(saved_level_state)
 
 
 func build_partial_state() -> Dictionary:
@@ -55,6 +53,16 @@ func clear_runtime_state() -> void:
 	_level_manager.clear_runtime_items()
 
 
+func _apply_run_payload_to_level_resource(
+	level_resource,
+	run_payload: Dictionary
+) -> void:
+	level_resource.mechanic_type = get_mechanic_type()
+	level_resource.mechanic_payload = run_payload.duplicate(true)
+	level_resource.cantidadNegativos = int(run_payload.get("negative_count", 0))
+	level_resource.cantidadPositivos = int(run_payload.get("positive_count", 0))
+
+
 func _extract_run_payload(run_data: Dictionary) -> Dictionary:
 	var nested: Variant = run_data.get("mechanic_payload", {})
 	if nested is Dictionary and not (nested as Dictionary).is_empty():
@@ -67,39 +75,78 @@ func _extract_run_payload(run_data: Dictionary) -> Dictionary:
 	}
 
 
+func _layout_runtime_items() -> void:
+	_level_manager.layout_runtime_items()
+
+
+func _restore_items_in_plate(saved_level_state: Dictionary) -> void:
+	_plate_sort_state_service.restore_items_in_plate(saved_level_state)
+
+
 func _spawn_items_for_run() -> void:
 	var level_resource = _level_manager.level_resource
 	var track_key: String = _level_manager.active_track_key
+	var category_code: String = _read_run_category_code(level_resource)
+
+	_spawn_positive_items(level_resource, track_key, category_code)
+	_spawn_negative_items(level_resource, track_key, category_code)
+
+
+func _read_run_category_code(level_resource) -> String:
 	var raw_payload: Variant = level_resource.mechanic_payload
 	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
-	var category_code: String = str(payload.get("category", ""))
+	return str(payload.get("category", ""))
 
-	var positive_items: Array = level_resource.get_positive_items(track_key)
-	positive_items = _level_manager.filter_items_by_category(positive_items, category_code)
-	positive_items.shuffle()
-	for item_index in range(level_resource.cantidadPositivos):
-		if positive_items.is_empty():
+
+func _spawn_positive_items(level_resource, track_key: String, category_code: String) -> void:
+	var positive_items: Array = _get_shuffled_track_items(
+		level_resource.get_positive_items(track_key),
+		category_code
+	)
+	_spawn_items_from_pool(
+		positive_items,
+		level_resource.cantidadPositivos,
+		"positive",
+		true
+	)
+
+
+func _spawn_negative_items(level_resource, track_key: String, category_code: String) -> void:
+	var negative_items: Array = _get_shuffled_track_items(
+		level_resource.get_negative_items(track_key),
+		category_code
+	)
+	_spawn_items_from_pool(
+		negative_items,
+		level_resource.cantidadNegativos,
+		"negative",
+		false
+	)
+
+
+func _get_shuffled_track_items(track_items: Array, category_code: String) -> Array:
+	var filtered_items: Array = _level_manager.filter_items_by_category(
+		track_items,
+		category_code
+	)
+	filtered_items.shuffle()
+	return filtered_items
+
+
+func _spawn_items_from_pool(
+	item_pool: Array,
+	wanted_count: int,
+	instance_prefix: String,
+	is_positive: bool
+) -> void:
+	for item_index in range(wanted_count):
+		if item_pool.is_empty():
 			break
-		var positive_item = positive_items.pop_front()
-		if positive_item == null:
+		var level_item = item_pool.pop_front()
+		if level_item == null:
 			continue
 		_level_manager.spawn_level_item(
-			positive_item,
-			"positive_%d" % item_index,
-			true
-		)
-
-	var negative_items: Array = level_resource.get_negative_items(track_key)
-	negative_items = _level_manager.filter_items_by_category(negative_items, category_code)
-	negative_items.shuffle()
-	for item_index in range(level_resource.cantidadNegativos):
-		if negative_items.is_empty():
-			break
-		var negative_item = negative_items.pop_front()
-		if negative_item == null:
-			continue
-		_level_manager.spawn_level_item(
-			negative_item,
-			"negative_%d" % item_index,
-			false
+			level_item,
+			"%s_%d" % [instance_prefix, item_index],
+			is_positive
 		)

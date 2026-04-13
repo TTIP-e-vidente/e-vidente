@@ -30,8 +30,7 @@ var _content_catalog = null
 
 
 func _ready() -> void:
-	_ensure_runtime_services()
-	_register_mechanics()
+	_bootstrap_level_runtime()
 
 
 func initialize_level_runtime(level_scene: Node) -> void:
@@ -213,16 +212,34 @@ func _read_active_run_definition() -> Dictionary:
 
 
 func _resolve_active_mechanic_controller(run_data: Dictionary):
-	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
-		run_data.get("mechanic_type", "")
-	)
-	if _mechanic_controllers.is_empty():
-		_register_mechanics()
+	active_mechanic_type = _read_requested_mechanic_type(run_data)
+	_ensure_mechanics_registered()
 	return _mechanic_controllers.get(active_mechanic_type)
 
 
+func _bootstrap_level_runtime() -> void:
+	_ensure_runtime_services()
+	_ensure_mechanics_registered()
+
+
+func _read_requested_mechanic_type(run_data: Dictionary) -> String:
+	return LevelMechanicRegistry.normalize_mechanic_type(
+		run_data.get("mechanic_type", "")
+	)
+
+
+func _ensure_mechanics_registered() -> void:
+	if not _mechanic_controllers.is_empty():
+		return
+	_register_mechanics()
+
+
 func _register_mechanics() -> void:
-	_mechanic_controllers = LevelMechanicRegistry.build_controllers(self)
+	_mechanic_controllers = _build_mechanic_controllers()
+
+
+func _build_mechanic_controllers() -> Dictionary:
+	return LevelMechanicRegistry.build_controllers(self)
 
 
 func _ensure_runtime_services() -> void:
