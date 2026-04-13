@@ -2,6 +2,14 @@ name: CI Shared Core (internal)
 
 on:
   workflow_call:
+    inputs:
+      validation_context:
+        required: true
+        type: string
+      pull_request_base_ref:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   docs:
@@ -12,12 +20,31 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: "Docs: Baseline"
         shell: bash
         run: |
           set -euo pipefail
           sh scripts/ci/check-docs-guardrails.sh
+
+      - name: "Docs: Fetch PR base branch"
+        if: inputs.validation_context == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${{ inputs.pull_request_base_ref }}:refs/remotes/origin/${{ inputs.pull_request_base_ref }}"
+
+      - name: "Docs: PR wiki sync reminder"
+        if: inputs.validation_context == 'pull_request'
+        shell: bash
+        env:
+          EVIDENTE_VALIDATION_CONTEXT: ${{ inputs.validation_context }}
+          EVIDENTE_PR_BASE_REF: ${{ inputs.pull_request_base_ref }}
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-pr-wiki-sync.sh
 
   codebase:
     name: Codebase / Structure

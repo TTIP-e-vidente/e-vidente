@@ -21,3 +21,5 @@ jobs:
   branch-validation:
     name: Commit
     uses: ./.github/workflows/ci-shared.yml
+    with:
+      validation_context: push

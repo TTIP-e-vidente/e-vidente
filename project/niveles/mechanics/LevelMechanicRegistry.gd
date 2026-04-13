@@ -44,11 +44,30 @@ static func _register_controller(
 	controller_script_path: String,
 	level_manager
 ) -> void:
-	var controller_script: Variant = load(controller_script_path)
-	if controller_script == null:
+	var raw_controller_script: Variant = load(controller_script_path)
+	if raw_controller_script == null:
 		push_error(
 			(
 				"LevelMechanicRegistry no pudo cargar el controlador '%s' en %s."
+			)
+			% [mechanic_type, controller_script_path]
+		)
+		return
+
+	if not raw_controller_script is Script:
+		push_error(
+			(
+				"LevelMechanicRegistry cargo un recurso invalido para '%s' en %s."
+			)
+			% [mechanic_type, controller_script_path]
+		)
+		return
+
+	var controller_script: Script = raw_controller_script
+	if not controller_script.can_instantiate():
+		push_error(
+			(
+				"LevelMechanicRegistry no puede instanciar '%s' en %s. Revisar errores de parseo o dependencias del script."
 			)
 			% [mechanic_type, controller_script_path]
 		)
