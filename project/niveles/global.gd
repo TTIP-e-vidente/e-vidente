@@ -2,10 +2,10 @@ extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload(
-	"res://niveles/helpers/GameLevelContentCatalog.gd"
+	"res://niveles/content/GameLevelContentCatalog.gd"
 )
 const GameProgressStateStoreScript := preload(
-	"res://niveles/helpers/GameProgressStateStore.gd"
+	"res://niveles/progress/GameProgressStateStore.gd"
 )
 
 var player_cambiante
@@ -111,7 +111,17 @@ func get_campaign_progress_for_track(track_key: String) -> Dictionary:
 
 
 func mark_level_completed(track_key: String, level_number: int) -> void:
-	_set_level_completed_flag(track_key, level_number, true)
+	var track_progress := get_campaign_progress_for_track(track_key)
+	if track_progress.is_empty():
+		return
+
+	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
+	var level_progress: Variant = track_progress.get(resolved_level_number, {})
+	if not level_progress is Dictionary:
+		return
+
+	level_progress[BOOK_LEVEL_COMPLETED_KEY] = true
+	track_progress[resolved_level_number] = level_progress
 
 
 func is_level_unlocked(track_key: String, level_number: int) -> bool:
@@ -122,9 +132,15 @@ func is_level_unlocked(track_key: String, level_number: int) -> bool:
 
 
 func is_level_completed(track_key: String, level_number: int) -> bool:
-	var level_progress := _get_level_progress(track_key, level_number)
-	if level_progress.is_empty():
+	var track_progress := get_campaign_progress_for_track(track_key)
+	if track_progress.is_empty():
 		return false
+
+	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
+	var level_progress: Variant = track_progress.get(resolved_level_number, {})
+	if not level_progress is Dictionary:
+		return false
+
 	return bool(level_progress.get(BOOK_LEVEL_COMPLETED_KEY, false))
 
 
@@ -181,33 +197,6 @@ func set_partial_level_state(
 
 func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	_campaign_progress_store.clear_partial_level_state(track_key, level_number)
-
-
-func _set_level_completed_flag(
-	track_key: String,
-	level_number: int,
-	completed: bool
-) -> void:
-	var level_progress := _get_level_progress(track_key, level_number)
-	if level_progress.is_empty():
-		return
-
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
-	var track_progress := get_campaign_progress_for_track(track_key)
-	level_progress[BOOK_LEVEL_COMPLETED_KEY] = completed
-	track_progress[resolved_level_number] = level_progress
-
-
-func _get_level_progress(track_key: String, level_number: int) -> Dictionary:
-	var track_progress := get_campaign_progress_for_track(track_key)
-	if track_progress.is_empty():
-		return {}
-
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	if raw_level_progress is Dictionary:
-		return raw_level_progress
-	return {}
 
 
 func _build_track_progress_line(

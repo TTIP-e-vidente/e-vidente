@@ -7,7 +7,7 @@ func _init(manager) -> void:
 	_manager = manager
 
 
-func spawn_level_item_instance(
+func create_item(
 	level_item: LevelItem,
 	instance_id: String,
 	is_positive: bool
@@ -21,7 +21,7 @@ func spawn_level_item_instance(
 	return level_item_instance
 
 
-func clear_runtime_items() -> void:
+func clear_items() -> void:
 	for item in _manager.level_items:
 		if is_instance_valid(item):
 			item.queue_free()
@@ -33,14 +33,14 @@ func clear_runtime_items() -> void:
 	_manager.plato.cantAlimentosNeg.clear()
 
 
-func position_runtime_items(level_resource: LevelResource) -> void:
-	var next_item_position := _starting_item_row_position(level_resource)
+func layout_items(level_resource: LevelResource) -> void:
+	var next_item_position := Vector2(230, 680)
+	var total_items: int = (
+		level_resource.cantidadNegativos + level_resource.cantidadPositivos
+	)
+	if total_items < 5:
+		next_item_position = Vector2(420, 680)
+
 	for item in _manager.level_items:
 		item.set_home_position(next_item_position)
 		next_item_position.x += 120
-
-
-func _starting_item_row_position(level_resource: LevelResource) -> Vector2:
-	if (level_resource.cantidadNegativos + level_resource.cantidadPositivos) < 5:
-		return Vector2(420, 680)
-	return Vector2(230, 680)

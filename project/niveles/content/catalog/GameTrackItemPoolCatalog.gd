@@ -16,17 +16,17 @@ static func build_item_pool_for_track(
 	legacy_positive_items: Array = [],
 	legacy_negative_items: Array = []
 ) -> Dictionary:
-	var clean_track_key: String = track_key.strip_edges()
-	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
+	var track = track_key.strip_edges()
+	if track.is_empty() or not GameTrackCatalog.has_track(track):
 		return {
 			POSITIVE_ITEMS_KEY: legacy_positive_items.duplicate(),
 			NEGATIVE_ITEMS_KEY: legacy_negative_items.duplicate()
 		}
 
-	var legacy_positive_item_weights: Dictionary = _count_legacy_items_by_path(
+	var legacy_positive_counts: Dictionary = _count_legacy_items_by_path(
 		legacy_positive_items
 	)
-	var legacy_negative_item_weights: Dictionary = _count_legacy_items_by_path(
+	var legacy_negative_counts: Dictionary = _count_legacy_items_by_path(
 		legacy_negative_items
 	)
 	var positive_items: Array = []
@@ -37,23 +37,22 @@ static func build_item_pool_for_track(
 			continue
 
 		var item_group: String = classify_item_for_track(
-			clean_track_key,
+			track,
 			item,
-			legacy_positive_item_weights,
-			legacy_negative_item_weights
+			legacy_positive_counts,
+			legacy_negative_counts
 		)
 		var item_path: String = _get_item_resource_path(item)
-		var repeat_count: int = 1
-		if item_group == POSITIVE_ITEMS_KEY:
-			repeat_count = int(legacy_positive_item_weights.get(item_path, 1))
-		elif item_group == NEGATIVE_ITEMS_KEY:
-			repeat_count = int(legacy_negative_item_weights.get(item_path, 1))
 
-		for unused_copy_index in range(max(1, repeat_count)):
-			if item_group == POSITIVE_ITEMS_KEY:
+		if item_group == POSITIVE_ITEMS_KEY:
+			var positive_count: int = int(legacy_positive_counts.get(item_path, 1))
+			for unused_copy_index in range(max(1, positive_count)):
 				positive_items.append(item)
-			else:
-				negative_items.append(item)
+			continue
+
+		var negative_count: int = int(legacy_negative_counts.get(item_path, 1))
+		for unused_copy_index in range(max(1, negative_count)):
+			negative_items.append(item)
 
 	return {
 		POSITIVE_ITEMS_KEY: positive_items,
@@ -64,40 +63,36 @@ static func build_item_pool_for_track(
 static func classify_item_for_track(
 	track_key: String,
 	item: Variant,
-	legacy_positive_item_weights: Dictionary = {},
-	legacy_negative_item_weights: Dictionary = {}
+	legacy_positive_counts: Dictionary = {},
+	legacy_negative_counts: Dictionary = {}
 ) -> String:
-	var clean_track_key: String = track_key.strip_edges()
-	if (
-		item == null
-		or clean_track_key.is_empty()
-		or not GameTrackCatalog.has_track(clean_track_key)
-	):
+	var track = track_key.strip_edges()
+	if item == null or track.is_empty() or not GameTrackCatalog.has_track(track):
 		return NEGATIVE_ITEMS_KEY
 
 	if (
 		item is Object
 		and item.has_method("is_explicitly_blocked_for_track")
-		and item.is_explicitly_blocked_for_track(clean_track_key)
+		and item.is_explicitly_blocked_for_track(track)
 	):
 		return NEGATIVE_ITEMS_KEY
 	if (
 		item is Object
 		and item.has_method("is_explicitly_allowed_for_track")
-		and item.is_explicitly_allowed_for_track(clean_track_key)
+		and item.is_explicitly_allowed_for_track(track)
 	):
 		return POSITIVE_ITEMS_KEY
 
 	var item_path: String = _get_item_resource_path(item)
-	var in_legacy_positive: bool = legacy_positive_item_weights.has(item_path)
-	var in_legacy_negative: bool = legacy_negative_item_weights.has(item_path)
+	var in_legacy_positive: bool = legacy_positive_counts.has(item_path)
+	var in_legacy_negative: bool = legacy_negative_counts.has(item_path)
 	if in_legacy_positive and not in_legacy_negative:
 		return POSITIVE_ITEMS_KEY
 	if in_legacy_negative and not in_legacy_positive:
 		return NEGATIVE_ITEMS_KEY
 
-	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(clean_track_key)
-	var item_pool_strategy: String = str(
+	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track)
+	var item_pool_strategy := str(
 		track_definition.get(
 			"item_pool_strategy",
 			GameTrackCatalog.ITEM_POOL_STRATEGY_LEGACY

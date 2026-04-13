@@ -6,18 +6,16 @@ const PlateSortMechanicControllerScript := preload(
 	"res://niveles/mechanics/PlateSortMechanicController.gd"
 )
 
-const CONTROLLER_SCRIPT_BY_TYPE := {
-	LevelMechanicTypes.PLATE_SORT: PlateSortMechanicControllerScript
-}
+const DEFAULT_MECHANIC_TYPE := LevelMechanicTypes.PLATE_SORT
 
 
 static func get_default_mechanic_type() -> String:
-	return LevelMechanicTypes.PLATE_SORT
+	return DEFAULT_MECHANIC_TYPE
 
 
 static func normalize_mechanic_type(
 	raw_mechanic_type: Variant,
-	fallback: String = LevelMechanicTypes.PLATE_SORT
+	fallback: String = DEFAULT_MECHANIC_TYPE
 ) -> String:
 	var clean_mechanic_type: String = str(raw_mechanic_type).strip_edges()
 	if clean_mechanic_type.is_empty():
@@ -26,22 +24,10 @@ static func normalize_mechanic_type(
 
 
 static func has_mechanic_type(raw_mechanic_type: Variant) -> bool:
-	var clean_mechanic_type: String = normalize_mechanic_type(raw_mechanic_type, "")
-	return (
-		not clean_mechanic_type.is_empty()
-		and CONTROLLER_SCRIPT_BY_TYPE.has(clean_mechanic_type)
-	)
-
-
-static func get_supported_types() -> Array:
-	return CONTROLLER_SCRIPT_BY_TYPE.keys().duplicate()
+	return normalize_mechanic_type(raw_mechanic_type, "") == DEFAULT_MECHANIC_TYPE
 
 
 static func build_controllers(level_manager) -> Dictionary:
-	var controllers: Dictionary = {}
-	for mechanic_type in get_supported_types():
-		var controller_script = CONTROLLER_SCRIPT_BY_TYPE.get(mechanic_type)
-		if controller_script == null:
-			continue
-		controllers[mechanic_type] = controller_script.new(level_manager)
-	return controllers
+	return {
+		DEFAULT_MECHANIC_TYPE: PlateSortMechanicControllerScript.new(level_manager)
+	}

@@ -2,7 +2,7 @@ extends Resource
 class_name LevelResource
 
 const GameTrackItemPoolResolver := preload(
-	"res://niveles/helpers/catalog/GameTrackItemPoolCatalog.gd"
+	"res://niveles/content/catalog/GameTrackItemPoolCatalog.gd"
 )
 
 @export var itemsPositivos : Array[LevelItem]

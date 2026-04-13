@@ -2,7 +2,7 @@ extends SceneTree
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload(
-	"res://niveles/helpers/GameLevelContentCatalog.gd"
+	"res://niveles/content/GameLevelContentCatalog.gd"
 )
 const KETO_TRACK_KEY := "cetogenica"
 

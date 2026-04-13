@@ -12,24 +12,51 @@ func _init(level_manager) -> void:
 	_level_manager = level_manager
 
 
-func build_partial_state(mechanic_type: String, current_run_index: int) -> Dictionary:
-	var plate_sort_state: Dictionary = _build_current_plate_sort_state()
-	var item_snapshots: Array = _get_saved_item_snapshots(plate_sort_state)
-	if item_snapshots.is_empty() and current_run_index <= 1:
+func build_save_state(mechanic_type: String, current_run_index: int) -> Dictionary:
+	var saved_items: Array = []
+	var positive_item_ids_in_plate: Array = []
+	for item in _level_manager.level_items:
+		if not is_instance_valid(item):
+			continue
+
+		var item_path: String = str(item.item_resource_path).strip_edges()
+		var instance_id: String = str(item.save_instance_id).strip_edges()
+		if item_path.is_empty() or instance_id.is_empty():
+			continue
+
+		saved_items.append(
+			{
+				Global.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
+				Global.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
+				Global.PARTIAL_LEVEL_IS_POSITIVE_KEY: bool(item.esPositivo)
+			}
+		)
+		if item.esPositivo and _level_manager.plato.has_positive_item(item):
+			positive_item_ids_in_plate.append(instance_id)
+
+	if saved_items.is_empty() and current_run_index <= 1:
 		return {}
-	var placed_positive_item_ids: Array = _get_placed_positive_item_ids(plate_sort_state)
+
+	var saved_state: Dictionary = {
+		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: positive_item_ids_in_plate
+	}
 	return {
 		Global.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
 		Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
-		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY: plate_sort_state,
-		Global.PARTIAL_LEVEL_ITEMS_KEY: item_snapshots,
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
+		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY: saved_state,
+		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: positive_item_ids_in_plate
 	}
 
 
-func build_partial_summary(partial_state: Dictionary) -> Dictionary:
-	var plate_sort_state: Dictionary = _extract_plate_sort_state(partial_state)
-	var placed_item_count: int = _get_placed_positive_item_ids(plate_sort_state).size()
+func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
+	var saved_state: Dictionary = _read_saved_state(saved_level_state)
+	var raw_placed_item_ids: Variant = saved_state.get(
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		[]
+	)
+	var placed_item_count: int = raw_placed_item_ids.size() if raw_placed_item_ids is Array else 0
 	return {
 		"placed_positive_count": placed_item_count,
 		"progress_count": placed_item_count,
@@ -38,40 +65,52 @@ func build_partial_summary(partial_state: Dictionary) -> Dictionary:
 	}
 
 
-func spawn_items_from_saved_state(saved_level_state: Dictionary) -> bool:
-	var plate_sort_state: Dictionary = _extract_plate_sort_state(saved_level_state)
-	var saved_item_snapshots: Array = _get_saved_item_snapshots(plate_sort_state)
-	if saved_item_snapshots.is_empty():
+func restore_items(saved_level_state: Dictionary) -> bool:
+	var saved_state: Dictionary = _read_saved_state(saved_level_state)
+	var raw_items: Variant = saved_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
+	if not raw_items is Array or (raw_items as Array).is_empty():
 		return false
-	for item_snapshot in saved_item_snapshots:
-		if not _spawn_runtime_item_from_snapshot(item_snapshot):
+	for saved_item in raw_items:
+		if not _restore_item(saved_item):
 			_level_manager.clear_runtime_items()
 			return false
 	return not _level_manager.level_items.is_empty()
 
 
-func restore_saved_positive_items(saved_level_state: Dictionary) -> void:
-	var plate_sort_state: Dictionary = _extract_plate_sort_state(saved_level_state)
-	var placed_positive_item_ids: Array = _get_placed_positive_item_ids(plate_sort_state)
-	if placed_positive_item_ids.is_empty():
-		return
-	var positive_items_in_plate: Array = _find_positive_items_for_plate(
-		placed_positive_item_ids
+func restore_items_in_plate(saved_level_state: Dictionary) -> void:
+	var saved_state: Dictionary = _read_saved_state(saved_level_state)
+	var raw_placed_item_ids: Variant = saved_state.get(
+		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		[]
 	)
-	_restore_positive_items_to_plate(positive_items_in_plate)
+	if not raw_placed_item_ids is Array or (raw_placed_item_ids as Array).is_empty():
+		return
+
+	var positive_items_in_plate: Array = []
+	for raw_item_id in raw_placed_item_ids:
+		var instance_id: String = str(raw_item_id).strip_edges()
+		if instance_id.is_empty():
+			continue
+		var item = _find_item_by_instance_id(instance_id)
+		if item == null or not item.esPositivo:
+			continue
+		positive_items_in_plate.append(item)
+
+	for index in range(positive_items_in_plate.size()):
+		var item = positive_items_in_plate[index]
+		item.restore_to_plate(
+			_get_plate_position(index, positive_items_in_plate.size())
+		)
+		_level_manager.plato.restore_positive_item(item)
 
 
-func _extract_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
+func _read_saved_state(saved_level_state: Dictionary) -> Dictionary:
 	var raw_mechanic_state: Variant = saved_level_state.get(
 		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
 		{}
 	)
 	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
 		return (raw_mechanic_state as Dictionary).duplicate(true)
-	return _build_legacy_plate_sort_state(saved_level_state)
-
-
-func _build_legacy_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
 	return {
 		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, []),
 		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(
@@ -81,28 +120,15 @@ func _build_legacy_plate_sort_state(saved_level_state: Dictionary) -> Dictionary
 	}
 
 
-func _get_saved_item_snapshots(plate_sort_state: Dictionary) -> Array:
-	var raw_items: Variant = plate_sort_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
-	return (raw_items as Array).duplicate(true) if raw_items is Array else []
-
-
-func _get_placed_positive_item_ids(plate_sort_state: Dictionary) -> Array:
-	var raw_placed_item_ids: Variant = plate_sort_state.get(
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
-		[]
-	)
-	return (raw_placed_item_ids as Array).duplicate(true) if raw_placed_item_ids is Array else []
-
-
-func _spawn_runtime_item_from_snapshot(item_snapshot: Variant) -> bool:
-	if not item_snapshot is Dictionary:
+func _restore_item(raw_saved_item: Variant) -> bool:
+	if not raw_saved_item is Dictionary:
 		return false
-	var saved_item_snapshot: Dictionary = item_snapshot
+	var saved_item: Dictionary = raw_saved_item
 	var item_path: String = str(
-		saved_item_snapshot.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
+		saved_item.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
 	).strip_edges()
 	var instance_id: String = str(
-		saved_item_snapshot.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
+		saved_item.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
 	).strip_edges()
 	if item_path.is_empty() or instance_id.is_empty():
 		return false
@@ -110,63 +136,12 @@ func _spawn_runtime_item_from_snapshot(item_snapshot: Variant) -> bool:
 	if level_item == null:
 		return false
 	var is_positive: bool = bool(
-		saved_item_snapshot.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)
+		saved_item.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)
 	)
 	return _level_manager.spawn_level_item(level_item, instance_id, is_positive) != null
 
 
-func _build_current_plate_sort_state() -> Dictionary:
-	var items: Array = []
-	var placed_positive_item_ids: Array = []
-	for item in _level_manager.level_items:
-		var item_snapshot: Dictionary = _build_runtime_item_snapshot(item)
-		if item_snapshot.is_empty():
-			continue
-		items.append(item_snapshot)
-		if item.esPositivo and _level_manager.plato.has_positive_item(item):
-			placed_positive_item_ids.append(
-				str(item_snapshot.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, ""))
-			)
-	return {
-		Global.PARTIAL_LEVEL_ITEMS_KEY: items,
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
-	}
-
-
-func _build_runtime_item_snapshot(item: Variant) -> Dictionary:
-	if not is_instance_valid(item):
-		return {}
-	var item_path: String = str(item.item_resource_path).strip_edges()
-	var instance_id: String = str(item.save_instance_id).strip_edges()
-	if item_path.is_empty() or instance_id.is_empty():
-		return {}
-	return {
-		Global.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
-		Global.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
-		Global.PARTIAL_LEVEL_IS_POSITIVE_KEY: bool(item.esPositivo)
-	}
-
-
-func _find_positive_items_for_plate(placed_positive_item_ids: Array) -> Array:
-	var positive_items_in_plate: Array = []
-	for raw_item_id in placed_positive_item_ids:
-		var item = _find_runtime_item_by_instance_id(str(raw_item_id).strip_edges())
-		if item == null or not item.esPositivo:
-			continue
-		positive_items_in_plate.append(item)
-	return positive_items_in_plate
-
-
-func _restore_positive_items_to_plate(positive_items_in_plate: Array) -> void:
-	for index in range(positive_items_in_plate.size()):
-		var item = positive_items_in_plate[index]
-		item.restore_to_plate(
-			_plate_position_for_index(index, positive_items_in_plate.size())
-		)
-		_level_manager.plato.restore_positive_item(item)
-
-
-func _find_runtime_item_by_instance_id(instance_id: String):
+func _find_item_by_instance_id(instance_id: String):
 	for item in _level_manager.level_items:
 		if not is_instance_valid(item):
 			continue
@@ -175,7 +150,7 @@ func _find_runtime_item_by_instance_id(instance_id: String):
 	return null
 
 
-func _plate_position_for_index(index: int, total_items: int) -> Vector2:
+func _get_plate_position(index: int, total_items: int) -> Vector2:
 	var columns: int = clampi(total_items, 1, MAX_PLATE_COLUMNS)
 	var row: int = floori(float(index) / float(columns))
 	var column: int = index % columns
