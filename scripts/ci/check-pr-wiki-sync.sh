@@ -37,33 +37,48 @@ if [ -z "$changed_files" ]; then
 	exit 0
 fi
 
-doc_sensitive_changes="$(
+ci_sensitive_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -E '^(\.github/workflows/|scripts/|project/(interface|niveles|resources)/.*\.(gd|tscn|tres)|project/project\.godot)$' || true
+		grep -E '^(\.github/workflows/|scripts/ci/|scripts/run-godot-validation\.(sh|ps1))' || true
 )"
 
-if [ -z "$doc_sensitive_changes" ]; then
-	echo "No architecture-sensitive changes detected."
+project_sensitive_changes="$(
+	printf '%s\n' "$changed_files" |
+		grep -E '^(project/(interface|niveles|resources)/.*\.(gd|tscn|tres)|project/project\.godot)$' || true
+)"
+
+if [ -z "$ci_sensitive_changes" ] && [ -z "$project_sensitive_changes" ]; then
+	echo "No documentation-sensitive changes detected."
 	append_summary "### Docs / Wiki"
 	append_summary "- Estado: OK"
-	append_summary "- Cobertura: este PR no toca zonas que requieran recordatorio de wiki"
+	append_summary "- Cobertura: este PR no toca CI ni zonas sensibles que requieran recordatorio documental"
 	exit 0
 fi
+
+ci_doc_changes="$(
+	printf '%s\n' "$changed_files" |
+		grep -E '^wiki/CI\.md$' || true
+)"
 
 documentation_changes="$(
 	printf '%s\n' "$changed_files" |
 		grep -E '^(README\.md|wiki/.*\.md)$' || true
 )"
 
-if [ -n "$documentation_changes" ]; then
-	echo "OK: wiki or README updated in this PR."
-	append_summary "### Docs / Wiki"
-	append_summary "- Estado: OK"
-	append_summary "- Cobertura: el PR toca codigo/estructura sensible y tambien actualiza README o wiki"
-	exit 0
+if [ -n "$ci_sensitive_changes" ] && [ -z "$ci_doc_changes" ]; then
+	echo "Files that triggered the CI documentation reminder:"
+	printf '%s\n' "$ci_sensitive_changes"
+	report_failure "Este PR cambia CI o sus scripts de validacion, pero no actualiza wiki/CI.md. Agrega una nota en wiki/CI.md para dejar trazabilidad del cambio."
 fi
 
-echo "Files that triggered the wiki reminder:"
-	printf '%s\n' "$doc_sensitive_changes"
+if [ -n "$project_sensitive_changes" ] && [ -z "$documentation_changes" ]; then
+	echo "Files that triggered the architecture documentation reminder:"
+	printf '%s\n' "$project_sensitive_changes"
+	report_failure "Este PR toca codigo o estructura sensible del proyecto, pero no actualiza README ni wiki. Agrega una nota en wiki/ o README.md para dejar trazabilidad del cambio."
+fi
 
-report_failure "Este PR toca codigo, estructura o CI en zonas sensibles pero no actualiza README ni wiki. Agrega una nota en wiki/ o README.md para dejar trazabilidad del cambio."
+echo "OK: documentation reminder satisfied for this PR."
+append_summary "### Docs / Wiki"
+append_summary "- Estado: OK"
+append_summary "- Cobertura: los cambios sensibles del PR quedaron acompanados por documentacion"
+exit 0

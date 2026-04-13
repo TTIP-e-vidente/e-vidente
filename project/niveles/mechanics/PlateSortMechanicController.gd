@@ -1,4 +1,4 @@
-extends LevelMechanicController
+extends "res://niveles/mechanics/LevelMechanicController.gd"
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
 const PlateSortMechanicStateServiceScript := preload(

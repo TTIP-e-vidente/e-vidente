@@ -11,8 +11,6 @@ Hay dos workflows visibles:
 
 Los dos delegan en `.github/workflows/ci-shared.yml`.
 
-No hay validación diff-aware, no hay nightly y no hay export web dentro del gate principal. La suite es la misma en push y PR a propósito: menos caminos, menos sorpresas.
-
 ## Checks obligatorios
 
 - `Docs / Wiki`
@@ -23,7 +21,12 @@ Los tres bloquean merge. La idea es que cada job responda una sola pregunta.
 
 ## `Docs / Wiki`
 
-Este job solo revisa que exista la documentación mínima del proyecto:
+Este job cubre dos cosas:
+
+- que la documentacion base del proyecto siga existiendo
+- que los cambios sensibles de un PR dejen rastro escrito
+
+La documentacion minima que siempre tiene que estar presente es esta:
 
 - `README.md`
 - `wiki/Home.md`
@@ -32,7 +35,13 @@ Este job solo revisa que exista la documentación mínima del proyecto:
 - `wiki/Architecture.md`
 - `wiki/Bitacora.md`
 
-No intenta validar calidad de redacción, links o consistencia fina. Si falla, debería ser porque desapareció documentación base o quedó vacía.
+En `push`, si falla, deberia ser porque falta alguno de esos archivos o porque quedo vacio.
+
+En `pull_request` suma dos recordatorios de trazabilidad:
+
+- si el PR cambia workflows o scripts de validacion, tiene que actualizar `wiki/CI.md`
+- si el PR toca zonas sensibles del proyecto (`project/niveles`, `project/interface`, `project/resources`, `project.godot`), tiene que actualizar `README.md` o algun archivo en `wiki/`
+
 
 ## `Codebase / Structure`
 
@@ -48,9 +57,11 @@ No corre tests de catálogo ni integración fina.
 
 ## `Gameplay Smoke`
 
-Este job corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `scripts/run-godot-validation.sh --run smoke godot`.
+Este job responde una sola pregunta: si el flujo minimo del slice todavia puede llegar al gameplay sin romperse.
 
-El smoke test hace una pasada corta del flujo principal:
+Corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `scripts/run-godot-validation.sh --run smoke godot`.
+
+La pasada usa el track baseline y recorre este camino:
 
 - Splash
 - Intro
@@ -60,7 +71,15 @@ El smoke test hace una pasada corta del flujo principal:
 - Apertura del capítulo 1
 - Entrada al gameplay
 
-Valida que la escena jugable cargue, que `ManagerLevel` tenga track y corrida activa, y que el slice no se caiga en los primeros frames. No intenta probar drag and drop, save/resume profundo ni navegación fina de todos los tracks.
+Si falla, la expectativa es que se haya roto el flujo principal antes o justo al entrar a la escena jugable.
+
+Valida tres cosas:
+
+- que la escena jugable cargue
+- que `ManagerLevel` quede inicializado con track y corrida activa
+- que el slice siga vivo en los primeros frames
+
+No intenta cubrir drag and drop, save/resume profundo ni navegacion fina de todos los tracks.
 
 ## Qué quedó afuera del gate principal
 
@@ -104,13 +123,13 @@ En shell:
 
 ```bash
 sh scripts/run-godot-validation.sh --run ci godot
+```
 
 Si querés correr solo una parte:
 
 - `sh scripts/run-godot-validation.sh --run codebase godot`
 - `sh scripts/run-godot-validation.sh --run smoke godot`
 - `sh scripts/run-godot-validation.sh --run full godot`
-```
 
 ## Cómo leer un test
 
