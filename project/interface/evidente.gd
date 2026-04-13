@@ -23,3 +23,9 @@ func _play_splash_animation() -> void:
 
 func _play_background_music() -> void:
 	background_music.play()
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(background_music):
+		background_music.stop()
+		background_music.stream = null

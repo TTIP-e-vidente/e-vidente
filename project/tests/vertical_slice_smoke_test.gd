@@ -1,6 +1,9 @@
 extends SceneTree
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameChapterAssetCatalogScript := preload(
+	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
+)
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 const SPLASH_SCENE := "res://interface/evidente.tscn"
@@ -27,18 +30,18 @@ func _initialize() -> void:
 func _run() -> void:
 	await process_frame
 	if not await _prepare_test_runtime():
-		_cleanup_and_quit()
+		await _cleanup_and_quit()
 		return
 
 	if not await _enter_gameplay_scene():
-		_cleanup_and_quit()
+		await _cleanup_and_quit()
 		return
 
 	_assert_gameplay_scene_contract()
 	if not failed:
 		await _assert_gameplay_scene_stays_alive()
 
-	_cleanup_and_quit()
+	await _cleanup_and_quit()
 
 
 func _prepare_test_runtime() -> bool:
@@ -144,10 +147,10 @@ func _invoke_current_scene_method_and_wait(
 
 
 func _assert_gameplay_scene_contract() -> void:
-	var manager_level = current_scene.get_node_or_null(MANAGER_LEVEL_NODE_PATH)
-	var plate = current_scene.get_node_or_null(PLATE_NODE_PATH)
-	var meal_sprite = current_scene.get_node_or_null(MEAL_NODE_PATH)
-	var condition_sprite = current_scene.get_node_or_null(CONDITION_NODE_PATH)
+	var manager_level: ManagerLevel = current_scene.get_node_or_null(MANAGER_LEVEL_NODE_PATH) as ManagerLevel
+	var plate: Plato = current_scene.get_node_or_null(PLATE_NODE_PATH) as Plato
+	var meal_sprite: Sprite2D = current_scene.get_node_or_null(MEAL_NODE_PATH) as Sprite2D
+	var condition_sprite: Sprite2D = current_scene.get_node_or_null(CONDITION_NODE_PATH) as Sprite2D
 
 	_assert(manager_level != null, "La escena jugable deberia exponer ManagerLevel")
 	_assert(plate != null, "La escena jugable deberia exponer el Plato")
@@ -201,7 +204,13 @@ func _resolve_singletons() -> void:
 
 
 func _cleanup_test_files() -> void:
-	global_state.reset_progress()
+	if global_state != null:
+		global_state.reset_progress()
+		global_state.is_dragging = null
+		global_state.player_cambiante = null
+		global_state.manager_level = null
+	if save_manager == null:
+		return
 	for relative_path in [
 		save_manager.SAVE_PATH,
 		save_manager.TEMP_SAVE_PATH,
@@ -214,8 +223,22 @@ func _cleanup_test_files() -> void:
 
 
 func _cleanup_and_quit() -> void:
+	_release_loaded_scene()
 	_cleanup_test_files()
+	GameChapterAssetCatalogScript.clear_texture_cache()
+	save_manager = null
+	global_state = null
+	await process_frame
+	await process_frame
 	quit(1 if failed else 0)
+
+
+func _release_loaded_scene() -> void:
+	if not is_instance_valid(current_scene):
+		return
+	var loaded_scene: Node = current_scene
+	current_scene = null
+	loaded_scene.free()
 
 
 func _assert(condition: bool, message: String) -> void:

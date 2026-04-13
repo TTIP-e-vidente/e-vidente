@@ -26,6 +26,12 @@ func _play_background_music() -> void:
 	background_music.play()
 
 
+func _exit_tree() -> void:
+	if is_instance_valid(background_music):
+		background_music.stop()
+		background_music.stream = null
+
+
 func _open_mode_selector() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())
 

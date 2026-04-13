@@ -92,6 +92,13 @@ func _initialize_archivero_scene() -> void:
 	_refresh_progress_overlay()
 
 
+func _exit_tree() -> void:
+	_disconnect_save_manager_signals()
+	if is_instance_valid(background):
+		background.stop()
+		background.stream = null
+
+
 func _configure_progress_overlay() -> void:
 	open_progress_button.icon = SAVE_ICON_IDLE
 	open_progress_button.text = "Mi progreso"
@@ -186,6 +193,17 @@ func _connect_save_manager_signals() -> void:
 		SaveManager.progress_saved.connect(_on_save_manager_profile_changed)
 	if not SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
 		SaveManager.user_registered.connect(_on_save_manager_profile_changed)
+
+
+func _disconnect_save_manager_signals() -> void:
+	if SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
+		SaveManager.save_status_changed.disconnect(_on_save_manager_changed)
+	if SaveManager.progress_loaded.is_connected(_on_save_manager_profile_changed):
+		SaveManager.progress_loaded.disconnect(_on_save_manager_profile_changed)
+	if SaveManager.progress_saved.is_connected(_on_save_manager_profile_changed):
+		SaveManager.progress_saved.disconnect(_on_save_manager_profile_changed)
+	if SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
+		SaveManager.user_registered.disconnect(_on_save_manager_profile_changed)
 
 
 func _build_history_log_text(history: Array) -> String:

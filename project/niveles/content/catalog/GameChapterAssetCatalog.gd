@@ -89,6 +89,10 @@ static func resolve_texture(texture_ref: Variant) -> Texture2D:
 	return texture
 
 
+static func clear_texture_cache() -> void:
+	_texture_cache.clear()
+
+
 static func _lookup_path(path_map: Dictionary, raw_key: String) -> String:
 	var clean_key := raw_key.strip_edges().to_lower()
 	if clean_key.is_empty():

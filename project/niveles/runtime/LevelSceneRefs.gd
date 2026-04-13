@@ -1,5 +1,8 @@
 extends RefCounted
-## Resuelve los nodos visuales de la escena de nivel y aplica texturas del run.
+
+const GameChapterAssetCatalogScript := preload(
+	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
+)
 
 var _manager
 
@@ -40,11 +43,13 @@ func connect_scene_nodes(level_scene: Node = null) -> bool:
 
 
 func apply_run_textures(level_resource: LevelResource, run_data: Dictionary) -> void:
-	level_resource.comida = Global.resolve_texture(run_data.get("meal_texture_path", ""))
-	level_resource.condicion = Global.resolve_texture(
+	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
+		run_data.get("meal_texture_path", "")
+	)
+	level_resource.condicion = GameChapterAssetCatalogScript.resolve_texture(
 		run_data.get("condition_texture_path", "")
 	)
-	level_resource.ensenanza = Global.resolve_texture(
+	level_resource.ensenanza = GameChapterAssetCatalogScript.resolve_texture(
 		run_data.get("teaching_texture_path", "")
 	)
 	_manager.meal_sprite.texture = level_resource.comida

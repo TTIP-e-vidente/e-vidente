@@ -1,8 +1,6 @@
 extends RefCounted
-## Servicio de persistencia parcial para la mecanica de plate sort.
-##
-## Se ocupa de tres cosas: serializar los items runtime, reconstruirlos desde
-## el save parcial y restaurar los positivos ya colocados en el plato.
+
+const GlobalStateScript := preload("res://niveles/global.gd")
 
 const MAX_PLATE_COLUMNS := 3
 const PLATE_ITEM_COLUMN_SPACING := 78.0
@@ -32,9 +30,9 @@ func build_save_state(mechanic_type: String, current_run_index: int) -> Dictiona
 
 		saved_items.append(
 			{
-				Global.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
-				Global.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
-				Global.PARTIAL_LEVEL_IS_POSITIVE_KEY: is_positive
+				GlobalStateScript.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
+				GlobalStateScript.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
+				GlobalStateScript.PARTIAL_LEVEL_IS_POSITIVE_KEY: is_positive
 			}
 		)
 		if is_positive and _level_manager.plato.has_positive_item(runtime_item):
@@ -44,23 +42,23 @@ func build_save_state(mechanic_type: String, current_run_index: int) -> Dictiona
 		return {}
 
 	var mechanic_state: Dictionary = {
-		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
 	}
 
 	return {
-		Global.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
-		Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
-		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
-		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
+		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
 	}
 
 
 func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
 	var plate_sort_state: Dictionary = _read_plate_sort_state(saved_level_state)
 	var raw_placed_positive_item_ids: Variant = plate_sort_state.get(
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
 		[]
 	)
 	var placed_item_count: int = (
@@ -78,7 +76,10 @@ func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
 
 func restore_items(saved_level_state: Dictionary) -> bool:
 	var plate_sort_state: Dictionary = _read_plate_sort_state(saved_level_state)
-	var raw_saved_items: Variant = plate_sort_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, [])
+	var raw_saved_items: Variant = plate_sort_state.get(
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY,
+		[]
+	)
 	if not raw_saved_items is Array or (raw_saved_items as Array).is_empty():
 		return false
 
@@ -93,7 +94,7 @@ func restore_items(saved_level_state: Dictionary) -> bool:
 func restore_items_in_plate(saved_level_state: Dictionary) -> void:
 	var plate_sort_state: Dictionary = _read_plate_sort_state(saved_level_state)
 	var raw_placed_positive_item_ids: Variant = plate_sort_state.get(
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
 		[]
 	)
 	if (
@@ -124,15 +125,18 @@ func _read_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
 	# Save actual: el estado vive dentro de mechanic_state.
 	# Compatibilidad legacy: items y placed IDs podían vivir en la raíz.
 	var raw_mechanic_state: Variant = saved_level_state.get(
-		Global.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
 		{}
 	)
 	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
 		return (raw_mechanic_state as Dictionary).duplicate(true)
 	return {
-		Global.PARTIAL_LEVEL_ITEMS_KEY: saved_level_state.get(Global.PARTIAL_LEVEL_ITEMS_KEY, []),
-		Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(
-			Global.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_level_state.get(
+			GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY,
+			[]
+		),
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: saved_level_state.get(
+			GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
 			[]
 		)
 	}
@@ -143,10 +147,10 @@ func _restore_saved_item(raw_saved_item: Variant) -> bool:
 		return false
 	var saved_item: Dictionary = raw_saved_item
 	var item_path: String = str(
-		saved_item.get(Global.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
+		saved_item.get(GlobalStateScript.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
 	).strip_edges()
 	var instance_id: String = str(
-		saved_item.get(Global.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
+		saved_item.get(GlobalStateScript.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
 	).strip_edges()
 	if item_path.is_empty() or instance_id.is_empty():
 		return false
@@ -154,7 +158,7 @@ func _restore_saved_item(raw_saved_item: Variant) -> bool:
 	if level_item == null:
 		return false
 	var is_positive: bool = bool(
-		saved_item.get(Global.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)
+		saved_item.get(GlobalStateScript.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)
 	)
 	return _level_manager.spawn_level_item(level_item, instance_id, is_positive) != null
 

@@ -1,13 +1,13 @@
 extends Node
 class_name ManagerLevel
-## Orquesta el runtime jugable de un nivel.
-##
-## Este archivo es la frontera entre la escena del nivel, el contenido global
-## del capitulo actual y el controller de la mecanica activa.
 
 const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 const LevelSceneRefsScript := preload("res://niveles/runtime/LevelSceneRefs.gd")
 const LevelItemRuntimeScript := preload("res://niveles/runtime/LevelItemRuntime.gd")
+const GlobalStateScript := preload("res://niveles/global.gd")
+const GameLevelContentCatalogScript := preload(
+	"res://niveles/content/GameLevelContentCatalog.gd"
+)
 
 @export var level_resource: LevelResource
 
@@ -25,6 +25,8 @@ var _mechanic_controllers: Dictionary = {}
 var _active_mechanic_controller = null
 var _scene_refs = null
 var _item_runtime = null
+var _global_state = null
+var _content_catalog = null
 
 
 func _ready() -> void:
@@ -49,7 +51,9 @@ func advance_to_next_run() -> bool:
 	if active_run_index >= get_total_runs():
 		return false
 	active_run_index += 1
-	_start_active_run({Global.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index})
+	_start_active_run(
+		{GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index}
+	)
 	return true
 
 
@@ -58,46 +62,14 @@ func get_current_run_index() -> int:
 
 
 func get_total_runs() -> int:
+	_ensure_runtime_services()
 	return max(
 		1,
-		Global.get_chapter_run_count(active_track_key, Global.get_current_level_number())
-	)
-
-
-func _start_current_run(saved_level_state: Dictionary) -> void:
-	if _active_mechanic_controller != null:
-		_active_mechanic_controller.clear_runtime_state()
-	else:
-		clear_runtime_items()
-
-	active_run_data = Global.get_chapter_run_definition(
-		active_track_key,
-		Global.get_current_level_number(),
-		active_run_index
-	)
-	if active_run_data.is_empty():
-		push_error(
-			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
-			% [active_track_key, Global.get_current_level_number(), active_run_index]
+		_content_catalog.get_chapter_run_count(
+			active_track_key,
+			_get_current_level_number()
 		)
-		return
-
-	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
-		active_run_data.get("mechanic_type", "")
 	)
-	if _mechanic_controllers.is_empty():
-		_register_mechanics()
-	_active_mechanic_controller = _mechanic_controllers.get(active_mechanic_type)
-	if _active_mechanic_controller == null:
-		push_error(
-			"ManagerLevel no encontro controlador para la mecanica '%s'."
-			% active_mechanic_type
-		)
-		return
-
-	_active_mechanic_controller.configure_run(active_run_data, level_resource)
-	_scene_refs.apply_run_textures(level_resource, active_run_data)
-	_active_mechanic_controller.restore_or_start(saved_level_state)
 
 
 func build_partial_level_state() -> Dictionary:
@@ -106,12 +78,12 @@ func build_partial_level_state() -> Dictionary:
 	var partial_level_state: Dictionary = _active_mechanic_controller.build_partial_state()
 	if partial_level_state.is_empty():
 		return {}
-	partial_level_state[Global.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
+	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
 	var stored_mechanic_type: Variant = partial_level_state.get(
-		Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
 		active_mechanic_type
 	)
-	partial_level_state[Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
+	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
 		stored_mechanic_type
 	).strip_edges()
 	return partial_level_state
@@ -119,11 +91,13 @@ func build_partial_level_state() -> Dictionary:
 
 func store_partial_level_state(track_key: String) -> Dictionary:
 	var partial_level_state: Dictionary = build_partial_level_state()
-	Global.set_partial_level_state(
-		track_key,
-		Global.get_current_level_number(),
-		partial_level_state
-	)
+	var global_state = _get_global_state()
+	if global_state != null:
+		global_state.set_partial_level_state(
+			track_key,
+			_get_current_level_number(),
+			partial_level_state
+		)
 	var summary: Dictionary = {
 		"has_partial_state": not partial_level_state.is_empty(),
 		"run_index": active_run_index,
@@ -145,7 +119,8 @@ func get_positive_items_in_plate_count() -> int:
 
 
 func filter_items_by_category(items: Array, category: String) -> Array:
-	return Global.filter_items_by_category(items, category)
+	_ensure_runtime_services()
+	return _content_catalog.filter_items_by_category(items, category)
 
 
 func spawn_level_item(level_item: LevelItem, instance_id: String, is_positive: bool):
@@ -170,7 +145,7 @@ func _start_active_run(partial_level_state: Dictionary) -> void:
 	if active_run_data.is_empty():
 		push_error(
 			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
-			% [active_track_key, Global.get_current_level_number(), active_run_index]
+			% [active_track_key, _get_current_level_number(), active_run_index]
 		)
 		return
 
@@ -199,15 +174,23 @@ func _clear_track_pool_cache() -> void:
 
 
 func _read_saved_level_state() -> Dictionary:
-	return Global.get_partial_level_state(
+	var global_state = _get_global_state()
+	if global_state == null:
+		return {}
+	return global_state.get_partial_level_state(
 		active_track_key,
-		Global.get_current_level_number()
+		_get_current_level_number()
 	)
 
 
 func _resolve_saved_run_index(partial_level_state: Dictionary) -> int:
 	return clampi(
-		int(partial_level_state.get(Global.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)),
+		int(
+			partial_level_state.get(
+				GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
+				1
+			)
+		),
 		1,
 		get_total_runs()
 	)
@@ -221,9 +204,10 @@ func _clear_previous_run_runtime() -> void:
 
 
 func _read_active_run_definition() -> Dictionary:
-	return Global.get_chapter_run_definition(
+	_ensure_runtime_services()
+	return _content_catalog.get_chapter_run_definition(
 		active_track_key,
-		Global.get_current_level_number(),
+		_get_current_level_number(),
 		active_run_index
 	)
 
@@ -242,7 +226,31 @@ func _register_mechanics() -> void:
 
 
 func _ensure_runtime_services() -> void:
+	if _content_catalog == null:
+		_content_catalog = GameLevelContentCatalogScript.new()
 	if _scene_refs == null:
 		_scene_refs = LevelSceneRefsScript.new(self)
 	if _item_runtime == null:
 		_item_runtime = LevelItemRuntimeScript.new(self)
+	if _global_state == null or not is_instance_valid(_global_state):
+		_global_state = _resolve_global_state()
+
+
+func _get_global_state() -> Node:
+	if _global_state == null or not is_instance_valid(_global_state):
+		_global_state = _resolve_global_state()
+	return _global_state
+
+
+func _resolve_global_state() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	return tree.get_root().get_node_or_null("Global")
+
+
+func _get_current_level_number() -> int:
+	var global_state = _get_global_state()
+	if global_state == null:
+		return 1
+	return int(global_state.get_current_level_number())

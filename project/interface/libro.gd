@@ -33,6 +33,14 @@ func _play_background_music() -> void:
 	background_music.play()
 
 
+func _exit_tree() -> void:
+	if is_instance_valid(background_music):
+		background_music.stop()
+		background_music.stream = null
+	_release_chapter_button_blueprint()
+	_chapter_button_icons.clear()
+
+
 func _register_book_resume_target() -> void:
 	SaveManager.set_resume_to_book(_active_track_key)
 
@@ -91,13 +99,20 @@ func _rebuild_track_chapter_buttons() -> void:
 func _clear_existing_chapter_buttons() -> void:
 	for chapter_button in _find_existing_chapter_buttons():
 		chapter_container.remove_child(chapter_button)
-		chapter_button.queue_free()
+		chapter_button.free()
 
 
 func _build_chapter_button_instance() -> Button:
 	if _chapter_button_blueprint == null:
 		return null
 	return _chapter_button_blueprint.duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
+
+
+func _release_chapter_button_blueprint() -> void:
+	if _chapter_button_blueprint == null:
+		return
+	_chapter_button_blueprint.free()
+	_chapter_button_blueprint = null
 
 
 func _configure_chapter_button_for_level(
