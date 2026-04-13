@@ -1,13 +1,16 @@
 extends Node
 class_name Estado
 
-@export var level : Level
-@export var player_cambiante : PlayerCambiante
+const LevelScript := preload("res://niveles/nivel_1/Level.gd")
+const PlayerCambianteScript := preload("res://niveles/PlayerCambiante.gd")
+
+@export var level: LevelScript
+@export var player_cambiante: PlayerCambianteScript
 @export var animation_name : String 
-@export var entra_item_positivo : Estado 
-@export var entra_item_negativo : Estado 
-@export var sale_item_positivo : Estado 
-@export var sale_item_negativo : Estado 
+@export var entra_item_positivo: Node 
+@export var entra_item_negativo: Node 
+@export var sale_item_positivo: Node 
+@export var sale_item_negativo: Node 
 
 func entra_item_plato(item, player):
 	if !item.esPositivo:

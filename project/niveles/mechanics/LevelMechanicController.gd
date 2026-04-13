@@ -12,7 +12,7 @@ func get_mechanic_type() -> String:
 	return ""
 
 
-func configure_run(_run_data: Dictionary, _level_resource: LevelResource) -> void:
+func configure_run(_run_data: Dictionary, _level_resource) -> void:
 	pass
 
 

@@ -1,11 +1,13 @@
 extends Area2D
 class_name Plato
 
+const LevelItemScript := preload("res://resources/level_item.gd")
+
 @onready var player_cambiante = $"../PlayerCambiante"
 @onready var bien = $Bien
 @onready var mal = $Mal
 
-var elementos : Array[LevelItem.Condicion]
+var elementos: Array[int] = []
 var cantAlimentosPos = {}
 var cantAlimentosNeg = {}
 

@@ -9,9 +9,9 @@ const GameLevelContentCatalogScript := preload(
 	"res://niveles/content/GameLevelContentCatalog.gd"
 )
 
-@export var level_resource: LevelResource
+@export var level_resource = null
 
-@onready var plato: Plato = %Plato
+@onready var plato = %Plato
 
 @onready var condition_sprite: Sprite2D = $"../Globo texto/Condition"
 @onready var meal_sprite: Sprite2D = $"../Globo texto/Meal"
@@ -123,7 +123,7 @@ func filter_items_by_category(items: Array, category: String) -> Array:
 	return _content_catalog.filter_items_by_category(items, category)
 
 
-func spawn_level_item(level_item: LevelItem, instance_id: String, is_positive: bool):
+func spawn_level_item(level_item, instance_id: String, is_positive: bool):
 	_ensure_runtime_services()
 	return _item_runtime.create_item(level_item, instance_id, is_positive)
 

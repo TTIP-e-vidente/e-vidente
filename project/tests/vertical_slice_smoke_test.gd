@@ -166,6 +166,8 @@ func _assert_gameplay_scene_contract() -> void:
 		manager_level.has_method("get_total_runs"),
 		"ManagerLevel deberia exponer el contrato publico del gameplay"
 	)
+	if failed:
+		return
 	var raw_active_track_key: Variant = manager_level.get("active_track_key")
 	var raw_active_run_data: Variant = manager_level.get("active_run_data")
 	var active_run_data: Dictionary = (

@@ -23,7 +23,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96
 @onready var victory: AnimatedSprite2D = $Victory
 @onready var next_chapter_button: Button = $Adelante
 @onready var teaching_sprite: Sprite2D = $Ensenanza
-@onready var manager_level: ManagerLevel = $ManagerLevel
+@onready var manager_level = $ManagerLevel
 @onready var save_progress_button: Button = $SaveProgressButton
 @onready var save_feedback_backdrop: PanelContainer = $SaveFeedbackBackdrop
 @onready var save_feedback_title: Label = (
@@ -60,7 +60,10 @@ func _play_level_audio() -> void:
 
 
 func _initialize_level_runtime() -> void:
-	manager_level.initialize_level_runtime(self)
+	if manager_level != null and manager_level.has_method("initialize_level_runtime"):
+		manager_level.call("initialize_level_runtime", self)
+		return
+	push_error("Level no pudo inicializar el runtime de ManagerLevel.")
 
 
 func _register_level_resume_target() -> void:

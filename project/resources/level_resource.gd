@@ -5,8 +5,8 @@ const GameTrackItemPoolResolver := preload(
 	"res://niveles/content/catalog/GameTrackItemPoolCatalog.gd"
 )
 
-@export var itemsPositivos : Array[LevelItem]
-@export var itemsNegativos : Array[LevelItem]
+@export var itemsPositivos: Array = []
+@export var itemsNegativos: Array = []
 @export var cantidadPositivos : int
 @export var cantidadNegativos : int
 @export var mechanic_type : String = ""

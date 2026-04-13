@@ -18,7 +18,7 @@ func connect_scene_nodes(level_scene: Node = null) -> bool:
 		return false
 
 	if not is_instance_valid(_manager.plato):
-		_manager.plato = scene_root.get_node_or_null("Plato") as Plato
+		_manager.plato = scene_root.get_node_or_null("Plato")
 	if not is_instance_valid(_manager.meal_sprite):
 		_manager.meal_sprite = scene_root.get_node_or_null("Globo texto/Meal") as Sprite2D
 	if not is_instance_valid(_manager.condition_sprite):
@@ -42,7 +42,7 @@ func connect_scene_nodes(level_scene: Node = null) -> bool:
 	return false
 
 
-func apply_run_textures(level_resource: LevelResource, run_data: Dictionary) -> void:
+func apply_run_textures(level_resource, run_data: Dictionary) -> void:
 	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
 		run_data.get("meal_texture_path", "")
 	)

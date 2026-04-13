@@ -17,7 +17,7 @@ func get_mechanic_type() -> String:
 	return LevelMechanicTypes.PLATE_SORT
 
 
-func configure_run(run_data: Dictionary, level_resource: LevelResource) -> void:
+func configure_run(run_data: Dictionary, level_resource) -> void:
 	var run_payload := _extract_run_payload(run_data)
 
 	level_resource.mechanic_type = get_mechanic_type()
@@ -68,7 +68,7 @@ func _extract_run_payload(run_data: Dictionary) -> Dictionary:
 
 
 func _spawn_items_for_run() -> void:
-	var level_resource: LevelResource = _level_manager.level_resource
+	var level_resource = _level_manager.level_resource
 	var track_key: String = _level_manager.active_track_key
 	var raw_payload: Variant = level_resource.mechanic_payload
 	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
@@ -80,7 +80,7 @@ func _spawn_items_for_run() -> void:
 	for item_index in range(level_resource.cantidadPositivos):
 		if positive_items.is_empty():
 			break
-		var positive_item: LevelItem = positive_items.pop_front() as LevelItem
+		var positive_item = positive_items.pop_front()
 		if positive_item == null:
 			continue
 		_level_manager.spawn_level_item(
@@ -95,7 +95,7 @@ func _spawn_items_for_run() -> void:
 	for item_index in range(level_resource.cantidadNegativos):
 		if negative_items.is_empty():
 			break
-		var negative_item: LevelItem = negative_items.pop_front() as LevelItem
+		var negative_item = negative_items.pop_front()
 		if negative_item == null:
 			continue
 		_level_manager.spawn_level_item(

@@ -154,7 +154,7 @@ func _restore_saved_item(raw_saved_item: Variant) -> bool:
 	).strip_edges()
 	if item_path.is_empty() or instance_id.is_empty():
 		return false
-	var level_item: LevelItem = load(item_path) as LevelItem
+	var level_item = load(item_path)
 	if level_item == null:
 		return false
 	var is_positive: bool = bool(
