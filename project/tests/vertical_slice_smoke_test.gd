@@ -147,8 +147,8 @@ func _invoke_current_scene_method_and_wait(
 
 
 func _assert_gameplay_scene_contract() -> void:
-	var manager_level: ManagerLevel = current_scene.get_node_or_null(MANAGER_LEVEL_NODE_PATH) as ManagerLevel
-	var plate: Plato = current_scene.get_node_or_null(PLATE_NODE_PATH) as Plato
+	var manager_level = current_scene.get_node_or_null(MANAGER_LEVEL_NODE_PATH)
+	var plate = current_scene.get_node_or_null(PLATE_NODE_PATH)
 	var meal_sprite: Sprite2D = current_scene.get_node_or_null(MEAL_NODE_PATH) as Sprite2D
 	var condition_sprite: Sprite2D = current_scene.get_node_or_null(CONDITION_NODE_PATH) as Sprite2D
 
@@ -158,21 +158,34 @@ func _assert_gameplay_scene_contract() -> void:
 	_assert(condition_sprite != null, "La escena jugable deberia exponer el nodo Condition")
 	if manager_level == null:
 		return
+	_assert(
+		manager_level.has_method("get_current_run_index"),
+		"ManagerLevel deberia cargar su script runtime"
+	)
+	_assert(
+		manager_level.has_method("get_total_runs"),
+		"ManagerLevel deberia exponer el contrato publico del gameplay"
+	)
+	var raw_active_track_key: Variant = manager_level.get("active_track_key")
+	var raw_active_run_data: Variant = manager_level.get("active_run_data")
+	var active_run_data: Dictionary = (
+		raw_active_run_data if raw_active_run_data is Dictionary else {}
+	)
 
 	_assert(
-		str(manager_level.active_track_key) == BASELINE_TRACK_KEY,
+		str(raw_active_track_key) == BASELINE_TRACK_KEY,
 		"ManagerLevel deberia inicializarse con el track seleccionado"
 	)
 	_assert(
-		not (manager_level.active_run_data as Dictionary).is_empty(),
+		not active_run_data.is_empty(),
 		"ManagerLevel deberia cargar una corrida valida al entrar al gameplay"
 	)
 	_assert(
-		int(manager_level.get_current_run_index()) == 1,
+		int(manager_level.call("get_current_run_index")) == 1,
 		"El smoke test deberia entrar en la primera corrida"
 	)
 	_assert(
-		int(manager_level.get_total_runs()) >= 1,
+		int(manager_level.call("get_total_runs")) >= 1,
 		"El gameplay deberia exponer al menos una corrida jugable"
 	)
 	_assert(
@@ -223,6 +236,7 @@ func _cleanup_test_files() -> void:
 
 
 func _cleanup_and_quit() -> void:
+	_stop_runtime_audio()
 	_release_loaded_scene()
 	_cleanup_test_files()
 	GameChapterAssetCatalogScript.clear_texture_cache()
@@ -239,6 +253,21 @@ func _release_loaded_scene() -> void:
 	var loaded_scene: Node = current_scene
 	current_scene = null
 	loaded_scene.free()
+
+
+func _stop_runtime_audio() -> void:
+	for audio_player in root.find_children("*", "AudioStreamPlayer", true, false):
+		var player: AudioStreamPlayer = audio_player as AudioStreamPlayer
+		if player == null:
+			continue
+		player.stop()
+		player.stream = null
+	for audio_player in root.find_children("*", "AudioStreamPlayer2D", true, false):
+		var player: AudioStreamPlayer2D = audio_player as AudioStreamPlayer2D
+		if player == null:
+			continue
+		player.stop()
+		player.stream = null
 
 
 func _assert(condition: bool, message: String) -> void:
