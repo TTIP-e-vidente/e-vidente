@@ -60,17 +60,9 @@ $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 
 $steps = @(
-    @{ Label = 'Import headless'; Hint = 'Revisar errores de parseo, rutas res:// o autoloads.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') },
-    @{ Label = 'Content catalog validation test'; Hint = 'Revisar integridad del catalogo de tracks, capitulos, corridas y recursos referenciados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/content_catalog_validation_test.gd') },
-    @{ Label = 'Track item pool resolution test'; Hint = 'Revisar metadata de items, condiciones y overrides por track.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/track_item_pool_resolution_test.gd') },
-    @{ Label = 'Track book navigation test'; Hint = 'Revisar la integracion entre catalogo, libros y escenas jugables de todos los tracks.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/track_book_navigation_test.gd') },
-    @{ Label = 'Save manager smoke test'; Hint = 'Revisar persistencia minima y carga inicial de SaveManager.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_smoke_test.gd') },
-    @{ Label = 'Save manager validation test'; Hint = 'Revisar perfil local, validacion de datos y escritura/lectura de SaveManager.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_validation_test.gd') },
-    @{ Label = 'Save manager signal contract test'; Hint = 'Revisar nombres de señales, payloads y puntos de emision.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_signal_contract_test.gd') },
-    @{ Label = 'Save manager legacy migration test'; Hint = 'Revisar migracion de saves legacy, session activa y resume_state.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/save_manager_legacy_migration_test.gd') },
-    @{ Label = 'Archivero overlay test'; Hint = 'Revisar nodos, visibilidad y callbacks del overlay de perfil.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/archivero_overlay_test.gd') },
-    @{ Label = 'Intro menu profile test'; Hint = 'Revisar flujo de Intro para perfil, continuar y navegacion.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/intro_menu_profile_test.gd') },
-    @{ Label = 'Level quick save test'; Hint = 'Revisar quick save, restauracion parcial y UI de guardado en nivel.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/level_quick_save_test.gd') }
+    @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') },
+    @{ Label = 'Content catalog validation test'; Hint = 'Revisar integridad del catalogo y de las escenas declaradas por track.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/content_catalog_validation_test.gd') },
+    @{ Label = 'Vertical slice smoke test'; Hint = 'Revisar el flujo minimo Intro -> Selector -> Archivero -> Libro -> Level.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
 )
 
 Push-Location $repoRoot

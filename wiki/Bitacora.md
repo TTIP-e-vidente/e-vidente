@@ -4,6 +4,11 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-13 | ci-baseline-vertical-slice
+Le bajamos bastante el peso a la CI para dejar una base mas confiable en esta etapa. Se mantuvieron los wrappers de push y PR, pero el workflow compartido quedo en solo dos checks obligatorios: `Guardrails` y `Core Validation`. Del gate salieron el diff-aware, el cache de `.godot`, los retries especiales, el export web y la bateria de tests finos de save/UI.
+
+La validacion funcional obligatoria ahora corre siempre la misma suite corta: import headless, validacion del catalogo y un smoke test vertical slice (`Intro -> Selector -> Archivero -> Libro -> Level`). Ese smoke quedo atado a un track baseline explicito para bajar fragilidad y tener una referencia clara de la demo jugable que hoy queremos cuidar.
+
 ### 2026-04-08 | quick-save/ci-push-branches
 Se endurecio la serializacion del quick save parcial para tolerar mejor estados `mechanic_state` vacios y seguir restaurando desde los campos de compatibilidad. Ademas la CI principal paso a correr en cada push de branch y se forzo la ejecucion de acciones JavaScript con Node 24 para adelantarse a la deprecacion de Node 20.
 

@@ -1,4 +1,5 @@
 extends RefCounted
+## Resuelve los nodos visuales de la escena de nivel y aplica texturas del run.
 
 var _manager
 
@@ -7,22 +8,22 @@ func _init(manager) -> void:
 	_manager = manager
 
 
-func connect_scene_nodes() -> bool:
-	var level_scene: Node = _manager.get_parent()
-	if level_scene == null:
+func connect_scene_nodes(level_scene: Node = null) -> bool:
+	var scene_root: Node = level_scene if level_scene != null else _manager.get_parent()
+	if scene_root == null:
 		push_error("ManagerLevel no encontro la escena de nivel contenedora.")
 		return false
 
 	if not is_instance_valid(_manager.plato):
-		_manager.plato = level_scene.get_node_or_null("Plato") as Plato
+		_manager.plato = scene_root.get_node_or_null("Plato") as Plato
 	if not is_instance_valid(_manager.meal_sprite):
-		_manager.meal_sprite = level_scene.get_node_or_null("Globo texto/Meal") as Sprite2D
+		_manager.meal_sprite = scene_root.get_node_or_null("Globo texto/Meal") as Sprite2D
 	if not is_instance_valid(_manager.condition_sprite):
-		_manager.condition_sprite = level_scene.get_node_or_null(
+		_manager.condition_sprite = scene_root.get_node_or_null(
 			"Globo texto/Condition"
 		) as Sprite2D
 	if not is_instance_valid(_manager.teaching_sprite):
-		_manager.teaching_sprite = level_scene.get_node_or_null("Ensenanza") as Sprite2D
+		_manager.teaching_sprite = scene_root.get_node_or_null("Ensenanza") as Sprite2D
 
 	if (
 		is_instance_valid(_manager.plato)

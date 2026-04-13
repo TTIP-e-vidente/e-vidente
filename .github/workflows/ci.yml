@@ -1,5 +1,5 @@
 name: CI
-run-name: "${{ github.event_name == 'push' && format('Commit {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && format('Manual {0} + web export', github.ref_name)) || format('Manual {0}', github.ref_name) }}"
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual {0}', github.ref_name) || format('Commit {0}', github.ref_name) }}"
 
 on:
   push:
@@ -8,15 +8,7 @@ on:
       - dev
       - 'feat/**'
       - 'feature/**'
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
-    inputs:
-      run_web_export:
-        description: "Run optional Web Export build"
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: godot-${{ github.workflow }}-${{ github.ref }}
@@ -27,11 +19,5 @@ permissions:
 
 jobs:
   branch-validation:
-    name: "${{ github.event_name == 'push' && 'Commit' || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && 'Manual + web export') || 'Manual' }}"
+    name: Commit
     uses: ./.github/workflows/ci-shared.yml
-    with:
-      trigger_kind: ${{ github.event_name }}
-      ref_name: ${{ github.ref_name }}
-      before_sha: ${{ github.event.before || '' }}
-      head_sha: ${{ github.sha }}
-      run_web_export: ${{ github.event_name == 'workflow_dispatch' && inputs.run_web_export || false }}

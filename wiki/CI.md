@@ -1,88 +1,81 @@
 ﻿# CI Pipeline
 
-La CI está pensada para cortar roturas reales del proyecto, no para meter ruido por cualquier detalle accesorio.
+En esta etapa preferimos correr poco, pero que lo que corra sirva de verdad.
 
 ## Qué corre y cuándo
 
 Hay dos workflows visibles:
 
-- `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**`, `feature/**`, además de `schedule` y `workflow_dispatch`
+- `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, más corrida manual
 - `.github/workflows/ci-pr.yml` para `pull_request` hacia `main` o `dev`
 
-Los dos llaman a `.github/workflows/ci-shared.yml`, que es donde vive la lógica real.
+Los dos delegan en `.github/workflows/ci-shared.yml`.
 
-Las ramas feature también corren CI en `push` para detectar problemas antes de llegar a `dev`.
+No hay validación diff-aware, no hay nightly y no hay export web dentro del gate principal. La suite es la misma en push y PR a propósito: menos caminos, menos sorpresas.
 
-La validación sigue siendo diff-aware:
+## Checks obligatorios
 
-- si se toca `project/` o la suite compartida, corre `full`
-- si el cambio es de docs o infraestructura liviana, baja a `pr-fast`
+- `Guardrails`
+- `Core Validation`
 
-También se cancelan corridas anteriores de la misma rama para no acumular checks viejos.
+Los dos bloquean merge. Con eso alcanza por ahora.
 
-## Gates
+## `Guardrails`
 
-- `guardrails` y `validate` son los checks que bloquean
-- `guardrails` corta por estructura crítica o problemas concretos de setup
-- `validate` corta por errores reales del juego, escenas o persistencia
-- el recordatorio sobre `wiki/Bitacora.md` no bloquea
+Este job corta solo por problemas básicos del repo:
 
-## `guardrails`
+- estructura crítica del repo
+- escenas y archivos mínimos del slice jugable
+- entrypoints del runner de validación
+- ESLint solo si existe configuración real y lockfile pinneado
 
-Este job bloquea solo por cosas que realmente dejan al repo en mal estado para validar o ejecutar.
+No revisa docs, no mira la wiki y no suma warnings de relleno. Si falla, debería ser por algo que realmente dejó mal parado al repo.
 
-Hoy chequea como bloqueo real:
-
-- estructura mínima del proyecto Godot
-- entrypoints críticos de la validación compartida
-
-Y deja como aviso no bloqueante:
-
-- ESLint, pero solo si hay configuración y lockfile válidos
-- `README.md`, `wiki/Home.md`, `wiki/Getting-Started.md` y `wiki/Bitacora.md`
-- `project/export_presets.cfg`, porque solo importa para el export web manual
-
-Si este job falla, debería haber un motivo concreto: falta algo runtime, falta configuración necesaria o hay una falla real del tooling que sí usamos.
-
-## `validate`
+## `Core Validation`
 
 Este job corre en `barichello/godot-ci:4.6.2` y usa `scripts/run-godot-validation.sh`.
 
-Reglas actuales:
+Hoy el gate obligatorio quedó en tres pasos:
 
-- `full` en `schedule`, `workflow_dispatch` y en cambios que tocan `project/` o la suite compartida
-- `pr-fast` cuando el cambio no afecta runtime ni tests principales
+- `godot --headless --path project --editor --quit`
+- `res://tests/content_catalog_validation_test.gd`
+- `res://tests/vertical_slice_smoke_test.gd`
 
-Si el import headless falla en `full`, la CI limpia el estado generado de `project/.godot` y reintenta una vez, conservando `uid_cache.bin`.
+El smoke test hace un recorrido corto por el flujo principal del slice:
 
-Cubre:
+- Intro
+- Selector
+- Archivero
+- Libro del primer track
+- Capítulo 1
+- Entrada al gameplay
 
-- import headless del proyecto
-- integración entre catálogo, libros y niveles de todos los tracks
-- smoke test de guardado local
-- validación de persistencia y perfil
-- contrato de señales de `SaveManager`
-- migración de saves legacy
-- overlay de Archivero
-- flujo de Intro para perfil y continuidad
-- quick save en niveles
-- suficiencia real de pools por categoría para cada corrida del catálogo
+Valida que la escena jugable cargue, que `ManagerLevel` tenga una corrida activa y que el slice no se caiga en los primeros frames. No intenta probar todo el juego. Solo confirma que el camino principal sigue vivo.
 
-Si falla este job, hay una rotura real que conviene arreglar antes de mergear.
+## Qué quedó afuera del gate principal
 
-Además sube un artifact `validation-logs-*` con un log general y logs separados por paso.
+Estos tests siguen sirviendo, pero ya no bloquean cada PR:
+
+- save/local profile
+- señales de `SaveManager`
+- migraciones legacy
+- overlay de `Archivero`
+- quick save por nivel
+- tests de integración más finos por track
+
+Tiene sentido correrlos cuando se toque fuerte persistencia, UI o flujo interno, pero no vale la pena ponerlos a bloquear cada commit.
 
 ## Decisiones de fiabilidad
 
-- cache de `project/.godot` basada en imports, escenas, recursos y assets relevantes
-- cuando una PR toca `project/`, la validación vuelve a `full`
-- si el primer import falla, hay un reintento con limpieza del estado generado
-- el export web quedó fuera del gate principal
-- ESLint solo corre si el repo realmente lo usa de forma determinística
+- sin cache de `project/.godot`
+- sin reintentos especiales ni limpieza condicional del import cache
+- sin perfiles `full` vs `pr-fast`
+- sin export web dentro del workflow obligatorio
+- un único runner funcional para push y PR
+
+La apuesta acá es que cada corrida se parezca lo más posible a un checkout limpio, aunque eso signifique resignar optimizaciones que hoy meten más ruido que valor.
 
 ## Validación local
-
-Para probar lo mismo que corre en CI:
 
 En Windows:
 
@@ -99,19 +92,12 @@ powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Godot
 En shell:
 
 ```bash
-sh scripts/run-godot-validation.sh --run full godot
+sh scripts/run-godot-validation.sh --run ci godot
 ```
 
-El export web conviene dejarlo como verificación manual aparte.
+## Cómo leer un test
 
-## Cómo leer una corrida
+- si falla `Guardrails`, revisar estructura base o tooling 
+- si falla `Core Validation`, revisar parseo, catálogo o flujo mínimo del juego
+- si hace falta más profundidad, correr manualmente los tests específicos de `project/tests/`
 
-- si falla `guardrails`, revisar estructura del repo o setup
-- si falla `validate`, revisar código, escenas, recursos o tests
-- si aparece warning por `wiki/Bitacora.md`, es deuda de documentación, no un bloqueo
-
-## Mantenimiento
-
-Si cambia un flujo importante del juego, hay que sumar o ajustar un test en `project/tests/` y mantener `scripts/run-godot-validation.sh` como punto único de entrada para la validación funcional.
-
-Si más adelante el repo incorpora un stack Node estable, ahí sí vale la pena endurecer `guardrails` alrededor de ese tooling.

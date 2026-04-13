@@ -1,6 +1,3 @@
-extends RefCounted
-
-
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 const RUN_RESOURCE_KEYS := [
@@ -12,6 +9,7 @@ const RUN_RESOURCE_KEYS := [
 
 static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 	var issues: Array[String] = []
+
 	for raw_track_key in track_chapter_catalog.keys():
 		var track_key: String = str(raw_track_key).strip_edges()
 		if GameTrackCatalog.has_track(track_key):
@@ -20,16 +18,21 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key: String = str(track_definition.get("key", "")).strip_edges()
+		var track_context: String = "El track %s" % track_key
 		var expected_level_count: int = max(
 			1,
 			int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
 		)
 		var book_scene_path: String = str(track_definition.get("book_scene_path", ""))
 		var level_scene_path: String = str(track_definition.get("level_scene_path", ""))
+		var teaching_key_prefixes: Array[String] = []
 		var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
-		var teaching_key_prefixes: Array = (
-			raw_prefixes if raw_prefixes is Array else []
-		)
+		if raw_prefixes is Array:
+			for raw_prefix in raw_prefixes:
+				var prefix: String = str(raw_prefix).strip_edges()
+				if prefix.is_empty():
+					continue
+				teaching_key_prefixes.append(prefix)
 
 		_validate_resource_path(
 			book_scene_path,
@@ -45,21 +48,25 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 		var raw_track_chapters: Variant = track_chapter_catalog.get(track_key, {})
 		if not raw_track_chapters is Dictionary:
 			issues.append(
-				"El track %s no expone un diccionario de capitulos valido." % track_key
+				"%s no expone un diccionario de capitulos valido." % track_context
 			)
 			continue
 
 		var track_chapters: Dictionary = raw_track_chapters
+
 		for raw_level_number in track_chapters.keys():
 			var level_number: int = int(raw_level_number)
 			if level_number >= 1 and level_number <= expected_level_count:
 				continue
 			issues.append(
-				"El track %s define un capitulo fuera de rango: %d"
-				% [track_key, level_number]
+				"%s define un capitulo fuera de rango: %d"
+				% [track_context, level_number]
 			)
 
 		for level_number in range(1, expected_level_count + 1):
+			var chapter_context: String = (
+				"El capitulo %d del track %s" % [level_number, track_key]
+			)
 			if not track_chapters.has(level_number):
 				issues.append(
 					"Falta el capitulo %d del track %s." % [level_number, track_key]
@@ -69,8 +76,7 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 			var raw_chapter_definition: Variant = track_chapters[level_number]
 			if not raw_chapter_definition is Dictionary:
 				issues.append(
-					"El capitulo %d del track %s no es un diccionario valido."
-					% [level_number, track_key]
+					"%s no es un diccionario valido." % chapter_context
 				)
 				continue
 
@@ -78,12 +84,12 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 			var raw_runs: Variant = chapter_definition.get("runs", [])
 			if not raw_runs is Array or raw_runs.is_empty():
 				issues.append(
-					"El capitulo %d del track %s no define corridas jugables."
-					% [level_number, track_key]
+					"%s no define corridas jugables." % chapter_context
 				)
 				continue
 
 			var runs: Array = raw_runs
+
 			for run_index in range(runs.size()):
 				var run_number: int = run_index + 1
 				var run_context: String = (
@@ -99,6 +105,7 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 					continue
 
 				var run_definition: Dictionary = raw_run_definition
+
 				var mechanic_type: String = LevelMechanicRegistry.normalize_mechanic_type(
 					run_definition.get("mechanic_type", ""),
 					""
@@ -122,9 +129,8 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 					issues.append("%s no define teaching_key." % run_context)
 				elif not teaching_key_prefixes.is_empty():
 					var matches_track: bool = false
-					for raw_prefix in teaching_key_prefixes:
-						var prefix: String = str(raw_prefix).strip_edges()
-						if prefix.is_empty() or not teaching_key.begins_with(prefix):
+					for prefix in teaching_key_prefixes:
+						if not teaching_key.begins_with(prefix):
 							continue
 						matches_track = true
 						break
@@ -154,10 +160,12 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 						% [run_context, category]
 					)
 
-				var payload: Variant = run_definition.get("mechanic_payload", {})
-				if not payload is Dictionary:
+				var raw_payload: Variant = run_definition.get("mechanic_payload", {})
+				if not raw_payload is Dictionary:
 					issues.append("%s no define mechanic_payload valido." % run_context)
 					continue
+
+				var payload: Dictionary = raw_payload
 
 				if int(payload.get("negative_count", -1)) != negative_count:
 					issues.append(
