@@ -28,50 +28,35 @@ static func has_mechanic_type(raw_mechanic_type: Variant) -> bool:
 
 
 static func build_controllers(level_manager) -> Dictionary:
-	var controllers: Dictionary = {}
-	_register_controller(
-		controllers,
-		DEFAULT_MECHANIC_TYPE,
-		PLATE_SORT_MECHANIC_CONTROLLER_PATH,
-		level_manager
-	)
-	return controllers
-
-
-static func _register_controller(
-	controllers: Dictionary,
-	mechanic_type: String,
-	controller_script_path: String,
-	level_manager
-) -> void:
-	var raw_controller_script: Variant = load(controller_script_path)
+	var raw_controller_script: Variant = load(PLATE_SORT_MECHANIC_CONTROLLER_PATH)
 	if raw_controller_script == null:
 		push_error(
 			(
 				"LevelMechanicRegistry no pudo cargar el controlador '%s' en %s."
 			)
-			% [mechanic_type, controller_script_path]
+			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
 		)
-		return
+		return {}
 
 	if not raw_controller_script is Script:
 		push_error(
 			(
 				"LevelMechanicRegistry cargo un recurso invalido para '%s' en %s."
 			)
-			% [mechanic_type, controller_script_path]
+			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
 		)
-		return
+		return {}
 
 	var controller_script: Script = raw_controller_script
 	if not controller_script.can_instantiate():
 		push_error(
 			(
-				"LevelMechanicRegistry no puede instanciar '%s' en %s. Revisar errores de parseo o dependencias del script."
+				"LevelMechanicRegistry no puede instanciar '%s' en %s. "
+				+ "Revisar errores de parseo o dependencias del script."
 			)
-			% [mechanic_type, controller_script_path]
+			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
 		)
-		return
+		return {}
 
 	var controller = controller_script.new(level_manager)
 	if controller == null:
@@ -79,8 +64,8 @@ static func _register_controller(
 			(
 				"LevelMechanicRegistry no pudo instanciar el controlador '%s' en %s."
 			)
-			% [mechanic_type, controller_script_path]
+			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
 		)
-		return
+		return {}
 
-	controllers[mechanic_type] = controller
+	return {DEFAULT_MECHANIC_TYPE: controller}

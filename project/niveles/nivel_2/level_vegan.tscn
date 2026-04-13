@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
@@ -36,8 +36,6 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_fecjc"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_spc0y"]
 [ext_resource type="Script" path="res://niveles/manager_level.gd" id="36_klwte"]
-[ext_resource type="Resource" path="res://niveles/nivel_2/level_2.tres" id="37_cemvk"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="38_qgt73"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-guardar.svg" id="39_saveicon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_wpkox"]
@@ -409,10 +407,9 @@ scale = Vector2(1.33952, 1.33952)
 
 [node name="ManagerLevel" type="Node" parent="."]
 script = ExtResource("36_klwte")
-level_resource = ExtResource("37_cemvk")
+level_resource_path = "res://niveles/nivel_2/level_2.tres"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("38_qgt73")
 volume_db = -4.962
 attenuation = 2.07053
 

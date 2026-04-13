@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_g0f04"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_l8wda"]
@@ -36,8 +36,6 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="25_x7g2d"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="26_6so0i"]
 [ext_resource type="Script" path="res://niveles/manager_level.gd" id="30_ycctx"]
-[ext_resource type="Resource" path="res://niveles/nivel_1/level_1.tres" id="31_3bfvs"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="31_6lgcq"]
 [ext_resource type="Texture2D" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="38_hnxgu"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-guardar.svg" id="39_saveicon"]
 
@@ -413,10 +411,9 @@ texture = ExtResource("38_hnxgu")
 
 [node name="ManagerLevel" type="Node" parent="."]
 script = ExtResource("30_ycctx")
-level_resource = ExtResource("31_3bfvs")
+level_resource_path = "res://niveles/nivel_1/level_1.tres"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("31_6lgcq")
 volume_db = -4.962
 attenuation = 2.07053
 

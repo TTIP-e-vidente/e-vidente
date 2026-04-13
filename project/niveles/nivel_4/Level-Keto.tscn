@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cpqkvf7oqnix0"]
+[gd_scene load_steps=42 format=3 uid="uid://cpqkvf7oqnix0"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
@@ -37,8 +37,6 @@
 [ext_resource type="Texture2D" uid="uid://boxxlcks2q6qv" path="res://assets-sistema/interfaz/icono-guardar.svg" id="35_fcmtb"]
 [ext_resource type="Texture2D" uid="uid://bckrksgaarpos" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="36_g2m33"]
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
-[ext_resource type="Resource" path="res://niveles/nivel_4/level_4.tres" id="38_277ff"]
-[ext_resource type="AudioStream" uid="uid://cqyqol04288fo" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="39_mdmua"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
 animations = [{
@@ -409,10 +407,9 @@ texture = ExtResource("36_g2m33")
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=990927628]
 script = ExtResource("37_m1vf8")
-level_resource = ExtResource("38_277ff")
+level_resource_path = "res://niveles/nivel_4/level_4.tres"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1123792084]
-stream = ExtResource("39_mdmua")
 volume_db = -4.962
 attenuation = 2.07053
 

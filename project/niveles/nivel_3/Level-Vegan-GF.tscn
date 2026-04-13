@@ -1,4 +1,4 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_wi3ev"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="2_f1fgs"]
@@ -34,8 +34,6 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="32_0bm5o"]
 [ext_resource type="Texture2D" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="33_x7570"]
 [ext_resource type="Script" path="res://niveles/manager_level.gd" id="34_uham0"]
-[ext_resource type="Resource" path="res://niveles/nivel_3/level_3.tres" id="35_q1rl2"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="36_sjxcj"]
 [ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="37_yw1kj"]
 [ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="38_w55qy"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-guardar.svg" id="39_saveicon"]
@@ -406,10 +404,9 @@ texture = ExtResource("33_x7570")
 
 [node name="ManagerLevel" type="Node" parent="."]
 script = ExtResource("34_uham0")
-level_resource = ExtResource("35_q1rl2")
+level_resource_path = "res://niveles/nivel_3/level_3.tres"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("36_sjxcj")
 volume_db = -4.962
 attenuation = 2.07053
 

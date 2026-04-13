@@ -5,11 +5,13 @@ const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicReg
 const LevelSceneRefsScript := preload("res://niveles/runtime/LevelSceneRefs.gd")
 const LevelItemRuntimeScript := preload("res://niveles/runtime/LevelItemRuntime.gd")
 const GlobalStateScript := preload("res://niveles/global.gd")
+const LevelResourceScript := preload("res://resources/level_resource.gd")
 const GameLevelContentCatalogScript := preload(
 	"res://niveles/content/GameLevelContentCatalog.gd"
 )
 
 @export var level_resource = null
+@export var level_resource_path := ""
 
 @onready var plato = %Plato
 
@@ -39,6 +41,7 @@ func initialize_level_runtime(level_scene: Node) -> void:
 		return
 
 	active_track_key = _resolve_active_track_key(level_scene)
+	_ensure_level_resource()
 	_clear_track_pool_cache()
 
 	var partial_level_state: Dictionary = _read_saved_level_state()
@@ -168,8 +171,37 @@ func _resolve_active_track_key(level_scene: Node) -> String:
 
 
 func _clear_track_pool_cache() -> void:
-	if level_resource != null:
+	if _is_valid_level_resource(level_resource):
 		level_resource.clear_track_pool_cache()
+
+
+func _ensure_level_resource() -> void:
+	if _is_valid_level_resource(level_resource):
+		return
+
+	var resolved_resource_path: String = level_resource_path.strip_edges()
+	if resolved_resource_path.is_empty():
+		level_resource = LevelResourceScript.new()
+		return
+
+	var loaded_level_resource: Variant = load(resolved_resource_path)
+	if _is_valid_level_resource(loaded_level_resource):
+		level_resource = loaded_level_resource
+		return
+
+	push_error(
+		"ManagerLevel no pudo cargar level_resource en %s." % resolved_resource_path
+	)
+	level_resource = LevelResourceScript.new()
+
+
+func _is_valid_level_resource(raw_level_resource: Variant) -> bool:
+	return (
+		raw_level_resource is Resource
+		and raw_level_resource.has_method("get_positive_items")
+		and raw_level_resource.has_method("get_negative_items")
+		and raw_level_resource.has_method("clear_track_pool_cache")
+	)
 
 
 func _read_saved_level_state() -> Dictionary:
@@ -212,34 +244,22 @@ func _read_active_run_definition() -> Dictionary:
 
 
 func _resolve_active_mechanic_controller(run_data: Dictionary):
-	active_mechanic_type = _read_requested_mechanic_type(run_data)
-	_ensure_mechanics_registered()
+	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
+		run_data.get("mechanic_type", "")
+	)
+	_ensure_mechanic_controllers()
 	return _mechanic_controllers.get(active_mechanic_type)
 
 
 func _bootstrap_level_runtime() -> void:
 	_ensure_runtime_services()
-	_ensure_mechanics_registered()
+	_ensure_mechanic_controllers()
 
 
-func _read_requested_mechanic_type(run_data: Dictionary) -> String:
-	return LevelMechanicRegistry.normalize_mechanic_type(
-		run_data.get("mechanic_type", "")
-	)
-
-
-func _ensure_mechanics_registered() -> void:
+func _ensure_mechanic_controllers() -> void:
 	if not _mechanic_controllers.is_empty():
 		return
-	_register_mechanics()
-
-
-func _register_mechanics() -> void:
-	_mechanic_controllers = _build_mechanic_controllers()
-
-
-func _build_mechanic_controllers() -> Dictionary:
-	return LevelMechanicRegistry.build_controllers(self)
+	_mechanic_controllers = LevelMechanicRegistry.build_controllers(self)
 
 
 func _ensure_runtime_services() -> void:
