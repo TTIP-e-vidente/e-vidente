@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3]
+[gd_scene load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
@@ -36,7 +36,6 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_fecjc"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_spc0y"]
 [ext_resource type="Script" path="res://niveles/manager_level.gd" id="36_klwte"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-guardar.svg" id="39_saveicon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_wpkox"]
 animations = [{
@@ -356,7 +355,6 @@ offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
 tooltip_text = "Guardar progreso"
-icon = ExtResource("39_saveicon")
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="."]

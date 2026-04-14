@@ -9,13 +9,13 @@ const SAVE_FEEDBACK_ERROR_TITLE := "No se pudo guardar"
 const SAVE_FEEDBACK_DEFAULT_TIME_LINE := "Guardado en este dispositivo"
 const SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE := "Reintenta de nuevo en unos segundos"
 const SAVE_FEEDBACK_RESET_WAIT_TIME := 3.0
+const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
+const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const DEFAULT_BACKGROUND_MUSIC_PATH := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
-const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
 const SAVE_FEEDBACK_SUCCESS_TITLE_COLOR := Color(0.215686, 0.337255, 0.231373, 1)
 const SAVE_FEEDBACK_SUCCESS_BODY_COLOR := Color(0.266667, 0.227451, 0.156863, 0.96)
 const SAVE_FEEDBACK_ERROR_TITLE_COLOR := Color(0.568627, 0.184314, 0.141176, 1)
@@ -39,6 +39,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96
 
 var save_feedback_timer: Timer
 var active_track_key := ""
+var save_icon_idle: Texture2D = null
+var save_icon_ok: Texture2D = null
 
 
 func _ready() -> void:
@@ -101,6 +103,7 @@ func _play_level_audio() -> void:
 
 
 func _configure_quick_save_feedback() -> void:
+	_ensure_quick_save_icons_loaded()
 	save_progress_button.tooltip_text = MANUAL_SAVE_TOOLTIP
 	_reset_save_feedback_visual_state()
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE
@@ -115,6 +118,21 @@ func _configure_quick_save_feedback() -> void:
 	save_feedback_timer.wait_time = SAVE_FEEDBACK_RESET_WAIT_TIME
 	save_feedback_timer.timeout.connect(_on_save_feedback_timeout)
 	add_child(save_feedback_timer)
+
+
+func _ensure_quick_save_icons_loaded() -> void:
+	if save_icon_idle == null:
+		save_icon_idle = _load_texture_or_null(SAVE_ICON_IDLE_PATH)
+	if save_icon_ok == null:
+		save_icon_ok = _load_texture_or_null(SAVE_ICON_OK_PATH)
+
+
+func _load_texture_or_null(texture_path: String) -> Texture2D:
+	var loaded_texture: Variant = load(texture_path)
+	if loaded_texture is Texture2D:
+		return loaded_texture
+	push_warning("Level no pudo cargar la textura de UI en %s." % texture_path)
+	return null
 
 
 func _exit_tree() -> void:
@@ -287,11 +305,11 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 	if success:
 		save_feedback_title.modulate = SAVE_FEEDBACK_SUCCESS_TITLE_COLOR
 		save_feedback_label.modulate = SAVE_FEEDBACK_SUCCESS_BODY_COLOR
-		save_progress_button.icon = SAVE_ICON_OK
+		save_progress_button.icon = save_icon_ok
 	else:
 		save_feedback_title.modulate = SAVE_FEEDBACK_ERROR_TITLE_COLOR
 		save_feedback_label.modulate = SAVE_FEEDBACK_ERROR_BODY_COLOR
-		save_progress_button.icon = SAVE_ICON_IDLE
+		save_progress_button.icon = save_icon_idle
 
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
@@ -299,7 +317,7 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 
 
 func _reset_save_feedback_visual_state() -> void:
-	save_progress_button.icon = SAVE_ICON_IDLE
+	save_progress_button.icon = save_icon_idle
 	save_feedback_backdrop.visible = false
 
 

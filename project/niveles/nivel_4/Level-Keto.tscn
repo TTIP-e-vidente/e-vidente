@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3 uid="uid://cpqkvf7oqnix0"]
+[gd_scene load_steps=40 format=3 uid="uid://cpqkvf7oqnix0"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
@@ -34,8 +34,6 @@
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="32_hxfx2"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_tpxw6"]
 [ext_resource type="Texture2D" uid="uid://d310wsm1t43q5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_oaafq"]
-[ext_resource type="Texture2D" uid="uid://boxxlcks2q6qv" path="res://assets-sistema/interfaz/icono-guardar.svg" id="35_fcmtb"]
-[ext_resource type="Texture2D" uid="uid://bckrksgaarpos" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="36_g2m33"]
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
@@ -355,7 +353,6 @@ offset_top = 141.0
 offset_right = 1127.0
 offset_bottom = 245.0
 tooltip_text = "Guardar progreso"
-icon = ExtResource("35_fcmtb")
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=2035953237]
@@ -403,7 +400,6 @@ visibility_layer = 256
 z_index = 9
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
-texture = ExtResource("36_g2m33")
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=990927628]
 script = ExtResource("37_m1vf8")
