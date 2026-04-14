@@ -1,0 +1,82 @@
+name: Pages
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual web deploy {0}', github.ref_name) || format('Pages {0}', github.ref_name) }}"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  export-web:
+    name: Export Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: barichello/godot-ci:4.6.2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install Linux runtime libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends libfontconfig1
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Export web build
+        shell: bash
+        env:
+          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/pages
+        run: |
+          set -euo pipefail
+          rm -rf "$GITHUB_WORKSPACE/build/web" "$GITHUB_WORKSPACE/validation-logs/pages"
+          mkdir -p "$GITHUB_WORKSPACE/build/web"
+
+          sh scripts/run-godot-validation.sh --run codebase godot
+          godot --headless --verbose --path project --export-release index "$GITHUB_WORKSPACE/build/web/index.html"
+
+          test -f "$GITHUB_WORKSPACE/build/web/index.html"
+          touch "$GITHUB_WORKSPACE/build/web/.nojekyll"
+
+      - name: Upload export logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-export-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
+          path: validation-logs/pages
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy-pages:
+    name: Deploy Pages
+    needs: export-web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

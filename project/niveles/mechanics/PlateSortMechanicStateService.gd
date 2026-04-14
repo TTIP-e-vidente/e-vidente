@@ -25,34 +25,21 @@ func build_save_state(mechanic_type: String, current_run_index: int) -> Dictiona
 	if saved_items.is_empty() and current_run_index <= 1:
 		return {}
 
-	return _build_partial_save_state(
-		mechanic_type,
-		current_run_index,
-		saved_items,
-		placed_positive_item_ids
-	)
+	var mechanic_state: Dictionary = {
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
+	}
+	return {
+		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
+		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
+	}
 
 
 func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
-	var placed_item_count: int = _count_saved_positive_items_in_plate(
-		saved_level_state
-	)
-	return _build_save_summary(placed_item_count)
-
-
-func restore_items(saved_level_state: Dictionary) -> bool:
-	var saved_items: Array = _read_saved_item_entries(saved_level_state)
-	return _restore_saved_runtime_items(saved_items)
-
-
-func restore_items_in_plate(saved_level_state: Dictionary) -> void:
-	var runtime_items_to_restore: Array = _find_runtime_items_to_restore_in_plate(
-		saved_level_state
-	)
-	_restore_runtime_items_to_plate(runtime_items_to_restore)
-
-
-func _build_save_summary(placed_item_count: int) -> Dictionary:
+	var placed_item_count: int = _read_saved_positive_item_ids(saved_level_state).size()
 	return {
 		"placed_positive_count": placed_item_count,
 		"progress_count": placed_item_count,
@@ -61,45 +48,64 @@ func _build_save_summary(placed_item_count: int) -> Dictionary:
 	}
 
 
+func restore_items(saved_level_state: Dictionary) -> bool:
+	var saved_items: Array = _read_saved_item_entries(saved_level_state)
+	return _restore_saved_runtime_items(saved_items)
+
+
+func restore_items_in_plate(saved_level_state: Dictionary) -> void:
+	var saved_positive_item_ids: Array = _read_saved_positive_item_ids(saved_level_state)
+	if saved_positive_item_ids.is_empty():
+		return
+
+	var runtime_items_to_restore: Array = []
+	for raw_item_id in saved_positive_item_ids:
+		var instance_id: String = str(raw_item_id).strip_edges()
+		if instance_id.is_empty():
+			continue
+
+		var runtime_item = _find_runtime_item_by_instance_id(instance_id)
+		if runtime_item == null or not runtime_item.esPositivo:
+			continue
+
+		runtime_items_to_restore.append(runtime_item)
+
+	for item_index in range(runtime_items_to_restore.size()):
+		var runtime_item = runtime_items_to_restore[item_index]
+		_restore_runtime_item_to_plate(
+			runtime_item,
+			item_index,
+			runtime_items_to_restore.size()
+		)
+
+
 func _collect_runtime_item_snapshot() -> Dictionary:
 	var saved_items: Array = []
 	var placed_positive_item_ids: Array = []
 
 	for runtime_item in _level_manager.level_items:
-		_append_runtime_item_to_snapshot(
-			runtime_item,
-			saved_items,
-			placed_positive_item_ids
-		)
+		if not is_instance_valid(runtime_item):
+			continue
+
+		var saved_item: Dictionary = _build_saved_item_entry(runtime_item)
+		if saved_item.is_empty():
+			continue
+
+		saved_items.append(saved_item)
+		if bool(runtime_item.esPositivo) and _level_manager.plato.has_positive_item(runtime_item):
+			placed_positive_item_ids.append(
+				str(
+					saved_item.get(
+						GlobalStateScript.PARTIAL_LEVEL_INSTANCE_ID_KEY,
+						""
+					)
+				)
+			)
 
 	return {
 		"saved_items": saved_items,
 		"placed_positive_item_ids": placed_positive_item_ids
 	}
-
-
-func _append_runtime_item_to_snapshot(
-	runtime_item,
-	saved_items: Array,
-	placed_positive_item_ids: Array
-) -> void:
-	if not is_instance_valid(runtime_item):
-		return
-
-	var saved_item: Dictionary = _build_saved_item_entry(runtime_item)
-	if saved_item.is_empty():
-		return
-
-	saved_items.append(saved_item)
-	if _is_runtime_item_saved_in_plate(runtime_item):
-		placed_positive_item_ids.append(
-			str(
-				saved_item.get(
-					GlobalStateScript.PARTIAL_LEVEL_INSTANCE_ID_KEY,
-					""
-				)
-			)
-		)
 
 
 func _build_saved_item_entry(runtime_item) -> Dictionary:
@@ -111,29 +117,6 @@ func _build_saved_item_entry(runtime_item) -> Dictionary:
 		GlobalStateScript.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
 		GlobalStateScript.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
 		GlobalStateScript.PARTIAL_LEVEL_IS_POSITIVE_KEY: bool(runtime_item.esPositivo)
-	}
-
-
-func _is_runtime_item_saved_in_plate(runtime_item) -> bool:
-	return bool(runtime_item.esPositivo) and _level_manager.plato.has_positive_item(runtime_item)
-
-
-func _build_partial_save_state(
-	mechanic_type: String,
-	current_run_index: int,
-	saved_items: Array,
-	placed_positive_item_ids: Array
-) -> Dictionary:
-	var mechanic_state: Dictionary = {
-		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
-		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
-	}
-	return {
-		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
-		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
-		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
-		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
-		GlobalStateScript.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
 	}
 
 
@@ -155,39 +138,6 @@ func _read_saved_item_entries(saved_level_state: Dictionary) -> Array:
 		plate_sort_state,
 		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY
 	)
-
-
-func _count_saved_positive_items_in_plate(saved_level_state: Dictionary) -> int:
-	return _read_saved_positive_item_ids(saved_level_state).size()
-
-
-func _find_runtime_items_to_restore_in_plate(saved_level_state: Dictionary) -> Array:
-	var saved_positive_item_ids: Array = _read_saved_positive_item_ids(
-		saved_level_state
-	)
-	if saved_positive_item_ids.is_empty():
-		return []
-
-	var runtime_items_to_restore: Array = []
-	for raw_item_id in saved_positive_item_ids:
-		var instance_id: String = str(raw_item_id).strip_edges()
-		if instance_id.is_empty():
-			continue
-		var runtime_item = _find_runtime_item_by_instance_id(instance_id)
-		if runtime_item == null or not runtime_item.esPositivo:
-			continue
-		runtime_items_to_restore.append(runtime_item)
-	return runtime_items_to_restore
-
-
-func _restore_runtime_items_to_plate(runtime_items_to_restore: Array) -> void:
-	for item_index in range(runtime_items_to_restore.size()):
-		var runtime_item = runtime_items_to_restore[item_index]
-		_restore_runtime_item_to_plate(
-			runtime_item,
-			item_index,
-			runtime_items_to_restore.size()
-		)
 
 
 func _read_saved_positive_item_ids(saved_level_state: Dictionary) -> Array:

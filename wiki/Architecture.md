@@ -128,4 +128,4 @@ Más detalle en [Persistencia Local](Persistencia-Local).
 
 ## Build y export
 
-El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. Esa salida se verifica y se publica como artifact en la CI.
+El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. El gate obligatorio no lo corre, pero el workflow `.github/workflows/pages.yml` hace import headless, exporta esa salida y la despliega en GitHub Pages.

@@ -32,28 +32,27 @@ var _content_catalog = null
 
 
 func _ready() -> void:
-	_bootstrap_level_runtime()
+	_initialize_runtime_dependencies()
 
 
 func initialize_level_runtime(level_scene: Node) -> void:
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
 	if not _scene_refs.connect_scene_nodes(level_scene):
 		return
 
-	active_track_key = _resolve_active_track_key(level_scene)
-	_ensure_level_resource()
-	_clear_track_pool_cache()
+	active_track_key = _read_track_key_from_scene(level_scene)
+	_prepare_level_resource_for_runtime()
 
-	var partial_level_state: Dictionary = _read_saved_level_state()
-	active_run_index = _resolve_saved_run_index(partial_level_state)
-	_start_active_run(partial_level_state)
+	var saved_level_state: Dictionary = _read_saved_level_state()
+	active_run_index = _resolve_run_index_from_saved_state(saved_level_state)
+	_start_current_run(saved_level_state)
 
 
 func advance_to_next_run() -> bool:
 	if active_run_index >= get_total_runs():
 		return false
 	active_run_index += 1
-	_start_active_run(
+	_start_current_run(
 		{GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index}
 	)
 	return true
@@ -64,12 +63,13 @@ func get_current_run_index() -> int:
 
 
 func get_total_runs() -> int:
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
+	var current_level_number: int = _get_current_level_number()
 	return max(
 		1,
 		_content_catalog.get_chapter_run_count(
 			active_track_key,
-			_get_current_level_number()
+			current_level_number
 		)
 	)
 
@@ -77,23 +77,21 @@ func get_total_runs() -> int:
 func build_partial_level_state() -> Dictionary:
 	if _active_mechanic_controller == null:
 		return {}
+
 	var partial_level_state: Dictionary = _active_mechanic_controller.build_partial_state()
 	if partial_level_state.is_empty():
 		return {}
+
 	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
-	var stored_mechanic_type: Variant = partial_level_state.get(
-		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
-		active_mechanic_type
+	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = (
+		_resolve_partial_state_mechanic_type(partial_level_state)
 	)
-	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
-		stored_mechanic_type
-	).strip_edges()
 	return partial_level_state
 
 
 func store_partial_level_state(track_key: String) -> Dictionary:
 	var partial_level_state: Dictionary = build_partial_level_state()
-	var global_state = _get_global_state()
+	var global_state: Node = _get_global_state()
 	if global_state != null:
 		global_state.set_partial_level_state(
 			track_key,
@@ -121,29 +119,29 @@ func get_positive_items_in_plate_count() -> int:
 
 
 func filter_items_by_category(items: Array, category: String) -> Array:
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
 	return _content_catalog.filter_items_by_category(items, category)
 
 
 func spawn_level_item(level_item, instance_id: String, is_positive: bool):
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
 	return _item_runtime.create_item(level_item, instance_id, is_positive)
 
 
 func clear_runtime_items() -> void:
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
 	_item_runtime.clear_items()
 
 
 func layout_runtime_items() -> void:
-	_ensure_runtime_services()
+	_ensure_runtime_dependencies()
 	_item_runtime.layout_items(level_resource)
 
 
-func _start_active_run(partial_level_state: Dictionary) -> void:
-	_clear_previous_run_runtime()
+func _start_current_run(saved_level_state: Dictionary) -> void:
+	_clear_runtime_from_previous_run()
 
-	active_run_data = _read_active_run_definition()
+	active_run_data = _read_current_run_definition()
 	if active_run_data.is_empty():
 		push_error(
 			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
@@ -151,7 +149,7 @@ func _start_active_run(partial_level_state: Dictionary) -> void:
 		)
 		return
 
-	_active_mechanic_controller = _resolve_active_mechanic_controller(active_run_data)
+	_active_mechanic_controller = _resolve_mechanic_controller_for_run(active_run_data)
 	if _active_mechanic_controller == null:
 		push_error(
 			"ManagerLevel no encontro controlador para la mecanica '%s'."
@@ -161,21 +159,26 @@ func _start_active_run(partial_level_state: Dictionary) -> void:
 
 	_active_mechanic_controller.configure_run(active_run_data, level_resource)
 	_scene_refs.apply_run_textures(level_resource, active_run_data)
-	_active_mechanic_controller.restore_or_start(partial_level_state)
+	_active_mechanic_controller.restore_or_start(saved_level_state)
 
 
-func _resolve_active_track_key(level_scene: Node) -> String:
+func _read_track_key_from_scene(level_scene: Node) -> String:
 	if level_scene != null and level_scene.has_method("_get_resume_track_key"):
 		return str(level_scene.call("_get_resume_track_key")).strip_edges()
 	return ""
 
 
-func _clear_track_pool_cache() -> void:
+func _prepare_level_resource_for_runtime() -> void:
+	_ensure_level_resource_loaded()
+	_clear_level_resource_track_pool_cache()
+
+
+func _clear_level_resource_track_pool_cache() -> void:
 	if _is_valid_level_resource(level_resource):
 		level_resource.clear_track_pool_cache()
 
 
-func _ensure_level_resource() -> void:
+func _ensure_level_resource_loaded() -> void:
 	if _is_valid_level_resource(level_resource):
 		return
 
@@ -205,7 +208,7 @@ func _is_valid_level_resource(raw_level_resource: Variant) -> bool:
 
 
 func _read_saved_level_state() -> Dictionary:
-	var global_state = _get_global_state()
+	var global_state: Node = _get_global_state()
 	if global_state == null:
 		return {}
 	return global_state.get_partial_level_state(
@@ -214,10 +217,10 @@ func _read_saved_level_state() -> Dictionary:
 	)
 
 
-func _resolve_saved_run_index(partial_level_state: Dictionary) -> int:
+func _resolve_run_index_from_saved_state(saved_level_state: Dictionary) -> int:
 	return clampi(
 		int(
-			partial_level_state.get(
+			saved_level_state.get(
 				GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
 				1
 			)
@@ -227,23 +230,24 @@ func _resolve_saved_run_index(partial_level_state: Dictionary) -> int:
 	)
 
 
-func _clear_previous_run_runtime() -> void:
+func _clear_runtime_from_previous_run() -> void:
 	if _active_mechanic_controller != null:
 		_active_mechanic_controller.clear_runtime_state()
 		return
 	clear_runtime_items()
 
 
-func _read_active_run_definition() -> Dictionary:
-	_ensure_runtime_services()
+func _read_current_run_definition() -> Dictionary:
+	_ensure_runtime_dependencies()
+	var current_level_number: int = _get_current_level_number()
 	return _content_catalog.get_chapter_run_definition(
 		active_track_key,
-		_get_current_level_number(),
+		current_level_number,
 		active_run_index
 	)
 
 
-func _resolve_active_mechanic_controller(run_data: Dictionary):
+func _resolve_mechanic_controller_for_run(run_data: Dictionary):
 	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
 		run_data.get("mechanic_type", "")
 	)
@@ -251,8 +255,16 @@ func _resolve_active_mechanic_controller(run_data: Dictionary):
 	return _mechanic_controllers.get(active_mechanic_type)
 
 
-func _bootstrap_level_runtime() -> void:
-	_ensure_runtime_services()
+func _resolve_partial_state_mechanic_type(partial_level_state: Dictionary) -> String:
+	var stored_mechanic_type: Variant = partial_level_state.get(
+		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
+		active_mechanic_type
+	)
+	return str(stored_mechanic_type).strip_edges()
+
+
+func _initialize_runtime_dependencies() -> void:
+	_ensure_runtime_dependencies()
 	_ensure_mechanic_controllers()
 
 
@@ -262,7 +274,7 @@ func _ensure_mechanic_controllers() -> void:
 	_mechanic_controllers = LevelMechanicRegistry.build_controllers(self)
 
 
-func _ensure_runtime_services() -> void:
+func _ensure_runtime_dependencies() -> void:
 	if _content_catalog == null:
 		_content_catalog = GameLevelContentCatalogScript.new()
 	if _scene_refs == null:

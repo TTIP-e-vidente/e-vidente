@@ -4,6 +4,9 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-13 | pages-web-deploy
+Se agrego un workflow separado para GitHub Pages que exporta el preset web `index` y despliega `build/web/` sin volver a meter el export dentro del gate obligatorio. La CI principal sigue cuidando estructura y slice jugable; el deploy web queda desacoplado para no mezclar merge gate con publicacion.
+
 ### 2026-04-13 | ci-baseline-vertical-slice
 Le bajamos bastante el peso a la CI para dejar una base mas confiable en esta etapa. Se mantuvieron los wrappers de push y PR, pero el workflow compartido quedo en solo dos checks obligatorios: `Guardrails` y `Core Validation`. Del gate salieron el diff-aware, el cache de `.godot`, los retries especiales, el export web y la bateria de tests finos de save/UI.
 

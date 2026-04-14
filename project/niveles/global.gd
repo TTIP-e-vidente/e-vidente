@@ -43,12 +43,9 @@ var progress_system_state_by_key: Dictionary = {}
 func _init() -> void:
 	_level_content_catalog = GameLevelContentCatalogScript.new()
 	_progress_state_store = GameProgressStateStoreScript.new(self)
-	campaign_progress_by_track = build_default_campaign_progress_state()
-	partial_level_state_by_track = _progress_state_store.build_empty_partial_level_state_map()
-	progress_system_state_by_key = _progress_state_store.build_empty_progress_system_state_map()
+	_reset_runtime_progress_state()
 
 
-# Contenido de tracks, capitulos y recursos.
 func get_track_level_count(track_key: String = "") -> int:
 	return _level_content_catalog.get_track_level_count(
 		track_key,
@@ -104,27 +101,17 @@ func get_current_level_number() -> int:
 
 
 func set_current_level_number(level_number: int, track_key: String = "") -> void:
-	current_level = _resolve_track_level_number(track_key, level_number)
+	current_level = _clamp_level_number_for_track(track_key, level_number)
 
 
 # Progreso de campaña visible por track y capitulo.
 func get_campaign_progress_for_track(track_key: String) -> Dictionary:
-	var normalized_track_key := track_key.strip_edges()
-	if normalized_track_key.is_empty() or not GameTrackCatalog.has_track(normalized_track_key):
+	var resolved_track_key: String = _resolve_existing_track_key(track_key)
+	if resolved_track_key.is_empty():
 		return {}
 
-	if not campaign_progress_by_track.has(normalized_track_key):
-		campaign_progress_by_track[normalized_track_key] = (
-			_level_content_catalog.build_default_track_progress_for_track(normalized_track_key)
-		)
-
-	var raw_track_progress: Variant = campaign_progress_by_track.get(
-		normalized_track_key,
-		{}
-	)
-	if raw_track_progress is Dictionary:
-		return raw_track_progress
-	return {}
+	_ensure_track_progress_exists(resolved_track_key)
+	return _read_track_progress_dictionary(resolved_track_key)
 
 
 func mark_level_completed(track_key: String, level_number: int) -> void:
@@ -132,18 +119,20 @@ func mark_level_completed(track_key: String, level_number: int) -> void:
 	if track_progress.is_empty():
 		return
 
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	if not raw_level_progress is Dictionary:
+	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
+	var level_progress: Dictionary = _read_level_progress_dictionary(
+		track_progress,
+		resolved_level_number
+	)
+	if level_progress.is_empty():
 		return
 
-	var level_progress: Dictionary = raw_level_progress
 	level_progress[BOOK_LEVEL_COMPLETED_KEY] = true
 	track_progress[resolved_level_number] = level_progress
 
 
 func is_level_unlocked(track_key: String, level_number: int) -> bool:
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
+	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
 	if resolved_level_number <= 1:
 		return true
 	return is_level_completed(track_key, resolved_level_number - 1)
@@ -154,12 +143,14 @@ func is_level_completed(track_key: String, level_number: int) -> bool:
 	if track_progress.is_empty():
 		return false
 
-	var resolved_level_number := _resolve_track_level_number(track_key, level_number)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	if not raw_level_progress is Dictionary:
+	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
+	var level_progress: Dictionary = _read_level_progress_dictionary(
+		track_progress,
+		resolved_level_number
+	)
+	if level_progress.is_empty():
 		return false
 
-	var level_progress: Dictionary = raw_level_progress
 	return bool(level_progress.get(BOOK_LEVEL_COMPLETED_KEY, false))
 
 
@@ -222,6 +213,12 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	_progress_state_store.clear_partial_level_state(track_key, level_number)
 
 
+func _reset_runtime_progress_state() -> void:
+	campaign_progress_by_track = build_default_campaign_progress_state()
+	partial_level_state_by_track = _progress_state_store.build_empty_partial_level_state_map()
+	progress_system_state_by_key = _progress_state_store.build_empty_progress_system_state_map()
+
+
 func _build_track_progress_line(
 	track_definition: Dictionary,
 	progress_summary: Dictionary
@@ -245,11 +242,39 @@ func _build_track_progress_line(
 	return "%s %d/%d" % [track_label, visible_level_count, level_count]
 
 
-func _resolve_track_level_number(track_key: String, level_number: int) -> int:
+func _resolve_existing_track_key(track_key: String) -> String:
 	var normalized_track_key := track_key.strip_edges()
+	if normalized_track_key.is_empty() or not GameTrackCatalog.has_track(normalized_track_key):
+		return ""
+	return normalized_track_key
+
+
+func _ensure_track_progress_exists(track_key: String) -> void:
+	if campaign_progress_by_track.has(track_key):
+		return
+	campaign_progress_by_track[track_key] = (
+		_level_content_catalog.build_default_track_progress_for_track(track_key)
+	)
+
+
+func _read_track_progress_dictionary(track_key: String) -> Dictionary:
+	var raw_track_progress: Variant = campaign_progress_by_track.get(track_key, {})
+	return raw_track_progress if raw_track_progress is Dictionary else {}
+
+
+func _read_level_progress_dictionary(
+	track_progress: Dictionary,
+	level_number: int
+) -> Dictionary:
+	var raw_level_progress: Variant = track_progress.get(level_number, {})
+	return raw_level_progress if raw_level_progress is Dictionary else {}
+
+
+func _clamp_level_number_for_track(track_key: String, level_number: int) -> int:
+	var resolved_track_key: String = _resolve_existing_track_key(track_key)
 	var max_level_number := get_max_track_level_count()
-	if not normalized_track_key.is_empty() and GameTrackCatalog.has_track(normalized_track_key):
-		max_level_number = get_track_level_count(normalized_track_key)
+	if not resolved_track_key.is_empty():
+		max_level_number = get_track_level_count(resolved_track_key)
 	if max_level_number <= 0:
 		return 1
 	return clampi(level_number, 1, max_level_number)

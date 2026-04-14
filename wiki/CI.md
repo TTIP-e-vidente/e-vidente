@@ -4,12 +4,13 @@ En esta etapa preferimos correr poco, pero que lo que corra sirva de verdad.
 
 ## Qué corre y cuándo
 
-Hay dos workflows visibles:
+Hay tres workflows visibles:
 
 - `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, más corrida manual
 - `.github/workflows/ci-pr.yml` para `pull_request` hacia `main` o `dev`
+- `.github/workflows/pages.yml` para export web y deploy a GitHub Pages en `main`, más corrida manual
 
-Los dos delegan en `.github/workflows/ci-shared.yml`.
+Los workflows de CI y PR delegan en `.github/workflows/ci-shared.yml`.
 
 ## Checks obligatorios
 
@@ -102,6 +103,19 @@ Tiene sentido correrlos cuando se toque fuerte persistencia, UI o flujo interno,
 - sin perfiles `full` vs `pr-fast`
 - sin export web dentro del workflow obligatorio
 - un único runner funcional para push y PR
+
+## Deploy web
+
+El deploy web no bloquea merge y vive aparte en `.github/workflows/pages.yml`.
+
+Ese workflow:
+
+- corre solo en `main` o manualmente
+- valida import headless del proyecto
+- exporta el preset web `index` a `build/web/index.html`
+- publica esa carpeta en GitHub Pages
+
+Si el repo ya tenía Pages prendido con source de branch, conviene cambiarlo a `GitHub Actions` para que deje de fallar el deployment interno viejo y pase a usar este workflow.
 
 La apuesta acá es que cada corrida se parezca lo más posible a un checkout limpio, aunque eso signifique resignar optimizaciones que hoy meten más ruido que valor.
 
