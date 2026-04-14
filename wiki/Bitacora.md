@@ -4,6 +4,9 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-14 | ci-split-docs-technical-smoke
+Reordenamos la CI para dejarla mas simple y mas facil de leer. La parte obligatoria quedo separada en tres workflows chicos: `Docs / Tracking` para PR, `Technical Health` para push y `Gameplay Smoke` para PR. Tambien sacamos el workflow compartido, para que cada pipeline tenga una responsabilidad clara. El check de documentacion ahora pide un cambio en Markdown mas una entrada en bitacora o changelog, la validacion tecnica quedo enfocada en estructura critica + import headless, y el smoke reutiliza el flujo baseline que ya existia para comprobar que el slice llega a gameplay sin crashear.
+
 ### 2026-04-13 | pages-web-deploy
 Se agrego un workflow separado para GitHub Pages que exporta el preset web `index` y despliega `build/web/` sin volver a meter el export dentro del gate obligatorio. La CI principal sigue cuidando estructura y slice jugable; el deploy web queda desacoplado para no mezclar merge gate con publicacion.
 

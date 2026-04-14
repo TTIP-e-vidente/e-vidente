@@ -1,6 +1,6 @@
 param(
     [string]$GodotCommand,
-    [ValidateSet('ci', 'full', 'smoke', 'codebase', 'guardrails', 'pr-fast')]
+    [ValidateSet('ci', 'full', 'smoke', 'codebase', 'guardrails', 'pr-fast', 'technical')]
     [string]$Mode = 'ci',
     [switch]$IncludeExport
 )
@@ -71,6 +71,7 @@ function Get-ValidationSteps {
     switch ($ValidationMode) {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }
+        'technical' { return @($importStep) }
         'smoke' { return @($smokeStep) }
         'ci' { return @($importStep, $smokeStep) }
         'pr-fast' { return @($importStep, $smokeStep) }

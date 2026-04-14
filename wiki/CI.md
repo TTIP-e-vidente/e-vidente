@@ -1,33 +1,38 @@
 ﻿# CI Pipeline
 
-En esta etapa preferimos correr poco, pero que lo que corra sirva de verdad.
+En esta etapa estamos apuntando a una CI chica, clara y util. No queremos un pipeline enorme ni checks que hagan ruido porque si. La idea es que cada corrida diga algo concreto sobre el estado del proyecto.
 
 ## Qué corre y cuándo
 
-Hay tres workflows visibles:
+Hoy tenemos cuatro workflows visibles:
 
-- `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, más corrida manual
-- `.github/workflows/ci-pr.yml` para `pull_request` hacia `main` o `dev`
-- `.github/workflows/pages.yml` para export web y deploy a GitHub Pages en `main`, más corrida manual
+- `.github/workflows/docs-pr.yml` para `pull_request` hacia `main` o `dev`
+- `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, mas corrida manual
+- `.github/workflows/gameplay-smoke-pr.yml` para `pull_request` hacia `main` o `dev`, mas corrida manual
+- `.github/workflows/pages.yml` para export web y deploy a GitHub Pages en `main`, mas corrida manual
 
-Los workflows de CI y PR delegan en `.github/workflows/ci-shared.yml`.
+No hay workflow compartido. Lo dejamos asi a proposito para que cada pipeline tenga un objetivo claro y sea facil de leer cuando falla.
 
 ## Checks obligatorios
 
-- `Docs / Wiki`
-- `Codebase / Structure`
+- `Docs / Tracking`
+- `Technical Health`
 - `Gameplay Smoke`
 
-Los tres bloquean merge. La idea es que cada job responda una sola pregunta.
+Los tres pueden bloquear merge. En la practica, `Technical Health` llega por el `push` del branch y los otros dos corren sobre el `pull_request`.
 
-## `Docs / Wiki`
+## `Docs / Tracking`
 
-Este job cubre dos cosas:
+Este workflow vive en `.github/workflows/docs-pr.yml` y corre solo en PR.
 
-- que la documentacion base del proyecto siga existiendo
-- que los cambios sensibles de un PR dejen rastro escrito
+La idea es bastante simple: si un cambio entra por PR, deberia dejar algo de contexto escrito. No hace falta una novela, pero si una minima traza de que se cambio y por que.
 
-La documentacion minima que siempre tiene que estar presente es esta:
+Chequea dos cosas:
+
+- que la documentacion base del repo siga estando
+- que el diff del PR incluya documentacion Markdown y alguna entrada de seguimiento
+
+La documentacion minima que siempre deberia existir es esta:
 
 - `README.md`
 - `wiki/Home.md`
@@ -36,29 +41,35 @@ La documentacion minima que siempre tiene que estar presente es esta:
 - `wiki/Architecture.md`
 - `wiki/Bitacora.md`
 
-En `push`, si falla, deberia ser porque falta alguno de esos archivos o porque quedo vacio.
+Para el diff del PR, el gate pide:
 
-En `pull_request` suma dos recordatorios de trazabilidad:
+- al menos un `.md` tocado en `docs/`, `wiki/`, `README.md` o `CHANGELOG.md`
+- al menos un archivo de seguimiento tocado: `wiki/Bitacora.md`, `CHANGELOG.md` o algun `.md` equivalente con `bitacora` o `changelog` dentro de `docs/`
 
-- si el PR cambia workflows o scripts de validacion, tiene que actualizar `wiki/CI.md`
-- si el PR toca zonas sensibles del proyecto (`project/niveles`, `project/interface`, `project/resources`, `project.godot`), tiene que actualizar `README.md` o algun archivo en `wiki/`
+Hoy el repo usa `wiki/` y no `docs/`, pero el check acepta ambos para no atar la regla a una sola carpeta.
 
+## `Technical Health`
 
-## `Codebase / Structure`
+Este workflow vive en `.github/workflows/ci.yml` y corre en cada `push` relevante.
 
-Este job corta solo por problemas técnicos básicos del slice:
+Lo que intenta responder es esto: con un checkout limpio, el proyecto sigue sano o ya hay alguna rotura tecnica obvia.
 
-- estructura crítica del repo
-- escenas y archivos mínimos del flujo jugable
-- entrypoints del runner de validación
-- ESLint solo si existe configuración real y lockfile pinneado
-- carga headless del proyecto con `godot --headless --path project --editor --quit`
+Incluye estos checks:
 
-No corre tests de catálogo ni integración fina.
+- valida estructura critica del repo
+- valida escenas y archivos minimos del slice
+- valida que sigan presentes los entrypoints de CI
+- corre ESLint solo si existe configuracion real y lockfile pinneado
+- abre el proyecto en headless con `godot --headless --path project --editor --quit`
+- revisa el log aunque Godot salga con codigo `0`, para no dejar pasar parse errors silenciosos
+
+No corre catalog validation ni tests de integracion fina. En esta etapa preferimos detectar roturas claras y mantener el gate estable.
 
 ## `Gameplay Smoke`
 
-Este job responde una sola pregunta: si el flujo minimo del slice todavia puede llegar al gameplay sin romperse.
+Este workflow vive en `.github/workflows/gameplay-smoke-pr.yml` y corre en PR.
+
+La pregunta aca es bien concreta: el flujo minimo jugable sigue llegando a gameplay sin romperse.
 
 Corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `scripts/run-godot-validation.sh --run smoke godot`.
 
@@ -69,22 +80,22 @@ La pasada usa el track baseline y recorre este camino:
 - Selector
 - Archivero
 - Libro del track baseline
-- Apertura del capítulo 1
+- Apertura del capitulo 1
 - Entrada al gameplay
 
-Si falla, la expectativa es que se haya roto el flujo principal antes o justo al entrar a la escena jugable.
-
-Valida tres cosas:
+Este smoke valida solo lo justo para darnos confianza:
 
 - que la escena jugable cargue
-- que `ManagerLevel` quede inicializado con track y corrida activa
-- que el slice siga vivo en los primeros frames
+- que exista `ManagerLevel`
+- que `ManagerLevel` exponga el contrato runtime minimo esperado
+- que track y corrida activa queden inicializados
+- que la escena siga viva durante los primeros frames
 
-No intenta cubrir drag and drop, save/resume profundo ni navegacion fina de todos los tracks.
+No intenta cubrir drag and drop, save/resume profundo, UI fina ni todos los tracks.
 
 ## Qué quedó afuera del gate principal
 
-Estos tests siguen sirviendo, pero ya no bloquean cada PR:
+Estos tests siguen siendo utiles, pero no bloquean cada PR:
 
 - `res://tests/content_catalog_validation_test.gd`
 - save/local profile
@@ -92,17 +103,18 @@ Estos tests siguen sirviendo, pero ya no bloquean cada PR:
 - migraciones legacy
 - overlay de `Archivero`
 - quick save por nivel
-- tests de integración más finos por track
+- tests de integracion mas finos por track
 
-Tiene sentido correrlos cuando se toque fuerte persistencia, UI o flujo interno, pero no vale la pena ponerlos a bloquear cada commit.
+Si tocamos fuerte persistencia, UI o flujo interno, tiene sentido correrlos. Pero hoy no conviene meterlos en el gate chico del dia a dia.
 
 ## Decisiones de fiabilidad
 
 - sin cache de `project/.godot`
 - sin reintentos especiales ni limpieza condicional del import cache
-- sin perfiles `full` vs `pr-fast`
-- sin export web dentro del workflow obligatorio
-- un único runner funcional para push y PR
+- sin suites grandes para cada PR
+- sin export web dentro del gate obligatorio
+- logs como artifact para `Technical Health` y `Gameplay Smoke`
+- un script de validacion con modos chicos: `technical`, `smoke`, `ci` y `full`
 
 ## Deploy web
 
@@ -115,40 +127,46 @@ Ese workflow:
 - exporta el preset web `index` a `build/web/index.html`
 - publica esa carpeta en GitHub Pages
 
-Si el repo ya tenía Pages prendido con source de branch, conviene cambiarlo a `GitHub Actions` para que deje de fallar el deployment interno viejo y pase a usar este workflow.
-
-La apuesta acá es que cada corrida se parezca lo más posible a un checkout limpio, aunque eso signifique resignar optimizaciones que hoy meten más ruido que valor.
+Si el repo ya tenia Pages prendido con source de branch, conviene cambiarlo a `GitHub Actions` para que deje de fallar el deployment viejo y pase a usar este workflow.
 
 ## Validación local
 
 En Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode technical
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode smoke
 ```
 
-Si `godot` no está en PATH:
+Si `godot` no esta en PATH:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode technical -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
 ```
 
 En shell:
 
 ```bash
-sh scripts/run-godot-validation.sh --run ci godot
+sh scripts/run-godot-validation.sh --run technical godot
+sh scripts/run-godot-validation.sh --run smoke godot
 ```
 
-Si querés correr solo una parte:
+Para el check de documentacion del PR:
 
-- `sh scripts/run-godot-validation.sh --run codebase godot`
-- `sh scripts/run-godot-validation.sh --run smoke godot`
+```bash
+git fetch origin main
+EVIDENTE_PR_BASE_REF=main sh scripts/ci/check-pr-docs.sh
+```
+
+Si queres correr la suite larga manualmente:
+
+- `sh scripts/run-godot-validation.sh --run ci godot`
 - `sh scripts/run-godot-validation.sh --run full godot`
 
-## Cómo leer un test
+## Cómo leer un check
 
-- si falla `Docs / Wiki`, revisar documentación base del repo
-- si falla `Codebase / Structure`, revisar estructura base, tooling o carga headless
-- si falla `Gameplay Smoke`, revisar el flujo mínimo jugable del slice
-- si hace falta más profundidad, correr manualmente los tests específicos de `project/tests/`
+- si falla `Docs / Tracking`, revisar si el PR actualizo docs Markdown y bitacora o changelog
+- si falla `Technical Health`, revisar estructura, tooling, parseo o carga headless
+- si falla `Gameplay Smoke`, revisar el flujo minimo Splash -> Intro -> Selector -> Archivero -> Libro -> Gameplay
+- si hace falta mas profundidad, correr manualmente los tests especificos de `project/tests/`
 

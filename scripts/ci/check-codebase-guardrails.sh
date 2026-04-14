@@ -92,6 +92,8 @@ wiki
 "
 
 critical_files="
+.github/workflows/docs-pr.yml
+.github/workflows/gameplay-smoke-pr.yml
 project/project.godot
 project/interface/evidente.tscn
 project/niveles/intro.tscn
@@ -103,6 +105,7 @@ project/tests/vertical_slice_smoke_test.gd
 scripts/run-godot-validation.sh
 scripts/run-godot-validation.ps1
 scripts/ci/check-docs-guardrails.sh
+scripts/ci/check-pr-docs.sh
 "
 
 check_required_directories

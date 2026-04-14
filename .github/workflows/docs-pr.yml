@@ -1,0 +1,47 @@
+name: Docs PR
+run-name: "${{ format('Docs {0} -> {1}', github.head_ref, github.base_ref) }}"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: docs-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs-tracking:
+    name: Docs / Tracking
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch PR base branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+
+      - name: Baseline docs guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-docs-guardrails.sh
+
+      - name: PR docs and tracking check
+        shell: bash
+        env:
+          EVIDENTE_PR_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-pr-docs.sh

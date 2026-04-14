@@ -186,7 +186,7 @@ run_godot_validation() {
 	fi
 
 	case "$mode" in
-		codebase|guardrails)
+		codebase|guardrails|technical)
 			run_codebase_suite
 			;;
 		smoke)
@@ -210,7 +210,7 @@ if [ "${1:-}" = "--run" ]; then
 	shift
 	mode="ci"
 	case "${1:-}" in
-		ci|full|pr-fast|smoke|codebase|guardrails)
+			ci|full|pr-fast|smoke|codebase|guardrails|technical)
 			mode="$1"
 			shift
 			;;

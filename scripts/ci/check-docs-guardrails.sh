@@ -35,13 +35,13 @@ wiki/Bitacora.md
 check_required_docs
 
 if [ "$missing" -ne 0 ]; then
-	append_summary "### Docs / Wiki"
+	append_summary "### Docs / Tracking"
 	append_summary "- Estado: FAIL"
 	append_summary "- Motivo: falta documentacion base o algun archivo esta vacio."
 	exit 1
 fi
 
-append_summary "### Docs / Wiki"
+append_summary "### Docs / Tracking"
 append_summary "- Estado: OK"
 append_summary "- Cobertura: presencia minima de README y wiki base"
 
