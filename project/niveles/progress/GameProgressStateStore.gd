@@ -80,11 +80,7 @@ func get_partial_level_state(track_key: String, level_number: int) -> Dictionary
 	)
 	if resolved_level_number <= 0:
 		return {}
-
-	var track_levels: Dictionary = _read_track_partial_states(resolved_track_key)
-	return _partial_level_state_codec.normalize_level_state(
-		track_levels.get(str(resolved_level_number), {})
-	)
+	return _read_partial_level_state(resolved_track_key, resolved_level_number)
 
 
 func set_partial_level_state(track_key: String, level_number: int, state: Dictionary) -> void:
@@ -99,19 +95,16 @@ func set_partial_level_state(track_key: String, level_number: int, state: Dictio
 	if resolved_level_number <= 0:
 		return
 
-	var track_levels: Dictionary = _read_track_partial_states(resolved_track_key)
-
-	if _global_state.is_level_completed(resolved_track_key, resolved_level_number):
-		track_levels.erase(str(resolved_level_number))
-		_write_track_partial_states(resolved_track_key, track_levels)
+	if _should_drop_partial_level_state(resolved_track_key, resolved_level_number):
+		_erase_partial_level_state(resolved_track_key, resolved_level_number)
 		return
 
 	var partial_level_state: Dictionary = _partial_level_state_codec.normalize_level_state(state)
-	if partial_level_state.is_empty():
-		track_levels.erase(str(resolved_level_number))
-	else:
-		track_levels[str(resolved_level_number)] = partial_level_state
-	_write_track_partial_states(resolved_track_key, track_levels)
+	_store_partial_level_state(
+		resolved_track_key,
+		resolved_level_number,
+		partial_level_state
+	)
 
 
 func clear_partial_level_state(track_key: String, level_number: int) -> void:
@@ -125,10 +118,7 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 	)
 	if resolved_level_number <= 0:
 		return
-
-	var track_levels: Dictionary = _read_track_partial_states(resolved_track_key)
-	track_levels.erase(str(resolved_level_number))
-	_write_track_partial_states(resolved_track_key, track_levels)
+	_erase_partial_level_state(resolved_track_key, resolved_level_number)
 
 
 func get_progress_system_state(system_key: String) -> Dictionary:
@@ -227,6 +217,40 @@ func _read_track_partial_states(track_key: String) -> Dictionary:
 
 func _write_track_partial_states(track_key: String, track_levels: Dictionary) -> void:
 	_global_state.partial_level_state_by_track[track_key] = track_levels
+
+
+func _read_partial_level_state(track_key: String, level_number: int) -> Dictionary:
+	var track_levels: Dictionary = _read_track_partial_states(track_key)
+	var level_key := str(level_number)
+	return _partial_level_state_codec.normalize_level_state(
+		track_levels.get(level_key, {})
+	)
+
+
+func _store_partial_level_state(
+	track_key: String,
+	level_number: int,
+	partial_level_state: Dictionary
+) -> void:
+	if partial_level_state.is_empty():
+		_erase_partial_level_state(track_key, level_number)
+		return
+
+	var track_levels: Dictionary = _read_track_partial_states(track_key)
+	var level_key := str(level_number)
+	track_levels[level_key] = partial_level_state
+	_write_track_partial_states(track_key, track_levels)
+
+
+func _erase_partial_level_state(track_key: String, level_number: int) -> void:
+	var track_levels: Dictionary = _read_track_partial_states(track_key)
+	var level_key := str(level_number)
+	track_levels.erase(level_key)
+	_write_track_partial_states(track_key, track_levels)
+
+
+func _should_drop_partial_level_state(track_key: String, level_number: int) -> bool:
+	return _global_state.is_level_completed(track_key, level_number)
 
 
 func _normalize_system_states(raw_system_states: Variant) -> Dictionary:

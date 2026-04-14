@@ -13,32 +13,39 @@ const PlayerCambianteScript := preload("res://niveles/PlayerCambiante.gd")
 @export var sale_item_negativo: Node 
 
 func entra_item_plato(item, player):
-	if !item.esPositivo:
-		if entra_item_negativo : 
-			player.abstract_state = entra_item_negativo 
-	else:
-		if entra_item_positivo :
-			player.abstract_state = entra_item_positivo 
-	if condiciones_de_victoria(player):
-		level._victory()
-		animation_name = "recontento"
-		player.hambre.hide()
+	_handle_plate_change(
+		item,
+		player,
+		entra_item_positivo,
+		entra_item_negativo
+	)
 
 func sale_item_plato(item, player):
-	if !item.esPositivo:
-		if sale_item_negativo : 
-			player.abstract_state = sale_item_negativo 
-	else:
-		if sale_item_positivo :
-			player.abstract_state = sale_item_positivo 
-	if condiciones_de_victoria(player):
-		level._victory()
-		animation_name = "recontento"
-		player.hambre.hide()
+	_handle_plate_change(
+		item,
+		player,
+		sale_item_positivo,
+		sale_item_negativo
+	)
 		
 		
 func aplicar_animacion(): 
 	player_cambiante.current_animation = animation_name
 
 func condiciones_de_victoria(player) : 
-	return (player.manager_level.level_resource.cantidadPositivos) == player.plato.cantAlimentosPos.keys().size() && player.plato.cantAlimentosNeg.is_empty() 
+	return player.manager_level.has_completed_current_run()
+
+
+func _handle_plate_change(item, player, positive_state: Node, negative_state: Node) -> void:
+	_apply_state_transition(item, player, positive_state, negative_state)
+	if not condiciones_de_victoria(player):
+		return
+	level.complete_current_run()
+	animation_name = "recontento"
+	player.hambre.hide()
+
+
+func _apply_state_transition(item, player, positive_state: Node, negative_state: Node) -> void:
+	var next_state: Node = positive_state if item.esPositivo else negative_state
+	if next_state != null:
+		player.abstract_state = next_state

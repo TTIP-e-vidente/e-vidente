@@ -42,19 +42,35 @@ var active_track_key := ""
 
 
 func _ready() -> void:
-	_initialize_level_scene()
+	_start_level_flow()
 	_configure_quick_save_feedback()
 
 
-func _initialize_level_scene() -> void:
+func _start_level_flow() -> void:
 	active_track_key = _resolve_configured_track_key()
+	_prepare_level_session()
+	_play_level_audio()
+	_start_gameplay_runtime()
+	_register_level_resume_target()
+
+
+func _initialize_level_scene() -> void:
+	_start_level_flow()
+
+
+func _prepare_level_session() -> void:
 	victory.hide()
 	next_chapter_button.disabled = true
-	_play_level_audio()
-	if manager_level != null and manager_level.has_method("initialize_level_runtime"):
-		manager_level.call("initialize_level_runtime", self)
-	else:
+
+
+func _start_gameplay_runtime() -> void:
+	if manager_level == null:
 		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
+		return
+	manager_level.start_level_session(self)
+
+
+func _register_level_resume_target() -> void:
 	SaveManager.set_resume_to_level(
 		_resolve_level_track_key(),
 		_current_level_number()
@@ -85,9 +101,8 @@ func _play_level_audio() -> void:
 
 
 func _configure_quick_save_feedback() -> void:
-	save_progress_button.icon = SAVE_ICON_IDLE
 	save_progress_button.tooltip_text = MANUAL_SAVE_TOOLTIP
-	save_feedback_backdrop.visible = false
+	_reset_save_feedback_visual_state()
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE
 	save_feedback_title.modulate = SAVE_FEEDBACK_SUCCESS_TITLE_COLOR
 	save_feedback_label.modulate = SAVE_FEEDBACK_SUCCESS_BODY_COLOR
@@ -114,16 +129,28 @@ func _on_atras_pressed() -> void:
 	GameSceneRouter.go_to_track_book(get_tree(), _resolve_level_track_key())
 
 
-func _victory() -> void:
+func complete_current_run() -> void:
 	var track_key := _resolve_level_track_key()
 	var level_number := _current_level_number()
+	_show_completed_run_feedback()
+	_persist_completed_level(track_key, level_number)
+
+
+func _show_completed_run_feedback() -> void:
 	victory.show()
 	victory.play("victory")
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
+
+
+func _persist_completed_level(track_key: String, level_number: int) -> void:
 	Global.mark_level_completed(track_key, level_number)
 	Global.clear_partial_level_state(track_key, level_number)
 	SaveManager.record_level_completed(track_key, level_number)
+
+
+func _victory() -> void:
+	complete_current_run()
 
 
 func _on_adelante_pressed() -> void:
@@ -140,67 +167,102 @@ func _on_save_progress_button_pressed() -> void:
 
 
 func _save_current_level_progress() -> void:
-	var partial_save_result: Dictionary = manager_level.store_partial_level_state(
-		_resolve_level_track_key()
-	)
+	var partial_save_result: Dictionary = _store_partial_level_progress()
 	SaveManager.record_manual_save()
 	var save_status: Dictionary = SaveManager.get_save_status()
-	if str(save_status.get("state", "")) == "error":
-		var last_error := str(save_status.get("last_error", "")).strip_edges()
-		_show_save_feedback(
-			SAVE_FEEDBACK_ERROR_TITLE,
-			(
-				last_error
-				if not last_error.is_empty()
-				else SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE
-			),
-			false
-		)
+	if _save_failed(save_status):
+		_show_save_error_feedback(save_status)
 		return
+	_show_save_success_feedback(partial_save_result, save_status)
 
-	var progress_count := int(
+
+func _store_partial_level_progress() -> Dictionary:
+	return manager_level.store_partial_level_state(_resolve_level_track_key())
+
+
+func _save_failed(save_status: Dictionary) -> bool:
+	return str(save_status.get("state", "")) == "error"
+
+
+func _show_save_error_feedback(save_status: Dictionary) -> void:
+	var last_error := str(save_status.get("last_error", "")).strip_edges()
+	var error_message := (
+		last_error
+		if not last_error.is_empty()
+		else SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE
+	)
+	_show_save_feedback(SAVE_FEEDBACK_ERROR_TITLE, error_message, false)
+
+
+func _show_save_success_feedback(
+	partial_save_result: Dictionary,
+	save_status: Dictionary
+) -> void:
+	var progress_count: int = _read_saved_progress_count(partial_save_result)
+	_show_save_feedback(
+		_resolve_save_feedback_title(progress_count),
+		_build_save_feedback_message(partial_save_result, save_status, progress_count),
+		true
+	)
+
+
+func _read_saved_progress_count(partial_save_result: Dictionary) -> int:
+	return int(
 		partial_save_result.get(
 			"progress_count",
 			partial_save_result.get("placed_positive_count", 0)
 		)
 	)
-	var save_feedback_title := (
+
+
+func _resolve_save_feedback_title(progress_count: int) -> String:
+	return (
 		SAVE_FEEDBACK_PARTIAL_TITLE
 		if progress_count > 0
 		else SAVE_FEEDBACK_DEFAULT_TITLE
 	)
-	var message_lines: Array[String] = []
+
+
+func _build_save_feedback_message(
+	partial_save_result: Dictionary,
+	save_status: Dictionary,
+	progress_count: int
+) -> String:
+	var message_lines: Array[String] = [
+		_build_saved_time_line(save_status),
+		_build_saved_progress_line(partial_save_result, progress_count)
+	]
+	return "\n".join(message_lines)
+
+
+func _build_saved_time_line(save_status: Dictionary) -> String:
 	var last_saved_at := str(save_status.get("last_saved_at", ""))
 	var saved_time := last_saved_at.get_slice(" ", 1)
 	if saved_time.is_empty():
-		message_lines.append(SAVE_FEEDBACK_DEFAULT_TIME_LINE)
-	else:
-		message_lines.append("Guardado a las %s" % saved_time)
+		return SAVE_FEEDBACK_DEFAULT_TIME_LINE
+	return "Guardado a las %s" % saved_time
 
+
+func _build_saved_progress_line(
+	partial_save_result: Dictionary,
+	progress_count: int
+) -> String:
 	if progress_count <= 0:
-		message_lines.append(
-			"Capitulo %d listo para retomar" % _current_level_number()
-		)
-	else:
-		var singular_label := str(
-			partial_save_result.get(
-				"progress_unit_singular",
-				"avance guardado"
-			)
-		)
-		var plural_label := str(
-			partial_save_result.get("progress_unit_plural", singular_label)
-		)
-		var progress_label := (
-			singular_label if progress_count == 1 else plural_label
-		)
-		message_lines.append("%d %s" % [progress_count, progress_label])
+		return "Capitulo %d listo para retomar" % _current_level_number()
 
-	_show_save_feedback(
-		save_feedback_title,
-		"\n".join(message_lines),
-		true
+	var singular_label := str(
+		partial_save_result.get(
+			"progress_unit_singular",
+			"avance guardado"
+		)
 	)
+	var plural_label := str(
+		partial_save_result.get("progress_unit_plural", singular_label)
+	)
+	var progress_label := (
+		singular_label if progress_count == 1 else plural_label
+	)
+	return "%d %s" % [progress_count, progress_label]
 
 
 func _resolve_configured_track_key() -> String:
@@ -236,11 +298,15 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 		save_feedback_timer.start()
 
 
+func _reset_save_feedback_visual_state() -> void:
+	save_progress_button.icon = SAVE_ICON_IDLE
+	save_feedback_backdrop.visible = false
+
+
 func _on_save_feedback_timeout() -> void:
 	if not is_inside_tree():
 		return
-	save_progress_button.icon = SAVE_ICON_IDLE
-	save_feedback_backdrop.visible = false
+	_reset_save_feedback_visual_state()
 
 
 func _current_level_number() -> int:

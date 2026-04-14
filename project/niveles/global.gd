@@ -1,9 +1,4 @@
 extends Node
-## Fachada publica del estado global de niveles.
-##
-## Expone un punto unico para consultar contenido, progreso y estado parcial,
-## pero deja la logica pesada repartida en el catalogo de contenido y el store
-## de progreso.
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload(
@@ -46,6 +41,7 @@ func _init() -> void:
 	_reset_runtime_progress_state()
 
 
+# Contenido jugable.
 func get_track_level_count(track_key: String = "") -> int:
 	return _level_content_catalog.get_track_level_count(
 		track_key,
@@ -109,17 +105,19 @@ func get_campaign_progress_for_track(track_key: String) -> Dictionary:
 	var resolved_track_key: String = _resolve_existing_track_key(track_key)
 	if resolved_track_key.is_empty():
 		return {}
-
-	_ensure_track_progress_exists(resolved_track_key)
-	return _read_track_progress_dictionary(resolved_track_key)
+	return _get_or_create_track_progress(resolved_track_key)
 
 
 func mark_level_completed(track_key: String, level_number: int) -> void:
-	var track_progress := get_campaign_progress_for_track(track_key)
-	if track_progress.is_empty():
+	var resolved_track_key: String = _resolve_existing_track_key(track_key)
+	var resolved_level_number: int = _resolve_campaign_level_number(
+		resolved_track_key,
+		level_number
+	)
+	if resolved_level_number <= 0:
 		return
 
-	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
+	var track_progress: Dictionary = _get_or_create_track_progress(resolved_track_key)
 	var level_progress: Dictionary = _read_level_progress_dictionary(
 		track_progress,
 		resolved_level_number
@@ -139,11 +137,15 @@ func is_level_unlocked(track_key: String, level_number: int) -> bool:
 
 
 func is_level_completed(track_key: String, level_number: int) -> bool:
-	var track_progress := get_campaign_progress_for_track(track_key)
-	if track_progress.is_empty():
+	var resolved_track_key: String = _resolve_existing_track_key(track_key)
+	var resolved_level_number: int = _resolve_campaign_level_number(
+		resolved_track_key,
+		level_number
+	)
+	if resolved_level_number <= 0:
 		return false
 
-	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
+	var track_progress: Dictionary = _get_or_create_track_progress(resolved_track_key)
 	var level_progress: Dictionary = _read_level_progress_dictionary(
 		track_progress,
 		resolved_level_number
@@ -223,22 +225,17 @@ func _build_track_progress_line(
 	track_definition: Dictionary,
 	progress_summary: Dictionary
 ) -> String:
-	var track_key := str(track_definition.get("key", "")).strip_edges()
+	var track_key := _read_track_summary_key(track_definition)
 	if track_key.is_empty():
 		return ""
 
 	var level_count: int = get_track_level_count(track_key)
-	var completed_level_count: int = int(progress_summary.get(track_key, 0))
-	var visible_level_count := 0
-	if level_count > 0:
-		visible_level_count = min(level_count, completed_level_count + 1)
-
-	var track_label := str(
-		track_definition.get(
-			"summary_label",
-			track_definition.get("label", DEFAULT_PROGRESS_LABEL)
-		)
+	var visible_level_count: int = _resolve_visible_level_count(
+		track_key,
+		level_count,
+		progress_summary
 	)
+	var track_label := _read_track_summary_label(track_definition)
 	return "%s %d/%d" % [track_label, visible_level_count, level_count]
 
 
@@ -257,6 +254,25 @@ func _ensure_track_progress_exists(track_key: String) -> void:
 	)
 
 
+func _get_or_create_track_progress(resolved_track_key: String) -> Dictionary:
+	_ensure_track_progress_exists(resolved_track_key)
+	return _read_track_progress_dictionary(resolved_track_key)
+
+
+func _resolve_campaign_level_number(
+	resolved_track_key: String,
+	level_number: int
+) -> int:
+	if resolved_track_key.is_empty():
+		return 0
+
+	var max_level_number: int = get_track_level_count(resolved_track_key)
+	if max_level_number <= 0:
+		return 0
+
+	return clampi(level_number, 1, max_level_number)
+
+
 func _read_track_progress_dictionary(track_key: String) -> Dictionary:
 	var raw_track_progress: Variant = campaign_progress_by_track.get(track_key, {})
 	return raw_track_progress if raw_track_progress is Dictionary else {}
@@ -268,6 +284,30 @@ func _read_level_progress_dictionary(
 ) -> Dictionary:
 	var raw_level_progress: Variant = track_progress.get(level_number, {})
 	return raw_level_progress if raw_level_progress is Dictionary else {}
+
+
+func _read_track_summary_key(track_definition: Dictionary) -> String:
+	return str(track_definition.get("key", "")).strip_edges()
+
+
+func _resolve_visible_level_count(
+	track_key: String,
+	level_count: int,
+	progress_summary: Dictionary
+) -> int:
+	if level_count <= 0:
+		return 0
+	var completed_level_count: int = int(progress_summary.get(track_key, 0))
+	return min(level_count, completed_level_count + 1)
+
+
+func _read_track_summary_label(track_definition: Dictionary) -> String:
+	return str(
+		track_definition.get(
+			"summary_label",
+			track_definition.get("label", DEFAULT_PROGRESS_LABEL)
+		)
+	)
 
 
 func _clamp_level_number_for_track(track_key: String, level_number: int) -> int:

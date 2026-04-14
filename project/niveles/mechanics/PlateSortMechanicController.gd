@@ -18,17 +18,7 @@ func get_mechanic_type() -> String:
 
 
 func configure_run(run_data: Dictionary, level_resource) -> void:
-	var raw_payload: Variant = run_data.get("mechanic_payload", {})
-	var run_payload: Dictionary = {}
-
-	if raw_payload is Dictionary and not (raw_payload as Dictionary).is_empty():
-		run_payload = (raw_payload as Dictionary).duplicate(true)
-	else:
-		run_payload = {
-			"negative_count": int(run_data.get("negative_count", 0)),
-			"positive_count": int(run_data.get("positive_count", 0)),
-			"category": str(run_data.get("category", ""))
-		}
+	var run_payload: Dictionary = _resolve_run_payload(run_data)
 
 	level_resource.mechanic_type = get_mechanic_type()
 	level_resource.mechanic_payload = run_payload.duplicate(true)
@@ -37,13 +27,34 @@ func configure_run(run_data: Dictionary, level_resource) -> void:
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	var restored_saved_items: bool = _plate_sort_state_service.restore_items(
-		saved_level_state
-	)
+	var restored_saved_items: bool = _restore_saved_runtime_items(saved_level_state)
 	if not restored_saved_items:
-		_spawn_runtime_items_for_current_run()
-		_level_manager.level_items.shuffle()
+		_spawn_items_for_active_run()
 
+	_restore_runtime_layout(saved_level_state)
+
+
+func _resolve_run_payload(run_data: Dictionary) -> Dictionary:
+	var raw_payload: Variant = run_data.get("mechanic_payload", {})
+	if raw_payload is Dictionary and not (raw_payload as Dictionary).is_empty():
+		return (raw_payload as Dictionary).duplicate(true)
+	return {
+		"negative_count": int(run_data.get("negative_count", 0)),
+		"positive_count": int(run_data.get("positive_count", 0)),
+		"category": str(run_data.get("category", ""))
+	}
+
+
+func _restore_saved_runtime_items(saved_level_state: Dictionary) -> bool:
+	return _plate_sort_state_service.restore_items(saved_level_state)
+
+
+func _spawn_items_for_active_run() -> void:
+	_spawn_runtime_items_for_current_run()
+	_level_manager.level_items.shuffle()
+
+
+func _restore_runtime_layout(saved_level_state: Dictionary) -> void:
 	_level_manager.layout_runtime_items()
 	_plate_sort_state_service.restore_items_in_plate(saved_level_state)
 
