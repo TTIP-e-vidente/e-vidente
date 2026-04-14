@@ -44,18 +44,6 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 		raw_state,
 		stored_mechanic_type
 	)
-	return _build_normalized_level_state(
-		run_index,
-		stored_mechanic_type,
-		normalized_mechanic_state
-	)
-
-
-func _build_normalized_level_state(
-	run_index: int,
-	stored_mechanic_type: String,
-	normalized_mechanic_state: Dictionary
-) -> Dictionary:
 	var resolved_mechanic_type: String = _resolve_mechanic_type(
 		stored_mechanic_type,
 		run_index,
@@ -136,17 +124,25 @@ func _filter_pending_track_levels(
 	track_key: String,
 	max_level_number: int
 ) -> Dictionary:
-	var normalized_track_levels: Dictionary = _normalize_track_levels(
-		raw_track_levels,
-		max_level_number
-	)
+	if not raw_track_levels is Dictionary:
+		return {}
+
 	var pending_track_levels: Dictionary = {}
 
-	for level_key in normalized_track_levels.keys():
-		var level_number := int(level_key)
+	for raw_key in raw_track_levels.keys():
+		var level_key := str(raw_key).strip_edges()
+		if not level_key.is_valid_int():
+			continue
+
+		var level_number := clampi(int(level_key), 1, max_level_number)
 		if _global_state.is_level_completed(track_key, level_number):
 			continue
-		pending_track_levels[level_key] = normalized_track_levels[level_key]
+
+		var normalized_level_state: Dictionary = normalize_level_state(
+			raw_track_levels[raw_key]
+		)
+		if not normalized_level_state.is_empty():
+			pending_track_levels[str(level_number)] = normalized_level_state
 
 	return pending_track_levels
 
@@ -172,14 +168,14 @@ func _normalize_mechanic_state(
 		_global_state.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
 		{}
 	)
-	if _should_use_plate_sort_state(mechanic_type):
+	if _uses_plate_sort_state(mechanic_type):
 		return _normalize_plate_sort_state(raw_state, raw_mechanic_state)
 	if raw_mechanic_state is Dictionary:
 		return (raw_mechanic_state as Dictionary).duplicate(true)
 	return {}
 
 
-func _should_use_plate_sort_state(mechanic_type: String) -> bool:
+func _uses_plate_sort_state(mechanic_type: String) -> bool:
 	return mechanic_type.is_empty() or mechanic_type == LevelMechanicTypes.PLATE_SORT
 
 
@@ -187,18 +183,33 @@ func _normalize_plate_sort_state(
 	raw_state: Dictionary,
 	raw_mechanic_state: Variant
 ) -> Dictionary:
-	var stored_plate_sort_state: Dictionary = _read_stored_plate_sort_state(
+	var stored_plate_sort_state: Dictionary = _read_plate_sort_source_state(
 		raw_state,
 		raw_mechanic_state
 	)
-	return _build_normalized_plate_sort_state(stored_plate_sort_state)
-
-
-func _build_normalized_plate_sort_state(stored_plate_sort_state: Dictionary) -> Dictionary:
-	var normalized_items: Array = _normalize_plate_sort_items(stored_plate_sort_state)
-	var positive_item_ids: Dictionary = _index_positive_plate_sort_items(
-		normalized_items
+	var normalized_items: Array = []
+	var positive_item_ids: Dictionary = {}
+	var raw_saved_items: Variant = stored_plate_sort_state.get(
+		_global_state.PARTIAL_LEVEL_ITEMS_KEY,
+		[]
 	)
+	if raw_saved_items is Array:
+		for raw_saved_item in raw_saved_items:
+			var normalized_item: Dictionary = _normalize_saved_plate_sort_item(
+				raw_saved_item
+			)
+			if normalized_item.is_empty():
+				continue
+			normalized_items.append(normalized_item)
+			if bool(normalized_item.get(_global_state.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)):
+				positive_item_ids[
+					str(
+						normalized_item.get(
+							_global_state.PARTIAL_LEVEL_INSTANCE_ID_KEY,
+							""
+						)
+					)
+				] = true
 	var normalized_placed_item_ids: Array = _normalize_plate_sort_placed_item_ids(
 		stored_plate_sort_state,
 		positive_item_ids
@@ -209,7 +220,7 @@ func _build_normalized_plate_sort_state(stored_plate_sort_state: Dictionary) -> 
 	}
 
 
-func _read_stored_plate_sort_state(
+func _read_plate_sort_source_state(
 	raw_state: Dictionary,
 	raw_mechanic_state: Variant
 ) -> Dictionary:
@@ -228,42 +239,6 @@ func _read_stored_plate_sort_state(
 			[]
 		)
 	}
-
-
-func _normalize_plate_sort_items(plate_sort_state: Dictionary) -> Array:
-	var normalized_items: Array = []
-	var raw_saved_items: Variant = plate_sort_state.get(
-		_global_state.PARTIAL_LEVEL_ITEMS_KEY,
-		[]
-	)
-	if not raw_saved_items is Array:
-		return normalized_items
-
-	for raw_saved_item in raw_saved_items:
-		var normalized_item: Dictionary = _normalize_saved_plate_sort_item(
-			raw_saved_item
-		)
-		if normalized_item.is_empty():
-			continue
-		normalized_items.append(normalized_item)
-
-	return normalized_items
-
-
-func _index_positive_plate_sort_items(normalized_items: Array) -> Dictionary:
-	var positive_item_ids: Dictionary = {}
-	for raw_item in normalized_items:
-		if not raw_item is Dictionary:
-			continue
-		var normalized_item: Dictionary = raw_item
-		if not bool(normalized_item.get(_global_state.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)):
-			continue
-		positive_item_ids[
-			str(normalized_item.get(_global_state.PARTIAL_LEVEL_INSTANCE_ID_KEY, ""))
-		] = true
-	return positive_item_ids
-
-
 func _normalize_plate_sort_placed_item_ids(
 	plate_sort_state: Dictionary,
 	positive_item_ids: Dictionary
