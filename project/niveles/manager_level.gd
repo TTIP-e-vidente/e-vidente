@@ -36,36 +36,47 @@ func _ready() -> void:
 
 
 func start_level_session(level_scene: Node) -> void:
-	if not _prepare_level_session(level_scene):
+	_warm_up_runtime_support()
+	if not _scene_refs.connect_scene_nodes(level_scene):
 		return
-	_restore_saved_run()
+
+	active_track_key = _read_track_key_from_scene(level_scene)
+	_ensure_level_resource_loaded()
+	if _is_valid_level_resource(level_resource):
+		level_resource.clear_track_pool_cache()
+
+	var global_state: Node = _get_global_state()
+	var saved_level_state: Dictionary = {}
+	if global_state != null:
+		saved_level_state = global_state.get_partial_level_state(
+			active_track_key,
+			_get_current_level_number()
+		)
+
+	active_run_index = clampi(
+		int(
+			saved_level_state.get(
+				GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
+				1
+			)
+		),
+		1,
+		get_total_runs()
+	)
+	_start_current_run(saved_level_state)
 
 
 func initialize_level_runtime(level_scene: Node) -> void:
 	start_level_session(level_scene)
 
 
-func _prepare_level_session(level_scene: Node) -> bool:
-	_warm_up_runtime_support()
-	if not _bind_level_scene(level_scene):
-		return false
-
-	active_track_key = _read_track_key_from_scene(level_scene)
-	_prepare_level_resource_for_runtime()
-	return true
-
-
-func _restore_saved_run() -> void:
-	var saved_level_state: Dictionary = _read_saved_partial_level_state()
-	active_run_index = _resolve_run_index_from_saved_state(saved_level_state)
-	_load_active_run(saved_level_state)
-
-
 func advance_to_next_run() -> bool:
-	if not _can_advance_to_next_run():
+	if active_run_index >= get_total_runs():
 		return false
 	active_run_index += 1
-	_load_requested_run(active_run_index)
+	_start_current_run({
+		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index
+	})
 	return true
 
 
@@ -90,30 +101,29 @@ func build_partial_level_state() -> Dictionary:
 		return {}
 
 	var partial_level_state: Dictionary = _active_mechanic_controller.build_partial_state()
-	return _append_active_run_context(partial_level_state)
+	if partial_level_state.is_empty():
+		return {}
+
+	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
+	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
+		partial_level_state.get(
+			GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
+			active_mechanic_type
+		)
+	).strip_edges()
+	return partial_level_state
 
 
 func store_partial_level_state(track_key: String) -> Dictionary:
 	var partial_level_state: Dictionary = build_partial_level_state()
-	_write_partial_level_state(track_key, partial_level_state)
-	return _build_partial_level_summary(partial_level_state)
-
-
-func _write_partial_level_state(
-	track_key: String,
-	partial_level_state: Dictionary
-) -> void:
 	var global_state: Node = _get_global_state()
-	if global_state == null:
-		return
-	global_state.set_partial_level_state(
-		track_key,
-		_get_current_level_number(),
-		partial_level_state
-	)
+	if global_state != null:
+		global_state.set_partial_level_state(
+			track_key,
+			_get_current_level_number(),
+			partial_level_state
+		)
 
-
-func _build_partial_level_summary(partial_level_state: Dictionary) -> Dictionary:
 	var summary: Dictionary = {
 		"has_partial_state": not partial_level_state.is_empty(),
 		"run_index": active_run_index,
@@ -165,61 +175,49 @@ func layout_runtime_items() -> void:
 	_item_runtime.layout_items(level_resource)
 
 
-func _load_active_run(saved_level_state: Dictionary) -> void:
-	_clear_previous_run_runtime()
-	if not _select_active_run_definition():
-		return
-	if not _select_active_mechanic_controller():
-		return
-	_configure_active_run_runtime()
-	_restore_active_run(saved_level_state)
 
+func _start_current_run(saved_level_state: Dictionary) -> void:
+	if _active_mechanic_controller != null:
+		_active_mechanic_controller.clear_runtime_state()
+	else:
+		clear_runtime_items()
 
-func _select_active_run_definition() -> bool:
-	active_run_data = _read_active_run_definition()
+	_ensure_runtime_support()
+	active_run_data = _content_catalog.get_chapter_run_definition(
+		active_track_key,
+		_get_current_level_number(),
+		active_run_index
+	)
 	if active_run_data.is_empty():
+		active_mechanic_type = ""
+		_active_mechanic_controller = null
 		push_error(
 			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
 			% [active_track_key, _get_current_level_number(), active_run_index]
 		)
-		return false
-	return true
+		return
 
-
-func _select_active_mechanic_controller() -> bool:
-	_active_mechanic_controller = _resolve_run_mechanic_controller(active_run_data)
+	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
+		active_run_data.get("mechanic_type", "")
+	)
+	_ensure_mechanic_controllers()
+	_active_mechanic_controller = _mechanic_controllers.get(active_mechanic_type)
 	if _active_mechanic_controller == null:
 		push_error(
 			"ManagerLevel no encontro controlador para la mecanica '%s'."
 			% active_mechanic_type
 		)
-		return false
-	return true
+		return
 
-
-func _restore_active_run(saved_level_state: Dictionary) -> void:
-	_active_mechanic_controller.restore_or_start(saved_level_state)
-
-
-func _configure_active_run_runtime() -> void:
 	_active_mechanic_controller.configure_run(active_run_data, level_resource)
 	_scene_refs.apply_run_textures(level_resource, active_run_data)
+	_active_mechanic_controller.restore_or_start(saved_level_state)
 
 
 func _read_track_key_from_scene(level_scene: Node) -> String:
 	if level_scene != null and level_scene.has_method("_get_resume_track_key"):
 		return str(level_scene.call("_get_resume_track_key")).strip_edges()
 	return ""
-
-
-func _prepare_level_resource_for_runtime() -> void:
-	_ensure_level_resource_loaded()
-	_clear_level_resource_track_pool_cache()
-
-
-func _clear_level_resource_track_pool_cache() -> void:
-	if _is_valid_level_resource(level_resource):
-		level_resource.clear_track_pool_cache()
 
 
 func _ensure_level_resource_loaded() -> void:
@@ -249,88 +247,6 @@ func _is_valid_level_resource(raw_level_resource: Variant) -> bool:
 		and raw_level_resource.has_method("get_negative_items")
 		and raw_level_resource.has_method("clear_track_pool_cache")
 	)
-
-
-func _read_saved_partial_level_state() -> Dictionary:
-	var global_state: Node = _get_global_state()
-	if global_state == null:
-		return {}
-	return global_state.get_partial_level_state(
-		active_track_key,
-		_get_current_level_number()
-	)
-
-
-func _resolve_run_index_from_saved_state(saved_level_state: Dictionary) -> int:
-	return clampi(
-		int(
-			saved_level_state.get(
-				GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
-				1
-			)
-		),
-		1,
-		get_total_runs()
-	)
-
-
-func _build_run_restore_state(run_index: int) -> Dictionary:
-	return {GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: run_index}
-
-
-func _load_requested_run(run_index: int) -> void:
-	_load_active_run(_build_run_restore_state(run_index))
-
-
-func _clear_previous_run_runtime() -> void:
-	if _active_mechanic_controller != null:
-		_active_mechanic_controller.clear_runtime_state()
-		return
-	clear_runtime_items()
-
-
-func _read_active_run_definition() -> Dictionary:
-	_ensure_runtime_support()
-	var current_level_number: int = _get_current_level_number()
-	return _content_catalog.get_chapter_run_definition(
-		active_track_key,
-		current_level_number,
-		active_run_index
-	)
-
-
-func _resolve_run_mechanic_controller(run_data: Dictionary):
-	active_mechanic_type = LevelMechanicRegistry.normalize_mechanic_type(
-		run_data.get("mechanic_type", "")
-	)
-	_ensure_mechanic_controllers()
-	return _mechanic_controllers.get(active_mechanic_type)
-
-
-func _append_active_run_context(partial_level_state: Dictionary) -> Dictionary:
-	if partial_level_state.is_empty():
-		return {}
-	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
-	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = (
-		_resolve_partial_state_mechanic_type(partial_level_state)
-	)
-	return partial_level_state
-
-
-func _resolve_partial_state_mechanic_type(partial_level_state: Dictionary) -> String:
-	var stored_mechanic_type: Variant = partial_level_state.get(
-		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
-		active_mechanic_type
-	)
-	return str(stored_mechanic_type).strip_edges()
-
-
-func _can_advance_to_next_run() -> bool:
-	return active_run_index < get_total_runs()
-
-
-func _bind_level_scene(level_scene: Node) -> bool:
-	return _scene_refs.connect_scene_nodes(level_scene)
 
 
 func _warm_up_runtime_support() -> void:
