@@ -30,25 +30,19 @@ func reset_progress() -> void:
 
 
 func export_progress() -> Dictionary:
-	var snapshot: Dictionary = {
-		"current_level": _global_state.get_current_level_number()
-	}
+	var snapshot: Dictionary = {"current_level": _global_state.get_current_level_number()}
 
 	for track_key in _global_state.TRACK_KEYS:
-		var flags: Array = []
-		var level_count: int = _global_state.get_track_level_count(track_key)
-		for level_number in range(1, level_count + 1):
-			flags.append(_global_state.is_level_completed(track_key, level_number))
-		snapshot[track_key] = flags
+		snapshot[track_key] = _build_track_completion_flags(track_key)
 
-	var partial_level_states: Dictionary = _partial_level_state_codec.export_track_states(
-		_global_state.partial_level_state_by_track
+	snapshot[GameProgressKeys.PARTIAL_LEVEL_STATES_KEY] = (
+		_partial_level_state_codec.export_track_states(
+			_global_state.partial_level_state_by_track
+		)
 	)
-	var system_states: Dictionary = _normalize_system_states(
+	snapshot[GameProgressKeys.PROGRESS_SYSTEM_STATES_KEY] = _normalize_system_states(
 		_global_state.progress_system_state_by_key
 	)
-	snapshot[GameProgressKeys.PARTIAL_LEVEL_STATES_KEY] = partial_level_states
-	snapshot[GameProgressKeys.PROGRESS_SYSTEM_STATES_KEY] = system_states
 	return snapshot
 
 
@@ -60,26 +54,11 @@ func import_progress(progress_snapshot: Dictionary) -> void:
 	_global_state.set_current_level_number(int(progress_snapshot.get("current_level", 1)))
 
 	for track_key in _global_state.TRACK_KEYS:
-		var stored_flags: Variant = progress_snapshot.get(track_key, [])
-		if not stored_flags is Array:
-			continue
+		_restore_track_completion_flags(track_key, progress_snapshot.get(track_key, []))
 
-		var track_progress: Dictionary = _global_state.get_campaign_progress_for_track(track_key)
-		var level_count: int = _global_state.get_track_level_count(track_key)
-		for level_index in range(min(stored_flags.size(), level_count)):
-			var level_number := level_index + 1
-			var raw_level_progress: Variant = track_progress.get(level_number, {})
-			if not raw_level_progress is Dictionary:
-				continue
-
-			var level_progress: Dictionary = raw_level_progress
-			level_progress[_global_state.BOOK_LEVEL_COMPLETED_KEY] = bool(stored_flags[level_index])
-			track_progress[level_number] = level_progress
-
-	var partial_level_states: Dictionary = _partial_level_state_codec.normalize_track_states(
+	_global_state.partial_level_state_by_track = _partial_level_state_codec.normalize_track_states(
 		progress_snapshot.get(GameProgressKeys.PARTIAL_LEVEL_STATES_KEY, {})
 	)
-	_global_state.partial_level_state_by_track = partial_level_states
 	_partial_level_state_codec.remove_completed_states(
 		_global_state.partial_level_state_by_track
 	)
@@ -93,100 +72,77 @@ func get_progress_summary() -> Dictionary:
 		"total": 0,
 		"max_total": _global_state.get_total_level_count()
 	}
+
 	for track_key in _global_state.TRACK_KEYS:
-		var completed_level_count := 0
+		var completed_level_count: int = 0
 		var level_count: int = _global_state.get_track_level_count(track_key)
 		for level_number in range(1, level_count + 1):
 			if _global_state.is_level_completed(track_key, level_number):
 				completed_level_count += 1
+
 		summary[track_key] = completed_level_count
 		summary["total"] = int(summary.get("total", 0)) + completed_level_count
+
 	return summary
 
 
 func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
-	var clean_track_key := track_key.strip_edges()
-	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
+	var clean_track_key: String = track_key.strip_edges()
+	var resolved_level_number: int = _resolve_level_number(clean_track_key, level_number)
+	if resolved_level_number <= 0:
 		return {}
 
-	var max_level_number: int = _global_state.get_track_level_count(clean_track_key)
-	if max_level_number <= 0:
-		return {}
-
-	var resolved_level_number: int = clampi(level_number, 1, max_level_number)
-	var raw_track_levels: Variant = _global_state.partial_level_state_by_track.get(
-		clean_track_key,
-		{}
-	)
-	var track_levels: Dictionary = raw_track_levels if raw_track_levels is Dictionary else {}
+	var track_levels: Dictionary = _get_partial_track_levels(clean_track_key)
 	return _partial_level_state_codec.normalize_level_state(
 		track_levels.get(str(resolved_level_number), {})
 	)
 
 
 func set_partial_level_state(track_key: String, level_number: int, state: Dictionary) -> void:
-	var clean_track_key := track_key.strip_edges()
-	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
+	var clean_track_key: String = track_key.strip_edges()
+	var resolved_level_number: int = _resolve_level_number(clean_track_key, level_number)
+	if resolved_level_number <= 0:
 		return
 
-	var max_level_number: int = _global_state.get_track_level_count(clean_track_key)
-	if max_level_number <= 0:
-		return
-	var resolved_level_number: int = clampi(level_number, 1, max_level_number)
-
-	var raw_track_levels: Variant = _global_state.partial_level_state_by_track.get(
-		clean_track_key,
-		{}
-	)
-	var track_levels: Dictionary = raw_track_levels if raw_track_levels is Dictionary else {}
-	var level_key := str(resolved_level_number)
+	var track_levels: Dictionary = _get_partial_track_levels(clean_track_key)
+	var level_key: String = str(resolved_level_number)
 
 	if _global_state.is_level_completed(clean_track_key, resolved_level_number):
 		track_levels.erase(level_key)
 		_global_state.partial_level_state_by_track[clean_track_key] = track_levels
 		return
 
-	var partial_level_state: Dictionary = _partial_level_state_codec.normalize_level_state(state)
-	if partial_level_state.is_empty():
+	var normalized_level_state: Dictionary = _partial_level_state_codec.normalize_level_state(state)
+	if normalized_level_state.is_empty():
 		track_levels.erase(level_key)
 	else:
-		track_levels[level_key] = partial_level_state
+		track_levels[level_key] = normalized_level_state
+
 	_global_state.partial_level_state_by_track[clean_track_key] = track_levels
 
 
 func clear_partial_level_state(track_key: String, level_number: int) -> void:
-	var clean_track_key := track_key.strip_edges()
-	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
+	var clean_track_key: String = track_key.strip_edges()
+	var resolved_level_number: int = _resolve_level_number(clean_track_key, level_number)
+	if resolved_level_number <= 0:
 		return
 
-	var max_level_number: int = _global_state.get_track_level_count(clean_track_key)
-	if max_level_number <= 0:
-		return
-
-	var resolved_level_number: int = clampi(level_number, 1, max_level_number)
-	var raw_track_levels: Variant = _global_state.partial_level_state_by_track.get(
-		clean_track_key,
-		{}
-	)
-	var track_levels: Dictionary = raw_track_levels if raw_track_levels is Dictionary else {}
+	var track_levels: Dictionary = _get_partial_track_levels(clean_track_key)
 	track_levels.erase(str(resolved_level_number))
 	_global_state.partial_level_state_by_track[clean_track_key] = track_levels
 
 
 func get_progress_system_state(system_key: String) -> Dictionary:
-	var clean_system_key := system_key.strip_edges()
+	var clean_system_key: String = system_key.strip_edges()
 	if clean_system_key.is_empty():
 		return {}
-
-	# Auto-crear un estado vacío si este sistema nunca guardó nada
 	if not _global_state.progress_system_state_by_key.has(clean_system_key):
-		_global_state.progress_system_state_by_key[clean_system_key] = {}
-
-	return _global_state.progress_system_state_by_key[clean_system_key]
+		return {}
+	return _global_state.progress_system_state_by_key[clean_system_key].duplicate(true)
 
 
 func set_progress_system_state(system_key: String, system_state: Dictionary) -> void:
-	var clean_system_key := system_key.strip_edges()
+	var clean_system_key: String = system_key.strip_edges()
 	if clean_system_key.is_empty():
 		return
 	if system_state.is_empty():
@@ -196,7 +152,7 @@ func set_progress_system_state(system_key: String, system_state: Dictionary) -> 
 
 
 func clear_progress_system_state(system_key: String) -> void:
-	var clean_system_key := system_key.strip_edges()
+	var clean_system_key: String = system_key.strip_edges()
 	if clean_system_key.is_empty():
 		return
 	_global_state.progress_system_state_by_key.erase(clean_system_key)
@@ -206,14 +162,64 @@ func _normalize_system_states(raw_system_states: Variant) -> Dictionary:
 	if not raw_system_states is Dictionary:
 		return {}
 
-	var result: Dictionary = {}
+	var normalized_states: Dictionary = {}
 	for raw_key in raw_system_states.keys():
-		var clean_key := str(raw_key).strip_edges()
+		var clean_key: String = str(raw_key).strip_edges()
 		if clean_key.is_empty():
 			continue
 
 		var raw_state: Variant = raw_system_states.get(raw_key, {})
 		if not raw_state is Dictionary:
 			continue
-		result[clean_key] = (raw_state as Dictionary).duplicate(true)
-	return result
+
+		normalized_states[clean_key] = (raw_state as Dictionary).duplicate(true)
+
+	return normalized_states
+
+
+func _build_track_completion_flags(track_key: String) -> Array:
+	var completion_flags: Array = []
+	var level_count: int = _global_state.get_track_level_count(track_key)
+	for level_number in range(1, level_count + 1):
+		completion_flags.append(_global_state.is_level_completed(track_key, level_number))
+	return completion_flags
+
+
+func _restore_track_completion_flags(track_key: String, stored_flags: Variant) -> void:
+	if not stored_flags is Array:
+		return
+
+	var track_progress: Dictionary = _global_state.get_campaign_progress_for_track(track_key)
+	var level_count: int = _global_state.get_track_level_count(track_key)
+	var completion_flags: Array = stored_flags
+
+	for level_index in range(min(completion_flags.size(), level_count)):
+		var level_number: int = level_index + 1
+		var raw_level_progress: Variant = track_progress.get(level_number, {})
+		if not raw_level_progress is Dictionary:
+			continue
+
+		var level_progress: Dictionary = raw_level_progress
+		level_progress[_global_state.BOOK_LEVEL_COMPLETED_KEY] = bool(
+			completion_flags[level_index]
+		)
+		track_progress[level_number] = level_progress
+
+
+func _resolve_level_number(track_key: String, level_number: int) -> int:
+	if track_key.is_empty() or not GameTrackCatalog.has_track(track_key):
+		return 0
+
+	var max_level_number: int = _global_state.get_track_level_count(track_key)
+	if max_level_number <= 0:
+		return 0
+
+	return clampi(level_number, 1, max_level_number)
+
+
+func _get_partial_track_levels(track_key: String) -> Dictionary:
+	var raw_track_levels: Variant = _global_state.partial_level_state_by_track.get(
+		track_key,
+		{}
+	)
+	return raw_track_levels if raw_track_levels is Dictionary else {}

@@ -64,25 +64,24 @@ func can_resume_current_save() -> bool:
 	return _history_contains_gameplay_progress(_manager.save_data.get("history", []))
 
 
-func record_level_completed(track_key: String, level_number: int) -> void:
-	Global.clear_partial_level_state(track_key, level_number)
-	set_resume_after_level_completed(track_key, level_number)
-	Global.record_level_completed_streak(track_key, level_number)
+func record_level_completed(track_key: String, level_number: int) -> Dictionary:
+	var previous_streak_state: Dictionary = Global.get_streak_state()
+	_update_runtime_state_after_level_completed(track_key, level_number)
+	var next_streak_state: Dictionary = _record_level_completed_streak(track_key, level_number)
 	_manager.sync_runtime_progress_to_current_save()
-	var track_definition := GameTrackCatalog.get_track_definition(track_key)
-	var track_label := str(track_definition.get("label", track_key)).strip_edges()
-	append_history(
-		"Completaste %s - capitulo %d" % [
-			track_label if not track_label.is_empty() else track_key,
-			level_number
-		],
-		{
-			"type": "level_completed",
-			"track": track_key,
-			"level": level_number
-		}
-	)
+	_append_level_completed_history(track_key, level_number)
 	_persist_progress_event("level_completed")
+	return _build_level_completed_result(previous_streak_state, next_streak_state)
+
+
+func record_question_session_completed(question_count: int, score: int) -> void:
+	if question_count < 1:
+		return
+
+	_record_question_session_completed_streak(question_count, score)
+	_manager.sync_runtime_progress_to_current_save()
+	_append_question_session_completed_history(question_count, score)
+	_persist_progress_event("question_session_completed")
 
 
 func record_manual_save() -> void:
@@ -156,6 +155,75 @@ func _build_level_resume_state(track_key: String, level_number: int) -> Dictiona
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
 		"level_number": clampi(level_number, 1, Global.get_track_level_count(track_key))
+	}
+
+
+func _update_runtime_state_after_level_completed(track_key: String, level_number: int) -> void:
+	Global.clear_partial_level_state(track_key, level_number)
+	set_resume_after_level_completed(track_key, level_number)
+
+
+func _record_level_completed_streak(track_key: String, level_number: int) -> Dictionary:
+	return Global.record_streak_activity(
+		"level_completed",
+		{
+			"track_key": track_key,
+			"level_number": level_number
+		}
+	)
+
+
+func _record_question_session_completed_streak(question_count: int, score: int) -> Dictionary:
+	return Global.record_streak_activity(
+		"question_session_completed",
+		{
+			"question_count": question_count,
+			"score": score
+		}
+	)
+
+
+func _append_level_completed_history(track_key: String, level_number: int) -> void:
+	append_history(
+		_build_level_completed_history_message(track_key, level_number),
+		{
+			"type": "level_completed",
+			"track": track_key,
+			"level": level_number
+		}
+	)
+
+
+func _append_question_session_completed_history(question_count: int, score: int) -> void:
+	append_history(
+		"Sesion de preguntas completada (%d/%d)" % [score, question_count],
+		{
+			"type": "question_session_completed",
+			"question_count": question_count,
+			"score": score
+		}
+	)
+
+
+func _build_level_completed_history_message(track_key: String, level_number: int) -> String:
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	var track_label := str(track_definition.get("label", track_key)).strip_edges()
+	return "Completaste %s - capitulo %d" % [
+		track_label if not track_label.is_empty() else track_key,
+		level_number
+	]
+
+
+func _build_level_completed_result(
+	previous_streak_state: Dictionary,
+	next_streak_state: Dictionary
+) -> Dictionary:
+	return {
+		"streak_state": next_streak_state,
+		"streak_feedback": Global.build_streak_feedback_event(
+			previous_streak_state,
+			next_streak_state
+		)
 	}
 
 
@@ -295,5 +363,3 @@ func _build_history_entry(message: String, metadata: Dictionary) -> Dictionary:
 		"message": message,
 		"metadata": metadata
 	}
-
-

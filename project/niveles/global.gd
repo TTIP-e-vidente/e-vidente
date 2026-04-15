@@ -21,8 +21,6 @@ const TRACK_KEYS := GameTrackCatalog.TRACK_ORDER
 const BOOK_LEVEL_COMPLETED_KEY := GameLevelContentCatalogScript.BOOK_LEVEL_COMPLETED_KEY
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
 const STREAK_SYSTEM_KEY := "streak"
-const STREAK_ACTIVITY_LEVEL_COMPLETED := "level_completed"
-const STREAK_ACTIVITY_QUESTION_SESSION_COMPLETED := "question_session_completed"
 
 var _level_content_catalog
 var _progress_state_store
@@ -204,6 +202,25 @@ func get_streak_state() -> Dictionary:
 	return _streak_state_service.normalize_state(get_progress_system_state(STREAK_SYSTEM_KEY))
 
 
+func get_streak_view_model() -> Dictionary:
+	var streak_view_model: Dictionary = _streak_state_service.build_view_model(
+		get_streak_state()
+	)
+	var last_track_key := str(streak_view_model.get("last_track_key", "")).strip_edges()
+	streak_view_model["last_track_label"] = _resolve_track_label(last_track_key)
+	return streak_view_model
+
+
+func build_streak_feedback_event(
+	previous_state: Dictionary,
+	next_state: Dictionary = {}
+) -> Dictionary:
+	var resolved_next_state: Dictionary = next_state
+	if resolved_next_state.is_empty():
+		resolved_next_state = get_streak_state()
+	return _streak_state_service.build_feedback_event(previous_state, resolved_next_state)
+
+
 func record_streak_activity(
 	activity_type: String,
 	metadata: Dictionary = {}
@@ -217,32 +234,12 @@ func record_streak_activity(
 	return next_streak_state
 
 
-func record_level_completed_streak(track_key: String, level_number: int) -> Dictionary:
-	return record_streak_activity(
-		STREAK_ACTIVITY_LEVEL_COMPLETED,
-		{
-			"track_key": track_key,
-			"level_number": level_number
-		}
-	)
-
-
-func record_question_session_streak(question_count: int, score: int) -> Dictionary:
-	return record_streak_activity(
-		STREAK_ACTIVITY_QUESTION_SESSION_COMPLETED,
-		{
-			"question_count": question_count,
-			"score": score
-		}
-	)
-
-
 func clear_streak_state() -> void:
 	clear_progress_system_state(STREAK_SYSTEM_KEY)
 
 
-func get_streak_summary_text() -> String:
-	return _streak_state_service.format_summary_text(get_streak_state())
+func has_streak_activity_today() -> bool:
+	return _streak_state_service.is_activity_recorded_today(get_streak_state())
 
 
 func get_progress_system_state(system_key: String) -> Dictionary:
@@ -308,3 +305,11 @@ func _clamp_level_number_for_track(track_key: String, level_number: int) -> int:
 	if max_level_number <= 0:
 		return 1
 	return clampi(level_number, 1, max_level_number)
+
+
+func _resolve_track_label(track_key: String) -> String:
+	var resolved_track_key := _resolve_existing_track_key(track_key)
+	if resolved_track_key.is_empty():
+		return ""
+	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(resolved_track_key)
+	return str(track_definition.get("label", resolved_track_key)).strip_edges()

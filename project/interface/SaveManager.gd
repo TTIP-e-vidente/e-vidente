@@ -238,8 +238,12 @@ func can_resume_current_save() -> bool:
 	return get_resume_service().can_resume_current_save()
 
 
-func record_level_completed(track_key: String, level_number: int) -> void:
-	get_resume_service().record_level_completed(track_key, level_number)
+func record_level_completed(track_key: String, level_number: int) -> Dictionary:
+	return get_resume_service().record_level_completed(track_key, level_number)
+
+
+func record_question_session_completed(question_count: int, score: int) -> void:
+	get_resume_service().record_question_session_completed(question_count, score)
 
 
 func get_save_status() -> Dictionary:

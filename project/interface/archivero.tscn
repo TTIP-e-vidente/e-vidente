@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://interface/Archivero.gd" id="1_vbpnf"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_4l60g"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="9_dbicon"]
+[ext_resource type="PackedScene" path="res://interface/components/StreakBadge.tscn" id="10_streakbadge"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawer_panel"]
 bg_color = Color(1, 1, 1, 1)
@@ -466,6 +467,9 @@ theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.94)
 theme_override_font_sizes/font_size = 14
 text = "0 de 18 capitulos completos"
 autowrap_mode = 3
+
+[node name="StreakBadge" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn" instance=ExtResource("10_streakbadge")]
+layout_mode = 2
 
 [node name="StatusRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2

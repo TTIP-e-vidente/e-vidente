@@ -16,9 +16,6 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const GameProgressIntegration := preload(
-	"res://niveles/progress/GameProgressIntegration.gd"
-)
 const SAVE_FEEDBACK_SUCCESS_TITLE_COLOR := Color(0.215686, 0.337255, 0.231373, 1)
 const SAVE_FEEDBACK_SUCCESS_BODY_COLOR := Color(0.266667, 0.227451, 0.156863, 0.96)
 const SAVE_FEEDBACK_ERROR_TITLE_COLOR := Color(0.568627, 0.184314, 0.141176, 1)
@@ -76,9 +73,13 @@ func _start_gameplay_runtime() -> void:
 
 
 func _register_level_resume_target() -> void:
-	GameProgressIntegration.register_level_resume(
-		_resolve_level_track_key(),
-		_current_level_number()
+	var track_key := _resolve_level_track_key()
+	var level_count: int = Global.get_track_level_count(track_key)
+	if level_count <= 0:
+		return
+	SaveManager.set_resume_to_level(
+		track_key,
+		clampi(_current_level_number(), 1, level_count)
 	)
 
 
@@ -157,7 +158,8 @@ func complete_current_run() -> void:
 	var track_key := _resolve_level_track_key()
 	var level_number := _current_level_number()
 	_show_completed_run_feedback()
-	_persist_completed_level(track_key, level_number)
+	var completion_result: Dictionary = _persist_completed_level(track_key, level_number)
+	_show_level_completed_feedback(completion_result)
 
 
 func _show_completed_run_feedback() -> void:
@@ -167,8 +169,17 @@ func _show_completed_run_feedback() -> void:
 	teaching_sprite.show()
 
 
-func _persist_completed_level(track_key: String, level_number: int) -> void:
-	GameProgressIntegration.complete_level(track_key, level_number)
+func _persist_completed_level(track_key: String, level_number: int) -> Dictionary:
+	var level_count: int = Global.get_track_level_count(track_key)
+	if level_count <= 0:
+		return {}
+
+	var resolved_level_number: int = clampi(level_number, 1, level_count)
+	Global.mark_level_completed(track_key, resolved_level_number)
+	return SaveManager.record_level_completed(
+		track_key,
+		resolved_level_number
+	)
 
 
 func _victory() -> void:
@@ -189,13 +200,25 @@ func _on_save_progress_button_pressed() -> void:
 
 
 func _save_current_level_progress() -> void:
-	var save_result: Dictionary = GameProgressIntegration.save_level_progress(
-		manager_level,
-		_resolve_level_track_key(),
-		_current_level_number()
-	)
-	var partial_save_result: Dictionary = save_result.get("partial_save_result", {})
-	var save_status: Dictionary = save_result.get("save_status", {})
+	if manager_level == null or not is_instance_valid(manager_level):
+		_show_save_error_feedback(
+			{"last_error": "No se pudo acceder al runtime del nivel para guardar."}
+		)
+		return
+
+	var track_key := _resolve_level_track_key()
+	var level_count: int = Global.get_track_level_count(track_key)
+	if level_count <= 0:
+		_show_save_error_feedback(
+			{"last_error": "No se pudo resolver el capitulo activo para guardar."}
+		)
+		return
+
+	var resolved_level_number: int = clampi(_current_level_number(), 1, level_count)
+	var partial_save_result: Dictionary = manager_level.store_partial_level_state(track_key)
+	SaveManager.set_resume_to_level(track_key, resolved_level_number)
+	SaveManager.record_manual_save()
+	var save_status: Dictionary = SaveManager.get_save_status()
 	if _save_failed(save_status):
 		_show_save_error_feedback(save_status)
 		return
@@ -302,18 +325,51 @@ func _get_resume_track_key() -> String:
 	return _resolve_level_track_key()
 
 
+func _show_level_completed_feedback(completion_result: Dictionary) -> void:
+	_show_streak_feedback(_read_streak_feedback(completion_result))
+
+
+func _read_streak_feedback(completion_result: Dictionary) -> Dictionary:
+	var raw_streak_feedback: Variant = completion_result.get("streak_feedback", {})
+	return raw_streak_feedback if raw_streak_feedback is Dictionary else {}
+
+
 func _show_save_feedback(title: String, message: String, success: bool) -> void:
+	_show_feedback_card(
+		title,
+		message,
+		SAVE_FEEDBACK_SUCCESS_TITLE_COLOR if success else SAVE_FEEDBACK_ERROR_TITLE_COLOR,
+		SAVE_FEEDBACK_SUCCESS_BODY_COLOR if success else SAVE_FEEDBACK_ERROR_BODY_COLOR
+	)
+	if success:
+		save_progress_button.icon = save_icon_ok
+	else:
+		save_progress_button.icon = save_icon_idle
+
+
+func _show_streak_feedback(streak_feedback: Dictionary) -> void:
+	if not bool(streak_feedback.get("should_show", false)):
+		return
+	_show_feedback_card(
+		str(streak_feedback.get("title", "Racha activa")).strip_edges(),
+		str(streak_feedback.get("message", "")).strip_edges(),
+		SAVE_FEEDBACK_SUCCESS_TITLE_COLOR,
+		SAVE_FEEDBACK_SUCCESS_BODY_COLOR
+	)
+	save_progress_button.icon = save_icon_idle
+
+
+func _show_feedback_card(
+	title: String,
+	message: String,
+	title_color: Color,
+	body_color: Color
+) -> void:
 	save_feedback_backdrop.visible = true
 	save_feedback_title.text = title
 	save_feedback_label.text = message
-	if success:
-		save_feedback_title.modulate = SAVE_FEEDBACK_SUCCESS_TITLE_COLOR
-		save_feedback_label.modulate = SAVE_FEEDBACK_SUCCESS_BODY_COLOR
-		save_progress_button.icon = save_icon_ok
-	else:
-		save_feedback_title.modulate = SAVE_FEEDBACK_ERROR_TITLE_COLOR
-		save_feedback_label.modulate = SAVE_FEEDBACK_ERROR_BODY_COLOR
-		save_progress_button.icon = save_icon_idle
+	save_feedback_title.modulate = title_color
+	save_feedback_label.modulate = body_color
 
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()

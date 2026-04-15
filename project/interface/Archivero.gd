@@ -62,6 +62,9 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 		"InfoColumn/ProgressPanel/MarginContainer/ProgressLabel"
 	) as Label
 )
+@onready var streak_badge: StreakBadge = (
+	summary_panel_content.get_node("InfoColumn/StreakBadge") as StreakBadge
+)
 @onready var save_status_label: Label = (
 	status_row.get_node("SaveCard/MarginContainer/SaveStatusLabel") as Label
 )
@@ -149,14 +152,17 @@ func _refresh_profile_summary(profile: Dictionary) -> void:
 
 func _refresh_progress_summary(progress_summary: Dictionary) -> void:
 	var progress_text := Global.format_progress_summary_text(progress_summary).strip_edges()
-	var streak_text := Global.get_streak_summary_text().strip_edges()
 	if progress_text.is_empty():
-		progress_summary_label.text = streak_text
-		return
-	if streak_text.is_empty():
+		progress_summary_label.text = "Todavia no hay capitulos completos"
+	else:
 		progress_summary_label.text = progress_text
+	_refresh_streak_badge()
+
+
+func _refresh_streak_badge() -> void:
+	if streak_badge == null or not is_instance_valid(streak_badge):
 		return
-	progress_summary_label.text = "%s\n\n%s" % [progress_text, streak_text]
+	streak_badge.render()
 
 
 func _refresh_save_status(save_status: Dictionary) -> void:

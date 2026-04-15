@@ -123,6 +123,55 @@ func _run() -> void:
 		"La UI deberia explicar cuando todavia no existe actividad valida"
 	)
 
+	var empty_view_model: Dictionary = streak_service.build_view_model({})
+	_assert(
+		str(empty_view_model.get("status_key", "")) == "inactive",
+		"Sin actividad previa la UI deberia marcar la racha como inactiva"
+	)
+	_assert(
+		not bool(empty_view_model.get("recorded_today", true)),
+		"Sin actividad previa no deberia figurar progreso para hoy"
+	)
+
+	var pending_view_model: Dictionary = streak_service.build_view_model(
+		{
+			"current_count": 3,
+			"best_count": 5,
+			"last_activity_day": _day_offset_from_today(-1),
+			"last_activity_at": "%s 10:00:00" % _day_offset_from_today(-1),
+			"last_activity_type": "level_completed",
+			"last_track_key": "veganismo"
+		}
+	)
+	_assert(
+		str(pending_view_model.get("status_key", "")) == "pending_today",
+		"Si la ultima actividad fue ayer la UI deberia marcar la racha como pendiente hoy"
+	)
+	_assert(
+		bool(pending_view_model.get("pending_today", false)),
+		"El view model deberia exponer explicitamente cuando hoy falta sostener la racha"
+	)
+
+	var active_view_model: Dictionary = streak_service.build_view_model(
+		streak_service.record_activity(
+			{},
+			"level_completed",
+			{
+				"track_key": "celiaquia",
+				"activity_day": Time.get_date_string_from_system(false),
+				"activity_at": "%s 08:00:00" % Time.get_date_string_from_system(false)
+			}
+		)
+	)
+	_assert(
+		str(active_view_model.get("status_key", "")) == "active_today",
+		"Una actividad valida hoy deberia marcar la racha como activa"
+	)
+	_assert(
+		str(active_view_model.get("last_activity_type_label", "")) == "nivel completado",
+		"El view model deberia resolver una etiqueta legible para el ultimo tipo de actividad"
+	)
+
 	quit(1 if failed else 0)
 
 
@@ -131,3 +180,9 @@ func _assert(condition: bool, message: String) -> void:
 		return
 	failed = true
 	printerr("STREAK STATE SERVICE TEST FAILED: %s" % message)
+
+
+func _day_offset_from_today(offset_days: int) -> String:
+	var today_unix: int = int(Time.get_unix_time_from_system())
+	var target_unix: int = today_unix + (offset_days * 86400)
+	return Time.get_date_string_from_unix_time(target_unix)

@@ -62,6 +62,8 @@ func format_save_reason(reason: String) -> String:
 			return "progreso reiniciado"
 		"level_completed":
 			return "avance persistido"
+		"question_session_completed":
+			return "sesion de preguntas completada"
 		"progress_sync":
 			return "sincronizacion de progreso"
 		"load_repair":
