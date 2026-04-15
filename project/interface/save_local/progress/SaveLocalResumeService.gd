@@ -24,19 +24,21 @@ func set_resume_after_level_completed(track_key: String, level_number: int) -> v
 	if level_number < Global.get_track_level_count(track_key):
 		set_resume_to_level(track_key, level_number + 1)
 		return
-	set_resume_state(_data_normalizer().default_resume_state())
+	set_resume_state(_manager.get_save_data_normalizer().default_resume_state())
 
 
 func get_resume_state() -> Dictionary:
+	var data_normalizer = _manager.get_save_data_normalizer()
 	var raw_resume_state: Variant = _manager.save_data.get("resume_state", {})
 	if not raw_resume_state is Dictionary:
-		return _resolve_resume_state(_data_normalizer().default_resume_state())
-	return _resolve_resume_state(_data_normalizer().normalize_resume_state(raw_resume_state))
+		return _resolve_resume_state(data_normalizer.default_resume_state())
+	return _resolve_resume_state(data_normalizer.normalize_resume_state(raw_resume_state))
 
 
 func get_current_resume_hint() -> String:
 	var resume_state: Dictionary = get_resume_state()
-	return _progress_state_helper().format_resume_hint_from_state(
+	var progress_state_helper = _manager.get_progress_state_helper()
+	return progress_state_helper.format_resume_hint_from_state(
 		resume_state,
 		_manager.RESUME_CONTEXT_HUB,
 		_manager.RESUME_CONTEXT_BOOK,
@@ -46,12 +48,26 @@ func get_current_resume_hint() -> String:
 
 
 func can_resume_current_save() -> bool:
-	return _save_can_resume()
+	var progress_summary: Dictionary = _manager.summarize_progress_data(
+		_manager.save_data.get("progress", {})
+	)
+	if int(progress_summary.get("total", 0)) > 0:
+		return true
+
+	var data_normalizer = _manager.get_save_data_normalizer()
+	var resume_state: Dictionary = data_normalizer.normalize_resume_state(
+		_manager.save_data.get("resume_state", {})
+	)
+	if str(resume_state.get("context", _manager.RESUME_CONTEXT_HUB)) != _manager.RESUME_CONTEXT_HUB:
+		return true
+
+	return _history_contains_gameplay_progress(_manager.save_data.get("history", []))
 
 
 func record_level_completed(track_key: String, level_number: int) -> void:
 	Global.clear_partial_level_state(track_key, level_number)
 	set_resume_after_level_completed(track_key, level_number)
+	Global.record_level_completed_streak(track_key, level_number)
 	_manager.sync_runtime_progress_to_current_save()
 	var track_definition := GameTrackCatalog.get_track_definition(track_key)
 	var track_label := str(track_definition.get("label", track_key)).strip_edges()
@@ -83,32 +99,34 @@ func append_history(message: String, metadata: Dictionary = {}) -> void:
 	if history.size() > _manager.HISTORY_LIMIT:
 		history = history.slice(0, _manager.HISTORY_LIMIT)
 	_manager.save_data["history"] = history
-	_write_coordinator().mark_dirty()
+	_manager.get_write_coordinator().mark_dirty()
 
 
 func repair_resume_state() -> bool:
-	var stored_resume_state: Dictionary = _data_normalizer().normalize_resume_state(
+	var data_normalizer = _manager.get_save_data_normalizer()
+	var stored_resume_state: Dictionary = data_normalizer.normalize_resume_state(
 		_manager.save_data.get("resume_state", {})
 	)
 	var resolved_resume_state: Dictionary = _resolve_resume_state(stored_resume_state)
 	if stored_resume_state == resolved_resume_state:
 		return false
 	_manager.save_data["resume_state"] = resolved_resume_state
-	_write_coordinator().mark_dirty()
+	_manager.get_write_coordinator().mark_dirty()
 	return true
 
 
 func set_resume_state(raw_resume_state: Dictionary) -> void:
-	var normalized_resume_state: Dictionary = (
-		_data_normalizer().normalize_resume_state(raw_resume_state)
+	var data_normalizer = _manager.get_save_data_normalizer()
+	var normalized_resume_state: Dictionary = data_normalizer.normalize_resume_state(
+		raw_resume_state
 	)
-	var current_resume_state: Dictionary = _data_normalizer().normalize_resume_state(
+	var current_resume_state: Dictionary = data_normalizer.normalize_resume_state(
 		_manager.save_data.get("resume_state", {})
 	)
 	_manager.save_data["resume_state"] = normalized_resume_state
 	if current_resume_state == normalized_resume_state:
 		return
-	_write_coordinator().mark_dirty()
+	_manager.get_write_coordinator().mark_dirty()
 
 
 func _should_keep_current_level_resume(allow_level_downgrade: bool) -> bool:
@@ -154,13 +172,13 @@ func _resolve_resume_state(normalized_resume_state: Dictionary) -> Dictionary:
 	var context: String = str(normalized_resume_state.get("context", _manager.RESUME_CONTEXT_HUB))
 	if context == _manager.RESUME_CONTEXT_LEVEL:
 		return normalized_resume_state
-	var history_resume_state: Dictionary = _derive_resume_state_from_history()
+	var history_resume_state: Dictionary = _read_resume_state_from_history()
 	if history_resume_state.is_empty():
 		return normalized_resume_state
 	return history_resume_state
 
 
-func _derive_resume_state_from_history() -> Dictionary:
+func _read_resume_state_from_history() -> Dictionary:
 	var history: Variant = _manager.save_data.get("history", [])
 	if not history is Array:
 		return {}
@@ -169,18 +187,21 @@ func _derive_resume_state_from_history() -> Dictionary:
 		var metadata: Dictionary = _history_metadata(entry)
 		if metadata.is_empty():
 			continue
+
 		var entry_type: String = str(metadata.get("type", "")).strip_edges()
-		if entry_type == "new_game":
-			return {}
-		if entry_type == "manual_save":
-			var manual_resume_state: Dictionary = _resume_state_from_history_metadata(metadata)
-			if not manual_resume_state.is_empty():
-				return manual_resume_state
-			continue
-		if entry_type == "level_completed":
-			var completed_resume_state: Dictionary = _resume_state_after_completed_level(metadata)
-			if not completed_resume_state.is_empty():
-				return completed_resume_state
+		match entry_type:
+			"new_game":
+				return {}
+			"manual_save":
+				var manual_resume_state: Dictionary = _resume_state_from_history_metadata(metadata)
+				if not manual_resume_state.is_empty():
+					return manual_resume_state
+			"level_completed":
+				var completed_resume_state: Dictionary = (
+					_resume_state_after_completed_level(metadata)
+				)
+				if not completed_resume_state.is_empty():
+					return completed_resume_state
 	return {}
 
 
@@ -189,40 +210,34 @@ func _resume_state_from_history_metadata(metadata: Dictionary) -> Dictionary:
 	var track_key: String = str(metadata.get("track", "")).strip_edges()
 	if context != _manager.RESUME_CONTEXT_LEVEL:
 		return {}
-	var track_definition := GameTrackCatalog.get_track_definition(track_key)
-	if track_definition.is_empty():
-		return {}
-	return {
-		"context": _manager.RESUME_CONTEXT_LEVEL,
-		"track_key": track_key,
-		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
-		"level_number": clampi(
-			int(metadata.get("level", 1)),
-			1,
-			Global.get_track_level_count(track_key)
-		)
-	}
+	return _build_saved_level_resume_state(track_key, int(metadata.get("level", 1)))
 
 
 func _resume_state_after_completed_level(metadata: Dictionary) -> Dictionary:
 	var track_key: String = str(metadata.get("track", "")).strip_edges()
-	var track_definition := GameTrackCatalog.get_track_definition(track_key)
-	if track_definition.is_empty():
-		return {}
 	var completed_level: int = clampi(
 		int(metadata.get("level", 1)),
 		1,
 		Global.get_track_level_count(track_key)
 	)
+	if GameTrackCatalog.get_track_definition(track_key).is_empty():
+		return {}
 	if not _is_saved_level_completed(track_key, completed_level):
 		return {}
 	if completed_level >= Global.get_track_level_count(track_key):
-		return _data_normalizer().default_resume_state()
+		return _manager.get_save_data_normalizer().default_resume_state()
+	return _build_saved_level_resume_state(track_key, completed_level + 1)
+
+
+func _build_saved_level_resume_state(track_key: String, level_number: int) -> Dictionary:
+	var track_definition := GameTrackCatalog.get_track_definition(track_key)
+	if track_definition.is_empty():
+		return {}
 	return {
 		"context": _manager.RESUME_CONTEXT_LEVEL,
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
-		"level_number": completed_level + 1
+		"level_number": clampi(level_number, 1, Global.get_track_level_count(track_key))
 	}
 
 
@@ -249,20 +264,6 @@ func _is_saved_level_completed(track_key: String, level_number: int) -> bool:
 	return bool(track_progress[level_index])
 
 
-func _save_can_resume() -> bool:
-	var progress_summary: Dictionary = _manager.summarize_progress_data(
-		_manager.save_data.get("progress", {})
-	)
-	if int(progress_summary.get("total", 0)) > 0:
-		return true
-	var resume_state: Dictionary = _data_normalizer().normalize_resume_state(
-		_manager.save_data.get("resume_state", {})
-	)
-	if str(resume_state.get("context", _manager.RESUME_CONTEXT_HUB)) != _manager.RESUME_CONTEXT_HUB:
-		return true
-	return _history_contains_gameplay_progress(_manager.save_data.get("history", []))
-
-
 func _history_contains_gameplay_progress(raw_history: Variant) -> bool:
 	if not raw_history is Array:
 		return false
@@ -283,7 +284,8 @@ func _history_metadata(entry: Variant) -> Dictionary:
 
 
 func _persist_progress_event(reason: String) -> void:
-	if _write_coordinator().write_save_data(false, reason):
+	var write_coordinator = _manager.get_write_coordinator()
+	if write_coordinator.write_save_data(false, reason):
 		_manager.progress_saved.emit(_manager.get_current_user_profile())
 
 
@@ -295,13 +297,3 @@ func _build_history_entry(message: String, metadata: Dictionary) -> Dictionary:
 	}
 
 
-func _write_coordinator():
-	return _manager.get_write_coordinator()
-
-
-func _data_normalizer():
-	return _manager.get_save_data_normalizer()
-
-
-func _progress_state_helper():
-	return _manager.get_progress_state_helper()

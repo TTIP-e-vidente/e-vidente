@@ -1,6 +1,9 @@
 extends Node
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameProgressIntegration := preload(
+	"res://niveles/progress/GameProgressIntegration.gd"
+)
 
 @export var quiz: ThemePreg
 @export var correcto: Color
@@ -68,8 +71,14 @@ func _randomizar_preguntas(array :Array) -> Array:
 	
 
 func _game_over() -> void:
+	var question_count: int = quiz.theme.size()
 	$Contenido/GameOver.show()
-	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", quiz.theme.size())
+	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", question_count)
+	_record_completed_question_session(question_count)
+
+
+func _record_completed_question_session(question_count: int) -> void:
+	GameProgressIntegration.record_question_session_completed(question_count, puntaje)
 
 
 

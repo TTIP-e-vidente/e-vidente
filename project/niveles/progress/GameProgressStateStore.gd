@@ -1,6 +1,7 @@
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const GameProgressKeys := preload("res://niveles/progress/GameProgressKeys.gd")
 const GamePartialLevelStateCodecScript := preload(
 	"res://niveles/progress/GamePartialLevelStateCodec.gd"
 )
@@ -21,14 +22,10 @@ func build_empty_partial_level_state_map() -> Dictionary:
 	return partial_states_by_track
 
 
-func build_empty_progress_system_state_map() -> Dictionary:
-	return {}
-
-
 func reset_progress() -> void:
 	_global_state.campaign_progress_by_track = _global_state.build_default_campaign_progress_state()
 	_global_state.partial_level_state_by_track = build_empty_partial_level_state_map()
-	_global_state.progress_system_state_by_key = build_empty_progress_system_state_map()
+	_global_state.progress_system_state_by_key = {}
 	_global_state.set_current_level_number(1)
 
 
@@ -36,6 +33,7 @@ func export_progress() -> Dictionary:
 	var snapshot: Dictionary = {
 		"current_level": _global_state.get_current_level_number()
 	}
+
 	for track_key in _global_state.TRACK_KEYS:
 		var flags: Array = []
 		var level_count: int = _global_state.get_track_level_count(track_key)
@@ -43,12 +41,14 @@ func export_progress() -> Dictionary:
 			flags.append(_global_state.is_level_completed(track_key, level_number))
 		snapshot[track_key] = flags
 
-	snapshot[_global_state.PARTIAL_LEVEL_STATES_KEY] = (
-		_partial_level_state_codec.export_track_states(_global_state.partial_level_state_by_track)
+	var partial_level_states: Dictionary = _partial_level_state_codec.export_track_states(
+		_global_state.partial_level_state_by_track
 	)
-	snapshot[_global_state.PROGRESS_SYSTEM_STATES_KEY] = (
-		_normalize_system_states(_global_state.progress_system_state_by_key)
+	var system_states: Dictionary = _normalize_system_states(
+		_global_state.progress_system_state_by_key
 	)
+	snapshot[GameProgressKeys.PARTIAL_LEVEL_STATES_KEY] = partial_level_states
+	snapshot[GameProgressKeys.PROGRESS_SYSTEM_STATES_KEY] = system_states
 	return snapshot
 
 
@@ -76,16 +76,15 @@ func import_progress(progress_snapshot: Dictionary) -> void:
 			level_progress[_global_state.BOOK_LEVEL_COMPLETED_KEY] = bool(stored_flags[level_index])
 			track_progress[level_number] = level_progress
 
-	_global_state.partial_level_state_by_track = (
-		_partial_level_state_codec.normalize_track_states(
-			progress_snapshot.get(_global_state.PARTIAL_LEVEL_STATES_KEY, {})
-		)
+	var partial_level_states: Dictionary = _partial_level_state_codec.normalize_track_states(
+		progress_snapshot.get(GameProgressKeys.PARTIAL_LEVEL_STATES_KEY, {})
 	)
+	_global_state.partial_level_state_by_track = partial_level_states
 	_partial_level_state_codec.remove_completed_states(
 		_global_state.partial_level_state_by_track
 	)
 	_global_state.progress_system_state_by_key = _normalize_system_states(
-		progress_snapshot.get(_global_state.PROGRESS_SYSTEM_STATES_KEY, {})
+		progress_snapshot.get(GameProgressKeys.PROGRESS_SYSTEM_STATES_KEY, {})
 	)
 
 
@@ -205,7 +204,7 @@ func clear_progress_system_state(system_key: String) -> void:
 
 func _normalize_system_states(raw_system_states: Variant) -> Dictionary:
 	if not raw_system_states is Dictionary:
-		return build_empty_progress_system_state_map()
+		return {}
 
 	var result: Dictionary = {}
 	for raw_key in raw_system_states.keys():

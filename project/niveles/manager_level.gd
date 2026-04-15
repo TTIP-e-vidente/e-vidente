@@ -4,7 +4,7 @@ class_name ManagerLevel
 const LevelMechanicRegistry := preload("res://niveles/mechanics/LevelMechanicRegistry.gd")
 const LevelSceneRefsScript := preload("res://niveles/runtime/LevelSceneRefs.gd")
 const LevelItemRuntimeScript := preload("res://niveles/runtime/LevelItemRuntime.gd")
-const GlobalStateScript := preload("res://niveles/global.gd")
+const GameProgressKeys := preload("res://niveles/progress/GameProgressKeys.gd")
 const LevelResourceScript := preload("res://resources/level_resource.gd")
 const GameLevelContentCatalogScript := preload(
 	"res://niveles/content/GameLevelContentCatalog.gd"
@@ -55,7 +55,7 @@ func start_level_session(level_scene: Node) -> void:
 	
 	var saved_run_index: int = int(
 		saved_level_state.get(
-			GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
+			GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY,
 			1
 		)
 	)
@@ -76,7 +76,7 @@ func advance_to_next_run() -> bool:
 		return false
 	active_run_index += 1
 	_start_current_run({
-		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index
+		GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY: active_run_index
 	})
 	return true
 
@@ -105,10 +105,10 @@ func build_partial_level_state() -> Dictionary:
 	if partial_level_state.is_empty():
 		return {}
 
-	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
-	partial_level_state[GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
+	partial_level_state[GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY] = active_run_index
+	partial_level_state[GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(
 		partial_level_state.get(
-			GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
+			GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY,
 			active_mechanic_type
 		)
 	).strip_edges()

@@ -32,6 +32,13 @@ func _run() -> void:
 	Global.mark_level_completed("celiaquia", 1)
 	Global.mark_level_completed("celiaquia", 2)
 	Global.mark_level_completed("veganismo", 1)
+	Global.record_streak_activity(
+		"level_completed",
+		{
+			"track_key": "celiaquia",
+			"level_number": 2
+		}
+	)
 	SaveManager.set_resume_to_level("celiaquia", 3)
 	SaveManager.record_manual_save()
 
@@ -85,6 +92,8 @@ func _run() -> void:
 		_assert(username_label.text.contains(TEST_USERNAME), "El overlay abierto deberia mostrar el nombre del perfil local preparado")
 		_assert(progress_label.text.contains("Celiaquia 3/6"), "El resumen deberia mostrar el siguiente capitulo disponible para celiaquia")
 		_assert(progress_label.text.contains("Veganismo 2/6"), "El resumen deberia mostrar el siguiente capitulo disponible para veganismo")
+		_assert(progress_label.text.contains("Racha diaria: 1 dia"), "El overlay deberia mostrar la racha diaria actual")
+		_assert(progress_label.text.contains("Hoy: completada"), "El overlay deberia indicar si la racha ya conto hoy")
 		_assert(resume_hint_label.text.contains("Retoma en Celiaquia capitulo 3"), "El perfil deberia resumir el punto exacto de reanudacion")
 		_assert(resume_now_button.visible, "El boton de retomar deberia mostrarse cuando hay una partida disponible")
 		history_toggle_button.emit_signal("pressed")

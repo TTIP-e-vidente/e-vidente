@@ -7,6 +7,9 @@ const GameLevelContentCatalogScript := preload(
 const GameProgressStateStoreScript := preload(
 	"res://niveles/progress/GameProgressStateStore.gd"
 )
+const GameStreakStateServiceScript := preload(
+	"res://niveles/progress/GameStreakStateService.gd"
+)
 
 var player_cambiante
 var is_dragging: Object
@@ -17,19 +20,13 @@ const LEVELS_PER_BOOK := GameTrackCatalog.DEFAULT_LEVEL_COUNT
 const TRACK_KEYS := GameTrackCatalog.TRACK_ORDER
 const BOOK_LEVEL_COMPLETED_KEY := GameLevelContentCatalogScript.BOOK_LEVEL_COMPLETED_KEY
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
-const PROGRESS_SYSTEM_STATES_KEY := "progress_system_states"
-const PARTIAL_LEVEL_STATES_KEY := "partial_level_states"
-const PARTIAL_LEVEL_RUN_INDEX_KEY := "run_index"
-const PARTIAL_LEVEL_MECHANIC_TYPE_KEY := "mechanic_type"
-const PARTIAL_LEVEL_MECHANIC_STATE_KEY := "mechanic_state"
-const PARTIAL_LEVEL_ITEMS_KEY := "items"
-const PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY := "placed_item_ids"
-const PARTIAL_LEVEL_ITEM_PATH_KEY := "item_path"
-const PARTIAL_LEVEL_INSTANCE_ID_KEY := "instance_id"
-const PARTIAL_LEVEL_IS_POSITIVE_KEY := "is_positive"
+const STREAK_SYSTEM_KEY := "streak"
+const STREAK_ACTIVITY_LEVEL_COMPLETED := "level_completed"
+const STREAK_ACTIVITY_QUESTION_SESSION_COMPLETED := "question_session_completed"
 
 var _level_content_catalog
 var _progress_state_store
+var _streak_state_service
 var campaign_progress_by_track: Dictionary = {}
 var partial_level_state_by_track: Dictionary = {}
 var progress_system_state_by_key: Dictionary = {}
@@ -38,6 +35,7 @@ var progress_system_state_by_key: Dictionary = {}
 func _init() -> void:
 	_level_content_catalog = GameLevelContentCatalogScript.new()
 	_progress_state_store = GameProgressStateStoreScript.new(self)
+	_streak_state_service = GameStreakStateServiceScript.new()
 	_reset_runtime_progress_state()
 
 
@@ -162,7 +160,6 @@ func is_level_completed(track_key: String, level_number: int) -> bool:
 	return bool(level_progress.get(BOOK_LEVEL_COMPLETED_KEY, false))
 
 
-# Persistencia y reanudacion del progreso.
 func reset_progress() -> void:
 	_progress_state_store.reset_progress()
 
@@ -203,6 +200,51 @@ func format_progress_summary_text(summary: Dictionary = {}) -> String:
 	return "\n".join(progress_lines)
 
 
+func get_streak_state() -> Dictionary:
+	return _streak_state_service.normalize_state(get_progress_system_state(STREAK_SYSTEM_KEY))
+
+
+func record_streak_activity(
+	activity_type: String,
+	metadata: Dictionary = {}
+) -> Dictionary:
+	var next_streak_state: Dictionary = _streak_state_service.record_activity(
+		get_streak_state(),
+		activity_type,
+		metadata
+	)
+	set_progress_system_state(STREAK_SYSTEM_KEY, next_streak_state)
+	return next_streak_state
+
+
+func record_level_completed_streak(track_key: String, level_number: int) -> Dictionary:
+	return record_streak_activity(
+		STREAK_ACTIVITY_LEVEL_COMPLETED,
+		{
+			"track_key": track_key,
+			"level_number": level_number
+		}
+	)
+
+
+func record_question_session_streak(question_count: int, score: int) -> Dictionary:
+	return record_streak_activity(
+		STREAK_ACTIVITY_QUESTION_SESSION_COMPLETED,
+		{
+			"question_count": question_count,
+			"score": score
+		}
+	)
+
+
+func clear_streak_state() -> void:
+	clear_progress_system_state(STREAK_SYSTEM_KEY)
+
+
+func get_streak_summary_text() -> String:
+	return _streak_state_service.format_summary_text(get_streak_state())
+
+
 func get_progress_system_state(system_key: String) -> Dictionary:
 	return _progress_state_store.get_progress_system_state(system_key)
 
@@ -234,7 +276,7 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 func _reset_runtime_progress_state() -> void:
 	campaign_progress_by_track = build_default_campaign_progress_state()
 	partial_level_state_by_track = _progress_state_store.build_empty_partial_level_state_map()
-	progress_system_state_by_key = _progress_state_store.build_empty_progress_system_state_map()
+	progress_system_state_by_key = {}
 
 
 func _resolve_existing_track_key(track_key: String) -> String:

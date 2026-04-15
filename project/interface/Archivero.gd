@@ -148,12 +148,21 @@ func _refresh_profile_summary(profile: Dictionary) -> void:
 
 
 func _refresh_progress_summary(progress_summary: Dictionary) -> void:
-	progress_summary_label.text = Global.format_progress_summary_text(progress_summary)
+	var progress_text := Global.format_progress_summary_text(progress_summary).strip_edges()
+	var streak_text := Global.get_streak_summary_text().strip_edges()
+	if progress_text.is_empty():
+		progress_summary_label.text = streak_text
+		return
+	if streak_text.is_empty():
+		progress_summary_label.text = progress_text
+		return
+	progress_summary_label.text = "%s\n\n%s" % [progress_text, streak_text]
 
 
 func _refresh_save_status(save_status: Dictionary) -> void:
 	save_status_label.text = _ui_helper.format_save_status(save_status)
-	_refresh_progress_button_tooltip(save_status)
+	open_progress_button.tooltip_text = _ui_helper.build_toggle_tooltip(save_status)
+	open_progress_button.text = "Mi progreso"
 
 
 func _refresh_resume_section() -> void:
@@ -272,10 +281,6 @@ func _on_guardar_pressed() -> void:
 
 
 func _on_resume_now_button_pressed() -> void:
-	_resume_current_save_from_overlay()
-
-
-func _resume_current_save_from_overlay() -> void:
 	if not SaveManager.can_resume_current_save():
 		return
 	_set_progress_overlay_visible(false)
@@ -284,10 +289,6 @@ func _resume_current_save_from_overlay() -> void:
 
 
 func _on_editar_perfil_pressed() -> void:
-	_open_profile_editor()
-
-
-func _open_profile_editor() -> void:
 	SaveManager.persist_runtime_progress_to_current_save()
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE)
 	GameSceneRouter.go_to_profile_editor(get_tree())
@@ -306,18 +307,9 @@ func _on_reset_progress_button_pressed() -> void:
 
 
 func _on_reset_progress_dialog_confirmed() -> void:
-	_reset_local_progress()
-
-
-func _reset_local_progress() -> void:
 	_set_history_view_visible(false)
 	SaveManager.reset_all_progress()
 	_refresh_progress_overlay()
-
-
-func _refresh_progress_button_tooltip(save_status: Dictionary) -> void:
-	open_progress_button.tooltip_text = _ui_helper.build_toggle_tooltip(save_status)
-	open_progress_button.text = "Mi progreso"
 
 
 func _show_saved_icon_feedback() -> void:

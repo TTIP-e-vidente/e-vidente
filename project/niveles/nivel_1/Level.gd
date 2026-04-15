@@ -16,6 +16,9 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameProgressIntegration := preload(
+	"res://niveles/progress/GameProgressIntegration.gd"
+)
 const SAVE_FEEDBACK_SUCCESS_TITLE_COLOR := Color(0.215686, 0.337255, 0.231373, 1)
 const SAVE_FEEDBACK_SUCCESS_BODY_COLOR := Color(0.266667, 0.227451, 0.156863, 0.96)
 const SAVE_FEEDBACK_ERROR_TITLE_COLOR := Color(0.568627, 0.184314, 0.141176, 1)
@@ -73,7 +76,7 @@ func _start_gameplay_runtime() -> void:
 
 
 func _register_level_resume_target() -> void:
-	SaveManager.set_resume_to_level(
+	GameProgressIntegration.register_level_resume(
 		_resolve_level_track_key(),
 		_current_level_number()
 	)
@@ -165,9 +168,7 @@ func _show_completed_run_feedback() -> void:
 
 
 func _persist_completed_level(track_key: String, level_number: int) -> void:
-	Global.mark_level_completed(track_key, level_number)
-	Global.clear_partial_level_state(track_key, level_number)
-	SaveManager.record_level_completed(track_key, level_number)
+	GameProgressIntegration.complete_level(track_key, level_number)
 
 
 func _victory() -> void:
@@ -188,17 +189,17 @@ func _on_save_progress_button_pressed() -> void:
 
 
 func _save_current_level_progress() -> void:
-	var partial_save_result: Dictionary = _store_partial_level_progress()
-	SaveManager.record_manual_save()
-	var save_status: Dictionary = SaveManager.get_save_status()
+	var save_result: Dictionary = GameProgressIntegration.save_level_progress(
+		manager_level,
+		_resolve_level_track_key(),
+		_current_level_number()
+	)
+	var partial_save_result: Dictionary = save_result.get("partial_save_result", {})
+	var save_status: Dictionary = save_result.get("save_status", {})
 	if _save_failed(save_status):
 		_show_save_error_feedback(save_status)
 		return
 	_show_save_success_feedback(partial_save_result, save_status)
-
-
-func _store_partial_level_progress() -> Dictionary:
-	return manager_level.store_partial_level_state(_resolve_level_track_key())
 
 
 func _save_failed(save_status: Dictionary) -> bool:
