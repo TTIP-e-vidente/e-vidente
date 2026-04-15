@@ -4,12 +4,11 @@ En esta etapa estamos apuntando a una CI chica, clara y util. No queremos un pip
 
 ## Qué corre y cuándo
 
-Hoy tenemos cuatro workflows visibles:
+Hoy tenemos tres workflows visibles:
 
 - `.github/workflows/docs-pr.yml` para `pull_request` hacia `main` o `dev`
 - `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, mas corrida manual
 - `.github/workflows/gameplay-smoke-pr.yml` para `pull_request` hacia `main` o `dev`, mas corrida manual
-- `.github/workflows/pages.yml` para export web y deploy a GitHub Pages en `main`, mas corrida manual
 
 No hay workflow compartido. Lo dejamos asi a proposito para que cada pipeline tenga un objetivo claro y sea facil de leer cuando falla.
 
@@ -118,16 +117,11 @@ Si tocamos fuerte persistencia, UI o flujo interno, tiene sentido correrlos. Per
 
 ## Deploy web
 
-El deploy web no bloquea merge y vive aparte en `.github/workflows/pages.yml`.
+El export web no bloquea merge y hoy tampoco tiene un workflow versionado dentro de `.github/workflows/`.
 
-Ese workflow:
+El repo mantiene el preset web `index` y la salida esperada sigue siendo `build/web/index.html` cuando el export corre bien.
 
-- corre solo en `main` o manualmente
-- valida import headless del proyecto
-- exporta el preset web `index` a `build/web/index.html`
-- publica esa carpeta en GitHub Pages
-
-Si el repo ya tenia Pages prendido con source de branch, conviene cambiarlo a `GitHub Actions` para que deje de fallar el deployment viejo y pase a usar este workflow.
+Si mas adelante se automatiza la publicacion web, conviene agregar un workflow dedicado y documentarlo aca con el path real.
 
 ## Validación local
 

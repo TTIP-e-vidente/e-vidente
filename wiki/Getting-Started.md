@@ -77,7 +77,7 @@ Si querés correr algo más puntual:
 - [ ] Los cambios se probaron localmente.
 - [ ] La descripcion del PR explica que cambio y por que.
 - [ ] Si hubo cambios relevantes en `project/`, quedo registro en `wiki/Bitacora.md`.
-- [ ] La CI pasa en `Docs / Wiki`, `Codebase / Structure` y `Gameplay Smoke`.
+- [ ] Los checks relevantes pasan: `Technical Health` en el branch y `Docs / Tracking` + `Gameplay Smoke` en el PR.
 
 `content_catalog_validation_test.gd` y el resto de los tests finos ya no forman parte del gate normal del PR. Siguen sirviendo para corridas manuales cuando se toca fuerte contenido, persistencia o navegación.
 
@@ -97,7 +97,7 @@ Si querés correr algo más puntual:
 - Revisar `project/export_presets.cfg`.
 - Verificar si la salida quedo en `build/web` o en alguna carpeta de export alternativa.
 
-### La CI marca un fallo en `Docs / Wiki`
+### La CI marca un fallo en `Docs / Tracking`
 
 - Revisar que sigan existiendo `README.md`, `wiki/Home.md`, `wiki/Getting-Started.md`, `wiki/CI.md`, `wiki/Architecture.md` y `wiki/Bitacora.md`.
 - Si falta contexto funcional del cambio, dejar una nota breve en `wiki/Bitacora.md`.

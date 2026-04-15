@@ -145,11 +145,12 @@ run_codebase_suite() {
 
 
 run_smoke_suite() {
+	run_import_headless
 	run_gameplay_smoke
 
 	write_success_summary \
 		"smoke" \
-		"gameplay smoke"
+		"import headless + gameplay smoke"
 }
 
 

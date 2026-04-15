@@ -128,4 +128,4 @@ Más detalle en [Persistencia Local](Persistencia-Local).
 
 ## Build y export
 
-El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. El gate obligatorio no lo corre, pero el workflow `.github/workflows/pages.yml` hace import headless, exporta esa salida y la despliega en GitHub Pages.
+El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. El gate obligatorio no lo corre y hoy el repo no versiona un workflow de Pages dentro de `.github/workflows/`, asi que cualquier publicacion web queda fuera de este pipeline.

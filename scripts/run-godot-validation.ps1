@@ -72,7 +72,7 @@ function Get-ValidationSteps {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }
         'technical' { return @($importStep) }
-        'smoke' { return @($smokeStep) }
+        'smoke' { return @($importStep, $smokeStep) }
         'ci' { return @($importStep, $smokeStep) }
         'pr-fast' { return @($importStep, $smokeStep) }
         'full' { return @($importStep, $catalogStep, $smokeStep) }

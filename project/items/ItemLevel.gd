@@ -1,8 +1,6 @@
 extends Node2D
 class_name Item_level
 
-const LevelItemScript := preload("res://resources/level_item.gd")
-
 @onready var sprite_2d = $Sprite2D
 @onready var area_2d = $Area2D
 var condiciones: Array[int] = []

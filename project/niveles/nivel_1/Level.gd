@@ -9,8 +9,8 @@ const SAVE_FEEDBACK_ERROR_TITLE := "No se pudo guardar"
 const SAVE_FEEDBACK_DEFAULT_TIME_LINE := "Guardado en este dispositivo"
 const SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE := "Reintenta de nuevo en unos segundos"
 const SAVE_FEEDBACK_RESET_WAIT_TIME := 3.0
-const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
-const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/logro-sin-realizar.png"
+const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/logro-realizado.png"
 const DEFAULT_BACKGROUND_MUSIC_PATH := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
@@ -128,7 +128,10 @@ func _ensure_quick_save_icons_loaded() -> void:
 
 
 func _load_texture_or_null(texture_path: String) -> Texture2D:
-	var loaded_texture: Variant = load(texture_path)
+	if not ResourceLoader.exists(texture_path, "Texture2D"):
+		push_warning("Level no encontro la textura de UI en %s." % texture_path)
+		return null
+	var loaded_texture: Variant = ResourceLoader.load(texture_path, "Texture2D")
 	if loaded_texture is Texture2D:
 		return loaded_texture
 	push_warning("Level no pudo cargar la textura de UI en %s." % texture_path)
