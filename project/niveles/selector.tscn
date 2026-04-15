@@ -1,13 +1,26 @@
 [gd_scene format=3 uid="uid://di3fv2eh00pko"]
 
 [ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
 [ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_6uvpc"]
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_6uvpc"]
 [ext_resource type="Texture2D" uid="uid://dat5d3t765v4l" path="res://assets-sistema/interfaz/selector-preguntas.png" id="4_g0ff0"]
 [ext_resource type="Texture2D" uid="uid://cd4i84fdabf0i" path="res://assets-sistema/interfaz/selector-recetas-png.png" id="5_fsij2"]
 [ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="6_lo2a7"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_px47c"]
+shader = ExtResource("4_6uvpc")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x5wwr"]
+shader = ExtResource("4_6uvpc")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
 content_margin_left = 4.0
@@ -106,29 +119,27 @@ offset_right = 772.0
 offset_bottom = 649.0
 scale = Vector2(1.14996, 1.14996)
 
-[node name="Recetas" type="Button" parent="MenuBar" unique_id=45560783]
+[node name="Recetas" type="TextureButton" parent="MenuBar" unique_id=2034736627]
+material = SubResource("ShaderMaterial_px47c")
 layout_mode = 0
 offset_left = 16.695953
-offset_top = 126.09132
+offset_top = 146.96161
 offset_right = 548.6959
-offset_bottom = 324.0913
+offset_bottom = 344.9616
 scale = Vector2(0.48045883, 0.4908836)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("5_fsij2")
-flat = true
+texture_normal = ExtResource("5_fsij2")
 
-[node name="Preguntas" type="Button" parent="MenuBar" unique_id=2027374575]
+[node name="Preguntas" type="TextureButton" parent="MenuBar" unique_id=411693344]
+material = SubResource("ShaderMaterial_x5wwr")
 layout_mode = 0
 offset_left = 16.695953
-offset_top = 235.66034
+offset_top = 274.79218
 offset_right = 548.6959
-offset_bottom = 433.66034
+offset_bottom = 472.79218
 scale = Vector2(0.48045886, 0.48045886)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("4_g0ff0")
-flat = true
+texture_normal = ExtResource("4_g0ff0")
 
-[node name="Salir" type="Button" parent="MenuBar" unique_id=1388647194]
+[node name="Salir" type="TextureButton" parent="MenuBar" unique_id=364315143]
 visible = false
 layout_mode = 0
 offset_left = 16.522324
@@ -136,9 +147,7 @@ offset_top = 351.31653
 offset_right = 548.52234
 offset_bottom = 549.3165
 scale = Vector2(0.48045886, 0.48045886)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("6_lo2a7")
-flat = true
+texture_normal = ExtResource("6_lo2a7")
 
 [node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1688635768]
 visible = false
