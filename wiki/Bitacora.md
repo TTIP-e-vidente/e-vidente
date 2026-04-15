@@ -4,6 +4,9 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-14 | gameplay-smoke-cold-start
+El smoke de gameplay estaba dando falsos negativos en GitHub Actions cuando corria sobre un checkout limpio sin import previo. El flujo jugable no estaba roto; el problema venia de recursos importados y de carga de UI no critica demasiado fragil para headless en cold start. Se ajusto la validacion para hacer import headless antes del vertical slice y el feedback visual de guardado rapido paso a usar iconos raster ya presentes en el repo para no depender de SVG en runtime.
+
 ### 2026-04-14 | ci-split-docs-technical-smoke
 Reordenamos la CI para dejarla mas simple y mas facil de leer. La parte obligatoria quedo separada en tres workflows chicos: `Docs / Tracking` para PR, `Technical Health` para push y `Gameplay Smoke` para PR. Tambien sacamos el workflow compartido, para que cada pipeline tenga una responsabilidad clara. El check de documentacion ahora pide un cambio en Markdown mas una entrada en bitacora o changelog, la validacion tecnica quedo enfocada en estructura critica + import headless, y el smoke reutiliza el flujo baseline que ya existia para comprobar que el slice llega a gameplay sin crashear.
 

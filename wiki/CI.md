@@ -72,6 +72,8 @@ La pregunta aca es bien concreta: el flujo minimo jugable sigue llegando a gamep
 
 Corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `scripts/run-godot-validation.sh --run smoke godot`.
 
+Antes de entrar al vertical slice, el runner hace un import headless del proyecto. En cold start de GitHub Actions vimos fallos falsos por recursos importados y por carga de UI no critica cuando el smoke iba directo al gameplay sobre un checkout limpio. Con el import previo, el test reproduce mejor el arranque real del proyecto y deja de mezclar validacion jugable con fragilidad de importacion.
+
 La pasada usa el track baseline y recorre este camino:
 
 - Splash
@@ -111,6 +113,7 @@ Si tocamos fuerte persistencia, UI o flujo interno, tiene sentido correrlos. Per
 - sin cache de `project/.godot`
 - sin reintentos especiales ni limpieza condicional del import cache
 - sin suites grandes para cada PR
+- import headless antes del smoke para estabilizar runners limpios
 - sin export web dentro del gate obligatorio
 - logs como artifact para `Technical Health` y `Gameplay Smoke`
 - un script de validacion con modos chicos: `technical`, `smoke`, `ci` y `full`
