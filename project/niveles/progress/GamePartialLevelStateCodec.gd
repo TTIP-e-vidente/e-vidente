@@ -42,7 +42,7 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 		return {}
 
 	var raw_saved_level_state: Dictionary = raw_level_state
-	var run_index: int = max(
+	var saved_run_index: int = max(
 		1,
 		int(raw_saved_level_state.get(_global_state.PARTIAL_LEVEL_RUN_INDEX_KEY, 1))
 	)

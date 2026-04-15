@@ -53,7 +53,7 @@ func start_level_session(level_scene: Node) -> void:
 			_get_current_level_number()
 		)
 	
-	var run_index: int = int(
+	var saved_run_index: int = int(
 		saved_level_state.get(
 			GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
 			1
