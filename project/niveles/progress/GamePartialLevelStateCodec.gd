@@ -56,20 +56,19 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 
 	var resolved_mechanic_type: String = stored_mechanic_type
 	if resolved_mechanic_type.is_empty() and (
-		run_index > 1 or not normalized_mechanic_state.is_empty()
+		saved_run_index > 1 or not normalized_mechanic_state.is_empty()
 	):
 		resolved_mechanic_type = LevelMechanicTypes.PLATE_SORT
 
-	if normalized_mechanic_state.is_empty() and run_index <= 1:
+	if normalized_mechanic_state.is_empty() and saved_run_index <= 1:
 		return {}
 
 	var normalized_level_state: Dictionary = {
-		_global_state.PARTIAL_LEVEL_RUN_INDEX_KEY: run_index,
+		_global_state.PARTIAL_LEVEL_RUN_INDEX_KEY: saved_run_index,
 		_global_state.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: resolved_mechanic_type,
 		_global_state.PARTIAL_LEVEL_MECHANIC_STATE_KEY: normalized_mechanic_state
 	}
 
-	# Compatibilidad legacy: algunos callers todavia leen items e ids en la raiz.
 	if resolved_mechanic_type == LevelMechanicTypes.PLATE_SORT:
 		normalized_level_state[_global_state.PARTIAL_LEVEL_ITEMS_KEY] = (
 			normalized_mechanic_state.get(_global_state.PARTIAL_LEVEL_ITEMS_KEY, [])

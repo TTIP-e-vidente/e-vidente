@@ -14,7 +14,7 @@ func _init(level_manager) -> void:
 	_level_manager = level_manager
 
 
-func build_save_state(mechanic_type: String, current_run_index: int) -> Dictionary:
+func build_save_state(mechanic_type: String, saved_run_index: int) -> Dictionary:
 	var runtime_snapshot: Dictionary = _build_runtime_snapshot()
 	var saved_items: Array = runtime_snapshot.get("saved_items", [])
 	var placed_positive_item_ids: Array = runtime_snapshot.get(
@@ -22,7 +22,7 @@ func build_save_state(mechanic_type: String, current_run_index: int) -> Dictiona
 		[]
 	)
 
-	if saved_items.is_empty() and current_run_index <= 1:
+	if saved_items.is_empty() and saved_run_index <= 1:
 		return {}
 
 	var mechanic_state: Dictionary = _build_plate_sort_mechanic_state(
@@ -30,7 +30,7 @@ func build_save_state(mechanic_type: String, current_run_index: int) -> Dictiona
 		placed_positive_item_ids
 	)
 	return {
-		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index,
+		GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY: saved_run_index,
 		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
 		GlobalStateScript.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
 		GlobalStateScript.PARTIAL_LEVEL_ITEMS_KEY: saved_items,

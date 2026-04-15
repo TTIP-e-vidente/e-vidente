@@ -52,14 +52,15 @@ func start_level_session(level_scene: Node) -> void:
 			active_track_key,
 			_get_current_level_number()
 		)
-
+	
+	var run_index: int = int(
+		saved_level_state.get(
+			GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
+			1
+		)
+	)
 	active_run_index = clampi(
-		int(
-			saved_level_state.get(
-				GlobalStateScript.PARTIAL_LEVEL_RUN_INDEX_KEY,
-				1
-			)
-		),
+		saved_run_index,
 		1,
 		get_total_runs()
 	)
@@ -123,19 +124,9 @@ func store_partial_level_state(track_key: String) -> Dictionary:
 			_get_current_level_number(),
 			partial_level_state
 		)
-
-	var summary: Dictionary = {
-		"has_partial_state": not partial_level_state.is_empty(),
-		"run_index": active_run_index,
-		"run_count": get_total_runs(),
-		"mechanic_type": active_mechanic_type
-	}
-	if _active_mechanic_controller != null:
-		summary.merge(
-			_active_mechanic_controller.build_partial_summary(partial_level_state),
-			true
-		)
-	return summary
+	if _active_mechanic_controller == null:
+		return {}
+	return _active_mechanic_controller.build_partial_summary(partial_level_state)
 
 
 func get_positive_items_in_plate_count() -> int:

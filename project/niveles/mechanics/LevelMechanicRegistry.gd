@@ -2,7 +2,7 @@ extends RefCounted
 
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
-const PLATE_SORT_MECHANIC_CONTROLLER_PATH := (
+const PlateSortMechanicControllerScript := preload(
 	"res://niveles/mechanics/PlateSortMechanicController.gd"
 )
 
@@ -28,43 +28,13 @@ static func has_mechanic_type(raw_mechanic_type: Variant) -> bool:
 
 
 static func build_controllers(level_manager) -> Dictionary:
-	var raw_controller_script: Variant = load(PLATE_SORT_MECHANIC_CONTROLLER_PATH)
-	if raw_controller_script == null:
-		push_error(
-			(
-				"LevelMechanicRegistry no pudo cargar el controlador '%s' en %s."
-			)
-			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
-		)
-		return {}
-
-	if not raw_controller_script is Script:
-		push_error(
-			(
-				"LevelMechanicRegistry cargo un recurso invalido para '%s' en %s."
-			)
-			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
-		)
-		return {}
-
-	var controller_script: Script = raw_controller_script
-	if not controller_script.can_instantiate():
-		push_error(
-			(
-				"LevelMechanicRegistry no puede instanciar '%s' en %s. "
-				+ "Revisar errores de parseo o dependencias del script."
-			)
-			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
-		)
-		return {}
-
-	var controller = controller_script.new(level_manager)
+	var controller = PlateSortMechanicControllerScript.new(level_manager)
 	if controller == null:
 		push_error(
 			(
-				"LevelMechanicRegistry no pudo instanciar el controlador '%s' en %s."
+				"LevelMechanicRegistry no pudo instanciar el controlador '%s'."
 			)
-			% [DEFAULT_MECHANIC_TYPE, PLATE_SORT_MECHANIC_CONTROLLER_PATH]
+			% DEFAULT_MECHANIC_TYPE
 		)
 		return {}
 
