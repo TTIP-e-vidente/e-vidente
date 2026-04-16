@@ -1,16 +1,22 @@
 extends Node2D
 
+## --- Recursos ---
+
 const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-base-datos.svg")
-const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok.svg")
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-base-datos-ok.svg")
+const GameSceneRouter         := preload("res://niveles/GameSceneRouter.gd")
 const ArchiveroUiHelperScript := preload("res://interface/helpers/ArchiveroUiHelper.gd")
 
-const PROFILE_RETURN_SCENE_META := "profile_return_scene"
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const PROFILE_RETURN_SCENE_META       := "profile_return_scene"
+const ARCHIVERO_SCENE                 := "res://interface/archivero.tscn"
 const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
+
+## --- Debug ---
 
 @export_group("Debug Demo")
 @export var debug_force_progress_overlay := false
+
+## --- Nodos ---
 
 @onready var background: AudioStreamPlayer2D = $Background
 @onready var profile_overlay: Control = $ProfileOverlayLayer/ProfileOverlay
@@ -76,14 +82,20 @@ const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
 	history_panel_content.get_node("HistoryBody/MarginContainer/HistoryText") as RichTextLabel
 )
 
-var is_archivero_highlighted := false
+## --- Estado runtime ---
+
+var is_archivero_highlighted   := false
 var _save_icon_feedback_revision := 0
-var _archivero_ui_helper = ArchiveroUiHelperScript.new()
+var _archivero_ui_helper         = ArchiveroUiHelperScript.new()
+
+## --- Ciclo de vida ---
 
 
 func _ready() -> void:
 	_initialize_archivero_scene()
 
+
+## --- Inicialización interna ---
 
 func _initialize_archivero_scene() -> void:
 	background.play()
@@ -129,6 +141,8 @@ func _configure_reset_progress_dialog() -> void:
 	)
 	reset_progress_dialog.get_ok_button().text = "Reiniciar"
 
+
+## --- Refresco del overlay de perfil ---
 
 func _refresh_profile_overlay() -> void:
 	var current_profile := SaveManager.get_current_user_profile()
@@ -211,6 +225,8 @@ func _refresh_history_log() -> void:
 	)
 
 
+## --- Señales de SaveManager ---
+
 func _connect_save_manager_signals() -> void:
 	if not SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
 		SaveManager.save_status_changed.connect(_on_save_manager_changed)
@@ -246,6 +262,8 @@ func _build_history_log_text(history: Array) -> String:
 		)
 	return "\n\n".join(history_lines)
 
+
+## --- Handlers de UI ---
 
 func _on_save_manager_changed(status: Dictionary) -> void:
 	var save_state := str(status.get("state", ""))

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://interface/components/StreakBadge.gd" id="1_streak_script"]
 
@@ -16,30 +16,6 @@ border_color = Color(0.278431, 0.25098, 0.184314, 0.14)
 shadow_color = Color(0.101961, 0.0862745, 0.0588235, 0.08)
 shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_icon_badge"]
-bg_color = Color(0.886275, 0.913725, 0.843137, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meta_chip"]
-bg_color = Color(1, 1, 1, 0.78)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.278431, 0.25098, 0.184314, 0.1)
-
 [node name="StreakBadge" type="PanelContainer"]
 theme_override_styles/panel = SubResource("StyleBoxFlat_streak_panel")
 script = ExtResource("1_streak_script")
@@ -54,26 +30,6 @@ theme_override_constants/margin_bottom = 12
 [node name="ContentRow" type="HBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 12
-
-[node name="IconBadge" type="PanelContainer" parent="MarginContainer/ContentRow"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_icon_badge")
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/ContentRow/IconBadge"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
-
-[node name="IconLabel" type="Label" parent="MarginContainer/ContentRow/IconBadge/MarginContainer"]
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_colors/font_color = Color(0.239216, 0.286275, 0.2, 0.96)
-theme_override_font_sizes/font_size = 18
-text = "R"
 
 [node name="TextColumn" type="VBoxContainer" parent="MarginContainer/ContentRow"]
 layout_mode = 2
@@ -99,42 +55,3 @@ theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.88)
 theme_override_font_sizes/font_size = 13
 text = ""
 autowrap_mode = 3
-
-[node name="MetaRow" type="HBoxContainer" parent="MarginContainer/ContentRow/TextColumn"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="TodayChip" type="PanelContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_meta_chip")
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow/TodayChip"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 5
-
-[node name="TodayChipLabel" type="Label" parent="MarginContainer/ContentRow/TextColumn/MetaRow/TodayChip/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.239216, 0.286275, 0.2, 0.92)
-theme_override_font_sizes/font_size = 12
-text = ""
-
-[node name="BestChip" type="PanelContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_meta_chip")
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow/BestChip"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 5
-
-[node name="BestChipLabel" type="Label" parent="MarginContainer/ContentRow/TextColumn/MetaRow/BestChip/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
-theme_override_font_sizes/font_size = 12
-text = ""

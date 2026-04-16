@@ -153,14 +153,14 @@ func _build_status_view(has_streak: bool, recorded_today: bool) -> Dictionary:
 		return {
 			"status_key": STATUS_INACTIVE,
 			"status_title": "Sin racha activa",
-			"status_detail": "Completa una actividad valida para iniciar la racha.",
+			"status_detail": "Completa una actividad para iniciar la racha.",
 			"today_status_label": "Sin iniciar"
 		}
 	if recorded_today:
 		return {
 			"status_key": STATUS_ACTIVE_TODAY,
 			"status_title": "Racha activa",
-			"status_detail": "Hoy ya registraste una actividad valida.",
+			"status_detail": "Hoy ya registraste una actividad.",
 			"today_status_label": "Hoy ok"
 		}
 	return {

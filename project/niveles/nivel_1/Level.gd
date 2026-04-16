@@ -1,48 +1,62 @@
 extends Node
 class_name Level
 
-const DEFAULT_TRACK_KEY := "celiaquia"
-const MANUAL_SAVE_TOOLTIP := "Guardar este avance en el dispositivo"
-const SAVE_FEEDBACK_DEFAULT_TITLE := "Guardado local"
-const SAVE_FEEDBACK_PARTIAL_TITLE := "Guardado parcial"
-const SAVE_FEEDBACK_ERROR_TITLE := "No se pudo guardar"
-const SAVE_FEEDBACK_DEFAULT_TIME_LINE := "Guardado en este dispositivo"
-const SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE := "Reintenta de nuevo en unos segundos"
-const SAVE_FEEDBACK_RESET_WAIT_TIME := 3.0
-const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
-const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+## --- Configuración ---
+
+const DEFAULT_TRACK_KEY            := "celiaquia"
 const DEFAULT_BACKGROUND_MUSIC_PATH := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const STREAK_PROGRESS_OVERLAY_SCENE := preload(
 	"res://interface/components/StreakProgressOverlay.tscn"
 )
-const SAVE_FEEDBACK_SUCCESS_TITLE_COLOR := Color(0.215686, 0.337255, 0.231373, 1)
-const SAVE_FEEDBACK_SUCCESS_BODY_COLOR := Color(0.266667, 0.227451, 0.156863, 0.96)
-const SAVE_FEEDBACK_ERROR_TITLE_COLOR := Color(0.568627, 0.184314, 0.141176, 1)
-const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96)
-const DEBUG_REPLAY_PROGRESS_FEEDBACK_KEY := KEY_F7
-const DEBUG_REPLAY_STREAK_FEEDBACK_KEY := KEY_F8
-const DEBUG_SAVE_FEEDBACK_SAMPLE_TIME := "14:32:00"
-const DEBUG_SAVE_FEEDBACK_SAMPLE_COUNT := 3
-const DEBUG_STREAK_SAMPLE_CURRENT_COUNT := 5
-const DEBUG_STREAK_SAMPLE_BEST_COUNT := 7
 
-@export var track_key_override := ""
+## --- Guardado rápido ---
+
+const MANUAL_SAVE_TOOLTIP               := "Guardar este avance en el dispositivo"
+const SAVE_FEEDBACK_DEFAULT_TITLE       := "Guardado local"
+const SAVE_FEEDBACK_PARTIAL_TITLE       := "Guardado parcial"
+const SAVE_FEEDBACK_ERROR_TITLE         := "No se pudo guardar"
+const SAVE_FEEDBACK_DEFAULT_TIME_LINE   := "Guardado en este dispositivo"
+const SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE := "Reintenta de nuevo en unos segundos"
+const SAVE_FEEDBACK_RESET_WAIT_TIME     := 3.0
+const SAVE_ICON_IDLE_PATH               := "res://assets-sistema/interfaz/icono-guardar.svg"
+const SAVE_ICON_OK_PATH                 := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+const SAVE_FEEDBACK_SUCCESS_TITLE_COLOR := Color(0.215686, 0.337255, 0.231373, 1)
+const SAVE_FEEDBACK_SUCCESS_BODY_COLOR  := Color(0.266667, 0.227451, 0.156863, 0.96)
+const SAVE_FEEDBACK_ERROR_TITLE_COLOR   := Color(0.568627, 0.184314, 0.141176, 1)
+const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0.96)
+
+## --- Debug ---
+
+const DEBUG_REPLAY_PROGRESS_FEEDBACK_KEY := KEY_F7
+const DEBUG_REPLAY_STREAK_FEEDBACK_KEY   := KEY_F8
+const DEBUG_SAVE_FEEDBACK_SAMPLE_TIME    := "14:32:00"
+const DEBUG_SAVE_FEEDBACK_SAMPLE_COUNT   := 3
+const DEBUG_STREAK_SAMPLE_CURRENT_COUNT  := 5
+const DEBUG_STREAK_SAMPLE_BEST_COUNT     := 7
+
+## --- Exports ---
+
+@export var track_key_override    := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @export_group("Debug Demo")
-@export var debug_force_progress_feedback := false
-@export var debug_force_streak_feedback := false
-# Debug para forzar el modal de la racha 
+@export var debug_force_progress_feedback  := false
+@export var debug_force_streak_feedback    := false
 @export var debug_respect_streak_daily_gate := false
-@onready var background: AudioStreamPlayer2D = $Background
-@onready var victory: AnimatedSprite2D = $Victory
-@onready var next_chapter_button: Button = $Adelante
-@onready var teaching_sprite: Sprite2D = $Ensenanza
-@onready var manager_level = $ManagerLevel
-@onready var save_progress_button: Button = $SaveProgressButton
+
+## --- Nodos de escena ---
+
+@onready var background:         AudioStreamPlayer2D = $Background
+@onready var victory:            AnimatedSprite2D    = $Victory
+@onready var next_chapter_button: Button             = $Adelante
+@onready var teaching_sprite:    Sprite2D            = $Ensenanza
+@onready var manager_level                           = $ManagerLevel
+
+## Guardado rápido (UI)
+@onready var save_progress_button:  Button         = $SaveProgressButton
 @onready var save_feedback_backdrop: PanelContainer = $SaveFeedbackBackdrop
 @onready var save_feedback_title: Label = (
 	$SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack/SaveFeedbackTitle
@@ -50,18 +64,25 @@ const DEBUG_STREAK_SAMPLE_BEST_COUNT := 7
 @onready var save_feedback_label: Label = (
 	$SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack/SaveFeedbackLabel
 )
-@onready var _streak_chip: PanelContainer = $HUDLayer/StreakChip
-@onready var _chip_count_label: Label = $HUDLayer/StreakChip/Inner/Row/CountLabel
-@onready var _chip_unit_label: Label = $HUDLayer/StreakChip/Inner/Row/UnitLabel
 
-var save_feedback_timer: Timer
-var active_track_key := ""
-var save_icon_idle: Texture2D = null
-var save_icon_ok: Texture2D = null
-var streak_progress_overlay: Node
+## --- Estado runtime ---
+
+# Chip de racha HUD — opcional, solo existe en niveles con HUDLayer.
+var _streak_chip:       PanelContainer = null
+var _chip_count_label:  Label          = null
+var _chip_unit_label:   Label          = null
+
+var save_feedback_timer:   Timer  = null
+var active_track_key:      String = ""
+var save_icon_idle:        Texture2D = null
+var save_icon_ok:          Texture2D = null
+var streak_progress_overlay: Node = null
 
 
 func _ready() -> void:
+	_streak_chip = get_node_or_null("HUDLayer/StreakChip") as PanelContainer
+	_chip_count_label = get_node_or_null("HUDLayer/StreakChip/Inner/Row/CountLabel") as Label
+	_chip_unit_label = get_node_or_null("HUDLayer/StreakChip/Inner/Row/UnitLabel") as Label
 	_start_level_flow()
 	_configure_quick_save_feedback()
 	_configure_streak_progress_overlay()
@@ -84,6 +105,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if debug_force_streak_feedback and key_event.keycode == DEBUG_REPLAY_STREAK_FEEDBACK_KEY:
 		_show_debug_streak_feedback()
 
+
+## --- Arranque ---
 
 func _start_level_flow() -> void:
 	active_track_key = _resolve_configured_track_key()
@@ -184,6 +207,8 @@ func _exit_tree() -> void:
 		background.stream = null
 
 
+## --- Navegación y gameplay ---
+
 func _on_atras_pressed() -> void:
 	GameSceneRouter.go_to_track_book(get_tree(), _resolve_level_track_key())
 
@@ -227,6 +252,8 @@ func _on_adelante_pressed() -> void:
 		return
 	GameSceneRouter.go_to_track_level(get_tree(), track_key, level_number + 1)
 
+
+## --- Guardado rápido ---
 
 func _on_save_progress_button_pressed() -> void:
 	_save_current_level_progress()
@@ -336,6 +363,8 @@ func _resolve_level_track_key() -> String:
 func _get_resume_track_key() -> String:
 	return _resolve_level_track_key()
 
+
+## --- Racha y feedback post-partida ---
 
 func _show_level_completed_feedback(completion_result: Dictionary) -> void:
 	var streak_feedback := _resolve_streak_feedback_for_display(completion_result)
@@ -451,12 +480,9 @@ func _show_feedback_card(
 	save_feedback_label.modulate = body_color
 
 	save_feedback_backdrop.modulate = Color(1, 1, 1, 0.0)
-	save_feedback_backdrop.position.y -= 10
 	save_feedback_backdrop.visible = true
 	var tween := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.set_parallel(true)
 	tween.tween_property(save_feedback_backdrop, "modulate:a", 1.0, 0.22)
-	tween.tween_property(save_feedback_backdrop, "position:y", save_feedback_backdrop.position.y + 10, 0.22)
 
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
@@ -488,6 +514,8 @@ func _resolve_level_number_for_track(track_key: String, level_number: int) -> in
 		return 0
 	return clampi(level_number, 1, level_count)
 
+
+## --- Debug ---
 
 func _apply_debug_demo_flags() -> void:
 	if debug_force_progress_feedback:
@@ -534,7 +562,11 @@ func _build_debug_streak_feedback() -> Dictionary:
 	}
 
 
+## --- HUD racha ---
+
 func _update_streak_chip() -> void:
+	if _streak_chip == null:
+		return
 	var vm := Global.get_streak_view_model()
 	var count := int(vm.get("current_count", 0))
 	_chip_count_label.text = str(count)
