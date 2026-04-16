@@ -5,7 +5,7 @@ class_name Plato
 @onready var bien = $Bien
 @onready var mal = $Mal
 
-var elementos : Array[LevelItem.Condicion]
+var elementos: Array[int] = []
 var cantAlimentosPos = {}
 var cantAlimentosNeg = {}
 

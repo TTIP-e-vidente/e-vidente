@@ -3,7 +3,7 @@ class_name Item_level
 
 @onready var sprite_2d = $Sprite2D
 @onready var area_2d = $Area2D
-var condiciones : Array[LevelItem.Condicion]
+var condiciones: Array[int] = []
 var body_ref 
 var plato 
 var offset: Vector2
@@ -17,7 +17,7 @@ var textSprite: Texture2D
 var item_resource_path := ""
 var save_instance_id := ""
 
-func setup(level_item: LevelItem, superficie, is_positive: bool, instance_id: String = ""):
+func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
 	textSprite = level_item.sprite
 	$Sprite2D.texture = textSprite
 	condiciones = level_item.condiciones.duplicate()

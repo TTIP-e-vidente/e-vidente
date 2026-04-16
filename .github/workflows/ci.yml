@@ -1,5 +1,5 @@
-name: CI
-run-name: "${{ github.event_name == 'push' && format('Commit {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && format('Manual {0} + web export', github.ref_name)) || format('Manual {0}', github.ref_name) }}"
+name: Technical Health
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual technical {0}', github.ref_name) || format('Technical {0}', github.ref_name) }}"
 
 on:
   push:
@@ -8,30 +8,61 @@ on:
       - dev
       - 'feat/**'
       - 'feature/**'
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
-    inputs:
-      run_web_export:
-        description: "Run optional Web Export build"
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
-  group: godot-${{ github.workflow }}-${{ github.ref }}
+  group: technical-health-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  branch-validation:
-    name: "${{ github.event_name == 'push' && 'Commit' || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && 'Manual + web export') || 'Manual' }}"
-    uses: ./.github/workflows/ci-shared.yml
-    with:
-      trigger_kind: ${{ github.event_name }}
-      ref_name: ${{ github.ref_name }}
-      before_sha: ${{ github.event.before || '' }}
-      head_sha: ${{ github.sha }}
-      run_web_export: ${{ github.event_name == 'workflow_dispatch' && inputs.run_web_export || false }}
+  technical-health:
+    name: Technical Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: barichello/godot-ci:4.6.2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node when package.json exists
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Linux runtime libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends libfontconfig1
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Structure and optional lint guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-codebase-guardrails.sh
+
+      - name: Headless import health check
+        shell: bash
+        env:
+          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/technical
+        run: |
+          set -euo pipefail
+          rm -rf "$GITHUB_WORKSPACE/validation-logs/technical"
+          sh scripts/run-godot-validation.sh --run technical godot
+
+      - name: Upload technical logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: technical-health-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
+          path: validation-logs/technical
+          if-no-files-found: warn
+          retention-days: 14

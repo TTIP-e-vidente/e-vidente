@@ -1,10 +1,10 @@
-[gd_scene format=3 uid="uid://cpqkvf7oqnix0"]
+[gd_scene load_steps=40 format=3 uid="uid://cpqkvf7oqnix0"]
 
-[ext_resource type="Script" uid="uid://nk0ld4ibf7bq" path="res://niveles/nivel_4/Level-Keto.gd" id="1_8lr8v"]
+[ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
 [ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="3_1lcvv"]
 [ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="4_ekkjv"]
-[ext_resource type="Texture2D" uid="uid://d2dmdursy2ltm" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0m5ih"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0m5ih"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_qkth7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="7_a14q0"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="8_jarw3"]
@@ -34,11 +34,7 @@
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="32_hxfx2"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_tpxw6"]
 [ext_resource type="Texture2D" uid="uid://d310wsm1t43q5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_oaafq"]
-[ext_resource type="Texture2D" uid="uid://boxxlcks2q6qv" path="res://assets-sistema/interfaz/icono-guardar.svg" id="35_fcmtb"]
-[ext_resource type="Texture2D" uid="uid://bckrksgaarpos" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="36_g2m33"]
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
-[ext_resource type="Resource" path="res://niveles/nivel_4/level_4.tres" id="38_277ff"]
-[ext_resource type="AudioStream" uid="uid://cqyqol04288fo" path="res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3" id="39_mdmua"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
 animations = [{
@@ -173,6 +169,7 @@ shadow_size = 8
 
 [node name="Level-Keto" type="Node" unique_id=851633998]
 script = ExtResource("1_8lr8v")
+track_key_override = "cetogenica"
 
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=684974535]
 z_index = 1
@@ -356,7 +353,6 @@ offset_top = 141.0
 offset_right = 1127.0
 offset_bottom = 245.0
 tooltip_text = "Guardar progreso"
-icon = ExtResource("35_fcmtb")
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=2035953237]
@@ -404,14 +400,12 @@ visibility_layer = 256
 z_index = 9
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
-texture = ExtResource("36_g2m33")
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=990927628]
 script = ExtResource("37_m1vf8")
-level_resource = ExtResource("38_277ff")
+level_resource_path = "res://niveles/nivel_4/level_4.tres"
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1123792084]
-stream = ExtResource("39_mdmua")
 volume_db = -4.962
 attenuation = 2.07053
 
@@ -419,6 +413,6 @@ attenuation = 2.07053
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entered"]
 [connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_exited"]
 [connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_animated_sprite_2d_animation_finished"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_pressed"]
 [connection signal="pressed" from="SaveProgressButton" to="." method="_on_save_progress_button_pressed"]

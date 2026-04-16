@@ -46,8 +46,8 @@ func _run() -> void:
 				_assert(manager_level != null, "El nivel de keto deberia exponer el ManagerLevel")
 				_assert(not expected_run.is_empty(), "Keto deberia resolver su corrida inicial desde el catalogo")
 				if manager_level != null and not expected_run.is_empty():
-					_assert(manager_level.current_track_key == "cetogenica", "Capitulo 1 de keto deberia configurar ManagerLevel con el track correcto")
-					_assert(manager_level.current_run_data == expected_run, "Capitulo 1 de keto deberia cargar la corrida definida para cetogenica en el catalogo")
+					_assert(manager_level.active_track_key == "cetogenica", "Capitulo 1 de keto deberia configurar ManagerLevel con el track correcto")
+					_assert(manager_level.active_run_data == expected_run, "Capitulo 1 de keto deberia cargar la corrida definida para cetogenica en el catalogo")
 					_assert(int(manager_level.get_total_runs()) == 1, "La integracion actual de keto deberia exponer una unica corrida por capitulo")
 
 		if current_scene != null:

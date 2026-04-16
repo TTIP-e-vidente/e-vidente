@@ -1,18 +1,18 @@
 extends RefCounted
 class_name LevelMechanicController
 
-var _manager
+var _level_manager
 
 
-func _init(manager) -> void:
-	_manager = manager
+func _init(level_manager) -> void:
+	_level_manager = level_manager
 
 
 func get_mechanic_type() -> String:
 	return ""
 
 
-func configure_run(_run_data: Dictionary, _level_resource: LevelResource) -> void:
+func configure_run(_run_data: Dictionary, _level_resource) -> void:
 	pass
 
 
