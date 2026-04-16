@@ -16,21 +16,11 @@ var _active_track_key := ""
 
 
 func _ready() -> void:
-	_initialize_track_book_scene()
-
-
-func _initialize_track_book_scene() -> void:
 	_active_track_key = _resolve_book_track_key()
-	_play_background_music()
+	background_music.play()
 	_capture_chapter_button_blueprint()
 	_rebuild_track_chapter_buttons()
-	_register_book_resume_target()
-	_refresh_chapter_button_lock_state()
-
-
-
-func _play_background_music() -> void:
-	background_music.play()
+	SaveManager.set_resume_to_book(_active_track_key)
 
 
 func _exit_tree() -> void:
@@ -39,10 +29,6 @@ func _exit_tree() -> void:
 		background_music.stream = null
 	_release_chapter_button_blueprint()
 	_chapter_button_icons.clear()
-
-
-func _register_book_resume_target() -> void:
-	SaveManager.set_resume_to_book(_active_track_key)
 
 
 func _get_track_key() -> String:
@@ -59,53 +45,45 @@ func _resolve_book_track_key() -> String:
 	return DEFAULT_TRACK_KEY
 
 
-func _refresh_chapter_button_lock_state() -> void:
-	for child in chapter_container.get_children():
-		var chapter_button := child as Button
-		if not _is_generated_chapter_button(chapter_button):
-			continue
-		var level_number := _level_number_from_button_name(chapter_button.name)
-		chapter_button.disabled = not Global.is_level_unlocked(_active_track_key, level_number)
-
-
 func _capture_chapter_button_blueprint() -> void:
 	if _chapter_button_blueprint != null:
 		return
-	var existing_buttons := _find_existing_chapter_buttons()
-	if existing_buttons.is_empty():
+	var chapter_buttons := _find_existing_chapter_buttons()
+	if chapter_buttons.is_empty():
 		return
 	_chapter_button_icons.clear()
-	for chapter_button in existing_buttons:
+	for chapter_button in chapter_buttons:
 		if chapter_button.icon != null:
 			_chapter_button_icons.append(chapter_button.icon)
 	_chapter_button_blueprint = (
-		existing_buttons[0].duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
+		chapter_buttons[0].duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
 	)
 
 
 func _rebuild_track_chapter_buttons() -> void:
-	_clear_existing_chapter_buttons()
+	for chapter_button in _find_existing_chapter_buttons():
+		chapter_container.remove_child(chapter_button)
+		chapter_button.free()
 	if _chapter_button_blueprint == null:
 		return
 	var level_count: int = max(1, Global.get_track_level_count(_active_track_key))
 	for level_number in range(1, level_count + 1):
-		var chapter_button := _build_chapter_button_instance()
+		var chapter_button := (
+			_chapter_button_blueprint.duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
+		)
 		if chapter_button == null:
 			continue
-		_configure_chapter_button_for_level(chapter_button, level_number)
+		chapter_button.name = "%s%d" % [CHAPTER_BUTTON_NAME_PREFIX, level_number]
+		chapter_button.tooltip_text = "Abrir capitulo %d" % level_number
+		if level_number - 1 < _chapter_button_icons.size():
+			chapter_button.icon = _chapter_button_icons[level_number - 1]
+			chapter_button.text = ""
+		else:
+			chapter_button.icon = null
+			chapter_button.text = "Capitulo %d" % level_number
+		chapter_button.disabled = not Global.is_level_unlocked(_active_track_key, level_number)
+		chapter_button.pressed.connect(_on_generated_chapter_button_pressed.bind(level_number))
 		chapter_container.add_child(chapter_button)
-
-
-func _clear_existing_chapter_buttons() -> void:
-	for chapter_button in _find_existing_chapter_buttons():
-		chapter_container.remove_child(chapter_button)
-		chapter_button.free()
-
-
-func _build_chapter_button_instance() -> Button:
-	if _chapter_button_blueprint == null:
-		return null
-	return _chapter_button_blueprint.duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
 
 
 func _release_chapter_button_blueprint() -> void:
@@ -113,25 +91,6 @@ func _release_chapter_button_blueprint() -> void:
 		return
 	_chapter_button_blueprint.free()
 	_chapter_button_blueprint = null
-
-
-func _configure_chapter_button_for_level(
-	chapter_button: Button,
-	level_number: int
-) -> void:
-	chapter_button.name = "%s%d" % [CHAPTER_BUTTON_NAME_PREFIX, level_number]
-	chapter_button.tooltip_text = "Abrir capitulo %d" % level_number
-	_apply_chapter_button_visuals(chapter_button, level_number)
-	chapter_button.pressed.connect(_on_generated_chapter_button_pressed.bind(level_number))
-
-
-func _apply_chapter_button_visuals(chapter_button: Button, level_number: int) -> void:
-	if level_number - 1 < _chapter_button_icons.size():
-		chapter_button.icon = _chapter_button_icons[level_number - 1]
-		chapter_button.text = ""
-		return
-	chapter_button.icon = null
-	chapter_button.text = "Capitulo %d" % level_number
 
 
 func _find_existing_chapter_buttons() -> Array[Button]:
@@ -151,10 +110,6 @@ func _is_generated_chapter_button(chapter_button: Button) -> bool:
 	)
 
 
-func _level_number_from_button_name(button_name: String) -> int:
-	return int(button_name.trim_prefix(CHAPTER_BUTTON_NAME_PREFIX))
-
-
 func _on_generated_chapter_button_pressed(level_number: int) -> void:
 	_open_track_chapter(level_number)
 
@@ -167,9 +122,5 @@ func _open_track_chapter(level_number: int) -> void:
 	)
 
 
-func _return_to_archivero() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
-
-
 func _on_atras_pressed() -> void:
-	_return_to_archivero()
+	GameSceneRouter.go_to_archivero(get_tree())

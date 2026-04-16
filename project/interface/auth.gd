@@ -6,62 +6,61 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ProfileFormHelperScript := preload("res://interface/helpers/ProfileFormHelper.gd")
 
-@onready var summary_content: Control = (
-	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent
-)
-@onready var preview_meta_row: VBoxContainer = (
-	summary_content.get_node("PreviewMetaRow") as VBoxContainer
-)
-@onready var form_content: Control = (
-	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent
-)
-@onready var primary_fields_row: HBoxContainer = (
-	form_content.get_node("PrimaryFieldsRow") as HBoxContainer
-)
-@onready var footer_content: Control = (
-	$Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer
-)
 @onready var current_profile_value: Label = (
-	summary_content.get_node("CurrentProfileValue") as Label
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/CurrentProfileValue
 )
 @onready var current_profile_email: Label = (
-	preview_meta_row.get_node("PreviewEmailBadge/MarginContainer/PreviewEmailLabel") as Label
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer/
+	PreviewEmailLabel
 )
 @onready var current_profile_age: Label = (
-	preview_meta_row.get_node("PreviewAgeBadge/MarginContainer/PreviewAgeLabel") as Label
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer/PreviewAgeLabel
 )
 @onready var summary_save_label: Label = (
-	summary_content.get_node("SummarySaveLabel") as Label
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/SummarySaveLabel
 )
 @onready var avatar_placeholder: Label = (
-	summary_content.get_node("AvatarPreviewFrame/AvatarPlaceholder") as Label
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/AvatarPreviewFrame/AvatarPlaceholder
 )
 @onready var register_username: LineEdit = (
-	primary_fields_row.get_node("UsernameColumn/UsernameEdit") as LineEdit
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/
+	FormContent/PrimaryFieldsRow/UsernameColumn/UsernameEdit
 )
 @onready var register_age: LineEdit = (
-	primary_fields_row.get_node("AgeColumn/AgeEdit") as LineEdit
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/
+	FormContent/PrimaryFieldsRow/AgeColumn/AgeEdit
 )
 @onready var register_email: LineEdit = (
-	form_content.get_node("EmailEdit") as LineEdit
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/
+	EmailEdit
 )
 @onready var avatar_path_edit: LineEdit = (
-	form_content.get_node("AvatarRow/AvatarPathEdit") as LineEdit
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/
+	AvatarRow/AvatarPathEdit
 )
 @onready var choose_avatar_button: Button = (
-	form_content.get_node("AvatarRow/ChooseAvatarButton") as Button
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/
+	AvatarRow/ChooseAvatarButton
 )
 @onready var clear_avatar_button: Button = (
-	form_content.get_node("AvatarRow/ClearAvatarButton") as Button
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/
+	AvatarRow/ClearAvatarButton
 )
 @onready var register_message: Label = (
-	form_content.get_node("RegisterMessage") as Label
+	$Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/
+	RegisterMessage
 )
 @onready var avatar_preview: TextureRect = (
-	summary_content.get_node("AvatarPreviewFrame/AvatarPreview") as TextureRect
+	$Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/
+	SummaryContent/AvatarPreviewFrame/AvatarPreview
 )
 @onready var register_button: Button = (
-	footer_content.get_node("RegisterButton") as Button
+	$Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton
 )
 @onready var back_button: Button = $BackButton
 @onready var avatar_dialog: FileDialog = $AvatarDialog
@@ -71,6 +70,7 @@ var _form_helper = ProfileFormHelperScript.new()
 
 func _ready() -> void:
 	var profile := SaveManager.get_current_user_profile()
+	var return_to_intro := _should_return_to_intro()
 	register_username.placeholder_text = "Nombre visible (opcional)"
 	register_age.placeholder_text = "Edad (opcional)"
 	register_email.placeholder_text = "Mail (opcional)"
@@ -78,16 +78,10 @@ func _ready() -> void:
 	back_button.text = ""
 	back_button.tooltip_text = (
 		"Volver al menu"
-		if _get_return_scene() == INTRO_SCENE
+		if return_to_intro
 		else "Volver al Archivero"
 	)
-	register_username.text = _form_helper.profile_name_for_form(
-		profile,
-		SaveManager.DEFAULT_PROFILE_NAME
-	)
-	register_age.text = _form_helper.age_for_form(profile)
-	register_email.text = str(profile.get("email", ""))
-	avatar_path_edit.text = str(profile.get("avatar_path", ""))
+	_load_profile_into_form(profile)
 	_connect_live_preview_signals()
 	_refresh_avatar_controls()
 	_refresh_summary(profile)
@@ -132,13 +126,7 @@ func _on_register_button_pressed() -> void:
 	_set_feedback(str(result.get("message", "")), is_ok)
 	if is_ok:
 		var saved_profile := SaveManager.get_current_user_profile()
-		register_username.text = _form_helper.profile_name_for_form(
-			saved_profile,
-			SaveManager.DEFAULT_PROFILE_NAME
-		)
-		register_age.text = _form_helper.age_for_form(saved_profile)
-		register_email.text = str(saved_profile.get("email", ""))
-		avatar_path_edit.text = str(saved_profile.get("avatar_path", ""))
+		_load_profile_into_form(saved_profile)
 		_refresh_avatar_controls()
 		_refresh_summary(saved_profile)
 	if result.get("ok", false):
@@ -156,13 +144,6 @@ func _on_back_button_pressed() -> void:
 func _update_avatar_preview(path: String) -> void:
 	avatar_preview.texture = SaveManager.load_avatar_texture(path)
 	avatar_placeholder.visible = avatar_preview.texture == null
-
-
-func _build_info_text() -> String:
-	return (
-		"Edita solo lo que quieras mostrar. Todo queda guardado en este dispositivo "
-		+ "y se refleja en Mi progreso."
-	)
 
 
 func _connect_live_preview_signals() -> void:
@@ -188,6 +169,16 @@ func _refresh_summary(profile: Dictionary) -> void:
 func _refresh_live_preview() -> void:
 	_apply_profile_preview(register_username.text, register_email.text, register_age.text)
 	_update_avatar_preview(avatar_path_edit.text)
+
+
+func _load_profile_into_form(profile: Dictionary) -> void:
+	register_username.text = _form_helper.profile_name_for_form(
+		profile,
+		SaveManager.DEFAULT_PROFILE_NAME
+	)
+	register_age.text = _form_helper.age_for_form(profile)
+	register_email.text = str(profile.get("email", ""))
+	avatar_path_edit.text = str(profile.get("avatar_path", ""))
 
 
 func _apply_profile_preview(profile_name: String, email: String, age_text: String) -> void:
@@ -217,16 +208,12 @@ func _set_feedback(message: String, success: bool) -> void:
 	)
 
 
-func _get_return_scene() -> String:
-	var return_scene = get_tree().root.get_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE)
-	if return_scene == INTRO_SCENE:
-		return INTRO_SCENE
-	return ARCHIVERO_SCENE
+func _should_return_to_intro() -> bool:
+	return get_tree().root.get_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE) == INTRO_SCENE
 
 
 func _go_to_return_scene() -> void:
-	var return_scene := _get_return_scene()
-	if return_scene == INTRO_SCENE:
+	if _should_return_to_intro():
 		GameSceneRouter.go_to_main_menu(get_tree())
 		return
 	GameSceneRouter.go_to_archivero(get_tree())

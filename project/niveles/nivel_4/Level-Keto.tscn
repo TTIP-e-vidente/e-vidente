@@ -190,7 +190,7 @@ texture = ExtResource("2_pfc42")
 [node name="Victory" type="AnimatedSprite2D" parent="." unique_id=703064052]
 visible = false
 z_index = 1
-position = Vector2(1079, 54)
+position = Vector2(1086, 34)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_4xm3r")
 animation = &"victory"

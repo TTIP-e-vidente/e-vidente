@@ -66,8 +66,6 @@ const DEBUG_STREAK_SAMPLE_BEST_COUNT     := 7
 )
 
 ## --- Estado runtime ---
-
-# Chip de racha HUD — opcional, solo existe en niveles con HUDLayer.
 var _streak_chip:       PanelContainer = null
 var _chip_count_label:  Label          = null
 var _chip_unit_label:   Label          = null
@@ -77,6 +75,7 @@ var active_track_key:      String = ""
 var save_icon_idle:        Texture2D = null
 var save_icon_ok:          Texture2D = null
 var streak_progress_overlay: Node = null
+var _current_run_completion_handled := false
 
 
 func _ready() -> void:
@@ -110,34 +109,21 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _start_level_flow() -> void:
 	active_track_key = _resolve_configured_track_key()
-	_prepare_level_session()
+	_current_run_completion_handled = false
+	victory.hide()
+	next_chapter_button.disabled = true
 	_play_level_audio()
-	_start_gameplay_runtime()
-	_register_level_resume_target()
+	if manager_level == null:
+		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
+	else:
+		manager_level.start_level_session(self)
+	var resolved_level_number := _resolve_current_level_number_for_track(active_track_key)
+	if resolved_level_number > 0:
+		SaveManager.set_resume_to_level(active_track_key, resolved_level_number)
 
 
 func _initialize_level_scene() -> void:
 	_start_level_flow()
-
-
-func _prepare_level_session() -> void:
-	victory.hide()
-	next_chapter_button.disabled = true
-
-
-func _start_gameplay_runtime() -> void:
-	if manager_level == null:
-		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
-		return
-	manager_level.start_level_session(self)
-
-
-func _register_level_resume_target() -> void:
-	var track_key := _resolve_level_track_key()
-	var resolved_level_number := _resolve_current_level_number_for_track(track_key)
-	if resolved_level_number <= 0:
-		return
-	SaveManager.set_resume_to_level(track_key, resolved_level_number)
 
 
 func _play_level_audio() -> void:
@@ -214,10 +200,17 @@ func _on_atras_pressed() -> void:
 
 
 func complete_current_run() -> void:
-	var track_key := _resolve_level_track_key()
-	var level_number := _current_level_number()
+	if _current_run_completion_handled:
+		return
+	_current_run_completion_handled = true
+
 	_show_completed_run_feedback()
-	var completion_result: Dictionary = _persist_completed_level(track_key, level_number)
+	var track_key := _resolve_level_track_key()
+	var level_number := _resolve_current_level_number_for_track(track_key)
+	var completion_result: Dictionary = {}
+	if level_number > 0:
+		Global.mark_level_completed(track_key, level_number)
+		completion_result = SaveManager.record_level_completed(track_key, level_number)
 	_show_level_completed_feedback(completion_result)
 
 
@@ -226,18 +219,6 @@ func _show_completed_run_feedback() -> void:
 	victory.play("victory")
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
-
-
-func _persist_completed_level(track_key: String, level_number: int) -> Dictionary:
-	var resolved_level_number := _resolve_level_number_for_track(track_key, level_number)
-	if resolved_level_number <= 0:
-		return {}
-
-	Global.mark_level_completed(track_key, resolved_level_number)
-	return SaveManager.record_level_completed(
-		track_key,
-		resolved_level_number
-	)
 
 
 func _victory() -> void:
@@ -298,7 +279,12 @@ func _show_save_success_feedback(
 	partial_save_result: Dictionary,
 	save_status: Dictionary
 ) -> void:
-	var progress_count := _get_saved_progress_count(partial_save_result)
+	var progress_count := int(
+		partial_save_result.get(
+			"progress_count",
+			partial_save_result.get("placed_positive_count", 0)
+		)
+	)
 	var feedback_title := SAVE_FEEDBACK_DEFAULT_TITLE
 	if progress_count > 0:
 		feedback_title = SAVE_FEEDBACK_PARTIAL_TITLE
@@ -308,15 +294,6 @@ func _show_save_success_feedback(
 		_format_saved_progress_line(partial_save_result, progress_count)
 	]
 	_show_save_feedback(feedback_title, "\n".join(feedback_lines), true)
-
-
-func _get_saved_progress_count(partial_save_result: Dictionary) -> int:
-	return int(
-		partial_save_result.get(
-			"progress_count",
-			partial_save_result.get("placed_positive_count", 0)
-		)
-	)
 
 
 func _format_saved_time_line(save_status: Dictionary) -> String:
@@ -367,38 +344,27 @@ func _get_resume_track_key() -> String:
 ## --- Racha y feedback post-partida ---
 
 func _show_level_completed_feedback(completion_result: Dictionary) -> void:
-	var streak_feedback := _resolve_streak_feedback_for_display(completion_result)
-	_show_streak_feedback(streak_feedback)
-
-
-func _resolve_streak_feedback_for_display(completion_result: Dictionary) -> Dictionary:
-	var streak_feedback := _extract_streak_feedback(completion_result)
-	if bool(streak_feedback.get("should_show", false)):
-		return streak_feedback
-	if not debug_respect_streak_daily_gate:
-		return _build_forced_streak_feedback(completion_result)
-	if debug_force_streak_feedback:
-		return _build_debug_streak_feedback()
-	return streak_feedback
-
-
-func _extract_streak_feedback(completion_result: Dictionary) -> Dictionary:
+	var streak_feedback: Dictionary = {}
 	var raw_streak_feedback: Variant = completion_result.get("streak_feedback", {})
-	return raw_streak_feedback if raw_streak_feedback is Dictionary else {}
+	if raw_streak_feedback is Dictionary:
+		streak_feedback = raw_streak_feedback
 
+	if not bool(streak_feedback.get("should_show", false)):
+		if not debug_respect_streak_daily_gate:
+			var streak_state: Dictionary = {}
+			var raw_streak_state: Variant = completion_result.get("streak_state", {})
+			if raw_streak_state is Dictionary:
+				streak_state = raw_streak_state
+			if streak_state.is_empty():
+				streak_state = Global.get_streak_state()
+			if streak_state.is_empty():
+				streak_feedback = _build_debug_streak_feedback()
+			else:
+				streak_feedback = _build_streak_feedback_from_state(streak_state)
+		elif debug_force_streak_feedback:
+			streak_feedback = _build_debug_streak_feedback()
 
-func _extract_streak_state(completion_result: Dictionary) -> Dictionary:
-	var raw_streak_state: Variant = completion_result.get("streak_state", {})
-	return raw_streak_state if raw_streak_state is Dictionary else {}
-
-
-func _build_forced_streak_feedback(completion_result: Dictionary) -> Dictionary:
-	var streak_state := _extract_streak_state(completion_result)
-	if streak_state.is_empty():
-		streak_state = Global.get_streak_state()
-	if streak_state.is_empty():
-		return _build_debug_streak_feedback()
-	return _build_streak_feedback_from_state(streak_state)
+	_show_streak_feedback(streak_feedback)
 
 
 func _build_streak_feedback_from_state(streak_state: Dictionary) -> Dictionary:
@@ -434,10 +400,7 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 		SAVE_FEEDBACK_SUCCESS_TITLE_COLOR if success else SAVE_FEEDBACK_ERROR_TITLE_COLOR,
 		SAVE_FEEDBACK_SUCCESS_BODY_COLOR if success else SAVE_FEEDBACK_ERROR_BODY_COLOR
 	)
-	if success:
-		save_progress_button.icon = save_icon_ok
-	else:
-		save_progress_button.icon = save_icon_idle
+	save_progress_button.icon = save_icon_ok if success else save_icon_idle
 
 
 func _show_streak_feedback(streak_feedback: Dictionary) -> void:

@@ -7,38 +7,22 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 
 func _ready() -> void:
-	_play_background_music()
+	background_music.play()
 
 
 func _on_start_pressed() -> void:
-	_open_mode_selector()
+	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _on_opciones_pressed() -> void:
-	_open_options_menu()
+	GameSceneRouter.go_to_options(get_tree())
 
 
 func _on_salir_pressed() -> void:
-	_quit_game()
-
-
-func _play_background_music() -> void:
-	background_music.play()
+	get_tree().quit()
 
 
 func _exit_tree() -> void:
 	if is_instance_valid(background_music):
 		background_music.stop()
 		background_music.stream = null
-
-
-func _open_mode_selector() -> void:
-	GameSceneRouter.go_to_mode_selector(get_tree())
-
-
-func _open_options_menu() -> void:
-	GameSceneRouter.go_to_options(get_tree())
-
-
-func _quit_game() -> void:
-	get_tree().quit()

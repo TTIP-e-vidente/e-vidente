@@ -24,67 +24,65 @@ const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
 @onready var close_profile_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
 @onready var summary_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/SessionPanel
 @onready var history_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel
-@onready var profile_content: Control = (
-	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent
-)
-@onready var summary_content: Control = (
-	profile_content.get_node("SummaryPanel/MarginContainer/SummaryContent") as Control
-)
-@onready var info_column: Control = summary_content.get_node("InfoColumn") as Control
-@onready var meta_row: HBoxContainer = info_column.get_node("MetaRow") as HBoxContainer
-@onready var secondary_actions_row: HBoxContainer = (
-	profile_content.get_node("SecondaryActionsRow") as HBoxContainer
-)
-@onready var status_row: HBoxContainer = (
-	profile_content.get_node("StatusRow") as HBoxContainer
-)
-@onready var history_panel_content: Control = (
-	$ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent
-)
 @onready var history_toggle_button: Button = (
-	secondary_actions_row.get_node("HistoryToggleButton") as Button
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SecondaryActionsRow/HistoryToggleButton
 )
 @onready var reset_progress_button: Button = (
-	secondary_actions_row.get_node("ResetProgressButton") as Button
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SecondaryActionsRow/ResetProgressButton
 )
 @onready var reset_progress_dialog: ConfirmationDialog = $ResetProgressDialog
 @onready var avatar_preview: TextureRect = (
-	summary_content.get_node(
-		"AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview"
-	) as TextureRect
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarFrame/
+	MarginContainer/AvatarPreview
 )
 @onready var avatar_state_label: Label = (
-	summary_content.get_node("AvatarColumn/AvatarState") as Label
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarState
 )
-@onready var username_label: Label = info_column.get_node("UsernameLabel") as Label
+@onready var username_label: Label = (
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/UsernameLabel
+)
 @onready var email_label: Label = (
-	meta_row.get_node(
-		"EmailBadge/MarginContainer/EmailLabel"
-	) as Label
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/EmailBadge/
+	MarginContainer/EmailLabel
 )
 @onready var age_label: Label = (
-	meta_row.get_node(
-		"AgeBadge/MarginContainer/AgeLabel"
-	) as Label
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/MetaRow/AgeBadge/
+	MarginContainer/AgeLabel
 )
-@onready var progress_summary_label: Label = info_column.get_node("ProgressLabel") as Label
-@onready var streak_badge: StreakBadge = info_column.get_node("StreakBadge") as StreakBadge
+@onready var progress_summary_label: Label = (
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressLabel
+)
+@onready var streak_badge: StreakBadge = (
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/StreakBadge
+)
 @onready var save_status_label: Label = (
-	status_row.get_node("SaveCard/MarginContainer/SaveStatusLabel") as Label
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	StatusRow/SaveCard/MarginContainer/SaveStatusLabel
 )
 @onready var resume_hint_label: Label = (
-	status_row.get_node("ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel") as Label
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeHintLabel
 )
 @onready var resume_now_button: Button = (
-	status_row.get_node("ResumeCard/MarginContainer/ResumeContent/ResumeNowButton") as Button
+	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
+	StatusRow/ResumeCard/MarginContainer/ResumeContent/ResumeNowButton
 )
 @onready var history_log_label: RichTextLabel = (
-	history_panel_content.get_node("HistoryBody/MarginContainer/HistoryText") as RichTextLabel
+	$ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/
+	HistoryBody/MarginContainer/HistoryText
 )
 
 ## --- Estado runtime ---
 
-var is_archivero_highlighted   := false
 var _save_icon_feedback_revision := 0
 var _archivero_ui_helper         = ArchiveroUiHelperScript.new()
 
@@ -92,16 +90,20 @@ var _archivero_ui_helper         = ArchiveroUiHelperScript.new()
 
 
 func _ready() -> void:
-	_initialize_archivero_scene()
-
-
-## --- Inicialización interna ---
-
-func _initialize_archivero_scene() -> void:
 	background.play()
 	_connect_save_manager_signals()
-	_configure_profile_overlay()
-	_configure_reset_progress_dialog()
+	open_profile_button.icon = SAVE_ICON_IDLE
+	open_profile_button.text = "Mi progreso"
+	reset_progress_button.text = "Reiniciar progreso"
+	_set_history_view_visible(false)
+	open_profile_button.visible = not profile_overlay.visible
+	close_profile_button.visible = profile_overlay.visible
+	reset_progress_dialog.title = "Reiniciar progreso"
+	reset_progress_dialog.dialog_text = (
+		"Esto borrara el avance guardado, el historial y las partidas retomables "
+		+ "de este dispositivo. El perfil visible se conserva."
+	)
+	reset_progress_dialog.get_ok_button().text = "Reiniciar"
 	_refresh_profile_overlay()
 	call_deferred("_apply_debug_demo_flags")
 
@@ -125,42 +127,12 @@ func _exit_tree() -> void:
 		background.stream = null
 
 
-func _configure_profile_overlay() -> void:
-	open_profile_button.icon = SAVE_ICON_IDLE
-	open_profile_button.text = "Mi progreso"
-	reset_progress_button.text = "Reiniciar progreso"
-	_set_history_view_visible(false)
-	_sync_profile_overlay_controls()
-
-
-func _configure_reset_progress_dialog() -> void:
-	reset_progress_dialog.title = "Reiniciar progreso"
-	reset_progress_dialog.dialog_text = (
-		"Esto borrara el avance guardado, el historial y las partidas retomables "
-		+ "de este dispositivo. El perfil visible se conserva."
-	)
-	reset_progress_dialog.get_ok_button().text = "Reiniciar"
-
-
 ## --- Refresco del overlay de perfil ---
 
 func _refresh_profile_overlay() -> void:
-	var current_profile := SaveManager.get_current_user_profile()
-	var progress_summary_by_track := Global.get_progress_summary()
-	var current_save_status := SaveManager.get_save_status()
-	_refresh_profile_summary(current_profile)
-	_refresh_progress_summary(progress_summary_by_track)
-	_refresh_save_status(current_save_status)
-	_refresh_resume_section()
-	_refresh_avatar_preview()
-	_refresh_history_log()
-	_sync_profile_overlay_controls()
-
-
-func _refresh_profile_summary(profile: Dictionary) -> void:
-	var username_text := str(
-		profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
-	).strip_edges()
+	var profile := SaveManager.get_current_user_profile()
+	var save_status := SaveManager.get_save_status()
+	var username_text := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
 	username_label.text = (
 		username_text
 		if not username_text.is_empty()
@@ -173,30 +145,22 @@ func _refresh_profile_summary(profile: Dictionary) -> void:
 		int(profile.get("age", 0))
 	)
 
-
-func _refresh_progress_summary(progress_summary: Dictionary) -> void:
-	var progress_summary_text := Global.format_progress_summary_text(progress_summary).strip_edges()
+	var progress_summary_text := (
+		Global.format_progress_summary_text(Global.get_progress_summary()).strip_edges()
+	)
 	progress_summary_label.text = (
 		"Todavia no hay capitulos completos"
 		if progress_summary_text.is_empty()
 		else progress_summary_text
 	)
-	_refresh_streak_badge()
-
-
-func _refresh_streak_badge() -> void:
 	if streak_badge == null or not is_instance_valid(streak_badge):
-		return
-	streak_badge.render()
+		pass
+	else:
+		streak_badge.render()
 
-
-func _refresh_save_status(save_status: Dictionary) -> void:
 	save_status_label.text = _archivero_ui_helper.format_save_status(save_status)
 	open_profile_button.tooltip_text = _archivero_ui_helper.build_toggle_tooltip(save_status)
-	open_profile_button.text = "Mi progreso"
 
-
-func _refresh_resume_section() -> void:
 	var can_resume := SaveManager.can_resume_current_save()
 	resume_hint_label.text = _archivero_ui_helper.format_resume_hint_label(
 		can_resume,
@@ -205,8 +169,6 @@ func _refresh_resume_section() -> void:
 	resume_now_button.visible = can_resume
 	resume_now_button.disabled = not can_resume
 
-
-func _refresh_avatar_preview() -> void:
 	var avatar_texture := SaveManager.get_current_user_avatar_texture()
 	avatar_preview.texture = avatar_texture
 	avatar_state_label.text = (
@@ -215,14 +177,15 @@ func _refresh_avatar_preview() -> void:
 		else "Avatar opcional"
 	)
 
-
-func _refresh_history_log() -> void:
 	var history_entries := SaveManager.get_current_save_history()
 	history_log_label.text = (
 		"Todavia no hay actividad guardada."
 		if history_entries.is_empty()
 		else _build_history_log_text(history_entries)
 	)
+
+	open_profile_button.visible = not profile_overlay.visible
+	close_profile_button.visible = profile_overlay.visible
 
 
 ## --- Señales de SaveManager ---
@@ -279,7 +242,8 @@ func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 func _set_profile_overlay_visible(overlay_visible: bool) -> void:
 	profile_overlay.visible = overlay_visible
 	_set_history_view_visible(false)
-	_sync_profile_overlay_controls()
+	open_profile_button.visible = not overlay_visible
+	close_profile_button.visible = overlay_visible
 	if overlay_visible:
 		_refresh_profile_overlay()
 
@@ -287,11 +251,6 @@ func _set_profile_overlay_visible(overlay_visible: bool) -> void:
 func _apply_debug_demo_flags() -> void:
 	if debug_force_progress_overlay:
 		_set_profile_overlay_visible(true)
-
-
-func _sync_profile_overlay_controls() -> void:
-	open_profile_button.visible = not profile_overlay.visible
-	close_profile_button.visible = profile_overlay.visible
 
 
 func _on_profile_toggle_button_pressed() -> void:
@@ -309,12 +268,10 @@ func _on_profile_backdrop_gui_input(event: InputEvent) -> void:
 
 func _on_mouse_entered() -> void:
 	$Anim.play("select")
-	is_archivero_highlighted = true
 
 
 func _on_mouse_exited() -> void:
 	$Anim.play("deselect")
-	is_archivero_highlighted = false
 
 
 func _on_atras_pressed() -> void:

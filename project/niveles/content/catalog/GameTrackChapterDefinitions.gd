@@ -1,7 +1,7 @@
 extends RefCounted
 ## Datos declarativos de capitulos por track.
 ##
-## Cada entrada describe la corrida base de un capitulo. Este archivo solo
+## Cada entrada describe la partida base de un capitulo. Este archivo solo
 ## transforma esa data mínima al schema jugable completo del catalogo.
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")

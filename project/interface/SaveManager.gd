@@ -263,66 +263,54 @@ func get_current_save_summary() -> Dictionary:
 
 
 func list_available_saves(include_empty: bool = false) -> Array:
-	var local_save_summary: Dictionary = _build_local_save_summary()
-	if local_save_summary.is_empty():
+	var save_summary: Dictionary = get_current_save_summary()
+	if save_summary.is_empty():
 		return []
-	if include_empty or bool(local_save_summary.get("can_resume", false)):
-		return [local_save_summary]
+	if include_empty or bool(save_summary.get("can_resume", false)):
+		return [save_summary]
 	return []
 
 
 func _build_local_save_summary() -> Dictionary:
-	var can_resume: bool = can_resume_current_save()
-	if not can_resume:
+	if not can_resume_current_save():
 		return {}
 
 	var resume_state: Dictionary = get_resume_state()
 	var progress_summary: Dictionary = summarize_progress_data(save_data.get("progress", {}))
-	var current_profile: Dictionary = get_current_user_profile()
-	var save_metadata: Dictionary = _get_normalized_save_metadata()
+	var profile: Dictionary = get_current_user_profile()
+	var raw_save_meta: Variant = save_data.get("save_meta", {})
+	var save_meta: Dictionary = get_save_data_normalizer().default_save_meta()
+	if raw_save_meta is Dictionary:
+		save_meta = get_save_data_normalizer().normalize_save_meta(raw_save_meta)
 
-	return {
-		"id": LOCAL_SAVE_ID,
-		"title": LOCAL_SAVE_TITLE,
-		"created_at": str(current_profile.get("created_at", "")),
-		"updated_at": _read_local_save_updated_at(current_profile, save_metadata),
-		"resume_hint": _build_resume_hint_from_state(resume_state),
-		"resume_context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
-		"resume_track_key": str(resume_state.get("track_key", "")),
-		"resume_level_number": int(resume_state.get("level_number", 1)),
-		"progress_summary": progress_summary,
-		"can_resume": can_resume,
-		"is_active": true
-	}
+	var updated_at := str(save_meta.get("last_saved_at", ""))
+	if updated_at.is_empty():
+		updated_at = str(profile.get("updated_at", ""))
+	if updated_at.is_empty():
+		updated_at = str(profile.get("created_at", ""))
 
-
-func _get_normalized_save_metadata() -> Dictionary:
-	var stored_save_metadata: Variant = save_data.get("save_meta", {})
-	if stored_save_metadata is Dictionary:
-		return get_save_data_normalizer().normalize_save_meta(stored_save_metadata)
-	return get_save_data_normalizer().default_save_meta()
-
-
-func _read_local_save_updated_at(profile: Dictionary, save_metadata: Dictionary) -> String:
-	var last_saved_at := str(save_metadata.get("last_saved_at", ""))
-	if not last_saved_at.is_empty():
-		return last_saved_at
-
-	var profile_updated_at := str(profile.get("updated_at", ""))
-	if not profile_updated_at.is_empty():
-		return profile_updated_at
-
-	return str(profile.get("created_at", ""))
-
-
-func _build_resume_hint_from_state(resume_state: Dictionary) -> String:
-	return get_progress_state_helper().format_resume_hint_from_state(
+	var track_label_by_key: Dictionary = _build_track_label_by_key()
+	var resume_hint: String = get_progress_state_helper().format_resume_hint_from_state(
 		resume_state,
 		RESUME_CONTEXT_HUB,
 		RESUME_CONTEXT_BOOK,
 		RESUME_CONTEXT_LEVEL,
-		_build_track_label_by_key()
+		track_label_by_key
 	)
+
+	return {
+		"id": LOCAL_SAVE_ID,
+		"title": LOCAL_SAVE_TITLE,
+		"created_at": str(profile.get("created_at", "")),
+		"updated_at": updated_at,
+		"resume_hint": resume_hint,
+		"resume_context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
+		"resume_track_key": str(resume_state.get("track_key", "")),
+		"resume_level_number": int(resume_state.get("level_number", 1)),
+		"progress_summary": progress_summary,
+		"can_resume": true,
+		"is_active": true
+	}
 
 
 func get_save_data_normalizer():

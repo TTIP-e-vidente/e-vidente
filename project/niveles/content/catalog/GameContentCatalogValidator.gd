@@ -12,9 +12,8 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 
 	for raw_track_key in track_chapter_catalog.keys():
 		var track_key: String = str(raw_track_key).strip_edges()
-		if GameTrackCatalog.has_track(track_key):
-			continue
-		issues.append("El catalogo de contenido define un track desconocido: %s" % track_key)
+		if not GameTrackCatalog.has_track(track_key):
+			issues.append("El catalogo de contenido define un track desconocido: %s" % track_key)
 
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key: String = str(track_definition.get("key", "")).strip_edges()
@@ -23,12 +22,17 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 			1,
 			int(track_definition.get("level_count", GameTrackCatalog.DEFAULT_LEVEL_COUNT))
 		)
-		var book_scene_path: String = str(track_definition.get("book_scene_path", ""))
-		var level_scene_path: String = str(track_definition.get("level_scene_path", ""))
+		var book_scene_path: String = str(track_definition.get("book_scene_path", "")).strip_edges()
+		var level_scene_path: String = str(
+			track_definition.get("level_scene_path", "")
+		).strip_edges()
 		var teaching_key_prefixes: Array[String] = []
-		var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
-		if raw_prefixes is Array:
-			for raw_prefix in raw_prefixes:
+		var raw_teaching_key_prefixes: Variant = track_definition.get(
+			"teaching_key_prefixes",
+			[]
+		)
+		if raw_teaching_key_prefixes is Array:
+			for raw_prefix in raw_teaching_key_prefixes:
 				var prefix: String = str(raw_prefix).strip_edges()
 				if prefix.is_empty():
 					continue
@@ -56,12 +60,11 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 
 		for raw_level_number in track_chapters.keys():
 			var level_number: int = int(raw_level_number)
-			if level_number >= 1 and level_number <= expected_level_count:
-				continue
-			issues.append(
-				"%s define un capitulo fuera de rango: %d"
-				% [track_context, level_number]
-			)
+			if level_number < 1 or level_number > expected_level_count:
+				issues.append(
+					"%s define un capitulo fuera de rango: %d"
+					% [track_context, level_number]
+				)
 
 		for level_number in range(1, expected_level_count + 1):
 			var chapter_context: String = (
@@ -128,13 +131,12 @@ static func validate(track_chapter_catalog: Dictionary) -> Array[String]:
 				if teaching_key.is_empty():
 					issues.append("%s no define teaching_key." % run_context)
 				elif not teaching_key_prefixes.is_empty():
-					var matches_track: bool = false
+					var uses_track_prefix: bool = false
 					for prefix in teaching_key_prefixes:
-						if not teaching_key.begins_with(prefix):
-							continue
-						matches_track = true
-						break
-					if not matches_track:
+						if teaching_key.begins_with(prefix):
+							uses_track_prefix = true
+							break
+					if not uses_track_prefix:
 						issues.append(
 							"%s deberia usar una teaching_key propia del track: %s"
 							% [run_context, teaching_key]

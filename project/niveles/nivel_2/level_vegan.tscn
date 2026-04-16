@@ -196,7 +196,7 @@ texture = ExtResource("3_gaj1j")
 
 [node name="Victory" type="AnimatedSprite2D" parent="."]
 z_index = 1
-position = Vector2(1079, 54)
+position = Vector2(1086, 34)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_wpkox")
 animation = &"victory"
