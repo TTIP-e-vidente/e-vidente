@@ -104,26 +104,11 @@ func get_streak_view_model() -> Dictionary:
 	return _progress.get_streak_view_model()
 
 
-func build_streak_feedback_event(
-	previous_state: Dictionary,
-	next_state: Dictionary = {}
-) -> Dictionary:
-	return _progress.build_streak_feedback_event(previous_state, next_state)
-
-
 func record_streak_activity(
 	activity_type: String,
 	metadata: Dictionary = {}
 ) -> Dictionary:
 	return _progress.record_streak_activity(activity_type, metadata)
-
-
-func clear_streak_state() -> void:
-	_progress.clear_streak_state()
-
-
-func has_streak_activity_today() -> bool:
-	return _progress.has_streak_activity_today()
 
 
 func get_progress_system_state(system_key: String) -> Dictionary:

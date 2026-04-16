@@ -74,21 +74,59 @@ func can_resume_current_save() -> bool:
 func record_level_completed(track_key: String, level_number: int) -> Dictionary:
 	var previous_streak_state: Dictionary = Global.get_streak_state()
 	_clear_partial_progress_and_advance_resume(track_key, level_number)
-	var updated_streak_state: Dictionary = _record_streak_for_completed_level(
-		track_key,
-		level_number
+	var updated_streak_state: Dictionary = Global.record_streak_activity(
+		"level_completed",
+		{
+			"track_key": track_key,
+			"level_number": level_number
+		}
 	)
+	var streak_feedback: Dictionary = {"should_show": false}
+	var today_day_key: String = Time.get_date_string_from_system(false)
+	if str(previous_streak_state.get("last_activity_day", "")).strip_edges() != today_day_key:
+		if str(updated_streak_state.get("last_activity_day", "")).strip_edges() == today_day_key:
+			var current_count: int = int(updated_streak_state.get("current_count", 0))
+			if current_count <= 1:
+				streak_feedback = {
+					"should_show": true,
+					"feedback_key": "activated",
+					"title": "Racha activada",
+					"message": "Hoy empezaste una racha de 1 dia.",
+					"current_count": 1,
+					"best_count": int(updated_streak_state.get("best_count", 0))
+				}
+			else:
+				streak_feedback = {
+					"should_show": true,
+					"feedback_key": "sustained",
+					"title": "Hoy sostuviste tu racha",
+					"message": "Vas %d %s seguidos." % [
+						current_count,
+						"dia" if current_count == 1 else "dias"
+					],
+					"current_count": current_count,
+					"best_count": int(updated_streak_state.get("best_count", 0))
+				}
 	_save_manager.sync_runtime_progress_to_current_save()
 	_append_completed_level_history(track_key, level_number)
 	_write_progress_event_to_disk("level_completed")
-	return _build_completed_level_result(previous_streak_state, updated_streak_state)
+	return {
+		"streak_state": updated_streak_state,
+		"streak_feedback": streak_feedback
+	}
 
 
 func record_question_session_completed(question_count: int, score: int) -> void:
 	if question_count < 1:
 		return
 
-	_record_streak_for_completed_question_session(question_count, score)
+	Global.record_streak_activity(
+		"question_session_completed",
+		{
+			"question_count": question_count,
+			"score": score
+		}
+	)
 	_save_manager.sync_runtime_progress_to_current_save()
 	_append_completed_question_history(question_count, score)
 	_write_progress_event_to_disk("question_session_completed")
@@ -175,26 +213,6 @@ func _clear_partial_progress_and_advance_resume(track_key: String, level_number:
 	set_resume_after_level_completed(track_key, level_number)
 
 
-func _record_streak_for_completed_level(track_key: String, level_number: int) -> Dictionary:
-	return Global.record_streak_activity(
-		"level_completed",
-		{
-			"track_key": track_key,
-			"level_number": level_number
-		}
-	)
-
-
-func _record_streak_for_completed_question_session(question_count: int, score: int) -> Dictionary:
-	return Global.record_streak_activity(
-		"question_session_completed",
-		{
-			"question_count": question_count,
-			"score": score
-		}
-	)
-
-
 func _append_completed_level_history(track_key: String, level_number: int) -> void:
 	append_history(
 		_build_completed_level_history_message(track_key, level_number),
@@ -224,21 +242,6 @@ func _build_completed_level_history_message(track_key: String, level_number: int
 		track_label if not track_label.is_empty() else track_key,
 		level_number
 	]
-
-
-func _build_completed_level_result(
-	previous_streak_state: Dictionary,
-	next_streak_state: Dictionary
-) -> Dictionary:
-	return {
-		"streak_state": next_streak_state,
-		"streak_feedback": Global.build_streak_feedback_event(
-			previous_streak_state,
-			next_streak_state
-		)
-	}
-
-
 func _build_manual_save_metadata(resume_state: Dictionary) -> Dictionary:
 	return {
 		"type": "manual_save",

@@ -186,6 +186,7 @@ func get_streak_view_model() -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_activity_day: String = str(streak_state.get("last_activity_day", ""))
+	var today_day_key: String = Time.get_date_string_from_system(false)
 	if current_count <= 0:
 		return {
 			"current_count": 0,
@@ -195,7 +196,7 @@ func get_streak_view_model() -> Dictionary:
 			"status_detail": "Completa una actividad para iniciar la racha."
 		}
 
-	if last_activity_day == Time.get_date_string_from_system(false):
+	if last_activity_day == today_day_key:
 		return {
 			"current_count": current_count,
 			"best_count": best_count,
@@ -211,54 +212,6 @@ func get_streak_view_model() -> Dictionary:
 		"status_title": "Racha pendiente hoy",
 		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy."
 	}
-
-
-func build_streak_feedback_event(
-	previous_state: Dictionary,
-	next_state: Dictionary = {}
-) -> Dictionary:
-	var normalized_previous_state: Dictionary = _read_streak_state(previous_state)
-	var normalized_next_state: Dictionary = get_streak_state()
-	if not next_state.is_empty():
-		normalized_next_state = _read_streak_state(next_state)
-
-	var today_day_key: String = Time.get_date_string_from_system(false)
-	var previous_activity_day: String = str(
-		normalized_previous_state.get("last_activity_day", "")
-	).strip_edges()
-	if previous_activity_day == today_day_key:
-		return {"should_show": false}
-
-	var next_activity_day: String = str(
-		normalized_next_state.get("last_activity_day", "")
-	).strip_edges()
-	if next_activity_day != today_day_key:
-		return {"should_show": false}
-
-	var current_count: int = int(normalized_next_state.get("current_count", 0))
-	if current_count <= 1:
-		return {
-			"should_show": true,
-			"feedback_key": "activated",
-			"title": "Racha activada",
-			"message": "Hoy empezaste una racha de 1 dia.",
-			"current_count": 1,
-			"best_count": int(normalized_next_state.get("best_count", 0))
-		}
-
-	return {
-		"should_show": true,
-		"feedback_key": "sustained",
-		"title": "Hoy sostuviste tu racha",
-		"message": "Vas %d %s seguidos." % [
-			current_count,
-			"dia" if current_count == 1 else "dias"
-		],
-		"current_count": current_count,
-		"best_count": int(normalized_next_state.get("best_count", 0))
-	}
-
-
 func record_streak_activity(
 	activity_type: String,
 	metadata: Dictionary = {}
@@ -296,16 +249,6 @@ func record_streak_activity(
 	}
 	set_progress_system_state(STREAK_SYSTEM_KEY, updated_streak_state)
 	return updated_streak_state
-
-
-func clear_streak_state() -> void:
-	clear_progress_system_state(STREAK_SYSTEM_KEY)
-
-
-func has_streak_activity_today() -> bool:
-	return str(
-		get_streak_state().get("last_activity_day", "")
-	).strip_edges() == Time.get_date_string_from_system(false)
 
 
 func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
