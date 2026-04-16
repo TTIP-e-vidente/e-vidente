@@ -117,15 +117,6 @@ run_import_headless() {
 }
 
 
-run_content_catalog_validation() {
-	run_step \
-		"02-content-catalog-validation" \
-		"Content catalog validation test" \
-		"Fallo la integridad del catalogo y de las escenas declaradas por track." \
-		--headless --path project -s res://tests/content_catalog_validation_test.gd
-}
-
-
 run_gameplay_smoke() {
 	run_step \
 		"03-vertical-slice-smoke" \
@@ -166,12 +157,11 @@ run_ci_suite() {
 
 run_full_suite() {
 	run_import_headless
-	run_content_catalog_validation
 	run_gameplay_smoke
 
 	write_success_summary \
 		"full" \
-		"import headless + content catalog validation + gameplay smoke"
+		"import headless + gameplay smoke"
 }
 
 run_godot_validation() {

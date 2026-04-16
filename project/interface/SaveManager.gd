@@ -43,9 +43,6 @@ const SaveLocalBootstrapServiceScript := preload(
 const SaveLocalProfileServiceScript := preload(
 	"res://interface/save_local/profile/SaveLocalProfileService.gd"
 )
-const SaveLocalProgressServiceScript := preload(
-	"res://interface/save_local/progress/SaveLocalProgressService.gd"
-)
 const SaveDataNormalizerScript := preload(
 	"res://interface/save_local/data/SaveDataNormalizer.gd"
 )
@@ -65,7 +62,6 @@ var _save_storage_helper: RefCounted = SaveLocalStorageHelperScript.new()
 var _progress_state_helper: RefCounted = SaveLocalStateHelperScript.new()
 var _save_bootstrap_service
 var _save_profile_service
-var _save_progress_service
 var _save_data_normalizer
 var _save_resume_service
 var _save_write_coordinator
@@ -158,35 +154,63 @@ func get_last_user_hint() -> String:
 
 
 func sync_runtime_progress_to_current_save() -> void:
-	get_progress_service().sync_runtime_progress_to_current_save()
+	var current_profile: Dictionary = get_current_user_profile()
+	_store_current_runtime_progress(current_profile)
+	get_write_coordinator().mark_dirty()
 
 
 func persist_runtime_progress_to_current_save() -> void:
-	get_progress_service().persist_runtime_progress_to_current_save()
+	sync_runtime_progress_to_current_save()
+	if get_write_coordinator().write_save_data(false, "progress_sync"):
+		progress_saved.emit(get_current_user_profile())
 
 
 func sync_runtime_progress_from_current_save() -> void:
-	get_progress_service().sync_runtime_progress_from_current_save()
+	Global.import_progress(save_data.get("progress", {}))
 
 
 func sync_runtime_progress_from_current_save_and_emit_signal() -> void:
-	get_progress_service().sync_runtime_progress_from_current_save_and_emit_signal()
+	sync_runtime_progress_from_current_save()
+	progress_loaded.emit(get_current_user_profile())
 
 
 func reload_current_save_and_get_resume_state() -> Dictionary:
-	return get_progress_service().reload_current_save_and_get_resume_state()
+	load_data()
+	sync_runtime_progress_from_current_save()
+	return _apply_resume_level_to_global_state(get_resume_state())
 
 
 func reload_current_save_and_get_resume_state_and_emit_signal() -> Dictionary:
-	return get_progress_service().reload_current_save_and_get_resume_state_and_emit_signal()
+	load_data()
+	sync_runtime_progress_from_current_save_and_emit_signal()
+	return _apply_resume_level_to_global_state(get_resume_state())
 
 
 func reset_all_progress() -> Dictionary:
-	return get_progress_service().reset_all_progress()
+	var current_profile: Dictionary = get_current_user_profile()
+	_reset_current_save_data(current_profile)
+
+	if not get_write_coordinator().write_save_data(false, "progress_reset"):
+		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
+
+	progress_loaded.emit(current_profile)
+	progress_saved.emit(current_profile)
+	return {
+		"ok": true,
+		"message": "Se reinicio el progreso local.",
+		"profile": current_profile
+	}
 
 
-func start_new_game(save_title: String = "") -> bool:
-	return get_progress_service().start_new_game(save_title)
+func start_new_game(_save_title: String = "") -> bool:
+	load_data()
+	var current_profile: Dictionary = get_current_user_profile()
+	_reset_current_save_data(current_profile)
+	get_resume_service().append_history("Nueva partida iniciada", {"type": "new_game"})
+	if not get_write_coordinator().write_save_data(false, "new_game"):
+		return false
+	_emit_progress_refresh_signals()
+	return true
 
 
 func validate_save_name(save_title: String) -> Dictionary:
@@ -271,6 +295,36 @@ func list_available_saves(include_empty: bool = false) -> Array:
 	return []
 
 
+func _reset_current_save_data(profile: Dictionary) -> void:
+	Global.reset_progress()
+	_store_current_runtime_progress(profile)
+	save_data["history"] = []
+	save_data["resume_state"] = get_save_data_normalizer().default_resume_state()
+	save_data["save_meta"] = get_save_data_normalizer().default_save_meta()
+	get_write_coordinator().mark_dirty()
+
+
+func _store_current_runtime_progress(profile: Dictionary) -> void:
+	save_data["profile"] = profile
+	save_data["progress"] = Global.export_progress()
+
+
+func _apply_resume_level_to_global_state(resume_state: Dictionary) -> Dictionary:
+	var resume_track_key: String = str(resume_state.get("track_key", ""))
+	Global.current_level = clampi(
+		int(resume_state.get("level_number", Global.current_level)),
+		1,
+		Global.get_track_level_count(resume_track_key)
+	)
+	return resume_state
+
+
+func _emit_progress_refresh_signals() -> void:
+	var current_profile: Dictionary = get_current_user_profile()
+	progress_loaded.emit(current_profile)
+	progress_saved.emit(current_profile)
+
+
 func _build_local_save_summary() -> Dictionary:
 	if not can_resume_current_save():
 		return {}
@@ -333,12 +387,6 @@ func get_profile_service():
 	if _save_profile_service == null:
 		_save_profile_service = SaveLocalProfileServiceScript.new(self)
 	return _save_profile_service
-
-
-func get_progress_service():
-	if _save_progress_service == null:
-		_save_progress_service = SaveLocalProgressServiceScript.new(self)
-	return _save_progress_service
 
 
 func get_resume_service():

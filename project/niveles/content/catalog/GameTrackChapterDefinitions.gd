@@ -8,7 +8,7 @@ const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameChapterAssetCatalog := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
-const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
+const PLATE_SORT_MECHANIC_TYPE := "plate_sort"
 
 const CATEGORY_MEAL := GameTrackCatalog.CATEGORY_ALMUERZO_CENA
 const CATEGORY_BREAKFAST := GameTrackCatalog.CATEGORY_DESAYUNO_MERIENDA
@@ -222,7 +222,7 @@ static func build_track_chapter_catalog() -> Dictionary:
 			track_chapters[chapter_number] = {
 				"runs": [
 					{
-						"mechanic_type": LevelMechanicTypes.PLATE_SORT,
+						"mechanic_type": PLATE_SORT_MECHANIC_TYPE,
 						"mechanic_payload": {
 							"negative_count": negative_count,
 							"positive_count": positive_count,
