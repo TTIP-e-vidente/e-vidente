@@ -1,6 +1,7 @@
 extends Container
 class_name ARCHIVERO_NIVELES
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 @onready var anim: AnimationPlayer = $Anim
@@ -41,7 +42,7 @@ func _on_gui_input(event: InputEvent) -> void:
 
 
 func _open_track_book() -> void:
-	if not track_key.is_empty() and Global.has_track(track_key):
+	if not track_key.is_empty() and GameTrackCatalog.has_track(track_key):
 		GameSceneRouter.go_to_track_book(get_tree(), track_key)
 		return
 	if not file.is_empty():

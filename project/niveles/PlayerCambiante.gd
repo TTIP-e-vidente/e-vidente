@@ -1,12 +1,14 @@
 extends Sprite2D
 class_name PlayerCambiante
 
+const LevelItemScript := preload("res://resources/level_item.gd")
+
 @onready var hambre = $hambre
 @onready var anim = $AnimatedSprite2D
 @onready var plato = $"../Plato"
 @onready var adelante = $"../Adelante"
 @onready var ensenanza = $"../Ensenanza"
-var tipo: LevelItem.Condicion
+var tipo: int
 var _current_animation := "cagadodehambre"
 var current_animation = "cagadodehambre" : 
 	set(value):
@@ -15,8 +17,8 @@ var current_animation = "cagadodehambre" :
 			anim.play(_current_animation)
 	get:
 		return _current_animation
-var _abstract_state: Estado
-var abstract_state : Estado : 
+var _abstract_state = null
+var abstract_state = null : 
 	set(new_state):
 		_abstract_state = new_state
 		if _abstract_state != null:
@@ -27,7 +29,7 @@ var abstract_state : Estado :
 @onready var manager_level = $"../ManagerLevel"
 
 func _ready():
-	tipo = LevelItem.Condicion.CELIACO
+	tipo = LevelItemScript.Condicion.CELIACO
 	abstract_state = sentir_hambre
 	anim.play(current_animation)
 

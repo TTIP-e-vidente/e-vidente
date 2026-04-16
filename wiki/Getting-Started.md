@@ -49,20 +49,26 @@ Despues, importar el proyecto en Godot:
 En Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci
 ```
 
 Si `godot` no esta en PATH:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
+powershell -ExecutionPolicy Bypass -File scripts/run-godot-validation.ps1 -Mode ci -GodotCommand "C:\ruta\a\Godot_v4.6.2-stable_win64.exe"
 ```
 
 En shell:
 
 ```bash
-sh scripts/run-godot-validation.sh --run full godot
+sh scripts/run-godot-validation.sh --run ci godot
 ```
+
+Si querés correr algo más puntual:
+
+- `sh scripts/run-godot-validation.sh --run codebase godot`
+- `sh scripts/run-godot-validation.sh --run smoke godot`
+- `sh scripts/run-godot-validation.sh --run full godot`
 
 ## Antes de abrir un PR
 
@@ -71,9 +77,9 @@ sh scripts/run-godot-validation.sh --run full godot
 - [ ] Los cambios se probaron localmente.
 - [ ] La descripcion del PR explica que cambio y por que.
 - [ ] Si hubo cambios relevantes en `project/`, quedo registro en `wiki/Bitacora.md`.
-- [ ] La CI pasa en `Guardrails` y `Core Validation`.
+- [ ] Los checks relevantes pasan: `Technical Health` en el branch y `Docs / Tracking` + `Gameplay Smoke` en el PR.
 
-`Optional Web Export Build` es manual y no forma parte del gate normal del PR.
+`content_catalog_validation_test.gd` y el resto de los tests finos ya no forman parte del gate normal del PR. Siguen sirviendo para corridas manuales cuando se toca fuerte contenido, persistencia o navegación.
 
 ## Problemas comunes
 
@@ -91,7 +97,7 @@ sh scripts/run-godot-validation.sh --run full godot
 - Revisar `project/export_presets.cfg`.
 - Verificar si la salida quedo en `build/web` o en alguna carpeta de export alternativa.
 
-### La CI marca falta de actualizacion en la wiki
+### La CI marca un fallo en `Docs / Tracking`
 
-- Eso suele pasar cuando hubo cambios en `project/` sin reflejo en `wiki/`.
-- En ese caso, alcanza con dejar una nota breve en `wiki/Bitacora.md`.
+- Revisar que sigan existiendo `README.md`, `wiki/Home.md`, `wiki/Getting-Started.md`, `wiki/CI.md`, `wiki/Architecture.md` y `wiki/Bitacora.md`.
+- Si falta contexto funcional del cambio, dejar una nota breve en `wiki/Bitacora.md`.

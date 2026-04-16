@@ -681,7 +681,7 @@ title = "Reiniciar progreso"
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent/HeaderRow/CloseHistoryButton" to="." method="_on_history_close_button_pressed"]
 [connection signal="confirmed" from="ResetProgressDialog" to="." method="_on_reset_progress_dialog_confirmed"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileToggleButton" to="." method="_on_profile_toggle_button_pressed"]
 [connection signal="pressed" from="ProfileOverlayLayer/ProfileOverlay/CloseProfileButton" to="." method="_on_close_profile_button_pressed"]
 [connection signal="gui_input" from="ProfileOverlayLayer/ProfileOverlay/Backdrop" to="." method="_on_profile_backdrop_gui_input"]
