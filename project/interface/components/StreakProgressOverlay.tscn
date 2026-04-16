@@ -1,0 +1,136 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://interface/components/StreakProgressOverlay.gd" id="1_4e56b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.996078, 0.988235, 0.956863, 0.980392)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.286275, 0.219608, 0.121569, 0.08)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 20
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+bg_color = Color(0.968627, 0.788235, 0.341176, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.984314, 0.831373, 0.431373, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="StreakProgressOverlay" type="CanvasLayer"]
+layer = 60
+script = ExtResource("1_4e56b")
+
+[node name="Overlay" type="Control" parent="." unique_name_in_owner=true]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Backdrop" type="ColorRect" parent="Overlay" unique_name_in_owner=true]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.101961, 0.0862745, 0.0470588, 0.54)
+
+[node name="MarginContainer" type="MarginContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="CenterContainer" type="CenterContainer" parent="Overlay/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Card" type="PanelContainer" parent="Overlay/MarginContainer/CenterContainer" unique_name_in_owner=true]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="Overlay/MarginContainer/CenterContainer/Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 48
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 48
+
+[node name="Content" type="VBoxContainer" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer"]
+layout_mode = 2
+alignment = 0
+theme_override_constants/separation = 0
+
+[node name="CurrentCountLabel" type="Label" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_name_in_owner=true]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.172549, 0.14902, 0.109804, 1)
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1
+text = "1 DIA"
+
+[node name="GapSmall" type="Control" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_name_in_owner=true]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.27451, 0.2, 0.0941176, 0.92)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Hoy activaste la racha, segui asi."
+
+[node name="GapMedium" type="Control" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="ProgressRow" type="HBoxContainer" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_name_in_owner=true]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="GapLarge" type="Control" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="Overlay/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_name_in_owner=true]
+custom_minimum_size = Vector2(300, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.192157, 0.133333, 0.0509804, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
+text = "Continuar"

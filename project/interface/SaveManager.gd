@@ -101,12 +101,12 @@ func register_user(
 
 func login_user(_identifier: String, _password: String) -> Dictionary:
 	sync_runtime_progress_from_current_save()
-	var profile := get_current_user_profile()
-	user_logged_in.emit(profile)
+	var current_profile := get_current_user_profile()
+	user_logged_in.emit(current_profile)
 	return {
 		"ok": true,
 		"message": "La persistencia local ya esta activa en este dispositivo.",
-		"profile": profile
+		"profile": current_profile
 	}
 
 
@@ -185,13 +185,13 @@ func reset_all_progress() -> Dictionary:
 	return get_progress_service().reset_all_progress()
 
 
-func start_new_game(title: String = "") -> bool:
-	return get_progress_service().start_new_game(title)
+func start_new_game(save_title: String = "") -> bool:
+	return get_progress_service().start_new_game(save_title)
 
 
-func validate_save_name(title: String) -> Dictionary:
+func validate_save_name(save_title: String) -> Dictionary:
 	return get_progress_state_helper().validate_save_name(
-		title,
+		save_title,
 		SAVE_NAME_MIN_LENGTH,
 		SAVE_NAME_MAX_LENGTH
 	)
@@ -201,13 +201,13 @@ func summarize_progress_data(progress: Variant) -> Dictionary:
 	return get_progress_state_helper().summarize_progress_data(
 		progress,
 		GameTrackCatalog.get_track_keys(),
-		_build_track_level_counts()
+		_build_level_count_by_track()
 	)
 
 
 func get_current_save_history() -> Array:
-	var history: Variant = save_data.get("history", [])
-	return history.duplicate(true) if history is Array else []
+	var stored_history: Variant = save_data.get("history", [])
+	return stored_history.duplicate(true) if stored_history is Array else []
 
 
 func record_manual_save() -> void:
@@ -259,34 +259,34 @@ func get_current_save_id() -> String:
 
 
 func get_current_save_summary() -> Dictionary:
-	return _build_current_save_summary()
+	return _build_local_save_summary()
 
 
 func list_available_saves(include_empty: bool = false) -> Array:
-	var current_save_summary: Dictionary = _build_current_save_summary()
-	if current_save_summary.is_empty():
+	var local_save_summary: Dictionary = _build_local_save_summary()
+	if local_save_summary.is_empty():
 		return []
-	if include_empty or bool(current_save_summary.get("can_resume", false)):
-		return [current_save_summary]
+	if include_empty or bool(local_save_summary.get("can_resume", false)):
+		return [local_save_summary]
 	return []
 
 
-func _build_current_save_summary() -> Dictionary:
+func _build_local_save_summary() -> Dictionary:
 	var can_resume: bool = can_resume_current_save()
 	if not can_resume:
 		return {}
 
 	var resume_state: Dictionary = get_resume_state()
 	var progress_summary: Dictionary = summarize_progress_data(save_data.get("progress", {}))
-	var profile: Dictionary = get_current_user_profile()
-	var save_meta: Dictionary = _get_normalized_save_meta()
+	var current_profile: Dictionary = get_current_user_profile()
+	var save_metadata: Dictionary = _get_normalized_save_metadata()
 
 	return {
 		"id": LOCAL_SAVE_ID,
 		"title": LOCAL_SAVE_TITLE,
-		"created_at": str(profile.get("created_at", "")),
-		"updated_at": _resolve_current_save_updated_at(profile, save_meta),
-		"resume_hint": _format_resume_hint_from_state(resume_state),
+		"created_at": str(current_profile.get("created_at", "")),
+		"updated_at": _read_local_save_updated_at(current_profile, save_metadata),
+		"resume_hint": _build_resume_hint_from_state(resume_state),
 		"resume_context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
 		"resume_track_key": str(resume_state.get("track_key", "")),
 		"resume_level_number": int(resume_state.get("level_number", 1)),
@@ -296,30 +296,32 @@ func _build_current_save_summary() -> Dictionary:
 	}
 
 
-func _get_normalized_save_meta() -> Dictionary:
-	var raw_save_meta: Variant = save_data.get("save_meta", {})
-	if raw_save_meta is Dictionary:
-		return get_save_data_normalizer().normalize_save_meta(raw_save_meta)
+func _get_normalized_save_metadata() -> Dictionary:
+	var stored_save_metadata: Variant = save_data.get("save_meta", {})
+	if stored_save_metadata is Dictionary:
+		return get_save_data_normalizer().normalize_save_meta(stored_save_metadata)
 	return get_save_data_normalizer().default_save_meta()
 
 
-func _resolve_current_save_updated_at(profile: Dictionary, save_meta: Dictionary) -> String:
-	var updated_at: String = str(save_meta.get("last_saved_at", ""))
-	if not updated_at.is_empty():
-		return updated_at
-	updated_at = str(profile.get("updated_at", ""))
-	if not updated_at.is_empty():
-		return updated_at
+func _read_local_save_updated_at(profile: Dictionary, save_metadata: Dictionary) -> String:
+	var last_saved_at := str(save_metadata.get("last_saved_at", ""))
+	if not last_saved_at.is_empty():
+		return last_saved_at
+
+	var profile_updated_at := str(profile.get("updated_at", ""))
+	if not profile_updated_at.is_empty():
+		return profile_updated_at
+
 	return str(profile.get("created_at", ""))
 
 
-func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
+func _build_resume_hint_from_state(resume_state: Dictionary) -> String:
 	return get_progress_state_helper().format_resume_hint_from_state(
 		resume_state,
 		RESUME_CONTEXT_HUB,
 		RESUME_CONTEXT_BOOK,
 		RESUME_CONTEXT_LEVEL,
-		_build_track_labels()
+		_build_track_label_by_key()
 	)
 
 
@@ -385,47 +387,51 @@ func _build_save_data_normalizer_context() -> Dictionary:
 		"resume_context_level": RESUME_CONTEXT_LEVEL,
 		"levels_per_book": Global.LEVELS_PER_BOOK,
 		"track_keys": GameTrackCatalog.get_track_keys(),
-		"track_level_counts": _build_track_level_counts(),
-		"track_book_scene_paths": _build_track_book_scene_paths(),
-		"track_level_scene_paths": _build_track_level_scene_paths()
+		"track_level_counts": _build_level_count_by_track(),
+		"track_book_scene_paths": _build_book_scene_path_by_track(),
+		"track_level_scene_paths": _build_level_scene_path_by_track()
 	}
 
 
-func _build_track_level_counts() -> Dictionary:
-	var level_counts := {}
+func _build_level_count_by_track() -> Dictionary:
+	var level_count_by_track: Dictionary = {}
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
 			continue
-		level_counts[track_key] = Global.get_track_level_count(track_key)
-	return level_counts
+		level_count_by_track[track_key] = Global.get_track_level_count(track_key)
+	return level_count_by_track
 
 
-func _build_track_labels() -> Dictionary:
-	var labels := {}
+func _build_track_label_by_key() -> Dictionary:
+	var track_label_by_key: Dictionary = {}
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
 			continue
-		labels[track_key] = str(track_definition.get("label", "")).strip_edges()
-	return labels
+		track_label_by_key[track_key] = str(track_definition.get("label", "")).strip_edges()
+	return track_label_by_key
 
 
-func _build_track_book_scene_paths() -> Dictionary:
-	var paths := {}
+func _build_book_scene_path_by_track() -> Dictionary:
+	var book_scene_path_by_track: Dictionary = {}
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
 			continue
-		paths[track_key] = str(track_definition.get("book_scene_path", "")).strip_edges()
-	return paths
+		book_scene_path_by_track[track_key] = str(
+			track_definition.get("book_scene_path", "")
+		).strip_edges()
+	return book_scene_path_by_track
 
 
-func _build_track_level_scene_paths() -> Dictionary:
-	var paths := {}
+func _build_level_scene_path_by_track() -> Dictionary:
+	var level_scene_path_by_track: Dictionary = {}
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
 			continue
-		paths[track_key] = str(track_definition.get("level_scene_path", "")).strip_edges()
-	return paths
+		level_scene_path_by_track[track_key] = str(
+			track_definition.get("level_scene_path", "")
+		).strip_edges()
+	return level_scene_path_by_track

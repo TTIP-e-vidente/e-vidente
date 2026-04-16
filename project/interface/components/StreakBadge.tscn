@@ -56,7 +56,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="IconBadge" type="PanelContainer" parent="MarginContainer/ContentRow"]
-custom_minimum_size = Vector2(54, 54)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_icon_badge")
 
@@ -72,13 +72,13 @@ layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 theme_override_colors/font_color = Color(0.239216, 0.286275, 0.2, 0.96)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "R"
 
 [node name="TextColumn" type="VBoxContainer" parent="MarginContainer/ContentRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/ContentRow/TextColumn"]
 layout_mode = 2
@@ -138,22 +138,3 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
 theme_override_font_sizes/font_size = 12
 text = ""
-
-[node name="LastChip" type="PanelContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_meta_chip")
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/ContentRow/TextColumn/MetaRow/LastChip"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 5
-
-[node name="LastChipLabel" type="Label" parent="MarginContainer/ContentRow/TextColumn/MetaRow/LastChip/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.86)
-theme_override_font_sizes/font_size = 12
-text = ""
-autowrap_mode = 3

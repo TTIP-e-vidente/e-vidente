@@ -38,7 +38,6 @@ var _status_key: String = STATUS_INACTIVE
 var _detail_text := ""
 var _today_text := ""
 var _best_text := ""
-var _last_text := ""
 
 @onready var icon_label: Label = $MarginContainer/ContentRow/IconBadge/MarginContainer/IconLabel
 @onready var title_label: Label = $MarginContainer/ContentRow/TextColumn/TitleLabel
@@ -47,10 +46,8 @@ var _last_text := ""
 @onready var meta_row: HBoxContainer = $MarginContainer/ContentRow/TextColumn/MetaRow
 @onready var today_chip: PanelContainer = $MarginContainer/ContentRow/TextColumn/MetaRow/TodayChip
 @onready var best_chip: PanelContainer = $MarginContainer/ContentRow/TextColumn/MetaRow/BestChip
-@onready var last_chip: PanelContainer = $MarginContainer/ContentRow/TextColumn/MetaRow/LastChip
 @onready var today_chip_label: Label = $MarginContainer/ContentRow/TextColumn/MetaRow/TodayChip/MarginContainer/TodayChipLabel
 @onready var best_chip_label: Label = $MarginContainer/ContentRow/TextColumn/MetaRow/BestChip/MarginContainer/BestChipLabel
-@onready var last_chip_label: Label = $MarginContainer/ContentRow/TextColumn/MetaRow/LastChip/MarginContainer/LastChipLabel
 
 
 func _ready() -> void:
@@ -77,10 +74,6 @@ func _apply_view_model(streak_view_model: Dictionary) -> void:
 	var next_status_key: String = str(streak_view_model.get("status_key", STATUS_INACTIVE))
 	var current_count: int = int(streak_view_model.get("current_count", 0))
 	var best_count: int = int(streak_view_model.get("best_count", 0))
-	var last_type_label: String = str(
-		streak_view_model.get("last_activity_type_label", "actividad valida")
-	).strip_edges()
-	var last_track_label: String = str(streak_view_model.get("last_track_label", "")).strip_edges()
 
 	_set_core_content(
 		_format_count_label(current_count),
@@ -90,7 +83,6 @@ func _apply_view_model(streak_view_model: Dictionary) -> void:
 	_detail_text = str(streak_view_model.get("status_detail", "")).strip_edges()
 	_today_text = str(streak_view_model.get("today_status_label", "Hoy falta")).strip_edges()
 	_best_text = "Mejor %d %s" % [best_count, _format_day_label(best_count)]
-	_last_text = _format_last_chip_label(last_type_label, last_track_label)
 	_refresh_ui()
 
 
@@ -108,7 +100,6 @@ func _clear_auxiliary_texts() -> void:
 	_detail_text = ""
 	_today_text = ""
 	_best_text = ""
-	_last_text = ""
 
 
 func _refresh_ui() -> void:
@@ -117,16 +108,14 @@ func _refresh_ui() -> void:
 
 	title_label.text = _status_text
 	count_label.text = _number_text
-	detail_label.text = _detail_text
-	detail_label.visible = not _detail_text.is_empty()
+	detail_label.text = _detail_text if not _detail_text.is_empty() else " "
+	detail_label.visible = true
 
 	today_chip_label.text = _today_text
 	today_chip.visible = not _today_text.is_empty()
 	best_chip_label.text = _best_text
 	best_chip.visible = not _best_text.is_empty()
-	last_chip_label.text = _last_text
-	last_chip.visible = not _last_text.is_empty()
-	meta_row.visible = today_chip.visible or best_chip.visible or last_chip.visible
+	meta_row.visible = today_chip.visible or best_chip.visible
 
 	icon_label.text = _resolve_icon_text(_status_key)
 	_modulate_for_status(_status_key)
@@ -155,20 +144,14 @@ func _format_count_label(current_count: int) -> String:
 	return "%d %s seguidos" % [current_count, _format_day_label(current_count)]
 
 
-func _format_last_chip_label(last_type_label: String, last_track_label: String) -> String:
-	if last_track_label.is_empty():
-		return "Ultima: %s" % last_type_label
-	return "Ultima: %s en %s" % [last_type_label, last_track_label]
-
-
 func _resolve_icon_text(next_status_key: String) -> String:
 	match next_status_key:
 		STATUS_ACTIVE_TODAY:
-			return PLACEHOLDER_ICON_ACTIVE
+			return "●"
 		STATUS_PENDING_TODAY:
-			return PLACEHOLDER_ICON_PENDING
+			return "◌"
 		_:
-			return PLACEHOLDER_ICON_INACTIVE
+			return "–"
 
 
 func _modulate_for_status(next_status_key: String) -> void:

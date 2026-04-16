@@ -32,38 +32,20 @@ var _content_catalog = null
 
 
 func _ready() -> void:
-	_warm_up_runtime_support()
+	_prepare_runtime_support()
 
 
 func start_level_session(level_scene: Node) -> void:
-	_warm_up_runtime_support()
+	_prepare_runtime_support()
 	if not _scene_refs.connect_scene_nodes(level_scene):
 		return
 
-	active_track_key = _read_track_key_from_scene(level_scene)
+	active_track_key = _resolve_track_key_from_scene(level_scene)
 	_ensure_level_resource_loaded()
-	if _is_valid_level_resource(level_resource):
-		level_resource.clear_track_pool_cache()
+	_clear_level_resource_track_cache()
 
-	var global_state: Node = _get_global_state()
-	var saved_level_state: Dictionary = {}
-	if global_state != null:
-		saved_level_state = global_state.get_partial_level_state(
-			active_track_key,
-			_get_current_level_number()
-		)
-	
-	var saved_run_index: int = int(
-		saved_level_state.get(
-			GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY,
-			1
-		)
-	)
-	active_run_index = clampi(
-		saved_run_index,
-		1,
-		get_total_runs()
-	)
+	var saved_level_state := _read_saved_level_state()
+	active_run_index = _resolve_saved_run_index(saved_level_state)
 	_start_current_run(saved_level_state)
 
 
@@ -87,12 +69,12 @@ func get_current_run_index() -> int:
 
 func get_total_runs() -> int:
 	_ensure_runtime_support()
-	var current_level_number: int = _get_current_level_number()
+	var level_number := _get_current_level_number()
 	return max(
 		1,
 		_content_catalog.get_chapter_run_count(
 			active_track_key,
-			current_level_number
+			level_number
 		)
 	)
 
@@ -168,23 +150,20 @@ func layout_runtime_items() -> void:
 
 
 func _start_current_run(saved_level_state: Dictionary) -> void:
-	if _active_mechanic_controller != null:
-		_active_mechanic_controller.clear_runtime_state()
-	else:
-		clear_runtime_items()
+	_clear_current_run_runtime()
 
 	_ensure_runtime_support()
+	var level_number := _get_current_level_number()
 	active_run_data = _content_catalog.get_chapter_run_definition(
 		active_track_key,
-		_get_current_level_number(),
+		level_number,
 		active_run_index
 	)
 	if active_run_data.is_empty():
-		active_mechanic_type = ""
-		_active_mechanic_controller = null
+		_reset_active_run_state()
 		push_error(
 			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
-			% [active_track_key, _get_current_level_number(), active_run_index]
+			% [active_track_key, level_number, active_run_index]
 		)
 		return
 
@@ -205,10 +184,45 @@ func _start_current_run(saved_level_state: Dictionary) -> void:
 	_active_mechanic_controller.restore_or_start(saved_level_state)
 
 
-func _read_track_key_from_scene(level_scene: Node) -> String:
+func _resolve_track_key_from_scene(level_scene: Node) -> String:
 	if level_scene != null and level_scene.has_method("_get_resume_track_key"):
 		return str(level_scene.call("_get_resume_track_key")).strip_edges()
 	return ""
+
+
+func _read_saved_level_state() -> Dictionary:
+	var global_state := _get_global_state()
+	if global_state == null:
+		return {}
+	return global_state.get_partial_level_state(
+		active_track_key,
+		_get_current_level_number()
+	)
+
+
+func _resolve_saved_run_index(saved_level_state: Dictionary) -> int:
+	var saved_run_index := int(
+		saved_level_state.get(GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)
+	)
+	return clampi(saved_run_index, 1, get_total_runs())
+
+
+func _clear_level_resource_track_cache() -> void:
+	if _is_valid_level_resource(level_resource):
+		level_resource.clear_track_pool_cache()
+
+
+func _clear_current_run_runtime() -> void:
+	if _active_mechanic_controller != null:
+		_active_mechanic_controller.clear_runtime_state()
+		return
+	clear_runtime_items()
+
+
+func _reset_active_run_state() -> void:
+	active_run_data = {}
+	active_mechanic_type = ""
+	_active_mechanic_controller = null
 
 
 func _ensure_level_resource_loaded() -> void:
@@ -240,7 +254,7 @@ func _is_valid_level_resource(raw_level_resource: Variant) -> bool:
 	)
 
 
-func _warm_up_runtime_support() -> void:
+func _prepare_runtime_support() -> void:
 	_ensure_runtime_support()
 	_ensure_mechanic_controllers()
 

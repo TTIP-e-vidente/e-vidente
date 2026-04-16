@@ -98,64 +98,64 @@ func set_current_level_number(level_number: int, track_key: String = "") -> void
 
 # Progreso de campaña visible por track y capitulo.
 func get_campaign_progress_for_track(track_key: String) -> Dictionary:
-	var resolved_track_key: String = _resolve_existing_track_key(track_key)
-	if resolved_track_key.is_empty():
+	var track_key_to_use: String = _resolve_existing_track_key(track_key)
+	if track_key_to_use.is_empty():
 		return {}
 
-	if not campaign_progress_by_track.has(resolved_track_key):
-		campaign_progress_by_track[resolved_track_key] = (
-			_level_content_catalog.build_default_track_progress_for_track(resolved_track_key)
+	if not campaign_progress_by_track.has(track_key_to_use):
+		campaign_progress_by_track[track_key_to_use] = (
+			_level_content_catalog.build_default_track_progress_for_track(track_key_to_use)
 		)
 
-	var raw_track_progress: Variant = campaign_progress_by_track.get(
-		resolved_track_key,
+	var stored_track_progress: Variant = campaign_progress_by_track.get(
+		track_key_to_use,
 		{}
 	)
-	return raw_track_progress if raw_track_progress is Dictionary else {}
+	return stored_track_progress if stored_track_progress is Dictionary else {}
 
 
 func mark_level_completed(track_key: String, level_number: int) -> void:
-	var resolved_track_key: String = _resolve_existing_track_key(track_key)
-	var resolved_level_number: int = _resolve_campaign_level_number(
-		resolved_track_key,
+	var track_key_to_use: String = _resolve_existing_track_key(track_key)
+	var level_number_to_use: int = _resolve_campaign_level_number(
+		track_key_to_use,
 		level_number
 	)
-	if resolved_level_number <= 0:
+	if level_number_to_use <= 0:
 		return
 
-	var track_progress: Dictionary = get_campaign_progress_for_track(resolved_track_key)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	if not raw_level_progress is Dictionary:
+	var track_progress: Dictionary = get_campaign_progress_for_track(track_key_to_use)
+	var stored_level_progress: Variant = track_progress.get(level_number_to_use, {})
+	if not stored_level_progress is Dictionary:
 		return
-	var level_progress: Dictionary = raw_level_progress
+	var level_progress_entry: Dictionary = stored_level_progress
 
-	level_progress[BOOK_LEVEL_COMPLETED_KEY] = true
-	track_progress[resolved_level_number] = level_progress
+	level_progress_entry[BOOK_LEVEL_COMPLETED_KEY] = true
+	track_progress[level_number_to_use] = level_progress_entry
 
 
 func is_level_unlocked(track_key: String, level_number: int) -> bool:
-	var resolved_level_number := _clamp_level_number_for_track(track_key, level_number)
-	if resolved_level_number <= 1:
+	var unlocked_level_number := _clamp_level_number_for_track(track_key, level_number)
+	if unlocked_level_number <= 1:
 		return true
-	return is_level_completed(track_key, resolved_level_number - 1)
+	return is_level_completed(track_key, unlocked_level_number - 1)
 
 
 func is_level_completed(track_key: String, level_number: int) -> bool:
-	var resolved_track_key: String = _resolve_existing_track_key(track_key)
-	var resolved_level_number: int = _resolve_campaign_level_number(
-		resolved_track_key,
+	var track_key_to_use: String = _resolve_existing_track_key(track_key)
+	var level_number_to_use: int = _resolve_campaign_level_number(
+		track_key_to_use,
 		level_number
 	)
-	if resolved_level_number <= 0:
+	if level_number_to_use <= 0:
 		return false
 
-	var track_progress: Dictionary = get_campaign_progress_for_track(resolved_track_key)
-	var raw_level_progress: Variant = track_progress.get(resolved_level_number, {})
-	if not raw_level_progress is Dictionary:
+	var track_progress: Dictionary = get_campaign_progress_for_track(track_key_to_use)
+	var stored_level_progress: Variant = track_progress.get(level_number_to_use, {})
+	if not stored_level_progress is Dictionary:
 		return false
-	var level_progress: Dictionary = raw_level_progress
+	var level_progress_entry: Dictionary = stored_level_progress
 
-	return bool(level_progress.get(BOOK_LEVEL_COMPLETED_KEY, false))
+	return bool(level_progress_entry.get(BOOK_LEVEL_COMPLETED_KEY, false))
 
 
 func reset_progress() -> void:
@@ -175,8 +175,8 @@ func get_progress_summary() -> Dictionary:
 
 
 func format_progress_summary_text(summary: Dictionary = {}) -> String:
-	var summary_to_format := summary if not summary.is_empty() else get_progress_summary()
-	var progress_lines: Array[String] = []
+	var summary_by_track := summary if not summary.is_empty() else get_progress_summary()
+	var summary_lines: Array[String] = []
 	for track_definition in GameTrackCatalog.get_track_definitions():
 		var track_key := str(track_definition.get("key", "")).strip_edges()
 		if track_key.is_empty():
@@ -186,16 +186,16 @@ func format_progress_summary_text(summary: Dictionary = {}) -> String:
 		if level_count <= 0:
 			continue
 
-		var completed_level_count: int = int(summary_to_format.get(track_key, 0))
-		var visible_level_count: int = min(level_count, completed_level_count + 1)
-		var track_label := str(
+		var completed_levels: int = int(summary_by_track.get(track_key, 0))
+		var visible_levels: int = min(level_count, completed_levels + 1)
+		var summary_label := str(
 			track_definition.get(
 				"summary_label",
 				track_definition.get("label", DEFAULT_PROGRESS_LABEL)
 			)
 		)
-		progress_lines.append("%s %d/%d" % [track_label, visible_level_count, level_count])
-	return "\n".join(progress_lines)
+		summary_lines.append("%s %d/%d" % [summary_label, visible_levels, level_count])
+	return "\n".join(summary_lines)
 
 
 func get_streak_state() -> Dictionary:
@@ -206,8 +206,8 @@ func get_streak_view_model() -> Dictionary:
 	var streak_view_model: Dictionary = _streak_state_service.build_view_model(
 		get_streak_state()
 	)
-	var last_track_key := str(streak_view_model.get("last_track_key", "")).strip_edges()
-	streak_view_model["last_track_label"] = _resolve_track_label(last_track_key)
+	var last_active_track_key := str(streak_view_model.get("last_track_key", "")).strip_edges()
+	streak_view_model["last_track_label"] = _resolve_track_label(last_active_track_key)
 	return streak_view_model
 
 
@@ -215,23 +215,23 @@ func build_streak_feedback_event(
 	previous_state: Dictionary,
 	next_state: Dictionary = {}
 ) -> Dictionary:
-	var resolved_next_state: Dictionary = next_state
-	if resolved_next_state.is_empty():
-		resolved_next_state = get_streak_state()
-	return _streak_state_service.build_feedback_event(previous_state, resolved_next_state)
+	var next_state_to_use: Dictionary = next_state
+	if next_state_to_use.is_empty():
+		next_state_to_use = get_streak_state()
+	return _streak_state_service.build_feedback_event(previous_state, next_state_to_use)
 
 
 func record_streak_activity(
 	activity_type: String,
 	metadata: Dictionary = {}
 ) -> Dictionary:
-	var next_streak_state: Dictionary = _streak_state_service.record_activity(
+	var updated_streak_state: Dictionary = _streak_state_service.record_activity(
 		get_streak_state(),
 		activity_type,
 		metadata
 	)
-	set_progress_system_state(STREAK_SYSTEM_KEY, next_streak_state)
-	return next_streak_state
+	set_progress_system_state(STREAK_SYSTEM_KEY, updated_streak_state)
+	return updated_streak_state
 
 
 func clear_streak_state() -> void:

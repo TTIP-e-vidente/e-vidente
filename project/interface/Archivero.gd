@@ -7,24 +7,30 @@ const ArchiveroUiHelperScript := preload("res://interface/helpers/ArchiveroUiHel
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
+
+@export_group("Debug Demo")
+@export var debug_force_progress_overlay := false
 
 @onready var background: AudioStreamPlayer2D = $Background
-@onready var progress_overlay: Control = $ProfileOverlayLayer/ProfileOverlay
-@onready var open_progress_button: Button = $ProfileOverlayLayer/ProfileToggleButton
-@onready var close_progress_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
+@onready var profile_overlay: Control = $ProfileOverlayLayer/ProfileOverlay
+@onready var open_profile_button: Button = $ProfileOverlayLayer/ProfileToggleButton
+@onready var close_profile_button: Button = $ProfileOverlayLayer/ProfileOverlay/CloseProfileButton
 @onready var summary_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/SessionPanel
 @onready var history_panel: PanelContainer = $ProfileOverlayLayer/ProfileOverlay/HistoryPanel
-@onready var progress_overlay_content: Control = (
+@onready var profile_content: Control = (
 	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent
 )
-@onready var summary_panel_content: Control = (
-	progress_overlay_content.get_node("SummaryPanel/MarginContainer/SummaryContent") as Control
+@onready var summary_content: Control = (
+	profile_content.get_node("SummaryPanel/MarginContainer/SummaryContent") as Control
 )
+@onready var info_column: Control = summary_content.get_node("InfoColumn") as Control
+@onready var meta_row: HBoxContainer = info_column.get_node("MetaRow") as HBoxContainer
 @onready var secondary_actions_row: HBoxContainer = (
-	progress_overlay_content.get_node("SecondaryActionsRow") as HBoxContainer
+	profile_content.get_node("SecondaryActionsRow") as HBoxContainer
 )
 @onready var status_row: HBoxContainer = (
-	progress_overlay_content.get_node("StatusRow") as HBoxContainer
+	profile_content.get_node("StatusRow") as HBoxContainer
 )
 @onready var history_panel_content: Control = (
 	$ProfileOverlayLayer/ProfileOverlay/HistoryPanel/MarginContainer/HistoryContent
@@ -37,34 +43,26 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 )
 @onready var reset_progress_dialog: ConfirmationDialog = $ResetProgressDialog
 @onready var avatar_preview: TextureRect = (
-	summary_panel_content.get_node(
+	summary_content.get_node(
 		"AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview"
 	) as TextureRect
 )
 @onready var avatar_state_label: Label = (
-	summary_panel_content.get_node("AvatarColumn/AvatarState") as Label
+	summary_content.get_node("AvatarColumn/AvatarState") as Label
 )
-@onready var username_label: Label = (
-	summary_panel_content.get_node("InfoColumn/UsernameLabel") as Label
-)
+@onready var username_label: Label = info_column.get_node("UsernameLabel") as Label
 @onready var email_label: Label = (
-	summary_panel_content.get_node(
-		"InfoColumn/MetaRow/EmailBadge/MarginContainer/EmailLabel"
+	meta_row.get_node(
+		"EmailBadge/MarginContainer/EmailLabel"
 	) as Label
 )
 @onready var age_label: Label = (
-	summary_panel_content.get_node(
-		"InfoColumn/MetaRow/AgeBadge/MarginContainer/AgeLabel"
+	meta_row.get_node(
+		"AgeBadge/MarginContainer/AgeLabel"
 	) as Label
 )
-@onready var progress_summary_label: Label = (
-	summary_panel_content.get_node(
-		"InfoColumn/ProgressPanel/MarginContainer/ProgressLabel"
-	) as Label
-)
-@onready var streak_badge: StreakBadge = (
-	summary_panel_content.get_node("InfoColumn/StreakBadge") as StreakBadge
-)
+@onready var progress_summary_label: Label = info_column.get_node("ProgressLabel") as Label
+@onready var streak_badge: StreakBadge = info_column.get_node("StreakBadge") as StreakBadge
 @onready var save_status_label: Label = (
 	status_row.get_node("SaveCard/MarginContainer/SaveStatusLabel") as Label
 )
@@ -80,7 +78,7 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 
 var is_archivero_highlighted := false
 var _save_icon_feedback_revision := 0
-var _ui_helper = ArchiveroUiHelperScript.new()
+var _archivero_ui_helper = ArchiveroUiHelperScript.new()
 
 
 func _ready() -> void:
@@ -90,9 +88,22 @@ func _ready() -> void:
 func _initialize_archivero_scene() -> void:
 	background.play()
 	_connect_save_manager_signals()
-	_configure_progress_overlay()
+	_configure_profile_overlay()
 	_configure_reset_progress_dialog()
-	_refresh_progress_overlay()
+	_refresh_profile_overlay()
+	call_deferred("_apply_debug_demo_flags")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not debug_force_progress_overlay:
+		return
+
+	var key_event := event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo:
+		return
+
+	if key_event.keycode == DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY:
+		_set_profile_overlay_visible(not profile_overlay.visible)
 
 
 func _exit_tree() -> void:
@@ -102,13 +113,12 @@ func _exit_tree() -> void:
 		background.stream = null
 
 
-func _configure_progress_overlay() -> void:
-	open_progress_button.icon = SAVE_ICON_IDLE
-	open_progress_button.text = "Mi progreso"
-	history_panel.visible = false
-	history_toggle_button.text = "Ver historial"
+func _configure_profile_overlay() -> void:
+	open_profile_button.icon = SAVE_ICON_IDLE
+	open_profile_button.text = "Mi progreso"
 	reset_progress_button.text = "Reiniciar progreso"
-	_sync_progress_overlay_controls()
+	_set_history_view_visible(false)
+	_sync_profile_overlay_controls()
 
 
 func _configure_reset_progress_dialog() -> void:
@@ -120,42 +130,43 @@ func _configure_reset_progress_dialog() -> void:
 	reset_progress_dialog.get_ok_button().text = "Reiniciar"
 
 
-func _refresh_progress_overlay() -> void:
-	var profile := SaveManager.get_current_user_profile()
-	var progress_summary := Global.get_progress_summary()
-	var save_status := SaveManager.get_save_status()
-	_refresh_profile_summary(profile)
-	_refresh_progress_summary(progress_summary)
-	_refresh_save_status(save_status)
+func _refresh_profile_overlay() -> void:
+	var current_profile := SaveManager.get_current_user_profile()
+	var progress_summary_by_track := Global.get_progress_summary()
+	var current_save_status := SaveManager.get_save_status()
+	_refresh_profile_summary(current_profile)
+	_refresh_progress_summary(progress_summary_by_track)
+	_refresh_save_status(current_save_status)
 	_refresh_resume_section()
 	_refresh_avatar_preview()
 	_refresh_history_log()
-	_sync_progress_overlay_controls()
+	_sync_profile_overlay_controls()
 
 
 func _refresh_profile_summary(profile: Dictionary) -> void:
-	var username := str(
+	var username_text := str(
 		profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
 	).strip_edges()
 	username_label.text = (
-		username
-		if not username.is_empty()
+		username_text
+		if not username_text.is_empty()
 		else SaveManager.DEFAULT_PROFILE_NAME
 	)
-	email_label.text = "Mail: %s" % _ui_helper.format_optional_text(
+	email_label.text = "Mail: %s" % _archivero_ui_helper.format_optional_text(
 		str(profile.get("email", ""))
 	)
-	age_label.text = "Edad: %s" % _ui_helper.format_optional_number(
+	age_label.text = "Edad: %s" % _archivero_ui_helper.format_optional_number(
 		int(profile.get("age", 0))
 	)
 
 
 func _refresh_progress_summary(progress_summary: Dictionary) -> void:
-	var progress_text := Global.format_progress_summary_text(progress_summary).strip_edges()
-	if progress_text.is_empty():
-		progress_summary_label.text = "Todavia no hay capitulos completos"
-	else:
-		progress_summary_label.text = progress_text
+	var progress_summary_text := Global.format_progress_summary_text(progress_summary).strip_edges()
+	progress_summary_label.text = (
+		"Todavia no hay capitulos completos"
+		if progress_summary_text.is_empty()
+		else progress_summary_text
+	)
 	_refresh_streak_badge()
 
 
@@ -166,14 +177,14 @@ func _refresh_streak_badge() -> void:
 
 
 func _refresh_save_status(save_status: Dictionary) -> void:
-	save_status_label.text = _ui_helper.format_save_status(save_status)
-	open_progress_button.tooltip_text = _ui_helper.build_toggle_tooltip(save_status)
-	open_progress_button.text = "Mi progreso"
+	save_status_label.text = _archivero_ui_helper.format_save_status(save_status)
+	open_profile_button.tooltip_text = _archivero_ui_helper.build_toggle_tooltip(save_status)
+	open_profile_button.text = "Mi progreso"
 
 
 func _refresh_resume_section() -> void:
 	var can_resume := SaveManager.can_resume_current_save()
-	resume_hint_label.text = _ui_helper.format_resume_hint_label(
+	resume_hint_label.text = _archivero_ui_helper.format_resume_hint_label(
 		can_resume,
 		SaveManager.get_current_resume_hint()
 	)
@@ -192,11 +203,12 @@ func _refresh_avatar_preview() -> void:
 
 
 func _refresh_history_log() -> void:
-	var history := SaveManager.get_current_save_history()
-	if history.is_empty():
-		history_log_label.text = "Todavia no hay actividad guardada."
-		return
-	history_log_label.text = _build_history_log_text(history)
+	var history_entries := SaveManager.get_current_save_history()
+	history_log_label.text = (
+		"Todavia no hay actividad guardada."
+		if history_entries.is_empty()
+		else _build_history_log_text(history_entries)
+	)
 
 
 func _connect_save_manager_signals() -> void:
@@ -222,49 +234,59 @@ func _disconnect_save_manager_signals() -> void:
 
 
 func _build_history_log_text(history: Array) -> String:
-	var lines: Array[String] = []
-	for entry in history:
-		if not entry is Dictionary:
+	var history_lines: Array[String] = []
+	for history_entry in history:
+		if not history_entry is Dictionary:
 			continue
-		lines.append("%s\n%s" % [entry.get("timestamp", ""), entry.get("message", "")])
-	return "\n\n".join(lines)
+		history_lines.append(
+			"%s\n%s" % [
+				history_entry.get("timestamp", ""),
+				history_entry.get("message", "")
+			]
+		)
+	return "\n\n".join(history_lines)
 
 
 func _on_save_manager_changed(status: Dictionary) -> void:
-	var state := str(status.get("state", ""))
-	if state == "saved" or state == "recovered":
+	var save_state := str(status.get("state", ""))
+	if save_state == "saved" or save_state == "recovered":
 		_show_saved_icon_feedback()
-	_refresh_progress_overlay()
+	_refresh_profile_overlay()
 
 
 func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
-	_refresh_progress_overlay()
+	_refresh_profile_overlay()
 
 
-func _set_progress_overlay_visible(overlay_visible: bool) -> void:
-	progress_overlay.visible = overlay_visible
+func _set_profile_overlay_visible(overlay_visible: bool) -> void:
+	profile_overlay.visible = overlay_visible
 	_set_history_view_visible(false)
-	_sync_progress_overlay_controls()
+	_sync_profile_overlay_controls()
 	if overlay_visible:
-		_refresh_progress_overlay()
+		_refresh_profile_overlay()
 
 
-func _sync_progress_overlay_controls() -> void:
-	open_progress_button.visible = not progress_overlay.visible
-	close_progress_button.visible = progress_overlay.visible
+func _apply_debug_demo_flags() -> void:
+	if debug_force_progress_overlay:
+		_set_profile_overlay_visible(true)
+
+
+func _sync_profile_overlay_controls() -> void:
+	open_profile_button.visible = not profile_overlay.visible
+	close_profile_button.visible = profile_overlay.visible
 
 
 func _on_profile_toggle_button_pressed() -> void:
-	_set_progress_overlay_visible(true)
+	_set_profile_overlay_visible(true)
 
 
 func _on_close_profile_button_pressed() -> void:
-	_set_progress_overlay_visible(false)
+	_set_profile_overlay_visible(false)
 
 
 func _on_profile_backdrop_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_set_progress_overlay_visible(false)
+		_set_profile_overlay_visible(false)
 
 
 func _on_mouse_entered() -> void:
@@ -289,7 +311,7 @@ func _on_guardar_pressed() -> void:
 func _on_resume_now_button_pressed() -> void:
 	if not SaveManager.can_resume_current_save():
 		return
-	_set_progress_overlay_visible(false)
+	_set_profile_overlay_visible(false)
 	var resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, ARCHIVERO_SCENE)
 
@@ -315,28 +337,28 @@ func _on_reset_progress_button_pressed() -> void:
 func _on_reset_progress_dialog_confirmed() -> void:
 	_set_history_view_visible(false)
 	SaveManager.reset_all_progress()
-	_refresh_progress_overlay()
+	_refresh_profile_overlay()
 
 
 func _show_saved_icon_feedback() -> void:
 	var save_status := SaveManager.get_save_status()
-	if str(save_status.get("state", "")) == "error":
-		open_progress_button.icon = SAVE_ICON_IDLE
-		return
-	if str(save_status.get("last_saved_reason", "")) == "":
-		open_progress_button.icon = SAVE_ICON_IDLE
+	if (
+		str(save_status.get("state", "")) == "error"
+		or str(save_status.get("last_saved_reason", "")) == ""
+	):
+		open_profile_button.icon = SAVE_ICON_IDLE
 		return
 	_save_icon_feedback_revision += 1
-	var revision := _save_icon_feedback_revision
-	open_progress_button.icon = SAVE_ICON_OK
-	_reset_saved_icon_after_delay(revision)
+	var feedback_revision := _save_icon_feedback_revision
+	open_profile_button.icon = SAVE_ICON_OK
+	_reset_saved_icon_after_delay(feedback_revision)
 
 
 func _reset_saved_icon_after_delay(revision: int) -> void:
 	await get_tree().create_timer(1.6).timeout
 	if not is_inside_tree() or revision != _save_icon_feedback_revision:
 		return
-	open_progress_button.icon = SAVE_ICON_IDLE
+	open_profile_button.icon = SAVE_ICON_IDLE
 
 
 func _set_history_view_visible(history_visible: bool) -> void:
