@@ -3,7 +3,7 @@ extends RefCounted
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
 const PlateSortMechanicControllerScript := preload(
-	"res://niveles/mechanics/PlateSortMechanicController.gd"
+	"res://niveles/mechanics/controllers/PlateSortMechanicController.gd"
 )
 
 const DEFAULT_MECHANIC_TYPE := LevelMechanicTypes.PLATE_SORT
@@ -28,7 +28,8 @@ static func has_mechanic_type(raw_mechanic_type: Variant) -> bool:
 
 
 static func build_controllers(level_manager) -> Dictionary:
-	var controller = PlateSortMechanicControllerScript.new(level_manager)
+	var controller_script: Variant = PlateSortMechanicControllerScript
+	var controller = controller_script.new(level_manager)
 	if controller == null:
 		push_error(
 			(

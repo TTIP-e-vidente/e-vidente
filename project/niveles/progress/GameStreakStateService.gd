@@ -33,12 +33,17 @@ func normalize_state(raw_state: Variant) -> Dictionary:
 	if not raw_state is Dictionary:
 		return normalized_state
 
-	var source_state: Dictionary = raw_state
-	var current_count: int = max(0, int(source_state.get(CURRENT_COUNT_KEY, 0)))
-	var best_count: int = max(0, int(source_state.get(BEST_COUNT_KEY, 0)))
-	var last_activity_day: String = str(source_state.get(LAST_ACTIVITY_DAY_KEY, "")).strip_edges()
+	var stored_streak_state: Dictionary = raw_state
+	var current_count: int = max(0, int(stored_streak_state.get(CURRENT_COUNT_KEY, 0)))
+	var best_count: int = max(0, int(stored_streak_state.get(BEST_COUNT_KEY, 0)))
+	var last_activity_day: String = str(
+		stored_streak_state.get(LAST_ACTIVITY_DAY_KEY, "")
+	).strip_edges()
 
-	normalized_state[BEST_COUNT_KEY] = max(best_count, current_count)
+	normalized_state[BEST_COUNT_KEY] = max(
+		best_count,
+		current_count
+	)
 	if not _is_valid_day_key(last_activity_day):
 		return normalized_state
 
@@ -46,12 +51,14 @@ func normalize_state(raw_state: Variant) -> Dictionary:
 	normalized_state[LAST_ACTIVITY_DAY_KEY] = last_activity_day
 	normalized_state[LAST_ACTIVITY_AT_KEY] = _normalize_timestamp(
 		last_activity_day,
-		str(source_state.get(LAST_ACTIVITY_AT_KEY, "")).strip_edges()
+		str(stored_streak_state.get(LAST_ACTIVITY_AT_KEY, "")).strip_edges()
 	)
 	normalized_state[LAST_ACTIVITY_TYPE_KEY] = str(
-		source_state.get(LAST_ACTIVITY_TYPE_KEY, "")
+		stored_streak_state.get(LAST_ACTIVITY_TYPE_KEY, "")
 	).strip_edges()
-	normalized_state[LAST_TRACK_KEY] = str(source_state.get(LAST_TRACK_KEY, "")).strip_edges()
+	normalized_state[LAST_TRACK_KEY] = str(
+		stored_streak_state.get(LAST_TRACK_KEY, "")
+	).strip_edges()
 	return normalized_state
 
 
@@ -61,41 +68,41 @@ func record_activity(
 	metadata: Dictionary = {}
 ) -> Dictionary:
 	var next_state: Dictionary = normalize_state(raw_state)
-	var activity_day: String = str(metadata.get("activity_day", "")).strip_edges()
+	var requested_activity_day: String = str(metadata.get("activity_day", "")).strip_edges()
+	var activity_day: String = requested_activity_day
 	if not _is_valid_day_key(activity_day):
 		activity_day = _today_day_key()
 
-	var activity_at: String = str(metadata.get("activity_at", "")).strip_edges()
-	if activity_at.is_empty():
-		var raw_activity_day: String = str(metadata.get("activity_day", "")).strip_edges()
-		if raw_activity_day.is_empty():
-			activity_at = Time.get_datetime_string_from_system(false, true)
-		else:
-			activity_at = _build_day_start_timestamp(activity_day)
+	var activity_at_to_store: String = str(metadata.get("activity_at", "")).strip_edges()
+	if activity_at_to_store.is_empty():
+		activity_at_to_store = Time.get_datetime_string_from_system(false, true)
+		if not requested_activity_day.is_empty():
+			activity_at_to_store = _build_day_start_timestamp(activity_day)
 	else:
-		activity_at = _normalize_timestamp(activity_day, activity_at)
+		activity_at_to_store = _normalize_timestamp(activity_day, activity_at_to_store)
 
-	var stored_activity_type: String = activity_type.strip_edges()
-	if stored_activity_type.is_empty():
-		stored_activity_type = DEFAULT_ACTIVITY_TYPE
+	var activity_type_to_store: String = activity_type.strip_edges()
+	if activity_type_to_store.is_empty():
+		activity_type_to_store = DEFAULT_ACTIVITY_TYPE
 
-	var current_count: int = int(next_state.get(CURRENT_COUNT_KEY, 0))
-	var last_activity_day: String = str(next_state.get(LAST_ACTIVITY_DAY_KEY, "")).strip_edges()
-	var next_current_count := 1
-	if not last_activity_day.is_empty():
-		var day_difference: int = _get_day_difference(last_activity_day, activity_day)
-		if day_difference == 0:
-			next_current_count = current_count
-		elif day_difference == 1:
-			next_current_count = current_count + 1
+	var previous_current_count: int = int(next_state.get(CURRENT_COUNT_KEY, 0))
+	var previous_activity_day: String = str(next_state.get(LAST_ACTIVITY_DAY_KEY, "")).strip_edges()
+	var next_current_count: int = 1
+	if not previous_activity_day.is_empty():
+		match _get_day_difference(previous_activity_day, activity_day):
+			0:
+				next_current_count = previous_current_count
+			1:
+				next_current_count = previous_current_count + 1
+
 	next_state[CURRENT_COUNT_KEY] = next_current_count
 	next_state[BEST_COUNT_KEY] = max(
 		int(next_state.get(BEST_COUNT_KEY, 0)),
 		next_current_count
 	)
 	next_state[LAST_ACTIVITY_DAY_KEY] = activity_day
-	next_state[LAST_ACTIVITY_AT_KEY] = activity_at
-	next_state[LAST_ACTIVITY_TYPE_KEY] = stored_activity_type
+	next_state[LAST_ACTIVITY_AT_KEY] = activity_at_to_store
+	next_state[LAST_ACTIVITY_TYPE_KEY] = activity_type_to_store
 	next_state[LAST_TRACK_KEY] = str(metadata.get("track_key", "")).strip_edges()
 	return next_state
 
@@ -109,10 +116,12 @@ func build_view_model(raw_state: Variant) -> Dictionary:
 	var state: Dictionary = normalize_state(raw_state)
 	var current_count: int = int(state.get(CURRENT_COUNT_KEY, 0))
 	var best_count: int = int(state.get(BEST_COUNT_KEY, 0))
-	var last_activity_day: String = str(state.get(LAST_ACTIVITY_DAY_KEY, ""))
-	var last_activity_type: String = str(state.get(LAST_ACTIVITY_TYPE_KEY, ""))
-	var recorded_today: bool = last_activity_day == _today_day_key()
+	var activity_day: String = str(state.get(LAST_ACTIVITY_DAY_KEY, ""))
+	var activity_type: String = str(state.get(LAST_ACTIVITY_TYPE_KEY, ""))
+	var today_day_key: String = _today_day_key()
+	var recorded_today: bool = activity_day == today_day_key
 	var has_streak: bool = current_count > 0
+	var pending_today: bool = has_streak and not recorded_today
 	var status_view: Dictionary = _build_status_view(has_streak, recorded_today)
 
 	return {
@@ -120,17 +129,20 @@ func build_view_model(raw_state: Variant) -> Dictionary:
 		"best_count": best_count,
 		"has_streak": has_streak,
 		"recorded_today": recorded_today,
-		"pending_today": has_streak and not recorded_today,
+		"pending_today": pending_today,
 		"status_key": str(status_view.get("status_key", STATUS_INACTIVE)),
 		"status_title": str(status_view.get("status_title", "Sin racha activa")),
 		"status_detail": str(
-			status_view.get("status_detail", "Completa una actividad valida para iniciar la racha.")
+			status_view.get(
+				"status_detail",
+				"Completa una actividad valida para iniciar la racha."
+			)
 		),
 		"today_status_label": str(status_view.get("today_status_label", "Sin iniciar")),
-		"last_activity_day": last_activity_day,
+		"last_activity_day": activity_day,
 		"last_activity_at": str(state.get(LAST_ACTIVITY_AT_KEY, "")),
-		"last_activity_type": last_activity_type,
-		"last_activity_type_label": _format_activity_type_label(last_activity_type),
+		"last_activity_type": activity_type,
+		"last_activity_type_label": _format_activity_type_label(activity_type),
 		"last_track_key": str(state.get(LAST_TRACK_KEY, ""))
 	}
 
@@ -138,13 +150,17 @@ func build_view_model(raw_state: Variant) -> Dictionary:
 func build_feedback_event(previous_raw_state: Variant, next_raw_state: Variant) -> Dictionary:
 	var previous_state: Dictionary = normalize_state(previous_raw_state)
 	var next_state: Dictionary = normalize_state(next_raw_state)
-	var previous_recorded_today: bool = (
-		str(previous_state.get(LAST_ACTIVITY_DAY_KEY, "")) == _today_day_key()
-	)
-	var next_recorded_today: bool = (
-		str(next_state.get(LAST_ACTIVITY_DAY_KEY, "")) == _today_day_key()
-	)
-	if previous_recorded_today or not next_recorded_today:
+	var today_day_key: String = _today_day_key()
+	var was_recorded_today: bool = str(
+		previous_state.get(LAST_ACTIVITY_DAY_KEY, "")
+	) == today_day_key
+	if was_recorded_today:
+		return {"should_show": false}
+
+	var is_recorded_today: bool = str(
+		next_state.get(LAST_ACTIVITY_DAY_KEY, "")
+	) == today_day_key
+	if not is_recorded_today:
 		return {"should_show": false}
 
 	var current_count: int = int(next_state.get(CURRENT_COUNT_KEY, 0))
@@ -174,8 +190,9 @@ func format_summary_text(raw_state: Variant) -> String:
 
 	var current_count: int = int(view_model.get("current_count", 0))
 	var best_count: int = int(view_model.get("best_count", 0))
+	var recorded_today: bool = bool(view_model.get("recorded_today", false))
 	var today_status: String = "Hoy: pendiente"
-	if bool(view_model.get("recorded_today", false)):
+	if recorded_today:
 		today_status = "Hoy: completada"
 
 	return "\n".join([

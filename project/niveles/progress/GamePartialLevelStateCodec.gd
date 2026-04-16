@@ -14,7 +14,7 @@ func export_track_states(partial_level_states: Dictionary) -> Dictionary:
 	var exported_states_by_track: Dictionary = {}
 
 	for track_key in _global_state.TRACK_KEYS:
-		var exported_track_level_states: Dictionary = _export_track_level_states(
+		var exported_track_level_states: Dictionary = _export_valid_level_states_for_track(
 			partial_level_states.get(track_key, {})
 		)
 		if exported_track_level_states.is_empty():
@@ -30,7 +30,7 @@ func normalize_track_states(raw_states: Variant) -> Dictionary:
 	var normalized_states_by_track: Dictionary = {}
 
 	for track_key in _global_state.TRACK_KEYS:
-		normalized_states_by_track[track_key] = _normalize_track_level_states(
+		normalized_states_by_track[track_key] = _normalize_level_states_for_track(
 			raw_states_by_track.get(track_key, {}),
 			track_key,
 			false
@@ -43,35 +43,43 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 	if not raw_level_state is Dictionary:
 		return {}
 
-	var saved_level_state: Dictionary = raw_level_state
-	var saved_run_index: int = max(
+	var stored_level_state: Dictionary = raw_level_state
+	var run_index: int = max(
 		1,
-		int(saved_level_state.get(GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY, 1))
+		int(stored_level_state.get(GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY, 1))
 	)
-	var saved_mechanic_type: String = str(
-		saved_level_state.get(GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, "")
+	var mechanic_type: String = str(
+		stored_level_state.get(GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, "")
 	).strip_edges()
-	var normalized_mechanic_state: Dictionary = _normalize_saved_mechanic_state(
-		saved_level_state,
-		saved_mechanic_type
+	var raw_mechanic_state: Variant = stored_level_state.get(
+		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
+		{}
 	)
+	var normalized_mechanic_state: Dictionary = {}
 
-	var resolved_mechanic_type: String = saved_mechanic_type
-	if resolved_mechanic_type.is_empty() and (
-		saved_run_index > 1 or not normalized_mechanic_state.is_empty()
-	):
-		resolved_mechanic_type = LevelMechanicTypes.PLATE_SORT
+	if mechanic_type.is_empty() or mechanic_type == LevelMechanicTypes.PLATE_SORT:
+		normalized_mechanic_state = _normalize_plate_sort_level_state(
+			stored_level_state,
+			raw_mechanic_state
+		)
+	elif raw_mechanic_state is Dictionary:
+		normalized_mechanic_state = (raw_mechanic_state as Dictionary).duplicate(true)
 
-	if normalized_mechanic_state.is_empty() and saved_run_index <= 1:
-		return {}
+	var has_saved_progress: bool = run_index > 1 or not normalized_mechanic_state.is_empty()
+	if mechanic_type.is_empty() and has_saved_progress:
+		mechanic_type = LevelMechanicTypes.PLATE_SORT
+
+	if normalized_mechanic_state.is_empty():
+		if run_index <= 1:
+			return {}
 
 	var normalized_level_state: Dictionary = {
-		GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY: saved_run_index,
-		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: resolved_mechanic_type,
+		GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY: run_index,
+		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
 		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY: normalized_mechanic_state
 	}
 
-	if resolved_mechanic_type == LevelMechanicTypes.PLATE_SORT:
+	if mechanic_type == LevelMechanicTypes.PLATE_SORT:
 		normalized_level_state[GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY] = (
 			normalized_mechanic_state.get(GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY, [])
 		)
@@ -85,71 +93,40 @@ func normalize_level_state(raw_level_state: Variant) -> Dictionary:
 	return normalized_level_state
 
 
-func remove_completed_states(partial_level_states: Dictionary) -> void:
-	for track_key in _global_state.TRACK_KEYS:
-		partial_level_states[track_key] = _normalize_track_level_states(
-			partial_level_states.get(track_key, {}),
-			track_key,
-			true
-		)
-
-
-func _normalize_saved_mechanic_state(
-	raw_saved_level_state: Dictionary,
-	mechanic_type: String
-) -> Dictionary:
-	var raw_mechanic_state: Variant = raw_saved_level_state.get(
-		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
-		{}
-	)
-
-	if mechanic_type.is_empty() or mechanic_type == LevelMechanicTypes.PLATE_SORT:
-		return _normalize_plate_sort_mechanic_state(
-			raw_saved_level_state,
-			raw_mechanic_state
-		)
-
-	if raw_mechanic_state is Dictionary:
-		return (raw_mechanic_state as Dictionary).duplicate(true)
-
-	return {}
-
-
-func _normalize_plate_sort_mechanic_state(
-	raw_saved_level_state: Dictionary,
+func _normalize_plate_sort_level_state(
+	stored_level_state: Dictionary,
 	raw_mechanic_state: Variant
 ) -> Dictionary:
-	var plate_sort_state: Dictionary = {}
+	var plate_sort_state_to_normalize: Dictionary = {}
 	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
-		plate_sort_state = raw_mechanic_state
+		plate_sort_state_to_normalize = raw_mechanic_state
 	else:
-		plate_sort_state = {
-			GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: raw_saved_level_state.get(
+		plate_sort_state_to_normalize = {
+			GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: stored_level_state.get(
 				GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY,
 				[]
 			),
-			GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: raw_saved_level_state.get(
+			GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: stored_level_state.get(
 				GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
 				[]
 			)
 		}
 
-	var normalized_saved_items: Array = []
+	var normalized_item_entries: Array = []
 	var valid_positive_item_ids: Dictionary = {}
-
-	var raw_saved_items: Variant = plate_sort_state.get(
+	var raw_saved_items: Variant = plate_sort_state_to_normalize.get(
 		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY,
 		[]
 	)
 	if raw_saved_items is Array:
 		for raw_saved_item in raw_saved_items:
-			var normalized_saved_item: Dictionary = _normalize_saved_plate_sort_item(
+			var normalized_saved_item: Dictionary = _normalize_plate_sort_item_entry(
 				raw_saved_item
 			)
 			if normalized_saved_item.is_empty():
 				continue
 
-			normalized_saved_items.append(normalized_saved_item)
+			normalized_item_entries.append(normalized_saved_item)
 			if bool(
 				normalized_saved_item.get(
 					GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY,
@@ -164,28 +141,37 @@ func _normalize_plate_sort_mechanic_state(
 				)
 				valid_positive_item_ids[instance_id] = true
 
-	var normalized_placed_positive_item_ids: Array = []
-	var raw_placed_item_ids: Variant = plate_sort_state.get(
+	var normalized_placed_item_ids: Array = []
+	var raw_placed_item_ids: Variant = plate_sort_state_to_normalize.get(
 		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
 		[]
 	)
 	if raw_placed_item_ids is Array:
 		for raw_item_id in raw_placed_item_ids:
 			var item_id: String = str(raw_item_id).strip_edges()
-			if item_id.is_empty() or normalized_placed_positive_item_ids.has(item_id):
+			if item_id.is_empty() or normalized_placed_item_ids.has(item_id):
 				continue
 			if not valid_positive_item_ids.has(item_id):
 				continue
 
-			normalized_placed_positive_item_ids.append(item_id)
+			normalized_placed_item_ids.append(item_id)
 
 	return {
-		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: normalized_saved_items,
-		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: normalized_placed_positive_item_ids
+		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: normalized_item_entries,
+		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: normalized_placed_item_ids
 	}
 
 
-func _normalize_saved_plate_sort_item(raw_saved_item: Variant) -> Dictionary:
+func remove_completed_states(partial_level_states: Dictionary) -> void:
+	for track_key in _global_state.TRACK_KEYS:
+		partial_level_states[track_key] = _normalize_level_states_for_track(
+			partial_level_states.get(track_key, {}),
+			track_key,
+			true
+		)
+
+
+func _normalize_plate_sort_item_entry(raw_saved_item: Variant) -> Dictionary:
 	if not raw_saved_item is Dictionary:
 		return {}
 
@@ -207,7 +193,7 @@ func _normalize_saved_plate_sort_item(raw_saved_item: Variant) -> Dictionary:
 	}
 
 
-func _export_track_level_states(raw_track_level_states: Variant) -> Dictionary:
+func _export_valid_level_states_for_track(raw_track_level_states: Variant) -> Dictionary:
 	var exported_track_level_states: Dictionary = {}
 	if not raw_track_level_states is Dictionary:
 		return exported_track_level_states
@@ -229,7 +215,7 @@ func _export_track_level_states(raw_track_level_states: Variant) -> Dictionary:
 	return exported_track_level_states
 
 
-func _normalize_track_level_states(
+func _normalize_level_states_for_track(
 	raw_track_level_states: Variant,
 	track_key: String,
 	skip_completed_levels: bool

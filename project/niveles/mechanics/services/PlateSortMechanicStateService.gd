@@ -16,30 +16,36 @@ func _init(level_manager) -> void:
 
 func build_save_state(mechanic_type: String, saved_run_index: int) -> Dictionary:
 	var runtime_snapshot: Dictionary = _build_runtime_snapshot()
-	var saved_items: Array = runtime_snapshot.get("saved_items", [])
+	var saved_item_entries: Array = runtime_snapshot.get("saved_items", [])
 	var placed_positive_item_ids: Array = runtime_snapshot.get(
 		"placed_positive_item_ids",
 		[]
 	)
+	var should_drop_empty_first_run_state: bool = (
+		saved_item_entries.is_empty()
+		and saved_run_index <= 1
+	)
 
-	if saved_items.is_empty() and saved_run_index <= 1:
+	if should_drop_empty_first_run_state:
 		return {}
 
-	var mechanic_state: Dictionary = _build_plate_sort_mechanic_state(
-		saved_items,
+	var mechanic_state: Dictionary = _build_mechanic_state(
+		saved_item_entries,
 		placed_positive_item_ids
 	)
 	return {
 		GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY: saved_run_index,
 		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
 		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
-		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: saved_item_entries,
 		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
 	}
 
 
 func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
-	var placed_positive_item_ids: Array = _read_saved_positive_item_ids(saved_level_state)
+	var placed_positive_item_ids: Array = _read_saved_positive_item_ids_from_state(
+		saved_level_state
+	)
 	var placed_item_count: int = placed_positive_item_ids.size()
 	return {
 		"placed_positive_count": placed_item_count,
@@ -50,12 +56,12 @@ func build_save_summary(saved_level_state: Dictionary) -> Dictionary:
 
 
 func restore_items(saved_level_state: Dictionary) -> bool:
-	var saved_items: Array = _read_saved_item_entries(saved_level_state)
-	if saved_items.is_empty():
+	var saved_item_entries: Array = _read_saved_item_entries_from_state(saved_level_state)
+	if saved_item_entries.is_empty():
 		return false
 
-	for raw_saved_item in saved_items:
-		if not _restore_saved_item(raw_saved_item):
+	for raw_saved_item in saved_item_entries:
+		if not _restore_saved_runtime_item(raw_saved_item):
 			_level_manager.clear_runtime_items()
 			return false
 
@@ -63,20 +69,20 @@ func restore_items(saved_level_state: Dictionary) -> bool:
 
 
 func restore_items_in_plate(saved_level_state: Dictionary) -> void:
-	var saved_positive_item_ids: Array = _read_saved_positive_item_ids(saved_level_state)
+	var saved_positive_item_ids: Array = _read_saved_positive_item_ids_from_state(saved_level_state)
 	if saved_positive_item_ids.is_empty():
 		return
 
-	var runtime_items_to_restore: Array = _collect_runtime_positive_items_to_restore(
+	var runtime_positive_items: Array = _collect_runtime_positive_items_to_restore(
 		saved_positive_item_ids
 	)
 
-	for item_index in range(runtime_items_to_restore.size()):
-		var runtime_item = runtime_items_to_restore[item_index]
+	for item_index in range(runtime_positive_items.size()):
+		var runtime_item = runtime_positive_items[item_index]
 		_restore_runtime_item_to_plate(
 			runtime_item,
 			item_index,
-			runtime_items_to_restore.size()
+			runtime_positive_items.size()
 		)
 
 
@@ -122,36 +128,36 @@ func _build_saved_item_entry(runtime_item) -> Dictionary:
 	}
 
 
-func _build_plate_sort_mechanic_state(
-	saved_items: Array,
+func _build_mechanic_state(
+	saved_item_entries: Array,
 	placed_positive_item_ids: Array
 ) -> Dictionary:
 	return {
-		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: saved_items,
+		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: saved_item_entries,
 		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
 	}
 
 
-func _read_saved_item_entries(saved_level_state: Dictionary) -> Array:
-	return _read_plate_sort_state_array(
+func _read_saved_item_entries_from_state(saved_level_state: Dictionary) -> Array:
+	return _read_array_from_plate_sort_state(
 		saved_level_state,
 		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY
 	)
 
 
-func _read_saved_positive_item_ids(saved_level_state: Dictionary) -> Array:
-	return _read_plate_sort_state_array(
+func _read_saved_positive_item_ids_from_state(saved_level_state: Dictionary) -> Array:
+	return _read_array_from_plate_sort_state(
 		saved_level_state,
 		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY
 	)
 
 
-func _read_plate_sort_state_array(
+func _read_array_from_plate_sort_state(
 	saved_level_state: Dictionary,
 	state_key: String
 ) -> Array:
-	var plate_sort_state: Dictionary = _read_plate_sort_state(saved_level_state)
-	var raw_state_value: Variant = plate_sort_state.get(state_key, [])
+	var stored_plate_sort_state: Dictionary = _read_stored_plate_sort_state(saved_level_state)
+	var raw_state_value: Variant = stored_plate_sort_state.get(state_key, [])
 	return raw_state_value if raw_state_value is Array else []
 
 
@@ -177,7 +183,7 @@ func _restore_runtime_item_to_plate(runtime_item, item_index: int, total_items: 
 	_level_manager.plato.restore_positive_item(runtime_item)
 
 
-func _read_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
+func _read_stored_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
 	var raw_mechanic_state: Variant = saved_level_state.get(
 		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
 		{}
@@ -196,7 +202,7 @@ func _read_plate_sort_state(saved_level_state: Dictionary) -> Dictionary:
 	}
 
 
-func _restore_saved_item(raw_saved_item: Variant) -> bool:
+func _restore_saved_runtime_item(raw_saved_item: Variant) -> bool:
 	if not raw_saved_item is Dictionary:
 		return false
 	var saved_item: Dictionary = raw_saved_item

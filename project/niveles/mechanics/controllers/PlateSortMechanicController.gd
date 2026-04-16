@@ -1,8 +1,8 @@
-extends "res://niveles/mechanics/LevelMechanicController.gd"
+extends "res://niveles/mechanics/controllers/LevelMechanicController.gd"
 
 const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
 const PlateSortMechanicStateServiceScript := preload(
-	"res://niveles/mechanics/PlateSortMechanicStateService.gd"
+	"res://niveles/mechanics/services/PlateSortMechanicStateService.gd"
 )
 
 var _plate_sort_state_service
@@ -18,18 +18,18 @@ func get_mechanic_type() -> String:
 
 
 func configure_run(run_data: Dictionary, level_resource) -> void:
-	var run_payload: Dictionary = _resolve_run_payload(run_data)
+	var resolved_run_payload: Dictionary = _resolve_run_payload(run_data)
 
 	level_resource.mechanic_type = get_mechanic_type()
-	level_resource.mechanic_payload = run_payload.duplicate(true)
-	level_resource.cantidadNegativos = int(run_payload.get("negative_count", 0))
-	level_resource.cantidadPositivos = int(run_payload.get("positive_count", 0))
+	level_resource.mechanic_payload = resolved_run_payload.duplicate(true)
+	level_resource.cantidadNegativos = int(resolved_run_payload.get("negative_count", 0))
+	level_resource.cantidadPositivos = int(resolved_run_payload.get("positive_count", 0))
 
 
 func restore_or_start(saved_level_state: Dictionary) -> void:
-	var restored_saved_items: bool = _restore_saved_runtime_items(saved_level_state)
-	if restored_saved_items:
-		_restore_runtime_layout(saved_level_state)
+	if _plate_sort_state_service.restore_items(saved_level_state):
+		_level_manager.layout_runtime_items()
+		_plate_sort_state_service.restore_items_in_plate(saved_level_state)
 		return
 
 	_spawn_items_for_active_run()
@@ -38,9 +38,12 @@ func restore_or_start(saved_level_state: Dictionary) -> void:
 
 
 func _resolve_run_payload(run_data: Dictionary) -> Dictionary:
-	var raw_payload: Variant = run_data.get("mechanic_payload", {})
-	if raw_payload is Dictionary and not (raw_payload as Dictionary).is_empty():
-		return (raw_payload as Dictionary).duplicate(true)
+	var stored_mechanic_payload: Variant = run_data.get("mechanic_payload", {})
+	if (
+		stored_mechanic_payload is Dictionary
+		and not (stored_mechanic_payload as Dictionary).is_empty()
+	):
+		return (stored_mechanic_payload as Dictionary).duplicate(true)
 	return {
 		"negative_count": int(run_data.get("negative_count", 0)),
 		"positive_count": int(run_data.get("positive_count", 0)),
@@ -48,16 +51,16 @@ func _resolve_run_payload(run_data: Dictionary) -> Dictionary:
 	}
 
 
-func _restore_saved_runtime_items(saved_level_state: Dictionary) -> bool:
-	return _plate_sort_state_service.restore_items(saved_level_state)
-
-
 func _spawn_items_for_active_run() -> void:
 	var level_resource = _level_manager.level_resource
 	var track_key: String = _level_manager.active_track_key
-	var raw_payload: Variant = level_resource.mechanic_payload
-	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
-	var category_code: String = str(payload.get("category", ""))
+	var stored_mechanic_payload: Variant = level_resource.mechanic_payload
+	var run_payload: Dictionary = (
+		stored_mechanic_payload
+		if stored_mechanic_payload is Dictionary
+		else {}
+	)
+	var category_code: String = str(run_payload.get("category", ""))
 
 	var positive_items: Array = _level_manager.filter_items_by_category(
 		level_resource.get_positive_items(track_key),
@@ -92,11 +95,6 @@ func _spawn_items_for_active_run() -> void:
 			"negative_%d" % item_index,
 			false
 		)
-
-
-func _restore_runtime_layout(saved_level_state: Dictionary) -> void:
-	_level_manager.layout_runtime_items()
-	_plate_sort_state_service.restore_items_in_plate(saved_level_state)
 
 
 func build_partial_state() -> Dictionary:
