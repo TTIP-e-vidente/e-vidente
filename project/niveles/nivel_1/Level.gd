@@ -9,8 +9,8 @@ const SAVE_FEEDBACK_ERROR_TITLE := "No se pudo guardar"
 const SAVE_FEEDBACK_DEFAULT_TIME_LINE := "Guardado en este dispositivo"
 const SAVE_FEEDBACK_DEFAULT_ERROR_MESSAGE := "Reintenta de nuevo en unos segundos"
 const SAVE_FEEDBACK_RESET_WAIT_TIME := 3.0
-const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/logro-sin-realizar.png"
-const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/logro-realizado.png"
+const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
+const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const DEFAULT_BACKGROUND_MUSIC_PATH := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
@@ -50,6 +50,9 @@ const DEBUG_STREAK_SAMPLE_BEST_COUNT := 7
 @onready var save_feedback_label: Label = (
 	$SaveFeedbackBackdrop/SaveFeedbackPadding/SaveFeedbackStack/SaveFeedbackLabel
 )
+@onready var _streak_chip: PanelContainer = $HUDLayer/StreakChip
+@onready var _chip_count_label: Label = $HUDLayer/StreakChip/Inner/Row/CountLabel
+@onready var _chip_unit_label: Label = $HUDLayer/StreakChip/Inner/Row/UnitLabel
 
 var save_feedback_timer: Timer
 var active_track_key := ""
@@ -62,6 +65,7 @@ func _ready() -> void:
 	_start_level_flow()
 	_configure_quick_save_feedback()
 	_configure_streak_progress_overlay()
+	_update_streak_chip()
 	call_deferred("_apply_debug_demo_flags")
 
 
@@ -441,11 +445,18 @@ func _show_feedback_card(
 	title_color: Color,
 	body_color: Color
 ) -> void:
-	save_feedback_backdrop.visible = true
 	save_feedback_title.text = title
 	save_feedback_label.text = message
 	save_feedback_title.modulate = title_color
 	save_feedback_label.modulate = body_color
+
+	save_feedback_backdrop.modulate = Color(1, 1, 1, 0.0)
+	save_feedback_backdrop.position.y -= 10
+	save_feedback_backdrop.visible = true
+	var tween := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.set_parallel(true)
+	tween.tween_property(save_feedback_backdrop, "modulate:a", 1.0, 0.22)
+	tween.tween_property(save_feedback_backdrop, "position:y", save_feedback_backdrop.position.y + 10, 0.22)
 
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
@@ -521,6 +532,32 @@ func _build_debug_streak_feedback() -> Dictionary:
 		"current_count": DEBUG_STREAK_SAMPLE_CURRENT_COUNT,
 		"best_count": DEBUG_STREAK_SAMPLE_BEST_COUNT
 	}
+
+
+func _update_streak_chip() -> void:
+	var vm := Global.get_streak_view_model()
+	var count := int(vm.get("current_count", 0))
+	_chip_count_label.text = str(count)
+	_chip_unit_label.text = "DÍA" if count == 1 else "DÍAS"
+	if count <= 0:
+		_streak_chip.visible = false
+		return
+	_streak_chip.visible = true
+	_streak_chip.modulate = Color(1, 1, 1, 0)
+	_streak_chip.scale = Vector2(0.75, 0.75)
+	_streak_chip.pivot_offset = Vector2(28, 28)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(_streak_chip, "modulate:a", 1.0, 0.30) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(_streak_chip, "scale", Vector2.ONE, 0.35) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.set_parallel(false)
+	t.tween_interval(0.8)
+	t.tween_property(_streak_chip, "scale", Vector2(1.06, 1.06), 0.14) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_property(_streak_chip, "scale", Vector2.ONE, 0.14) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _configure_streak_progress_overlay() -> void:
