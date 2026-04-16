@@ -1,5 +1,4 @@
 extends RefCounted
-class_name LevelMechanicController
 
 var _level_manager
 
