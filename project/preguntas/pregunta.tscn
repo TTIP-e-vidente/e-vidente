@@ -1,25 +1,35 @@
 [gd_scene format=3 uid="uid://btw41ex60ytny"]
 
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
-[ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/preguntas_control.gd" id="1_dlf6l"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
+[ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/pregunta.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
 [ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_78ome"]
-[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="4_78ome"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="7_x3ikk"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = -6.525
 font = ExtResource("6_x3ikk")
 font_size = 26
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ecatg"]
+shader = ExtResource("7_x3ikk")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eder2"]
+shader = ExtResource("7_x3ikk")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
+
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
 quiz = ExtResource("2_onqq7")
-correcto = Color(0.25544092, 0.55395013, 0.24246675, 1)
-incorrecto = Color(0.8098167, 0.29154578, 0.21364143, 1)
 
 [node name="Contenido" type="Control" parent="." unique_id=1424383837]
 layout_mode = 3
@@ -87,25 +97,32 @@ offset_bottom = 65.0
 
 [node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 454.0
-offset_right = 899.0
-offset_bottom = 682.0
+offset_left = 423.6
+offset_top = 429.805
+offset_right = 814.81464
+offset_bottom = 735.0703
 theme_override_constants/separation = 20
 
-[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
+[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=24985177]
+z_as_relative = false
+material = SubResource("ShaderMaterial_ecatg")
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 24
-icon = ExtResource("4_78ome")
+theme_override_constants/align_to_largest_stylebox = 0
+theme_override_font_sizes/font_size = 25
+icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
 
-[node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
+[node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1340327289]
+show_behind_parent = true
+z_as_relative = false
+material = SubResource("ShaderMaterial_eder2")
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.07
-theme_override_font_sizes/font_size = 24
+theme_override_constants/align_to_largest_stylebox = 0
+theme_override_font_sizes/font_size = 25
 icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
