@@ -434,55 +434,6 @@ level_resource_path = "res://niveles/nivel_3/level_3.tres"
 volume_db = -4.962
 attenuation = 2.07053
 
-[node name="HUDLayer" type="CanvasLayer" parent="."]
-layer = 10
-
-[node name="StreakChip" type="PanelContainer" parent="HUDLayer"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 3
-anchors_preset = 0
-anchor_left = 0.0
-anchor_right = 0.0
-anchor_top = 0.0
-anchor_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
-offset_left = 20
-offset_right = 76
-offset_top = 20
-offset_bottom = 76
-theme_override_styles/panel = SubResource("StyleBoxFlat_hud_chip")
-
-[node name="Inner" type="MarginContainer" parent="HUDLayer/StreakChip"]
-layout_mode = 2
-theme_override_constants/margin_left = 0
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 0
-theme_override_constants/margin_bottom = 6
-
-[node name="Row" type="VBoxContainer" parent="HUDLayer/StreakChip/Inner"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 0
-
-[node name="CountLabel" type="Label" parent="HUDLayer/StreakChip/Inner/Row"]
-layout_mode = 2
-size_flags_horizontal = 3
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "0"
-
-[node name="UnitLabel" type="Label" parent="HUDLayer/StreakChip/Inner/Row"]
-layout_mode = 2
-size_flags_horizontal = 3
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(1, 1, 1, 0.80)
-text = "DÍA"
-
 [connection signal="input_event" from="Menú" to="Menú" method="_on_input_event"]
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entered"]
 [connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_exited"]

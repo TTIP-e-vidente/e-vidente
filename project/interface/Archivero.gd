@@ -60,7 +60,8 @@ const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
 	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
 	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressLabel
 )
-@onready var streak_badge: StreakBadge = (
+@onready var menu_streak_badge: Node = $CanvasLayer/ModeSelectionStreakBadge
+@onready var profile_streak_badge: StreakBadge = (
 	$ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/
 	SummaryPanel/MarginContainer/SummaryContent/InfoColumn/StreakBadge
 )
@@ -92,8 +93,8 @@ var _archivero_ui_helper         = ArchiveroUiHelperScript.new()
 func _ready() -> void:
 	background.play()
 	_connect_save_manager_signals()
-	open_profile_button.icon = SAVE_ICON_IDLE
-	open_profile_button.text = "Mi progreso"
+	_set_profile_toggle_button_label("Mi progreso")
+	_set_profile_toggle_button_status_icon(SAVE_ICON_IDLE)
 	reset_progress_button.text = "Reiniciar progreso"
 	_set_history_view_visible(false)
 	open_profile_button.visible = not profile_overlay.visible
@@ -132,7 +133,9 @@ func _exit_tree() -> void:
 func _refresh_profile_overlay() -> void:
 	var profile := SaveManager.get_current_user_profile()
 	var save_status := SaveManager.get_save_status()
-	var username_text := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
+	var username_text := str(
+		profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
+	).strip_edges()
 	username_label.text = (
 		username_text
 		if not username_text.is_empty()
@@ -153,10 +156,7 @@ func _refresh_profile_overlay() -> void:
 		if progress_summary_text.is_empty()
 		else progress_summary_text
 	)
-	if streak_badge == null or not is_instance_valid(streak_badge):
-		pass
-	else:
-		streak_badge.render()
+	_refresh_streak_badges()
 
 	save_status_label.text = _archivero_ui_helper.format_save_status(save_status)
 	open_profile_button.tooltip_text = _archivero_ui_helper.build_toggle_tooltip(save_status)
@@ -186,6 +186,35 @@ func _refresh_profile_overlay() -> void:
 
 	open_profile_button.visible = not profile_overlay.visible
 	close_profile_button.visible = profile_overlay.visible
+
+
+func _refresh_streak_badges() -> void:
+	if (
+		menu_streak_badge != null
+		and is_instance_valid(menu_streak_badge)
+		and menu_streak_badge.has_method("render")
+	):
+		menu_streak_badge.call("render")
+	if profile_streak_badge != null and is_instance_valid(profile_streak_badge):
+		profile_streak_badge.render()
+
+
+func _set_profile_toggle_button_label(button_label: String) -> void:
+	if open_profile_button == null or not is_instance_valid(open_profile_button):
+		return
+	if open_profile_button.has_method("set_label_text"):
+		open_profile_button.call("set_label_text", button_label)
+		return
+	open_profile_button.text = button_label
+
+
+func _set_profile_toggle_button_status_icon(status_icon: Texture2D) -> void:
+	if open_profile_button == null or not is_instance_valid(open_profile_button):
+		return
+	if open_profile_button.has_method("set_status_icon"):
+		open_profile_button.call("set_status_icon", status_icon)
+		return
+	open_profile_button.icon = status_icon
 
 
 ## --- Señales de SaveManager ---
@@ -321,11 +350,11 @@ func _show_saved_icon_feedback() -> void:
 		str(save_status.get("state", "")) == "error"
 		or str(save_status.get("last_saved_reason", "")) == ""
 	):
-		open_profile_button.icon = SAVE_ICON_IDLE
+		_set_profile_toggle_button_status_icon(SAVE_ICON_IDLE)
 		return
 	_save_icon_feedback_revision += 1
 	var feedback_revision := _save_icon_feedback_revision
-	open_profile_button.icon = SAVE_ICON_OK
+	_set_profile_toggle_button_status_icon(SAVE_ICON_OK)
 	_reset_saved_icon_after_delay(feedback_revision)
 
 
@@ -333,7 +362,7 @@ func _reset_saved_icon_after_delay(revision: int) -> void:
 	await get_tree().create_timer(1.6).timeout
 	if not is_inside_tree() or revision != _save_icon_feedback_revision:
 		return
-	open_profile_button.icon = SAVE_ICON_IDLE
+	_set_profile_toggle_button_status_icon(SAVE_ICON_IDLE)
 
 
 func _set_history_view_visible(history_visible: bool) -> void:

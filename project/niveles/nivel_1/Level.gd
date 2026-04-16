@@ -66,10 +66,6 @@ const DEBUG_STREAK_SAMPLE_BEST_COUNT     := 7
 )
 
 ## --- Estado runtime ---
-var _streak_chip:       PanelContainer = null
-var _chip_count_label:  Label          = null
-var _chip_unit_label:   Label          = null
-
 var save_feedback_timer:   Timer  = null
 var active_track_key:      String = ""
 var save_icon_idle:        Texture2D = null
@@ -79,13 +75,9 @@ var _current_run_completion_handled := false
 
 
 func _ready() -> void:
-	_streak_chip = get_node_or_null("HUDLayer/StreakChip") as PanelContainer
-	_chip_count_label = get_node_or_null("HUDLayer/StreakChip/Inner/Row/CountLabel") as Label
-	_chip_unit_label = get_node_or_null("HUDLayer/StreakChip/Inner/Row/UnitLabel") as Label
 	_start_level_flow()
 	_configure_quick_save_feedback()
 	_configure_streak_progress_overlay()
-	_update_streak_chip()
 	call_deferred("_apply_debug_demo_flags")
 
 
@@ -523,37 +515,6 @@ func _build_debug_streak_feedback() -> Dictionary:
 		"current_count": DEBUG_STREAK_SAMPLE_CURRENT_COUNT,
 		"best_count": DEBUG_STREAK_SAMPLE_BEST_COUNT
 	}
-
-
-## --- HUD racha ---
-
-func _update_streak_chip() -> void:
-	if _streak_chip == null:
-		return
-	var vm := Global.get_streak_view_model()
-	var count := int(vm.get("current_count", 0))
-	_chip_count_label.text = str(count)
-	_chip_unit_label.text = "DÍA" if count == 1 else "DÍAS"
-	if count <= 0:
-		_streak_chip.visible = false
-		return
-	_streak_chip.visible = true
-	_streak_chip.modulate = Color(1, 1, 1, 0)
-	_streak_chip.scale = Vector2(0.75, 0.75)
-	_streak_chip.pivot_offset = Vector2(28, 28)
-	var t := create_tween()
-	t.set_parallel(true)
-	t.tween_property(_streak_chip, "modulate:a", 1.0, 0.30) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(_streak_chip, "scale", Vector2.ONE, 0.35) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.set_parallel(false)
-	t.tween_interval(0.8)
-	t.tween_property(_streak_chip, "scale", Vector2(1.06, 1.06), 0.14) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	t.tween_property(_streak_chip, "scale", Vector2.ONE, 0.14) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
 
 func _configure_streak_progress_overlay() -> void:
 	if streak_progress_overlay != null and is_instance_valid(streak_progress_overlay):

@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://interface/Archivero.gd" id="1_vbpnf"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_4l60g"]
@@ -8,8 +8,9 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="9_dbicon"]
 [ext_resource type="PackedScene" path="res://interface/components/StreakBadge.tscn" id="10_streakbadge"]
+[ext_resource type="PackedScene" path="res://interface/components/StreakDailySeal.tscn" id="11_streakseal"]
+[ext_resource type="Script" path="res://interface/components/ProfileProgressButton.gd" id="12_profile_toggle"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawer_panel"]
 bg_color = Color(1, 1, 1, 1)
@@ -184,6 +185,13 @@ flip_v = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
+[node name="ModeSelectionStreakBadge" parent="CanvasLayer" instance=ExtResource("11_streakseal")]
+offset_left = 10.0
+offset_top = 6.0
+offset_right = 146.0
+offset_bottom = 142.0
+mouse_filter = 2
+
 [node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer"]
 offset_left = 191.0
 offset_top = 126.0
@@ -215,25 +223,13 @@ file = "res://interface/libro.tscn"
 [node name="ProfileOverlayLayer" type="CanvasLayer" parent="."]
 
 [node name="ProfileToggleButton" type="Button" parent="ProfileOverlayLayer"]
-offset_left = 868.0
-offset_top = 20.0
-offset_right = 1088.0
-offset_bottom = 84.0
+offset_left = 924.0
+offset_top = 12.0
+offset_right = 1144.0
+offset_bottom = 76.0
 tooltip_text = "guardado de partida"
 modulate = Color(1, 1, 1, 0.94)
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_focus_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_hover_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_pressed_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/focus = SubResource("StyleBoxFlat_toggle_button")
-text = "Mi progreso"
-icon = ExtResource("9_dbicon")
-flat = true
+script = ExtResource("12_profile_toggle")
 
 [node name="ProfileOverlay" type="Control" parent="ProfileOverlayLayer"]
 visible = false
