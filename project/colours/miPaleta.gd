@@ -1,6 +1,11 @@
 extends Resource
 class_name MiPaleta
 
+const PRIMARY = Color("#A3D9A5")
+const SECONDARY = Color("#F2C94C")
+const HOVER = Color("#6FCF97")
+const DISABLED = Color("#D3D3D3")
+
 # Colores Principales (Fila Superior)
 @export var oro_claro: Color = Color("#dbc151")
 @export var naranja_tierra: Color = Color("#db9d4b")

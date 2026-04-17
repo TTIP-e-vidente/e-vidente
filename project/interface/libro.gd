@@ -17,7 +17,39 @@ var _active_track_key := ""
 
 func _ready() -> void:
 	_initialize_track_book_scene()
+	_setup_chapter_buttons()
 
+
+func _setup_chapter_buttons():
+	for child in chapter_container.get_children():
+		if child is Button:
+			child.mouse_entered.connect(_on_chapter_hover.bind(child))
+			child.mouse_exited.connect(_on_chapter_exit.bind(child))
+			child.pressed.connect(_on_chapter_pressed.bind(child))
+
+func _on_chapter_hover(button: Button):
+	var tween = create_tween()
+	tween.tween_property(button, "scale", Vector2(1.1, 1.1), 0.15)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _on_chapter_exit(button: Button):
+	var tween = create_tween()
+	tween.tween_property(button, "scale", Vector2(1, 1), 0.15)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _on_chapter_pressed(button: Button):
+	var tween = create_tween()
+	
+	var original_pos = button.position
+	
+	tween.tween_property(button, "position", original_pos + Vector2(0, 6), 0.05)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	
+	tween.tween_property(button, "position", original_pos, 0.08)\
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+					
 
 func _initialize_track_book_scene() -> void:
 	_active_track_key = _resolve_book_track_key()
