@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MapData" format=3 uid="uid://yqr50f14duer"]
+
+[sub_resource type="GDScript" id="GDScript_c0v2q"]
+script/source = "extends Resource
+
+class_name MapData
+
+@export var levels: Array[Dictionary] = []
+"
+
+[resource]
+script = SubResource("GDScript_c0v2q")
+levels = Array[Dictionary]([{}, {}, {}])
+metadata/_custom_type_script = "uid://dhohufexucioq"

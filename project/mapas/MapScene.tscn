@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://b83n8ya7ww7ee"]
+
+[ext_resource type="Script" uid="uid://crrhyx3f4rp2e" path="res://mapas/MapScene.gd" id="1_xmpkx"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_btgau"]
+[ext_resource type="PackedScene" uid="uid://kmsb3inpowgb" path="res://mapas/LevelNode.tscn" id="3_7kmkb"]
+[ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="4_2456x"]
+[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="5_8ea5f"]
+
+[node name="MapScene" type="Node2D" unique_id=971913902]
+script = ExtResource("1_xmpkx")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=824501897]
+light_mask = 524288
+visibility_layer = 524288
+offset_right = 1158.0001
+offset_bottom = 807.9999
+metadata/_edit_use_anchors_ = true
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=909156203]
+light_mask = 524288
+visibility_layer = 524288
+position = Vector2(580.1896, 412.68744)
+rotation = -3.1415927
+scale = Vector2(0.33047423, 0.33076382)
+texture = ExtResource("2_btgau")
+
+[node name="Button" type="TextureButton" parent="." unique_id=429268425]
+offset_right = 8.0
+offset_bottom = 8.0
+metadata/_edit_use_anchors_ = true
+
+[node name="curva" type="Sprite2D" parent="." unique_id=1962576876]
+position = Vector2(570.1594, 770)
+scale = Vector2(0.43979317, 0.55780816)
+texture = ExtResource("4_2456x")
+
+[node name="NodesContainer" type="Node2D" parent="." unique_id=2088499811]
+
+[node name="LevelNode" parent="NodesContainer" unique_id=257581998 instance=ExtResource("3_7kmkb")]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1604196530]
+position = Vector2(591.99994, 142)
+scale = Vector2(0.52793294, 0.52793294)
+texture = ExtResource("5_8ea5f")
