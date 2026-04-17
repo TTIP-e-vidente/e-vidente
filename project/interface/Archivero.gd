@@ -13,7 +13,6 @@ const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
 @export var debug_force_progress_overlay := false
 
 var background_music_player: AudioStreamPlayer2D
-var hover_animation: AnimationPlayer
 var profile_overlay: Control
 var profile_toggle_button: Button
 var close_profile_button: Button
@@ -69,7 +68,6 @@ func _exit_tree() -> void:
 
 func _cache_ui_nodes() -> void:
 	background_music_player = $Background as AudioStreamPlayer2D
-	hover_animation = $Anim as AnimationPlayer
 	reset_progress_dialog = $ResetProgressDialog as ConfirmationDialog
 	mode_selection_streak_badge = $CanvasLayer/ModeSelectionStreakBadge
 
@@ -282,14 +280,6 @@ func _on_close_profile_button_pressed() -> void:
 func _on_profile_backdrop_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_update_overlay_visibility(false)
-
-
-func _on_mouse_entered() -> void:
-	hover_animation.play("select")
-
-
-func _on_mouse_exited() -> void:
-	hover_animation.play("deselect")
 
 
 func _on_atras_pressed() -> void:
