@@ -8,16 +8,28 @@ const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
 @onready var resume_backdrop: ColorRect = $PlayBackdrop
 @onready var resume_panel: PanelContainer = $PlayPanel
 
+@onready var celiaquia: TextureButton = $MenuBar/Celiaquia
+@onready var veganismo: TextureButton = $MenuBar/Veganismo
+@onready var vegan_gf: TextureButton = $"MenuBar/Vegan-GF"
+@onready var cetogenica: TextureButton = $MenuBar/Cetogenica
+@onready var diabetes: TextureButton = $MenuBar/Diabetes
+@onready var autismo: TextureButton = $MenuBar/Autismo
 
 @onready var buttons := [
-	$MenuBar/Recetas,
-	$MenuBar/Preguntas,
-	$MenuBar/Salir
+	celiaquia,
+	veganismo,
+	vegan_gf,
+	cetogenica,
+	diabetes,
+	autismo
 ]
 
 func _ready() -> void:
 	_play_background_music()
 	_set_resume_overlay_visible(false)
+	
+	_set_button_enabled(diabetes, false)
+	_set_button_enabled(autismo, false)
 	
 	for b in buttons:
 		if b.material:
@@ -27,22 +39,40 @@ func _set_resume_overlay_visible(overlay_visible: bool) -> void:
 	resume_backdrop.visible = overlay_visible
 	resume_panel.visible = overlay_visible
 
-func _on_start_pressed() -> void:
-	_bounce_button($MenuBar/Recetas)
+func _on_celiaquia_pressed() -> void:
+	_bounce_button(celiaquia)
 	await get_tree().create_timer(0.15).timeout
 	_open_archivero()
 
 
-func _on_opciones_pressed() -> void:	
-	_bounce_button($MenuBar/Preguntas)
+func _on_veganismo_pressed() -> void:	
+	_bounce_button(veganismo)
 	await get_tree().create_timer(0.15).timeout
 	_open_questions_mode()
 
 
-func _on_salir_pressed() -> void:
-	_bounce_button($MenuBar/Salir)
+func _on_vegan_gf_pressed() -> void:
+	_bounce_button(vegan_gf)
 	await get_tree().create_timer(0.15).timeout
 	_quit_game()
+	
+func _on_cetogenica_pressed() -> void:
+	_bounce_button(cetogenica)
+	await get_tree().create_timer(0.15).timeout
+	_open_archivero()
+
+
+func _on_diabetes_pressed() -> void:	
+	_bounce_button(diabetes)
+	await get_tree().create_timer(0.15).timeout
+	# hacer que vaya al mapa de diabetes
+
+
+func _on_autismo_pressed() -> void:
+	_bounce_button(autismo)
+	await get_tree().create_timer(0.15).timeout
+	# hacer que vaya al mapa de autismo
+
 
 
 func _on_continue_pressed() -> void:
@@ -61,6 +91,9 @@ func _on_play_close_pressed() -> void:
 func _on_mode_pressed() -> void:
 	_set_resume_overlay_visible(false)
 
+func _set_button_enabled(button: BaseButton, enabled: bool) -> void:
+	button.disabled = not enabled
+	button.modulate = Color(1, 1, 1, 1) if enabled else Color(5, 5, 5, 1)
 
 func _on_atras_pressed() -> void:
 	GameSceneRouter.go_to_main_menu(get_tree())

@@ -2,13 +2,15 @@
 
 [ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
-[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_6uvpc"]
 [ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_6uvpc"]
-[ext_resource type="Texture2D" uid="uid://dat5d3t765v4l" path="res://assets-sistema/interfaz/selector-preguntas.png" id="4_g0ff0"]
-[ext_resource type="Texture2D" uid="uid://cd4i84fdabf0i" path="res://assets-sistema/interfaz/selector-recetas-png.png" id="5_fsij2"]
-[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="6_lo2a7"]
+[ext_resource type="Texture2D" uid="uid://d2bn2v4834a73" path="res://assets-sistema/selector/selector-celiaquia.png" id="4_x5wwr"]
+[ext_resource type="Texture2D" uid="uid://dps4jrytnvabq" path="res://assets-sistema/selector/selector-veganismo.png" id="5_lo2a7"]
+[ext_resource type="Texture2D" uid="uid://1yva1t6sigvf" path="res://assets-sistema/selector/selector-vegan-gf.png" id="6_5qkxe"]
 [ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="Texture2D" uid="uid://xaey3sbr1iy5" path="res://assets-sistema/selector/selector-cetogenica.png" id="7_xov0c"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
+[ext_resource type="Texture2D" uid="uid://co7k3gagotuj5" path="res://assets-sistema/selector/selector-diabetes.png" id="8_uk3qb"]
+[ext_resource type="Texture2D" uid="uid://4plop0koq1r6" path="res://assets-sistema/selector/selector-autismo.png" id="9_tiw82"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_px47c"]
 shader = ExtResource("4_6uvpc")
@@ -107,47 +109,73 @@ rotation = 3.1415927
 scale = Vector2(0.3337207, 0.32700717)
 texture = ExtResource("2_fsij2")
 
-[node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=960727714]
-position = Vector2(567, 183)
-scale = Vector2(0.43902442, 0.4390244)
-texture = ExtResource("3_6uvpc")
-
 [node name="MenuBar" type="MenuBar" parent="." unique_id=1246973931]
-offset_left = 400.0
-offset_top = 153.0
-offset_right = 772.0
-offset_bottom = 649.0
-scale = Vector2(1.14996, 1.14996)
+offset_left = 406.0
+offset_top = 24.0
+offset_right = 778.0
+offset_bottom = 520.0
+scale = Vector2(1.5899601, 1.5899601)
+start_index = -3
 
-[node name="Recetas" type="TextureButton" parent="MenuBar" unique_id=2034736627]
+[node name="Celiaquia" type="TextureButton" parent="MenuBar" unique_id=2034736627]
 material = SubResource("ShaderMaterial_px47c")
 layout_mode = 0
-offset_left = 16.695953
-offset_top = 146.96161
-offset_right = 548.6959
-offset_bottom = 344.9616
+offset_left = 15.748539
+offset_top = 18.11081
+offset_right = 547.74854
+offset_bottom = 216.11084
 scale = Vector2(0.48045883, 0.4908836)
-texture_normal = ExtResource("5_fsij2")
+texture_normal = ExtResource("4_x5wwr")
 
-[node name="Preguntas" type="TextureButton" parent="MenuBar" unique_id=411693344]
+[node name="Veganismo" type="TextureButton" parent="MenuBar" unique_id=411693344]
 material = SubResource("ShaderMaterial_x5wwr")
 layout_mode = 0
 offset_left = 16.695953
-offset_top = 274.79218
+offset_top = 89.7666
 offset_right = 548.6959
-offset_bottom = 472.79218
+offset_bottom = 287.7666
 scale = Vector2(0.48045886, 0.48045886)
-texture_normal = ExtResource("4_g0ff0")
+texture_normal = ExtResource("5_lo2a7")
 
-[node name="Salir" type="TextureButton" parent="MenuBar" unique_id=364315143]
-visible = false
+[node name="Vegan-GF" type="TextureButton" parent="MenuBar" unique_id=1640160193]
+material = SubResource("ShaderMaterial_px47c")
 layout_mode = 0
-offset_left = 16.522324
-offset_top = 351.31653
-offset_right = 548.52234
-offset_bottom = 549.3165
+offset_left = 16.695953
+offset_top = 161.42241
+offset_right = 548.6959
+offset_bottom = 359.42242
+scale = Vector2(0.48045883, 0.4908836)
+texture_normal = ExtResource("6_5qkxe")
+
+[node name="Cetogenica" type="TextureButton" parent="MenuBar" unique_id=1124666114]
+material = SubResource("ShaderMaterial_x5wwr")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 239.37761
+offset_right = 548.6959
+offset_bottom = 437.37762
 scale = Vector2(0.48045886, 0.48045886)
-texture_normal = ExtResource("6_lo2a7")
+texture_normal = ExtResource("7_xov0c")
+
+[node name="Diabetes" type="TextureButton" parent="MenuBar" unique_id=2010230787]
+material = SubResource("ShaderMaterial_px47c")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 314.97052
+offset_right = 548.6959
+offset_bottom = 512.9708
+scale = Vector2(0.48045883, 0.4908836)
+texture_normal = ExtResource("8_uk3qb")
+
+[node name="Autismo" type="TextureButton" parent="MenuBar" unique_id=265707750]
+material = SubResource("ShaderMaterial_x5wwr")
+layout_mode = 0
+offset_left = 16.522316
+offset_top = 386.62634
+offset_right = 548.52234
+offset_bottom = 584.62634
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("9_tiw82")
 
 [node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1688635768]
 visible = false
@@ -280,9 +308,12 @@ text = "
 icon = ExtResource("8_fsij2")
 flat = true
 
-[connection signal="pressed" from="MenuBar/Recetas" to="." method="_on_start_pressed"]
-[connection signal="pressed" from="MenuBar/Preguntas" to="." method="_on_opciones_pressed"]
-[connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
+[connection signal="pressed" from="MenuBar/Celiaquia" to="." method="_on_celiaquia_pressed"]
+[connection signal="pressed" from="MenuBar/Veganismo" to="." method="_on_veganismo_pressed"]
+[connection signal="pressed" from="MenuBar/Vegan-GF" to="." method="_on_vegan_gf_pressed"]
+[connection signal="pressed" from="MenuBar/Cetogenica" to="." method="_on_cetogenica_pressed"]
+[connection signal="pressed" from="MenuBar/Diabetes" to="." method="_on_diabetes_pressed"]
+[connection signal="pressed" from="MenuBar/Autismo" to="." method="_on_autismo_pressed"]
 [connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]
 [connection signal="pressed" from="PlayPanel/MarginContainer/Content/ContinueButton" to="." method="_on_continue_pressed"]
