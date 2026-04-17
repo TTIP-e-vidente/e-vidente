@@ -26,6 +26,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96
 @onready var adelante_1: Sprite2D = $Adelante/adelante1
 @onready var adelante_2: Sprite2D = $Adelante/adelante2
 @onready var adelante_3: Sprite2D = $Adelante/adelante3
+
+@export var paleta: MiPaleta
 @export var track_key_override := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @onready var background: AudioStreamPlayer2D = $Background
