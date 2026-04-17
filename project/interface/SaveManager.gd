@@ -30,7 +30,9 @@ const TEMP_SAVE_PATH := "user://save_data.tmp.json"
 const BACKUP_SAVE_PATH := "user://save_data.backup.json"
 const AVATARS_DIR := "user://avatars"
 const DEFAULT_PROFILE_NAME := "Perfil local"
+const HISTORY_LIMIT := 25
 const RESUME_CONTEXT_HUB := "hub"
+const RESUME_CONTEXT_BOOK := "book"
 const RESUME_CONTEXT_LEVEL := "level"
 const LOCAL_SAVE_ID := "local_save"
 const LOCAL_SAVE_TITLE := "Partida actual"
@@ -143,7 +145,10 @@ func get_current_user_profile() -> Dictionary:
 	if not stored_profile is Dictionary:
 		return {}
 
-	var normalized_profile: Dictionary = _profile_helper.normalize_profile_data(stored_profile, DEFAULT_PROFILE_NAME)
+	var normalized_profile: Dictionary = _profile_helper.normalize_profile_data(
+		stored_profile,
+		DEFAULT_PROFILE_NAME
+	)
 	if str(normalized_profile.get("username", "")).is_empty():
 		normalized_profile["username"] = DEFAULT_PROFILE_NAME
 	return normalized_profile
@@ -223,7 +228,11 @@ func record_manual_save() -> void:
 
 
 func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
-	if not allow_level_downgrade and str(get_resume_state().get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
+	if (
+		not allow_level_downgrade
+		and str(get_resume_state().get("context", RESUME_CONTEXT_HUB))
+		== RESUME_CONTEXT_LEVEL
+	):
 		return
 	_store_resume_state(_resume_helper.build_resume_state_for_book(track_key, Global.current_level))
 
@@ -279,7 +288,10 @@ func record_question_session_completed(question_count: int, score: int) -> void:
 	if question_count < 1:
 		return
 
-	Global.record_streak_activity("question_session_completed", {"question_count": question_count, "score": score})
+	Global.record_streak_activity(
+		"question_session_completed",
+		{"question_count": question_count, "score": score}
+	)
 	_capture_progress_snapshot()
 	_append_history(
 		"Sesion de preguntas completada (%d/%d)" % [score, question_count],
@@ -352,7 +364,12 @@ func _write_after_load_repair(
 			has_unsaved_changes = false
 			_emit_save_status("recovered", loaded_from, recovered_from)
 		else:
-			_emit_save_status("error", loaded_from, recovered_from, "No se pudo restaurar el save principal en disco.")
+			_emit_save_status(
+				"error",
+				loaded_from,
+				recovered_from,
+				"No se pudo restaurar el save principal en disco."
+			)
 		return
 
 	if recovered_from.is_empty():
@@ -367,7 +384,12 @@ func _write_save_to_disk(force: bool = false, reason: String = "save") -> bool:
 
 	var result: Dictionary = _disk_writer.write(save_data, _loaded_from, reason)
 	if not bool(result.get("ok", false)):
-		_emit_save_status("error", _loaded_from, _recovered_from, str(result.get("error_message", "")))
+		_emit_save_status(
+			"error",
+			_loaded_from,
+			_recovered_from,
+			str(result.get("error_message", ""))
+		)
 		return false
 
 	if bool(result.get("wrote_primary", false)):
@@ -444,4 +466,3 @@ func _emit_save_status(
 	_recovered_from = recovered_from
 	_last_error = last_error
 	save_status_changed.emit(get_save_status())
-

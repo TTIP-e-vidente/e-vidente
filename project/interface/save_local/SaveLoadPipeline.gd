@@ -82,7 +82,10 @@ func _apply_profile_shape(save_data: Dictionary) -> bool:
 		stored_profile = {}
 		changed = true
 
-	var profile: Dictionary = _profile_helper.normalize_profile_data(stored_profile, DEFAULT_PROFILE_NAME)
+	var profile: Dictionary = _profile_helper.normalize_profile_data(
+		stored_profile,
+		DEFAULT_PROFILE_NAME
+	)
 	if str(profile.get("username", "")).is_empty():
 		profile["username"] = DEFAULT_PROFILE_NAME
 		changed = true
@@ -176,7 +179,10 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 
 	var raw_profile: Variant = source_data.get("profile", {})
 	if raw_profile is Dictionary:
-		normalized["profile"] = _profile_helper.normalize_profile_data(raw_profile, DEFAULT_PROFILE_NAME)
+		normalized["profile"] = _profile_helper.normalize_profile_data(
+			raw_profile,
+			DEFAULT_PROFILE_NAME
+		)
 
 	var raw_progress: Variant = source_data.get("progress", {})
 	if raw_progress is Dictionary:

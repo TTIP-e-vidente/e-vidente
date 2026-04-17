@@ -168,10 +168,21 @@ func _refresh_preview_from_form(_text: String = "") -> void:
 	)
 
 
-func _update_preview_labels(username: String, email: String, age_text: String, avatar_path: String) -> void:
-	profile_name_preview_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
+func _update_preview_labels(
+	username: String,
+	email: String,
+	age_text: String,
+	avatar_path: String
+) -> void:
+	profile_name_preview_label.text = (
+		username
+		if not username.is_empty()
+		else SaveManager.DEFAULT_PROFILE_NAME
+	)
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
-	profile_age_preview_label.text = "Edad: %s" % (age_text if not age_text.is_empty() else "sin dato")
+	profile_age_preview_label.text = "Edad: %s" % (
+		age_text if not age_text.is_empty() else "sin dato"
+	)
 	avatar_preview.texture = SaveManager.load_avatar_texture(avatar_path)
 	avatar_placeholder_label.visible = avatar_preview.texture == null
 
