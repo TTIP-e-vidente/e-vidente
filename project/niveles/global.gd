@@ -8,12 +8,7 @@ const GameProgressStateStoreScript := preload(
 	"res://niveles/progress/GameProgressStateStore.gd"
 )
 
-var player_cambiante
-var is_dragging: Object
-var manager_level
 var current_level: int = 1
-
-const LEVELS_PER_BOOK := GameTrackCatalog.DEFAULT_LEVEL_COUNT
 
 var _content
 var _progress
@@ -118,9 +113,6 @@ func get_progress_system_state(system_key: String) -> Dictionary:
 func set_progress_system_state(system_key: String, system_state: Dictionary) -> void:
 	_progress.set_progress_system_state(system_key, system_state)
 
-
-func clear_progress_system_state(system_key: String) -> void:
-	_progress.clear_progress_system_state(system_key)
 
 
 func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:

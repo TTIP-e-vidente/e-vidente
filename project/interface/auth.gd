@@ -4,7 +4,6 @@ const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const ProfileFormHelperScript := preload("res://interface/helpers/ProfileFormHelper.gd")
 
 var profile_name_preview_label: Label
 var profile_email_preview_label: Label
@@ -22,9 +21,6 @@ var avatar_preview: TextureRect
 var save_profile_button: Button
 var back_button: Button
 var avatar_dialog: FileDialog
-
-var _form_helper = ProfileFormHelperScript.new()
-
 
 func _ready() -> void:
 	_cache_ui_nodes()
@@ -96,10 +92,15 @@ func _configure_static_ui() -> void:
 
 
 func _load_current_profile_state() -> void:
-	var current_profile: Dictionary = SaveManager.get_current_user_profile()
-	_populate_form_from_profile(current_profile)
+	var profile: Dictionary = SaveManager.get_current_user_profile()
+	_populate_form_from_profile(profile)
 	_refresh_avatar_controls()
-	_refresh_summary_from_profile(current_profile)
+	var username := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
+	var email := str(profile.get("email", "")).strip_edges()
+	var age := int(profile.get("age", 0))
+	_update_preview_labels(username, email, "" if age <= 0 else str(age), str(profile.get("avatar_path", "")))
+	var last_reason := str(SaveManager.get_save_status().get("last_saved_reason", ""))
+	summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ") if not last_reason.is_empty() else "Ultimo guardado: sin escrituras registradas."
 
 
 func _on_choose_avatar_button_pressed() -> void:
@@ -116,24 +117,21 @@ func _on_clear_avatar_button_pressed() -> void:
 
 func _on_register_button_pressed() -> void:
 	_set_feedback("", true)
-	var age_result: Dictionary = _form_helper.parse_age(age_input.text)
-	if not bool(age_result.get("ok", false)):
-		_set_feedback(
-			str(age_result.get(
-				"message",
-				"Ingresa una edad valida o deja el campo vacio."
-			)),
-			false
-		)
-		return
+	var age_text := age_input.text.strip_edges()
+	var parsed_age := 0
+	if not age_text.is_empty():
+		if not age_text.is_valid_int() or int(age_text) < 0:
+			_set_feedback("La edad debe ser un numero entero o quedar vacia.", false)
+			return
+		parsed_age = int(age_text)
 
 	var save_result: Dictionary = SaveManager.update_local_profile(
 		username_input.text,
-		int(age_result.get("value", 0)),
+		parsed_age,
 		email_input.text,
 		avatar_path_input.text
 	)
-	_handle_profile_save_result(save_result)
+	_on_profile_saved(save_result)
 
 
 func _on_login_button_pressed() -> void:
@@ -154,49 +152,39 @@ func _on_profile_field_changed(_new_text: String) -> void:
 	_refresh_preview_from_form()
 
 
-func _refresh_summary_from_profile(profile: Dictionary) -> void:
-	_render_profile_preview(
-		str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)),
-		str(profile.get("email", "")),
-		_form_helper.age_for_form(profile)
-	)
-	_update_avatar_preview(str(profile.get("avatar_path", "")))
-	_refresh_summary_save_status()
-
-
 func _refresh_preview_from_form() -> void:
-	_render_profile_preview(username_input.text, email_input.text, age_input.text)
-	_update_avatar_preview(avatar_path_input.text)
-
-
-func _refresh_summary_save_status() -> void:
-	summary_save_label.text = _form_helper.build_summary_save_text(
-		SaveManager.get_save_status()
+	var age_text := age_input.text.strip_edges()
+	var age_display: String
+	if age_text.is_empty():
+		age_display = ""
+	elif not age_text.is_valid_int() or int(age_text) < 0:
+		age_display = "revisar"
+	else:
+		age_display = age_text
+	_update_preview_labels(
+		username_input.text.strip_edges(),
+		email_input.text.strip_edges(),
+		age_display,
+		avatar_path_input.text
 	)
+
+
+func _update_preview_labels(username: String, email: String, age_text: String, avatar_path: String) -> void:
+	profile_name_preview_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
+	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
+	profile_age_preview_label.text = "Edad: %s" % (age_text if not age_text.is_empty() else "sin dato")
+	_update_avatar_preview(avatar_path)
 
 
 func _populate_form_from_profile(profile: Dictionary) -> void:
-	username_input.text = _form_helper.profile_name_for_form(
-		profile,
-		SaveManager.DEFAULT_PROFILE_NAME
-	)
-	age_input.text = _form_helper.age_for_form(profile)
+	var username := str(profile.get("username", ""))
+	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
+
+	var age := int(profile.get("age", 0))
+	age_input.text = "" if age <= 0 else str(age)
+
 	email_input.text = str(profile.get("email", ""))
 	avatar_path_input.text = str(profile.get("avatar_path", ""))
-
-
-func _render_profile_preview(profile_name: String, email: String, age_text: String) -> void:
-	var preview: Dictionary = _form_helper.build_preview(
-		profile_name,
-		email,
-		age_text,
-		SaveManager.DEFAULT_PROFILE_NAME
-	)
-	profile_name_preview_label.text = str(
-		preview.get("username", SaveManager.DEFAULT_PROFILE_NAME)
-	)
-	profile_email_preview_label.text = str(preview.get("email", "Mail: sin dato"))
-	profile_age_preview_label.text = str(preview.get("age", "Edad: sin dato"))
 
 
 func _update_avatar_preview(path: String) -> void:
@@ -216,7 +204,7 @@ func _refresh_avatar_controls() -> void:
 	clear_avatar_button.visible = has_avatar
 
 
-func _handle_profile_save_result(save_result: Dictionary) -> void:
+func _on_profile_saved(save_result: Dictionary) -> void:
 	var is_ok: bool = bool(save_result.get("ok", false))
 	_set_feedback(str(save_result.get("message", "")), is_ok)
 	if not is_ok:

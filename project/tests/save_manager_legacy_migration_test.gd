@@ -77,7 +77,6 @@ func _run() -> void:
 	_assert(str(profile.get("username", "")) == "Perfil legado", "La migracion deberia tomar el usuario apuntado por last_user")
 	_assert(str(profile.get("email", "")) == "legado@example.com", "La migracion deberia conservar el mail del save legado")
 	_assert(int(profile.get("age", 0)) == 34, "La migracion deberia conservar la edad del save legado")
-	_assert(SaveManager.get_users_count() == 1, "Tras migrar deberia existir un unico perfil local")
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "legacy_migration", "La metadata deberia marcar que el save provino de una migracion")
 
 	var summary: Dictionary = Global.get_progress_summary()

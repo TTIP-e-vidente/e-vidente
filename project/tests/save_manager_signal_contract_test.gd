@@ -9,8 +9,6 @@ var SaveManager
 var Global
 var failed := false
 var user_registered_count := 0
-var user_logged_in_count := 0
-var user_logged_out_count := 0
 var progress_saved_count := 0
 var progress_loaded_count := 0
 var save_status_events: Array[Dictionary] = []
@@ -41,7 +39,6 @@ func _run() -> void:
 	await process_frame
 	_assert(bool(profile_result.get("ok", false)), "La actualizacion del perfil deberia funcionar para probar señales")
 	_assert(user_registered_count == 1, "Actualizar el perfil deberia emitir user_registered una vez")
-	_assert(user_logged_in_count == 1, "Actualizar el perfil deberia emitir user_logged_in una vez")
 	_assert(progress_loaded_count == 1, "Actualizar el perfil deberia emitir progress_loaded una vez")
 	_assert(_has_save_state("dirty"), "Actualizar el perfil deberia marcar el save como dirty antes de persistir")
 	_assert(_has_saved_reason("profile_updated"), "Actualizar el perfil deberia publicar profile_updated en save_status_changed")
@@ -51,20 +48,6 @@ func _run() -> void:
 	await process_frame
 	_assert(progress_saved_count == 1, "El guardado manual deberia emitir progress_saved una vez")
 	_assert(_has_saved_reason("manual_save"), "El guardado manual deberia reflejar manual_save en save_status_changed")
-
-	SaveManager.sync_runtime_progress_from_current_save_and_emit_signal()
-	await process_frame
-	_assert(progress_loaded_count == 2, "La carga explicita del progreso deberia volver a emitir progress_loaded")
-
-	SaveManager.logout()
-	await process_frame
-	_assert(user_logged_out_count == 1, "El logout deberia emitir user_logged_out")
-	_assert(_has_saved_reason("progress_sync"), "El logout deberia sincronizar el progreso antes de salir")
-
-	var login_result: Dictionary = SaveManager.login_user("", "")
-	await process_frame
-	_assert(bool(login_result.get("ok", false)), "El login local simplificado deberia seguir funcionando")
-	_assert(user_logged_in_count == 2, "El login local deberia emitir user_logged_in nuevamente")
 
 	for index in range(SaveManager.HISTORY_LIMIT + 7):
 		SaveManager.record_manual_save()
@@ -85,8 +68,6 @@ func _resolve_singletons() -> void:
 
 func _connect_signals() -> void:
 	SaveManager.user_registered.connect(_on_user_registered)
-	SaveManager.user_logged_in.connect(_on_user_logged_in)
-	SaveManager.user_logged_out.connect(_on_user_logged_out)
 	SaveManager.progress_saved.connect(_on_progress_saved)
 	SaveManager.progress_loaded.connect(_on_progress_loaded)
 	SaveManager.save_status_changed.connect(_on_save_status_changed)
@@ -94,8 +75,6 @@ func _connect_signals() -> void:
 
 func _reset_counters() -> void:
 	user_registered_count = 0
-	user_logged_in_count = 0
-	user_logged_out_count = 0
 	progress_saved_count = 0
 	progress_loaded_count = 0
 	save_status_events.clear()
@@ -139,14 +118,6 @@ func _has_saved_reason(reason: String) -> bool:
 
 func _on_user_registered(_profile: Dictionary) -> void:
 	user_registered_count += 1
-
-
-func _on_user_logged_in(_profile: Dictionary) -> void:
-	user_logged_in_count += 1
-
-
-func _on_user_logged_out() -> void:
-	user_logged_out_count += 1
 
 
 func _on_progress_saved(_profile: Dictionary) -> void:

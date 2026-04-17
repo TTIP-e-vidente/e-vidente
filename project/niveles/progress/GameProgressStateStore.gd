@@ -2,6 +2,7 @@ extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameProgressKeys := preload("res://niveles/progress/GameProgressKeys.gd")
+const GameStreakTracker := preload("res://niveles/progress/GameStreakTracker.gd")
 
 const BOOK_LEVEL_COMPLETED_KEY := "completed"
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
@@ -178,77 +179,20 @@ func format_progress_summary_text(summary: Dictionary = {}) -> String:
 
 
 func get_streak_state() -> Dictionary:
-	return _read_streak_state(get_progress_system_state(STREAK_SYSTEM_KEY))
+	return GameStreakTracker.read(get_progress_system_state(STREAK_SYSTEM_KEY))
 
 
 func get_streak_view_model() -> Dictionary:
-	var streak_state: Dictionary = get_streak_state()
-	var current_count: int = int(streak_state.get("current_count", 0))
-	var best_count: int = int(streak_state.get("best_count", 0))
-	var last_activity_day: String = str(streak_state.get("last_activity_day", ""))
-	var today_day_key: String = Time.get_date_string_from_system(false)
-	if current_count <= 0:
-		return {
-			"current_count": 0,
-			"best_count": best_count,
-			"status_key": "inactive",
-			"status_title": "Sin racha activa",
-			"status_detail": "Completa una actividad para iniciar la racha."
-		}
+	return GameStreakTracker.view_model(get_streak_state())
 
-	if last_activity_day == today_day_key:
-		return {
-			"current_count": current_count,
-			"best_count": best_count,
-			"status_key": "active_today",
-			"status_title": "Racha activa",
-			"status_detail": "Hoy ya registraste una actividad."
-		}
 
-	return {
-		"current_count": current_count,
-		"best_count": best_count,
-		"status_key": "pending_today",
-		"status_title": "Racha pendiente hoy",
-		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy."
-	}
 func record_streak_activity(
 	activity_type: String,
 	metadata: Dictionary = {}
 ) -> Dictionary:
-	var streak_state: Dictionary = get_streak_state()
-	var today_day_key: String = Time.get_date_string_from_system(false)
-	var last_activity_day: String = str(streak_state.get("last_activity_day", ""))
-	var current_count: int = 1
-
-	if last_activity_day == today_day_key:
-		current_count = int(streak_state.get("current_count", 0))
-	elif not last_activity_day.is_empty():
-		var last_activity_day_unix: int = int(
-			Time.get_unix_time_from_datetime_string(last_activity_day)
-		)
-		var today_day_unix: int = int(
-			Time.get_unix_time_from_datetime_string(today_day_key)
-		)
-		var day_difference: int = int(
-			(today_day_unix - last_activity_day_unix) / 86400.0
-		)
-		if day_difference == 1:
-			current_count = int(streak_state.get("current_count", 0)) + 1
-
-	var updated_streak_state: Dictionary = {
-		"current_count": current_count,
-		"best_count": max(int(streak_state.get("best_count", 0)), current_count),
-		"last_activity_day": today_day_key,
-		"last_activity_type": (
-			"activity"
-			if activity_type.strip_edges().is_empty()
-			else activity_type.strip_edges()
-		),
-		"last_track_key": str(metadata.get("track_key", "")).strip_edges()
-	}
-	set_progress_system_state(STREAK_SYSTEM_KEY, updated_streak_state)
-	return updated_streak_state
+	var updated: Dictionary = GameStreakTracker.record(get_streak_state(), activity_type, metadata)
+	set_progress_system_state(STREAK_SYSTEM_KEY, updated)
+	return updated
 
 
 func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
@@ -413,122 +357,86 @@ func _normalize_level_state(raw_level_state: Variant) -> Dictionary:
 	if not raw_level_state is Dictionary:
 		return {}
 
-	var stored_level_state: Dictionary = raw_level_state
-	var run_index: int = max(
-		1,
-		int(stored_level_state.get(GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY, 1))
-	)
-	var mechanic_type: String = str(
-		stored_level_state.get(GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, "")
-	).strip_edges()
-	var raw_mechanic_state: Variant = stored_level_state.get(
-		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY,
-		{}
-	)
-	var normalized_mechanic_state: Dictionary = {}
+	var state: Dictionary = raw_level_state
+	var run_index: int = max(1, int(state.get(GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)))
+	var mechanic_type: String = str(state.get(GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, "")).strip_edges()
+	var raw_mechanic_state: Variant = state.get(GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY, {})
 
+	var mechanic_state: Dictionary = {}
 	if mechanic_type.is_empty() or mechanic_type == PLATE_SORT_MECHANIC_TYPE:
-		var saved_plate_sort_state: Dictionary = {}
-		if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
-			saved_plate_sort_state = raw_mechanic_state
-		else:
-			saved_plate_sort_state = {
-				GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: stored_level_state.get(
-					GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY,
-					[]
-				),
-				GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: stored_level_state.get(
-					GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
-					[]
-				)
-			}
-
-		var saved_item_entries: Array = []
-		var positive_item_ids_by_instance: Dictionary = {}
-		var raw_saved_items: Variant = saved_plate_sort_state.get(
-			GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY,
-			[]
-		)
-		if raw_saved_items is Array:
-			for raw_saved_item in raw_saved_items:
-				if not raw_saved_item is Dictionary:
-					continue
-
-				var item_path: String = str(
-					raw_saved_item.get(GameProgressKeys.PARTIAL_LEVEL_ITEM_PATH_KEY, "")
-				).strip_edges()
-				var instance_id: String = str(
-					raw_saved_item.get(GameProgressKeys.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")
-				).strip_edges()
-				if item_path.is_empty() or instance_id.is_empty():
-					continue
-
-				var saved_item_entry: Dictionary = {
-					GameProgressKeys.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
-					GameProgressKeys.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
-					GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY: bool(
-						raw_saved_item.get(
-							GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY,
-							false
-						)
-					)
-				}
-				saved_item_entries.append(saved_item_entry)
-				if bool(
-					saved_item_entry.get(
-						GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY,
-						false
-					)
-				):
-					positive_item_ids_by_instance[instance_id] = true
-
-		var placed_positive_item_ids: Array = []
-		var raw_placed_item_ids: Variant = saved_plate_sort_state.get(
-			GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
-			[]
-		)
-		if raw_placed_item_ids is Array:
-			for raw_item_id in raw_placed_item_ids:
-				var item_id: String = str(raw_item_id).strip_edges()
-				if item_id.is_empty() or placed_positive_item_ids.has(item_id):
-					continue
-				if not positive_item_ids_by_instance.has(item_id):
-					continue
-
-				placed_positive_item_ids.append(item_id)
-
-		normalized_mechanic_state = {
-			GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: saved_item_entries,
-			GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: placed_positive_item_ids
-		}
+		mechanic_state = _normalize_plate_sort_mechanic(state, raw_mechanic_state)
 	elif raw_mechanic_state is Dictionary:
-		normalized_mechanic_state = (raw_mechanic_state as Dictionary).duplicate(true)
+		mechanic_state = (raw_mechanic_state as Dictionary).duplicate(true)
 
-	var has_saved_progress: bool = run_index > 1 or not normalized_mechanic_state.is_empty()
-	if mechanic_type.is_empty() and has_saved_progress:
+	if mechanic_type.is_empty() and (run_index > 1 or not mechanic_state.is_empty()):
 		mechanic_type = PLATE_SORT_MECHANIC_TYPE
 
-	if normalized_mechanic_state.is_empty() and run_index <= 1:
+	if mechanic_state.is_empty() and run_index <= 1:
 		return {}
 
-	var normalized_level_state: Dictionary = {
+	return {
 		GameProgressKeys.PARTIAL_LEVEL_RUN_INDEX_KEY: run_index,
 		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_TYPE_KEY: mechanic_type,
-		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY: normalized_mechanic_state
+		GameProgressKeys.PARTIAL_LEVEL_MECHANIC_STATE_KEY: mechanic_state,
+		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: mechanic_state.get(GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY, []),
+		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: mechanic_state.get(GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
 	}
 
-	if mechanic_type == PLATE_SORT_MECHANIC_TYPE:
-		normalized_level_state[GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY] = (
-			normalized_mechanic_state.get(GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY, [])
-		)
-		normalized_level_state[GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY] = (
-			normalized_mechanic_state.get(
-				GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY,
-				[]
-			)
-		)
 
-	return normalized_level_state
+func _normalize_plate_sort_mechanic(state: Dictionary, raw_mechanic_state: Variant) -> Dictionary:
+	# Si el mechanic_state tiene datos usarlo directamente; si no, leer desde la raíz (legado).
+	var plate_sort_state: Dictionary = {}
+	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
+		plate_sort_state = raw_mechanic_state
+	else:
+		plate_sort_state = {
+			GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: state.get(GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY, []),
+			GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: state.get(GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+		}
+
+	var items: Array = _normalize_plate_sort_items(plate_sort_state)
+	var valid_positive_ids: Dictionary = {}
+	for item in items:
+		if bool(item.get(GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY, false)):
+			valid_positive_ids[str(item.get(GameProgressKeys.PARTIAL_LEVEL_INSTANCE_ID_KEY, ""))] = true
+
+	return {
+		GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY: items,
+		GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY: _normalize_placed_ids(plate_sort_state, valid_positive_ids)
+	}
+
+
+func _normalize_plate_sort_items(plate_sort_state: Dictionary) -> Array:
+	var items: Array = []
+	var raw_items: Variant = plate_sort_state.get(GameProgressKeys.PARTIAL_LEVEL_ITEMS_KEY, [])
+	if not raw_items is Array:
+		return items
+	for raw_item in raw_items:
+		if not raw_item is Dictionary:
+			continue
+		var item_path: String = str(raw_item.get(GameProgressKeys.PARTIAL_LEVEL_ITEM_PATH_KEY, "")).strip_edges()
+		var instance_id: String = str(raw_item.get(GameProgressKeys.PARTIAL_LEVEL_INSTANCE_ID_KEY, "")).strip_edges()
+		if item_path.is_empty() or instance_id.is_empty():
+			continue
+		items.append({
+			GameProgressKeys.PARTIAL_LEVEL_ITEM_PATH_KEY: item_path,
+			GameProgressKeys.PARTIAL_LEVEL_INSTANCE_ID_KEY: instance_id,
+			GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY: bool(raw_item.get(GameProgressKeys.PARTIAL_LEVEL_IS_POSITIVE_KEY, false))
+		})
+	return items
+
+
+func _normalize_placed_ids(plate_sort_state: Dictionary, valid_positive_ids: Dictionary) -> Array:
+	var result: Array = []
+	var raw_ids: Variant = plate_sort_state.get(GameProgressKeys.PARTIAL_LEVEL_PLACED_ITEM_IDS_KEY, [])
+	if not raw_ids is Array:
+		return result
+	for raw_id in raw_ids:
+		var item_id: String = str(raw_id).strip_edges()
+		if item_id.is_empty() or result.has(item_id) or not valid_positive_ids.has(item_id):
+			continue
+		result.append(item_id)
+	return result
 
 
 func _remove_completed_partial_states(partial_level_states: Dictionary) -> void:
@@ -638,44 +546,3 @@ func _get_track_level_count(track_key: String) -> int:
 
 func _get_total_level_count() -> int:
 	return _content.get_total_level_count(GameTrackCatalog.get_total_level_count())
-
-
-func _read_streak_state(raw_state: Variant) -> Dictionary:
-	var streak_state: Dictionary = {
-		"current_count": 0,
-		"best_count": 0,
-		"last_activity_day": "",
-		"last_activity_type": "",
-		"last_track_key": ""
-	}
-	if not raw_state is Dictionary:
-		return streak_state
-
-	var stored_streak_state: Dictionary = raw_state
-	var current_count: int = max(0, int(stored_streak_state.get("current_count", 0)))
-	var best_count: int = max(current_count, int(stored_streak_state.get("best_count", 0)))
-	var last_activity_day: String = str(
-		stored_streak_state.get("last_activity_day", "")
-	).strip_edges()
-	if not last_activity_day.is_empty():
-		var last_activity_day_unix: int = int(
-			Time.get_unix_time_from_datetime_string(last_activity_day)
-		)
-		if Time.get_date_string_from_unix_time(last_activity_day_unix) != last_activity_day:
-			last_activity_day = ""
-			current_count = 0
-	else:
-		current_count = 0
-
-	streak_state["current_count"] = current_count
-	streak_state["best_count"] = best_count
-	streak_state["last_activity_day"] = last_activity_day
-	if not last_activity_day.is_empty():
-		streak_state["last_activity_type"] = str(
-			stored_streak_state.get("last_activity_type", "")
-		).strip_edges()
-		streak_state["last_track_key"] = str(
-			stored_streak_state.get("last_track_key", "")
-		).strip_edges()
-	return streak_state
-

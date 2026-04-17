@@ -1,5 +1,5 @@
 extends Container
-class_name ARCHIVERO_NIVELES
+class_name ArchiveroTrackItem
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
@@ -38,9 +38,7 @@ func _on_gui_input(event: InputEvent) -> void:
 	if not archive_highlighted:
 		return
 	var mouse_event := event as InputEventMouseButton
-	if mouse_event == null:
-		return
-	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+	if mouse_event == null or mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
 	if not track_key.is_empty() and GameTrackCatalog.has_track(track_key):
 		GameSceneRouter.go_to_track_book(get_tree(), track_key)
