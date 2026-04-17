@@ -2,35 +2,19 @@ extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
-var _archivero_scene: String
-var _resume_context_hub: String
-var _resume_context_book: String
-var _resume_context_level: String
-var _history_limit: int
-var _gameplay_history_types: Array
-
-
-func _init(
-	archivero_scene: String,
-	resume_context_hub: String,
-	resume_context_book: String,
-	resume_context_level: String,
-	history_limit: int,
-	gameplay_history_types: Array
-) -> void:
-	_archivero_scene = archivero_scene
-	_resume_context_hub = resume_context_hub
-	_resume_context_book = resume_context_book
-	_resume_context_level = resume_context_level
-	_history_limit = history_limit
-	_gameplay_history_types = gameplay_history_types.duplicate()
+const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const CONTEXT_HUB := "hub"
+const CONTEXT_BOOK := "book"
+const CONTEXT_LEVEL := "level"
+const HISTORY_LIMIT := 25
+const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
 
 
 func default_resume_state() -> Dictionary:
 	return {
-		"context": _resume_context_hub,
+		"context": CONTEXT_HUB,
 		"track_key": "",
-		"scene_path": _archivero_scene,
+		"scene_path": ARCHIVERO_SCENE,
 		"level_number": 1
 	}
 
@@ -40,7 +24,7 @@ func normalize_resume_state(raw_resume_state: Variant) -> Dictionary:
 		return default_resume_state()
 
 	var stored_resume_state: Dictionary = raw_resume_state
-	var context: String = str(stored_resume_state.get("context", _resume_context_hub)).strip_edges()
+	var context: String = str(stored_resume_state.get("context", CONTEXT_HUB)).strip_edges()
 	var track_key: String = str(stored_resume_state.get("track_key", "")).strip_edges()
 	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
 	if track_definition.is_empty():
@@ -51,18 +35,18 @@ func normalize_resume_state(raw_resume_state: Variant) -> Dictionary:
 		1,
 		Global.get_track_level_count(track_key)
 	)
-	if context == _resume_context_book:
+	if context == CONTEXT_BOOK:
 		return {
-			"context": _resume_context_book,
+			"context": CONTEXT_BOOK,
 			"track_key": track_key,
-			"scene_path": str(track_definition.get("book_scene_path", _archivero_scene)),
+			"scene_path": str(track_definition.get("book_scene_path", ARCHIVERO_SCENE)),
 			"level_number": level_number
 		}
-	if context == _resume_context_level:
+	if context == CONTEXT_LEVEL:
 		return {
-			"context": _resume_context_level,
+			"context": CONTEXT_LEVEL,
 			"track_key": track_key,
-			"scene_path": str(track_definition.get("level_scene_path", _archivero_scene)),
+			"scene_path": str(track_definition.get("level_scene_path", ARCHIVERO_SCENE)),
 			"level_number": level_number
 		}
 	return default_resume_state()
@@ -101,7 +85,7 @@ func store_resume_state(save_data: Dictionary, raw_resume_state: Dictionary) -> 
 func build_resume_state_for_book(track_key: String, current_level: int) -> Dictionary:
 	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
 	return {
-		"context": _resume_context_book,
+		"context": CONTEXT_BOOK,
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("book_scene_path", "")).strip_edges(),
 		"level_number": clampi(current_level, 1, Global.get_track_level_count(track_key))
@@ -111,7 +95,7 @@ func build_resume_state_for_book(track_key: String, current_level: int) -> Dicti
 func build_resume_state_for_level(track_key: String, level_number: int) -> Dictionary:
 	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
 	return {
-		"context": _resume_context_level,
+		"context": CONTEXT_LEVEL,
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
 		"level_number": clampi(level_number, 1, Global.get_track_level_count(track_key))
@@ -122,8 +106,8 @@ func append_history(save_data: Dictionary, message: String, metadata: Dictionary
 	var stored_history: Variant = save_data.get("history", [])
 	var history_entries: Array = stored_history if stored_history is Array else []
 	history_entries.push_front(_build_history_entry(message, metadata))
-	if history_entries.size() > _history_limit:
-		history_entries = history_entries.slice(0, _history_limit)
+	if history_entries.size() > HISTORY_LIMIT:
+		history_entries = history_entries.slice(0, HISTORY_LIMIT)
 	save_data["history"] = history_entries
 
 
@@ -139,23 +123,21 @@ func history_has_gameplay_progress(raw_history: Variant) -> bool:
 		var metadata: Dictionary = _read_history_metadata(history_entry)
 		if metadata.is_empty():
 			continue
-		if _gameplay_history_types.has(str(metadata.get("type", ""))):
+		if GAMEPLAY_HISTORY_TYPES.has(str(metadata.get("type", ""))):
 			return true
 	return false
 
 
 func format_resume_hint_from_state(resume_state: Dictionary) -> String:
-	var context: String = str(resume_state.get("context", _resume_context_hub))
+	var context: String = str(resume_state.get("context", CONTEXT_HUB))
 	var track_key: String = str(resume_state.get("track_key", ""))
 	var level_number: int = int(resume_state.get("level_number", 1))
 	var track_label: String = str(_build_track_label_by_key().get(track_key, "Tu progreso"))
-	match context:
-		_resume_context_level:
-			return "%s capitulo %d" % [track_label, level_number]
-		_resume_context_book:
-			return "%s seleccion de capitulos" % track_label
-		_:
-			return "el selector de modos"
+	if context == CONTEXT_LEVEL:
+		return "%s capitulo %d" % [track_label, level_number]
+	if context == CONTEXT_BOOK:
+		return "%s seleccion de capitulos" % track_label
+	return "el selector de modos"
 
 
 func is_saved_level_completed(
@@ -179,8 +161,8 @@ func _resolve_resume_state_with_history_fallback(
 	save_data: Dictionary,
 	normalized_resume_state: Dictionary
 ) -> Dictionary:
-	var context: String = str(normalized_resume_state.get("context", _resume_context_hub))
-	if context == _resume_context_level:
+	var context: String = str(normalized_resume_state.get("context", CONTEXT_HUB))
+	if context == CONTEXT_LEVEL:
 		return normalized_resume_state
 	var history_resume_state: Dictionary = _find_resume_state_in_history(save_data)
 	if history_resume_state.is_empty():
@@ -226,7 +208,7 @@ func _find_resume_state_in_history(save_data: Dictionary) -> Dictionary:
 
 
 func _build_resume_state_from_manual_save_metadata(metadata: Dictionary) -> Dictionary:
-	if str(metadata.get("context", "")).strip_edges() != _resume_context_level:
+	if str(metadata.get("context", "")).strip_edges() != CONTEXT_LEVEL:
 		return {}
 	var track_key: String = str(metadata.get("track", "")).strip_edges()
 	return build_resume_state_for_level(track_key, int(metadata.get("level", 1)))

@@ -221,9 +221,7 @@ func _resolve_singletons() -> void:
 func _cleanup_test_files() -> void:
 	if global_state != null:
 		global_state.reset_progress()
-		global_state.is_dragging = null
-		global_state.player_cambiante = null
-		global_state.manager_level = null
+		Item_level.is_dragging = null
 	if save_manager == null:
 		return
 	for relative_path in [

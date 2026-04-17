@@ -33,7 +33,7 @@ func _on_continue_pressed() -> void:
 	if not SaveManager.can_resume_current_save():
 		_set_resume_overlay_visible(false)
 		return
-	var resume_state := SaveManager.reload_current_save_and_get_resume_state()
+	var resume_state: Dictionary = SaveManager.reload_from_disk_and_get_resume()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
