@@ -92,27 +92,39 @@ func _cache_overlay_nodes() -> void:
 
 
 func _cache_profile_content_nodes() -> void:
-	var profile_content := profile_summary_panel.get_node("MarginContainer/ProfileContent") as Control
-	var summary_content := profile_content.get_node("SummaryPanel/MarginContainer/SummaryContent") as Control
+	var profile_content := profile_summary_panel.get_node(
+		"MarginContainer/ProfileContent"
+	) as Control
+	var summary_content := profile_content.get_node(
+		"SummaryPanel/MarginContainer/SummaryContent"
+	) as Control
 	var info_column := summary_content.get_node("InfoColumn") as Control
 	var status_row := profile_content.get_node("StatusRow") as Control
-	var resume_content := status_row.get_node("ResumeCard/MarginContainer/ResumeContent") as Control
+	var resume_content := status_row.get_node(
+		"ResumeCard/MarginContainer/ResumeContent"
+	) as Control
 	var secondary_actions_row := profile_content.get_node("SecondaryActionsRow") as Control
-	var history_content := profile_history_panel.get_node("MarginContainer/HistoryContent") as Control
+	var history_content := profile_history_panel.get_node(
+		"MarginContainer/HistoryContent"
+	) as Control
 
 	username_label = info_column.get_node("UsernameLabel") as Label
 	email_label = info_column.get_node("MetaRow/EmailBadge/MarginContainer/EmailLabel") as Label
 	age_label = info_column.get_node("MetaRow/AgeBadge/MarginContainer/AgeLabel") as Label
 	progress_summary_label = info_column.get_node("ProgressLabel") as Label
 	profile_streak_badge = info_column.get_node("StreakBadge") as StreakBadge
-	avatar_preview = summary_content.get_node("AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview") as TextureRect
+	avatar_preview = summary_content.get_node(
+		"AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview"
+	) as TextureRect
 	avatar_state_label = summary_content.get_node("AvatarColumn/AvatarState") as Label
 	save_status_label = status_row.get_node("SaveCard/MarginContainer/SaveStatusLabel") as Label
 	resume_hint_label = resume_content.get_node("ResumeHintLabel") as Label
 	resume_now_button = resume_content.get_node("ResumeNowButton") as Button
 	history_toggle_button = secondary_actions_row.get_node("HistoryToggleButton") as Button
 	reset_progress_button = secondary_actions_row.get_node("ResetProgressButton") as Button
-	history_log_label = history_content.get_node("HistoryBody/MarginContainer/HistoryText") as RichTextLabel
+	history_log_label = history_content.get_node(
+		"HistoryBody/MarginContainer/HistoryText"
+	) as RichTextLabel
 
 
 func _configure_static_ui() -> void:
@@ -139,7 +151,9 @@ func _refresh_profile_overlay() -> void:
 	var save_status: Dictionary = SaveManager.get_save_status()
 
 	# Identidad
-	var username: String = str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
+	var username: String = str(
+		profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
+	).strip_edges()
 	username_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
 	var email: String = str(profile.get("email", "")).strip_edges()
 	email_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
@@ -147,11 +161,20 @@ func _refresh_profile_overlay() -> void:
 	age_label.text = "Edad: %s" % (str(age) if age > 0 else "sin dato")
 
 	# Progreso
-	var summary_text := Global.format_progress_summary_text(Global.get_progress_summary()).strip_edges()
-	progress_summary_label.text = summary_text if not summary_text.is_empty() else "Todavia no hay capitulos completos"
+	var summary_text := Global.format_progress_summary_text(
+		Global.get_progress_summary()
+	).strip_edges()
+	progress_summary_label.text = (
+		summary_text
+		if not summary_text.is_empty()
+		else "Todavia no hay capitulos completos"
+	)
 
 	# Racha
-	if is_instance_valid(mode_selection_streak_badge) and mode_selection_streak_badge.has_method("render"):
+	if (
+		is_instance_valid(mode_selection_streak_badge)
+		and mode_selection_streak_badge.has_method("render")
+	):
 		mode_selection_streak_badge.call("render")
 	if is_instance_valid(profile_streak_badge):
 		profile_streak_badge.render()
@@ -168,7 +191,11 @@ func _refresh_profile_overlay() -> void:
 	var can_resume: bool = SaveManager.can_resume_current_save()
 	resume_now_button.visible = can_resume
 	resume_now_button.disabled = not can_resume
-	resume_hint_label.text = "Retoma en %s" % SaveManager.get_current_resume_hint() if can_resume else "Todavia no hay un punto guardado"
+	resume_hint_label.text = (
+		"Retoma en %s" % SaveManager.get_current_resume_hint()
+		if can_resume
+		else "Todavia no hay un punto guardado"
+	)
 
 	# Avatar
 	var avatar_texture: Texture2D = SaveManager.get_current_user_avatar_texture()
@@ -177,7 +204,11 @@ func _refresh_profile_overlay() -> void:
 
 	# Historial
 	var history_entries: Array = SaveManager.get_current_save_history()
-	history_log_label.text = _build_history_log_text(history_entries) if not history_entries.is_empty() else "Todavia no hay actividad guardada."
+	history_log_label.text = (
+		_build_history_log_text(history_entries)
+		if not history_entries.is_empty()
+		else "Todavia no hay actividad guardada."
+	)
 
 	_sync_overlay_button_visibility()
 
@@ -242,7 +273,10 @@ func _on_resume_now_button_pressed() -> void:
 
 func _on_editar_perfil_pressed() -> void:
 	SaveManager.save_progress_to_disk()
-	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE)  # el editor sabe a donde volver
+	get_tree().root.set_meta(
+		PROFILE_RETURN_SCENE_META,
+		ARCHIVERO_SCENE
+	)
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
@@ -332,14 +366,21 @@ func _format_save_status(status: Dictionary) -> String:
 	var error_message := str(status.get("last_error", ""))
 	match state:
 		"error":
-			return "No se pudo guardar.\n%s" % ("Reintenta de nuevo." if error_message.is_empty() else error_message)
+			return "No se pudo guardar.\n%s" % (
+				"Reintenta de nuevo."
+				if error_message.is_empty()
+				else error_message
+			)
 		"dirty":
 			return "Hay cambios sin guardar\nPresiona Guardar para conservarlos"
 		"saved":
 			return "Ultimo guardado: %s" % last_saved_at
 		_:
 			if last_saved_at == "sin datos" or last_saved_at.is_empty():
-				return "Todavia no hay guardado local\nUsa Guardar cuando quieras conservar este avance"
+				return (
+					"Todavia no hay guardado local\n"
+					+ "Usa Guardar cuando quieras conservar este avance"
+				)
 			return "Ultimo guardado: %s" % last_saved_at
 
 

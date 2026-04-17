@@ -10,6 +10,7 @@ var _storage_helper: RefCounted
 func _init(storage_helper: RefCounted) -> void:
 	_storage_helper = storage_helper
 
+
 func write(
 	save_data: Dictionary,
 	loaded_from: String,
@@ -63,16 +64,16 @@ func _backup_primary_if_needed(loaded_from: String) -> bool:
 
 
 func _replace_primary_with_temp(loaded_from: String) -> Dictionary:
-	_storage_helper.remove_file_if_exists(_save_path)
-	if _storage_helper.move_file(_temp_path, _save_path) == OK:
+	_storage_helper.remove_file_if_exists(SAVE_PATH)
+	if _storage_helper.move_file(TEMP_PATH, SAVE_PATH) == OK:
 		return {"ok": true, "wrote_primary": true}
 
-	if FileAccess.file_exists(_temp_path):
+	if FileAccess.file_exists(TEMP_PATH):
 		if loaded_from != "primary":
 			return {"ok": true, "wrote_primary": false}
 
-	if FileAccess.file_exists(_backup_path):
-		_storage_helper.copy_file(_backup_path, _save_path)
+	if FileAccess.file_exists(BACKUP_PATH):
+		_storage_helper.copy_file(BACKUP_PATH, SAVE_PATH)
 
 	return {"ok": false, "wrote_primary": false}
 
