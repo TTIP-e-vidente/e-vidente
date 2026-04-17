@@ -179,6 +179,8 @@ shadow_size = 8
 
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
+track_key_override = null
+background_music_path = null
 
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=2124096868]
 z_index = 1

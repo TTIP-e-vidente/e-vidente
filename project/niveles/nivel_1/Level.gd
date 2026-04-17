@@ -21,6 +21,11 @@ const SAVE_FEEDBACK_SUCCESS_BODY_COLOR := Color(0.266667, 0.227451, 0.156863, 0.
 const SAVE_FEEDBACK_ERROR_TITLE_COLOR := Color(0.568627, 0.184314, 0.141176, 1)
 const SAVE_FEEDBACK_ERROR_BODY_COLOR := Color(0.403922, 0.160784, 0.121569, 0.96)
 
+@onready var menu: Area2D = $Menú
+
+@onready var adelante_1: Sprite2D = $Adelante/adelante1
+@onready var adelante_2: Sprite2D = $Adelante/adelante2
+@onready var adelante_3: Sprite2D = $Adelante/adelante3
 @export var track_key_override := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @onready var background: AudioStreamPlayer2D = $Background
@@ -158,10 +163,26 @@ func complete_current_run() -> void:
 
 
 func _show_completed_run_feedback() -> void:
-	victory.show()
-	victory.play("victory")
+	
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
+
+	var chapter_fijo := _current_level_number()
+	while _current_level_number() == chapter_fijo:
+		adelante_2.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_2.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.hide()
+		await get_tree().create_timer(0.60).timeout
+
+
 
 
 func _persist_completed_level(track_key: String, level_number: int) -> void:

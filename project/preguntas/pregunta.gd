@@ -66,7 +66,6 @@ func _respuesta_boton(boton) -> void:
 	await get_tree().create_timer(1.2).timeout
 	_siguiente_pregunta()
 
-# ✅ BOUNCE REAL (ahora sí se mueve TODO)
 func _respuesta_correcta(boton):
 	var tween = create_tween()
 	
@@ -77,7 +76,6 @@ func _respuesta_correcta(boton):
 	tween.tween_property(boton, "scale", Vector2(1.05, 0.95), 0.08)
 	tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
 
-# ❌ SHAKE REAL
 func _respuesta_incorrecta(boton):
 	var tween = create_tween()
 	
