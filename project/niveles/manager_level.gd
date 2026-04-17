@@ -65,6 +65,7 @@ func get_total_runs() -> int:
 	return max(1, Global.get_chapter_run_count(active_track_key, Global.current_level))
 
 
+# Solo arma y devuelve el dict de estado parcial. No guarda nada.
 func build_partial_level_state() -> Dictionary:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
 		return {}
@@ -105,6 +106,7 @@ func build_partial_level_state() -> Dictionary:
 	}
 
 
+# Arma el estado parcial, lo guarda en Global y devuelve metadata de UI para el feedback.
 func store_partial_level_state(track_key: String) -> Dictionary:
 	var partial_level_state: Dictionary = build_partial_level_state()
 	Global.set_partial_level_state(

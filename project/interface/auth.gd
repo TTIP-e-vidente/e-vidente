@@ -25,7 +25,9 @@ var avatar_dialog: FileDialog
 func _ready() -> void:
 	_cache_ui_nodes()
 	_configure_static_ui()
-	_connect_live_preview_signals()
+	username_input.text_changed.connect(_refresh_preview_from_form)
+	age_input.text_changed.connect(_refresh_preview_from_form)
+	email_input.text_changed.connect(_refresh_preview_from_form)
 	_load_current_profile_state()
 	_set_feedback("Revisa la vista previa y guarda cuando este lista.", true)
 
@@ -93,14 +95,25 @@ func _configure_static_ui() -> void:
 
 func _load_current_profile_state() -> void:
 	var profile: Dictionary = SaveManager.get_current_user_profile()
-	_populate_form_from_profile(profile)
-	_refresh_avatar_controls()
-	var username := str(profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)).strip_edges()
-	var email := str(profile.get("email", "")).strip_edges()
+
+	# Llenar el formulario con los datos guardados
+	var username := str(profile.get("username", ""))
+	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
 	var age := int(profile.get("age", 0))
-	_update_preview_labels(username, email, "" if age <= 0 else str(age), str(profile.get("avatar_path", "")))
+	age_input.text = "" if age <= 0 else str(age)
+	email_input.text = str(profile.get("email", ""))
+	avatar_path_input.text = str(profile.get("avatar_path", ""))
+
+	# Actualizar controles de avatar y vista previa
+	_refresh_avatar_controls()
+	_update_preview_labels(username, email_input.text, age_input.text, avatar_path_input.text)
+
+	# Mostrar ultimo guardado
 	var last_reason := str(SaveManager.get_save_status().get("last_saved_reason", ""))
-	summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ") if not last_reason.is_empty() else "Ultimo guardado: sin escrituras registradas."
+	if last_reason.is_empty():
+		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
+	else:
+		summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ")
 
 
 func _on_choose_avatar_button_pressed() -> void:
@@ -131,7 +144,11 @@ func _on_register_button_pressed() -> void:
 		email_input.text,
 		avatar_path_input.text
 	)
-	_on_profile_saved(save_result)
+	var is_ok: bool = bool(save_result.get("ok", false))
+	_set_feedback(str(save_result.get("message", "")), is_ok)
+	if is_ok:
+		_load_current_profile_state()
+		_go_to_return_scene()
 
 
 func _on_login_button_pressed() -> void:
@@ -142,29 +159,11 @@ func _on_back_button_pressed() -> void:
 	_go_to_return_scene()
 
 
-func _connect_live_preview_signals() -> void:
-	for field in [username_input, age_input, email_input]:
-		if not field.text_changed.is_connected(_on_profile_field_changed):
-			field.text_changed.connect(_on_profile_field_changed)
-
-
-func _on_profile_field_changed(_new_text: String) -> void:
-	_refresh_preview_from_form()
-
-
-func _refresh_preview_from_form() -> void:
-	var age_text := age_input.text.strip_edges()
-	var age_display: String
-	if age_text.is_empty():
-		age_display = ""
-	elif not age_text.is_valid_int() or int(age_text) < 0:
-		age_display = "revisar"
-	else:
-		age_display = age_text
+func _refresh_preview_from_form(_text: String = "") -> void:
 	_update_preview_labels(
 		username_input.text.strip_edges(),
 		email_input.text.strip_edges(),
-		age_display,
+		age_input.text.strip_edges(),
 		avatar_path_input.text
 	)
 
@@ -173,22 +172,7 @@ func _update_preview_labels(username: String, email: String, age_text: String, a
 	profile_name_preview_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
 	profile_age_preview_label.text = "Edad: %s" % (age_text if not age_text.is_empty() else "sin dato")
-	_update_avatar_preview(avatar_path)
-
-
-func _populate_form_from_profile(profile: Dictionary) -> void:
-	var username := str(profile.get("username", ""))
-	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
-
-	var age := int(profile.get("age", 0))
-	age_input.text = "" if age <= 0 else str(age)
-
-	email_input.text = str(profile.get("email", ""))
-	avatar_path_input.text = str(profile.get("avatar_path", ""))
-
-
-func _update_avatar_preview(path: String) -> void:
-	avatar_preview.texture = SaveManager.load_avatar_texture(path)
+	avatar_preview.texture = SaveManager.load_avatar_texture(avatar_path)
 	avatar_placeholder_label.visible = avatar_preview.texture == null
 
 
@@ -202,16 +186,6 @@ func _refresh_avatar_controls() -> void:
 	var has_avatar: bool = not avatar_path_input.text.strip_edges().is_empty()
 	choose_avatar_button.text = "Cambiar foto" if has_avatar else "Elegir foto"
 	clear_avatar_button.visible = has_avatar
-
-
-func _on_profile_saved(save_result: Dictionary) -> void:
-	var is_ok: bool = bool(save_result.get("ok", false))
-	_set_feedback(str(save_result.get("message", "")), is_ok)
-	if not is_ok:
-		return
-
-	_load_current_profile_state()
-	_go_to_return_scene()
 
 
 func _set_feedback(message: String, success: bool) -> void:

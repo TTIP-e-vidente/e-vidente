@@ -1,44 +1,41 @@
 extends RefCounted
 
 
+const SAVE_PATH := "user://save_data.json"
+const TEMP_PATH := "user://save_data.tmp.json"
+const BACKUP_PATH := "user://save_data.backup.json"
+const SAVE_VERSION := 4
+const DEFAULT_PROFILE_NAME := "Perfil local"
+
 var _storage_helper: RefCounted
 var _profile_helper: RefCounted
 var _resume_helper: RefCounted
-var _save_path: String
-var _temp_path: String
-var _backup_path: String
-var _save_version: int
-var _default_profile_name: String
 
 
 func _init(
 	storage_helper: RefCounted,
 	profile_helper: RefCounted,
-	resume_helper: RefCounted,
-	save_path: String,
-	temp_path: String,
-	backup_path: String,
-	save_version: int,
-	default_profile_name: String
+	resume_helper: RefCounted
 ) -> void:
 	_storage_helper = storage_helper
 	_profile_helper = profile_helper
 	_resume_helper = resume_helper
-	_save_path = save_path
-	_temp_path = temp_path
-	_backup_path = backup_path
-	_save_version = save_version
-	_default_profile_name = default_profile_name
 
 
 # Carga save_data desde disco. Devuelve un contexto con:
 # {save_data, loaded_from, recovered_from, needs_write, rewrite_reason}
 func load_from_disk() -> Dictionary:
-	var context: Dictionary = _default_context()
+	var context: Dictionary = {
+		"save_data": default_save_data(),
+		"loaded_from": "default",
+		"recovered_from": "",
+		"needs_write": false,
+		"rewrite_reason": ""
+	}
 	var load_result: Dictionary = _storage_helper.load_available_save_data(
-		_save_path,
-		_temp_path,
-		_backup_path
+		SAVE_PATH,
+		TEMP_PATH,
+		BACKUP_PATH
 	)
 
 	if not bool(load_result.get("ok", false)):
@@ -78,16 +75,6 @@ func default_save_data() -> Dictionary:
 	return _build_default_save_data()
 
 
-func _default_context() -> Dictionary:
-	return {
-		"save_data": default_save_data(),
-		"loaded_from": "default",
-		"recovered_from": "",
-		"needs_write": false,
-		"rewrite_reason": ""
-	}
-
-
 func _apply_profile_shape(save_data: Dictionary) -> bool:
 	var changed := false
 	var stored_profile: Variant = save_data.get("profile", {})
@@ -95,9 +82,9 @@ func _apply_profile_shape(save_data: Dictionary) -> bool:
 		stored_profile = {}
 		changed = true
 
-	var profile: Dictionary = _profile_helper.normalize_profile_data(stored_profile, _default_profile_name)
+	var profile: Dictionary = _profile_helper.normalize_profile_data(stored_profile, DEFAULT_PROFILE_NAME)
 	if str(profile.get("username", "")).is_empty():
-		profile["username"] = _default_profile_name
+		profile["username"] = DEFAULT_PROFILE_NAME
 		changed = true
 
 	var created_at: String = str(profile.get("created_at", ""))
@@ -163,8 +150,15 @@ static func _default_save_meta() -> Dictionary:
 
 func _build_default_save_data() -> Dictionary:
 	return {
-		"version": _save_version,
-		"profile": _build_default_profile_data(),
+		"version": SAVE_VERSION,
+		"profile": {
+			"username": DEFAULT_PROFILE_NAME,
+			"age": 0,
+			"email": "",
+			"avatar_path": "",
+			"created_at": "",
+			"updated_at": ""
+		},
 		"save_meta": _default_save_meta(),
 		"resume_state": _resume_helper.default_resume_state().duplicate(true),
 		"progress": {},
@@ -172,28 +166,17 @@ func _build_default_save_data() -> Dictionary:
 	}
 
 
-func _build_default_profile_data() -> Dictionary:
-	return {
-		"username": _default_profile_name,
-		"age": 0,
-		"email": "",
-		"avatar_path": "",
-		"created_at": "",
-		"updated_at": ""
-	}
-
-
 func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
-	var default_resume_state: Dictionary = _resume_helper.default_resume_state()
-	var source_data: Dictionary = _flatten_legacy_sessions_if_needed(
-		_migrate_legacy_root_if_needed(raw_data, default_resume_state)
-	)
+	var migrated_data: Dictionary = raw_data
+	if raw_data.has("users"):
+		migrated_data = _migrate_legacy_save_data(raw_data)
+	var source_data: Dictionary = _flatten_legacy_sessions_if_needed(migrated_data)
 	var normalized: Dictionary = _build_default_save_data()
-	normalized["version"] = int(source_data.get("version", _save_version))
+	normalized["version"] = int(source_data.get("version", SAVE_VERSION))
 
 	var raw_profile: Variant = source_data.get("profile", {})
 	if raw_profile is Dictionary:
-		normalized["profile"] = _profile_helper.normalize_profile_data(raw_profile, _default_profile_name)
+		normalized["profile"] = _profile_helper.normalize_profile_data(raw_profile, DEFAULT_PROFILE_NAME)
 
 	var raw_progress: Variant = source_data.get("progress", {})
 	if raw_progress is Dictionary:
@@ -230,19 +213,7 @@ func _normalize_history(raw_history: Variant) -> Array:
 
 # --- Migración de formatos legacy ---
 
-func _migrate_legacy_root_if_needed(
-	raw_data: Dictionary,
-	default_resume_state: Dictionary
-) -> Dictionary:
-	if not raw_data.has("users"):
-		return raw_data
-	return _migrate_legacy_save_data(raw_data, default_resume_state)
-
-
-func _migrate_legacy_save_data(
-	raw_data: Dictionary,
-	default_resume_state: Dictionary
-) -> Dictionary:
+func _migrate_legacy_save_data(raw_data: Dictionary) -> Dictionary:
 	var normalized: Dictionary = _build_default_save_data()
 	var selected_user: Dictionary = _resolve_selected_legacy_user(raw_data)
 	if selected_user.is_empty():
@@ -250,14 +221,14 @@ func _migrate_legacy_save_data(
 
 	normalized["profile"] = _profile_helper.normalize_profile_data(
 		{
-			"username": selected_user.get("username", _default_profile_name),
+			"username": selected_user.get("username", DEFAULT_PROFILE_NAME),
 			"age": selected_user.get("age", 0),
 			"email": selected_user.get("email", ""),
 			"avatar_path": selected_user.get("avatar_path", ""),
 			"created_at": selected_user.get("created_at", ""),
 			"updated_at": selected_user.get("updated_at", "")
 		},
-		_default_profile_name
+		DEFAULT_PROFILE_NAME
 	)
 
 	var migrated_progress: Variant = selected_user.get("progress", {})

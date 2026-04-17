@@ -29,26 +29,19 @@ const SAVE_PATH := "user://save_data.json"
 const TEMP_SAVE_PATH := "user://save_data.tmp.json"
 const BACKUP_SAVE_PATH := "user://save_data.backup.json"
 const AVATARS_DIR := "user://avatars"
-const SAVE_VERSION := 4
-const HISTORY_LIMIT := 25
 const DEFAULT_PROFILE_NAME := "Perfil local"
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 const RESUME_CONTEXT_HUB := "hub"
-const RESUME_CONTEXT_BOOK := "book"
 const RESUME_CONTEXT_LEVEL := "level"
 const LOCAL_SAVE_ID := "local_save"
 const LOCAL_SAVE_TITLE := "Partida actual"
 const LOCAL_PROFILE_KEY := "local_profile"
-const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
 
 var save_data: Dictionary = {}
 var has_unsaved_changes: bool = false
-var runtime_save_status: Dictionary = {
-	"state": "idle",
-	"last_loaded_from": "default",
-	"recovered_from": "",
-	"last_error": ""
-}
+var _save_state: String = "idle"
+var _loaded_from: String = "default"
+var _recovered_from: String = ""
+var _last_error: String = ""
 
 var _profile_helper: RefCounted
 var _resume_helper: RefCounted
@@ -59,31 +52,10 @@ var _load_pipeline: RefCounted
 
 func _init() -> void:
 	_profile_helper = SaveLocalProfileHelperScript.new()
-	_resume_helper = SaveLocalResumeHelperScript.new(
-		ARCHIVERO_SCENE,
-		RESUME_CONTEXT_HUB,
-		RESUME_CONTEXT_BOOK,
-		RESUME_CONTEXT_LEVEL,
-		HISTORY_LIMIT,
-		GAMEPLAY_HISTORY_TYPES
-	)
+	_resume_helper = SaveLocalResumeHelperScript.new()
 	_storage_helper = SaveLocalStorageHelperScript.new()
-	_disk_writer = SaveDiskWriterScript.new(
-		_storage_helper,
-		SAVE_PATH,
-		TEMP_SAVE_PATH,
-		BACKUP_SAVE_PATH
-	)
-	_load_pipeline = SaveLoadPipelineScript.new(
-		_storage_helper,
-		_profile_helper,
-		_resume_helper,
-		SAVE_PATH,
-		TEMP_SAVE_PATH,
-		BACKUP_SAVE_PATH,
-		SAVE_VERSION,
-		DEFAULT_PROFILE_NAME
-	)
+	_disk_writer = SaveDiskWriterScript.new(_storage_helper)
+	_load_pipeline = SaveLoadPipelineScript.new(_storage_helper, _profile_helper, _resume_helper)
 
 
 func _ready() -> void:
@@ -96,10 +68,10 @@ func _notification(what: int) -> void:
 
 
 func load_data() -> void:
-	var load_result: Dictionary = _load_pipeline.load_from_disk()
-	save_data = load_result.get("save_data", _load_pipeline.default_save_data())
+	var result: Dictionary = _load_pipeline.load_from_disk()
+	save_data = result["save_data"]
 
-	var needs_write: bool = bool(load_result.get("needs_write", false))
+	var needs_write: bool = result["needs_write"]
 	if _load_pipeline.repair_structure(save_data):
 		_mark_save_dirty()
 		needs_write = true
@@ -107,9 +79,9 @@ func load_data() -> void:
 		_mark_save_dirty()
 		needs_write = true
 
-	var loaded_from: String = str(load_result.get("loaded_from", "default"))
-	var recovered_from: String = str(load_result.get("recovered_from", ""))
-	var rewrite_reason: String = str(load_result.get("rewrite_reason", ""))
+	var loaded_from: String = result["loaded_from"]
+	var recovered_from: String = result["recovered_from"]
+	var rewrite_reason: String = result["rewrite_reason"]
 
 	if needs_write:
 		_write_after_load_repair(loaded_from, recovered_from, rewrite_reason)
@@ -190,9 +162,13 @@ func save_progress_to_disk() -> void:
 
 func reload_from_disk_and_get_resume() -> Dictionary:
 	load_data()
-	var raw_progress: Variant = save_data.get("progress", {})
-	Global.import_progress(raw_progress if raw_progress is Dictionary else {})
-	return _apply_resume_level_to_global_state(get_resume_state())
+	var resume_state: Dictionary = get_resume_state()
+	Global.current_level = clampi(
+		int(resume_state.get("level_number", Global.current_level)),
+		1,
+		Global.get_track_level_count(str(resume_state.get("track_key", "")))
+	)
+	return resume_state
 
 
 func reset_all_progress() -> Dictionary:
@@ -215,21 +191,18 @@ func reset_all_progress() -> Dictionary:
 
 func _summarize_progress_data(progress: Variant) -> Dictionary:
 	var progress_data: Dictionary = progress if progress is Dictionary else {}
-	var summary: Dictionary = {
-		"total": 0,
-		"max_total": 0
-	}
+	var summary: Dictionary = {"total": 0, "max_total": 0}
 	for raw_track_key in GameTrackCatalog.get_track_keys():
 		var track_key: String = str(raw_track_key)
-		var completed_levels: int = _count_completed_levels(
-			progress_data.get(track_key, [])
-		)
-		summary[track_key] = completed_levels
-		summary["total"] = int(summary.get("total", 0)) + completed_levels
-		summary["max_total"] = (
-			int(summary.get("max_total", 0))
-			+ Global.get_track_level_count(track_key)
-		)
+		var flags: Variant = progress_data.get(track_key, [])
+		var completed: int = 0
+		if flags is Array:
+			for entry in flags:
+				if bool(entry):
+					completed += 1
+		summary[track_key] = completed
+		summary["total"] += completed
+		summary["max_total"] += Global.get_track_level_count(track_key)
 	return summary
 
 
@@ -250,25 +223,14 @@ func record_manual_save() -> void:
 
 
 func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
-	if not allow_level_downgrade:
-		var current_resume_state: Dictionary = get_resume_state()
-		if str(current_resume_state.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
-			return
-
-	var resume_state: Dictionary = _resume_helper.build_resume_state_for_book(
-		track_key,
-		Global.current_level
-	)
-	_store_resume_state(resume_state)
+	if not allow_level_downgrade and str(get_resume_state().get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
+		return
+	_store_resume_state(_resume_helper.build_resume_state_for_book(track_key, Global.current_level))
 
 
 func set_resume_to_level(track_key: String, level_number: int = -1) -> void:
-	var level_number_to_resume: int = Global.current_level if level_number < 1 else level_number
-	var resume_state: Dictionary = _resume_helper.build_resume_state_for_level(
-		track_key,
-		level_number_to_resume
-	)
-	_store_resume_state(resume_state)
+	var level: int = Global.current_level if level_number < 1 else level_number
+	_store_resume_state(_resume_helper.build_resume_state_for_level(track_key, level))
 
 
 func get_resume_state() -> Dictionary:
@@ -331,13 +293,13 @@ func get_save_status() -> Dictionary:
 	var meta: Dictionary = raw_meta if raw_meta is Dictionary else {}
 	var save_summary: Dictionary = get_current_save_summary()
 	return {
-		"state": str(runtime_save_status.get("state", "idle")),
+		"state": _save_state,
 		"last_saved_at": str(meta.get("last_saved_at", "")),
 		"last_saved_reason": str(meta.get("last_saved_reason", "")),
 		"write_count": max(0, int(meta.get("write_count", 0))),
-		"last_loaded_from": str(runtime_save_status.get("last_loaded_from", "default")),
-		"recovered_from": str(runtime_save_status.get("recovered_from", "")),
-		"last_error": str(runtime_save_status.get("last_error", "")),
+		"last_loaded_from": _loaded_from,
+		"recovered_from": _recovered_from,
+		"last_error": _last_error,
 		"has_unsaved_changes": has_unsaved_changes,
 		"save_id": str(save_summary.get("id", "")),
 		"save_title": str(save_summary.get("title", "")),
@@ -376,16 +338,13 @@ func get_current_save_summary() -> Dictionary:
 	}
 
 
-# Escribe a disco después de reparar el save durante la carga.
-# Unifica la lógica que antes estaba en _rewrite_repaired_save_data,
-# _emit_status_after_repaired_load y _emit_load_repair_write_error.
 func _write_after_load_repair(
 	loaded_from: String,
 	recovered_from: String,
 	reason: String
 ) -> void:
-	runtime_save_status["last_loaded_from"] = loaded_from
-	runtime_save_status["recovered_from"] = recovered_from
+	_loaded_from = loaded_from
+	_recovered_from = recovered_from
 	var effective_reason: String = reason if not reason.is_empty() else "load_repair"
 
 	if not _write_save_to_disk(true, effective_reason):
@@ -393,46 +352,30 @@ func _write_after_load_repair(
 			has_unsaved_changes = false
 			_emit_save_status("recovered", loaded_from, recovered_from)
 		else:
-			_emit_save_status(
-				"error", loaded_from, recovered_from,
-				"No se pudo restaurar el save principal en disco."
-			)
+			_emit_save_status("error", loaded_from, recovered_from, "No se pudo restaurar el save principal en disco.")
 		return
 
 	if recovered_from.is_empty():
-		_emit_save_status("ready", str(runtime_save_status.get("last_loaded_from", "primary")))
+		_emit_save_status("ready", _loaded_from)
 	else:
-		_emit_save_status(
-			"recovered",
-			str(runtime_save_status.get("last_loaded_from", loaded_from)),
-			recovered_from
-		)
+		_emit_save_status("recovered", _loaded_from, recovered_from)
 
 
 func _write_save_to_disk(force: bool = false, reason: String = "save") -> bool:
 	if not force and not has_unsaved_changes:
 		return true
 
-	var result: Dictionary = _disk_writer.write(save_data, runtime_save_status, reason)
+	var result: Dictionary = _disk_writer.write(save_data, _loaded_from, reason)
 	if not bool(result.get("ok", false)):
-		_emit_save_status(
-			"error",
-			str(runtime_save_status.get("last_loaded_from", "default")),
-			str(runtime_save_status.get("recovered_from", "")),
-			str(result.get("error_message", ""))
-		)
+		_emit_save_status("error", _loaded_from, _recovered_from, str(result.get("error_message", "")))
 		return false
 
 	if bool(result.get("wrote_primary", false)):
-		runtime_save_status["last_loaded_from"] = "primary"
-		runtime_save_status["recovered_from"] = ""
+		_loaded_from = "primary"
+		_recovered_from = ""
 
 	has_unsaved_changes = false
-	_emit_save_status(
-		"saved",
-		str(runtime_save_status.get("last_loaded_from", "default")),
-		str(runtime_save_status.get("recovered_from", ""))
-	)
+	_emit_save_status("saved", _loaded_from, _recovered_from)
 	return true
 
 
@@ -482,25 +425,11 @@ func _reset_current_save_data(profile: Dictionary) -> void:
 	_mark_save_dirty()
 
 
-func _apply_resume_level_to_global_state(resume_state: Dictionary) -> Dictionary:
-	var resume_track_key: String = str(resume_state.get("track_key", ""))
-	Global.current_level = clampi(
-		int(resume_state.get("level_number", Global.current_level)),
-		1,
-		Global.get_track_level_count(resume_track_key)
-	)
-	return resume_state
-
-
 func _mark_save_dirty() -> void:
 	if has_unsaved_changes:
 		return
 	has_unsaved_changes = true
-	_emit_save_status(
-		"dirty",
-		str(runtime_save_status.get("last_loaded_from", "default")),
-		str(runtime_save_status.get("recovered_from", ""))
-	)
+	_emit_save_status("dirty", _loaded_from, _recovered_from)
 
 
 func _emit_save_status(
@@ -509,18 +438,10 @@ func _emit_save_status(
 	recovered_from: String = "",
 	last_error: String = ""
 ) -> void:
-	runtime_save_status["state"] = state
+	_save_state = state
 	if not loaded_from.is_empty():
-		runtime_save_status["last_loaded_from"] = loaded_from
-	runtime_save_status["recovered_from"] = recovered_from
-	runtime_save_status["last_error"] = last_error
+		_loaded_from = loaded_from
+	_recovered_from = recovered_from
+	_last_error = last_error
 	save_status_changed.emit(get_save_status())
 
-
-func _count_completed_levels(track_progress: Variant) -> int:
-	var completed := 0
-	if track_progress is Array:
-		for entry in track_progress:
-			if bool(entry):
-				completed += 1
-	return completed

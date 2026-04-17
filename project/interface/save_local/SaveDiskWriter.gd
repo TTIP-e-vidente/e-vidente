@@ -1,25 +1,18 @@
 extends RefCounted
 
+const SAVE_PATH := "user://save_data.json"
+const TEMP_PATH := "user://save_data.tmp.json"
+const BACKUP_PATH := "user://save_data.backup.json"
+
 var _storage_helper: RefCounted
-var _save_path: String
-var _temp_path: String
-var _backup_path: String
 
 
-func _init(
-	storage_helper: RefCounted,
-	save_path: String,
-	temp_path: String,
-	backup_path: String
-) -> void:
+func _init(storage_helper: RefCounted) -> void:
 	_storage_helper = storage_helper
-	_save_path = save_path
-	_temp_path = temp_path
-	_backup_path = backup_path
 
 func write(
 	save_data: Dictionary,
-	runtime_status: Dictionary,
+	loaded_from: String,
 	reason: String
 ) -> Dictionary:
 	_stamp_save_meta(save_data, reason)
@@ -28,10 +21,10 @@ func write(
 	if not _write_temp_snapshot(serialized):
 		return _failure("No se pudo abrir el archivo temporal del save.")
 
-	if not _backup_primary_if_needed(runtime_status):
+	if not _backup_primary_if_needed(loaded_from):
 		return _failure("No se pudo generar el backup del save local.")
 
-	var replace_result: Dictionary = _replace_primary_with_temp(runtime_status)
+	var replace_result: Dictionary = _replace_primary_with_temp(loaded_from)
 	if not bool(replace_result.get("ok", false)):
 		return _failure("No se pudo reemplazar el save principal.")
 
@@ -52,7 +45,7 @@ func _stamp_save_meta(save_data: Dictionary, reason: String) -> void:
 
 
 func _write_temp_snapshot(serialized: String) -> bool:
-	var temp_file := FileAccess.open(_temp_path, FileAccess.WRITE)
+	var temp_file := FileAccess.open(TEMP_PATH, FileAccess.WRITE)
 	if temp_file == null:
 		return false
 	temp_file.store_string(serialized)
@@ -61,21 +54,21 @@ func _write_temp_snapshot(serialized: String) -> bool:
 	return true
 
 
-func _backup_primary_if_needed(runtime_status: Dictionary) -> bool:
-	if not FileAccess.file_exists(_save_path):
+func _backup_primary_if_needed(loaded_from: String) -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
 		return true
-	if str(runtime_status.get("last_loaded_from", "primary")) != "primary":
+	if loaded_from != "primary":
 		return true
-	return _storage_helper.copy_file(_save_path, _backup_path)
+	return _storage_helper.copy_file(SAVE_PATH, BACKUP_PATH)
 
 
-func _replace_primary_with_temp(runtime_status: Dictionary) -> Dictionary:
+func _replace_primary_with_temp(loaded_from: String) -> Dictionary:
 	_storage_helper.remove_file_if_exists(_save_path)
 	if _storage_helper.move_file(_temp_path, _save_path) == OK:
 		return {"ok": true, "wrote_primary": true}
 
 	if FileAccess.file_exists(_temp_path):
-		if str(runtime_status.get("last_loaded_from", "primary")) != "primary":
+		if loaded_from != "primary":
 			return {"ok": true, "wrote_primary": false}
 
 	if FileAccess.file_exists(_backup_path):

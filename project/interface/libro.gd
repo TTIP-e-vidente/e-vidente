@@ -31,7 +31,9 @@ func _exit_tree() -> void:
 	if is_instance_valid(background_music):
 		background_music.stop()
 		background_music.stream = null
-	_free_button_template()
+	if _button_template != null:
+		_button_template.free()
+		_button_template = null
 	_chapter_button_icons.clear()
 
 
@@ -80,28 +82,14 @@ func _rebuild_chapter_buttons() -> void:
 		chapter_container.add_child(chapter_button)
 
 
-func _free_button_template() -> void:
-	if _button_template == null:
-		return
-	_button_template.free()
-	_button_template = null
-
-
 func _get_chapter_buttons() -> Array[Button]:
 	var buttons: Array[Button] = []
 	for child in chapter_container.get_children():
 		var chapter_button := child as Button
-		if not _is_chapter_button(chapter_button):
+		if chapter_button == null or not chapter_button.name.begins_with(CHAPTER_BUTTON_NAME_PREFIX):
 			continue
 		buttons.append(chapter_button)
 	return buttons
-
-
-func _is_chapter_button(chapter_button: Button) -> bool:
-	return (
-		chapter_button != null
-		and chapter_button.name.begins_with(CHAPTER_BUTTON_NAME_PREFIX)
-	)
 
 
 func _on_chapter_button_pressed(level_number: int) -> void:
