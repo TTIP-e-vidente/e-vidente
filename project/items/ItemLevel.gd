@@ -16,6 +16,7 @@ var info: Texture2D
 var textSprite: Texture2D
 var item_resource_path := ""
 var save_instance_id := ""
+static var is_dragging: Object = null
 
 func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
 	textSprite = level_item.sprite
@@ -52,11 +53,11 @@ func _process(_delta):
 		if Input.is_action_just_pressed("click"):
 			initialPos = global_position
 			offset = get_global_mouse_position() - global_position
-			Global.is_dragging = self
-		if Input.is_action_pressed("click") && Global.is_dragging == self:
+			is_dragging = self
+		if Input.is_action_pressed("click") && is_dragging == self:
 			global_position = get_global_mouse_position() - offset
-		elif Input.is_action_just_released("click") && Global.is_dragging == self:
-			Global.is_dragging = null
+		elif Input.is_action_just_released("click") && is_dragging == self:
+			is_dragging = null
 			var tween = get_tree().create_tween()
 			if is_inside_droppable and is_instance_valid(body_ref):
 				tween.tween_property(self, "global_position", get_global_mouse_position(), 0.5).set_ease(Tween.EASE_OUT)
@@ -95,11 +96,11 @@ func _on_area_2d_area_exited(area):
 	_handle_droppable_exit(area)
 
 func _on_area_2d_mouse_entered():
-	if !Global.is_dragging:
+	if !is_dragging:
 		draggable = true
 		scale = Vector2(1.2, 1.2)
 
 func _on_area_2d_mouse_exited():
-	if !Global.is_dragging:
+	if !is_dragging:
 		draggable = false
 		scale = Vector2(1,1)

@@ -70,9 +70,9 @@ func _run_track_case(track_definition: Dictionary) -> void:
 		_assert(current_scene != null, "%s deberia abrir una escena jugable" % case_label)
 		if current_scene != null:
 			_assert(current_scene.scene_file_path == level_scene_path, "%s deberia abrir la escena jugable del track" % case_label)
-			_assert(current_scene.has_method("_get_resume_track_key"), "%s deberia exponer el track del nivel actual" % level_scene_path)
-			if current_scene.has_method("_get_resume_track_key"):
-				_assert(str(current_scene._get_resume_track_key()) == track_key, "%s deberia estar alineado con el track %s" % [level_scene_path, track_key])
+			_assert(current_scene.has_method("_get_active_track_key"), "%s deberia exponer el track del nivel actual" % level_scene_path)
+			if current_scene.has_method("_get_active_track_key"):
+				_assert(str(current_scene._get_active_track_key()) == track_key, "%s deberia estar alineado con el track %s" % [level_scene_path, track_key])
 			var manager_level = current_scene.get_node_or_null("ManagerLevel")
 			var expected_run: Dictionary = Global.get_chapter_run_definition(track_key, 1, 1)
 			_assert(manager_level != null, "%s deberia exponer el ManagerLevel" % level_scene_path)

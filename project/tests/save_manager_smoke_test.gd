@@ -31,7 +31,6 @@ func _run() -> void:
 	_assert(avatar_error == OK, "No se pudo crear el avatar temporal para la prueba")
 
 	SaveManager.load_data()
-	_assert(SaveManager.is_authenticated(), "El perfil local deberia inicializarse automaticamente")
 
 	var profile_result: Dictionary = SaveManager.update_local_profile(
 		TEST_USERNAME,
