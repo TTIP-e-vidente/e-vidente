@@ -298,9 +298,9 @@ volume_db = -4.962
 attenuation = 2.07053
 
 [node name="Atrás" type="Button" parent="." unique_id=1945836818]
-offset_left = 51.0
+offset_left = 54.0
 offset_top = 636.00006
-offset_right = 280.0
+offset_right = 283.0
 offset_bottom = 904.00006
 scale = Vector2(0.5200003, 0.45500025)
 text = "

@@ -167,9 +167,6 @@ func _open_track_chapter(level_number: int) -> void:
 	)
 
 
-func _return_to_archivero() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
-
 
 func _on_atras_pressed() -> void:
-	_return_to_archivero()
+	GameSceneRouter.go_to_intro(get_tree())

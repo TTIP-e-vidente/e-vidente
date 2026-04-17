@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="5_8ea5f"]
 [ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="5_2456x"]
 [ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="6_8ea5f"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_ltd81"]
 
 [node name="MapScene" type="Node2D" unique_id=971913902]
 script = ExtResource("1_xmpkx")
@@ -53,7 +54,23 @@ position = Vector2(-139, 199.00003)
 scale = Vector2(0.39726195, 0.4079034)
 texture = ExtResource("6_8ea5f")
 
+[node name="LevelNode3" parent="NodesContainer" unique_id=1713970446 instance=ExtResource("3_7kmkb")]
+
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1604196530]
 position = Vector2(591.99994, 142)
 scale = Vector2(0.52793294, 0.52793294)
 texture = ExtResource("5_8ea5f")
+
+[node name="Atrás" type="Button" parent="." unique_id=1845473314]
+offset_left = 51.0
+offset_top = 63.00006
+offset_right = 280.0
+offset_bottom = 331.00006
+scale = Vector2(0.5200003, 0.45500025)
+text = "
+"
+icon = ExtResource("8_ltd81")
+flat = true
+
+[connection signal="level_selected" from="NodesContainer/LevelNode" to="." method="_on_level_node_level_selected"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]

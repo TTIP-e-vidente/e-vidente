@@ -10,5 +10,15 @@ class_name MapData
 
 [resource]
 script = SubResource("GDScript_c0v2q")
-levels = Array[Dictionary]([{}, {}, {}])
+levels = Array[Dictionary]([{
+"id": 0,
+"pos": Vector2(200, 300),
+"scene": "res://niveles/nivel_1/Level.tscn"
+}, {
+"id": "1",
+"scene": "res://preguntas/pregunta.tscn"
+}, {
+"id": "3",
+"scene": "res://niveles/nivel_2/level_vegan.tscn"
+}, {}, {}, {}, {}, {}])
 metadata/_custom_type_script = "uid://dhohufexucioq"

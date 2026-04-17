@@ -2,6 +2,7 @@ extends Node2D
 class_name ModeSelector
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const colores := preload("res://colours/miPaleta.gd")
 const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
 
 @onready var background_music: AudioStreamPlayer2D = $Background
@@ -42,24 +43,24 @@ func _set_resume_overlay_visible(overlay_visible: bool) -> void:
 func _on_celiaquia_pressed() -> void:
 	_bounce_button(celiaquia)
 	await get_tree().create_timer(0.15).timeout
-	_open_archivero()
+	GameSceneRouter.go_to_map(get_tree())
 
 
 func _on_veganismo_pressed() -> void:	
 	_bounce_button(veganismo)
 	await get_tree().create_timer(0.15).timeout
-	_open_questions_mode()
+	GameSceneRouter.go_to_track_book(get_tree(), "veganismo")
 
 
 func _on_vegan_gf_pressed() -> void:
 	_bounce_button(vegan_gf)
 	await get_tree().create_timer(0.15).timeout
-	_quit_game()
+	GameSceneRouter.go_to_track_book(get_tree(), "veganismo_celiaquia")
 	
 func _on_cetogenica_pressed() -> void:
 	_bounce_button(cetogenica)
 	await get_tree().create_timer(0.15).timeout
-	_open_archivero()
+	GameSceneRouter.go_to_track_book(get_tree(), "cetogenica")
 
 
 func _on_diabetes_pressed() -> void:	

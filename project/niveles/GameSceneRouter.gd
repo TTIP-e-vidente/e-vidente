@@ -9,6 +9,7 @@ const ARCHIVERO_SCENE_PATH := "res://interface/archivero.tscn"
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
+const MAP_SCENE_PATH:= "res://mapas/MapScene.tscn"
 
 const BOOK_SCENE_PATH_KEY := "book_scene_path"    # clave en TRACK_DEFINITIONS
 const LEVEL_SCENE_PATH_KEY := "level_scene_path"  # clave en TRACK_DEFINITIONS
@@ -45,6 +46,9 @@ static func go_to_profile_editor(tree: SceneTree) -> void:
 
 static func go_to_questions(tree: SceneTree) -> void:
 	_change_scene_to_path(tree, QUESTIONS_SCENE_PATH)
+
+static func go_to_map(tree: SceneTree) -> void:
+	_change_scene_to_path(tree, MAP_SCENE_PATH)
 
 
 static func go_to_track_book(tree: SceneTree, track_key: String) -> void:

@@ -5,14 +5,10 @@
 [node name="LevelNode" type="Node2D" unique_id=257581998]
 script = ExtResource("1_bdcs1")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1327334720]
+[node name="Button" type="TextureButton" parent="." unique_id=2136653225]
 offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="Button" type="TextureButton" parent="VBoxContainer" unique_id=2136653225]
-layout_mode = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="Icon" type="Sprite2D" parent="VBoxContainer/Button" unique_id=81622321]
-position = Vector2(978.99994, 336)
+[node name="Icon" type="Sprite2D" parent="Button" unique_id=81622321]
+position = Vector2(3, 1.000061)
 scale = Vector2(0.45849058, 0.4476923)
