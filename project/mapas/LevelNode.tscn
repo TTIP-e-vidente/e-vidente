@@ -1,14 +1,6 @@
 [gd_scene format=3 uid="uid://kmsb3inpowgb"]
 
 [ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_bdcs1"]
-[ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="2_0gq50"]
-[ext_resource type="Texture2D" uid="uid://dtvxy0gip5tdj" path="res://assets-sistema/mapa/desafio-mapa-2.png" id="3_uce0a"]
-[ext_resource type="Texture2D" uid="uid://c1vin12uk0ll1" path="res://assets-sistema/mapa/desafio-mapa-3.png" id="4_hmfnp"]
-[ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="5_d2r37"]
-[ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="6_dx17n"]
-[ext_resource type="Texture2D" uid="uid://buqf74swbmle8" path="res://assets-sistema/mapa/desafio-mapa-6.png" id="7_ammjg"]
-[ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="8_6vk0g"]
-[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="9_qq2y2"]
 
 [node name="LevelNode" type="Node2D" unique_id=257581998]
 script = ExtResource("1_bdcs1")
@@ -24,67 +16,3 @@ metadata/_edit_use_anchors_ = true
 [node name="Icon" type="Sprite2D" parent="VBoxContainer/Button" unique_id=81622321]
 position = Vector2(978.99994, 336)
 scale = Vector2(0.45849058, 0.4476923)
-texture = ExtResource("2_0gq50")
-
-[node name="Button2" type="TextureButton" parent="VBoxContainer" unique_id=792906831]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon2" type="Sprite2D" parent="VBoxContainer/Button2" unique_id=600807808]
-position = Vector2(863, 558)
-scale = Vector2(0.42227986, 0.42227983)
-texture = ExtResource("3_uce0a")
-
-[node name="Button3" type="TextureButton" parent="VBoxContainer" unique_id=1069062072]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon3" type="Sprite2D" parent="VBoxContainer/Button3" unique_id=1729299579]
-position = Vector2(686, 724.00006)
-scale = Vector2(0.40417847, 0.40417847)
-texture = ExtResource("4_hmfnp")
-
-[node name="Button4" type="TextureButton" parent="VBoxContainer" unique_id=1028785395]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon4" type="Sprite2D" parent="VBoxContainer/Button4" unique_id=1551264534]
-position = Vector2(403, 661)
-scale = Vector2(0.36631018, 0.36631024)
-texture = ExtResource("5_d2r37")
-
-[node name="Button5" type="TextureButton" parent="VBoxContainer" unique_id=918216062]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon5" type="Sprite2D" parent="VBoxContainer/Button5" unique_id=2060332046]
-position = Vector2(152.00002, 697.00006)
-scale = Vector2(0.4975885, 0.48164532)
-texture = ExtResource("6_dx17n")
-
-[node name="Button6" type="TextureButton" parent="VBoxContainer" unique_id=683367543]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon6" type="Sprite2D" parent="VBoxContainer/Button6" unique_id=1938066558]
-position = Vector2(258, 906)
-scale = Vector2(0.56057936, 0.55593485)
-texture = ExtResource("7_ammjg")
-
-[node name="Button7" type="TextureButton" parent="VBoxContainer" unique_id=268611663]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon7" type="Sprite2D" parent="VBoxContainer/Button7" unique_id=2100940753]
-position = Vector2(178.00002, 1146)
-scale = Vector2(0.40077153, 0.40077162)
-texture = ExtResource("8_6vk0g")
-
-[node name="Button8" type="TextureButton" parent="VBoxContainer" unique_id=1817934557]
-layout_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Icon8" type="Sprite2D" parent="VBoxContainer/Button8" unique_id=1285204520]
-position = Vector2(406.00003, 1274.0001)
-scale = Vector2(0.4975885, 0.48164532)
-texture = ExtResource("9_qq2y2")
