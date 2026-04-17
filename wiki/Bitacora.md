@@ -4,6 +4,13 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-17 | racha-player
+Se agregó un sistema de racha diaria. La idea es simple: cada vez que el jugador completa un nivel, se registra la fecha. Al día siguiente, si vuelve a jugar, la racha sube; si se saltea un día, vuelve a 1; si juega dos veces el mismo día, se mantiene igual.
+
+El algoritmo compara la fecha de la última actividad con la de hoy usando timestamps Unix: si la diferencia es exactamente 1 día suma, si es 0 no cambia, cualquier otra cosa resetea. Guarda el contador actual y el mejor histórico en el estado de progreso existente.
+
+Del lado visual hay tres componentes nuevos: un badge en el HUD que muestra el contador y cambia de color según el estado (sin racha / racha pendiente hoy / racha activa hoy), un sello decorativo dibujado en canvas, y un overlay que aparece al completar un nivel mostrando los últimos 7 días con círculos coloreados.
+
 ### 2026-04-14 | gameplay-smoke-cold-start
 El smoke de gameplay estaba dando falsos negativos en GitHub Actions cuando corria sobre un checkout limpio sin import previo. El flujo jugable no estaba roto; el problema venia de recursos importados y de carga de UI no critica demasiado fragil para headless en cold start. Se ajusto la validacion para hacer import headless antes del vertical slice y el feedback visual de guardado rapido paso a usar iconos raster ya presentes en el repo para no depender de SVG en runtime.
 

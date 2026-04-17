@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://interface/Archivero.gd" id="1_vbpnf"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_4l60g"]
@@ -8,7 +8,9 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/icono-base-datos.svg" id="9_dbicon"]
+[ext_resource type="PackedScene" path="res://interface/components/StreakBadge.tscn" id="10_streakbadge"]
+[ext_resource type="PackedScene" path="res://interface/components/StreakDailySeal.tscn" id="11_streakseal"]
+[ext_resource type="Script" path="res://interface/components/ProfileProgressButton.gd" id="12_profile_toggle"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawer_panel"]
 bg_color = Color(1, 1, 1, 1)
@@ -183,6 +185,13 @@ flip_v = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
+[node name="ModeSelectionStreakBadge" parent="CanvasLayer" instance=ExtResource("11_streakseal")]
+offset_left = 10.0
+offset_top = 6.0
+offset_right = 146.0
+offset_bottom = 142.0
+mouse_filter = 2
+
 [node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer"]
 offset_left = 191.0
 offset_top = 126.0
@@ -214,25 +223,13 @@ file = "res://interface/libro.tscn"
 [node name="ProfileOverlayLayer" type="CanvasLayer" parent="."]
 
 [node name="ProfileToggleButton" type="Button" parent="ProfileOverlayLayer"]
-offset_left = 868.0
-offset_top = 20.0
-offset_right = 1088.0
-offset_bottom = 84.0
+offset_left = 924.0
+offset_top = 12.0
+offset_right = 1144.0
+offset_bottom = 76.0
 tooltip_text = "guardado de partida"
 modulate = Color(1, 1, 1, 0.94)
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_focus_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_hover_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_colors/font_pressed_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_toggle_button")
-theme_override_styles/focus = SubResource("StyleBoxFlat_toggle_button")
-text = "Mi progreso"
-icon = ExtResource("9_dbicon")
-flat = true
+script = ExtResource("12_profile_toggle")
 
 [node name="ProfileOverlay" type="Control" parent="ProfileOverlayLayer"]
 visible = false
@@ -281,7 +278,7 @@ theme_override_constants/margin_bottom = 22
 
 [node name="ProfileContent" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
 [node name="HeaderRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
@@ -324,10 +321,11 @@ text = "Guardado local"
 [node name="Title" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 22
 text = "Mi progreso"
 
 [node name="Subtitle" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.88)
 theme_override_font_sizes/font_size = 15
@@ -350,12 +348,12 @@ layout_mode = 2
 theme_override_constants/separation = 16
 
 [node name="AvatarColumn" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
-custom_minimum_size = Vector2(112, 0)
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="AvatarFrame" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn"]
-custom_minimum_size = Vector2(96, 96)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_avatar_frame")
 
@@ -367,7 +365,7 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
 [node name="AvatarPreview" type="TextureRect" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/AvatarColumn/AvatarFrame/MarginContainer"]
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
@@ -382,9 +380,10 @@ text = "Avatar opcional"
 [node name="InfoColumn" type="VBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 6
 
 [node name="ProfileBadge" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_chip")
@@ -405,7 +404,7 @@ text = "Partida actual"
 [node name="UsernameLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 18
 text = "Sin nombre"
 
 [node name="MetaRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn"]
@@ -448,31 +447,22 @@ theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.92)
 theme_override_font_sizes/font_size = 13
 text = "Edad: -"
 
-[node name="ProgressPanel" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn"]
+[node name="ProgressLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_history_body")
-
-[node name="MarginContainer" type="MarginContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="ProgressLabel" type="Label" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn/ProgressPanel/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.94)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.72)
+theme_override_font_sizes/font_size = 13
 text = "0 de 18 capitulos completos"
 autowrap_mode = 3
+
+[node name="StreakBadge" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SummaryPanel/MarginContainer/SummaryContent/InfoColumn" instance=ExtResource("10_streakbadge")]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="StatusRow" type="HBoxContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="SaveCard" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow"]
-custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_status_card")
@@ -492,7 +482,6 @@ text = "Ultimo guardado: sin datos"
 autowrap_mode = 3
 
 [node name="ResumeCard" type="PanelContainer" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/StatusRow"]
-custom_minimum_size = Vector2(0, 126)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_status_card")
@@ -534,7 +523,7 @@ theme_override_constants/separation = 12
 [node name="Guardar" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 46)
+custom_minimum_size = Vector2(0, 40)
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_primary_button")
@@ -546,7 +535,7 @@ text = "Guardar ahora"
 [node name="CerrarSesion" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/ActionsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 46)
+custom_minimum_size = Vector2(0, 40)
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
@@ -562,7 +551,7 @@ theme_override_constants/separation = 12
 [node name="HistoryToggleButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 34)
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")
@@ -574,7 +563,7 @@ text = "Ver historial"
 [node name="ResetProgressButton" type="Button" parent="ProfileOverlayLayer/ProfileOverlay/SessionPanel/MarginContainer/ProfileContent/SecondaryActionsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 34)
 theme_override_colors/font_color = Color(0.568627, 0.184314, 0.141176, 1)
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_button")

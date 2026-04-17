@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
@@ -174,6 +174,16 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.121569)
 shadow_size = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_chip"]
+bg_color = Color(0.12, 0.10, 0.07, 0.96)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
+shadow_offset = Vector2(0, 2)
+
 [node name="Level-Vegan" type="Node"]
 script = ExtResource("1_64ycw")
 track_key_override = "veganismo"
@@ -186,7 +196,7 @@ texture = ExtResource("3_gaj1j")
 
 [node name="Victory" type="AnimatedSprite2D" parent="."]
 z_index = 1
-position = Vector2(1079, 54)
+position = Vector2(1086, 34)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_wpkox")
 animation = &"victory"
@@ -350,22 +360,40 @@ icon = ExtResource("34_spc0y")
 flat = true
 
 [node name="SaveProgressButton" type="Button" parent="."]
-offset_left = 1023.0
-offset_top = 18.0
-offset_right = 1111.0
-offset_bottom = 106.0
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2
+offset_left = -34.0
+offset_top = 22.0
+offset_right = -8.0
+offset_bottom = 48.0
+modulate = Color(0.4, 0.4, 0.4, 0.6)
 tooltip_text = "Guardar progreso"
 flat = true
+icon_max_width = 18
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="."]
 visible = false
 clip_contents = true
 mouse_filter = 2
 z_index = 20
-offset_left = 706.0
-offset_top = 18.0
-offset_right = 1003.0
-offset_bottom = 140.0
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2
+offset_left = -306.0
+offset_top = 54.0
+offset_right = -4.0
+offset_bottom = 175.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_b7x1j")
 
 [node name="SaveFeedbackPadding" type="MarginContainer" parent="SaveFeedbackBackdrop"]

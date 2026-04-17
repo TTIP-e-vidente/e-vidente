@@ -9,7 +9,7 @@ const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
 @onready var resume_panel: PanelContainer = $PlayPanel
 
 func _ready() -> void:
-	_play_background_music()
+	background_music.play()
 	_set_resume_overlay_visible(false)
 
 
@@ -18,19 +18,23 @@ func _set_resume_overlay_visible(overlay_visible: bool) -> void:
 	resume_panel.visible = overlay_visible
 
 func _on_start_pressed() -> void:
-	_open_archivero()
+	GameSceneRouter.go_to_archivero(get_tree())
 
 
 func _on_opciones_pressed() -> void:
-	_open_questions_mode()
+	GameSceneRouter.go_to_questions(get_tree())
 
 
 func _on_salir_pressed() -> void:
-	_quit_game()
+	get_tree().quit()
 
 
 func _on_continue_pressed() -> void:
-	_resume_current_save()
+	if not SaveManager.can_resume_current_save():
+		_set_resume_overlay_visible(false)
+		return
+	var resume_state := SaveManager.reload_current_save_and_get_resume_state()
+	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
 func _on_play_backdrop_gui_input(event: InputEvent) -> void:
@@ -50,31 +54,7 @@ func _on_atras_pressed() -> void:
 	GameSceneRouter.go_to_main_menu(get_tree())
 
 
-func _play_background_music() -> void:
-	background_music.play()
-
-
 func _exit_tree() -> void:
 	if is_instance_valid(background_music):
 		background_music.stop()
 		background_music.stream = null
-
-
-func _open_archivero() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
-
-
-func _open_questions_mode() -> void:
-	GameSceneRouter.go_to_questions(get_tree())
-
-
-func _quit_game() -> void:
-	get_tree().quit()
-
-
-func _resume_current_save() -> void:
-	if not SaveManager.can_resume_current_save():
-		_set_resume_overlay_visible(false)
-		return
-	var resume_state := SaveManager.reload_current_save_and_get_resume_state()
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)

@@ -33,6 +33,8 @@ func format_save_reason(reason: String) -> String:
 			return "sincronizacion de progreso"
 		"level_completed":
 			return "nivel completado"
+		"question_session_completed":
+			return "sesion de preguntas completada"
 		"manual_save":
 			return "guardado manual"
 		"progress_reset":
@@ -70,6 +72,23 @@ func format_optional_number(value: int) -> String:
 	return str(value)
 
 
+func format_streak_summary(streak_state: Dictionary, recorded_today: bool) -> String:
+	var current_count: int = int(streak_state.get("current_count", 0))
+	if current_count <= 0:
+		return "Racha diaria: sin actividad valida todavia"
+
+	var best_count: int = int(streak_state.get("best_count", 0))
+	var today_status := "Hoy: pendiente"
+	if recorded_today:
+		today_status = "Hoy: completada"
+
+	return "\n".join([
+		"Racha diaria: %d %s" % [current_count, _format_day_label(current_count)],
+		"Mejor racha: %d %s" % [best_count, _format_day_label(best_count)],
+		today_status
+	])
+
+
 func format_resume_hint_label(can_resume: bool, resume_hint: String) -> String:
 	if can_resume:
 		return "Retoma en %s" % resume_hint
@@ -82,3 +101,7 @@ func build_toggle_tooltip(save_status: Dictionary) -> String:
 	if not last_saved_at.is_empty():
 		tooltip_lines.append("Ultimo guardado: %s" % last_saved_at)
 	return "\n".join(tooltip_lines)
+
+
+func _format_day_label(count: int) -> String:
+	return "dia" if count == 1 else "dias"

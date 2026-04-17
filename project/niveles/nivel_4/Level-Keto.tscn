@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://cpqkvf7oqnix0"]
+[gd_scene load_steps=41 format=3 uid="uid://cpqkvf7oqnix0"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
@@ -167,6 +167,16 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.121569)
 shadow_size = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_chip"]
+bg_color = Color(0.12, 0.10, 0.07, 0.96)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
+shadow_offset = Vector2(0, 2)
+
 [node name="Level-Keto" type="Node" unique_id=851633998]
 script = ExtResource("1_8lr8v")
 track_key_override = "cetogenica"
@@ -180,7 +190,7 @@ texture = ExtResource("2_pfc42")
 [node name="Victory" type="AnimatedSprite2D" parent="." unique_id=703064052]
 visible = false
 z_index = 1
-position = Vector2(1079, 54)
+position = Vector2(1086, 34)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_4xm3r")
 animation = &"victory"
@@ -348,21 +358,40 @@ icon = ExtResource("34_oaafq")
 flat = true
 
 [node name="SaveProgressButton" type="Button" parent="." unique_id=1991229158]
-offset_left = 1023.0
-offset_top = 141.0
-offset_right = 1127.0
-offset_bottom = 245.0
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2
+offset_left = -34.0
+offset_top = 22.0
+offset_right = -8.0
+offset_bottom = 48.0
+modulate = Color(0.4, 0.4, 0.4, 0.6)
 tooltip_text = "Guardar progreso"
 flat = true
+icon_max_width = 18
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=2035953237]
 visible = false
-z_index = 20
 clip_contents = true
-offset_left = 706.0
-offset_top = 18.0
-offset_right = 1003.0
-offset_bottom = 140.0
+mouse_filter = 2
+z_index = 20
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2
+offset_left = -306.0
+offset_top = 54.0
+offset_right = -4.0
+offset_bottom = 175.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_0nv70")
 
