@@ -68,8 +68,10 @@ func _randomizar_preguntas(array :Array) -> Array:
 	
 
 func _game_over() -> void:
+	var question_count: int = quiz.theme.size()
 	$Contenido/GameOver.show()
-	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", quiz.theme.size())
+	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", question_count)
+	SaveManager.record_question_session_completed(question_count, puntaje)
 
 
 

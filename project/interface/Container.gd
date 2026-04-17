@@ -37,11 +37,11 @@ func _on_mouse_exited() -> void:
 func _on_gui_input(event: InputEvent) -> void:
 	if not archive_highlighted:
 		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		_open_track_book()
-
-
-func _open_track_book() -> void:
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event == null:
+		return
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
 	if not track_key.is_empty() and GameTrackCatalog.has_track(track_key):
 		GameSceneRouter.go_to_track_book(get_tree(), track_key)
 		return

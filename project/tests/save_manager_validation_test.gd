@@ -74,6 +74,14 @@ func _run() -> void:
 			"exp": 120
 		}
 	)
+	var recorded_streak_state: Dictionary = Global.record_streak_activity(
+		"level_completed",
+		{
+			"track_key": "celiaquia",
+			"level_number": 2
+		}
+	)
+	_assert(int(recorded_streak_state.get("current_count", 0)) == 1, "La primera actividad valida deberia iniciar la racha en 1")
 	SaveManager.set_resume_to_level("celiaquia", Global.current_level)
 	SaveManager.record_manual_save()
 	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
@@ -102,10 +110,40 @@ func _run() -> void:
 	var restored_question_progress: Dictionary = Global.get_progress_system_state("questions")
 	_assert(int(restored_question_progress.get("best_streak", 0)) == 4, "La recarga deberia restaurar estados de progreso adicionales como racha")
 	_assert(int(restored_question_progress.get("exp", 0)) == 120, "La recarga deberia restaurar estados de progreso adicionales como exp")
+	var restored_streak_state: Dictionary = Global.get_streak_state()
+	_assert(int(restored_streak_state.get("current_count", 0)) == 1, "La recarga deberia restaurar la racha diaria actual")
+	_assert(int(restored_streak_state.get("best_count", 0)) == 1, "La recarga deberia restaurar la mejor racha guardada")
+	var saved_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.READ)
+	_assert(saved_file != null, "Deberia poder abrirse el save real para validar la persistencia de la racha")
+	var persisted_progress: Dictionary = {}
+	if saved_file != null:
+		var saved_json := JSON.new()
+		var saved_text: String = saved_file.get_as_text()
+		saved_file = null
+		_assert(saved_json.parse(saved_text) == OK, "El save real deberia seguir siendo JSON valido")
+		if saved_json.data is Dictionary:
+			persisted_progress = (saved_json.data as Dictionary).get("progress", {})
+	var persisted_system_states: Dictionary = persisted_progress.get("progress_system_states", {})
+	var persisted_streak_state: Dictionary = persisted_system_states.get("streak", {})
+	_assert(int(persisted_streak_state.get("current_count", 0)) == 1, "El save real en disco deberia persistir la racha diaria actual")
+	_assert(int(persisted_streak_state.get("best_count", 0)) == 1, "El save real en disco deberia persistir la mejor racha")
 	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La recarga deberia recuperar el contexto del nivel guardado")
 	_assert(int(resume_state.get("level_number", 0)) == 2, "La recarga deberia recuperar el capitulo a retomar")
 	_assert(Global.current_level == 2, "La recarga deberia restaurar el capitulo actual para retomar")
 	SaveManager.record_level_completed("celiaquia", 2)
+	_assert(int(Global.get_streak_state().get("current_count", 0)) == 1, "Completar otro capitulo el mismo dia no deberia sumar dos veces la racha")
+	var completion_save_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.READ)
+	_assert(completion_save_file != null, "Completar un nivel deberia volver a escribir el save real")
+	if completion_save_file != null:
+		var completion_json := JSON.new()
+		var completion_text: String = completion_save_file.get_as_text()
+		completion_save_file = null
+		_assert(completion_json.parse(completion_text) == OK, "El save despues de completar un nivel deberia seguir siendo JSON valido")
+		if completion_json.data is Dictionary:
+			var completion_progress: Dictionary = (completion_json.data as Dictionary).get("progress", {})
+			var completion_system_states: Dictionary = completion_progress.get("progress_system_states", {})
+			var completion_streak_state: Dictionary = completion_system_states.get("streak", {})
+			_assert(int(completion_streak_state.get("current_count", 0)) == 1, "Completar un nivel deberia persistir la racha sin perderla al escribir el save")
 	var next_resume_state: Dictionary = SaveManager.get_resume_state()
 	_assert(str(next_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "Completar un capitulo deberia mantener la reanudacion dentro del flujo de juego")
 	_assert(int(next_resume_state.get("level_number", 0)) == 3, "Completar un capitulo deberia dejar preparada la carga del siguiente")
@@ -149,6 +187,7 @@ func _run() -> void:
 		"La API nueva deberia indicar que el save actual es retomable"
 	)
 	_assert(Global.get_progress_system_state("questions").is_empty(), "Nueva partida deberia limpiar estados adicionales como preguntas, racha o exp")
+	_assert(int(Global.get_streak_state().get("current_count", -1)) == 0, "Nueva partida deberia limpiar la racha diaria")
 	var new_save_resume_state: Dictionary = SaveManager.reload_current_save_and_get_resume_state()
 	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "La nueva partida deberia poder recargarse vacia")
 	_assert(str(new_save_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_HUB, "La nueva partida deberia reanudar desde el Archivero")
@@ -174,6 +213,7 @@ func _run() -> void:
 	_assert(bool(reset_result.get("ok", false)), "Reiniciar el progreso local deberia persistirse correctamente")
 	_assert(int(Global.get_progress_summary().get("total", -1)) == 0, "Reiniciar el progreso deberia limpiar todo el avance jugable")
 	_assert(Global.get_progress_system_state("questions").is_empty(), "Reiniciar el progreso deberia limpiar los estados adicionales")
+	_assert(int(Global.get_streak_state().get("current_count", -1)) == 0, "Reiniciar el progreso deberia limpiar la racha diaria")
 	_assert(not SaveManager.can_resume_current_save(), "Reiniciar el progreso no deberia dejar una partida retomable")
 	_assert(SaveManager.list_available_saves(true).is_empty(), "Reiniciar el progreso deberia borrar todos los saves retomables")
 	_assert(SaveManager.get_current_save_history().is_empty(), "Reiniciar el progreso deberia limpiar el historial local")

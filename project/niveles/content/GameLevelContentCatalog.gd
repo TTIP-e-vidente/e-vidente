@@ -7,9 +7,6 @@ const GameTrackChapterDefinitionsScript := preload(
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
-const GameContentCatalogValidatorScript := preload(
-	"res://niveles/content/catalog/GameContentCatalogValidator.gd"
-)
 
 const BOOK_LEVEL_COMPLETED_KEY := "completed"
 
@@ -76,14 +73,6 @@ func get_chapter_run_definition(
 	var resolved_run_index := clampi(run_index, 1, chapter_runs.size()) - 1
 	var run_definition: Dictionary = chapter_runs[resolved_run_index]
 	return run_definition.duplicate(true)
-
-
-func get_validation_issues() -> Array[String]:
-	return GameContentCatalogValidatorScript.validate(_chapters_by_track)
-
-
-func is_valid() -> bool:
-	return get_validation_issues().is_empty()
 
 
 func resolve_texture(texture_ref: Variant) -> Texture2D:
