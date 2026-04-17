@@ -197,6 +197,7 @@ func _refresh_streak_badges() -> void:
 		menu_streak_badge.call("render")
 	if profile_streak_badge != null and is_instance_valid(profile_streak_badge):
 		profile_streak_badge.render()
+	_debug_log_ui_streak_state("refresh_streak_badges")
 
 
 func _set_profile_toggle_button_label(button_label: String) -> void:
@@ -266,6 +267,18 @@ func _on_save_manager_changed(status: Dictionary) -> void:
 
 func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 	_refresh_profile_overlay()
+
+
+func _debug_log_ui_streak_state(checkpoint: String) -> void:
+	if not OS.is_debug_build():
+		return
+
+	var payload: Dictionary = {
+		"checkpoint": checkpoint,
+		"streak_state": Global.get_streak_state(),
+		"streak_view_model": Global.get_streak_view_model()
+	}
+	print("[STREAK_DEBUG][UI] %s" % JSON.stringify(payload))
 
 
 func _set_profile_overlay_visible(overlay_visible: bool) -> void:

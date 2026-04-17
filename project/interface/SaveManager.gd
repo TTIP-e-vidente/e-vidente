@@ -41,6 +41,7 @@ const LOCAL_PROFILE_KEY := "local_profile"
 const SAVE_NAME_MIN_LENGTH := 3
 const SAVE_NAME_MAX_LENGTH := 40
 const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
+const DEBUG_STREAK_LOG_PREFIX := "[STREAK_DEBUG]"
 
 var save_data: Dictionary = {}
 var has_unsaved_changes: bool = false
@@ -105,7 +106,34 @@ func load_data() -> void:
 		has_unsaved_changes = false
 		_emit_save_status("ready", loaded_from)
 
-	Global.import_progress(save_data.get("progress", {}))
+	var loaded_progress: Dictionary = _read_progress_dictionary(save_data.get("progress", {}))
+	_debug_log_streak_checkpoint(
+		"after_load_save_data",
+		{
+			"loaded_from": loaded_from,
+			"recovered_from": recovered_from,
+			"needs_write": needs_write,
+			"rewrite_reason": rewrite_reason,
+			"loaded_save_streak": _debug_extract_streak_state_from_progress(loaded_progress)
+		}
+	)
+	_debug_log_streak_checkpoint(
+		"before_global_import_progress",
+		{
+			"loaded_from": loaded_from,
+			"loaded_save_streak": _debug_extract_streak_state_from_progress(loaded_progress)
+		}
+	)
+	Global.import_progress(loaded_progress)
+	_debug_log_streak_checkpoint(
+		"after_global_import_progress",
+		{
+			"loaded_from": loaded_from,
+			"loaded_save_streak": _debug_extract_streak_state_from_progress(loaded_progress),
+			"runtime_streak_after_import": Global.get_streak_state()
+		}
+	)
+	progress_loaded.emit(get_current_user_profile())
 
 
 func register_user(
@@ -239,8 +267,10 @@ func get_last_user_hint() -> String:
 
 
 func sync_runtime_progress_to_current_save() -> void:
+	_debug_log_streak_checkpoint("before_sync_runtime_to_save")
 	save_data["profile"] = get_current_user_profile()
 	save_data["progress"] = Global.export_progress()
+	_debug_log_streak_checkpoint("after_sync_runtime_to_save")
 	_mark_save_dirty()
 
 
@@ -251,7 +281,21 @@ func persist_runtime_progress_to_current_save() -> void:
 
 
 func sync_runtime_progress_from_current_save() -> void:
-	Global.import_progress(save_data.get("progress", {}))
+	var loaded_progress: Dictionary = _read_progress_dictionary(save_data.get("progress", {}))
+	_debug_log_streak_checkpoint(
+		"before_global_import_progress_from_current_save",
+		{
+			"loaded_save_streak": _debug_extract_streak_state_from_progress(loaded_progress)
+		}
+	)
+	Global.import_progress(loaded_progress)
+	_debug_log_streak_checkpoint(
+		"after_global_import_progress_from_current_save",
+		{
+			"loaded_save_streak": _debug_extract_streak_state_from_progress(loaded_progress),
+			"runtime_streak_after_import": Global.get_streak_state()
+		}
+	)
 
 
 func sync_runtime_progress_from_current_save_and_emit_signal() -> void:
@@ -424,6 +468,15 @@ func record_level_completed(track_key: String, level_number: int) -> Dictionary:
 		previous_streak_state,
 		updated_streak_state
 	)
+	_debug_log_streak_checkpoint(
+		"after_valid_activity_level_completed",
+		{
+			"activity_type": "level_completed",
+			"track_key": track_key,
+			"level_number": level_number,
+			"runtime_streak_after_activity": updated_streak_state
+		}
+	)
 
 	sync_runtime_progress_to_current_save()
 	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
@@ -451,11 +504,20 @@ func record_question_session_completed(question_count: int, score: int) -> void:
 	if question_count < 1:
 		return
 
-	Global.record_streak_activity(
+	var updated_streak_state: Dictionary = Global.record_streak_activity(
 		"question_session_completed",
 		{
 			"question_count": question_count,
 			"score": score
+		}
+	)
+	_debug_log_streak_checkpoint(
+		"after_valid_activity_question_session_completed",
+		{
+			"activity_type": "question_session_completed",
+			"question_count": question_count,
+			"score": score,
+			"runtime_streak_after_activity": updated_streak_state
 		}
 	)
 	sync_runtime_progress_to_current_save()
@@ -749,6 +811,13 @@ func _write_save_to_disk(force: bool = false, reason: String = "save") -> bool:
 
 	var payload: Dictionary = save_data.duplicate(true)
 	var serialized_payload: String = _storage_helper.serialize_save_data(payload)
+	_debug_log_streak_checkpoint(
+		"before_write_to_disk",
+		{
+			"reason": reason,
+			"disk_context_before_write": _debug_read_disk_streak_context()
+		}
+	)
 	if not _write_temp_snapshot(serialized_payload):
 		return false
 	if not _backup_primary_save_if_needed():
@@ -763,6 +832,13 @@ func _write_save_to_disk(force: bool = false, reason: String = "save") -> bool:
 		runtime_save_status["recovered_from"] = ""
 
 	has_unsaved_changes = false
+	_debug_log_streak_checkpoint(
+		"after_write_to_disk",
+		{
+			"reason": reason,
+			"disk_context_after_write": _debug_read_disk_streak_context()
+		}
+	)
 	_emit_save_status(
 		"saved",
 		str(runtime_save_status.get("last_loaded_from", "default")),
@@ -811,6 +887,13 @@ func _replace_primary_save_with_temp() -> Dictionary:
 
 
 func _publish_write_error(message: String) -> void:
+	_debug_log_streak_checkpoint(
+		"write_error",
+		{
+			"last_error": message,
+			"disk_context_on_error": _debug_read_disk_streak_context()
+		}
+	)
 	_emit_save_status(
 		"error",
 		str(runtime_save_status.get("last_loaded_from", "default")),
@@ -842,3 +925,78 @@ func _emit_save_status(
 	runtime_save_status["recovered_from"] = recovered_from
 	runtime_save_status["last_error"] = last_error
 	notify_save_status_changed()
+
+
+func _read_progress_dictionary(raw_progress: Variant) -> Dictionary:
+	return raw_progress if raw_progress is Dictionary else {}
+
+
+func _debug_extract_streak_state_from_progress(progress_snapshot: Variant) -> Dictionary:
+	if not progress_snapshot is Dictionary:
+		return {}
+
+	var progress_data: Dictionary = progress_snapshot
+	var raw_progress_system_states: Variant = progress_data.get(
+		"progress_system_states",
+		{}
+	)
+	if not raw_progress_system_states is Dictionary:
+		return {}
+
+	var progress_system_states: Dictionary = raw_progress_system_states
+	var raw_streak_state: Variant = progress_system_states.get("streak", {})
+	if not raw_streak_state is Dictionary:
+		return {}
+	return (raw_streak_state as Dictionary).duplicate(true)
+
+
+func _debug_read_disk_streak_context() -> Dictionary:
+	if not OS.is_debug_build():
+		return {}
+
+	var load_result: Dictionary = _storage_helper.load_available_save_data(
+		SAVE_PATH,
+		TEMP_SAVE_PATH,
+		BACKUP_SAVE_PATH
+	)
+	if not bool(load_result.get("ok", false)):
+		return {
+			"source": "missing",
+			"streak": {}
+		}
+
+	var raw_data: Variant = load_result.get("data", {})
+	var persisted_save_data: Dictionary = raw_data if raw_data is Dictionary else {}
+	return {
+		"source": str(load_result.get("source", "default")),
+		"streak": _debug_extract_streak_state_from_progress(
+			persisted_save_data.get("progress", {})
+		)
+	}
+
+
+func _debug_log_streak_checkpoint(checkpoint: String, metadata: Dictionary = {}) -> void:
+	if not OS.is_debug_build():
+		return
+
+	var payload: Dictionary = {
+		"checkpoint": checkpoint,
+		"runtime_streak": Global.get_streak_state(),
+		"runtime_export_streak": _debug_extract_streak_state_from_progress(
+			Global.export_progress()
+		),
+		"save_data_streak": _debug_extract_streak_state_from_progress(
+			save_data.get("progress", {})
+		),
+		"save_runtime_status": {
+			"state": str(runtime_save_status.get("state", "idle")),
+			"last_loaded_from": str(runtime_save_status.get("last_loaded_from", "default")),
+			"recovered_from": str(runtime_save_status.get("recovered_from", "")),
+			"last_error": str(runtime_save_status.get("last_error", "")),
+			"has_unsaved_changes": has_unsaved_changes
+		}
+	}
+	for raw_key in metadata.keys():
+		payload[str(raw_key)] = metadata[raw_key]
+
+	print("%s %s" % [DEBUG_STREAK_LOG_PREFIX, JSON.stringify(payload)])
