@@ -10,6 +10,8 @@ append_summary() {
 
 report_failure() {
 	message="$1"
+	echo "Archivos cambiados en el PR:"
+	printf '%s\n' "$changed_files"
 	echo "::error::$message"
 	append_summary "### Docs / Tracking"
 	append_summary "- Estado: FAIL"
@@ -19,7 +21,8 @@ report_failure() {
 
 base_ref="${EVIDENTE_PR_BASE_REF:-${GITHUB_BASE_REF:-}}"
 if [ -z "$base_ref" ]; then
-	report_failure "No se pudo resolver la rama base del pull request para validar documentacion."
+	echo "::error::No se pudo resolver la rama base del pull request para validar documentacion."
+	exit 1
 fi
 
 changed_files="$(git diff --name-only --diff-filter=ACMR "origin/$base_ref"...HEAD)"
@@ -30,23 +33,19 @@ fi
 
 doc_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -Ei '^(README\.md|CHANGELOG\.md|docs/.*\.md|wiki/.*\.md)$' || true
+		grep -Ei '^(README\.md|CHANGELOG\.md|docs/.*\.md|docs-local/.*\.md|wiki/.*\.md)$' || true
 )"
 
 tracking_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -Ei '^(wiki/bitacora\.md|changelog\.md|docs/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
+		grep -Ei '^(wiki/bitacora\.md|changelog\.md|docs(-local)?/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
 )"
 
 if [ -z "$doc_changes" ]; then
-	echo "Archivos cambiados en el PR:"
-	printf '%s\n' "$changed_files"
 	report_failure "Este PR no modifica documentacion Markdown. Actualiza algun .md en docs/, wiki/ o README.md."
 fi
 
 if [ -z "$tracking_changes" ]; then
-	echo "Archivos cambiados en el PR:"
-	printf '%s\n' "$changed_files"
 	report_failure "Este PR no actualiza bitacora ni changelog. Deja trazabilidad en wiki/Bitacora.md, CHANGELOG.md o un archivo equivalente dentro de docs/."
 fi
 

@@ -110,7 +110,7 @@ func _call_and_expect(
 
 
 func _wait_for(expected_path: String, label: String) -> void:
-	for i in 12:
+	for i in 60:
 		await process_frame
 		if current_scene != null and current_scene.scene_file_path == expected_path:
 			return

@@ -1,0 +1,46 @@
+name: Gameplay Smoke PR
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual smoke {0}', github.ref_name) || format('Smoke {0}', github.head_ref) }}"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: gameplay-smoke-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gameplay-smoke:
+    name: Gameplay Smoke
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.6.2
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install libraries
+        run: apt-get update -y && apt-get install -y libfontconfig1
+
+      - name: Gameplay smoke validation
+        shell: sh
+        run: |
+          set -eu
+          rm -rf validation-logs/gameplay
+          export EVIDENTE_VALIDATION_LOG_DIR="validation-logs/gameplay"
+          sh scripts/run-godot-validation.sh --run smoke godot
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameplay-smoke-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
+          path: validation-logs/gameplay
+          retention-days: 14
