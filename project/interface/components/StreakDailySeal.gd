@@ -11,8 +11,8 @@ const STATUS_ACTIVE_TODAY := "active_today"
 const DEFAULT_TITLE_TEXT := "racha diaria"
 const SPOKE_COUNT := 40
 const ARC_FONT_SIZE := 16
-const ARC_START_ANGLE := deg_to_rad(-160.0)
-const ARC_END_ANGLE := deg_to_rad(-18.0)
+const ARC_START_ANGLE := -160.0 * PI / 180.0
+const ARC_END_ANGLE := -18.0 * PI / 180.0
 
 var _current_count := 0
 var _status_key := STATUS_INACTIVE
