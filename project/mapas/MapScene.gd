@@ -4,7 +4,7 @@ extends Node2D
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 var level_node_scene := preload("res://mapas/LevelNode.tscn")
-@onready var nodes_container = $Nodes
+@onready var nodes_container = $NodesContainer
 
 func _ready():
 	_render_map()
@@ -12,7 +12,7 @@ func _ready():
 func _render_map():
 	if map_data == null:
 		push_error("No hay map_data asignado")
-	return	
+		return
 	for level_data in map_data.levels:
 		var node = level_node_scene.instantiate()
 					

@@ -3,7 +3,7 @@ extends Node2D
 signal level_selected(scene_path)
 
 
-@onready var icon: Sprite2D = $Icon
+@onready var icon: Sprite2D = $Button/Icon
 @onready var button: TextureButton = $Button
 
 
