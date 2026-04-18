@@ -665,7 +665,8 @@ func _on_overlay_guardar_pressed() -> void:
 
 func _on_overlay_reset_pressed() -> void:
 	SaveManager.reset_all_progress()
-	_refresh_profile_overlay()
+	_close_profile_overlay()
+	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _open_archivero() -> void:

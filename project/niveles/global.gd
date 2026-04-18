@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload("res://niveles/content/GameLevelContentCatalog.gd")

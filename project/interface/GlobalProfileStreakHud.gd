@@ -505,7 +505,9 @@ func _on_overlay_guardar_pressed() -> void:
 
 func _on_overlay_reset_pressed() -> void:
 	SaveManager.reset_all_progress()
-	_refresh_profile_overlay()
+	_profile_overlay.visible = false
+	_profile_button.visible = true
+	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _format_save_status(state: String) -> String:

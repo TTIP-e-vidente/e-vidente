@@ -40,6 +40,9 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var background:         AudioStreamPlayer2D = $Background
 @onready var victory:            AnimatedSprite2D    = $Victory
 @onready var next_chapter_button: Button             = $Adelante
+@onready var adelante_1: Sprite2D					 = $Adelante/adelante1
+@onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
+@onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
 @onready var manager_level                           = $ManagerLevel
 
@@ -157,6 +160,7 @@ func complete_current_run() -> void:
 
 	var track_key := active_track_key
 	var level_number := _valid_level_number(track_key)
+	var current_level := _current_level_number()
 	if level_number <= 0:
 		return
 
@@ -173,7 +177,7 @@ func complete_current_run() -> void:
 
 	# 3. Persistir todo a disco
 	SaveManager.record_level_completed(track_key, level_number)
-
+	_show_completed_run_feedback()
 	# 4. Generar feedback de racha
 	var updated_streak: Dictionary = Global.get_streak_state()
 	var only_first_today: bool = debug_respect_streak_daily_gate
@@ -186,6 +190,25 @@ func complete_current_run() -> void:
 	# 5. Mostrar feedback
 	_show_streak_feedback(streak_feedback)
 
+func _show_completed_run_feedback() -> void:
+	
+	next_chapter_button.disabled = false
+	teaching_sprite.show()
+
+	var chapter_fijo := _current_level_number()
+	while _current_level_number() == chapter_fijo:
+		adelante_2.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_2.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.hide()
+		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_pressed() -> void:
 	var track_key := active_track_key
@@ -302,6 +325,8 @@ func _valid_level_number(track_key: String) -> int:
 		return 0
 	return clampi(Global.current_level, 1, level_count)
 
+func _current_level_number() -> int:
+	return int(Global.current_level)
 
 ## --- Debug ---
 
