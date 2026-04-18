@@ -2,7 +2,6 @@ extends Node2D
 
 @export var map_data: MapData
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const colores := preload("res://colours/miPaleta.gd")
 
 var level_node_scene := preload("res://mapas/LevelNode.tscn")
 @onready var nodes_container = $Nodes
