@@ -93,7 +93,7 @@ wiki
 
 critical_files="
 .github/workflows/docs-pr.yml
-.github/workflows/gameplay-smoke-pr.yml
+.github/workflows/ci.yml
 project/project.godot
 project/interface/evidente.tscn
 project/niveles/intro.tscn

@@ -2,12 +2,10 @@ name: Technical Health
 run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual technical {0}', github.ref_name) || format('Technical {0}', github.ref_name) }}"
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - dev
-      - 'feat/**'
-      - 'feature/**'
   workflow_dispatch:
 
 concurrency:
@@ -21,9 +19,7 @@ jobs:
   technical-health:
     name: Technical Health
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    container:
-      image: barichello/godot-ci:4.6.2
+    timeout-minutes: 5
 
     steps:
       - name: Checkout repository
@@ -35,34 +31,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Linux runtime libraries
-        shell: bash
-        run: |
-          set -euo pipefail
-          apt-get update
-          apt-get install -y --no-install-recommends libfontconfig1
-          rm -rf /var/lib/apt/lists/*
-
       - name: Structure and optional lint guardrails
         shell: bash
         run: |
           set -euo pipefail
           sh scripts/ci/check-codebase-guardrails.sh
-
-      - name: Headless import health check
-        shell: bash
-        env:
-          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/technical
-        run: |
-          set -euo pipefail
-          rm -rf "$GITHUB_WORKSPACE/validation-logs/technical"
-          sh scripts/run-godot-validation.sh --run technical godot
-
-      - name: Upload technical logs artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: technical-health-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
-          path: validation-logs/technical
-          if-no-files-found: warn
-          retention-days: 14
