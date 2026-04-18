@@ -709,7 +709,7 @@ func _process(_delta: float) -> void:
 			var uv: Vector2 = (mouse - rect.position) / rect.size
 			uv.x = clamp(uv.x, 0.0, 1.0)
 			uv.y = clamp(uv.y, 0.0, 1.0)
-			var center: Vector2 = rect.position + rect.size / 2
+			var center: Vector2 = rect.position + rect.size / 2.0
 			var dist := mouse.distance_to(center)
 			if dist < 200:
 				mat.set_shader_parameter("mouse_pos", uv)

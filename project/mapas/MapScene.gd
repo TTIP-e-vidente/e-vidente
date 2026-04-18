@@ -11,7 +11,7 @@ func _ready():
 
 func _render_map():
 	if map_data == null:
-		push_error("No hay map_data asignado")
+		push_warning("MapScene: No hay map_data asignado, saltando render.")
 		return
 	for level_data in map_data.levels:
 		var node = level_node_scene.instantiate()
