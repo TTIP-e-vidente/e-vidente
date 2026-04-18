@@ -5,10 +5,8 @@ signal level_selected(scene_path)
 @export var nivel_id: int
 @export var escena: String
 
-@onready var sprite: Sprite2D = $Sprite2D
 @onready var icon: Sprite2D = $Button/Icon
 @onready var button: TextureButton = $Button
-@onready var collision_shape_2d: CollisionShape2D = $Sprite/CollisionShape2D
 
 @export var desbloqueado: bool = false
 
@@ -30,14 +28,22 @@ func _mouse_exit():
 	var tween = create_tween()
 	tween.tween_property(self, "scale", base_scale, 0.1)
 
+func setup(data: Dictionary, unlocked: bool) -> void:
+	nivel_id = int(data.get("id", nivel_id))
+	escena = str(data.get("scene", escena))
+	desbloqueado = unlocked
+
 func _click():
 	if not desbloqueado:
+		return
+	if escena.is_empty():
+		push_warning("LevelNode: no hay escena asignada para nivel %d" % nivel_id)
 		return
 	
 	_bounce()
 	await get_tree().create_timer(0.2).timeout
 	
-	level_selected.emit("res://niveles/nivel_1/Level.tscn")
+	level_selected.emit(escena)
 
 func _bounce():
 	var tween = create_tween()

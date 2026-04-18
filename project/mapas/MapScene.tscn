@@ -45,6 +45,8 @@ texture = ExtResource("4_2456x")
 [node name="LevelNode" parent="NodesContainer" unique_id=257581998 instance=ExtResource("3_7kmkb")]
 position = Vector2(1023, 388)
 scale = Vector2(1.2851176, 1.3313808)
+nivel_id = 1
+escena = "res://niveles/nivel_1/Level.tscn"
 
 [node name="Sprite" type="Sprite2D" parent="NodesContainer/LevelNode" unique_id=1819669559]
 scale = Vector2(0.39726195, 0.4079034)
@@ -57,6 +59,8 @@ shape = SubResource("CircleShape2D_ltd81")
 
 [node name="LevelNode2" parent="NodesContainer" unique_id=1754636522 instance=ExtResource("3_7kmkb")]
 position = Vector2(848, 630)
+nivel_id = 2
+escena = "res://preguntas/pregunta.tscn"
 
 [node name="Sprite2" type="Sprite2D" parent="NodesContainer/LevelNode2" unique_id=1076498540]
 position = Vector2(-2, 1)
@@ -87,5 +91,6 @@ text = "
 icon = ExtResource("8_ltd81")
 flat = true
 
-[connection signal="level_selected" from="NodesContainer/LevelNode" to="." method="_on_level_node_level_selected"]
+[connection signal="level_selected" from="NodesContainer/LevelNode" to="." method="_on_level_selected"]
+[connection signal="level_selected" from="NodesContainer/LevelNode2" to="." method="_on_level_selected"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]

@@ -2,7 +2,7 @@ extends Node
 
 var niveles_desbloqueados := {
 	1: true,
-	2: false,
+	2: true,
 	3: false
 }
 
