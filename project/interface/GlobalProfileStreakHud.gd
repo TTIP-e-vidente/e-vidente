@@ -466,8 +466,8 @@ func _refresh_profile_overlay() -> void:
 	var summary_text := Global.format_progress_summary_text(Global.get_progress_summary()).strip_edges()
 	_progress_label.text = summary_text if not summary_text.is_empty() else "Todavia no hay capitulos completos"
 
-	if _profile_streak_badge.has_method("refresh"):
-		_profile_streak_badge.call("refresh")
+	if _profile_streak_badge.has_method("render"):
+		_profile_streak_badge.call("render")
 
 	var state: String = str(save_status.get("state", "idle")).strip_edges()
 	_save_status_label.text = _format_save_status(state)
