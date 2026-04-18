@@ -2,11 +2,30 @@
 
 [ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
 [ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
 [ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_rimye"]
 [ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rimye"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kkk1x"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
@@ -24,7 +43,7 @@ scale = Vector2(0.3361547, 0.3361548)
 texture = ExtResource("2_dj2xn")
 
 [node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=348476412]
-position = Vector2(567, 183)
+position = Vector2(567, 136)
 scale = Vector2(0.43902442, 0.4390244)
 texture = ExtResource("3_dj2xn")
 
@@ -35,38 +54,46 @@ offset_right = 772.0
 offset_bottom = 649.0
 scale = Vector2(1.14996, 1.14996)
 
-[node name="Jugar" type="Button" parent="MenuBar" unique_id=1017891503]
-layout_mode = 0
+[node name="Jugar" type="TextureButton" parent="MenuBar" unique_id=91319419]
+editor_description = "Jugar"
+material = SubResource("ShaderMaterial_544v7")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.35200003
+anchor_bottom = 0.35200003
 offset_left = 16.695953
-offset_top = 126.09132
+offset_top = -78.93651
 offset_right = 548.6959
-offset_bottom = 324.0913
+offset_bottom = 119.06351
 scale = Vector2(0.48045883, 0.4908836)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("2_68fep")
-flat = true
+accessibility_live = 2
+texture_normal = ExtResource("2_68fep")
 
-[node name="Opciones" type="Button" parent="MenuBar" unique_id=1136441667]
-layout_mode = 0
+[node name="Opciones" type="TextureButton" parent="MenuBar" unique_id=713939385]
+material = SubResource("ShaderMaterial_rimye")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.47500002
+anchor_bottom = 0.47500002
 offset_left = 16.695953
-offset_top = 235.66034
+offset_top = -2.5484161
 offset_right = 548.6959
-offset_bottom = 433.66034
+offset_bottom = 195.45157
 scale = Vector2(0.48045886, 0.48045886)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("4_mji7j")
-flat = true
+texture_normal = ExtResource("4_mji7j")
 
-[node name="Salir" type="Button" parent="MenuBar" unique_id=2110255214]
-layout_mode = 0
+[node name="Salir" type="TextureButton" parent="MenuBar" unique_id=1519213975]
+material = SubResource("ShaderMaterial_kkk1x")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.34300002
+anchor_bottom = 0.34300002
 offset_left = 16.522324
-offset_top = 351.31653
+offset_top = 198.58043
 offset_right = 548.52234
-offset_bottom = 549.3165
+offset_bottom = 396.58044
 scale = Vector2(0.48045886, 0.48045886)
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("5_nvq7f")
-flat = true
+texture_normal = ExtResource("5_nvq7f")
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
 stream = ExtResource("6_eoqxh")

@@ -5,6 +5,7 @@ const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const MAIN_MENU_SCENE_PATH := "res://niveles/intro.tscn"
 const MODE_SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
+const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const ARCHIVERO_SCENE_PATH := "res://interface/archivero.tscn"
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
@@ -31,8 +32,12 @@ static func go_to_mode_selector(tree: SceneTree) -> void:
 	_change_scene_to_path(tree, MODE_SELECTOR_SCENE_PATH)
 
 
+static func go_to_map(tree: SceneTree) -> void:
+	_change_scene_to_path(tree, MAP_SCENE_PATH)
+
+
 static func go_to_archivero(tree: SceneTree) -> void:
-	_change_scene_to_path(tree, ARCHIVERO_SCENE_PATH)
+	go_to_mode_selector(tree)
 
 
 static func go_to_options(tree: SceneTree) -> void:
@@ -62,7 +67,7 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 static func go_to_resume(
 	tree: SceneTree,
 	resume_state: Dictionary,
-	fallback_scene: String = ARCHIVERO_SCENE_PATH
+	fallback_scene: String = MODE_SELECTOR_SCENE_PATH
 ) -> void:
 	var scene_path := str(resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene))
 	_change_scene_to_path(tree, scene_path)
@@ -70,8 +75,8 @@ static func go_to_resume(
 
 static func _resolve_track_scene_path(track_key: String, scene_path_key: String) -> String:
 	var track_definition := GameTrackCatalog.get_track_definition(track_key)
-	var scene_path := str(track_definition.get(scene_path_key, ARCHIVERO_SCENE_PATH)).strip_edges()
-	return scene_path if not scene_path.is_empty() else ARCHIVERO_SCENE_PATH
+	var scene_path := str(track_definition.get(scene_path_key, MODE_SELECTOR_SCENE_PATH)).strip_edges()
+	return scene_path if not scene_path.is_empty() else MODE_SELECTOR_SCENE_PATH
 
 
 static func _change_scene_to_path(tree: SceneTree, scene_path: String) -> void:

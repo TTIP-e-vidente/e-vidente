@@ -106,6 +106,16 @@ Feedback visual y sonoro
 - El contenido se define con recursos `Preguntas` agrupados en `ThemePreg`.
 - La estructura ya contempla variantes de texto, imagen, audio y video para cada pregunta.
 - `selector.tscn` puede abrir `pregunta.tscn` como flujo aparte.
+- Al completar el quiz, `pregunta.gd` registra el nivel como completado en Global y SaveManager y desbloquea el siguiente nodo del mapa.
+
+### Sistema de mapa
+
+- `mapas/MapScene.tscn` es la escena del mapa de Celiaquia. Los nodos de capítulo están colocados a mano en la escena.
+- `mapas/LevelNode.gd` es el nodo clickeable de cada capítulo. Usa detección por distancia (radio de 80px escalado) en lugar de TextureButton para manejar hover y click.
+- `mapas/LevelManager.gd` es un autoload con el estado de desbloqueo de los nodos del mapa. Es un sistema aparte de `Global.is_level_unlocked()` y hoy solo cubre Celiaquia.
+- Los nodos del mapa tienen tres estados visuales: completado (naranja tierra, sin interacción), bloqueado (translúcido) y desbloqueado (color normal, clickeable con animación de hover y bounce).
+- Los colores usan la paleta del proyecto definida en `colours/miPaleta.gd`.
+- Hoy solo existe mapa para Celiaquia. Los otros recorridos todavía no tienen mapa propio.
 
 ### Sistema de persistencia local
 

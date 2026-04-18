@@ -5,6 +5,8 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DEFAULT_TRACK_KEY := "celiaquia"
 const CHAPTER_BUTTON_DUPLICATE_FLAGS := 14
 const CHAPTER_BUTTON_NAME_PREFIX := "Cap"
+const HOVER_SCALE := 1.06
+const HOVER_DURATION := 0.12
 
 @onready var background_music: AudioStreamPlayer2D = $Background
 @onready var chapter_container: VBoxContainer = $VBoxContainer
@@ -13,6 +15,7 @@ const CHAPTER_BUTTON_NAME_PREFIX := "Cap"
 var _chapter_button_icons: Array[Texture2D] = []
 var _button_template: Button
 var _active_track_key := ""
+var _chapter_hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
@@ -79,6 +82,8 @@ func _rebuild_chapter_buttons() -> void:
 			chapter_button.text = "Capitulo %d" % level_number
 		chapter_button.disabled = not Global.is_level_unlocked(_active_track_key, level_number)
 		chapter_button.pressed.connect(_on_chapter_button_pressed.bind(level_number))
+		chapter_button.mouse_entered.connect(_on_chapter_hover.bind(chapter_button, true))
+		chapter_button.mouse_exited.connect(_on_chapter_hover.bind(chapter_button, false))
 		chapter_container.add_child(chapter_button)
 
 
@@ -96,5 +101,17 @@ func _on_chapter_button_pressed(level_number: int) -> void:
 	GameSceneRouter.go_to_track_level(get_tree(), _active_track_key, level_number)
 
 
+func _on_chapter_hover(button: Button, entered: bool) -> void:
+	if button.disabled:
+		return
+	var target_scale := Vector2(HOVER_SCALE, HOVER_SCALE) if entered else Vector2.ONE
+	if _chapter_hover_tweens.has(button) and is_instance_valid(_chapter_hover_tweens[button]):
+		_chapter_hover_tweens[button].kill()
+	var tw := create_tween()
+	tw.tween_property(button, "scale", target_scale, HOVER_DURATION)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_chapter_hover_tweens[button] = tw
+
+
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
+	GameSceneRouter.go_to_mode_selector(get_tree())

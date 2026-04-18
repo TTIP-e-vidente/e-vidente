@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ThemePreg" format=3 uid="uid://yt3ganvy1l4o"]
 
 [ext_resource type="Script" uid="uid://bickgle2fn34j" path="res://preguntas/theme/theme.gd" id="1_8g5yt"]
-[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/pregunta.gd" id="2_cm4co"]
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/preguntas.gd" id="2_cm4co"]
 [ext_resource type="Resource" uid="uid://j426x4c5xamn" path="res://preguntas/preguntas_recurso/eliminar_gluten.tres" id="3_vg0bl"]
 [ext_resource type="Resource" uid="uid://bhq5jsa0elcij" path="res://preguntas/preguntas_recurso/enfermedad_autoinmune.tres" id="4_w8ahy"]
 [ext_resource type="Resource" uid="uid://c0wxnu5tcwtf7" path="res://preguntas/preguntas_recurso/estudio_celiaquia.tres" id="5_6lu8l"]

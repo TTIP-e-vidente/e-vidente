@@ -1,6 +1,6 @@
 extends Control
 
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const ARCHIVERO_SCENE := "res://niveles/selector.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
@@ -216,4 +216,4 @@ func _go_to_return_scene() -> void:
 	if _should_return_to_intro():
 		GameSceneRouter.go_to_main_menu(get_tree())
 		return
-	GameSceneRouter.go_to_archivero(get_tree())
+	GameSceneRouter.go_to_mode_selector(get_tree())
