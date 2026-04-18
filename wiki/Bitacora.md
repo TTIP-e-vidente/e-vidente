@@ -4,6 +4,16 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-18 | mapa-celiaquia-feedback-visual
+Se agregó feedback visual al mapa de Celiaquia para que el jugador pueda distinguir de un vistazo qué capítulos ya completó, cuáles tiene disponibles y cuáles todavía están bloqueados. Cada nodo del mapa ahora se pinta según su estado: naranja tierra cuando está completado, translúcido cuando está bloqueado y sin cambio cuando está desbloqueado pero pendiente. Los nodos completados además dejan de responder al click y al hover, así el jugador sabe que ahí ya no hay nada por hacer.
+
+Del lado de la lógica, el modo preguntas no estaba registrando la finalización del capítulo. Se corrigió para que al terminar el quiz se marque el nivel como completado en Global y SaveManager y se desbloquee el siguiente nodo en LevelManager. También se arregló una referencia rota en la escena de preguntas que apuntaba a un script viejo que ya no existía.
+
+Los colores vienen de la paleta del proyecto (`miPaleta.gd`), así que si más adelante se quiere cambiar el tono es cuestión de tocar un solo lugar. Esto queda implementado solo para el mapa de Celiaquia; los otros recorridos todavía no tienen mapa propio.
+
+### 2026-04-15 | animaciones-componentes
+Se sumaron animaciones a varios componentes de la interfaz para que la aplicación se sienta más viva y menos estática. Cosas como transiciones al pasar entre pantallas, pequeños rebotes al tocar botones y movimientos sutiles en los elementos del mapa. Nada que cambie la lógica del juego, pero le da otra sensación al usarlo. La idea fue que cada interacción tenga un mínimo de respuesta visual para que el jugador sienta que la app le está respondiendo.
+
 ### 2026-04-17 | racha-player
 Se agregó un sistema de racha diaria. La idea es simple: cada vez que el jugador completa un nivel, se registra la fecha. Al día siguiente, si vuelve a jugar, la racha sube; si se saltea un día, vuelve a 1; si juega dos veces el mismo día, se mantiene igual.
 
