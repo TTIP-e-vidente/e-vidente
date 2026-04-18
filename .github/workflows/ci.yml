@@ -16,8 +16,23 @@ permissions:
   contents: read
 
 jobs:
-  technical-health:
-    name: Technical Health
+  structure:
+    name: Structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check critical directories and files
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-structure-guardrails.sh
+
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -31,8 +46,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Structure and optional lint guardrails
+      - name: Run ESLint if configured
         shell: bash
         run: |
           set -euo pipefail
-          sh scripts/ci/check-codebase-guardrails.sh
+          sh scripts/ci/check-lint-guardrails.sh
