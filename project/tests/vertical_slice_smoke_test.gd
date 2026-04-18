@@ -5,6 +5,7 @@ const GameChapterAssetCatalog := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
 
+const MAP_SCENE := "res://mapas/MapScene.tscn"
 const BOOK_SCENE := "res://interface/libro.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 
@@ -37,14 +38,10 @@ func _run() -> void:
 	await _go_to("res://interface/evidente.tscn", "Splash")
 	await _call_and_expect("_on_go_pressed", "res://niveles/intro.tscn", "Intro")
 	await _call_and_expect("_on_start_pressed", "res://niveles/selector.tscn", "Selector")
-	await _call_and_expect("_on_start_pressed", "res://interface/archivero.tscn", "Archivero")
+	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
 
 	if not failed:
-		GameSceneRouter.go_to_track_book(self, "celiaquia")
-		await _wait_for(BOOK_SCENE, "Libro")
-
-	if not failed:
-		await _call_and_expect("_open_track_chapter", LEVEL_SCENE, "Nivel", [1])
+		await _call_and_expect("_on_level_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
 
 
 	if not failed:

@@ -126,7 +126,7 @@ run_gameplay_smoke() {
 	run_step \
 		"03-vertical-slice-smoke" \
 		"Gameplay smoke test" \
-		"Se rompio el flujo minimo Splash -> Intro -> Selector -> Archivero -> Libro -> Gameplay." \
+		"Se rompio el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay." \
 		--headless --path project -s res://tests/vertical_slice_smoke_test.gd
 }
 
