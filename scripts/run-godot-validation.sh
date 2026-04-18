@@ -47,6 +47,7 @@ run_step() {
 	fi
 
 	failure_detail="$(grep -E 'SCRIPT ERROR:|Parse Error:|Compile Error:|Failed to load script|FAILED:|FALLO:' "$tmp_log" | tail -n 1 || true)"
+	all_errors="$(grep -n -E 'ERROR:|SCRIPT ERROR:|Parse Error:|Compile Error:|Failed to load' "$tmp_log" | head -n 30 || true)"
 	if [ "$status" -eq 0 ] && [ -n "$failure_detail" ]; then
 		status=1
 	fi
@@ -58,6 +59,10 @@ run_step() {
 		echo "Ayuda: $failure_hint"
 		if [ -n "$failure_detail" ]; then
 			echo "Detalle: $failure_detail"
+		fi
+		if [ -n "$all_errors" ]; then
+			echo "Errores completos:"
+			echo "$all_errors"
 		fi
 		if [ -n "$failure_excerpt" ]; then
 			echo "Excerpt: $failure_excerpt"
