@@ -3,6 +3,8 @@ extends Node
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 @export var quiz: ThemePreg
+@export var nivel_id: int = 2
+@export var track_key: String = "celiaquia"
 
 var botones: Array
 var index: int
@@ -100,6 +102,11 @@ func _randomizar_preguntas(array :Array) -> Array:
 func _game_over() -> void:
 	$Contenido/GameOver.show()
 	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", _max_questions)
+
+	# Registrar nivel completado y desbloquear el siguiente
+	Global.mark_level_completed(track_key, nivel_id)
+	SaveManager.record_level_completed(track_key, nivel_id)
+	LevelManager.desbloquear(nivel_id + 1)
 
 func _on_jugar_nuevamente_pressed() -> void:
 	GameSceneRouter.go_to_map(get_tree())

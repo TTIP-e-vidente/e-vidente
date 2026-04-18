@@ -7,17 +7,22 @@ signal level_selected(scene_path)
 @export var desbloqueado: bool = false
 
 const CLICK_RADIUS := 80.0
+const COLOR_COMPLETADO := Color("#db9d4b")  # naranja tierra de la paleta
+const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 
 var base_scale := Vector2.ONE
 var _hovered := false
+var _completado := false
 
 
 func _ready():
 	desbloqueado = LevelManager.esta_desbloqueado(nivel_id)
+	_completado = Global.is_level_completed("celiaquia", nivel_id)
+	_aplicar_color_segun_estado()
 
 
 func _input(event: InputEvent) -> void:
-	if not desbloqueado:
+	if not desbloqueado or _completado:
 		return
 
 	if event is InputEventMouseMotion:
@@ -60,3 +65,13 @@ func _bounce():
 	tween.tween_property(self, "scale", base_scale * Vector2(1.15, 0.90), 0.06)
 	tween.tween_property(self, "scale", base_scale * Vector2(0.95, 1.05), 0.06)
 	tween.tween_property(self, "scale", base_scale, 0.08)
+
+
+func _aplicar_color_segun_estado() -> void:
+	var completado := Global.is_level_completed("celiaquia", nivel_id)
+	if completado:
+		modulate = COLOR_COMPLETADO
+	elif not desbloqueado:
+		modulate = COLOR_BLOQUEADO
+	else:
+		modulate = Color.WHITE
