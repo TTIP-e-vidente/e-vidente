@@ -97,4 +97,4 @@ func _on_chapter_button_pressed(level_number: int) -> void:
 
 
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
+	GameSceneRouter.go_to_mode_selector(get_tree())

@@ -3,7 +3,9 @@ class_name ModeSelector
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const colores := preload("res://colours/miPaleta.gd")
-const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
+const STREAK_SEAL_SCENE := preload("res://interface/components/StreakDailySeal.tscn")
+const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
+const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 
 @onready var background_music: AudioStreamPlayer2D = $Background
 @onready var resume_backdrop: ColorRect = $PlayBackdrop
@@ -28,6 +30,7 @@ const RESUME_FALLBACK_SCENE := "res://interface/archivero.tscn"
 func _ready() -> void:
 	_play_background_music()
 	_set_resume_overlay_visible(false)
+	_build_hud()
 	
 	_set_button_enabled(diabetes, false)
 	_set_button_enabled(autismo, false)
@@ -110,8 +113,52 @@ func _exit_tree() -> void:
 		background_music.stream = null
 
 
+func _build_hud() -> void:
+	var hud_layer := CanvasLayer.new()
+	hud_layer.layer = 75
+	add_child(hud_layer)
+
+	var hud_root := Control.new()
+	hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layer.add_child(hud_root)
+
+	var streak_seal := STREAK_SEAL_SCENE.instantiate() as Control
+	if streak_seal != null:
+		streak_seal.anchor_left = 0.0
+		streak_seal.anchor_top = 0.0
+		streak_seal.anchor_right = 0.0
+		streak_seal.anchor_bottom = 0.0
+		streak_seal.offset_left = 16.0
+		streak_seal.offset_top = 16.0
+		streak_seal.offset_right = 152.0
+		streak_seal.offset_bottom = 152.0
+		hud_root.add_child(streak_seal)
+
+	var profile_btn := Button.new()
+	profile_btn.script = PROFILE_BUTTON_SCRIPT
+	profile_btn.anchor_left = 1.0
+	profile_btn.anchor_top = 0.0
+	profile_btn.anchor_right = 1.0
+	profile_btn.anchor_bottom = 0.0
+	profile_btn.offset_left = -152.0
+	profile_btn.offset_top = 16.0
+	profile_btn.offset_right = -16.0
+	profile_btn.offset_bottom = 84.0
+	profile_btn.tooltip_text = "Mi progreso"
+	profile_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	profile_btn.pressed.connect(_on_profile_pressed)
+	hud_root.add_child(profile_btn)
+
+
+func _on_profile_pressed() -> void:
+	SaveManager.save_progress_to_disk()
+	get_tree().root.set_meta("profile_return_scene", "res://niveles/selector.tscn")
+	GameSceneRouter.go_to_profile_editor(get_tree())
+
+
 func _open_archivero() -> void:
-	GameSceneRouter.go_to_archivero(get_tree())
+	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _open_questions_mode() -> void:
@@ -126,7 +173,7 @@ func _resume_current_save() -> void:
 	if not SaveManager.can_resume_current_save():
 		_set_resume_overlay_visible(false)
 		return
-	var resume_state := SaveManager.reload_current_save_and_get_resume_state()
+	var resume_state := SaveManager.reload_from_disk_and_get_resume()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 func _bounce_button(button: Control):
