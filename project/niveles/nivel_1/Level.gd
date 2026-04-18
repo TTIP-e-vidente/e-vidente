@@ -31,15 +31,16 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @export var track_key_override    := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @export_group("Debug Demo")
-@export var debug_force_progress_feedback  := false
 @export var debug_force_streak_feedback    := false
-@export var debug_respect_streak_daily_gate := false
 
 ## --- Nodos de escena ---
 
 @onready var background:         AudioStreamPlayer2D = $Background
 @onready var victory:            AnimatedSprite2D    = $Victory
 @onready var next_chapter_button: Button             = $Adelante
+@onready var adelante_1: Sprite2D					 = $Adelante/adelante1
+@onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
+@onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
 @onready var manager_level                           = $ManagerLevel
 
@@ -66,23 +67,7 @@ func _ready() -> void:
 	streak_progress_overlay = STREAK_PROGRESS_OVERLAY_SCENE.instantiate()
 	if streak_progress_overlay != null:
 		add_child(streak_progress_overlay)
-	call_deferred("_apply_debug_demo_flags")
 
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not debug_force_progress_feedback and not debug_force_streak_feedback:
-		return
-
-	var key_event := event as InputEventKey
-	if key_event == null or not key_event.pressed or key_event.echo:
-		return
-
-	if debug_force_progress_feedback and key_event.keycode == KEY_F7:
-		_show_debug_progress_feedback()
-		return
-
-	if debug_force_streak_feedback and key_event.keycode == KEY_F8:
-		_show_debug_streak_feedback()
 
 
 ## --- Arranque ---
@@ -141,7 +126,10 @@ func _exit_tree() -> void:
 ## --- Navegación y gameplay ---
 
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
+	if active_track_key == DEFAULT_TRACK_KEY:
+		GameSceneRouter.go_to_map(get_tree())
+	else:
+		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
 func complete_current_run() -> void:
@@ -149,14 +137,12 @@ func complete_current_run() -> void:
 		return
 	_current_run_completion_handled = true
 
-	# Mostrar animación de victoria
-	victory.show()
-	victory.play("victory")
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
 
 	var track_key := active_track_key
 	var level_number := _valid_level_number(track_key)
+	var current_level := _current_level_number()
 	if level_number <= 0:
 		return
 
@@ -173,10 +159,10 @@ func complete_current_run() -> void:
 
 	# 3. Persistir todo a disco
 	SaveManager.record_level_completed(track_key, level_number)
-
+	_show_completed_run_feedback()
 	# 4. Generar feedback de racha
 	var updated_streak: Dictionary = Global.get_streak_state()
-	var only_first_today: bool = debug_respect_streak_daily_gate
+	var only_first_today: bool = not debug_force_streak_feedback
 	var streak_feedback: Dictionary = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
@@ -186,13 +172,36 @@ func complete_current_run() -> void:
 	# 5. Mostrar feedback
 	_show_streak_feedback(streak_feedback)
 
+func _show_completed_run_feedback() -> void:
+	
+	next_chapter_button.disabled = false
+	teaching_sprite.show()
+
+	var chapter_fijo := _current_level_number()
+	while _current_level_number() == chapter_fijo:
+		adelante_2.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_2.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_1.hide()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.show()
+		await get_tree().create_timer(0.60).timeout
+		adelante_3.hide()
+		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_pressed() -> void:
-	var track_key := active_track_key
-	if Global.current_level >= Global.get_track_level_count(track_key):
-		GameSceneRouter.go_to_main_menu(get_tree())
-		return
-	GameSceneRouter.go_to_track_level(get_tree(), track_key, Global.current_level + 1)
+	if active_track_key == DEFAULT_TRACK_KEY:
+		GameSceneRouter.go_to_map(get_tree())
+	else:
+		var next_level := _current_level_number() + 1
+		var level_count := Global.get_track_level_count(active_track_key)
+		if next_level <= level_count:
+			GameSceneRouter.go_to_track_level(get_tree(), active_track_key, next_level)
+		else:
+			GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
 ## --- Guardado rápido ---
@@ -302,25 +311,5 @@ func _valid_level_number(track_key: String) -> int:
 		return 0
 	return clampi(Global.current_level, 1, level_count)
 
-
-## --- Debug ---
-
-func _apply_debug_demo_flags() -> void:
-	if debug_force_progress_feedback:
-		_show_debug_progress_feedback()
-	if debug_force_streak_feedback:
-		_show_debug_streak_feedback()
-
-
-func _show_debug_progress_feedback() -> void:
-	_show_save_success_feedback(
-		{"progress_count": 3, "progress_unit_singular": "comida en el plato", "progress_unit_plural": "comidas en el plato"},
-		{"state": "saved", "last_saved_at": "%s 14:32:00" % Time.get_date_string_from_system(false)}
-	)
-
-
-func _show_debug_streak_feedback() -> void:
-	_show_streak_feedback({
-		"should_show": true, "feedback_key": "sustained", "title": "Racha diaria",
-		"message": "Vas 5 dias seguidos.", "current_count": 5, "best_count": 7
-	})
+func _current_level_number() -> int:
+	return int(Global.current_level)

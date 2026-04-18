@@ -33,7 +33,7 @@ func normalize_resume_state(raw_resume_state: Variant) -> Dictionary:
 	var level_number: int = clampi(
 		int(stored_resume_state.get("level_number", 1)),
 		1,
-		Global.get_track_level_count(track_key)
+		GameTrackCatalog.get_track_level_count(track_key)
 	)
 	if context == CONTEXT_BOOK:
 		return {
@@ -88,7 +88,7 @@ func build_resume_state_for_book(track_key: String, current_level: int) -> Dicti
 		"context": CONTEXT_BOOK,
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("book_scene_path", "")).strip_edges(),
-		"level_number": clampi(current_level, 1, Global.get_track_level_count(track_key))
+		"level_number": clampi(current_level, 1, GameTrackCatalog.get_track_level_count(track_key))
 	}
 
 
@@ -98,7 +98,7 @@ func build_resume_state_for_level(track_key: String, level_number: int) -> Dicti
 		"context": CONTEXT_LEVEL,
 		"track_key": track_key,
 		"scene_path": str(track_definition.get("level_scene_path", "")).strip_edges(),
-		"level_number": clampi(level_number, 1, Global.get_track_level_count(track_key))
+		"level_number": clampi(level_number, 1, GameTrackCatalog.get_track_level_count(track_key))
 	}
 
 
@@ -222,13 +222,13 @@ func _build_resume_state_after_completed_level(
 	var completed_level: int = clampi(
 		int(metadata.get("level", 1)),
 		1,
-		Global.get_track_level_count(track_key)
+		GameTrackCatalog.get_track_level_count(track_key)
 	)
 	if GameTrackCatalog.get_track_definition(track_key).is_empty():
 		return {}
 	if not is_saved_level_completed(save_data, track_key, completed_level):
 		return {}
-	if completed_level >= Global.get_track_level_count(track_key):
+	if completed_level >= GameTrackCatalog.get_track_level_count(track_key):
 		return default_resume_state()
 	return build_resume_state_for_level(track_key, completed_level + 1)
 

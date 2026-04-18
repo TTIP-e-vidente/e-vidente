@@ -1,5 +1,5 @@
 name: Gameplay Smoke PR
-run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual smoke {0}', github.ref_name) || format('Smoke {0} -> {1}', github.head_ref, github.base_ref) }}"
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual smoke {0}', github.ref_name) || format('Smoke {0}', github.head_ref) }}"
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('gameplay-smoke-pr-{0}', github.event.pull_request.number) || format('gameplay-smoke-manual-{0}', github.ref) }}
+  group: gameplay-smoke-pr-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -19,36 +19,28 @@ jobs:
   gameplay-smoke:
     name: Gameplay Smoke
     runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.6.2
     timeout-minutes: 12
-    container:
-      image: barichello/godot-ci:4.6.2
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Linux runtime libraries
-        shell: bash
-        run: |
-          set -euo pipefail
-          apt-get update
-          apt-get install -y --no-install-recommends libfontconfig1
-          rm -rf /var/lib/apt/lists/*
+      - name: Install libraries
+        run: apt-get update -y && apt-get install -y libfontconfig1
 
       - name: Gameplay smoke validation
-        shell: bash
-        env:
-          EVIDENTE_VALIDATION_LOG_DIR: ${{ github.workspace }}/validation-logs/gameplay
+        shell: sh
         run: |
-          set -euo pipefail
-          rm -rf "$GITHUB_WORKSPACE/validation-logs/gameplay"
+          set -eu
+          rm -rf validation-logs/gameplay
+          export EVIDENTE_VALIDATION_LOG_DIR="validation-logs/gameplay"
           sh scripts/run-godot-validation.sh --run smoke godot
 
-      - name: Upload gameplay logs artifact
+      - name: Upload validation logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gameplay-smoke-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
           path: validation-logs/gameplay
-          if-no-files-found: warn
           retention-days: 14

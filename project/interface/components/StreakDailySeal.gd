@@ -11,8 +11,8 @@ const STATUS_ACTIVE_TODAY := "active_today"
 const DEFAULT_TITLE_TEXT := "racha diaria"
 const SPOKE_COUNT := 40
 const ARC_FONT_SIZE := 16
-const ARC_START_ANGLE := deg_to_rad(-160.0)
-const ARC_END_ANGLE := deg_to_rad(-18.0)
+const ARC_START_ANGLE := -160.0 * PI / 180.0
+const ARC_END_ANGLE := -18.0 * PI / 180.0
 
 var _current_count := 0
 var _status_key := STATUS_INACTIVE
@@ -41,7 +41,10 @@ func set_badge(number_value: int, next_status_key: String = STATUS_INACTIVE) -> 
 func _resolve_view_model(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
 		return streak_view_model
-	return Global.get_streak_view_model()
+	var global_node := get_node_or_null("/root/Global")
+	if global_node and global_node.has_method("get_streak_view_model"):
+		return global_node.get_streak_view_model()
+	return {}
 
 
 func _apply_view_model(streak_view_model: Dictionary) -> void:

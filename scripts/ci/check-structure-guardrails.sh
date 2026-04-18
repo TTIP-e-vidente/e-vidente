@@ -39,45 +39,6 @@ check_required_files() {
 	done
 }
 
-run_eslint_if_configured() {
-	if [ ! -f package.json ]; then
-		echo "No package.json detected. Skipping ESLint guardrail."
-		return
-	fi
-
-	has_eslint_config=0
-	for config_path in \
-		eslint.config.js \
-		eslint.config.mjs \
-		.eslintrc \
-		.eslintrc.json \
-		.eslintrc.js \
-		.eslintrc.cjs \
-		.eslintrc.yaml \
-		.eslintrc.yml
-	do
-		if [ -f "$config_path" ]; then
-			has_eslint_config=1
-			break
-		fi
-	done
-
-	if [ "$has_eslint_config" -ne 1 ]; then
-		echo "No ESLint config detected. Skipping lint guardrail."
-		return
-	fi
-
-	if [ ! -f package-lock.json ] && [ ! -f npm-shrinkwrap.json ]; then
-		echo "::notice::Skipping ESLint: package.json detected but no npm lockfile is pinned."
-		echo "::notice::Keep lint outside the required gate until Node tooling is deterministic."
-		return
-	fi
-
-	echo "Running ESLint with pinned npm dependencies..."
-	npm ci
-	npx eslint . --max-warnings=0
-}
-
 missing=0
 
 critical_dirs="
@@ -93,7 +54,7 @@ wiki
 
 critical_files="
 .github/workflows/docs-pr.yml
-.github/workflows/gameplay-smoke-pr.yml
+.github/workflows/ci.yml
 project/project.godot
 project/interface/evidente.tscn
 project/niveles/intro.tscn
@@ -112,16 +73,14 @@ check_required_directories
 check_required_files
 
 if [ "$missing" -ne 0 ]; then
-	append_summary "### Codebase / Structure"
+	append_summary "### Structure"
 	append_summary "- Estado: FAIL"
 	append_summary "- Motivo: falta estructura o entrypoints criticos del slice."
 	exit 1
 fi
 
-run_eslint_if_configured
-
-append_summary "### Codebase / Structure"
+append_summary "### Structure"
 append_summary "- Estado: OK"
-append_summary "- Cobertura: estructura critica del repo y lint opcional deterministico"
+append_summary "- Cobertura: estructura critica del repo (directorios y archivos)"
 
-echo "Codebase guardrails passed."
+echo "Structure guardrails passed."

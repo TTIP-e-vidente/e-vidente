@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://kmsb3inpowgb"]
+
+[ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_bdcs1"]
+
+[node name="LevelNode" type="Node2D" unique_id=257581998]
+script = ExtResource("1_bdcs1")
+
+[node name="Button" type="TextureButton" parent="." unique_id=2136653225]
+offset_right = 40.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Icon" type="Sprite2D" parent="Button" unique_id=81622321]
+position = Vector2(3, 1.000061)
+scale = Vector2(0.45849058, 0.4476923)
