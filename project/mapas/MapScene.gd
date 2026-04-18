@@ -34,4 +34,4 @@ func _is_level_unlocked(id: int) -> bool:
 	return id <= Global.current_level
 
 func _on_atrás_pressed() -> void:
-	GameSceneRouter.go_to_main_menu(get_tree())
+	GameSceneRouter.go_to_mode_selector(get_tree())

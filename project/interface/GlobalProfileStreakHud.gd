@@ -431,12 +431,14 @@ func _close_profile_overlay() -> void:
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(_session_panel, "modulate:a", 0.0, 0.15)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tw.chain().tween_callback(func() -> void:
-		_profile_overlay.visible = false
-		_session_panel.offset_left = -490.0
-		_session_panel.offset_right = -16.0
-		_session_panel.modulate.a = 1.0
-	)
+	tw.chain().tween_callback(_on_close_animation_finished)
+
+
+func _on_close_animation_finished() -> void:
+	_profile_overlay.visible = false
+	_session_panel.offset_left = -490.0
+	_session_panel.offset_right = -16.0
+	_session_panel.modulate.a = 1.0
 
 
 func _refresh_profile_overlay() -> void:

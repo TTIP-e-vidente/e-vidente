@@ -126,7 +126,10 @@ func _exit_tree() -> void:
 ## --- Navegación y gameplay ---
 
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_map(get_tree())
+	if active_track_key == DEFAULT_TRACK_KEY:
+		GameSceneRouter.go_to_map(get_tree())
+	else:
+		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
 func complete_current_run() -> void:
@@ -190,7 +193,15 @@ func _show_completed_run_feedback() -> void:
 		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_pressed() -> void:
-	GameSceneRouter.go_to_map(get_tree())
+	if active_track_key == DEFAULT_TRACK_KEY:
+		GameSceneRouter.go_to_map(get_tree())
+	else:
+		var next_level := _current_level_number() + 1
+		var level_count := Global.get_track_level_count(active_track_key)
+		if next_level <= level_count:
+			GameSceneRouter.go_to_track_level(get_tree(), active_track_key, next_level)
+		else:
+			GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
 ## --- Guardado rápido ---
