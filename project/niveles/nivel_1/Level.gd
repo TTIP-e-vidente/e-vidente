@@ -126,7 +126,7 @@ func _exit_tree() -> void:
 ## --- Navegación y gameplay ---
 
 func _on_atras_pressed() -> void:
-	GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
+	GameSceneRouter.go_to_map(get_tree())
 
 
 func complete_current_run() -> void:
@@ -190,11 +190,7 @@ func _show_completed_run_feedback() -> void:
 		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_pressed() -> void:
-	var track_key := active_track_key
-	if Global.current_level >= Global.get_track_level_count(track_key):
-		GameSceneRouter.go_to_main_menu(get_tree())
-		return
-	GameSceneRouter.go_to_track_level(get_tree(), track_key, Global.current_level + 1)
+	GameSceneRouter.go_to_map(get_tree())
 
 
 ## --- Guardado rápido ---
@@ -306,16 +302,3 @@ func _valid_level_number(track_key: String) -> int:
 
 func _current_level_number() -> int:
 	return int(Global.current_level)
-
-## --- Debug ---
-
-func _apply_debug_demo_flags() -> void:
-	if debug_force_progress_feedback:
-		_show_debug_progress_feedback()
-
-
-func _show_debug_progress_feedback() -> void:
-	_show_save_success_feedback(
-		{"progress_count": 3, "progress_unit_singular": "comida en el plato", "progress_unit_plural": "comidas en el plato"},
-		{"state": "saved", "last_saved_at": "%s 14:32:00" % Time.get_date_string_from_system(false)}
-	)

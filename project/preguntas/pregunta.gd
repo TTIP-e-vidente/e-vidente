@@ -9,6 +9,8 @@ var index: int
 var puntaje: int
 var bloqueado := false
 
+var _max_questions := 1
+
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[index]
 
@@ -27,7 +29,7 @@ func _ready() -> void:
 func load_quiz() -> void:
 	bloqueado = false
 	
-	if index >= quiz.theme.size():
+	if index >= _max_questions or index >= quiz.theme.size():
 		_game_over()
 		return
 	
@@ -97,10 +99,10 @@ func _randomizar_preguntas(array :Array) -> Array:
 
 func _game_over() -> void:
 	$Contenido/GameOver.show()
-	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", quiz.theme.size())
+	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", _max_questions)
 
 func _on_jugar_nuevamente_pressed() -> void:
-	get_tree().reload_current_scene()
+	GameSceneRouter.go_to_map(get_tree())
 
 func _on_atrás_pressed() -> void:
-	GameSceneRouter.go_to_mode_selector(get_tree())
+	GameSceneRouter.go_to_map(get_tree())
