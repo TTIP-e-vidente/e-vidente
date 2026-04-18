@@ -32,7 +32,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @export_group("Debug Demo")
 @export var debug_force_progress_feedback  := false
-@export var debug_force_streak_feedback    := false
+@export var debug_force_streak_feedback    := true
 @export var debug_respect_streak_daily_gate := false
 
 ## --- Nodos de escena ---
@@ -152,9 +152,6 @@ func complete_current_run() -> void:
 		return
 	_current_run_completion_handled = true
 
-	# Mostrar animación de victoria
-	victory.show()
-	victory.play("victory")
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
 

@@ -44,7 +44,6 @@ texture = ExtResource("4_2456x")
 
 [node name="LevelNode" parent="NodesContainer" unique_id=257581998 instance=ExtResource("3_7kmkb")]
 position = Vector2(1023, 388)
-scale = Vector2(1.2851176, 1.3313808)
 
 [node name="Sprite" type="Sprite2D" parent="NodesContainer/LevelNode" unique_id=1819669559]
 scale = Vector2(0.39726195, 0.4079034)
@@ -87,5 +86,4 @@ text = "
 icon = ExtResource("8_ltd81")
 flat = true
 
-[connection signal="level_selected" from="NodesContainer/LevelNode" to="." method="_on_level_node_level_selected"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
