@@ -62,6 +62,7 @@ func _run() -> void:
 
 
 func _check_gameplay_scene(global) -> void:
+	var level_scene := current_scene
 	var ml = current_scene.get_node_or_null("ManagerLevel")
 	_check(ml != null, "Falta nodo ManagerLevel")
 	_check(current_scene.get_node_or_null("Plato") != null, "Falta nodo Plato")
@@ -76,10 +77,84 @@ func _check_gameplay_scene(global) -> void:
 		return
 
 	_check(str(ml.active_track_key) == "celiaquia", "Track deberia ser celiaquia")
-	_check(ml.active_run_data is Dictionary and not ml.active_run_data.is_empty(), "Sin datos de corrida")
+	_check(
+		ml.active_run_data is Dictionary and not ml.active_run_data.is_empty(),
+		"Sin datos de corrida"
+	)
 	_check(ml.get_current_run_index() == 1, "Deberia ser la primera corrida")
 	_check(ml.get_total_runs() >= 1, "Deberia haber al menos una corrida")
 	_check(global.get_current_level_number() == 1, "Global deberia estar en capitulo 1")
+	_check(
+		level_scene.has_method("complete_current_run"),
+		"El nivel deberia exponer complete_current_run"
+	)
+	_check(level_scene.has_method("is_run_completed"), "El nivel deberia exponer is_run_completed")
+	if failed:
+		return
+
+	level_scene.complete_current_run()
+	await process_frame
+	await process_frame
+	_check_completed_gameplay_state(level_scene, ml)
+
+
+func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
+	var next_button := level_scene.get_node_or_null("Adelante") as Button
+	var back_button := level_scene.get_node_or_null("Atrás") as Button
+	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
+	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
+	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
+
+	_check(level_scene.is_run_completed(), "El nivel deberia quedar marcado como completado")
+	_check(
+		next_button != null and not next_button.disabled,
+		"La flecha siguiente deberia quedar habilitada"
+	)
+	_check(
+		back_button != null and back_button.disabled,
+		"El boton atras deberia quedar deshabilitado"
+	)
+	_check(teaching != null and teaching.visible, "La ensenanza final deberia quedar visible")
+	_check(
+		lupa != null and not lupa.monitoring,
+		"La lupa deberia dejar de monitorear al terminar el nivel"
+	)
+	_check(
+		title != null and title.material is ShaderMaterial,
+		"La escena deberia entrar en blanco y negro al completarse"
+	)
+	_check(
+		next_button != null and next_button.material == null,
+		"La flecha siguiente no deberia entrar en blanco y negro"
+	)
+	if failed:
+		return
+
+	var checked_items := 0
+	for runtime_item in manager_level.level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+		checked_items += 1
+		_check(
+			runtime_item.has_method("is_interaction_enabled"),
+			"Los items runtime deberian exponer su estado de interaccion"
+		)
+		_check(
+			not runtime_item.is_interaction_enabled(),
+			"Los alimentos deberian quedar deshabilitados al completar el nivel"
+		)
+		var sprite := runtime_item.get_node_or_null("Sprite2D") as Sprite2D
+		_check(
+			sprite != null and sprite.material is ShaderMaterial,
+			"Los alimentos deberian verse en blanco y negro al completar el nivel"
+		)
+		if failed:
+			return
+
+	_check(
+		checked_items > 0,
+		"El nivel deberia exponer alimentos runtime para validar el bloqueo post-final"
+	)
 
 
 func _go_to(scene_path: String, label: String) -> void:

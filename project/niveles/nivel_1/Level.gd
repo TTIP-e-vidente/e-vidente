@@ -1,6 +1,8 @@
 extends Node
 class_name Level
 
+signal run_completed
+
 ## --- Configuración ---
 
 const DEFAULT_TRACK_KEY            := "celiaquia"
@@ -15,8 +17,12 @@ const GameStreakTrackerScript      := preload(
 const STREAK_PROGRESS_OVERLAY_SCENE := preload(
 	"res://interface/components/StreakProgressOverlay.tscn"
 )
+const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
+	"res://niveles/level_completion_black_and_white.gdshader"
+)
 const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
 const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
+const COMPLETION_DIM_COLOR := Color(0.72, 0.72, 0.72, 1.0)
 
 ## --- Guardado rápido ---
 
@@ -32,16 +38,21 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
 @export_group("Debug Demo")
 @export var debug_force_streak_feedback    := false
+@export_group("Completion")
+@export var grayscale_on_completion := true
 
 ## --- Nodos de escena ---
 
 @onready var background:         AudioStreamPlayer2D = $Background
 @onready var victory:            AnimatedSprite2D    = $Victory
+@onready var back_button:        Button              = $Atrás
 @onready var next_chapter_button: Button             = $Adelante
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
+@onready var menu_area:          Area2D              = $Menú
+@onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
 
 ## Guardado rápido (UI)
@@ -59,6 +70,8 @@ var save_feedback_timer:   Timer  = null
 var active_track_key:      String = ""
 var streak_progress_overlay: Node = null
 var _current_run_completion_handled := false
+var _completion_visual_original_materials: Dictionary = {}
+var _completion_visual_original_modulates: Dictionary = {}
 
 
 func _ready() -> void:
@@ -76,7 +89,10 @@ func _start_level_flow() -> void:
 	var configured_key := track_key_override.strip_edges()
 	active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 	_current_run_completion_handled = false
+	Item_level.is_dragging = null
+	_restore_post_completion_state()
 	victory.hide()
+	victory.stop()
 	next_chapter_button.disabled = true
 	_play_level_audio()
 	if manager_level == null:
@@ -126,25 +142,29 @@ func _exit_tree() -> void:
 ## --- Navegación y gameplay ---
 
 func _on_atras_pressed() -> void:
+	if is_run_completed():
+		return
 	if active_track_key == DEFAULT_TRACK_KEY:
 		GameSceneRouter.go_to_map(get_tree())
 	else:
 		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
+func is_run_completed() -> bool:
+	return _current_run_completion_handled
+
+
 func complete_current_run() -> void:
 	if _current_run_completion_handled:
 		return
-	_current_run_completion_handled = true
-
-	next_chapter_button.disabled = false
-	teaching_sprite.show()
 
 	var track_key := active_track_key
 	var level_number := _valid_level_number(track_key)
-	var current_level := _current_level_number()
 	if level_number <= 0:
 		return
+
+	_current_run_completion_handled = true
+	_lock_completed_run()
 
 	# --- Flujo de racha (lineal, todo acá) ---
 	# 1. Capturar estado de racha ANTES de registrar
@@ -171,14 +191,11 @@ func complete_current_run() -> void:
 
 	# 5. Mostrar feedback
 	_show_streak_feedback(streak_feedback)
+	run_completed.emit()
 
 func _show_completed_run_feedback() -> void:
-	
-	next_chapter_button.disabled = false
-	teaching_sprite.show()
-
 	var chapter_fijo := _current_level_number()
-	while _current_level_number() == chapter_fijo:
+	while is_inside_tree() and is_run_completed() and _current_level_number() == chapter_fijo:
 		adelante_2.show()
 		await get_tree().create_timer(0.60).timeout
 		adelante_2.hide()
@@ -193,6 +210,8 @@ func _show_completed_run_feedback() -> void:
 		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_pressed() -> void:
+	if not is_run_completed():
+		return
 	if active_track_key == DEFAULT_TRACK_KEY:
 		GameSceneRouter.go_to_map(get_tree())
 	else:
@@ -207,14 +226,24 @@ func _on_adelante_pressed() -> void:
 ## --- Guardado rápido ---
 
 func _on_save_progress_button_pressed() -> void:
+	if is_run_completed():
+		return
 	if manager_level == null or not is_instance_valid(manager_level):
-		_show_save_feedback("No se pudo guardar", "No se pudo acceder al runtime del nivel para guardar.", false)
+		_show_save_feedback(
+			"No se pudo guardar",
+			"No se pudo acceder al runtime del nivel para guardar.",
+			false
+		)
 		return
 
 	var track_key := active_track_key
 	var resolved_level_number := _valid_level_number(track_key)
 	if resolved_level_number <= 0:
-		_show_save_feedback("No se pudo guardar", "No se pudo resolver el capitulo activo para guardar.", false)
+		_show_save_feedback(
+			"No se pudo guardar",
+			"No se pudo resolver el capitulo activo para guardar.",
+			false
+		)
 		return
 
 	var partial_save_result: Dictionary = manager_level.store_partial_level_state(track_key)
@@ -223,7 +252,11 @@ func _on_save_progress_button_pressed() -> void:
 	var save_status: Dictionary = SaveManager.get_save_status()
 	if str(save_status.get("state", "")) == "error":
 		var error := str(save_status.get("last_error", "")).strip_edges()
-		_show_save_feedback("No se pudo guardar", error if not error.is_empty() else "Reintenta de nuevo en unos segundos", false)
+		_show_save_feedback(
+			"No se pudo guardar",
+			error if not error.is_empty() else "Reintenta de nuevo en unos segundos",
+			false
+		)
 		return
 	_show_save_success_feedback(partial_save_result, save_status)
 
@@ -232,7 +265,11 @@ func _show_save_success_feedback(partial: Dictionary, save_status: Dictionary) -
 	var count := int(partial.get("progress_count", partial.get("placed_positive_count", 0)))
 	var title := "Guardado parcial" if count > 0 else SAVE_FEEDBACK_DEFAULT_TITLE
 	var saved_time := str(save_status.get("last_saved_at", "")).get_slice(" ", 1)
-	var time_line := "Guardado a las %s" % saved_time if not saved_time.is_empty() else "Guardado en este dispositivo"
+	var time_line := (
+		"Guardado a las %s" % saved_time
+		if not saved_time.is_empty()
+		else "Guardado en este dispositivo"
+	)
 	var progress_line: String
 	if count <= 0:
 		progress_line = "Capitulo %d listo para retomar" % Global.current_level
@@ -246,7 +283,10 @@ func _show_save_success_feedback(partial: Dictionary, save_status: Dictionary) -
 ## --- Racha y feedback post-partida ---
 
 func _show_save_feedback(title: String, message: String, success: bool) -> void:
-	if is_instance_valid(streak_progress_overlay) and streak_progress_overlay.has_method("hide_overlay"):
+	if (
+		is_instance_valid(streak_progress_overlay)
+		and streak_progress_overlay.has_method("hide_overlay")
+	):
 		streak_progress_overlay.call("hide_overlay")
 	_show_feedback_card(
 		title,
@@ -261,7 +301,10 @@ func _show_streak_feedback(feedback: Dictionary) -> void:
 	if not bool(feedback.get("should_show", false)):
 		return
 	_reset_save_feedback_visual_state()
-	if is_instance_valid(streak_progress_overlay) and streak_progress_overlay.has_method("show_feedback"):
+	if (
+		is_instance_valid(streak_progress_overlay)
+		and streak_progress_overlay.has_method("show_feedback")
+	):
 		streak_progress_overlay.call("show_feedback", feedback)
 	else:
 		_show_feedback_card(
@@ -303,6 +346,119 @@ func _on_save_feedback_timeout() -> void:
 	if not is_inside_tree():
 		return
 	_reset_save_feedback_visual_state()
+
+
+func _lock_completed_run() -> void:
+	Item_level.is_dragging = null
+	_set_gameplay_interactions_enabled(false)
+	next_chapter_button.disabled = false
+	next_chapter_button.grab_focus()
+	teaching_sprite.show()
+	victory.show()
+	victory.play("victory")
+	_apply_completion_visual_state()
+
+
+func _restore_post_completion_state() -> void:
+	restore_completion_visual_state()
+	_set_gameplay_interactions_enabled(true)
+	teaching_sprite.hide()
+
+
+func _set_gameplay_interactions_enabled(enabled: bool) -> void:
+	if is_instance_valid(back_button):
+		back_button.disabled = not enabled
+		back_button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+	if is_instance_valid(save_progress_button):
+		save_progress_button.disabled = not enabled
+		save_progress_button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+	if is_instance_valid(menu_area):
+		menu_area.monitoring = enabled
+		menu_area.monitorable = enabled
+	if is_instance_valid(lupa_area):
+		lupa_area.monitoring = enabled
+		lupa_area.monitorable = enabled
+	if (
+		is_instance_valid(manager_level)
+		and manager_level.has_method("set_runtime_items_interactable")
+	):
+		manager_level.set_runtime_items_interactable(enabled)
+
+
+func _apply_completion_visual_state() -> void:
+	if not grayscale_on_completion:
+		return
+
+	var grayscale_material := ShaderMaterial.new()
+	grayscale_material.shader = COMPLETION_BLACK_AND_WHITE_SHADER
+	for runtime_node in find_children("*", "", true, false):
+		if not runtime_node is CanvasItem:
+			continue
+		if _should_skip_completion_visual(runtime_node):
+			continue
+
+		var canvas_item := runtime_node as CanvasItem
+		var node_id := canvas_item.get_instance_id()
+		if not _completion_visual_original_modulates.has(node_id):
+			_completion_visual_original_modulates[node_id] = canvas_item.modulate
+		var original_modulate: Color = canvas_item.modulate
+		canvas_item.modulate = Color(
+			COMPLETION_DIM_COLOR.r,
+			COMPLETION_DIM_COLOR.g,
+			COMPLETION_DIM_COLOR.b,
+			original_modulate.a
+		)
+
+		if canvas_item is Sprite2D or canvas_item is AnimatedSprite2D:
+			if not _completion_visual_original_materials.has(node_id):
+				_completion_visual_original_materials[node_id] = canvas_item.material
+			canvas_item.material = grayscale_material
+
+
+func _should_skip_completion_visual(runtime_node: Node) -> bool:
+	if runtime_node == self:
+		return true
+	if is_instance_valid(next_chapter_button) and (
+		runtime_node == next_chapter_button or next_chapter_button.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
+		return true
+	if is_instance_valid(victory) and runtime_node == victory:
+		return true
+	if is_instance_valid(save_feedback_backdrop) and (
+		runtime_node == save_feedback_backdrop
+		or save_feedback_backdrop.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(streak_progress_overlay) and (
+		runtime_node == streak_progress_overlay
+		or streak_progress_overlay.is_ancestor_of(runtime_node)
+	):
+		return true
+	return false
+
+
+func restore_completion_visual_state() -> void:
+	if (
+		_completion_visual_original_materials.is_empty()
+		and _completion_visual_original_modulates.is_empty()
+	):
+		return
+
+	for runtime_node in find_children("*", "", true, false):
+		if not runtime_node is CanvasItem:
+			continue
+
+		var canvas_item := runtime_node as CanvasItem
+		var node_id := canvas_item.get_instance_id()
+		if _completion_visual_original_modulates.has(node_id):
+			canvas_item.modulate = _completion_visual_original_modulates[node_id]
+		if _completion_visual_original_materials.has(node_id):
+			canvas_item.material = _completion_visual_original_materials[node_id]
+
+	_completion_visual_original_materials.clear()
+	_completion_visual_original_modulates.clear()
 
 
 func _valid_level_number(track_key: String) -> int:

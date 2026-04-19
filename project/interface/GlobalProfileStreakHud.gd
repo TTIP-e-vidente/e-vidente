@@ -12,6 +12,8 @@ const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
 const SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
+# Streak seal position (top-left anchor, pixel offsets from corner)
+const _STREAK_SEAL_OFFSETS := Rect2(16.0, 16.0, 152.0, 152.0)
 
 var _hud_root: Control
 var _streak_seal: Control
@@ -60,14 +62,14 @@ func _build_hud() -> void:
 	_streak_seal = STREAK_SEAL_SCENE.instantiate() as Control
 	if _streak_seal != null:
 		_streak_seal.name = "GlobalStreakDailySeal"
-		_streak_seal.anchor_left = 1.0
+		_streak_seal.anchor_left = 0.0
 		_streak_seal.anchor_top = 0.0
-		_streak_seal.anchor_right = 1.0
+		_streak_seal.anchor_right = 0.0
 		_streak_seal.anchor_bottom = 0.0
-		_streak_seal.offset_left = -152.0
-		_streak_seal.offset_top = 16.0
-		_streak_seal.offset_right = -16.0
-		_streak_seal.offset_bottom = 152.0
+		_streak_seal.offset_left = _STREAK_SEAL_OFFSETS.position.x
+		_streak_seal.offset_top = _STREAK_SEAL_OFFSETS.position.y
+		_streak_seal.offset_right = _STREAK_SEAL_OFFSETS.size.x
+		_streak_seal.offset_bottom = _STREAK_SEAL_OFFSETS.size.y
 		_hud_root.add_child(_streak_seal)
 
 	_profile_button = Button.new()

@@ -65,6 +65,14 @@ func get_total_runs() -> int:
 	return max(1, Global.get_chapter_run_count(active_track_key, Global.current_level))
 
 
+func set_runtime_items_interactable(enabled: bool) -> void:
+	for runtime_item in level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+		if runtime_item.has_method("set_interaction_enabled"):
+			runtime_item.set_interaction_enabled(enabled)
+
+
 # Solo arma y devuelve el dict de estado parcial. No guarda nada.
 func build_partial_level_state() -> Dictionary:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
@@ -278,7 +286,9 @@ func _connect_scene_nodes(level_scene: Node) -> bool:
 		and is_instance_valid(teaching_sprite)
 	)
 	if not all_connected:
-		push_error("ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual.")
+		push_error(
+			"ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual."
+		)
 	return all_connected
 
 
