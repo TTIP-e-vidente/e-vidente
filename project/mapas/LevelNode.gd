@@ -16,7 +16,7 @@ var _completado := false
 
 
 func _ready():
-	desbloqueado = LevelManager.esta_desbloqueado(nivel_id)
+	desbloqueado = Global.is_level_unlocked("celiaquia", nivel_id)
 	_completado = Global.is_level_completed("celiaquia", nivel_id)
 	_aplicar_color_segun_estado()
 
