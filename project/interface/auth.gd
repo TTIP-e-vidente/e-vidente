@@ -94,22 +94,19 @@ func _configure_static_ui() -> void:
 
 
 func _load_current_profile_state() -> void:
-	var profile: Dictionary = SaveManager.get_current_user_profile()
-
-	# Llenar el formulario con los datos guardados
-	var username := str(profile.get("username", ""))
+	var username := SaveManager.get_current_user_name()
 	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
-	var age := int(profile.get("age", 0))
+	var age := SaveManager.get_current_user_age()
 	age_input.text = "" if age <= 0 else str(age)
-	email_input.text = str(profile.get("email", ""))
-	avatar_path_input.text = str(profile.get("avatar_path", ""))
+	email_input.text = SaveManager.get_current_user_email()
+	avatar_path_input.text = SaveManager.get_current_user_avatar_path()
 
 	# Actualizar controles de avatar y vista previa
 	_refresh_avatar_controls()
 	_update_preview_labels(username, email_input.text, age_input.text, avatar_path_input.text)
 
 	# Mostrar ultimo guardado
-	var last_reason := str(SaveManager.get_save_status().get("last_saved_reason", ""))
+	var last_reason := SaveManager.get_last_saved_reason()
 	if last_reason.is_empty():
 		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
 	else:

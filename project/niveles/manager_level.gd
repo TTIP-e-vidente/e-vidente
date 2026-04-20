@@ -15,8 +15,10 @@ const MAX_PLATE_COLUMNS := 3
 const PLATE_ITEM_COLUMN_SPACING := 78.0
 const PLATE_ITEM_ROW_SPACING := 48.0
 const PLATE_ITEM_VERTICAL_OFFSET := -12.0
+const PARTIAL_SAVE_UNIT_SINGULAR := "alimento correcto en el plato"
+const PARTIAL_SAVE_UNIT_PLURAL := "alimentos correctos en el plato"
 
-@export var level_resource = null
+@export var level_resource: Resource = null
 @export var level_resource_path := ""
 
 @onready var plato = %Plato
@@ -29,6 +31,9 @@ var active_track_key: String = ""
 var active_run_index: int = 1
 var active_run_data: Dictionary = {}
 var active_mechanic_type: String = ""
+var active_positive_item_count: int = 0
+var active_negative_item_count: int = 0
+var active_category_code: String = ""
 
 
 func start_level_session(track_key: String, level_scene: Node) -> void:
@@ -114,8 +119,7 @@ func build_partial_level_state() -> Dictionary:
 	}
 
 
-# Arma el estado parcial, lo guarda en Global y devuelve metadata de UI para el feedback.
-func store_partial_level_state(track_key: String) -> Dictionary:
+func store_partial_level_state(track_key: String) -> int:
 	var partial_level_state: Dictionary = build_partial_level_state()
 	Global.set_partial_level_state(
 		track_key,
@@ -123,17 +127,24 @@ func store_partial_level_state(track_key: String) -> Dictionary:
 		partial_level_state
 	)
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
-		return {}
+		return 0
+	return get_positive_items_in_plate_count()
 
-	var mechanic_state: Dictionary = partial_level_state.get("mechanic_state", {}) as Dictionary
-	var placed_item_ids: Array = mechanic_state.get("placed_item_ids", [])
-	var placed_item_count: int = placed_item_ids.size()
-	return {
-		"placed_positive_count": placed_item_count,
-		"progress_count": placed_item_count,
-		"progress_unit_singular": "alimento correcto en el plato",
-		"progress_unit_plural": "alimentos correctos en el plato"
-	}
+
+func format_partial_save_progress(saved_positive_count: int) -> String:
+	if saved_positive_count <= 0:
+		return "Capitulo %d listo para retomar" % Global.current_level
+	var unit: String = PARTIAL_SAVE_UNIT_SINGULAR
+	if saved_positive_count != 1:
+		unit = PARTIAL_SAVE_UNIT_PLURAL
+	return "%d %s" % [saved_positive_count, unit]
+
+
+func get_current_run_save_label() -> String:
+	var total_runs: int = get_total_runs()
+	if total_runs <= 1:
+		return ""
+	return "Corrida %d de %d" % [active_run_index, total_runs]
 
 
 func get_positive_items_in_plate_count() -> int:
@@ -164,8 +175,8 @@ func filter_items_by_category(items: Array, category: String) -> Array:
 	return result
 
 
-func spawn_level_item(level_item, instance_id: String, is_positive: bool):
-	var level_item_instance = level_item.escena.instantiate()
+func spawn_level_item(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
+	var level_item_instance: Node = level_item.escena.instantiate()
 	if level_item_instance == null:
 		return null
 	level_item_instance.setup(level_item, plato, is_positive, instance_id)
@@ -209,6 +220,7 @@ func _load_current_run(saved_level_state: Dictionary) -> void:
 	if active_run_data.is_empty():
 		active_run_data = {}
 		active_mechanic_type = ""
+		_clear_active_run_payload()
 		push_error(
 			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
 			% [active_track_key, level_number, active_run_index]
@@ -219,18 +231,12 @@ func _load_current_run(saved_level_state: Dictionary) -> void:
 	if active_mechanic_type.is_empty():
 		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
+		_clear_active_run_payload()
 		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
 		return
 
-	var run_payload: Dictionary = active_run_data.get("mechanic_payload", {}) as Dictionary
-	if run_payload.is_empty():
-		run_payload = {
-			"negative_count": int(active_run_data.get("negative_count", 0)),
-			"positive_count": int(active_run_data.get("positive_count", 0)),
-			"category": str(active_run_data.get("category", ""))
-		}
-
-	_setup_level_resource(run_payload)
+	_apply_active_run_payload()
+	_setup_level_resource()
 
 	# Extraer items guardados (legacy: pueden estar anidados en mechanic_state o en la raíz)
 	var saved_mechanic_state: Dictionary = saved_level_state
@@ -248,16 +254,32 @@ func _load_current_run(saved_level_state: Dictionary) -> void:
 		_place_saved_items_on_plate(saved_mechanic_state)
 		return
 
-	_spawn_fresh_items(run_payload)
+	_spawn_fresh_items()
 	level_items.shuffle()
 	layout_runtime_items()
 
 
-func _setup_level_resource(run_payload: Dictionary) -> void:
+func _apply_active_run_payload() -> void:
+	var run_payload: Dictionary = {}
+	if active_run_data.get("mechanic_payload", null) is Dictionary:
+		run_payload = active_run_data["mechanic_payload"]
+
+	if not run_payload.is_empty():
+		active_negative_item_count = int(run_payload.get("negative_count", 0))
+		active_positive_item_count = int(run_payload.get("positive_count", 0))
+		active_category_code = str(run_payload.get("category", "")).strip_edges()
+		return
+
+	active_negative_item_count = int(active_run_data.get("negative_count", 0))
+	active_positive_item_count = int(active_run_data.get("positive_count", 0))
+	active_category_code = str(active_run_data.get("category", "")).strip_edges()
+
+
+func _setup_level_resource() -> void:
 	level_resource.mechanic_type = active_mechanic_type
-	level_resource.mechanic_payload = run_payload
-	level_resource.cantidadNegativos = int(run_payload.get("negative_count", 0))
-	level_resource.cantidadPositivos = int(run_payload.get("positive_count", 0))
+	level_resource.mechanic_payload = _build_active_run_payload()
+	level_resource.cantidadNegativos = active_negative_item_count
+	level_resource.cantidadPositivos = active_positive_item_count
 	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
 		active_run_data.get("meal_texture_path", "")
 	)
@@ -292,9 +314,7 @@ func _connect_scene_nodes(level_scene: Node) -> bool:
 	return all_connected
 
 
-func _spawn_fresh_items(run_payload: Dictionary) -> void:
-	var category_code: String = str(run_payload.get("category", ""))
-
+func _spawn_fresh_items() -> void:
 	var item_pools: Dictionary = GameTrackItemPoolCatalogScript.build_item_pool_for_track(
 		active_track_key,
 		level_resource.itemsPositivos,
@@ -303,10 +323,10 @@ func _spawn_fresh_items(run_payload: Dictionary) -> void:
 
 	var positive_items: Array = filter_items_by_category(
 		item_pools.get("positive_items", []),
-		category_code
+		active_category_code
 	)
 	positive_items.shuffle()
-	for item_index in range(level_resource.cantidadPositivos):
+	for item_index in range(active_positive_item_count):
 		if positive_items.is_empty():
 			break
 		var level_item = positive_items.pop_front()
@@ -316,10 +336,10 @@ func _spawn_fresh_items(run_payload: Dictionary) -> void:
 
 	var negative_items: Array = filter_items_by_category(
 		item_pools.get("negative_items", []),
-		category_code
+		active_category_code
 	)
 	negative_items.shuffle()
-	for item_index in range(level_resource.cantidadNegativos):
+	for item_index in range(active_negative_item_count):
 		if negative_items.is_empty():
 			break
 		var level_item = negative_items.pop_front()
@@ -383,7 +403,7 @@ func _spawn_saved_item(raw_saved_item: Variant) -> bool:
 	return spawn_level_item(level_item, instance_id, is_positive) != null
 
 
-func _find_runtime_item_by_instance_id(instance_id: String):
+func _find_runtime_item_by_instance_id(instance_id: String) -> Node:
 	for runtime_item in level_items:
 		if not is_instance_valid(runtime_item):
 			continue
@@ -402,6 +422,20 @@ func _get_plate_position(index: int, total_items: int) -> Vector2:
 		float(row) * PLATE_ITEM_ROW_SPACING + PLATE_ITEM_VERTICAL_OFFSET
 	)
 	return plato.global_position + offset
+
+
+func _build_active_run_payload() -> Dictionary:
+	return {
+		"negative_count": active_negative_item_count,
+		"positive_count": active_positive_item_count,
+		"category": active_category_code
+	}
+
+
+func _clear_active_run_payload() -> void:
+	active_positive_item_count = 0
+	active_negative_item_count = 0
+	active_category_code = ""
 
 
 func _ensure_level_resource_loaded() -> void:

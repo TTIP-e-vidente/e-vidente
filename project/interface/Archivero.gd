@@ -147,17 +147,11 @@ func _configure_static_ui() -> void:
 
 
 func _refresh_profile_overlay() -> void:
-	var profile: Dictionary = SaveManager.get_current_user_profile()
-	var save_status: Dictionary = SaveManager.get_save_status()
-
-	# Identidad
-	var username: String = str(
-		profile.get("username", SaveManager.DEFAULT_PROFILE_NAME)
-	).strip_edges()
-	username_label.text = username if not username.is_empty() else SaveManager.DEFAULT_PROFILE_NAME
-	var email: String = str(profile.get("email", "")).strip_edges()
+	var username: String = SaveManager.get_current_user_name()
+	username_label.text = username
+	var email: String = SaveManager.get_current_user_email()
 	email_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
-	var age: int = int(profile.get("age", 0))
+	var age: int = SaveManager.get_current_user_age()
 	age_label.text = "Edad: %s" % (str(age) if age > 0 else "sin dato")
 
 	# Progreso
@@ -180,8 +174,8 @@ func _refresh_profile_overlay() -> void:
 		profile_streak_badge.render()
 
 	# Estado de guardado
-	save_status_label.text = _format_save_status(save_status)
-	var last_saved_at := str(save_status.get("last_saved_at", ""))
+	save_status_label.text = _format_save_status()
+	var last_saved_at := SaveManager.get_last_saved_at()
 	var tooltip := "Abrir guardado local"
 	if not last_saved_at.is_empty():
 		tooltip += "\nUltimo guardado: %s" % last_saved_at
@@ -317,9 +311,8 @@ func _update_history_view_visibility(history_visible: bool) -> void:
 
 
 func _flash_saved_icon_briefly() -> void:
-	var save_status := SaveManager.get_save_status()
-	var save_failed := str(save_status.get("state", "")) == "error"
-	var nothing_was_saved := str(save_status.get("last_saved_reason", "")) == ""
+	var save_failed := SaveManager.has_save_error()
+	var nothing_was_saved := SaveManager.get_last_saved_reason().is_empty()
 	if save_failed or nothing_was_saved:
 		_set_save_icon(SAVE_ICON_IDLE)
 		return
@@ -360,10 +353,12 @@ func _build_history_log_text(history: Array) -> String:
 	return "\n\n".join(history_lines)
 
 
-func _format_save_status(status: Dictionary) -> String:
-	var state := str(status.get("state", "idle"))
-	var last_saved_at := str(status.get("last_saved_at", "sin datos"))
-	var error_message := str(status.get("last_error", ""))
+func _format_save_status() -> String:
+	var state := SaveManager.get_current_save_state()
+	var last_saved_at := SaveManager.get_last_saved_at()
+	if last_saved_at.is_empty():
+		last_saved_at = "sin datos"
+	var error_message := SaveManager.get_last_save_error()
 	match state:
 		"error":
 			return "No se pudo guardar.\n%s" % (

@@ -8,4 +8,4 @@ func _ready():
 	background.play()
 
 func _on_atrás_pressed():
-	GameSceneRouter.go_to_intro(get_tree())
+	GameSceneRouter.go_to_main_menu(get_tree())

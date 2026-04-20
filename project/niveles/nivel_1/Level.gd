@@ -246,38 +246,34 @@ func _on_save_progress_button_pressed() -> void:
 		)
 		return
 
-	var partial_save_result: Dictionary = manager_level.store_partial_level_state(track_key)
+	var saved_positive_count: int = manager_level.store_partial_level_state(track_key)
 	SaveManager.set_resume_to_level(track_key, resolved_level_number)
 	SaveManager.record_manual_save()
-	var save_status: Dictionary = SaveManager.get_save_status()
-	if str(save_status.get("state", "")) == "error":
-		var error := str(save_status.get("last_error", "")).strip_edges()
+	if SaveManager.has_save_error():
+		var error := SaveManager.get_last_save_error()
 		_show_save_feedback(
 			"No se pudo guardar",
 			error if not error.is_empty() else "Reintenta de nuevo en unos segundos",
 			false
 		)
 		return
-	_show_save_success_feedback(partial_save_result, save_status)
+	_show_save_success_feedback(saved_positive_count)
 
 
-func _show_save_success_feedback(partial: Dictionary, save_status: Dictionary) -> void:
-	var count := int(partial.get("progress_count", partial.get("placed_positive_count", 0)))
-	var title := "Guardado parcial" if count > 0 else SAVE_FEEDBACK_DEFAULT_TITLE
-	var saved_time := str(save_status.get("last_saved_at", "")).get_slice(" ", 1)
+func _show_save_success_feedback(saved_positive_count: int) -> void:
+	var title := "Guardado parcial" if saved_positive_count > 0 else SAVE_FEEDBACK_DEFAULT_TITLE
+	var saved_time := SaveManager.get_last_saved_at().get_slice(" ", 1)
 	var time_line := (
 		"Guardado a las %s" % saved_time
 		if not saved_time.is_empty()
 		else "Guardado en este dispositivo"
 	)
-	var progress_line: String
-	if count <= 0:
-		progress_line = "Capitulo %d listo para retomar" % Global.current_level
-	else:
-		var singular := str(partial.get("progress_unit_singular", "avance guardado"))
-		var unit := singular if count == 1 else str(partial.get("progress_unit_plural", singular))
-		progress_line = "%d %s" % [count, unit]
-	_show_save_feedback(title, "%s\n%s" % [time_line, progress_line], true)
+	var detail_lines: Array[String] = [time_line]
+	var run_line: String = manager_level.get_current_run_save_label()
+	if not run_line.is_empty():
+		detail_lines.append(run_line)
+	detail_lines.append(manager_level.format_partial_save_progress(saved_positive_count))
+	_show_save_feedback(title, "\n".join(detail_lines), true)
 
 
 ## --- Racha y feedback post-partida ---

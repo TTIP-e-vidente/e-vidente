@@ -106,7 +106,6 @@ func _game_over() -> void:
 	# Registrar nivel completado y desbloquear el siguiente
 	Global.mark_level_completed(track_key, nivel_id)
 	SaveManager.record_level_completed(track_key, nivel_id)
-	LevelManager.desbloquear(nivel_id + 1)
 
 func _on_jugar_nuevamente_pressed() -> void:
 	GameSceneRouter.go_to_map(get_tree())
