@@ -15,8 +15,8 @@
 [ext_resource type="Texture2D" uid="uid://dg000rn7y0tik" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
 [ext_resource type="Texture2D" uid="uid://buoa0rng8ujif" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
 [ext_resource type="Texture2D" uid="uid://dtsqqbb5fjj5b" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
-[ext_resource type="Texture2D" uid="uid://dvieosc1mn71b" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
-[ext_resource type="AudioStream" uid="uid://b3066err46pf6" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_8sp5d"]
 animations = [{

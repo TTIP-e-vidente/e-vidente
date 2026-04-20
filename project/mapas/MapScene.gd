@@ -65,9 +65,8 @@ func _build_hud() -> void:
 	profile_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	hud_root.add_child(profile_btn)
 
-func _render_map():
+func _render_map() -> void:
 	if map_data == null:
-		push_warning("MapScene: No hay map_data asignado, saltando render.")
 		return
 
 	for level_data in map_data.levels:

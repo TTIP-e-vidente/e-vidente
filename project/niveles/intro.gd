@@ -59,7 +59,7 @@ func _update_button_shader(button: Button, mat: ShaderMaterial):
 	else:
 		mat.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
 
-func _process(delta):
+func _process(_delta: float) -> void:
 	var mouse = get_viewport().get_mouse_position()
 	
 	for b in buttons:
@@ -71,7 +71,7 @@ func _process(delta):
 			uv.x = clamp(uv.x, 0.0, 1.0)
 			uv.y = clamp(uv.y, 0.0, 1.0)
 			
-			var center = rect.position + rect.size / 2
+			var center: Vector2 = rect.position + rect.size / 2.0
 			var dist = mouse.distance_to(center)
 			
 			if dist < 200:
