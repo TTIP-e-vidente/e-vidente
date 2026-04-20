@@ -30,7 +30,7 @@
 [ext_resource type="Texture2D" uid="uid://dceo5v4ncrkee" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
 [ext_resource type="Texture2D" uid="uid://j2ngl8c1l25w" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
 [ext_resource type="Texture2D" uid="uid://bbkdt7kfdfx7k" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
-[ext_resource type="Texture2D" uid="uid://cq685qadxj6rt" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
+[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
 [ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="24_ngqma"]
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="25_gudht"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="25_x7g2d"]

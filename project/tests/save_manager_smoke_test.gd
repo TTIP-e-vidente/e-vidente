@@ -5,6 +5,7 @@ const TEST_EMAIL := "ci_save_user@example.com"
 const TEST_AGE := 24
 const TEMP_AVATAR_PATH := "user://ci_avatar.png"
 const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 var SaveManager
 var Global
@@ -39,8 +40,8 @@ func _run() -> void:
 		temp_avatar_absolute
 	)
 	_assert(bool(profile_result.get("ok", false)), "Actualizacion del perfil local fallida: %s" % profile_result.get("message", "sin detalle"))
-	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "No se genero el archivo local de guardado")
-	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
+	_assert(FileAccess.file_exists(SaveManagerScript.SAVE_PATH), "No se genero el archivo local de guardado")
+	_assert(not FileAccess.file_exists(SaveManagerScript.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
 	_assert(FileAccess.file_exists(STORED_AVATAR_PATH), "No se copio el avatar al almacenamiento local")
 	_assert(SaveManager.get_current_user_avatar_texture() != null, "No se pudo recargar el avatar desde user://")
 	var save_status: Dictionary = SaveManager.get_save_status()
@@ -110,9 +111,9 @@ func _create_temp_avatar(destination: String) -> int:
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
 	for relative_path in [
-		SaveManager.SAVE_PATH,
-		SaveManager.TEMP_SAVE_PATH,
-		SaveManager.BACKUP_SAVE_PATH,
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH,
 		TEMP_AVATAR_PATH,
 		STORED_AVATAR_PATH
 	]:

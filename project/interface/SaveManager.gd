@@ -25,7 +25,9 @@ signal progress_saved(profile: Dictionary)
 signal progress_loaded(profile: Dictionary)
 signal save_status_changed(status: Dictionary)
 
-const TEMP_SAVE_PATH := "user://save_data.tmp.json"
+const SAVE_PATH := SaveDataLoaderScript.SAVE_PATH
+const TEMP_SAVE_PATH := SaveDataLoaderScript.TEMP_SAVE_PATH
+const BACKUP_SAVE_PATH := SaveDataLoaderScript.BACKUP_SAVE_PATH
 const AVATARS_DIR := "user://avatars"
 const DEFAULT_PROFILE_NAME := SaveDataSchemaScript.DEFAULT_PROFILE_NAME
 const SAVE_VERSION := SaveDataSchemaScript.SAVE_VERSION
@@ -50,6 +52,7 @@ var _disk_writer: RefCounted
 var _schema: RefCounted
 var _data_loader: RefCounted
 var _resume_helper: RefCounted
+var _global_autoload: Node = null
 
 
 func _init() -> void:
@@ -90,7 +93,7 @@ func load_data() -> void:
 		_emit_save_status("ready", loaded_from)
 
 	var saved_progress: Variant = save_data.get("progress", {})
-	Global.import_progress(saved_progress if saved_progress is Dictionary else {})
+	_global_import_progress(saved_progress if saved_progress is Dictionary else {})
 	progress_loaded.emit(get_current_user_profile())
 
 
@@ -194,13 +197,13 @@ func record_manual_save() -> void:
 			"type": "manual_save",
 			"context": str(resume.get("context", RESUME_CONTEXT_HUB)),
 			"track": str(resume.get("track_key", "")),
-			"level": int(resume.get("level_number", Global.current_level))
+			"level": int(resume.get("level_number", _global_get_current_level_number()))
 		}
 	)
 
 
 func record_level_completed(track_key: String, level_number: int) -> void:
-	Global.clear_partial_level_state(track_key, level_number)
+	_global_clear_partial_level_state(track_key, level_number)
 	_update_resume_after_completed_level(track_key, level_number)
 	_save_current_state(
 		"level_completed",
@@ -213,7 +216,7 @@ func record_question_session_completed(question_count: int, score: int) -> void:
 	if question_count < 1:
 		return
 
-	Global.record_streak_activity(
+	_global_record_streak_activity(
 		"question_session_completed",
 		{"question_count": question_count, "score": score}
 	)
@@ -244,11 +247,11 @@ func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) 
 		and str(get_resume_state().get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL
 	):
 		return
-	_store_resume_state(_resume_helper.build_for_book(track_key, Global.current_level))
+	_store_resume_state(_resume_helper.build_for_book(track_key, _global_get_current_level_number()))
 
 
 func set_resume_to_level(track_key: String, level_number: int = -1) -> void:
-	var level: int = Global.current_level if level_number < 1 else level_number
+	var level: int = _global_get_current_level_number() if level_number < 1 else level_number
 	_store_resume_state(_resume_helper.build_for_level(track_key, level))
 
 
@@ -272,10 +275,14 @@ func can_resume_current_save() -> bool:
 func reload_from_disk_and_get_resume() -> Dictionary:
 	load_data()
 	var resume_state: Dictionary = get_resume_state()
-	Global.current_level = clampi(
-		int(resume_state.get("level_number", Global.current_level)),
+	var clamped_level_number: int = clampi(
+		int(resume_state.get("level_number", _global_get_current_level_number())),
 		1,
-		Global.get_track_level_count(str(resume_state.get("track_key", "")))
+		max(1, _global_get_track_level_count(str(resume_state.get("track_key", ""))))
+	)
+	_global_set_current_level_number(
+		clamped_level_number,
+		str(resume_state.get("track_key", ""))
 	)
 	return resume_state
 
@@ -369,7 +376,7 @@ func _apply_profile_identity_updates(
 
 
 func _update_resume_after_completed_level(track_key: String, level_number: int) -> void:
-	if level_number < Global.get_track_level_count(track_key):
+	if level_number < _global_get_track_level_count(track_key):
 		set_resume_to_level(track_key, level_number + 1)
 		return
 	_store_resume_state(_resume_helper.get_default_state(ARCHIVERO_SCENE))
@@ -387,7 +394,7 @@ func _save_current_state(
 	emit_progress_saved: bool = true
 ) -> bool:
 	save_data["profile"] = get_current_user_profile()
-	save_data["progress"] = Global.export_progress()
+	save_data["progress"] = _global_export_progress()
 	_mark_save_dirty()
 	if not history_message.is_empty():
 		_schema.append_history(save_data, history_message, history_metadata)
@@ -462,18 +469,87 @@ func _summarize_progress(progress: Variant) -> Dictionary:
 					completed += 1
 		summary[track_key] = completed
 		summary["total"] += completed
-		summary["max_total"] += Global.get_track_level_count(track_key)
+		summary["max_total"] += _global_get_track_level_count(track_key)
 	return summary
 
 
 func _reset_current_save_data(profile: Dictionary) -> void:
-	Global.reset_progress()
+	_global_reset_progress()
 	save_data["profile"] = profile
-	save_data["progress"] = Global.export_progress()
+	save_data["progress"] = _global_export_progress()
 	save_data["history"] = []
 	save_data["resume_state"] = _resume_helper.get_default_state(ARCHIVERO_SCENE)
 	save_data["save_meta"] = _empty_save_meta()
 	_mark_save_dirty()
+
+
+func _get_global_autoload() -> Node:
+	if _global_autoload == null or not is_instance_valid(_global_autoload):
+		_global_autoload = get_node_or_null("/root/Global")
+	return _global_autoload
+
+
+func _global_import_progress(progress_snapshot: Dictionary) -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("import_progress"):
+		global_autoload.call("import_progress", progress_snapshot)
+
+
+func _global_export_progress() -> Dictionary:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("export_progress"):
+		return {}
+	var exported_progress: Variant = global_autoload.call("export_progress")
+	if exported_progress is Dictionary:
+		return (exported_progress as Dictionary).duplicate(true)
+	return {}
+
+
+func _global_get_current_level_number() -> int:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null:
+		return 1
+	if global_autoload.has_method("get_current_level_number"):
+		return int(global_autoload.call("get_current_level_number"))
+	return int(global_autoload.get("current_level"))
+
+
+func _global_set_current_level_number(level_number: int, track_key: String = "") -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null:
+		return
+	if global_autoload.has_method("set_current_level_number"):
+		global_autoload.call("set_current_level_number", level_number, track_key)
+		return
+	global_autoload.set("current_level", level_number)
+
+
+func _global_get_track_level_count(track_key: String) -> int:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("get_track_level_count"):
+		return int(global_autoload.call("get_track_level_count", track_key))
+	return GameTrackCatalog.get_track_level_count(track_key, GameTrackCatalog.DEFAULT_LEVEL_COUNT)
+
+
+func _global_clear_partial_level_state(track_key: String, level_number: int) -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("clear_partial_level_state"):
+		global_autoload.call("clear_partial_level_state", track_key, level_number)
+
+
+func _global_record_streak_activity(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("record_streak_activity"):
+		var streak_state: Variant = global_autoload.call("record_streak_activity", activity_type, metadata)
+		if streak_state is Dictionary:
+			return (streak_state as Dictionary).duplicate(true)
+	return {}
+
+
+func _global_reset_progress() -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("reset_progress"):
+		global_autoload.call("reset_progress")
 
 
 func _empty_save_meta() -> Dictionary:

@@ -1,12 +1,11 @@
 extends SceneTree
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameChapterAssetCatalog := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
-const BOOK_SCENE := "res://interface/libro.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 
 var failed := false
@@ -19,19 +18,15 @@ func _initialize() -> void:
 func _run() -> void:
 	await process_frame
 
-	var global = root.get_node_or_null("/root/Global")
-	var save_mgr = root.get_node_or_null("/root/SaveManager")
-	_check(global != null, "Autoload Global no encontrado")
-	_check(save_mgr != null, "Autoload SaveManager no encontrado")
+	var global_state = root.get_node_or_null("/root/Global")
+	var save_manager = root.get_node_or_null("/root/SaveManager")
+	_check(global_state != null, "Autoload Global no encontrado")
+	_check(save_manager != null, "Autoload SaveManager no encontrado")
 	if failed:
 		await _quit()
 		return
 
-	# Limpiar estado de test
-	global.reset_progress()
-	Item_level.is_dragging = null
-	_delete_save_files(save_mgr)
-	save_mgr.load_data()
+	_reset_test_state(global_state, save_manager)
 	await process_frame
 
 
@@ -39,13 +34,18 @@ func _run() -> void:
 	await _call_and_expect("_on_go_pressed", "res://niveles/intro.tscn", "Intro")
 	await _call_and_expect("_on_start_pressed", "res://niveles/selector.tscn", "Selector")
 	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
+	if not failed:
+		var nodes_container := current_scene.get_node_or_null("NodesContainer") as Node2D
+		_check(nodes_container != null, "El mapa deberia exponer el contenedor de nodos")
+		if nodes_container != null:
+			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
 
 	if not failed:
 		await _call_and_expect("_on_level_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
 
 
 	if not failed:
-		_check_gameplay_scene(global)
+		_check_gameplay_scene(global_state)
 
 
 	if not failed:
@@ -54,11 +54,15 @@ func _run() -> void:
 		_check(is_instance_valid(current_scene), "La escena crasheo en los primeros frames")
 
 
-	global.reset_progress()
-	Item_level.is_dragging = null
-	_delete_save_files(save_mgr)
-	save_mgr.load_data()
+	_reset_test_state(global_state, save_manager)
 	await _quit()
+
+
+func _reset_test_state(global_state, save_manager) -> void:
+	global_state.reset_progress()
+	Item_level.is_dragging = null
+	_delete_save_files()
+	save_manager.load_data()
 
 
 func _check_gameplay_scene(global) -> void:
@@ -189,8 +193,12 @@ func _wait_for(expected_path: String, label: String) -> void:
 	_check(false, "No se llego a %s (%s)" % [label, expected_path])
 
 
-func _delete_save_files(save_mgr) -> void:
-	for path in [save_mgr.SAVE_PATH, save_mgr.TEMP_SAVE_PATH, save_mgr.BACKUP_SAVE_PATH]:
+func _delete_save_files() -> void:
+	for path in [
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH
+	]:
 		var abs_path := ProjectSettings.globalize_path(path)
 		if FileAccess.file_exists(abs_path):
 			DirAccess.remove_absolute(abs_path)

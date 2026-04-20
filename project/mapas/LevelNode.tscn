@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://kmsb3inpowgb"]
 
 [ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_bdcs1"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_xvw7m"]
 
 [node name="LevelNode" type="Node2D" unique_id=257581998]
 script = ExtResource("1_bdcs1")
@@ -10,5 +11,17 @@ offset_right = 40.0
 metadata/_edit_use_anchors_ = true
 
 [node name="Icon" type="Sprite2D" parent="Button" unique_id=81622321]
-position = Vector2(3, 1.000061)
-scale = Vector2(0.45849058, 0.4476923)
+position = Vector2(0, -4)
+scale = Vector2(0.22, 0.22)
+
+[node name="Title" type="Label" parent="."]
+offset_left = -98.0
+offset_top = -70.0
+offset_right = 104.0
+offset_bottom = -34.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("2_xvw7m")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.15, 0.15, 0.15, 0.95)
+text = "Nodo"
+horizontal_alignment = 1

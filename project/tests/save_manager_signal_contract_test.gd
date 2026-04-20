@@ -4,6 +4,7 @@ const TEST_USERNAME := "signal_user"
 const TEST_EMAIL := "signal_user@example.com"
 const TEMP_AVATAR_PATH := "user://signal_avatar.png"
 const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 var SaveManager
 var Global
@@ -49,10 +50,10 @@ func _run() -> void:
 	_assert(progress_saved_count == 1, "El guardado manual deberia emitir progress_saved una vez")
 	_assert(_has_saved_reason("manual_save"), "El guardado manual deberia reflejar manual_save en save_status_changed")
 
-	for index in range(SaveManager.HISTORY_LIMIT + 7):
+	for index in range(SaveManagerScript.HISTORY_LIMIT + 7):
 		SaveManager.record_manual_save()
 	await process_frame
-	_assert(SaveManager.get_current_save_history().size() == SaveManager.HISTORY_LIMIT, "El historial deberia respetar el limite maximo configurado")
+	_assert(SaveManager.get_current_save_history().size() == SaveManagerScript.HISTORY_LIMIT, "El historial deberia respetar el limite maximo configurado")
 
 	_cleanup_test_files()
 	await process_frame
@@ -90,9 +91,9 @@ func _create_temp_avatar(destination: String) -> int:
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
 	for relative_path in [
-		SaveManager.SAVE_PATH,
-		SaveManager.TEMP_SAVE_PATH,
-		SaveManager.BACKUP_SAVE_PATH,
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH,
 		TEMP_AVATAR_PATH,
 		STORED_AVATAR_PATH
 	]:
