@@ -9,6 +9,10 @@ var elementos: Array[int] = []
 var cantAlimentosPos = {}
 var cantAlimentosNeg = {}
 
+func react_food(item) -> void:
+	_react_food(item)
+
+
 func _react_food(item):
 	if  item.esPositivo:
 		cantAlimentosPos[item] = null

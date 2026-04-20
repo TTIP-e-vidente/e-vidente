@@ -125,6 +125,26 @@ static func get_track_definition(track_key: String) -> Dictionary:
 	return (TRACK_DEFINITIONS[key] as Dictionary).duplicate(true)
 
 
+static func get_track_label(track_key: String, fallback: String = "") -> String:
+	return str(get_track_definition(track_key).get("label", fallback)).strip_edges()
+
+
+static func get_track_summary_label(track_key: String, fallback: String = "") -> String:
+	return str(get_track_definition(track_key).get("summary_label", fallback)).strip_edges()
+
+
+static func get_book_scene_path(track_key: String) -> String:
+	return str(get_track_definition(track_key).get("book_scene_path", "")).strip_edges()
+
+
+static func get_level_scene_path(track_key: String) -> String:
+	return str(get_track_definition(track_key).get("level_scene_path", "")).strip_edges()
+
+
+static func get_archive_texture_path(track_key: String) -> String:
+	return str(get_track_definition(track_key).get("archive_texture_path", "")).strip_edges()
+
+
 static func get_track_definitions() -> Array:
 	var result: Array = []
 	for track_key in TRACK_ORDER:

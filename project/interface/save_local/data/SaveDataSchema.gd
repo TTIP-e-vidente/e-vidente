@@ -1,0 +1,74 @@
+## Estructura y valores por defecto del archivo de guardado local.
+##
+## Define la forma canónica del save_data.json que se persiste en disco.
+## Contiene los valores iniciales, la normalización de campos cargados
+## desde disco, y la reparación de estructuras corruptas o incompletas.
+##
+## Estructura del archivo:
+##   version            → Versión del esquema (actualmente 4)
+##   profile            → Datos de identidad del jugador (ver SaveLocalProfileHelper)
+##   progress           → Progreso de juego: campaña, racha y estado parcial
+##   resume_state       → Dónde retomar al volver al juego (hub, libro, nivel)
+##   history            → Historial de acciones recientes
+##   save_meta          → Metadatos de la última escritura a disco
+extends RefCounted
+
+const SAVE_VERSION := 4
+const DEFAULT_PROFILE_NAME := "Perfil local"
+const HISTORY_LIMIT := 25
+const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+
+
+func default_save_data() -> Dictionary:
+	return {
+		"version": SAVE_VERSION,
+		"profile": {
+			"username": DEFAULT_PROFILE_NAME, "age": 0, "email": "",
+			"avatar_path": "", "created_at": "", "updated_at": ""
+		},
+		"save_meta": {"last_saved_at": "", "last_saved_reason": "", "write_count": 0},
+		"resume_state": default_resume_state().duplicate(true),
+		"progress": {},
+		"history": []
+	}
+
+
+func default_resume_state() -> Dictionary:
+	return {
+		"context": "hub",
+		"track_key": "",
+		"scene_path": ARCHIVERO_SCENE,
+		"level_number": 1
+	}
+
+
+func normalize_save_meta(raw: Variant) -> Dictionary:
+	if not raw is Dictionary:
+		return {"last_saved_at": "", "last_saved_reason": "", "write_count": 0}
+	return {
+		"last_saved_at": str(raw.get("last_saved_at", "")),
+		"last_saved_reason": str(raw.get("last_saved_reason", "")),
+		"write_count": max(0, int(raw.get("write_count", 0)))
+	}
+
+
+func normalize_history(raw: Variant) -> Array:
+	var result: Array = []
+	if raw is Array:
+		for entry in raw:
+			if entry is Dictionary:
+				result.append((entry as Dictionary).duplicate(true))
+	return result
+
+
+func append_history(save_data: Dictionary, message: String, metadata: Dictionary = {}) -> void:
+	var stored: Variant = save_data.get("history", [])
+	var entries: Array = stored if stored is Array else []
+	entries.push_front({
+		"timestamp": Time.get_datetime_string_from_system(false, true),
+		"message": message,
+		"metadata": metadata
+	})
+	if entries.size() > HISTORY_LIMIT:
+		entries = entries.slice(0, HISTORY_LIMIT)
+	save_data["history"] = entries
