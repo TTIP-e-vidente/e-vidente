@@ -124,14 +124,17 @@ func _get_map_node_definition(node_index: int, expected_kind: String, node_label
 	if failed:
 		return {}
 
-	_assert(current_scene.map_data != null, "El mapa deberia seguir teniendo MapData antes de leer %s" % node_label)
+	_assert(
+		current_scene.has_method("get_playable_node_definitions"),
+		"El mapa deberia exponer get_playable_node_definitions antes de leer %s" % node_label
+	)
 	if failed:
 		return {}
 
-	var node_definitions: Array = current_scene.map_data.levels
+	var node_definitions: Array = current_scene.get_playable_node_definitions()
 	_assert(
 		node_index >= 0 and node_index < node_definitions.size(),
-		"No se encontro %s dentro de map_data.levels" % node_label
+		"No se encontro %s dentro del contrato del mapa" % node_label
 	)
 	if failed:
 		return {}
@@ -162,13 +165,16 @@ func _wait_for(expected_path: String, label: String) -> void:
 
 
 func _check_map_contract() -> void:
-	var rendered_nodes: Node2D = current_scene.get_node_or_null("NodesContainer") as Node2D
-	_assert(rendered_nodes != null, "El mapa deberia exponer NodesContainer")
-	_assert(current_scene.map_data != null, "El mapa deberia tener un recurso MapData asignado")
-	if rendered_nodes == null or current_scene.map_data == null:
+	var rendered_nodes: Node2D = current_scene.call("get_nodes_container") as Node2D
+	_assert(rendered_nodes != null, "El mapa deberia exponer get_nodes_container")
+	_assert(
+		current_scene.has_method("get_playable_node_definitions"),
+		"El mapa deberia exponer get_playable_node_definitions"
+	)
+	if rendered_nodes == null or not current_scene.has_method("get_playable_node_definitions"):
 		return
 
-	var node_definitions: Array = current_scene.map_data.levels
+	var node_definitions: Array = current_scene.get_playable_node_definitions()
 	_assert(
 		node_definitions.size() == EXPECTED_NODE_COUNT,
 		"El mapa de Celiaquia deberia declarar %d nodos" % EXPECTED_NODE_COUNT

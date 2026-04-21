@@ -1,3 +1,4 @@
+@tool
 extends Button
 
 const LABEL_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")

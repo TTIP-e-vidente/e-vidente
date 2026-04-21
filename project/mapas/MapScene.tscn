@@ -1,64 +1,12 @@
-[gd_scene format=3 uid="uid://b83n8ya7ww7ee"]
+[gd_scene load_steps=4 format=3 uid="uid://b83n8ya7ww7ee"]
 
 [ext_resource type="Script" uid="uid://crrhyx3f4rp2e" path="res://mapas/MapScene.gd" id="1_xmpkx"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_btgau"]
-[ext_resource type="Resource" path="res://mapas/celiaquia_map.tres" id="3_7kmkb"]
-[ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="4_2456x"]
-[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="5_8ea5f"]
-[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="5_2456x"]
-[ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="6_8ea5f"]
-[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_ltd81"]
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_ltd81"]
-radius = 1.7703874
+[ext_resource type="PackedScene" path="res://mapas/MapBoard.tscn" id="2_mapboard"]
+[ext_resource type="PackedScene" path="res://mapas/MapHud.tscn" id="3_maphud"]
 
 [node name="MapScene" type="Node2D" unique_id=971913902]
 script = ExtResource("1_xmpkx")
-map_data = ExtResource("3_7kmkb")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=824501897]
-light_mask = 524288
-visibility_layer = 524288
-offset_right = 1158.0001
-offset_bottom = 807.9999
-color = Color(0.973, 0.965, 0.945, 1)
-metadata/_edit_use_anchors_ = true
+[node name="MapBoard" parent="." instance=ExtResource("2_mapboard")]
 
-[node name="Fondo" type="Sprite2D" parent="." unique_id=909156203]
-light_mask = 524288
-visibility_layer = 524288
-position = Vector2(580.1896, 412.68744)
-rotation = -3.1415927
-scale = Vector2(0.33047423, 0.33076382)
-modulate = Color(1, 1, 1, 0.18)
-texture = ExtResource("2_btgau")
-
-[node name="Button" type="TextureButton" parent="." unique_id=429268425]
-offset_right = 8.0
-offset_bottom = 8.0
-metadata/_edit_use_anchors_ = true
-
-[node name="curva" type="Sprite2D" parent="." unique_id=1962576876]
-position = Vector2(570.1594, 770)
-scale = Vector2(0.43979317, 0.55780816)
-texture = ExtResource("4_2456x")
-
-[node name="NodesContainer" type="Node2D" parent="." unique_id=2088499811]
-
-[node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1604196530]
-position = Vector2(591.99994, 142)
-scale = Vector2(0.52793294, 0.52793294)
-texture = ExtResource("5_8ea5f")
-
-[node name="Atrás" type="Button" parent="." unique_id=1845473314]
-offset_left = 51.0
-offset_top = 63.00006
-offset_right = 280.0
-offset_bottom = 331.00006
-scale = Vector2(0.5200003, 0.45500025)
-text = "
-"
-icon = ExtResource("8_ltd81")
-flat = true
-
-[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[node name="MapHud" parent="." unique_id=973545405 instance=ExtResource("3_maphud")]

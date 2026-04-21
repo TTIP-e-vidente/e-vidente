@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://kmsb3inpowgb"]
+[gd_scene load_steps=3 format=3 uid="uid://kmsb3inpowgb"]
 
 [ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_bdcs1"]
 [ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_xvw7m"]
@@ -7,10 +7,14 @@
 script = ExtResource("1_bdcs1")
 
 [node name="Button" type="TextureButton" parent="." unique_id=2136653225]
-offset_right = 40.0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = 80.0
+focus_mode = 0
 metadata/_edit_use_anchors_ = true
 
-[node name="Icon" type="Sprite2D" parent="Button" unique_id=81622321]
+[node name="Icon" type="Sprite2D" parent="." unique_id=81622321]
 position = Vector2(0, -4)
 scale = Vector2(0.22, 0.22)
 
@@ -25,3 +29,7 @@ theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.15, 0.15, 0.15, 0.95)
 text = "Nodo"
 horizontal_alignment = 1
+
+[connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="Button" to="." method="_on_button_mouse_exited"]
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

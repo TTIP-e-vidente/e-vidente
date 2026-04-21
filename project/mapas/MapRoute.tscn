@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="1_path_texture"]
+
+[sub_resource type="Curve2D" id="Curve2D_map_path"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 56, 774, 0, 0, 0, 0, 136, 738, 0, 0, 0, 0, 176, 681, 0, 0, 0, 0, 236, 638, 0, 0, 0, 0, 304, 620, 0, 0, 0, 0, 376, 621, 0, 0, 0, 0, 446, 633, 0, 0, 0, 0, 514, 651, 0, 0, 0, 0, 584, 672, 0, 0, 0, 0, 654, 685, 0, 0, 0, 0, 726, 688, 0, 0, 0, 0, 792, 668, 0, 0, 0, 0, 828, 587, 0, 0, 0, 0, 825, 489, 0, 0, 0, 0, 822, 451, 0, 0, 0, 0, 887, 404, 0, 0, 0, 0, 950, 367, 0, 0, 0, 0, 994, 335, 0, 0, 0, 0, 989, 269, 0, 0, 0, 0, 965, 219)
+}
+
+[node name="MapRoute" type="Path2D"]
+curve = SubResource("Curve2D_map_path")
+
+[node name="PathReference" type="Sprite2D" parent="."]
+position = Vector2(570.1594, 770)
+scale = Vector2(0.43979317, 0.55780816)
+texture = ExtResource("1_path_texture")
