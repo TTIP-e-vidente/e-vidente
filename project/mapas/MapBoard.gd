@@ -1,6 +1,6 @@
 extends Node2D
 
-@onready var nodes_container: Node2D = $NodesContainer
+@onready var nodes_container: Node2D = $ScrollContainer/Contenido/NodesContainer
 
 
 func get_nodes_container() -> Node2D:
