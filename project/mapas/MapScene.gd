@@ -12,48 +12,40 @@ const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
-	_connect_map_hud_back_action()
-	_clear_previous_question_session()
-	_render_map_nodes()
-
-
-func _connect_map_hud_back_action() -> void:
-	if map_hud != null and map_hud.has_signal("back_requested"):
-		map_hud.connect("back_requested", _on_atrás_pressed)
-
-
-func _clear_previous_question_session() -> void:
+	_connect_back_signal()
 	Global.clear_active_question_session()
+	_refresh_map_nodes()
+
+
+func _connect_back_signal() -> void:
+	if map_hud != null and map_hud.has_signal("back_requested"):
+		map_hud.connect("back_requested", _on_back_requested)
 
 
 # Render del mapa -------------------------------------------------------------
-func _render_map_nodes() -> void:
-	var scene_authored_nodes: Array[Node2D] = _get_authored_level_nodes()
-	if scene_authored_nodes.is_empty():
+func _refresh_map_nodes() -> void:
+	var board_nodes: Array[Node2D] = _get_board_nodes()
+	if board_nodes.is_empty():
 		push_warning("MapScene: MapBoard no expone nodos configurados en escena.")
 		return
 
-	_render_authored_level_nodes(scene_authored_nodes)
-
-
-func _render_authored_level_nodes(authored_nodes: Array[Node2D]) -> void:
-	var playable_entries: Array[Dictionary] = _build_playable_scene_entries(authored_nodes)
-	var playable_node_data: Array = _extract_node_data(playable_entries)
-	var level_selected_handler := Callable(self, "_on_level_selected")
+	var playable_entries: Array[Dictionary] = _build_playable_entries(board_nodes)
+	var playable_node_data: Array = _collect_node_data(playable_entries)
+	var node_selected_handler := Callable(self, "_on_node_selected")
 
 	for node_index in range(playable_entries.size()):
-		_configure_scene_node_for_progress(
+		_apply_progress_to_node(
 			playable_entries[node_index],
 			playable_node_data,
 			node_index,
-			level_selected_handler
+			node_selected_handler
 		)
 
 
 func get_playable_node_data() -> Array:
-	var authored_nodes: Array[Node2D] = _get_authored_level_nodes()
-	var playable_entries: Array[Dictionary] = _build_playable_scene_entries(authored_nodes)
-	return _extract_node_data(playable_entries)
+	var board_nodes: Array[Node2D] = _get_board_nodes()
+	var playable_entries: Array[Dictionary] = _build_playable_entries(board_nodes)
+	return _collect_node_data(playable_entries)
 
 
 func get_playable_node_definitions() -> Array[Dictionary]:
@@ -62,21 +54,16 @@ func get_playable_node_definitions() -> Array[Dictionary]:
 		node_definitions.append(node_data.to_dictionary())
 	return node_definitions
 
-
-func get_map_board() -> Node2D:
-	return map_board
-
-
 func get_nodes_container() -> Node2D:
 	if map_board != null and map_board.has_method("get_nodes_container"):
 		return map_board.call("get_nodes_container") as Node2D
 	return null
 
 
-func _build_playable_scene_entries(scene_nodes: Array[Node2D]) -> Array[Dictionary]:
+func _build_playable_entries(scene_nodes: Array[Node2D]) -> Array[Dictionary]:
 	var playable_entries: Array[Dictionary] = []
 	for scene_node in scene_nodes:
-		var node_data = _build_node_data_from_scene_node(scene_node)
+		var node_data = scene_node.call("build_node_data")
 		if not _node_has_destination(node_data):
 			push_warning("MapScene: Hay un nodo del mapa sin destino configurado.")
 			scene_node.visible = false
@@ -84,27 +71,27 @@ func _build_playable_scene_entries(scene_nodes: Array[Node2D]) -> Array[Dictiona
 
 		scene_node.visible = true
 		playable_entries.append({
-			"node": scene_node,
+			"scene_node": scene_node,
 			"node_data": node_data.duplicate_data()
 		})
 
 	return playable_entries
 
 
-func _extract_node_data(playable_entries: Array[Dictionary]) -> Array:
+func _collect_node_data(playable_entries: Array[Dictionary]) -> Array:
 	var node_data_list: Array = []
 	for entry in playable_entries:
 		node_data_list.append(entry.get("node_data", null))
 	return node_data_list
 
 
-func _configure_scene_node_for_progress(
+func _apply_progress_to_node(
 	playable_entry: Dictionary,
 	playable_node_data: Array,
 	node_index: int,
-	level_selected_handler: Callable
+	node_selected_handler: Callable
 ) -> void:
-	var scene_node: Node2D = playable_entry.get("node", null) as Node2D
+	var scene_node: Node2D = playable_entry.get("scene_node", null) as Node2D
 	var node_data = playable_entry.get("node_data", null)
 	if scene_node == null or node_data == null:
 		return
@@ -117,36 +104,32 @@ func _configure_scene_node_for_progress(
 	)
 
 	scene_node.position = node_data.node_position
-	scene_node.setup_from_node_data(node_data, node_unlocked, node_completed)
-	if not scene_node.is_connected("level_selected", level_selected_handler):
-		scene_node.connect("level_selected", level_selected_handler)
+	scene_node.apply_node_state(node_data, node_unlocked, node_completed)
+	if not scene_node.is_connected("node_selected", node_selected_handler):
+		scene_node.connect("node_selected", node_selected_handler)
 
 
-func _build_node_data_from_scene_node(scene_node: Node2D) -> RefCounted:
-	return scene_node.call("build_node_data")
-
-
-func _get_authored_level_nodes() -> Array[Node2D]:
-	var authored_nodes: Array[Node2D] = []
+func _get_board_nodes() -> Array[Node2D]:
+	var board_nodes: Array[Node2D] = []
 	if map_board == null or not map_board.has_method("get_authored_level_nodes"):
-		return authored_nodes
+		return board_nodes
 
 	var raw_nodes: Array = map_board.call("get_authored_level_nodes")
 	for raw_node in raw_nodes:
 		var map_node: Node2D = raw_node as Node2D
 		if map_node != null:
-			authored_nodes.append(map_node)
-	return authored_nodes
+			board_nodes.append(map_node)
+	return board_nodes
 
 
 # Navegacion -----------------------------------------------------------------
-func _on_level_selected(level_target: Variant) -> void:
-	var node_data = _resolve_level_target_to_node_data(level_target)
+func _on_node_selected(selected_target: Variant) -> void:
+	var node_data = _read_node_data_from_selection(selected_target)
 	if node_data != null:
-		_open_node_from_map(node_data)
+		_open_selected_node(node_data)
 		return
 
-	var scene_path := str(level_target).strip_edges()
+	var scene_path := str(selected_target).strip_edges()
 	if scene_path.is_empty():
 		push_warning("MapScene: Se intento abrir un destino vacio desde el mapa.")
 		return
@@ -154,16 +137,16 @@ func _on_level_selected(level_target: Variant) -> void:
 	get_tree().change_scene_to_file(scene_path)
 
 
-func _resolve_level_target_to_node_data(level_target: Variant):
-	if level_target is Dictionary:
-		return MapNodeDataScript.from_dictionary(level_target as Dictionary)
-	if level_target is Object and level_target.has_method("to_dictionary"):
-		return level_target
+func _read_node_data_from_selection(selected_target: Variant):
+	if selected_target is Dictionary:
+		return MapNodeDataScript.from_dictionary(selected_target as Dictionary)
+	if selected_target is Object and selected_target.has_method("to_dictionary"):
+		return selected_target
 	return null
 
 
-func _open_node_from_map(node_data) -> void:
-	var track_key: String = _resolve_track_key(node_data)
+func _open_selected_node(node_data) -> void:
+	var track_key: String = _get_valid_track_key(node_data)
 
 	if node_data.is_question():
 		_open_question_node(track_key, node_data)
@@ -173,12 +156,12 @@ func _open_node_from_map(node_data) -> void:
 
 
 func _open_question_node(track_key: String, node_data) -> void:
-	var question_session_state: Dictionary = _build_question_session_state(track_key, node_data)
+	var question_session_state: Dictionary = _build_question_session(track_key, node_data)
 	Global.set_active_question_session(question_session_state)
 	GameSceneRouter.go_to_questions(get_tree())
 
 
-func _build_question_session_state(track_key: String, node_data) -> Dictionary:
+func _build_question_session(track_key: String, node_data) -> Dictionary:
 	return {
 		"track_key": track_key,
 		"nivel_id": node_data.get_question_session_level_id(),
@@ -200,21 +183,13 @@ func _node_has_destination(node_data) -> bool:
 	if node_data == null:
 		return false
 	if node_data.is_question():
-		return _question_node_has_destination(node_data)
+		return node_data.has_question_destination()
 
 	if not node_data.is_chapter():
 		return false
 
-	return _chapter_node_has_destination(node_data)
-
-
-func _question_node_has_destination(node_data) -> bool:
-	return node_data.has_question_destination()
-
-
-func _chapter_node_has_destination(node_data) -> bool:
 	return node_data.has_chapter_destination() and GameTrackCatalog.has_track(
-		_resolve_track_key(node_data)
+		_get_valid_track_key(node_data)
 	)
 
 
@@ -230,23 +205,19 @@ func _is_node_unlocked_by_order(
 
 
 func _is_node_completed(node_data) -> bool:
-	var track_key: String = _resolve_track_key(node_data)
+	var track_key: String = _get_valid_track_key(node_data)
 	if node_data.is_question():
-		return _is_question_node_completed(track_key, node_data)
+		return Global.is_question_completed(track_key, node_data.question_key)
 	return Global.is_level_completed(track_key, node_data.level_number)
 
 
-func _is_question_node_completed(track_key: String, node_data) -> bool:
-	return Global.is_question_completed(track_key, node_data.question_key)
-
-
-func _resolve_track_key(node_data) -> String:
-	var raw_track_key: String = node_data.get_declared_track_key(DEFAULT_TRACK_KEY)
+func _get_valid_track_key(node_data) -> String:
+	var raw_track_key: String = node_data.get_track_key_or_default(DEFAULT_TRACK_KEY)
 	if GameTrackCatalog.has_track(raw_track_key):
 		return raw_track_key
 	return DEFAULT_TRACK_KEY
 
 
 # Salida ---------------------------------------------------------------------
-func _on_atrás_pressed() -> void:
+func _on_back_requested() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())

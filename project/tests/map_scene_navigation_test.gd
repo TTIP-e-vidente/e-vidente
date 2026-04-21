@@ -61,7 +61,7 @@ func _validate_first_recipe_flow() -> void:
 	if failed:
 		return
 
-	current_scene._on_level_selected(first_recipe_node_definition)
+	current_scene._on_node_selected(first_recipe_node_definition)
 	await _wait_for(LEVEL_SCENE, "Nivel de receta")
 	_assert(Global.current_level == 1, "El primer nodo de receta deberia fijar el capitulo 1")
 	if failed:
@@ -91,7 +91,7 @@ func _validate_first_question_flow() -> void:
 	if failed:
 		return
 
-	current_scene._on_level_selected(first_question_node_definition)
+	current_scene._on_node_selected(first_question_node_definition)
 	await _wait_for(QUESTIONS_SCENE, "Nivel de pregunta")
 	_assert(
 		current_scene.quiz != null and current_scene.quiz.theme.size() == 1,

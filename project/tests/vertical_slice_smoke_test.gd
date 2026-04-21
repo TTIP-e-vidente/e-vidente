@@ -41,7 +41,7 @@ func _run() -> void:
 			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
 
 	if not failed:
-		await _call_and_expect("_on_level_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
+		await _call_and_expect("_on_node_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
 
 
 	if not failed:

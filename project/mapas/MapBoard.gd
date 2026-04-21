@@ -8,20 +8,18 @@ func get_nodes_container() -> Node2D:
 
 
 func get_authored_level_nodes() -> Array[Node2D]:
-	var authored_nodes: Array[Node2D] = []
+	var configured_nodes: Array[Node2D] = []
 	for child in nodes_container.get_children():
 		var map_node: Node2D = child as Node2D
-		if map_node == null or not map_node.has_method("build_node_data"):
+		if map_node == null:
 			continue
-		authored_nodes.append(map_node)
+		if not map_node.has_method("build_node_data"):
+			continue
+		configured_nodes.append(map_node)
 
-	authored_nodes.sort_custom(Callable(self, "_sort_nodes_by_id"))
-	return authored_nodes
-
-
-func has_authored_level_nodes() -> bool:
-	return not get_authored_level_nodes().is_empty()
+	configured_nodes.sort_custom(Callable(self, "_sort_by_nivel_id"))
+	return configured_nodes
 
 
-func _sort_nodes_by_id(a: Node2D, b: Node2D) -> bool:
+func _sort_by_nivel_id(a: Node2D, b: Node2D) -> bool:
 	return int(a.get("nivel_id")) < int(b.get("nivel_id"))

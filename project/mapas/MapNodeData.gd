@@ -93,5 +93,5 @@ func get_question_session_level_id() -> int:
 	return question_number if question_number > 0 else node_id
 
 
-func get_declared_track_key(default_track_key: String) -> String:
+func get_track_key_or_default(default_track_key: String) -> String:
 	return track_key if not track_key.is_empty() else default_track_key

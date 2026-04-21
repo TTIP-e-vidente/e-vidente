@@ -12,7 +12,7 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 
 func _ready() -> void:
-	profile_overlay.hide_overlay()
+	_hide_profile_overlay()
 	_connect_save_manager_signals()
 	_refresh_hud()
 
@@ -55,8 +55,7 @@ func _refresh_hud() -> void:
 
 
 func _on_profile_button_pressed() -> void:
-	profile_button.visible = false
-	profile_overlay.show_overlay()
+	_show_profile_overlay()
 
 
 func _on_back_button_pressed() -> void:
@@ -64,35 +63,31 @@ func _on_back_button_pressed() -> void:
 
 
 func _on_overlay_close_requested() -> void:
-	profile_button.visible = true
-	profile_overlay.hide_overlay()
+	_hide_profile_overlay()
 
 
 func _on_overlay_resume_pressed() -> void:
-	profile_button.visible = true
-	profile_overlay.hide_overlay()
+	_hide_profile_overlay()
 	if not SaveManager.can_resume_current_save():
 		return
 	var resume_state: Dictionary = SaveManager.reload_from_disk_and_get_resume()
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, _get_return_scene_path())
+	GameSceneRouter.go_to_resume(get_tree(), resume_state, _get_scene_to_return_to())
 
 
 func _on_overlay_edit_profile_pressed() -> void:
 	SaveManager.save_progress_to_disk()
-	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _get_return_scene_path())
+	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _get_scene_to_return_to())
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
-func _on_overlay_guardar_pressed() -> void:
+func _on_overlay_save_pressed() -> void:
 	SaveManager.save_progress_to_disk()
-	profile_overlay.refresh()
 	_refresh_hud()
 
 
 func _on_overlay_reset_pressed() -> void:
 	SaveManager.reset_all_progress()
-	profile_button.visible = true
-	profile_overlay.hide_overlay()
+	_hide_profile_overlay()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
@@ -104,7 +99,17 @@ func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 	_refresh_hud()
 
 
-func _get_return_scene_path() -> String:
+func _show_profile_overlay() -> void:
+	profile_button.visible = false
+	profile_overlay.show_overlay()
+
+
+func _hide_profile_overlay() -> void:
+	profile_button.visible = true
+	profile_overlay.hide_overlay()
+
+
+func _get_scene_to_return_to() -> String:
 	if get_tree() == null or get_tree().current_scene == null:
 		return MAP_SCENE_PATH
 	var scene_path: String = str(get_tree().current_scene.scene_file_path).strip_edges()

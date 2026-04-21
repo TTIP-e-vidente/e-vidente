@@ -1,7 +1,12 @@
 @tool
 extends Node2D
+## Nodo visual y clickeable del mapa.
+##
+## Este archivo hace dos cosas:
+## - toma la configuracion del inspector y la convierte en `MapNodeData`,
+## - muestra el estado runtime que `MapScene` le aplica.
 
-signal level_selected(level_target: Variant)
+signal node_selected(selected_target: Variant)
 
 const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
 const NODE_KIND_CHAPTER := "chapter"
@@ -9,17 +14,17 @@ const NODE_KIND_QUESTION := "question"
 const COLOR_COMPLETADO := Color("#db9d4b")
 const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 
-@export_group("Runtime")
+@export_group("Estado Runtime")
 @export var nivel_id: int = 0
 @export var desbloqueado: bool = false
 
-@export_group("Map Authoring")
+@export_group("Configuracion del Nodo")
 @export_enum("chapter", "question") var node_kind: String = NODE_KIND_CHAPTER:
 	set(value):
-		_authored_node_kind = _normalize_node_kind(value)
-		_sync_authored_preview()
+		_configured_node_kind = _normalize_node_kind(value)
+		_refresh_preview_in_editor()
 	get:
-		return _authored_node_kind
+		return _configured_node_kind
 @export var track_key: String = "celiaquia"
 @export var level_number: int = 0
 @export var question_number: int = 0
@@ -27,31 +32,31 @@ const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 @export_file("*.tres") var question_resource_path: String = ""
 @export_file("*.tscn") var scene_path: String = ""
 
-@export_group("Visual")
+@export_group("Vista")
 @export var label_text: String = "Nodo":
 	set(value):
-		_authored_label_text = value.strip_edges()
-		_sync_authored_preview()
+		_configured_label_text = value.strip_edges()
+		_refresh_preview_in_editor()
 	get:
-		return _authored_label_text
+		return _configured_label_text
 @export var icon_texture: Texture2D:
 	set(value):
-		_authored_icon_texture = value
-		_sync_authored_preview()
+		_configured_icon_texture = value
+		_refresh_preview_in_editor()
 	get:
-		return _authored_icon_texture
+		return _configured_icon_texture
 
 var base_scale: Vector2 = Vector2.ONE
 var _hovered: bool = false
-var _node_is_completed: bool = false
-var _node_label_text: String = ""
-var _node_icon_texture: Texture2D = null
-var _selected_node_data: Variant = null
-var _selection_in_progress: bool = false
+var _is_completed: bool = false
+var _visible_label_text: String = ""
+var _visible_icon_texture: Texture2D = null
+var _current_node_data: Variant = null
+var _click_in_progress: bool = false
 
-var _authored_node_kind: String = NODE_KIND_CHAPTER
-var _authored_label_text: String = "Nodo"
-var _authored_icon_texture: Texture2D = null
+var _configured_node_kind: String = NODE_KIND_CHAPTER
+var _configured_label_text: String = "Nodo"
+var _configured_icon_texture: Texture2D = null
 
 @onready var button: TextureButton = $Button
 @onready var icon: Sprite2D = $Icon
@@ -61,8 +66,8 @@ var _authored_icon_texture: Texture2D = null
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
 	base_scale = scale
-	_apply_authored_preview_state()
-	_selected_node_data = build_node_data()
+	_load_preview_from_config()
+	_current_node_data = build_node_data()
 	_refresh_node_view()
 
 
@@ -70,39 +75,39 @@ func _ready() -> void:
 func build_node_data() -> RefCounted:
 	var node_data = MapNodeDataScript.new()
 	node_data.node_id = nivel_id
-	node_data.node_kind = _authored_node_kind
-	node_data.label_text = _resolved_authored_label_text()
+	node_data.node_kind = _configured_node_kind
+	node_data.label_text = _get_configured_label_text()
 	node_data.track_key = track_key.strip_edges()
 	node_data.level_number = level_number
 	node_data.question_number = question_number
 	node_data.question_key = question_key.strip_edges()
 	node_data.question_resource_path = question_resource_path.strip_edges()
-	node_data.scene_path = _resolve_scene_path()
-	node_data.icon_texture_path = _resolve_authored_icon_texture_path()
+	node_data.scene_path = _get_scene_path()
+	node_data.icon_texture_path = _get_configured_icon_path()
 	node_data.node_position = position
 	return node_data
 
 
-func setup_from_node_data(node_data, unlocked: bool, completed: bool = false) -> void:
+func apply_node_state(node_data, unlocked: bool, completed: bool = false) -> void:
 	desbloqueado = unlocked
-	_node_is_completed = completed
-	_copy_runtime_data_from_node_data(node_data)
-	_selected_node_data = node_data.duplicate_data()
+	_is_completed = completed
+	_copy_node_data_to_fields(node_data)
+	_current_node_data = node_data.duplicate_data()
 	_refresh_node_view()
 
 
 # Interaccion ----------------------------------------------------------------
 func _on_button_pressed() -> void:
-	if _selection_in_progress or Engine.is_editor_hint():
+	if _click_in_progress or Engine.is_editor_hint():
 		return
-	if not _node_has_target():
+	if not _current_data_has_destination():
 		push_warning("LevelNode: no hay destino asignado para el nodo %d" % nivel_id)
 		return
-	_selection_in_progress = true
+	_click_in_progress = true
 	_bounce()
 	await get_tree().create_timer(0.25).timeout
-	level_selected.emit(_selected_node_data)
-	_selection_in_progress = false
+	node_selected.emit(_current_node_data)
+	_click_in_progress = false
 
 
 func _on_button_mouse_entered() -> void:
@@ -138,7 +143,7 @@ func _apply_interaction_state() -> void:
 		button.disabled = false
 		button.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		return
-	button.disabled = not desbloqueado or _node_is_completed
+	button.disabled = not desbloqueado or _is_completed
 	button.mouse_default_cursor_shape = (
 		Control.CURSOR_ARROW
 		if button.disabled
@@ -147,22 +152,22 @@ func _apply_interaction_state() -> void:
 
 
 # Visual ---------------------------------------------------------------------
-func _apply_authored_preview_state() -> void:
-	_node_label_text = _resolved_authored_label_text()
-	_node_icon_texture = _resolve_authored_icon_texture()
+func _load_preview_from_config() -> void:
+	_visible_label_text = _get_configured_label_text()
+	_visible_icon_texture = _get_configured_icon_texture()
 
 
-func _sync_authored_preview() -> void:
+func _refresh_preview_in_editor() -> void:
 	if not is_node_ready() or not Engine.is_editor_hint():
 		return
-	_apply_authored_preview_state()
-	_selected_node_data = build_node_data()
+	_load_preview_from_config()
+	_current_node_data = build_node_data()
 	_refresh_node_view()
 
 
-func _copy_runtime_data_from_node_data(node_data) -> void:
+func _copy_node_data_to_fields(node_data) -> void:
 	nivel_id = node_data.node_id
-	_authored_node_kind = _normalize_node_kind(node_data.node_kind)
+	_configured_node_kind = _normalize_node_kind(node_data.node_kind)
 	track_key = node_data.track_key
 	level_number = node_data.level_number
 	question_number = node_data.question_number
@@ -170,10 +175,10 @@ func _copy_runtime_data_from_node_data(node_data) -> void:
 	question_resource_path = node_data.question_resource_path
 	scene_path = node_data.scene_path
 	position = node_data.node_position
-	_authored_label_text = node_data.label_text
-	_node_label_text = node_data.label_text
-	_authored_icon_texture = _resolve_runtime_icon_texture(node_data.icon_texture_path)
-	_node_icon_texture = _authored_icon_texture
+	_configured_label_text = node_data.label_text
+	_visible_label_text = node_data.label_text
+	_configured_icon_texture = _get_runtime_icon_texture(node_data.icon_texture_path)
+	_visible_icon_texture = _configured_icon_texture
 
 
 func _refresh_node_view() -> void:
@@ -185,15 +190,15 @@ func _refresh_node_view() -> void:
 func _apply_node_visuals() -> void:
 	if not is_node_ready():
 		return
-	title_label.text = _node_label_text
-	icon.texture = _node_icon_texture
+	title_label.text = _visible_label_text
+	icon.texture = _visible_icon_texture
 
 
 func _apply_color_for_progress_state() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
 		return
-	if _node_is_completed:
+	if _is_completed:
 		modulate = COLOR_COMPLETADO
 	elif not desbloqueado:
 		modulate = COLOR_BLOQUEADO
@@ -201,31 +206,31 @@ func _apply_color_for_progress_state() -> void:
 		modulate = Color.WHITE
 
 
-func _resolve_runtime_icon_texture(icon_texture_path: String) -> Texture2D:
+func _get_runtime_icon_texture(icon_texture_path: String) -> Texture2D:
 	var runtime_texture: Texture2D = _load_texture_from_path(icon_texture_path.strip_edges())
 	if runtime_texture != null:
 		return runtime_texture
-	return _resolve_authored_icon_texture()
+	return _get_configured_icon_texture()
 
 
-func _resolve_scene_path() -> String:
+func _get_scene_path() -> String:
 	return scene_path.strip_edges()
 
 
-func _resolved_authored_label_text() -> String:
-	if not _authored_label_text.is_empty():
-		return _authored_label_text
-	if _authored_node_kind == NODE_KIND_QUESTION:
+func _get_configured_label_text() -> String:
+	if not _configured_label_text.is_empty():
+		return _configured_label_text
+	if _configured_node_kind == NODE_KIND_QUESTION:
 		return "Pregunta %d" % max(1, question_number if question_number > 0 else nivel_id)
 	return "Receta %d" % max(1, level_number if level_number > 0 else nivel_id)
 
 
-func _resolve_authored_icon_texture() -> Texture2D:
-	return _authored_icon_texture
+func _get_configured_icon_texture() -> Texture2D:
+	return _configured_icon_texture
 
 
-func _resolve_authored_icon_texture_path() -> String:
-	var resolved_icon: Texture2D = _resolve_authored_icon_texture()
+func _get_configured_icon_path() -> String:
+	var resolved_icon: Texture2D = _get_configured_icon_texture()
 	if resolved_icon == null:
 		return ""
 	return str(resolved_icon.resource_path).strip_edges()
@@ -249,10 +254,9 @@ func _normalize_node_kind(value: String) -> String:
 
 
 # Destino --------------------------------------------------------------------
-func _node_has_target() -> bool:
-	if _selected_node_data == null:
+func _current_data_has_destination() -> bool:
+	if _current_node_data == null:
 		return false
-	if _selected_node_data.is_question():
-		return _selected_node_data.has_question_destination()
-	return _selected_node_data.has_chapter_destination()
-	return false
+	if _current_node_data.is_question():
+		return _current_node_data.has_question_destination()
+	return _current_node_data.has_chapter_destination()
