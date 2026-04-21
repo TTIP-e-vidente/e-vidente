@@ -166,10 +166,6 @@ shadow_size = 8
 
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
-track_key_override = null
-background_music_path = null
-debug_force_streak_feedback = null
-grayscale_on_completion = null
 
 [node name="FondoFicha2" type="ColorRect" parent="." unique_id=2109054412]
 offset_left = 5.0
