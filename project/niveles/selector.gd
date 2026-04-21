@@ -2,7 +2,7 @@ extends Node2D
 class_name ModeSelector
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const STREAK_SEAL_SCENE := preload("res://interface/components/StreakDailySeal.tscn")
+const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
@@ -144,7 +144,7 @@ func _on_button_hover(button: TextureButton, entered: bool) -> void:
 	_hover_tweens[button] = tw
 
 
-# --- HUD (streak + profile button) ---
+# --- HUD (racha + profile button) ---
 
 func _build_hud() -> void:
 	var hud_layer := CanvasLayer.new()
@@ -156,17 +156,17 @@ func _build_hud() -> void:
 	hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud_layer.add_child(hud_root)
 
-	var streak_seal := STREAK_SEAL_SCENE.instantiate() as Control
-	if streak_seal != null:
-		streak_seal.anchor_left = 0.0
-		streak_seal.anchor_top = 0.0
-		streak_seal.anchor_right = 0.0
-		streak_seal.anchor_bottom = 0.0
-		streak_seal.offset_left = 16.0
-		streak_seal.offset_top = 16.0
-		streak_seal.offset_right = 152.0
-		streak_seal.offset_bottom = 152.0
-		hud_root.add_child(streak_seal)
+	var racha := RACHA_SCENE.instantiate() as Control
+	if racha != null:
+		racha.anchor_left = 0.0
+		racha.anchor_top = 0.0
+		racha.anchor_right = 0.0
+		racha.anchor_bottom = 0.0
+		racha.offset_left = 16.0
+		racha.offset_top = 16.0
+		racha.offset_right = 152.0
+		racha.offset_bottom = 152.0
+		hud_root.add_child(racha)
 
 	_profile_toggle_btn = Button.new()
 	_profile_toggle_btn.script = PROFILE_BUTTON_SCRIPT

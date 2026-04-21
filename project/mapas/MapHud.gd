@@ -6,7 +6,7 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
-@onready var streak_seal: Control = $HudRoot/TopLeftAnchor/StreakDailySeal
+@onready var racha: Control = $HudRoot/TopLeftAnchor/Racha
 @onready var profile_button: Button = $HudRoot/TopRightAnchor/ProfileButton
 @onready var profile_overlay: ProfileOverlayPanel = $ProfileOverlayPanel
 
@@ -48,8 +48,8 @@ func _disconnect_save_manager_signals() -> void:
 
 
 func _refresh_hud() -> void:
-	if streak_seal != null and streak_seal.has_method("render"):
-		streak_seal.call("render")
+	if racha != null and racha.has_method("render"):
+		racha.call("render")
 	if profile_overlay != null and profile_overlay.visible:
 		profile_overlay.refresh()
 

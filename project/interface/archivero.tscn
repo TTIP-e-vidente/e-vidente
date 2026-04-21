@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
 [ext_resource type="PackedScene" path="res://interface/components/StreakBadge.tscn" id="10_streakbadge"]
-[ext_resource type="PackedScene" path="res://interface/components/StreakDailySeal.tscn" id="11_streakseal"]
+[ext_resource type="PackedScene" path="res://interface/components/Racha.tscn" id="11_racha"]
 [ext_resource type="Script" path="res://interface/components/ProfileProgressButton.gd" id="12_profile_toggle"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawer_panel"]
@@ -185,7 +185,7 @@ flip_v = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="ModeSelectionStreakBadge" parent="CanvasLayer" instance=ExtResource("11_streakseal")]
+[node name="RachaModoSeleccion" parent="CanvasLayer" instance=ExtResource("11_racha")]
 offset_left = 10.0
 offset_top = 6.0
 offset_right = 146.0

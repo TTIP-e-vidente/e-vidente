@@ -1,7 +1,7 @@
 extends CanvasLayer
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const STREAK_SEAL_SCENE := preload("res://interface/components/StreakDailySeal.tscn")
+const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
 
@@ -12,11 +12,11 @@ const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
 const SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
-# Streak seal position (top-left anchor, pixel offsets from corner)
-const _STREAK_SEAL_OFFSETS := Rect2(16.0, 16.0, 152.0, 152.0)
+# Posicion de la racha (ancla superior izquierda y offsets en pixeles)
+const _RACHA_OFFSETS := Rect2(16.0, 16.0, 152.0, 152.0)
 
 var _hud_root: Control
-var _streak_seal: Control
+var _racha: Control
 var _profile_button: Button
 var _last_scene_path := ""
 var _profile_overlay: ProfileOverlayPanel
@@ -45,23 +45,23 @@ func _exit_tree() -> void:
 
 func _build_hud() -> void:
 	_hud_root = Control.new()
-	_hud_root.name = "GlobalProfileStreakHudRoot"
+	_hud_root.name = "GlobalProfileRachaHudRoot"
 	_hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_hud_root)
 
-	_streak_seal = STREAK_SEAL_SCENE.instantiate() as Control
-	if _streak_seal != null:
-		_streak_seal.name = "GlobalStreakDailySeal"
-		_streak_seal.anchor_left = 0.0
-		_streak_seal.anchor_top = 0.0
-		_streak_seal.anchor_right = 0.0
-		_streak_seal.anchor_bottom = 0.0
-		_streak_seal.offset_left = _STREAK_SEAL_OFFSETS.position.x
-		_streak_seal.offset_top = _STREAK_SEAL_OFFSETS.position.y
-		_streak_seal.offset_right = _STREAK_SEAL_OFFSETS.size.x
-		_streak_seal.offset_bottom = _STREAK_SEAL_OFFSETS.size.y
-		_hud_root.add_child(_streak_seal)
+	_racha = RACHA_SCENE.instantiate() as Control
+	if _racha != null:
+		_racha.name = "GlobalRacha"
+		_racha.anchor_left = 0.0
+		_racha.anchor_top = 0.0
+		_racha.anchor_right = 0.0
+		_racha.anchor_bottom = 0.0
+		_racha.offset_left = _RACHA_OFFSETS.position.x
+		_racha.offset_top = _RACHA_OFFSETS.position.y
+		_racha.offset_right = _RACHA_OFFSETS.size.x
+		_racha.offset_bottom = _RACHA_OFFSETS.size.y
+		_hud_root.add_child(_racha)
 
 	_profile_button = Button.new()
 	_profile_button.name = "GlobalProfileButton"
@@ -126,8 +126,8 @@ func _refresh_hud() -> void:
 		if _profile_overlay != null and _profile_overlay.visible:
 			_profile_overlay.visible = false
 			_profile_button.visible = true
-	if _streak_seal != null and _streak_seal.has_method("render"):
-		_streak_seal.call("render")
+	if _racha != null and _racha.has_method("render"):
+		_racha.call("render")
 
 
 func _apply_scene_visibility(scene_path: String) -> void:
