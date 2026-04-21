@@ -2,31 +2,37 @@ extends Node2D
 
 @export var map_data: MapData
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const STREAK_SEAL_SCENE := preload(
-	"res://interface/components/StreakDailySeal.tscn"
-)
-const PROFILE_BUTTON_SCRIPT := preload(
-	"res://interface/components/ProfileProgressButton.gd"
-)
+const STREAK_SEAL_SCENE := preload("res://interface/components/StreakDailySeal.tscn")
+const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 
 var level_node_scene := preload("res://mapas/LevelNode.tscn")
 
+@onready var btn_atras: Button = $"Atrás"
 @onready var nodes_container = $NodesContainer
+
+var escala_original := Vector2.ONE
 
 
 func _ready():
-	_position_back_button()
+	escala_original = btn_atras.scale
+	btn_atras.mouse_entered.connect(_on_back_hover)
+	btn_atras.mouse_exited.connect(_on_back_exit)
 	_build_hud()
 	_render_map()
 
 
-func _position_back_button() -> void:
-	var btn := $"Atrás" as Button
-	btn.scale = Vector2(0.52, 0.455)
-	btn.offset_left = 54.0
-	btn.offset_top = 636.0
-	btn.offset_right = 283.0
-	btn.offset_bottom = 904.0
+func _on_back_hover():
+	var tween = create_tween()
+	var t = tween.tween_property(btn_atras, "scale", escala_original * 1.04, 0.12)
+	t.set_trans(Tween.TRANS_BACK)
+	t.set_ease(Tween.EASE_OUT)
+
+
+func _on_back_exit():
+	var tween = create_tween()
+	var t = tween.tween_property(btn_atras, "scale", escala_original, 0.12)
+	t.set_trans(Tween.TRANS_BACK)
+	t.set_ease(Tween.EASE_OUT)
 
 
 func _build_hud() -> void:
@@ -65,6 +71,7 @@ func _build_hud() -> void:
 	profile_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	hud_root.add_child(profile_btn)
 
+
 func _render_map() -> void:
 	if map_data == null:
 		return
@@ -80,13 +87,16 @@ func _render_map() -> void:
 
 		node.level_selected.connect(_on_level_selected)
 
+
 func _on_level_selected(scene_path: String):
 	get_tree().change_scene_to_file(scene_path)
+
 
 func _is_level_unlocked(id: int) -> bool:
 	if id == 1:
 		return true
 	return id <= Global.current_level
+
 
 func _on_atrás_pressed() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())

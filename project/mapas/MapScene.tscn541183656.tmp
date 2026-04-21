@@ -81,10 +81,10 @@ scale = Vector2(0.52793294, 0.52793294)
 texture = ExtResource("5_8ea5f")
 
 [node name="Atrás" type="Button" parent="." unique_id=1845473314]
-offset_left = 51.0
-offset_top = 627.00006
-offset_right = 280.0
-offset_bottom = 895.00006
+offset_left = 44.0
+offset_top = 640.0
+offset_right = 273.0
+offset_bottom = 908.0
 scale = Vector2(0.5200003, 0.45500025)
 text = "
 "
