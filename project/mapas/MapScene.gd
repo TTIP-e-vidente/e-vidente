@@ -24,28 +24,32 @@ func _connect_back_signal() -> void:
 
 # Render del mapa -------------------------------------------------------------
 func _refresh_map_nodes() -> void:
-	var board_nodes: Array[Node2D] = _get_board_nodes()
-	if board_nodes.is_empty():
+	var playable_scene_nodes: Array[Node2D] = _get_playable_scene_nodes()
+	if playable_scene_nodes.is_empty():
 		push_warning("MapScene: MapBoard no expone nodos configurados en escena.")
 		return
 
-	var playable_entries: Array[Dictionary] = _build_playable_entries(board_nodes)
-	var playable_node_data: Array = _collect_node_data(playable_entries)
 	var node_selected_handler := Callable(self, "_on_node_selected")
+	var previous_node_completed: bool = true
 
-	for node_index in range(playable_entries.size()):
-		_apply_progress_to_node(
-			playable_entries[node_index],
-			playable_node_data,
-			node_index,
-			node_selected_handler
-		)
+	for scene_node in playable_scene_nodes:
+		var node_data = scene_node.call("build_node_data").duplicate_data()
+		var node_completed: bool = _is_node_completed(node_data)
+		var node_unlocked: bool = previous_node_completed or node_completed
+
+		scene_node.position = node_data.node_position
+		scene_node.apply_node_state(node_data, node_unlocked, node_completed)
+		if not scene_node.is_connected("node_selected", node_selected_handler):
+			scene_node.connect("node_selected", node_selected_handler)
+
+		previous_node_completed = node_completed
 
 
 func get_playable_node_data() -> Array:
-	var board_nodes: Array[Node2D] = _get_board_nodes()
-	var playable_entries: Array[Dictionary] = _build_playable_entries(board_nodes)
-	return _collect_node_data(playable_entries)
+	var playable_node_data: Array = []
+	for scene_node in _get_playable_scene_nodes():
+		playable_node_data.append(scene_node.call("build_node_data").duplicate_data())
+	return playable_node_data
 
 
 func get_playable_node_definitions() -> Array[Dictionary]:
@@ -54,15 +58,16 @@ func get_playable_node_definitions() -> Array[Dictionary]:
 		node_definitions.append(node_data.to_dictionary())
 	return node_definitions
 
+
 func get_nodes_container() -> Node2D:
 	if map_board != null and map_board.has_method("get_nodes_container"):
 		return map_board.call("get_nodes_container") as Node2D
 	return null
 
 
-func _build_playable_entries(scene_nodes: Array[Node2D]) -> Array[Dictionary]:
-	var playable_entries: Array[Dictionary] = []
-	for scene_node in scene_nodes:
+func _get_playable_scene_nodes() -> Array[Node2D]:
+	var playable_scene_nodes: Array[Node2D] = []
+	for scene_node in _get_board_nodes():
 		var node_data = scene_node.call("build_node_data")
 		if not _node_has_destination(node_data):
 			push_warning("MapScene: Hay un nodo del mapa sin destino configurado.")
@@ -70,43 +75,9 @@ func _build_playable_entries(scene_nodes: Array[Node2D]) -> Array[Dictionary]:
 			continue
 
 		scene_node.visible = true
-		playable_entries.append({
-			"scene_node": scene_node,
-			"node_data": node_data.duplicate_data()
-		})
+		playable_scene_nodes.append(scene_node)
 
-	return playable_entries
-
-
-func _collect_node_data(playable_entries: Array[Dictionary]) -> Array:
-	var node_data_list: Array = []
-	for entry in playable_entries:
-		node_data_list.append(entry.get("node_data", null))
-	return node_data_list
-
-
-func _apply_progress_to_node(
-	playable_entry: Dictionary,
-	playable_node_data: Array,
-	node_index: int,
-	node_selected_handler: Callable
-) -> void:
-	var scene_node: Node2D = playable_entry.get("scene_node", null) as Node2D
-	var node_data = playable_entry.get("node_data", null)
-	if scene_node == null or node_data == null:
-		return
-
-	var node_completed: bool = _is_node_completed(node_data)
-	var node_unlocked: bool = _is_node_unlocked_by_order(
-		playable_node_data,
-		node_index,
-		node_completed
-	)
-
-	scene_node.position = node_data.node_position
-	scene_node.apply_node_state(node_data, node_unlocked, node_completed)
-	if not scene_node.is_connected("node_selected", node_selected_handler):
-		scene_node.connect("node_selected", node_selected_handler)
+	return playable_scene_nodes
 
 
 func _get_board_nodes() -> Array[Node2D]:
@@ -124,41 +95,35 @@ func _get_board_nodes() -> Array[Node2D]:
 
 # Navegacion -----------------------------------------------------------------
 func _on_node_selected(selected_target: Variant) -> void:
-	var node_data = _read_node_data_from_selection(selected_target)
-	if node_data != null:
-		_open_selected_node(node_data)
+	var node_data = _get_node_data_from_selection(selected_target)
+	if node_data == null:
+		var scene_path := str(selected_target).strip_edges()
+		if scene_path.is_empty():
+			push_warning("MapScene: Se intento abrir un destino vacio desde el mapa.")
+			return
+
+		get_tree().change_scene_to_file(scene_path)
 		return
 
-	var scene_path := str(selected_target).strip_edges()
-	if scene_path.is_empty():
-		push_warning("MapScene: Se intento abrir un destino vacio desde el mapa.")
+	var track_key: String = _get_valid_track_key(node_data)
+	if node_data.is_question():
+		Global.set_active_question_session(_build_question_session(track_key, node_data))
+		GameSceneRouter.go_to_questions(get_tree())
 		return
 
-	get_tree().change_scene_to_file(scene_path)
+	GameSceneRouter.go_to_track_level(
+		get_tree(),
+		track_key,
+		node_data.level_number
+	)
 
 
-func _read_node_data_from_selection(selected_target: Variant):
+func _get_node_data_from_selection(selected_target: Variant):
 	if selected_target is Dictionary:
 		return MapNodeDataScript.from_dictionary(selected_target as Dictionary)
 	if selected_target is Object and selected_target.has_method("to_dictionary"):
 		return selected_target
 	return null
-
-
-func _open_selected_node(node_data) -> void:
-	var track_key: String = _get_valid_track_key(node_data)
-
-	if node_data.is_question():
-		_open_question_node(track_key, node_data)
-		return
-
-	_open_chapter_node(track_key, node_data)
-
-
-func _open_question_node(track_key: String, node_data) -> void:
-	var question_session_state: Dictionary = _build_question_session(track_key, node_data)
-	Global.set_active_question_session(question_session_state)
-	GameSceneRouter.go_to_questions(get_tree())
 
 
 func _build_question_session(track_key: String, node_data) -> Dictionary:
@@ -171,39 +136,19 @@ func _build_question_session(track_key: String, node_data) -> Dictionary:
 	}
 
 
-func _open_chapter_node(track_key: String, node_data) -> void:
-	GameSceneRouter.go_to_track_level(
-		get_tree(),
-		track_key,
-		node_data.level_number
-	)
-
-
 func _node_has_destination(node_data) -> bool:
 	if node_data == null:
 		return false
 	if node_data.is_question():
 		return node_data.has_question_destination()
-
 	if not node_data.is_chapter():
 		return false
-
 	return node_data.has_chapter_destination() and GameTrackCatalog.has_track(
 		_get_valid_track_key(node_data)
 	)
 
 
 # Progreso -------------------------------------------------------------------
-func _is_node_unlocked_by_order(
-	playable_node_data: Array,
-	index: int,
-	completed: bool
-) -> bool:
-	if completed or index <= 0:
-		return true
-	return _is_node_completed(playable_node_data[index - 1])
-
-
 func _is_node_completed(node_data) -> bool:
 	var track_key: String = _get_valid_track_key(node_data)
 	if node_data.is_question():

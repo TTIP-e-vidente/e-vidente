@@ -12,13 +12,12 @@ var level_number: int = 0
 var question_number: int = 0
 var question_key: String = ""
 var question_resource_path: String = ""
-var scene_path: String = ""
 var icon_texture_path: String = ""
 var node_position: Vector2 = Vector2.ZERO
 
 
 static func from_dictionary(node_definition: Dictionary) -> RefCounted:
-	var node_data: RefCounted = load(SCRIPT_PATH).new()
+	var node_data: RefCounted = _new_node_data()
 	node_data.node_id = int(node_definition.get("id", 0))
 	node_data.node_kind = normalize_node_kind(str(node_definition.get("kind", NODE_KIND_CHAPTER)))
 	node_data.label_text = str(node_definition.get("label", "")).strip_edges()
@@ -27,10 +26,13 @@ static func from_dictionary(node_definition: Dictionary) -> RefCounted:
 	node_data.question_number = int(node_definition.get("question_number", 0))
 	node_data.question_key = str(node_definition.get("question_key", "")).strip_edges()
 	node_data.question_resource_path = str(node_definition.get("question_resource_path", "")).strip_edges()
-	node_data.scene_path = str(node_definition.get("scene_path", node_definition.get("scene", ""))).strip_edges()
 	node_data.icon_texture_path = str(node_definition.get("icon_texture_path", "")).strip_edges()
 	node_data.node_position = node_definition.get("pos", Vector2.ZERO)
 	return node_data
+
+
+static func _new_node_data() -> RefCounted:
+	return load(SCRIPT_PATH).new()
 
 
 static func normalize_node_kind(raw_kind: String) -> String:
@@ -42,19 +44,7 @@ static func normalize_node_kind(raw_kind: String) -> String:
 
 
 func duplicate_data() -> RefCounted:
-	var duplicated_data: RefCounted = get_script().new()
-	duplicated_data.node_id = node_id
-	duplicated_data.node_kind = node_kind
-	duplicated_data.label_text = label_text
-	duplicated_data.track_key = track_key
-	duplicated_data.level_number = level_number
-	duplicated_data.question_number = question_number
-	duplicated_data.question_key = question_key
-	duplicated_data.question_resource_path = question_resource_path
-	duplicated_data.scene_path = scene_path
-	duplicated_data.icon_texture_path = icon_texture_path
-	duplicated_data.node_position = node_position
-	return duplicated_data
+	return from_dictionary(to_dictionary())
 
 
 func to_dictionary() -> Dictionary:
@@ -67,7 +57,6 @@ func to_dictionary() -> Dictionary:
 		"question_number": question_number,
 		"question_key": question_key,
 		"question_resource_path": question_resource_path,
-		"scene_path": scene_path,
 		"icon_texture_path": icon_texture_path,
 		"pos": node_position,
 	}
