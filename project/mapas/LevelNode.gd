@@ -52,7 +52,6 @@ var _configured_icon_texture: Texture2D = null
 
 @onready var button: TextureButton = $Button
 @onready var icon: Sprite2D = $Icon
-@onready var title_label: Label = $Title
 
 
 # Ciclo de vida ---------------------------------------------------------------
@@ -156,7 +155,6 @@ func _refresh_node_view() -> void:
 		return
 
 	var visible_node_data = _get_active_node_data()
-	title_label.text = _get_label_text_for_view(visible_node_data)
 	icon.texture = _get_icon_texture_for_view(visible_node_data)
 	_apply_interaction_state()
 	_apply_color_for_progress_state()
@@ -178,14 +176,6 @@ func _get_active_node_data():
 	if _runtime_node_data != null:
 		return _runtime_node_data
 	return build_node_data()
-
-
-func _get_label_text_for_view(node_data) -> String:
-	if node_data != null:
-		var runtime_label_text: String = str(node_data.label_text).strip_edges()
-		if not runtime_label_text.is_empty():
-			return runtime_label_text
-	return _get_authored_label_text()
 
 
 func _get_icon_texture_for_view(node_data) -> Texture2D:

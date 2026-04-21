@@ -62,7 +62,7 @@ func _configure_scene_nodes() -> void:
 		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		count_label.add_theme_font_override("font", COUNT_FONT)
-		count_label.add_theme_color_override("font_color", Color(0.97, 0.97, 0.97, 1.0))
+		count_label.add_theme_color_override("font_color", Color(0, 0, 0, 1.0))
 
 	_refresh_ui()
 
