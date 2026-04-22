@@ -1,5 +1,6 @@
 @tool
 extends Node2D
+## Nodo visual/configurable del mapa. Traduce exports authored a datos runtime.
 
 signal node_selected(selected_target: Variant)
 
@@ -58,19 +59,15 @@ var _configured_icon_texture: Texture2D = null
 func _ready() -> void:
 	base_scale = scale
 	_refresh_node_view()
-	ProgressManager.capitulo_completado.connect(_on_capitulo_completado)
-
-func _on_capitulo_completado(capitulo):
-	mostrar_popup_fin_capitulo()
-	ProgressManager.marcar_mostrado(capitulo)
-
-func mostrar_popup_fin_capitulo():
-	var popup = preload("res://mapas/completo/CapituloCompletado.tscn").instantiate()
-	get_tree().root.add_child(popup)
 	
 # Escena -> contrato ---------------------------------------------------------
-func build_node_data() -> RefCounted:
-	var node_data = MapNodeDataScript.new()
+func build_runtime_node_data() -> RefCounted:
+	var node_data: RefCounted = MapNodeDataScript.create()
+	_copy_authored_values_into_node_data(node_data)
+	return node_data
+
+
+func _copy_authored_values_into_node_data(node_data: RefCounted) -> void:
 	node_data.node_id = nivel_id
 	node_data.node_kind = _configured_node_kind
 	node_data.label_text = _get_authored_label_text()
@@ -81,7 +78,10 @@ func build_node_data() -> RefCounted:
 	node_data.question_resource_path = question_resource_path.strip_edges()
 	node_data.icon_texture_path = _get_configured_icon_path()
 	node_data.node_position = position
-	return node_data
+
+
+func build_node_data() -> RefCounted:
+	return build_runtime_node_data()
 
 
 func apply_node_state(node_data, unlocked: bool, completed: bool = false) -> void:
@@ -94,7 +94,7 @@ func apply_node_state(node_data, unlocked: bool, completed: bool = false) -> voi
 
 # Interaccion ----------------------------------------------------------------
 func _on_button_pressed() -> void:
-	if _click_in_progress or Engine.is_editor_hint():
+	if _should_ignore_runtime_click():
 		return
 
 	var selected_node_data = _get_active_node_data()
@@ -107,6 +107,10 @@ func _on_button_pressed() -> void:
 	await get_tree().create_timer(0.25).timeout
 	node_selected.emit(selected_node_data)
 	_click_in_progress = false
+
+
+func _should_ignore_runtime_click() -> bool:
+	return _click_in_progress or Engine.is_editor_hint()
 
 
 func _on_button_mouse_entered() -> void:
@@ -183,7 +187,7 @@ func _apply_color_for_progress_state() -> void:
 func _get_active_node_data():
 	if _runtime_node_data != null:
 		return _runtime_node_data
-	return build_node_data()
+	return build_runtime_node_data()
 
 
 func _get_icon_texture_for_view(node_data) -> Texture2D:
@@ -231,6 +235,4 @@ func _normalize_node_kind(value: String) -> String:
 func _node_data_has_destination(node_data) -> bool:
 	if node_data == null:
 		return false
-	if node_data.is_question():
-		return node_data.has_question_destination()
-	return node_data.has_chapter_destination()
+	return node_data.has_runtime_destination()

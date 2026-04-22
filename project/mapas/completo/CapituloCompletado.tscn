@@ -1,71 +1,212 @@
 [gd_scene format=3 uid="uid://llnw5j83mj4c"]
 
 [ext_resource type="Script" uid="uid://bh345no747w0g" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_alro2"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_ej5sx"]
-[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="4_pjnru"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="4_legacy_bg"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_52n2h"]
-bg_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
-border_blend = true
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.988235, 0.980392, 0.952941, 0.92)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.184314, 0.137255, 0.12)
+shadow_color = Color(0.04, 0.04, 0.04, 0.18)
+shadow_size = 28
+shadow_offset = Vector2(0, 12)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip"]
+bg_color = Color(1, 1, 1, 0.78)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.184314, 0.137255, 0.12)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary"]
+bg_color = Color(1, 1, 1, 0.64)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.184314, 0.137255, 0.1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+bg_color = Color(0.168627, 0.180392, 0.156863, 1)
 corner_radius_top_left = 20
 corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
-shadow_color = Color(0.49433076, 0.49433076, 0.4943307, 0.6)
-shadow_size = 170
+shadow_color = Color(0, 0, 0, 0.16)
+shadow_size = 14
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
 
-[node name="CapituloCompletado" type="Node2D" unique_id=429467181]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.223529, 0.243137, 0.211765, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.16)
+shadow_size = 14
+
+[node name="CapituloCompletado" type="CanvasLayer" unique_id=429467181]
+layer = 70
 script = ExtResource("1_xxxk7")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1632478236]
-offset_right = 1163.0
-offset_bottom = 810.0
+[node name="FondoFicha" type="ColorRect" parent="."]
+offset_left = 5.0
+offset_right = 1158.0
+offset_bottom = 799.0
+mouse_filter = 2
+color = Color(1, 1, 0.996078, 0.988235)
 
-[node name="Fondo" type="Sprite2D" parent="." unique_id=1293645956]
-position = Vector2(585.00006, 407)
-rotation = -3.1415927
-scale = Vector2(-0.3365924, -0.33659244)
-texture = ExtResource("2_alro2")
+[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha"]
+position = Vector2(566.99994, 416)
+rotation = 3.1415927
+scale = Vector2(0.35245946, 0.35245946)
+texture = ExtResource("4_legacy_bg")
 
-[node name="Panel" type="Panel" parent="." unique_id=460499072]
-offset_left = 283.0
-offset_top = 198.0
-offset_right = 883.0
-offset_bottom = 580.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_52n2h")
+[node name="OverlayRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=507719952]
-clip_contents = true
-layout_mode = 0
-offset_top = 14.0
-offset_right = 600.0
-offset_bottom = 396.0
-theme_override_constants/separation = 21
-alignment = 1
+[node name="Backdrop" type="ColorRect" parent="OverlayRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer" unique_id=1079695056]
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="CenterContainer" type="CenterContainer" parent="OverlayRoot/MarginContainer"]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_ej5sx")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Card" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer"]
+custom_minimum_size = Vector2(620, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 34
+
+[node name="Content" type="VBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="ChipCenter" type="CenterContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+layout_mode = 2
+
+[node name="StatusChip" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chip")
+
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
+
+[node name="StatusBadge" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip/MarginContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_colors/font_color = Color(0.270588, 0.243137, 0.184314, 1)
+theme_override_font_sizes/font_size = 14
+text = "MAPA COMPLETO"
+
+[node name="Title" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_spray")
+theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
 theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
 text = "¡Felicitaciones!"
-horizontal_alignment = 1
 
-[node name="Label2" type="Label" parent="Panel/VBoxContainer" unique_id=622475861]
+[node name="Subtitle" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_ej5sx")
-theme_override_font_sizes/font_size = 40
-text = "Terminaste el 
-capítulo de Celiaquía 🎉"
+theme_override_fonts/font = ExtResource("2_spray")
+theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
+autowrap_mode = 3
+text = "Terminaste el mapa de Celiaquia"
 
-[node name="Continuar" type="Button" parent="Panel/VBoxContainer" unique_id=196870568]
+[node name="SummaryPanel" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_ej5sx")
-theme_override_font_sizes/font_size = 24
+theme_override_styles/panel = SubResource("StyleBoxFlat_summary")
+
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="DetailLabel" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel/MarginContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Podés usar la flecha del mapa para volver o tocar Continuar para salir al menu principal."
+
+[node name="Gap" type="Control" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+custom_minimum_size = Vector2(280, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_colors/font_color = Color(0.956863, 0.945098, 0.909804, 1)
+theme_override_font_sizes/font_size = 23
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
 text = "Continuar"
-icon = ExtResource("4_pjnru")
-flat = true
-icon_alignment = 1
 
-[connection signal="pressed" from="Panel/VBoxContainer/Continuar" to="." method="_on_continuar_pressed"]
+[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ContinueButton" to="." method="_on_continuar_pressed"]

@@ -348,7 +348,6 @@ func _lock_completed_run() -> void:
 	Item_level.is_dragging = null
 	_set_gameplay_interactions_enabled(false)
 	next_chapter_button.disabled = false
-	next_chapter_button.grab_focus()
 	teaching_sprite.show()
 	victory.show()
 	victory.play("victory")
@@ -369,11 +368,11 @@ func _set_gameplay_interactions_enabled(enabled: bool) -> void:
 		save_progress_button.disabled = not enabled
 		save_progress_button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
 	if is_instance_valid(menu_area):
-		menu_area.monitoring = enabled
-		menu_area.monitorable = enabled
+		menu_area.set_deferred("monitoring", enabled)
+		menu_area.set_deferred("monitorable", enabled)
 	if is_instance_valid(lupa_area):
-		lupa_area.monitoring = enabled
-		lupa_area.monitorable = enabled
+		lupa_area.set_deferred("monitoring", enabled)
+		lupa_area.set_deferred("monitorable", enabled)
 	if (
 		is_instance_valid(manager_level)
 		and manager_level.has_method("set_runtime_items_interactable")

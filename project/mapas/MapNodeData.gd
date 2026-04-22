@@ -1,8 +1,19 @@
 extends RefCounted
+## Contrato serializable de un nodo del mapa para escena, runtime y tests.
 
 const NODE_KIND_CHAPTER := "chapter"
 const NODE_KIND_QUESTION := "question"
 const SCRIPT_PATH := "res://mapas/MapNodeData.gd"
+const DICT_KEY_ID := "id"
+const DICT_KEY_KIND := "kind"
+const DICT_KEY_LABEL := "label"
+const DICT_KEY_TRACK_KEY := "track_key"
+const DICT_KEY_LEVEL_NUMBER := "level_number"
+const DICT_KEY_QUESTION_NUMBER := "question_number"
+const DICT_KEY_QUESTION_KEY := "question_key"
+const DICT_KEY_QUESTION_RESOURCE_PATH := "question_resource_path"
+const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
+const DICT_KEY_POSITION := "pos"
 
 var node_id: int = 0
 var node_kind: String = NODE_KIND_CHAPTER
@@ -16,23 +27,37 @@ var icon_texture_path: String = ""
 var node_position: Vector2 = Vector2.ZERO
 
 
+static func create() -> RefCounted:
+	return load(SCRIPT_PATH).new()
+
+
 static func from_dictionary(node_definition: Dictionary) -> RefCounted:
-	var node_data: RefCounted = _new_node_data()
-	node_data.node_id = int(node_definition.get("id", 0))
-	node_data.node_kind = normalize_node_kind(str(node_definition.get("kind", NODE_KIND_CHAPTER)))
-	node_data.label_text = str(node_definition.get("label", "")).strip_edges()
-	node_data.track_key = str(node_definition.get("track_key", "")).strip_edges()
-	node_data.level_number = int(node_definition.get("level_number", 0))
-	node_data.question_number = int(node_definition.get("question_number", 0))
-	node_data.question_key = str(node_definition.get("question_key", "")).strip_edges()
-	node_data.question_resource_path = str(node_definition.get("question_resource_path", "")).strip_edges()
-	node_data.icon_texture_path = str(node_definition.get("icon_texture_path", "")).strip_edges()
-	node_data.node_position = node_definition.get("pos", Vector2.ZERO)
+	var node_data: RefCounted = create()
+	node_data.node_id = int(node_definition.get(DICT_KEY_ID, 0))
+	node_data.node_kind = normalize_node_kind(
+		str(node_definition.get(DICT_KEY_KIND, NODE_KIND_CHAPTER))
+	)
+	node_data.label_text = str(node_definition.get(DICT_KEY_LABEL, "")).strip_edges()
+	node_data.track_key = str(node_definition.get(DICT_KEY_TRACK_KEY, "")).strip_edges()
+	node_data.level_number = int(node_definition.get(DICT_KEY_LEVEL_NUMBER, 0))
+	node_data.question_number = int(node_definition.get(DICT_KEY_QUESTION_NUMBER, 0))
+	node_data.question_key = str(node_definition.get(DICT_KEY_QUESTION_KEY, "")).strip_edges()
+	node_data.question_resource_path = str(
+		node_definition.get(DICT_KEY_QUESTION_RESOURCE_PATH, "")
+	).strip_edges()
+	node_data.icon_texture_path = str(node_definition.get(DICT_KEY_ICON_TEXTURE_PATH, "")).strip_edges()
+	node_data.node_position = node_definition.get(DICT_KEY_POSITION, Vector2.ZERO)
 	return node_data
 
 
-static func _new_node_data() -> RefCounted:
-	return load(SCRIPT_PATH).new()
+static func from_selection_payload(selected_target: Variant) -> RefCounted:
+	if selected_target is Dictionary:
+		return from_dictionary(selected_target as Dictionary)
+	if selected_target is Object and selected_target.has_method("to_dictionary"):
+		var raw_node_definition: Variant = selected_target.call("to_dictionary")
+		if raw_node_definition is Dictionary:
+			return from_dictionary(raw_node_definition as Dictionary)
+	return null
 
 
 static func normalize_node_kind(raw_kind: String) -> String:
@@ -49,16 +74,16 @@ func duplicate_data() -> RefCounted:
 
 func to_dictionary() -> Dictionary:
 	return {
-		"id": node_id,
-		"kind": node_kind,
-		"label": label_text,
-		"track_key": track_key,
-		"level_number": level_number,
-		"question_number": question_number,
-		"question_key": question_key,
-		"question_resource_path": question_resource_path,
-		"icon_texture_path": icon_texture_path,
-		"pos": node_position,
+		DICT_KEY_ID: node_id,
+		DICT_KEY_KIND: node_kind,
+		DICT_KEY_LABEL: label_text,
+		DICT_KEY_TRACK_KEY: track_key,
+		DICT_KEY_LEVEL_NUMBER: level_number,
+		DICT_KEY_QUESTION_NUMBER: question_number,
+		DICT_KEY_QUESTION_KEY: question_key,
+		DICT_KEY_QUESTION_RESOURCE_PATH: question_resource_path,
+		DICT_KEY_ICON_TEXTURE_PATH: icon_texture_path,
+		DICT_KEY_POSITION: node_position,
 	}
 
 
@@ -76,6 +101,14 @@ func has_question_destination() -> bool:
 
 func has_chapter_destination() -> bool:
 	return level_number > 0
+
+
+func has_runtime_destination() -> bool:
+	if is_question():
+		return has_question_destination()
+	if is_chapter():
+		return has_chapter_destination()
+	return false
 
 
 func get_question_session_level_id() -> int:

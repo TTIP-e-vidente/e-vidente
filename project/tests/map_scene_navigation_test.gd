@@ -2,10 +2,13 @@ extends SceneTree
 
 const SaveManagerScript := preload("res://interface/SaveManager.gd")
 const MAP_SCENE := "res://mapas/MapScene.tscn"
+const MODE_SELECTOR_SCENE := "res://niveles/selector.tscn"
 const QUESTIONS_SCENE := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 const EXPECTED_NODE_COUNT := 14
 const TRACK_KEY_CELIAQUIA := "celiaquia"
+const MAP_NODE_KIND_CHAPTER := "chapter"
+const MAP_NODE_KIND_QUESTION := "question"
 
 var SaveManager
 var Global
@@ -34,6 +37,11 @@ func _run() -> void:
 		return
 
 	await _validate_first_question_flow()
+	if failed:
+		await _quit()
+		return
+
+	await _validate_map_completion_popup()
 	await _quit()
 
 
@@ -119,6 +127,62 @@ func _validate_first_question_flow() -> void:
 	await _wait_for(MAP_SCENE, "Retorno al mapa desde pregunta")
 
 
+func _validate_map_completion_popup() -> void:
+	_cleanup_test_files()
+	Global.set_progress_system_state(
+		"map_completion",
+		{
+			"shown_tracks": {
+				TRACK_KEY_CELIAQUIA: true
+			}
+		}
+	)
+
+	await _go_to(MAP_SCENE, "Mapa completo")
+	_mark_all_map_nodes_as_completed(current_scene.get_playable_node_definitions())
+
+	await _go_to(MAP_SCENE, "Mapa de Celiaquia completado")
+	var completion_popup: Node = current_scene.get_node_or_null("CapituloCompletado")
+	_assert(
+		completion_popup != null,
+		"El mapa completo deberia abrir la escena CapituloCompletado aunque la track ya estuviera marcada como mostrada"
+	)
+	if failed:
+		return
+
+	completion_popup.call("_on_continuar_pressed")
+	await _wait_for(MODE_SELECTOR_SCENE, "Selector de modos desde popup de mapa completado")
+
+
+func _mark_all_map_nodes_as_completed(node_definitions: Array) -> void:
+	for raw_node_definition in node_definitions:
+		if not raw_node_definition is Dictionary:
+			continue
+		_mark_single_map_node_as_completed(raw_node_definition as Dictionary)
+
+
+func _mark_single_map_node_as_completed(node_definition: Dictionary) -> void:
+	if _is_question_node_definition(node_definition):
+		Global.mark_question_completed(
+			TRACK_KEY_CELIAQUIA,
+			str(node_definition.get("question_key", "")).strip_edges()
+		)
+		return
+
+	Global.mark_level_completed(
+		TRACK_KEY_CELIAQUIA,
+		int(node_definition.get("level_number", 0))
+	)
+
+
+func _is_question_node_definition(node_definition: Dictionary) -> bool:
+	return _get_node_kind(node_definition) == MAP_NODE_KIND_QUESTION
+
+
+func _get_node_kind(node_definition: Dictionary) -> String:
+	return str(node_definition.get("kind", "")).strip_edges()
+
+
 func _get_map_node_definition(node_index: int, expected_kind: String, node_label: String) -> Dictionary:
 	_assert(current_scene != null, "El mapa deberia seguir cargado antes de leer %s" % node_label)
 	if failed:
@@ -145,7 +209,7 @@ func _get_map_node_definition(node_index: int, expected_kind: String, node_label
 		return {}
 
 	var node_definition: Dictionary = raw_node_definition as Dictionary
-	var node_kind: String = str(node_definition.get("kind", "")).strip_edges()
+	var node_kind: String = _get_node_kind(node_definition)
 	_assert(node_kind == expected_kind, "Se esperaba que %s fuera %s" % [node_label, expected_kind])
 	return node_definition
 
@@ -191,15 +255,15 @@ func _check_map_contract() -> void:
 
 
 func _check_single_node_contract(node_definition: Dictionary) -> void:
-	var node_kind: String = str(node_definition.get("kind", "")).strip_edges()
+	var node_kind: String = _get_node_kind(node_definition)
 	_assert(
-		node_kind == "chapter" or node_kind == "question",
+		node_kind == MAP_NODE_KIND_CHAPTER or node_kind == MAP_NODE_KIND_QUESTION,
 		"Cada nodo del mapa deberia declarar si es receta o pregunta"
 	)
 	if failed:
 		return
 
-	if node_kind == "chapter":
+	if node_kind == MAP_NODE_KIND_CHAPTER:
 		_assert(
 			int(node_definition.get("level_number", 0)) > 0,
 			"Los nodos de receta deberian apuntar a un capitulo valido"
