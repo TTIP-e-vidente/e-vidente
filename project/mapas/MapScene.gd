@@ -33,10 +33,6 @@ func _connect_back_signal() -> void:
 
 
 # Render del mapa -------------------------------------------------------------
-func _refresh_map_nodes() -> void:
-	_render_runtime_map()
-
-
 func _render_runtime_map() -> void:
 	var runtime_map_nodes: Array[Node2D] = _get_runtime_playable_map_nodes()
 	if runtime_map_nodes.is_empty():
@@ -59,7 +55,7 @@ func _configure_runtime_map_node(
 	previous_node_completed: bool,
 	node_selected_handler: Callable
 ) -> bool:
-	var runtime_node_data: RefCounted = _duplicate_runtime_node_data_from_node(map_node)
+	var runtime_node_data: RefCounted = MapNodeDataScript.duplicate_from_map_node(map_node)
 	var node_completed: bool = _is_node_completed(runtime_node_data)
 	var node_unlocked: bool = previous_node_completed or node_completed
 
@@ -93,7 +89,7 @@ func _show_map_completion_if_needed() -> void:
 
 func _are_all_runtime_map_nodes_completed(runtime_map_nodes: Array[Node2D]) -> bool:
 	for map_node in runtime_map_nodes:
-		var runtime_node_data: RefCounted = _build_runtime_node_data_from_node(map_node)
+		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
 		if not _is_node_completed(runtime_node_data):
 			return false
 	return true
@@ -101,7 +97,7 @@ func _are_all_runtime_map_nodes_completed(runtime_map_nodes: Array[Node2D]) -> b
 
 func _resolve_map_track_key(runtime_map_nodes: Array[Node2D]) -> String:
 	for map_node in runtime_map_nodes:
-		var runtime_node_data: RefCounted = _build_runtime_node_data_from_node(map_node)
+		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
 		var track_key: String = _get_valid_track_key(runtime_node_data)
 		if not track_key.is_empty():
 			return track_key
@@ -111,7 +107,7 @@ func _resolve_map_track_key(runtime_map_nodes: Array[Node2D]) -> String:
 func get_playable_node_data() -> Array:
 	var playable_node_data: Array = []
 	for map_node in _get_runtime_playable_map_nodes():
-		playable_node_data.append(_duplicate_runtime_node_data_from_node(map_node))
+		playable_node_data.append(MapNodeDataScript.duplicate_from_map_node(map_node))
 	return playable_node_data
 
 
@@ -131,7 +127,7 @@ func get_nodes_container() -> Node2D:
 func _get_runtime_playable_map_nodes() -> Array[Node2D]:
 	var runtime_map_nodes: Array[Node2D] = []
 	for map_node in _get_board_nodes():
-		var runtime_node_data: RefCounted = _build_runtime_node_data_from_node(map_node)
+		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
 		if not _node_can_be_opened_from_map(runtime_node_data):
 			_hide_unconfigured_map_node(map_node)
 			continue
@@ -147,32 +143,15 @@ func _hide_unconfigured_map_node(map_node: Node2D) -> void:
 	map_node.visible = false
 
 
-func _build_runtime_node_data_from_node(map_node: Node2D) -> RefCounted:
-	var runtime_node_data: RefCounted = null
-	if map_node.has_method("build_runtime_node_data"):
-		runtime_node_data = map_node.call("build_runtime_node_data")
-	else:
-		runtime_node_data = map_node.call("build_node_data")
-	return runtime_node_data
-
-
-func _duplicate_runtime_node_data_from_node(map_node: Node2D) -> RefCounted:
-	var runtime_node_data: RefCounted = _build_runtime_node_data_from_node(map_node)
-	return runtime_node_data.duplicate_data()
-
-
 func _get_board_nodes() -> Array[Node2D]:
 	var board_nodes: Array[Node2D] = []
 	if map_board == null:
 		return board_nodes
 
-	var raw_nodes: Array = []
-	if map_board.has_method("get_runtime_map_nodes"):
-		raw_nodes = map_board.call("get_runtime_map_nodes")
-	elif map_board.has_method("get_authored_level_nodes"):
-		raw_nodes = map_board.call("get_authored_level_nodes")
-	else:
+	if not map_board.has_method("get_runtime_map_nodes"):
 		return board_nodes
+
+	var raw_nodes: Array = map_board.call("get_runtime_map_nodes")
 
 	for raw_node in raw_nodes:
 		var map_node: Node2D = raw_node as Node2D
@@ -184,7 +163,7 @@ func _get_board_nodes() -> Array[Node2D]:
 # Navegacion -----------------------------------------------------------------
 func _on_node_selected(selected_target: Variant) -> void:
 	_save_current_map_scroll()
-	var selected_node_data: RefCounted = _build_node_data_from_selection(selected_target)
+	var selected_node_data: RefCounted = MapNodeDataScript.from_selection_payload(selected_target)
 	if selected_node_data == null:
 		_open_direct_scene_path(selected_target)
 		return
@@ -222,11 +201,6 @@ func _open_chapter_node(track_key: String, node_data: RefCounted) -> void:
 		track_key,
 		node_data.level_number
 	)
-
-
-func _build_node_data_from_selection(selected_target: Variant) -> RefCounted:
-	return MapNodeDataScript.from_selection_payload(selected_target)
-
 
 func _build_question_session(track_key: String, node_data: RefCounted) -> Dictionary:
 	return {

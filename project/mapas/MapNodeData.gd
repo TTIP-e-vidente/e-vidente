@@ -50,7 +50,27 @@ static func from_dictionary(node_definition: Dictionary) -> RefCounted:
 	return node_data
 
 
+static func from_map_node(map_node: Node2D) -> RefCounted:
+	if map_node == null or not map_node.has_method("build_runtime_node_data"):
+		return null
+	var built_node_data: Variant = map_node.call("build_runtime_node_data")
+	if built_node_data is RefCounted:
+		return built_node_data as RefCounted
+	return null
+
+
+static func duplicate_from_map_node(map_node: Node2D) -> RefCounted:
+	var node_data: RefCounted = from_map_node(map_node)
+	if node_data == null:
+		return null
+	return node_data.duplicate_data()
+
+
 static func from_selection_payload(selected_target: Variant) -> RefCounted:
+	if selected_target is Object and selected_target.has_method("duplicate_data"):
+		var duplicated_node_data: Variant = selected_target.call("duplicate_data")
+		if duplicated_node_data is RefCounted:
+			return duplicated_node_data as RefCounted
 	if selected_target is Dictionary:
 		return from_dictionary(selected_target as Dictionary)
 	if selected_target is Object and selected_target.has_method("to_dictionary"):

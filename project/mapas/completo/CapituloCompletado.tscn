@@ -190,7 +190,7 @@ theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
 theme_override_font_sizes/font_size = 17
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Podés usar la flecha del mapa para volver o tocar Continuar para salir al menu principal."
+text = "Podés usar la flecha del mapa para volver o tocar Continuar para ir al selector de modos."
 
 [node name="Gap" type="Control" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
 custom_minimum_size = Vector2(0, 6)

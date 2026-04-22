@@ -1,5 +1,4 @@
 extends Node2D
-## Expone los nodos authored del mapa ya ordenados por progreso.
 
 @onready var scroll_container: ScrollContainer = $ScrollContainer
 @onready var nodes_container: Node2D = $ScrollContainer/Contenido/NodesContainer
@@ -34,14 +33,10 @@ func get_runtime_map_nodes() -> Array[Node2D]:
 	return ordered_map_nodes
 
 
-func get_authored_level_nodes() -> Array[Node2D]:
-	return get_runtime_map_nodes()
-
-
 func _is_runtime_map_node(map_node: Node2D) -> bool:
 	if map_node == null:
 		return false
-	return map_node.has_method("build_runtime_node_data") or map_node.has_method("build_node_data")
+	return map_node.has_method("build_runtime_node_data")
 
 
 func _sort_by_nivel_id(a: Node2D, b: Node2D) -> bool:
