@@ -465,3 +465,5 @@ func _valid_level_number(track_key: String) -> int:
 
 func _current_level_number() -> int:
 	return int(Global.current_level)
+	
+	

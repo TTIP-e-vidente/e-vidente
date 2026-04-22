@@ -58,8 +58,16 @@ var _configured_icon_texture: Texture2D = null
 func _ready() -> void:
 	base_scale = scale
 	_refresh_node_view()
+	ProgressManager.capitulo_completado.connect(_on_capitulo_completado)
 
+func _on_capitulo_completado(capitulo):
+	mostrar_popup_fin_capitulo()
+	ProgressManager.marcar_mostrado(capitulo)
 
+func mostrar_popup_fin_capitulo():
+	var popup = preload("res://mapas/completo/CapituloCompletado.tscn").instantiate()
+	get_tree().root.add_child(popup)
+	
 # Escena -> contrato ---------------------------------------------------------
 func build_node_data() -> RefCounted:
 	var node_data = MapNodeDataScript.new()

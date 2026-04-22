@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://llnw5j83mj4c"]
+
+[ext_resource type="Script" uid="uid://bh345no747w0g" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_alro2"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_ej5sx"]
+[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="4_pjnru"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_52n2h"]
+bg_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+border_blend = true
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0.49433076, 0.49433076, 0.4943307, 0.6)
+shadow_size = 170
+
+[node name="CapituloCompletado" type="Node2D" unique_id=429467181]
+script = ExtResource("1_xxxk7")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1632478236]
+offset_right = 1163.0
+offset_bottom = 810.0
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=1293645956]
+position = Vector2(585.00006, 407)
+rotation = -3.1415927
+scale = Vector2(-0.3365924, -0.33659244)
+texture = ExtResource("2_alro2")
+
+[node name="Panel" type="Panel" parent="." unique_id=460499072]
+offset_left = 283.0
+offset_top = 198.0
+offset_right = 883.0
+offset_bottom = 580.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_52n2h")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=507719952]
+clip_contents = true
+layout_mode = 0
+offset_top = 14.0
+offset_right = 600.0
+offset_bottom = 396.0
+theme_override_constants/separation = 21
+alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer" unique_id=1079695056]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_ej5sx")
+theme_override_font_sizes/font_size = 34
+text = "¡Felicitaciones!"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="Panel/VBoxContainer" unique_id=622475861]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_ej5sx")
+theme_override_font_sizes/font_size = 40
+text = "Terminaste el 
+capítulo de Celiaquía 🎉"
+horizontal_alignment = 1
+
+[node name="Continuar" type="Button" parent="Panel/VBoxContainer" unique_id=196870568]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_ej5sx")
+theme_override_font_sizes/font_size = 24
+text = "Continuar"
+icon = ExtResource("4_pjnru")
+flat = true
+icon_alignment = 1
+
+[connection signal="pressed" from="Panel/VBoxContainer/Continuar" to="." method="_on_continuar_pressed"]

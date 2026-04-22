@@ -23,6 +23,7 @@ config/icon="res://icon.svg"
 
 Global="*res://niveles/global.gd"
 SaveManager="*res://interface/SaveManager.gd"
+ProgressManager="*uid://bua3uxynsevoq"
 
 [display]
 
