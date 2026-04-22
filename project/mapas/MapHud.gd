@@ -50,6 +50,8 @@ func _disconnect_save_manager_signals() -> void:
 func _refresh_hud() -> void:
 	if racha != null and racha.has_method("render"):
 		racha.call("render")
+	if profile_button != null and profile_button.has_method("refresh_profile_icon"):
+		profile_button.call("refresh_profile_icon")
 	if profile_overlay != null and profile_overlay.visible:
 		profile_overlay.refresh()
 

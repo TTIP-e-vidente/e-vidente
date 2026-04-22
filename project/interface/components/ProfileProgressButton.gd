@@ -1,19 +1,13 @@
 @tool
 extends Button
 
-const LABEL_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
-
-const DEFAULT_LABEL_TEXT := "Mi progreso"
+const BACKGROUND_TEXTURE := preload("res://assets-sistema/perfil/perfil-menu.png")
 const BUTTON_MIN_SIZE := Vector2(220.0, 68.0)
+const BACKGROUND_MARGIN := 6.0
+const AVATAR_SCALE_IN_LEFT_TILE := 0.64
 
-
-@onready var perfil: Sprite2D = $"TopRightAnchor/ProfileButton/Perfil"
-
-
-
-var _label_text: String = DEFAULT_LABEL_TEXT
-var _status_icon: Texture2D = null
-var _is_hovered: bool = false
+var _background_sprite: Sprite2D = null
+var _avatar_sprite: Sprite2D = null
 
 
 func _ready() -> void:
@@ -23,8 +17,8 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_apply_empty_style_overrides()
-	queue_redraw()
-	_draw()
+	_ensure_visual_nodes()
+	refresh_profile_icon()
 
 
 func _get_minimum_size() -> Vector2:
@@ -32,62 +26,94 @@ func _get_minimum_size() -> Vector2:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_MOUSE_ENTER:
-		_is_hovered = true
-		queue_redraw()
-		return
-	if what == NOTIFICATION_MOUSE_EXIT:
-		_is_hovered = false
-		queue_redraw()
-		return
 	if (
 		what == NOTIFICATION_RESIZED
 		or what == NOTIFICATION_THEME_CHANGED
 		or what == NOTIFICATION_FOCUS_ENTER
 		or what == NOTIFICATION_FOCUS_EXIT
 	):
-		queue_redraw()
+		_layout_visual_nodes()
 
 
-func set_label_text(next_label_text: String) -> void:
-	var resolved_label_text: String = next_label_text.strip_edges()
-	_label_text = (
-		DEFAULT_LABEL_TEXT
-		if resolved_label_text.is_empty()
-		else resolved_label_text
+func refresh_profile_icon() -> void:
+	_ensure_visual_nodes()
+	_refresh_avatar_texture()
+	_layout_visual_nodes()
+
+
+func _ensure_visual_nodes() -> void:
+	var legacy_sprite: Sprite2D = get_node_or_null("Perfil") as Sprite2D
+	if legacy_sprite != null:
+		legacy_sprite.visible = false
+
+	if _background_sprite == null or not is_instance_valid(_background_sprite):
+		_background_sprite = get_node_or_null("ProfileBackground") as Sprite2D
+		if _background_sprite == null:
+			_background_sprite = Sprite2D.new()
+			_background_sprite.name = "ProfileBackground"
+			add_child(_background_sprite)
+		_background_sprite.centered = true
+		_background_sprite.z_index = 0
+	_background_sprite.texture = BACKGROUND_TEXTURE
+
+	if _avatar_sprite == null or not is_instance_valid(_avatar_sprite):
+		_avatar_sprite = get_node_or_null("AvatarPreview") as Sprite2D
+		if _avatar_sprite == null:
+			_avatar_sprite = Sprite2D.new()
+			_avatar_sprite.name = "AvatarPreview"
+			add_child(_avatar_sprite)
+		_avatar_sprite.centered = true
+		_avatar_sprite.z_index = 1
+
+
+func _refresh_avatar_texture() -> void:
+	if _avatar_sprite == null:
+		return
+	var avatar_texture: Texture2D = null
+	if SaveManager != null:
+		avatar_texture = SaveManager.get_current_user_avatar_texture()
+	_avatar_sprite.texture = avatar_texture
+	_avatar_sprite.visible = avatar_texture != null
+
+
+
+func _layout_visual_nodes() -> void:
+	if not is_node_ready() or _background_sprite == null or _background_sprite.texture == null:
+		return
+	var texture_size: Vector2 = _background_sprite.texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+	var available_width: float = maxf(1.0, size.x - BACKGROUND_MARGIN)
+	var available_height: float = maxf(1.0, size.y - BACKGROUND_MARGIN)
+	var scale_factor: float = minf(
+		available_width / texture_size.x,
+		available_height / texture_size.y
 	)
-	queue_redraw()
-
-
-func set_status_icon(next_status_icon: Texture2D) -> void:
-	_status_icon = next_status_icon
-	queue_redraw()
-
-
-func _draw() -> void:
-	var margin := 6.0
-	var padding := 12.0
-	var zoom := 2.5
-
-	var tile_size: float = minf(size.y - margin, 62.0)
-
-	var tile_position: Vector2 = Vector2(
-		size.x * 0.7 - tile_size * 0.5,
-		(size.y - tile_size) * 0.5
+	var scaled_size: Vector2 = texture_size * scale_factor
+	_background_sprite.scale = Vector2.ONE * scale_factor
+	_background_sprite.position = Vector2(
+		size.x - BACKGROUND_MARGIN - scaled_size.x * 0.5,
+		size.y * 0.5
 	)
 
-	var center: Vector2 = tile_position + Vector2(tile_size, tile_size) * 0.5
+	if _avatar_sprite == null or not _avatar_sprite.visible or _avatar_sprite.texture == null:
+		return
+	var avatar_texture_size: Vector2 = _avatar_sprite.texture.get_size()
+	if avatar_texture_size.x <= 0.0 or avatar_texture_size.y <= 0.0:
+		return
 
-	if perfil and perfil.texture:
-		var texture_size := perfil.texture.get_size().x
-		var effective_size := tile_size - padding
-		var base_scale := effective_size / texture_size
-		var final_scale := base_scale * zoom
-
-		perfil.scale = Vector2.ONE * final_scale
-		perfil.position = center
-
-	var seal_center: Vector2 = tile_position + Vector2(tile_size, tile_size) * Vector2(0.5, 0.55)
+	var left_tile_size: float = scaled_size.y
+	var avatar_target_size: float = left_tile_size * AVATAR_SCALE_IN_LEFT_TILE
+	var avatar_scale: float = minf(
+		avatar_target_size / avatar_texture_size.x,
+		avatar_target_size / avatar_texture_size.y
+	)
+	var background_top_left: Vector2 = _background_sprite.position - scaled_size * 0.5
+	_avatar_sprite.scale = Vector2.ONE * avatar_scale
+	_avatar_sprite.position = background_top_left + Vector2(
+		left_tile_size * 0.5,
+		scaled_size.y * 0.5
+	)
 
 
 func _apply_empty_style_overrides() -> void:

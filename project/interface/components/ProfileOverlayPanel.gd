@@ -13,6 +13,7 @@ signal close_requested
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
+@onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
 @onready var _avatar_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarLabel
 @onready var _username_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/UsernameLabel
 @onready var _email_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow/EmailLabel
@@ -51,6 +52,10 @@ func refresh() -> void:
 	var username: String = SaveManager.get_current_user_name()
 	_username_label.text = username
 	_avatar_label.text = _initials_from(username)
+	var avatar_texture: Texture2D = SaveManager.get_current_user_avatar_texture()
+	_avatar_preview.texture = avatar_texture
+	_avatar_preview.visible = avatar_texture != null
+	_avatar_label.visible = avatar_texture == null
 
 	var email: String = SaveManager.get_current_user_email()
 	_email_label.text = email if not email.is_empty() else "Sin correo"
