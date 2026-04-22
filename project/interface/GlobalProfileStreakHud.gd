@@ -128,6 +128,8 @@ func _refresh_hud() -> void:
 			_profile_button.visible = true
 	if _racha != null and _racha.has_method("render"):
 		_racha.call("render")
+	if _profile_button != null and _profile_button.has_method("refresh_profile_icon"):
+		_profile_button.call("refresh_profile_icon")
 
 
 func _apply_scene_visibility(scene_path: String) -> void:
