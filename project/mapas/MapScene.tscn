@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://b83n8ya7ww7ee"]
+[gd_scene format=3 uid="uid://b83n8ya7ww7ee"]
 
 [ext_resource type="Script" uid="uid://crrhyx3f4rp2e" path="res://mapas/MapScene.gd" id="1_xmpkx"]
-[ext_resource type="PackedScene" path="res://mapas/MapBoard.tscn" id="2_mapboard"]
-[ext_resource type="PackedScene" path="res://mapas/MapHud.tscn" id="3_maphud"]
+[ext_resource type="PackedScene" uid="uid://p1dw52qkjytt" path="res://mapas/MapBoard.tscn" id="2_mapboard"]
+[ext_resource type="PackedScene" uid="uid://jjtcsaulb7id" path="res://mapas/MapHud.tscn" id="3_maphud"]
 
 [node name="MapScene" type="Node2D" unique_id=971913902]
+scale = Vector2(1, 1.016767)
 script = ExtResource("1_xmpkx")
 
-[node name="MapBoard" parent="." instance=ExtResource("2_mapboard")]
+[node name="MapBoard" parent="." unique_id=1840884042 instance=ExtResource("2_mapboard")]
+position = Vector2(0, -13.769133)
 
 [node name="MapHud" parent="." unique_id=973545405 instance=ExtResource("3_maphud")]

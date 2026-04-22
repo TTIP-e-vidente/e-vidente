@@ -2,49 +2,54 @@
 
 [ext_resource type="Script" uid="uid://bh345no747w0g" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="4_legacy_bg"]
+[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_alro2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
 bg_color = Color(0.988235, 0.980392, 0.952941, 0.92)
-corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
-corner_radius_bottom_left = 28
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.2, 0.184314, 0.137255, 0.12)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 shadow_color = Color(0.04, 0.04, 0.04, 0.18)
 shadow_size = 28
 shadow_offset = Vector2(0, 12)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip"]
 bg_color = Color(1, 1, 1, 0.78)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.2, 0.184314, 0.137255, 0.12)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary"]
 bg_color = Color(1, 1, 1, 0.64)
-corner_radius_top_left = 22
-corner_radius_top_right = 22
-corner_radius_bottom_right = 22
-corner_radius_bottom_left = 22
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.2, 0.184314, 0.137255, 0.1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
 bg_color = Color(0.168627, 0.180392, 0.156863, 1)
 corner_radius_top_left = 20
 corner_radius_top_right = 20
@@ -52,10 +57,6 @@ corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 shadow_color = Color(0, 0, 0, 0.16)
 shadow_size = 14
-content_margin_left = 20.0
-content_margin_top = 10.0
-content_margin_right = 20.0
-content_margin_bottom = 10.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
 bg_color = Color(0.223529, 0.243137, 0.211765, 1)
@@ -70,29 +71,28 @@ shadow_size = 14
 layer = 70
 script = ExtResource("1_xxxk7")
 
-[node name="FondoFicha" type="ColorRect" parent="."]
+[node name="FondoFicha" type="ColorRect" parent="." unique_id=1862879759]
 offset_left = 5.0
 offset_right = 1158.0
 offset_bottom = 799.0
 mouse_filter = 2
 color = Color(1, 1, 0.996078, 0.988235)
 
-[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha"]
+[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha" unique_id=2094211025]
 position = Vector2(566.99994, 416)
 rotation = 3.1415927
 scale = Vector2(0.35245946, 0.35245946)
 texture = ExtResource("4_legacy_bg")
 
-[node name="OverlayRoot" type="Control" parent="."]
+[node name="OverlayRoot" type="Control" parent="." unique_id=507394411]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
-[node name="Backdrop" type="ColorRect" parent="OverlayRoot"]
+[node name="Backdrop" type="ColorRect" parent="OverlayRoot" unique_id=385238318]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -101,7 +101,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
-[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot"]
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot" unique_id=1388333783]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -113,100 +113,105 @@ theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
-[node name="CenterContainer" type="CenterContainer" parent="OverlayRoot/MarginContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="OverlayRoot/MarginContainer" unique_id=1964574127]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Card" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer"]
+[node name="Card" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer" unique_id=1896057494]
 custom_minimum_size = Vector2(620, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
-[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card"]
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card" unique_id=1389166970]
 layout_mode = 2
 theme_override_constants/margin_left = 42
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 42
 theme_override_constants/margin_bottom = 34
 
-[node name="Content" type="VBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer"]
+[node name="Content" type="VBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer" unique_id=1838372606]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="ChipCenter" type="CenterContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="ChipCenter" type="CenterContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=172021432]
 layout_mode = 2
 
-[node name="StatusChip" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter"]
+[node name="StatusChip" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter" unique_id=1018819922]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip"]
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip" unique_id=1387971310]
 layout_mode = 2
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 8
 
-[node name="StatusBadge" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip/MarginContainer"]
+[node name="StatusBadge" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip/MarginContainer" unique_id=1542547762]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_regular")
 theme_override_colors/font_color = Color(0.270588, 0.243137, 0.184314, 1)
+theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 14
 text = "MAPA COMPLETO"
 
-[node name="Title" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="Title" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=538231622]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("2_spray")
 theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_fonts/font = ExtResource("2_spray")
 theme_override_font_sizes/font_size = 34
-horizontal_alignment = 1
 text = "¡Felicitaciones!"
+horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="Subtitle" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1187940992]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("2_spray")
 theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_fonts/font = ExtResource("2_spray")
 theme_override_font_sizes/font_size = 28
+text = "Terminaste el mapa de Celiaquia"
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Terminaste el mapa de Celiaquia"
 
-[node name="SummaryPanel" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="SummaryPanel" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=208844850]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_summary")
 
-[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel" unique_id=1610903745]
 layout_mode = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 18
 
-[node name="DetailLabel" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel/MarginContainer"]
+[node name="DetailLabel" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/SummaryPanel/MarginContainer" unique_id=54797851]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_regular")
 theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
+theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 17
+text = "Podés usar la flecha del mapa para volver o tocar Continuar para ir al selector de modos."
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Podés usar la flecha del mapa para volver o tocar Continuar para ir al selector de modos."
 
-[node name="Gap" type="Control" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="Gap" type="Control" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1098519490]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content"]
+[node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1080345016]
 custom_minimum_size = Vector2(280, 58)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_fonts/font = ExtResource("3_regular")
 theme_override_colors/font_color = Color(0.956863, 0.945098, 0.909804, 1)
-theme_override_font_sizes/font_size = 23
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
 text = "Continuar"
+icon = ExtResource("5_alro2")
+flat = true
+autowrap_trim_flags = 0
+clip_text = true
+icon_alignment = 1
 
 [connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ContinueButton" to="." method="_on_continuar_pressed"]

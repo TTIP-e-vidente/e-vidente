@@ -1,140 +1,153 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene format=3 uid="uid://csi4t0q828okm"]
 
-[ext_resource type="Script" path="res://interface/auth.gd" id="1_auth"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_bg"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(1, 1, 1, 0)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-border_width_left = 0
-border_width_top = 0
-border_width_right = 0
-border_width_bottom = 0
-shadow_size = 0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.990196, 0.972549, 0.921569, 0.82)
-corner_radius_top_left = 22
-corner_radius_top_right = 22
-corner_radius_bottom_right = 22
-corner_radius_bottom_left = 22
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary_panel"]
-bg_color = Color(0.938, 0.938, 0.944, 1)
-corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
-corner_radius_bottom_left = 28
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.62, 0.62, 0.67, 0.2)
-shadow_color = Color(0.28, 0.28, 0.32, 0.1)
-shadow_size = 16
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_form_panel"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
-corner_radius_bottom_left = 28
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.62, 0.62, 0.67, 0.15)
-shadow_color = Color(0.28, 0.28, 0.32, 0.1)
-shadow_size = 16
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_info_panel"]
-bg_color = Color(0.858824, 0.909804, 0.788235, 0.36)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.309804, 0.372549, 0.266667, 0.12)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_footer_panel"]
-bg_color = Color(0.936, 0.936, 0.942, 0.92)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.62, 0.62, 0.67, 0.15)
-shadow_color = Color(0.28, 0.28, 0.32, 0.08)
-shadow_size = 10
+[ext_resource type="Script" uid="uid://ckcb6asdec3cm" path="res://interface/auth.gd" id="1_auth"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_l8ewg"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
+[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="4_defg6"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_chip"]
 bg_color = Color(0.780392, 0.839216, 0.658824, 0.62)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.309804, 0.372549, 0.266667, 0.14)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary_panel"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.8425069, 0.8542316, 0.8775097, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.62, 0.62, 0.67, 0.2)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.28, 0.28, 0.32, 0.1)
+shadow_size = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_frame"]
+bg_color = Color(0.867, 0.906, 0.8, 0.55)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.309804, 0.372549, 0.266667, 0.22)
+corner_radius_top_left = 48
+corner_radius_top_right = 48
+corner_radius_bottom_right = 48
+corner_radius_bottom_left = 48
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_chip"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 8.0
+content_margin_bottom = 5.0
+bg_color = Color(1, 1, 1, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_form_panel"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.62, 0.62, 0.67, 0.15)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.28, 0.28, 0.32, 0.1)
+shadow_size = 16
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_field"]
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.72, 0.72, 0.76, 1)
-content_margin_left = 14.0
-content_margin_top = 12.0
-content_margin_right = 14.0
-content_margin_bottom = 12.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_field_focus"]
-bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_field_focus"]
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.309804, 0.46, 0.266667, 0.85)
-content_margin_left = 14.0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary_button"]
+content_margin_left = 16.0
 content_margin_top = 12.0
-content_margin_right = 14.0
+content_margin_right = 16.0
 content_margin_bottom = 12.0
+bg_color = Color(0.938, 0.938, 0.944, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.72, 0.76, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_footer_panel"]
+bg_color = Color(0.84313726, 0.85490197, 0.8784314, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9142871, 0.9144129, 0.9291205, 0.14901961)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.28, 0.28, 0.32, 0.08)
+shadow_size = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 bg_color = Color(0.309804, 0.372549, 0.266667, 1)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
@@ -142,10 +155,6 @@ corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 shadow_color = Color(0.101961, 0.0862745, 0.0588235, 0.12)
 shadow_size = 12
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button_hover"]
 bg_color = Color(0.356863, 0.427451, 0.301961, 1)
@@ -156,69 +165,7 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.1)
 shadow_size = 12
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary_button"]
-bg_color = Color(0.938, 0.938, 0.944, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.72, 0.72, 0.76, 0.8)
-content_margin_left = 16.0
-content_margin_top = 12.0
-content_margin_right = 16.0
-content_margin_bottom = 12.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_frame"]
-bg_color = Color(0.867, 0.906, 0.8, 0.55)
-corner_radius_top_left = 48
-corner_radius_top_right = 48
-corner_radius_bottom_right = 48
-corner_radius_bottom_left = 48
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.309804, 0.372549, 0.266667, 0.22)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_back_button"]
-bg_color = Color(0.996078, 0.988235, 0.956863, 0.96)
-corner_radius_top_left = 22
-corner_radius_top_right = 22
-corner_radius_bottom_right = 22
-corner_radius_bottom_left = 22
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
-shadow_color = Color(0.101961, 0.0862745, 0.0588235, 0.12)
-shadow_size = 12
-content_margin_left = 14.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_chip"]
-bg_color = Color(1, 1, 1, 0.82)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.1)
-content_margin_left = 8.0
-content_margin_top = 5.0
-content_margin_right = 8.0
-content_margin_bottom = 5.0
-
-[node name="Auth" type="Control"]
+[node name="Auth" type="Control" unique_id=121126078]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -227,7 +174,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_auth")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=233376717]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -236,29 +183,31 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 0.996078, 0.988235)
 
-[node name="BackgroundTexture" type="TextureRect" parent="Backdrop"]
+[node name="BackgroundTexture" type="TextureRect" parent="Backdrop" unique_id=1000170950]
+modulate = Color(1, 1, 1, 0.52)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_bg")
+texture = ExtResource("2_l8ewg")
 expand_mode = 1
 stretch_mode = 6
-modulate = Color(1, 1, 1, 0.52)
 
-[node name="BackButton" type="Button" parent="."]
+[node name="BackButton" type="Button" parent="." unique_id=1957216421]
+layout_mode = 0
 offset_left = 22.0
 offset_top = 22.0
 offset_right = 114.0
 offset_bottom = 114.0
-flat = true
+scale = Vector2(0.9955206, 0.9952646)
 icon = ExtResource("3_back")
+flat = true
 expand_icon = true
 
-[node name="Card" type="ScrollContainer" parent="."]
-layout_mode = 3
+[node name="Card" type="ScrollContainer" parent="." unique_id=1122413704]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -268,11 +217,11 @@ offset_right = -16.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
+follow_focus = true
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 0
-follow_focus = true
 
-[node name="MarginContainer" type="MarginContainer" parent="Card"]
+[node name="MarginContainer" type="MarginContainer" parent="Card" unique_id=1864612542]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -281,307 +230,308 @@ theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 18
 
-[node name="Content" type="VBoxContainer" parent="Card/MarginContainer"]
+[node name="Content" type="VBoxContainer" parent="Card/MarginContainer" unique_id=296619268]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 14
 
-[node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
+[node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content" unique_id=1906079587]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Header" type="VBoxContainer" parent="Card/MarginContainer/Content/HeaderRow"]
+[node name="Header" type="VBoxContainer" parent="Card/MarginContainer/Content/HeaderRow" unique_id=733866024]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="ChipRow" type="HBoxContainer" parent="Card/MarginContainer/Content/HeaderRow/Header"]
+[node name="ChipRow" type="HBoxContainer" parent="Card/MarginContainer/Content/HeaderRow/Header" unique_id=1736599711]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HeaderChip" type="PanelContainer" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow"]
+[node name="HeaderChip" type="PanelContainer" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow" unique_id=2126591664]
+visible = false
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_header_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow/HeaderChip"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow/HeaderChip" unique_id=1991654721]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 6
 
-[node name="ChipLabel" type="Label" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow/HeaderChip/MarginContainer"]
+[node name="ChipLabel" type="Label" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow/HeaderChip/MarginContainer" unique_id=608202087]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.247059, 0.290196, 0.211765, 1)
 theme_override_font_sizes/font_size = 11
-text = "Perfil de este equipo"
+text = "Perfil "
 
-[node name="Spacer" type="Control" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow"]
+[node name="Spacer" type="Control" parent="Card/MarginContainer/Content/HeaderRow/Header/ChipRow" unique_id=1681437603]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MainRow" type="HBoxContainer" parent="Card/MarginContainer/Content"]
+[node name="MainRow" type="HBoxContainer" parent="Card/MarginContainer/Content" unique_id=575082325]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 
-[node name="SummaryPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow"]
+[node name="SummaryPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow" unique_id=1230226376]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_summary_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel" unique_id=975601705]
 layout_mode = 2
 theme_override_constants/margin_left = 22
 theme_override_constants/margin_top = 22
 theme_override_constants/margin_right = 22
 theme_override_constants/margin_bottom = 22
 
-[node name="SummaryContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer"]
+[node name="SummaryContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer" unique_id=828767498]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 
-[node name="AvatarPreviewFrame" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent"]
+[node name="AvatarPreviewFrame" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=1217419159]
 custom_minimum_size = Vector2(96, 96)
-size_flags_horizontal = 4
 layout_mode = 2
+size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_preview_frame")
 
-[node name="AvatarPreview" type="TextureRect" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame"]
+[node name="AvatarPreview" type="TextureRect" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame" unique_id=97117492]
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="AvatarPlaceholder" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame"]
+[node name="AvatarPlaceholder" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame" unique_id=1749525584]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.7)
 theme_override_font_sizes/font_size = 13
+text = "Sin foto"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "Sin foto"
 
-[node name="CurrentProfileValue" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent"]
+[node name="CurrentProfileValue" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=1592793286]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 30
-horizontal_alignment = 1
 text = "Perfil local"
+horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="PreviewMetaRow" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent"]
+[node name="PreviewMetaRow" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=2012533773]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PreviewEmailBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow"]
+[node name="PreviewEmailBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow" unique_id=1101026811]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_preview_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge" unique_id=341664239]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 5
 
-[node name="PreviewEmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer"]
+[node name="PreviewEmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer" unique_id=671521729]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.9)
 theme_override_font_sizes/font_size = 13
 text = "Mail: sin dato"
 autowrap_mode = 3
 
-[node name="PreviewAgeBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow"]
+[node name="PreviewAgeBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow" unique_id=1024844464]
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_preview_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge" unique_id=1640269383]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 5
 
-[node name="PreviewAgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer"]
+[node name="PreviewAgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer" unique_id=1658104096]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.9)
 theme_override_font_sizes/font_size = 13
 text = "Edad: sin dato"
 
-[node name="SummarySaveLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent"]
+[node name="SummarySaveLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=162990050]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.65)
 theme_override_font_sizes/font_size = 13
-horizontal_alignment = 1
 text = "Ultimo guardado: sin datos"
+horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="SummaryNote" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent"]
+[node name="SummaryNote" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=2135905121]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.52)
 theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
 text = "Vista previa en tiempo real."
-autowrap_mode = 3
+horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="FormPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow"]
+[node name="FormPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow" unique_id=1604792394]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_form_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel" unique_id=1360389439]
 layout_mode = 2
 theme_override_constants/margin_left = 22
 theme_override_constants/margin_top = 22
 theme_override_constants/margin_right = 22
 theme_override_constants/margin_bottom = 22
 
-[node name="FormContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer"]
+[node name="FormContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer" unique_id=1866968136]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 
-[node name="FormTitle" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="FormTitle" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1331612482]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 28
 text = "Editar perfil"
 
-[node name="FormHint" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="FormHint" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=33393744]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.72)
 theme_override_font_sizes/font_size = 14
 text = "Los cambios se ven en tiempo real. Guarda cuando estes listo."
 autowrap_mode = 3
 
-[node name="PrimaryFieldsRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="PrimaryFieldsRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=567646248]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="UsernameColumn" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow"]
+[node name="UsernameColumn" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow" unique_id=893609413]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="UsernameLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn"]
+[node name="UsernameLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn" unique_id=595941308]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
 theme_override_font_sizes/font_size = 12
 text = "Nombre visible"
 
-[node name="UsernameEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn"]
+[node name="UsernameEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn" unique_id=1433020975]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
-theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Nombre visible"
 
-[node name="AgeColumn" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow"]
+[node name="AgeColumn" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow" unique_id=2133418831]
 custom_minimum_size = Vector2(138, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="AgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn"]
+[node name="AgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn" unique_id=1454226060]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
 theme_override_font_sizes/font_size = 12
 text = "Edad"
 
-[node name="AgeEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn"]
+[node name="AgeEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn" unique_id=661241277]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
-theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Edad (opcional)"
 
-[node name="EmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="EmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1634638263]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
 theme_override_font_sizes/font_size = 12
 text = "Mail"
 
-[node name="EmailEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="EmailEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1398302359]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
-theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Mail (opcional)"
 
-[node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2024719766]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
 theme_override_font_sizes/font_size = 12
 text = "Foto de perfil"
 
-[node name="AvatarRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="AvatarRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2108620491]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="AvatarPathEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow"]
+[node name="AvatarPathEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow" unique_id=1993978848]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
-theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
-editable = false
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Selecciona una imagen opcional"
+editable = false
 
-[node name="ChooseAvatarButton" type="Button" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow"]
+[node name="ChooseAvatarButton" type="Button" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow" unique_id=235904367]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_secondary_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 text = "Elegir foto"
 
-[node name="ClearAvatarButton" type="Button" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow"]
+[node name="ClearAvatarButton" type="Button" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow" unique_id=1563047640]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_secondary_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 text = "Quitar"
 
-[node name="AvatarHint" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="AvatarHint" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=723622844]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.62)
 theme_override_font_sizes/font_size = 13
 text = "PNG, JPG o WEBP. Opcional."
 autowrap_mode = 3
 
-[node name="RegisterMessage" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent"]
+[node name="RegisterMessage" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1930273834]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.219608, 0.380392, 0.235294, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 3
 
-[node name="FooterPanel" type="PanelContainer" parent="Card/MarginContainer/Content"]
+[node name="FooterPanel" type="PanelContainer" parent="Card/MarginContainer/Content" unique_id=1589894920]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_footer_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/FooterPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/FooterPanel" unique_id=1605697821]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 16
 
-[node name="Footer" type="HBoxContainer" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer"]
+[node name="Footer" type="HBoxContainer" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer" unique_id=497589626]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="FooterNote" type="Label" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer"]
+[node name="FooterNote" type="Label" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer" unique_id=1931028451]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.9)
@@ -589,25 +539,28 @@ theme_override_font_sizes/font_size = 15
 text = "Se guarda en este dispositivo y se actualiza al volver a Mi progreso."
 autowrap_mode = 3
 
-[node name="RegisterButton" type="Button" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer"]
-custom_minimum_size = Vector2(248, 58)
+[node name="RegisterButton" type="Button" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer" unique_id=820342557]
+custom_minimum_size = Vector2(249.55, 58)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_primary_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_primary_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_primary_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_primary_button_hover")
 text = "Guardar perfil"
+icon = ExtResource("4_defg6")
+flat = true
+icon_alignment = 1
 
-[node name="AvatarDialog" type="FileDialog" parent="."]
-access = 2
-file_mode = 0
+[node name="AvatarDialog" type="FileDialog" parent="." unique_id=1349551692]
 title = "Seleccionar foto de perfil"
+file_mode = 0
+access = 2
 filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.webp ; WEBP")
 
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton" to="." method="_on_choose_avatar_button_pressed"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton" to="." method="_on_clear_avatar_button_pressed"]
 [connection signal="pressed" from="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton" to="." method="_on_register_button_pressed"]
-[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="file_selected" from="AvatarDialog" to="." method="_on_avatar_dialog_file_selected"]
