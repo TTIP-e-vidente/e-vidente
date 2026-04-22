@@ -1,13 +1,13 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://ccolhcqvnrd8d"]
 
 [ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="3_icon"]
+[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="3_icon"]
 
-[node name="MapChapterNode" type="Node2D"]
+[node name="MapChapterNode" type="Node2D" unique_id=1895852919]
 script = ExtResource("1_script")
 icon_texture = ExtResource("3_icon")
 
-[node name="Button" type="TextureButton" parent="."]
+[node name="Button" type="TextureButton" parent="." unique_id=1425031385]
 offset_left = -80.0
 offset_top = -80.0
 offset_right = 80.0
@@ -15,9 +15,9 @@ offset_bottom = 80.0
 focus_mode = 0
 metadata/_edit_use_anchors_ = true
 
-[node name="Icon" type="Sprite2D" parent="."]
-position = Vector2(0, -4)
-scale = Vector2(0.22, 0.22)
+[node name="Icon" type="Sprite2D" parent="." unique_id=494369290]
+position = Vector2(1, -1)
+scale = Vector2(0.30596542, 0.3059654)
 texture = ExtResource("3_icon")
 
 [connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
