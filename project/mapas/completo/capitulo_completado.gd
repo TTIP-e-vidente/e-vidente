@@ -27,7 +27,6 @@ func _refresh_copy() -> void:
 		return
 	var track_label: String = GameTrackCatalog.get_track_label(_track_key, "este modo")
 	subtitle_label.text = "Terminaste el mapa de %s" % track_label
-	detail_label.text = "Podés usar la flecha del mapa para volver o tocar Continuar para ir al selector de modos."
 
 
 func _on_continuar_pressed() -> void:
