@@ -8,9 +8,6 @@ const FORWARD_ARROW_TEXTURE := preload(
 const EMPTY_STREAK_BAR_TEXTURE := preload(
 	"res://assets-sistema/racha-diaria/barra-dias-incompletos.png"
 )
-const FULL_STREAK_BAR_TEXTURE := preload(
-	"res://assets-sistema/racha-diaria/barra-dias.png"
-)
 const DEFAULT_TITLE := "Racha Diaria"
 const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
 const STREAK_RETURN_SCENE_META := "streak_return_scene"
@@ -18,10 +15,6 @@ const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 const STATUS_MESSAGE_ACTIVATED := "Hoy activaste la racha, segui asi."
 const STATUS_MESSAGE_SUSTAINED := "Hoy sostuviste la racha."
-const TRACK_FILL_COLOR := Color(0.876, 0.643, 0.259, 0.98)
-const TRACK_DOT_FUTURE_COLOR := Color(0.985, 0.985, 0.985, 1.0)
-const TRACK_DOT_ACTIVE_COLOR := Color(0.972, 0.857, 0.608, 1.0)
-const TRACK_DOT_CURRENT_COLOR := Color(0.936, 0.718, 0.302, 1.0)
 const MAX_VISIBLE_DAYS := 7
 
 var _current_count: int = 0
@@ -30,11 +23,7 @@ var _status_key: String = "inactive"
 var _status_detail: String = ""
 var _day_circles: Array[Node] = []
 var _connector_sprites: Array[Sprite2D] = []
-var _progress_dot_nodes: Array[Panel] = []
-var _progress_dot_centers: Array[Vector2] = []
 var _detail_label: Label
-var _progress_overlay: Control
-var _progress_fill: Panel
 var _continue_button: Button
 var _feedback_continue_target: Dictionary = {}
 var _pulse_tween: Tween
@@ -62,7 +51,6 @@ func _ready() -> void:
 	streak_view.offset_bottom = 0.0
 	_cache_progress_nodes()
 	_ensure_detail_label()
-	_ensure_progress_overlay()
 	_ensure_continue_button()
 	_connect_map_hud()
 	_load_entry_state()
@@ -172,35 +160,6 @@ func _ensure_detail_label() -> void:
 		streak_view.add_child(_detail_label)
 
 
-func _ensure_progress_overlay() -> void:
-	_progress_overlay = streak_view.get_node_or_null("ProgressOverlay") as Control
-	if _progress_overlay == null:
-		_progress_overlay = Control.new()
-		_progress_overlay.name = "ProgressOverlay"
-		_progress_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		streak_view.add_child(_progress_overlay)
-
-	_progress_fill = _progress_overlay.get_node_or_null("ProgressFill") as Panel
-	if _progress_fill == null:
-		_progress_fill = Panel.new()
-		_progress_fill.name = "ProgressFill"
-		_progress_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_progress_overlay.add_child(_progress_fill)
-		_progress_overlay.move_child(_progress_fill, 0)
-
-	_progress_dot_nodes.clear()
-	for day_index in range(MAX_VISIBLE_DAYS):
-		var dot_name := "ProgressDot%d" % (day_index + 1)
-		var dot_panel := _progress_overlay.get_node_or_null(dot_name) as Panel
-		if dot_panel == null:
-			dot_panel = Panel.new()
-			dot_panel.name = dot_name
-			dot_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			_progress_overlay.add_child(dot_panel)
-		_progress_dot_nodes.append(dot_panel)
-	_progress_overlay.visible = false
-
-
 func _ensure_continue_button() -> void:
 	_continue_button = streak_view.get_node_or_null("ContinueButton") as Button
 	if _continue_button == null:
@@ -232,118 +191,6 @@ func _ensure_continue_button() -> void:
 	_continue_button.disabled = true
 	if not _continue_button.pressed.is_connected(_on_continue_button_pressed):
 		_continue_button.pressed.connect(_on_continue_button_pressed)
-
-
-func _build_progress_fill_style(track_height: float) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	var radius := int(track_height * 0.5)
-	style.bg_color = TRACK_FILL_COLOR
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0.71, 0.56, 0.24, 0.18)
-	style.shadow_size = 8
-	return style
-
-
-func _build_progress_dot_style(dot_color: Color, dot_size: float) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	var radius := int(dot_size * 0.5)
-	style.bg_color = dot_color
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0, 0, 0, 0.04)
-	style.shadow_size = 2
-	return style
-
-
-func _layout_progress_overlay() -> void:
-	if _progress_overlay == null or streak_bar == null or streak_bar.texture == null:
-		return
-
-	var bar_texture_size: Vector2 = streak_bar.texture.get_size()
-	var bar_scale := Vector2(absf(streak_bar.scale.x), absf(streak_bar.scale.y))
-	var bar_display_size := Vector2(
-		bar_texture_size.x * bar_scale.x,
-		bar_texture_size.y * bar_scale.y
-	)
-	_progress_overlay.position = streak_bar.position - bar_display_size * 0.5
-	_progress_overlay.size = bar_display_size
-
-	var overlay_global_rect: Rect2 = _progress_overlay.get_global_rect()
-	_progress_dot_centers.clear()
-	for day_circle in _day_circles:
-		var day_circle_control := day_circle as Control
-		if day_circle_control == null:
-			continue
-		day_circle_control.visible = true
-		var day_circle_center_global: Vector2 = day_circle_control.get_global_rect().get_center()
-		_progress_dot_centers.append(day_circle_center_global - overlay_global_rect.position)
-
-	var dot_size := clampf(bar_display_size.y * 0.28, 22.0, 34.0)
-	if _progress_dot_centers.size() >= 2:
-		dot_size = minf(
-			dot_size,
-			(_progress_dot_centers[1].x - _progress_dot_centers[0].x) * 0.34
-		)
-
-	for dot_index in range(_progress_dot_nodes.size()):
-		var dot_panel: Panel = _progress_dot_nodes[dot_index]
-		if dot_panel == null:
-			continue
-		if dot_index >= _progress_dot_centers.size():
-			dot_panel.visible = false
-			continue
-		dot_panel.visible = true
-		dot_panel.size = Vector2(dot_size, dot_size)
-		dot_panel.position = _progress_dot_centers[dot_index] - Vector2.ONE * dot_size * 0.5
-
-	_progress_fill.position = Vector2.ZERO
-	_progress_fill.size = Vector2(0.0, bar_display_size.y)
-	_progress_fill.add_theme_stylebox_override(
-		"panel",
-		_build_progress_fill_style(bar_display_size.y)
-	)
-
-
-func _update_progress_overlay() -> void:
-	if _progress_overlay == null or _progress_fill == null:
-		return
-
-	var visible_day_count: int = _get_visible_day_count()
-	if visible_day_count <= 0 or _progress_dot_centers.is_empty():
-		_progress_fill.visible = false
-	else:
-		_progress_fill.visible = true
-		var last_active_center: Vector2 = _progress_dot_centers[visible_day_count - 1]
-		var dot_width: float = _progress_dot_nodes[0].size.x if not _progress_dot_nodes.is_empty() else 24.0
-		var fill_width := clampf(
-			last_active_center.x + dot_width * 0.66,
-			dot_width,
-			_progress_overlay.size.x
-		)
-		_progress_fill.size = Vector2(fill_width, _progress_overlay.size.y)
-		_progress_fill.add_theme_stylebox_override(
-			"panel",
-			_build_progress_fill_style(_progress_overlay.size.y)
-		)
-
-	for dot_index in range(_progress_dot_nodes.size()):
-		var dot_panel: Panel = _progress_dot_nodes[dot_index]
-		if dot_panel == null or not dot_panel.visible:
-			continue
-		var dot_color := TRACK_DOT_FUTURE_COLOR
-		if dot_index < visible_day_count:
-			dot_color = TRACK_DOT_ACTIVE_COLOR
-		if _status_key == "active_today" and dot_index == visible_day_count - 1:
-			dot_color = TRACK_DOT_CURRENT_COLOR
-		dot_panel.add_theme_stylebox_override(
-			"panel",
-			_build_progress_dot_style(dot_color, dot_panel.size.x)
-		)
 
 
 func _connect_map_hud() -> void:
@@ -406,7 +253,6 @@ func _update_bar_visual() -> void:
 
 
 func _update_connector_visuals() -> void:
-	var visible_day_count: int = _get_visible_day_count()
 	for connector_index in range(_connector_sprites.size()):
 		var connector_sprite: Sprite2D = _connector_sprites[connector_index]
 		if connector_sprite == null:
@@ -414,40 +260,28 @@ func _update_connector_visuals() -> void:
 		connector_sprite.visible = false
 		connector_sprite.modulate = Color.WHITE
 
-	if visible_day_count < 2:
-		return
-
-	var segment_index := clampi(visible_day_count - 2, 0, _connector_sprites.size() - 1)
-	var active_segment: Sprite2D = _connector_sprites[segment_index]
-	if active_segment != null:
-		active_segment.visible = true
-
 
 func _update_day_circles() -> void:
 	var visible_day_count: int = _get_visible_day_count()
-	for circle_node in _day_circles:
-		var circle_control := circle_node as Control
+	for day_index in range(_day_circles.size()):
+		var circle_control := _day_circles[day_index] as Control
 		if circle_control == null:
 			continue
 		var slot := circle_control.get_parent() as Control
 		if slot != null:
 			slot.visible = true
-		circle_control.visible = false
 		circle_control.scale = Vector2.ONE
-		circle_control.modulate = Color.WHITE
-
-	if visible_day_count <= 0:
-		return
-
-	var active_day_index := clampi(visible_day_count - 1, 0, _day_circles.size() - 1)
-	var active_circle := _day_circles[active_day_index] as Control
-	if active_circle == null or not active_circle.has_method("set_estado"):
-		return
-	active_circle.visible = true
-	active_circle.call(
-		"set_estado",
-		DayCircleScript.Estado.HOY if _status_key == "active_today" else DayCircleScript.Estado.COMPLETO
-	)
+		if day_index >= visible_day_count:
+			circle_control.visible = false
+			circle_control.modulate = Color.WHITE
+			continue
+		circle_control.visible = true
+		if not circle_control.has_method("set_estado"):
+			continue
+		var estado := DayCircleScript.Estado.COMPLETO
+		if _status_key == "active_today" and day_index == visible_day_count - 1:
+			estado = DayCircleScript.Estado.HOY
+		circle_control.call("set_estado", estado)
 
 
 func _play_feedback_intro() -> void:
@@ -544,9 +378,10 @@ func _update_pulse_state() -> void:
 	if _status_key != "active_today":
 		return
 	var visible_day_count: int = _get_visible_day_count()
-	if visible_day_count <= 0 or visible_day_count > _day_circles.size():
+	if visible_day_count <= 0:
 		return
-	var current_circle := _day_circles[visible_day_count - 1] as Control
+	var current_day_index: int = clampi(visible_day_count - 1, 0, _day_circles.size() - 1)
+	var current_circle := _day_circles[current_day_index] as Control
 	if current_circle == null or not current_circle.visible:
 		return
 	current_circle.pivot_offset = current_circle.size * 0.5

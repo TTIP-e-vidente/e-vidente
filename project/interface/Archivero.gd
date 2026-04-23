@@ -6,10 +6,6 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
-const DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY := KEY_F6
-
-@export_group("Debug Demo")
-@export var debug_force_progress_overlay := false
 
 # Root scene nodes
 var background_music_player: AudioStreamPlayer2D
@@ -55,19 +51,6 @@ func _ready() -> void:
 	_connect_save_manager_signals()
 	background_music_player.play()
 	_refresh_profile_overlay()
-	_apply_debug_demo_flags.call_deferred()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not debug_force_progress_overlay:
-		return
-
-	var key_event := event as InputEventKey
-	if key_event == null or not key_event.pressed or key_event.echo:
-		return
-
-	if key_event.keycode == DEBUG_TOGGLE_PROGRESS_OVERLAY_KEY:
-		_update_overlay_visibility(not profile_overlay.visible)
 
 
 func _exit_tree() -> void:
@@ -391,9 +374,4 @@ func _format_save_status() -> String:
 					+ "Usa Guardar cuando quieras conservar este avance"
 				)
 			return "Ultimo guardado: %s" % last_saved_at
-
-
-func _apply_debug_demo_flags() -> void:
-	if debug_force_progress_overlay:
-		_update_overlay_visibility(true)
  
