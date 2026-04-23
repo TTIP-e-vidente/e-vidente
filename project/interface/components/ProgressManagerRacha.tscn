@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://deghb1a1oj2sb"]
 
+[ext_resource type="Script" path="res://interface/components/ProgressManagerRacha.gd" id="1_wg76n"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_4j5vn"]
 [ext_resource type="PackedScene" uid="uid://l486egq1vfiq" path="res://interface/components/DayCircle.tscn" id="1_ivdk2"]
 [ext_resource type="Texture2D" uid="uid://bkv7pi87jsgvx" path="res://assets-sistema/racha-diaria/racha-2-dias.png" id="2_3ji3y"]
@@ -16,6 +17,7 @@
 [node name="ProgressManagerRacha" type="Control" unique_id=1333100631]
 layout_mode = 3
 anchors_preset = 0
+script = ExtResource("1_wg76n")
 
 [node name="StreakView" type="Control" parent="." unique_id=1710265920]
 anchors_preset = 0
