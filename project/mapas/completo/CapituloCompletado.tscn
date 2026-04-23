@@ -6,8 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="4_legacy_bg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_blob"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
 bg_color = Color(0.988235, 0.980392, 0.952941, 0.92)
 border_width_left = 1
@@ -47,27 +45,7 @@ corner_radius_top_right = 22
 corner_radius_bottom_right = 22
 corner_radius_bottom_left = 22
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
-content_margin_left = 28.0
-content_margin_top = 14.0
-content_margin_right = 28.0
-content_margin_bottom = 14.0
-bg_color = Color(0.168627, 0.180392, 0.156863, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-shadow_color = Color(0, 0, 0, 0.16)
-shadow_size = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.223529, 0.243137, 0.211765, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-shadow_color = Color(0, 0, 0, 0.16)
-shadow_size = 10
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
 
 [node name="CapituloCompletado" type="CanvasLayer" unique_id=429467181]
 layer = 70
@@ -143,20 +121,6 @@ layout_mode = 2
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_chip")
 
-[node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip" unique_id=1387971310]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 8
-
-[node name="StatusBadge" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ChipCenter/StatusChip/MarginContainer" unique_id=1542547762]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.270588, 0.243137, 0.184314, 1)
-theme_override_fonts/font = ExtResource("3_regular")
-theme_override_font_sizes/font_size = 13
-text = "MAPA COMPLETO"
-
 [node name="Title" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=538231622]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
@@ -169,8 +133,8 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
 theme_override_fonts/font = ExtResource("2_spray")
-theme_override_font_sizes/font_size = 22
-text = "Terminaste el mapa de Celiaquia"
+theme_override_font_sizes/font_size = 27
+text = "Terminaste el mapa de Celiaquía"
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -190,7 +154,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
 theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 16
-text = "Podés usar la flecha del mapa para volver o tocar Continuar para ir al selector de modos."
+text = "¿Estás listx para dominar otras restricciones alimentarias?"
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -218,11 +182,14 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 35.0
+offset_top = -8.0
+offset_right = -44.0
+offset_bottom = 5.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("5_blob")
 expand_mode = 1
-stretch_mode = 0
 
 [connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ContinueButton" to="." method="_on_continuar_pressed"]
