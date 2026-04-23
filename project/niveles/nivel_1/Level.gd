@@ -33,8 +33,6 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 
 @export var track_key_override    := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
-@export_group("Debug Demo")
-@export var debug_force_streak_feedback    := false
 @export_group("Completion")
 @export var grayscale_on_completion := true
 
@@ -177,11 +175,10 @@ func complete_current_run() -> void:
 
 	# 4. Preparar el feedback de racha para mostrarlo al avanzar
 	var updated_streak: Dictionary = Global.get_streak_state()
-	var only_first_today: bool = not debug_force_streak_feedback
 	_pending_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
-		only_first_today
+		true
 	)
 
 	_show_completed_run_feedback()
