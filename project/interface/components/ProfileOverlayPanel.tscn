@@ -1,7 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://interface/components/ProfileOverlayPanel.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://interface/components/StreakBadge.tscn" id="2_streak_badge"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_session_panel"]
 bg_color = Color(0.995, 0.992, 0.985, 1)
@@ -370,9 +369,6 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.78)
 theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
-
-[node name="StreakBadge" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("2_streak_badge")]
-layout_mode = 2
 
 [node name="StatusRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2

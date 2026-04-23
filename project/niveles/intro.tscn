@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
 [ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_rimye"]
 [ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
 shader = ExtResource("4_rimye")

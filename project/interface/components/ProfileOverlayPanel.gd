@@ -1,10 +1,6 @@
 extends Control
 class_name ProfileOverlayPanel
 
-## Panel lateral reutilizable que muestra perfil, progreso, guardado y acciones.
-## La estructura visual se define en ProfileOverlayPanel.tscn.
-## Este script solo maneja datos y animaciones.
-
 signal resume_pressed
 signal save_pressed
 signal edit_profile_pressed
@@ -19,7 +15,6 @@ signal close_requested
 @onready var _email_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow/EmailLabel
 @onready var _age_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow/AgeLabel
 @onready var _progress_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/ProgressLabel
-@onready var _streak_badge: Node = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StreakBadge
 @onready var _save_status_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/SaveCard/VBox/SaveStatusLabel
 @onready var _resume_hint_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeHintLabel
 @onready var _resume_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeButton
@@ -71,9 +66,6 @@ func refresh() -> void:
 		if not summary_text.is_empty()
 		else "Todavia no hay capitulos completos"
 	)
-
-	if _streak_badge != null and _streak_badge.has_method("render"):
-		_streak_badge.call("render")
 
 	_save_status_label.text = _format_state(SaveManager.get_current_save_state())
 
