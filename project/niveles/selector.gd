@@ -32,6 +32,7 @@ const HOVER_DURATION := 0.15
 
 var _profile_overlay: ProfileOverlayPanel
 var _profile_toggle_btn: Button
+var _racha_badge: Control
 var _button_base_scales: Dictionary = {}
 var _hover_tweens: Dictionary = {}
 
@@ -158,6 +159,7 @@ func _build_hud() -> void:
 
 	var racha := RACHA_SCENE.instantiate() as Control
 	if racha != null:
+		_racha_badge = racha
 		racha.anchor_left = 0.0
 		racha.anchor_top = 0.0
 		racha.anchor_right = 0.0
@@ -167,6 +169,7 @@ func _build_hud() -> void:
 		racha.offset_right = 152.0
 		racha.offset_bottom = 152.0
 		hud_root.add_child(racha)
+		_connect_streak_badge()
 
 	_profile_toggle_btn = Button.new()
 	_profile_toggle_btn.script = PROFILE_BUTTON_SCRIPT
@@ -197,6 +200,22 @@ func _build_hud() -> void:
 func _on_profile_toggle_pressed() -> void:
 	_profile_toggle_btn.visible = false
 	_profile_overlay.show_overlay()
+
+
+func _connect_streak_badge() -> void:
+	if _racha_badge == null or not _racha_badge.has_signal("pressed"):
+		return
+	var callback := Callable(self, "_on_racha_pressed")
+	if not _racha_badge.is_connected("pressed", callback):
+		_racha_badge.connect("pressed", callback)
+
+
+func _on_racha_pressed() -> void:
+	if _profile_overlay != null:
+		_profile_overlay.hide_overlay()
+	if _profile_toggle_btn != null:
+		_profile_toggle_btn.visible = true
+	GameSceneRouter.go_to_streak(get_tree(), RESUME_FALLBACK_SCENE)
 
 
 func _on_overlay_close_requested() -> void:

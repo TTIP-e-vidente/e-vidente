@@ -2,18 +2,23 @@
 class_name Racha
 extends Control
 
+signal pressed
+
 const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 
 var _current_count: int = 0
+var _is_interactive := true
 
 @onready var background: TextureRect = $Background
 @onready var count_label: Label = $CountLabel
+@onready var hotspot_button: Button = $HotspotButton
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_configure_scene_nodes()
+	_configure_hotspot_button()
 	render()
 
 
@@ -24,6 +29,11 @@ func render(streak_view_model: Dictionary = {}) -> void:
 func set_badge(number_value: int, _next_status_key: String = "") -> void:
 	_current_count = max(0, number_value)
 	_refresh_ui()
+
+
+func set_interactive(enabled: bool) -> void:
+	_is_interactive = enabled
+	_refresh_interactivity()
 
 
 func _resolve_view_model(streak_view_model: Dictionary) -> Dictionary:
@@ -67,6 +77,29 @@ func _configure_scene_nodes() -> void:
 	_refresh_ui()
 
 
+func _configure_hotspot_button() -> void:
+	if hotspot_button == null:
+		return
+	hotspot_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hotspot_button.offset_left = 0.0
+	hotspot_button.offset_top = 0.0
+	hotspot_button.offset_right = 0.0
+	hotspot_button.offset_bottom = 0.0
+	hotspot_button.flat = true
+	hotspot_button.text = ""
+	hotspot_button.focus_mode = Control.FOCUS_ALL
+	hotspot_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty_style := StyleBoxEmpty.new()
+	hotspot_button.add_theme_stylebox_override("normal", empty_style)
+	hotspot_button.add_theme_stylebox_override("hover", empty_style)
+	hotspot_button.add_theme_stylebox_override("pressed", empty_style)
+	hotspot_button.add_theme_stylebox_override("focus", empty_style)
+	hotspot_button.add_theme_stylebox_override("disabled", empty_style)
+	if not hotspot_button.pressed.is_connected(_on_hotspot_button_pressed):
+		hotspot_button.pressed.connect(_on_hotspot_button_pressed)
+	_refresh_interactivity()
+
+
 func _refresh_ui() -> void:
 	if not is_node_ready():
 		return
@@ -86,3 +119,14 @@ func _resolve_count_font_size(count_text: String) -> int:
 	if count_text.length() == 2:
 		return 42
 	return 52
+
+
+func _refresh_interactivity() -> void:
+	if hotspot_button == null:
+		return
+	hotspot_button.visible = _is_interactive
+	hotspot_button.disabled = not _is_interactive
+
+
+func _on_hotspot_button_pressed() -> void:
+	pressed.emit()

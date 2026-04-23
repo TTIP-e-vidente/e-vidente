@@ -11,6 +11,7 @@ const PROFILE_EDITOR_SCENE_PATH := "res://interface/auth.tscn"
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
 const SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
+const STREAK_SCENE_PATH := "res://interface/components/ProgressManagerRacha.tscn"
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 # Posicion de la racha (ancla superior izquierda y offsets en pixeles)
 const _RACHA_OFFSETS := Rect2(16.0, 16.0, 152.0, 152.0)
@@ -62,6 +63,7 @@ func _build_hud() -> void:
 		_racha.offset_right = _RACHA_OFFSETS.size.x
 		_racha.offset_bottom = _RACHA_OFFSETS.size.y
 		_hud_root.add_child(_racha)
+		_connect_streak_badge()
 
 	_profile_button = Button.new()
 	_profile_button.name = "GlobalProfileButton"
@@ -139,9 +141,18 @@ func _apply_scene_visibility(scene_path: String) -> void:
 		SPLASH_SCENE_PATH,
 		INTRO_SCENE_PATH,
 		SELECTOR_SCENE_PATH,
+		STREAK_SCENE_PATH,
 	]
 	var is_level_scene := scene_path.begins_with("res://niveles/nivel_")
 	_hud_root.visible = not hidden_scenes.has(scene_path) and not is_level_scene
+
+
+func _connect_streak_badge() -> void:
+	if _racha == null or not _racha.has_signal("pressed"):
+		return
+	var callback := Callable(self, "_on_racha_pressed")
+	if not _racha.is_connected("pressed", callback):
+		_racha.connect("pressed", callback)
 
 
 # --- Profile overlay callbacks ---
@@ -149,6 +160,17 @@ func _apply_scene_visibility(scene_path: String) -> void:
 func _on_profile_button_pressed() -> void:
 	_profile_button.visible = false
 	_profile_overlay.show_overlay()
+
+
+func _on_racha_pressed() -> void:
+	var current_scene_path := _get_current_scene_path()
+	if current_scene_path.is_empty() or current_scene_path == STREAK_SCENE_PATH:
+		return
+	if _profile_overlay != null:
+		_profile_overlay.hide_overlay()
+	if _profile_button != null:
+		_profile_button.visible = true
+	GameSceneRouter.go_to_streak(get_tree(), current_scene_path)
 
 
 func _on_overlay_close_requested() -> void:

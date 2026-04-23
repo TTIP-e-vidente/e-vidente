@@ -13,6 +13,7 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 func _ready() -> void:
 	_hide_profile_overlay()
+	_connect_streak_badge()
 	_connect_save_manager_signals()
 	_refresh_hud()
 
@@ -56,8 +57,24 @@ func _refresh_hud() -> void:
 		profile_overlay.refresh()
 
 
+func _connect_streak_badge() -> void:
+	if racha == null or not racha.has_signal("pressed"):
+		return
+	var callback := Callable(self, "_on_racha_pressed")
+	if not racha.is_connected("pressed", callback):
+		racha.connect("pressed", callback)
+
+
 func _on_profile_button_pressed() -> void:
 	_show_profile_overlay()
+
+
+func _on_racha_pressed() -> void:
+	var current_scene_path: String = _get_scene_to_return_to()
+	if current_scene_path == GameSceneRouter.STREAK_SCENE_PATH:
+		return
+	_hide_profile_overlay()
+	GameSceneRouter.go_to_streak(get_tree(), current_scene_path)
 
 
 func _on_back_button_pressed() -> void:

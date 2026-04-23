@@ -51,6 +51,7 @@ func _ready() -> void:
 	_cache_overlay_nodes()
 	_cache_profile_content_nodes()
 	_configure_static_ui()
+	_connect_streak_badge()
 	_connect_save_manager_signals()
 	background_music_player.play()
 	_refresh_profile_overlay()
@@ -144,6 +145,14 @@ func _configure_static_ui() -> void:
 
 	_update_history_view_visibility(false)
 	_sync_overlay_button_visibility()
+
+
+func _connect_streak_badge() -> void:
+	if mode_selection_streak_badge == null or not mode_selection_streak_badge.has_signal("pressed"):
+		return
+	var callback := Callable(self, "_on_mode_selection_streak_badge_pressed")
+	if not mode_selection_streak_badge.is_connected("pressed", callback):
+		mode_selection_streak_badge.connect("pressed", callback)
 
 
 func _refresh_profile_overlay() -> void:
@@ -251,6 +260,11 @@ func _on_profile_backdrop_gui_input(event: InputEvent) -> void:
 func _on_atras_pressed() -> void:
 	SaveManager.save_progress_to_disk()
 	GameSceneRouter.go_to_main_menu(get_tree())
+
+
+func _on_mode_selection_streak_badge_pressed() -> void:
+	_update_overlay_visibility(false)
+	GameSceneRouter.go_to_streak(get_tree(), ARCHIVERO_SCENE)
 
 
 func _on_guardar_pressed() -> void:
