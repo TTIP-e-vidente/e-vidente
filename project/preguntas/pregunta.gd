@@ -3,6 +3,7 @@ extends Node
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
 const DEFAULT_RETURN_SCENE_PATH := GameSceneRouter.MAP_SCENE_PATH
+const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
 
 @export var quiz: ThemePreg
 @export var nivel_id: int = 2
@@ -22,10 +23,16 @@ var pregunta_actual: Preguntas:
 	get : return quiz.theme[index]
 
 @onready var preguntas: Label = $Contenido/Informacion/Pregunta
+@onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
+@onready var _game_over_panel: ColorRect = $Contenido/GameOver
+@onready var _game_over_title: Label = $Contenido/GameOver/Aciertos
+@onready var _game_over_score: Label = $Contenido/GameOver/Puntaje
 
 func _ready() -> void:
 	_prepare_question_session()
 	puntaje = 0
+	if _audio_player != null:
+		_audio_player.stream = CORRECT_ANSWER_SOUND
 	_collect_answer_buttons()
 	_shuffle_quiz_questions()
 	_load_current_question()
@@ -176,6 +183,9 @@ func _lock_answer_buttons() -> void:
 
 func _respuesta_correcta(boton: Button) -> void:
 	var tween = create_tween()
+	if _audio_player != null and _audio_player.stream != null:
+		_audio_player.stop()
+		_audio_player.play()
 	
 	boton.modulate = Color(0, 1, 0)
 	
@@ -204,8 +214,21 @@ func _advance_to_next_question() -> void:
 
 
 func _game_over() -> void:
-	$Contenido/GameOver.show()
-	$Contenido/GameOver/Puntaje.text = str(puntaje, "/", _max_questions)
+	if _has_map_session and _max_questions <= 1:
+		_finish_map_question_session()
+		_return_to_origin_scene()
+		return
+
+	_game_over_panel.show()
+	if _max_questions <= 1:
+		_game_over_title.visible = false
+		_game_over_score.visible = true
+		_game_over_score.text = "Muy bien" if puntaje > 0 else "No era esa"
+	else:
+		_game_over_title.visible = true
+		_game_over_score.visible = true
+		_game_over_title.text = "Aciertos:"
+		_game_over_score.text = str(puntaje, "/", _max_questions)
 
 	if _has_map_session:
 		_finish_map_question_session()
