@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://deghb1a1oj2sb"]
 
-[ext_resource type="Script" path="res://interface/components/ProgressManagerRacha.gd" id="1_wg76n"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_4j5vn"]
 [ext_resource type="PackedScene" uid="uid://l486egq1vfiq" path="res://interface/components/DayCircle.tscn" id="1_ivdk2"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="1_arrow"]
+[ext_resource type="Script" uid="uid://cn3g8p845jkil" path="res://interface/components/ProgressManagerRacha.gd" id="1_wg76n"]
 [ext_resource type="Texture2D" uid="uid://bkv7pi87jsgvx" path="res://assets-sistema/racha-diaria/racha-2-dias.png" id="2_3ji3y"]
 [ext_resource type="PackedScene" uid="uid://jjtcsaulb7id" path="res://mapas/MapHud.tscn" id="2_wus86"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_1jrfl"]
@@ -14,9 +15,14 @@
 [ext_resource type="Texture2D" uid="uid://o7pmr5fq2yp2" path="res://assets-sistema/racha-diaria/racha-6-dias.png" id="6_l4jvo"]
 [ext_resource type="Texture2D" uid="uid://dcufivrkn5nxd" path="res://assets-sistema/racha-diaria/racha-7-dias.png" id="7_4j5vn"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1"]
+
 [node name="ProgressManagerRacha" type="Control" unique_id=1333100631]
 layout_mode = 3
 anchors_preset = 0
+empty_message = "Completa una actividad para iniciar la racha."
+feedback_default_message = "Hoy sostuviste la racha."
+week_messages = PackedStringArray("Hoy activaste la racha, segui asi.", "Dos dias seguidos. Vas muy bien.", "Tres dias! El habito se esta formando.", "Cuatro dias. Ya es casi una costumbre.", "Cinco dias. La mitad de la semana completada.", "Seis dias! Casi la semana entera.", "Una semana completa. Increible!")
 script = ExtResource("1_wg76n")
 
 [node name="StreakView" type="Control" parent="." unique_id=1710265920]
@@ -142,3 +148,37 @@ position = Vector2(18.599655, 59.07605)
 scale = Vector2(0.7960943, 0.7960943)
 texture = ExtResource("7_4j5vn")
 offset = Vector2(498, -3)
+
+[node name="EstadoRacha" type="Label" parent="StreakView" unique_id=500000001]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 612.0
+offset_right = 820.0
+offset_bottom = 692.0
+theme_override_font_sizes/font_size = 21
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ContinueButton" type="Button" parent="StreakView" unique_id=500000002]
+visible = false
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -210.0
+offset_right = -12.0
+offset_bottom = -12.0
+scale = Vector2(0.62, 0.62)
+focus_mode = 0
+mouse_default_cursor_shape = 2
+icon = ExtResource("1_arrow")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_1")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_1")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_1")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1")
+disabled = true
+expand_icon = true

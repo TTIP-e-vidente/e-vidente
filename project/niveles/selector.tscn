@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://d2bn2v4834a73" path="res://assets-sistema/selector/selector-celiaquia.png" id="4_x5wwr"]
 [ext_resource type="Texture2D" uid="uid://dps4jrytnvabq" path="res://assets-sistema/selector/selector-veganismo.png" id="5_lo2a7"]
 [ext_resource type="Texture2D" uid="uid://1yva1t6sigvf" path="res://assets-sistema/selector/selector-vegan-gf.png" id="6_5qkxe"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 [ext_resource type="Texture2D" uid="uid://xaey3sbr1iy5" path="res://assets-sistema/selector/selector-cetogenica.png" id="7_xov0c"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
 [ext_resource type="Texture2D" uid="uid://co7k3gagotuj5" path="res://assets-sistema/selector/selector-diabetes.png" id="8_uk3qb"]

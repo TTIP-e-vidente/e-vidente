@@ -36,8 +36,8 @@
 [ext_resource type="Texture2D" uid="uid://811ps8f6u20x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="35_7gq85"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_284cr"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_ma8ur"]
-[ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="37_yw1kj"]
-[ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="38_w55qy"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="37_yw1kj"]
+[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="38_w55qy"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
 animations = [{

@@ -14,6 +14,9 @@ const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
+const ENABLE_STREAK_PREVIEW_SEQUENCE := true
+const STREAK_PREVIEW_COUNTS_KEY := "mock_streak_counts"
+const STREAK_PREVIEW_MAX_COUNT := 7
 const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 	"res://niveles/level_completion_black_and_white.gdshader"
 )
@@ -205,12 +208,13 @@ func _on_adelante_pressed() -> void:
 		return
 	if bool(_pending_streak_feedback.get("should_show", false)):
 		var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
+		var continue_target: Dictionary = _build_post_completion_continue_target(pending_feedback)
 		_pending_streak_feedback = {}
 		GameSceneRouter.go_to_streak(
 			get_tree(),
 			"",
 			pending_feedback,
-			_build_post_completion_continue_target()
+			continue_target
 		)
 		return
 	_go_to_post_completion_destination()
@@ -287,23 +291,47 @@ func _show_streak_feedback(feedback: Dictionary) -> void:
 	return
 
 
-func _build_post_completion_continue_target() -> Dictionary:
+func _build_post_completion_continue_target(streak_feedback: Dictionary = {}) -> Dictionary:
+	var continue_target: Dictionary
 	if active_track_key == DEFAULT_TRACK_KEY:
-		return {"type": "map"}
+		continue_target = {"type": "map"}
+		_append_mock_streak_preview(continue_target, streak_feedback)
+		return continue_target
 
 	var next_level: int = _current_level_number() + 1
 	var level_count: int = Global.get_track_level_count(active_track_key)
 	if next_level <= level_count:
-		return {
+		continue_target = {
 			"type": "track_level",
 			"track_key": active_track_key,
 			"level_number": next_level
 		}
+		_append_mock_streak_preview(continue_target, streak_feedback)
+		return continue_target
 
-	return {
+	continue_target = {
 		"type": "track_book",
 		"track_key": active_track_key
 	}
+	_append_mock_streak_preview(continue_target, streak_feedback)
+	return continue_target
+
+
+func _append_mock_streak_preview(
+	continue_target: Dictionary,
+	streak_feedback: Dictionary = {}
+) -> void:
+	if not ENABLE_STREAK_PREVIEW_SEQUENCE:
+		return
+	var current_count: int = int(streak_feedback.get("current_count", 0))
+	if current_count <= 0 or current_count >= STREAK_PREVIEW_MAX_COUNT:
+		return
+	var preview_counts: Array[int] = []
+	for preview_count in range(current_count + 1, STREAK_PREVIEW_MAX_COUNT + 1):
+		preview_counts.append(preview_count)
+	if preview_counts.is_empty():
+		return
+	continue_target[STREAK_PREVIEW_COUNTS_KEY] = preview_counts
 
 
 func _go_to_post_completion_destination() -> void:
