@@ -69,6 +69,10 @@ func _ensure_visual_nodes() -> void:
 func _refresh_avatar_texture() -> void:
 	if _avatar_sprite == null:
 		return
+	if Engine.is_editor_hint():
+		_avatar_sprite.texture = null
+		_avatar_sprite.visible = false
+		return
 	var avatar_texture: Texture2D = null
 	if SaveManager != null:
 		avatar_texture = SaveManager.get_current_user_avatar_texture()

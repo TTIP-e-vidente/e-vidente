@@ -74,6 +74,8 @@ func render(streak_view_model: Dictionary = {}) -> void:
 	_current_count = max(0, int(resolved_view_model.get("current_count", 0)))
 	_best_count = max(_current_count, int(resolved_view_model.get("best_count", 0)))
 	_status_detail = str(resolved_view_model.get("status_detail", "")).strip_edges()
+	if _current_count > 0:
+		_status_detail = _build_streak_message(_current_count)
 	_refresh_ui()
 
 
@@ -105,10 +107,8 @@ func _show_feedback(feedback: Dictionary) -> void:
 		int(feedback.get("best_count", base_best_count))
 	)
 
-	var week_message: String = _resolve_streak_message(_current_count)
-	if not week_message.is_empty():
-		_status_detail = week_message
-	else:
+	_status_detail = _build_streak_message(_current_count)
+	if _status_detail.is_empty():
 		_status_detail = str(feedback.get("message", feedback_default_message)).strip_edges()
 
 	_refresh_ui()
@@ -175,21 +175,35 @@ func _connect_map_hud() -> void:
 		map_hud.connect("back_requested", callback)
 
 
-func _resolve_streak_message(count: int) -> String:
-	var cycle_days: int = _day_circles.size()
-	if cycle_days <= 0:
-		cycle_days = week_messages.size()
-	if count <= 0 or cycle_days <= 0:
+func _build_streak_message(count: int) -> String:
+	if count <= 0:
 		return ""
-	var day_in_week: int = ((count - 1) % cycle_days) + 1
-	var week_number: int = int((count - 1) / cycle_days) + 1
-	var message_index: int = day_in_week - 1
-	if message_index < 0 or message_index >= week_messages.size():
-		return ""
-	var base_message: String = week_messages[message_index]
-	if week_number == 1:
-		return base_message
-	return "Semana %d, dia %d. %s" % [week_number, day_in_week, base_message]
+
+	var day_in_week: int = ((count - 1) % 7) + 1
+	var week_number: int = int((count - 1) / 7) + 1
+
+	var message: String = ""
+	match day_in_week:
+		1:
+			message = "Dia 1. Arrancaste, y eso ya cuenta."
+		2:
+			message = "Dia 2. Volviste otra vez. Ahi es donde empieza a valer."
+		3:
+			message = "Dia 3. Ya te estas haciendo el lugar."
+		4:
+			message = "Dia 4. Esto ya no fue casualidad. Lo estas sosteniendo."
+		5:
+			message = "Dia 5. Te quedan dos pasos para cerrar la semana."
+		6:
+			message = "Dia 6. Llegaste hasta aca. Uno mas y completas la semana."
+		7:
+			message = "Dia 7. Semana completa. Frenar un segundo y ver eso tambien vale."
+		_:
+			message = "Seguis sumando dias. Eso no pasa por casualidad."
+
+	if week_number <= 1:
+		return message
+	return "Semana %d. %s" % [week_number, message]
 
 
 func _read_and_clear_root_meta(meta_key: String) -> Dictionary:
@@ -233,7 +247,7 @@ func _show_next_mock_preview() -> bool:
 	_mock_preview_counts.remove_at(0)
 	_current_count = preview_count
 	_best_count = max(_best_count, preview_count)
-	_status_detail = _resolve_streak_message(preview_count)
+	_status_detail = _build_streak_message(preview_count)
 	_refresh_ui()
 	return true
 
