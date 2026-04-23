@@ -46,6 +46,10 @@ var _mock_preview_counts: Array[int] = []
 func _ready() -> void:
 	_connect_continue_button()
 	_connect_map_hud()
+	_load_entry_state()
+
+
+func _load_entry_state() -> void:
 	var feedback: Dictionary = _read_and_clear_root_meta(STREAK_FEEDBACK_META)
 	_feedback_continue_target = _read_and_clear_root_meta(STREAK_CONTINUE_TARGET_META)
 	_mock_preview_counts = _extract_mock_preview_counts(_feedback_continue_target)
@@ -56,41 +60,17 @@ func _ready() -> void:
 
 
 func render(streak_view_model: Dictionary = {}) -> void:
-	_feedback_continue_target = {}
-	_mock_preview_counts.clear()
-	_continue_button.visible = false
-	_continue_button.disabled = true
-	if back_button != null:
-		back_button.visible = true
-
-	var resolved_view_model: Dictionary = streak_view_model
-	if resolved_view_model.is_empty():
-		var global_node: Node = get_node_or_null("/root/Global")
-		if global_node != null and global_node.has_method("get_streak_view_model"):
-			var raw_view_model: Variant = global_node.call("get_streak_view_model")
-			if raw_view_model is Dictionary:
-				resolved_view_model = raw_view_model
-
+	_set_regular_mode()
+	var resolved_view_model: Dictionary = _resolve_streak_view_model(streak_view_model)
 	_current_count = max(0, int(resolved_view_model.get("current_count", 0)))
 	_best_count = max(_current_count, int(resolved_view_model.get("best_count", 0)))
-	_status_detail = str(resolved_view_model.get("status_detail", "")).strip_edges()
-	if _current_count > 0:
-		_status_detail = _build_streak_message(_current_count)
+	_status_detail = _resolve_regular_status_detail(resolved_view_model)
 	_refresh_ui()
 
 
 func _show_feedback(feedback: Dictionary) -> void:
-	_continue_button.visible = true
-	_continue_button.disabled = false
-	if back_button != null:
-		back_button.visible = false
-
-	var base_view_model: Dictionary = {}
-	var global_node: Node = get_node_or_null("/root/Global")
-	if global_node != null and global_node.has_method("get_streak_view_model"):
-		var raw_view_model: Variant = global_node.call("get_streak_view_model")
-		if raw_view_model is Dictionary:
-			base_view_model = raw_view_model
+	_set_feedback_mode()
+	var base_view_model: Dictionary = _resolve_streak_view_model({})
 
 	var base_current_count: int = max(
 		0,
@@ -114,27 +94,48 @@ func _show_feedback(feedback: Dictionary) -> void:
 	_refresh_ui()
 
 
+func _set_regular_mode() -> void:
+	_feedback_continue_target = {}
+	_mock_preview_counts.clear()
+	_continue_button.visible = false
+	_continue_button.disabled = true
+	if back_button != null:
+		back_button.visible = true
+
+
+func _set_feedback_mode() -> void:
+	_continue_button.visible = true
+	_continue_button.disabled = false
+	if back_button != null:
+		back_button.visible = false
+
+
+func _resolve_streak_view_model(streak_view_model: Dictionary) -> Dictionary:
+	if not streak_view_model.is_empty():
+		return streak_view_model
+
+	var global_node: Node = get_node_or_null("/root/Global")
+	if global_node == null or not global_node.has_method("get_streak_view_model"):
+		return {}
+
+	var raw_view_model: Variant = global_node.call("get_streak_view_model")
+	if raw_view_model is Dictionary:
+		return raw_view_model
+	return {}
+
+
+func _resolve_regular_status_detail(streak_view_model: Dictionary) -> String:
+	if _current_count > 0:
+		return _build_streak_message(_current_count)
+	return str(streak_view_model.get("status_detail", "")).strip_edges()
+
+
 func _refresh_ui() -> void:
 	if not is_node_ready():
 		return
 	streak_count_label.text = str(_current_count)
-
-	if not _status_detail.is_empty():
-		_detail_label.text = _status_detail
-	elif _best_count > 0:
-		_detail_label.text = "Mejor racha: %d dias" % _best_count
-	else:
-		_detail_label.text = empty_message
-
-	var cycle_days: int = _day_circles.size()
-	if cycle_days <= 0:
-		cycle_days = week_messages.size()
-
-	var visible_day_count: int = 0
-	if _current_count > 0 and cycle_days > 0:
-		visible_day_count = _current_count % cycle_days
-		if visible_day_count == 0:
-			visible_day_count = cycle_days
+	_detail_label.text = _resolve_detail_text()
+	var visible_day_count: int = _resolve_visible_day_count()
 
 	for connector_index in range(_connector_sprites.size()):
 		var connector_sprite: Sprite2D = _connector_sprites[connector_index]
@@ -160,6 +161,32 @@ func _refresh_ui() -> void:
 			continue
 
 		day_circle.call("set_estado", DayCircleScript.Estado.COMPLETO)
+
+
+func _resolve_detail_text() -> String:
+	if not _status_detail.is_empty():
+		return _status_detail
+	if _best_count > 0:
+		return "Mejor racha: %d dias" % _best_count
+	return empty_message
+
+
+func _resolve_visible_day_count() -> int:
+	var cycle_days: int = _resolve_cycle_days()
+	if _current_count <= 0 or cycle_days <= 0:
+		return 0
+
+	var visible_day_count: int = _current_count % cycle_days
+	if visible_day_count == 0:
+		return cycle_days
+	return visible_day_count
+
+
+func _resolve_cycle_days() -> int:
+	var cycle_days: int = _day_circles.size()
+	if cycle_days > 0:
+		return cycle_days
+	return week_messages.size()
 
 
 func _connect_continue_button() -> void:
