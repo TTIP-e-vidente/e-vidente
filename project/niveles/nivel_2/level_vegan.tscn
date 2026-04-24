@@ -3,8 +3,6 @@
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
 [ext_resource type="Texture2D" uid="uid://drylf5njm8qsj" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="3_gaj1j"]
-[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="4_mvmjh"]
-[ext_resource type="Texture2D" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="5_l4pa0"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_0a2dw"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="6_w25c5"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="7_wtr41"]
@@ -39,20 +37,6 @@
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="36_klwte"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_0lh3u"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_c7a2m"]
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_wpkox"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("4_mvmjh")
-}, {
-"duration": 1.0,
-"texture": ExtResource("5_l4pa0")
-}],
-"loop": true,
-"name": &"victory",
-"speed": 5.0
-}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dgfld"]
 size = Vector2(600, 100)
@@ -186,14 +170,6 @@ z_index = 1
 position = Vector2(233, 109)
 scale = Vector2(0.6068007, 0.6068007)
 texture = ExtResource("3_gaj1j")
-
-[node name="Victory" type="AnimatedSprite2D" parent="." unique_id=190024053]
-visible = false
-z_index = 1
-position = Vector2(1079, 54)
-scale = Vector2(0.252046, 0.252046)
-sprite_frames = SubResource("SpriteFrames_wpkox")
-animation = &"victory"
 
 [node name="Menú" type="Area2D" parent="." unique_id=86445257 groups=["droppable"]]
 light_mask = 8
@@ -332,22 +308,22 @@ animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
 [node name="Atrás" type="Button" parent="." unique_id=1435472127]
-offset_left = 14.0
+offset_left = 30.0
 offset_top = 623.0
-offset_right = 243.0
+offset_right = 259.0
 offset_bottom = 891.0
-scale = Vector2(0.64, 0.56)
+scale = Vector2(0.58400095, 0.5110008)
 text = "
 "
 icon = ExtResource("33_fecjc")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=1129487624]
-offset_left = 994.0
-offset_top = 632.0
-offset_right = 1221.0
-offset_bottom = 865.0
-scale = Vector2(0.625337, 0.609372)
+offset_left = 988.0
+offset_top = 627.00006
+offset_right = 1215.0
+offset_bottom = 860.00006
+scale = Vector2(0.5686006, 0.5540841)
 text = "
 "
 icon = ExtResource("34_spc0y")

@@ -42,7 +42,6 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 ## --- Nodos de escena ---
 
 @onready var background:         AudioStreamPlayer2D = $Background
-@onready var victory:            AnimatedSprite2D    = $Victory
 @onready var back_button:        Button              = $Atrás
 @onready var next_chapter_button: Button             = $Adelante
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
@@ -87,8 +86,6 @@ func _start_level_flow() -> void:
 	_current_run_completion_handled = false
 	Item_level.is_dragging = null
 	_restore_post_completion_state()
-	victory.hide()
-	victory.stop()
 	next_chapter_button.disabled = true
 	_play_level_audio()
 	if manager_level == null:
@@ -394,8 +391,6 @@ func _lock_completed_run() -> void:
 	_set_gameplay_interactions_enabled(false)
 	next_chapter_button.disabled = false
 	teaching_sprite.show()
-	victory.show()
-	victory.play("victory")
 	_apply_completion_visual_state()
 
 
@@ -463,8 +458,6 @@ func _should_skip_completion_visual(runtime_node: Node) -> bool:
 	):
 		return true
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
-		return true
-	if is_instance_valid(victory) and runtime_node == victory:
 		return true
 	if is_instance_valid(save_feedback_backdrop) and (
 		runtime_node == save_feedback_backdrop
