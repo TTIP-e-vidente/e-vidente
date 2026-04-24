@@ -1,6 +1,7 @@
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
 
 const ROUTE_SPLASH := "splash"
 const ROUTE_MAIN_MENU := "main_menu"
@@ -81,7 +82,10 @@ static func go_to_streak(
 			tree_root.remove_meta(STREAK_FEEDBACK_META)
 
 		if not continue_target.is_empty():
-			tree_root.set_meta(STREAK_CONTINUE_TARGET_META, continue_target.duplicate(true))
+			tree_root.set_meta(
+				STREAK_CONTINUE_TARGET_META,
+				GameStreakDebugScript.sanitize_continue_target(continue_target)
+			)
 		elif tree_root.has_meta(STREAK_CONTINUE_TARGET_META):
 			tree_root.remove_meta(STREAK_CONTINUE_TARGET_META)
 	_change_scene_to_path(tree, STREAK_SCENE_PATH)
