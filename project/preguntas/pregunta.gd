@@ -14,7 +14,7 @@ var index: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
 
-var _max_questions := 1
+var _max_questions: int = 0
 var _active_question_key: String = ""
 var _has_map_session: bool = false
 var _return_scene_path: String = DEFAULT_RETURN_SCENE_PATH
@@ -30,6 +30,7 @@ var pregunta_actual: Preguntas:
 
 func _ready() -> void:
 	_prepare_question_session()
+	_sync_question_count()
 	puntaje = 0
 	if _audio_player != null:
 		_audio_player.stream = CORRECT_ANSWER_SOUND
@@ -108,6 +109,14 @@ func _apply_map_session_context(session_state: Dictionary) -> void:
 	if _return_scene_path.is_empty():
 		_return_scene_path = DEFAULT_RETURN_SCENE_PATH
 	_has_map_session = true
+
+
+func _sync_question_count() -> void:
+	if quiz == null:
+		_max_questions = 0
+		return
+
+	_max_questions = quiz.theme.size()
 
 
 func _shuffle_quiz_questions() -> void:
