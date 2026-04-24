@@ -14,9 +14,9 @@ const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
-const ENABLE_STREAK_PREVIEW_SEQUENCE := true
-const STREAK_PREVIEW_COUNTS_KEY := "mock_streak_counts"
-const STREAK_PREVIEW_MAX_COUNT := 7
+const GameStreakDebugScript := preload(
+	"res://niveles/progress/GameStreakDebug.gd"
+)
 const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 	"res://niveles/level_completion_black_and_white.gdshader"
 )
@@ -321,17 +321,20 @@ func _append_mock_streak_preview(
 	continue_target: Dictionary,
 	streak_feedback: Dictionary = {}
 ) -> void:
-	if not ENABLE_STREAK_PREVIEW_SEQUENCE:
+	if not GameStreakDebugScript.is_preview_enabled():
 		return
 	var current_count: int = int(streak_feedback.get("current_count", 0))
-	if current_count <= 0 or current_count >= STREAK_PREVIEW_MAX_COUNT:
+	if current_count <= 0 or current_count >= GameStreakDebugScript.PREVIEW_MAX_COUNT:
 		return
 	var preview_counts: Array[int] = []
-	for preview_count in range(current_count + 1, STREAK_PREVIEW_MAX_COUNT + 1):
+	for preview_count in range(
+		current_count + 1,
+		GameStreakDebugScript.PREVIEW_MAX_COUNT + 1
+	):
 		preview_counts.append(preview_count)
 	if preview_counts.is_empty():
 		return
-	continue_target[STREAK_PREVIEW_COUNTS_KEY] = preview_counts
+	continue_target[GameStreakDebugScript.PREVIEW_COUNTS_KEY] = preview_counts
 
 
 func _go_to_post_completion_destination() -> void:

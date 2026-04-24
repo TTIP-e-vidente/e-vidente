@@ -2,12 +2,12 @@ extends Control
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DayCircleScript := preload("res://interface/components/DayCircle.gd")
+const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
 
 const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
 const STREAK_RETURN_SCENE_META := "streak_return_scene"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
-const STREAK_PREVIEW_COUNTS_KEY := "mock_streak_counts"
 
 @export var empty_message := "Completa una actividad para iniciar la racha."
 @export var feedback_default_message := "Hoy sostuviste la racha."
@@ -270,8 +270,11 @@ func _extract_mock_preview_counts(continue_target: Dictionary) -> Array[int]:
 		cycle_days = week_messages.size()
 	if continue_target.is_empty():
 		return preview_counts
-	var raw_counts: Variant = continue_target.get(STREAK_PREVIEW_COUNTS_KEY, [])
-	continue_target.erase(STREAK_PREVIEW_COUNTS_KEY)
+	var preview_key: String = GameStreakDebugScript.PREVIEW_COUNTS_KEY
+	var raw_counts: Variant = continue_target.get(preview_key, [])
+	continue_target.erase(preview_key)
+	if not GameStreakDebugScript.is_preview_enabled():
+		return preview_counts
 	if not (raw_counts is Array):
 		return preview_counts
 	for raw_value in raw_counts:
