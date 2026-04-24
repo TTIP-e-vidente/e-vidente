@@ -38,6 +38,7 @@ var _hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	GameSceneRouter.request_initial_scene_preload()
 	_play_background_music()
 	_set_resume_overlay_visible(false)
 	_build_hud()

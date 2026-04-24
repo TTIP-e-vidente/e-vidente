@@ -16,6 +16,9 @@ const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
 
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
+	GameSceneRouter.request_scene_preload(
+		GameTrackCatalog.get_level_scene_path(DEFAULT_TRACK_KEY)
+	)
 	_connect_back_signal()
 	_clear_transient_question_session()
 	_render_runtime_map()

@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
 [ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
 [ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
-[ext_resource type="Shader" uid="uid://ouiuwpm2wm3h" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
+[ext_resource type="Shader" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
 [ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
 [ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="12_oop13"]
 

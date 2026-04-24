@@ -155,9 +155,9 @@ func _refresh_ui() -> void:
 		if slot != null:
 			slot.visible = true
 
-		var is_visible: bool = day_index < visible_day_count
-		day_circle.visible = is_visible
-		if not is_visible:
+		var should_show_day: bool = day_index < visible_day_count
+		day_circle.visible = should_show_day
+		if not should_show_day:
 			continue
 
 		day_circle.call("set_estado", DayCircleScript.Estado.COMPLETO)
@@ -207,30 +207,47 @@ func _build_streak_message(count: int) -> String:
 		return ""
 
 	var day_in_week: int = ((count - 1) % 7) + 1
-	var week_number: int = int((count - 1) / 7) + 1
+	var week_number: int = floori(float(count - 1) / 7.0) + 1
 
 	var message: String = ""
+	if week_number <= 1:
+		match day_in_week:
+			1:
+				message = "Muy bien, empezaste."
+			2:
+				message = "Volviste, y ahi es donde empieza a tomar forma."
+			3:
+				message = "Tres seguidos. Ya le estas haciendo lugar."
+			4:
+				message = "Lo estas sosteniendo de verdad."
+			5:
+				message = "Ya casi cerras la semana."
+			6:
+				message = "Estas a un paso de completarla."
+			7:
+				message = "Semana completa. Frenate un segundo y disfrutalo."
+			_:
+				message = "Seguis sumando, y eso ya dice mucho."
+		return message
+
 	match day_in_week:
 		1:
-			message = "Dia 1. Arrancaste, y eso ya cuenta."
+			message = "Arrancaste otra semana sin cortar la racha."
 		2:
-			message = "Dia 2. Volviste otra vez. Ahi es donde empieza a valer."
+			message = "Seguis firme. Ya van %d dias seguidos." % count
 		3:
-			message = "Dia 3. Ya te estas haciendo el lugar."
+			message = "La constancia ya se nota."
 		4:
-			message = "Dia 4. Esto ya no fue casualidad. Lo estas sosteniendo."
+			message = "Otra semana en marcha. Lo estas sosteniendo."
 		5:
-			message = "Dia 5. Te quedan dos pasos para cerrar la semana."
+			message = "Ya casi cerras otra semana."
 		6:
-			message = "Dia 6. Llegaste hasta aca. Uno mas y completas la semana."
+			message = "Te falta un paso para completar otra semana."
 		7:
-			message = "Dia 7. Semana completa. Frenar un segundo y ver eso tambien vale."
+			message = "Otra semana completa. Tu racha sigue creciendo."
 		_:
-			message = "Seguis sumando dias. Eso no pasa por casualidad."
-
-	if week_number <= 1:
-		return message
-	return "Semana %d. %s" % [week_number, message]
+			message = "Seguis sumando, y eso ya dice mucho."
+	return message
 
 
 func _read_and_clear_root_meta(meta_key: String) -> Dictionary:
