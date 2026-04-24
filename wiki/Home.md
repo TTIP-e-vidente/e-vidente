@@ -41,6 +41,7 @@ e-vidente/
 - La CI valida estructura, documentación, tests de guardado y export web.
 - El catálogo principal ya contempla celiaquia, veganismo, mixto y keto.
 - El repo mantiene un modo de preguntas separado del loop principal de recetas.
+- El flujo de preguntas visible hoy es corto: valida una respuesta, da feedback inmediato y, si vino desde el mapa, vuelve a la escena de origen sin mostrar una pantalla de puntaje innecesaria.
 - La persistencia local está documentada como flujo de una sola partida retomable y está cubierta por tests headless.
 - El criterio general sigue siendo el mismo: cambios cortos, trazables y bien entendidos.
-- El juego tiene un sistema de racha diaria: al completar un nivel se registra la fecha y la racha sube si se jugó el día anterior, se mantiene si ya se jugó hoy, o se resetea si pasó más de un día. El HUD muestra el contador y un overlay resume los últimos 7 días.
+- El juego tiene un sistema de racha diaria: al completar un nivel se registra la fecha y la racha sube si se jugó el día anterior, se mantiene si ya se jugó hoy, o se resetea si pasó más de un día. El HUD muestra el contador y la pantalla de racha ahora también funciona como feedback post-partida con mensajes simples por día.

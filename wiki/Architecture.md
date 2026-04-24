@@ -104,9 +104,19 @@ Feedback visual y sonoro
 
 - `preguntas/` concentra un modo de quiz separado del loop principal de recetas.
 - El contenido se define con recursos `Preguntas` agrupados en `ThemePreg`.
-- La estructura ya contempla variantes de texto, imagen, audio y video para cada pregunta.
+- La estructura ya contempla variantes de texto, imagen, audio y video para cada pregunta, aunque el flujo visible hoy está resuelto como una sesión corta.
 - `selector.tscn` puede abrir `pregunta.tscn` como flujo aparte.
-- Al completar el quiz, `pregunta.gd` registra el nivel como completado en Global y SaveManager y desbloquea el siguiente nodo del mapa.
+- Si la escena se abre desde el mapa, `pregunta.gd` toma una sola pregunta desde `Global.active_question_session`, registra el resultado y vuelve a la escena de origen.
+- Si la respuesta es correcta, la pantalla da feedback visual y sonoro antes de avanzar o cerrar la sesión.
+
+### Sistema de racha diaria
+
+- `niveles/progress/GameStreakTracker.gd` concentra la regla de negocio de la racha: leer estado, registrar actividad y armar el view model.
+- `niveles/global.gd` expone la racha al resto del juego para que UI y gameplay no tengan que recalcular nada por su cuenta.
+- `interface/components/Racha.tscn` muestra el contador chico en el HUD.
+- `interface/components/ProgressManagerRacha.tscn` muestra la pantalla completa de racha y también se usa como feedback después de completar un nivel.
+- `GameSceneRouter.go_to_streak()` pasa el contexto de entrada por meta en el root: escena de vuelta, feedback y destino del botón continuar.
+- Desde `Level.gd` se puede entrar a esa pantalla con contexto de post-partida. En ese punto el flujo decide si solo muestra el estado actual o si encadena varios estados de racha para mostrar la progresión completa antes de continuar.
 
 ### Sistema de mapa
 
