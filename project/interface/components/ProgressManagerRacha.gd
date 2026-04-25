@@ -9,8 +9,8 @@ const STREAK_RETURN_SCENE_META := "streak_return_scene"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 
-@export var empty_message := "Completa una actividad para iniciar la racha."
-@export var feedback_default_message := "Hoy sostuviste la racha."
+@export var empty_message := "Completa una actividad para empezar la racha."
+@export var feedback_default_message := "Hoy mantuviste la racha."
 @export var week_messages: PackedStringArray = PackedStringArray()
 
 var _current_count: int = 0
@@ -213,36 +213,36 @@ func _build_streak_message(count: int) -> String:
 	if week_number <= 1:
 		match day_in_week:
 			1:
-				message = "Muy bien, empezaste."
+				message = "Muy bien. Este camino ya empezo."
 			2:
-				message = "Volviste, y ahi es donde empieza a tomar forma."
+				message = "Volviste, y eso ya empieza a tomar forma."
 			3:
-				message = "Tres seguidos. Ya le estas haciendo lugar."
+				message = "Tres dias seguidos. Tu constancia ya se nota."
 			4:
-				message = "Lo estas sosteniendo de verdad."
+				message = "La racha se viene sosteniendo de verdad."
 			5:
-				message = "Ya casi cerras la semana."
+				message = "Ya falta poco para cerrar la semana."
 			6:
-				message = "Estas a un paso de completarla."
+				message = "Estas a un paso de completar la semana."
 			7:
-				message = "Semana completa. Frenate un segundo y disfrutalo."
+				message = "Semana completa. Frena un segundo y celebralo."
 			_:
 				message = "Seguis sumando, y eso ya dice mucho."
 		return message
 
 	match day_in_week:
 		1:
-			message = "Arrancaste otra semana sin cortar la racha."
+			message = "Empezo otra semana y la racha sigue."
 		2:
-			message = "Seguis firme. Ya van %d dias seguidos." % count
+			message = "La racha sigue firme. Ya van %d dias seguidos." % count
 		3:
 			message = "La constancia ya se nota."
 		4:
-			message = "Otra semana en marcha. Lo estas sosteniendo."
+			message = "Otra semana en marcha. La racha se sostiene."
 		5:
-			message = "Ya casi cerras otra semana."
+			message = "Ya falta poco para cerrar otra semana."
 		6:
-			message = "Te falta un paso para completar otra semana."
+			message = "Falta un paso para completar otra semana."
 		7:
 			message = "Otra semana completa. Tu racha sigue creciendo."
 		_:
