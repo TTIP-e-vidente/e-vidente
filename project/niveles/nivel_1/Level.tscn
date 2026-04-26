@@ -325,22 +325,22 @@ animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
 [node name="Atrás" type="Button" parent="." unique_id=1082464570]
-offset_left = 14.0
-offset_top = 623.0
-offset_right = 243.0
-offset_bottom = 891.0
-scale = Vector2(0.64, 0.56)
+offset_left = 36.0
+offset_top = 632.0
+offset_right = 258.0
+offset_bottom = 907.14294
+scale = Vector2(0.5006558, 0.44468418)
 text = "
 "
 icon = ExtResource("25_x7g2d")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=956013369]
-offset_left = 994.0
-offset_top = 632.0
-offset_right = 1221.0
-offset_bottom = 865.0
-scale = Vector2(0.625337, 0.609372)
+offset_left = 995.99994
+offset_top = 635.0
+offset_right = 1223.0
+offset_bottom = 868.0
+scale = Vector2(0.49980462, 0.4870445)
 text = "
 "
 icon = ExtResource("26_6so0i")

@@ -10,6 +10,7 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 
 func _ready() -> void:
+	GameSceneRouter.request_initial_scene_preload()
 	splash_animation.play(INTRO_ANIMATION)
 	background_music.play()
 	await get_tree().create_timer(1.0).timeout

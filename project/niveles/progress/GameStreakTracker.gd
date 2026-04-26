@@ -145,7 +145,7 @@ static func _days_between(date_a: String, date_b: String) -> int:
 		return -1
 	var unix_a: int = int(Time.get_unix_time_from_datetime_string(date_a))
 	var unix_b: int = int(Time.get_unix_time_from_datetime_string(date_b))
-	return int(absi(unix_b - unix_a) / SECONDS_PER_DAY)
+	return int(float(absi(unix_b - unix_a)) / SECONDS_PER_DAY)
 
 
 ## Verifica que una fecha "YYYY-MM-DD" sea un formato válido.

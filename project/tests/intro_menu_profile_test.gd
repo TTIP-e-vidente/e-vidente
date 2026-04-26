@@ -3,6 +3,7 @@ extends SceneTree
 const SELECTOR_SCENE := "res://niveles/selector.tscn"
 const QUESTIONS_SCENE := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 var SaveManager
 var Global
@@ -120,9 +121,9 @@ func _resolve_singletons() -> void:
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
 	for relative_path in [
-		SaveManager.SAVE_PATH,
-		SaveManager.TEMP_SAVE_PATH,
-		SaveManager.BACKUP_SAVE_PATH
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH
 	]:
 		var absolute_path := ProjectSettings.globalize_path(relative_path)
 		if FileAccess.file_exists(absolute_path):

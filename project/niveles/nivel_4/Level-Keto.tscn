@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
 [ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
-[ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="3_1lcvv"]
-[ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="4_ekkjv"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0m5ih"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_qkth7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="7_a14q0"]
@@ -38,20 +36,6 @@
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_pfc42"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_0m5ih"]
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("3_1lcvv")
-}, {
-"duration": 1.0,
-"texture": ExtResource("4_ekkjv")
-}],
-"loop": true,
-"name": &"victory",
-"speed": 5.0
-}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bbluw"]
 size = Vector2(600, 100)
@@ -180,14 +164,6 @@ position = Vector2(218.99998, 112)
 scale = Vector2(0.36439705, 0.36439705)
 texture = ExtResource("2_pfc42")
 
-[node name="Victory" type="AnimatedSprite2D" parent="." unique_id=703064052]
-visible = false
-z_index = 1
-position = Vector2(1079, 54)
-scale = Vector2(0.252046, 0.252046)
-sprite_frames = SubResource("SpriteFrames_4xm3r")
-animation = &"victory"
-
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1610385028]
 offset_left = 1.0
 offset_top = -1.0
@@ -217,7 +193,7 @@ shape = SubResource("RectangleShape2D_bbluw")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=1636032260]
 position = Vector2(0.18774223, 5.555523)
-scale = Vector2(0.64898545, 0.8349246)
+scale = Vector2(0.64084595, 0.93667847)
 texture = ExtResource("7_a14q0")
 
 [node name="Plato" parent="." unique_id=2125072684 instance=ExtResource("8_jarw3")]
@@ -329,22 +305,22 @@ animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
 [node name="Atrás" type="Button" parent="." unique_id=1539658187]
-offset_left = 54.0
-offset_top = 638.00006
-offset_right = 276.0
-offset_bottom = 902.2857
-scale = Vector2(0.4400736, 0.38506442)
+offset_left = 43.000004
+offset_top = 635.00006
+offset_right = 265.0
+offset_bottom = 899.2857
+scale = Vector2(0.50878745, 0.44518906)
 text = "
 "
 icon = ExtResource("33_tpxw6")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=1508956975]
-offset_left = 996.0
-offset_top = 644.0
-offset_right = 1223.0
-offset_bottom = 877.0
-scale = Vector2(0.4211458, 0.41039386)
+offset_left = 983.0
+offset_top = 638.0
+offset_right = 1210.0
+offset_bottom = 871.0
+scale = Vector2(0.4787635, 0.46654055)
 text = "
 "
 icon = ExtResource("34_oaafq")

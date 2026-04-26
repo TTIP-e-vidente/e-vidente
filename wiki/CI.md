@@ -7,7 +7,7 @@ En esta etapa estamos apuntando a una CI chica, clara y util. No queremos un pip
 Hoy tenemos tres workflows visibles:
 
 - `.github/workflows/docs-pr.yml` para `pull_request` hacia `main` o `dev`
-- `.github/workflows/ci.yml` para `push` a `main`, `dev`, `feat/**` y `feature/**`, mas corrida manual
+- `.github/workflows/ci.yml` para `pull_request` hacia `main` o `dev`, mas corrida manual
 - `.github/workflows/gameplay-smoke-pr.yml` para `pull_request` hacia `main` o `dev`, mas corrida manual
 
 No hay workflow compartido. Lo dejamos asi a proposito para que cada pipeline tenga un objetivo claro y sea facil de leer cuando falla.
@@ -18,7 +18,7 @@ No hay workflow compartido. Lo dejamos asi a proposito para que cada pipeline te
 - `Technical Health`
 - `Gameplay Smoke`
 
-Los tres pueden bloquear merge. En la practica, `Technical Health` llega por el `push` del branch y los otros dos corren sobre el `pull_request`.
+Los tres pueden bloquear merge. Hoy los tres corren sobre el `pull_request` y dos de ellos tambien se pueden disparar manualmente.
 
 ## `Docs / Tracking`
 
@@ -45,24 +45,20 @@ Para el diff del PR, el gate pide:
 - al menos un `.md` tocado en `docs/`, `wiki/`, `README.md` o `CHANGELOG.md`
 - al menos un archivo de seguimiento tocado: `wiki/Bitacora.md`, `CHANGELOG.md` o algun `.md` equivalente con `bitacora` o `changelog` dentro de `docs/`
 
-Hoy el repo usa `wiki/` y no `docs/`, pero el check acepta ambos para no atar la regla a una sola carpeta.
+`docs-local/` queda fuera del gate porque se usa como documentacion local del equipo y no forma parte del contenido publicado del repo en GitHub.
 
 ## `Technical Health`
 
-Este workflow vive en `.github/workflows/ci.yml` y corre en cada `push` relevante.
+Este workflow vive en `.github/workflows/ci.yml` y hoy corre en PR o manual.
 
-Lo que intenta responder es esto: con un checkout limpio, el proyecto sigue sano o ya hay alguna rotura tecnica obvia.
+Es el check mas chico de los tres. No abre Godot ni corre smoke. Su trabajo actual es responder algo mas acotado: si la estructura minima del repo sigue en pie y si el lint opcional no se rompio.
 
-Incluye estos checks:
+Incluye dos jobs:
 
-- valida estructura critica del repo
-- valida escenas y archivos minimos del slice
-- valida que sigan presentes los entrypoints de CI
-- corre ESLint solo si existe configuracion real y lockfile pinneado
-- abre el proyecto en headless con `godot --headless --path project --editor --quit`
-- revisa el log aunque Godot salga con codigo `0`, para no dejar pasar parse errors silenciosos
+- `Structure`: revisa directorios y archivos criticos del repo, incluyendo escenas base del slice y scripts de CI.
+- `Lint`: corre ESLint solo si existe `package.json`, hay configuracion real de ESLint y hay lockfile pinneado.
 
-No corre catalog validation ni tests de integracion fina. En esta etapa preferimos detectar roturas claras y mantener el gate estable.
+Hoy no hace import headless, no parsea logs de Godot y no sube artifacts. Si queremos volver a usarlo como chequeo tecnico mas profundo, eso habria que reintroducirlo en el workflow real.
 
 ## `Gameplay Smoke`
 
@@ -74,23 +70,24 @@ Corre en `barichello/godot-ci:4.6.2`, instala `libfontconfig1` y ejecuta `script
 
 Antes de entrar al vertical slice, el runner hace un import headless del proyecto. En cold start de GitHub Actions vimos fallos falsos por recursos importados y por carga de UI no critica cuando el smoke iba directo al gameplay sobre un checkout limpio. Con el import previo, el test reproduce mejor el arranque real del proyecto y deja de mezclar validacion jugable con fragilidad de importacion.
 
-La pasada usa el track baseline y recorre este camino:
+La pasada hoy recorre este camino:
 
 - Splash
 - Intro
 - Selector
-- Archivero
-- Libro del track baseline
-- Apertura del capitulo 1
+- Mapa
+- Apertura del capitulo 1 desde el mapa
 - Entrada al gameplay
 
 Este smoke valida solo lo justo para darnos confianza:
 
 - que la escena jugable cargue
+- que el mapa cargue y exponga sus nodos jugables esperados
 - que exista `ManagerLevel`
 - que `ManagerLevel` exponga el contrato runtime minimo esperado
 - que track y corrida activa queden inicializados
 - que la escena siga viva durante los primeros frames
+- que el nivel pueda completar una corrida y dejar el estado post-completion esperado
 
 No intenta cubrir drag and drop, save/resume profundo, UI fina ni todos los tracks.
 
@@ -115,8 +112,8 @@ Si tocamos fuerte persistencia, UI o flujo interno, tiene sentido correrlos. Per
 - sin suites grandes para cada PR
 - import headless antes del smoke para estabilizar runners limpios
 - sin export web dentro del gate obligatorio
-- logs como artifact para `Technical Health` y `Gameplay Smoke`
-- un script de validacion con modos chicos: `technical`, `smoke`, `ci` y `full`
+- logs como artifact para `Gameplay Smoke`
+- un script de validacion con modos chicos: `technical`, `smoke`, `ci` y `full`, aunque hoy en CI solo lo usa `Gameplay Smoke`
 
 ## Deploy web
 
@@ -127,6 +124,10 @@ El repo mantiene el preset web `index` y la salida esperada sigue siendo `build/
 Si mas adelante se automatiza la publicacion web, conviene agregar un workflow dedicado y documentarlo aca con el path real.
 
 ## Validación local
+
+Hay una diferencia importante entre la validacion local y la CI real.
+
+Los scripts `run-godot-validation.*` siguen sirviendo para abrir el proyecto en headless y correr smoke manualmente. Pero hoy ese paso de import headless no forma parte de `Technical Health`; en CI solo corre dentro de `Gameplay Smoke`.
 
 En Windows:
 
@@ -163,7 +164,7 @@ Si queres correr la suite larga manualmente:
 ## Cómo leer un check
 
 - si falla `Docs / Tracking`, revisar si el PR actualizo docs Markdown y bitacora o changelog
-- si falla `Technical Health`, revisar estructura, tooling, parseo o carga headless
-- si falla `Gameplay Smoke`, revisar el flujo minimo Splash -> Intro -> Selector -> Archivero -> Libro -> Gameplay
+- si falla `Technical Health`, revisar estructura critica del repo o tooling de lint
+- si falla `Gameplay Smoke`, revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay
 - si hace falta mas profundidad, correr manualmente los tests especificos de `project/tests/`
 

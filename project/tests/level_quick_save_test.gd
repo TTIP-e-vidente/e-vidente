@@ -1,5 +1,7 @@
 extends SceneTree
 
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
+
 var SaveManager
 var Global
 var failed := false
@@ -112,7 +114,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 	var first_run_state: Dictionary = Global.get_partial_level_state(track_key, Global.current_level)
 	print("LEVEL QUICK SAVE TRACE: first save %s run=%d placed=%d" % [case_label, int(first_run_state.get("run_index", 0)), first_run_state.get("placed_item_ids", []).size()])
 
-	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "%s deberia escribir el save principal" % case_label)
+	_assert(FileAccess.file_exists(SaveManagerScript.SAVE_PATH), "%s deberia escribir el save principal" % case_label)
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "manual_save", "%s deberia registrarse como guardado manual" % case_label)
 	_assert(save_feedback_label.text.to_lower().contains("guardado"), "%s deberia informar que el progreso quedo guardado" % case_label)
 	_assert(save_feedback_backdrop.visible, "%s deberia mostrar el feedback dentro de una tarjeta visible" % case_label)
@@ -131,7 +133,7 @@ func _run_quick_save_case(test_case: Dictionary) -> void:
 	Global.reset_progress()
 	var resume_state: Dictionary = SaveManager.reload_from_disk_and_get_resume()
 	print("LEVEL QUICK SAVE TRACE: first reload %s context=%s level=%d" % [case_label, str(resume_state.get("context", "")), int(resume_state.get("level_number", 0))])
-	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "%s deberia mantener la reanudacion dentro del nivel" % case_label)
+	_assert(str(resume_state.get("context", "")) == SaveManagerScript.RESUME_CONTEXT_LEVEL, "%s deberia mantener la reanudacion dentro del nivel" % case_label)
 	_assert(str(resume_state.get("track_key", "")) == track_key, "%s deberia reanudar el track correcto" % case_label)
 	_assert(str(resume_state.get("scene_path", "")) == scene_path, "%s deberia reanudar en la escena correcta" % case_label)
 	_assert(int(resume_state.get("level_number", 0)) == 2, "%s deberia seguir apuntando al capitulo actual" % case_label)
@@ -189,9 +191,9 @@ func _resolve_singletons() -> void:
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
 	for relative_path in [
-		SaveManager.SAVE_PATH,
-		SaveManager.TEMP_SAVE_PATH,
-		SaveManager.BACKUP_SAVE_PATH
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH
 	]:
 		var absolute_path := ProjectSettings.globalize_path(relative_path)
 		if FileAccess.file_exists(absolute_path):
