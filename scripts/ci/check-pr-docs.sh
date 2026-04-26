@@ -33,12 +33,12 @@ fi
 
 doc_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -Ei '^(README\.md|CHANGELOG\.md|docs/.*\.md|docs-local/.*\.md|wiki/.*\.md)$' || true
+		grep -Ei '^(README\.md|CHANGELOG\.md|docs/.*\.md|wiki/.*\.md)$' || true
 )"
 
 tracking_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -Ei '^(wiki/bitacora\.md|changelog\.md|docs(-local)?/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
+		grep -Ei '^(wiki/bitacora\.md|changelog\.md|docs/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
 )"
 
 if [ -z "$doc_changes" ]; then

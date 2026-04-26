@@ -122,8 +122,6 @@ func _validate_first_question_flow() -> void:
 	)
 	if failed:
 		return
-
-	current_scene._on_jugar_nuevamente_pressed()
 	await _wait_for(MAP_SCENE, "Retorno al mapa desde pregunta")
 
 

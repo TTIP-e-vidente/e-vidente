@@ -42,10 +42,10 @@ La documentacion minima que siempre deberia existir es esta:
 
 Para el diff del PR, el gate pide:
 
-- al menos un `.md` tocado en `docs/`, `docs-local/`, `wiki/`, `README.md` o `CHANGELOG.md`
-- al menos un archivo de seguimiento tocado: `wiki/Bitacora.md`, `CHANGELOG.md` o algun `.md` equivalente con `bitacora` o `changelog` dentro de `docs/` o `docs-local/`
+- al menos un `.md` tocado en `docs/`, `wiki/`, `README.md` o `CHANGELOG.md`
+- al menos un archivo de seguimiento tocado: `wiki/Bitacora.md`, `CHANGELOG.md` o algun `.md` equivalente con `bitacora` o `changelog` dentro de `docs/`
 
-Hoy el repo usa `wiki/` y `docs-local/`, pero el check acepta varios paths para no atar la regla a una sola carpeta.
+`docs-local/` queda fuera del gate porque se usa como documentacion local del equipo y no forma parte del contenido publicado del repo en GitHub.
 
 ## `Technical Health`
 
