@@ -1,250 +1,101 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://r20wgxspx7pc"]
 
-[ext_resource type="Script" path="res://niveles/intro.gd" id="1_1l6ju"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="2_khhng"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
+[ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
+[ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
+[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
+[ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_rimye"]
+[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
 [ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
-bg_color = Color(0.984314, 0.960784, 0.905882, 0.98)
-corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
-corner_radius_bottom_left = 28
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.2)
-shadow_color = Color(0, 0, 0, 0.2)
-shadow_size = 22
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_chip"]
-bg_color = Color(0.780392, 0.839216, 0.658824, 0.75)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rimye"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_primary"]
-bg_color = Color(0.309804, 0.372549, 0.266667, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kkk1x"]
+shader = ExtResource("4_rimye")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_secondary"]
-bg_color = Color(1, 1, 1, 0.92)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_summary"]
-bg_color = Color(1, 1, 1, 0.7)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.08)
-
-[node name="Intro" type="Node2D"]
+[node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
 position = Vector2(4, 0)
 script = ExtResource("1_1l6ju")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1784597498]
 process_priority = -1
 offset_right = 1153.0
 offset_bottom = 800.0
-color = Color(0.482506, 0.830236, 0.748423, 1)
 
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
+[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=395179224]
 position = Vector2(586, 397)
-scale = Vector2(1.06083, 1.06083)
-texture = ExtResource("2_khhng")
+scale = Vector2(0.3361547, 0.3361548)
+texture = ExtResource("2_dj2xn")
 
-[node name="MenuBar" type="MenuBar" parent="."]
+[node name="Sprite2D2" type="Sprite2D" parent="ColorRect" unique_id=348476412]
+position = Vector2(567, 136)
+scale = Vector2(0.43902442, 0.4390244)
+texture = ExtResource("3_dj2xn")
+
+[node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
 offset_left = 400.0
 offset_top = 153.0
 offset_right = 772.0
 offset_bottom = 649.0
 scale = Vector2(1.14996, 1.14996)
 
-[node name="Jugar" type="Button" parent="MenuBar"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = -3.0
-offset_right = 422.0
-offset_bottom = 150.0
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("2_68fep")
-flat = true
+[node name="Jugar" type="TextureButton" parent="MenuBar" unique_id=91319419]
+editor_description = "Jugar"
+material = SubResource("ShaderMaterial_544v7")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.35200003
+anchor_bottom = 0.35200003
+offset_left = 16.695953
+offset_top = -78.93651
+offset_right = 548.6959
+offset_bottom = 119.06351
+scale = Vector2(0.48045883, 0.4908836)
+accessibility_live = 2
+texture_normal = ExtResource("2_68fep")
 
-[node name="Opciones" type="Button" parent="MenuBar"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 161.0
-offset_right = 422.0
-offset_bottom = 314.0
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("4_mji7j")
-flat = true
+[node name="Opciones" type="TextureButton" parent="MenuBar" unique_id=713939385]
+material = SubResource("ShaderMaterial_rimye")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.47500002
+anchor_bottom = 0.47500002
+offset_left = 16.695953
+offset_top = -2.5484161
+offset_right = 548.6959
+offset_bottom = 195.45157
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("4_mji7j")
 
-[node name="Salir" type="Button" parent="MenuBar"]
-layout_mode = 0
-offset_left = 7.82637
-offset_top = 311.315
-offset_right = 286.826
-offset_bottom = 464.315
-theme_override_font_sizes/font_size = 60
-icon = ExtResource("5_nvq7f")
-flat = true
+[node name="Salir" type="TextureButton" parent="MenuBar" unique_id=1519213975]
+material = SubResource("ShaderMaterial_kkk1x")
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.34300002
+anchor_bottom = 0.34300002
+offset_left = 16.522324
+offset_top = 198.58043
+offset_right = 548.52234
+offset_bottom = 396.58044
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("5_nvq7f")
 
-[node name="PlayBackdrop" type="ColorRect" parent="."]
-visible = false
-offset_right = 1153.0
-offset_bottom = 800.0
-color = Color(0.0823529, 0.0941176, 0.0862745, 0.22)
-
-[node name="PlayPanel" type="PanelContainer" parent="."]
-visible = false
-offset_left = 634.0
-offset_top = 118.0
-offset_right = 1080.0
-offset_bottom = 438.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_play_panel")
-
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 22
-
-[node name="Content" type="VBoxContainer" parent="PlayPanel/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="HeaderRow" type="HBoxContainer" parent="PlayPanel/MarginContainer/Content"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="StatusChip" type="PanelContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_play_chip")
-
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 6
-
-[node name="StatusBadge" type="Label" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.247059, 0.290196, 0.211765, 1)
-theme_override_font_sizes/font_size = 12
-text = "ULTIMA PARTIDA"
-
-[node name="Spacer" type="Control" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
-custom_minimum_size = Vector2(8, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow"]
-custom_minimum_size = Vector2(92, 38)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
-theme_override_font_sizes/font_size = 15
-theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
-text = "Cerrar"
-
-[node name="Title" type="Label" parent="PlayPanel/MarginContainer/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 30
-text = "Seguir jugando"
-
-[node name="Subtitle" type="Label" parent="PlayPanel/MarginContainer/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.84)
-theme_override_font_sizes/font_size = 15
-text = "Retoma tu ultimo guardado o entra al selector de modos."
-autowrap_mode = 3
-
-[node name="SummaryPanel" type="PanelContainer" parent="PlayPanel/MarginContainer/Content"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_play_summary")
-
-[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/SummaryPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
-
-[node name="ResumeSummary" type="Label" parent="PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 15
-text = "Ultimo punto: el selector de modos"
-autowrap_mode = 3
-
-[node name="ContinueButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_play_primary")
-theme_override_styles/hover = SubResource("StyleBoxFlat_play_primary")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_play_primary")
-theme_override_styles/focus = SubResource("StyleBoxFlat_play_primary")
-text = "Continuar ultima partida"
-
-[node name="ModeButton" type="Button" parent="PlayPanel/MarginContainer/Content"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
-theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
-text = "Ir al selector de modos"
-
-[node name="Background" type="AudioStreamPlayer2D" parent="."]
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
 stream = ExtResource("6_eoqxh")
 volume_db = -4.962
 attenuation = 2.07053
@@ -252,7 +103,3 @@ attenuation = 2.07053
 [connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
 [connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
-[connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ContinueButton" to="." method="_on_continue_pressed"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ModeButton" to="." method="_on_mode_pressed"]
-[connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]

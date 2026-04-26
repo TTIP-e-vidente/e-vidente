@@ -1,0 +1,211 @@
+[gd_scene format=3 uid="uid://p1dw52qkjytt"]
+
+[ext_resource type="Script" uid="uid://x7kmrf51ynq0" path="res://mapas/MapBoard.gd" id="1_mapboard"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_btgau"]
+[ext_resource type="PackedScene" uid="uid://ccolhcqvnrd8d" path="res://mapas/MapChapterNode.tscn" id="3_chapternode"]
+[ext_resource type="PackedScene" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
+[ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="5_path1"]
+[ext_resource type="Texture2D" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
+[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="7_title"]
+[ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
+[ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
+[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
+[ext_resource type="Shader" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
+[ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
+[ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="12_oop13"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_scroll"]
+shader = ExtResource("11_fade_shader")
+shader_parameter/fade_size = 0.15
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_content"]
+shader = ExtResource("11_fade_shader")
+shader_parameter/fade_size = 0.15
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_overlay"]
+shader = ExtResource("11_fade_shader")
+shader_parameter/fade_size = 0.1270000060325
+
+[node name="MapBoard" type="Node2D" unique_id=1733738547]
+script = ExtResource("1_mapboard")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=2084717994]
+light_mask = 524288
+visibility_layer = 524288
+offset_right = 1158.0001
+offset_bottom = 807.9999
+metadata/_edit_use_anchors_ = true
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=797879777]
+light_mask = 524288
+visibility_layer = 524288
+position = Vector2(580.1896, 412.68744)
+rotation = -3.1415927
+scale = Vector2(0.33047423, 0.33076382)
+texture = ExtResource("2_btgau")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=679278202]
+material = SubResource("ShaderMaterial_scroll")
+offset_left = 57.0
+offset_top = 145.0
+offset_right = 1070.0
+offset_bottom = 790.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
+material = SubResource("ShaderMaterial_content")
+custom_minimum_size = Vector2(0, 1800)
+layout_mode = 2
+
+[node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
+position = Vector2(514.99994, 371)
+scale = Vector2(0.43979317, 0.43780574)
+texture = ExtResource("5_path1")
+
+[node name="curva2" type="Sprite2D" parent="ScrollContainer/Contenido/curva" unique_id=1919804139]
+position = Vector2(63.666504, 1982.6145)
+rotation = -6.2831855
+scale = Vector2(0.9532122, 1.0489042)
+texture = ExtResource("6_path2")
+
+[node name="NodesContainer" type="Node2D" parent="ScrollContainer/Contenido" unique_id=102587014]
+position = Vector2(-52, -198)
+
+[node name="Receta1" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1082101743 instance=ExtResource("3_chapternode")]
+position = Vector2(1007, 314)
+scale = Vector2(0.73355484, 0.75309384)
+nivel_id = 1
+level_number = 1
+label_text = "Receta 1"
+
+[node name="Pregunta1" parent="ScrollContainer/Contenido/NodesContainer" unique_id=478850551 instance=ExtResource("4_questionnode")]
+position = Vector2(865.00006, 423)
+scale = Vector2(1.1968933, 1.1993694)
+nivel_id = 2
+question_number = 1
+question_key = "eliminar_gluten"
+question_resource_path = "res://preguntas/preguntas_recurso/eliminar_gluten.tres"
+label_text = "Pregunta 1"
+
+[node name="Receta2" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1445131880 instance=ExtResource("3_chapternode")]
+position = Vector2(657, 509)
+scale = Vector2(0.839978, 0.839978)
+nivel_id = 3
+level_number = 2
+label_text = "Receta 2"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta2" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1195057867 instance=ExtResource("4_questionnode")]
+position = Vector2(424, 467)
+scale = Vector2(1.2851127, 1.3313757)
+nivel_id = 4
+question_number = 2
+question_key = "enfermedad_autoinmune"
+question_resource_path = "res://preguntas/preguntas_recurso/enfermedad_autoinmune.tres"
+label_text = "Pregunta 2"
+
+[node name="Receta3" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1146155867 instance=ExtResource("3_chapternode")]
+position = Vector2(189, 491)
+scale = Vector2(0.80511767, 0.83410126)
+nivel_id = 5
+level_number = 3
+label_text = "Receta 3"
+icon_texture = ExtResource("10_icon4")
+
+[node name="Pregunta3" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1380028840 instance=ExtResource("4_questionnode")]
+position = Vector2(122.00001, 649)
+scale = Vector2(1.1569129, 1.1593063)
+nivel_id = 6
+question_number = 3
+question_key = "estudio_celiaquia"
+question_resource_path = "res://preguntas/preguntas_recurso/estudio_celiaquia.tres"
+label_text = "Pregunta 3"
+icon_texture = ExtResource("10_m2v86")
+
+[node name="Receta4" parent="ScrollContainer/Contenido/NodesContainer" unique_id=279800297 instance=ExtResource("3_chapternode")]
+position = Vector2(281.00003, 786.00006)
+scale = Vector2(0.93355364, 0.9584198)
+nivel_id = 7
+level_number = 4
+label_text = "Receta 4"
+icon_texture = ExtResource("11_oop13")
+
+[node name="Pregunta4" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1941662804 instance=ExtResource("4_questionnode")]
+position = Vector2(308.00012, 998)
+scale = Vector2(1.4769166, 1.4799719)
+nivel_id = 8
+question_number = 4
+question_key = "gluten_arroz"
+question_resource_path = "res://preguntas/preguntas_recurso/gluten_arroz.tres"
+label_text = "Pregunta 4"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Receta5" parent="ScrollContainer/Contenido/NodesContainer" unique_id=2143944951 instance=ExtResource("3_chapternode")]
+position = Vector2(506, 984)
+scale = Vector2(0.9199829, 0.9199829)
+nivel_id = 9
+level_number = 5
+label_text = "Receta 5"
+
+[node name="Pregunta5" parent="ScrollContainer/Contenido/NodesContainer" unique_id=498746782 instance=ExtResource("4_questionnode")]
+position = Vector2(727.0001, 1033)
+scale = Vector2(1.4451176, 1.4971406)
+nivel_id = 10
+question_number = 5
+question_key = "limite_ingesta"
+question_resource_path = "res://preguntas/preguntas_recurso/limite_ingesta.tres"
+label_text = "Pregunta 5"
+
+[node name="Receta6" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1478396672 instance=ExtResource("3_chapternode")]
+position = Vector2(828, 1301)
+scale = Vector2(0.8851177, 0.9169812)
+nivel_id = 11
+level_number = 6
+label_text = "Receta 6"
+icon_texture = ExtResource("10_icon4")
+
+[node name="Pregunta6" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1392498150 instance=ExtResource("4_questionnode")]
+position = Vector2(1008.00006, 1496)
+scale = Vector2(1.1569177, 1.159311)
+nivel_id = 12
+question_number = 6
+question_key = "simbolo_tacc"
+question_resource_path = "res://preguntas/preguntas_recurso/simbolo_tacc.tres"
+label_text = "Pregunta 6"
+icon_texture = ExtResource("12_oop13")
+
+[node name="Pregunta7" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1795411104 instance=ExtResource("4_questionnode")]
+position = Vector2(700.00006, 1547)
+scale = Vector2(1.4535549, 1.4922718)
+nivel_id = 13
+question_number = 7
+question_key = "trigo_sarraceno"
+question_resource_path = "res://preguntas/preguntas_recurso/trigo_sarraceno.tres"
+label_text = "Pregunta 7"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta8" parent="ScrollContainer/Contenido/NodesContainer" unique_id=970675717 instance=ExtResource("4_questionnode")]
+position = Vector2(421.00012, 1508)
+scale = Vector2(1.3241454, 1.3179823)
+nivel_id = 14
+question_number = 8
+question_key = "gluten_maiz"
+question_resource_path = "res://preguntas/preguntas_recurso/gluten_maiz.tres"
+label_text = "Pregunta 8"
+
+[node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
+position = Vector2(591.99994, 142)
+scale = Vector2(0.52793294, 0.52793294)
+texture = ExtResource("7_title")
+
+[node name="FadeOverlay" type="TextureRect" parent="." unique_id=1614004936]
+z_index = 10
+material = SubResource("ShaderMaterial_overlay")
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

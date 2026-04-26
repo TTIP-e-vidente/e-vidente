@@ -1,188 +1,458 @@
 extends Node
 class_name ManagerLevel
 
-const LevelMechanicTypes := preload("res://niveles/mechanics/LevelMechanicTypes.gd")
-const PlateSortMechanicControllerScript := preload("res://niveles/mechanics/PlateSortMechanicController.gd")
+const GameChapterAssetCatalogScript := preload(
+	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
+)
+const GameTrackItemPoolCatalogScript := preload(
+	"res://niveles/content/catalog/GameTrackItemPoolCatalog.gd"
+)
+const LevelResourceScript := preload("res://resources/level_resource.gd")
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
-@export var level_resource : LevelResource
+const PLATE_SORT_MECHANIC_TYPE := "plate_sort"
+const MAX_PLATE_COLUMNS := 3
+const PLATE_ITEM_COLUMN_SPACING := 78.0
+const PLATE_ITEM_ROW_SPACING := 48.0
+const PLATE_ITEM_VERTICAL_OFFSET := -12.0
+const PARTIAL_SAVE_UNIT_SINGULAR := "alimento correcto en el plato"
+const PARTIAL_SAVE_UNIT_PLURAL := "alimentos correctos en el plato"
 
-@onready var plato: Plato = %Plato
+@export var level_resource: Resource = null
+@export var level_resource_path := ""
 
-var posicion:Vector2
-var lista_items = []
-@onready var condition: Sprite2D = $"../Globo texto/Condition"
-@onready var meal: Sprite2D = $"../Globo texto/Meal"
-@onready var ensenanza: Sprite2D = $"../Ensenanza"
-var current_track_key := ""
-var current_run_index := 1
-var current_run_data: Dictionary = {}
-var current_mechanic_type := ""
-var _mechanic_controllers: Dictionary = {}
-var _active_mechanic_controller = null
+@onready var plato = %Plato
+
+var condition_sprite: Sprite2D = null
+var meal_sprite: Sprite2D = null
+var teaching_sprite: Sprite2D = null
+var level_items: Array = []
+var active_track_key: String = ""
+var active_run_index: int = 1
+var active_run_data: Dictionary = {}
+var active_mechanic_type: String = ""
+var active_positive_item_count: int = 0
+var active_negative_item_count: int = 0
+var active_category_code: String = ""
 
 
-func _ready() -> void:
-	_register_mechanics()
-
-func setup(nivel):
-	if not _ensure_level_references():
+func start_level_session(track_key: String, level_scene: Node) -> void:
+	if not _connect_scene_nodes(level_scene):
 		return
-	current_track_key = ""
-	if nivel != null and nivel.has_method("_get_resume_track_key"):
-		current_track_key = str(nivel._get_resume_track_key()).strip_edges()
-	var saved_level_state := Global.get_partial_level_state(current_track_key, Global.current_level)
-	current_run_index = _resolve_saved_run_index(saved_level_state)
+
+	active_track_key = track_key.strip_edges()
+	_ensure_level_resource_loaded()
+
+	var saved_level_state: Dictionary = Global.get_partial_level_state(
+		active_track_key, Global.current_level
+	)
+	active_run_index = clampi(
+		int(saved_level_state.get("run_index", 1)),
+		1,
+		get_total_runs()
+	)
 	_load_current_run(saved_level_state)
 
 
 func advance_to_next_run() -> bool:
-	if current_run_index >= get_total_runs():
+	if active_run_index >= get_total_runs():
 		return false
-	current_run_index += 1
-	_load_current_run({Global.PARTIAL_LEVEL_RUN_INDEX_KEY: current_run_index})
+	active_run_index += 1
+	_load_current_run({"run_index": active_run_index})
 	return true
 
 
 func get_current_run_index() -> int:
-	return current_run_index
+	return active_run_index
 
 
 func get_total_runs() -> int:
-	return max(1, Global.get_chapter_run_count(current_track_key, Global.current_level))
-	
+	return max(1, Global.get_chapter_run_count(active_track_key, Global.current_level))
 
-func build_partial_save_state() -> Dictionary:
-	if _active_mechanic_controller == null:
+
+func set_runtime_items_interactable(enabled: bool) -> void:
+	for runtime_item in level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+		if runtime_item.has_method("set_interaction_enabled"):
+			runtime_item.set_interaction_enabled(enabled)
+
+
+# Solo arma y devuelve el dict de estado parcial. No guarda nada.
+func build_partial_level_state() -> Dictionary:
+	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
 		return {}
-	var partial_state: Dictionary = _active_mechanic_controller.build_partial_state()
-	if partial_state.is_empty():
+
+	var saved_item_entries: Array = []
+	var placed_positive_item_ids: Array = []
+
+	for runtime_item in level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+
+		var item_path: String = str(runtime_item.item_resource_path).strip_edges()
+		var instance_id: String = str(runtime_item.save_instance_id).strip_edges()
+		if item_path.is_empty() or instance_id.is_empty():
+			continue
+
+		var saved_item_entry: Dictionary = {
+			"item_path": item_path,
+			"instance_id": instance_id,
+			"is_positive": bool(runtime_item.esPositivo)
+		}
+		saved_item_entries.append(saved_item_entry)
+
+		if bool(runtime_item.esPositivo) and plato.has_positive_item(runtime_item):
+			placed_positive_item_ids.append(instance_id)
+
+	if saved_item_entries.is_empty() and active_run_index <= 1:
 		return {}
-	partial_state[Global.PARTIAL_LEVEL_RUN_INDEX_KEY] = current_run_index
-	partial_state[Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY] = str(partial_state.get(Global.PARTIAL_LEVEL_MECHANIC_TYPE_KEY, current_mechanic_type)).strip_edges()
-	return partial_state
 
-
-func store_partial_level_state(track_key: String) -> Dictionary:
-	var partial_state: Dictionary = build_partial_save_state()
-	Global.set_partial_level_state(track_key, Global.current_level, partial_state)
-	var summary: Dictionary = {
-		"has_partial_state": not partial_state.is_empty(),
-		"run_index": current_run_index,
-		"run_count": get_total_runs(),
-		"mechanic_type": current_mechanic_type
+	var mechanic_state: Dictionary = {
+		"items": saved_item_entries,
+		"placed_item_ids": placed_positive_item_ids
 	}
-	if _active_mechanic_controller != null:
-		summary.merge(_active_mechanic_controller.build_partial_summary(partial_state), true)
-	return summary
+	return {
+		"run_index": active_run_index,
+		"mechanic_type": active_mechanic_type,
+		"mechanic_state": mechanic_state
+	}
+
+
+func store_partial_level_state(track_key: String) -> int:
+	var partial_level_state: Dictionary = build_partial_level_state()
+	Global.set_partial_level_state(
+		track_key,
+		Global.current_level,
+		partial_level_state
+	)
+	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
+		return 0
+	return get_positive_items_in_plate_count()
+
+
+func format_partial_save_progress(saved_positive_count: int) -> String:
+	if saved_positive_count <= 0:
+		return "Capitulo %d listo para retomar" % Global.current_level
+	var unit: String = PARTIAL_SAVE_UNIT_SINGULAR
+	if saved_positive_count != 1:
+		unit = PARTIAL_SAVE_UNIT_PLURAL
+	return "%d %s" % [saved_positive_count, unit]
+
+
+func get_current_run_save_label() -> String:
+	var total_runs: int = get_total_runs()
+	if total_runs <= 1:
+		return ""
+	return "Corrida %d de %d" % [active_run_index, total_runs]
 
 
 func get_positive_items_in_plate_count() -> int:
-	if _active_mechanic_controller == null:
+	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE or not is_instance_valid(plato):
 		return 0
-	return _active_mechanic_controller.get_progress_count()
+	return plato.cantAlimentosPos.size()
 
 
-func _layout_items() -> void:
-	if (level_resource.cantidadNegativos + level_resource.cantidadPositivos) < 5 :
-		posicion = Vector2(420,680) 
-	else:
-		posicion = Vector2(230,680)
-	for i in lista_items:
-		i.set_home_position(posicion)
-		posicion.x += 120
-	
-func _load_current_run(saved_level_state: Dictionary) -> void:
-	_clear_current_mechanic_state()
-	current_run_data = Global.get_chapter_run_definition(current_track_key, Global.current_level, current_run_index)
-	if current_run_data.is_empty():
-		push_error("ManagerLevel no encontro datos para %s capitulo %d corrida %d." % [current_track_key, Global.current_level, current_run_index])
-		return
-	if not _apply_current_run_data():
-		return
-	_active_mechanic_controller.restore_or_start(saved_level_state)
-
-
-func _apply_current_run_data() -> bool:
-	level_resource.comida = Global.resolve_texture(current_run_data.get("meal_texture_path", ""))
-	level_resource.condicion = Global.resolve_texture(current_run_data.get("condition_texture_path", ""))
-	level_resource.ensenanza = Global.resolve_texture(current_run_data.get("teaching_texture_path", ""))
-	current_mechanic_type = _resolve_run_mechanic_type(current_run_data)
-	_active_mechanic_controller = _resolve_mechanic_controller(current_mechanic_type)
-	if _active_mechanic_controller == null:
-		push_error("ManagerLevel no encontro controlador para la mecanica '%s'." % current_mechanic_type)
+func has_completed_current_run() -> bool:
+	if not is_instance_valid(plato):
 		return false
-	_active_mechanic_controller.configure_run(current_run_data, level_resource)
-	return true
+	if level_resource == null:
+		return false
+	return (
+		int(level_resource.cantidadPositivos) == get_positive_items_in_plate_count()
+		and plato.cantAlimentosNeg.is_empty()
+	)
 
 
-func _resolve_saved_run_index(saved_level_state: Dictionary) -> int:
-	return clampi(int(saved_level_state.get(Global.PARTIAL_LEVEL_RUN_INDEX_KEY, 1)), 1, get_total_runs())
+func filter_items_by_category(items: Array, category: String) -> Array:
+	if category.strip_edges().is_empty():
+		return items.duplicate()
+	var wanted: String = GameTrackCatalog.normalize_category_code(category)
+	var result: Array = []
+	for item in items:
+		if GameTrackCatalog.categories_match(str(item.categoria), wanted):
+			result.append(item)
+	return result
 
 
-func _resolve_run_mechanic_type(run_data: Dictionary) -> String:
-	var mechanic_type: String = str(run_data.get("mechanic_type", LevelMechanicTypes.PLATE_SORT)).strip_edges()
-	if mechanic_type.is_empty():
-		return LevelMechanicTypes.PLATE_SORT
-	return mechanic_type
-
-
-func _register_mechanics() -> void:
-	_mechanic_controllers = {
-		LevelMechanicTypes.PLATE_SORT: PlateSortMechanicControllerScript.new(self)
-	}
-
-
-func _resolve_mechanic_controller(mechanic_type: String):
-	if _mechanic_controllers.is_empty():
-		_register_mechanics()
-	var clean_mechanic_type: String = mechanic_type.strip_edges()
-	if _mechanic_controllers.has(clean_mechanic_type):
-		return _mechanic_controllers[clean_mechanic_type]
-	return null
-
-
-func _clear_current_mechanic_state() -> void:
-	if _active_mechanic_controller != null:
-		_active_mechanic_controller.clear_runtime_state()
-		return
-	_clear_spawned_items()
-
-
-func _instantiate_level_item(level_item: LevelItem, instance_id: String, is_positive: bool):
-	var new_item = level_item.escena.instantiate()
-	if new_item == null:
+func spawn_level_item(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
+	var level_item_instance: Node = level_item.escena.instantiate()
+	if level_item_instance == null:
 		return null
-	new_item.setup(level_item, plato, is_positive, instance_id)
-	add_child(new_item)
-	lista_items.append(new_item)
-	return new_item
+	level_item_instance.setup(level_item, plato, is_positive, instance_id)
+	add_child(level_item_instance)
+	level_items.append(level_item_instance)
+	return level_item_instance
 
-func _clear_spawned_items() -> void:
-	for item in lista_items:
+
+func clear_runtime_items() -> void:
+	for item in level_items:
 		if is_instance_valid(item):
 			item.queue_free()
-	lista_items = []
+	level_items.clear()
+	if not is_instance_valid(plato):
+		return
 	plato.elementos.clear()
 	plato.cantAlimentosPos.clear()
 	plato.cantAlimentosNeg.clear()
 
 
-func _ensure_level_references() -> bool:
-	var level_root := get_parent()
-	if level_root == null:
-		push_error("ManagerLevel no encontro la escena de nivel contenedora.")
-		return false
+func layout_runtime_items() -> void:
+	var next_item_position := Vector2(230, 680)
+	var total_items: int = (
+		level_resource.cantidadNegativos + level_resource.cantidadPositivos
+	)
+	if total_items < 5:
+		next_item_position = Vector2(420, 680)
+	for item in level_items:
+		item.set_home_position(next_item_position)
+		next_item_position.x += 120
+
+
+
+func _load_current_run(saved_level_state: Dictionary) -> void:
+	clear_runtime_items()
+
+	var level_number: int = Global.current_level
+	active_run_data = Global.get_chapter_run_definition(
+		active_track_key, level_number, active_run_index
+	)
+	if active_run_data.is_empty():
+		active_run_data = {}
+		active_mechanic_type = ""
+		_clear_active_run_payload()
+		push_error(
+			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
+			% [active_track_key, level_number, active_run_index]
+		)
+		return
+
+	active_mechanic_type = str(active_run_data.get("mechanic_type", "")).strip_edges()
+	if active_mechanic_type.is_empty():
+		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
+		_clear_active_run_payload()
+		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
+		return
+
+	_apply_active_run_payload()
+	_setup_level_resource()
+
+	# Extraer items guardados (legacy: pueden estar anidados en mechanic_state o en la raíz)
+	var saved_mechanic_state: Dictionary = saved_level_state
+	if saved_level_state.get("mechanic_state", null) is Dictionary:
+		var mechanic_dict: Dictionary = saved_level_state["mechanic_state"]
+		if not mechanic_dict.is_empty():
+			saved_mechanic_state = mechanic_dict
+
+	var saved_items: Array = []
+	if saved_mechanic_state.get("items", null) is Array:
+		saved_items = saved_mechanic_state["items"]
+
+	if _try_restore_saved_items(saved_items):
+		layout_runtime_items()
+		_place_saved_items_on_plate(saved_mechanic_state)
+		return
+
+	_spawn_fresh_items()
+	level_items.shuffle()
+	layout_runtime_items()
+
+
+func _apply_active_run_payload() -> void:
+	var run_payload: Dictionary = {}
+	if active_run_data.get("mechanic_payload", null) is Dictionary:
+		run_payload = active_run_data["mechanic_payload"]
+
+	if not run_payload.is_empty():
+		active_negative_item_count = int(run_payload.get("negative_count", 0))
+		active_positive_item_count = int(run_payload.get("positive_count", 0))
+		active_category_code = str(run_payload.get("category", "")).strip_edges()
+		return
+
+	active_negative_item_count = int(active_run_data.get("negative_count", 0))
+	active_positive_item_count = int(active_run_data.get("positive_count", 0))
+	active_category_code = str(active_run_data.get("category", "")).strip_edges()
+
+
+func _setup_level_resource() -> void:
+	level_resource.mechanic_type = active_mechanic_type
+	level_resource.mechanic_payload = _build_active_run_payload()
+	level_resource.cantidadNegativos = active_negative_item_count
+	level_resource.cantidadPositivos = active_positive_item_count
+	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
+		active_run_data.get("meal_texture_path", "")
+	)
+	level_resource.condicion = GameChapterAssetCatalogScript.resolve_texture(
+		active_run_data.get("condition_texture_path", "")
+	)
+	level_resource.ensenanza = GameChapterAssetCatalogScript.resolve_texture(
+		active_run_data.get("teaching_texture_path", "")
+	)
+	meal_sprite.texture = level_resource.comida
+	condition_sprite.texture = level_resource.condicion
+	teaching_sprite.texture = level_resource.ensenanza
+
+
+func _connect_scene_nodes(level_scene: Node) -> bool:
 	if not is_instance_valid(plato):
-		plato = level_root.get_node_or_null("Plato") as Plato
-	if not is_instance_valid(meal):
-		meal = level_root.get_node_or_null("Globo texto/Meal") as Sprite2D
-	if not is_instance_valid(condition):
-		condition = level_root.get_node_or_null("Globo texto/Condition") as Sprite2D
-	if not is_instance_valid(ensenanza):
-		ensenanza = level_root.get_node_or_null("Ensenanza") as Sprite2D
-	if not is_instance_valid(plato) or not is_instance_valid(meal) or not is_instance_valid(condition) or not is_instance_valid(ensenanza):
-		push_error("ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual.")
+		plato = level_scene.get_node_or_null("Plato")
+	meal_sprite = level_scene.get_node_or_null("Globo texto/Meal") as Sprite2D
+	condition_sprite = level_scene.get_node_or_null("Globo texto/Condition") as Sprite2D
+	teaching_sprite = level_scene.get_node_or_null("Ensenanza") as Sprite2D
+
+	var all_connected := (
+		is_instance_valid(plato)
+		and is_instance_valid(meal_sprite)
+		and is_instance_valid(condition_sprite)
+		and is_instance_valid(teaching_sprite)
+	)
+	if not all_connected:
+		push_error(
+			"ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual."
+		)
+	return all_connected
+
+
+func _spawn_fresh_items() -> void:
+	var item_pools: Dictionary = GameTrackItemPoolCatalogScript.build_item_pool_for_track(
+		active_track_key,
+		level_resource.itemsPositivos,
+		level_resource.itemsNegativos
+	)
+
+	var positive_items: Array = filter_items_by_category(
+		item_pools.get("positive_items", []),
+		active_category_code
+	)
+	positive_items.shuffle()
+	for item_index in range(active_positive_item_count):
+		if positive_items.is_empty():
+			break
+		var level_item = positive_items.pop_front()
+		if level_item == null:
+			continue
+		spawn_level_item(level_item, "positive_%d" % item_index, true)
+
+	var negative_items: Array = filter_items_by_category(
+		item_pools.get("negative_items", []),
+		active_category_code
+	)
+	negative_items.shuffle()
+	for item_index in range(active_negative_item_count):
+		if negative_items.is_empty():
+			break
+		var level_item = negative_items.pop_front()
+		if level_item == null:
+			continue
+		spawn_level_item(level_item, "negative_%d" % item_index, false)
+
+
+func _try_restore_saved_items(saved_item_entries: Array) -> bool:
+	if saved_item_entries.is_empty():
 		return false
-	return true
+
+	for raw_saved_item in saved_item_entries:
+		if not _spawn_saved_item(raw_saved_item):
+			clear_runtime_items()
+			return false
+
+	return not level_items.is_empty()
 
 
+func _place_saved_items_on_plate(saved_mechanic_state: Dictionary) -> void:
+	var raw_saved_positive_item_ids: Variant = saved_mechanic_state.get("placed_item_ids", [])
+	if not raw_saved_positive_item_ids is Array:
+		return
+
+	var runtime_positive_items: Array = []
+	for raw_item_id in raw_saved_positive_item_ids:
+		var instance_id: String = str(raw_item_id).strip_edges()
+		if instance_id.is_empty():
+			continue
+
+		var runtime_item = _find_runtime_item_by_instance_id(instance_id)
+		if runtime_item == null or not runtime_item.esPositivo:
+			continue
+
+		runtime_positive_items.append(runtime_item)
+
+	for item_index in range(runtime_positive_items.size()):
+		var runtime_item = runtime_positive_items[item_index]
+		runtime_item.restore_to_plate(
+			_get_plate_position(item_index, runtime_positive_items.size())
+		)
+		plato.restore_positive_item(runtime_item)
+
+
+func _spawn_saved_item(raw_saved_item: Variant) -> bool:
+	if not raw_saved_item is Dictionary:
+		return false
+
+	var saved_item: Dictionary = raw_saved_item
+	var item_path: String = str(saved_item.get("item_path", "")).strip_edges()
+	var instance_id: String = str(saved_item.get("instance_id", "")).strip_edges()
+	if item_path.is_empty() or instance_id.is_empty():
+		return false
+
+	var level_item = load(item_path)
+	if level_item == null:
+		return false
+
+	var is_positive: bool = bool(saved_item.get("is_positive", false))
+	return spawn_level_item(level_item, instance_id, is_positive) != null
+
+
+func _find_runtime_item_by_instance_id(instance_id: String) -> Node:
+	for runtime_item in level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+		if str(runtime_item.save_instance_id) == instance_id:
+			return runtime_item
+	return null
+
+
+func _get_plate_position(index: int, total_items: int) -> Vector2:
+	var columns: int = clampi(total_items, 1, MAX_PLATE_COLUMNS)
+	var row: int = floori(float(index) / float(columns))
+	var column: int = index % columns
+	var horizontal_origin: float = float(columns - 1) / 2.0
+	var offset: Vector2 = Vector2(
+		(float(column) - horizontal_origin) * PLATE_ITEM_COLUMN_SPACING,
+		float(row) * PLATE_ITEM_ROW_SPACING + PLATE_ITEM_VERTICAL_OFFSET
+	)
+	return plato.global_position + offset
+
+
+func _build_active_run_payload() -> Dictionary:
+	return {
+		"negative_count": active_negative_item_count,
+		"positive_count": active_positive_item_count,
+		"category": active_category_code
+	}
+
+
+func _clear_active_run_payload() -> void:
+	active_positive_item_count = 0
+	active_negative_item_count = 0
+	active_category_code = ""
+
+
+func _ensure_level_resource_loaded() -> void:
+	if level_resource is Resource:
+		return
+
+	var resolved_resource_path: String = level_resource_path.strip_edges()
+	if resolved_resource_path.is_empty():
+		level_resource = LevelResourceScript.new()
+		return
+
+	var loaded_level_resource: Variant = load(resolved_resource_path)
+	if loaded_level_resource is Resource:
+		level_resource = loaded_level_resource
+		return
+
+	push_error(
+		"ManagerLevel no pudo cargar level_resource en %s." % resolved_resource_path
+	)
+	level_resource = LevelResourceScript.new()

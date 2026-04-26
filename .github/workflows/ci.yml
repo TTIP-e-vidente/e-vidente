@@ -1,35 +1,53 @@
-name: CI
-run-name: "${{ github.event_name == 'push' && format('Commit {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && format('Manual {0} + web export', github.ref_name)) || format('Manual {0}', github.ref_name) }}"
+name: Technical Health
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual technical {0}', github.ref_name) || format('Technical {0}', github.ref_name) }}"
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - dev
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
-    inputs:
-      run_web_export:
-        description: "Run optional Web Export build"
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
-  group: godot-${{ github.workflow }}-${{ github.ref }}
+  group: technical-health-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  branch-validation:
-    name: "${{ github.event_name == 'push' && 'Commit' || github.event_name == 'schedule' && 'Nightly' || (inputs.run_web_export && 'Manual + web export') || 'Manual' }}"
-    uses: ./.github/workflows/ci-shared.yml
-    with:
-      trigger_kind: ${{ github.event_name }}
-      ref_name: ${{ github.ref_name }}
-      before_sha: ${{ github.event.before || '' }}
-      head_sha: ${{ github.sha }}
-      run_web_export: ${{ github.event_name == 'workflow_dispatch' && inputs.run_web_export || false }}
+  structure:
+    name: Structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check critical directories and files
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-structure-guardrails.sh
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node when package.json exists
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run ESLint if configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/ci/check-lint-guardrails.sh

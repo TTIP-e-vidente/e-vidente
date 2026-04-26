@@ -1,11 +1,8 @@
-[gd_resource type="Resource" script_class="LevelResource" load_steps=90 format=3]
+[gd_resource type="Resource" script_class="LevelResource" load_steps=87 format=3]
 
 [ext_resource type="Resource" path="res://items/fideos.tres" id="1_clon8"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/almuerzo.png" id="1_hjtvf"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/prepara-celiaquia.png" id="2_iu4pu"]
 [ext_resource type="Resource" path="res://items/medialuna.tres" id="2_wjfco"]
 [ext_resource type="Resource" path="res://items/pan.tres" id="3_6h7ao"]
-[ext_resource type="Texture2D" path="res://assets-sistema/ensenanza/ensenanza-celiaquia-1.png" id="3_xeip7"]
 [ext_resource type="Resource" path="res://items/raviol.tres" id="4_ujo02"]
 [ext_resource type="Resource" path="res://items/alfajor-chocolate-ddl.tres" id="6_aooi5"]
 [ext_resource type="Resource" path="res://items/arroz.tres" id="6_axbds"]
@@ -96,6 +93,3 @@ itemsPositivos = Array[Resource("res://resources/level_item.gd")]([ExtResource("
 itemsNegativos = Array[Resource("res://resources/level_item.gd")]([ExtResource("1_clon8"), ExtResource("2_wjfco"), ExtResource("3_6h7ao"), ExtResource("4_ujo02"), ExtResource("6_aooi5"), ExtResource("7_ne4on"), ExtResource("8_3ieqx"), ExtResource("9_wpyxg"), ExtResource("10_1xia4"), ExtResource("11_udoht"), ExtResource("12_5rj1r"), ExtResource("13_lg2g4"), ExtResource("14_6hw7b"), ExtResource("15_nnvb3"), ExtResource("16_01b4o"), ExtResource("17_jv2jv"), ExtResource("18_38gob"), ExtResource("19_efeen"), ExtResource("20_14rjx"), ExtResource("21_hg2v1"), ExtResource("22_14vrf"), ExtResource("23_xx814"), ExtResource("24_wednn"), ExtResource("25_846oq"), ExtResource("26_ywsta"), ExtResource("27_gfnoj")])
 cantidadPositivos = 2
 cantidadNegativos = 2
-comida = ExtResource("1_hjtvf")
-condicion = ExtResource("2_iu4pu")
-ensenanza = ExtResource("3_xeip7")

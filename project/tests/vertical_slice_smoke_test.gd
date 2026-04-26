@@ -1,0 +1,234 @@
+extends SceneTree
+
+const GameChapterAssetCatalog := preload(
+	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
+)
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
+
+const MAP_SCENE := "res://mapas/MapScene.tscn"
+const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
+
+var failed := false
+
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	await process_frame
+
+	var global_state = root.get_node_or_null("/root/Global")
+	var save_manager = root.get_node_or_null("/root/SaveManager")
+	_check(global_state != null, "Autoload Global no encontrado")
+	_check(save_manager != null, "Autoload SaveManager no encontrado")
+	if failed:
+		await _quit()
+		return
+
+	_reset_test_state(global_state, save_manager)
+	await process_frame
+
+
+	await _go_to("res://interface/evidente.tscn", "Splash")
+	await _call_and_expect("_on_go_pressed", "res://niveles/intro.tscn", "Intro")
+	await _call_and_expect("_on_start_pressed", "res://niveles/selector.tscn", "Selector")
+	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
+	if not failed:
+		var nodes_container := current_scene.call("get_nodes_container") as Node2D
+		_check(nodes_container != null, "El mapa deberia exponer get_nodes_container")
+		if nodes_container != null:
+			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
+
+	if not failed:
+		await _call_and_expect("_on_node_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
+
+
+	if not failed:
+		_check_gameplay_scene(global_state)
+
+
+	if not failed:
+		for i in 3:
+			await process_frame
+		_check(is_instance_valid(current_scene), "La escena crasheo en los primeros frames")
+
+
+	_reset_test_state(global_state, save_manager)
+	await _quit()
+
+
+func _reset_test_state(global_state, save_manager) -> void:
+	global_state.reset_progress()
+	Item_level.is_dragging = null
+	_delete_save_files()
+	save_manager.load_data()
+
+
+func _check_gameplay_scene(global) -> void:
+	var level_scene := current_scene
+	var ml = current_scene.get_node_or_null("ManagerLevel")
+	_check(ml != null, "Falta nodo ManagerLevel")
+	_check(current_scene.get_node_or_null("Plato") != null, "Falta nodo Plato")
+	_check(current_scene.get_node_or_null("Globo texto/Meal") != null, "Falta nodo Meal")
+	_check(current_scene.get_node_or_null("Globo texto/Condition") != null, "Falta nodo Condition")
+	if ml == null:
+		return
+
+	_check(ml.has_method("get_current_run_index"), "ManagerLevel sin get_current_run_index")
+	_check(ml.has_method("get_total_runs"), "ManagerLevel sin get_total_runs")
+	if failed:
+		return
+
+	_check(str(ml.active_track_key) == "celiaquia", "Track deberia ser celiaquia")
+	_check(
+		ml.active_run_data is Dictionary and not ml.active_run_data.is_empty(),
+		"Sin datos de corrida"
+	)
+	_check(ml.get_current_run_index() == 1, "Deberia ser la primera corrida")
+	_check(ml.get_total_runs() >= 1, "Deberia haber al menos una corrida")
+	_check(global.get_current_level_number() == 1, "Global deberia estar en capitulo 1")
+	_check(
+		level_scene.has_method("complete_current_run"),
+		"El nivel deberia exponer complete_current_run"
+	)
+	_check(level_scene.has_method("is_run_completed"), "El nivel deberia exponer is_run_completed")
+	if failed:
+		return
+
+	level_scene.complete_current_run()
+	await process_frame
+	await process_frame
+	_check_completed_gameplay_state(level_scene, ml)
+
+
+func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
+	var next_button := level_scene.get_node_or_null("Adelante") as Button
+	var back_button := level_scene.get_node_or_null("Atrás") as Button
+	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
+	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
+	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
+
+	_check(level_scene.is_run_completed(), "El nivel deberia quedar marcado como completado")
+	_check(
+		next_button != null and not next_button.disabled,
+		"La flecha siguiente deberia quedar habilitada"
+	)
+	_check(
+		back_button != null and back_button.disabled,
+		"El boton atras deberia quedar deshabilitado"
+	)
+	_check(teaching != null and teaching.visible, "La ensenanza final deberia quedar visible")
+	_check(
+		lupa != null and not lupa.monitoring,
+		"La lupa deberia dejar de monitorear al terminar el nivel"
+	)
+	_check(
+		title != null and title.material is ShaderMaterial,
+		"La escena deberia entrar en blanco y negro al completarse"
+	)
+	_check(
+		next_button != null and next_button.material == null,
+		"La flecha siguiente no deberia entrar en blanco y negro"
+	)
+	if failed:
+		return
+
+	var checked_items := 0
+	for runtime_item in manager_level.level_items:
+		if not is_instance_valid(runtime_item):
+			continue
+		checked_items += 1
+		_check(
+			runtime_item.has_method("is_interaction_enabled"),
+			"Los items runtime deberian exponer su estado de interaccion"
+		)
+		_check(
+			not runtime_item.is_interaction_enabled(),
+			"Los alimentos deberian quedar deshabilitados al completar el nivel"
+		)
+		var sprite := runtime_item.get_node_or_null("Sprite2D") as Sprite2D
+		_check(
+			sprite != null and sprite.material is ShaderMaterial,
+			"Los alimentos deberian verse en blanco y negro al completar el nivel"
+		)
+		if failed:
+			return
+
+	_check(
+		checked_items > 0,
+		"El nivel deberia exponer alimentos runtime para validar el bloqueo post-final"
+	)
+
+
+func _go_to(scene_path: String, label: String) -> void:
+	if failed:
+		return
+	_check(change_scene_to_file(scene_path) == OK, "No se pudo abrir %s" % label)
+	if not failed:
+		await _wait_for(scene_path, label)
+
+
+func _call_and_expect(
+	method: String, expected_scene: String, label: String, args: Array = []
+) -> void:
+	if failed:
+		return
+	_check(current_scene != null, "No hay escena antes de %s" % label)
+	_check(
+		current_scene != null and current_scene.has_method(method),
+		"%s no tiene metodo %s" % [label, method]
+	)
+	if failed:
+		return
+	current_scene.callv(method, args)
+	await _wait_for(expected_scene, label)
+
+
+func _wait_for(expected_path: String, label: String) -> void:
+	for i in 60:
+		await process_frame
+		if current_scene != null and current_scene.scene_file_path == expected_path:
+			return
+	_check(false, "No se llego a %s (%s)" % [label, expected_path])
+
+
+func _delete_save_files() -> void:
+	for path in [
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH
+	]:
+		var abs_path := ProjectSettings.globalize_path(path)
+		if FileAccess.file_exists(abs_path):
+			DirAccess.remove_absolute(abs_path)
+
+
+func _quit() -> void:
+	_stop_audio()
+	if is_instance_valid(current_scene):
+		var scene = current_scene
+		current_scene = null
+		scene.free()
+	GameChapterAssetCatalog.clear_texture_cache()
+	await process_frame
+	await process_frame
+	quit(1 if failed else 0)
+
+
+func _stop_audio() -> void:
+	for player in root.find_children("*", "AudioStreamPlayer", true, false):
+		if player is AudioStreamPlayer:
+			player.stop()
+			player.stream = null
+	for player in root.find_children("*", "AudioStreamPlayer2D", true, false):
+		if player is AudioStreamPlayer2D:
+			player.stop()
+			player.stream = null
+
+
+func _check(condition: bool, message: String) -> void:
+	if condition:
+		return
+	failed = true
+	printerr("SMOKE TEST FAILED: %s" % message)

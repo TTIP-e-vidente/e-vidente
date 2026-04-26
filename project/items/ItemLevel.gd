@@ -3,7 +3,7 @@ class_name Item_level
 
 @onready var sprite_2d = $Sprite2D
 @onready var area_2d = $Area2D
-var condiciones : Array[LevelItem.Condicion]
+var condiciones: Array[int] = []
 var body_ref 
 var plato 
 var offset: Vector2
@@ -16,8 +16,10 @@ var info: Texture2D
 var textSprite: Texture2D
 var item_resource_path := ""
 var save_instance_id := ""
+var interaction_enabled := true
+static var is_dragging: Object = null
 
-func setup(level_item: LevelItem, superficie, is_positive: bool, instance_id: String = ""):
+func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
 	textSprite = level_item.sprite
 	$Sprite2D.texture = textSprite
 	condiciones = level_item.condiciones.duplicate()
@@ -47,25 +49,53 @@ func restore_to_plate(target_position: Vector2) -> void:
 	body_ref = plato
 	is_inside_droppable = true
 
+
+func set_interaction_enabled(enabled: bool) -> void:
+	interaction_enabled = enabled
+	if not interaction_enabled and is_dragging == self:
+		is_dragging = null
+	draggable = false
+	scale = Vector2.ONE
+	if is_instance_valid(area_2d):
+		area_2d.input_pickable = interaction_enabled
+
+
+func is_interaction_enabled() -> bool:
+	return interaction_enabled
+
 func _process(_delta):
+	if not interaction_enabled:
+		return
 	if draggable:
 		if Input.is_action_just_pressed("click"):
 			initialPos = global_position
 			offset = get_global_mouse_position() - global_position
-			Global.is_dragging = self
-		if Input.is_action_pressed("click") && Global.is_dragging == self:
+			is_dragging = self
+		if Input.is_action_pressed("click") && is_dragging == self:
 			global_position = get_global_mouse_position() - offset
-		elif Input.is_action_just_released("click") && Global.is_dragging == self:
-			Global.is_dragging = null
+		elif Input.is_action_just_released("click") && is_dragging == self:
+			is_dragging = null
 			var tween = get_tree().create_tween()
 			if is_inside_droppable and is_instance_valid(body_ref):
-				tween.tween_property(self, "global_position", get_global_mouse_position(), 0.5).set_ease(Tween.EASE_OUT)
+				tween.tween_property(
+					self,
+					"global_position",
+					get_global_mouse_position(),
+					0.5
+				).set_ease(Tween.EASE_OUT)
 				if body_ref == plato:
-					plato._react_food(self)
+					plato.react_food(self)
 			else:
-				tween.tween_property(self, "global_position", initialPos, 0.5).set_ease(Tween.EASE_OUT)
+				tween.tween_property(
+					self,
+					"global_position",
+					initialPos,
+					0.5
+				).set_ease(Tween.EASE_OUT)
 
 func _handle_droppable_enter(target):
+	if not interaction_enabled:
+		return
 	if target == null or !target.is_in_group("droppable"):
 		return
 	is_inside_droppable = true
@@ -74,6 +104,8 @@ func _handle_droppable_enter(target):
 		plato.elementos.append_array(condiciones)
 
 func _handle_droppable_exit(target):
+	if not interaction_enabled:
+		return
 	if target == null or !target.is_in_group("droppable"):
 		return
 	if target == plato:
@@ -95,11 +127,15 @@ func _on_area_2d_area_exited(area):
 	_handle_droppable_exit(area)
 
 func _on_area_2d_mouse_entered():
-	if !Global.is_dragging:
+	if not interaction_enabled:
+		return
+	if !is_dragging:
 		draggable = true
 		scale = Vector2(1.2, 1.2)
 
 func _on_area_2d_mouse_exited():
-	if !Global.is_dragging:
+	if not interaction_enabled:
+		return
+	if !is_dragging:
 		draggable = false
 		scale = Vector2(1,1)

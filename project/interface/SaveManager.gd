@@ -1,407 +1,125 @@
 extends Node
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const SaveLocalProfileHelperScript := preload(
+	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
+)
+const SaveDiskWriterScript := preload(
+	"res://interface/save_local/write/SaveDiskWriter.gd"
+)
+const SaveDataSchemaScript := preload(
+	"res://interface/save_local/data/SaveDataSchema.gd"
+)
+const SaveDataLoaderScript := preload(
+	"res://interface/save_local/data/SaveDataLoader.gd"
+)
+const SaveResumeStateScript := preload(
+	"res://interface/save_local/data/SaveResumeState.gd"
+)
+
+@warning_ignore("unused_signal")
 signal user_registered(profile: Dictionary)
-signal user_logged_in(profile: Dictionary)
-signal user_logged_out()
+@warning_ignore("unused_signal")
 signal progress_saved(profile: Dictionary)
+@warning_ignore("unused_signal")
 signal progress_loaded(profile: Dictionary)
 signal save_status_changed(status: Dictionary)
 
-const SAVE_PATH := "user://save_data.json"
-const TEMP_SAVE_PATH := "user://save_data.tmp.json"
-const BACKUP_SAVE_PATH := "user://save_data.backup.json"
+const SAVE_PATH := SaveDataLoaderScript.SAVE_PATH
+const TEMP_SAVE_PATH := SaveDataLoaderScript.TEMP_SAVE_PATH
+const BACKUP_SAVE_PATH := SaveDataLoaderScript.BACKUP_SAVE_PATH
 const AVATARS_DIR := "user://avatars"
-const SAVE_VERSION := 4
-const HISTORY_LIMIT := 25
-const DEFAULT_PROFILE_NAME := "Perfil local"
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
-const RESUME_CONTEXT_HUB := "hub"
-const RESUME_CONTEXT_BOOK := "book"
-const RESUME_CONTEXT_LEVEL := "level"
-const SESSION_TITLE_PREFIX := "Partida"
-const SESSION_ID_PREFIX := "session_"
-const SESSION_TITLE_MIN_LENGTH := 3
-const SESSION_TITLE_MAX_LENGTH := 40
+const DEFAULT_PROFILE_NAME := SaveDataSchemaScript.DEFAULT_PROFILE_NAME
+const SAVE_VERSION := SaveDataSchemaScript.SAVE_VERSION
+const ARCHIVERO_SCENE := SaveDataSchemaScript.ARCHIVERO_SCENE
+const RESUME_CONTEXT_HUB := SaveResumeStateScript.RESUME_CONTEXT_HUB
+const RESUME_CONTEXT_BOOK := SaveResumeStateScript.RESUME_CONTEXT_BOOK
+const RESUME_CONTEXT_LEVEL := SaveResumeStateScript.RESUME_CONTEXT_LEVEL
+const LOCAL_SAVE_ID := "local_save"
+const LOCAL_SAVE_TITLE := "Partida actual"
+const LOCAL_PROFILE_KEY := "local_profile"
 const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
-const SaveLocalProfileHelperScript := preload("res://interface/save_local/SaveLocalProfileHelper.gd")
-const SaveLocalStorageHelperScript := preload("res://interface/save_local/SaveLocalStorageHelper.gd")
-const SaveLocalSessionHelperScript := preload("res://interface/save_local/SaveLocalSessionHelper.gd")
-const SaveDataNormalizerScript := preload("res://interface/save_local/SaveDataNormalizer.gd")
-const SaveLocalSessionStoreScript := preload("res://interface/save_local/SaveLocalSessionStore.gd")
-const SaveLocalWriteCoordinatorScript := preload("res://interface/save_local/SaveLocalWriteCoordinator.gd")
 
 var save_data: Dictionary = {}
-var current_user_key := "local_profile"
-var has_unsaved_changes := false
-var last_saved_snapshot := ""
-var _profile_helper = SaveLocalProfileHelperScript.new()
-var _storage_helper = SaveLocalStorageHelperScript.new()
-var _session_helper = SaveLocalSessionHelperScript.new()
-var _data_normalizer
-var _session_store
-var _write_coordinator
-var runtime_save_status := {
-	"state": "idle",
-	"last_loaded_from": "default",
-	"recovered_from": "",
-	"last_error": ""
-}
+var has_unsaved_changes: bool = false
+var _save_state: String = "idle"
+var _loaded_from: String = "default"
+var _recovered_from: String = ""
+var _last_error: String = ""
+
+var _profile_helper: RefCounted
+var _disk_writer: RefCounted
+var _schema: RefCounted
+var _data_loader: RefCounted
+var _resume_helper: RefCounted
+var _global_autoload: Node = null
+
+
+func _init() -> void:
+	_profile_helper = SaveLocalProfileHelperScript.new()
+	_disk_writer = SaveDiskWriterScript.new()
+	_schema = SaveDataSchemaScript.new()
+	_data_loader = SaveDataLoaderScript.new()
+	_resume_helper = SaveResumeStateScript.new()
 
 
 func _ready() -> void:
-	_ensure_runtime_services()
-	_ensure_data_normalizer()
 	load_data()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		save_current_user_progress()
+		save_progress_to_disk()
 
 
 func load_data() -> void:
-	save_data = _default_save_data()
-	var load_result := _load_available_save_data()
-	var needs_write := false
-	var loaded_from := "default"
-	var recovered_from := ""
+	save_data = _data_loader.load_data()
 
-	if bool(load_result.get("ok", false)):
-		save_data = _normalize_save_data(load_result.get("data", {}))
-		loaded_from = str(load_result.get("source", "primary"))
-		if loaded_from != "primary":
-			recovered_from = loaded_from
-			needs_write = true
-	else:
-		save_data = _default_save_data()
-		needs_write = true
-
-	if _ensure_local_profile():
-		needs_write = true
-	_project_active_session_to_runtime()
-	if _repair_resume_state():
+	var needs_write: bool = bool(_data_loader.needs_write)
+	var loaded_from: String = str(_data_loader.loaded_from)
+	var recovered_from: String = str(_data_loader.recovered_from)
+	var rewrite_reason: String = str(_data_loader.rewrite_reason)
+	if _repair_loaded_save_data():
 		needs_write = true
 
 	if needs_write:
-		if _write_save_data(true, "load_repair"):
-			if recovered_from.is_empty():
-				_emit_save_status("ready", loaded_from)
-			else:
-				_emit_save_status("recovered", "primary", recovered_from)
-		else:
-			_emit_save_status("error", loaded_from, recovered_from, "No se pudo restaurar el save principal en disco.")
+		_write_after_load_repair(
+			loaded_from,
+			recovered_from,
+			rewrite_reason
+		)
 	else:
-		last_saved_snapshot = _serialize_save_data()
 		has_unsaved_changes = false
 		_emit_save_status("ready", loaded_from)
 
-	Global.import_progress(save_data.get("progress", {}))
+	var saved_progress: Variant = save_data.get("progress", {})
+	_global_import_progress(saved_progress if saved_progress is Dictionary else {})
+	progress_loaded.emit(get_current_user_profile())
 
 
-func is_authenticated() -> bool:
-	return not get_current_user_profile().is_empty()
-
-
-func has_accounts() -> bool:
-	return is_authenticated()
-
-
-func get_users_count() -> int:
-	return 1 if is_authenticated() else 0
-
-
-func get_last_user_hint() -> String:
-	return str(get_current_user_profile().get("username", DEFAULT_PROFILE_NAME))
-
-
-func update_local_profile(username: String, age: int, email: String, avatar_source_path: String) -> Dictionary:
-	var validation := _validate_profile(username, age, email, avatar_source_path)
-	if not validation["ok"]:
+func update_local_profile(
+	username: String,
+	age: int,
+	email: String,
+	avatar_source_path: String
+) -> Dictionary:
+	var validation: Dictionary = _profile_helper.validate_profile(
+		username,
+		age,
+		email,
+		avatar_source_path
+	)
+	if not bool(validation.get("ok", false)):
 		return validation
 
-	var clean_username := username.strip_edges()
-	var clean_email := email.strip_edges()
-	var clean_avatar_path := avatar_source_path.strip_edges()
-	var timestamp := Time.get_datetime_string_from_system(false, true)
-	var profile := get_current_user_profile()
-	var previous_avatar_path := str(profile.get("avatar_path", "")).strip_edges()
+	var profile: Dictionary = get_current_user_profile()
+	var avatar_result: Dictionary = _update_profile_avatar(profile, avatar_source_path)
+	if not bool(avatar_result.get("ok", false)):
+		return avatar_result
 
-	if clean_username.is_empty():
-		profile["username"] = DEFAULT_PROFILE_NAME
-	else:
-		profile["username"] = clean_username
-	profile["age"] = max(0, age)
-	profile["email"] = clean_email
-	if clean_avatar_path.is_empty():
-		_remove_managed_avatar(previous_avatar_path)
-		profile["avatar_path"] = ""
-	else:
-		var persisted_avatar_path := _persist_avatar(current_user_key, clean_avatar_path)
-		if persisted_avatar_path.is_empty():
-			return {"ok": false, "message": "No se pudo copiar la foto seleccionada al almacenamiento local."}
-		if persisted_avatar_path != previous_avatar_path:
-			_remove_managed_avatar(previous_avatar_path)
-		profile["avatar_path"] = persisted_avatar_path
-	profile["updated_at"] = timestamp
-	if str(profile.get("created_at", "")).is_empty():
-		profile["created_at"] = timestamp
-
+	_apply_profile_identity_updates(profile, username, age, email)
 	save_data["profile"] = profile
-	_mark_dirty()
-	_append_history("Perfil local actualizado", {"type": "profile_updated"})
-	save_current_user_progress(false)
-	if not _write_save_data(false, "profile_updated"):
-		return {"ok": false, "message": "No se pudo escribir el perfil local en disco."}
-
-	var updated_profile := get_current_user_profile()
-	user_registered.emit(updated_profile)
-	user_logged_in.emit(updated_profile)
-	progress_loaded.emit(updated_profile)
-	return {"ok": true, "message": "Perfil local actualizado.", "profile": updated_profile}
-
-
-func register_user(username: String, _password: String, age: int, email: String, avatar_source_path: String) -> Dictionary:
-	return update_local_profile(username, age, email, avatar_source_path)
-
-
-func login_user(_identifier: String, _password: String) -> Dictionary:
-	load_current_user_progress(false)
-	var profile := get_current_user_profile()
-	user_logged_in.emit(profile)
-	return {"ok": true, "message": "La persistencia local ya esta activa en este dispositivo.", "profile": profile}
-
-
-func logout() -> void:
-	save_current_user_progress()
-	user_logged_out.emit()
-
-
-func save_current_user_progress(write_to_disk: bool = true) -> void:
-	var profile := get_current_user_profile()
-	save_data["profile"] = profile
-	save_data["progress"] = Global.export_progress()
-	_mark_dirty()
-
-	if write_to_disk:
-		if _write_save_data(false, "progress_sync"):
-			progress_saved.emit(get_current_user_profile())
-
-
-func load_current_user_progress(should_emit_progress_signal: bool = true) -> void:
-	Global.import_progress(save_data.get("progress", {}))
-	if should_emit_progress_signal:
-		progress_loaded.emit(get_current_user_profile())
-
-
-func load_progress_and_get_resume_state(should_emit_progress_signal: bool = false) -> Dictionary:
-	load_data()
-	if not _has_active_session():
-		var recent_session_id := get_recent_save_slot_id()
-		if not recent_session_id.is_empty():
-			_activate_session(recent_session_id)
-	load_current_user_progress(should_emit_progress_signal)
-	var resume_state := get_resume_state()
-	var track_key := str(resume_state.get("track_key", ""))
-	Global.current_level = clampi(int(resume_state.get("level_number", Global.current_level)), 1, Global.get_track_level_count(track_key))
-	return resume_state
-
-
-func load_slot_and_get_resume_state(session_id: String, should_emit_progress_signal: bool = false) -> Dictionary:
-	load_data()
-	if not _activate_session(session_id):
-		return _default_resume_state()
-	load_current_user_progress(should_emit_progress_signal)
-	var resume_state := get_resume_state()
-	var track_key := str(resume_state.get("track_key", ""))
-	Global.current_level = clampi(int(resume_state.get("level_number", Global.current_level)), 1, Global.get_track_level_count(track_key))
-	return resume_state
-
-
-func list_save_slots(include_empty: bool = false) -> Array:
-	var slots: Array = []
-	var sessions = save_data.get("sessions", {})
-	if sessions is Dictionary:
-		for raw_session_id in sessions.keys():
-			var session_id := str(raw_session_id)
-			if not sessions[session_id] is Dictionary:
-				continue
-			var summary := _build_session_summary(_normalize_session_data(sessions[session_id], session_id))
-			if include_empty or bool(summary.get("can_resume", false)):
-				slots.append(summary)
-	slots.sort_custom(_sort_save_slot_summaries)
-	return slots
-
-
-func get_recent_save_slot_id() -> String:
-	var slots := list_save_slots()
-	if slots.is_empty():
-		return ""
-	return str(slots[0].get("id", ""))
-
-
-func get_active_save_slot_id() -> String:
-	return str(save_data.get("active_session_id", "")).strip_edges()
-
-
-func get_active_save_slot_summary() -> Dictionary:
-	var active_session := _get_active_session_data()
-	if active_session.is_empty():
-		return {}
-	return _build_session_summary(active_session)
-
-
-func validate_session_title(title: String) -> Dictionary:
-	return _session_helper.validate_session_title(title, SESSION_TITLE_MIN_LENGTH, SESSION_TITLE_MAX_LENGTH)
-
-
-func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
-	var current_resume_state := get_resume_state()
-	if not allow_level_downgrade and str(current_resume_state.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
-		return
-	_set_resume_state({
-		"context": RESUME_CONTEXT_BOOK,
-		"track_key": track_key,
-		"scene_path": _get_book_scene_path(track_key),
-		"level_number": clampi(Global.current_level, 1, Global.get_track_level_count(track_key))
-	})
-
-
-func set_resume_to_level(track_key: String, level_number: int = -1) -> void:
-	var resolved_level: int = Global.current_level if level_number < 1 else level_number
-	_set_resume_state({
-		"context": RESUME_CONTEXT_LEVEL,
-		"track_key": track_key,
-		"scene_path": _get_level_scene_path(track_key),
-		"level_number": clampi(resolved_level, 1, Global.get_track_level_count(track_key))
-	})
-
-
-func set_resume_after_level_completed(track_key: String, level_number: int) -> void:
-	if level_number < Global.get_track_level_count(track_key):
-		set_resume_to_level(track_key, level_number + 1)
-		return
-	_set_resume_state(_default_resume_state())
-
-
-func get_resume_state() -> Dictionary:
-	var raw_resume_state = save_data.get("resume_state", {})
-	if not raw_resume_state is Dictionary:
-		return _resolve_resume_state(_default_resume_state())
-	return _resolve_resume_state(_normalize_resume_state(raw_resume_state))
-
-
-func get_resume_hint(session_id: String = "") -> String:
-	var resume_state := get_resume_state() if session_id.strip_edges().is_empty() else _get_session_resume_state(session_id)
-	return _format_resume_hint_from_state(resume_state)
-
-
-func can_resume_game(session_id: String = "") -> bool:
-	var requested_session_id := session_id.strip_edges()
-	if not requested_session_id.is_empty():
-		return _session_can_resume(_get_session_data(requested_session_id))
-	return not list_save_slots().is_empty()
-
-
-func record_level_completed(track_key: String, level_number: int) -> void:
-	Global.clear_partial_level_state(track_key, level_number)
-	set_resume_after_level_completed(track_key, level_number)
-	save_current_user_progress(false)
-	var message := "Completaste %s - capitulo %d" % [_track_label(track_key), level_number]
-	_append_history(message, {
-		"type": "level_completed",
-		"track": track_key,
-		"level": level_number,
-		"session_id": get_active_save_slot_id()
-	})
-	if _write_save_data(false, "level_completed"):
-		progress_saved.emit(get_current_user_profile())
-
-
-func record_manual_save() -> void:
-	save_current_user_progress(false)
-	var resume_state := get_resume_state()
-	_append_history("Guardado manual", {
-		"type": "manual_save",
-		"context": str(resume_state.get("context", RESUME_CONTEXT_HUB)),
-		"track": str(resume_state.get("track_key", "")),
-		"level": int(resume_state.get("level_number", Global.current_level)),
-		"session_id": get_active_save_slot_id()
-	})
-	if _write_save_data(false, "manual_save"):
-		progress_saved.emit(get_current_user_profile())
-
-
-func reset_all_progress() -> Dictionary:
-	var profile := get_current_user_profile()
-	save_data["sessions"] = {}
-	save_data["active_session_id"] = ""
-	save_data["next_session_number"] = 1
-	save_data["history"] = []
-	save_data["resume_state"] = _default_resume_state()
-	Global.reset_progress()
-	save_data["progress"] = Global.export_progress()
-	_mark_dirty()
-
-	if not _write_save_data(false, "progress_reset"):
-		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
-
-	progress_loaded.emit(profile)
-	progress_saved.emit(profile)
-	return {"ok": true, "message": "Se reinicio el progreso local.", "profile": profile}
-
-
-func start_new_game(title: String = "") -> bool:
-	load_data()
-	var title_validation := validate_session_title(title)
-	if not bool(title_validation.get("ok", false)):
-		return false
-	var normalized_title := str(title_validation.get("title", ""))
-	var should_reuse_active_session := _has_active_session() and not _session_can_resume(_get_active_session_data())
-	if _has_active_session() and not should_reuse_active_session:
-		save_current_user_progress()
-
-	_reset_runtime_session_projection()
-	if should_reuse_active_session:
-		_rename_active_session(normalized_title)
-	else:
-		_create_session(normalized_title, true)
-
-	Global.reset_progress()
-	save_current_user_progress(false)
-	_append_history("Nueva partida iniciada", {
-		"type": "new_game",
-		"session_id": get_active_save_slot_id()
-	})
-	if not _write_save_data(false, "new_game"):
-		return false
-	var profile := get_current_user_profile()
-	progress_loaded.emit(profile)
-	progress_saved.emit(profile)
-	return true
-
-
-func get_current_user_profile() -> Dictionary:
-	var user_record = save_data.get("profile", {})
-	if not user_record is Dictionary:
-		return {}
-	return {
-		"username": user_record.get("username", DEFAULT_PROFILE_NAME),
-		"age": int(user_record.get("age", 0)),
-		"email": user_record.get("email", ""),
-		"avatar_path": user_record.get("avatar_path", ""),
-		"created_at": user_record.get("created_at", ""),
-		"updated_at": user_record.get("updated_at", "")
-	}
-
-
-func get_save_status() -> Dictionary:
-	_ensure_runtime_services()
-	return _write_coordinator.get_save_status()
-
-
-func get_current_user_history() -> Array:
-	var history = save_data.get("history", [])
-	return history.duplicate(true)
+	return _persist_updated_profile()
 
 
 func load_avatar_texture(path: String) -> Texture2D:
@@ -409,400 +127,492 @@ func load_avatar_texture(path: String) -> Texture2D:
 
 
 func get_current_user_avatar_texture() -> Texture2D:
-	var profile := get_current_user_profile()
-	if profile.is_empty():
+	var avatar_path: String = get_current_user_avatar_path()
+	if avatar_path.is_empty():
 		return null
-	return load_avatar_texture(str(profile.get("avatar_path", "")))
+	return load_avatar_texture(avatar_path)
 
 
-func _validate_profile(username: String, age: int, email: String, avatar_source_path: String) -> Dictionary:
-	return _profile_helper.validate_profile(username, age, email, avatar_source_path)
+func get_current_user_profile() -> Dictionary:
+	var stored_profile: Variant = save_data.get("profile", {})
+	if not stored_profile is Dictionary:
+		return {}
 
+	var profile: Dictionary = _profile_helper.normalize_profile_data(
+		stored_profile,
+		DEFAULT_PROFILE_NAME
+	)
+	if str(profile.get("username", "")).is_empty():
+		profile["username"] = DEFAULT_PROFILE_NAME
+	return profile
 
-func _ensure_runtime_services() -> void:
-	if _session_store == null:
-		_session_store = SaveLocalSessionStoreScript.new(self)
-	if _write_coordinator == null:
-		_write_coordinator = SaveLocalWriteCoordinatorScript.new(self)
 
+func get_current_user_name() -> String:
+	var username: String = str(get_current_user_profile().get("username", DEFAULT_PROFILE_NAME)).strip_edges()
+	return username if not username.is_empty() else DEFAULT_PROFILE_NAME
 
-func _ensure_data_normalizer() -> void:
-	if _data_normalizer != null:
-		return
-	_data_normalizer = SaveDataNormalizerScript.new(_profile_helper, _session_helper, _build_normalizer_context())
 
+func get_current_user_email() -> String:
+	return str(get_current_user_profile().get("email", "")).strip_edges()
 
-func _build_normalizer_context() -> Dictionary:
-	return {
-		"save_version": SAVE_VERSION,
-		"default_profile_name": DEFAULT_PROFILE_NAME,
-		"session_id_prefix": SESSION_ID_PREFIX,
-		"session_title_prefix": SESSION_TITLE_PREFIX,
-		"session_title_max_length": SESSION_TITLE_MAX_LENGTH,
-		"gameplay_history_types": GAMEPLAY_HISTORY_TYPES,
-		"archivero_scene": ARCHIVERO_SCENE,
-		"resume_context_hub": RESUME_CONTEXT_HUB,
-		"resume_context_book": RESUME_CONTEXT_BOOK,
-		"resume_context_level": RESUME_CONTEXT_LEVEL,
-		"levels_per_book": Global.LEVELS_PER_BOOK,
-		"track_keys": Global.get_track_keys(),
-		"track_level_counts": Global.get_track_level_counts(),
-		"track_book_scene_paths": Global.get_track_book_scene_paths(),
-		"track_level_scene_paths": Global.get_track_level_scene_paths()
-	}
 
+func get_current_user_age() -> int:
+	return max(0, int(get_current_user_profile().get("age", 0)))
 
-func _default_save_data() -> Dictionary:
-	return _data_normalizer.default_save_data()
 
+func get_current_user_avatar_path() -> String:
+	return str(get_current_user_profile().get("avatar_path", "")).strip_edges()
 
-func _default_save_meta() -> Dictionary:
-	return _data_normalizer.default_save_meta()
 
+func get_current_save_state() -> String:
+	return _save_state
 
-func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
-	return _data_normalizer.normalize_save_data(raw_data)
 
+func has_save_error() -> bool:
+	return _save_state == "error"
 
-func _default_resume_state() -> Dictionary:
-	return _data_normalizer.default_resume_state()
 
+func get_last_saved_at() -> String:
+	return str(_get_save_meta().get("last_saved_at", ""))
 
-func _normalize_resume_state(raw_resume_state: Dictionary) -> Dictionary:
-	return _data_normalizer.normalize_resume_state(raw_resume_state)
 
+func get_last_saved_reason() -> String:
+	return str(_get_save_meta().get("last_saved_reason", ""))
 
-func _default_session_data(session_id: String = "", title: String = "", created_at: String = "") -> Dictionary:
-	return _data_normalizer.default_session_data(session_id, title, created_at)
 
+func get_last_save_error() -> String:
+	return _last_error.strip_edges()
 
-func _normalize_session_data(raw_session: Dictionary, session_id: String = "") -> Dictionary:
-	return _data_normalizer.normalize_session_data(raw_session, session_id)
 
+func save_progress_to_disk() -> void:
+	_save_current_state("progress_sync")
 
-func _normalize_sessions(raw_sessions: Variant) -> Dictionary:
-	return _data_normalizer.normalize_sessions(raw_sessions)
 
-
-func _migrate_single_session_data(raw_data: Dictionary) -> Dictionary:
-	return _data_normalizer.migrate_single_session_data(raw_data)
-
-
-func _sanitize_active_session_id(active_session_id: String, sessions: Dictionary) -> String:
-	return _data_normalizer.sanitize_active_session_id(active_session_id, sessions)
-
-
-func _find_most_recent_session_id(sessions: Dictionary) -> String:
-	return _data_normalizer.find_most_recent_session_id(sessions)
-
-
-func _project_active_session_to_runtime() -> void:
-	_ensure_runtime_services()
-	_session_store.project_active_session_to_runtime()
-
-
-func _get_active_session_data() -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.get_active_session_data()
-
-
-func _get_session_data(session_id: String) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.get_session_data(session_id)
-
-
-func _get_session_resume_state(session_id: String) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.get_session_resume_state(session_id)
-
-
-func _has_active_session() -> bool:
-	_ensure_runtime_services()
-	return _session_store.has_active_session()
-
-
-func _activate_session(session_id: String) -> bool:
-	_ensure_runtime_services()
-	return _session_store.activate_session(session_id)
-
-
-func _create_session(title: String = "", activate: bool = true) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.create_session(title, activate)
-
-
-func _rename_active_session(title: String) -> void:
-	_ensure_runtime_services()
-	_session_store.rename_active_session(title)
-
-
-func _reset_runtime_session_projection() -> void:
-	_ensure_runtime_services()
-	_session_store.reset_runtime_session_projection()
-
-
-func _sync_active_session_to_storage(save_meta: Dictionary) -> void:
-	_ensure_runtime_services()
-	_session_store.sync_active_session_to_storage(save_meta)
-
-
-func _ensure_active_session_for_write(reason: String) -> void:
-	_ensure_runtime_services()
-	_session_store.ensure_active_session_for_write(reason)
-
-
-func _build_default_session_title(session_number: int) -> String:
-	return _session_helper.build_default_session_title(SESSION_TITLE_PREFIX, session_number)
-
-
-func _normalize_session_title_value(title: String) -> String:
-	return _session_helper.normalize_session_title_value(title)
-
-
-func _build_default_session_title_from_id(session_id: String) -> String:
-	return _session_helper.build_default_session_title_from_id(SESSION_TITLE_PREFIX, SESSION_ID_PREFIX, session_id)
-
-
-func _build_session_summary(session: Dictionary) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.build_session_summary(session)
-
-
-func _sort_save_slot_summaries(left: Dictionary, right: Dictionary) -> bool:
-	_ensure_runtime_services()
-	return _session_store.sort_save_slot_summaries(left, right)
-
-
-func _summarize_progress_data(progress: Variant) -> Dictionary:
-	return _session_helper.summarize_progress_data(progress, Global.get_track_keys(), Global.get_track_level_counts())
-
-
-func _count_completed_progress_track(track_progress: Variant) -> int:
-	return _session_helper.count_completed_progress_track(track_progress)
-
-
-func _session_can_resume(session: Dictionary) -> bool:
-	_ensure_runtime_services()
-	return _session_store.session_can_resume(session)
-
-
-func _runtime_projection_has_session_content() -> bool:
-	_ensure_runtime_services()
-	return _session_store.runtime_projection_has_session_content()
-
-
-func _session_updated_at(session: Dictionary) -> String:
-	return _session_helper.session_updated_at(session)
-
-
-func _format_resume_hint_from_state(resume_state: Dictionary) -> String:
-	return _session_helper.format_resume_hint_from_state(
-		resume_state,
-		RESUME_CONTEXT_HUB,
-		RESUME_CONTEXT_BOOK,
-		RESUME_CONTEXT_LEVEL,
-		Global.get_track_labels()
+func record_manual_save() -> void:
+	var resume: Dictionary = get_resume_state()
+	_save_current_state(
+		"manual_save",
+		"Guardado manual",
+		{
+			"type": "manual_save",
+			"context": str(resume.get("context", RESUME_CONTEXT_HUB)),
+			"track": str(resume.get("track_key", "")),
+			"level": int(resume.get("level_number", _global_get_current_level_number()))
+		}
 	)
 
 
-func _repair_resume_state() -> bool:
-	var stored_resume_state := _normalize_resume_state(save_data.get("resume_state", {}))
-	var resolved_resume_state := _resolve_resume_state(stored_resume_state)
-	if stored_resume_state == resolved_resume_state:
+func record_level_completed(track_key: String, level_number: int) -> void:
+	_global_clear_partial_level_state(track_key, level_number)
+	_update_resume_after_completed_level(track_key, level_number)
+	_save_current_state(
+		"level_completed",
+		_build_level_completed_message(track_key, level_number),
+		{"type": "level_completed", "track": track_key, "level": level_number}
+	)
+
+
+func record_question_session_completed(question_count: int, score: int) -> void:
+	if question_count < 1:
+		return
+
+	_global_record_streak_activity(
+		"question_session_completed",
+		{"question_count": question_count, "score": score}
+	)
+	_save_current_state(
+		"question_session_completed",
+		"Sesion de preguntas completada (%d/%d)" % [score, question_count],
+		{
+			"type": "question_session_completed",
+			"question_count": question_count,
+			"score": score
+		}
+	)
+
+
+func reset_all_progress() -> Dictionary:
+	var current_profile: Dictionary = get_current_user_profile()
+	_reset_current_save_data(current_profile)
+	if not _write_save_to_disk(false, "progress_reset"):
+		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
+	progress_loaded.emit(current_profile)
+	progress_saved.emit(current_profile)
+	return {"ok": true, "message": "Se reinicio el progreso local.", "profile": current_profile}
+
+
+func set_resume_to_book(track_key: String, allow_level_downgrade: bool = false) -> void:
+	if (
+		not allow_level_downgrade
+		and str(get_resume_state().get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL
+	):
+		return
+	_store_resume_state(_resume_helper.build_for_book(track_key, _global_get_current_level_number()))
+
+
+func set_resume_to_level(track_key: String, level_number: int = -1) -> void:
+	var level: int = _global_get_current_level_number() if level_number < 1 else level_number
+	_store_resume_state(_resume_helper.build_for_level(track_key, level))
+
+
+func get_resume_state() -> Dictionary:
+	return _resume_helper.resolve_from_save(save_data, ARCHIVERO_SCENE)
+
+
+func get_current_resume_hint() -> String:
+	return _resume_helper.format_hint(get_resume_state())
+
+
+func can_resume_current_save() -> bool:
+	var summary: Dictionary = _summarize_progress(save_data.get("progress", {}))
+	if int(summary.get("total", 0)) > 0:
+		return true
+	if str(get_resume_state().get("context", RESUME_CONTEXT_HUB)) != RESUME_CONTEXT_HUB:
+		return true
+	return _history_has_gameplay(save_data.get("history", []))
+
+
+func reload_from_disk_and_get_resume() -> Dictionary:
+	load_data()
+	var resume_state: Dictionary = get_resume_state()
+	var clamped_level_number: int = clampi(
+		int(resume_state.get("level_number", _global_get_current_level_number())),
+		1,
+		max(1, _global_get_track_level_count(str(resume_state.get("track_key", ""))))
+	)
+	_global_set_current_level_number(
+		clamped_level_number,
+		str(resume_state.get("track_key", ""))
+	)
+	return resume_state
+
+
+func get_save_status() -> Dictionary:
+	var meta: Dictionary = _get_save_meta()
+	var save_summary: Dictionary = get_current_save_summary()
+	return {
+		"state": _save_state,
+		"last_saved_at": str(meta.get("last_saved_at", "")),
+		"last_saved_reason": str(meta.get("last_saved_reason", "")),
+		"write_count": max(0, int(meta.get("write_count", 0))),
+		"last_loaded_from": _loaded_from,
+		"recovered_from": _recovered_from,
+		"last_error": _last_error,
+		"has_unsaved_changes": has_unsaved_changes,
+		"save_id": str(save_summary.get("id", "")),
+		"save_title": str(save_summary.get("title", "")),
+		"save_count": 1 if not save_summary.is_empty() else 0
+	}
+
+
+func get_current_save_summary() -> Dictionary:
+	if not can_resume_current_save():
+		return {}
+
+	var profile: Dictionary = get_current_user_profile()
+	var meta: Dictionary = _get_save_meta()
+	var resume: Dictionary = get_resume_state()
+	var progress: Dictionary = _summarize_progress(save_data.get("progress", {}))
+	var updated_at: String = str(meta.get("last_saved_at", ""))
+	if updated_at.is_empty():
+		updated_at = str(profile.get("updated_at", ""))
+	if updated_at.is_empty():
+		updated_at = str(profile.get("created_at", ""))
+
+	return {
+		"id": LOCAL_SAVE_ID,
+		"title": LOCAL_SAVE_TITLE,
+		"created_at": str(profile.get("created_at", "")),
+		"updated_at": updated_at,
+		"resume_hint": _resume_helper.format_hint(resume),
+		"resume_context": str(resume.get("context", RESUME_CONTEXT_HUB)),
+		"resume_track_key": str(resume.get("track_key", "")),
+		"resume_level_number": int(resume.get("level_number", 1)),
+		"progress_summary": progress,
+		"can_resume": true,
+		"is_active": true
+	}
+
+
+func get_current_save_history() -> Array:
+	var stored: Variant = save_data.get("history", [])
+	return stored.duplicate(true) if stored is Array else []
+
+
+func _get_save_meta() -> Dictionary:
+	return _schema.normalize_save_meta(save_data.get("save_meta", {}))
+
+
+func _repair_loaded_save_data() -> bool:
+	var needs_write_after_repair: bool = false
+	if _data_loader.repair_structure(save_data):
+		_mark_save_dirty()
+		needs_write_after_repair = true
+	if _resume_helper.repair(save_data, ARCHIVERO_SCENE):
+		_mark_save_dirty()
+		needs_write_after_repair = true
+	return needs_write_after_repair
+
+
+func _update_profile_avatar(profile: Dictionary, avatar_source_path: String) -> Dictionary:
+	var previous_avatar_path: String = str(profile.get("avatar_path", "")).strip_edges()
+	return _profile_helper.apply_avatar_change(
+		profile,
+		avatar_source_path.strip_edges(),
+		previous_avatar_path,
+		AVATARS_DIR,
+		LOCAL_PROFILE_KEY
+	)
+
+
+func _apply_profile_identity_updates(
+	profile: Dictionary,
+	username: String,
+	age: int,
+	email: String
+) -> void:
+	_profile_helper.apply_identity_changes(profile, username, age, email, DEFAULT_PROFILE_NAME)
+	_profile_helper.stamp_timestamps(profile)
+
+
+func _update_resume_after_completed_level(track_key: String, level_number: int) -> void:
+	if level_number < _global_get_track_level_count(track_key):
+		set_resume_to_level(track_key, level_number + 1)
+		return
+	_store_resume_state(_resume_helper.get_default_state(ARCHIVERO_SCENE))
+
+
+func _build_level_completed_message(track_key: String, level_number: int) -> String:
+	var track_label: String = GameTrackCatalog.get_track_label(track_key, track_key)
+	return "Completaste %s - capitulo %d" % [track_label, level_number]
+
+
+func _save_current_state(
+	reason: String,
+	history_message: String = "",
+	history_metadata: Dictionary = {},
+	emit_progress_saved: bool = true
+) -> bool:
+	save_data["profile"] = get_current_user_profile()
+	save_data["progress"] = _global_export_progress()
+	_mark_save_dirty()
+	if not history_message.is_empty():
+		_schema.append_history(save_data, history_message, history_metadata)
+	if not _write_save_to_disk(false, reason):
 		return false
-	save_data["resume_state"] = resolved_resume_state
-	_mark_dirty()
+	if emit_progress_saved:
+		progress_saved.emit(get_current_user_profile())
 	return true
 
 
-func _resolve_resume_state(normalized_resume_state: Dictionary) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.resolve_resume_state(normalized_resume_state)
+func _store_resume_state(raw: Dictionary) -> void:
+	var next_resume_state: Dictionary = _resume_helper.normalize(raw, ARCHIVERO_SCENE)
+	var current_resume_state: Dictionary = _resume_helper.normalize(
+		save_data.get("resume_state", {}),
+		ARCHIVERO_SCENE
+	)
+	save_data["resume_state"] = next_resume_state
+	if current_resume_state != next_resume_state:
+		_mark_save_dirty()
 
 
-func _derive_resume_state_from_history() -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.derive_resume_state_from_history()
+func _write_save_to_disk(force: bool = false, reason: String = "save") -> bool:
+	if not force and not has_unsaved_changes:
+		return true
+
+	var result: Dictionary = _disk_writer.write(save_data, _loaded_from, reason)
+	if not bool(result.get("ok", false)):
+		_emit_save_status(
+			"error",
+			_loaded_from,
+			_recovered_from,
+			str(result.get("error_message", "Error desconocido al guardar."))
+		)
+		return false
+
+	if bool(result.get("wrote_primary", false)):
+		_loaded_from = "primary"
+		_recovered_from = ""
+
+	has_unsaved_changes = false
+	_emit_save_status("saved", _loaded_from, _recovered_from)
+	return true
 
 
-func _resume_state_from_history_metadata(metadata: Dictionary) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.resume_state_from_history_metadata(metadata)
+func _history_has_gameplay(raw_history: Variant) -> bool:
+	if not raw_history is Array:
+		return false
+	for history_entry in raw_history:
+		var metadata: Dictionary = _read_history_metadata(history_entry)
+		if not metadata.is_empty() and GAMEPLAY_HISTORY_TYPES.has(str(metadata.get("type", ""))):
+			return true
+	return false
 
 
-func _resume_state_after_completed_level(metadata: Dictionary) -> Dictionary:
-	_ensure_runtime_services()
-	return _session_store.resume_state_after_completed_level(metadata)
+func _read_history_metadata(entry: Variant) -> Dictionary:
+	if not entry is Dictionary:
+		return {}
+	var metadata: Variant = entry.get("metadata", {})
+	return metadata if metadata is Dictionary else {}
 
 
-func _is_saved_level_completed(track_key: String, level_number: int) -> bool:
-	_ensure_runtime_services()
-	return _session_store.is_saved_level_completed(track_key, level_number)
+func _summarize_progress(progress: Variant) -> Dictionary:
+	var progress_data: Dictionary = progress if progress is Dictionary else {}
+	var summary: Dictionary = {"total": 0, "max_total": 0}
+	for raw_track_key in GameTrackCatalog.get_track_keys():
+		var track_key: String = str(raw_track_key)
+		var flags: Variant = progress_data.get(track_key, [])
+		var completed: int = 0
+		if flags is Array:
+			for flag_value in flags:
+				if bool(flag_value):
+					completed += 1
+		summary[track_key] = completed
+		summary["total"] += completed
+		summary["max_total"] += _global_get_track_level_count(track_key)
+	return summary
 
 
-func _migrate_legacy_save_data(raw_data: Dictionary) -> Dictionary:
-	return _data_normalizer.migrate_legacy_save_data(raw_data)
-
-
-func _normalize_profile_data(raw_profile: Dictionary) -> Dictionary:
-	return _data_normalizer.normalize_profile_data(raw_profile)
-
-
-func _normalize_save_meta(raw_save_meta: Dictionary) -> Dictionary:
-	return _data_normalizer.normalize_save_meta(raw_save_meta)
-
-
-func _normalize_history(raw_history: Variant) -> Array:
-	return _data_normalizer.normalize_history(raw_history)
-
-
-func _write_save_data(force: bool = false, reason: String = "save") -> bool:
-	_ensure_runtime_services()
-	return _write_coordinator.write_save_data(force, reason)
-
-
-func _append_history(message: String, metadata: Dictionary = {}) -> void:
-	var history: Array = save_data.get("history", [])
-	history.push_front({
-		"timestamp": Time.get_datetime_string_from_system(false, true),
-		"message": message,
-		"metadata": metadata
-	})
-	if history.size() > HISTORY_LIMIT:
-		history = history.slice(0, HISTORY_LIMIT)
-	save_data["history"] = history
-	_mark_dirty()
-
-
-func _persist_avatar(user_key: String, source_path: String) -> String:
-	return _profile_helper.persist_avatar(AVATARS_DIR, user_key, source_path)
-
-
-func _remove_managed_avatar(path: String) -> void:
-	_profile_helper.remove_managed_avatar(AVATARS_DIR, path)
-
-
-func _safe_file_key(raw_key: String) -> String:
-	return _profile_helper.safe_file_key(raw_key)
-
-
-func _is_valid_email(email: String) -> bool:
-	return _profile_helper.is_valid_email(email)
-
-
-func _ensure_local_profile() -> bool:
-	var changed := false
-	var profile = save_data.get("profile", {})
-	if not profile is Dictionary:
-		profile = {}
-		changed = true
-
-	profile = _normalize_profile_data(profile)
-	if str(profile.get("username", "")).is_empty():
-		profile["username"] = DEFAULT_PROFILE_NAME
-		changed = true
-
-	var created_at := str(profile.get("created_at", ""))
-	if created_at.is_empty():
-		created_at = Time.get_datetime_string_from_system(false, true)
-		profile["created_at"] = created_at
-		changed = true
-
-	if str(profile.get("updated_at", "")).is_empty():
-		profile["updated_at"] = created_at
-		changed = true
-
-	if not save_data.get("progress", {}) is Dictionary:
-		save_data["progress"] = {}
-		changed = true
-
-	if not save_data.get("history", []) is Array:
-		save_data["history"] = []
-		changed = true
-
-	var save_meta = save_data.get("save_meta", {})
-	if not save_meta is Dictionary:
-		save_data["save_meta"] = _default_save_meta()
-		changed = true
-	else:
-		save_data["save_meta"] = _normalize_save_meta(save_meta)
-
-	var resume_state = save_data.get("resume_state", {})
-	if not resume_state is Dictionary:
-		save_data["resume_state"] = _default_resume_state()
-		changed = true
-	else:
-		save_data["resume_state"] = _normalize_resume_state(resume_state)
-
+func _reset_current_save_data(profile: Dictionary) -> void:
+	_global_reset_progress()
 	save_data["profile"] = profile
-	current_user_key = "local_profile"
-	if changed:
-		_mark_dirty()
-	return changed
+	save_data["progress"] = _global_export_progress()
+	save_data["history"] = []
+	save_data["resume_state"] = _resume_helper.get_default_state(ARCHIVERO_SCENE)
+	save_data["save_meta"] = _empty_save_meta()
+	_mark_save_dirty()
 
 
-func _load_available_save_data() -> Dictionary:
-	return _storage_helper.load_available_save_data(SAVE_PATH, TEMP_SAVE_PATH, BACKUP_SAVE_PATH)
+func _get_global_autoload() -> Node:
+	if _global_autoload == null or not is_instance_valid(_global_autoload):
+		_global_autoload = get_node_or_null("/root/Global")
+	return _global_autoload
 
 
-func _save_source_from_path(path: String) -> String:
-	return _storage_helper.save_source_from_path(path, SAVE_PATH, TEMP_SAVE_PATH, BACKUP_SAVE_PATH)
+func _global_import_progress(progress_snapshot: Dictionary) -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("import_progress"):
+		global_autoload.call("import_progress", progress_snapshot)
 
 
-func _read_save_data_from_path(path: String) -> Dictionary:
-	return _storage_helper.read_save_data_from_path(path)
+func _global_export_progress() -> Dictionary:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("export_progress"):
+		return {}
+	var exported_progress: Variant = global_autoload.call("export_progress")
+	if exported_progress is Dictionary:
+		return (exported_progress as Dictionary).duplicate(true)
+	return {}
 
 
-func _serialize_save_data() -> String:
-	return _storage_helper.serialize_save_data(save_data)
+func _global_get_current_level_number() -> int:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null:
+		return 1
+	if global_autoload.has_method("get_current_level_number"):
+		return int(global_autoload.call("get_current_level_number"))
+	return int(global_autoload.get("current_level"))
 
 
-func _copy_file(source_path: String, destination_path: String) -> bool:
-	return _storage_helper.copy_file(source_path, destination_path)
-
-
-func _move_file(source_path: String, destination_path: String) -> int:
-	return _storage_helper.move_file(source_path, destination_path)
-
-
-func _remove_file_if_exists(path: String) -> void:
-	_storage_helper.remove_file_if_exists(path)
-
-
-func _set_resume_state(raw_resume_state: Dictionary) -> void:
-	var normalized_resume_state := _normalize_resume_state(raw_resume_state)
-	var current_resume_state := _normalize_resume_state(save_data.get("resume_state", {}))
-	save_data["resume_state"] = normalized_resume_state
-	if current_resume_state == normalized_resume_state:
+func _global_set_current_level_number(level_number: int, track_key: String = "") -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload == null:
 		return
-	_mark_dirty()
+	if global_autoload.has_method("set_current_level_number"):
+		global_autoload.call("set_current_level_number", level_number, track_key)
+		return
+	global_autoload.set("current_level", level_number)
 
 
-func _is_known_track(track_key: String) -> bool:
-	return Global.has_track(track_key)
+func _global_get_track_level_count(track_key: String) -> int:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("get_track_level_count"):
+		return int(global_autoload.call("get_track_level_count", track_key))
+	return GameTrackCatalog.get_track_level_count(track_key, GameTrackCatalog.DEFAULT_LEVEL_COUNT)
 
 
-func _get_book_scene_path(track_key: String) -> String:
-	return Global.get_book_scene_path(track_key)
+func _global_clear_partial_level_state(track_key: String, level_number: int) -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("clear_partial_level_state"):
+		global_autoload.call("clear_partial_level_state", track_key, level_number)
 
 
-func _get_level_scene_path(track_key: String) -> String:
-	return Global.get_level_scene_path(track_key)
+func _global_record_streak_activity(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("record_streak_activity"):
+		var streak_state: Variant = global_autoload.call("record_streak_activity", activity_type, metadata)
+		if streak_state is Dictionary:
+			return (streak_state as Dictionary).duplicate(true)
+	return {}
 
 
-func _mark_dirty() -> void:
-	_ensure_runtime_services()
-	_write_coordinator.mark_dirty()
+func _global_reset_progress() -> void:
+	var global_autoload: Node = _get_global_autoload()
+	if global_autoload != null and global_autoload.has_method("reset_progress"):
+		global_autoload.call("reset_progress")
 
 
-func _emit_save_status(state: String, loaded_from: String = "", recovered_from: String = "", last_error: String = "") -> void:
-	_ensure_runtime_services()
-	_write_coordinator.emit_save_status(state, loaded_from, recovered_from, last_error)
+func _empty_save_meta() -> Dictionary:
+	return {"last_saved_at": "", "last_saved_reason": "", "write_count": 0}
 
 
-func _notify_save_status_changed() -> void:
+func _persist_updated_profile() -> Dictionary:
+	if not _save_current_state(
+		"profile_updated",
+		"Perfil local actualizado",
+		{"type": "profile_updated"},
+		false
+	):
+		return {"ok": false, "message": "No se pudo escribir el perfil local en disco."}
+
+	var updated_profile: Dictionary = get_current_user_profile()
+	user_registered.emit(updated_profile)
+	progress_loaded.emit(updated_profile)
+	return {"ok": true, "message": "Perfil local actualizado.", "profile": updated_profile}
+
+
+func _mark_save_dirty() -> void:
+	if has_unsaved_changes:
+		return
+	has_unsaved_changes = true
+	_emit_save_status("dirty", _loaded_from, _recovered_from)
+
+
+func _emit_save_status(
+	state: String,
+	loaded_from: String = "",
+	recovered_from: String = "",
+	last_error: String = ""
+) -> void:
+	_save_state = state
+	if not loaded_from.is_empty():
+		_loaded_from = loaded_from
+	_recovered_from = recovered_from
+	_last_error = last_error
 	save_status_changed.emit(get_save_status())
 
 
-func _track_label(track_key: String) -> String:
-	return Global.get_track_label(track_key)
+func _write_after_load_repair(
+	loaded_from: String,
+	recovered_from: String,
+	reason: String
+) -> void:
+	_loaded_from = loaded_from
+	_recovered_from = recovered_from
+	var effective_reason: String = reason if not reason.is_empty() else "load_repair"
+	if not _write_save_to_disk(true, effective_reason):
+		if not recovered_from.is_empty() and FileAccess.file_exists(TEMP_SAVE_PATH):
+			has_unsaved_changes = false
+			_emit_save_status("recovered", loaded_from, recovered_from)
+		else:
+			_emit_save_status(
+				"error",
+				loaded_from,
+				recovered_from,
+				"No se pudo restaurar el save principal en disco."
+			)
+		return
+	if recovered_from.is_empty():
+		_emit_save_status("ready", _loaded_from)
+	else:
+		_emit_save_status("recovered", _loaded_from, recovered_from)

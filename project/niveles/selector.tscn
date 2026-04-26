@@ -1,0 +1,321 @@
+[gd_scene format=3 uid="uid://di3fv2eh00pko"]
+
+[ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_fsij2"]
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_6uvpc"]
+[ext_resource type="Texture2D" uid="uid://d2bn2v4834a73" path="res://assets-sistema/selector/selector-celiaquia.png" id="4_x5wwr"]
+[ext_resource type="Texture2D" uid="uid://dps4jrytnvabq" path="res://assets-sistema/selector/selector-veganismo.png" id="5_lo2a7"]
+[ext_resource type="Texture2D" uid="uid://1yva1t6sigvf" path="res://assets-sistema/selector/selector-vegan-gf.png" id="6_5qkxe"]
+[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="Texture2D" uid="uid://xaey3sbr1iy5" path="res://assets-sistema/selector/selector-cetogenica.png" id="7_xov0c"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
+[ext_resource type="Texture2D" uid="uid://co7k3gagotuj5" path="res://assets-sistema/selector/selector-diabetes.png" id="8_uk3qb"]
+[ext_resource type="Texture2D" uid="uid://4plop0koq1r6" path="res://assets-sistema/selector/selector-autismo.png" id="9_tiw82"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_px47c"]
+shader = ExtResource("4_6uvpc")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x5wwr"]
+shader = ExtResource("4_6uvpc")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.984314, 0.960784, 0.905882, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.2)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0, 0, 0, 0.2)
+shadow_size = 22
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_chip"]
+bg_color = Color(0.780392, 0.839216, 0.658824, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.16)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_secondary"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 1, 1, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.203922, 0.247059, 0.172549, 0.14)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_summary"]
+bg_color = Color(1, 1, 1, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.203922, 0.247059, 0.172549, 0.08)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_primary"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0.309804, 0.372549, 0.266667, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[node name="Intro" type="Node2D" unique_id=933896845]
+z_index = 4
+position = Vector2(4, 0)
+script = ExtResource("1_g0ff0")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=281631034]
+process_priority = -1
+offset_right = 1153.0
+offset_bottom = 800.0
+
+[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=1225842932]
+position = Vector2(573.52826, 402.14877)
+rotation = 3.1415927
+scale = Vector2(0.3337207, 0.32700717)
+texture = ExtResource("2_fsij2")
+
+[node name="MenuBar" type="MenuBar" parent="." unique_id=1246973931]
+offset_left = 406.0
+offset_top = 24.0
+offset_right = 778.0
+offset_bottom = 520.0
+scale = Vector2(1.5899601, 1.5899601)
+start_index = -3
+
+[node name="Celiaquia" type="TextureButton" parent="MenuBar" unique_id=2034736627]
+material = SubResource("ShaderMaterial_px47c")
+layout_mode = 0
+offset_left = 15.748539
+offset_top = 18.11081
+offset_right = 547.74854
+offset_bottom = 216.11084
+scale = Vector2(0.48045883, 0.4908836)
+texture_normal = ExtResource("4_x5wwr")
+
+[node name="Veganismo" type="TextureButton" parent="MenuBar" unique_id=411693344]
+material = SubResource("ShaderMaterial_x5wwr")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 89.7666
+offset_right = 548.6959
+offset_bottom = 287.7666
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("5_lo2a7")
+
+[node name="Vegan-GF" type="TextureButton" parent="MenuBar" unique_id=1640160193]
+material = SubResource("ShaderMaterial_px47c")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 161.42241
+offset_right = 548.6959
+offset_bottom = 359.42242
+scale = Vector2(0.48045883, 0.4908836)
+texture_normal = ExtResource("6_5qkxe")
+
+[node name="Cetogenica" type="TextureButton" parent="MenuBar" unique_id=1124666114]
+material = SubResource("ShaderMaterial_x5wwr")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 239.37761
+offset_right = 548.6959
+offset_bottom = 437.37762
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("7_xov0c")
+
+[node name="Diabetes" type="TextureButton" parent="MenuBar" unique_id=2010230787]
+material = SubResource("ShaderMaterial_px47c")
+layout_mode = 0
+offset_left = 16.695953
+offset_top = 314.97052
+offset_right = 548.6959
+offset_bottom = 512.9708
+scale = Vector2(0.48045883, 0.4908836)
+texture_normal = ExtResource("8_uk3qb")
+
+[node name="Autismo" type="TextureButton" parent="MenuBar" unique_id=265707750]
+material = SubResource("ShaderMaterial_x5wwr")
+layout_mode = 0
+offset_left = 16.522316
+offset_top = 386.62634
+offset_right = 548.52234
+offset_bottom = 584.62634
+scale = Vector2(0.48045886, 0.48045886)
+texture_normal = ExtResource("9_tiw82")
+
+[node name="PlayBackdrop" type="ColorRect" parent="." unique_id=1688635768]
+visible = false
+offset_right = 1153.0
+offset_bottom = 800.0
+color = Color(0.0823529, 0.0941176, 0.0862745, 0.22)
+
+[node name="PlayPanel" type="PanelContainer" parent="." unique_id=1662224480]
+visible = false
+offset_left = 634.0
+offset_top = 118.0
+offset_right = 1080.0
+offset_bottom = 438.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_play_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel" unique_id=1181874619]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 22
+
+[node name="Content" type="VBoxContainer" parent="PlayPanel/MarginContainer" unique_id=6173405]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="HeaderRow" type="HBoxContainer" parent="PlayPanel/MarginContainer/Content" unique_id=2064356795]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StatusChip" type="PanelContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1294554503]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_play_chip")
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip" unique_id=1798952591]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+
+[node name="StatusBadge" type="Label" parent="PlayPanel/MarginContainer/Content/HeaderRow/StatusChip/MarginContainer" unique_id=1973147570]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.247059, 0.290196, 0.211765, 1)
+theme_override_font_sizes/font_size = 12
+text = "ULTIMA PARTIDA"
+
+[node name="Spacer" type="Control" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=1603156671]
+custom_minimum_size = Vector2(8, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=2088248950]
+custom_minimum_size = Vector2(92, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
+text = "Cerrar"
+
+[node name="Title" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=598294786]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 30
+text = "Seguir jugando"
+
+[node name="Subtitle" type="Label" parent="PlayPanel/MarginContainer/Content" unique_id=860489170]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.84)
+theme_override_font_sizes/font_size = 15
+text = "Retoma tu ultimo guardado o entra al selector de modos."
+autowrap_mode = 3
+
+[node name="SummaryPanel" type="PanelContainer" parent="PlayPanel/MarginContainer/Content" unique_id=1990493290]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_play_summary")
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayPanel/MarginContainer/Content/SummaryPanel" unique_id=1021068703]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ResumeSummary" type="Label" parent="PlayPanel/MarginContainer/Content/SummaryPanel/MarginContainer" unique_id=1131992]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 15
+text = "Ultimo punto: el selector de modos"
+autowrap_mode = 3
+
+[node name="ContinueButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=800336124]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_primary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_primary")
+text = "Continuar ultima partida"
+
+[node name="ModeButton" type="Button" parent="PlayPanel/MarginContainer/Content" unique_id=1707256141]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_play_secondary")
+theme_override_styles/focus = SubResource("StyleBoxFlat_play_secondary")
+text = "Ir al selector de modos"
+
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=412964845]
+stream = ExtResource("7_5qkxe")
+volume_db = -4.962
+attenuation = 2.07053
+
+[node name="Atrás" type="Button" parent="." unique_id=1945836818]
+offset_left = 54.0
+offset_top = 636.00006
+offset_right = 283.0
+offset_bottom = 904.00006
+scale = Vector2(0.5200003, 0.45500025)
+text = "
+"
+icon = ExtResource("8_fsij2")
+flat = true
+
+[connection signal="pressed" from="MenuBar/Celiaquia" to="." method="_on_celiaquia_pressed"]
+[connection signal="pressed" from="MenuBar/Veganismo" to="." method="_on_veganismo_pressed"]
+[connection signal="pressed" from="MenuBar/Vegan-GF" to="." method="_on_vegan_gf_pressed"]
+[connection signal="pressed" from="MenuBar/Cetogenica" to="." method="_on_cetogenica_pressed"]
+[connection signal="pressed" from="MenuBar/Diabetes" to="." method="_on_diabetes_pressed"]
+[connection signal="pressed" from="MenuBar/Autismo" to="." method="_on_autismo_pressed"]
+[connection signal="gui_input" from="PlayBackdrop" to="." method="_on_play_backdrop_gui_input"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/HeaderRow/CloseButton" to="." method="_on_play_close_pressed"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ContinueButton" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="PlayPanel/MarginContainer/Content/ModeButton" to="." method="_on_mode_pressed"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]
