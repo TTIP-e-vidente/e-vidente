@@ -9,6 +9,8 @@ const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
 
+var escala_original := Vector2.ONE
+
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard

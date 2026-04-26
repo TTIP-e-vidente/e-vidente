@@ -20,6 +20,7 @@ const HOVER_DURATION := 0.15
 @onready var cetogenica: TextureButton = $MenuBar/Cetogenica
 @onready var diabetes: TextureButton = $MenuBar/Diabetes
 @onready var autismo: TextureButton = $MenuBar/Autismo
+@onready var btn_atras: Button = $"Atrás"
 
 @onready var buttons := [
 	celiaquia,
@@ -52,6 +53,10 @@ func _ready() -> void:
 		_button_base_scales[b] = b.scale
 		b.mouse_entered.connect(_on_button_hover.bind(b, true))
 		b.mouse_exited.connect(_on_button_hover.bind(b, false))
+
+	_button_base_scales[btn_atras] = btn_atras.scale
+	btn_atras.mouse_entered.connect(_on_button_hover.bind(btn_atras, true))
+	btn_atras.mouse_exited.connect(_on_button_hover.bind(btn_atras, false))
 
 
 func _set_resume_overlay_visible(overlay_visible: bool) -> void:
@@ -86,13 +91,11 @@ func _on_cetogenica_pressed() -> void:
 func _on_diabetes_pressed() -> void:
 	_bounce_button(diabetes)
 	await get_tree().create_timer(0.15).timeout
-	# hacer que vaya al mapa de diabetes
 
 
 func _on_autismo_pressed() -> void:
 	_bounce_button(autismo)
 	await get_tree().create_timer(0.15).timeout
-	# hacer que vaya al mapa de autismo
 
 
 func _on_continue_pressed() -> void:
@@ -131,10 +134,8 @@ func _exit_tree() -> void:
 		background_music.stream = null
 
 
-# --- Hover scale animation ---
-
-func _on_button_hover(button: TextureButton, entered: bool) -> void:
-	if button.disabled:
+func _on_button_hover(button: Control, entered: bool) -> void:
+	if button is BaseButton and button.disabled:
 		return
 	var base_scale: Vector2 = _button_base_scales.get(button, button.scale)
 	var target: Vector2 = base_scale * HOVER_SCALE if entered else base_scale
@@ -195,8 +196,6 @@ func _build_hud() -> void:
 	_profile_overlay.reset_progress_pressed.connect(_on_overlay_reset_pressed)
 	_profile_overlay.close_requested.connect(_on_overlay_close_requested)
 
-
-# --- Profile overlay callbacks ---
 
 func _on_profile_toggle_pressed() -> void:
 	_profile_toggle_btn.visible = false
