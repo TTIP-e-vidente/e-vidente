@@ -282,12 +282,6 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _show_streak_feedback(feedback: Dictionary) -> void:
-	if feedback.is_empty():
-		return
-	return
-
-
 func _build_post_completion_continue_target(streak_feedback: Dictionary = {}) -> Dictionary:
 	var continue_target: Dictionary
 	if active_track_key == DEFAULT_TRACK_KEY:

@@ -42,26 +42,29 @@ func refresh_profile_icon() -> void:
 
 
 func _ensure_visual_nodes() -> void:
+	var can_create_nodes: bool = not Engine.is_editor_hint()
 	var legacy_sprite: Sprite2D = get_node_or_null("Perfil") as Sprite2D
 	if legacy_sprite != null:
 		legacy_sprite.visible = false
 
 	if _background_sprite == null or not is_instance_valid(_background_sprite):
 		_background_sprite = get_node_or_null("ProfileBackground") as Sprite2D
-		if _background_sprite == null:
+		if _background_sprite == null and can_create_nodes:
 			_background_sprite = Sprite2D.new()
 			_background_sprite.name = "ProfileBackground"
 			add_child(_background_sprite)
+	if _background_sprite != null:
 		_background_sprite.centered = true
 		_background_sprite.z_index = 0
-	_background_sprite.texture = BACKGROUND_TEXTURE
+		_background_sprite.texture = BACKGROUND_TEXTURE
 
 	if _avatar_sprite == null or not is_instance_valid(_avatar_sprite):
 		_avatar_sprite = get_node_or_null("AvatarPreview") as Sprite2D
-		if _avatar_sprite == null:
+		if _avatar_sprite == null and can_create_nodes:
 			_avatar_sprite = Sprite2D.new()
 			_avatar_sprite.name = "AvatarPreview"
 			add_child(_avatar_sprite)
+	if _avatar_sprite != null:
 		_avatar_sprite.centered = true
 		_avatar_sprite.z_index = 1
 
