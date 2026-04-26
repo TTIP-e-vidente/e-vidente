@@ -5,6 +5,7 @@ const TEST_EMAIL := "validation_user@example.com"
 const TEMP_AVATAR_PATH := "user://validation_avatar.png"
 const TEMP_AVATAR_INVALID_PATH := "user://validation_avatar.txt"
 const STORED_AVATAR_PATH := "user://avatars/local_profile.png"
+const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 var SaveManager
 var Global
@@ -73,9 +74,9 @@ func _run() -> void:
 	_assert(int(recorded_streak_state.get("current_count", 0)) == 1, "La primera actividad valida deberia iniciar la racha en 1")
 	SaveManager.set_resume_to_level("celiaquia", Global.current_level)
 	SaveManager.record_manual_save()
-	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
-	_assert(FileAccess.file_exists(SaveManager.BACKUP_SAVE_PATH), "El guardado robusto deberia mantener un backup reciente")
-	_assert(not FileAccess.file_exists(SaveManager.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
+	_assert(FileAccess.file_exists(SaveManagerScript.SAVE_PATH), "El guardado manual deberia escribir save_data.json")
+	_assert(FileAccess.file_exists(SaveManagerScript.BACKUP_SAVE_PATH), "El guardado robusto deberia mantener un backup reciente")
+	_assert(not FileAccess.file_exists(SaveManagerScript.TEMP_SAVE_PATH), "No deberia quedar un archivo temporal luego de guardar correctamente")
 	var saved_status: Dictionary = SaveManager.get_save_status()
 	_assert(str(saved_status.get("last_saved_reason", "")) == "manual_save", "La metadata del save deberia registrar el guardado manual")
 	_assert(int(saved_status.get("write_count", 0)) > 0, "La metadata del save deberia llevar conteo de escrituras")
@@ -89,7 +90,7 @@ func _run() -> void:
 	var restored_streak_state: Dictionary = Global.get_streak_state()
 	_assert(int(restored_streak_state.get("current_count", 0)) == 1, "La recarga deberia restaurar la racha diaria actual")
 	_assert(int(restored_streak_state.get("best_count", 0)) == 1, "La recarga deberia restaurar la mejor racha guardada")
-	var saved_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.READ)
+	var saved_file := FileAccess.open(SaveManagerScript.SAVE_PATH, FileAccess.READ)
 	_assert(saved_file != null, "Deberia poder abrirse el save real para validar la persistencia de la racha")
 	var persisted_progress: Dictionary = {}
 	if saved_file != null:
@@ -103,12 +104,12 @@ func _run() -> void:
 	var persisted_streak_state: Dictionary = persisted_system_states.get("streak", {})
 	_assert(int(persisted_streak_state.get("current_count", 0)) == 1, "El save real en disco deberia persistir la racha diaria actual")
 	_assert(int(persisted_streak_state.get("best_count", 0)) == 1, "El save real en disco deberia persistir la mejor racha")
-	_assert(str(resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La recarga deberia recuperar el contexto del nivel guardado")
+	_assert(str(resume_state.get("context", "")) == SaveManagerScript.RESUME_CONTEXT_LEVEL, "La recarga deberia recuperar el contexto del nivel guardado")
 	_assert(int(resume_state.get("level_number", 0)) == 2, "La recarga deberia recuperar el capitulo a retomar")
 	_assert(Global.current_level == 2, "La recarga deberia restaurar el capitulo actual para retomar")
 	SaveManager.record_level_completed("celiaquia", 2)
 	_assert(int(Global.get_streak_state().get("current_count", 0)) == 1, "Completar otro capitulo el mismo dia no deberia sumar dos veces la racha")
-	var completion_save_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.READ)
+	var completion_save_file := FileAccess.open(SaveManagerScript.SAVE_PATH, FileAccess.READ)
 	_assert(completion_save_file != null, "Completar un nivel deberia volver a escribir el save real")
 	if completion_save_file != null:
 		var completion_json := JSON.new()
@@ -121,28 +122,28 @@ func _run() -> void:
 			var completion_streak_state: Dictionary = completion_system_states.get("streak", {})
 			_assert(int(completion_streak_state.get("current_count", 0)) == 1, "Completar un nivel deberia persistir la racha sin perderla al escribir el save")
 	var next_resume_state: Dictionary = SaveManager.get_resume_state()
-	_assert(str(next_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "Completar un capitulo deberia mantener la reanudacion dentro del flujo de juego")
+	_assert(str(next_resume_state.get("context", "")) == SaveManagerScript.RESUME_CONTEXT_LEVEL, "Completar un capitulo deberia mantener la reanudacion dentro del flujo de juego")
 	_assert(int(next_resume_state.get("level_number", 0)) == 3, "Completar un capitulo deberia dejar preparada la carga del siguiente")
 	SaveManager.set_resume_to_book("celiaquia", true)
 	var recovered_resume_state: Dictionary = SaveManager.get_resume_state()
-	_assert(str(recovered_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "El resume no deberia degradarse a selector de capitulos si existe una reanudacion jugable mas precisa")
+	_assert(str(recovered_resume_state.get("context", "")) == SaveManagerScript.RESUME_CONTEXT_LEVEL, "El resume no deberia degradarse a selector de capitulos si existe una reanudacion jugable mas precisa")
 	_assert(int(recovered_resume_state.get("level_number", 0)) == 3, "La reanudacion deberia seguir apuntando al siguiente capitulo despues de una degradacion accidental")
 	SaveManager.record_manual_save()
 
 	SaveManager.load_data()
 	var repaired_resume_state: Dictionary = SaveManager.get_resume_state()
-	_assert(str(repaired_resume_state.get("context", "")) == SaveManager.RESUME_CONTEXT_LEVEL, "La carga deberia reparar en disco un resume_state degradado")
+	_assert(str(repaired_resume_state.get("context", "")) == SaveManagerScript.RESUME_CONTEXT_LEVEL, "La carga deberia reparar en disco un resume_state degradado")
 	_assert(int(repaired_resume_state.get("level_number", 0)) == 3, "La reparacion del save deberia conservar el siguiente capitulo listo para retomar")
 	_assert(str(SaveManager.get_save_status().get("last_saved_reason", "")) == "load_repair", "La auto-reparacion del resume deberia registrarse como load_repair")
 
-	var broken_file := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.WRITE)
+	var broken_file := FileAccess.open(SaveManagerScript.SAVE_PATH, FileAccess.WRITE)
 	_assert(broken_file != null, "No se pudo abrir save_data.json para corrupcion controlada")
 	if broken_file != null:
 		broken_file.store_string("{ esto no es json }")
 	SaveManager.load_data()
 	_assert(SaveManager.get_current_user_profile().get("username", "") == TEST_USERNAME, "Con backup disponible deberia recuperarse el ultimo perfil valido")
 	_assert(int(Global.get_progress_summary().get("celiaquia", 0)) == 1, "Con backup disponible deberia recuperarse el progreso guardado del snapshot anterior")
-	_assert(FileAccess.file_exists(SaveManager.SAVE_PATH), "La recuperacion deberia reescribir el save principal")
+	_assert(FileAccess.file_exists(SaveManagerScript.SAVE_PATH), "La recuperacion deberia reescribir el save principal")
 	var recovered_status: Dictionary = SaveManager.get_save_status()
 	_assert(str(recovered_status.get("state", "")) == "recovered", "La metadata runtime deberia indicar que el save fue recuperado")
 	_assert(str(recovered_status.get("recovered_from", "")) == "backup", "La metadata runtime deberia indicar la fuente de recuperacion")
@@ -194,9 +195,9 @@ func _create_invalid_avatar(destination: String) -> int:
 func _cleanup_test_files() -> void:
 	Global.reset_progress()
 	for relative_path in [
-		SaveManager.SAVE_PATH,
-		SaveManager.TEMP_SAVE_PATH,
-		SaveManager.BACKUP_SAVE_PATH,
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH,
 		TEMP_AVATAR_PATH,
 		TEMP_AVATAR_INVALID_PATH,
 		STORED_AVATAR_PATH

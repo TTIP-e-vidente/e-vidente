@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_ci3cu"]
 [ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_g4om8"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="9_0j0nq"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_ejgq3"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_ejgq3"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"

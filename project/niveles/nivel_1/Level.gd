@@ -14,8 +14,8 @@ const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
-const STREAK_PROGRESS_OVERLAY_SCENE := preload(
-	"res://interface/components/StreakProgressOverlay.tscn"
+const GameStreakDebugScript := preload(
+	"res://niveles/progress/GameStreakDebug.gd"
 )
 const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 	"res://niveles/level_completion_black_and_white.gdshader"
@@ -36,15 +36,12 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 
 @export var track_key_override    := ""
 @export var background_music_path := DEFAULT_BACKGROUND_MUSIC_PATH
-@export_group("Debug Demo")
-@export var debug_force_streak_feedback    := false
 @export_group("Completion")
 @export var grayscale_on_completion := true
 
 ## --- Nodos de escena ---
 
 @onready var background:         AudioStreamPlayer2D = $Background
-@onready var victory:            AnimatedSprite2D    = $Victory
 @onready var back_button:        Button              = $Atrás
 @onready var next_chapter_button: Button             = $Adelante
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
@@ -68,7 +65,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 ## --- Estado runtime ---
 var save_feedback_timer:   Timer  = null
 var active_track_key:      String = ""
-var streak_progress_overlay: Node = null
+var _pending_streak_feedback: Dictionary = {}
 var _current_run_completion_handled := false
 var _completion_visual_original_materials: Dictionary = {}
 var _completion_visual_original_modulates: Dictionary = {}
@@ -77,9 +74,6 @@ var _completion_visual_original_modulates: Dictionary = {}
 func _ready() -> void:
 	_start_level_flow()
 	_configure_quick_save_feedback()
-	streak_progress_overlay = STREAK_PROGRESS_OVERLAY_SCENE.instantiate()
-	if streak_progress_overlay != null:
-		add_child(streak_progress_overlay)
 
 
 
@@ -88,11 +82,10 @@ func _ready() -> void:
 func _start_level_flow() -> void:
 	var configured_key := track_key_override.strip_edges()
 	active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
+	_pending_streak_feedback = {}
 	_current_run_completion_handled = false
 	Item_level.is_dragging = null
 	_restore_post_completion_state()
-	victory.hide()
-	victory.stop()
 	next_chapter_button.disabled = true
 	_play_level_audio()
 	if manager_level == null:
@@ -167,7 +160,7 @@ func complete_current_run() -> void:
 	_lock_completed_run()
 
 	# --- Flujo de racha (lineal, todo acá) ---
-	# 1. Capturar estado de racha ANTES de registrar
+	# 1. Capturar racha previa para calcular el feedback post-partida
 	var previous_streak: Dictionary = Global.get_streak_state()
 
 	# 2. Registrar progreso y actividad de racha
@@ -179,18 +172,16 @@ func complete_current_run() -> void:
 
 	# 3. Persistir todo a disco
 	SaveManager.record_level_completed(track_key, level_number)
-	_show_completed_run_feedback()
-	# 4. Generar feedback de racha
+
+	# 4. Preparar el feedback de racha para mostrarlo al avanzar
 	var updated_streak: Dictionary = Global.get_streak_state()
-	var only_first_today: bool = not debug_force_streak_feedback
-	var streak_feedback: Dictionary = GameStreakTrackerScript.build_feedback(
+	_pending_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
-		only_first_today
+		true
 	)
 
-	# 5. Mostrar feedback
-	_show_streak_feedback(streak_feedback)
+	_show_completed_run_feedback()
 	run_completed.emit()
 
 func _show_completed_run_feedback() -> void:
@@ -212,15 +203,18 @@ func _show_completed_run_feedback() -> void:
 func _on_adelante_pressed() -> void:
 	if not is_run_completed():
 		return
-	if active_track_key == DEFAULT_TRACK_KEY:
-		GameSceneRouter.go_to_map(get_tree())
-	else:
-		var next_level := _current_level_number() + 1
-		var level_count := Global.get_track_level_count(active_track_key)
-		if next_level <= level_count:
-			GameSceneRouter.go_to_track_level(get_tree(), active_track_key, next_level)
-		else:
-			GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
+	if bool(_pending_streak_feedback.get("should_show", false)):
+		var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
+		var continue_target: Dictionary = _build_post_completion_continue_target(pending_feedback)
+		_pending_streak_feedback = {}
+		GameSceneRouter.go_to_streak(
+			get_tree(),
+			"",
+			pending_feedback,
+			continue_target
+		)
+		return
+	_go_to_post_completion_destination()
 
 
 ## --- Guardado rápido ---
@@ -279,11 +273,6 @@ func _show_save_success_feedback(saved_positive_count: int) -> void:
 ## --- Racha y feedback post-partida ---
 
 func _show_save_feedback(title: String, message: String, success: bool) -> void:
-	if (
-		is_instance_valid(streak_progress_overlay)
-		and streak_progress_overlay.has_method("hide_overlay")
-	):
-		streak_progress_overlay.call("hide_overlay")
 	_show_feedback_card(
 		title,
 		message,
@@ -293,23 +282,70 @@ func _show_save_feedback(title: String, message: String, success: bool) -> void:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _show_streak_feedback(feedback: Dictionary) -> void:
-	if not bool(feedback.get("should_show", false)):
+func _build_post_completion_continue_target(streak_feedback: Dictionary = {}) -> Dictionary:
+	var continue_target: Dictionary
+	if active_track_key == DEFAULT_TRACK_KEY:
+		continue_target = {"type": "map"}
+		_append_mock_streak_preview(continue_target, streak_feedback)
+		return continue_target
+
+	var next_level: int = _current_level_number() + 1
+	var level_count: int = Global.get_track_level_count(active_track_key)
+	if next_level <= level_count:
+		continue_target = {
+			"type": "track_level",
+			"track_key": active_track_key,
+			"level_number": next_level
+		}
+		_append_mock_streak_preview(continue_target, streak_feedback)
+		return continue_target
+
+	continue_target = {
+		"type": "track_book",
+		"track_key": active_track_key
+	}
+	_append_mock_streak_preview(continue_target, streak_feedback)
+	return continue_target
+
+
+func _append_mock_streak_preview(
+	continue_target: Dictionary,
+	streak_feedback: Dictionary = {}
+) -> void:
+	if not GameStreakDebugScript.is_preview_enabled():
 		return
-	_reset_save_feedback_visual_state()
-	if (
-		is_instance_valid(streak_progress_overlay)
-		and streak_progress_overlay.has_method("show_feedback")
+	var current_count: int = int(streak_feedback.get("current_count", 0))
+	if current_count <= 0 or current_count >= GameStreakDebugScript.PREVIEW_MAX_COUNT:
+		return
+	var preview_counts: Array[int] = []
+	for preview_count in range(
+		current_count + 1,
+		GameStreakDebugScript.PREVIEW_MAX_COUNT + 1
 	):
-		streak_progress_overlay.call("show_feedback", feedback)
-	else:
-		_show_feedback_card(
-			str(feedback.get("title", "Racha activa")).strip_edges(),
-			str(feedback.get("message", "")).strip_edges(),
-			SAVE_FEEDBACK_SUCCESS_TITLE_COLOR,
-			SAVE_FEEDBACK_SUCCESS_BODY_COLOR
-		)
-	save_progress_button.icon = SAVE_ICON_IDLE
+		preview_counts.append(preview_count)
+	if preview_counts.is_empty():
+		return
+	continue_target[GameStreakDebugScript.PREVIEW_COUNTS_KEY] = preview_counts
+
+
+func _go_to_post_completion_destination() -> void:
+	var continue_target: Dictionary = _build_post_completion_continue_target()
+	match str(continue_target.get("type", "")).strip_edges():
+		"map":
+			GameSceneRouter.go_to_map(get_tree())
+		"track_level":
+			GameSceneRouter.go_to_track_level(
+				get_tree(),
+				str(continue_target.get("track_key", "")).strip_edges(),
+				int(continue_target.get("level_number", -1))
+			)
+		"track_book":
+			GameSceneRouter.go_to_track_book(
+				get_tree(),
+				str(continue_target.get("track_key", "")).strip_edges()
+			)
+		_:
+			GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _show_feedback_card(
@@ -348,10 +384,7 @@ func _lock_completed_run() -> void:
 	Item_level.is_dragging = null
 	_set_gameplay_interactions_enabled(false)
 	next_chapter_button.disabled = false
-	next_chapter_button.grab_focus()
 	teaching_sprite.show()
-	victory.show()
-	victory.play("victory")
 	_apply_completion_visual_state()
 
 
@@ -369,11 +402,11 @@ func _set_gameplay_interactions_enabled(enabled: bool) -> void:
 		save_progress_button.disabled = not enabled
 		save_progress_button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
 	if is_instance_valid(menu_area):
-		menu_area.monitoring = enabled
-		menu_area.monitorable = enabled
+		menu_area.set_deferred("monitoring", enabled)
+		menu_area.set_deferred("monitorable", enabled)
 	if is_instance_valid(lupa_area):
-		lupa_area.monitoring = enabled
-		lupa_area.monitorable = enabled
+		lupa_area.set_deferred("monitoring", enabled)
+		lupa_area.set_deferred("monitorable", enabled)
 	if (
 		is_instance_valid(manager_level)
 		and manager_level.has_method("set_runtime_items_interactable")
@@ -420,16 +453,9 @@ func _should_skip_completion_visual(runtime_node: Node) -> bool:
 		return true
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
-	if is_instance_valid(victory) and runtime_node == victory:
-		return true
 	if is_instance_valid(save_feedback_backdrop) and (
 		runtime_node == save_feedback_backdrop
 		or save_feedback_backdrop.is_ancestor_of(runtime_node)
-	):
-		return true
-	if is_instance_valid(streak_progress_overlay) and (
-		runtime_node == streak_progress_overlay
-		or streak_progress_overlay.is_ancestor_of(runtime_node)
 	):
 		return true
 	return false
@@ -465,3 +491,5 @@ func _valid_level_number(track_key: String) -> int:
 
 func _current_level_number() -> int:
 	return int(Global.current_level)
+	
+	

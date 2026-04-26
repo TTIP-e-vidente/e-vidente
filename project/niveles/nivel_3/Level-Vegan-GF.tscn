@@ -36,22 +36,6 @@
 [ext_resource type="Texture2D" uid="uid://811ps8f6u20x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="35_7gq85"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_284cr"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_ma8ur"]
-[ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="37_yw1kj"]
-[ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="38_w55qy"]
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_4xm3r"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("37_yw1kj")
-}, {
-"duration": 1.0,
-"texture": ExtResource("38_w55qy")
-}],
-"loop": true,
-"name": &"victory",
-"speed": 5.0
-}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bbluw"]
 size = Vector2(600, 100)
@@ -180,14 +164,6 @@ position = Vector2(221, 97.00001)
 scale = Vector2(0.5341749, 0.5341749)
 texture = ExtResource("2_f1fgs")
 
-[node name="Victory" type="AnimatedSprite2D" parent="." unique_id=162006048]
-visible = false
-z_index = 1
-position = Vector2(1079, 54)
-scale = Vector2(0.252046, 0.252046)
-sprite_frames = SubResource("SpriteFrames_4xm3r")
-animation = &"victory"
-
 [node name="ColorRect" type="ColorRect" parent="." unique_id=407455266]
 offset_right = 1152.0
 offset_bottom = 800.0
@@ -203,7 +179,7 @@ light_mask = 8
 visibility_layer = 9
 z_index = 1
 position = Vector2(567, 695)
-scale = Vector2(1.2443, 0.72)
+scale = Vector2(1.1643, 0.72)
 collision_layer = 8
 collision_mask = 8
 input_pickable = false
@@ -214,7 +190,7 @@ shape = SubResource("RectangleShape2D_bbluw")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=904192699]
 position = Vector2(11.744013, -5.25511)
-scale = Vector2(0.6922421, 0.98787)
+scale = Vector2(0.69194996, 1.0049309)
 texture = ExtResource("7_d7vbi")
 
 [node name="Plato" parent="." unique_id=1890537969 instance=ExtResource("5_wrlk6")]
@@ -326,22 +302,22 @@ animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
 [node name="Atrás" type="Button" parent="." unique_id=679275653]
-offset_left = 14.0
-offset_top = 623.0
-offset_right = 243.0
-offset_bottom = 891.0
-scale = Vector2(0.64, 0.56)
+offset_left = 42.000004
+offset_top = 626.99994
+offset_right = 271.0
+offset_bottom = 894.99994
+scale = Vector2(0.54661703, 0.47828993)
 text = "
 "
 icon = ExtResource("31_lvwkw")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=511563476]
-offset_left = 994.0
+offset_left = 991.0
 offset_top = 632.0
-offset_right = 1221.0
+offset_right = 1218.0
 offset_bottom = 865.0
-scale = Vector2(0.625337, 0.609372)
+scale = Vector2(0.5046441, 0.5006948)
 text = "
 "
 icon = ExtResource("32_0bm5o")

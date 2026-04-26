@@ -4,8 +4,13 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-23 | racha-y-preguntas-flujo-corto
+Se acomodaron dos partes del juego que estaban quedando medio ásperas de usar. Por un lado, la pantalla de racha se simplificó bastante por dentro para que el código sea más fácil de seguir y, del lado visible, pasó a mostrar mensajes más humanos según el día de la racha en lugar de textos tan genéricos. También quedó más claro que la progresión de racha que se ve después de completar un nivel forma parte del flujo de post-partida y no de un sistema aparte.
+
+Por otro lado, el flujo de preguntas se volvió más corto y más lógico para el caso del mapa. Ahora, cuando la pregunta viene como sesión de una sola pregunta, la pantalla da feedback, reproduce un sonido al acertar y vuelve sin mostrar un overlay de puntaje tipo `1/1` que no sumaba nada. También se agregó un guard en un componente `@tool` del perfil para que el editor no intente usar `SaveManager` como placeholder y no aparezca ese error molesto al abrir escenas.
+
 ### 2026-04-18 | mapa-celiaquia-feedback-visual
-Se agregó feedback visual al mapa de Celiaquia para que el jugador pueda distinguir de un vistazo qué capítulos ya completó, cuáles tiene disponibles y cuáles todavía están bloqueados. Cada nodo del mapa ahora se pinta según su estado: naranja tierra cuando está completado, translúcido cuando está bloqueado y sin cambio cuando está desbloqueado pero pendiente. Los nodos completados además dejan de responder al click y al hover, así el jugador sabe que ahí ya no hay nada por hacer.
+Se implementó el mapa de Celiaquia como escena jugable y, sobre esa base, se agregó feedback visual para que el jugador pueda distinguir de un vistazo qué capítulos ya completó, cuáles tiene disponibles y cuáles todavía están bloqueados. Cada nodo del mapa ahora se pinta según su estado: naranja tierra cuando está completado, translúcido cuando está bloqueado y sin cambio cuando está desbloqueado pero pendiente. Los nodos completados además dejan de responder al click y al hover, así el jugador sabe que ahí ya no hay nada por hacer.
 
 Del lado de la lógica, el modo preguntas no estaba registrando la finalización del capítulo. Se corrigió para que al terminar el quiz se marque el nivel como completado en Global y SaveManager y se desbloquee el siguiente nodo en LevelManager. También se arregló una referencia rota en la escena de preguntas que apuntaba a un script viejo que ya no existía.
 
