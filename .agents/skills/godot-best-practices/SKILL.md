@@ -181,6 +181,28 @@ func _load_level_async(path: String) -> void:
     # Get with: ResourceLoader.load_threaded_get(path)
 ```
 
+### 6. Scene-First Visual Authoring (Avoid Hardcoded Styles)
+
+Prefer editor-authored visuals over script-side styling:
+
+```gdscript
+# Prefer: scene + theme driven visuals, script only toggles behavior
+class_name PrimaryButton
+extends Button
+
+func set_loading(is_loading: bool) -> void:
+    disabled = is_loading
+    text = "Loading..." if is_loading else "Continue"
+
+# Avoid: hardcoded colors/fonts/layout scattered in gameplay scripts
+```
+
+Use these guides for art and UI workflows:
+
+- `references/patterns/sprite-production-pipeline.md`
+- `references/architecture/ui-theming-with-scene-resources.md`
+- `references/deployment/itchio-web-export.md`
+
 ## Quick Reference
 
 | Category | Prefer | Avoid |
@@ -403,11 +425,16 @@ See `references/patterns/save-load-system.md` for comprehensive guide.
 - `references/patterns/object-pooling.md` - Complete pooling system
 - `references/patterns/save-load-system.md` - Comprehensive save/load guide
 - `references/patterns/input-handling.md` - Input buffering and rebinding
+- `references/patterns/sprite-production-pipeline.md` - Efficient sprite production and integration workflow
 
 ### Architecture
 - `references/architecture/project-structure.md` - Directory organization
 - `references/architecture/scene-composition.md` - Scene design patterns
 - `references/architecture/node-communication.md` - Signals vs direct calls
+- `references/architecture/ui-theming-with-scene-resources.md` - Theme/resources-first UI and scene-based styling
+
+### Deployment
+- `references/deployment/itchio-web-export.md` - Web export checklist and itch.io constraints
 
 ### GDScript Deep Dives
 - `references/gdscript/type-system.md` - Static typing in depth
