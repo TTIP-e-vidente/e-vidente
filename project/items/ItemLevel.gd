@@ -84,7 +84,7 @@ func _process(_delta):
 					0.5
 				).set_ease(Tween.EASE_OUT)
 				if body_ref == plato:
-					plato.react_food(self)
+					plato.reaccionar_comida(self)
 			else:
 				tween.tween_property(
 					self,
@@ -123,7 +123,7 @@ func _on_area_2d_body_exited(body):
 func _on_area_2d_area_entered(area):
 	_handle_droppable_enter(area)
 
-func _on_area_2d_area_exited(area):
+func _on_area_2d_area_salido(area):
 	_handle_droppable_exit(area)
 
 func _on_area_2d_mouse_entered():

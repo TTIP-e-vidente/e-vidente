@@ -25,7 +25,7 @@ signal close_requested
 
 
 func _ready() -> void:
-	_overlay_backdrop.gui_input.connect(_on_backdrop_input)
+	_overlay_backdrop.gui_input.connect(_on_entrada_fondo)
 	_close_btn.pressed.connect(func(): close_requested.emit())
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
 	_guardar_btn.pressed.connect(func(): save_pressed.emit())
@@ -33,33 +33,33 @@ func _ready() -> void:
 	_reset_btn.pressed.connect(func(): reset_progress_pressed.emit())
 
 
-func show_overlay() -> void:
-	refresh()
+func mostrar_superposicion() -> void:
+	refrescar()
 	visible = true
-	_animate_slide_in()
+	_animar_entrada_deslizada()
 
 
-func hide_overlay() -> void:
-	_animate_slide_out()
+func ocultar_superposicion() -> void:
+	_animar_salida_deslizada()
 
 
-func refresh() -> void:
-	var username: String = SaveManager.get_current_user_name()
+func refrescar() -> void:
+	var username: String = SaveManager.obtener_nombre_usuario_actual()
 	_username_label.text = username
-	_avatar_label.text = _initials_from(username)
-	var avatar_texture: Texture2D = SaveManager.get_current_user_avatar_texture()
+	_avatar_label.text = _iniciales_desde(username)
+	var avatar_texture: Texture2D = SaveManager.obtener_textura_avatar_usuario_actual()
 	_avatar_preview.texture = avatar_texture
 	_avatar_preview.visible = avatar_texture != null
 	_avatar_label.visible = avatar_texture == null
 
-	var email: String = SaveManager.get_current_user_email()
+	var email: String = SaveManager.obtener_email_usuario_actual()
 	_email_label.text = email if not email.is_empty() else "Sin correo"
 
-	var age: int = SaveManager.get_current_user_age()
+	var age: int = SaveManager.obtener_edad_usuario_actual()
 	_age_label.text = "Edad: %d" % age if age > 0 else ""
 
-	var summary_text := Global.format_progress_summary_text(
-		Global.get_progress_summary()
+	var summary_text := Global.formatear_progreso_resumen_texto(
+		Global.obtener_progreso_resumen()
 	).strip_edges()
 	_progress_label.text = (
 		summary_text
@@ -67,9 +67,9 @@ func refresh() -> void:
 		else "Todavia no hay capitulos completos"
 	)
 
-	_save_status_label.text = _format_state(SaveManager.get_current_save_state())
+	_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
 
-	var can_resume: bool = SaveManager.can_resume_current_save()
+	var can_resume: bool = SaveManager.puede_reanudar_guardado_actual()
 	_resume_hint_label.text = (
 		"Continuar partida" if can_resume else "Sin partida activa"
 	)
@@ -79,7 +79,7 @@ func refresh() -> void:
 
 # --- Helpers ---
 
-func _initials_from(full_name: String) -> String:
+func _iniciales_desde(full_name: String) -> String:
 	var parts := full_name.split(" ", false)
 	var initials := ""
 	for i in mini(parts.size(), 2):
@@ -88,7 +88,7 @@ func _initials_from(full_name: String) -> String:
 	return initials if not initials.is_empty() else "?"
 
 
-func _format_state(state: String) -> String:
+func _formatear_estado(state: String) -> String:
 	match state:
 		"error": return "Error al guardar"
 		"dirty": return "Cambios sin guardar"
@@ -96,12 +96,12 @@ func _format_state(state: String) -> String:
 		_: return "Sin datos"
 
 
-func _on_backdrop_input(event: InputEvent) -> void:
+func _on_entrada_fondo(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		close_requested.emit()
 
 
-func _animate_slide_in() -> void:
+func _animar_entrada_deslizada() -> void:
 	var target_x := _session_panel.offset_left
 	_session_panel.offset_left = target_x + 120.0
 	_session_panel.offset_right += 120.0
@@ -119,7 +119,7 @@ func _animate_slide_in() -> void:
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
-func _animate_slide_out() -> void:
+func _animar_salida_deslizada() -> void:
 	var tw := create_tween().set_parallel(true)
 	tw.tween_property(_overlay_backdrop, "color:a", 0.0, 0.18)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
@@ -129,10 +129,10 @@ func _animate_slide_out() -> void:
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(_session_panel, "modulate:a", 0.0, 0.15)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tw.chain().tween_callback(_on_slide_out_done)
+	tw.chain().tween_callback(_on_salida_deslizada_finalizada)
 
 
-func _on_slide_out_done() -> void:
+func _on_salida_deslizada_finalizada() -> void:
 	visible = false
 	_session_panel.offset_left = -490.0
 	_session_panel.offset_right = -16.0

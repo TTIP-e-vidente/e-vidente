@@ -1,10 +1,10 @@
 extends RefCounted
 
 
-func format_save_status(status: Dictionary) -> String:
+func formatear_estado_guardado(status: Dictionary) -> String:
 	var state := str(status.get("state", "idle"))
 	var last_saved_at := str(status.get("last_saved_at", "sin datos"))
-	var reason := format_save_reason(str(status.get("last_saved_reason", "")))
+	var reason := formatear_motivo_guardado(str(status.get("last_saved_reason", "")))
 	var recovered_from := str(status.get("recovered_from", ""))
 	var error_message := str(status.get("last_error", ""))
 
@@ -12,7 +12,7 @@ func format_save_status(status: Dictionary) -> String:
 		"error":
 			return "No se pudo guardar.\n%s" % ("Reintenta de nuevo." if error_message.is_empty() else error_message)
 		"recovered":
-			return "Se recupero una copia desde %s\nUltimo guardado: %s" % [format_save_source(recovered_from), last_saved_at]
+			return "Se recupero una copia desde %s\nUltimo guardado: %s" % [formatear_origen_guardado(recovered_from), last_saved_at]
 		"dirty":
 			return "Hay cambios sin guardar\nPresiona Guardar para conservarlos"
 		"saved":
@@ -23,7 +23,7 @@ func format_save_status(status: Dictionary) -> String:
 			return "Ultimo guardado: %s\nListo para continuar" % last_saved_at
 
 
-func format_save_reason(reason: String) -> String:
+func formatear_motivo_guardado(reason: String) -> String:
 	match reason:
 		"profile_updated":
 			return "perfil actualizado"
@@ -47,7 +47,7 @@ func format_save_reason(reason: String) -> String:
 			return "guardado local"
 
 
-func format_save_source(source: String) -> String:
+func formatear_origen_guardado(source: String) -> String:
 	match source:
 		"primary":
 			return "tu guardado principal"
@@ -59,20 +59,20 @@ func format_save_source(source: String) -> String:
 			return "un estado nuevo"
 
 
-func format_optional_text(value: String) -> String:
+func formatear_texto_opcional(value: String) -> String:
 	var clean_value := value.strip_edges()
 	if clean_value.is_empty():
 		return "sin dato"
 	return clean_value
 
 
-func format_optional_number(value: int) -> String:
+func formatear_numero_opcional(value: int) -> String:
 	if value <= 0:
 		return "sin dato"
 	return str(value)
 
 
-func format_streak_summary(streak_state: Dictionary, recorded_today: bool) -> String:
+func formatear_resumen_racha(streak_state: Dictionary, recorded_today: bool) -> String:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return "Racha diaria: sin actividad valida todavia"
@@ -83,19 +83,19 @@ func format_streak_summary(streak_state: Dictionary, recorded_today: bool) -> St
 		today_status = "Hoy: completada"
 
 	return "\n".join([
-		"Racha diaria: %d %s" % [current_count, _format_day_label(current_count)],
-		"Mejor racha: %d %s" % [best_count, _format_day_label(best_count)],
+		"Racha diaria: %d %s" % [current_count, _formatear_etiqueta_dia(current_count)],
+		"Mejor racha: %d %s" % [best_count, _formatear_etiqueta_dia(best_count)],
 		today_status
 	])
 
 
-func format_resume_hint_label(can_resume: bool, resume_hint: String) -> String:
+func formatear_etiqueta_pista_reanudar(can_resume: bool, resume_hint: String) -> String:
 	if can_resume:
 		return "Retoma en %s" % resume_hint
 	return "Todavia no hay un punto guardado"
 
 
-func build_toggle_tooltip(save_status: Dictionary) -> String:
+func construir_tooltip_conmutador(save_status: Dictionary) -> String:
 	var tooltip_lines := ["Abrir guardado local"]
 	var last_saved_at := str(save_status.get("last_saved_at", ""))
 	if not last_saved_at.is_empty():
@@ -103,5 +103,5 @@ func build_toggle_tooltip(save_status: Dictionary) -> String:
 	return "\n".join(tooltip_lines)
 
 
-func _format_day_label(count: int) -> String:
+func _formatear_etiqueta_dia(count: int) -> String:
 	return "dia" if count == 1 else "dias"

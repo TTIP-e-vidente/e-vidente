@@ -11,15 +11,15 @@
 ##   last_track_key     → Track donde se realizó la última actividad
 ##
 ## Flujo:
-##   Runtime (Global._streak) → export_streak() → save_data.json
-##   save_data.json → import_streak() → Runtime (Global._streak)
+##   Runtime (Global._streak) → exportar_racha() → save_data.json
+##   save_data.json → importar_racha() → Runtime (Global._streak)
 extends RefCounted
 
 const STREAK_KEY := "streak"
 
 
 ## Extrae el diccionario de racha del snapshot de progreso que se lee de disco.
-func import_streak(progress_snapshot: Dictionary) -> Dictionary:
+func importar_racha(progress_snapshot: Dictionary) -> Dictionary:
 	var systems: Variant = progress_snapshot.get("progress_system_states", {})
 	var streak: Variant = systems.get(STREAK_KEY, {}) if systems is Dictionary else {}
 	if streak is Dictionary:
@@ -28,7 +28,7 @@ func import_streak(progress_snapshot: Dictionary) -> Dictionary:
 
 
 ## Inyecta el estado de racha dentro del snapshot de progreso que se escribe a disco.
-func export_streak(progress_snapshot: Dictionary, streak_state: Dictionary) -> void:
+func exportar_racha(progress_snapshot: Dictionary, streak_state: Dictionary) -> void:
 	if streak_state.is_empty():
 		return
 	progress_snapshot["progress_system_states"] = {

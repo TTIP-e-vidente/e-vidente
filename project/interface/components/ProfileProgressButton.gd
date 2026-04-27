@@ -16,9 +16,9 @@ func _ready() -> void:
 	icon = null
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_apply_empty_style_overrides()
-	_ensure_visual_nodes()
-	refresh_profile_icon()
+	_aplicar_sobrescrituras_estilo_vacio()
+	_asegurar_nodos_visuales()
+	refrescar_icono_perfil()
 
 
 func _get_minimum_size() -> Vector2:
@@ -32,16 +32,16 @@ func _notification(what: int) -> void:
 		or what == NOTIFICATION_FOCUS_ENTER
 		or what == NOTIFICATION_FOCUS_EXIT
 	):
-		_layout_visual_nodes()
+		_distribuir_nodos_visuales()
 
 
-func refresh_profile_icon() -> void:
-	_ensure_visual_nodes()
-	_refresh_avatar_texture()
-	_layout_visual_nodes()
+func refrescar_icono_perfil() -> void:
+	_asegurar_nodos_visuales()
+	_refrescar_textura_avatar()
+	_distribuir_nodos_visuales()
 
 
-func _ensure_visual_nodes() -> void:
+func _asegurar_nodos_visuales() -> void:
 	var can_create_nodes: bool = not Engine.is_editor_hint()
 	var legacy_sprite: Sprite2D = get_node_or_null("Perfil") as Sprite2D
 	if legacy_sprite != null:
@@ -69,7 +69,7 @@ func _ensure_visual_nodes() -> void:
 		_avatar_sprite.z_index = 1
 
 
-func _refresh_avatar_texture() -> void:
+func _refrescar_textura_avatar() -> void:
 	if _avatar_sprite == null:
 		return
 	if Engine.is_editor_hint():
@@ -78,13 +78,13 @@ func _refresh_avatar_texture() -> void:
 		return
 	var avatar_texture: Texture2D = null
 	if SaveManager != null:
-		avatar_texture = SaveManager.get_current_user_avatar_texture()
+		avatar_texture = SaveManager.obtener_textura_avatar_usuario_actual()
 	_avatar_sprite.texture = avatar_texture
 	_avatar_sprite.visible = avatar_texture != null
 
 
 
-func _layout_visual_nodes() -> void:
+func _distribuir_nodos_visuales() -> void:
 	if not is_node_ready() or _background_sprite == null or _background_sprite.texture == null:
 		return
 	var texture_size: Vector2 = _background_sprite.texture.get_size()
@@ -123,7 +123,7 @@ func _layout_visual_nodes() -> void:
 	)
 
 
-func _apply_empty_style_overrides() -> void:
+func _aplicar_sobrescrituras_estilo_vacio() -> void:
 	var empty_style: StyleBoxEmpty = StyleBoxEmpty.new()
 	add_theme_stylebox_override("normal", empty_style)
 	add_theme_stylebox_override("hover", empty_style)

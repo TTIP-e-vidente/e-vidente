@@ -25,7 +25,7 @@ func configure_for_track(track_key: String) -> void:
 func _refresh_copy() -> void:
 	if subtitle_label == null or detail_label == null:
 		return
-	var track_label: String = GameTrackCatalog.get_track_label(_track_key, "este modo")
+	var track_label: String = GameTrackCatalog.obtener_etiqueta_pista(_track_key, "este modo")
 	subtitle_label.text = "Terminaste el mapa de %s" % track_label
 
 

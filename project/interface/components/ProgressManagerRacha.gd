@@ -44,33 +44,33 @@ var _mock_preview_counts: Array[int] = []
 
 
 func _ready() -> void:
-	_connect_continue_button()
-	_connect_map_hud()
-	_load_entry_state()
+	_conectar_boton_continuar()
+	_conectar_hud_mapa()
+	_cargar_estado_entrada()
 
 
-func _load_entry_state() -> void:
-	var feedback: Dictionary = _read_and_clear_root_meta(STREAK_FEEDBACK_META)
-	_feedback_continue_target = _read_and_clear_root_meta(STREAK_CONTINUE_TARGET_META)
-	_mock_preview_counts = _extract_mock_preview_counts(_feedback_continue_target)
+func _cargar_estado_entrada() -> void:
+	var feedback: Dictionary = _leer_y_limpiar_meta_raiz(STREAK_FEEDBACK_META)
+	_feedback_continue_target = _leer_y_limpiar_meta_raiz(STREAK_CONTINUE_TARGET_META)
+	_mock_preview_counts = _extraer_conteos_vista_previa_mock(_feedback_continue_target)
 	if feedback.is_empty():
-		render()
+		renderizar()
 		return
-	_show_feedback(feedback)
+	_mostrar_feedback(feedback)
 
 
-func render(streak_view_model: Dictionary = {}) -> void:
-	_set_regular_mode()
-	var resolved_view_model: Dictionary = _resolve_streak_view_model(streak_view_model)
+func renderizar(streak_view_model: Dictionary = {}) -> void:
+	_establecer_modo_regular()
+	var resolved_view_model: Dictionary = _resolver_view_model_racha(streak_view_model)
 	_current_count = max(0, int(resolved_view_model.get("current_count", 0)))
 	_best_count = max(_current_count, int(resolved_view_model.get("best_count", 0)))
-	_status_detail = _resolve_regular_status_detail(resolved_view_model)
-	_refresh_ui()
+	_status_detail = _resolver_detalle_estado_regular(resolved_view_model)
+	_refrescar_ui()
 
 
-func _show_feedback(feedback: Dictionary) -> void:
-	_set_feedback_mode()
-	var base_view_model: Dictionary = _resolve_streak_view_model({})
+func _mostrar_feedback(feedback: Dictionary) -> void:
+	_establecer_modo_feedback()
+	var base_view_model: Dictionary = _resolver_view_model_racha({})
 
 	var base_current_count: int = max(
 		0,
@@ -87,14 +87,14 @@ func _show_feedback(feedback: Dictionary) -> void:
 		int(feedback.get("best_count", base_best_count))
 	)
 
-	_status_detail = _build_streak_message(_current_count)
+	_status_detail = _construir_mensaje_racha(_current_count)
 	if _status_detail.is_empty():
 		_status_detail = str(feedback.get("message", feedback_default_message)).strip_edges()
 
-	_refresh_ui()
+	_refrescar_ui()
 
 
-func _set_regular_mode() -> void:
+func _establecer_modo_regular() -> void:
 	_feedback_continue_target = {}
 	_mock_preview_counts.clear()
 	_continue_button.visible = false
@@ -103,39 +103,39 @@ func _set_regular_mode() -> void:
 		back_button.visible = true
 
 
-func _set_feedback_mode() -> void:
+func _establecer_modo_feedback() -> void:
 	_continue_button.visible = true
 	_continue_button.disabled = false
 	if back_button != null:
 		back_button.visible = false
 
 
-func _resolve_streak_view_model(streak_view_model: Dictionary) -> Dictionary:
+func _resolver_view_model_racha(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
 		return streak_view_model
 
 	var global_node: Node = get_node_or_null("/root/Global")
-	if global_node == null or not global_node.has_method("get_streak_view_model"):
+	if global_node == null or not global_node.has_method("obtener_modelo_vista_racha"):
 		return {}
 
-	var raw_view_model: Variant = global_node.call("get_streak_view_model")
+	var raw_view_model: Variant = global_node.call("obtener_modelo_vista_racha")
 	if raw_view_model is Dictionary:
 		return raw_view_model
 	return {}
 
 
-func _resolve_regular_status_detail(streak_view_model: Dictionary) -> String:
+func _resolver_detalle_estado_regular(streak_view_model: Dictionary) -> String:
 	if _current_count > 0:
-		return _build_streak_message(_current_count)
+		return _construir_mensaje_racha(_current_count)
 	return str(streak_view_model.get("status_detail", "")).strip_edges()
 
 
-func _refresh_ui() -> void:
+func _refrescar_ui() -> void:
 	if not is_node_ready():
 		return
 	streak_count_label.text = str(_current_count)
-	_detail_label.text = _resolve_detail_text()
-	var visible_day_count: int = _resolve_visible_day_count()
+	_detail_label.text = _resolver_texto_detalle()
+	var visible_day_count: int = _resolver_cantidad_dias_visibles()
 
 	for connector_index in range(_connector_sprites.size()):
 		var connector_sprite: Sprite2D = _connector_sprites[connector_index]
@@ -163,7 +163,7 @@ func _refresh_ui() -> void:
 		day_circle.call("set_estado", DayCircleScript.Estado.COMPLETO)
 
 
-func _resolve_detail_text() -> String:
+func _resolver_texto_detalle() -> String:
 	if not _status_detail.is_empty():
 		return _status_detail
 	if _best_count > 0:
@@ -171,8 +171,8 @@ func _resolve_detail_text() -> String:
 	return empty_message
 
 
-func _resolve_visible_day_count() -> int:
-	var cycle_days: int = _resolve_cycle_days()
+func _resolver_cantidad_dias_visibles() -> int:
+	var cycle_days: int = _resolver_dias_ciclo()
 	if _current_count <= 0 or cycle_days <= 0:
 		return 0
 
@@ -182,27 +182,27 @@ func _resolve_visible_day_count() -> int:
 	return visible_day_count
 
 
-func _resolve_cycle_days() -> int:
+func _resolver_dias_ciclo() -> int:
 	var cycle_days: int = _day_circles.size()
 	if cycle_days > 0:
 		return cycle_days
 	return week_messages.size()
 
 
-func _connect_continue_button() -> void:
-	if not _continue_button.pressed.is_connected(_on_continue_button_pressed):
-		_continue_button.pressed.connect(_on_continue_button_pressed)
+func _conectar_boton_continuar() -> void:
+	if not _continue_button.pressed.is_connected(_on_boton_continuar_presionado):
+		_continue_button.pressed.connect(_on_boton_continuar_presionado)
 
 
-func _connect_map_hud() -> void:
+func _conectar_hud_mapa() -> void:
 	if map_hud == null or not map_hud.has_signal("back_requested"):
 		return
-	var callback := Callable(self, "_on_back_requested")
+	var callback := Callable(self, "_on_volver_solicitado")
 	if not map_hud.is_connected("back_requested", callback):
 		map_hud.connect("back_requested", callback)
 
 
-func _build_streak_message(count: int) -> String:
+func _construir_mensaje_racha(count: int) -> String:
 	if count <= 0:
 		return ""
 
@@ -250,7 +250,7 @@ func _build_streak_message(count: int) -> String:
 	return message
 
 
-func _read_and_clear_root_meta(meta_key: String) -> Dictionary:
+func _leer_y_limpiar_meta_raiz(meta_key: String) -> Dictionary:
 	if get_tree() == null or get_tree().root == null:
 		return {}
 	var tree_root: Window = get_tree().root
@@ -263,7 +263,7 @@ func _read_and_clear_root_meta(meta_key: String) -> Dictionary:
 	return {}
 
 
-func _extract_mock_preview_counts(continue_target: Dictionary) -> Array[int]:
+func _extraer_conteos_vista_previa_mock(continue_target: Dictionary) -> Array[int]:
 	var preview_counts: Array[int] = []
 	var cycle_days: int = _day_circles.size()
 	if cycle_days <= 0:
@@ -287,28 +287,28 @@ func _extract_mock_preview_counts(continue_target: Dictionary) -> Array[int]:
 	return preview_counts
 
 
-func _show_next_mock_preview() -> bool:
+func _mostrar_siguiente_vista_previa_mock() -> bool:
 	if _mock_preview_counts.is_empty():
 		return false
 	var preview_count: int = _mock_preview_counts[0]
 	_mock_preview_counts.remove_at(0)
 	_current_count = preview_count
 	_best_count = max(_best_count, preview_count)
-	_status_detail = _build_streak_message(preview_count)
-	_refresh_ui()
+	_status_detail = _construir_mensaje_racha(preview_count)
+	_refrescar_ui()
 	return true
 
 
-func _on_continue_button_pressed() -> void:
-	if _show_next_mock_preview():
+func _on_boton_continuar_presionado() -> void:
+	if _mostrar_siguiente_vista_previa_mock():
 		return
 	if _feedback_continue_target.is_empty():
-		_on_back_requested()
+		_on_volver_solicitado()
 		return
-	_go_to_continue_target(_feedback_continue_target)
+	_ir_a_objetivo_continuar(_feedback_continue_target)
 
 
-func _go_to_continue_target(continue_target: Dictionary) -> void:
+func _ir_a_objetivo_continuar(continue_target: Dictionary) -> void:
 	var target_type: String = str(continue_target.get("type", "")).strip_edges()
 	match target_type:
 		"map":
@@ -325,16 +325,16 @@ func _go_to_continue_target(continue_target: Dictionary) -> void:
 				str(continue_target.get("track_key", "")).strip_edges()
 			)
 		_:
-			_on_back_requested()
+			_on_volver_solicitado()
 
 
-func _on_back_requested() -> void:
+func _on_volver_solicitado() -> void:
 	if get_tree() == null:
 		return
-	get_tree().change_scene_to_file(_resolve_return_scene_path())
+	get_tree().change_scene_to_file(_resolver_ruta_escena_retorno())
 
 
-func _resolve_return_scene_path() -> String:
+func _resolver_ruta_escena_retorno() -> String:
 	if get_tree() == null or get_tree().root == null:
 		return DEFAULT_RETURN_SCENE
 	var tree_root: Window = get_tree().root

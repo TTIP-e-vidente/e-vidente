@@ -1,7 +1,7 @@
 extends RefCounted
 
 
-func validate_profile(
+func validar_perfil(
 	username: String,
 	age: int,
 	email: String,
@@ -18,15 +18,15 @@ func validate_profile(
 		}
 	if age < 0:
 		return {"ok": false, "message": "La edad no puede ser negativa."}
-	if not clean_email.is_empty() and not is_valid_email(clean_email):
+	if not clean_email.is_empty() and not es_email_valido(clean_email):
 		return {"ok": false, "message": "Ingresa un mail valido o deja el campo vacio."}
-	if not clean_avatar_path.is_empty() and load_avatar_texture(clean_avatar_path) == null:
+	if not clean_avatar_path.is_empty() and cargar_textura_avatar(clean_avatar_path) == null:
 		return {"ok": false, "message": "La foto seleccionada no se pudo abrir como imagen valida."}
 
 	return {"ok": true}
 
 
-func normalize_profile_data(raw_profile: Dictionary, default_profile_name: String) -> Dictionary:
+func normalizar_datos_perfil(raw_profile: Dictionary, default_profile_name: String) -> Dictionary:
 	return {
 		"username": str(raw_profile.get("username", default_profile_name)).strip_edges(),
 		"age": max(0, int(raw_profile.get("age", 0))),
@@ -37,7 +37,7 @@ func normalize_profile_data(raw_profile: Dictionary, default_profile_name: Strin
 	}
 
 
-func load_avatar_texture(path: String) -> Texture2D:
+func cargar_textura_avatar(path: String) -> Texture2D:
 	var avatar_path := path.strip_edges()
 	if avatar_path.is_empty():
 		return null
@@ -50,7 +50,7 @@ func load_avatar_texture(path: String) -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func persist_avatar(avatars_dir: String, user_key: String, source_path: String) -> String:
+func persistir_avatar(avatars_dir: String, user_key: String, source_path: String) -> String:
 	var clean_source := source_path.strip_edges()
 	if clean_source.is_empty():
 		return ""
@@ -62,7 +62,7 @@ func persist_avatar(avatars_dir: String, user_key: String, source_path: String) 
 	if extension.is_empty():
 		extension = "png"
 
-	var destination := "%s/%s.%s" % [avatars_dir, safe_file_key(user_key), extension]
+	var destination := "%s/%s.%s" % [avatars_dir, clave_archivo_segura(user_key), extension]
 	var source_file := FileAccess.open(clean_source, FileAccess.READ)
 	if source_file == null:
 		return ""
@@ -78,16 +78,16 @@ func persist_avatar(avatars_dir: String, user_key: String, source_path: String) 
 	return destination
 
 
-func remove_managed_avatar(avatars_dir: String, path: String) -> void:
+func eliminar_avatar_gestionado(avatars_dir: String, path: String) -> void:
 	var clean_path := path.strip_edges()
 	if clean_path.is_empty():
 		return
 	if not clean_path.begins_with("%s/" % avatars_dir):
 		return
-	remove_file_if_exists(clean_path)
+	eliminar_archivo_si_existe(clean_path)
 
 
-func safe_file_key(raw_key: String) -> String:
+func clave_archivo_segura(raw_key: String) -> String:
 	var safe_key := raw_key.to_lower().strip_edges()
 	for character in [
 		" ",
@@ -117,20 +117,20 @@ func safe_file_key(raw_key: String) -> String:
 	return safe_key
 
 
-func is_valid_email(email: String) -> bool:
+func es_email_valido(email: String) -> bool:
 	var regex := RegEx.new()
 	regex.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
 	return regex.search(email) != null
 
 
-func remove_file_if_exists(path: String) -> void:
+func eliminar_archivo_si_existe(path: String) -> void:
 	if not FileAccess.file_exists(path):
 		return
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 # Construye un diccionario limpio con los campos del perfil normalizados.
-func build_clean_update(
+func construir_actualizacion_limpia(
 	username: String,
 	age: int,
 	email: String,
@@ -145,7 +145,7 @@ func build_clean_update(
 
 
 # Aplica los campos de identidad (nombre, edad, mail) al diccionario de perfil en-lugar.
-func apply_identity_changes(
+func aplicar_cambios_identidad(
 	profile: Dictionary,
 	username: String,
 	age: int,
@@ -159,7 +159,7 @@ func apply_identity_changes(
 
 
 # Copia y persiste el avatar nuevo si cambió. Elimina el avatar anterior si ya no se usa.
-func apply_avatar_change(
+func aplicar_cambio_avatar(
 	profile: Dictionary,
 	clean_avatar_path: String,
 	previous_avatar_path: String,
@@ -167,11 +167,11 @@ func apply_avatar_change(
 	profile_key: String
 ) -> Dictionary:
 	if clean_avatar_path.is_empty():
-		remove_managed_avatar(avatars_dir, previous_avatar_path)
+		eliminar_avatar_gestionado(avatars_dir, previous_avatar_path)
 		profile["avatar_path"] = ""
 		return {"ok": true}
 
-	var persisted_path: String = persist_avatar(avatars_dir, profile_key, clean_avatar_path)
+	var persisted_path: String = persistir_avatar(avatars_dir, profile_key, clean_avatar_path)
 	if persisted_path.is_empty():
 		return {
 			"ok": false,
@@ -179,13 +179,13 @@ func apply_avatar_change(
 		}
 
 	if persisted_path != previous_avatar_path:
-		remove_managed_avatar(avatars_dir, previous_avatar_path)
+		eliminar_avatar_gestionado(avatars_dir, previous_avatar_path)
 	profile["avatar_path"] = persisted_path
 	return {"ok": true}
 
 
 # Estampa created_at y updated_at en el perfil. Crea created_at si no existe.
-func stamp_timestamps(profile: Dictionary) -> void:
+func estampar_timestamps(profile: Dictionary) -> void:
 	var timestamp: String = Time.get_datetime_string_from_system(false, true)
 	profile["updated_at"] = timestamp
 	if str(profile.get("created_at", "")).is_empty():

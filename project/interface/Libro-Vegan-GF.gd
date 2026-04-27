@@ -1,5 +1,5 @@
 extends Libro
 class_name LibroVeganGLF
 
-func _get_track_key() -> String:
+func _obtener_clave_pista() -> String:
 	return "veganismo_celiaquia"

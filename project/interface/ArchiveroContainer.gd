@@ -5,26 +5,26 @@ const TRACK_CARD_SCENE := preload("res://interface/container.tscn")
 
 
 func _ready() -> void:
-	rebuild_track_cards_from_catalog()
+	reconstruir_tarjetas_pistas_desde_catalogo()
 
 
-func rebuild_track_cards() -> void:
-	rebuild_track_cards_from_catalog()
+func reconstruir_tarjetas_pistas() -> void:
+	reconstruir_tarjetas_pistas_desde_catalogo()
 
 
-func rebuild_track_cards_from_catalog() -> void:
-	_clear_existing_track_cards()
-	for track_definition in GameTrackCatalog.get_track_definitions():
-		_add_track_card(track_definition)
+func reconstruir_tarjetas_pistas_desde_catalogo() -> void:
+	_limpiar_tarjetas_pistas_existentes()
+	for track_definition in GameTrackCatalog.obtener_definiciones_pista():
+		_agregar_tarjeta_pista(track_definition)
 
 
-func _clear_existing_track_cards() -> void:
+func _limpiar_tarjetas_pistas_existentes() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
 
 
-func _add_track_card(track_definition: Dictionary) -> void:
+func _agregar_tarjeta_pista(track_definition: Dictionary) -> void:
 	var track_key := str(track_definition.get("key", "")).strip_edges()
 	if track_key.is_empty():
 		return
@@ -35,5 +35,5 @@ func _add_track_card(track_definition: Dictionary) -> void:
 	add_child(track_card)
 	if track_card is Control:
 		(track_card as Control).size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if track_card.has_method("configure"):
-		track_card.call_deferred("configure", track_definition)
+	if track_card.has_method("configurar"):
+		track_card.call_deferred("configurar", track_definition)

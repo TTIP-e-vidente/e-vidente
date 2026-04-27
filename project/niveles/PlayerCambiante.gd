@@ -33,22 +33,22 @@ func _ready():
 	abstract_state = sentir_hambre
 	anim.play(current_animation)
 
-func item_en_plato(item):
+func elemento_en_plato(item):
 	abstract_state.entra_item_plato(item, self)
 	if item.esPositivo: 
 		current_animation = "resonrison"
 	else : 
 		current_animation = "retriston"
 	
-func item_sale_plato(item):
+func elemento_sale_plato(item):
 	abstract_state.sale_item_plato(item, self)
 
 
-func prepare_for_next_run() -> void:
+func preparar_para_siguiente_corrida() -> void:
 	hambre.show()
 	abstract_state = sentir_hambre
 	current_animation = "cagadodehambre"
 
 
-func _on_animated_sprite_2d_animation_finished():
+func _on_sprite_animado_2d_animacion_finalizada():
 	abstract_state.aplicar_animacion()

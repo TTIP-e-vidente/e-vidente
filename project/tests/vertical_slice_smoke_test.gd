@@ -31,9 +31,9 @@ func _run() -> void:
 
 
 	await _go_to("res://interface/evidente.tscn", "Splash")
-	await _call_and_expect("_on_go_pressed", "res://niveles/intro.tscn", "Intro")
-	await _call_and_expect("_on_start_pressed", "res://niveles/selector.tscn", "Selector")
-	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
+	await _call_and_expect("_on_ir_presionado", "res://niveles/intro.tscn", "Intro")
+	await _call_and_expect("_on_iniciar_presionado", "res://niveles/selector.tscn", "Selector")
+	await _call_and_expect("_on_celiaquia_presionado", MAP_SCENE, "Mapa")
 	if not failed:
 		var nodes_container := current_scene.call("get_nodes_container") as Node2D
 		_check(nodes_container != null, "El mapa deberia exponer get_nodes_container")
@@ -59,10 +59,10 @@ func _run() -> void:
 
 
 func _reset_test_state(global_state, save_manager) -> void:
-	global_state.reset_progress()
+	global_state.reiniciar_progreso()
 	Item_level.is_dragging = null
 	_delete_save_files()
-	save_manager.load_data()
+	save_manager.cargar_datos()
 
 
 func _check_gameplay_scene(global) -> void:
@@ -75,8 +75,8 @@ func _check_gameplay_scene(global) -> void:
 	if ml == null:
 		return
 
-	_check(ml.has_method("get_current_run_index"), "ManagerLevel sin get_current_run_index")
-	_check(ml.has_method("get_total_runs"), "ManagerLevel sin get_total_runs")
+	_check(ml.has_method("obtener_actual_corrida_indice"), "ManagerLevel sin obtener_actual_corrida_indice")
+	_check(ml.has_method("obtener_total_corridas"), "ManagerLevel sin obtener_total_corridas")
 	if failed:
 		return
 
@@ -85,18 +85,18 @@ func _check_gameplay_scene(global) -> void:
 		ml.active_run_data is Dictionary and not ml.active_run_data.is_empty(),
 		"Sin datos de corrida"
 	)
-	_check(ml.get_current_run_index() == 1, "Deberia ser la primera corrida")
-	_check(ml.get_total_runs() >= 1, "Deberia haber al menos una corrida")
-	_check(global.get_current_level_number() == 1, "Global deberia estar en capitulo 1")
+	_check(ml.obtener_actual_corrida_indice() == 1, "Deberia ser la primera corrida")
+	_check(ml.obtener_total_corridas() >= 1, "Deberia haber al menos una corrida")
+	_check(global.obtener_actual_nivel_numero() == 1, "Global deberia estar en capitulo 1")
 	_check(
-		level_scene.has_method("complete_current_run"),
-		"El nivel deberia exponer complete_current_run"
+		level_scene.has_method("completar_corrida_actual"),
+		"El nivel deberia exponer completar_corrida_actual"
 	)
-	_check(level_scene.has_method("is_run_completed"), "El nivel deberia exponer is_run_completed")
+	_check(level_scene.has_method("es_corrida_completado"), "El nivel deberia exponer es_corrida_completado")
 	if failed:
 		return
 
-	level_scene.complete_current_run()
+	level_scene.completar_corrida_actual()
 	await process_frame
 	await process_frame
 	_check_completed_gameplay_state(level_scene, ml)
@@ -109,7 +109,7 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
 	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
 
-	_check(level_scene.is_run_completed(), "El nivel deberia quedar marcado como completado")
+	_check(level_scene.es_corrida_completado(), "El nivel deberia quedar marcado como completado")
 	_check(
 		next_button != null and not next_button.disabled,
 		"La flecha siguiente deberia quedar habilitada"
@@ -210,7 +210,7 @@ func _quit() -> void:
 		var scene = current_scene
 		current_scene = null
 		scene.free()
-	GameChapterAssetCatalog.clear_texture_cache()
+	GameChapterAssetCatalog.limpiar_cache_texturas()
 	await process_frame
 	await process_frame
 	quit(1 if failed else 0)

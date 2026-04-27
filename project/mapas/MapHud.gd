@@ -13,7 +13,7 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 func _ready() -> void:
 	_hide_profile_overlay()
-	_connect_streak_badge()
+	_conectar_insignia_racha()
 	_connect_save_manager_signals()
 	_refresh_hud()
 
@@ -57,10 +57,10 @@ func _refresh_hud() -> void:
 		profile_overlay.refresh()
 
 
-func _connect_streak_badge() -> void:
+func _conectar_insignia_racha() -> void:
 	if racha == null or not racha.has_signal("pressed"):
 		return
-	var callback := Callable(self, "_on_racha_pressed")
+	var callback := Callable(self, "_on_racha_presionado")
 	if not racha.is_connected("pressed", callback):
 		racha.connect("pressed", callback)
 
@@ -69,7 +69,7 @@ func _on_profile_button_pressed() -> void:
 	_show_profile_overlay()
 
 
-func _on_racha_pressed() -> void:
+func _on_racha_presionado() -> void:
 	var current_scene_path: String = _get_scene_to_return_to()
 	if current_scene_path == GameSceneRouter.STREAK_SCENE_PATH:
 		return
@@ -81,31 +81,31 @@ func _on_back_button_pressed() -> void:
 	back_requested.emit()
 
 
-func _on_overlay_close_requested() -> void:
+func _on_superposicion_cerrar_solicitado() -> void:
 	_hide_profile_overlay()
 
 
-func _on_overlay_resume_pressed() -> void:
+func _on_superposicion_reanudar_presionado() -> void:
 	_hide_profile_overlay()
-	if not SaveManager.can_resume_current_save():
+	if not SaveManager.puede_reanudar_guardado_actual():
 		return
-	var resume_state: Dictionary = SaveManager.reload_from_disk_and_get_resume()
+	var resume_state: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, _get_scene_to_return_to())
 
 
-func _on_overlay_edit_profile_pressed() -> void:
-	SaveManager.save_progress_to_disk()
+func _on_superposicion_edit_perfil_presionado() -> void:
+	SaveManager.guardar_progreso_en_disco()
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _get_scene_to_return_to())
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
 func _on_overlay_save_pressed() -> void:
-	SaveManager.save_progress_to_disk()
+	SaveManager.guardar_progreso_en_disco()
 	_refresh_hud()
 
 
-func _on_overlay_reset_pressed() -> void:
-	SaveManager.reset_all_progress()
+func _on_superposicion_reiniciar_presionado() -> void:
+	SaveManager.reiniciar_todo_progreso()
 	_hide_profile_overlay()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
@@ -120,12 +120,12 @@ func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 
 func _show_profile_overlay() -> void:
 	profile_button.visible = false
-	profile_overlay.show_overlay()
+	profile_overlay.mostrar_superposicion()
 
 
 func _hide_profile_overlay() -> void:
 	profile_button.visible = true
-	profile_overlay.hide_overlay()
+	profile_overlay.ocultar_superposicion()
 
 
 func _get_scene_to_return_to() -> String:

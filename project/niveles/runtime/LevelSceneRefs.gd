@@ -11,7 +11,7 @@ func _init(manager) -> void:
 	_manager = manager
 
 
-func connect_scene_nodes(level_scene: Node = null) -> bool:
+func conectar_escena_nodos(level_scene: Node = null) -> bool:
 	var scene_root: Node = level_scene if level_scene != null else _manager.get_parent()
 	if scene_root == null:
 		push_error("ManagerLevel no encontro la escena de nivel contenedora.")
@@ -42,14 +42,14 @@ func connect_scene_nodes(level_scene: Node = null) -> bool:
 	return false
 
 
-func apply_run_textures(level_resource, run_data: Dictionary) -> void:
-	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
+func aplicar_texturas_corrida(level_resource, run_data: Dictionary) -> void:
+	level_resource.comida = GameChapterAssetCatalogScript.resolver_textura(
 		run_data.get("meal_texture_path", "")
 	)
-	level_resource.condicion = GameChapterAssetCatalogScript.resolve_texture(
+	level_resource.condicion = GameChapterAssetCatalogScript.resolver_textura(
 		run_data.get("condition_texture_path", "")
 	)
-	level_resource.ensenanza = GameChapterAssetCatalogScript.resolve_texture(
+	level_resource.ensenanza = GameChapterAssetCatalogScript.resolver_textura(
 		run_data.get("teaching_texture_path", "")
 	)
 	_manager.meal_sprite.texture = level_resource.comida

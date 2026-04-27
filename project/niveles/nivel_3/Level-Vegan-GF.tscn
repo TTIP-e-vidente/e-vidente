@@ -409,10 +409,10 @@ level_resource_path = "res://niveles/nivel_3/level_3.tres"
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="input_event" from="Menú" to="Menú" method="_on_input_event"]
-[connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entered"]
-[connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_exited"]
-[connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_animated_sprite_2d_animation_finished"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]
-[connection signal="pressed" from="Adelante" to="." method="_on_adelante_pressed"]
-[connection signal="pressed" from="SaveProgressButton" to="." method="_on_save_progress_button_pressed"]
+[connection signal="input_event" from="Menú" to="Menú" method="_on_evento_entrada"]
+[connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]
+[connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_salido"]
+[connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_sprite_animado_2d_animacion_finalizada"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
+[connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
+[connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
