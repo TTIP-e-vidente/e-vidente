@@ -26,27 +26,27 @@ func _init() -> void:
 	_schema = SaveDataSchemaScript.new()
 
 
-func load_data() -> Dictionary:
-	_reset_load_context()
+func cargar_datos() -> Dictionary:
+	_reiniciar_contexto_carga()
 
-	var raw_save: Variant = _read_first_valid_file()
+	var raw_save: Variant = _leer_primer_archivo_valido()
 	if not raw_save is Dictionary:
 		needs_write = true
-		return _schema.default_save_data()
+		return _schema.datos_guardado_predeterminados()
 
 	var loaded_save: Dictionary = raw_save
 	if loaded_from != "primary":
 		recovered_from = loaded_from
 		needs_write = true
 
-	rewrite_reason = _rewrite_reason(loaded_save)
+	rewrite_reason = _reescribir_motivo(loaded_save)
 	if not rewrite_reason.is_empty():
 		needs_write = true
 
-	return _normalize_loaded_data(loaded_save)
+	return _normalizar_datos_cargados(loaded_save)
 
 
-func repair_structure(save_snapshot: Dictionary) -> bool:
+func reparar_estructura(save_snapshot: Dictionary) -> bool:
 	var changed := false
 
 	var stored_profile: Variant = save_snapshot.get("profile", {})
@@ -54,7 +54,7 @@ func repair_structure(save_snapshot: Dictionary) -> bool:
 		stored_profile = {}
 		changed = true
 
-	var profile: Dictionary = _profile_helper.normalize_profile_data(
+	var profile: Dictionary = _profile_helper.normalizar_datos_perfil(
 		stored_profile,
 		DEFAULT_PROFILE_NAME
 	)
@@ -78,35 +78,35 @@ func repair_structure(save_snapshot: Dictionary) -> bool:
 		changed = true
 
 	if not save_snapshot.get("save_meta", {}) is Dictionary:
-		save_snapshot["save_meta"] = _empty_save_meta()
+		save_snapshot["save_meta"] = _meta_guardado_vacia()
 		changed = true
 	else:
-		save_snapshot["save_meta"] = _schema.normalize_save_meta(
+		save_snapshot["save_meta"] = _schema.normalizar_meta_guardado(
 			save_snapshot.get("save_meta", {})
 		)
 
 	return changed
 
 
-func _reset_load_context() -> void:
+func _reiniciar_contexto_carga() -> void:
 	loaded_from = "default"
 	recovered_from = ""
 	needs_write = false
 	rewrite_reason = ""
 
 
-func _read_first_valid_file() -> Variant:
-	var raw_save: Variant = _read_json_file(SAVE_PATH)
+func _leer_primer_archivo_valido() -> Variant:
+	var raw_save: Variant = _leer_archivo_json(SAVE_PATH)
 	if raw_save is Dictionary:
 		loaded_from = "primary"
 		return raw_save
 
-	raw_save = _read_json_file(TEMP_SAVE_PATH)
+	raw_save = _leer_archivo_json(TEMP_SAVE_PATH)
 	if raw_save is Dictionary:
 		loaded_from = "temp"
 		return raw_save
 
-	raw_save = _read_json_file(BACKUP_SAVE_PATH)
+	raw_save = _leer_archivo_json(BACKUP_SAVE_PATH)
 	if raw_save is Dictionary:
 		loaded_from = "backup"
 		return raw_save
@@ -114,7 +114,7 @@ func _read_first_valid_file() -> Variant:
 	return null
 
 
-func _read_json_file(path: String) -> Variant:
+func _leer_archivo_json(path: String) -> Variant:
 	if not FileAccess.file_exists(path):
 		return null
 
@@ -135,18 +135,18 @@ func _read_json_file(path: String) -> Variant:
 	return null
 
 
-func _normalize_loaded_data(raw: Dictionary) -> Dictionary:
+func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 	var migrated: Dictionary = raw
 	if raw.has("users"):
-		migrated = _migrate_legacy(raw)
+		migrated = _migrar_legacy(raw)
 
-	var source: Dictionary = _flatten_legacy_sessions(migrated)
-	var normalized: Dictionary = _schema.default_save_data()
+	var source: Dictionary = _aplanar_sesiones_legacy(migrated)
+	var normalized: Dictionary = _schema.datos_guardado_predeterminados()
 	normalized["version"] = int(source.get("version", SAVE_VERSION))
 
 	var source_profile: Variant = source.get("profile", {})
 	if source_profile is Dictionary:
-		normalized["profile"] = _profile_helper.normalize_profile_data(
+		normalized["profile"] = _profile_helper.normalizar_datos_perfil(
 			source_profile,
 			DEFAULT_PROFILE_NAME
 		)
@@ -155,17 +155,17 @@ func _normalize_loaded_data(raw: Dictionary) -> Dictionary:
 	if source_progress is Dictionary:
 		normalized["progress"] = (source_progress as Dictionary).duplicate(true)
 
-	normalized["save_meta"] = _schema.normalize_save_meta(source.get("save_meta", {}))
+	normalized["save_meta"] = _schema.normalizar_meta_guardado(source.get("save_meta", {}))
 
 	var source_resume_state: Variant = source.get("resume_state", {})
 	if source_resume_state is Dictionary:
 		normalized["resume_state"] = (source_resume_state as Dictionary).duplicate(true)
 
-	normalized["history"] = _schema.normalize_history(source.get("history", []))
+	normalized["history"] = _schema.normalizar_historial(source.get("history", []))
 	return normalized
 
 
-func _rewrite_reason(raw: Dictionary) -> String:
+func _reescribir_motivo(raw: Dictionary) -> String:
 	if raw.has("users"):
 		return "legacy_migration"
 	if raw.has("sessions") or raw.has("active_session_id") or raw.has("next_session_number"):
@@ -173,13 +173,13 @@ func _rewrite_reason(raw: Dictionary) -> String:
 	return ""
 
 
-func _migrate_legacy(raw: Dictionary) -> Dictionary:
-	var normalized: Dictionary = _schema.default_save_data()
-	var user: Dictionary = _resolve_legacy_user(raw)
+func _migrar_legacy(raw: Dictionary) -> Dictionary:
+	var normalized: Dictionary = _schema.datos_guardado_predeterminados()
+	var user: Dictionary = _resolver_usuario_legacy(raw)
 	if user.is_empty():
 		return normalized
 
-	normalized["profile"] = _profile_helper.normalize_profile_data({
+	normalized["profile"] = _profile_helper.normalizar_datos_perfil({
 		"username": user.get("username", DEFAULT_PROFILE_NAME),
 		"age": user.get("age", 0),
 		"email": user.get("email", ""),
@@ -192,16 +192,16 @@ func _migrate_legacy(raw: Dictionary) -> Dictionary:
 	if legacy_progress is Dictionary:
 		normalized["progress"] = (legacy_progress as Dictionary).duplicate(true)
 
-	normalized["save_meta"] = _schema.normalize_save_meta({
+	normalized["save_meta"] = _schema.normalizar_meta_guardado({
 		"last_saved_at": user.get("updated_at", ""),
 		"last_saved_reason": "legacy_migration",
 		"write_count": 0
 	})
-	normalized["history"] = _schema.normalize_history(user.get("history", []))
+	normalized["history"] = _schema.normalizar_historial(user.get("history", []))
 	return normalized
 
 
-func _resolve_legacy_user(raw: Dictionary) -> Dictionary:
+func _resolver_usuario_legacy(raw: Dictionary) -> Dictionary:
 	var users: Variant = raw.get("users", {})
 	if not users is Dictionary:
 		return {}
@@ -216,7 +216,7 @@ func _resolve_legacy_user(raw: Dictionary) -> Dictionary:
 	return users[first_key] if users[first_key] is Dictionary else {}
 
 
-func _flatten_legacy_sessions(raw: Dictionary) -> Dictionary:
+func _aplanar_sesiones_legacy(raw: Dictionary) -> Dictionary:
 	var sessions: Variant = raw.get("sessions", {})
 	if not sessions is Dictionary:
 		return raw
@@ -262,11 +262,11 @@ func _flatten_legacy_sessions(raw: Dictionary) -> Dictionary:
 	if selected_resume_state is Dictionary:
 		flat["resume_state"] = (selected_resume_state as Dictionary).duplicate(true)
 
-	flat["history"] = _schema.normalize_history(selected.get("history", []))
+	flat["history"] = _schema.normalizar_historial(selected.get("history", []))
 	return flat
 
 
-func _empty_save_meta() -> Dictionary:
+func _meta_guardado_vacia() -> Dictionary:
 	return {
 		"last_saved_at": "",
 		"last_saved_reason": "",

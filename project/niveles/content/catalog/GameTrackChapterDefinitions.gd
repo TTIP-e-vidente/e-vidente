@@ -1,8 +1,4 @@
 extends RefCounted
-## Datos declarativos de capitulos por track.
-##
-## Cada entrada describe la partida base de un capitulo. Este archivo solo
-## transforma esa data mínima al schema jugable completo del catalogo.
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameChapterAssetCatalog := preload(
@@ -194,9 +190,9 @@ const RAW_CHAPTERS_BY_TRACK := {
 }
 
 
-static func build_track_chapter_catalog() -> Dictionary:
+static func construir_catalogo_capitulo_pista() -> Dictionary:
 	var chapters_by_track: Dictionary = {}
-	for track_key in GameTrackCatalog.get_track_keys():
+	for track_key in GameTrackCatalog.obtener_claves_pista():
 		var track_chapters: Dictionary = {}
 		var raw_chapters: Variant = RAW_CHAPTERS_BY_TRACK.get(track_key, [])
 		var chapter_list: Array = raw_chapters if raw_chapters is Array else []
@@ -213,7 +209,7 @@ static func build_track_chapter_catalog() -> Dictionary:
 			var category: String = str(chapter_definition.get("category", ""))
 			var negative_count: int = int(chapter_definition.get("negative_count", 0))
 			var positive_count: int = int(chapter_definition.get("positive_count", 0))
-			var asset_paths: Dictionary = GameChapterAssetCatalog.build_run_asset_paths(
+			var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
 				track_key,
 				meal_key,
 				teaching_key

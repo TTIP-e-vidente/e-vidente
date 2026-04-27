@@ -44,4 +44,4 @@ stream = ExtResource("4_tn4me")
 attenuation = 1.07177
 
 [connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]
-[connection signal="area_exited" from="Area2D" to="." method="_on_area_2d_area_exited"]
+[connection signal="area_exited" from="Area2D" to="." method="_on_area_2d_area_salido"]

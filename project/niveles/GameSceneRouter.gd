@@ -130,12 +130,12 @@ static func request_initial_scene_preload() -> void:
 	request_scene_preload(MODE_SELECTOR_SCENE_PATH)
 	request_scene_preload(MAP_SCENE_PATH)
 	request_scene_preload(
-		GameTrackCatalog.get_level_scene_path(GameTrackCatalog.TRACK_CELIAQUIA)
+		GameTrackCatalog.obtener_ruta_escena_nivel(GameTrackCatalog.TRACK_CELIAQUIA)
 	)
 
 
 static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
-	var scene_path: String = GameTrackCatalog.get_book_scene_path(track_key)
+	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
 	_change_scene_to_path(tree, scene_path)
@@ -143,7 +143,7 @@ static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
 
 static func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
 	_store_requested_level(tree, track_key, level_number)
-	var scene_path: String = GameTrackCatalog.get_level_scene_path(track_key)
+	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_nivel(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
 	_change_scene_to_path(tree, scene_path)
@@ -200,7 +200,7 @@ static func _store_requested_level(
 		return
 	var global_state := _get_global_state(tree)
 	if global_state != null:
-		global_state.set_current_level_number(level_number, track_key)
+		global_state.establecer_actual_nivel_numero(level_number, track_key)
 
 
 static func _change_scene_to_path(tree: SceneTree, scene_path: String) -> void:

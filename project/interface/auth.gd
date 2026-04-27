@@ -23,16 +23,16 @@ var back_button: Button
 var avatar_dialog: FileDialog
 
 func _ready() -> void:
-	_cache_ui_nodes()
-	_configure_static_ui()
-	username_input.text_changed.connect(_refresh_preview_from_form)
-	age_input.text_changed.connect(_refresh_preview_from_form)
-	email_input.text_changed.connect(_refresh_preview_from_form)
-	_load_current_profile_state()
-	_set_feedback("Revisa la vista previa y guarda cuando este lista.", true)
+	_cachear_nodos_ui()
+	_configurar_ui_estatica()
+	username_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
+	age_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
+	email_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
+	_cargar_estado_perfil_actual()
+	_establecer_feedback("Revisa la vista previa y guarda cuando este lista.", true)
 
 
-func _cache_ui_nodes() -> void:
+func _cachear_nodos_ui() -> void:
 	back_button = $BackButton as Button
 	avatar_dialog = $AvatarDialog as FileDialog
 
@@ -80,7 +80,7 @@ func _cache_ui_nodes() -> void:
 	save_profile_button = footer.get_node("RegisterButton") as Button
 
 
-func _configure_static_ui() -> void:
+func _configurar_ui_estatica() -> void:
 	username_input.placeholder_text = "Nombre visible (opcional)"
 	age_input.placeholder_text = "Edad (opcional)"
 	email_input.placeholder_text = "Mail (opcional)"
@@ -88,76 +88,76 @@ func _configure_static_ui() -> void:
 	back_button.text = ""
 	back_button.tooltip_text = (
 		"Volver al menu"
-		if _should_return_to_intro()
+		if _deberia_volver_a_intro()
 		else "Volver al Archivero"
 	)
 
 
-func _load_current_profile_state() -> void:
-	var username := SaveManager.get_current_user_name()
+func _cargar_estado_perfil_actual() -> void:
+	var username := SaveManager.obtener_nombre_usuario_actual()
 	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
-	var age := SaveManager.get_current_user_age()
+	var age := SaveManager.obtener_edad_usuario_actual()
 	age_input.text = "" if age <= 0 else str(age)
-	email_input.text = SaveManager.get_current_user_email()
-	avatar_path_input.text = SaveManager.get_current_user_avatar_path()
+	email_input.text = SaveManager.obtener_email_usuario_actual()
+	avatar_path_input.text = SaveManager.obtener_ruta_avatar_usuario_actual()
 
 	# Actualizar controles de avatar y vista previa
-	_refresh_avatar_controls()
-	_update_preview_labels(username, email_input.text, age_input.text, avatar_path_input.text)
+	_refrescar_controles_avatar()
+	_actualizar_etiquetas_vista_previa(username, email_input.text, age_input.text, avatar_path_input.text)
 
 	# Mostrar ultimo guardado
-	var last_reason := SaveManager.get_last_saved_reason()
+	var last_reason := SaveManager.obtener_motivo_ultimo_guardado()
 	if last_reason.is_empty():
 		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
 	else:
 		summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ")
 
 
-func _on_choose_avatar_button_pressed() -> void:
+func _on_boton_elegir_avatar_presionado() -> void:
 	avatar_dialog.popup_centered_ratio(0.75)
 
 
-func _on_avatar_dialog_file_selected(path: String) -> void:
-	_apply_avatar_path(path)
+func _on_archivo_avatar_seleccionado(path: String) -> void:
+	_aplicar_ruta_avatar(path)
 
 
-func _on_clear_avatar_button_pressed() -> void:
-	_apply_avatar_path("")
+func _on_boton_limpiar_avatar_presionado() -> void:
+	_aplicar_ruta_avatar("")
 
 
-func _on_register_button_pressed() -> void:
-	_set_feedback("", true)
+func _on_boton_registrar_presionado() -> void:
+	_establecer_feedback("", true)
 	var age_text := age_input.text.strip_edges()
 	var parsed_age := 0
 	if not age_text.is_empty():
 		if not age_text.is_valid_int() or int(age_text) < 0:
-			_set_feedback("La edad debe ser un numero entero o quedar vacia.", false)
+			_establecer_feedback("La edad debe ser un numero entero o quedar vacia.", false)
 			return
 		parsed_age = int(age_text)
 
-	var save_result: Dictionary = SaveManager.update_local_profile(
+	var save_result: Dictionary = SaveManager.actualizar_perfil_local(
 		username_input.text,
 		parsed_age,
 		email_input.text,
 		avatar_path_input.text
 	)
 	var is_ok: bool = bool(save_result.get("ok", false))
-	_set_feedback(str(save_result.get("message", "")), is_ok)
+	_establecer_feedback(str(save_result.get("message", "")), is_ok)
 	if is_ok:
-		_load_current_profile_state()
-		_go_to_return_scene()
+		_cargar_estado_perfil_actual()
+		_ir_a_escena_retorno()
 
 
-func _on_login_button_pressed() -> void:
-	_go_to_return_scene()
+func _on_boton_login_presionado() -> void:
+	_ir_a_escena_retorno()
 
 
-func _on_back_button_pressed() -> void:
-	_go_to_return_scene()
+func _on_boton_volver_presionado() -> void:
+	_ir_a_escena_retorno()
 
 
-func _refresh_preview_from_form(_text: String = "") -> void:
-	_update_preview_labels(
+func _refrescar_vista_previa_desde_formulario(_text: String = "") -> void:
+	_actualizar_etiquetas_vista_previa(
 		username_input.text.strip_edges(),
 		email_input.text.strip_edges(),
 		age_input.text.strip_edges(),
@@ -165,7 +165,7 @@ func _refresh_preview_from_form(_text: String = "") -> void:
 	)
 
 
-func _update_preview_labels(
+func _actualizar_etiquetas_vista_previa(
 	username: String,
 	email: String,
 	age_text: String,
@@ -180,23 +180,23 @@ func _update_preview_labels(
 	profile_age_preview_label.text = "Edad: %s" % (
 		age_text if not age_text.is_empty() else "sin dato"
 	)
-	avatar_preview.texture = SaveManager.load_avatar_texture(avatar_path)
+	avatar_preview.texture = SaveManager.cargar_textura_avatar(avatar_path)
 	avatar_placeholder_label.visible = avatar_preview.texture == null
 
 
-func _apply_avatar_path(path: String) -> void:
+func _aplicar_ruta_avatar(path: String) -> void:
 	avatar_path_input.text = path
-	_refresh_avatar_controls()
-	_refresh_preview_from_form()
+	_refrescar_controles_avatar()
+	_refrescar_vista_previa_desde_formulario()
 
 
-func _refresh_avatar_controls() -> void:
+func _refrescar_controles_avatar() -> void:
 	var has_avatar: bool = not avatar_path_input.text.strip_edges().is_empty()
 	choose_avatar_button.text = "Cambiar foto" if has_avatar else "Elegir foto"
 	clear_avatar_button.visible = has_avatar
 
 
-func _set_feedback(message: String, success: bool) -> void:
+func _establecer_feedback(message: String, success: bool) -> void:
 	feedback_label.text = message
 	feedback_label.modulate = (
 		Color(0.219608, 0.380392, 0.235294, 1)
@@ -205,12 +205,12 @@ func _set_feedback(message: String, success: bool) -> void:
 	)
 
 
-func _should_return_to_intro() -> bool:
+func _deberia_volver_a_intro() -> bool:
 	return get_tree().root.get_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE) == INTRO_SCENE
 
 
-func _go_to_return_scene() -> void:
-	if _should_return_to_intro():
+func _ir_a_escena_retorno() -> void:
+	if _deberia_volver_a_intro():
 		GameSceneRouter.go_to_main_menu(get_tree())
 		return
 	GameSceneRouter.go_to_mode_selector(get_tree())

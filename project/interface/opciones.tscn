@@ -43,4 +43,4 @@ stream = ExtResource("5_5gqb0")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
