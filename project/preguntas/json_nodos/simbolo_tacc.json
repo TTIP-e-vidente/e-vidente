@@ -1,0 +1,23 @@
+{
+	"schema_version": 2,
+	"node": {
+		"node_kind": "question",
+		"question_key": "simbolo_tacc",
+		"title": "Pregunta 6",
+		"track_key": "celiaquia",
+		"question_number": 6,
+		"difficulty": "media",
+		"estimated_seconds": 25
+	},
+	"activity": {
+		"type": "quiz_choice",
+		"title": "Pregunta 6",
+		"instruction": "Lee la consigna y elegi la respuesta correcta."
+	},
+	"question": {
+		"prompt": "El simbolo Sin TACC se modifico a Sin gluten porque se descubrio que, durante la cosecha en campos de trigo, el gluten se transferia a semillas de cebada, centeno y avena, y que al separarse correctamente las cosechas ya no era necesario excluirlas completamente de la dieta celiaca.",
+		"correct_answer": "Verdadero",
+		"wrong_answers": ["Falso"],
+		"type": "text"
+	}
+}

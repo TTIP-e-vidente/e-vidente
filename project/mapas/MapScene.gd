@@ -208,13 +208,7 @@ func _open_chapter_node(track_key: String, node_data: RefCounted) -> void:
 	)
 
 func _build_question_session(track_key: String, node_data: RefCounted) -> Dictionary:
-	return {
-		"track_key": track_key,
-		"nivel_id": node_data.get_question_session_level_id(),
-		"question_key": node_data.question_key,
-		"question_resource_path": node_data.question_resource_path,
-		"return_scene_path": GameSceneRouter.MAP_SCENE_PATH
-	}
+	return node_data.build_question_session(track_key, GameSceneRouter.MAP_SCENE_PATH)
 
 
 func _save_current_map_scroll() -> void:

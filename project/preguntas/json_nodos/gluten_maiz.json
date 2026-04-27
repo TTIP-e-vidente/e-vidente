@@ -1,0 +1,23 @@
+{
+	"schema_version": 2,
+	"node": {
+		"node_kind": "question",
+		"question_key": "gluten_maiz",
+		"title": "Pregunta 8",
+		"track_key": "celiaquia",
+		"question_number": 8,
+		"difficulty": "avanzada",
+		"estimated_seconds": 15
+	},
+	"activity": {
+		"type": "quiz_choice",
+		"title": "Pregunta 8",
+		"instruction": "Lee la consigna y elegi la respuesta correcta."
+	},
+	"question": {
+		"prompt": "El gluten esta en el maiz?",
+		"correct_answer": "No",
+		"wrong_answers": ["Si"],
+		"type": "text"
+	}
+}

@@ -64,8 +64,8 @@ Versión corta para ubicarte rápido:
 | Entrada y Menú | `interface/evidente.gd`, `interface/intro.gd`, `niveles/selector.gd` | Arranque y navegación inicial |
 | Progreso y Guardado | `interface/SaveManager.gd`, `niveles/global.gd`, `interface/save_local/*` | Guardar, recuperar y consultar avance |
 | Gameplay | `niveles/nivel_1/Level.gd`, `niveles/manager_level.gd`, `niveles/mechanics/*` | Flujo jugable y lógica de mecánicas |
-| Preguntas | `preguntas/pregunta.gd`, `preguntas/*.tres` | Quiz y contenido de preguntas |
-| Mapa | `mapas/MapScene.gd`, `mapas/LevelNode.gd`, `mapas/LevelManager.gd` | Navegación visual por capítulos |
+| Preguntas | `preguntas/pregunta.gd`, `preguntas/json_nodos/*.json`, `preguntas/QuestionJsonLoader.gd` | Quiz y contenido de preguntas |
+| Mapa | `mapas/MapScene.gd`, `mapas/LevelNode.gd`, `mapas/MapNodeData.gd` | Navegación visual por capítulos |
 | Audio | `managers/MusicManager.gd` | Música de fondo y continuidad |
 | UI de progreso | `interface/components/Racha.tscn`, `interface/components/ProgressManagerRacha.gd` | Feedback de racha y estado |
 
@@ -237,6 +237,17 @@ self.modulate = color
 ---
 
 ## Cómo Aprender el Código
+
+### Ruta trainee para mapa y niveles
+
+Si querés tocar solo mapa, preguntas JSON o niveles sin entender todo el repo, seguí este orden:
+
+1. `mapas/MapBoard.tscn` - dónde están los nodos visibles.
+2. `mapas/LevelNode.gd` - qué datos tiene cada nodo.
+3. `preguntas/json_nodos/*.json` - contenido de preguntas.
+4. `preguntas/pregunta.gd` - cómo se consume el JSON.
+5. `niveles/nivel_1/Level.gd` - nivel visible.
+6. `niveles/manager_level.gd` - armado real de la sesión.
 
 No necesitás leerlo TODO de una. Depende cuánto tiempo tengas:
 

@@ -1,0 +1,27 @@
+{
+	"schema_version": 2,
+	"node": {
+		"node_kind": "question",
+		"question_key": "arrastrar_al_plato",
+		"title": "Arrastra al plato",
+		"track_key": "celiaquia",
+		"question_number": 10,
+		"difficulty": "media",
+		"estimated_seconds": 30
+	},
+	"activity": {
+		"type": "drag_to_target",
+		"title": "Arrastra al plato",
+		"instruction": "Arrastra solo los alimentos aptos."
+	},
+	"drag_and_drop": {
+		"target": {
+			"id": "plato",
+			"label": "Plato"
+		},
+		"items": [
+			{"id": "manzana", "label": "Manzana", "is_correct": true},
+			{"id": "pan_trigo", "label": "Pan de trigo", "is_correct": false}
+		]
+	}
+}

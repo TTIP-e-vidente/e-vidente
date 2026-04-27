@@ -2,6 +2,7 @@ extends Node
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
+const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const DEFAULT_RETURN_SCENE_PATH := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
 
@@ -10,7 +11,7 @@ const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points
 @export var track_key: String = "celiaquia"
 
 var botones: Array[Button] = []
-var index: int = 0
+var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
 
@@ -20,16 +21,16 @@ var _has_map_session: bool = false
 var _return_scene_path: String = DEFAULT_RETURN_SCENE_PATH
 
 var pregunta_actual: Preguntas:
-	get : return quiz.theme[index]
+	get : return quiz.theme[indice_pregunta_actual]
 
-@onready var preguntas: Label = $Contenido/Informacion/Pregunta
+@onready var pregunta_label: Label = $Contenido/Informacion/Pregunta
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
 @onready var _game_over_panel: ColorRect = $Contenido/GameOver
 @onready var _game_over_title: Label = $Contenido/GameOver/Aciertos
 @onready var _game_over_score: Label = $Contenido/GameOver/Puntaje
 
 func _ready() -> void:
-	_prepare_question_session()
+	_preparar_sesion_de_preguntas()
 	_sync_question_count()
 	puntaje = 0
 	if _audio_player != null:
@@ -49,32 +50,82 @@ func _collect_answer_buttons() -> void:
 		boton_respuesta.pressed.connect(_respuesta_boton.bind(boton_respuesta))
 
 
-func _prepare_question_session() -> void:
+func _preparar_sesion_de_preguntas() -> void:
 	# Si la escena se abrio desde el mapa, reemplazamos el tema por una sola pregunta.
-	_reset_map_question_session_state()
+	_reiniciar_estado_de_sesion_de_mapa()
 
 	var session_state: Dictionary = Global.obtener_activo_pregunta_sesion()
 	if session_state.is_empty():
 		return
 
-	var question_resource: Preguntas = _load_question_from_map_session(session_state)
-	if question_resource == null:
+	var tema_desde_mapa: ThemePreg = _cargar_tema_desde_sesion_de_mapa(session_state)
+	if tema_desde_mapa == null:
 		return
 
-	quiz = _build_single_question_theme(question_resource)
-	_apply_map_session_context(session_state)
+	quiz = tema_desde_mapa
+	_aplicar_contexto_de_sesion_de_mapa(session_state)
 
 
-func _reset_map_question_session_state() -> void:
+func _reiniciar_estado_de_sesion_de_mapa() -> void:
 	_has_map_session = false
 	_active_question_key = ""
 	_return_scene_path = DEFAULT_RETURN_SCENE_PATH
 
 
-func _load_question_from_map_session(session_state: Dictionary) -> Preguntas:
+func _cargar_tema_desde_sesion_de_mapa(session_state: Dictionary) -> ThemePreg:
+	var question_json_path: String = str(session_state.get("question_json_path", "")).strip_edges()
+	if not question_json_path.is_empty():
+		var json_theme: ThemePreg = _cargar_tema_desde_json(question_json_path)
+		if json_theme != null:
+			return json_theme
+
+	var question_resource: Preguntas = _cargar_pregunta_legacy_desde_sesion_mapa(session_state)
+	if question_resource == null:
+		return null
+
+	return _construir_tema_con_una_pregunta(question_resource)
+
+
+func _cargar_tema_desde_json(question_json_path: String) -> ThemePreg:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var loaded_theme: ThemePreg = QuestionJsonLoaderScript.cargar_tema_desde_archivo_json(
+		question_json_path,
+		errors,
+		warnings
+	)
+	if loaded_theme != null:
+		return loaded_theme
+
+	_informar_errores_y_advertencias_de_json(question_json_path, errors, warnings)
+	return null
+
+
+func _informar_errores_y_advertencias_de_json(
+	question_json_path: String,
+	errors: Array[String],
+	warnings: Array[String]
+) -> void:
+	if not errors.is_empty():
+		push_warning(
+			"Preguntas: JSON invalido para el nodo (%s). Se usa fallback .tres. Detalle: %s"
+			% [question_json_path, " | ".join(errors)]
+		)
+
+	if not warnings.is_empty():
+		push_warning(
+			"Preguntas: JSON cargado con advertencias (%s): %s"
+			% [question_json_path, " | ".join(warnings)]
+		)
+
+
+func _cargar_pregunta_legacy_desde_sesion_mapa(session_state: Dictionary) -> Preguntas:
 	var question_resource_path := str(
 		session_state.get("question_resource_path", "")
 	).strip_edges()
+	if question_resource_path.is_empty():
+		push_warning("Preguntas: no hay question_resource_path para fallback .tres.")
+		return null
 	var question_resource: Variant = load(question_resource_path)
 	if question_resource == null:
 		push_warning(
@@ -91,7 +142,7 @@ func _load_question_from_map_session(session_state: Dictionary) -> Preguntas:
 	return question_resource as Preguntas
 
 
-func _build_single_question_theme(question_resource: Preguntas) -> ThemePreg:
+func _construir_tema_con_una_pregunta(question_resource: Preguntas) -> ThemePreg:
 	var question_theme: ThemePreg = ThemePregScript.new()
 	var typed_theme: Array[Preguntas] = []
 	typed_theme.append(question_resource)
@@ -99,7 +150,7 @@ func _build_single_question_theme(question_resource: Preguntas) -> ThemePreg:
 	return question_theme
 
 
-func _apply_map_session_context(session_state: Dictionary) -> void:
+func _aplicar_contexto_de_sesion_de_mapa(session_state: Dictionary) -> void:
 	track_key = str(session_state.get("track_key", track_key)).strip_edges()
 	nivel_id = int(session_state.get("nivel_id", nivel_id))
 	_active_question_key = str(session_state.get("question_key", "")).strip_edges()
@@ -132,11 +183,11 @@ func _load_current_question() -> void:
 		push_warning("Preguntas: no hay quiz asignado para cargar.")
 		return
 
-	if index >= _max_questions or index >= quiz.theme.size():
+	if indice_pregunta_actual >= _max_questions or indice_pregunta_actual >= quiz.theme.size():
 		_game_over()
 		return
 
-	preguntas.text = pregunta_actual.info_pregunta
+	pregunta_label.text = pregunta_actual.info_pregunta
 
 	var opciones_actuales: Array[String] = pregunta_actual.opciones
 	_apply_answer_options(opciones_actuales)
@@ -218,7 +269,7 @@ func _respuesta_incorrecta(boton: Button) -> void:
 
 
 func _advance_to_next_question() -> void:
-	index += 1
+	indice_pregunta_actual += 1
 	_load_current_question()
 
 

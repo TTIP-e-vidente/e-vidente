@@ -1,0 +1,23 @@
+{
+	"schema_version": 2,
+	"node": {
+		"node_kind": "question",
+		"question_key": "mi_pregunta",
+		"title": "Pregunta ejemplo",
+		"track_key": "celiaquia",
+		"question_number": 1,
+		"difficulty": "basica",
+		"estimated_seconds": 20
+	},
+	"activity": {
+		"type": "quiz_choice",
+		"title": "Pregunta ejemplo",
+		"instruction": "Lee la consigna y elegi la respuesta correcta."
+	},
+	"question": {
+		"prompt": "Texto de la pregunta",
+		"correct_answer": "Si",
+		"wrong_answers": ["No"],
+		"type": "text"
+	}
+}

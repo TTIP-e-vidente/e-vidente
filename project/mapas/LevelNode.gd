@@ -1,6 +1,5 @@
 @tool
 extends Node2D
-## Nodo visual/configurable del mapa. Traduce exports authored a datos runtime.
 
 signal node_selected(selected_target: Variant)
 
@@ -25,6 +24,9 @@ const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 @export var level_number: int = 0
 @export var question_number: int = 0
 @export var question_key: String = ""
+
+@export_group("Destino Pregunta - Avanzado")
+@export_file("*.json") var question_json_path: String = ""
 @export_file("*.tres") var question_resource_path: String = ""
 
 @export_group("Vista en Editor")
@@ -71,6 +73,7 @@ func build_runtime_node_data() -> RefCounted:
 	node_data.level_number = level_number
 	node_data.question_number = question_number
 	node_data.question_key = question_key.strip_edges()
+	node_data.question_json_path = question_json_path.strip_edges()
 	node_data.question_resource_path = question_resource_path.strip_edges()
 	node_data.icon_texture_path = _resolve_icon_texture_path()
 	node_data.node_position = position
