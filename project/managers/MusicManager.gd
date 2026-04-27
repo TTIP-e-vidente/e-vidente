@@ -7,6 +7,7 @@ signal musica_finalizada
 
 const VOLUMEN_PREDETERMINADO_DB := 0.0
 const DURACION_TRANSICION_DESVANECIMIENTO := 0.5
+const UMBRAL_REINICIO_SEGUNDOS := 0.1
 
 var _reproductor_musica: AudioStreamPlayer = null
 var _ruta_musica_actual: String = ""
@@ -18,16 +19,27 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _reproductor_musica == null or not _reproductor_musica.playing:
+	if _reproductor_musica == null:
 		return
-	
+
+	if _ruta_musica_actual.is_empty() or _reproductor_musica.stream_paused:
+		return
+
 	if _reproductor_musica.stream == null:
 		return
-	
+
+	if not _reproductor_musica.playing:
+		_reiniciar_musica_actual()
+		return
+
 	var duracion_total: float = _reproductor_musica.stream.get_length()
+	if duracion_total <= 0.0:
+		return
+
 	var posicion_actual: float = _reproductor_musica.get_playback_position()
-	
-	if posicion_actual >= (duracion_total - 0.1):
+	var umbral_reinicio: float = max(duracion_total - UMBRAL_REINICIO_SEGUNDOS, 0.0)
+
+	if posicion_actual >= umbral_reinicio:
 		_reiniciar_musica_actual()
 
 
@@ -96,11 +108,16 @@ func obtener_musica_actual() -> String:
 func _configurar_reproductor_musica() -> void:
 	if _reproductor_musica != null:
 		return
-	
+
 	_reproductor_musica = AudioStreamPlayer.new()
 	_reproductor_musica.name = "ReproductorMusica"
 	_reproductor_musica.bus = &"Master"
+	_reproductor_musica.finished.connect(_on_reproductor_musica_finalizado)
 	add_child(_reproductor_musica)
+
+
+func _on_reproductor_musica_finalizado() -> void:
+	_reiniciar_musica_actual()
 
 
 func _reiniciar_musica_actual() -> void:
