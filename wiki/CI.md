@@ -42,8 +42,8 @@ La documentacion minima que siempre deberia existir es esta:
 
 Para el diff del PR, el gate pide:
 
-- al menos un `.md` tocado en `docs/`, `wiki/`, `README.md` o `CHANGELOG.md`
-- al menos un archivo de seguimiento tocado: `wiki/Bitacora.md`, `CHANGELOG.md` o algun `.md` equivalente con `bitacora` o `changelog` dentro de `docs/`
+- al menos un `.md` tocado en `docs/`, `wiki/` o `README.md`
+- al menos un archivo de seguimiento tocado: `wiki/Bitacora.md` o algún `.md` equivalente con `bitacora` dentro de `docs/`
 
 `docs-local/` queda fuera del gate porque se usa como documentacion local del equipo y no forma parte del contenido publicado del repo en GitHub.
 
@@ -163,7 +163,7 @@ Si queres correr la suite larga manualmente:
 
 ## Cómo leer un check
 
-- si falla `Docs / Tracking`, revisar si el PR actualizo docs Markdown y bitacora o changelog
+- si falla `Docs / Tracking`, revisar si el PR actualizó docs Markdown y bitácora
 - si falla `Technical Health`, revisar estructura critica del repo o tooling de lint
 - si falla `Gameplay Smoke`, revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay
 - si hace falta mas profundidad, correr manualmente los tests especificos de `project/tests/`

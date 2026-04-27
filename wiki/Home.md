@@ -1,157 +1,152 @@
 ﻿# 🎮 E-VIDENTE Docs
 
-Bienvenido a la documentación técnica de E-VIDENTE.
+Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 
-> 🎓 Juego educativo sobre alimentación con 4 recorridos jugables y modo preguntas.
+> 🎓 **E-VIDENTE** es un juego educativo sobre alimentación. Tenés 4 recorridos jugables (celiaquia, veganismo, mixto, keto) y un modo preguntas para reforzar.
 
 ---
 
-## 🚀 Rápido: Busca Lo Que Necesitas
+## Buscás algo específico?
 
-| Necesito... | Voy a... |
+| Necesito... | Andá a... |
 |---|---|
-| 📖 Entender la arquitectura | [Architecture.md](Architecture.md) |
-| 🆕 Setup local del proyecto | [Getting-Started.md](Getting-Started.md) |
-| 🔍 Ver qué cambió recientemente | [CHANGELOG.md](CHANGELOG.md) o [Bitacora.md](Bitacora.md) |
-| 💾 Debuggear guardado local | [Persistencia-Local.md](Persistencia-Local.md) |
-| 🤔 Entender decisiones arquitectónicas | [adr/](adr/) |
-| 🔧 Entender CI/Deploy | [CI.md](CI.md) |
-| 📊 Ver tabla "dónde tocar qué" | [Architecture.md - Qué tocar](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) |
+| 🎬 Ver cómo funciona el proyecto | [Architecture.md](Architecture.md) - El tour visual |
+| 🆕 Levantar el proyecto en tu PC | [Getting-Started.md](Getting-Started.md) |
+| 🔍 Saber qué cambió en los últimos días | [Bitacora.md](Bitacora.md) - Resúmenes cortos |
+| 🗂️ Ver histórico anterior al POC | [Pre-POC.md](Pre-POC.md) |
+| 💾 Entender cómo funciona el guardado | [Persistencia-Local.md](Persistencia-Local.md) |
+| 🤔 Entender por qué se hizo algo así (solo cambios grandes) | [adr/](adr/) - Decisiones de alto impacto |
+| 🔧 Saber de CI y deploy | [CI.md](CI.md) |
+| 🎯 Necesito cambiar algo, ¿por dónde empiezo? | [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) - La tabla de "toco esto" |
 
 ---
 
-## 📚 Documentación Principal
+## Si Lo Vas a Mostrar en Clase
 
-### 1️⃣ [Architecture.md](Architecture.md) - La Base
-- Estructura del proyecto visualizada
-- Diagrama Mermaid del flujo
-- Tabla "Dónde tocar qué" por feature
-- Sistemas principales explicados
-- Links a ADR y CHANGELOG
+Si querés presentar el proyecto sin que nadie se pierda, usá esta ruta corta:
 
-**Para**: Nuevos devs, onboarding, entender la estructura.
+1. Abrí [Architecture.md](Architecture.md) y mostrá primero el diagrama principal.
+2. Bajá a la sección de sistemas clave para explicar audio, guardado, navegación y racha.
+3. Cerrá con [Bitacora.md](Bitacora.md) para mostrar qué se mejoró recientemente.
 
-### 2️⃣ [Getting-Started.md](Getting-Started.md) - Setup
-- Requerimientos (Godot 4.6.2)
-- Instalación local
-- Cómo correr el proyecto
-- Cómo correr tests
-
-**Para**: Primera vez en el proyecto.
-
-### 3️⃣ [Bitacora.md](Bitacora.md) - Resúmenes Ejecutivos
-- Últimos cambios en 3 líneas
-- Categorizado por [AUDIO], [UI], [GAMEPLAY], etc.
-- Links a PRs y CHANGELOG
-
-**Para**: Visión rápida de qué cambió.
-
-### 4️⃣ [CHANGELOG.md](CHANGELOG.md) - Detalles Técnicos
-- Todos los cambios por versión/sprint
-- Métricas (líneas, archivos)
-- APIs nuevas
-- Breaking changes
-
-**Para**: Cuando necesitas detalles completos.
-
-### 5️⃣ [adr/](adr/) - Decisiones
-Carpeta con Architecture Decision Records.  
-**1 archivo = 1 decisión importante**
-
-- [ADR-001-MusicManager.md](adr/ADR-001-MusicManager.md) - Por qué música centralizada
-- Formato: Problema → Alternativas → Decisión → Impacto
-
-**Para**: Entender "por qué" algo se hizo así.
-
-### 6️⃣ [Persistencia-Local.md](Persistencia-Local.md) - Save System
-Deep dive del sistema de guardado.
-
-**Para**: Trabajando con persistencia.
-
-### 7️⃣ [CI.md](CI.md) - GitHub Actions
-Pipelines de validación.
-
-**Para**: Contributing a main, entendiendo checks.
+Con ese recorrido, en 5 minutos se entiende qué hace el juego y cómo está organizado.
 
 ---
 
-## 🎯 Según Tu Rol
+## Lo Que Hay en Cada Doc
 
-### 👶 Soy Nuevo en el Proyecto
-1. Lee este archivo (Home.md)
-2. Lee [Architecture.md](Architecture.md) - mira el Mermaid
-3. Lee [Getting-Started.md](Getting-Started.md)
-4. Corre el proyecto localmente
-5. Lee el código en este orden:
-   - `interface/evidente.gd` (arranque)
-   - `niveles/GameSceneRouter.gd` (navegación)
-   - `interface/SaveManager.gd` (persistencia)
+### 🎬 [Architecture.md](Architecture.md)
+Este es el tour visual del proyecto. Te mostramos cómo fluye todo (splash → menú → gameplay), dónde vive cada archivo importante, y una tabla que dice "si necesitás cambiar X, tocá este archivo".
 
-### 🔧 Voy a Trabajar en Código
-1. Lee [Architecture.md - Qué tocar](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) tabla
-2. Busca tu cambio ahí
-3. Sigue el link al ADR si lo hay
-4. Lee el archivo específico
-5. Corre tests: ver [Getting-Started.md](Getting-Started.md#testing)
+**Ideal para**: Entender la estructura, saber dónde está cada cosa.
 
-### 📖 Voy a Agregar una Feature Completamente Nueva
-1. Lee [Architecture.md](Architecture.md) completo
-2. Lee [adr/](adr/) para entender patrones
-3. Crea tu propio ADR explicando:
-   - Problema
-   - Alternativas consideradas
-   - Tu decisión
-   - Impacto
-4. Agrégalo a [adr/](adr/)
+### 📥 [Getting-Started.md](Getting-Started.md)
+Paso a paso para tener el proyecto corriendo en tu PC. Qué necesitás instalar, cómo abrir todo, cómo correr tests.
 
-### 🚀 Voy a Mergear a Main
-1. Verifica que [CI.md](CI.md) pase
-2. Si tocas `project/`, actualiza [Bitacora.md](Bitacora.md)
-3. Mira que [CHANGELOG.md](CHANGELOG.md) sea consistente
-4. Merge cuando CI sea verde
+**Ideal para**: Primera vez que tocás el proyecto.
 
----
+### 📝 [Bitacora.md](Bitacora.md)
+Cambios recientes resumidos en 3 líneas. Todo categorizado (🎵 Audio, 🎮 Gameplay, etc.) así encontrás rápido.
 
-## 📊 Estado del Proyecto
+**Ideal para**: Saber qué cambió recientemente sin tener que leer todo.
 
-- ✅ **Godot**: 4.6.2
-- ✅ **Tracks**: Celiaquia, Veganismo, Mixto, Cetogénica
-- ✅ **Persistencia**: Multi-sesión local
-- ✅ **Racha**: Sistema diario implementado
-- ✅ **Mapa**: Mapa visual de Celiaquia con estados
-- ✅ **Preguntas**: Quiz integrado en el mapa
-- ✅ **Música**: Loop automático en sesiones prolongadas
-- ✅ **CI**: Validación de estructura, tests, export
+### 🗂️ [Pre-POC.md](Pre-POC.md)
+Archivo histórico con todo lo que pasó antes del POC.
+
+**Ideal para**: Mostrar contexto inicial sin mezclarlo con la etapa actual.
+
+### 🤔 [adr/](adr/) - Por Qué Se Hizo Así
+Carpeta con las decisiones importantes del proyecto. Para cada decisión importante hay un archivo que explica:
+- El problema que teníamos
+- Qué alternativas consideramos
+- Qué elegimos y por qué
+- Qué cambió en el proyecto por eso
+
+**Ideal para**: Entender el "por qué" detrás de cambios grandes (no hace falta para ajustes chicos).
+
+### 💾 [Persistencia-Local.md](Persistencia-Local.md)
+Todo sobre cómo guardamos el progreso del jugador en el disco. Qué guardamos, cómo lo guardamos, cómo lo recuperamos.
+
+**Ideal para**: Trabajando con guardado de partidas.
+
+### ⚙️ [CI.md](CI.md)
+Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cosas se chequean cada vez que subimos cambios.
+
+**Ideal para**: Entender por qué pasan o fallan los checks.
 
 ---
 
-## 🔄 Flujo de Cambios
+## Según Qué Estés Haciendo
 
-```
-1. Crea rama (bug/nombre o feature/nombre)
-   ↓
-2. Hace cambios + testa localmente
-   ↓
-3. Si toca proyecto, actualiza Bitacora + CHANGELOG
-   ↓
-4. Abre PR
-   ↓
-5. CI corre automáticamente
-   ↓
-6. Si CI ✅ y review ✅, mergea
-   ↓
-7. Branch se auto-elimina
-```
+### Soy Nuevo Acá
+1. Leé este archivo
+2. Mirá el diagrama en [Architecture.md](Architecture.md)
+3. Seguí los pasos en [Getting-Started.md](Getting-Started.md)
+4. Levantá el proyecto en tu PC
+5. Leé el código en este orden:
+   - `interface/evidente.gd` - Cómo arranca todo
+   - `niveles/GameSceneRouter.gd` - Cómo navegamos entre pantallas
+   - `interface/SaveManager.gd` - Cómo se guarda todo
 
-**Docs convenciones**:
-- Cambios chicos y reviewables
-- Nombres explícitos en código
-- Comentarios solo para lógica compleja
-- Una nota en Bitácora si cambia flujo visible
+### Voy a Cambiar Algo en el Código
+1. Abrí la tabla en [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar)
+2. Buscá lo que querés cambiar
+3. La tabla te dice en qué archivo tocar
+4. Si es una parte grande del sistema y hay un ADR, leélo para entender por qué se hizo así
+5. Corre los tests antes de hacer PR: ver [Getting-Started.md](Getting-Started.md#testing)
+
+### Voy a Agregar una Feature Completamente Nueva
+1. Leé [Architecture.md](Architecture.md) completo para entender cómo encaja
+2. Mirá los [adr/](adr/) para ver cómo documentamos decisiones grandes
+3. Si la feature cambia arquitectura, escribí un ADR explicando:
+   - El problema que estás resolviendo
+   - Qué alternativas consideraste
+   - Qué elegiste y por qué
+   - Cómo cambia el proyecto
+4. Si no cambia arquitectura, alcanza con [Bitacora.md](Bitacora.md)
+
+### Estoy Por Mergear a Main
+1. Verificá que los checks en [CI.md](CI.md) pasen (acá está qué se chequea)
+2. Si tocaste algo en `project/`, actualizá [Bitacora.md](Bitacora.md) con lo que cambiaste
+3. Revisá que la entrada en [Bitacora.md](Bitacora.md) esté clara y breve
+4. Mergeá cuando todo esté verde
 
 ---
 
-## 🔗 Links Clave
+## Qué Hay Hoy en el Proyecto
+
+- ✅ **Godot 4.6.2** - La versión que estamos usando
+- ✅ **4 Tracks Jugables** - Celiaquia, Veganismo, Mixto, Cetogénica
+- ✅ **Guardado Local** - Podés retomar donde dejaste
+- ✅ **Sistema de Racha** - +1 cada día que jugás
+- ✅ **Mapa Visual** - En Celiaquia ya se ve todo
+- ✅ **Quiz Integrado** - Las preguntas están en el mapa
+- ✅ **Música** - Se reinicia automáticamente en sesiones largas
+- ✅ **Automatización** - Los checks se corren solos en cada actualización
+
+---
+
+## Cómo Metemos Cambios al Proyecto
+
+**El flujo es así**:
+
+1. Creás una rama nueva con un nombre descriptivo (bug/musica-loop o feature/racha-visual)
+2. Hacés tus cambios y los testeas en tu PC
+3. Si tocaste algo importante en `project/`, anotalo en [Bitacora.md](Bitacora.md)
+4. Abrís un PR
+5. Los checks automáticos corren (si fallan, los arreglás)
+6. Una vez que todo está verde, mergeás
+7. GitHub elimina la rama automáticamente
+
+**Reglas que nos cuidamos**:
+- Los cambios tienen que ser fáciles de entender
+- Los nombres de variables y funciones explícitos (no abreviaturas raras)
+- Comentarios solo cuando la lógica es difícil
+- Bitácora se actualiza si cambió algo que el jugador ve
+
+---
+
+## Links Útiles
 
 - **GitHub Repo**: https://github.com/TTIP-e-vidente/e-vidente
 - **Godot Download**: https://godotengine.org/download/windows/
@@ -160,10 +155,10 @@ Pipelines de validación.
 
 ---
 
-## 💡 Tips
+## Tips Para Navegar la Wiki
 
-- Usa `Ctrl+F` en Architecture.md para buscar un sistema
-- El Mermaid diagram es clickeable en GitHub
-- CHANGELOG está indexado por versión y categoría
-- ADR te explica por qué, no solo qué
-- Si no encuentras algo, busca en la tabla "Qué tocar"
+- **Búsqueda**: `Ctrl+F` en Architecture.md si necesitás encontrar un archivo o sistema rápido
+- **Mermaid**: El diagrama en Architecture.md es clickeable en GitHub (prueba hacer click en una caja)
+- **Bitácora**: Ahí está el resumen cronológico de cambios del equipo
+- **ADR**: Ahí te explicamos el "por qué" de las cosas, no solo el "qué"
+- **Tabla de cambios**: Si no sabés por dónde empezar, la tabla en Architecture.md te lo dice
