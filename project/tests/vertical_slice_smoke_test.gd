@@ -31,7 +31,7 @@ func _run() -> void:
 
 
 	await _go_to("res://interface/evidente.tscn", "Splash")
-	await _call_and_expect("_on_go_pressed", "res://niveles/intro.tscn", "Intro")
+	await _call_and_expect("_on_ir_presionado", "res://niveles/intro.tscn", "Intro")
 	await _call_and_expect("_on_iniciar_presionado", "res://niveles/selector.tscn", "Selector")
 	await _call_and_expect("_on_celiaquia_presionado", MAP_SCENE, "Mapa")
 	if not failed:
@@ -62,7 +62,7 @@ func _reset_test_state(global_state, save_manager) -> void:
 	global_state.reiniciar_progreso()
 	Item_level.is_dragging = null
 	_delete_save_files()
-	save_manager.load_data()
+	save_manager.cargar_datos()
 
 
 func _check_gameplay_scene(global) -> void:
