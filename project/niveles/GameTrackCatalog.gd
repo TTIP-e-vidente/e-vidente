@@ -153,7 +153,7 @@ static func obtener_definiciones_pista() -> Array:
 
 
 static func obtener_pista_nivel_cantidad(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
-	var definition := get_track_definition(track_key)
+	var definition := obtener_definicion_pista(track_key)
 	return max(1, int(definition.get("level_count", fallback)))
 
 

@@ -209,7 +209,7 @@ static func construir_catalogo_capitulo_pista() -> Dictionary:
 			var category: String = str(chapter_definition.get("category", ""))
 			var negative_count: int = int(chapter_definition.get("negative_count", 0))
 			var positive_count: int = int(chapter_definition.get("positive_count", 0))
-var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
+			var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
 				track_key,
 				meal_key,
 				teaching_key

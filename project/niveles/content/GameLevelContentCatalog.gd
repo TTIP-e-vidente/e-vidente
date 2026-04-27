@@ -21,11 +21,11 @@ func filtrar_elementos_por_categoria(items: Array, category_code: String) -> Arr
 	if category_code.strip_edges().is_empty():
 		return items.duplicate()
 	var filtered_items: Array = []
-	var wanted_category: String = GameTrackCatalog.normalize_category_code(
+	var wanted_category: String = GameTrackCatalog.normalizar_codigo_categoria(
 		category_code
 	)
 	for item in items:
-		if GameTrackCatalog.categories_match(str(item.categoria), wanted_category):
+		if GameTrackCatalog.categorias_coinciden(str(item.categoria), wanted_category):
 			filtered_items.append(item)
 	return filtered_items
 
@@ -37,14 +37,14 @@ func obtener_pista_nivel_cantidad(track_key: String, fallback: int = 0) -> int:
 
 func obtener_maximo_pista_nivel_cantidad(fallback: int = 0) -> int:
 	var max_level_count := fallback
-	for track_key in GameTrackCatalog.get_track_keys():
+	for track_key in GameTrackCatalog.obtener_claves_pista():
 		max_level_count = max(max_level_count, obtener_pista_nivel_cantidad(track_key, fallback))
 	return max_level_count
 
 
 func obtener_total_nivel_cantidad(fallback: int = 0) -> int:
 	var total_levels := 0
-	for track_key in GameTrackCatalog.get_track_keys():
+	for track_key in GameTrackCatalog.obtener_claves_pista():
 		total_levels += obtener_pista_nivel_cantidad(track_key, fallback)
 	return total_levels
 
@@ -81,7 +81,7 @@ func resolver_textura(texture_ref: Variant) -> Texture2D:
 
 func construir_predeterminado_pista_progreso_estado() -> Dictionary:
 	var progress_by_track: Dictionary = {}
-	for track_key in GameTrackCatalog.get_track_keys():
+	for track_key in GameTrackCatalog.obtener_claves_pista():
 		progress_by_track[track_key] = construir_predeterminado_progreso_pista_por_pista(track_key)
 	return progress_by_track
 
