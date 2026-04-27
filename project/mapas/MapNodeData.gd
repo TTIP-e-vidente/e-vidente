@@ -11,9 +11,12 @@ const DICT_KEY_TRACK_KEY := "track_key"
 const DICT_KEY_LEVEL_NUMBER := "level_number"
 const DICT_KEY_QUESTION_NUMBER := "question_number"
 const DICT_KEY_QUESTION_KEY := "question_key"
+const DICT_KEY_QUESTION_JSON_PATH := "question_json_path"
 const DICT_KEY_QUESTION_RESOURCE_PATH := "question_resource_path"
 const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
 const DICT_KEY_POSITION := "pos"
+const DEFAULT_QUESTION_JSON_DIR := "res://preguntas/json_nodos"
+const DEFAULT_QUESTION_RESOURCE_DIR := "res://preguntas/preguntas_recurso"
 
 var node_id: int = 0
 var node_kind: String = NODE_KIND_CHAPTER
@@ -22,6 +25,7 @@ var track_key: String = ""
 var level_number: int = 0
 var question_number: int = 0
 var question_key: String = ""
+var question_json_path: String = ""
 var question_resource_path: String = ""
 var icon_texture_path: String = ""
 var node_position: Vector2 = Vector2.ZERO
@@ -42,6 +46,9 @@ static func from_dictionary(node_definition: Dictionary) -> RefCounted:
 	node_data.level_number = int(node_definition.get(DICT_KEY_LEVEL_NUMBER, 0))
 	node_data.question_number = int(node_definition.get(DICT_KEY_QUESTION_NUMBER, 0))
 	node_data.question_key = str(node_definition.get(DICT_KEY_QUESTION_KEY, "")).strip_edges()
+	node_data.question_json_path = str(
+		node_definition.get(DICT_KEY_QUESTION_JSON_PATH, "")
+	).strip_edges()
 	node_data.question_resource_path = str(
 		node_definition.get(DICT_KEY_QUESTION_RESOURCE_PATH, "")
 	).strip_edges()
@@ -101,6 +108,7 @@ func to_dictionary() -> Dictionary:
 		DICT_KEY_LEVEL_NUMBER: level_number,
 		DICT_KEY_QUESTION_NUMBER: question_number,
 		DICT_KEY_QUESTION_KEY: question_key,
+		DICT_KEY_QUESTION_JSON_PATH: question_json_path,
 		DICT_KEY_QUESTION_RESOURCE_PATH: question_resource_path,
 		DICT_KEY_ICON_TEXTURE_PATH: icon_texture_path,
 		DICT_KEY_POSITION: node_position,
@@ -116,7 +124,12 @@ func is_chapter() -> bool:
 
 
 func has_question_destination() -> bool:
-	return not question_resource_path.is_empty()
+	var resolved_json_path: String = get_resolved_question_json_path()
+	if not resolved_json_path.is_empty() and FileAccess.file_exists(resolved_json_path):
+		return true
+
+	var resolved_resource_path: String = get_resolved_question_resource_path()
+	return not resolved_resource_path.is_empty() and ResourceLoader.exists(resolved_resource_path)
 
 
 func has_chapter_destination() -> bool:
@@ -137,3 +150,60 @@ func get_question_session_level_id() -> int:
 
 func get_track_key_or_default(default_track_key: String) -> String:
 	return track_key if not track_key.is_empty() else default_track_key
+
+
+func build_question_session(resolved_track_key: String, return_scene_path: String) -> Dictionary:
+	return {
+		"track_key": resolved_track_key,
+		"nivel_id": get_question_session_level_id(),
+		"question_key": get_resolved_question_key(),
+		"question_json_path": get_resolved_question_json_path(),
+		"question_resource_path": get_resolved_question_resource_path(),
+		"return_scene_path": return_scene_path
+	}
+
+
+func get_resolved_question_key() -> String:
+	var explicit_key: String = question_key.strip_edges()
+	if not explicit_key.is_empty():
+		return explicit_key
+
+	var json_key: String = _extract_file_name_without_extension(question_json_path)
+	if not json_key.is_empty():
+		return json_key
+
+	return _extract_file_name_without_extension(question_resource_path)
+
+
+func get_resolved_question_json_path() -> String:
+	var explicit_path: String = question_json_path.strip_edges()
+	if not explicit_path.is_empty():
+		return explicit_path
+
+	var resolved_key: String = get_resolved_question_key()
+	if resolved_key.is_empty():
+		return ""
+	return "%s/%s.json" % [DEFAULT_QUESTION_JSON_DIR, resolved_key]
+
+
+func get_resolved_question_resource_path() -> String:
+	var explicit_path: String = question_resource_path.strip_edges()
+	if not explicit_path.is_empty():
+		return explicit_path
+
+	var resolved_key: String = get_resolved_question_key()
+	if resolved_key.is_empty():
+		return ""
+	return "%s/%s.tres" % [DEFAULT_QUESTION_RESOURCE_DIR, resolved_key]
+
+
+func _extract_file_name_without_extension(raw_path: String) -> String:
+	var clean_path: String = raw_path.strip_edges()
+	if clean_path.is_empty():
+		return ""
+
+	var file_name: String = clean_path.get_file().strip_edges()
+	var extension_index: int = file_name.rfind(".")
+	if extension_index < 0:
+		return file_name
+	return file_name.substr(0, extension_index)
