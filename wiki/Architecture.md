@@ -1,151 +1,422 @@
-# Architecture
+# 🏗️ E-VIDENTE Architecture
 
-Esta página resume cómo está organizado el proyecto y dónde conviene tocar cada parte.
+> Guía visual y estructurada de cómo funciona el proyecto.  
+> **Para decisiones arquitectónicas**, ver [ADR/](adr/).  
+> **Para cambios recientes**, ver [CHANGELOG](CHANGELOG.md).
 
-## Estructura general
+---
 
-La mayor parte del trabajo vive dentro de `project/`.
+## 🎯 En 2 Minutos (El Flujo)
+
+```mermaid
+graph TD
+    A["🎬 Splash<br/>evidente.tscn"] -->|bounce_button| B["🏠 Main Menu<br/>intro.tscn"]
+    B -->|jugar| C["🎯 Mode Selector<br/>selector.tscn"]
+    C -->|choose| D{Flujo}
+    D -->|Recipes| E["📖 Track Book<br/>libro.gd"]
+    D -->|Quiz| F["❓ Questions<br/>pregunta.gd"]
+    D -->|Resume| G["⏮️ Last Save<br/>SaveManager"]
+    E -->|open_chapter| H["📍 Map/Level<br/>MapScene.gd"]
+    H -->|start| I["🎮 Gameplay<br/>Level.gd"]
+    F -->|answer_q| I
+    I -->|complete| J["🎉 Streak Feedback<br/>ProgressManagerRacha.gd"]
+    I -->|save| K["💾 Persistence<br/>SaveManager"]
+    J -->|continue| L["↩️ Back to Menu<br/>GameSceneRouter"]
+    K -->|disk| M["📁 Local Storage"]
+    style A fill:#ff9900
+    style B fill:#ff9900
+    style C fill:#ff9900
+    style I fill:#66cc66
+    style K fill:#6666cc
+```
+
+---
+
+## 📁 Estructura del Proyecto
 
 ```
-project/
-├── interface/          # UI y escenas de navegación
-│  ├── evidente.tscn    # Escena principal
-│  ├── evidente.gd      # Script principal
-│  ├── libro*.tscn      # Vistas de libro y recetas
-│  ├── opciones.tscn    # Menú de opciones
-│  └── *.gd             # Scripts de UI y flujo
+📦 project/
 │
-├── items/              # Recursos de alimentos
-│  └── *.tres
+├─ 🎬 interface/ (UI & Navegación)
+│  ├─ evidente.gd ..................... Splash inicial (animado)
+│  ├─ evidente.tscn
+│  ├─ intro.gd ....................... Menú principal
+│  ├─ intro.tscn
+│  ├─ libro.gd ....................... Selector de capítulos por track
+│  ├─ libro*.tscn
+│  ├─ Archivero.gd ................... Hub de guardado y acceso a tracks ⭐
+│  ├─ archivero.tscn
+│  ├─ opciones.gd .................... Pantalla de opciones
+│  ├─ opciones.tscn
+│  ├─ SaveManager.gd ................. ⭐ PUNTO ÚNICO DE PERSISTENCIA
+│  │
+│  ├─ components/
+│  │  ├─ Racha.tscn .................. Badge pequeño en HUD
+│  │  ├─ ProgressManagerRacha.gd ...... Pantalla completa de racha
+│  │  ├─ ProgressManagerRacha.tscn
+│  │  ├─ ProfileOverlayPanel.gd ....... Overlay de perfil
+│  │  └─ ...
+│  │
+│  └─ save_local/ (Sistema de Persistencia)
+│     ├─ data/ ....................... Normalización de payloads legacy
+│     ├─ progress/ ................... Sesiones y historial
+│     └─ persistence/ ................ I/O a disco
 │
-├── niveles/            # Catálogo, escenas y mecánicas de niveles
-├── preguntas/          # Modo quiz y recursos de preguntas
-├── resources/          # Configuración general
-├── assets-sistema/     # Sprites, sonido y material visual
-├── project.godot       # Configuración del proyecto
-└── export_presets.cfg  # Presets de export
+├─ 🎮 niveles/ (Gameplay & Catálogo)
+│  ├─ intro.gd ....................... Menú principal (duplica interfaz/intro.gd)
+│  ├─ selector.gd .................... Selector de modos (alternativa)
+│  ├─ GameSceneRouter.gd ............. ⭐ HUB CENTRAL DE NAVEGACIÓN
+│  ├─ GameTrackCatalog.gd ............ Catálogo de 4 tracks (celiaquia, veganismo, etc)
+│  ├─ global.gd ...................... ⭐ ESTADO RUNTIME EN MEMORIA
+│  │
+│  ├─ nivel_1/
+│  │  ├─ Level.gd .................... Shell común jugable ⭐
+│  │  ├─ level_celiaquia.tres ........ Config de nivel
+│  │  └─ ...
+│  │
+│  ├─ manager_level.gd ............... Orquestador runtime de partida
+│  │
+│  ├─ progress/
+│  │  └─ GameStreakTracker.gd ........ Lógica de racha diaria
+│  │
+│  ├─ mechanics/
+│  │  └─ PlateSortMechanicController.gd Mecánica actual (ordenar alimentos)
+│  │
+│  └─ ...
+│
+├─ 🍎 items/ (Alimentos)
+│  └─ *.tres ......................... ⭐ CADA ALIMENTO ES UN RESOURCE
+│                                      (verdad única de propiedades)
+│
+├─ ❓ preguntas/ (Sistema Quiz)
+│  ├─ pregunta.gd .................... Controlador de preguntas
+│  ├─ pregunta.tscn
+│  ├─ Preguntas*.tres ................ Resources de preguntas
+│  └─ ...
+│
+├─ 🗺️ mapas/ (Sistema Mapa)
+│  ├─ MapScene.gd .................... Escena del mapa
+│  ├─ MapScene.tscn
+│  ├─ LevelNode.gd ................... Nodo clickeable de capítulo
+│  └─ LevelManager.gd ................ Estado de desbloqueo (Celiaquia)
+│
+├─ 🎨 colours/
+│  └─ miPaleta.gd .................... ⭐ PALETA ÚNICA DEL PROYECTO
+│
+├─ 🔊 managers/
+│  └─ MusicManager.gd ................ ⭐ GESTOR CENTRALIZADO DE AUDIO
+│
+├─ 🎬 assets-sistema/
+│  ├─ sonidos/ ....................... Música, SFX
+│  ├─ iconos/ ........................ Sprites de UI
+│  ├─ interfaz/ ...................... Assets de botones, etc
+│  └─ ...
+│
+├─ 📚 resources/
+│  └─ *.tres ......................... Configuración general
+│
+├─ 🧪 tests/
+│  └─ *.gd ........................... Tests headless (CI)
+│
+├─ project.godot .................... Config del proyecto
+└─ export_presets.cfg ............... Presets de export
+
+⭐ = Archivos clave para entender el proyecto
 ```
 
-## Recursos de alimentos
+---
 
-Cada alimento está definido como un `.tres`. Ahí vive la verdad del dato: si contiene gluten, si tiene lactosa, si es vegano y cualquier otra propiedad que el juego necesite consultar.
+## 🎯 Qué Tocar Según Qué Quieras Cambiar
 
-## Escena principal
+| Quiero cambiar... | Toco aquí | Complejidad | Detalles |
+|---|---|---|---|
+| 🎵 Música de fondo | `managers/MusicManager.gd` | ⭐ | [ADR-001](adr/ADR-001-MusicManager.md) \| API: `reproducir_musica()` |
+| 🏠 Menú principal | `interface/intro.gd` | ⭐ | Botones, animaciones, eventos |
+| 🎯 Selector de modos | `interface/selector.gd` | ⭐ | UI de 6 botones + resume |
+| 📖 Libros/Capítulos | `interface/libro.gd` | ⭐ | Generador dinámico de botones |
+| 🎮 Flujo de nivel | `niveles/nivel_1/Level.gd` | ⭐⭐ | Shell común, evento run_completed |
+| 🎮 Mecánica gameplay | `niveles/mechanics/PlateSortMechanicController.gd` | ⭐⭐⭐ | Validación, feedback, scoring |
+| 💾 Guardado local | `interface/SaveManager.gd` | ⭐⭐⭐ | Serialización, compatibilidad |
+| 📊 Progreso/Racha | `niveles/global.gd` | ⭐⭐ | Métodos: `is_level_completed()`, etc |
+| 🏃 Racha diaria | `niveles/progress/GameStreakTracker.gd` | ⭐ | Lógica timestamps, view model |
+| 🗺️ Mapa visual | `mapas/MapScene.gd` | ⭐⭐ | Estados visuales, desbloqueo |
+| 🍎 Alimentos/Condiciones | `items/*.tres` | ⭐ | Resource de propiedades |
+| 🌈 Colores/Paleta | `colours/miPaleta.gd` | ⭐ | Valores RGBA, única fuente |
+| 🎛️ Catálogo de tracks | `niveles/GameTrackCatalog.gd` | ⭐⭐ | 4 tracks: celiaquia, veganismo, etc |
+| 🔄 Navegación entre escenas | `niveles/GameSceneRouter.gd` | ⭐ | Métodos: `go_to_map()`, `go_to_level()`, etc |
+| 🔧 CI/Deploy | `.github/workflows/` | ⭐⭐⭐ | Pipelines, headless validation |
 
-`evidente.tscn` es la escena de arranque configurada en `project.godot`.
+---
 
-No es el menu principal. Su rol actual es mas acotado: funciona como portada animada y deriva a `intro.tscn`.
+## 🌊 Flujo de Datos
 
-`intro.tscn` es el menu principal real. Desde ahi se abre `selector.tscn`, que decide si el jugador entra al flujo de recetas, al modo preguntas o reanuda el ultimo punto guardado.
-
-`GameSceneRouter.gd` concentra la navegacion principal entre escenas para que el recorrido se pueda seguir sin buscar `change_scene_to_file()` repartidos por todo el proyecto.
-
-## Cómo seguir el flujo en código
-
-Si queres reconstruir el recorrido completo leyendo el menor numero posible de archivos, hoy conviene seguir este orden:
-
-1. `interface/evidente.gd`: portada animada de arranque.
-2. `niveles/intro.gd`: menu principal.
-3. `niveles/selector.gd`: selector entre recetas, preguntas y continuar.
-4. `interface/Archivero.gd`: hub visible del save local y entrada al flujo de recetas.
-5. `interface/libro.gd`: selector de capitulos por track.
-6. `niveles/nivel_1/Level.gd`: shell comun de cualquier nivel jugable.
-7. `niveles/manager_level.gd`: orquestador runtime de la corrida activa.
-8. `niveles/mechanics/PlateSortMechanicController.gd`: mecanica jugable actual.
-9. `interface/SaveManager.gd`: persistencia local y resume.
-10. `niveles/global.gd`: metadata de tracks, catalogo y progreso en memoria.
-
-En la practica, casi todo el flujo visible de la app sale de esa cadena.
-
-## Flujo de datos
-
-El flujo general del juego es bastante directo:
-
-```
-Input del jugador
-    ↓
-Script de escena
-    ↓
-Lógica de validación
-    ↓
-Actualización de estado
-    ↓
-Feedback visual y sonoro
+```mermaid
+graph LR
+    A["👆 Input<br/>Mouse/Key"] -->|evento| B["🎯 Script<br/>de Escena"]
+    B -->|validar| C["✅ Lógica<br/>de Negocio"]
+    C -->|actualizar| D["💾 Estado<br/>Global + SaveManager"]
+    D -->|emit| E["🎨 Feedback<br/>Visual + Sonoro"]
+    E -->|se ve| F["👁️ Jugador"]
+    F -->|reacciona| A
+    style A fill:#66cc66
+    style B fill:#ff9900
+    style C fill:#ff9900
+    style D fill:#6666cc
+    style E fill:#ff6666
+    style F fill:#66cc66
 ```
 
-## Sistemas principales
+---
 
-### Sistema de alimentos
+## 🎨 Sistemas Principales
 
-- Los `items/*.tres` describen cada alimento.
-- Las recetas y reglas de validación se apoyan en esos datos.
-- Los pools jugables ahora se resuelven por track a partir del catalogo de items y del metadata del propio alimento.
-- Los foods nuevos pueden entrar automaticamente en celiaquia, veganismo y mixto si sus `condiciones` estan bien cargadas; para tracks ambiguos como cetogenica se puede usar `allowed_track_keys` o `blocked_track_keys` en el propio item.
-- Las listas gigantes dentro de `level_*.tres` siguen sirviendo como fallback y ponderacion legacy, pero agregar una comida nueva ya no deberia requerir editar esos recursos a mano.
+<table>
+<tr>
+<td width="50%">
 
-### Sistema de niveles
+### 🎵 Audio
 
-- Cada nivel define condiciones alimentarias, items disponibles y contexto del reto.
-- `GameTrackCatalog` centraliza los cuatro recorridos jugables: celiaquia, veganismo, veganismo + celiaquia y cetogenica.
-- La mecánica principal integrada hoy sigue siendo armar el plato correcto según esas restricciones.
+**Archivo**: `managers/MusicManager.gd` ⭐  
+**Tipo**: Autoload global
 
-### Sistema de interfaz
+Gestor centralizado de reproducción. Detecta fin de pista automáticamente y reinicia sin interrupciones.
 
-- `evidente.tscn` es la portada animada.
-- `intro.tscn` es el menu principal.
-- `selector.tscn` separa recetas, preguntas y continuar.
-- `GameSceneRouter.gd` centraliza la navegacion principal.
-- `Archivero` concentra el resumen de guardado y el acceso visible al perfil local.
-- `libro*.tscn` muestran los capitulos habilitados de cada track.
-- `Level.gd` y `ManagerLevel.gd` separan flujo visible de escena y armado runtime del nivel.
-- `opciones.tscn` reune ajustes y pantallas secundarias.
+✅ Loop automático  
+✅ Control de volumen  
+✅ Transiciones suaves  
 
-### Sistema de preguntas
+**Métodos clave**:
+```gdscript
+reproducir_musica(ruta: String)
+establecer_volumen(lineal: float)
+pausar_musica() / reanudar_musica()
+```
 
-- `preguntas/` concentra un modo de quiz separado del loop principal de recetas.
-- El contenido se define con recursos `Preguntas` agrupados en `ThemePreg`.
-- La estructura ya contempla variantes de texto, imagen, audio y video para cada pregunta, aunque el flujo visible hoy está resuelto como una sesión corta.
-- `selector.tscn` puede abrir `pregunta.tscn` como flujo aparte.
-- Si la escena se abre desde el mapa, `pregunta.gd` toma una sola pregunta desde `Global.active_question_session`, registra el resultado y vuelve a la escena de origen.
-- Si la respuesta es correcta, la pantalla da feedback visual y sonoro antes de avanzar o cerrar la sesión.
+[ADR-001: MusicManager](adr/ADR-001-MusicManager.md)
 
-### Sistema de racha diaria
+</td>
+<td width="50%">
 
-- `niveles/progress/GameStreakTracker.gd` concentra la regla de negocio de la racha: leer estado, registrar actividad y armar el view model.
-- `niveles/global.gd` expone la racha al resto del juego para que UI y gameplay no tengan que recalcular nada por su cuenta.
-- `interface/components/Racha.tscn` muestra el contador chico en el HUD.
-- `interface/components/ProgressManagerRacha.tscn` muestra la pantalla completa de racha y también se usa como feedback después de completar un nivel.
-- `GameSceneRouter.go_to_streak()` pasa el contexto de entrada por meta en el root: escena de vuelta, feedback y destino del botón continuar.
-- Desde `Level.gd` se puede entrar a esa pantalla con contexto de post-partida. En ese punto el flujo decide si solo muestra el estado actual o si encadena varios estados de racha para mostrar la progresión completa antes de continuar.
+### 💾 Persistencia
 
-### Sistema de mapa
+**Archivo**: `interface/SaveManager.gd` ⭐  
+**Tipo**: Autoload global
 
-- `mapas/MapScene.tscn` es la escena del mapa de Celiaquia. Los nodos de capítulo están colocados a mano en la escena.
-- `mapas/LevelNode.gd` es el nodo clickeable de cada capítulo. Usa detección por distancia (radio de 80px escalado) en lugar de TextureButton para manejar hover y click.
-- `mapas/LevelManager.gd` es un autoload con el estado de desbloqueo de los nodos del mapa. Es un sistema aparte de `Global.is_level_unlocked()` y hoy solo cubre Celiaquia.
-- Los nodos del mapa tienen tres estados visuales: completado (naranja tierra, sin interacción), bloqueado (translúcido) y desbloqueado (color normal, clickeable con animación de hover y bounce).
-- Los colores usan la paleta del proyecto definida en `colours/miPaleta.gd`.
-- Hoy solo existe mapa para Celiaquia. Los otros recorridos todavía no tienen mapa propio.
+Punto único de entrada para guardado local.  
+Expone perfil, progreso, historial y resume.
 
-### Sistema de persistencia local
+✅ Multi-sesión  
+✅ Compatibilidad legacy  
+✅ Respaldo automático  
 
-- `SaveManager` funciona como autoload y es la unica fachada publica del save local.
-- El modelo activo ya no expone slots reales: persiste un unico save local con `profile`, `progress`, `history`, `resume_state` y `save_meta`.
-- `interface/save_local/data/` normaliza payloads viejos y absorbe compatibilidad con saves legacy.
-- `interface/save_local/progress/` resuelve progreso, historial y resume.
-- `interface/save_local/persistence/` carga, escribe y recupera el save en disco.
-- `Global` mantiene el progreso runtime en memoria; `SaveManager` lo serializa y lo restaura.
-- `selector.tscn`, `Archivero`, `auth.tscn` y `Level.gd` son los puntos visibles donde ese flujo aparece en pantalla.
+**Métodos clave**:
+```gdscript
+load_data()
+save_data()
+set_resume_to_level(track, level)
+is_level_completed(track, level)
+```
 
-Más detalle en [Persistencia Local](Persistencia-Local).
+[Más detalles](Persistencia-Local.md)
 
-## Stack técnico
+</td>
+</tr>
 
-- Godot 4.6.2.
-- GDScript para la lógica del proyecto.
-- GitHub Actions para CI.
-- `barichello/godot-ci:4.6.2` para validación y export headless.
+<tr>
+<td width="50%">
 
-## Build y export
+### 🎮 Navegación
 
-El export web usa el preset `index` y deja la salida en `build/web/index.html` cuando corre bien. El gate obligatorio no lo corre y hoy el repo no versiona un workflow de Pages dentro de `.github/workflows/`, asi que cualquier publicacion web queda fuera de este pipeline.
+**Archivo**: `niveles/GameSceneRouter.gd` ⭐  
+**Tipo**: Script estático
+
+Hub central que concentra todos los `change_scene_to_file()` en un solo lugar. Pasaje de contexto por meta.
+
+✅ Trazable  
+✅ Sin duplicación  
+✅ Context passing  
+
+**Métodos clave**:
+```gdscript
+go_to_main_menu(tree)
+go_to_map(tree)
+go_to_track_book(tree, track_key)
+go_to_track_level(tree, track_key, level)
+go_to_streak(tree, context)
+```
+
+[Usar GameSceneRouter](Architecture.md#navegacion)
+
+</td>
+<td width="50%">
+
+### 🏃 Racha Diaria
+
+**Archivo**: `niveles/progress/GameStreakTracker.gd` ⭐  
+**Tipo**: Lógica pura
+
+Regla de negocio: +1 si juega al día siguiente, reset si no.  
+Timestamps Unix para precisión.
+
+✅ Determinístico  
+✅ Observable  
+✅ View model limpio  
+
+**Lógica**:
+```
+diff_days = (today - last_date) / 86400
+if diff_days == 1: streak += 1
+elif diff_days != 0: streak = 1
+```
+
+[Ver en Bitácora](Bitacora.md#racha-diaria)
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+### 🍎 Alimentos
+
+**Archivo**: `items/*.tres`  
+**Tipo**: Resource
+
+Cada alimento es un `.tres` con propiedades  
+(gluten, lactosa, vegano, etc).
+
+✅ Verdad única  
+✅ Data-driven  
+✅ Fácil de extender  
+
+**Propiedades**:
+- condiciones (array de ints)
+- allowed_track_keys / blocked_track_keys
+- nombre, descripción, texture
+
+[Entender items](Architecture.md#alimentos)
+
+</td>
+<td width="50%">
+
+### 🌈 Paleta
+
+**Archivo**: `colours/miPaleta.gd`  
+**Tipo**: Resource
+
+Punto único de colores del proyecto.  
+Cambios aquí = cambios globales.
+
+✅ Consistencia  
+✅ Fácil de mantener  
+✅ DRY (Don't Repeat Yourself)  
+
+**Cómo usar**:
+```gdscript
+var color = miPaleta.naranja_tierra
+modulate = color
+```
+
+[Asset en proyecto](../project/colours/)
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Onboarding: Cómo Leer el Código
+
+**Si tienes 10 minutos**:
+1. Lee este archivo (Architecture.md)
+2. Mira el diagrama Mermaid arriba
+3. Busca tu cambio en la tabla "Qué tocar"
+
+**Si tienes 30 minutos**:
+1. Lee [Home.md](Home.md) completo
+2. Lee `interface/evidente.gd` hasta `_ready()`
+3. Lee `niveles/GameSceneRouter.gd` todo
+4. Entiende dónde vive cada cosa
+
+**Si tienes 1 hora** (deep dive):
+1. Sigue este orden:
+   - `interface/evidente.gd` (arranque)
+   - `niveles/intro.gd` (menú)
+   - `niveles/selector.gd` (selector)
+   - `interface/SaveManager.gd` (persistencia)
+   - `interface/libro.gd` (capítulos)
+   - `niveles/nivel_1/Level.gd` (gameplay)
+   - `niveles/manager_level.gd` (orquestación)
+
+2. Complementa con docs:
+   - [Persistencia Local](Persistencia-Local.md) - Deep dive save
+   - [CHANGELOG](CHANGELOG.md) - Qué cambió
+   - [ADR/](adr/) - Decisiones arquitectónicas
+
+---
+
+## 📚 Documentación Adicional
+
+| Documento | Propósito | Cuándo leer |
+|-----------|-----------|-----------|
+| [Home.md](Home.md) | Índice y punto de entrada | Primero |
+| [Getting-Started.md](Getting-Started.md) | Setup y primeros pasos | Si eres nuevo |
+| [Persistencia-Local.md](Persistencia-Local.md) | Deep dive de save local | Trabajando con saves |
+| [CI.md](CI.md) | Pipelines y validación | Contribuyendo a main |
+| [CHANGELOG.md](CHANGELOG.md) | Cambios detallados | Buscando qué cambió |
+| [adr/](adr/) | Decisiones arquitectónicas | Entendiendo "por qué" |
+| [Bitacora.md](Bitacora.md) | Resúmenes ejecutivos | Visión general rápida |
+
+---
+
+## 🏛️ Convenciones de Código
+
+### Nombres
+- Explícito > Críptico
+- `background_music` > `bgm`
+- `_play_level_audio()` > `_playAudio()`
+
+### Estructura de Scripts
+```gdscript
+extends Node
+class_name MyClass
+
+# === Signals ===
+signal event_happened
+
+# === Constants ===
+const SOME_VALUE = 42
+
+# === Exports ===
+@export var configurable := 0
+
+# === Private Variables ===
+var _state := "inicial"
+
+# === Lifecycle ===
+func _ready() -> void:
+    pass
+
+# === Public API ===
+func do_something() -> void:
+    pass
+
+# === Private Helpers ===
+func _helper() -> void:
+    pass
+```
+
+### Comentarios
+- `## descripción` para comentarios de docstring
+- `# descripción` para lógica compleja
+- Evitar obvio: `# increment x` ❌
+
+---
+
+## 🔗 Links Clave
+
+- **Repo**: https://github.com/TTIP-e-vidente/e-vidente
+- **CI**: `.github/workflows/`
+- **Build Local**: Ver [Getting-Started.md](Getting-Started.md)
+- **Godot Docs**: https://docs.godotengine.org/en/stable/
+- **GDScript**: https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html

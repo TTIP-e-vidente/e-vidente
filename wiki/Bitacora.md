@@ -1,8 +1,46 @@
-﻿# Bitacora
+﻿# 📋 Bitácora
 
-Registro breve de cambios y decisiones que conviene no perder.
+Registro breve de cambios importantes y decisiones.  
+**Para detalles técnicos completos**, ver [CHANGELOG.md](CHANGELOG.md).  
+**Para decisiones arquitectónicas**, ver [adr/](adr/).
 
-## Entradas
+---
+
+## Entradas Recientes
+
+### [🎵 AUDIO] 2026-04-27 | Música loop en sesiones prolongadas
+Gestor centralizado `MusicManager` que reinicia automáticamente la música al terminar. 
+Actualiza 7 escenas y centraliza control de volumen y transiciones. Sin silencios en sesiones prolongadas.
+
+🔗 [ADR-001](adr/ADR-001-MusicManager.md) | [PR #17](https://github.com/TTIP-e-vidente/e-vidente/pull/17) | [CHANGELOG](CHANGELOG.md#musica)
+
+---
+
+## Cambios por Categoría
+
+### 🎵 Audio
+- **2026-04-27** - **Music Loop** - Autoplay en sesiones prolongadas [PR #17](https://github.com/TTIP-e-vidente/e-vidente/pull/17)
+
+### 🎨 UI & Animaciones
+- **2026-04-23** - **Racha & Preguntas** - Flow optimization [PR #14](https://github.com/TTIP-e-vidente/e-vidente/pull/14)
+- **2026-04-15** - **Componentes Animados** - Transiciones y rebotes [PR #12](https://github.com/TTIP-e-vidente/e-vidente/pull/12)
+
+### 🎮 Gameplay & Mapa
+- **2026-04-18** - **Mapa Celiaquia** - Visual feedback de estados [PR #13](https://github.com/TTIP-e-vidente/e-vidente/pull/13)
+- **2026-04-17** - **Racha Diaria** - Sistema de rachas [PR #15](https://github.com/TTIP-e-vidente/e-vidente/pull/15)
+
+### 💾 Persistencia
+- **2026-04-06** - **Quick Save** - Guardado parcial por nivel [PR #8](https://github.com/TTIP-e-vidente/e-vidente/pull/8)
+- **2026-04-04** - **Multi-Partida** - Sistema multi-sesión [PR #5](https://github.com/TTIP-e-vidente/e-vidente/pull/5)
+- **2026-04-02** - **Save Local** - Persistencia inicial [PR #2](https://github.com/TTIP-e-vidente/e-vidente/pull/2)
+
+### 🔧 Infraestructura
+- **2026-04-14** - **CI Split** - Workflows organizadas [PR #11](https://github.com/TTIP-e-vidente/e-vidente/pull/11)
+- **2026-04-02** - **CI Setup** - GitHub Actions inicial [PR #1](https://github.com/TTIP-e-vidente/e-vidente/pull/1)
+
+---
+
+## Historial Completo
 
 ### 2026-04-27 | musica-loop-sesiones-prolongadas
 Se implementó un gestor centralizado de música (`MusicManager`) para resolver silencios inesperados en sesiones prolongadas. El problema ocurría cuando los jugadores permanecían mucho tiempo en una pantalla: la música terminaba y no se reiniciaba, generando un silencio jarring. El nuevo sistema detecta automáticamente cuando la pista llega al final (últimos 0.1 segundos) y la reinicia sin interrupciones audibles. Se actualizaron 7 escenas principales para usar el MusicManager en lugar de instancias individuales de AudioStreamPlayer, eliminando duplicación de código y centralizando el control. El autoload se registró en `project.godot` y el loop funciona de forma transparente en todas las pantallas: menú, selector, mapa, niveles, archivero y splash. No hay solapamiento de audio ni cambios en volumen—la música mantiene la configuración y transiciona suavemente entre escenas.
