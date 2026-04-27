@@ -9,8 +9,8 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 const HOVER_SCALE := Vector2(1.08, 1.08)
 const HOVER_DURATION := 0.15
+const MUSICA_FONDO_PREDETERMINADA := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
-@onready var background_music: AudioStreamPlayer2D = $Background
 @onready var resume_backdrop: ColorRect = $PlayBackdrop
 @onready var resume_panel: PanelContainer = $PlayPanel
 
@@ -125,13 +125,11 @@ func _on_atras_pressed() -> void:
 
 
 func _play_background_music() -> void:
-	background_music.play()
+	MusicManager.reproducir_musica(MUSICA_FONDO_PREDETERMINADA)
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(background_music):
-		background_music.stop()
-		background_music.stream = null
+	pass
 
 
 func _on_button_hover(button: Control, entered: bool) -> void:

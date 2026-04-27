@@ -4,6 +4,9 @@ Registro breve de cambios y decisiones que conviene no perder.
 
 ## Entradas
 
+### 2026-04-27 | musica-loop-sesiones-prolongadas
+Se implementó un gestor centralizado de música (`MusicManager`) para resolver silencios inesperados en sesiones prolongadas. El problema ocurría cuando los jugadores permanecían mucho tiempo en una pantalla: la música terminaba y no se reiniciaba, generando un silencio jarring. El nuevo sistema detecta automáticamente cuando la pista llega al final (últimos 0.1 segundos) y la reinicia sin interrupciones audibles. Se actualizaron 7 escenas principales para usar el MusicManager en lugar de instancias individuales de AudioStreamPlayer, eliminando duplicación de código y centralizando el control. El autoload se registró en `project.godot` y el loop funciona de forma transparente en todas las pantallas: menú, selector, mapa, niveles, archivero y splash. No hay solapamiento de audio ni cambios en volumen—la música mantiene la configuración y transiciona suavemente entre escenas.
+
 ### 2026-04-23 | racha-y-preguntas-flujo-corto
 Se acomodaron dos partes del juego que estaban quedando medio ásperas de usar. Por un lado, la pantalla de racha se simplificó bastante por dentro para que el código sea más fácil de seguir y, del lado visible, pasó a mostrar mensajes más humanos según el día de la racha en lugar de textos tan genéricos. También quedó más claro que la progresión de racha que se ve después de completar un nivel forma parte del flujo de post-partida y no de un sistema aparte.
 

@@ -3,12 +3,12 @@ extends Node2D
 const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-base-datos.svg")
 const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok.svg")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 
 # Root scene nodes
-var background_music_player: AudioStreamPlayer2D
 var reset_progress_dialog: ConfirmationDialog
 var mode_selection_streak_badge: Node
 
@@ -49,19 +49,15 @@ func _ready() -> void:
 	_configure_static_ui()
 	_connect_streak_badge()
 	_connect_save_manager_signals()
-	background_music_player.play()
+	MusicManager.reproducir_musica(MUSICA_FONDO)
 	_refresh_profile_overlay()
 
 
 func _exit_tree() -> void:
 	_disconnect_save_manager_signals()
-	if is_instance_valid(background_music_player):
-		background_music_player.stop()
-		background_music_player.stream = null
 
 
 func _cache_root_nodes() -> void:
-	background_music_player = $Background as AudioStreamPlayer2D
 	reset_progress_dialog = $ResetProgressDialog as ConfirmationDialog
 	mode_selection_streak_badge = $CanvasLayer/ModeSelectionStreakBadge
 

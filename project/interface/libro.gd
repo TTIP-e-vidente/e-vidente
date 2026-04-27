@@ -7,8 +7,8 @@ const CHAPTER_BUTTON_DUPLICATE_FLAGS := 14
 const CHAPTER_BUTTON_NAME_PREFIX := "Cap"
 const HOVER_SCALE := 1.06
 const HOVER_DURATION := 0.12
+const MUSICA_FONDO_PREDETERMINADA := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
-@onready var background_music: AudioStreamPlayer2D = $Background
 @onready var chapter_container: VBoxContainer = $VBoxContainer
 @export var track_key_override := ""
 
@@ -24,16 +24,13 @@ func _ready() -> void:
 		_active_track_key = _get_track_key()
 	if _active_track_key.is_empty():
 		_active_track_key = DEFAULT_TRACK_KEY
-	background_music.play()
+	MusicManager.reproducir_musica(MUSICA_FONDO_PREDETERMINADA)
 	_load_button_template_from_scene()
 	_rebuild_chapter_buttons()
 	SaveManager.set_resume_to_book(_active_track_key)
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(background_music):
-		background_music.stop()
-		background_music.stream = null
 	if _button_template != null:
 		_button_template.free()
 		_button_template = null

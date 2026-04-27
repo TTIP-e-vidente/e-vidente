@@ -2,8 +2,7 @@ extends Node2D
 class_name MainMenu
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-
-@onready var background_music: AudioStreamPlayer2D = $Background
+const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 @onready var buttons := [
 	$MenuBar/Jugar,
@@ -40,13 +39,11 @@ func _on_salir_pressed() -> void:
 
 
 func _play_background_music() -> void:
-	background_music.play()
+	MusicManager.reproducir_musica(MUSICA_FONDO)
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(background_music):
-		background_music.stop()
-		background_music.stream = null
+	pass
 
 
 func _update_button_shader(button: Button, mat: ShaderMaterial):

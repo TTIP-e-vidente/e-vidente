@@ -41,7 +41,6 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 
 ## --- Nodos de escena ---
 
-@onready var background:         AudioStreamPlayer2D = $Background
 @onready var back_button:        Button              = $Atrás
 @onready var next_chapter_button: Button             = $Adelante
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
@@ -98,12 +97,10 @@ func _start_level_flow() -> void:
 
 
 func _play_level_audio() -> void:
-	if not is_instance_valid(background) or background_music_path.strip_edges().is_empty():
+	if background_music_path.strip_edges().is_empty():
 		return
-	var stream: Variant = load(background_music_path.strip_edges())
-	if stream is AudioStream:
-		background.stream = stream
-		background.play()
+	var ruta_musica: String = background_music_path.strip_edges()
+	MusicManager.reproducir_musica(ruta_musica)
 
 
 func _configure_quick_save_feedback() -> void:
@@ -127,9 +124,6 @@ func _configure_quick_save_feedback() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
-	if is_instance_valid(background):
-		background.stop()
-		background.stream = null
 
 
 ## --- Navegación y gameplay ---
