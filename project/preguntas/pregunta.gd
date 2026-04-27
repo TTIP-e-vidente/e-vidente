@@ -248,12 +248,12 @@ func _game_over() -> void:
 
 func _finish_map_question_session() -> void:
 	_register_completed_map_question_if_needed()
-	SaveManager.record_question_session_completed(_max_questions, puntaje)
+	SaveManager.registrar_sesion_preguntas_completada(_max_questions, puntaje)
 
 
 func _finish_regular_question_session() -> void:
 	Global.marcar_nivel_completado(track_key, nivel_id)
-	SaveManager.record_level_completed(track_key, nivel_id)
+	SaveManager.registrar_nivel_completado(track_key, nivel_id)
 
 
 func _register_completed_map_question_if_needed() -> void:

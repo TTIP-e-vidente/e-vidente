@@ -93,7 +93,7 @@ func _iniciar_flujo_nivel() -> void:
 		manager_level.iniciar_nivel_sesion(active_track_key, self)
 	var resolved_level_number := _numero_nivel_valido(active_track_key)
 	if resolved_level_number > 0:
-		SaveManager.set_resume_to_level(active_track_key, resolved_level_number)
+		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
 
 
 func _reproducir_audio_nivel() -> void:
@@ -165,7 +165,7 @@ func completar_corrida_actual() -> void:
 	)
 
 	# 3. Persistir todo a disco
-	SaveManager.record_level_completed(track_key, level_number)
+	SaveManager.registrar_nivel_completado(track_key, level_number)
 
 	# 4. Preparar el feedback de racha para mostrarlo al avanzar
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
@@ -235,10 +235,10 @@ func _on_guardar_progreso_boton_presionado() -> void:
 		return
 
 	var saved_positive_count: int = manager_level.almacenar_parcial_nivel_estado(track_key)
-	SaveManager.set_resume_to_level(track_key, resolved_level_number)
-	SaveManager.record_manual_save()
-	if SaveManager.has_save_error():
-		var error := SaveManager.get_last_save_error()
+	SaveManager.establecer_reanudar_en_nivel(track_key, resolved_level_number)
+	SaveManager.registrar_guardado_manual()
+	if SaveManager.tiene_error_guardado():
+		var error: String = SaveManager.obtener_error_ultimo_guardado()
 		_mostrar_guardar_retroalimentacion(
 			"No se pudo guardar",
 			error if not error.is_empty() else "Reintenta de nuevo en unos segundos",
@@ -250,7 +250,7 @@ func _on_guardar_progreso_boton_presionado() -> void:
 
 func _mostrar_guardar_exito_retroalimentacion(saved_positive_count: int) -> void:
 	var title := "Guardado parcial" if saved_positive_count > 0 else SAVE_FEEDBACK_DEFAULT_TITLE
-	var saved_time := SaveManager.get_last_saved_at().get_slice(" ", 1)
+	var saved_time: String = SaveManager.obtener_ultimo_guardado_en().get_slice(" ", 1)
 	var time_line := (
 		"Guardado a las %s" % saved_time
 		if not saved_time.is_empty()

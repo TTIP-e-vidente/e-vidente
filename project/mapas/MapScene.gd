@@ -19,7 +19,7 @@ var escala_original := Vector2.ONE
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
 	GameSceneRouter.request_scene_preload(
-		GameTrackCatalog.get_level_scene_path(DEFAULT_TRACK_KEY)
+		GameTrackCatalog.obtener_ruta_escena_nivel(DEFAULT_TRACK_KEY)
 	)
 	_connect_back_signal()
 	_clear_transient_question_session()
@@ -247,7 +247,7 @@ func _node_can_be_opened_from_map(node_data: RefCounted) -> bool:
 		return false
 	if node_data.is_question():
 		return true
-	return node_data.has_chapter_destination() and GameTrackCatalog.has_track(
+	return node_data.has_chapter_destination() and GameTrackCatalog.tiene_pista(
 		_obtener_clave_pista_valida(node_data)
 	)
 
@@ -262,7 +262,7 @@ func _is_node_completed(node_data: RefCounted) -> bool:
 
 func _obtener_clave_pista_valida(node_data: RefCounted) -> String:
 	var raw_track_key: String = node_data.get_track_key_or_default(DEFAULT_TRACK_KEY)
-	if GameTrackCatalog.has_track(raw_track_key):
+	if GameTrackCatalog.tiene_pista(raw_track_key):
 		return raw_track_key
 	return DEFAULT_TRACK_KEY
 

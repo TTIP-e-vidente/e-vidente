@@ -87,25 +87,25 @@ func _on_superposicion_cerrar_solicitado() -> void:
 
 func _on_superposicion_reanudar_presionado() -> void:
 	_hide_profile_overlay()
-	if not SaveManager.can_resume_current_save():
+	if not SaveManager.puede_reanudar_guardado_actual():
 		return
-	var resume_state: Dictionary = SaveManager.reload_from_disk_and_get_resume()
+	var resume_state: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, _get_scene_to_return_to())
 
 
 func _on_superposicion_edit_perfil_presionado() -> void:
-	SaveManager.save_progress_to_disk()
+	SaveManager.guardar_progreso_en_disco()
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _get_scene_to_return_to())
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
 func _on_overlay_save_pressed() -> void:
-	SaveManager.save_progress_to_disk()
+	SaveManager.guardar_progreso_en_disco()
 	_refresh_hud()
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
-	SaveManager.reset_all_progress()
+	SaveManager.reiniciar_todo_progreso()
 	_hide_profile_overlay()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
