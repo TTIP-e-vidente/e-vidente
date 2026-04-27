@@ -120,12 +120,12 @@ func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
 
 func _show_profile_overlay() -> void:
 	profile_button.visible = false
-	profile_overlay.show_overlay()
+	profile_overlay.mostrar_superposicion()
 
 
 func _hide_profile_overlay() -> void:
 	profile_button.visible = true
-	profile_overlay.hide_overlay()
+	profile_overlay.ocultar_superposicion()
 
 
 func _get_scene_to_return_to() -> String:

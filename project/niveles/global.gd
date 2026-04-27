@@ -238,13 +238,13 @@ func exportar_progreso() -> Dictionary:
 
 
 func _exportar_campana_progreso() -> Dictionary:
-	return _campaign_save_helper.export_campana(
+	return _campaign_save_helper.exportar_campana(
 		_completed_levels_by_track, current_level, obtener_pista_nivel_cantidad
 	)
 
 
 func _exportar_estados_parciales_nivel(snapshot: Dictionary) -> void:
-	snapshot["partial_level_states"] = _partial_state_save_helper.export_estado(
+	snapshot["partial_level_states"] = _partial_state_save_helper.exportar_estado(
 		_partial_level_state_by_track
 	)
 
@@ -264,13 +264,13 @@ func importar_progreso(snapshot: Dictionary) -> void:
 
 
 func _importar_campana_progreso(snapshot: Dictionary) -> void:
-	current_level = _campaign_save_helper.import_campana(
+	current_level = _campaign_save_helper.importar_campana(
 		snapshot, _completed_levels_by_track, obtener_pista_nivel_cantidad
 	)
 
 
 func _importar_estados_parciales_nivel(snapshot: Dictionary) -> void:
-	_partial_level_state_by_track = _partial_state_save_helper.import_estado(
+	_partial_level_state_by_track = _partial_state_save_helper.importar_estado(
 		snapshot.get("partial_level_states", {}),
 		es_nivel_completado,
 		obtener_pista_nivel_cantidad
@@ -295,7 +295,7 @@ func _duplicar_estados_extra_sistema_progreso() -> Dictionary:
 
 func _agregar_estado_progreso_racha(systems_state: Dictionary) -> void:
 	var streak_wrapper: Dictionary = {}
-	_streak_save_helper.export_streak(streak_wrapper, _streak_state)
+	_streak_save_helper.exportar_racha(streak_wrapper, _streak_state)
 	var streak_systems: Variant = streak_wrapper.get("progress_system_states", {})
 	if streak_systems is Dictionary:
 		systems_state.merge((streak_systems as Dictionary).duplicate(true), true)
@@ -317,7 +317,7 @@ func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
 
 
 func _importar_racha_estado_progreso(systems_state: Dictionary) -> void:
-	_streak_state = _streak_save_helper.import_streak({"progress_system_states": systems_state})
+	_streak_state = _streak_save_helper.importar_racha({"progress_system_states": systems_state})
 
 
 func _importar_pregunta_progreso_estado(systems_state: Dictionary) -> void:

@@ -197,7 +197,7 @@ func _construir_hud() -> void:
 
 func _on_perfil_alternar_presionado() -> void:
 	_profile_toggle_btn.visible = false
-	_profile_overlay.show_overlay()
+	_profile_overlay.mostrar_superposicion()
 
 
 func _conectar_insignia_racha() -> void:
@@ -210,7 +210,7 @@ func _conectar_insignia_racha() -> void:
 
 func _on_racha_presionado() -> void:
 	if _profile_overlay != null:
-		_profile_overlay.hide_overlay()
+		_profile_overlay.ocultar_superposicion()
 	if _profile_toggle_btn != null:
 		_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_streak(get_tree(), RESUME_FALLBACK_SCENE)
@@ -218,12 +218,12 @@ func _on_racha_presionado() -> void:
 
 func _on_superposicion_cerrar_solicitado() -> void:
 	_profile_toggle_btn.visible = true
-	_profile_overlay.hide_overlay()
+	_profile_overlay.ocultar_superposicion()
 
 
 func _on_superposicion_reanudar_presionado() -> void:
 	_profile_toggle_btn.visible = true
-	_profile_overlay.hide_overlay()
+	_profile_overlay.ocultar_superposicion()
 	_reanudar_actual_guardar()
 
 
