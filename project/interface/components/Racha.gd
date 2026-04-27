@@ -17,40 +17,40 @@ var _is_interactive := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_configure_scene_nodes()
-	_configure_hotspot_button()
-	render()
+	_configurar_nodos_escena()
+	_configurar_boton_hotspot()
+	renderizar()
 
 
-func render(streak_view_model: Dictionary = {}) -> void:
-	_apply_view_model(_resolve_view_model(streak_view_model))
+func renderizar(streak_view_model: Dictionary = {}) -> void:
+	_aplicar_view_model(_resolver_view_model(streak_view_model))
 
 
-func set_badge(number_value: int, _next_status_key: String = "") -> void:
+func establecer_insignia(number_value: int, _next_status_key: String = "") -> void:
 	_current_count = max(0, number_value)
-	_refresh_ui()
+	_refrescar_ui()
 
 
-func set_interactive(enabled: bool) -> void:
+func establecer_interactivo(enabled: bool) -> void:
 	_is_interactive = enabled
-	_refresh_interactivity()
+	_refrescar_interactividad()
 
 
-func _resolve_view_model(streak_view_model: Dictionary) -> Dictionary:
+func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
 		return streak_view_model
 	var global_node := get_node_or_null("/root/Global")
-	if global_node and global_node.has_method("get_streak_view_model"):
-		return global_node.get_streak_view_model()
+	if global_node and global_node.has_method("obtener_modelo_vista_racha"):
+		return global_node.obtener_modelo_vista_racha()
 	return {}
 
 
-func _apply_view_model(streak_view_model: Dictionary) -> void:
+func _aplicar_view_model(streak_view_model: Dictionary) -> void:
 	_current_count = max(0, int(streak_view_model.get("current_count", 0)))
-	_refresh_ui()
+	_refrescar_ui()
 
 
-func _configure_scene_nodes() -> void:
+func _configurar_nodos_escena() -> void:
 	if background != null:
 		background.set_anchors_preset(Control.PRESET_FULL_RECT)
 		background.offset_left = 0.0
@@ -74,10 +74,10 @@ func _configure_scene_nodes() -> void:
 		count_label.add_theme_font_override("font", COUNT_FONT)
 		count_label.add_theme_color_override("font_color", Color(0, 0, 0, 1.0))
 
-	_refresh_ui()
+	_refrescar_ui()
 
 
-func _configure_hotspot_button() -> void:
+func _configurar_boton_hotspot() -> void:
 	if hotspot_button == null:
 		return
 	hotspot_button.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -95,12 +95,12 @@ func _configure_hotspot_button() -> void:
 	hotspot_button.add_theme_stylebox_override("pressed", empty_style)
 	hotspot_button.add_theme_stylebox_override("focus", empty_style)
 	hotspot_button.add_theme_stylebox_override("disabled", empty_style)
-	if not hotspot_button.pressed.is_connected(_on_hotspot_button_pressed):
-		hotspot_button.pressed.connect(_on_hotspot_button_pressed)
-	_refresh_interactivity()
+	if not hotspot_button.pressed.is_connected(_on_boton_hotspot_presionado):
+		hotspot_button.pressed.connect(_on_boton_hotspot_presionado)
+	_refrescar_interactividad()
 
 
-func _refresh_ui() -> void:
+func _refrescar_ui() -> void:
 	if not is_node_ready():
 		return
 
@@ -109,11 +109,11 @@ func _refresh_ui() -> void:
 		count_label.text = count_text
 		count_label.add_theme_font_size_override(
 			"font_size",
-			_resolve_count_font_size(count_text)
+			_resolver_tamano_fuente_contador(count_text)
 		)
 
 
-func _resolve_count_font_size(count_text: String) -> int:
+func _resolver_tamano_fuente_contador(count_text: String) -> int:
 	if count_text.length() >= 3:
 		return 34
 	if count_text.length() == 2:
@@ -121,12 +121,12 @@ func _resolve_count_font_size(count_text: String) -> int:
 	return 52
 
 
-func _refresh_interactivity() -> void:
+func _refrescar_interactividad() -> void:
 	if hotspot_button == null:
 		return
 	hotspot_button.visible = _is_interactive
 	hotspot_button.disabled = not _is_interactive
 
 
-func _on_hotspot_button_pressed() -> void:
+func _on_boton_hotspot_presionado() -> void:
 	pressed.emit()

@@ -36,22 +36,22 @@ func _init() -> void:
 	_streak_save_helper = SaveRachaHelperScript.new()
 	_campaign_save_helper = SaveCampanaHelperScript.new()
 	_partial_state_save_helper = SaveEstadoHelperScript.new()
-	reset_progress()
+	reiniciar_progreso()
 
 
-func get_current_level_number() -> int:
+func obtener_actual_nivel_numero() -> int:
 	return current_level
 
 
-func set_current_level_number(level_number: int, track_key: String = "") -> void:
-	var max_level: int = _level_content.get_max_track_level_count(GameTrackCatalog.DEFAULT_LEVEL_COUNT)
+func establecer_actual_nivel_numero(level_number: int, track_key: String = "") -> void:
+	var max_level: int = _level_content.obtener_maximo_pista_nivel_cantidad(GameTrackCatalog.DEFAULT_LEVEL_COUNT)
 	var key: String = track_key.strip_edges()
-	if not key.is_empty() and GameTrackCatalog.has_track(key):
-		max_level = get_track_level_count(key)
+	if not key.is_empty() and GameTrackCatalog.tiene_pista(key):
+		max_level = obtener_pista_nivel_cantidad(key)
 	current_level = 1 if max_level <= 0 else clampi(level_number, 1, max_level)
 
 
-func reset_progress() -> void:
+func reiniciar_progreso() -> void:
 	current_level = 1
 	_completed_levels_by_track = {}
 	_partial_level_state_by_track = {}
@@ -60,61 +60,61 @@ func reset_progress() -> void:
 	_question_progress_by_track = {}
 	_active_question_session = {}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
-		_ensure_track_progress_exists(track_key)
+		_asegurar_pista_progreso_existe(track_key)
 		_partial_level_state_by_track[track_key] = {}
 
-func mark_level_completed(track_key: String, level_number: int) -> void:
-	var key := _get_valid_track_key(track_key)
-	var level_index := _level_to_index(key, level_number)
+func marcar_nivel_completado(track_key: String, level_number: int) -> void:
+	var key := _obtener_clave_pista_valida(track_key)
+	var level_index := _nivel_a_indice(key, level_number)
 	if level_index < 0:
 		return
-	_ensure_track_progress_exists(key)
+	_asegurar_pista_progreso_existe(key)
 	_completed_levels_by_track[key][level_index] = true
 
-func is_level_unlocked(track_key: String, level_number: int) -> bool:
-	var key := _get_valid_track_key(track_key)
+func es_nivel_desbloqueado(track_key: String, level_number: int) -> bool:
+	var key := _obtener_clave_pista_valida(track_key)
 	if key.is_empty():
 		return level_number <= 1
 	if level_number <= 1:
 		return true
-	return is_level_completed(key, level_number - 1)
+	return es_nivel_completado(key, level_number - 1)
 
-func is_level_completed(track_key: String, level_number: int) -> bool:
-	var key := _get_valid_track_key(track_key)
-	var level_index := _level_to_index(key, level_number)
+func es_nivel_completado(track_key: String, level_number: int) -> bool:
+	var key := _obtener_clave_pista_valida(track_key)
+	var level_index := _nivel_a_indice(key, level_number)
 	if level_index < 0:
 		return false
-	_ensure_track_progress_exists(key)
+	_asegurar_pista_progreso_existe(key)
 	return _completed_levels_by_track[key][level_index]
 
-func get_progress_summary() -> Dictionary:
+func obtener_progreso_resumen() -> Dictionary:
 	var summary: Dictionary = {
 		"total": 0,
-		"max_total": _level_content.get_total_level_count(GameTrackCatalog.get_total_level_count())
+		"max_total": _level_content.obtener_total_nivel_cantidad(GameTrackCatalog.obtener_total_nivel_cantidad())
 	}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		var count: int = 0
-		for level in range(1, get_track_level_count(track_key) + 1):
-			if is_level_completed(track_key, level):
+		for level in range(1, obtener_pista_nivel_cantidad(track_key) + 1):
+			if es_nivel_completado(track_key, level):
 				count += 1
 		summary[track_key] = count
 		summary["total"] += count
 	return summary
 
-func format_progress_summary_text(summary: Dictionary = {}) -> String:
-	var by_track: Dictionary = summary if not summary.is_empty() else get_progress_summary()
+func formatear_progreso_resumen_texto(summary: Dictionary = {}) -> String:
+	var by_track: Dictionary = summary if not summary.is_empty() else obtener_progreso_resumen()
 	var lines: Array[String] = []
-	for track_definition in GameTrackCatalog.get_track_definitions():
+	for track_definition in GameTrackCatalog.obtener_definiciones_pista():
 		var key: String = str(track_definition.get("key", "")).strip_edges()
 		if key.is_empty():
 			continue
-		var level_count: int = get_track_level_count(key)
+		var level_count: int = obtener_pista_nivel_cantidad(key)
 		if level_count <= 0:
 			continue
 		var completed: int = int(by_track.get(key, 0))
-		var label: String = GameTrackCatalog.get_track_summary_label(
+		var label: String = GameTrackCatalog.obtener_etiqueta_resumen_pista(
 			key,
-			GameTrackCatalog.get_track_label(key, DEFAULT_PROGRESS_LABEL)
+			GameTrackCatalog.obtener_etiqueta_pista(key, DEFAULT_PROGRESS_LABEL)
 		)
 		if label.is_empty():
 			label = DEFAULT_PROGRESS_LABEL
@@ -122,28 +122,28 @@ func format_progress_summary_text(summary: Dictionary = {}) -> String:
 	return "\n".join(lines)
 
 
-func get_partial_level_state(track_key: String, level_number: int) -> Dictionary:
-	var key := _get_valid_track_key(track_key)
-	var level := _get_valid_level_number(key, level_number)
+func obtener_parcial_nivel_estado(track_key: String, level_number: int) -> Dictionary:
+	var key := _obtener_clave_pista_valida(track_key)
+	var level := _obtener_numero_nivel_valido(key, level_number)
 	if level <= 0:
 		return {}
 	return _partial_level_state_by_track.get(key, {}).get(level, {})
 
-func set_partial_level_state(track_key: String, level_number: int, state: Dictionary) -> void:
-	var key := _get_valid_track_key(track_key)
-	var level := _get_valid_level_number(key, level_number)
+func establecer_parcial_nivel_estado(track_key: String, level_number: int, state: Dictionary) -> void:
+	var key := _obtener_clave_pista_valida(track_key)
+	var level := _obtener_numero_nivel_valido(key, level_number)
 	if level <= 0:
 		return
 	if not _partial_level_state_by_track.has(key):
 		_partial_level_state_by_track[key] = {}
-	if is_level_completed(key, level) or state.is_empty():
+	if es_nivel_completado(key, level) or state.is_empty():
 		_partial_level_state_by_track[key].erase(level)
 	else:
 		_partial_level_state_by_track[key][level] = state
 
-func clear_partial_level_state(track_key: String, level_number: int) -> void:
-	var key := _get_valid_track_key(track_key)
-	var level := _get_valid_level_number(key, level_number)
+func limpiar_parcial_nivel_estado(track_key: String, level_number: int) -> void:
+	var key := _obtener_clave_pista_valida(track_key)
+	var level := _obtener_numero_nivel_valido(key, level_number)
 	if level <= 0:
 		return
 	if _partial_level_state_by_track.has(key):
@@ -152,8 +152,8 @@ func clear_partial_level_state(track_key: String, level_number: int) -> void:
 
 # --- Preguntas del mapa ---
 
-func mark_question_completed(track_key: String, question_key: String) -> void:
-	var normalized_track_key: String = _get_valid_track_key(track_key)
+func marcar_pregunta_completado(track_key: String, question_key: String) -> void:
+	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
 	var normalized_question_key: String = question_key.strip_edges()
 	if normalized_track_key.is_empty() or normalized_question_key.is_empty():
 		return
@@ -161,8 +161,8 @@ func mark_question_completed(track_key: String, question_key: String) -> void:
 	progress_for_track[normalized_question_key] = true
 	_question_progress_by_track[normalized_track_key] = progress_for_track
 
-func is_question_completed(track_key: String, question_key: String) -> bool:
-	var normalized_track_key: String = _get_valid_track_key(track_key)
+func es_pregunta_completado(track_key: String, question_key: String) -> bool:
+	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
 	var normalized_question_key: String = question_key.strip_edges()
 	if normalized_track_key.is_empty() or normalized_question_key.is_empty():
 		return false
@@ -171,19 +171,19 @@ func is_question_completed(track_key: String, question_key: String) -> bool:
 		return false
 	return bool(raw_track_progress.get(normalized_question_key, false))
 
-func set_active_question_session(session_state: Dictionary) -> void:
+func establecer_activo_pregunta_sesion(session_state: Dictionary) -> void:
 	_active_question_session = session_state.duplicate(true)
 
-func get_active_question_session() -> Dictionary:
+func obtener_activo_pregunta_sesion() -> Dictionary:
 	return _active_question_session.duplicate(true)
 
-func clear_active_question_session() -> void:
+func limpiar_activo_pregunta_sesion() -> void:
 	_active_question_session = {}
 
 
 # --- Estados extra de progreso ---
 
-func set_progress_system_state(system_key: String, state: Dictionary) -> void:
+func establecer_progreso_sistema_estado(system_key: String, state: Dictionary) -> void:
 	var normalized_system_key: String = system_key.strip_edges()
 	if normalized_system_key.is_empty():
 		return
@@ -192,7 +192,7 @@ func set_progress_system_state(system_key: String, state: Dictionary) -> void:
 		return
 	_extra_progress_system_states[normalized_system_key] = state.duplicate(true)
 
-func get_progress_system_state(system_key: String) -> Dictionary:
+func obtener_progreso_sistema_estado(system_key: String) -> Dictionary:
 	var normalized_system_key: String = system_key.strip_edges()
 	if normalized_system_key.is_empty():
 		return {}
@@ -204,87 +204,87 @@ func get_progress_system_state(system_key: String) -> Dictionary:
 
 # --- Racha ---
 
-func get_streak_state() -> Dictionary:
+func obtener_estado_racha() -> Dictionary:
 	return GameStreakTracker.read(_streak_state)
 
-func get_streak_view_model() -> Dictionary:
-	return GameStreakTracker.view_model(get_streak_state())
+func obtener_modelo_vista_racha() -> Dictionary:
+	return GameStreakTracker.view_model(obtener_estado_racha())
 
-func record_streak_activity(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
-	_streak_state = GameStreakTracker.record(get_streak_state(), activity_type, metadata)
+func registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
+	_streak_state = GameStreakTracker.record(obtener_estado_racha(), activity_type, metadata)
 	return _streak_state
 
 
-func get_track_level_count(track_key: String = "") -> int:
-	var fallback: int = GameTrackCatalog.get_track_level_count(
+func obtener_pista_nivel_cantidad(track_key: String = "") -> int:
+	var fallback: int = GameTrackCatalog.obtener_pista_nivel_cantidad(
 		track_key, GameTrackCatalog.DEFAULT_LEVEL_COUNT
 	)
-	return _level_content.get_track_level_count(track_key, fallback)
+	return _level_content.obtener_pista_nivel_cantidad(track_key, fallback)
 
-func get_chapter_run_count(track_key: String, level_number: int) -> int:
-	return _level_content.get_chapter_run_count(track_key, level_number)
+func obtener_capitulo_corrida_cantidad(track_key: String, level_number: int) -> int:
+	return _level_content.obtener_capitulo_corrida_cantidad(track_key, level_number)
 
-func get_chapter_run_definition(
+func obtener_capitulo_corrida_definicion(
 	track_key: String, level_number: int, run_index: int = 1
 ) -> Dictionary:
-	return _level_content.get_chapter_run_definition(track_key, level_number, run_index)
+	return _level_content.obtener_capitulo_corrida_definicion(track_key, level_number, run_index)
 
 
-func export_progress() -> Dictionary:
-	var snapshot: Dictionary = _export_campaign_progress()
-	_export_partial_level_states(snapshot)
-	_export_progress_system_states(snapshot)
+func exportar_progreso() -> Dictionary:
+	var snapshot: Dictionary = _exportar_campana_progreso()
+	_exportar_estados_parciales_nivel(snapshot)
+	_exportar_estados_sistema_progreso(snapshot)
 	return snapshot
 
 
-func _export_campaign_progress() -> Dictionary:
+func _exportar_campana_progreso() -> Dictionary:
 	return _campaign_save_helper.export_campana(
-		_completed_levels_by_track, current_level, get_track_level_count
+		_completed_levels_by_track, current_level, obtener_pista_nivel_cantidad
 	)
 
 
-func _export_partial_level_states(snapshot: Dictionary) -> void:
+func _exportar_estados_parciales_nivel(snapshot: Dictionary) -> void:
 	snapshot["partial_level_states"] = _partial_state_save_helper.export_estado(
 		_partial_level_state_by_track
 	)
 
 
-func _export_progress_system_states(snapshot: Dictionary) -> void:
-	var systems_state: Dictionary = _build_progress_system_states_snapshot()
+func _exportar_estados_sistema_progreso(snapshot: Dictionary) -> void:
+	var systems_state: Dictionary = _construir_snapshot_estados_sistema_progreso()
 	if not systems_state.is_empty():
 		snapshot["progress_system_states"] = systems_state
 
-func import_progress(snapshot: Dictionary) -> void:
-	reset_progress()
+func importar_progreso(snapshot: Dictionary) -> void:
+	reiniciar_progreso()
 	if snapshot.is_empty():
 		return
-	_import_campaign_progress(snapshot)
-	_import_partial_level_states(snapshot)
-	_import_progress_system_states(snapshot.get("progress_system_states", {}))
+	_importar_campana_progreso(snapshot)
+	_importar_estados_parciales_nivel(snapshot)
+	_importar_estados_sistema_progreso(snapshot.get("progress_system_states", {}))
 
 
-func _import_campaign_progress(snapshot: Dictionary) -> void:
+func _importar_campana_progreso(snapshot: Dictionary) -> void:
 	current_level = _campaign_save_helper.import_campana(
-		snapshot, _completed_levels_by_track, get_track_level_count
+		snapshot, _completed_levels_by_track, obtener_pista_nivel_cantidad
 	)
 
 
-func _import_partial_level_states(snapshot: Dictionary) -> void:
+func _importar_estados_parciales_nivel(snapshot: Dictionary) -> void:
 	_partial_level_state_by_track = _partial_state_save_helper.import_estado(
 		snapshot.get("partial_level_states", {}),
-		is_level_completed,
-		get_track_level_count
+		es_nivel_completado,
+		obtener_pista_nivel_cantidad
 	)
 
 
-func _build_progress_system_states_snapshot() -> Dictionary:
-	var systems_state: Dictionary = _duplicate_extra_progress_system_states()
-	_append_streak_progress_state(systems_state)
-	_append_question_progress_state(systems_state)
+func _construir_snapshot_estados_sistema_progreso() -> Dictionary:
+	var systems_state: Dictionary = _duplicar_estados_extra_sistema_progreso()
+	_agregar_estado_progreso_racha(systems_state)
+	_agregar_pregunta_progreso_estado(systems_state)
 	return systems_state
 
 
-func _duplicate_extra_progress_system_states() -> Dictionary:
+func _duplicar_estados_extra_sistema_progreso() -> Dictionary:
 	var systems_state: Dictionary = {}
 	for system_key in _extra_progress_system_states.keys():
 		var raw_state: Variant = _extra_progress_system_states.get(system_key, {})
@@ -293,7 +293,7 @@ func _duplicate_extra_progress_system_states() -> Dictionary:
 	return systems_state
 
 
-func _append_streak_progress_state(systems_state: Dictionary) -> void:
+func _agregar_estado_progreso_racha(systems_state: Dictionary) -> void:
 	var streak_wrapper: Dictionary = {}
 	_streak_save_helper.export_streak(streak_wrapper, _streak_state)
 	var streak_systems: Variant = streak_wrapper.get("progress_system_states", {})
@@ -301,32 +301,32 @@ func _append_streak_progress_state(systems_state: Dictionary) -> void:
 		systems_state.merge((streak_systems as Dictionary).duplicate(true), true)
 
 
-func _append_question_progress_state(systems_state: Dictionary) -> void:
+func _agregar_pregunta_progreso_estado(systems_state: Dictionary) -> void:
 	if not _question_progress_by_track.is_empty():
 		systems_state[QUESTION_PROGRESS_SYSTEM_KEY] = _question_progress_by_track.duplicate(true)
 
 
-func _import_progress_system_states(raw_systems_state: Variant) -> void:
+func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
 	if not raw_systems_state is Dictionary:
 		return
 
 	var systems_state: Dictionary = raw_systems_state
-	_import_streak_progress_state(systems_state)
-	_import_question_progress_state(systems_state)
-	_import_custom_progress_system_states(systems_state)
+	_importar_racha_estado_progreso(systems_state)
+	_importar_pregunta_progreso_estado(systems_state)
+	_importar_estados_sistema_progreso_personalizados(systems_state)
 
 
-func _import_streak_progress_state(systems_state: Dictionary) -> void:
+func _importar_racha_estado_progreso(systems_state: Dictionary) -> void:
 	_streak_state = _streak_save_helper.import_streak({"progress_system_states": systems_state})
 
 
-func _import_question_progress_state(systems_state: Dictionary) -> void:
+func _importar_pregunta_progreso_estado(systems_state: Dictionary) -> void:
 	var question_progress_state: Variant = systems_state.get(QUESTION_PROGRESS_SYSTEM_KEY, {})
 	if question_progress_state is Dictionary:
 		_question_progress_by_track = (question_progress_state as Dictionary).duplicate(true)
 
 
-func _import_custom_progress_system_states(systems_state: Dictionary) -> void:
+func _importar_estados_sistema_progreso_personalizados(systems_state: Dictionary) -> void:
 	for system_key in systems_state.keys():
 		var normalized_system_key: String = str(system_key).strip_edges()
 		if normalized_system_key == STREAK_SYSTEM_KEY:
@@ -338,33 +338,33 @@ func _import_custom_progress_system_states(systems_state: Dictionary) -> void:
 			_extra_progress_system_states[normalized_system_key] = (raw_state as Dictionary).duplicate(true)
 
 
-func _get_valid_track_key(track_key: String) -> String:
+func _obtener_clave_pista_valida(track_key: String) -> String:
 	var key: String = track_key.strip_edges()
-	if key.is_empty() or not GameTrackCatalog.has_track(key):
+	if key.is_empty() or not GameTrackCatalog.tiene_pista(key):
 		return ""
 	return key
 
 
-func _level_to_index(track_key: String, level_number: int) -> int:
+func _nivel_a_indice(track_key: String, level_number: int) -> int:
 	if track_key.is_empty():
 		return -1
-	var count: int = get_track_level_count(track_key)
+	var count: int = obtener_pista_nivel_cantidad(track_key)
 	if count <= 0:
 		return -1
 	return clampi(level_number, 1, count) - 1
 
 
-func _get_valid_level_number(track_key: String, level_number: int) -> int:
+func _obtener_numero_nivel_valido(track_key: String, level_number: int) -> int:
 	if track_key.is_empty():
 		return 0
-	var max_level: int = get_track_level_count(track_key)
+	var max_level: int = obtener_pista_nivel_cantidad(track_key)
 	return 0 if max_level <= 0 else clampi(level_number, 1, max_level)
 
 
-func _ensure_track_progress_exists(track_key: String) -> void:
+func _asegurar_pista_progreso_existe(track_key: String) -> void:
 	if _completed_levels_by_track.has(track_key):
 		return
-	var count: int = get_track_level_count(track_key)
+	var count: int = obtener_pista_nivel_cantidad(track_key)
 	var flags: Array = []
 	flags.resize(count)
 	flags.fill(false)

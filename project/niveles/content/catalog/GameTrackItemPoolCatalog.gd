@@ -11,38 +11,38 @@ static var _cached_items: Array = []
 static var _items_loaded := false
 
 
-static func build_item_pool_for_track(
+static func construir_fondo_elemento_pista(
 	track_key: String,
 	legacy_positive_items: Array = [],
 	legacy_negative_items: Array = []
 ) -> Dictionary:
 	var clean_track_key: String = track_key.strip_edges()
-	if clean_track_key.is_empty() or not GameTrackCatalog.has_track(clean_track_key):
+	if clean_track_key.is_empty() or not GameTrackCatalog.tiene_pista(clean_track_key):
 		return {
 			POSITIVE_ITEMS_KEY: legacy_positive_items.duplicate(),
 			NEGATIVE_ITEMS_KEY: legacy_negative_items.duplicate()
 		}
 
-	var legacy_positive_counts: Dictionary = _count_legacy_items_by_path(
+	var legacy_positive_counts: Dictionary = _contar_elementos_legados_por_ruta(
 		legacy_positive_items
 	)
-	var legacy_negative_counts: Dictionary = _count_legacy_items_by_path(
+	var legacy_negative_counts: Dictionary = _contar_elementos_legados_por_ruta(
 		legacy_negative_items
 	)
 	var positive_items: Array = []
 	var negative_items: Array = []
 
-	for item in get_all_items():
+	for item in obtener_todos_elementos():
 		if item == null:
 			continue
 
-		var item_pool_key: String = classify_item_for_track(
+		var item_pool_key: String = clasificar_elemento_para_pista(
 			clean_track_key,
 			item,
 			legacy_positive_counts,
 			legacy_negative_counts
 		)
-		var item_path: String = _get_item_resource_path(item)
+		var item_path: String = _obtener_ruta_recurso_elemento(item)
 
 		if item_pool_key == POSITIVE_ITEMS_KEY:
 			var positive_copy_count: int = int(legacy_positive_counts.get(item_path, 1))
@@ -60,7 +60,7 @@ static func build_item_pool_for_track(
 	}
 
 
-static func classify_item_for_track(
+static func clasificar_elemento_para_pista(
 	track_key: String,
 	item: Variant,
 	legacy_positive_counts: Dictionary = {},
@@ -70,18 +70,18 @@ static func classify_item_for_track(
 	if (
 		item == null
 		or clean_track_key.is_empty()
-		or not GameTrackCatalog.has_track(clean_track_key)
+		or not GameTrackCatalog.tiene_pista(clean_track_key)
 	):
 		return NEGATIVE_ITEMS_KEY
 
-	var explicit_item_group: String = _classify_item_by_explicit_track_rules(
+	var explicit_item_group: String = _clasificar_elemento_por_reglas_pista_explicitas(
 		clean_track_key,
 		item
 	)
 	if not explicit_item_group.is_empty():
 		return explicit_item_group
 
-	var legacy_item_group: String = _classify_item_by_legacy_membership(
+	var legacy_item_group: String = _clasificar_elemento_por_pertenencia_legada(
 		item,
 		legacy_positive_counts,
 		legacy_negative_counts
@@ -89,8 +89,8 @@ static func classify_item_for_track(
 	if not legacy_item_group.is_empty():
 		return legacy_item_group
 
-	return _classify_item_using_track_strategy(clean_track_key, item)
-static func _classify_item_by_explicit_track_rules(
+	return _clasificar_elemento_usando_estrategia_pista(clean_track_key, item)
+static func _clasificar_elemento_por_reglas_pista_explicitas(
 	track_key: String,
 	item: Variant
 ) -> String:
@@ -109,12 +109,12 @@ static func _classify_item_by_explicit_track_rules(
 	return ""
 
 
-static func _classify_item_by_legacy_membership(
+static func _clasificar_elemento_por_pertenencia_legada(
 	item: Variant,
 	legacy_positive_counts: Dictionary,
 	legacy_negative_counts: Dictionary
 ) -> String:
-	var item_path: String = _get_item_resource_path(item)
+	var item_path: String = _obtener_ruta_recurso_elemento(item)
 	var is_in_legacy_positive_pool: bool = legacy_positive_counts.has(item_path)
 	var is_in_legacy_negative_pool: bool = legacy_negative_counts.has(item_path)
 	if is_in_legacy_positive_pool and not is_in_legacy_negative_pool:
@@ -124,8 +124,8 @@ static func _classify_item_by_legacy_membership(
 	return ""
 
 
-static func _classify_item_using_track_strategy(track_key: String, item: Variant) -> String:
-	var track_definition: Dictionary = GameTrackCatalog.get_track_definition(track_key)
+static func _clasificar_elemento_usando_estrategia_pista(track_key: String, item: Variant) -> String:
+	var track_definition: Dictionary = GameTrackCatalog.obtener_definicion_pista(track_key)
 	var item_pool_strategy: String = str(
 		track_definition.get(
 			"item_pool_strategy",
@@ -148,17 +148,17 @@ static func _classify_item_using_track_strategy(track_key: String, item: Variant
 	)
 
 
-static func get_all_items() -> Array:
+static func obtener_todos_elementos() -> Array:
 	if _items_loaded:
 		return _cached_items.duplicate()
-	_cached_items = _load_all_items()
+	_cached_items = _cargar_todos_elementos()
 	_items_loaded = true
 	return _cached_items.duplicate()
 
 
-static func _load_all_items() -> Array:
+static func _cargar_todos_elementos() -> Array:
 	var items: Array = []
-	for item_path in _find_item_resource_paths():
+	for item_path in _encontrar_rutas_recursos_elemento():
 		var item = load(item_path)
 		if item == null:
 			continue
@@ -166,7 +166,7 @@ static func _load_all_items() -> Array:
 	return items
 
 
-static func _find_item_resource_paths() -> Array[String]:
+static func _encontrar_rutas_recursos_elemento() -> Array[String]:
 	var dir = DirAccess.open(ITEMS_DIR_PATH)
 	if dir == null:
 		return []
@@ -185,16 +185,16 @@ static func _find_item_resource_paths() -> Array[String]:
 	return item_paths
 
 
-static func _get_item_resource_path(item: Variant) -> String:
+static func _obtener_ruta_recurso_elemento(item: Variant) -> String:
 	return str((item as Resource).resource_path) if item is Resource else ""
 
 
-static func _count_legacy_items_by_path(items: Array) -> Dictionary:
+static func _contar_elementos_legados_por_ruta(items: Array) -> Dictionary:
 	var item_count_by_path: Dictionary = {}
 	for item in items:
 		if item == null:
 			continue
-		var item_path: String = _get_item_resource_path(item).strip_edges()
+		var item_path: String = _obtener_ruta_recurso_elemento(item).strip_edges()
 		if item_path.is_empty():
 			continue
 		item_count_by_path[item_path] = int(item_count_by_path.get(item_path, 0)) + 1

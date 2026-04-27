@@ -14,19 +14,19 @@ func _ready() -> void:
 	splash_animation.play(INTRO_ANIMATION)
 	MusicManager.reproducir_musica(MUSICA_FONDO)
 	await get_tree().create_timer(1.0).timeout
-	bounce_button(go)
+	animar_rebote_boton(go)
 	await get_tree().create_timer(0.5).timeout
-	bounce_button(go)
+	animar_rebote_boton(go)
 	
-func bounce_button(button: Control):
+func animar_rebote_boton(button: Control):
 	var tween = create_tween()
 	var original_pos = button.position
 	
-	tween.tween_property(go, "position:y", original_pos.y - 6, 0.06)
-	tween.tween_property(go, "position:y", original_pos.y + 2, 0.05)
-	tween.tween_property(go, "position:y", original_pos.y, 0.06)
+	tween.tween_property(button, "position:y", original_pos.y - 6, 0.06)
+	tween.tween_property(button, "position:y", original_pos.y + 2, 0.05)
+	tween.tween_property(button, "position:y", original_pos.y, 0.06)
 
-func _on_go_pressed() -> void:
+func _on_ir_presionado() -> void:
 	GameSceneRouter.go_to_main_menu(get_tree())
 
 

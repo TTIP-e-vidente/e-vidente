@@ -29,7 +29,7 @@ func _ready() -> void:
 
 
 func _clear_transient_question_session() -> void:
-	Global.clear_active_question_session()
+	Global.limpiar_activo_pregunta_sesion()
 
 
 func _connect_back_signal() -> void:
@@ -103,7 +103,7 @@ func _are_all_runtime_map_nodes_completed(runtime_map_nodes: Array[Node2D]) -> b
 func _resolve_map_track_key(runtime_map_nodes: Array[Node2D]) -> String:
 	for map_node in runtime_map_nodes:
 		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
-		var track_key: String = _get_valid_track_key(runtime_node_data)
+		var track_key: String = _obtener_clave_pista_valida(runtime_node_data)
 		if not track_key.is_empty():
 			return track_key
 	return DEFAULT_TRACK_KEY
@@ -186,7 +186,7 @@ func _open_direct_scene_path(selected_target: Variant) -> void:
 
 
 func _open_map_node(node_data: RefCounted) -> void:
-	var track_key: String = _get_valid_track_key(node_data)
+	var track_key: String = _obtener_clave_pista_valida(node_data)
 	if node_data.is_question():
 		_open_question_node(track_key, node_data)
 		return
@@ -196,7 +196,7 @@ func _open_map_node(node_data: RefCounted) -> void:
 
 
 func _open_question_node(track_key: String, node_data: RefCounted) -> void:
-	Global.set_active_question_session(_build_question_session(track_key, node_data))
+	Global.establecer_activo_pregunta_sesion(_build_question_session(track_key, node_data))
 	GameSceneRouter.go_to_questions(get_tree())
 
 
@@ -218,13 +218,13 @@ func _build_question_session(track_key: String, node_data: RefCounted) -> Dictio
 
 
 func _save_current_map_scroll() -> void:
-	var map_view_state: Dictionary = Global.get_progress_system_state(MAP_VIEW_SYSTEM_KEY)
+	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
 	map_view_state[MAP_VIEW_SCROLL_VERTICAL_KEY] = _get_current_map_scroll_vertical()
-	Global.set_progress_system_state(MAP_VIEW_SYSTEM_KEY, map_view_state)
+	Global.establecer_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY, map_view_state)
 
 
 func _restore_saved_map_scroll() -> void:
-	var map_view_state: Dictionary = Global.get_progress_system_state(MAP_VIEW_SYSTEM_KEY)
+	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
 	var saved_scroll_vertical: int = int(map_view_state.get(MAP_VIEW_SCROLL_VERTICAL_KEY, 0))
 	_set_current_map_scroll_vertical(saved_scroll_vertical)
 
@@ -248,19 +248,19 @@ func _node_can_be_opened_from_map(node_data: RefCounted) -> bool:
 	if node_data.is_question():
 		return true
 	return node_data.has_chapter_destination() and GameTrackCatalog.has_track(
-		_get_valid_track_key(node_data)
+		_obtener_clave_pista_valida(node_data)
 	)
 
 
 # Progreso -------------------------------------------------------------------
 func _is_node_completed(node_data: RefCounted) -> bool:
-	var track_key: String = _get_valid_track_key(node_data)
+	var track_key: String = _obtener_clave_pista_valida(node_data)
 	if node_data.is_question():
-		return Global.is_question_completed(track_key, node_data.question_key)
-	return Global.is_level_completed(track_key, node_data.level_number)
+		return Global.es_pregunta_completado(track_key, node_data.question_key)
+	return Global.es_nivel_completado(track_key, node_data.level_number)
 
 
-func _get_valid_track_key(node_data: RefCounted) -> String:
+func _obtener_clave_pista_valida(node_data: RefCounted) -> String:
 	var raw_track_key: String = node_data.get_track_key_or_default(DEFAULT_TRACK_KEY)
 	if GameTrackCatalog.has_track(raw_track_key):
 		return raw_track_key

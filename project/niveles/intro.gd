@@ -13,32 +13,32 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 
 func _ready() -> void:
 	GameSceneRouter.request_initial_scene_preload()
-	_play_background_music()
+	_reproducir_musica_fondo()
 
 	
 	for b in buttons:
 		if b.material:
 			b.material = b.material.duplicate()
 
-func _on_start_pressed() -> void:
-	_bounce_button($MenuBar/Jugar)
+func _on_iniciar_presionado() -> void:
+	_rebote_boton($MenuBar/Jugar)
 	await get_tree().create_timer(0.15).timeout
-	_open_mode_selector()
+	_abrir_modo_selector()
 
 
-func _on_opciones_pressed() -> void:
-	_bounce_button($MenuBar/Opciones)
+func _on_opciones_presionado() -> void:
+	_rebote_boton($MenuBar/Opciones)
 	await get_tree().create_timer(0.15).timeout
-	_open_options_menu()
+	_abrir_opciones_menu()
 
 
-func _on_salir_pressed() -> void:
-	_bounce_button($MenuBar/Salir)
+func _on_salir_presionado() -> void:
+	_rebote_boton($MenuBar/Salir)
 	await get_tree().create_timer(0.15).timeout
-	_quit_game()
+	_salir_juego()
 
 
-func _play_background_music() -> void:
+func _reproducir_musica_fondo() -> void:
 	MusicManager.reproducir_musica(MUSICA_FONDO)
 
 
@@ -46,7 +46,7 @@ func _exit_tree() -> void:
 	pass
 
 
-func _update_button_shader(button: Button, mat: ShaderMaterial):
+func _actualizar_sombreado_boton(button: Button, mat: ShaderMaterial):
 	var mouse_global = get_viewport().get_mouse_position()
 	var local_mouse = button.to_local(mouse_global)
 	
@@ -77,18 +77,18 @@ func _process(_delta: float) -> void:
 			else:
 				mat.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
 				
-func _open_mode_selector() -> void:
+func _abrir_modo_selector() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
-func _open_options_menu() -> void:
+func _abrir_opciones_menu() -> void:
 	GameSceneRouter.go_to_options(get_tree())
 
 
-func _quit_game() -> void:
+func _salir_juego() -> void:
 	get_tree().quit()
 
-func _bounce_button(button: Control):
+func _rebote_boton(button: Control):
 	var tween = create_tween()
 	
 	var original_pos = button.position

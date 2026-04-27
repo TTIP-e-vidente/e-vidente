@@ -7,5 +7,5 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 func _ready():
 	MusicManager.reproducir_musica(MUSICA_FONDO)
 
-func _on_atrás_pressed():
+func _on_atras_presionado():
 	GameSceneRouter.go_to_main_menu(get_tree())

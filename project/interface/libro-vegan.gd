@@ -4,5 +4,5 @@ class_name LibroVegan
 const TRACK_KEY := "veganismo"
 
 
-func _get_track_key() -> String:
+func _obtener_clave_pista() -> String:
 	return TRACK_KEY

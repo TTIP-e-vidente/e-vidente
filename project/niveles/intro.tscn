@@ -100,6 +100,6 @@ stream = ExtResource("6_eoqxh")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
-[connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
-[connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
+[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_iniciar_presionado"]
+[connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_presionado"]
+[connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_presionado"]

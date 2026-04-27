@@ -7,7 +7,7 @@ func _init(manager) -> void:
 	_manager = manager
 
 
-func create_item(
+func crear_elemento(
 	level_item,
 	instance_id: String,
 	is_positive: bool
@@ -21,7 +21,7 @@ func create_item(
 	return level_item_instance
 
 
-func clear_items() -> void:
+func limpiar_elementos() -> void:
 	for item in _manager.level_items:
 		if is_instance_valid(item):
 			item.queue_free()
@@ -33,7 +33,7 @@ func clear_items() -> void:
 	_manager.plato.cantAlimentosNeg.clear()
 
 
-func layout_items(level_resource) -> void:
+func distribuir_elementos(level_resource) -> void:
 	var next_item_position := Vector2(230, 680)
 	var total_items: int = (
 		level_resource.cantidadNegativos + level_resource.cantidadPositivos

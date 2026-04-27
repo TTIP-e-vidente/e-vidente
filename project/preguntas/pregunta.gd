@@ -53,7 +53,7 @@ func _prepare_question_session() -> void:
 	# Si la escena se abrio desde el mapa, reemplazamos el tema por una sola pregunta.
 	_reset_map_question_session_state()
 
-	var session_state: Dictionary = Global.get_active_question_session()
+	var session_state: Dictionary = Global.obtener_activo_pregunta_sesion()
 	if session_state.is_empty():
 		return
 
@@ -252,13 +252,13 @@ func _finish_map_question_session() -> void:
 
 
 func _finish_regular_question_session() -> void:
-	Global.mark_level_completed(track_key, nivel_id)
+	Global.marcar_nivel_completado(track_key, nivel_id)
 	SaveManager.record_level_completed(track_key, nivel_id)
 
 
 func _register_completed_map_question_if_needed() -> void:
 	if _has_map_session and not _active_question_key.is_empty():
-		Global.mark_question_completed(track_key, _active_question_key)
+		Global.marcar_pregunta_completado(track_key, _active_question_key)
 
 
 func _on_jugar_nuevamente_pressed() -> void:
@@ -270,5 +270,5 @@ func _on_atrás_pressed() -> void:
 
 
 func _return_to_origin_scene() -> void:
-	Global.clear_active_question_session()
+	Global.limpiar_activo_pregunta_sesion()
 	get_tree().change_scene_to_file(_return_scene_path)
