@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "estudio_celiaquia",
-		"title": "Pregunta 3",
-		"track_key": "celiaquia",
-		"question_number": 3,
-		"difficulty": "basica",
-		"estimated_seconds": 20
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta 3",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "Para hacer un estudio de celiaquia, tenes que dejar de comer cosas con gluten antes del estudio de sangre o de la biopsia intestinal?",
+	"id": "estudio_celiaquia",
+	"theme": "celiaquia",
+	"title": "Estudio de celiaquia",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "Para hacer un estudio de celiaquia, tenes que dejar de comer cosas con gluten antes del estudio de sangre o de la biopsia intestinal?",
 		"correct_answer": "Si",
-		"wrong_answers": ["No"],
-		"type": "text"
+		"wrong_options": ["No"],
+		"visual_resource": ""
 	}
 }

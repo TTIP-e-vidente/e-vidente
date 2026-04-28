@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "gluten_arroz",
-		"title": "Pregunta 4",
-		"track_key": "celiaquia",
-		"question_number": 4,
-		"difficulty": "media",
-		"estimated_seconds": 15
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta 4",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "El gluten esta en el arroz?",
+	"id": "gluten_arroz",
+	"theme": "celiaquia",
+	"title": "Gluten en el arroz",
+	"difficulty": "medium",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "El gluten esta en el arroz?",
 		"correct_answer": "No",
-		"wrong_answers": ["Si"],
-		"type": "text"
+		"wrong_options": ["Si"],
+		"visual_resource": ""
 	}
 }

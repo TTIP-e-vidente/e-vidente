@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "enfermedad_autoinmune",
-		"title": "Pregunta 2",
-		"track_key": "celiaquia",
-		"question_number": 2,
-		"difficulty": "basica",
-		"estimated_seconds": 15
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta 2",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "La celiaquia es una enfermedad autoinmune?",
+	"id": "enfermedad_autoinmune",
+	"theme": "celiaquia",
+	"title": "Celiaquia autoinmune",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "La celiaquia es una enfermedad autoinmune?",
 		"correct_answer": "Si",
-		"wrong_answers": ["No"],
-		"type": "text"
+		"wrong_options": ["No"],
+		"visual_resource": ""
 	}
 }

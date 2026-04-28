@@ -36,6 +36,7 @@ var active_negative_item_count: int = 0
 var active_category_code: String = ""
 
 
+# --- Flujo público del nivel --------------------------------------------------
 func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	if not _conectar_escena_nodos(level_scene):
 		return
@@ -43,14 +44,8 @@ func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	active_track_key = track_key.strip_edges()
 	_asegurar_recurso_nivel_cargado()
 
-	var saved_level_state: Dictionary = Global.obtener_parcial_nivel_estado(
-		active_track_key, Global.current_level
-	)
-	active_run_index = clampi(
-		int(saved_level_state.get("run_index", 1)),
-		1,
-		obtener_total_corridas()
-	)
+	var saved_level_state: Dictionary = _obtener_estado_guardado_actual()
+	active_run_index = _resolver_indice_corrida(saved_level_state)
 	_cargar_corrida_actual(saved_level_state)
 
 
@@ -78,40 +73,15 @@ func establecer_tiempo_ejecucion_elementos_interactuable(enabled: bool) -> void:
 			runtime_item.set_interaction_enabled(enabled)
 
 
-# Solo arma y devuelve el dict de estado parcial. No guarda nada.
+# --- Guardado parcial ---------------------------------------------------------
 func construir_parcial_nivel_estado() -> Dictionary:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
 		return {}
 
-	var saved_item_entries: Array = []
-	var placed_positive_item_ids: Array = []
-
-	for runtime_item in level_items:
-		if not is_instance_valid(runtime_item):
-			continue
-
-		var item_path: String = str(runtime_item.item_resource_path).strip_edges()
-		var instance_id: String = str(runtime_item.save_instance_id).strip_edges()
-		if item_path.is_empty() or instance_id.is_empty():
-			continue
-
-		var saved_item_entry: Dictionary = {
-			"item_path": item_path,
-			"instance_id": instance_id,
-			"is_positive": bool(runtime_item.esPositivo)
-		}
-		saved_item_entries.append(saved_item_entry)
-
-		if bool(runtime_item.esPositivo) and plato.tiene_positivo_elemento(runtime_item):
-			placed_positive_item_ids.append(instance_id)
-
-	if saved_item_entries.is_empty() and active_run_index <= 1:
+	var mechanic_state: Dictionary = _construir_estado_guardado_mecanica()
+	if mechanic_state.is_empty() and active_run_index <= 1:
 		return {}
 
-	var mechanic_state: Dictionary = {
-		"items": saved_item_entries,
-		"placed_item_ids": placed_positive_item_ids
-	}
 	return {
 		"run_index": active_run_index,
 		"mechanic_type": active_mechanic_type,
@@ -147,6 +117,45 @@ func obtener_actual_corrida_guardar_label() -> String:
 	return "Corrida %d de %d" % [active_run_index, total_runs]
 
 
+func _construir_estado_guardado_mecanica() -> Dictionary:
+	var saved_item_entries: Array = []
+	var placed_positive_item_ids: Array = []
+
+	for runtime_item in level_items:
+		var saved_item_entry: Dictionary = _construir_entrada_guardado_item(runtime_item)
+		if saved_item_entry.is_empty():
+			continue
+		saved_item_entries.append(saved_item_entry)
+
+		if bool(runtime_item.esPositivo) and plato.tiene_positivo_elemento(runtime_item):
+			placed_positive_item_ids.append(str(runtime_item.save_instance_id))
+
+	if saved_item_entries.is_empty():
+		return {}
+
+	return {
+		"items": saved_item_entries,
+		"placed_item_ids": placed_positive_item_ids
+	}
+
+
+func _construir_entrada_guardado_item(runtime_item: Node) -> Dictionary:
+	if not is_instance_valid(runtime_item):
+		return {}
+
+	var item_path: String = str(runtime_item.item_resource_path).strip_edges()
+	var instance_id: String = str(runtime_item.save_instance_id).strip_edges()
+	if item_path.is_empty() or instance_id.is_empty():
+		return {}
+
+	return {
+		"item_path": item_path,
+		"instance_id": instance_id,
+		"is_positive": bool(runtime_item.esPositivo)
+	}
+
+
+# --- Consultas de gameplay ----------------------------------------------------
 func obtener_positivo_elementos_in_plato_cantidad() -> int:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE or not is_instance_valid(plato):
 		return 0
@@ -167,14 +176,15 @@ func tiene_completado_actual_corrida() -> bool:
 func filtrar_elementos_por_categoria(items: Array, category: String) -> Array:
 	if category.strip_edges().is_empty():
 		return items.duplicate()
-	var wanted: String = GameTrackCatalog.normalizar_codigo_categoria(category)
-	var result: Array = []
+	var wanted_category: String = GameTrackCatalog.normalizar_codigo_categoria(category)
+	var filtered_items: Array = []
 	for item in items:
-		if GameTrackCatalog.categorias_coinciden(str(item.categoria), wanted):
-			result.append(item)
-	return result
+		if GameTrackCatalog.categorias_coinciden(str(item.categoria), wanted_category):
+			filtered_items.append(item)
+	return filtered_items
 
 
+# --- Runtime de items ---------------------------------------------------------
 func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
 	var level_item_instance: Node = level_item.escena.instantiate()
 	if level_item_instance == null:
@@ -199,9 +209,7 @@ func limpiar_tiempo_ejecucion_elementos() -> void:
 
 func distribuir_tiempo_ejecucion_elementos() -> void:
 	var next_item_position := Vector2(230, 680)
-	var total_items: int = (
-		level_resource.cantidadNegativos + level_resource.cantidadPositivos
-	)
+	var total_items: int = level_resource.cantidadNegativos + level_resource.cantidadPositivos
 	if total_items < 5:
 		next_item_position = Vector2(420, 680)
 	for item in level_items:
@@ -209,49 +217,18 @@ func distribuir_tiempo_ejecucion_elementos() -> void:
 		next_item_position.x += 120
 
 
-
+# --- Carga de corrida ---------------------------------------------------------
 func _cargar_corrida_actual(saved_level_state: Dictionary) -> void:
 	limpiar_tiempo_ejecucion_elementos()
 
-	var level_number: int = Global.current_level
-	active_run_data = Global.obtener_capitulo_corrida_definicion(
-		active_track_key, level_number, active_run_index
-	)
-	if active_run_data.is_empty():
-		active_run_data = {}
-		active_mechanic_type = ""
-		_limpiar_activo_corrida_carga()
-		push_error(
-			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
-			% [active_track_key, level_number, active_run_index]
-		)
-		return
-
-	active_mechanic_type = str(active_run_data.get("mechanic_type", "")).strip_edges()
-	if active_mechanic_type.is_empty():
-		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
-	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
-		_limpiar_activo_corrida_carga()
-		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
+	if not _cargar_definicion_corrida_actual():
 		return
 
 	_aplicar_activo_corrida_carga()
 	_configurar_nivel_recurso()
 
-	# Extraer items guardados (legacy: pueden estar anidados en mechanic_state o en la raíz)
-	var saved_mechanic_state: Dictionary = saved_level_state
-	if saved_level_state.get("mechanic_state", null) is Dictionary:
-		var mechanic_dict: Dictionary = saved_level_state["mechanic_state"]
-		if not mechanic_dict.is_empty():
-			saved_mechanic_state = mechanic_dict
-
-	var saved_items: Array = []
-	if saved_mechanic_state.get("items", null) is Array:
-		saved_items = saved_mechanic_state["items"]
-
-	if _intentar_restaurar_guardado_elementos(saved_items):
-		distribuir_tiempo_ejecucion_elementos()
-		_colocar_guardado_elementos_on_plato(saved_mechanic_state)
+	var saved_mechanic_state: Dictionary = _extraer_estado_guardado_mecanica(saved_level_state)
+	if _restaurar_corrida_guardada(saved_mechanic_state):
 		return
 
 	_generar_frescos_elementos()
@@ -259,20 +236,78 @@ func _cargar_corrida_actual(saved_level_state: Dictionary) -> void:
 	distribuir_tiempo_ejecucion_elementos()
 
 
-func _aplicar_activo_corrida_carga() -> void:
-	var run_payload: Dictionary = {}
-	if active_run_data.get("mechanic_payload", null) is Dictionary:
-		run_payload = active_run_data["mechanic_payload"]
+func _cargar_definicion_corrida_actual() -> bool:
+	var level_number: int = Global.current_level
+	active_run_data = Global.obtener_capitulo_corrida_definicion(
+		active_track_key,
+		level_number,
+		active_run_index
+	)
+	if active_run_data.is_empty():
+		_resetear_estado_corrida_activa()
+		push_error(
+			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
+			% [active_track_key, level_number, active_run_index]
+		)
+		return false
 
-	if not run_payload.is_empty():
-		active_negative_item_count = int(run_payload.get("negative_count", 0))
-		active_positive_item_count = int(run_payload.get("positive_count", 0))
-		active_category_code = str(run_payload.get("category", "")).strip_edges()
+	active_mechanic_type = str(
+		active_run_data.get("mechanic_type", PLATE_SORT_MECHANIC_TYPE)
+	).strip_edges()
+	if active_mechanic_type.is_empty():
+		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+
+	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
+		_resetear_estado_corrida_activa()
+		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
+		return false
+
+	return true
+
+
+func _extraer_estado_guardado_mecanica(saved_level_state: Dictionary) -> Dictionary:
+	var saved_mechanic_state: Dictionary = saved_level_state
+	var raw_mechanic_state: Variant = saved_level_state.get("mechanic_state", null)
+	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
+		saved_mechanic_state = raw_mechanic_state as Dictionary
+	return saved_mechanic_state
+
+
+func _restaurar_corrida_guardada(saved_mechanic_state: Dictionary) -> bool:
+	var saved_items: Array = _obtener_items_guardados(saved_mechanic_state)
+	if not _intentar_restaurar_guardado_elementos(saved_items):
+		return false
+
+	distribuir_tiempo_ejecucion_elementos()
+	_colocar_guardado_elementos_on_plato(saved_mechanic_state)
+	return true
+
+
+func _obtener_items_guardados(saved_mechanic_state: Dictionary) -> Array:
+	var raw_saved_items: Variant = saved_mechanic_state.get("items", [])
+	if raw_saved_items is Array:
+		return raw_saved_items as Array
+	return []
+
+
+func _aplicar_activo_corrida_carga() -> void:
+	var run_payload: Dictionary = _obtener_payload_corrida()
+	if run_payload.is_empty():
+		active_negative_item_count = int(active_run_data.get("negative_count", 0))
+		active_positive_item_count = int(active_run_data.get("positive_count", 0))
+		active_category_code = str(active_run_data.get("category", "")).strip_edges()
 		return
 
-	active_negative_item_count = int(active_run_data.get("negative_count", 0))
-	active_positive_item_count = int(active_run_data.get("positive_count", 0))
-	active_category_code = str(active_run_data.get("category", "")).strip_edges()
+	active_negative_item_count = int(run_payload.get("negative_count", 0))
+	active_positive_item_count = int(run_payload.get("positive_count", 0))
+	active_category_code = str(run_payload.get("category", "")).strip_edges()
+
+
+func _obtener_payload_corrida() -> Dictionary:
+	var raw_payload: Variant = active_run_data.get("mechanic_payload", {})
+	if raw_payload is Dictionary:
+		return raw_payload as Dictionary
+	return {}
 
 
 func _configurar_nivel_recurso() -> void:
@@ -314,6 +349,7 @@ func _conectar_escena_nodos(level_scene: Node) -> bool:
 	return all_connected
 
 
+# --- Generación y restauración de items --------------------------------------
 func _generar_frescos_elementos() -> void:
 	var item_pools: Dictionary = GameTrackItemPoolCatalogScript.construir_fondo_elemento_pista(
 		active_track_key,
@@ -321,31 +357,36 @@ func _generar_frescos_elementos() -> void:
 		level_resource.itemsNegativos
 	)
 
-	var positive_items: Array = filtrar_elementos_por_categoria(
+	_generar_items_desde_pool(
 		item_pools.get("positive_items", []),
-		active_category_code
+		active_positive_item_count,
+		true,
+		"positive"
 	)
-	positive_items.shuffle()
-	for item_index in range(active_positive_item_count):
-		if positive_items.is_empty():
-			break
-		var level_item = positive_items.pop_front()
-		if level_item == null:
-			continue
-		generar_nivel_elemento(level_item, "positive_%d" % item_index, true)
-
-	var negative_items: Array = filtrar_elementos_por_categoria(
+	_generar_items_desde_pool(
 		item_pools.get("negative_items", []),
-		active_category_code
+		active_negative_item_count,
+		false,
+		"negative"
 	)
-	negative_items.shuffle()
-	for item_index in range(active_negative_item_count):
-		if negative_items.is_empty():
+
+
+func _generar_items_desde_pool(
+	source_items: Array,
+	wanted_count: int,
+	is_positive: bool,
+	instance_prefix: String
+) -> void:
+	var filtered_items: Array = filtrar_elementos_por_categoria(source_items, active_category_code)
+	filtered_items.shuffle()
+
+	for item_index in range(wanted_count):
+		if filtered_items.is_empty():
 			break
-		var level_item = negative_items.pop_front()
+		var level_item: Resource = filtered_items.pop_front()
 		if level_item == null:
 			continue
-		generar_nivel_elemento(level_item, "negative_%d" % item_index, false)
+		generar_nivel_elemento(level_item, "%s_%d" % [instance_prefix, item_index], is_positive)
 
 
 func _intentar_restaurar_guardado_elementos(saved_item_entries: Array) -> bool:
@@ -353,9 +394,10 @@ func _intentar_restaurar_guardado_elementos(saved_item_entries: Array) -> bool:
 		return false
 
 	for raw_saved_item in saved_item_entries:
-		if not _generar_guardado_elemento(raw_saved_item):
-			limpiar_tiempo_ejecucion_elementos()
-			return false
+		if _generar_guardado_elemento(raw_saved_item):
+			continue
+		limpiar_tiempo_ejecucion_elementos()
+		return false
 
 	return not level_items.is_empty()
 
@@ -424,12 +466,31 @@ func _obtener_plato_posicion(index: int, total_items: int) -> Vector2:
 	return plato.global_position + offset
 
 
+# --- Helpers internos ---------------------------------------------------------
+func _obtener_estado_guardado_actual() -> Dictionary:
+	return Global.obtener_parcial_nivel_estado(active_track_key, Global.current_level)
+
+
+func _resolver_indice_corrida(saved_level_state: Dictionary) -> int:
+	return clampi(
+		int(saved_level_state.get("run_index", 1)),
+		1,
+		obtener_total_corridas()
+	)
+
+
 func _construir_activo_corrida_carga() -> Dictionary:
 	return {
 		"negative_count": active_negative_item_count,
 		"positive_count": active_positive_item_count,
 		"category": active_category_code
 	}
+
+
+func _resetear_estado_corrida_activa() -> void:
+	active_run_data = {}
+	active_mechanic_type = ""
+	_limpiar_activo_corrida_carga()
 
 
 func _limpiar_activo_corrida_carga() -> void:
