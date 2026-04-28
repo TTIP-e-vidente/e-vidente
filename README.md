@@ -80,3 +80,21 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 ## 📌 Estado del proyecto
 
 🚧 En desarrollo
+
+## Cómo leer el flujo de nodos jugables
+
+1. El flujo empieza en `project/mapas/MapScene.gd`, cuando el jugador toca un nodo del mapa.
+2. `MapScene.gd` arma el `session_context`, le pide el JSON a `project/preguntas/NodeContentLoader.gd` y recibe siempre `{ ok, data, error }`.
+3. Desde ese punto se usa solo el formato oficial `node_data`: `id`, `theme`, `title`, `difficulty`, `mode`, `content`.
+4. `project/mapas/PlayableNodeRouter.gd` mira `node_data.mode` y devuelve la escena jugable.
+5. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
+6. `project/preguntas/QuestionJsonLoader.gd` existe solo como adaptador temporal para que `pregunta.gd` siga usando `ThemePreg/Preguntas`.
+7. Para crear un nodo nuevo alcanza con agregar o editar un JSON en `project/niveles/nodos/` y apuntar el nodo del mapa a esa clave.
+8. Para agregar una modalidad futura hay que sumar su validación en `NodeContentLoader.gd`, su ruta en `PlayableNodeRouter.gd` y su escena jugable.
+
+## Estructura de contenido
+
+- `project/niveles/nodos/`: JSON de nodos jugables del mapa.
+- `project/preguntas/`: escena y adaptador de modalidad `quiz_choice`.
+- `project/mapas/`: mapa, routing y apertura de nodos.
+- `project/mapas/drag_drop/DragDropNode.tscn`: modalidad `drag_drop` MVP.

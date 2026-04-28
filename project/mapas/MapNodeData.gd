@@ -1,5 +1,4 @@
 extends RefCounted
-## Contrato serializable de un nodo del mapa para escena, runtime y tests.
 
 const NODE_KIND_CHAPTER := "chapter"
 const NODE_KIND_QUESTION := "question"
@@ -15,7 +14,8 @@ const DICT_KEY_QUESTION_JSON_PATH := "question_json_path"
 const DICT_KEY_QUESTION_RESOURCE_PATH := "question_resource_path"
 const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
 const DICT_KEY_POSITION := "pos"
-const DEFAULT_QUESTION_JSON_DIR := "res://preguntas/json_nodos"
+const DEFAULT_NODE_JSON_DIR := "res://niveles/nodos"
+const LEGACY_NODE_JSON_DIR := "res://preguntas/json_nodos"
 const DEFAULT_QUESTION_RESOURCE_DIR := "res://preguntas/preguntas_recurso"
 
 var node_id: int = 0
@@ -176,14 +176,14 @@ func get_resolved_question_key() -> String:
 
 
 func get_resolved_question_json_path() -> String:
-	var explicit_path: String = question_json_path.strip_edges()
+	var explicit_path: String = _resolver_ruta_json_legacy(question_json_path.strip_edges())
 	if not explicit_path.is_empty():
 		return explicit_path
 
 	var resolved_key: String = get_resolved_question_key()
 	if resolved_key.is_empty():
 		return ""
-	return "%s/%s.json" % [DEFAULT_QUESTION_JSON_DIR, resolved_key]
+	return "%s/%s.json" % [DEFAULT_NODE_JSON_DIR, resolved_key]
 
 
 func get_resolved_question_resource_path() -> String:
@@ -207,3 +207,22 @@ func _extract_file_name_without_extension(raw_path: String) -> String:
 	if extension_index < 0:
 		return file_name
 	return file_name.substr(0, extension_index)
+
+
+func _resolver_ruta_json_legacy(raw_path: String) -> String:
+	var clean_path: String = raw_path.strip_edges()
+	if clean_path.is_empty():
+		return ""
+	if FileAccess.file_exists(clean_path):
+		return clean_path
+	if not clean_path.begins_with(LEGACY_NODE_JSON_DIR):
+		return clean_path
+
+	var migrated_path: String = clean_path.replace(LEGACY_NODE_JSON_DIR, DEFAULT_NODE_JSON_DIR)
+	if FileAccess.file_exists(migrated_path):
+		push_warning(
+			"MapNodeData: ruta legacy detectada. Usa %s en lugar de %s."
+			% [migrated_path, clean_path]
+		)
+		return migrated_path
+	return clean_path
