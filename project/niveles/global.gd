@@ -172,15 +172,6 @@ func es_nodo_jugable_completado(track_key: String, node_key: String) -> bool:
 		return false
 	return bool(raw_track_progress.get(normalized_node_key, false))
 
-
-# TODO post-demo: eliminar cuando no haya codigo llamando a wrappers question_*.
-func marcar_pregunta_completado(track_key: String, question_key: String) -> void:
-	marcar_nodo_jugable_completado(track_key, question_key)
-
-
-func es_pregunta_completado(track_key: String, question_key: String) -> bool:
-	return es_nodo_jugable_completado(track_key, question_key)
-
 func establecer_sesion_nodo_jugable_activo(session_state: Dictionary) -> void:
 	_active_playable_node_session = session_state.duplicate(true)
 
@@ -191,19 +182,6 @@ func obtener_sesion_nodo_jugable_activo() -> Dictionary:
 
 func limpiar_sesion_nodo_jugable_activo() -> void:
 	_active_playable_node_session = {}
-
-
-# TODO post-demo: eliminar cuando no haya codigo llamando a wrappers question_*.
-func establecer_activo_pregunta_sesion(session_state: Dictionary) -> void:
-	establecer_sesion_nodo_jugable_activo(session_state)
-
-
-func obtener_activo_pregunta_sesion() -> Dictionary:
-	return obtener_sesion_nodo_jugable_activo()
-
-
-func limpiar_activo_pregunta_sesion() -> void:
-	limpiar_sesion_nodo_jugable_activo()
 
 
 # --- Estados extra de progreso ---
@@ -305,7 +283,7 @@ func _importar_estados_parciales_nivel(snapshot: Dictionary) -> void:
 func _construir_snapshot_estados_sistema_progreso() -> Dictionary:
 	var systems_state: Dictionary = _duplicar_estados_extra_sistema_progreso()
 	_agregar_estado_progreso_racha(systems_state)
-	_agregar_pregunta_progreso_estado(systems_state)
+	_agregar_estado_progreso_nodos_jugables(systems_state)
 	return systems_state
 
 
@@ -326,7 +304,7 @@ func _agregar_estado_progreso_racha(systems_state: Dictionary) -> void:
 		systems_state.merge((streak_systems as Dictionary).duplicate(true), true)
 
 
-func _agregar_pregunta_progreso_estado(systems_state: Dictionary) -> void:
+func _agregar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void:
 	if not _playable_node_progress_by_track.is_empty():
 		systems_state[QUESTION_PROGRESS_SYSTEM_KEY] = _playable_node_progress_by_track.duplicate(true)
 
@@ -337,7 +315,7 @@ func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
 
 	var systems_state: Dictionary = raw_systems_state
 	_importar_racha_estado_progreso(systems_state)
-	_importar_pregunta_progreso_estado(systems_state)
+	_importar_estado_progreso_nodos_jugables(systems_state)
 	_importar_estados_sistema_progreso_personalizados(systems_state)
 
 
@@ -345,10 +323,10 @@ func _importar_racha_estado_progreso(systems_state: Dictionary) -> void:
 	_streak_state = _streak_save_helper.importar_racha({"progress_system_states": systems_state})
 
 
-func _importar_pregunta_progreso_estado(systems_state: Dictionary) -> void:
-	var question_progress_state: Variant = systems_state.get(QUESTION_PROGRESS_SYSTEM_KEY, {})
-	if question_progress_state is Dictionary:
-		_playable_node_progress_by_track = (question_progress_state as Dictionary).duplicate(true)
+func _importar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void:
+	var estado_progreso_nodos: Variant = systems_state.get(QUESTION_PROGRESS_SYSTEM_KEY, {})
+	if estado_progreso_nodos is Dictionary:
+		_playable_node_progress_by_track = (estado_progreso_nodos as Dictionary).duplicate(true)
 
 
 func _importar_estados_sistema_progreso_personalizados(systems_state: Dictionary) -> void:

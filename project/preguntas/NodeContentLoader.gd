@@ -9,19 +9,23 @@ const MODE_DRAG_DROP := "drag_drop"
 
 
 static func cargar_contenido_nodo(ruta_json: String) -> Dictionary:
-	var resultado_lectura: Dictionary = _leer_archivo_json(ruta_json)
-	if not bool(resultado_lectura.get("ok", false)):
-		return resultado_lectura
+	var lectura_json: Dictionary = _leer_archivo_json(ruta_json)
+	if not bool(lectura_json.get("ok", false)):
+		return lectura_json
 
-	var datos_crudos: Dictionary = resultado_lectura["data"]
-	var datos_nodo: Dictionary = NormalizadorLegacy.normalizar_datos_nodo(datos_crudos)
-	var mensaje_error: String = ValidadorContenido.validar_datos_nodo(datos_nodo)
-	if mensaje_error.is_empty():
-		mensaje_error = ValidadorContenido.validar_contenido_por_modo(datos_nodo)
+	var datos_normalizados: Dictionary = NormalizadorLegacy.normalizar_datos_nodo(lectura_json["data"])
+	var mensaje_error: String = _validar_datos_nodo(datos_normalizados)
 	if not mensaje_error.is_empty():
 		return _resultado_error(mensaje_error)
 
-	return _resultado_ok(ValidadorContenido.limpiar_datos_nodo(datos_nodo))
+	return _resultado_ok(ValidadorContenido.limpiar_datos_nodo(datos_normalizados))
+
+
+static func _validar_datos_nodo(datos_nodo: Dictionary) -> String:
+	var mensaje_error: String = ValidadorContenido.validar_datos_nodo(datos_nodo)
+	if not mensaje_error.is_empty():
+		return mensaje_error
+	return ValidadorContenido.validar_contenido_por_modo(datos_nodo)
 
 
 static func _leer_archivo_json(ruta_json: String) -> Dictionary:
@@ -59,9 +63,9 @@ static func _resultado_ok(data: Dictionary) -> Dictionary:
 	}
 
 
-static func _resultado_error(message: String) -> Dictionary:
+static func _resultado_error(mensaje: String) -> Dictionary:
 	return {
 		"ok": false,
 		"data": {},
-		"error": message
+		"error": mensaje
 	}

@@ -16,10 +16,10 @@ const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 @export_group("Destino")
 @export_enum("chapter", "question") var node_kind: String = NODE_KIND_CHAPTER:
 	set(value):
-		_configured_node_kind = _normalizar_tipo_nodo(value)
+		_tipo_nodo_configurado = _normalizar_tipo_nodo(value)
 		_actualizar_preview_en_editor()
 	get:
-		return _configured_node_kind
+		return _tipo_nodo_configurado
 @export var track_key: String = "celiaquia"
 @export var level_number: int = 0
 @export var question_number: int = 0
@@ -32,34 +32,34 @@ const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 @export_group("Vista en Editor")
 @export var label_text: String = "Nodo":
 	set(value):
-		_configured_label_text = value.strip_edges()
+		_texto_label_configurado = value.strip_edges()
 		_actualizar_preview_en_editor()
 	get:
-		return _configured_label_text
+		return _texto_label_configurado
 @export var icon_texture: Texture2D:
 	set(value):
-		_configured_icon_texture = value
+		_textura_icono_configurada = value
 		_actualizar_preview_en_editor()
 	get:
-		return _configured_icon_texture
+		return _textura_icono_configurada
 
-var base_scale: Vector2 = Vector2.ONE
-var _hovered: bool = false
-var _is_completed: bool = false
-var _runtime_node_data: RefCounted = null
-var _click_in_progress: bool = false
+var escala_base: Vector2 = Vector2.ONE
+var _esta_hover: bool = false
+var _esta_completado: bool = false
+var _datos_nodo_runtime: RefCounted = null
+var _click_en_curso: bool = false
 
-var _configured_node_kind: String = NODE_KIND_CHAPTER
-var _configured_label_text: String = "Nodo"
-var _configured_icon_texture: Texture2D = null
+var _tipo_nodo_configurado: String = NODE_KIND_CHAPTER
+var _texto_label_configurado: String = "Nodo"
+var _textura_icono_configurada: Texture2D = null
 
-@onready var button: TextureButton = $Button
-@onready var icon: Sprite2D = $Icon
+@onready var boton: TextureButton = $Button
+@onready var icono: Sprite2D = $Icon
 
 
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
-	base_scale = scale
+	escala_base = scale
 	_actualizar_vista_nodo()
 
 
@@ -67,7 +67,7 @@ func _ready() -> void:
 func crear_datos_runtime_nodo() -> RefCounted:
 	var node_data: RefCounted = MapNodeDataScript.crear()
 	node_data.node_id = nivel_id
-	node_data.node_kind = _configured_node_kind
+	node_data.node_kind = _tipo_nodo_configurado
 	node_data.label_text = _resolver_texto_label()
 	node_data.track_key = track_key.strip_edges()
 	node_data.level_number = level_number
@@ -108,41 +108,41 @@ func _get(property: StringName) -> Variant:
 
 func aplicar_estado_nodo(node_data: RefCounted, unlocked: bool, completed: bool = false) -> void:
 	desbloqueado = unlocked
-	_is_completed = completed
-	_runtime_node_data = node_data.duplicar_datos()
+	_esta_completado = completed
+	_datos_nodo_runtime = node_data.duplicar_datos()
 	position = node_data.node_position
 	_actualizar_vista_nodo()
 
 
 # Interaccion ----------------------------------------------------------------
 func _on_button_pressed() -> void:
-	if _click_in_progress or Engine.is_editor_hint():
+	if _click_en_curso or Engine.is_editor_hint():
 		return
 
-	var current_node_data: RefCounted = _obtener_datos_nodo_actuales()
-	if current_node_data == null or not current_node_data.tiene_destino_runtime():
+	var datos_nodo_actual: RefCounted = _obtener_datos_nodo_actual()
+	if datos_nodo_actual == null or not datos_nodo_actual.tiene_destino_runtime():
 		push_warning("LevelNode: no hay destino asignado para el nodo %d" % nivel_id)
 		return
 
-	_click_in_progress = true
-	_bounce()
+	_click_en_curso = true
+	_animar_click()
 	await get_tree().create_timer(0.25).timeout
-	node_selected.emit(current_node_data)
-	_click_in_progress = false
+	node_selected.emit(datos_nodo_actual)
+	_click_en_curso = false
 
 
 func _on_button_mouse_entered() -> void:
-	if button.disabled or _hovered or Engine.is_editor_hint():
+	if boton.disabled or _esta_hover or Engine.is_editor_hint():
 		return
-	_hovered = true
-	_animar_escala_hasta(base_scale * 1.08)
+	_esta_hover = true
+	_animar_escala_hasta(escala_base * 1.08)
 
 
 func _on_button_mouse_exited() -> void:
-	if not _hovered or Engine.is_editor_hint():
+	if not _esta_hover or Engine.is_editor_hint():
 		return
-	_hovered = false
-	_animar_escala_hasta(base_scale)
+	_esta_hover = false
+	_animar_escala_hasta(escala_base)
 
 
 func _animar_escala_hasta(target_scale: Vector2) -> void:
@@ -150,25 +150,25 @@ func _animar_escala_hasta(target_scale: Vector2) -> void:
 	tween.tween_property(self, "scale", target_scale, 0.12)
 
 
-func _bounce() -> void:
+func _animar_click() -> void:
 	var tween := create_tween()
-	tween.tween_property(self, "scale", base_scale * Vector2(1.15, 0.90), 0.06)
-	tween.tween_property(self, "scale", base_scale * Vector2(0.95, 1.05), 0.06)
-	tween.tween_property(self, "scale", base_scale, 0.08)
+	tween.tween_property(self, "scale", escala_base * Vector2(1.15, 0.90), 0.06)
+	tween.tween_property(self, "scale", escala_base * Vector2(0.95, 1.05), 0.06)
+	tween.tween_property(self, "scale", escala_base, 0.08)
 
 
 func _aplicar_estado_interaccion() -> void:
 	if not is_node_ready():
 		return
 	if Engine.is_editor_hint():
-		button.disabled = false
-		button.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		boton.disabled = false
+		boton.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		return
 
-	button.disabled = not desbloqueado or _is_completed
-	button.mouse_default_cursor_shape = (
+	boton.disabled = not desbloqueado or _esta_completado
+	boton.mouse_default_cursor_shape = (
 		Control.CURSOR_ARROW
-		if button.disabled
+		if boton.disabled
 		else Control.CURSOR_POINTING_HAND
 	)
 
@@ -184,8 +184,8 @@ func _actualizar_vista_nodo() -> void:
 	if not is_node_ready():
 		return
 
-	var current_node_data: RefCounted = _obtener_datos_nodo_actuales()
-	icon.texture = _resolver_textura_icono(current_node_data)
+	var datos_nodo_actual: RefCounted = _obtener_datos_nodo_actual()
+	icono.texture = _resolver_textura_icono(datos_nodo_actual)
 	_aplicar_estado_interaccion()
 	_aplicar_color_por_progreso()
 
@@ -194,7 +194,7 @@ func _aplicar_color_por_progreso() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
 		return
-	if _is_completed:
+	if _esta_completado:
 		modulate = COLOR_COMPLETADO
 	elif not desbloqueado:
 		modulate = COLOR_BLOQUEADO
@@ -202,34 +202,33 @@ func _aplicar_color_por_progreso() -> void:
 		modulate = Color.WHITE
 
 
-func _obtener_datos_nodo_actuales() -> RefCounted:
-	if _runtime_node_data != null:
-		return _runtime_node_data
+func _obtener_datos_nodo_actual() -> RefCounted:
+	if _datos_nodo_runtime != null:
+		return _datos_nodo_runtime
 	return crear_datos_runtime_nodo()
 
 
 func _resolver_textura_icono(node_data: RefCounted) -> Texture2D:
 	if node_data != null:
-		var runtime_icon_path: String = str(node_data.icon_texture_path).strip_edges()
-		var runtime_icon_texture: Texture2D = _cargar_textura_desde_ruta(runtime_icon_path)
-		if runtime_icon_texture != null:
-			return runtime_icon_texture
-	return _configured_icon_texture
+		var ruta_icono_runtime: String = str(node_data.icon_texture_path).strip_edges()
+		var textura_icono_runtime: Texture2D = _cargar_textura_desde_ruta(ruta_icono_runtime)
+		if textura_icono_runtime != null:
+			return textura_icono_runtime
+	return _textura_icono_configurada
 
 
 func _resolver_texto_label() -> String:
-	if not _configured_label_text.is_empty():
-		return _configured_label_text
-	if _configured_node_kind == NODE_KIND_QUESTION:
+	if not _texto_label_configurado.is_empty():
+		return _texto_label_configurado
+	if _tipo_nodo_configurado == NODE_KIND_QUESTION:
 		return "Pregunta %d" % max(1, question_number if question_number > 0 else nivel_id)
 	return "Receta %d" % max(1, level_number if level_number > 0 else nivel_id)
 
 
 func _resolver_ruta_icono() -> String:
-	var resolved_icon: Texture2D = _configured_icon_texture
-	if resolved_icon == null:
+	if _textura_icono_configurada == null:
 		return ""
-	return str(resolved_icon.resource_path).strip_edges()
+	return str(_textura_icono_configurada.resource_path).strip_edges()
 
 
 func _cargar_textura_desde_ruta(texture_path: String) -> Texture2D:

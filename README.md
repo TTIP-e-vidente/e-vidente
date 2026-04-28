@@ -83,16 +83,26 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 ## Cómo leer el flujo de nodos jugables
 
-1. El flujo empieza en `project/mapas/MapScene.gd`, cuando el jugador toca un nodo del mapa.
-2. `MapScene.gd` arma `contexto_sesion` con `track_key`, `node_key`, `node_json_path` y `return_scene_path`.
-3. `project/preguntas/NodeContentLoader.gd` carga el JSON del nodo jugable y devuelve siempre `{ ok, data, error }`.
-4. Si `ok` es `true`, `data` ya usa el contrato oficial: `id`, `theme`, `title`, `difficulty`, `mode`, `content`.
-5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y devuelve la escena jugable.
-6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice`; `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
-7. `project/preguntas/QuestionJsonLoader.gd` queda solo como adaptador temporal de `quiz_choice` al modelo viejo `ThemePreg/Preguntas`.
-8. Para crear un nodo nuevo, el path por convencion es `project/niveles/nodos/<track_key>/<node_key>.json`.
-9. Para sumar una modalidad futura: agregar `mode`, validar `content`, rutear la escena y crear la nueva actividad.
-10. En los nodos del mapa, la API principal ya usa `node_key`, `node_json_path` y `node_resource_path`; los nombres `question_*` quedan solo como compatibilidad legacy interna, no como API nueva.
+1. El jugador toca un nodo en `project/mapas/MapScene.gd`.
+2. `MapScene.gd` recibe la selección y pide a `MapNodeData.gd` un `contexto_sesion`.
+3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
+4. `project/preguntas/NodeContentLoader.gd` carga el JSON y lo deja en el contrato oficial `{ ok, data, error }`.
+5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
+6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
+7. `project/niveles/global.gd` conserva la sesión activa del nodo y el progreso necesario para volver.
+8. La escena jugable termina y vuelve a `return_scene_path`, que normalmente es el mapa.
+
+Para agregar un nodo nuevo:
+
+- autorizarlo visualmente en el mapa con `LevelNode.tscn` o el board del mapa.
+- crear su JSON en `project/niveles/nodos/<track_key>/<node_key>.json`.
+
+Para agregar una modalidad nueva:
+
+- definir su `mode` y validar su `content` en `NodeContentLoader.gd` y `NodeContentValidator.gd`.
+- rutear la escena en `PlayableNodeRouter.gd` y crear la nueva escena jugable.
+
+Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como API nueva.
 
 ## Estructura de contenido jugable
 
