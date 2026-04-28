@@ -1,46 +1,44 @@
 extends RefCounted
 
-var _manager
+var _gestor
 
 
 func _init(manager) -> void:
-	_manager = manager
+	_gestor = manager
 
 
 func crear_elemento(
-	level_item,
+	elemento_nivel,
 	instance_id: String,
-	is_positive: bool
+	es_positivo: bool
 ):
-	var level_item_instance = level_item.escena.instantiate()
-	if level_item_instance == null:
+	var instancia_elemento = elemento_nivel.escena.instantiate()
+	if instancia_elemento == null:
 		return null
-	level_item_instance.setup(level_item, _manager.plato, is_positive, instance_id)
-	_manager.add_child(level_item_instance)
-	_manager.level_items.append(level_item_instance)
-	return level_item_instance
+	instancia_elemento.setup(elemento_nivel, _gestor.plato, es_positivo, instance_id)
+	_gestor.add_child(instancia_elemento)
+	_gestor.level_items.append(instancia_elemento)
+	return instancia_elemento
 
 
 func limpiar_elementos() -> void:
-	for item in _manager.level_items:
+	for item in _gestor.level_items:
 		if is_instance_valid(item):
 			item.queue_free()
-	_manager.level_items.clear()
-	if not is_instance_valid(_manager.plato):
+	_gestor.level_items.clear()
+	if not is_instance_valid(_gestor.plato):
 		return
-	_manager.plato.elementos.clear()
-	_manager.plato.cantAlimentosPos.clear()
-	_manager.plato.cantAlimentosNeg.clear()
+	_gestor.plato.elementos.clear()
+	_gestor.plato.cantAlimentosPos.clear()
+	_gestor.plato.cantAlimentosNeg.clear()
 
 
-func distribuir_elementos(level_resource) -> void:
-	var next_item_position := Vector2(230, 680)
-	var total_items: int = (
-		level_resource.cantidadNegativos + level_resource.cantidadPositivos
-	)
+func distribuir_elementos(recurso_nivel) -> void:
+	var next_item_position: Vector2 = Vector2(230, 680)
+	var total_items: int = recurso_nivel.cantidadNegativos + recurso_nivel.cantidadPositivos
 	if total_items < 5:
 		next_item_position = Vector2(420, 680)
 
-	for item in _manager.level_items:
+	for item in _gestor.level_items:
 		item.set_home_position(next_item_position)
 		next_item_position.x += 120

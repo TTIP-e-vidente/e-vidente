@@ -84,7 +84,7 @@ position = Vector2(865.00006, 423)
 scale = Vector2(1.1968933, 1.1993694)
 nivel_id = 2
 question_number = 1
-question_key = "eliminar_gluten"
+node_key = "eliminar_gluten"
 label_text = "Pregunta 1"
 
 [node name="Receta2" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1445131880 instance=ExtResource("3_chapternode")]
@@ -100,7 +100,7 @@ position = Vector2(424, 467)
 scale = Vector2(1.2851127, 1.3313757)
 nivel_id = 4
 question_number = 2
-question_key = "enfermedad_autoinmune"
+node_key = "enfermedad_autoinmune"
 label_text = "Pregunta 2"
 
 [node name="Receta3" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1146155867 instance=ExtResource("3_chapternode")]
@@ -116,7 +116,7 @@ position = Vector2(122.00001, 649)
 scale = Vector2(1.1569129, 1.1593063)
 nivel_id = 6
 question_number = 3
-question_key = "estudio_celiaquia"
+node_key = "estudio_celiaquia"
 label_text = "Pregunta 3"
 icon_texture = ExtResource("10_m2v86")
 
@@ -133,7 +133,7 @@ position = Vector2(308.00012, 998)
 scale = Vector2(1.4769166, 1.4799719)
 nivel_id = 8
 question_number = 4
-question_key = "gluten_arroz"
+node_key = "gluten_arroz"
 label_text = "Pregunta 4"
 icon_texture = ExtResource("8_icon5")
 
@@ -149,7 +149,7 @@ position = Vector2(727.0001, 1033)
 scale = Vector2(1.4451176, 1.4971406)
 nivel_id = 10
 question_number = 5
-question_key = "limite_ingesta"
+node_key = "limite_ingesta"
 label_text = "Pregunta 5"
 
 [node name="Receta6" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1478396672 instance=ExtResource("3_chapternode")]
@@ -165,7 +165,7 @@ position = Vector2(1008.00006, 1496)
 scale = Vector2(1.1569177, 1.159311)
 nivel_id = 12
 question_number = 6
-question_key = "simbolo_tacc"
+node_key = "simbolo_tacc"
 label_text = "Pregunta 6"
 icon_texture = ExtResource("12_oop13")
 
@@ -174,7 +174,7 @@ position = Vector2(700.00006, 1547)
 scale = Vector2(1.4535549, 1.4922718)
 nivel_id = 13
 question_number = 7
-question_key = "trigo_sarraceno"
+node_key = "trigo_sarraceno"
 label_text = "Pregunta 7"
 icon_texture = ExtResource("8_icon5")
 
@@ -183,7 +183,7 @@ position = Vector2(421.00012, 1508)
 scale = Vector2(1.3241454, 1.3179823)
 nivel_id = 14
 question_number = 8
-question_key = "armar_plato_sin_tacc"
+node_key = "armar_plato_sin_tacc"
 label_text = "Pregunta 8"
 
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]

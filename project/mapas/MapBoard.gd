@@ -4,8 +4,13 @@ extends Node2D
 @onready var nodes_container: Node2D = $ScrollContainer/Contenido/NodesContainer
 
 
-func get_nodes_container() -> Node2D:
+func obtener_contenedor_nodos() -> Node2D:
 	return nodes_container
+
+
+# TODO post-demo: eliminar cuando no haya codigo pidiendo get_nodes_container().
+func get_nodes_container() -> Node2D:
+	return obtener_contenedor_nodos()
 
 
 func get_scroll_vertical_value() -> int:
@@ -36,7 +41,7 @@ func get_runtime_map_nodes() -> Array[Node2D]:
 func _is_runtime_map_node(map_node: Node2D) -> bool:
 	if map_node == null:
 		return false
-	return map_node.has_method("build_runtime_node_data")
+	return map_node.has_method("crear_datos_runtime_nodo")
 
 
 func _sort_by_nivel_id(a: Node2D, b: Node2D) -> bool:

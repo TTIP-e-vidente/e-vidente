@@ -18,7 +18,7 @@ var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
 
-var _active_question_key: String = ""
+var _active_node_key: String = ""
 var _has_map_session: bool = false
 var _return_scene_path: String = DEFAULT_RETURN_SCENE_PATH
 var _blocking_error_message: String = ""
@@ -36,7 +36,6 @@ var pregunta_actual: Preguntas:
 @onready var _game_over_title: Label = $Contenido/GameOver/Aciertos
 @onready var _game_over_score: Label = $Contenido/GameOver/Puntaje
 
-
 func _ready() -> void:
 	puntaje = 0
 	_recolectar_botones_respuesta()
@@ -44,8 +43,9 @@ func _ready() -> void:
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_blocking_error_message)
 		return
-	_mezclar_preguntas_del_quiz()
-	_renderizar_pregunta_actual()
+	if _cantidad_de_preguntas() > 1:
+		quiz.theme.shuffle()
+	_renderizar_pregunta()
 
 
 func _recolectar_botones_respuesta() -> void:
@@ -63,38 +63,37 @@ func _recolectar_botones_respuesta() -> void:
 
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
-	boton_respuesta.pressed.connect(_al_seleccionar_respuesta.bind(boton_respuesta))
-
+	boton_respuesta.pressed.connect(_responder.bind(boton_respuesta))
 
 func _configurar_desde_sesion_activa() -> void:
-	_reiniciar_contexto_de_mapa()
+	_reiniciar_contexto_sesion()
 	_blocking_error_message = ""
 
-	var session_context: Dictionary = Global.obtener_activo_pregunta_sesion()
-	if session_context.is_empty():
+	var contexto_sesion: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	if contexto_sesion.is_empty():
 		return
 
-	var datos_nodo: Dictionary = _leer_datos_nodo_de_sesion(session_context)
-	if not datos_nodo.is_empty():
-		configurar_desde_datos_nodo(datos_nodo, session_context)
-		return
-
-	var load_result: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(session_context)
-	_aplicar_contexto_de_mapa(session_context)
-	if not bool(load_result.get("ok", false)):
+	_aplicar_contexto_sesion(contexto_sesion)
+	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(contexto_sesion)
+	if not bool(resultado_quiz.get("ok", false)):
 		_establecer_mensaje_de_error(
-			str(load_result.get("error", "No se pudo cargar el contenido del nodo."))
+			str(resultado_quiz.get("error", "No se pudo cargar el contenido del nodo."))
 		)
 		return
-	quiz = load_result.get("theme") as ThemePreg
+	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
 
 
-func configurar_desde_datos_nodo(datos_nodo: Dictionary, session_context: Dictionary) -> bool:
-	# Desde aca la escena trabaja solo con el formato oficial despues del loader.
-	_aplicar_contexto_de_mapa(session_context)
+func _reiniciar_contexto_sesion() -> void:
+	_has_map_session = false
+	_active_node_key = ""
+	_return_scene_path = DEFAULT_RETURN_SCENE_PATH
+
+func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
+	_aplicar_contexto_sesion(contexto_sesion)
+	var ruta_json: String = str(contexto_sesion.get("node_json_path", "")).strip_edges()
 	var quiz_result: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
 		datos_nodo,
-		str(session_context.get("question_json_path", "")).strip_edges()
+		ruta_json
 	)
 	if not bool(quiz_result.get("ok", false)):
 		_establecer_mensaje_de_error(
@@ -102,34 +101,20 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary, session_context: Dictio
 		)
 		return false
 
-	quiz = quiz_result.get("theme") as ThemePreg
+	quiz = quiz_result.get("data", {}).get("theme") as ThemePreg
 	return true
 
 
-func _reiniciar_contexto_de_mapa() -> void:
-	_has_map_session = false
-	_active_question_key = ""
-	_return_scene_path = DEFAULT_RETURN_SCENE_PATH
-
-
-func _leer_datos_nodo_de_sesion(session_context: Dictionary) -> Dictionary:
-	var raw_node_data: Variant = session_context.get("node_content", {})
-	if raw_node_data is Dictionary:
-		return (raw_node_data as Dictionary).duplicate(true)
-	return {}
-
-
-func _aplicar_contexto_de_mapa(session_context: Dictionary) -> void:
+func _aplicar_contexto_sesion(session_context: Dictionary) -> void:
 	track_key = str(session_context.get("track_key", track_key)).strip_edges()
 	nivel_id = int(session_context.get("nivel_id", nivel_id))
-	_active_question_key = str(session_context.get("question_key", "")).strip_edges()
+	_active_node_key = str(session_context.get("node_key", "")).strip_edges()
 	_return_scene_path = str(
 		session_context.get("return_scene_path", DEFAULT_RETURN_SCENE_PATH)
 	).strip_edges()
 	if _return_scene_path.is_empty():
 		_return_scene_path = DEFAULT_RETURN_SCENE_PATH
-	_has_map_session = true
-
+	_has_map_session = not session_context.is_empty()
 
 func _puede_iniciar_quiz() -> bool:
 	if quiz == null:
@@ -140,18 +125,10 @@ func _puede_iniciar_quiz() -> bool:
 		return false
 	return true
 
-
 func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
-
-func _mezclar_preguntas_del_quiz() -> void:
-	if _cantidad_de_preguntas() <= 1:
-		return
-	quiz.theme.shuffle()
-
-
-func _renderizar_pregunta_actual() -> void:
+func _renderizar_pregunta() -> void:
 	bloqueado = false
 
 	if quiz == null:
@@ -163,14 +140,9 @@ func _renderizar_pregunta_actual() -> void:
 		_finalizar_quiz()
 		return
 
-	_renderizar_encabezado_pregunta()
-	_renderizar_opciones(pregunta_actual.opciones)
-
-
-func _renderizar_encabezado_pregunta() -> void:
 	pregunta_label.text = pregunta_actual.info_pregunta
 	_renderizar_media_de_pregunta(pregunta_actual)
-
+	_renderizar_opciones(pregunta_actual.opciones)
 
 func _renderizar_opciones(opciones_actuales: Array[String]) -> void:
 	_asegurar_cantidad_de_botones(opciones_actuales.size())
@@ -180,7 +152,6 @@ func _renderizar_opciones(opciones_actuales: Array[String]) -> void:
 			_ocultar_boton_respuesta(boton_respuesta)
 			continue
 		_configurar_boton_respuesta(boton_respuesta, opciones_actuales[button_index])
-
 
 func _asegurar_cantidad_de_botones(required_count: int) -> void:
 	if required_count <= botones.size():
@@ -198,7 +169,6 @@ func _asegurar_cantidad_de_botones(required_count: int) -> void:
 		_answers_container.add_child(new_button)
 		_registrar_boton_respuesta(new_button)
 
-
 func _configurar_boton_respuesta(boton_respuesta: Button, answer_text: String) -> void:
 	boton_respuesta.show()
 	boton_respuesta.text = answer_text
@@ -209,28 +179,25 @@ func _configurar_boton_respuesta(boton_respuesta: Button, answer_text: String) -
 	boton_respuesta.scale = Vector2.ONE
 	boton_respuesta.rotation_degrees = 0
 
-
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
 	boton_respuesta.hide()
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
 
-
-func _renderizar_media_de_pregunta(question_resource: Preguntas) -> void:
+func _renderizar_media_de_pregunta(pregunta_recurso: Preguntas) -> void:
 	_limpiar_media_de_pregunta()
-	if question_resource == null:
+	if pregunta_recurso == null:
 		return
 
-	if question_resource.tipo != Enum.TipoPregunta.IMAGEN:
+	if pregunta_recurso.tipo != Enum.TipoPregunta.IMAGEN:
 		return
-	if question_resource.pregunta_imagen == null:
+	if pregunta_recurso.pregunta_imagen == null:
 		return
 
 	_visual_panel.show()
 	_question_image.show()
-	_question_image.texture = question_resource.pregunta_imagen
-
+	_question_image.texture = pregunta_recurso.pregunta_imagen
 
 func _limpiar_media_de_pregunta() -> void:
 	if _audio_player != null:
@@ -242,120 +209,106 @@ func _limpiar_media_de_pregunta() -> void:
 	if _visual_panel != null:
 		_visual_panel.hide()
 
-
-func _al_seleccionar_respuesta(boton: Button) -> void:
+func _responder(boton: Button) -> void:
 	if bloqueado:
 		return
 
 	bloqueado = true
-	_bloquear_botones_de_respuesta()
-
-	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
-
-	if pregunta_actual.correct == respuesta_elegida:
-		_mostrar_feedback_acierto(boton)
-		puntaje += 1
-	else:
-		_mostrar_feedback_error(boton)
-
-	await get_tree().create_timer(1.2).timeout
-	_avanzar_a_la_siguiente_pregunta()
-
-
-func _bloquear_botones_de_respuesta() -> void:
 	for boton_respuesta in botones:
 		boton_respuesta.disabled = true
 
+	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
+	var es_correcta: bool = pregunta_actual.correct == respuesta_elegida
+	if es_correcta:
+		puntaje += 1
 
-func _mostrar_feedback_acierto(boton: Button) -> void:
+	_mostrar_feedback_respuesta(boton, es_correcta)
+
+	await get_tree().create_timer(1.2).timeout
+	indice_pregunta_actual += 1
+	_renderizar_pregunta()
+
+func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
-	if _audio_player != null:
+	if es_correcta and _audio_player != null:
 		_audio_player.stop()
 		_audio_player.stream = CORRECT_ANSWER_SOUND
 		_audio_player.play()
 
-	boton.modulate = Color(0, 1, 0)
-
-	tween.tween_property(boton, "scale", Vector2(1.2, 0.8), 0.08)
-	tween.tween_property(boton, "scale", Vector2(0.9, 1.1), 0.08)
-	tween.tween_property(boton, "scale", Vector2(1.05, 0.95), 0.08)
-	tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
-
-
-func _mostrar_feedback_error(boton: Button) -> void:
-	var tween = create_tween()
+	if es_correcta:
+		boton.modulate = Color(0, 1, 0)
+		tween.tween_property(boton, "scale", Vector2(1.2, 0.8), 0.08)
+		tween.tween_property(boton, "scale", Vector2(0.9, 1.1), 0.08)
+		tween.tween_property(boton, "scale", Vector2(1.05, 0.95), 0.08)
+		tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
+		return
 
 	boton.modulate = Color(1, 0, 0)
-
-	for i in 5:
+	for unused_index in 5:
 		tween.tween_property(boton, "rotation_degrees", 8, 0.03)
 		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
-
 	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
-
-
-func _avanzar_a_la_siguiente_pregunta() -> void:
-	indice_pregunta_actual += 1
-	_renderizar_pregunta_actual()
-
 
 func _finalizar_quiz() -> void:
 	if _has_map_session and _cantidad_de_preguntas() <= 1:
-		_finalizar_sesion_del_mapa()
-		_finalizar_actividad_y_volver()
+		if not _active_node_key.is_empty():
+			Global.marcar_nodo_jugable_completado(track_key, _active_node_key)
+		SaveManager.registrar_sesion_preguntas_completada(_cantidad_de_preguntas(), puntaje)
+		_volver_al_mapa()
 		return
 
 	if _cantidad_de_preguntas() <= 1:
-		_configurar_panel_final(
-			"",
-			"Muy bien" if puntaje > 0 else "No era esa",
-			false,
-			true
-		)
+		_configurar_panel_final("", "Muy bien" if puntaje > 0 else "No era esa", false, true)
 	else:
 		_configurar_panel_final("Aciertos:", str(puntaje, "/", _cantidad_de_preguntas()), true, true)
 
 	if _has_map_session:
-		_finalizar_sesion_del_mapa()
+		if not _active_node_key.is_empty():
+			Global.marcar_nodo_jugable_completado(track_key, _active_node_key)
+		SaveManager.registrar_sesion_preguntas_completada(_cantidad_de_preguntas(), puntaje)
 		return
 
-	_finalizar_sesion_regular()
-
+	Global.marcar_nivel_completado(track_key, nivel_id)
+	SaveManager.registrar_nivel_completado(track_key, nivel_id)
 
 func _configurar_panel_final(
-	title_text: String,
-	score_text: String,
-	title_visible: bool,
-	score_visible: bool,
-	title_font_size: int = GAME_OVER_DEFAULT_FONT_SIZE,
-	score_font_size: int = GAME_OVER_DEFAULT_FONT_SIZE,
+	texto_titulo: String,
+	texto_puntaje: String,
+	titulo_visible: bool,
+	puntaje_visible: bool,
+	tamano_titulo: int = GAME_OVER_DEFAULT_FONT_SIZE,
+	tamano_puntaje: int = GAME_OVER_DEFAULT_FONT_SIZE,
 	wrap_score: bool = false
 ) -> void:
 	_game_over_panel.show()
-	_game_over_title.visible = title_visible
-	_game_over_score.visible = score_visible
-	_game_over_title.text = title_text
-	_game_over_score.text = score_text
-	_game_over_title.add_theme_font_size_override("font_size", title_font_size)
-	_game_over_score.add_theme_font_size_override("font_size", score_font_size)
+	_game_over_title.visible = titulo_visible
+	_game_over_score.visible = puntaje_visible
+	_game_over_title.text = texto_titulo
+	_game_over_score.text = texto_puntaje
+	_game_over_title.add_theme_font_size_override("font_size", tamano_titulo)
+	_game_over_score.add_theme_font_size_override("font_size", tamano_puntaje)
 	_game_over_score.autowrap_mode = (
 		TextServer.AUTOWRAP_WORD_SMART
 		if wrap_score
 		else TextServer.AUTOWRAP_OFF
 	)
 
-
-func _mostrar_error_bloqueante(message: String) -> void:
+func _mostrar_error_bloqueante(mensaje: String) -> void:
 	bloqueado = true
-	_bloquear_botones_de_respuesta()
+	for boton_respuesta in botones:
+		boton_respuesta.disabled = true
 	_limpiar_media_de_pregunta()
 	for boton_respuesta in botones:
 		_ocultar_boton_respuesta(boton_respuesta)
 
-	var safe_message: String = _acotar_mensaje(message)
+	var mensaje_limpio: String = mensaje.replace("\n", " ").strip_edges()
+	if mensaje_limpio.is_empty():
+		mensaje_limpio = "Revisa el archivo JSON del nodo."
+	elif mensaje_limpio.length() > 140:
+		mensaje_limpio = "%s..." % mensaje_limpio.substr(0, 137)
 	_configurar_panel_final(
 		"Contenido no disponible",
-		safe_message,
+		mensaje_limpio,
 		true,
 		true,
 		CONTENT_ERROR_TITLE_FONT_SIZE,
@@ -363,49 +316,21 @@ func _mostrar_error_bloqueante(message: String) -> void:
 		true
 	)
 
-
-func _finalizar_sesion_del_mapa() -> void:
-	_registrar_pregunta_completada_si_corresponde()
-	SaveManager.registrar_sesion_preguntas_completada(_cantidad_de_preguntas(), puntaje)
-
-
-func _finalizar_sesion_regular() -> void:
-	Global.marcar_nivel_completado(track_key, nivel_id)
-	SaveManager.registrar_nivel_completado(track_key, nivel_id)
-
-
-func _registrar_pregunta_completada_si_corresponde() -> void:
-	if _has_map_session and not _active_question_key.is_empty():
-		Global.marcar_pregunta_completado(track_key, _active_question_key)
-
-
-func _establecer_mensaje_de_error(message: String) -> void:
-	var clean_message: String = message.strip_edges()
-	if clean_message.is_empty():
+func _establecer_mensaje_de_error(mensaje: String) -> void:
+	var mensaje_limpio: String = mensaje.strip_edges()
+	if mensaje_limpio.is_empty():
 		return
 	if not _blocking_error_message.is_empty():
 		return
-	_blocking_error_message = clean_message
-
-
-func _acotar_mensaje(message: String) -> String:
-	var clean_message: String = message.replace("\n", " ").strip_edges()
-	if clean_message.is_empty():
-		return "Revisa el archivo JSON del nodo."
-	if clean_message.length() <= 140:
-		return clean_message
-	return "%s..." % clean_message.substr(0, 137)
-
+	_blocking_error_message = mensaje_limpio
 
 func _on_jugar_nuevamente_pressed() -> void:
-	_finalizar_actividad_y_volver()
-
+	_volver_al_mapa()
 
 func _on_atrás_pressed() -> void:
-	_finalizar_actividad_y_volver()
+	_volver_al_mapa()
 
-
-func _finalizar_actividad_y_volver() -> void:
+func _volver_al_mapa() -> void:
 	_limpiar_media_de_pregunta()
-	Global.limpiar_activo_pregunta_sesion()
+	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_return_scene_path)

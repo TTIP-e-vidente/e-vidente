@@ -1,54 +1,49 @@
 extends PanelContainer
 class_name DragDropItem
 
-# Responsabilidad:
-# - Representar visualmente un item arrastrable.
-# - Guardar `item_data`.
-# - Generar `drag_data`.
-# - Marcarse como colocado.
-# No hace:
-# - No valida la actividad completa.
-# - No conoce el progreso del mapa.
-# - No decide si el drop es correcto.
-
-var item_data: Dictionary = {}
+var datos_item: Dictionary = {}
 
 var _label_node: Label
 var _image_rect: TextureRect
 
 
-func setup(new_item_data: Dictionary) -> void:
-	item_data = new_item_data.duplicate(true)
+func configurar(nuevos_datos_item: Dictionary) -> void:
+	datos_item = nuevos_datos_item.duplicate(true)
 	custom_minimum_size = Vector2(180, 140)
-	_construir_ui_si_hace_falta()
-	_actualizar_ui()
+	_construir_ui()
+	_renderizar()
 
 
-func mark_as_placed() -> void:
-	item_data["placed"] = true
+func marcar_como_colocado() -> void:
+	datos_item["placed"] = true
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	if bool(item_data.get("placed", false)):
+	if bool(datos_item.get("placed", false)):
 		return null
 
-	var preview: Control = duplicate() as Control
-	if preview != null:
-		preview.modulate = Color(1, 1, 1, 0.75)
-		set_drag_preview(preview)
+	_mostrar_preview_de_arrastre()
 
 	return {
-		"item_id": str(item_data.get("id", "")).strip_edges(),
-		"label": str(item_data.get("label", "")).strip_edges(),
-		"image": str(item_data.get("image", "")).strip_edges(),
-		"correct_target": str(item_data.get("correct_target", "")).strip_edges(),
+		"item_id": str(datos_item.get("id", "")).strip_edges(),
+		"label": str(datos_item.get("label", "")).strip_edges(),
+		"image": str(datos_item.get("image", "")).strip_edges(),
+		"correct_target": str(datos_item.get("correct_target", "")).strip_edges(),
 		"item_node": self
 	}
 
 
-func _construir_ui_si_hace_falta() -> void:
+func _mostrar_preview_de_arrastre() -> void:
+	var preview: Control = duplicate() as Control
+	if preview == null:
+		return
+	preview.modulate = Color(1, 1, 1, 0.75)
+	set_drag_preview(preview)
+
+
+func _construir_ui() -> void:
 	if _label_node != null and _image_rect != null:
 		return
 
@@ -78,26 +73,14 @@ func _construir_ui_si_hace_falta() -> void:
 	box.add_child(_label_node)
 
 
-func _actualizar_ui() -> void:
+func _renderizar() -> void:
 	if _label_node == null or _image_rect == null:
 		return
 
-	var texture: Texture2D = _cargar_textura()
+	var image_path: String = str(datos_item.get("image", "")).strip_edges()
+	var texture: Texture2D = load(image_path) as Texture2D if not image_path.is_empty() else null
 	_image_rect.texture = texture
 	_image_rect.visible = texture != null
-	_label_node.text = str(item_data.get("label", "Item")).strip_edges()
+	_label_node.text = str(datos_item.get("label", "Item")).strip_edges()
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
-
-
-func _cargar_textura() -> Texture2D:
-	var image_path: String = str(item_data.get("image", "")).strip_edges()
-	if image_path.is_empty():
-		return null
-
-	var resource: Variant = load(image_path)
-	if resource is Texture2D:
-		return resource as Texture2D
-
-	push_warning("DragDropItem: item image invalida (%s)." % image_path)
-	return null

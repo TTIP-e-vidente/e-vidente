@@ -84,17 +84,21 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 ## Cómo leer el flujo de nodos jugables
 
 1. El flujo empieza en `project/mapas/MapScene.gd`, cuando el jugador toca un nodo del mapa.
-2. `MapScene.gd` arma el `session_context`, le pide el JSON a `project/preguntas/NodeContentLoader.gd` y recibe siempre `{ ok, data, error }`.
-3. Desde ese punto se usa solo el formato oficial `node_data`: `id`, `theme`, `title`, `difficulty`, `mode`, `content`.
-4. `project/mapas/PlayableNodeRouter.gd` mira `node_data.mode` y devuelve la escena jugable.
-5. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
-6. `project/preguntas/QuestionJsonLoader.gd` existe solo como adaptador temporal para que `pregunta.gd` siga usando `ThemePreg/Preguntas`.
-7. Para crear un nodo nuevo alcanza con agregar o editar un JSON en `project/niveles/nodos/` y apuntar el nodo del mapa a esa clave.
-8. Para agregar una modalidad futura hay que sumar su validación en `NodeContentLoader.gd`, su ruta en `PlayableNodeRouter.gd` y su escena jugable.
+2. `MapScene.gd` arma `contexto_sesion` con `track_key`, `node_key`, `node_json_path` y `return_scene_path`.
+3. `project/preguntas/NodeContentLoader.gd` carga el JSON del nodo jugable y devuelve siempre `{ ok, data, error }`.
+4. Si `ok` es `true`, `data` ya usa el contrato oficial: `id`, `theme`, `title`, `difficulty`, `mode`, `content`.
+5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y devuelve la escena jugable.
+6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice`; `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
+7. `project/preguntas/QuestionJsonLoader.gd` queda solo como adaptador temporal de `quiz_choice` al modelo viejo `ThemePreg/Preguntas`.
+8. Para crear un nodo nuevo, el path por convencion es `project/niveles/nodos/<track_key>/<node_key>.json`.
+9. Para sumar una modalidad futura: agregar `mode`, validar `content`, rutear la escena y crear la nueva actividad.
+10. En los nodos del mapa, la API principal ya usa `node_key`, `node_json_path` y `node_resource_path`; los nombres `question_*` quedan solo como compatibilidad legacy interna, no como API nueva.
 
-## Estructura de contenido
+## Estructura de contenido jugable
 
-- `project/niveles/nodos/`: JSON de nodos jugables del mapa.
-- `project/preguntas/`: escena y adaptador de modalidad `quiz_choice`.
-- `project/mapas/`: mapa, routing y apertura de nodos.
-- `project/mapas/drag_drop/DragDropNode.tscn`: modalidad `drag_drop` MVP.
+- `project/niveles/nodos/celiaquia/`: contenido real de nodos jugables del track.
+- `project/niveles/nodos/ejemplos/`: ejemplos oficiales y legacy de referencia.
+- `project/preguntas/`: modalidad `quiz_choice` y su adaptador temporal, no el sistema completo.
+- `project/mapas/`: mapa, routing y contexto de apertura.
+- `project/mapas/drag_drop/`: modalidad `drag_drop`.
+- `mode` define la modalidad; `content` contiene solo los datos especificos de esa modalidad.

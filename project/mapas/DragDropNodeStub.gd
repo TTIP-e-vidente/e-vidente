@@ -11,8 +11,8 @@ var _return_scene_path: String = DEFAULT_RETURN_SCENE_PATH
 
 
 func _ready() -> void:
-	var session_state: Dictionary = Global.obtener_activo_pregunta_sesion()
-	var node_content: Dictionary = session_state.get("node_content", {})
+	var session_state: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	var node_content: Dictionary = session_state.get("node_data", {})
 	var content: Dictionary = node_content.get("content", {})
 
 	_return_scene_path = str(
@@ -32,5 +32,5 @@ func _ready() -> void:
 
 
 func _on_back_button_pressed() -> void:
-	Global.limpiar_activo_pregunta_sesion()
+	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_return_scene_path)
