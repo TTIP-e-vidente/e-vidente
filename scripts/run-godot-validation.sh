@@ -133,10 +133,10 @@ run_gameplay_smoke() {
 
 run_question_json_contract() {
 	run_step \
-		"02-question-json-contract" \
-		"Question JSON contract test" \
-		"Se rompio el contrato canonical de json_nodos para preguntas o su manejo de errores." \
-		--headless --path project -s res://tests/question_json_loader_test.gd
+		"02-node-json-contract" \
+		"Playable node JSON contract test" \
+		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
+		--headless --path project -s res://tests/node_content_loader_test.gd
 }
 
 

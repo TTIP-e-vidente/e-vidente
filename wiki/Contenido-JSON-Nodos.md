@@ -6,7 +6,7 @@ Esta guia explica como desacoplar el contenido de nodos del mapa para que la log
 
 - Lo mas simple ahora es configurar solo `question_key`.
 - El sistema busca automaticamente:
-  - `res://preguntas/json_nodos/<question_key>.json`
+  - `res://niveles/nodos/<question_key>.json`
   - y si no existe o falla, `res://preguntas/preguntas_recurso/<question_key>.tres`
 - `question_json_path` y `question_resource_path` siguen existiendo, pero ya son opcionales.
 - Asi no se rompen nodos existentes y el authoring queda mucho mas corto.
@@ -15,9 +15,10 @@ Esta guia explica como desacoplar el contenido de nodos del mapa para que la log
 
 - Contrato del nodo: `project/mapas/MapNodeData.gd`
 - Authoring del nodo: `project/mapas/LevelNode.gd`
-- Sesion de mapa -> pregunta: `project/mapas/MapScene.gd`
-- Loader JSON: `project/preguntas/QuestionJsonLoader.gd`
-- Consumo en escena pregunta: `project/preguntas/pregunta.gd`
+- Sesion de mapa -> nodo jugable: `project/mapas/MapScene.gd`
+- Loader JSON de nodos jugables: `project/preguntas/NodeContentLoader.gd`
+- Adaptador quiz legacy: `project/preguntas/QuestionJsonLoader.gd`
+- Consumo en escenas: `project/preguntas/pregunta.gd` y `project/mapas/drag_drop/DragDropNode.gd`
 
 ## Formato JSON recomendado
 
@@ -125,7 +126,7 @@ Si hay error, cae a `.tres` para mantener compatibilidad.
 ## Flujo trainee-friendly para crear un nodo nuevo
 
 1. Elegir una clave simple, por ejemplo `mito_gluten`.
-2. Crear `project/preguntas/json_nodos/mito_gluten.json`.
+2. Crear `project/niveles/nodos/mito_gluten.json`.
 3. Pegar el formato recomendado:
 
 ```json
