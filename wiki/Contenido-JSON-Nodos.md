@@ -44,11 +44,13 @@ project/
 El flujo completo es este:
 
 1. El jugador toca un nodo del mapa.
-2. `MapScene.gd` recibe la selección y arma `contexto_sesion`.
-3. `NodeContentLoader.gd` carga y normaliza el JSON.
-4. `PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
-5. La escena jugable recibe `node_data`, usa `content` y ejecuta la actividad.
-6. Cuando termina, vuelve a `return_scene_path`.
+2. `MapScene.gd` recibe la selección y le pide a `MapNodeData.gd` el `contexto_sesion`.
+3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
+4. `NodeContentLoader.gd` carga y normaliza el JSON.
+5. `PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
+6. La escena jugable recibe `node_data`, usa `content` y ejecuta la modalidad.
+7. `global.gd` conserva la sesión activa y el progreso del nodo.
+8. Cuando termina, vuelve a `return_scene_path`.
 
 Si querés explicarlo rápido a alguien nuevo, alcanza con esta frase:
 
@@ -188,7 +190,7 @@ Todavía quedan algunas compatibilidades controladas para no romper contenido vi
 1. Elegí `track_key` y `node_key`, por ejemplo `celiaquia` + `mito_gluten`.
 2. Creá `project/niveles/nodos/celiaquia/mito_gluten.json`.
 3. Pegá el formato oficial con el `mode` correcto.
-4. En el nodo del mapa, configurá `node_key = "mito_gluten"`.
+4. En el mapa, agregá o configurá el `LevelNode` que apunte a ese `node_key`.
 5. Probá el flujo completo desde el mapa.
 
 ## Cómo agregar una modalidad futura
