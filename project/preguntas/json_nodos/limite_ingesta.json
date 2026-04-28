@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "limite_ingesta",
-		"title": "Pregunta 5",
-		"track_key": "celiaquia",
-		"question_number": 5,
-		"difficulty": "media",
-		"estimated_seconds": 20
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta 5",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "El limite de seguridad para celiacos es de menos de 10 partes por millon (ppm) de gluten por alimento, lo que garantiza la seguridad de ingesta.",
+	"id": "limite_ingesta",
+	"theme": "celiaquia",
+	"title": "Limite de ingesta",
+	"difficulty": "medium",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "El limite de seguridad para celiacos es de menos de 10 partes por millon (ppm) de gluten por alimento, lo que garantiza la seguridad de ingesta.",
 		"correct_answer": "Verdadero",
-		"wrong_answers": ["Falso"],
-		"type": "text"
+		"wrong_options": ["Falso"],
+		"visual_resource": ""
 	}
 }

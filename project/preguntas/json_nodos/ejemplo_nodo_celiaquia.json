@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "mi_pregunta",
-		"title": "Pregunta ejemplo",
-		"track_key": "celiaquia",
-		"question_number": 1,
-		"difficulty": "basica",
-		"estimated_seconds": 20
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta ejemplo",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "Texto de la pregunta",
-		"correct_answer": "Si",
-		"wrong_answers": ["No"],
-		"type": "text"
+	"id": "gluten_maiz",
+	"theme": "celiaquia",
+	"title": "Gluten en el maiz",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "El maiz contiene gluten?",
+		"correct_answer": "No",
+		"wrong_options": ["Si", "Solo si esta cocido", "Depende del color"],
+		"visual_resource": ""
 	}
 }

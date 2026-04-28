@@ -1,23 +1,13 @@
 {
-	"schema_version": 2,
-	"node": {
-		"node_kind": "question",
-		"question_key": "eliminar_gluten",
-		"title": "Pregunta 1",
-		"track_key": "celiaquia",
-		"question_number": 1,
-		"difficulty": "basica",
-		"estimated_seconds": 20
-	},
-	"activity": {
-		"type": "quiz_choice",
-		"title": "Pregunta 1",
-		"instruction": "Lee la consigna y elegi la respuesta correcta."
-	},
-	"question": {
-		"prompt": "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnologicos (enzimaticos/industriales) para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro.",
+	"id": "eliminar_gluten",
+	"theme": "celiaquia",
+	"title": "Eliminar gluten del trigo",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnologicos para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro.",
 		"correct_answer": "Verdadero",
-		"wrong_answers": ["Falso"],
-		"type": "text"
+		"wrong_options": ["Falso"],
+		"visual_resource": ""
 	}
 }

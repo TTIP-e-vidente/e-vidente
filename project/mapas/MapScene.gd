@@ -1,9 +1,10 @@
 extends Node2D
-## Orquesta el mapa authored en escena: prepara nodos, calcula progreso y abre destinos.
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
+const NodeContentLoaderScript := preload("res://preguntas/NodeContentLoader.gd")
+const PlayableNodeRouterScript := preload("res://mapas/PlayableNodeRouter.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
@@ -188,16 +189,22 @@ func _open_direct_scene_path(selected_target: Variant) -> void:
 func _open_map_node(node_data: RefCounted) -> void:
 	var track_key: String = _obtener_clave_pista_valida(node_data)
 	if node_data.is_question():
-		_open_question_node(track_key, node_data)
+		_open_playable_node(track_key, node_data)
 		return
 
 	_open_chapter_node(track_key, node_data)
 
 
 
-func _open_question_node(track_key: String, node_data: RefCounted) -> void:
-	Global.establecer_activo_pregunta_sesion(_build_question_session(track_key, node_data))
-	GameSceneRouter.go_to_questions(get_tree())
+func _open_playable_node(track_key: String, node_data: RefCounted) -> void:
+	var session_context: Dictionary = _build_playable_node_session_context(track_key, node_data)
+	var opening_result: Dictionary = _resolve_playable_node_opening(session_context)
+	Global.establecer_activo_pregunta_sesion(opening_result.get("session_state", session_context))
+
+	var scene_path: String = str(
+		opening_result.get("scene_path", GameSceneRouter.QUESTIONS_SCENE_PATH)
+	).strip_edges()
+	_open_playable_scene(scene_path)
 
 
 func _open_chapter_node(track_key: String, node_data: RefCounted) -> void:
@@ -207,8 +214,73 @@ func _open_chapter_node(track_key: String, node_data: RefCounted) -> void:
 		node_data.level_number
 	)
 
-func _build_question_session(track_key: String, node_data: RefCounted) -> Dictionary:
+func _build_playable_node_session_context(track_key: String, node_data: RefCounted) -> Dictionary:
 	return node_data.build_question_session(track_key, GameSceneRouter.MAP_SCENE_PATH)
+
+
+func _resolve_playable_node_opening(session_context: Dictionary) -> Dictionary:
+	var default_opening: Dictionary = _build_default_playable_node_opening(session_context)
+	var node_result: Dictionary = _load_node_content(session_context)
+	if not bool(node_result.get("ok", false)):
+		var error_message: String = str(node_result.get("error", "")).strip_edges()
+		if not error_message.is_empty():
+			push_warning(
+				"MapScene: no se pudo cargar el nodo jugable desde JSON. Se usa el flujo fallback. %s"
+				% error_message
+			)
+		return default_opening
+
+	var node_data: Dictionary = node_result.get("data", {})
+	var route_result: Dictionary = _get_scene_for_mode(node_data)
+	if not bool(route_result.get("ok", false)):
+		push_error(str(route_result.get("error", "No se pudo resolver la escena del nodo jugable.")))
+		return default_opening
+
+	return {
+		"scene_path": str(
+			route_result.get("scene_path", GameSceneRouter.QUESTIONS_SCENE_PATH)
+		).strip_edges(),
+		"session_state": _build_routed_session_context(session_context, node_data)
+	}
+
+
+func _load_node_content(session_context: Dictionary) -> Dictionary:
+	var question_json_path: String = str(session_context.get("question_json_path", "")).strip_edges()
+	if question_json_path.is_empty():
+		return {
+			"ok": false,
+			"data": {},
+			"error": ""
+		}
+	return NodeContentLoaderScript.load_node_content(question_json_path)
+
+
+func _get_scene_for_mode(node_data: Dictionary) -> Dictionary:
+	return PlayableNodeRouterScript.get_scene_for_mode(node_data)
+
+
+func _open_playable_scene(scene_path: String) -> void:
+	if scene_path == GameSceneRouter.QUESTIONS_SCENE_PATH:
+		GameSceneRouter.go_to_questions(get_tree())
+		return
+	get_tree().change_scene_to_file(scene_path)
+
+
+func _build_default_playable_node_opening(session_context: Dictionary) -> Dictionary:
+	return {
+		"scene_path": GameSceneRouter.QUESTIONS_SCENE_PATH,
+		"session_state": session_context
+	}
+
+
+func _build_routed_session_context(
+	session_context: Dictionary,
+	node_data: Dictionary
+) -> Dictionary:
+	var routed_session: Dictionary = session_context.duplicate(true)
+	routed_session["node_mode"] = str(node_data.get("mode", "")).strip_edges()
+	routed_session["node_content"] = node_data
+	return routed_session
 
 
 func _save_current_map_scroll() -> void:

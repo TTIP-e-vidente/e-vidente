@@ -183,7 +183,7 @@ position = Vector2(421.00012, 1508)
 scale = Vector2(1.3241454, 1.3179823)
 nivel_id = 14
 question_number = 8
-question_key = "gluten_maiz"
+question_key = "armar_plato_sin_tacc"
 label_text = "Pregunta 8"
 
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
