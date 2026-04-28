@@ -1,6 +1,5 @@
 extends RefCounted
 
-
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 const ITEMS_DIR_PATH := "res://items"
@@ -23,14 +22,16 @@ static func construir_fondo_elemento_pista(
 			NEGATIVE_ITEMS_KEY: legacy_negative_items.duplicate()
 		}
 
-	var legacy_positive_counts: Dictionary = _contar_elementos_legados_por_ruta(
+	var conteos_positivos_legados: Dictionary = _contar_elementos_legados_por_ruta(
 		legacy_positive_items
 	)
-	var legacy_negative_counts: Dictionary = _contar_elementos_legados_por_ruta(
+	var conteos_negativos_legados: Dictionary = _contar_elementos_legados_por_ruta(
 		legacy_negative_items
 	)
-	var positive_items: Array = []
-	var negative_items: Array = []
+	var pools: Dictionary = {
+		POSITIVE_ITEMS_KEY: [],
+		NEGATIVE_ITEMS_KEY: []
+	}
 
 	for item in obtener_todos_elementos():
 		if item == null:
@@ -39,25 +40,18 @@ static func construir_fondo_elemento_pista(
 		var item_pool_key: String = clasificar_elemento_para_pista(
 			clean_track_key,
 			item,
-			legacy_positive_counts,
-			legacy_negative_counts
+			conteos_positivos_legados,
+			conteos_negativos_legados
 		)
 		var item_path: String = _obtener_ruta_recurso_elemento(item)
+		var copies: int = int(
+			conteos_positivos_legados.get(item_path, 1)
+			if item_pool_key == POSITIVE_ITEMS_KEY
+			else conteos_negativos_legados.get(item_path, 1)
+		)
+		_agregar_copias(pools[item_pool_key], item, copies)
 
-		if item_pool_key == POSITIVE_ITEMS_KEY:
-			var positive_copy_count: int = int(legacy_positive_counts.get(item_path, 1))
-			for unused_positive_index in range(max(1, positive_copy_count)):
-				positive_items.append(item)
-			continue
-
-		var negative_copy_count: int = int(legacy_negative_counts.get(item_path, 1))
-		for unused_negative_index in range(max(1, negative_copy_count)):
-			negative_items.append(item)
-
-	return {
-		POSITIVE_ITEMS_KEY: positive_items,
-		NEGATIVE_ITEMS_KEY: negative_items
-	}
+	return pools
 
 
 static func clasificar_elemento_para_pista(
@@ -146,6 +140,9 @@ static func _clasificar_elemento_usando_estrategia_pista(track_key: String, item
 		if item.has_any_condition(blocked_conditions)
 		else POSITIVE_ITEMS_KEY
 	)
+static func _agregar_copias(pool: Array, item: Variant, copies: int) -> void:
+	for unused_index in range(max(1, copies)):
+		pool.append(item)
 
 
 static func obtener_todos_elementos() -> Array:

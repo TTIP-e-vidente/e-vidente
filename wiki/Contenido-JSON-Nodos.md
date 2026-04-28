@@ -1,164 +1,212 @@
 # Contenido de Nodos por JSON
 
-Esta guia explica como desacoplar el contenido de nodos del mapa para que la logica de juego sea reutilizable sin hardcodear consignas en scripts.
+Esta página resume cómo funciona hoy el contenido jugable del mapa.
 
-## Resumen
+La idea importante es simple: el mapa ya no abre “preguntas” hardcodeadas. Abre nodos jugables. Cada nodo define su modalidad con `mode` y sus datos específicos con `content`.
 
-- Lo mas simple ahora es configurar solo `question_key`.
-- El sistema busca automaticamente:
-  - `res://niveles/nodos/<question_key>.json`
-  - y si no existe o falla, `res://preguntas/preguntas_recurso/<question_key>.tres`
-- `question_json_path` y `question_resource_path` siguen existiendo, pero ya son opcionales.
-- Asi no se rompen nodos existentes y el authoring queda mucho mas corto.
+## Dónde vive el contenido
 
-## Dónde se integra
+```text
+project/
+  niveles/
+    nodos/
+      celiaquia/
+        gluten_maiz.json
+        gluten_arroz.json
+        armar_plato_sin_tacc.json
+      ejemplos/
+        ejemplo_quiz_choice.json
+        ejemplo_drag_drop.json
+        ejemplo_select_option_legacy.json
+        ejemplo_title_card_legacy.json
+  preguntas/
+    pregunta.gd
+    pregunta.tscn
+    QuestionJsonLoader.gd
+  mapas/
+    MapScene.gd
+    PlayableNodeRouter.gd
+    drag_drop/
+      DragDropNode.gd
+      DragDropNode.tscn
+      DragDropItem.gd
+      DragDropTarget.gd
+      DragDropValidator.gd
+```
 
-- Contrato del nodo: `project/mapas/MapNodeData.gd`
-- Authoring del nodo: `project/mapas/LevelNode.gd`
-- Sesion de mapa -> nodo jugable: `project/mapas/MapScene.gd`
-- Loader JSON de nodos jugables: `project/preguntas/NodeContentLoader.gd`
-- Adaptador quiz legacy: `project/preguntas/QuestionJsonLoader.gd`
-- Consumo en escenas: `project/preguntas/pregunta.gd` y `project/mapas/drag_drop/DragDropNode.gd`
+- `niveles/nodos/` guarda los JSON de nodos jugables.
+- `preguntas/` contiene solo la modalidad `quiz_choice` y su adaptador temporal.
+- `mapas/` contiene el mapa, el contexto de apertura y el routing.
+- `mapas/drag_drop/` contiene la modalidad `drag_drop`.
 
-## Formato JSON recomendado
+## Cómo se lee un nodo
 
-Formato recomendado hoy, mas claro para trainees:
+El flujo completo es este:
+
+1. El jugador toca un nodo del mapa.
+2. `MapScene.gd` recibe la selección y arma `contexto_sesion`.
+3. `NodeContentLoader.gd` carga y normaliza el JSON.
+4. `PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
+5. La escena jugable recibe `node_data`, usa `content` y ejecuta la actividad.
+6. Cuando termina, vuelve a `return_scene_path`.
+
+Si querés explicarlo rápido a alguien nuevo, alcanza con esta frase:
+
+“Mapa abre nodo jugable. Loader carga JSON. Router elige escena según `mode`. Escena usa `content`. Escena vuelve al mapa.”
+
+## Convención de rutas
+
+La convención principal hoy es:
+
+- con `track_key = "celiaquia"`
+- y `node_key = "gluten_maiz"`
+
+el runtime resuelve:
+
+`res://niveles/nodos/celiaquia/gluten_maiz.json`
+
+Además:
+
+- `node_json_path` y `node_resource_path` son la API principal para casos especiales.
+- `question_key`, `question_json_path` y `question_resource_path` quedan solo como compatibilidad legacy interna de escenas viejas. No son la API nueva.
+- si llega una ruta vieja de `res://preguntas/json_nodos/`, el loader intenta migrarla y deja una advertencia controlada.
+
+## Contrato oficial del loader
+
+`NodeContentLoader.gd` siempre devuelve esta estructura:
 
 ```json
 {
-  "schema_version": 1,
-  "node": {
-    "node_kind": "question",
-    "question_key": "mito_gluten",
-    "title": "Pregunta 1",
-    "track_key": "celiaquia",
-    "question_number": 1,
-    "difficulty": "basica",
-    "estimated_seconds": 20
+  "ok": true,
+  "data": {
+    "id": "gluten_maiz",
+    "theme": "celiaquia",
+    "title": "Gluten en el maiz",
+    "difficulty": "easy",
+    "mode": "quiz_choice",
+    "content": {}
   },
-  "activity": {
-    "type": "quiz_choice",
-    "title": "Pregunta 1",
-    "instruction": "Lee la consigna y elegi la respuesta correcta."
-  },
-  "question": {
-    "prompt": "Texto de la pregunta",
-    "correct_answer": "Verdadero",
-    "wrong_answers": ["Falso"],
-    "type": "text"
+  "error": ""
+}
+```
+
+Después del loader, el runtime debería trabajar solo con `data` ya normalizado.
+
+## Formato JSON oficial
+
+Todos los nodos jugables comparten estos campos:
+
+```json
+{
+  "id": "gluten_maiz",
+  "theme": "celiaquia",
+  "title": "Gluten en el maiz",
+  "difficulty": "easy",
+  "mode": "quiz_choice",
+  "content": {}
+}
+```
+
+La lectura correcta es:
+
+- `mode` define la modalidad.
+- `content` contiene solo los datos específicos de esa modalidad.
+
+### Ejemplo de `quiz_choice`
+
+```json
+{
+  "id": "gluten_maiz",
+  "theme": "celiaquia",
+  "title": "Gluten en el maiz",
+  "difficulty": "easy",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "El maiz contiene gluten?",
+    "correct_answer": "No",
+    "wrong_options": ["Si", "Solo si esta cocido", "Depende del color"],
+    "visual_resource": ""
   }
 }
 ```
 
-Tipos de actividad que puede describir el JSON:
-
-- `quiz_choice`
-- `select_option`
-- `drag_to_target`
-- `title_card`
-
-Hoy la escena `pregunta.gd` consume directo `quiz_choice` y `select_option`.
-
-Formato minimo, que tambien sigue funcionando:
+### Ejemplo de `drag_drop`
 
 ```json
 {
-  "prompt": "Texto de la consigna",
-  "correct_answer": "Verdadero",
-  "wrong_answers": ["Falso"],
-  "type": "text"
-}
-```
-
-Formato extendido, si queres agrupar metadata:
-
-```json
-{
-  "schema_version": 1,
-  "node": {
-    "id": "celiaquia_pregunta_01",
-    "title": "Pregunta 1",
-    "topic": "celiaquia",
-    "difficulty": "facil",
-    "modalities": ["quiz_choice"],
-    "lessons": [
+  "id": "armar_plato_sin_tacc",
+  "theme": "celiaquia",
+  "title": "Arma un plato apto",
+  "difficulty": "easy",
+  "mode": "drag_drop",
+  "content": {
+    "instruction": "Arrastra al plato solo los alimentos aptos sin TACC.",
+    "targets": [
       {
-        "id": "eliminar_gluten",
-        "prompt": "Texto de la consigna",
-        "correct_answer": "Verdadero",
-        "wrong_answers": ["Falso"],
-        "type": "text",
-        "assets": {
-          "image_path": "",
-          "audio_path": "",
-          "video_path": ""
-        }
+        "id": "plato",
+        "label": "Plato apto"
       }
-    ]
+    ],
+    "items": [
+      {
+        "id": "arroz",
+        "label": "Arroz",
+        "image": "res://assets-sistema/iconos/arroz-0.png",
+        "correct_target": "plato"
+      },
+      {
+        "id": "pan",
+        "label": "Pan",
+        "image": "res://assets-sistema/iconos/pan-0.png",
+        "correct_target": ""
+      }
+    ],
+    "success_message": "Bien! Elegiste alimentos aptos.",
+    "error_message": "Cuidado: ese alimento puede contener gluten."
   }
 }
 ```
 
-## Campos minimos por leccion
+## Qué pide cada modalidad
 
-- `prompt`
-- `correct_answer`
-- `wrong_answers` o `options`
+- `quiz_choice` requiere `question`, `correct_answer` y `wrong_options`.
+- `drag_drop` requiere `instruction`, `targets` e `items`.
 
-## Aliases soportados
+Si querés ver dónde se valida eso, el punto canónico es `project/preguntas/NodeContentValidator.gd`.
 
-- `consigna` -> `prompt`
-- `respuesta_correcta` -> `correct_answer`
-- `opciones` -> `options`
-- `opciones_incorrectas` -> `wrong_answers`
+## Compatibilidad legacy que sigue viva
 
-## Validacion controlada
+Todavía quedan algunas compatibilidades controladas para no romper contenido viejo:
 
-El sistema informa con `push_warning` cuando:
+- `select_option` se normaliza a `quiz_choice`.
+- `drag_to_target` se normaliza a `drag_drop`.
+- `QuestionJsonLoader.gd` adapta solo `quiz_choice` al modelo viejo `ThemePreg/Preguntas`.
+- el fallback `.tres` sigue disponible para nodos legacy.
 
-- no existe el archivo,
-- el JSON no parsea,
-- faltan campos requeridos,
-- o un recurso visual/sonoro no carga.
+## Cómo crear un nodo nuevo
 
-Si hay error, cae a `.tres` para mantener compatibilidad.
+1. Elegí `track_key` y `node_key`, por ejemplo `celiaquia` + `mito_gluten`.
+2. Creá `project/niveles/nodos/celiaquia/mito_gluten.json`.
+3. Pegá el formato oficial con el `mode` correcto.
+4. En el nodo del mapa, configurá `node_key = "mito_gluten"`.
+5. Probá el flujo completo desde el mapa.
 
-## Flujo trainee-friendly para crear un nodo nuevo
+## Cómo agregar una modalidad futura
 
-1. Elegir una clave simple, por ejemplo `mito_gluten`.
-2. Crear `project/niveles/nodos/mito_gluten.json`.
-3. Pegar el formato recomendado:
+1. Agregar el nuevo `mode` en `NodeContentLoader.gd`.
+2. Validar su `content` mínimo en `NodeContentValidator.gd`.
+3. Agregar su ruta en `PlayableNodeRouter.gd`.
+4. Crear la escena jugable que lea `node_data` desde la sesión.
+5. Resolver su finalización con `return_scene_path` para volver al mapa.
 
-```json
-{
-  "schema_version": 1,
-  "node": {
-    "node_kind": "question",
-    "question_key": "mito_gluten",
-    "title": "Pregunta nueva",
-    "track_key": "celiaquia",
-    "question_number": 1,
-    "difficulty": "basica",
-    "modality": "quiz_choice"
-  },
-  "question": {
-    "prompt": "Tu consigna",
-    "correct_answer": "Si",
-    "wrong_answers": ["No"],
-    "type": "text"
-  }
-}
-```
+## Checklist manual
 
-4. En el nodo del mapa, escribir solo `question_key = "mito_gluten"`.
-5. Probar el nodo.
-
-No hace falta escribir rutas si seguis la convencion de nombres.
-
-## Cuando usar rutas explicitas
-
-Usa `question_json_path` o `question_resource_path` solo si:
-
-- queres guardar el archivo en otra carpeta,
-- queres migrar de forma gradual,
-- o tenes un caso especial que no sigue la convencion.
+- Abrir un nodo `quiz_choice` desde el mapa.
+- Responder el quiz y verificar que vuelve.
+- Abrir un nodo `drag_drop` desde el mapa.
+- Completar `drag_drop` y verificar que vuelve.
+- Probar un `mode` inválido y verificar error controlado.
+- Probar contenido faltante y verificar error claro.
+- Probar un JSON legacy `select_option` y verificar normalización a `quiz_choice`.
+- Probar una ruta vieja `res://preguntas/json_nodos/...` y verificar migración.
+- Crear un nodo nuevo en `project/niveles/nodos/<track_key>/` y abrirlo desde el mapa.
