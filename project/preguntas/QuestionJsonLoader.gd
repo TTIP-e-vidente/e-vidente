@@ -21,35 +21,15 @@ static func cargar_resultado_desde_datos_nodo(
 
 
 static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
-	var ruta_json: String = _extraer_ruta_json_de_sesion(contexto_sesion)
-	var datos_nodo: Dictionary = _extraer_datos_nodo_de_sesion(contexto_sesion)
+	var datos_nodo: Dictionary = contexto_sesion.get("node_data", {})
 	if not datos_nodo.is_empty():
-		return cargar_resultado_desde_datos_nodo(datos_nodo, ruta_json)
-	if ruta_json.is_empty():
-		return _cargar_fallback_legacy(contexto_sesion)
+		return cargar_resultado_desde_datos_nodo(datos_nodo, str(contexto_sesion.get("node_json_path", "")))
+	return _cargar_fallback_legacy(contexto_sesion)
 
-	var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
-	if bool(resultado_nodo.get("ok", false)):
-		return cargar_resultado_desde_datos_nodo(resultado_nodo["data"], ruta_json)
-
-	var resultado_legacy: Dictionary = _cargar_fallback_legacy(contexto_sesion)
-	if bool(resultado_legacy.get("ok", false)):
-		return resultado_legacy
-
-	return _resultado_error(
-		str(resultado_nodo.get("error", "No se pudo cargar el contenido del nodo."))
-	)
-
-
-static func _extraer_datos_nodo_de_sesion(contexto_sesion: Dictionary) -> Dictionary:
-	var datos_nodo: Variant = contexto_sesion.get("node_data", {})
-	if datos_nodo is Dictionary:
-		return (datos_nodo as Dictionary).duplicate(true)
-	return {}
 
 
 static func _cargar_fallback_legacy(contexto_sesion: Dictionary) -> Dictionary:
-	var ruta_recurso: String = _extraer_ruta_recurso_legacy_de_sesion(contexto_sesion)
+	var ruta_recurso: String = str(contexto_sesion.get("node_resource_path", "")).strip_edges()
 	if ruta_recurso.is_empty():
 		return _resultado_error(ERROR_CONTENIDO_NO_DISPONIBLE)
 
@@ -58,14 +38,6 @@ static func _cargar_fallback_legacy(contexto_sesion: Dictionary) -> Dictionary:
 		return _resultado_error(ERROR_CONTENIDO_NO_DISPONIBLE)
 
 	return _resultado_ok_con_tema(_crear_tema(pregunta_legacy))
-
-
-static func _extraer_ruta_json_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("node_json_path", "")).strip_edges()
-
-
-static func _extraer_ruta_recurso_legacy_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("node_resource_path", "")).strip_edges()
 
 
 static func _resultado_ok_con_tema(tema: ThemePreg) -> Dictionary:
@@ -104,53 +76,53 @@ static func _cargar_pregunta_legacy(ruta_recurso_pregunta: String) -> Preguntas:
 
 
 static func _crear_tema(pregunta_recurso: Preguntas) -> ThemePreg:
-	var theme: ThemePreg = ThemePregScript.new()
-	theme.theme = [pregunta_recurso]
-	return theme
+	var tema: ThemePreg = ThemePregScript.new()
+	tema.theme = [pregunta_recurso]
+	return tema
 
 
-static func _crear_pregunta(content: Dictionary, etiqueta_origen: String) -> Preguntas:
-	var correct_answer: String = str(content.get("correct_answer", "")).strip_edges()
-	var question: Preguntas = PreguntasScript.new()
-	question.info_pregunta = str(content.get("question", "")).strip_edges()
-	question.correct = correct_answer
-	question.opciones = _crear_opciones(content, correct_answer)
-	question.pregunta_imagen = _cargar_visual(
-		str(content.get("visual_resource", "")).strip_edges(),
+static func _crear_pregunta(contenido: Dictionary, etiqueta_origen: String) -> Preguntas:
+	var respuesta_correcta: String = str(contenido.get("correct_answer", "")).strip_edges()
+	var pregunta: Preguntas = PreguntasScript.new()
+	pregunta.info_pregunta = str(contenido.get("question", "")).strip_edges()
+	pregunta.correct = respuesta_correcta
+	pregunta.opciones = _crear_opciones(contenido, respuesta_correcta)
+	pregunta.pregunta_imagen = _cargar_visual(
+		str(contenido.get("visual_resource", "")).strip_edges(),
 		etiqueta_origen
 	)
-	question.tipo = (
+	pregunta.tipo = (
 		Enum.TipoPregunta.IMAGEN
-		if question.pregunta_imagen != null
+		if pregunta.pregunta_imagen != null
 		else Enum.TipoPregunta.TEXTO
 	)
-	return question
+	return pregunta
 
 
-static func _crear_opciones(content: Dictionary, correct_answer: String) -> Array[String]:
+static func _crear_opciones(contenido: Dictionary, respuesta_correcta: String) -> Array[String]:
 	var opciones: Array[String] = []
-	if not correct_answer.is_empty():
-		opciones.append(correct_answer)
+	if not respuesta_correcta.is_empty():
+		opciones.append(respuesta_correcta)
 
-	for raw_wrong_option in content.get("wrong_options", []):
-		var wrong_option: String = str(raw_wrong_option).strip_edges()
-		if wrong_option.is_empty() or opciones.has(wrong_option):
+	for opcion_cruda in contenido.get("wrong_options", []):
+		var opcion_incorrecta: String = str(opcion_cruda).strip_edges()
+		if opcion_incorrecta.is_empty() or opciones.has(opcion_incorrecta):
 			continue
-		opciones.append(wrong_option)
+		opciones.append(opcion_incorrecta)
 
 	return opciones
 
 
-static func _cargar_visual(visual_path: String, etiqueta_origen: String) -> Texture2D:
-	if visual_path.is_empty():
+static func _cargar_visual(ruta_visual: String, etiqueta_origen: String) -> Texture2D:
+	if ruta_visual.is_empty():
 		return null
 
-	var resource: Variant = load(visual_path)
-	if resource is Texture2D:
-		return resource as Texture2D
+	var recurso: Variant = load(ruta_visual)
+	if recurso is Texture2D:
+		return recurso as Texture2D
 
 	push_warning(
 		"QuestionJsonLoader: visual_resource invalido (%s). Archivo: %s"
-		% [visual_path, etiqueta_origen]
+		% [ruta_visual, etiqueta_origen]
 	)
 	return null

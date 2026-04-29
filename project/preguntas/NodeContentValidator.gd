@@ -71,12 +71,19 @@ static func _validar_drag_drop(contenido: Dictionary) -> String:
 	var targets: Array = targets_crudos as Array
 	if targets.is_empty():
 		return "DragDrop: debe tener al menos un target."
+		
+	var ids_targets: Array[String] = []
 	for indice_target in range(targets.size()):
 		if not targets[indice_target] is Dictionary:
 			return "DragDrop: target %d debe ser un objeto." % (indice_target + 1)
 		var target: Dictionary = targets[indice_target] as Dictionary
-		if str(target.get("id", "")).strip_edges().is_empty():
+		var target_id: String = str(target.get("id", "")).strip_edges()
+		if target_id.is_empty():
 			return "DragDrop: target %d sin id." % (indice_target + 1)
+		if ids_targets.has(target_id):
+			return "DragDrop: target repetido (%s)." % target_id
+		ids_targets.append(target_id)
+		
 		if str(target.get("label", "")).strip_edges().is_empty():
 			return "DragDrop: target %d sin label." % (indice_target + 1)
 
@@ -86,18 +93,35 @@ static func _validar_drag_drop(contenido: Dictionary) -> String:
 	var items: Array = items_crudos as Array
 	if items.is_empty():
 		return "DragDrop: debe tener al menos un item."
+		
+	var ids_items: Array[String] = []
+	var hay_items_correctos: bool = false
 	for indice_item in range(items.size()):
 		if not items[indice_item] is Dictionary:
 			return "DragDrop: item %d debe ser un objeto." % (indice_item + 1)
 		var item: Dictionary = items[indice_item] as Dictionary
-		if str(item.get("id", "")).strip_edges().is_empty():
+		var item_id: String = str(item.get("id", "")).strip_edges()
+		if item_id.is_empty():
 			return "DragDrop: item %d sin id." % (indice_item + 1)
+		if ids_items.has(item_id):
+			return "DragDrop: item repetido (%s)." % item_id
+		ids_items.append(item_id)
+		
 		if str(item.get("label", "")).strip_edges().is_empty():
 			return "DragDrop: item %d sin label." % (indice_item + 1)
 		if not item.has("image"):
 			return "DragDrop: item %d sin image." % (indice_item + 1)
 		if not item.has("correct_target"):
 			return "DragDrop: item %d sin correct_target." % (indice_item + 1)
+			
+		var correct_target: String = str(item.get("correct_target", "")).strip_edges()
+		if not correct_target.is_empty():
+			hay_items_correctos = true
+			if not ids_targets.has(correct_target):
+				return "DragDrop: item %d apunta a target inexistente (%s)." % [(indice_item + 1), correct_target]
+
+	if not hay_items_correctos:
+		return "DragDrop: no hay items correctos para completar la actividad."
 	return ""
 
 

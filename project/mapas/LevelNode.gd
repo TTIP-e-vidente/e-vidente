@@ -65,19 +65,19 @@ func _ready() -> void:
 
 # Escena -> contrato ---------------------------------------------------------
 func crear_datos_runtime_nodo() -> RefCounted:
-	var node_data: RefCounted = MapNodeDataScript.crear()
-	node_data.node_id = nivel_id
-	node_data.node_kind = _tipo_nodo_configurado
-	node_data.label_text = _resolver_texto_label()
-	node_data.track_key = track_key.strip_edges()
-	node_data.level_number = level_number
-	node_data.question_number = question_number
-	node_data.node_key = node_key.strip_edges()
-	node_data.node_json_path = node_json_path.strip_edges()
-	node_data.node_resource_path = node_resource_path.strip_edges()
-	node_data.icon_texture_path = _resolver_ruta_icono()
-	node_data.node_position = position
-	return node_data
+	var datos_mapa_nodo: RefCounted = MapNodeDataScript.crear()
+	datos_mapa_nodo.node_id = nivel_id
+	datos_mapa_nodo.node_kind = _tipo_nodo_configurado
+	datos_mapa_nodo.label_text = _resolver_texto_label()
+	datos_mapa_nodo.track_key = track_key.strip_edges()
+	datos_mapa_nodo.level_number = level_number
+	datos_mapa_nodo.question_number = question_number
+	datos_mapa_nodo.node_key = node_key.strip_edges()
+	datos_mapa_nodo.node_json_path = node_json_path.strip_edges()
+	datos_mapa_nodo.node_resource_path = node_resource_path.strip_edges()
+	datos_mapa_nodo.icon_texture_path = _resolver_ruta_icono()
+	datos_mapa_nodo.node_position = position
+	return datos_mapa_nodo
 
 
 # TODO post-demo: eliminar cuando no haya escenas usando question_*.
@@ -106,11 +106,11 @@ func _get(property: StringName) -> Variant:
 	return null
 
 
-func aplicar_estado_nodo(node_data: RefCounted, unlocked: bool, completed: bool = false) -> void:
-	desbloqueado = unlocked
-	_esta_completado = completed
-	_datos_nodo_runtime = node_data.duplicar_datos()
-	position = node_data.node_position
+func aplicar_estado_nodo(datos_mapa_nodo: RefCounted, desbloqueado_nuevo: bool, completado_nuevo: bool = false) -> void:
+	desbloqueado = desbloqueado_nuevo
+	_esta_completado = completado_nuevo
+	_datos_nodo_runtime = datos_mapa_nodo.duplicar_datos()
+	position = datos_mapa_nodo.node_position
 	_actualizar_vista_nodo()
 
 
@@ -145,9 +145,9 @@ func _on_button_mouse_exited() -> void:
 	_animar_escala_hasta(escala_base)
 
 
-func _animar_escala_hasta(target_scale: Vector2) -> void:
+func _animar_escala_hasta(escala_destino: Vector2) -> void:
 	var tween := create_tween()
-	tween.tween_property(self, "scale", target_scale, 0.12)
+	tween.tween_property(self, "scale", escala_destino, 0.12)
 
 
 func _animar_click() -> void:
@@ -208,9 +208,9 @@ func _obtener_datos_nodo_actual() -> RefCounted:
 	return crear_datos_runtime_nodo()
 
 
-func _resolver_textura_icono(node_data: RefCounted) -> Texture2D:
-	if node_data != null:
-		var ruta_icono_runtime: String = str(node_data.icon_texture_path).strip_edges()
+func _resolver_textura_icono(datos_mapa_nodo: RefCounted) -> Texture2D:
+	if datos_mapa_nodo != null:
+		var ruta_icono_runtime: String = str(datos_mapa_nodo.icon_texture_path).strip_edges()
 		var textura_icono_runtime: Texture2D = _cargar_textura_desde_ruta(ruta_icono_runtime)
 		if textura_icono_runtime != null:
 			return textura_icono_runtime
@@ -231,18 +231,18 @@ func _resolver_ruta_icono() -> String:
 	return str(_textura_icono_configurada.resource_path).strip_edges()
 
 
-func _cargar_textura_desde_ruta(texture_path: String) -> Texture2D:
-	if texture_path.is_empty():
+func _cargar_textura_desde_ruta(ruta_textura: String) -> Texture2D:
+	if ruta_textura.is_empty():
 		return null
-	var texture_resource: Variant = load(texture_path)
-	if texture_resource is Texture2D:
-		return texture_resource
+	var recurso_textura: Variant = load(ruta_textura)
+	if recurso_textura is Texture2D:
+		return recurso_textura
 	return null
 
 
-func _normalizar_tipo_nodo(value: String) -> String:
+func _normalizar_tipo_nodo(valor: String) -> String:
 	return (
 		NODE_KIND_QUESTION
-		if value.strip_edges().to_lower() == NODE_KIND_QUESTION
+		if valor.strip_edges().to_lower() == NODE_KIND_QUESTION
 		else NODE_KIND_CHAPTER
 	)

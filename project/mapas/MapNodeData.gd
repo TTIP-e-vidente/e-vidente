@@ -41,33 +41,33 @@ static func crear() -> RefCounted:
 
 
 static func desde_diccionario(definicion_nodo: Dictionary) -> RefCounted:
-	var datos_nodo: RefCounted = crear()
-	datos_nodo.node_id = int(definicion_nodo.get(DICT_KEY_ID, 0))
-	datos_nodo.node_kind = normalizar_tipo_nodo(
+	var datos_mapa_nodo: RefCounted = crear()
+	datos_mapa_nodo.node_id = int(definicion_nodo.get(DICT_KEY_ID, 0))
+	datos_mapa_nodo.node_kind = normalizar_tipo_nodo(
 		str(definicion_nodo.get(DICT_KEY_KIND, NODE_KIND_CHAPTER))
 	)
-	datos_nodo.label_text = _leer_texto(definicion_nodo, DICT_KEY_LABEL)
-	datos_nodo.track_key = _leer_texto(definicion_nodo, DICT_KEY_TRACK_KEY)
-	datos_nodo.level_number = int(definicion_nodo.get(DICT_KEY_LEVEL_NUMBER, 0))
-	datos_nodo.question_number = int(definicion_nodo.get(DICT_KEY_QUESTION_NUMBER, 0))
-	datos_nodo.node_key = _leer_texto_con_legacy(
+	datos_mapa_nodo.label_text = _leer_texto(definicion_nodo, DICT_KEY_LABEL)
+	datos_mapa_nodo.track_key = _leer_texto(definicion_nodo, DICT_KEY_TRACK_KEY)
+	datos_mapa_nodo.level_number = int(definicion_nodo.get(DICT_KEY_LEVEL_NUMBER, 0))
+	datos_mapa_nodo.question_number = int(definicion_nodo.get(DICT_KEY_QUESTION_NUMBER, 0))
+	datos_mapa_nodo.node_key = _leer_texto_con_legacy(
 		definicion_nodo,
 		DICT_KEY_NODE_KEY,
 		DICT_KEY_LEGACY_QUESTION_KEY
 	)
-	datos_nodo.node_json_path = _leer_texto_con_legacy(
+	datos_mapa_nodo.node_json_path = _leer_texto_con_legacy(
 		definicion_nodo,
 		DICT_KEY_NODE_JSON_PATH,
 		DICT_KEY_LEGACY_QUESTION_JSON_PATH
 	)
-	datos_nodo.node_resource_path = _leer_texto_con_legacy(
+	datos_mapa_nodo.node_resource_path = _leer_texto_con_legacy(
 		definicion_nodo,
 		DICT_KEY_NODE_RESOURCE_PATH,
 		DICT_KEY_LEGACY_QUESTION_RESOURCE_PATH
 	)
-	datos_nodo.icon_texture_path = _leer_texto(definicion_nodo, DICT_KEY_ICON_TEXTURE_PATH)
-	datos_nodo.node_position = definicion_nodo.get(DICT_KEY_POSITION, Vector2.ZERO)
-	return datos_nodo
+	datos_mapa_nodo.icon_texture_path = _leer_texto(definicion_nodo, DICT_KEY_ICON_TEXTURE_PATH)
+	datos_mapa_nodo.node_position = definicion_nodo.get(DICT_KEY_POSITION, Vector2.ZERO)
+	return datos_mapa_nodo
 
 
 static func desde_nodo_mapa(nodo_mapa: Node2D) -> RefCounted:
@@ -80,10 +80,10 @@ static func desde_nodo_mapa(nodo_mapa: Node2D) -> RefCounted:
 
 
 static func duplicar_desde_nodo_mapa(nodo_mapa: Node2D) -> RefCounted:
-	var datos_nodo: RefCounted = desde_nodo_mapa(nodo_mapa)
-	if datos_nodo == null:
+	var datos_mapa_nodo: RefCounted = desde_nodo_mapa(nodo_mapa)
+	if datos_mapa_nodo == null:
 		return null
-	return datos_nodo.duplicar_datos()
+	return datos_mapa_nodo.duplicar_datos()
 
 
 static func desde_seleccion(seleccion_mapa: Variant) -> RefCounted:

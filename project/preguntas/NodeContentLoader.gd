@@ -8,64 +8,50 @@ const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 
 
-static func cargar_contenido_nodo(ruta_json: String) -> Dictionary:
-	var lectura_json: Dictionary = _leer_archivo_json(ruta_json)
-	if not bool(lectura_json.get("ok", false)):
-		return lectura_json
+static func cargar_contenido_nodo(ruta_json_nodo: String) -> Dictionary:
+	var lectura_json: Dictionary = _leer_archivo_json(ruta_json_nodo)
+	if lectura_json.is_empty():
+		return {}
 
-	var datos_normalizados: Dictionary = NormalizadorLegacy.normalizar_datos_nodo(lectura_json["data"])
-	var mensaje_error: String = _validar_datos_nodo(datos_normalizados)
-	if not mensaje_error.is_empty():
-		return _resultado_error(mensaje_error)
-
-	return _resultado_ok(ValidadorContenido.limpiar_datos_nodo(datos_normalizados))
-
-
-static func _validar_datos_nodo(datos_nodo: Dictionary) -> String:
+	var datos_nodo: Dictionary = NormalizadorLegacy.normalizar_datos_nodo(lectura_json)
 	var mensaje_error: String = ValidadorContenido.validar_datos_nodo(datos_nodo)
+	if mensaje_error.is_empty():
+		mensaje_error = ValidadorContenido.validar_contenido_por_modo(datos_nodo)
+		
 	if not mensaje_error.is_empty():
-		return mensaje_error
-	return ValidadorContenido.validar_contenido_por_modo(datos_nodo)
+		push_error("NodeContentLoader: " + mensaje_error)
+		return {}
+
+	return ValidadorContenido.limpiar_datos_nodo(datos_nodo)
 
 
-static func _leer_archivo_json(ruta_json: String) -> Dictionary:
-	var ruta_limpia: String = NormalizadorLegacy.resolver_ruta_json(ruta_json)
+static func _leer_archivo_json(ruta_json_nodo: String) -> Dictionary:
+	var ruta_limpia: String = NormalizadorLegacy.resolver_ruta_json(ruta_json_nodo)
 	if ruta_limpia.is_empty():
-		return _resultado_error("Falta la ruta del JSON.")
+		push_error("NodeContentLoader: Falta la ruta del JSON.")
+		return {}
 
 	if not FileAccess.file_exists(ruta_limpia):
-		return _resultado_error("No existe el JSON. Archivo: %s" % ruta_limpia)
+		push_warning("NodeContentLoader: No existe el JSON. Archivo: %s" % ruta_limpia)
+		return {}
 
-	var file: FileAccess = FileAccess.open(ruta_limpia, FileAccess.READ)
-	if file == null:
-		return _resultado_error("No se pudo abrir el JSON. Archivo: %s" % ruta_limpia)
+	var archivo: FileAccess = FileAccess.open(ruta_limpia, FileAccess.READ)
+	if archivo == null:
+		push_error("NodeContentLoader: No se pudo abrir el JSON. Archivo: %s" % ruta_limpia)
+		return {}
 
 	var parser := JSON.new()
-	var parse_result: Error = parser.parse(file.get_as_text())
-	if parse_result != OK:
-		return _resultado_error(
-			"JSON invalido en linea %d: %s Archivo: %s"
+	var resultado_parseo: Error = parser.parse(archivo.get_as_text())
+	if resultado_parseo != OK:
+		push_error(
+			"NodeContentLoader: JSON invalido en linea %d: %s Archivo: %s"
 			% [parser.get_error_line(), parser.get_error_message(), ruta_limpia]
 		)
+		return {}
 
 	var datos_parseados: Variant = parser.get_data()
 	if not datos_parseados is Dictionary:
-		return _resultado_error("El JSON debe ser un objeto. Archivo: %s" % ruta_limpia)
+		push_error("NodeContentLoader: El JSON debe ser un objeto. Archivo: %s" % ruta_limpia)
+		return {}
 
-	return _resultado_ok(datos_parseados as Dictionary)
-
-
-static func _resultado_ok(data: Dictionary) -> Dictionary:
-	return {
-		"ok": true,
-		"data": data,
-		"error": ""
-	}
-
-
-static func _resultado_error(mensaje: String) -> Dictionary:
-	return {
-		"ok": false,
-		"data": {},
-		"error": mensaje
-	}
+	return datos_parseados as Dictionary

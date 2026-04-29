@@ -37,7 +37,7 @@ func _ready() -> void:
 	if not _mensaje_error_bloqueante.is_empty():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
-	_renderizar()
+	renderizar()
 
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
@@ -51,9 +51,7 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictio
 
 	_titulo = str(datos_nodo.get("title", "Nodo drag_drop")).strip_edges()
 	_contenido = datos_nodo.get("content", {})
-	_mensaje_error_bloqueante = _validar_contenido(_contenido)
-	if not _mensaje_error_bloqueante.is_empty():
-		return false
+	_mensaje_error_bloqueante = ""
 
 	_ids_items_correctos = _obtener_ids_items_correctos(_contenido.get("items", []))
 	_ids_items_colocados.clear()
@@ -92,7 +90,7 @@ func _extraer_datos_nodo_de_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	return {}
 
 
-func _renderizar() -> void:
+func renderizar() -> void:
 	_label_titulo.text = _titulo
 	_label_instruccion.text = str(_contenido.get("instruction", "")).strip_edges()
 	_mostrar_feedback(_label_instruccion.text, FEEDBACK_INFO_COLOR)
@@ -108,7 +106,7 @@ func _renderizar_targets(targets: Array) -> void:
 		var datos_target: Dictionary = (raw_target as Dictionary).duplicate(true)
 		var target_control: DragDropTarget = DragDropTargetScript.new()
 		target_control.configurar(datos_target)
-		target_control.item_dropped.connect(_manejar_drop)
+		target_control.item_dropped.connect(manejar_drop)
 		_contenedor_targets.add_child(target_control)
 		_targets_por_id[str(datos_target.get("id", "")).strip_edges()] = target_control
 
@@ -122,7 +120,7 @@ func _renderizar_items(items: Array) -> void:
 		_grilla_items.add_child(item_control)
 
 
-func _manejar_drop(target_id: String, datos_item: Dictionary) -> void:
+func manejar_drop(target_id: String, datos_item: Dictionary) -> void:
 	if _actividad_completada:
 		return
 
@@ -160,7 +158,7 @@ func _aceptar_item(target_id: String, item_node: DragDropItem, datos_item: Dicti
 		_mensaje_de_contenido("success_message", "Bien! Ese item va en ese target."),
 		FEEDBACK_SUCCESS_COLOR
 	)
-	_verificar_completado()
+	verificar_completado()
 
 
 func _rechazar_item() -> void:
@@ -170,7 +168,7 @@ func _rechazar_item() -> void:
 	)
 
 
-func _verificar_completado() -> void:
+func verificar_completado() -> void:
 	if not _todos_colocados():
 		return
 
@@ -210,47 +208,6 @@ func _mensaje_de_contenido(clave: String, fallback: String) -> String:
 	return mensaje
 
 
-func _validar_contenido(contenido: Dictionary) -> String:
-	var ids_targets: Array[String] = []
-	var error_targets: String = _validar_targets(contenido.get("targets", []), ids_targets)
-	if not error_targets.is_empty():
-		return error_targets
-
-	return _validar_items(contenido.get("items", []), ids_targets)
-
-
-func _validar_targets(targets: Array, ids_targets: Array[String]) -> String:
-	for raw_target in targets:
-		var id_target: String = str((raw_target as Dictionary).get("id", "")).strip_edges()
-		if ids_targets.has(id_target):
-			return "DragDrop: hay targets repetidos (%s)." % id_target
-		ids_targets.append(id_target)
-	return ""
-
-
-func _validar_items(items: Array, ids_targets: Array[String]) -> String:
-	var ids_items: Array[String] = []
-	var hay_items_correctos: bool = false
-	for raw_item in items:
-		var datos_item: Dictionary = raw_item as Dictionary
-		var id_item: String = str(datos_item.get("id", "")).strip_edges()
-		if ids_items.has(id_item):
-			return "DragDrop: hay items repetidos (%s)." % id_item
-		ids_items.append(id_item)
-
-		var id_target_correcto: String = str(datos_item.get("correct_target", "")).strip_edges()
-		if id_target_correcto.is_empty():
-			continue
-		hay_items_correctos = true
-		if not ids_targets.has(id_target_correcto):
-			return "DragDrop: el item %s apunta a un target inexistente (%s)." % [id_item, id_target_correcto]
-
-	if not hay_items_correctos:
-		return "DragDrop: no hay items correctos para completar la actividad."
-
-	return ""
-
-
 func _obtener_ids_items_correctos(items: Array) -> Array[String]:
 	var ids: Array[String] = []
 	for raw_item in items:
@@ -274,12 +231,12 @@ func _reiniciar_actividad() -> void:
 	_ids_items_colocados.clear()
 
 
-func _limpiar_contenedor(container: Node) -> void:
-	for child in container.get_children():
-		child.queue_free()
+func _limpiar_contenedor(contenedor: Node) -> void:
+	for hijo in contenedor.get_children():
+		hijo.queue_free()
 
 
-func _volver_al_mapa() -> void:
+func volver_al_mapa() -> void:
 	if _actividad_completada:
 		if _tiene_sesion_de_mapa and not _clave_nodo.is_empty():
 			Global.marcar_nodo_jugable_completado(track_key, _clave_nodo)
@@ -293,10 +250,10 @@ func _volver_al_mapa() -> void:
 
 
 func _on_back_button_pressed() -> void:
-	_volver_al_mapa()
+	volver_al_mapa()
 
 
 func _on_continue_button_pressed() -> void:
 	if not _actividad_completada:
 		return
-	_volver_al_mapa()
+	volver_al_mapa()
