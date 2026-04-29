@@ -26,7 +26,7 @@ var username_label: Label
 var email_label: Label
 var age_label: Label
 var progress_summary_label: Label
-var profile_streak_badge: StreakBadge
+var profile_streak_badge: Node
 var avatar_preview: TextureRect
 var avatar_state_label: Label
 
@@ -92,7 +92,7 @@ func _cachear_nodos_contenido_perfil() -> void:
 	email_label = info_column.get_node("MetaRow/EmailBadge/MarginContainer/EmailLabel") as Label
 	age_label = info_column.get_node("MetaRow/AgeBadge/MarginContainer/AgeLabel") as Label
 	progress_summary_label = info_column.get_node("ProgressLabel") as Label
-	profile_streak_badge = info_column.get_node("StreakBadge") as StreakBadge
+	profile_streak_badge = info_column.get_node("StreakBadge") as Node
 	avatar_preview = summary_content.get_node(
 		"AvatarColumn/AvatarFrame/MarginContainer/AvatarPreview"
 	) as TextureRect
@@ -158,8 +158,8 @@ func _refrescar_superposicion_perfil() -> void:
 		and mode_selection_streak_badge.has_method("renderizar")
 	):
 		mode_selection_streak_badge.call("renderizar")
-	if is_instance_valid(profile_streak_badge):
-		profile_streak_badge.renderizar()
+	if is_instance_valid(profile_streak_badge) and profile_streak_badge.has_method("renderizar"):
+		profile_streak_badge.call("renderizar")
 
 	# Estado de guardado
 	save_status_label.text = _formatear_estado_guardado()

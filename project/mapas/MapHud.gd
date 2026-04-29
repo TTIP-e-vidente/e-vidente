@@ -12,43 +12,43 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 
 
 func _ready() -> void:
-	_hide_profile_overlay()
+	_ocultar_superposicion_perfil()
 	_conectar_insignia_racha()
-	_connect_save_manager_signals()
-	_refresh_hud()
+	_conectar_senales_guardado()
+	_actualizar_hud()
 
 
 func _exit_tree() -> void:
-	_disconnect_save_manager_signals()
+	_desconectar_senales_guardado()
 
 
-func _connect_save_manager_signals() -> void:
+func _conectar_senales_guardado() -> void:
 	if SaveManager == null:
 		return
-	if not SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
-		SaveManager.save_status_changed.connect(_on_save_manager_changed)
-	if not SaveManager.progress_loaded.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_loaded.connect(_on_save_manager_profile_changed)
-	if not SaveManager.progress_saved.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_saved.connect(_on_save_manager_profile_changed)
-	if not SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
-		SaveManager.user_registered.connect(_on_save_manager_profile_changed)
+	if not SaveManager.save_status_changed.is_connected(_al_cambiar_estado_guardado):
+		SaveManager.save_status_changed.connect(_al_cambiar_estado_guardado)
+	if not SaveManager.progress_loaded.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.progress_loaded.connect(_al_cambiar_perfil_guardado)
+	if not SaveManager.progress_saved.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.progress_saved.connect(_al_cambiar_perfil_guardado)
+	if not SaveManager.user_registered.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.user_registered.connect(_al_cambiar_perfil_guardado)
 
 
-func _disconnect_save_manager_signals() -> void:
+func _desconectar_senales_guardado() -> void:
 	if SaveManager == null:
 		return
-	if SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
-		SaveManager.save_status_changed.disconnect(_on_save_manager_changed)
-	if SaveManager.progress_loaded.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_loaded.disconnect(_on_save_manager_profile_changed)
-	if SaveManager.progress_saved.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_saved.disconnect(_on_save_manager_profile_changed)
-	if SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
-		SaveManager.user_registered.disconnect(_on_save_manager_profile_changed)
+	if SaveManager.save_status_changed.is_connected(_al_cambiar_estado_guardado):
+		SaveManager.save_status_changed.disconnect(_al_cambiar_estado_guardado)
+	if SaveManager.progress_loaded.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.progress_loaded.disconnect(_al_cambiar_perfil_guardado)
+	if SaveManager.progress_saved.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.progress_saved.disconnect(_al_cambiar_perfil_guardado)
+	if SaveManager.user_registered.is_connected(_al_cambiar_perfil_guardado):
+		SaveManager.user_registered.disconnect(_al_cambiar_perfil_guardado)
 
 
-func _refresh_hud() -> void:
+func _actualizar_hud() -> void:
 	if racha != null and racha.has_method("render"):
 		racha.call("render")
 	if profile_button != null and profile_button.has_method("refresh_profile_icon"):
@@ -66,15 +66,15 @@ func _conectar_insignia_racha() -> void:
 
 
 func _on_profile_button_pressed() -> void:
-	_show_profile_overlay()
+	_mostrar_superposicion_perfil()
 
 
 func _on_racha_presionado() -> void:
-	var current_scene_path: String = _get_scene_to_return_to()
-	if current_scene_path == GameSceneRouter.STREAK_SCENE_PATH:
+	var ruta_escena_actual: String = _obtener_ruta_escena_retorno()
+	if ruta_escena_actual == GameSceneRouter.STREAK_SCENE_PATH:
 		return
-	_hide_profile_overlay()
-	GameSceneRouter.go_to_streak(get_tree(), current_scene_path)
+	_ocultar_superposicion_perfil()
+	GameSceneRouter.go_to_streak(get_tree(), ruta_escena_actual)
 
 
 func _on_back_button_pressed() -> void:
@@ -82,54 +82,54 @@ func _on_back_button_pressed() -> void:
 
 
 func _on_superposicion_cerrar_solicitado() -> void:
-	_hide_profile_overlay()
+	_ocultar_superposicion_perfil()
 
 
 func _on_superposicion_reanudar_presionado() -> void:
-	_hide_profile_overlay()
+	_ocultar_superposicion_perfil()
 	if not SaveManager.puede_reanudar_guardado_actual():
 		return
-	var resume_state: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, _get_scene_to_return_to())
+	var estado_reanudacion: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
+	GameSceneRouter.go_to_resume(get_tree(), estado_reanudacion, _obtener_ruta_escena_retorno())
 
 
 func _on_superposicion_edit_perfil_presionado() -> void:
 	SaveManager.guardar_progreso_en_disco()
-	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _get_scene_to_return_to())
+	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _obtener_ruta_escena_retorno())
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
 func _on_overlay_save_pressed() -> void:
 	SaveManager.guardar_progreso_en_disco()
-	_refresh_hud()
+	_actualizar_hud()
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
 	SaveManager.reiniciar_todo_progreso()
-	_hide_profile_overlay()
+	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
-func _on_save_manager_changed(_status: Dictionary) -> void:
-	_refresh_hud()
+func _al_cambiar_estado_guardado(_status: Dictionary) -> void:
+	_actualizar_hud()
 
 
-func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
-	_refresh_hud()
+func _al_cambiar_perfil_guardado(_profile: Dictionary) -> void:
+	_actualizar_hud()
 
 
-func _show_profile_overlay() -> void:
+func _mostrar_superposicion_perfil() -> void:
 	profile_button.visible = false
 	profile_overlay.mostrar_superposicion()
 
 
-func _hide_profile_overlay() -> void:
+func _ocultar_superposicion_perfil() -> void:
 	profile_button.visible = true
 	profile_overlay.ocultar_superposicion()
 
 
-func _get_scene_to_return_to() -> String:
+func _obtener_ruta_escena_retorno() -> String:
 	if get_tree() == null or get_tree().current_scene == null:
 		return MAP_SCENE_PATH
-	var scene_path: String = str(get_tree().current_scene.scene_file_path).strip_edges()
-	return scene_path if not scene_path.is_empty() else MAP_SCENE_PATH
+	var ruta_escena: String = str(get_tree().current_scene.scene_file_path).strip_edges()
+	return ruta_escena if not ruta_escena.is_empty() else MAP_SCENE_PATH

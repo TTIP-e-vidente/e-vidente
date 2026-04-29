@@ -1,4 +1,4 @@
-﻿# 📋 Bitácora
+# 📋 Bitácora
 
 Cambios importantes que anotamos para no perder de vista.
 
@@ -19,6 +19,10 @@ Esta estructura está pensada para exposición: el histórico previo vive en Pre
 ---
 
 ## Lo Que Pasó Recientemente
+
+### [📦 CONTENIDO] 2026-04-29 | Contenido desacoplado de nodos (JSON)
+
+Logramos separar por completo el contenido de los desafíos de la lógica del mapa. Ahora, los nodos funcionan de forma dinámica mediante archivos JSON independientes, lo que nos permite sumar niveles y temáticas sin tocar una sola línea de código. Ya dejamos integrados los primeros 9 desafíos de celiaquía (quizzes y actividades de arrastrar)
 
 ### [🎵 AUDIO] 2026-04-27 | Música loop en sesiones prolongadas
 Gestor centralizado `MusicManager` que reinicia automáticamente la música al terminar. 
@@ -45,6 +49,7 @@ Actualiza 7 escenas y centraliza control de volumen y transiciones. Sin silencio
 - **2026-04-02** - **Save Local** - Persistencia inicial.
 
 ### 🔧 Infraestructura
+- **2026-04-29** - **Contenido JSON desacoplado** - Nodos jugables cargan contenido desde JSON. Soporte quiz_choice y drag_drop. Errores controlados.
 - **2026-04-14** - **CI Split** - Workflows organizados.
 - **2026-04-02** - **CI Setup** - GitHub Actions inicial.
 

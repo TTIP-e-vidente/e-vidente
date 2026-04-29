@@ -15,6 +15,7 @@ Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 | 🔍 Saber qué cambió en los últimos días | [Bitacora.md](Bitacora.md) - Resúmenes cortos |
 | 🗂️ Ver histórico anterior al POC | [Pre-POC.md](Pre-POC.md) |
 | 💾 Entender cómo funciona el guardado | [Persistencia-Local.md](Persistencia-Local.md) |
+| 🧩 Cargar nodos desde JSON | [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md) |
 | 🤔 Entender por qué se hizo algo así (solo cambios grandes) | [adr/](adr/) - Decisiones de alto impacto |
 | 🔧 Saber de CI y deploy | [CI.md](CI.md) |
 | 🎯 Necesito cambiar algo, ¿por dónde empiezo? | [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) - La tabla de "toco esto" |

@@ -1,15 +1,14 @@
 extends Node2D
-## Orquesta el mapa authored en escena: prepara nodos, calcula progreso y abre destinos.
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
+const NodeContentLoaderScript := preload("res://preguntas/NodeContentLoader.gd")
+const PlayableNodeRouterScript := preload("res://mapas/PlayableNodeRouter.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
-
-var escala_original := Vector2.ONE
 
 
 @onready var map_hud: CanvasLayer = $MapHud
@@ -21,252 +20,231 @@ func _ready() -> void:
 	GameSceneRouter.request_scene_preload(
 		GameTrackCatalog.obtener_ruta_escena_nivel(DEFAULT_TRACK_KEY)
 	)
-	_connect_back_signal()
-	_clear_transient_question_session()
-	_render_runtime_map()
-	_restore_saved_map_scroll()
-	_show_map_completion_if_needed()
-
-
-func _clear_transient_question_session() -> void:
-	Global.limpiar_activo_pregunta_sesion()
-
-
-func _connect_back_signal() -> void:
 	if map_hud != null and map_hud.has_signal("back_requested"):
-		map_hud.connect("back_requested", _on_back_requested)
+		map_hud.connect("back_requested", _al_pedir_volver)
+	Global.limpiar_sesion_nodo_jugable_activo()
+	_renderizar_mapa_runtime()
+	_restaurar_scroll_guardado_del_mapa()
+	_mostrar_completado_del_mapa_si_corresponde()
 
 
 # Render del mapa -------------------------------------------------------------
-func _render_runtime_map() -> void:
-	var runtime_map_nodes: Array[Node2D] = _get_runtime_playable_map_nodes()
+func _renderizar_mapa_runtime() -> void:
+	var runtime_map_nodes: Array[Node2D] = _obtener_nodos_jugables_runtime()
 	if runtime_map_nodes.is_empty():
 		push_warning("MapScene: MapBoard no expone nodos configurados en escena.")
 		return
 
-	var node_selected_handler := Callable(self, "_on_node_selected")
-	var previous_node_completed: bool = true
+	var handler_nodo_seleccionado := Callable(self, "_al_seleccionar_nodo")
+	var nodo_previo_completado: bool = true
 
-	for map_node in runtime_map_nodes:
-		previous_node_completed = _configure_runtime_map_node(
-			map_node,
-			previous_node_completed,
-			node_selected_handler
+	for nodo_visual in runtime_map_nodes:
+		nodo_previo_completado = _configurar_nodo_runtime(
+			nodo_visual,
+			nodo_previo_completado,
+			handler_nodo_seleccionado
 		)
 
 
-func _configure_runtime_map_node(
-	map_node: Node2D,
-	previous_node_completed: bool,
-	node_selected_handler: Callable
+func _configurar_nodo_runtime(
+	nodo_visual: Node2D,
+	nodo_previo_completado: bool,
+	handler_nodo_seleccionado: Callable
 ) -> bool:
-	var runtime_node_data: RefCounted = MapNodeDataScript.duplicate_from_map_node(map_node)
-	var node_completed: bool = _is_node_completed(runtime_node_data)
-	var node_unlocked: bool = previous_node_completed or node_completed
+	var datos_mapa_nodo: RefCounted = MapNodeDataScript.duplicar_desde_nodo_mapa(nodo_visual)
+	var esta_completado: bool = _nodo_esta_completado(datos_mapa_nodo)
+	var esta_desbloqueado: bool = nodo_previo_completado or esta_completado
 
-	map_node.position = runtime_node_data.node_position
-	map_node.apply_node_state(runtime_node_data, node_unlocked, node_completed)
-	if not map_node.is_connected("node_selected", node_selected_handler):
-		map_node.connect("node_selected", node_selected_handler)
+	nodo_visual.position = datos_mapa_nodo.node_position
+	nodo_visual.aplicar_estado_nodo(datos_mapa_nodo, esta_desbloqueado, esta_completado)
+	if not nodo_visual.is_connected("node_selected", handler_nodo_seleccionado):
+		nodo_visual.connect("node_selected", handler_nodo_seleccionado)
 
-	return node_completed
+	return esta_completado
 
 
-func _show_map_completion_if_needed() -> void:
-	var runtime_map_nodes: Array[Node2D] = _get_runtime_playable_map_nodes()
+func _mostrar_completado_del_mapa_si_corresponde() -> void:
+	var runtime_map_nodes: Array[Node2D] = _obtener_nodos_jugables_runtime()
 	if runtime_map_nodes.is_empty():
 		return
 
-	if not _are_all_runtime_map_nodes_completed(runtime_map_nodes):
+	if not _estan_todos_los_nodos_completados(runtime_map_nodes):
 		return
 
-	var completed_track_key: String = _resolve_map_track_key(runtime_map_nodes)
-	if completed_track_key.is_empty():
+	var clave_pista_completada: String = _resolver_clave_de_pista_del_mapa(runtime_map_nodes)
+	if clave_pista_completada.is_empty():
 		return
 
-	var completion_popup: Node = MAP_COMPLETION_SCENE.instantiate()
-	if completion_popup == null:
+	var popup_completado: Node = MAP_COMPLETION_SCENE.instantiate()
+	if popup_completado == null:
 		return
-	if completion_popup.has_method("configure_for_track"):
-		completion_popup.call("configure_for_track", completed_track_key)
-	add_child(completion_popup)
+	if popup_completado.has_method("configure_for_track"):
+		popup_completado.call("configure_for_track", clave_pista_completada)
+	add_child(popup_completado)
 
 
-func _are_all_runtime_map_nodes_completed(runtime_map_nodes: Array[Node2D]) -> bool:
-	for map_node in runtime_map_nodes:
-		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
-		if not _is_node_completed(runtime_node_data):
+func _estan_todos_los_nodos_completados(runtime_map_nodes: Array[Node2D]) -> bool:
+	for nodo_visual in runtime_map_nodes:
+		var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_nodo_mapa(nodo_visual)
+		if not _nodo_esta_completado(datos_mapa_nodo):
 			return false
 	return true
 
 
-func _resolve_map_track_key(runtime_map_nodes: Array[Node2D]) -> String:
-	for map_node in runtime_map_nodes:
-		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
-		var track_key: String = _obtener_clave_pista_valida(runtime_node_data)
+func _resolver_clave_de_pista_del_mapa(runtime_map_nodes: Array[Node2D]) -> String:
+	for nodo_visual in runtime_map_nodes:
+		var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_nodo_mapa(nodo_visual)
+		var track_key: String = _obtener_clave_pista_valida(datos_mapa_nodo)
 		if not track_key.is_empty():
 			return track_key
 	return DEFAULT_TRACK_KEY
 
 
-func get_playable_node_data() -> Array:
-	var playable_node_data: Array = []
-	for map_node in _get_runtime_playable_map_nodes():
-		playable_node_data.append(MapNodeDataScript.duplicate_from_map_node(map_node))
-	return playable_node_data
-
-
-func get_playable_node_definitions() -> Array[Dictionary]:
-	var node_definitions: Array[Dictionary] = []
-	for node_data in get_playable_node_data():
-		node_definitions.append(node_data.to_dictionary())
-	return node_definitions
-
-
-func get_nodes_container() -> Node2D:
-	if map_board != null and map_board.has_method("get_nodes_container"):
-		return map_board.call("get_nodes_container") as Node2D
+func obtener_contenedor_de_nodos() -> Node2D:
+	if map_board != null and map_board.has_method("obtener_contenedor_nodos"):
+		return map_board.call("obtener_contenedor_nodos") as Node2D
 	return null
 
 
-func _get_runtime_playable_map_nodes() -> Array[Node2D]:
+func _obtener_nodos_jugables_runtime() -> Array[Node2D]:
 	var runtime_map_nodes: Array[Node2D] = []
-	for map_node in _get_board_nodes():
-		var runtime_node_data: RefCounted = MapNodeDataScript.from_map_node(map_node)
-		if not _node_can_be_opened_from_map(runtime_node_data):
-			_hide_unconfigured_map_node(map_node)
+	for nodo_visual in _obtener_nodos_del_tablero():
+		var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_nodo_mapa(nodo_visual)
+		if not _nodo_se_puede_abrir_desde_mapa(datos_mapa_nodo):
+			push_warning("MapScene: Hay un nodo del mapa sin destino configurado.")
+			nodo_visual.visible = false
 			continue
 
-		map_node.visible = true
-		runtime_map_nodes.append(map_node)
+		nodo_visual.visible = true
+		runtime_map_nodes.append(nodo_visual)
 
 	return runtime_map_nodes
 
 
-func _hide_unconfigured_map_node(map_node: Node2D) -> void:
-	push_warning("MapScene: Hay un nodo del mapa sin destino configurado.")
-	map_node.visible = false
-
-
-func _get_board_nodes() -> Array[Node2D]:
-	var board_nodes: Array[Node2D] = []
+func _obtener_nodos_del_tablero() -> Array[Node2D]:
+	var nodos_tablero: Array[Node2D] = []
 	if map_board == null:
-		return board_nodes
+		return nodos_tablero
 
-	if not map_board.has_method("get_runtime_map_nodes"):
-		return board_nodes
+	if not map_board.has_method("obtener_nodos_runtime_mapa"):
+		return nodos_tablero
 
-	var raw_nodes: Array = map_board.call("get_runtime_map_nodes")
+	var nodos_crudos: Array = map_board.call("obtener_nodos_runtime_mapa")
 
-	for raw_node in raw_nodes:
-		var map_node: Node2D = raw_node as Node2D
-		if map_node != null:
-			board_nodes.append(map_node)
-	return board_nodes
+	for nodo_crudo in nodos_crudos:
+		var nodo_visual: Node2D = nodo_crudo as Node2D
+		if nodo_visual != null:
+			nodos_tablero.append(nodo_visual)
+	return nodos_tablero
 
 
 # Navegacion -----------------------------------------------------------------
-func _on_node_selected(selected_target: Variant) -> void:
-	_save_current_map_scroll()
-	var selected_node_data: RefCounted = MapNodeDataScript.from_selection_payload(selected_target)
-	if selected_node_data == null:
-		_open_direct_scene_path(selected_target)
+func _al_seleccionar_nodo(destino_seleccionado: Variant) -> void:
+	_guardar_scroll_actual_del_mapa()
+	var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_seleccion(destino_seleccionado)
+	if datos_mapa_nodo == null:
+		var ruta_escena: String = str(destino_seleccionado).strip_edges()
+		if ruta_escena.is_empty():
+			push_warning("MapScene: Se intento abrir un destino vacio desde el mapa.")
+			return
+
+		get_tree().change_scene_to_file(ruta_escena)
 		return
 
-	_open_map_node(selected_node_data)
+	_abrir_nodo_seleccionado(datos_mapa_nodo)
 
 
-func _open_direct_scene_path(selected_target: Variant) -> void:
-	var scene_path := str(selected_target).strip_edges()
-	if scene_path.is_empty():
-		push_warning("MapScene: Se intento abrir un destino vacio desde el mapa.")
+func _abrir_nodo_seleccionado(datos_mapa_nodo: RefCounted) -> void:
+	var clave_pista: String = _obtener_clave_pista_valida(datos_mapa_nodo)
+	if datos_mapa_nodo.es_nodo_jugable():
+		_abrir_nodo_jugable(clave_pista, datos_mapa_nodo)
 		return
 
-	get_tree().change_scene_to_file(scene_path)
-
-
-func _open_map_node(node_data: RefCounted) -> void:
-	var track_key: String = _obtener_clave_pista_valida(node_data)
-	if node_data.is_question():
-		_open_question_node(track_key, node_data)
-		return
-
-	_open_chapter_node(track_key, node_data)
-
-
-
-func _open_question_node(track_key: String, node_data: RefCounted) -> void:
-	Global.establecer_activo_pregunta_sesion(_build_question_session(track_key, node_data))
-	GameSceneRouter.go_to_questions(get_tree())
-
-
-func _open_chapter_node(track_key: String, node_data: RefCounted) -> void:
 	GameSceneRouter.go_to_track_level(
 		get_tree(),
-		track_key,
-		node_data.level_number
+		clave_pista,
+		datos_mapa_nodo.level_number
 	)
 
-func _build_question_session(track_key: String, node_data: RefCounted) -> Dictionary:
-	return {
-		"track_key": track_key,
-		"nivel_id": node_data.get_question_session_level_id(),
-		"question_key": node_data.question_key,
-		"question_resource_path": node_data.question_resource_path,
-		"return_scene_path": GameSceneRouter.MAP_SCENE_PATH
-	}
+
+func _abrir_nodo_jugable(clave_pista: String, datos_mapa_nodo: RefCounted) -> void:
+	var contexto_sesion: Dictionary = datos_mapa_nodo.crear_contexto_sesion(
+		clave_pista,
+		GameSceneRouter.MAP_SCENE_PATH
+	)
+	var ruta_json_nodo: String = str(contexto_sesion.get("node_json_path", ""))
+	var resultado_carga: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json_nodo)
+	
+	if not bool(resultado_carga.get("ok", false)):
+		push_warning("MapScene: usando fallback legacy. %s" % str(resultado_carga.get("error", "")))
+		_abrir_escena_jugable(GameSceneRouter.QUESTIONS_SCENE_PATH, contexto_sesion)
+		return
+
+	var datos_nodo: Dictionary = resultado_carga.get("data", {})
+	var modo_nodo: String = str(datos_nodo.get("mode", "")).strip_edges()
+	var ruta_escena: String = PlayableNodeRouterScript.obtener_escena_jugable(modo_nodo)
+	
+	if ruta_escena.is_empty():
+		push_error("MapScene: No se pudo resolver la escena para el modo: " + modo_nodo)
+		_abrir_escena_jugable(GameSceneRouter.QUESTIONS_SCENE_PATH, contexto_sesion)
+		return
+
+	contexto_sesion["node_mode"] = modo_nodo
+	contexto_sesion["node_data"] = datos_nodo
+	_abrir_escena_jugable(ruta_escena, contexto_sesion)
 
 
-func _save_current_map_scroll() -> void:
+func _abrir_escena_jugable(ruta_escena: String, contexto_sesion: Dictionary) -> void:
+	Global.establecer_sesion_nodo_jugable_activo(contexto_sesion)
+	if ruta_escena == GameSceneRouter.QUESTIONS_SCENE_PATH:
+		GameSceneRouter.go_to_questions(get_tree())
+		return
+	get_tree().change_scene_to_file(ruta_escena)
+
+
+func _guardar_scroll_actual_del_mapa() -> void:
 	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
-	map_view_state[MAP_VIEW_SCROLL_VERTICAL_KEY] = _get_current_map_scroll_vertical()
+	var scroll_vertical_actual: int = 0
+	if map_board != null and map_board.has_method("obtener_scroll_vertical"):
+		scroll_vertical_actual = int(map_board.call("obtener_scroll_vertical"))
+	map_view_state[MAP_VIEW_SCROLL_VERTICAL_KEY] = scroll_vertical_actual
 	Global.establecer_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY, map_view_state)
 
 
-func _restore_saved_map_scroll() -> void:
+func _restaurar_scroll_guardado_del_mapa() -> void:
 	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
-	var saved_scroll_vertical: int = int(map_view_state.get(MAP_VIEW_SCROLL_VERTICAL_KEY, 0))
-	_set_current_map_scroll_vertical(saved_scroll_vertical)
+	var scroll_vertical_guardado: int = int(map_view_state.get(MAP_VIEW_SCROLL_VERTICAL_KEY, 0))
+	if map_board != null and map_board.has_method("establecer_scroll_vertical"):
+		map_board.call("establecer_scroll_vertical", scroll_vertical_guardado)
 
 
-func _get_current_map_scroll_vertical() -> int:
-	if map_board != null and map_board.has_method("get_scroll_vertical_value"):
-		return int(map_board.call("get_scroll_vertical_value"))
-	return 0
-
-
-func _set_current_map_scroll_vertical(scroll_value: int) -> void:
-	if map_board != null and map_board.has_method("set_scroll_vertical_value"):
-		map_board.call("set_scroll_vertical_value", scroll_value)
-
-
-func _node_can_be_opened_from_map(node_data: RefCounted) -> bool:
-	if node_data == null:
+func _nodo_se_puede_abrir_desde_mapa(datos_mapa_nodo: RefCounted) -> bool:
+	if datos_mapa_nodo == null:
 		return false
-	if not node_data.has_runtime_destination():
+	if not datos_mapa_nodo.tiene_destino_runtime():
 		return false
-	if node_data.is_question():
+	if datos_mapa_nodo.es_nodo_jugable():
 		return true
-	return node_data.has_chapter_destination() and GameTrackCatalog.tiene_pista(
-		_obtener_clave_pista_valida(node_data)
+	return datos_mapa_nodo.tiene_destino_capitulo() and GameTrackCatalog.tiene_pista(
+		_obtener_clave_pista_valida(datos_mapa_nodo)
 	)
 
 
 # Progreso -------------------------------------------------------------------
-func _is_node_completed(node_data: RefCounted) -> bool:
-	var track_key: String = _obtener_clave_pista_valida(node_data)
-	if node_data.is_question():
-		return Global.es_pregunta_completado(track_key, node_data.question_key)
-	return Global.es_nivel_completado(track_key, node_data.level_number)
+func _nodo_esta_completado(datos_mapa_nodo: RefCounted) -> bool:
+	var track_key: String = _obtener_clave_pista_valida(datos_mapa_nodo)
+	if datos_mapa_nodo.es_nodo_jugable():
+		return Global.es_nodo_jugable_completado(track_key, datos_mapa_nodo.resolver_clave_nodo())
+	return Global.es_nivel_completado(track_key, datos_mapa_nodo.level_number)
 
 
-func _obtener_clave_pista_valida(node_data: RefCounted) -> String:
-	var raw_track_key: String = node_data.get_track_key_or_default(DEFAULT_TRACK_KEY)
-	if GameTrackCatalog.tiene_pista(raw_track_key):
-		return raw_track_key
+func _obtener_clave_pista_valida(datos_mapa_nodo: RefCounted) -> String:
+	var clave_pista_cruda: String = datos_mapa_nodo.obtener_clave_pista_o_default(DEFAULT_TRACK_KEY)
+	if GameTrackCatalog.tiene_pista(clave_pista_cruda):
+		return clave_pista_cruda
 	return DEFAULT_TRACK_KEY
 
 
 # Salida ---------------------------------------------------------------------
-func _on_back_requested() -> void:
+func _al_pedir_volver() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())
