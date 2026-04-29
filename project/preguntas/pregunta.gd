@@ -39,20 +39,20 @@ var pregunta_actual: Preguntas:
 func _ready() -> void:
 	puntaje = 0
 	_recolectar_botones_respuesta()
-	_configurar_quiz_desde_sesion()
+	configurar_quiz_desde_sesion()
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	if _cantidad_de_preguntas() > 1:
 		quiz.theme.shuffle()
-	_mostrar_pregunta()
+	mostrar_pregunta()
 
 
 func _recolectar_botones_respuesta() -> void:
 	botones.clear()
 	_plantillas_botones_respuesta.clear()
-	for raw_button in _contenedor_respuestas.get_children():
-		var boton_respuesta: Button = raw_button as Button
+	for boton_crudo in _contenedor_respuestas.get_children():
+		var boton_respuesta: Button = boton_crudo as Button
 		if boton_respuesta == null:
 			continue
 		var boton_plantilla: Button = boton_respuesta.duplicate() as Button
@@ -63,9 +63,9 @@ func _recolectar_botones_respuesta() -> void:
 
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
-	boton_respuesta.pressed.connect(_manejar_respuesta.bind(boton_respuesta))
+	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
 
-func _configurar_quiz_desde_sesion() -> void:
+func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
 	_mensaje_error_bloqueante = ""
 
@@ -91,17 +91,17 @@ func _reiniciar_sesion_nodo() -> void:
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
 	_aplicar_contexto_sesion(contexto_sesion)
 	var ruta_json: String = str(contexto_sesion.get("node_json_path", "")).strip_edges()
-	var quiz_result: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
+	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
 		datos_nodo,
 		ruta_json
 	)
-	if not bool(quiz_result.get("ok", false)):
+	if not bool(resultado_quiz.get("ok", false)):
 		_establecer_mensaje_de_error(
-			str(quiz_result.get("error", "No se pudo adaptar el nodo quiz_choice."))
+			str(resultado_quiz.get("error", "No se pudo adaptar el nodo quiz_choice."))
 		)
 		return false
 
-	quiz = quiz_result.get("data", {}).get("theme") as ThemePreg
+	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
 	return true
 
 
@@ -128,7 +128,7 @@ func _puede_iniciar_quiz() -> bool:
 func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
-func _mostrar_pregunta() -> void:
+func mostrar_pregunta() -> void:
 	bloqueado = false
 
 	if quiz == null:
@@ -209,7 +209,7 @@ func _limpiar_media_de_pregunta() -> void:
 	if _visual_panel != null:
 		_visual_panel.hide()
 
-func _manejar_respuesta(boton: Button) -> void:
+func manejar_respuesta(boton: Button) -> void:
 	if bloqueado:
 		return
 
@@ -226,7 +226,7 @@ func _manejar_respuesta(boton: Button) -> void:
 
 	await get_tree().create_timer(1.2).timeout
 	indice_pregunta_actual += 1
-	_mostrar_pregunta()
+	mostrar_pregunta()
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
@@ -253,7 +253,7 @@ func _finalizar_quiz() -> void:
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
 	if _tiene_sesion_de_mapa and cantidad_preguntas <= 1:
 		_guardar_progreso_de_mapa(cantidad_preguntas)
-		_volver_al_mapa()
+		volver_al_mapa()
 		return
 
 	_mostrar_panel_final_del_quiz(cantidad_preguntas)
@@ -333,12 +333,12 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 	_mensaje_error_bloqueante = mensaje_limpio
 
 func _on_jugar_nuevamente_pressed() -> void:
-	_volver_al_mapa()
+	volver_al_mapa()
 
 func _on_atrás_pressed() -> void:
-	_volver_al_mapa()
+	volver_al_mapa()
 
-func _volver_al_mapa() -> void:
+func volver_al_mapa() -> void:
 	_limpiar_media_de_pregunta()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
