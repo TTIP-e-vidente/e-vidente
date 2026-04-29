@@ -131,6 +131,15 @@ run_gameplay_smoke() {
 }
 
 
+run_question_json_contract() {
+	run_step \
+		"02-node-json-contract" \
+		"Playable node JSON contract test" \
+		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
+		--headless --path project -s res://tests/node_content_loader_test.gd
+}
+
+
 run_codebase_suite() {
 	run_import_headless
 
@@ -142,31 +151,34 @@ run_codebase_suite() {
 
 run_smoke_suite() {
 	run_import_headless
+	run_question_json_contract
 	run_gameplay_smoke
 
 	write_success_summary \
 		"smoke" \
-		"import headless + gameplay smoke"
+		"import headless + question json contract + gameplay smoke"
 }
 
 
 run_ci_suite() {
 	run_import_headless
+	run_question_json_contract
 	run_gameplay_smoke
 
 	write_success_summary \
 		"ci" \
-		"import headless + gameplay smoke"
+		"import headless + question json contract + gameplay smoke"
 }
 
 
 run_full_suite() {
 	run_import_headless
+	run_question_json_contract
 	run_gameplay_smoke
 
 	write_success_summary \
 		"full" \
-		"import headless + gameplay smoke"
+		"import headless + question json contract + gameplay smoke"
 }
 
 run_godot_validation() {

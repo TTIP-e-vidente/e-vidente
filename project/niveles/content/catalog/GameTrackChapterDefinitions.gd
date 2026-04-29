@@ -193,52 +193,51 @@ const RAW_CHAPTERS_BY_TRACK := {
 static func construir_catalogo_capitulo_pista() -> Dictionary:
 	var chapters_by_track: Dictionary = {}
 	for track_key in GameTrackCatalog.obtener_claves_pista():
-		var track_chapters: Dictionary = {}
-		var raw_chapters: Variant = RAW_CHAPTERS_BY_TRACK.get(track_key, [])
-		var chapter_list: Array = raw_chapters if raw_chapters is Array else []
-
-		for chapter_index in range(chapter_list.size()):
-			var raw_chapter_definition: Variant = chapter_list[chapter_index]
-			if not raw_chapter_definition is Dictionary:
-				continue
-
-			var chapter_number: int = chapter_index + 1
-			var chapter_definition: Dictionary = raw_chapter_definition
-			var meal_key: String = str(chapter_definition.get("meal_key", ""))
-			var teaching_key: String = str(chapter_definition.get("teaching_key", ""))
-			var category: String = str(chapter_definition.get("category", ""))
-			var negative_count: int = int(chapter_definition.get("negative_count", 0))
-			var positive_count: int = int(chapter_definition.get("positive_count", 0))
-			var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
-				track_key,
-				meal_key,
-				teaching_key
-			)
-
-			track_chapters[chapter_number] = {
-				"runs": [
-					{
-						"mechanic_type": PLATE_SORT_MECHANIC_TYPE,
-						"mechanic_payload": {
-							"negative_count": negative_count,
-							"positive_count": positive_count,
-							"category": category
-						},
-						"negative_count": negative_count,
-						"positive_count": positive_count,
-						"teaching_key": teaching_key,
-						"meal_texture_path": str(asset_paths.get("meal_texture_path", "")),
-						"condition_texture_path": str(
-							asset_paths.get("condition_texture_path", "")
-						),
-						"teaching_texture_path": str(
-							asset_paths.get("teaching_texture_path", "")
-						),
-						"category": category
-					}
-				]
-			}
-
-		chapters_by_track[track_key] = track_chapters
+		chapters_by_track[track_key] = _construir_capitulos_de_pista(track_key)
 
 	return chapters_by_track
+
+
+static func _construir_capitulos_de_pista(track_key: String) -> Dictionary:
+	var capitulos: Dictionary = {}
+	var raw_chapters: Variant = RAW_CHAPTERS_BY_TRACK.get(track_key, [])
+	var chapter_list: Array = raw_chapters if raw_chapters is Array else []
+
+	for chapter_index in range(chapter_list.size()):
+		var raw_chapter_definition: Variant = chapter_list[chapter_index]
+		if not raw_chapter_definition is Dictionary:
+			continue
+		capitulos[chapter_index + 1] = {
+			"runs": [_construir_corrida(track_key, raw_chapter_definition as Dictionary)]
+		}
+
+	return capitulos
+
+
+static func _construir_corrida(track_key: String, chapter_definition: Dictionary) -> Dictionary:
+	var meal_key: String = str(chapter_definition.get("meal_key", "")).strip_edges()
+	var teaching_key: String = str(chapter_definition.get("teaching_key", "")).strip_edges()
+	var category: String = str(chapter_definition.get("category", "")).strip_edges()
+	var negative_count: int = int(chapter_definition.get("negative_count", 0))
+	var positive_count: int = int(chapter_definition.get("positive_count", 0))
+	var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
+		track_key,
+		meal_key,
+		teaching_key
+	)
+
+	return {
+		"mechanic_type": PLATE_SORT_MECHANIC_TYPE,
+		"mechanic_payload": {
+			"negative_count": negative_count,
+			"positive_count": positive_count,
+			"category": category
+		},
+		"negative_count": negative_count,
+		"positive_count": positive_count,
+		"teaching_key": teaching_key,
+		"meal_texture_path": str(asset_paths.get("meal_texture_path", "")),
+		"condition_texture_path": str(asset_paths.get("condition_texture_path", "")),
+		"teaching_texture_path": str(asset_paths.get("teaching_texture_path", "")),
+		"category": category
+	}

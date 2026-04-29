@@ -42,7 +42,7 @@ const TEACHING_TEXTURE_PATHS := {
 	"keto_6": "res://assets-sistema/ensenanza/ensenanza-keto-6.png"
 }
 
-static var _texture_cache: Dictionary = {}
+static var _cache_texturas: Dictionary = {}
 
 
 static func construir_rutas_activos_corrida(
@@ -50,30 +50,13 @@ static func construir_rutas_activos_corrida(
 	meal_key: String,
 	teaching_key: String
 ) -> Dictionary:
+	var track_definition: Dictionary = GameTrackCatalog.obtener_definicion_pista(track_key)
+	var condition_key: String = str(track_definition.get("condition_texture_key", "")).strip_edges()
 	return {
-		"meal_texture_path": obtener_ruta_textura_comida(meal_key),
-		"condition_texture_path": obtener_ruta_textura_condicion_para_pista(track_key),
-		"teaching_texture_path": obtener_ruta_textura_ensenanza(teaching_key)
+		"meal_texture_path": _buscar_ruta(MEAL_TEXTURE_PATHS, meal_key),
+		"condition_texture_path": _buscar_ruta(CONDITION_TEXTURE_PATHS, condition_key),
+		"teaching_texture_path": _buscar_ruta(TEACHING_TEXTURE_PATHS, teaching_key)
 	}
-
-
-static func obtener_ruta_textura_comida(meal_key: String) -> String:
-	return _buscar_ruta(MEAL_TEXTURE_PATHS, meal_key)
-
-
-static func obtener_ruta_textura_condicion_para_pista(track_key: String) -> String:
-	var track_definition := GameTrackCatalog.obtener_definicion_pista(track_key)
-	return obtener_ruta_textura_condicion(
-		str(track_definition.get("condition_texture_key", "")).strip_edges()
-	)
-
-
-static func obtener_ruta_textura_condicion(condition_key: String) -> String:
-	return _buscar_ruta(CONDITION_TEXTURE_PATHS, condition_key)
-
-
-static func obtener_ruta_textura_ensenanza(teaching_key: String) -> String:
-	return _buscar_ruta(TEACHING_TEXTURE_PATHS, teaching_key)
 
 
 static func resolver_textura(texture_ref: Variant) -> Texture2D:
@@ -82,15 +65,15 @@ static func resolver_textura(texture_ref: Variant) -> Texture2D:
 	var texture_path: String = str(texture_ref).strip_edges()
 	if texture_path.is_empty():
 		return null
-	if _texture_cache.has(texture_path):
-		return _texture_cache[texture_path]
+	if _cache_texturas.has(texture_path):
+		return _cache_texturas[texture_path]
 	var texture: Texture2D = load(texture_path) as Texture2D
-	_texture_cache[texture_path] = texture
+	_cache_texturas[texture_path] = texture
 	return texture
 
 
 static func limpiar_cache_texturas() -> void:
-	_texture_cache.clear()
+	_cache_texturas.clear()
 
 
 static func _buscar_ruta(path_map: Dictionary, raw_key: String) -> String:

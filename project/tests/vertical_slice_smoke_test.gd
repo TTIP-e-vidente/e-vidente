@@ -35,13 +35,13 @@ func _run() -> void:
 	await _call_and_expect("_on_iniciar_presionado", "res://niveles/selector.tscn", "Selector")
 	await _call_and_expect("_on_celiaquia_presionado", MAP_SCENE, "Mapa")
 	if not failed:
-		var nodes_container := current_scene.call("get_nodes_container") as Node2D
-		_check(nodes_container != null, "El mapa deberia exponer get_nodes_container")
+		var nodes_container := current_scene.call("obtener_contenedor_de_nodos") as Node2D
+		_check(nodes_container != null, "El mapa deberia exponer obtener_contenedor_de_nodos")
 		if nodes_container != null:
 			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
 
 	if not failed:
-		await _call_and_expect("_on_node_selected", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
+		await _call_and_expect("_al_seleccionar_nodo", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
 
 
 	if not failed:

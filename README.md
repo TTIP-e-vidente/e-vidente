@@ -80,3 +80,35 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 ## 📌 Estado del proyecto
 
 🚧 En desarrollo
+
+## Cómo leer el flujo de nodos jugables
+
+1. El jugador toca un nodo en `project/mapas/MapScene.gd`.
+2. `MapScene.gd` recibe la selección y pide a `MapNodeData.gd` un `contexto_sesion`.
+3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
+4. `project/preguntas/NodeContentLoader.gd` carga el JSON y lo deja en el contrato oficial `{ ok, data, error }`.
+5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
+6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
+7. `project/niveles/global.gd` conserva la sesión activa del nodo y el progreso necesario para volver.
+8. La escena jugable termina y vuelve a `return_scene_path`, que normalmente es el mapa.
+
+Para agregar un nodo nuevo:
+
+- autorizarlo visualmente en el mapa con `LevelNode.tscn` o el board del mapa.
+- crear su JSON en `project/niveles/nodos/<track_key>/<node_key>.json`.
+
+Para agregar una modalidad nueva:
+
+- definir su `mode` y validar su `content` en `NodeContentLoader.gd` y `NodeContentValidator.gd`.
+- rutear la escena en `PlayableNodeRouter.gd` y crear la nueva escena jugable.
+
+Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como API nueva.
+
+## Estructura de contenido jugable
+
+- `project/niveles/nodos/celiaquia/`: contenido real de nodos jugables del track.
+- `project/niveles/nodos/ejemplos/`: ejemplos oficiales y legacy de referencia.
+- `project/preguntas/`: modalidad `quiz_choice` y su adaptador temporal, no el sistema completo.
+- `project/mapas/`: mapa, routing y contexto de apertura.
+- `project/mapas/drag_drop/`: modalidad `drag_drop`.
+- `mode` define la modalidad; `content` contiene solo los datos especificos de esa modalidad.

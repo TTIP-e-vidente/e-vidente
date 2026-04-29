@@ -1,0 +1,10 @@
+{
+	"id": "modo_no_soportado",
+	"theme": "tests",
+	"title": "Modo no soportado",
+	"difficulty": "easy",
+	"mode": "food_choice",
+	"content": {
+		"instruction": "Modo futuro"
+	}
+}

@@ -1,43 +1,39 @@
 extends Node2D
 
-@onready var scroll_container: ScrollContainer = $ScrollContainer
-@onready var nodes_container: Node2D = $ScrollContainer/Contenido/NodesContainer
+@onready var contenedor_scroll: ScrollContainer = $ScrollContainer
+@onready var contenedor_nodos: Node2D = $ScrollContainer/Contenido/NodesContainer
 
 
-func get_nodes_container() -> Node2D:
-	return nodes_container
+func obtener_contenedor_nodos() -> Node2D:
+	return contenedor_nodos
 
 
-func get_scroll_vertical_value() -> int:
-	if scroll_container == null:
+func obtener_scroll_vertical() -> int:
+	if contenedor_scroll == null:
 		return 0
-	return int(scroll_container.scroll_vertical)
+	return int(contenedor_scroll.scroll_vertical)
 
 
-func set_scroll_vertical_value(scroll_value: int) -> void:
-	if scroll_container == null:
+func establecer_scroll_vertical(scroll_value: int) -> void:
+	if contenedor_scroll == null:
 		return
-	var max_scroll: int = int(scroll_container.get_v_scroll_bar().max_value)
-	scroll_container.scroll_vertical = clampi(scroll_value, 0, max_scroll)
+	var max_scroll: int = int(contenedor_scroll.get_v_scroll_bar().max_value)
+	contenedor_scroll.scroll_vertical = clampi(scroll_value, 0, max_scroll)
 
 
-func get_runtime_map_nodes() -> Array[Node2D]:
-	var ordered_map_nodes: Array[Node2D] = []
-	for child in nodes_container.get_children():
-		var map_node: Node2D = child as Node2D
-		if not _is_runtime_map_node(map_node):
+func obtener_nodos_runtime_mapa() -> Array[Node2D]:
+	var nodos_ordenados: Array[Node2D] = []
+	for nodo_hijo in contenedor_nodos.get_children():
+		var nodo_mapa: Node2D = nodo_hijo as Node2D
+		if nodo_mapa == null:
 			continue
-		ordered_map_nodes.append(map_node)
+		if not nodo_mapa.has_method("crear_datos_runtime_nodo"):
+			continue
+		nodos_ordenados.append(nodo_mapa)
 
-	ordered_map_nodes.sort_custom(Callable(self, "_sort_by_nivel_id"))
-	return ordered_map_nodes
-
-
-func _is_runtime_map_node(map_node: Node2D) -> bool:
-	if map_node == null:
-		return false
-	return map_node.has_method("build_runtime_node_data")
+	nodos_ordenados.sort_custom(Callable(self, "_ordenar_por_nivel_id"))
+	return nodos_ordenados
 
 
-func _sort_by_nivel_id(a: Node2D, b: Node2D) -> bool:
+func _ordenar_por_nivel_id(a: Node2D, b: Node2D) -> bool:
 	return int(a.get("nivel_id")) < int(b.get("nivel_id"))
