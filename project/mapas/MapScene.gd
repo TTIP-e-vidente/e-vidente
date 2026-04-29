@@ -173,13 +173,14 @@ func _abrir_nodo_jugable(clave_pista: String, datos_mapa_nodo: RefCounted) -> vo
 		GameSceneRouter.MAP_SCENE_PATH
 	)
 	var ruta_json_nodo: String = str(contexto_sesion.get("node_json_path", ""))
-	var datos_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json_nodo)
+	var resultado_carga: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json_nodo)
 	
-	if datos_nodo.is_empty():
-		push_warning("MapScene: usando fallback legacy por fallo de JSON.")
+	if not bool(resultado_carga.get("ok", false)):
+		push_warning("MapScene: usando fallback legacy. %s" % str(resultado_carga.get("error", "")))
 		_abrir_escena_jugable(GameSceneRouter.QUESTIONS_SCENE_PATH, contexto_sesion)
 		return
 
+	var datos_nodo: Dictionary = resultado_carga.get("data", {})
 	var modo_nodo: String = str(datos_nodo.get("mode", "")).strip_edges()
 	var ruta_escena: String = PlayableNodeRouterScript.obtener_escena_jugable(modo_nodo)
 	

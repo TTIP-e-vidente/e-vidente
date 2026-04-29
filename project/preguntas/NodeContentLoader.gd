@@ -11,7 +11,7 @@ const MODE_DRAG_DROP := "drag_drop"
 static func cargar_contenido_nodo(ruta_json_nodo: String) -> Dictionary:
 	var lectura_json: Dictionary = _leer_archivo_json(ruta_json_nodo)
 	if lectura_json.is_empty():
-		return {}
+		return _resultado_error("No se pudo leer el JSON: %s" % ruta_json_nodo)
 
 	var datos_nodo: Dictionary = NormalizadorLegacy.normalizar_datos_nodo(lectura_json)
 	var mensaje_error: String = ValidadorContenido.validar_datos_nodo(datos_nodo)
@@ -20,9 +20,17 @@ static func cargar_contenido_nodo(ruta_json_nodo: String) -> Dictionary:
 		
 	if not mensaje_error.is_empty():
 		push_error("NodeContentLoader: " + mensaje_error)
-		return {}
+		return _resultado_error(mensaje_error)
 
-	return ValidadorContenido.limpiar_datos_nodo(datos_nodo)
+	return _resultado_ok(ValidadorContenido.limpiar_datos_nodo(datos_nodo))
+
+
+static func _resultado_ok(datos_nodo: Dictionary) -> Dictionary:
+	return { "ok": true, "data": datos_nodo, "error": "" }
+
+
+static func _resultado_error(mensaje: String) -> Dictionary:
+	return { "ok": false, "data": {}, "error": mensaje }
 
 
 static func _leer_archivo_json(ruta_json_nodo: String) -> Dictionary:
