@@ -17,12 +17,14 @@ const GameStreakTrackerScript      := preload(
 const GameStreakDebugScript := preload(
 	"res://niveles/progress/GameStreakDebug.gd"
 )
+const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
 const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 	"res://niveles/level_completion_black_and_white.gdshader"
 )
 const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
 const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
 const COMPLETION_DIM_COLOR := Color(0.72, 0.72, 0.72, 1.0)
+const CONTINUADOR_POSICION_FLECHA_DERECHA := Vector2(882.0, 632.0)
 
 ## --- Guardado rápido ---
 
@@ -50,8 +52,6 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
-@onready var contador_siguiente_label: Label         = $ContadorSiguienteLabel
-@onready var timer_siguiente_nodo: Timer             = $TimerSiguienteNodo
 
 ## Guardado rápido (UI)
 @onready var save_progress_button:  Button         = $SaveProgressButton
@@ -76,11 +76,12 @@ var _usa_flujo_mapa := false
 var _node_key_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
-var tiempo_restante := 5
 var ya_continuo := false
+var continuador: ContinueCountdown = null
 
 
 func _ready() -> void:
+	_crear_continuador()
 	_iniciar_flujo_nivel()
 	_configurar_retroalimentacion_guardado_rapida()
 
@@ -170,8 +171,8 @@ func _configurar_retroalimentacion_guardado_rapida() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
-	if is_instance_valid(timer_siguiente_nodo):
-		timer_siguiente_nodo.stop()
+	if continuador != null:
+		continuador.detener()
 
 
 ## --- Navegación y gameplay ---
@@ -208,7 +209,6 @@ func completar_corrida_actual() -> void:
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
 		mostrar_continuacion()
-		_mostrar_completado_corrida_retroalimentacion()
 		run_completed.emit()
 		return
 
@@ -275,6 +275,18 @@ func _on_adelante_presionado() -> void:
 
 ## --- Continuación desde mapa ---
 
+func _crear_continuador() -> void:
+	continuador = ContinueCountdownScene.instantiate() as ContinueCountdown
+	add_child(continuador)
+	ubicar_continuador()
+	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
+	continuador.ocultar()
+
+
+func ubicar_continuador() -> void:
+	continuador.position = CONTINUADOR_POSICION_FLECHA_DERECHA
+
+
 func _guardar_progreso_de_mapa() -> void:
 	if _node_key_actual.is_empty():
 		return
@@ -282,33 +294,13 @@ func _guardar_progreso_de_mapa() -> void:
 
 
 func mostrar_continuacion() -> void:
-	tiempo_restante = 5
 	ya_continuo = false
-	next_chapter_button.disabled = false
-	next_chapter_button.show()
-	contador_siguiente_label.show()
-	contador_siguiente_label.move_to_front()
-	actualizar_texto_contador()
-	timer_siguiente_nodo.stop()
-	timer_siguiente_nodo.start()
-
-
-func actualizar_texto_contador() -> void:
-	contador_siguiente_label.text = "Próximo juego en %ds..." % tiempo_restante
+	next_chapter_button.hide()
+	continuador.iniciar(5)
 
 
 func _on_timer_siguiente_nodo_timeout() -> void:
-	if ya_continuo or not is_inside_tree():
-		timer_siguiente_nodo.stop()
-		return
-
-	tiempo_restante -= 1
-	if tiempo_restante <= 0:
-		timer_siguiente_nodo.stop()
-		continuar_al_siguiente_nodo()
-		return
-
-	actualizar_texto_contador()
+	continuar_al_siguiente_nodo()
 
 
 func continuar_al_siguiente_nodo() -> void:
@@ -316,7 +308,8 @@ func continuar_al_siguiente_nodo() -> void:
 		return
 
 	ya_continuo = true
-	timer_siguiente_nodo.stop()
+	if continuador != null:
+		continuador.detener()
 
 	if _node_key_actual.is_empty():
 		_ir_a_destino_posterior_finalizacion()
@@ -501,11 +494,10 @@ func _bloquear_completado_corrida() -> void:
 func _restaurar_estado_posterior_finalizacion() -> void:
 	restaurar_finalizacion_visual_estado()
 	_establecer_interacciones_jugabilidad_habilitadas(true)
+	next_chapter_button.show()
 	teaching_sprite.hide()
-	if is_instance_valid(contador_siguiente_label):
-		contador_siguiente_label.hide()
-	if is_instance_valid(timer_siguiente_nodo):
-		timer_siguiente_nodo.stop()
+	if continuador != null:
+		continuador.ocultar()
 
 
 func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
@@ -572,7 +564,9 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		or save_feedback_backdrop.is_ancestor_of(runtime_node)
 	):
 		return true
-	if is_instance_valid(contador_siguiente_label) and runtime_node == contador_siguiente_label:
+	if is_instance_valid(continuador) and (
+		runtime_node == continuador or continuador.is_ancestor_of(runtime_node)
+	):
 		return true
 	return false
 

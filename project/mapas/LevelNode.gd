@@ -1,7 +1,7 @@
 @tool
 extends Node2D
 
-signal node_selected(selected_target: Variant)
+signal nodo_seleccionado(datos_mapa_nodo: RefCounted)
 
 const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
 const NODE_KIND_CHAPTER := "chapter"
@@ -53,8 +53,8 @@ var _tipo_nodo_configurado: String = NODE_KIND_CHAPTER
 var _texto_label_configurado: String = "Nodo"
 var _textura_icono_configurada: Texture2D = null
 
-@onready var boton: TextureButton = $Button
-@onready var icono: Sprite2D = $Icon
+@onready var boton_nodo: TextureButton = $Button
+@onready var icono_estado: Sprite2D = $Icon
 
 
 # Ciclo de vida ---------------------------------------------------------------
@@ -106,7 +106,7 @@ func _get(property: StringName) -> Variant:
 	return null
 
 
-func aplicar_estado_nodo(datos_mapa_nodo: RefCounted, desbloqueado_nuevo: bool, completado_nuevo: bool = false) -> void:
+func configurar(datos_mapa_nodo: RefCounted, desbloqueado_nuevo: bool, completado_nuevo: bool = false) -> void:
 	desbloqueado = desbloqueado_nuevo
 	_esta_completado = completado_nuevo
 	_datos_nodo_runtime = datos_mapa_nodo.duplicar_datos()
@@ -120,19 +120,19 @@ func _on_button_pressed() -> void:
 		return
 
 	var datos_nodo_actual: RefCounted = _obtener_datos_nodo_actual()
-	if datos_nodo_actual == null or not datos_nodo_actual.tiene_destino_runtime():
+	if datos_nodo_actual == null or not datos_nodo_actual.esta_disponible():
 		push_warning("LevelNode: no hay destino asignado para el nodo %d" % nivel_id)
 		return
 
 	_click_en_curso = true
 	_animar_click()
 	await get_tree().create_timer(0.25).timeout
-	node_selected.emit(datos_nodo_actual)
+	nodo_seleccionado.emit(datos_nodo_actual)
 	_click_en_curso = false
 
 
 func _on_button_mouse_entered() -> void:
-	if boton.disabled or _esta_hover or Engine.is_editor_hint():
+	if boton_nodo.disabled or _esta_hover or Engine.is_editor_hint():
 		return
 	_esta_hover = true
 	_animar_escala_hasta(escala_base * 1.08)
@@ -161,14 +161,14 @@ func _aplicar_estado_interaccion() -> void:
 	if not is_node_ready():
 		return
 	if Engine.is_editor_hint():
-		boton.disabled = false
-		boton.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		boton_nodo.disabled = false
+		boton_nodo.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		return
 
-	boton.disabled = not desbloqueado or _esta_completado
-	boton.mouse_default_cursor_shape = (
+	boton_nodo.disabled = not desbloqueado or _esta_completado
+	boton_nodo.mouse_default_cursor_shape = (
 		Control.CURSOR_ARROW
-		if boton.disabled
+		if boton_nodo.disabled
 		else Control.CURSOR_POINTING_HAND
 	)
 
@@ -185,7 +185,7 @@ func _actualizar_vista_nodo() -> void:
 		return
 
 	var datos_nodo_actual: RefCounted = _obtener_datos_nodo_actual()
-	icono.texture = _resolver_textura_icono(datos_nodo_actual)
+	icono_estado.texture = _resolver_textura_icono(datos_nodo_actual)
 	_aplicar_estado_interaccion()
 	_aplicar_color_por_progreso()
 

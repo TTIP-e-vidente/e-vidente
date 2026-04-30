@@ -2,12 +2,15 @@ extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
+const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
 const DEFAULT_RETURN_SCENE_PATH := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
 const CONTENT_ERROR_BODY_FONT_SIZE := 26
+const CONTINUADOR_TAMANIO := Vector2(300.0, 140.0)
+const CONTINUADOR_MARGEN := Vector2(40.0, 30.0)
 
 @export var quiz: ThemePreg
 @export var nivel_id: int = 2
@@ -18,13 +21,13 @@ var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
 var ya_continuo: bool = false
-var tiempo_restante: int = 5
 
 var _clave_nodo_activo: String = ""
 var _tiene_sesion_de_mapa: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE_PATH
 var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
+var continuador: ContinueCountdown = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -34,18 +37,17 @@ var pregunta_actual: Preguntas:
 @onready var _imagen_pregunta: TextureRect = $Contenido/Informacion/Visual/Imagen
 @onready var _contenedor_respuestas: VBoxContainer = $Contenido/Preguntas
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
+@onready var _contenido: Control = $Contenido
 @onready var _panel_final: ColorRect = $Contenido/GameOver
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
-@onready var _contenedor_continuacion: VBoxContainer = $Contenido/ContinuacionAutomatica
-@onready var _flecha_derecha: Button = $Contenido/ContinuacionAutomatica/FlechaDerecha
-@onready var _contador_siguiente_label: Label = $Contenido/ContinuacionAutomatica/ContadorSiguienteLabel
-@onready var _timer_siguiente_nodo: Timer = $TimerSiguienteNodo
+@onready var _contenedor_continuacion_legacy: VBoxContainer = $Contenido/ContinuacionAutomatica
 
 func _ready() -> void:
 	puntaje = 0
-	_ocultar_continuacion_automatica()
+	_crear_continuador()
+	_ocultar_continuacion_legacy()
 	_recolectar_botones_respuesta()
 	configurar_quiz_desde_sesion()
 	if not _puede_iniciar_quiz():
@@ -283,14 +285,6 @@ func _finalizar_quiz() -> void:
 	mostrar_ensenanza_final()
 
 
-func _mostrar_panel_final_del_quiz(cantidad_preguntas: int) -> void:
-	if cantidad_preguntas <= 1:
-		_configurar_panel_final("", "Muy bien" if puntaje > 0 else "No era esa", false, true)
-		return
-
-	_configurar_panel_final("Aciertos:", str(puntaje, "/", cantidad_preguntas), true, true)
-
-
 func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
 	if not _clave_nodo_activo.is_empty():
 		Global.marcar_nodo_jugable_completado(track_key, _clave_nodo_activo)
@@ -363,8 +357,28 @@ func _on_atras_pressed() -> void:
 
 ## --- Continuación desde mapa ---
 
+func _crear_continuador() -> void:
+	continuador = ContinueCountdownScene.instantiate() as ContinueCountdown
+	_contenido.add_child(continuador)
+	ubicar_continuador()
+	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
+	continuador.ocultar()
+
+
+func ubicar_continuador() -> void:
+	continuador.anchor_left = 1.0
+	continuador.anchor_top = 1.0
+	continuador.anchor_right = 1.0
+	continuador.anchor_bottom = 1.0
+	continuador.offset_left = -CONTINUADOR_TAMANIO.x - CONTINUADOR_MARGEN.x
+	continuador.offset_top = -CONTINUADOR_TAMANIO.y - CONTINUADOR_MARGEN.y
+	continuador.offset_right = -CONTINUADOR_MARGEN.x
+	continuador.offset_bottom = -CONTINUADOR_MARGEN.y
+
+
 func volver_al_mapa() -> void:
-	_timer_siguiente_nodo.stop()
+	if continuador != null:
+		continuador.detener()
 	_limpiar_media_de_pregunta()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
@@ -375,40 +389,18 @@ func mostrar_ensenanza_final() -> void:
 
 
 func mostrar_continuacion() -> void:
-	tiempo_restante = 5
 	ya_continuo = false
 	_boton_volver_mapa_final.hide()
-	_contenedor_continuacion.show()
-	_flecha_derecha.show()
-	_contador_siguiente_label.show()
-	_contenedor_continuacion.move_to_front()
-	actualizar_texto_contador()
-	_timer_siguiente_nodo.stop()
-	_timer_siguiente_nodo.start()
+	_ocultar_continuacion_legacy()
+	continuador.iniciar(5)
 
 
-func actualizar_texto_contador() -> void:
-	_contador_siguiente_label.text = "Pr\u00f3ximo juego en %d..." % tiempo_restante
-
-
-func _ocultar_continuacion_automatica() -> void:
-	_contenedor_continuacion.hide()
-	_flecha_derecha.hide()
-	_contador_siguiente_label.hide()
+func _ocultar_continuacion_legacy() -> void:
+	_contenedor_continuacion_legacy.hide()
 
 
 func _on_timer_siguiente_nodo_timeout() -> void:
-	if ya_continuo or not is_inside_tree():
-		_timer_siguiente_nodo.stop()
-		return
-
-	tiempo_restante -= 1
-	if tiempo_restante <= 0:
-		_timer_siguiente_nodo.stop()
-		continuar_al_siguiente_nodo()
-		return
-
-	actualizar_texto_contador()
+	continuar_al_siguiente_nodo()
 
 
 func continuar_al_siguiente_nodo() -> void:
@@ -416,7 +408,8 @@ func continuar_al_siguiente_nodo() -> void:
 		return
 
 	ya_continuo = true
-	_timer_siguiente_nodo.stop()
+	if continuador != null:
+		continuador.detener()
 
 	if _clave_nodo_activo.is_empty():
 		volver_al_mapa()

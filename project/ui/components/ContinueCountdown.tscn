@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/components/ContinueCountdown.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_flecha"]
+
+[node name="ContinueCountdown" type="Control"]
+visible = false
+z_index = 30
+custom_minimum_size = Vector2(300, 140)
+offset_right = 300.0
+offset_bottom = 140.0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="FlechaButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 0.0
+offset_right = 216.0
+offset_bottom = 92.0
+focus_mode = 0
+texture_normal = ExtResource("2_flecha")
+metadata/_edit_use_anchors_ = true
+
+[node name="ContadorLabel" type="Label" parent="."]
+layout_mode = 0
+offset_top = 94.0
+offset_right = 300.0
+offset_bottom = 132.0
+theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
+theme_override_font_sizes/font_size = 24
+text = "Próximo juego en 5s..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 1.0
