@@ -50,6 +50,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
+@onready var contador_siguiente_label: Label         = $ContadorSiguienteLabel
+@onready var timer_siguiente_nodo: Timer             = $TimerSiguienteNodo
 
 ## Guardado rápido (UI)
 @onready var save_progress_button:  Button         = $SaveProgressButton
@@ -68,6 +70,14 @@ var _pending_streak_feedback: Dictionary = {}
 var _current_run_completion_handled := false
 var _completion_visual_original_materials: Dictionary = {}
 var _completion_visual_original_modulates: Dictionary = {}
+var _contexto_nodo_mapa: Dictionary = {}
+var _datos_nodo_mapa: Dictionary = {}
+var _usa_flujo_mapa := false
+var _node_key_actual := ""
+var _ruta_escena_retorno := ""
+var _track_key_contexto := ""
+var tiempo_restante := 5
+var ya_continuo := false
 
 
 func _ready() -> void:
@@ -79,10 +89,15 @@ func _ready() -> void:
 ## --- Arranque ---
 
 func _iniciar_flujo_nivel() -> void:
+	cargar_contexto_sesion()
 	var configured_key := track_key_override.strip_edges()
-	active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
+	if not _track_key_contexto.is_empty():
+		active_track_key = _track_key_contexto
+	else:
+		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 	_pending_streak_feedback = {}
 	_current_run_completion_handled = false
+	ya_continuo = false
 	Item_level.is_dragging = null
 	_restaurar_estado_posterior_finalizacion()
 	next_chapter_button.disabled = true
@@ -94,6 +109,37 @@ func _iniciar_flujo_nivel() -> void:
 	var resolved_level_number := _numero_nivel_valido(active_track_key)
 	if resolved_level_number > 0:
 		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
+
+
+func cargar_contexto_sesion() -> void:
+	_contexto_nodo_mapa = Global.obtener_sesion_nodo_jugable_activo()
+	_datos_nodo_mapa = {}
+	_usa_flujo_mapa = false
+	_node_key_actual = ""
+	_track_key_contexto = ""
+	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+
+	if _contexto_nodo_mapa.is_empty():
+		return
+
+	_node_key_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
+	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
+	_ruta_escena_retorno = str(
+		_contexto_nodo_mapa.get("return_scene_path", GameSceneRouter.MAP_SCENE_PATH)
+	).strip_edges()
+	if _ruta_escena_retorno.is_empty():
+		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+
+	var datos_nodo: Variant = _contexto_nodo_mapa.get("node_data", {})
+	if datos_nodo is Dictionary:
+		configurar_desde_datos_nodo(datos_nodo)
+
+	_usa_flujo_mapa = not _node_key_actual.is_empty()
+
+
+func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
+	# Level conserva su gameplay original; estos datos quedan disponibles para futuros textos/items JSON.
+	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
 func _reproducir_audio_nivel() -> void:
@@ -124,12 +170,18 @@ func _configurar_retroalimentacion_guardado_rapida() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
+	if is_instance_valid(timer_siguiente_nodo):
+		timer_siguiente_nodo.stop()
 
 
 ## --- Navegación y gameplay ---
 
 func _on_atras_presionado() -> void:
 	if es_corrida_completado():
+		return
+	if _usa_flujo_mapa:
+		Global.limpiar_sesion_nodo_jugable_activo()
+		get_tree().change_scene_to_file(_ruta_escena_retorno)
 		return
 	if active_track_key == DEFAULT_TRACK_KEY:
 		GameSceneRouter.go_to_map(get_tree())
@@ -152,6 +204,13 @@ func completar_corrida_actual() -> void:
 
 	_current_run_completion_handled = true
 	_bloquear_completado_corrida()
+
+	if _usa_flujo_mapa:
+		_guardar_progreso_de_mapa()
+		mostrar_continuacion()
+		_mostrar_completado_corrida_retroalimentacion()
+		run_completed.emit()
+		return
 
 	# --- Flujo de racha (lineal, todo acá) ---
 	# 1. Capturar racha previa para calcular el feedback post-partida
@@ -197,6 +256,9 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 func _on_adelante_presionado() -> void:
 	if not es_corrida_completado():
 		return
+	if _usa_flujo_mapa:
+		continuar_al_siguiente_nodo()
+		return
 	if bool(_pending_streak_feedback.get("should_show", false)):
 		var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
 		var continue_target: Dictionary = _construir_objetivo_continuar_posterior_finalizacion(pending_feedback)
@@ -209,6 +271,60 @@ func _on_adelante_presionado() -> void:
 		)
 		return
 	_ir_a_destino_posterior_finalizacion()
+
+
+## --- Continuación desde mapa ---
+
+func _guardar_progreso_de_mapa() -> void:
+	if _node_key_actual.is_empty():
+		return
+	Global.marcar_nodo_jugable_completado(active_track_key, _node_key_actual)
+
+
+func mostrar_continuacion() -> void:
+	tiempo_restante = 5
+	ya_continuo = false
+	next_chapter_button.disabled = false
+	next_chapter_button.show()
+	contador_siguiente_label.show()
+	contador_siguiente_label.move_to_front()
+	actualizar_texto_contador()
+	timer_siguiente_nodo.stop()
+	timer_siguiente_nodo.start()
+
+
+func actualizar_texto_contador() -> void:
+	contador_siguiente_label.text = "Próximo juego en %ds..." % tiempo_restante
+
+
+func _on_timer_siguiente_nodo_timeout() -> void:
+	if ya_continuo or not is_inside_tree():
+		timer_siguiente_nodo.stop()
+		return
+
+	tiempo_restante -= 1
+	if tiempo_restante <= 0:
+		timer_siguiente_nodo.stop()
+		continuar_al_siguiente_nodo()
+		return
+
+	actualizar_texto_contador()
+
+
+func continuar_al_siguiente_nodo() -> void:
+	if ya_continuo:
+		return
+
+	ya_continuo = true
+	timer_siguiente_nodo.stop()
+
+	if _node_key_actual.is_empty():
+		_ir_a_destino_posterior_finalizacion()
+		return
+
+	Global.solicitar_continuar(_node_key_actual)
+	Global.limpiar_sesion_nodo_jugable_activo()
+	get_tree().change_scene_to_file(_ruta_escena_retorno)
 
 
 ## --- Guardado rápido ---
@@ -386,6 +502,10 @@ func _restaurar_estado_posterior_finalizacion() -> void:
 	restaurar_finalizacion_visual_estado()
 	_establecer_interacciones_jugabilidad_habilitadas(true)
 	teaching_sprite.hide()
+	if is_instance_valid(contador_siguiente_label):
+		contador_siguiente_label.hide()
+	if is_instance_valid(timer_siguiente_nodo):
+		timer_siguiente_nodo.stop()
 
 
 func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
@@ -451,6 +571,8 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		runtime_node == save_feedback_backdrop
 		or save_feedback_backdrop.is_ancestor_of(runtime_node)
 	):
+		return true
+	if is_instance_valid(contador_siguiente_label) and runtime_node == contador_siguiente_label:
 		return true
 	return false
 
