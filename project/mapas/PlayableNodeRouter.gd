@@ -9,9 +9,4 @@ const RUTAS_POR_MODO := {
 }
 
 static func obtener_escena_jugable(modo: String) -> String:
-	var ruta_escena: String = str(RUTAS_POR_MODO.get(modo.strip_edges(), "")).strip_edges()
-	if ruta_escena.is_empty():
-		return ""
-	if not ResourceLoader.exists(ruta_escena):
-		return ""
-	return ruta_escena
+	return str(RUTAS_POR_MODO.get(modo.strip_edges(), "")).strip_edges()

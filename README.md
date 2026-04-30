@@ -88,10 +88,17 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 3. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
 4. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
 5. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
-6. `project/preguntas/pregunta.gd` y `project/niveles/nivel_1/Level.gd` ejecutan la modalidad.
-7. Al terminar llaman `Global.solicitar_continuar(node_key_actual)`.
-8. `MapScene.gd` consume esa intención y abre el siguiente nodo del mapa.
-9. `project/mapas/drag_drop/DragDropNode.tscn` queda como legacy/back-up y no forma parte del flujo principal.
+6. La modalidad termina y llama `Global.solicitar_continuar(node_key_actual)`.
+7. `MapScene.gd` consume esa intención y abre el siguiente nodo del mapa.
+8. `project/mapas/drag_drop/DragDropNode.tscn` queda como legacy/back-up y no forma parte del flujo principal.
+
+## Responsabilidades del mapa
+
+- `MapScene.gd`: orquesta el mapa, carga contenido y abre nodos jugables.
+- `LevelNode.gd`: representa un nodo visual clickeable y emite `nodo_seleccionado`.
+- `MapNodeData.gd`: describe datos simples del nodo del mapa.
+- `MapProgress.gd`: resuelve progreso, desbloqueo y siguiente nodo.
+- Las modalidades no deciden el siguiente nodo.
 
 Para agregar un nodo nuevo:
 

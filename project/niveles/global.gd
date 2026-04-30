@@ -192,8 +192,8 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 
 var nodo_a_continuar: String = ""
 
-func solicitar_continuar(node_key: String) -> void:
-	nodo_a_continuar = node_key.strip_edges()
+func solicitar_continuar(node_key_actual: String) -> void:
+	nodo_a_continuar = node_key_actual.strip_edges()
 
 func consumir_nodo_a_continuar() -> String:
 	var nodo = nodo_a_continuar

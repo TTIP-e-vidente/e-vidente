@@ -1,10 +1,11 @@
 extends RefCounted
 
+# Tipos de nodo
 const NODE_KIND_CHAPTER := "chapter"
-# El valor serializado sigue siendo "question" por compatibilidad con escenas ya armadas.
+# Legacy: el valor serializado sigue siendo "question" por escenas ya armadas.
 const NODE_KIND_QUESTION := "question"
-const SCRIPT_PATH := "res://mapas/MapNodeData.gd"
-const NodeContentLegacyScript := preload("res://preguntas/NodeContentLegacy.gd")
+
+# Claves de diccionario
 const DICT_KEY_ID := "id"
 const DICT_KEY_KIND := "kind"
 const DICT_KEY_LABEL := "label"
@@ -14,15 +15,21 @@ const DICT_KEY_QUESTION_NUMBER := "question_number"
 const DICT_KEY_NODE_KEY := "node_key"
 const DICT_KEY_NODE_JSON_PATH := "node_json_path"
 const DICT_KEY_NODE_RESOURCE_PATH := "node_resource_path"
-# TODO post-demo: eliminar lectura legacy cuando no haya escenas o diccionarios usando question_*.
+const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
+const DICT_KEY_POSITION := "pos"
+
+# Compatibilidad legacy
 const DICT_KEY_LEGACY_QUESTION_KEY := "question_key"
 const DICT_KEY_LEGACY_QUESTION_JSON_PATH := "question_json_path"
 const DICT_KEY_LEGACY_QUESTION_RESOURCE_PATH := "question_resource_path"
-const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
-const DICT_KEY_POSITION := "pos"
+const NodeContentLegacyScript := preload("res://preguntas/NodeContentLegacy.gd")
+
+# Rutas por convencion
+const SCRIPT_PATH := "res://mapas/MapNodeData.gd"
 const DEFAULT_NODE_JSON_DIR := "res://niveles/nodos"
 const DEFAULT_NODE_RESOURCE_DIR := "res://preguntas/preguntas_recurso"
 
+# Datos principales
 var node_id: int = 0
 var node_kind: String = NODE_KIND_CHAPTER
 var label_text: String = ""
@@ -36,6 +43,7 @@ var icon_texture_path: String = ""
 var node_position: Vector2 = Vector2.ZERO
 
 
+# Creacion -------------------------------------------------------------------
 static func crear() -> RefCounted:
 	return load(SCRIPT_PATH).new()
 
@@ -73,17 +81,11 @@ static func desde_diccionario(definicion_nodo: Dictionary) -> RefCounted:
 static func desde_nodo_mapa(nodo_mapa: Node2D) -> RefCounted:
 	if nodo_mapa == null or not nodo_mapa.has_method("crear_datos_runtime_nodo"):
 		return null
+
 	var datos_nodo_creados: Variant = nodo_mapa.call("crear_datos_runtime_nodo")
 	if datos_nodo_creados is RefCounted:
 		return datos_nodo_creados as RefCounted
 	return null
-
-
-static func duplicar_desde_nodo_mapa(nodo_mapa: Node2D) -> RefCounted:
-	var datos_mapa_nodo: RefCounted = desde_nodo_mapa(nodo_mapa)
-	if datos_mapa_nodo == null:
-		return null
-	return datos_mapa_nodo.duplicar_datos()
 
 
 static func desde_seleccion(seleccion_mapa: Variant) -> RefCounted:
@@ -91,23 +93,25 @@ static func desde_seleccion(seleccion_mapa: Variant) -> RefCounted:
 		var datos_nodo_duplicados: Variant = seleccion_mapa.call("duplicar_datos")
 		if datos_nodo_duplicados is RefCounted:
 			return datos_nodo_duplicados as RefCounted
+
 	if seleccion_mapa is Dictionary:
 		return desde_diccionario(seleccion_mapa as Dictionary)
+
 	if seleccion_mapa is Object and seleccion_mapa.has_method("a_diccionario"):
 		var definicion_nodo_cruda: Variant = seleccion_mapa.call("a_diccionario")
 		if definicion_nodo_cruda is Dictionary:
 			return desde_diccionario(definicion_nodo_cruda as Dictionary)
+
 	return null
 
 
 static func normalizar_tipo_nodo(tipo_crudo: String) -> String:
-	return (
-		NODE_KIND_QUESTION
-		if tipo_crudo.strip_edges().to_lower() == NODE_KIND_QUESTION
-		else NODE_KIND_CHAPTER
-	)
+	if tipo_crudo.strip_edges().to_lower() == NODE_KIND_QUESTION:
+		return NODE_KIND_QUESTION
+	return NODE_KIND_CHAPTER
 
 
+# API publica ----------------------------------------------------------------
 func duplicar_datos() -> RefCounted:
 	return desde_diccionario(a_diccionario())
 
@@ -136,50 +140,15 @@ func es_capitulo() -> bool:
 	return node_kind == NODE_KIND_CHAPTER
 
 
-func tiene_destino_jugable() -> bool:
-	var ruta_json_resuelta: String = resolver_ruta_json_nodo()
-	if not ruta_json_resuelta.is_empty() and FileAccess.file_exists(ruta_json_resuelta):
-		return true
-
-	var ruta_recurso_resuelta: String = resolver_ruta_recurso_nodo()
-	return not ruta_recurso_resuelta.is_empty() and ResourceLoader.exists(ruta_recurso_resuelta)
-
-
-func tiene_destino_capitulo() -> bool:
-	return level_number > 0
-
-
-func tiene_destino_runtime() -> bool:
+func esta_disponible() -> bool:
 	if es_nodo_jugable():
-		return tiene_destino_jugable()
+		return tiene_json() or tiene_recurso_legacy()
 	if es_capitulo():
-		return tiene_destino_capitulo()
+		return level_number > 0
 	return false
 
 
-func obtener_nivel_id_sesion() -> int:
-	return question_number if question_number > 0 else node_id
-
-
-func obtener_clave_pista_o_default(clave_pista_default: String) -> String:
-	return track_key if not track_key.is_empty() else clave_pista_default
-
-
-func crear_contexto_sesion(clave_pista_resuelta: String, ruta_escena_retorno: String) -> Dictionary:
-	var clave_nodo: String = resolver_clave_nodo()
-	var ruta_json_nodo: String = resolver_ruta_json_nodo()
-	var ruta_recurso_nodo: String = resolver_ruta_recurso_nodo()
-	return {
-		"track_key": clave_pista_resuelta,
-		"nivel_id": obtener_nivel_id_sesion(),
-		"node_key": clave_nodo,
-		"node_json_path": ruta_json_nodo,
-		"node_resource_path": ruta_recurso_nodo,
-		"return_scene_path": ruta_escena_retorno
-	}
-
-
-func resolver_clave_nodo() -> String:
+func obtener_clave_nodo() -> String:
 	var clave_explicita: String = node_key.strip_edges()
 	if not clave_explicita.is_empty():
 		return clave_explicita
@@ -191,31 +160,72 @@ func resolver_clave_nodo() -> String:
 	return _obtener_nombre_sin_extension(node_resource_path)
 
 
-func resolver_ruta_json_nodo() -> String:
-	var ruta_explicita: String = NodeContentLegacyScript.resolver_ruta_json(
-		node_json_path.strip_edges()
-	)
+func obtener_titulo() -> String:
+	var titulo_limpio: String = label_text.strip_edges()
+	if not titulo_limpio.is_empty():
+		return titulo_limpio
+	return obtener_clave_nodo()
+
+
+func obtener_ruta_json() -> String:
+	var ruta_explicita: String = NodeContentLegacyScript.resolver_ruta_json(node_json_path)
 	if not ruta_explicita.is_empty():
 		return ruta_explicita
 
-	var rutas_candidatas: Array[String] = _rutas_json_por_convencion()
+	var rutas_candidatas: Array[String] = _obtener_rutas_json_por_convencion()
 	for ruta_candidata in rutas_candidatas:
 		if FileAccess.file_exists(ruta_candidata):
 			return ruta_candidata
+
 	if rutas_candidatas.is_empty():
 		return ""
 	return rutas_candidatas[0]
 
 
-func resolver_ruta_recurso_nodo() -> String:
+func obtener_ruta_recurso() -> String:
 	var ruta_explicita: String = node_resource_path.strip_edges()
 	if not ruta_explicita.is_empty():
 		return ruta_explicita
 
-	var clave_resuelta: String = resolver_clave_nodo()
-	if clave_resuelta.is_empty():
+	var clave_nodo: String = obtener_clave_nodo()
+	if clave_nodo.is_empty():
 		return ""
-	return "%s/%s.tres" % [DEFAULT_NODE_RESOURCE_DIR, clave_resuelta]
+	return "%s/%s.tres" % [DEFAULT_NODE_RESOURCE_DIR, clave_nodo]
+
+
+func tiene_json() -> bool:
+	var ruta_json: String = obtener_ruta_json()
+	return not ruta_json.is_empty() and FileAccess.file_exists(ruta_json)
+
+
+func tiene_recurso_legacy() -> bool:
+	var ruta_recurso: String = obtener_ruta_recurso()
+	return not ruta_recurso.is_empty() and ResourceLoader.exists(ruta_recurso)
+
+
+# Contexto de sesion ---------------------------------------------------------
+func crear_contexto_sesion(return_scene_path: String) -> Dictionary:
+	return {
+		"node_key": obtener_clave_nodo(),
+		"node_title": obtener_titulo(),
+		"node_json_path": obtener_ruta_json(),
+		"node_resource_path": obtener_ruta_recurso(),
+		"return_scene_path": return_scene_path,
+	}
+
+
+# Helpers privados -----------------------------------------------------------
+func _obtener_rutas_json_por_convencion() -> Array[String]:
+	var rutas_candidatas: Array[String] = []
+	var clave_nodo: String = obtener_clave_nodo()
+	if clave_nodo.is_empty():
+		return rutas_candidatas
+
+	var clave_pista: String = track_key.strip_edges()
+	if not clave_pista.is_empty():
+		rutas_candidatas.append("%s/%s/%s.json" % [DEFAULT_NODE_JSON_DIR, clave_pista, clave_nodo])
+	rutas_candidatas.append("%s/%s.json" % [DEFAULT_NODE_JSON_DIR, clave_nodo])
+	return rutas_candidatas
 
 
 func _obtener_nombre_sin_extension(ruta_cruda: String) -> String:
@@ -228,21 +238,6 @@ func _obtener_nombre_sin_extension(ruta_cruda: String) -> String:
 	if indice_extension < 0:
 		return nombre_archivo
 	return nombre_archivo.substr(0, indice_extension)
-
-
-func _rutas_json_por_convencion() -> Array[String]:
-	var rutas_candidatas: Array[String] = []
-	var clave_resuelta: String = resolver_clave_nodo()
-	if clave_resuelta.is_empty():
-		return rutas_candidatas
-
-	var clave_pista_resuelta: String = track_key.strip_edges()
-	if not clave_pista_resuelta.is_empty():
-		rutas_candidatas.append(
-			"%s/%s/%s.json" % [DEFAULT_NODE_JSON_DIR, clave_pista_resuelta, clave_resuelta]
-		)
-	rutas_candidatas.append("%s/%s.json" % [DEFAULT_NODE_JSON_DIR, clave_resuelta])
-	return rutas_candidatas
 
 
 static func _leer_texto(definicion_nodo: Dictionary, clave: String, fallback: String = "") -> String:
