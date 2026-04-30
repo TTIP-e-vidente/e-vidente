@@ -336,7 +336,7 @@ func _on_superposicion_edit_perfil_presionado() -> void:
 
 func _on_superposicion_guardar_presionado() -> void:
 	SaveManager.guardar_progreso_en_disco()
-	_profile_overlay.refresh()
+	_profile_overlay.refrescar()
 
 
 func _on_superposicion_reiniciar_presionado() -> void:

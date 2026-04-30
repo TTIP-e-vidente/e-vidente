@@ -2,6 +2,7 @@ extends PanelContainer
 class_name DragDropItem
 
 var datos_item: Dictionary = {}
+var mostrar_label: bool = false
 
 var _etiqueta_item: Label
 var _imagen_item: TextureRect
@@ -9,7 +10,8 @@ var _imagen_item: TextureRect
 
 func configurar(nuevos_datos_item: Dictionary) -> void:
 	datos_item = nuevos_datos_item.duplicate(true)
-	custom_minimum_size = Vector2(180, 140)
+	custom_minimum_size = Vector2(120, 120)
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_construir_ui()
 	_renderizar()
 
@@ -60,7 +62,7 @@ func _construir_ui() -> void:
 	contenedor_margen.add_child(contenedor_vertical)
 
 	_imagen_item = TextureRect.new()
-	_imagen_item.custom_minimum_size = Vector2(72, 72)
+	_imagen_item.custom_minimum_size = Vector2(78, 78)
 	_imagen_item.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_imagen_item.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_imagen_item.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -68,6 +70,8 @@ func _construir_ui() -> void:
 
 	_etiqueta_item = Label.new()
 	_etiqueta_item.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_etiqueta_item.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	_etiqueta_item.add_theme_font_size_override("font_size", 15)
 	_etiqueta_item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_etiqueta_item.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	contenedor_vertical.add_child(_etiqueta_item)
@@ -82,5 +86,6 @@ func _renderizar() -> void:
 	_imagen_item.texture = textura
 	_imagen_item.visible = textura != null
 	_etiqueta_item.text = str(datos_item.get("label", "Item")).strip_edges()
+	_etiqueta_item.visible = mostrar_label and not _etiqueta_item.text.is_empty()
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP

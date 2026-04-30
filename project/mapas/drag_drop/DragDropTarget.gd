@@ -6,13 +6,15 @@ signal item_dropped(target_id: String, drag_data: Dictionary)
 var datos_target: Dictionary = {}
 
 var _titulo_target: Label
-var _contenedor_items: VBoxContainer
+var _contenedor_items: HFlowContainer
 
 
 func configurar(nuevos_datos_target: Dictionary) -> void:
 	datos_target = nuevos_datos_target.duplicate(true)
 	custom_minimum_size = Vector2(220, 220)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_construir_ui()
 	_renderizar()
 
@@ -21,24 +23,22 @@ func agregar_item_colocado(texto_item: String, textura_item: Texture2D) -> void:
 	if _contenedor_items == null:
 		return
 
-	var fila: HBoxContainer = HBoxContainer.new()
-	fila.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_contenedor_items.add_child(fila)
-
 	if textura_item != null:
 		var imagen_item: TextureRect = TextureRect.new()
-		imagen_item.custom_minimum_size = Vector2(48, 48)
+		imagen_item.custom_minimum_size = Vector2(54, 54)
 		imagen_item.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		imagen_item.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		imagen_item.texture = textura_item
 		imagen_item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		fila.add_child(imagen_item)
+		imagen_item.tooltip_text = texto_item
+		_contenedor_items.add_child(imagen_item)
+		return
 
 	var etiqueta_item: Label = Label.new()
 	etiqueta_item.text = texto_item
-	etiqueta_item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	etiqueta_item.add_theme_font_size_override("font_size", 14)
 	etiqueta_item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fila.add_child(etiqueta_item)
+	_contenedor_items.add_child(etiqueta_item)
 
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
@@ -74,7 +74,10 @@ func _construir_ui() -> void:
 	_titulo_target.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	contenedor_raiz.add_child(_titulo_target)
 
-	_contenedor_items = VBoxContainer.new()
+	_contenedor_items = HFlowContainer.new()
+	_contenedor_items.alignment = FlowContainer.ALIGNMENT_CENTER
+	_contenedor_items.add_theme_constant_override("h_separation", 8)
+	_contenedor_items.add_theme_constant_override("v_separation", 8)
 	_contenedor_items.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_contenedor_items.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	contenedor_raiz.add_child(_contenedor_items)
@@ -85,5 +88,6 @@ func _renderizar() -> void:
 		return
 
 	_titulo_target.text = str(datos_target.get("label", "Target")).strip_edges()
+	_titulo_target.hide()
 	for child in _contenedor_items.get_children():
 		child.queue_free()

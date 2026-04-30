@@ -369,6 +369,23 @@ position = Vector2(108.74133, 118.15442)
 scale = Vector2(1, 1.0000001)
 texture = ExtResource("38_yoibg")
 
+[node name="ContadorSiguienteLabel" type="Label" parent="."]
+visible = false
+z_index = 12
+offset_left = 894.0
+offset_top = 735.0
+offset_right = 1148.0
+offset_bottom = 773.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
+theme_override_font_sizes/font_size = 24
+text = "Próximo juego en 5s..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimerSiguienteNodo" type="Timer" parent="."]
+wait_time = 1.0
+
 [node name="SaveProgressButton" type="Button" parent="." unique_id=856988732]
 visible = false
 offset_left = 1023.0
@@ -442,3 +459,4 @@ attenuation = 2.07053
 [connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
 [connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
+[connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]

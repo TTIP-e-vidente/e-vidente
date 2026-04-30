@@ -1,0 +1,38 @@
+{
+  "id": "receta_4_cocina_segura",
+  "theme": "celiaquia",
+  "title": "Ordena la cocina segura",
+  "difficulty": "medium",
+  "mode": "drag_drop",
+  "content": {
+    "instruction": "Arrastra al sector seguro solo los ingredientes aptos sin TACC.",
+    "targets": [
+      {
+        "id": "seguro",
+        "label": "Sector seguro"
+      }
+    ],
+    "items": [
+      {
+        "id": "maicena",
+        "label": "Maicena",
+        "image": "res://assets-sistema/iconos/maicena-0.png",
+        "correct_target": "seguro"
+      },
+      {
+        "id": "queso",
+        "label": "Queso",
+        "image": "res://assets-sistema/iconos/queso-0.png",
+        "correct_target": "seguro"
+      },
+      {
+        "id": "pizza",
+        "label": "Pizza",
+        "image": "res://assets-sistema/iconos/pizza-0.png",
+        "correct_target": ""
+      }
+    ],
+    "success_message": "Bien! Separaste los productos seguros.",
+    "error_message": "Ese producto puede contaminar la cocina."
+  }
+}

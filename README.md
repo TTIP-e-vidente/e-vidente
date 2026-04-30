@@ -81,16 +81,17 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 🚧 En desarrollo
 
-## Cómo leer el flujo de nodos jugables
+## Flujo de nodo jugable
 
-1. El jugador toca un nodo en `project/mapas/MapScene.gd`.
-2. `MapScene.gd` recibe la selección y pide a `MapNodeData.gd` un `contexto_sesion`.
-3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
-4. `project/preguntas/NodeContentLoader.gd` carga el JSON y lo deja en el contrato oficial `{ ok, data, error }`.
-5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
-6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
-7. `project/niveles/global.gd` conserva la sesión activa del nodo y el progreso necesario para volver.
-8. La escena jugable termina y vuelve a `return_scene_path`, que normalmente es el mapa.
+1. `project/mapas/MapScene.gd` maneja el mapa.
+2. `project/preguntas/NodeContentLoader.gd` carga el JSON del nodo.
+3. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
+4. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
+5. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
+6. `project/preguntas/pregunta.gd` y `project/niveles/nivel_1/Level.gd` ejecutan la modalidad.
+7. Al terminar llaman `Global.solicitar_continuar(node_key_actual)`.
+8. `MapScene.gd` consume esa intención y abre el siguiente nodo del mapa.
+9. `project/mapas/drag_drop/DragDropNode.tscn` queda como legacy/back-up y no forma parte del flujo principal.
 
 Para agregar un nodo nuevo:
 
@@ -110,5 +111,6 @@ Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como
 - `project/niveles/nodos/ejemplos/`: ejemplos oficiales y legacy de referencia.
 - `project/preguntas/`: modalidad `quiz_choice` y su adaptador temporal, no el sistema completo.
 - `project/mapas/`: mapa, routing y contexto de apertura.
-- `project/mapas/drag_drop/`: modalidad `drag_drop`.
+- `project/niveles/nivel_1/`: modalidad oficial `drag_drop` basada en `Level.tscn` y `Level.gd`.
+- `project/mapas/drag_drop/`: legacy/back-up; no es el flujo principal de `drag_drop`.
 - `mode` define la modalidad; `content` contiene solo los datos especificos de esa modalidad.

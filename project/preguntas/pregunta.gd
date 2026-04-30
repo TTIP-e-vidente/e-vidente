@@ -17,6 +17,8 @@ var botones: Array[Button] = []
 var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
+var ya_continuo: bool = false
+var tiempo_restante: int = 5
 
 var _clave_nodo_activo: String = ""
 var _tiene_sesion_de_mapa: bool = false
@@ -35,9 +37,15 @@ var pregunta_actual: Preguntas:
 @onready var _panel_final: ColorRect = $Contenido/GameOver
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
+@onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
+@onready var _contenedor_continuacion: VBoxContainer = $Contenido/ContinuacionAutomatica
+@onready var _flecha_derecha: Button = $Contenido/ContinuacionAutomatica/FlechaDerecha
+@onready var _contador_siguiente_label: Label = $Contenido/ContinuacionAutomatica/ContadorSiguienteLabel
+@onready var _timer_siguiente_nodo: Timer = $TimerSiguienteNodo
 
 func _ready() -> void:
 	puntaje = 0
+	_ocultar_continuacion_automatica()
 	_recolectar_botones_respuesta()
 	configurar_quiz_desde_sesion()
 	if not _puede_iniciar_quiz():
@@ -65,6 +73,7 @@ func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
 	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
 
+
 func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
 	_mensaje_error_bloqueante = ""
@@ -87,6 +96,7 @@ func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
 	_clave_nodo_activo = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
+
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
 	_aplicar_contexto_sesion(contexto_sesion)
@@ -116,6 +126,7 @@ func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
 	_tiene_sesion_de_mapa = not contexto_sesion.is_empty()
 
+
 func _puede_iniciar_quiz() -> bool:
 	if quiz == null:
 		_establecer_mensaje_de_error("No hay contenido cargado para este nodo.")
@@ -125,8 +136,10 @@ func _puede_iniciar_quiz() -> bool:
 		return false
 	return true
 
+
 func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
+
 
 func mostrar_pregunta() -> void:
 	bloqueado = false
@@ -144,6 +157,7 @@ func mostrar_pregunta() -> void:
 	_mostrar_visual_de_pregunta(pregunta_actual)
 	_mostrar_opciones(pregunta_actual.opciones)
 
+
 func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
 	_asegurar_cantidad_de_botones(opciones_actuales.size())
 	for indice_boton in range(botones.size()):
@@ -152,6 +166,7 @@ func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
 			_ocultar_boton_respuesta(boton_respuesta)
 			continue
 		_configurar_boton_respuesta(boton_respuesta, opciones_actuales[indice_boton])
+
 
 func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 	if cantidad_necesaria <= botones.size():
@@ -169,6 +184,7 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 		_contenedor_respuestas.add_child(nuevo_boton)
 		_registrar_boton_respuesta(nuevo_boton)
 
+
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
 	boton_respuesta.text = texto_respuesta
@@ -179,11 +195,13 @@ func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: Strin
 	boton_respuesta.scale = Vector2.ONE
 	boton_respuesta.rotation_degrees = 0
 
+
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
 	boton_respuesta.hide()
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
+
 
 func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
 	_limpiar_media_de_pregunta()
@@ -199,6 +217,7 @@ func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
 	_imagen_pregunta.show()
 	_imagen_pregunta.texture = pregunta_recurso.pregunta_imagen
 
+
 func _limpiar_media_de_pregunta() -> void:
 	if _audio_player != null:
 		_audio_player.stop()
@@ -208,6 +227,7 @@ func _limpiar_media_de_pregunta() -> void:
 		_imagen_pregunta.hide()
 	if _visual_panel != null:
 		_visual_panel.hide()
+
 
 func manejar_respuesta(boton: Button) -> void:
 	if bloqueado:
@@ -225,8 +245,8 @@ func manejar_respuesta(boton: Button) -> void:
 	_mostrar_feedback_respuesta(boton, es_correcta)
 
 	await get_tree().create_timer(1.2).timeout
-	indice_pregunta_actual += 1
-	mostrar_pregunta()
+	_finalizar_quiz()
+
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
@@ -249,21 +269,18 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
 	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
 
+
 func _finalizar_quiz() -> void:
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
-	if _tiene_sesion_de_mapa and cantidad_preguntas <= 1:
-		_guardar_progreso_de_mapa(cantidad_preguntas)
-		volver_al_mapa()
-		return
-
-	_mostrar_panel_final_del_quiz(cantidad_preguntas)
 
 	if _tiene_sesion_de_mapa:
 		_guardar_progreso_de_mapa(cantidad_preguntas)
+		mostrar_ensenanza_final()
 		return
 
 	Global.marcar_nivel_completado(track_key, nivel_id)
 	SaveManager.registrar_nivel_completado(track_key, nivel_id)
+	mostrar_ensenanza_final()
 
 
 func _mostrar_panel_final_del_quiz(cantidad_preguntas: int) -> void:
@@ -278,6 +295,7 @@ func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
 	if not _clave_nodo_activo.is_empty():
 		Global.marcar_nodo_jugable_completado(track_key, _clave_nodo_activo)
 	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
+
 
 func _configurar_panel_final(
 	texto_titulo: String,
@@ -300,6 +318,7 @@ func _configurar_panel_final(
 		if wrap_score
 		else TextServer.AUTOWRAP_OFF
 	)
+
 
 func _mostrar_error_bloqueante(mensaje: String) -> void:
 	bloqueado = true
@@ -324,6 +343,7 @@ func _mostrar_error_bloqueante(mensaje: String) -> void:
 		true
 	)
 
+
 func _establecer_mensaje_de_error(mensaje: String) -> void:
 	var mensaje_limpio: String = mensaje.strip_edges()
 	if mensaje_limpio.is_empty():
@@ -332,13 +352,80 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 		return
 	_mensaje_error_bloqueante = mensaje_limpio
 
+
 func _on_jugar_nuevamente_pressed() -> void:
 	volver_al_mapa()
 
-func _on_atrás_pressed() -> void:
+
+func _on_atras_pressed() -> void:
 	volver_al_mapa()
 
+
+## --- Continuación desde mapa ---
+
 func volver_al_mapa() -> void:
+	_timer_siguiente_nodo.stop()
 	_limpiar_media_de_pregunta()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
+
+
+func mostrar_ensenanza_final() -> void:
+	mostrar_continuacion()
+
+
+func mostrar_continuacion() -> void:
+	tiempo_restante = 5
+	ya_continuo = false
+	_boton_volver_mapa_final.hide()
+	_contenedor_continuacion.show()
+	_flecha_derecha.show()
+	_contador_siguiente_label.show()
+	_contenedor_continuacion.move_to_front()
+	actualizar_texto_contador()
+	_timer_siguiente_nodo.stop()
+	_timer_siguiente_nodo.start()
+
+
+func actualizar_texto_contador() -> void:
+	_contador_siguiente_label.text = "Pr\u00f3ximo juego en %d..." % tiempo_restante
+
+
+func _ocultar_continuacion_automatica() -> void:
+	_contenedor_continuacion.hide()
+	_flecha_derecha.hide()
+	_contador_siguiente_label.hide()
+
+
+func _on_timer_siguiente_nodo_timeout() -> void:
+	if ya_continuo or not is_inside_tree():
+		_timer_siguiente_nodo.stop()
+		return
+
+	tiempo_restante -= 1
+	if tiempo_restante <= 0:
+		_timer_siguiente_nodo.stop()
+		continuar_al_siguiente_nodo()
+		return
+
+	actualizar_texto_contador()
+
+
+func continuar_al_siguiente_nodo() -> void:
+	if ya_continuo:
+		return
+
+	ya_continuo = true
+	_timer_siguiente_nodo.stop()
+
+	if _clave_nodo_activo.is_empty():
+		volver_al_mapa()
+		return
+
+	Global.solicitar_continuar(_clave_nodo_activo)
+	Global.limpiar_sesion_nodo_jugable_activo()
+	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
+
+
+func _on_flecha_derecha_pressed() -> void:
+	continuar_al_siguiente_nodo()

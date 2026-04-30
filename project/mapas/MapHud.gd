@@ -54,7 +54,7 @@ func _actualizar_hud() -> void:
 	if profile_button != null and profile_button.has_method("refresh_profile_icon"):
 		profile_button.call("refresh_profile_icon")
 	if profile_overlay != null and profile_overlay.visible:
-		profile_overlay.refresh()
+		profile_overlay.refrescar()
 
 
 func _conectar_insignia_racha() -> void:
