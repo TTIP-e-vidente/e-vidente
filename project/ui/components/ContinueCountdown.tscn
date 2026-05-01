@@ -6,31 +6,32 @@
 [node name="ContinueCountdown" type="Control"]
 visible = false
 z_index = 30
-custom_minimum_size = Vector2(300, 140)
-offset_right = 300.0
-offset_bottom = 140.0
+custom_minimum_size = Vector2(210, 36)
+offset_right = 210.0
+offset_bottom = 36.0
 mouse_filter = 2
 script = ExtResource("1_script")
 
 [node name="FlechaButton" type="TextureButton" parent="."]
 layout_mode = 0
-offset_left = 88.0
-offset_top = 0.0
-offset_right = 216.0
-offset_bottom = 92.0
+offset_left = 174.0
+offset_top = 2.0
+offset_right = 208.0
+offset_bottom = 34.0
 focus_mode = 0
 texture_normal = ExtResource("2_flecha")
 metadata/_edit_use_anchors_ = true
 
 [node name="ContadorLabel" type="Label" parent="."]
 layout_mode = 0
-offset_top = 94.0
-offset_right = 300.0
-offset_bottom = 132.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 170.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 13
 text = "Próximo juego en 5s..."
-horizontal_alignment = 1
+horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="Timer" type="Timer" parent="."]
