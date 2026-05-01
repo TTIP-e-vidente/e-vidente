@@ -1,11 +1,8 @@
 extends RefCounted
 
-# Tipos de nodo
 const NODE_KIND_CHAPTER := "chapter"
-# Legacy: el valor serializado sigue siendo "question" por escenas ya armadas.
 const NODE_KIND_QUESTION := "question"
 
-# Claves de diccionario
 const DICT_KEY_ID := "id"
 const DICT_KEY_KIND := "kind"
 const DICT_KEY_LABEL := "label"
@@ -18,18 +15,10 @@ const DICT_KEY_NODE_RESOURCE_PATH := "node_resource_path"
 const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
 const DICT_KEY_POSITION := "pos"
 
-# Compatibilidad legacy
-const DICT_KEY_LEGACY_QUESTION_KEY := "question_key"
-const DICT_KEY_LEGACY_QUESTION_JSON_PATH := "question_json_path"
-const DICT_KEY_LEGACY_QUESTION_RESOURCE_PATH := "question_resource_path"
-const NodeContentLegacyScript := preload("res://preguntas/NodeContentLegacy.gd")
-
-# Rutas por convencion
 const SCRIPT_PATH := "res://mapas/MapNodeData.gd"
 const DEFAULT_NODE_JSON_DIR := "res://niveles/nodos"
 const DEFAULT_NODE_RESOURCE_DIR := "res://preguntas/preguntas_recurso"
 
-# Datos principales
 var node_id: int = 0
 var node_kind: String = NODE_KIND_CHAPTER
 var label_text: String = ""
@@ -42,8 +31,12 @@ var node_resource_path: String = ""
 var icon_texture_path: String = ""
 var node_position: Vector2 = Vector2.ZERO
 
+const DICT_KEY_LEGACY_QUESTION_KEY := "question_key"
+const DICT_KEY_LEGACY_QUESTION_JSON_PATH := "question_json_path"
+const DICT_KEY_LEGACY_QUESTION_RESOURCE_PATH := "question_resource_path"
+const NodeContentLegacyScript := preload("res://preguntas/NodeContentLegacy.gd")
 
-# Creacion -------------------------------------------------------------------
+
 static func crear() -> RefCounted:
 	return load(SCRIPT_PATH).new()
 

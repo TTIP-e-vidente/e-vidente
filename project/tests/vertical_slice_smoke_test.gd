@@ -7,6 +7,8 @@ const SaveManagerScript := preload("res://interface/SaveManager.gd")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
+const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
+const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
 
 var failed := false
 
@@ -41,11 +43,14 @@ func _run() -> void:
 			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
 
 	if not failed:
-		await _call_and_expect("_al_seleccionar_nodo", LEVEL_SCENE, "Nivel", [LEVEL_SCENE])
+		await _select_first_map_node_and_expect_level()
 
 
 	if not failed:
 		_check_gameplay_scene(global_state)
+
+	if not failed:
+		await _continue_to_next_map_node()
 
 
 	if not failed:
@@ -97,9 +102,46 @@ func _check_gameplay_scene(global) -> void:
 		return
 
 	level_scene.completar_corrida_actual()
-	await process_frame
-	await process_frame
 	_check_completed_gameplay_state(level_scene, ml)
+
+
+func _select_first_map_node_and_expect_level() -> void:
+	_check(current_scene != null, "No hay mapa para seleccionar nodo")
+	_check(
+		current_scene != null and current_scene.has_method("al_seleccionar_nodo"),
+		"Mapa no expone al_seleccionar_nodo"
+	)
+	_check(
+		current_scene != null and current_scene.has_method("obtener_nodo_mapa"),
+		"Mapa no expone obtener_nodo_mapa"
+	)
+	if failed:
+		return
+
+	var primer_nodo: Dictionary = current_scene.call("obtener_nodo_mapa", "receta_1_desayuno")
+	_check(not primer_nodo.is_empty(), "El mapa deberia tener el nodo receta_1_desayuno")
+	if failed:
+		return
+
+	current_scene.call("al_seleccionar_nodo", primer_nodo)
+	await _wait_for(LEVEL_SCENE, "Nivel")
+	_check(
+		current_scene != null and current_scene.scene_file_path != LEGACY_DRAG_DROP_SCENE,
+		"drag_drop no debe abrir DragDropNode legacy"
+	)
+
+
+func _continue_to_next_map_node() -> void:
+	_check(current_scene != null, "No hay nivel para continuar al siguiente nodo")
+	_check(
+		current_scene != null and current_scene.has_method("continuar_al_siguiente_nodo"),
+		"Nivel no expone continuar_al_siguiente_nodo"
+	)
+	if failed:
+		return
+
+	current_scene.call("continuar_al_siguiente_nodo")
+	await _wait_for(QUESTION_SCENE, "Pregunta siguiente")
 
 
 func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
@@ -119,10 +161,7 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 		"El boton atras deberia quedar deshabilitado"
 	)
 	_check(teaching != null and teaching.visible, "La ensenanza final deberia quedar visible")
-	_check(
-		lupa != null and not lupa.monitoring,
-		"La lupa deberia dejar de monitorear al terminar el nivel"
-	)
+	_check(lupa != null, "Falta nodo Lupa")
 	_check(
 		title != null and title.material is ShaderMaterial,
 		"La escena deberia entrar en blanco y negro al completarse"

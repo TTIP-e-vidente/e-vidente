@@ -22,12 +22,12 @@ var puntaje: int = 0
 var bloqueado: bool = false
 var ya_continuo: bool = false
 
-var _clave_nodo_activo: String = ""
+var _nodo_actual: String = ""
 var _tiene_sesion_de_mapa: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE_PATH
 var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
-var continuador: ContinueCountdown = null
+var continuador = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -96,7 +96,7 @@ func configurar_quiz_desde_sesion() -> void:
 
 func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
-	_clave_nodo_activo = ""
+	_nodo_actual = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
 
 
@@ -120,7 +120,7 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictio
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	nivel_id = int(contexto_sesion.get("nivel_id", nivel_id))
-	_clave_nodo_activo = str(contexto_sesion.get("node_key", "")).strip_edges()
+	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
 	_ruta_escena_de_retorno = str(
 		contexto_sesion.get("return_scene_path", DEFAULT_RETURN_SCENE_PATH)
 	).strip_edges()
@@ -286,8 +286,8 @@ func _finalizar_quiz() -> void:
 
 
 func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
-	if not _clave_nodo_activo.is_empty():
-		Global.marcar_nodo_jugable_completado(track_key, _clave_nodo_activo)
+	if not _nodo_actual.is_empty():
+		Global.marcar_nodo_jugable_completado(track_key, _nodo_actual)
 	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
 
 
@@ -358,14 +358,14 @@ func _on_atras_pressed() -> void:
 ## --- Continuación desde mapa ---
 
 func _crear_continuador() -> void:
-	continuador = ContinueCountdownScene.instantiate() as ContinueCountdown
+	continuador = ContinueCountdownScene.instantiate()
 	_contenido.add_child(continuador)
-	ubicar_continuador()
+	_ubicar_continuador()
 	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
 	continuador.ocultar()
 
 
-func ubicar_continuador() -> void:
+func _ubicar_continuador() -> void:
 	continuador.anchor_left = 1.0
 	continuador.anchor_top = 1.0
 	continuador.anchor_right = 1.0
@@ -411,11 +411,11 @@ func continuar_al_siguiente_nodo() -> void:
 	if continuador != null:
 		continuador.detener()
 
-	if _clave_nodo_activo.is_empty():
+	if _nodo_actual.is_empty():
 		volver_al_mapa()
 		return
 
-	Global.solicitar_continuar(_clave_nodo_activo)
+	Global.solicitar_continuar(_nodo_actual)
 	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
 
