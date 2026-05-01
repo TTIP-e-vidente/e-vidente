@@ -149,12 +149,70 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 	_change_scene_to_path(tree, scene_path)
 
 
+static func go_to_continue_target(
+	tree: SceneTree,
+	continue_target: Dictionary,
+	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
+) -> void:
+	if tree == null:
+		return
+
+	var target_type: String = str(continue_target.get("type", "")).strip_edges()
+	match target_type:
+		"map":
+			_clear_active_playable_session(tree)
+			go_to_map(tree)
+		"map_continue":
+			var global_state := _get_global_state(tree)
+			var node_key: String = str(continue_target.get("node_key", "")).strip_edges()
+			if (
+				global_state != null
+				and not node_key.is_empty()
+				and global_state.has_method("solicitar_continuar")
+			):
+				global_state.call("solicitar_continuar", node_key)
+			_clear_active_playable_session(tree)
+			var return_scene_path: String = str(
+				continue_target.get("return_scene_path", MAP_SCENE_PATH)
+			).strip_edges()
+			if return_scene_path.is_empty():
+				return_scene_path = MAP_SCENE_PATH
+			_change_scene_to_path(tree, return_scene_path)
+		"track_level":
+			_clear_active_playable_session(tree)
+			go_to_track_level(
+				tree,
+				str(continue_target.get("track_key", "")).strip_edges(),
+				int(continue_target.get("level_number", -1))
+			)
+		"track_book":
+			_clear_active_playable_session(tree)
+			go_to_track_book(
+				tree,
+				str(continue_target.get("track_key", "")).strip_edges()
+			)
+		"scene_path":
+			_clear_active_playable_session(tree)
+			var scene_path: String = str(
+				continue_target.get("scene_path", fallback_scene_path)
+			).strip_edges()
+			_change_scene_to_path(
+				tree,
+				scene_path if not scene_path.is_empty() else fallback_scene_path
+			)
+		_:
+			_clear_active_playable_session(tree)
+			_change_scene_to_path(tree, fallback_scene_path)
+
+
 static func go_to_resume(
 	tree: SceneTree,
 	resume_state: Dictionary,
 	fallback_scene: String = MODE_SELECTOR_SCENE_PATH
 ) -> void:
-	var scene_path: String = str(resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene)).strip_edges()
+	var scene_path: String = str(
+		resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene)
+	).strip_edges()
 	var safe_scene_path: String = scene_path if not scene_path.is_empty() else fallback_scene
 	_change_scene_to_path(tree, safe_scene_path)
 
@@ -246,3 +304,9 @@ static func _get_global_state(tree: SceneTree) -> Node:
 	if tree == null:
 		return null
 	return tree.get_root().get_node_or_null("Global")
+
+
+static func _clear_active_playable_session(tree: SceneTree) -> void:
+	var global_state := _get_global_state(tree)
+	if global_state != null and global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
+		global_state.call("limpiar_sesion_nodo_jugable_activo")

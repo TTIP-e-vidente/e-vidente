@@ -71,6 +71,7 @@ func _reset_test_state(global_state, save_manager) -> void:
 	Item_level.is_dragging = null
 	_delete_save_files()
 	save_manager.cargar_datos()
+	global_state.registrar_actividad_racha("smoke_setup", {"track_key": "celiaquia"})
 
 
 func _check_gameplay_scene(global) -> void:
