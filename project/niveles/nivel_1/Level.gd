@@ -73,11 +73,11 @@ var _completion_visual_original_modulates: Dictionary = {}
 var _contexto_nodo_mapa: Dictionary = {}
 var _datos_nodo_mapa: Dictionary = {}
 var _usa_flujo_mapa := false
-var _node_key_actual := ""
+var _nodo_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
-var ya_continuo := false
-var continuador: ContinueCountdown = null
+var _ya_continuo := false
+var continuador = null
 
 
 func _ready() -> void:
@@ -90,7 +90,7 @@ func _ready() -> void:
 ## --- Arranque ---
 
 func _iniciar_flujo_nivel() -> void:
-	cargar_contexto_sesion()
+	_cargar_contexto_sesion()
 	var configured_key := track_key_override.strip_edges()
 	if not _track_key_contexto.is_empty():
 		active_track_key = _track_key_contexto
@@ -98,7 +98,7 @@ func _iniciar_flujo_nivel() -> void:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 	_pending_streak_feedback = {}
 	_current_run_completion_handled = false
-	ya_continuo = false
+	_ya_continuo = false
 	Item_level.is_dragging = null
 	_restaurar_estado_posterior_finalizacion()
 	next_chapter_button.disabled = true
@@ -112,18 +112,18 @@ func _iniciar_flujo_nivel() -> void:
 		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
 
 
-func cargar_contexto_sesion() -> void:
+func _cargar_contexto_sesion() -> void:
 	_contexto_nodo_mapa = Global.obtener_sesion_nodo_jugable_activo()
 	_datos_nodo_mapa = {}
 	_usa_flujo_mapa = false
-	_node_key_actual = ""
+	_nodo_actual = ""
 	_track_key_contexto = ""
 	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
 
 	if _contexto_nodo_mapa.is_empty():
 		return
 
-	_node_key_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
+	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
 	_ruta_escena_retorno = str(
 		_contexto_nodo_mapa.get("return_scene_path", GameSceneRouter.MAP_SCENE_PATH)
@@ -135,11 +135,10 @@ func cargar_contexto_sesion() -> void:
 	if datos_nodo is Dictionary:
 		configurar_desde_datos_nodo(datos_nodo)
 
-	_usa_flujo_mapa = not _node_key_actual.is_empty()
+	_usa_flujo_mapa = not _nodo_actual.is_empty()
 
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
-	# Level conserva su gameplay original; estos datos quedan disponibles para futuros textos/items JSON.
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
@@ -276,25 +275,25 @@ func _on_adelante_presionado() -> void:
 ## --- Continuación desde mapa ---
 
 func _crear_continuador() -> void:
-	continuador = ContinueCountdownScene.instantiate() as ContinueCountdown
+	continuador = ContinueCountdownScene.instantiate()
 	add_child(continuador)
-	ubicar_continuador()
+	_ubicar_continuador()
 	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
 	continuador.ocultar()
 
 
-func ubicar_continuador() -> void:
+func _ubicar_continuador() -> void:
 	continuador.position = CONTINUADOR_POSICION_FLECHA_DERECHA
 
 
 func _guardar_progreso_de_mapa() -> void:
-	if _node_key_actual.is_empty():
+	if _nodo_actual.is_empty():
 		return
-	Global.marcar_nodo_jugable_completado(active_track_key, _node_key_actual)
+	Global.marcar_nodo_jugable_completado(active_track_key, _nodo_actual)
 
 
 func mostrar_continuacion() -> void:
-	ya_continuo = false
+	_ya_continuo = false
 	next_chapter_button.hide()
 	continuador.iniciar(5)
 
@@ -304,18 +303,18 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
-	if ya_continuo:
+	if _ya_continuo:
 		return
 
-	ya_continuo = true
+	_ya_continuo = true
 	if continuador != null:
 		continuador.detener()
 
-	if _node_key_actual.is_empty():
+	if _nodo_actual.is_empty():
 		_ir_a_destino_posterior_finalizacion()
 		return
 
-	Global.solicitar_continuar(_node_key_actual)
+	Global.solicitar_continuar(_nodo_actual)
 	Global.limpiar_sesion_nodo_jugable_activo()
 	get_tree().change_scene_to_file(_ruta_escena_retorno)
 

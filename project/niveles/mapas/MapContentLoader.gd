@@ -46,29 +46,10 @@ static func _validar_mapa(datos_mapa: Dictionary) -> Dictionary:
 
 	var nodos: Array = []
 	for indice in range((nodos_crudos as Array).size()):
-		var nodo_crudo: Variant = (nodos_crudos as Array)[indice]
-		if not nodo_crudo is Dictionary:
-			return _resultado_error("El nodo %d del mapa debe ser un objeto." % indice)
-
-		var nodo_mapa: Dictionary = nodo_crudo as Dictionary
-		var node_key: String = str(nodo_mapa.get("node_key", "")).strip_edges()
-		var titulo_nodo: String = str(nodo_mapa.get("title", "")).strip_edges()
-		var ruta_json_nodo: String = str(nodo_mapa.get("json_path", "")).strip_edges()
-
-		if node_key.is_empty():
-			return _resultado_error("El nodo %d necesita node_key." % indice)
-		if titulo_nodo.is_empty():
-			return _resultado_error("El nodo %d necesita title." % indice)
-		if ruta_json_nodo.is_empty():
-			return _resultado_error("El nodo %d necesita json_path." % indice)
-
-		nodos.append(
-			{
-				"node_key": node_key,
-				"title": titulo_nodo,
-				"json_path": ruta_json_nodo
-			}
-		)
+		var resultado_nodo: Dictionary = _validar_nodo_mapa((nodos_crudos as Array)[indice], indice)
+		if not bool(resultado_nodo.get("ok", false)):
+			return resultado_nodo
+		nodos.append(resultado_nodo.get("data", {}))
 
 	return _resultado_ok(
 		{
@@ -76,6 +57,32 @@ static func _validar_mapa(datos_mapa: Dictionary) -> Dictionary:
 			"track_key": track_key,
 			"title": titulo,
 			"nodes": nodos
+		}
+	)
+
+
+static func _validar_nodo_mapa(nodo_crudo: Variant, indice: int) -> Dictionary:
+	var numero_nodo: int = indice + 1
+	if not nodo_crudo is Dictionary:
+		return _resultado_error("El nodo %d del mapa debe ser un objeto." % numero_nodo)
+
+	var nodo_mapa: Dictionary = nodo_crudo as Dictionary
+	var node_key: String = str(nodo_mapa.get("node_key", "")).strip_edges()
+	var titulo_nodo: String = str(nodo_mapa.get("title", "")).strip_edges()
+	var ruta_json_nodo: String = str(nodo_mapa.get("json_path", "")).strip_edges()
+
+	if node_key.is_empty():
+		return _resultado_error("El nodo %d no tiene node_key." % numero_nodo)
+	if titulo_nodo.is_empty():
+		return _resultado_error("El nodo %d no tiene title." % numero_nodo)
+	if ruta_json_nodo.is_empty():
+		return _resultado_error("El nodo %d no tiene json_path." % numero_nodo)
+
+	return _resultado_ok(
+		{
+			"node_key": node_key,
+			"title": titulo_nodo,
+			"json_path": ruta_json_nodo
 		}
 	)
 

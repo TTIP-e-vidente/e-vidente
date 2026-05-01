@@ -30,9 +30,7 @@ var _streak_state: Dictionary = {}
 var _extra_progress_system_states: Dictionary = {}
 var _playable_node_progress_by_track: Dictionary = {}
 var _active_playable_node_session: Dictionary = {}
-# Clave del nodo que acaba de completarse y pide avanzar al siguiente del mapa.
-# MapScene lee este valor al volver desde una escena jugable.
-var _solicitud_continuar_node_key: String = ""
+var _nodo_a_continuar: String = ""
 
 
 func _init() -> void:
@@ -63,7 +61,7 @@ func reiniciar_progreso() -> void:
 
 	_playable_node_progress_by_track = {}
 	_active_playable_node_session = {}
-	_solicitud_continuar_node_key = ""
+	_nodo_a_continuar = ""
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		_asegurar_pista_progreso_existe(track_key)
 		_partial_level_state_by_track[track_key] = {}
@@ -190,14 +188,12 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 
 # --- Solicitud de continuar al siguiente nodo del mapa ---
 
-var nodo_a_continuar: String = ""
-
-func solicitar_continuar(node_key_actual: String) -> void:
-	nodo_a_continuar = node_key_actual.strip_edges()
+func solicitar_continuar(nodo_actual: String) -> void:
+	_nodo_a_continuar = nodo_actual.strip_edges()
 
 func consumir_nodo_a_continuar() -> String:
-	var nodo = nodo_a_continuar
-	nodo_a_continuar = ""
+	var nodo: String = _nodo_a_continuar
+	_nodo_a_continuar = ""
 	return nodo
 
 

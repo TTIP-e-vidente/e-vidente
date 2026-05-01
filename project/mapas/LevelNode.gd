@@ -45,7 +45,7 @@ const COLOR_BLOQUEADO := Color(1, 1, 1, 0.35)
 
 var escala_base: Vector2 = Vector2.ONE
 var _esta_hover: bool = false
-var _esta_completado: bool = false
+var esta_completado: bool = false
 var _datos_nodo_runtime: RefCounted = null
 var _click_en_curso: bool = false
 
@@ -60,7 +60,7 @@ var _textura_icono_configurada: Texture2D = null
 # Ciclo de vida ---------------------------------------------------------------
 func _ready() -> void:
 	escala_base = scale
-	_actualizar_vista_nodo()
+	actualizar_estado_visual()
 
 
 # Escena -> contrato ---------------------------------------------------------
@@ -106,12 +106,16 @@ func _get(property: StringName) -> Variant:
 	return null
 
 
-func configurar(datos_mapa_nodo: RefCounted, desbloqueado_nuevo: bool, completado_nuevo: bool = false) -> void:
-	desbloqueado = desbloqueado_nuevo
-	_esta_completado = completado_nuevo
+func configurar(
+	datos_mapa_nodo: RefCounted,
+	esta_disponible: bool,
+	completado_nuevo: bool = false
+) -> void:
+	desbloqueado = esta_disponible
+	esta_completado = completado_nuevo
 	_datos_nodo_runtime = datos_mapa_nodo.duplicar_datos()
 	position = datos_mapa_nodo.node_position
-	_actualizar_vista_nodo()
+	actualizar_estado_visual()
 
 
 # Interaccion ----------------------------------------------------------------
@@ -165,7 +169,7 @@ func _aplicar_estado_interaccion() -> void:
 		boton_nodo.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		return
 
-	boton_nodo.disabled = not desbloqueado or _esta_completado
+	boton_nodo.disabled = not desbloqueado or esta_completado
 	boton_nodo.mouse_default_cursor_shape = (
 		Control.CURSOR_ARROW
 		if boton_nodo.disabled
@@ -177,29 +181,42 @@ func _aplicar_estado_interaccion() -> void:
 func _actualizar_preview_en_editor() -> void:
 	if not is_node_ready() or not Engine.is_editor_hint():
 		return
-	_actualizar_vista_nodo()
+	actualizar_estado_visual()
 
 
-func _actualizar_vista_nodo() -> void:
+func actualizar_estado_visual() -> void:
 	if not is_node_ready():
 		return
 
 	var datos_nodo_actual: RefCounted = _obtener_datos_nodo_actual()
 	icono_estado.texture = _resolver_textura_icono(datos_nodo_actual)
 	_aplicar_estado_interaccion()
-	_aplicar_color_por_progreso()
+	_aplicar_estado_visual()
 
 
-func _aplicar_color_por_progreso() -> void:
+func _aplicar_estado_visual() -> void:
 	if Engine.is_editor_hint():
-		modulate = Color.WHITE
+		mostrar_disponible()
 		return
-	if _esta_completado:
-		modulate = COLOR_COMPLETADO
-	elif not desbloqueado:
-		modulate = COLOR_BLOQUEADO
-	else:
-		modulate = Color.WHITE
+	if esta_completado:
+		mostrar_completado()
+		return
+	if not desbloqueado:
+		mostrar_bloqueado()
+		return
+	mostrar_disponible()
+
+
+func mostrar_bloqueado() -> void:
+	modulate = COLOR_BLOQUEADO
+
+
+func mostrar_disponible() -> void:
+	modulate = Color.WHITE
+
+
+func mostrar_completado() -> void:
+	modulate = COLOR_COMPLETADO
 
 
 func _obtener_datos_nodo_actual() -> RefCounted:

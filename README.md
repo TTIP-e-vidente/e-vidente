@@ -81,16 +81,18 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 🚧 En desarrollo
 
-## Flujo de nodo jugable
+## Flujo principal
 
 1. `project/mapas/MapScene.gd` maneja el mapa.
-2. `project/preguntas/NodeContentLoader.gd` carga el JSON del nodo.
-3. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
-4. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
-5. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
-6. La modalidad termina y llama `Global.solicitar_continuar(node_key_actual)`.
-7. `MapScene.gd` consume esa intención y abre el siguiente nodo del mapa.
-8. `project/mapas/drag_drop/DragDropNode.tscn` queda como legacy/back-up y no forma parte del flujo principal.
+2. `project/mapas/MapNodeData.gd` describe cada nodo.
+3. `project/mapas/LevelNode.gd` muestra el nodo visual.
+4. `project/preguntas/NodeContentLoader.gd` carga JSON.
+5. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
+6. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
+7. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
+8. La modalidad termina y pide continuar.
+9. `MapScene.gd` abre el siguiente nodo.
+10. `project/mapas/drag_drop/DragDropNode.tscn` queda legacy/back-up.
 
 ## Responsabilidades del mapa
 
@@ -99,6 +101,30 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 - `MapNodeData.gd`: describe datos simples del nodo del mapa.
 - `MapProgress.gd`: resuelve progreso, desbloqueo y siguiente nodo.
 - Las modalidades no deciden el siguiente nodo.
+
+## Flujo JSON de mapa
+
+1. `MapContentLoader.gd` carga el JSON del mapa.
+2. `MapScene.gd` guarda `nodes[]` como lista ordenada.
+3. `LevelNode.gd` muestra cada nodo visual.
+4. `MapNodeData.gd` resuelve `node_key` y `json_path`.
+5. `MapScene.gd` pasa `json_path` a `NodeContentLoader.gd`.
+6. `NodeContentLoader.gd` carga el JSON jugable.
+7. `PlayableNodeRouter.gd` usa `mode`.
+8. Al terminar, `MapScene.gd` abre `nodes[indice + 1]`.
+
+## Como crear un mapa
+
+1. Crear un archivo en `project/niveles/mapas/`.
+2. Definir `id`, `track_key` y `title`.
+3. Agregar `nodes[]` en orden.
+4. Cada nodo tiene `node_key`, `title` y `json_path`.
+5. El `mode` vive en el JSON del nodo, no en el mapa.
+6. Para sumar un nodo, agregarlo al array y crear su JSON.
+
+```json
+{"id":"demo_mapa","track_key":"celiaquia","title":"Demo","nodes":[{"node_key":"nodo_01","title":"Primer nodo","json_path":"res://niveles/nodos/celiaquia/nodo_01.json"}]}
+```
 
 Para agregar un nodo nuevo:
 
