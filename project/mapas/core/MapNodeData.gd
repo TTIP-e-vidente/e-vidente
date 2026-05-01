@@ -15,7 +15,7 @@ const DICT_KEY_NODE_RESOURCE_PATH := "node_resource_path"
 const DICT_KEY_ICON_TEXTURE_PATH := "icon_texture_path"
 const DICT_KEY_POSITION := "pos"
 
-const SCRIPT_PATH := "res://mapas/MapNodeData.gd"
+const SCRIPT_PATH := "res://mapas/core/MapNodeData.gd"
 const DEFAULT_NODE_JSON_DIR := "res://niveles/nodos"
 const DEFAULT_NODE_RESOURCE_DIR := "res://preguntas/preguntas_recurso"
 

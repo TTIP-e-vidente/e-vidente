@@ -22,10 +22,11 @@ static func resolver_ruta_json(ruta_json: String) -> String:
 
 	var ruta_legacy: String = _resolver_ruta_legacy(ruta_res)
 	if not ruta_legacy.is_empty():
-		push_warning(
-			"NodeContentLoader: ruta legacy detectada. Usa %s en lugar de %s."
-			% [ruta_legacy, ruta_limpia]
-		)
+		if _debe_advertir_ruta_legacy(ruta_limpia, ruta_legacy):
+			push_warning(
+				"NodeContentLoader: ruta legacy detectada. Usa %s en lugar de %s."
+				% [ruta_legacy, ruta_limpia]
+			)
 		return ruta_legacy
 
 	return ruta_res
@@ -67,6 +68,16 @@ static func _resolver_ruta_legacy(ruta_json: String) -> String:
 	if not _puede_buscar_por_nombre(ruta_json):
 		return ""
 	return _buscar_ruta_json_por_nombre(ruta_json.get_file())
+
+
+static func _debe_advertir_ruta_legacy(ruta_original: String, ruta_resuelta: String) -> bool:
+	if ruta_original == ruta_resuelta:
+		return false
+	return (
+		ruta_original.begins_with(DIRECTORIO_NODOS_LEGACY)
+		or ruta_original.begins_with(DIRECTORIO_PROYECTO_NODOS_LEGACY)
+		or ruta_original.begins_with("res://%s" % DIRECTORIO_PROYECTO_NODOS_LEGACY)
+	)
 
 
 static func _puede_buscar_por_nombre(ruta_json: String) -> bool:

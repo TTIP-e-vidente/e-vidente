@@ -3,10 +3,10 @@ extends Node2D
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const MapContentLoaderScript := preload("res://sistemas/contenido/MapContentLoader.gd")
-const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
-const MapProgressScript := preload("res://mapas/MapProgress.gd")
+const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const MapProgressScript := preload("res://mapas/core/MapProgress.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
-const PlayableNodeRouterScript := preload("res://mapas/PlayableNodeRouter.gd")
+const PlayableNodeRouterScript := preload("res://mapas/core/PlayableNodeRouter.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 const MAP_JSON_PATH := "res://niveles/mapas/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
