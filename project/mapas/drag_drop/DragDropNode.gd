@@ -5,7 +5,7 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DragDropItemScript := preload("res://mapas/drag_drop/DragDropItem.gd")
 const DragDropTargetScript := preload("res://mapas/drag_drop/DragDropTarget.gd")
 
-const DEFAULT_RETURN_SCENE_PATH := GameSceneRouter.MAP_SCENE_PATH
+const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
 const DRAG_DROP_MODE := "drag_drop"
 const TITULO_POR_PISTA := {
 	"celiaquia": "res://assets-sistema/interfaz/titulo-celiaquia.png",
@@ -16,7 +16,9 @@ const TITULO_POR_PISTA := {
 const PERSONAJE_POR_PISTA := {
 	"celiaquia": "res://assets-sistema/player/personaje-idle-1.png",
 	"veganismo": "res://assets-sistema/player/player - vegan/personaje-idle-1.png",
-	"veganismo_celiaquia": "res://assets-sistema/player/player - vegan gluten free/personaje-idle-1.png",
+	"veganismo_celiaquia": (
+		"res://assets-sistema/player/player - vegan gluten free/personaje-idle-1.png"
+	),
 	"keto": "res://assets-sistema/player/player-keto/personaje-idle-1.png"
 }
 
@@ -26,7 +28,7 @@ const FEEDBACK_ERROR_COLOR := Color(0.82, 0.26, 0.26)
 
 var track_key: String = "celiaquia"
 var _clave_nodo: String = ""
-var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE_PATH
+var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
 var _tiene_sesion_de_mapa: bool = false
 var _actividad_completada: bool = false
 var _mensaje_error_bloqueante: String = ""
@@ -98,11 +100,12 @@ func _configurar_actividad_desde_sesion() -> void:
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	_clave_nodo = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_ruta_escena_de_retorno = str(
-		contexto_sesion.get("return_scene_path", DEFAULT_RETURN_SCENE_PATH)
-	).strip_edges()
+	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
+		contexto_sesion,
+		DEFAULT_RETURN_SCENE
+	)
 	if _ruta_escena_de_retorno.is_empty():
-		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
+		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_tiene_sesion_de_mapa = not contexto_sesion.is_empty()
 
 
@@ -193,7 +196,9 @@ func aceptar_item(target_id: String, item_node: DragDropItem, datos_item: Dictio
 	var target_control: DragDropTarget = _targets_por_id.get(target_id) as DragDropTarget
 	if target_control != null:
 		var ruta_textura: String = str(datos_item.get("image", "")).strip_edges()
-		var textura: Texture2D = load(ruta_textura) as Texture2D if not ruta_textura.is_empty() else null
+		var textura: Texture2D = (
+			load(ruta_textura) as Texture2D if not ruta_textura.is_empty() else null
+		)
 		target_control.agregar_item_colocado(
 			str(datos_item.get("label", "")).strip_edges(),
 			textura
@@ -280,7 +285,7 @@ func _obtener_ids_items_correctos(items: Array) -> Array[String]:
 
 func _reiniciar_actividad() -> void:
 	_clave_nodo = ""
-	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
+	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_tiene_sesion_de_mapa = false
 	_actividad_completada = false
 	_mensaje_error_bloqueante = ""
