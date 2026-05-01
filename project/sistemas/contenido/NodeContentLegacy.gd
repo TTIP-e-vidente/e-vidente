@@ -41,9 +41,15 @@ static func normalizar_datos_nodo(datos_crudos: Dictionary) -> Dictionary:
 
 static func _normalizar_ruta_proyecto(ruta_json: String) -> String:
 	if ruta_json.begins_with(DIRECTORIO_PROYECTO_NODOS_ACTUAL):
-		return "%s%s" % [DIRECTORIO_NODOS_ACTUAL, ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_ACTUAL)]
+		return "%s%s" % [
+			DIRECTORIO_NODOS_ACTUAL,
+			ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_ACTUAL)
+		]
 	if ruta_json.begins_with(DIRECTORIO_PROYECTO_NODOS_LEGACY):
-		return "%s%s" % [DIRECTORIO_NODOS_LEGACY, ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_LEGACY)]
+		return "%s%s" % [
+			DIRECTORIO_NODOS_LEGACY,
+			ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_LEGACY)
+		]
 	if ruta_json.begins_with("res://project/"):
 		return "res://%s" % ruta_json.trim_prefix("res://project/")
 	return ruta_json
@@ -52,7 +58,10 @@ static func _normalizar_ruta_proyecto(ruta_json: String) -> String:
 static func _resolver_ruta_legacy(ruta_json: String) -> String:
 	var ruta_migrada: String = ruta_json
 	if ruta_json.begins_with(DIRECTORIO_NODOS_LEGACY):
-		ruta_migrada = "%s%s" % [DIRECTORIO_NODOS_ACTUAL, ruta_json.trim_prefix(DIRECTORIO_NODOS_LEGACY)]
+		ruta_migrada = "%s%s" % [
+			DIRECTORIO_NODOS_ACTUAL,
+			ruta_json.trim_prefix(DIRECTORIO_NODOS_LEGACY)
+		]
 	if ruta_migrada != ruta_json and FileAccess.file_exists(ruta_migrada):
 		return ruta_migrada
 	if not _puede_buscar_por_nombre(ruta_json):
@@ -166,18 +175,30 @@ static func _normalizar_formato_legacy(datos_crudos: Dictionary) -> Dictionary:
 				"id": str(datos_nodo.get("question_key", "")).strip_edges(),
 				"theme": str(datos_nodo.get("track_key", "")).strip_edges(),
 				"title": str(datos_nodo.get("title", "")).strip_edges(),
-				"difficulty": _normalizar_dificultad(str(datos_nodo.get("difficulty", "")).strip_edges()),
+				"difficulty": _normalizar_dificultad(
+					str(datos_nodo.get("difficulty", "")).strip_edges()
+				),
 				"mode": modo,
 				"content": _leer_diccionario(
 					datos_crudos.get(
 						"title_card",
-						datos_crudos.get("drag_and_drop", datos_crudos.get("question", datos_crudos.get("selection", {})))
+						datos_crudos.get(
+							"drag_and_drop",
+							datos_crudos.get(
+								"question",
+								datos_crudos.get("selection", {})
+							)
+						)
 					)
 				)
 			}
 
 
-static func _crear_nodo_quiz(datos_nodo: Dictionary, modo: String, bloque_quiz: Dictionary) -> Dictionary:
+static func _crear_nodo_quiz(
+	datos_nodo: Dictionary,
+	modo: String,
+	bloque_quiz: Dictionary
+) -> Dictionary:
 	return {
 		"id": str(datos_nodo.get("question_key", "")).strip_edges(),
 		"theme": str(datos_nodo.get("track_key", "")).strip_edges(),
@@ -185,7 +206,10 @@ static func _crear_nodo_quiz(datos_nodo: Dictionary, modo: String, bloque_quiz: 
 		"difficulty": _normalizar_dificultad(str(datos_nodo.get("difficulty", "")).strip_edges()),
 		"mode": modo,
 		"content": {
-			"question": _primer_texto(bloque_quiz, ["question", "prompt", "instruction", "consigna"]),
+			"question": _primer_texto(
+				bloque_quiz,
+				["question", "prompt", "instruction", "consigna"]
+			),
 			"correct_answer": _primer_texto(
 				bloque_quiz,
 				["correct_answer", "correct_option", "respuesta_correcta", "correct"]
@@ -260,7 +284,10 @@ static func _targets(bloque_drag: Dictionary, target_fallback: Dictionary) -> Ar
 	return targets
 
 
-static func _items_drag_drop(bloque_drag: Dictionary, target_por_defecto: String) -> Array[Dictionary]:
+static func _items_drag_drop(
+	bloque_drag: Dictionary,
+	target_por_defecto: String
+) -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 	var items_crudos: Variant = bloque_drag.get("items", [])
 	if not items_crudos is Array:

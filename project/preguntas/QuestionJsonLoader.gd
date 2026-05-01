@@ -1,10 +1,12 @@
 extends RefCounted
 class_name QuestionJsonLoader
 
-const NodeContentLoaderScript := preload("res://preguntas/NodeContentLoader.gd")
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
 const PreguntasScript := preload("res://preguntas/recursos/preguntas.gd")
-const ERROR_CONTENIDO_NO_DISPONIBLE := "No se pudo cargar el contenido del nodo. Revisa su JSON o el recurso fallback."
+const ERROR_CONTENIDO_NO_DISPONIBLE := (
+	"No se pudo cargar el contenido del nodo. Revisa su JSON o el recurso fallback."
+)
 
 
 static func cargar_resultado_desde_datos_nodo(
@@ -16,14 +18,20 @@ static func cargar_resultado_desde_datos_nodo(
 			"QuestionJsonLoader solo soporta quiz_choice. Archivo: %s" % etiqueta_origen
 		)
 
-	var pregunta_recurso: Preguntas = _crear_pregunta(datos_nodo.get("content", {}), etiqueta_origen)
+	var pregunta_recurso: Preguntas = _crear_pregunta(
+		datos_nodo.get("content", {}),
+		etiqueta_origen
+	)
 	return _resultado_ok_con_tema(_crear_tema(pregunta_recurso))
 
 
 static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	var datos_nodo: Dictionary = contexto_sesion.get("node_data", {})
 	if not datos_nodo.is_empty():
-		return cargar_resultado_desde_datos_nodo(datos_nodo, str(contexto_sesion.get("node_json_path", "")))
+		return cargar_resultado_desde_datos_nodo(
+			datos_nodo,
+			str(contexto_sesion.get("node_json_path", ""))
+		)
 	return _cargar_fallback_legacy(contexto_sesion)
 
 

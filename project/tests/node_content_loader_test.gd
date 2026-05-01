@@ -1,6 +1,6 @@
 extends SceneTree
 
-const NodeContentLoader := preload("res://preguntas/NodeContentLoader.gd")
+const NodeContentLoader := preload("res://sistemas/contenido/NodeContentLoader.gd")
 
 var _fallo: bool = false
 
@@ -31,9 +31,15 @@ func _probar_quiz_valido() -> void:
 
 	var datos_nodo: Dictionary = resultado.get("data", {})
 	var contenido: Dictionary = datos_nodo.get("content", {})
-	_assert(str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_QUIZ_CHOICE, "Quiz valido deberia normalizar mode quiz_choice")
+	_assert(
+		str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_QUIZ_CHOICE,
+		"Quiz valido deberia normalizar mode quiz_choice"
+	)
 	_assert(str(datos_nodo.get("id", "")) == "gluten_maiz", "Quiz valido deberia conservar id")
-	_assert(str(contenido.get("question", "")) == "El gluten esta en el maiz?", "Quiz valido deberia conservar content.question")
+	_assert(
+		str(contenido.get("question", "")) == "El gluten esta en el maiz?",
+		"Quiz valido deberia conservar content.question"
+	)
 
 
 func _probar_drag_drop_valido() -> void:
@@ -48,7 +54,10 @@ func _probar_drag_drop_valido() -> void:
 	var contenido: Dictionary = datos_nodo.get("content", {})
 	var targets: Array = contenido.get("targets", [])
 	var items: Array = contenido.get("items", [])
-	_assert(str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_DRAG_DROP, "DragDrop valido deberia conservar mode drag_drop")
+	_assert(
+		str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_DRAG_DROP,
+		"DragDrop valido deberia conservar mode drag_drop"
+	)
 	_assert(targets.size() == 1, "DragDrop valido deberia tener un target")
 	_assert(items.size() == 2, "DragDrop valido deberia tener dos items")
 
@@ -58,7 +67,10 @@ func _probar_mode_no_soportado() -> void:
 		"res://tests/fixtures/nodos/modo_no_soportado.json"
 	)
 	_assert(not bool(resultado.get("ok", false)), "Mode no soportado deberia fallar")
-	_assert(str(resultado.get("error", "")).contains("Modo no soportado"), "Mode no soportado deberia informar error claro")
+	_assert(
+		str(resultado.get("error", "")).contains("Modo no soportado"),
+		"Mode no soportado deberia informar error claro"
+	)
 
 
 func _probar_contenido_faltante() -> void:
@@ -66,7 +78,10 @@ func _probar_contenido_faltante() -> void:
 		"res://tests/fixtures/nodos/contenido_faltante.json"
 	)
 	_assert(not bool(resultado.get("ok", false)), "Contenido faltante deberia fallar")
-	_assert(str(resultado.get("error", "")).contains("wrong_options"), "Contenido faltante deberia explicar el campo invalido")
+	_assert(
+		str(resultado.get("error", "")).contains("wrong_options"),
+		"Contenido faltante deberia explicar el campo invalido"
+	)
 
 
 func _probar_json_legacy() -> void:
@@ -79,8 +94,14 @@ func _probar_json_legacy() -> void:
 
 	var datos_nodo: Dictionary = resultado.get("data", {})
 	var contenido: Dictionary = datos_nodo.get("content", {})
-	_assert(str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_QUIZ_CHOICE, "JSON legacy deberia mapear select_option a quiz_choice")
-	_assert(str(contenido.get("correct_answer", "")) == "Arroz blanco", "JSON legacy deberia conservar la opcion correcta")
+	_assert(
+		str(datos_nodo.get("mode", "")) == NodeContentLoader.MODE_QUIZ_CHOICE,
+		"JSON legacy deberia mapear select_option a quiz_choice"
+	)
+	_assert(
+		str(contenido.get("correct_answer", "")) == "Arroz blanco",
+		"JSON legacy deberia conservar la opcion correcta"
+	)
 
 
 func _probar_ruta_vieja() -> void:
@@ -92,14 +113,20 @@ func _probar_ruta_vieja() -> void:
 		return
 
 	var datos_nodo: Dictionary = resultado.get("data", {})
-	_assert(str(datos_nodo.get("id", "")) == "eliminar_gluten", "Ruta vieja deberia resolver el nodo correcto")
+	_assert(
+		str(datos_nodo.get("id", "")) == "eliminar_gluten",
+		"Ruta vieja deberia resolver el nodo correcto"
+	)
 
 
 func _probar_ruta_de_proyecto() -> void:
 	var resultado: Dictionary = NodeContentLoader.cargar_contenido_nodo(
 		"project/niveles/nodos/celiaquia/gluten_maiz.json"
 	)
-	_assert(bool(resultado.get("ok", false)), "Ruta project/niveles/nodos deberia resolverse a res://")
+	_assert(
+		bool(resultado.get("ok", false)),
+		"Ruta project/niveles/nodos deberia resolverse a res://"
+	)
 
 
 func _assert(condicion: bool, mensaje: String) -> void:

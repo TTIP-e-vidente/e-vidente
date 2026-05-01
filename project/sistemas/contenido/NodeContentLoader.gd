@@ -1,8 +1,8 @@
 extends RefCounted
 class_name NodeContentLoader
 
-const NormalizadorLegacy := preload("res://preguntas/NodeContentLegacy.gd")
-const ValidadorContenido := preload("res://preguntas/NodeContentValidator.gd")
+const NormalizadorLegacy := preload("res://sistemas/contenido/NodeContentLegacy.gd")
+const ValidadorContenido := preload("res://sistemas/contenido/NodeContentValidator.gd")
 
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"

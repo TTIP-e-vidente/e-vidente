@@ -118,7 +118,10 @@ static func _validar_drag_drop(contenido: Dictionary) -> String:
 		if not correct_target.is_empty():
 			hay_items_correctos = true
 			if not ids_targets.has(correct_target):
-				return "DragDrop: item %d apunta a target inexistente (%s)." % [(indice_item + 1), correct_target]
+				return (
+					"DragDrop: item %d apunta a target inexistente (%s)."
+					% [(indice_item + 1), correct_target]
+				)
 
 	if not hay_items_correctos:
 		return "DragDrop: no hay items correctos para completar la actividad."
