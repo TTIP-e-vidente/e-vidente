@@ -40,7 +40,10 @@ func _run() -> void:
 		var nodes_container := current_scene.call("obtener_contenedor_de_nodos") as Node2D
 		_check(nodes_container != null, "El mapa deberia exponer obtener_contenedor_de_nodos")
 		if nodes_container != null:
-			_check(nodes_container.get_child_count() == 14, "El mapa deberia renderizar 14 nodos jugables")
+			_check(
+				nodes_container.get_child_count() == 14,
+				"El mapa deberia renderizar 14 nodos jugables"
+			)
 
 	if not failed:
 		await _select_first_map_node_and_expect_level()
@@ -80,7 +83,10 @@ func _check_gameplay_scene(global) -> void:
 	if ml == null:
 		return
 
-	_check(ml.has_method("obtener_actual_corrida_indice"), "ManagerLevel sin obtener_actual_corrida_indice")
+	_check(
+		ml.has_method("obtener_actual_corrida_indice"),
+		"ManagerLevel sin obtener_actual_corrida_indice"
+	)
 	_check(ml.has_method("obtener_total_corridas"), "ManagerLevel sin obtener_total_corridas")
 	if failed:
 		return
@@ -97,7 +103,10 @@ func _check_gameplay_scene(global) -> void:
 		level_scene.has_method("completar_corrida_actual"),
 		"El nivel deberia exponer completar_corrida_actual"
 	)
-	_check(level_scene.has_method("es_corrida_completado"), "El nivel deberia exponer es_corrida_completado")
+	_check(
+		level_scene.has_method("es_corrida_completado"),
+		"El nivel deberia exponer es_corrida_completado"
+	)
 	if failed:
 		return
 

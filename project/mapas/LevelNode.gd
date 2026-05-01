@@ -3,7 +3,7 @@ extends Node2D
 
 signal nodo_seleccionado(datos_mapa_nodo: RefCounted)
 
-const MapNodeDataScript := preload("res://mapas/MapNodeData.gd")
+const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NODE_KIND_CHAPTER := "chapter"
 const NODE_KIND_QUESTION := "question"
 const COLOR_COMPLETADO := Color("#db9d4b")

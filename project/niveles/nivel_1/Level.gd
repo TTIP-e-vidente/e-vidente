@@ -260,7 +260,9 @@ func _on_adelante_presionado() -> void:
 		return
 	if bool(_pending_streak_feedback.get("should_show", false)):
 		var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
-		var continue_target: Dictionary = _construir_objetivo_continuar_posterior_finalizacion(pending_feedback)
+		var continue_target: Dictionary = (
+			_construir_objetivo_continuar_posterior_finalizacion(pending_feedback)
+		)
 		_pending_streak_feedback = {}
 		GameSceneRouter.go_to_streak(
 			get_tree(),
@@ -384,7 +386,9 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _construir_objetivo_continuar_posterior_finalizacion(streak_feedback: Dictionary = {}) -> Dictionary:
+func _construir_objetivo_continuar_posterior_finalizacion(
+	streak_feedback: Dictionary = {}
+) -> Dictionary:
 	var continue_target: Dictionary
 	if active_track_key == DEFAULT_TRACK_KEY:
 		continue_target = {"type": "map"}
