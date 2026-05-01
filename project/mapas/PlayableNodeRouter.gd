@@ -1,7 +1,7 @@
 extends RefCounted
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const NodeContentLoaderScript := preload("res://preguntas/NodeContentLoader.gd")
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 
 const RUTAS_POR_MODO := {
 	NodeContentLoaderScript.MODE_QUIZ_CHOICE: GameSceneRouter.QUESTIONS_SCENE_PATH,

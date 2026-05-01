@@ -34,7 +34,7 @@ var node_position: Vector2 = Vector2.ZERO
 const DICT_KEY_LEGACY_QUESTION_KEY := "question_key"
 const DICT_KEY_LEGACY_QUESTION_JSON_PATH := "question_json_path"
 const DICT_KEY_LEGACY_QUESTION_RESOURCE_PATH := "question_resource_path"
-const NodeContentLegacyScript := preload("res://preguntas/NodeContentLegacy.gd")
+const NodeContentLegacyScript := preload("res://sistemas/contenido/NodeContentLegacy.gd")
 
 
 static func crear() -> RefCounted:
@@ -233,7 +233,11 @@ func _obtener_nombre_sin_extension(ruta_cruda: String) -> String:
 	return nombre_archivo.substr(0, indice_extension)
 
 
-static func _leer_texto(definicion_nodo: Dictionary, clave: String, fallback: String = "") -> String:
+static func _leer_texto(
+	definicion_nodo: Dictionary,
+	clave: String,
+	fallback: String = ""
+) -> String:
 	return str(definicion_nodo.get(clave, fallback)).strip_edges()
 
 
