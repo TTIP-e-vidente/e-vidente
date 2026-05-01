@@ -1,6 +1,12 @@
 extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const GameStreakTrackerScript := preload(
+	"res://niveles/progress/GameStreakTracker.gd"
+)
+const PostGameFlowControllerScript := preload(
+	"res://niveles/progress/PostGameFlowController.gd"
+)
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
 const DEFAULT_RETURN_SCENE_PATH := GameSceneRouter.MAP_SCENE_PATH
@@ -27,6 +33,8 @@ var _tiene_sesion_de_mapa: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE_PATH
 var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
+var _pending_streak_feedback: Dictionary = {}
+var _pending_post_game_flow: Dictionary = {}
 var continuador = null
 
 var pregunta_actual: Preguntas:
@@ -85,7 +93,9 @@ func configurar_quiz_desde_sesion() -> void:
 		return
 
 	_aplicar_contexto_sesion(contexto_sesion)
-	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(contexto_sesion)
+	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(
+		contexto_sesion
+	)
 	if not bool(resultado_quiz.get("ok", false)):
 		_establecer_mensaje_de_error(
 			str(resultado_quiz.get("error", "No se pudo cargar el contenido del nodo."))
@@ -98,6 +108,8 @@ func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
 	_nodo_actual = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE_PATH
+	_pending_streak_feedback = {}
+	_pending_post_game_flow = {}
 
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
@@ -274,14 +286,27 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 
 func _finalizar_quiz() -> void:
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
+	var previous_streak: Dictionary = Global.obtener_estado_racha()
 
 	if _tiene_sesion_de_mapa:
 		_guardar_progreso_de_mapa(cantidad_preguntas)
-		mostrar_ensenanza_final()
-		return
+	else:
+		Global.marcar_nivel_completado(track_key, nivel_id)
+		SaveManager.registrar_nivel_completado(track_key, nivel_id)
 
-	Global.marcar_nivel_completado(track_key, nivel_id)
-	SaveManager.registrar_nivel_completado(track_key, nivel_id)
+	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
+	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	_pending_streak_feedback = GameStreakTrackerScript.build_feedback(
+		previous_streak,
+		updated_streak,
+		true
+	)
+	_pending_post_game_flow = PostGameFlowControllerScript.build_flow_state(
+		previous_streak,
+		updated_streak,
+		_crear_contexto_post_partida(),
+		_pending_streak_feedback
+	)
 	mostrar_ensenanza_final()
 
 
@@ -348,10 +373,16 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 
 
 func _on_jugar_nuevamente_pressed() -> void:
+	if not _pending_post_game_flow.is_empty():
+		_resolver_flujo_post_partida(false)
+		return
 	volver_al_mapa()
 
 
 func _on_atras_pressed() -> void:
+	if not _pending_post_game_flow.is_empty():
+		_resolver_flujo_post_partida(false)
+		return
 	volver_al_mapa()
 
 
@@ -377,6 +408,9 @@ func _ubicar_continuador() -> void:
 
 
 func volver_al_mapa() -> void:
+	if not _pending_post_game_flow.is_empty():
+		_resolver_flujo_post_partida(false)
+		return
 	if continuador != null:
 		continuador.detener()
 	_limpiar_media_de_pregunta()
@@ -404,6 +438,10 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
+	if not _pending_post_game_flow.is_empty():
+		_resolver_flujo_post_partida(true)
+		return
+
 	if ya_continuo:
 		return
 
@@ -422,3 +460,40 @@ func continuar_al_siguiente_nodo() -> void:
 
 func _on_flecha_derecha_pressed() -> void:
 	continuar_al_siguiente_nodo()
+
+
+func _resolver_flujo_post_partida(streak_timer_finished: bool) -> void:
+	if _pending_post_game_flow.is_empty():
+		volver_al_mapa_legacy()
+		return
+
+	var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
+	var pending_flow: Dictionary = _pending_post_game_flow.duplicate(true)
+	_pending_streak_feedback = {}
+	_pending_post_game_flow = {}
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		pending_flow,
+		pending_feedback,
+		streak_timer_finished
+	)
+
+
+func volver_al_mapa_legacy() -> void:
+	if continuador != null:
+		continuador.detener()
+	_limpiar_media_de_pregunta()
+	Global.limpiar_sesion_nodo_jugable_activo()
+	get_tree().change_scene_to_file(_ruta_escena_de_retorno)
+
+
+func _crear_contexto_post_partida() -> Dictionary:
+	return {
+		"source_name": "Pregunta",
+		"track_key": track_key,
+		"default_track_key": "celiaquia",
+		"current_level_number": nivel_id,
+		"track_level_count": Global.obtener_pista_nivel_cantidad(track_key),
+		"node_key": _nodo_actual,
+		"return_scene_path": _ruta_escena_de_retorno,
+	}

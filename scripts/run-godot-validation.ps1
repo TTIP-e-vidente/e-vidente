@@ -66,16 +66,17 @@ function Get-ValidationSteps {
 
     $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') }
     $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/node_content_loader_test.gd') }
+    $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/post_game_flow_controller_test.gd') }
     $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
 
     switch ($ValidationMode) {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }
         'technical' { return @($importStep) }
-        'smoke' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'ci' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'pr-fast' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'full' { return @($importStep, $nodeJsonStep, $smokeStep) }
+        'smoke' { return @($importStep, $nodeJsonStep, $postGameFlowStep, $smokeStep) }
+        'ci' { return @($importStep, $nodeJsonStep, $postGameFlowStep, $smokeStep) }
+        'pr-fast' { return @($importStep, $nodeJsonStep, $postGameFlowStep, $smokeStep) }
+        'full' { return @($importStep, $nodeJsonStep, $postGameFlowStep, $smokeStep) }
         default { throw "Modo de validacion no soportado: $ValidationMode" }
     }
 }

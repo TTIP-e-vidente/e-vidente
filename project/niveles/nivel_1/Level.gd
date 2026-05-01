@@ -17,6 +17,9 @@ const GameStreakTrackerScript      := preload(
 const GameStreakDebugScript := preload(
 	"res://niveles/progress/GameStreakDebug.gd"
 )
+const PostGameFlowControllerScript := preload(
+	"res://niveles/progress/PostGameFlowController.gd"
+)
 const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
 const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 	"res://niveles/level_completion_black_and_white.gdshader"
@@ -67,6 +70,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 var save_feedback_timer:   Timer  = null
 var active_track_key:      String = ""
 var _pending_streak_feedback: Dictionary = {}
+var _pending_post_game_flow: Dictionary = {}
 var _current_run_completion_handled := false
 var _completion_visual_original_materials: Dictionary = {}
 var _completion_visual_original_modulates: Dictionary = {}
@@ -97,6 +101,7 @@ func _iniciar_flujo_nivel() -> void:
 	else:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 	_pending_streak_feedback = {}
+	_pending_post_game_flow = {}
 	_current_run_completion_handled = false
 	_ya_continuo = false
 	Item_level.is_dragging = null
@@ -205,33 +210,41 @@ func completar_corrida_actual() -> void:
 	_current_run_completion_handled = true
 	_bloquear_completado_corrida()
 
+	var previous_streak: Dictionary = Global.obtener_estado_racha()
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
-		mostrar_continuacion()
-		run_completed.emit()
-		return
+		Global.registrar_actividad_racha(
+			"map_node_completed",
+			{
+				"track_key": track_key,
+				"level_number": level_number,
+				"node_key": _nodo_actual,
+			}
+		)
+	else:
+		Global.marcar_nivel_completado(track_key, level_number)
+		Global.registrar_actividad_racha(
+			"level_completed",
+			{"track_key": track_key, "level_number": level_number}
+		)
+		SaveManager.registrar_nivel_completado(track_key, level_number)
 
-	# --- Flujo de racha (lineal, todo acá) ---
-	# 1. Capturar racha previa para calcular el feedback post-partida
-	var previous_streak: Dictionary = Global.obtener_estado_racha()
-
-	# 2. Registrar progreso y actividad de racha
-	Global.marcar_nivel_completado(track_key, level_number)
-	Global.registrar_actividad_racha(
-		"level_completed",
-		{"track_key": track_key, "level_number": level_number}
-	)
-
-	# 3. Persistir todo a disco
-	SaveManager.registrar_nivel_completado(track_key, level_number)
-
-	# 4. Preparar el feedback de racha para mostrarlo al avanzar
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	_pending_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
+	_pending_post_game_flow = PostGameFlowControllerScript.build_flow_state(
+		previous_streak,
+		updated_streak,
+		_crear_contexto_post_partida(level_number),
+		_pending_streak_feedback
+	)
+	if _usa_flujo_mapa:
+		mostrar_continuacion()
+		run_completed.emit()
+		return
 
 	_mostrar_completado_corrida_retroalimentacion()
 	run_completed.emit()
@@ -255,23 +268,7 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 func _on_adelante_presionado() -> void:
 	if not es_corrida_completado():
 		return
-	if _usa_flujo_mapa:
-		continuar_al_siguiente_nodo()
-		return
-	if bool(_pending_streak_feedback.get("should_show", false)):
-		var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
-		var continue_target: Dictionary = (
-			_construir_objetivo_continuar_posterior_finalizacion(pending_feedback)
-		)
-		_pending_streak_feedback = {}
-		GameSceneRouter.go_to_streak(
-			get_tree(),
-			"",
-			pending_feedback,
-			continue_target
-		)
-		return
-	_ir_a_destino_posterior_finalizacion()
+	_resolver_flujo_post_partida(true)
 
 
 ## --- Continuación desde mapa ---
@@ -305,6 +302,10 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
+	if not _pending_post_game_flow.is_empty():
+		_resolver_flujo_post_partida(true)
+		return
+
 	if _ya_continuo:
 		return
 
@@ -313,7 +314,8 @@ func continuar_al_siguiente_nodo() -> void:
 		continuador.detener()
 
 	if _nodo_actual.is_empty():
-		_ir_a_destino_posterior_finalizacion()
+		Global.limpiar_sesion_nodo_jugable_activo()
+		get_tree().change_scene_to_file(_ruta_escena_retorno)
 		return
 
 	Global.solicitar_continuar(_nodo_actual)
@@ -386,72 +388,50 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _construir_objetivo_continuar_posterior_finalizacion(
-	streak_feedback: Dictionary = {}
-) -> Dictionary:
-	var continue_target: Dictionary
-	if active_track_key == DEFAULT_TRACK_KEY:
-		continue_target = {"type": "map"}
-		_agregar_vista_previa_mock_racha(continue_target, streak_feedback)
-		return continue_target
+func _resolver_flujo_post_partida(streak_timer_finished: bool) -> void:
+	if _pending_post_game_flow.is_empty():
+		if _usa_flujo_mapa:
+			_continuar_flujo_mapa_legacy()
+			return
+		GameSceneRouter.go_to_mode_selector(get_tree())
+		return
 
-	var next_level: int = _actual_nivel_numero() + 1
-	var level_count: int = Global.obtener_pista_nivel_cantidad(active_track_key)
-	if next_level <= level_count:
-		continue_target = {
-			"type": "track_level",
-			"track_key": active_track_key,
-			"level_number": next_level
-		}
-		_agregar_vista_previa_mock_racha(continue_target, streak_feedback)
-		return continue_target
+	var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
+	var pending_flow: Dictionary = _pending_post_game_flow.duplicate(true)
+	_pending_streak_feedback = {}
+	_pending_post_game_flow = {}
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		pending_flow,
+		pending_feedback,
+		streak_timer_finished
+	)
 
-	continue_target = {
-		"type": "track_book",
-		"track_key": active_track_key
+
+func _continuar_flujo_mapa_legacy() -> void:
+	if _ya_continuo:
+		return
+	_ya_continuo = true
+	if continuador != null:
+		continuador.detener()
+	if _nodo_actual.is_empty():
+		GameSceneRouter.go_to_map(get_tree())
+		return
+	Global.solicitar_continuar(_nodo_actual)
+	Global.limpiar_sesion_nodo_jugable_activo()
+	get_tree().change_scene_to_file(_ruta_escena_retorno)
+
+
+func _crear_contexto_post_partida(level_number: int) -> Dictionary:
+	return {
+		"source_name": "Level",
+		"track_key": active_track_key,
+		"default_track_key": DEFAULT_TRACK_KEY,
+		"current_level_number": level_number,
+		"track_level_count": Global.obtener_pista_nivel_cantidad(active_track_key),
+		"node_key": _nodo_actual,
+		"return_scene_path": _ruta_escena_retorno,
 	}
-	_agregar_vista_previa_mock_racha(continue_target, streak_feedback)
-	return continue_target
-
-
-func _agregar_vista_previa_mock_racha(
-	continue_target: Dictionary,
-	streak_feedback: Dictionary = {}
-) -> void:
-	if not GameStreakDebugScript.is_preview_enabled():
-		return
-	var current_count: int = int(streak_feedback.get("current_count", 0))
-	if current_count <= 0 or current_count >= GameStreakDebugScript.PREVIEW_MAX_COUNT:
-		return
-	var preview_counts: Array[int] = []
-	for preview_count in range(
-		current_count + 1,
-		GameStreakDebugScript.PREVIEW_MAX_COUNT + 1
-	):
-		preview_counts.append(preview_count)
-	if preview_counts.is_empty():
-		return
-	continue_target[GameStreakDebugScript.PREVIEW_COUNTS_KEY] = preview_counts
-
-
-func _ir_a_destino_posterior_finalizacion() -> void:
-	var continue_target: Dictionary = _construir_objetivo_continuar_posterior_finalizacion()
-	match str(continue_target.get("type", "")).strip_edges():
-		"map":
-			GameSceneRouter.go_to_map(get_tree())
-		"track_level":
-			GameSceneRouter.go_to_track_level(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges(),
-				int(continue_target.get("level_number", -1))
-			)
-		"track_book":
-			GameSceneRouter.go_to_track_book(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges()
-			)
-		_:
-			GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _mostrar_retroalimentacion_tarjeta(

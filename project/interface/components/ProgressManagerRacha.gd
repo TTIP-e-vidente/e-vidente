@@ -1,8 +1,13 @@
 extends Control
 
+signal flow_completed
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DayCircleScript := preload("res://interface/components/DayCircle.gd")
 const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
+const PostGameFlowControllerScript := preload(
+	"res://niveles/progress/PostGameFlowController.gd"
+)
 
 const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
 const STREAK_RETURN_SCENE_META := "streak_return_scene"
@@ -302,30 +307,11 @@ func _mostrar_siguiente_vista_previa_mock() -> bool:
 func _on_boton_continuar_presionado() -> void:
 	if _mostrar_siguiente_vista_previa_mock():
 		return
-	if _feedback_continue_target.is_empty():
-		_on_volver_solicitado()
-		return
-	_ir_a_objetivo_continuar(_feedback_continue_target)
-
-
-func _ir_a_objetivo_continuar(continue_target: Dictionary) -> void:
-	var target_type: String = str(continue_target.get("type", "")).strip_edges()
-	match target_type:
-		"map":
-			GameSceneRouter.go_to_map(get_tree())
-		"track_level":
-			GameSceneRouter.go_to_track_level(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges(),
-				int(continue_target.get("level_number", -1))
-			)
-		"track_book":
-			GameSceneRouter.go_to_track_book(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges()
-			)
-		_:
-			_on_volver_solicitado()
+	flow_completed.emit()
+	PostGameFlowControllerScript.navigate_after_streak(
+		get_tree(),
+		_resolver_ruta_escena_retorno()
+	)
 
 
 func _on_volver_solicitado() -> void:
