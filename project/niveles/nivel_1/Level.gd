@@ -69,8 +69,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 ## --- Estado runtime ---
 var save_feedback_timer:   Timer  = null
 var active_track_key:      String = ""
-var _pending_streak_feedback: Dictionary = {}
-var _pending_post_game_flow: Dictionary = {}
+var _post_game_streak_feedback: Dictionary = {}
+var _post_game_flow_state: Dictionary = {}
 var _current_run_completion_handled := false
 var _completion_visual_original_materials: Dictionary = {}
 var _completion_visual_original_modulates: Dictionary = {}
@@ -100,8 +100,8 @@ func _iniciar_flujo_nivel() -> void:
 		active_track_key = _track_key_contexto
 	else:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
-	_pending_streak_feedback = {}
-	_pending_post_game_flow = {}
+	_post_game_streak_feedback = {}
+	_post_game_flow_state = {}
 	_current_run_completion_handled = false
 	_ya_continuo = false
 	Item_level.is_dragging = null
@@ -130,9 +130,10 @@ func _cargar_contexto_sesion() -> void:
 
 	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
-	_ruta_escena_retorno = str(
-		_contexto_nodo_mapa.get("return_scene_path", GameSceneRouter.MAP_SCENE_PATH)
-	).strip_edges()
+	_ruta_escena_retorno = GameSceneRouter.read_return_to(
+		_contexto_nodo_mapa,
+		GameSceneRouter.MAP_SCENE_PATH
+	)
 	if _ruta_escena_retorno.is_empty():
 		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
 
@@ -185,8 +186,7 @@ func _on_atras_presionado() -> void:
 	if es_corrida_completado():
 		return
 	if _usa_flujo_mapa:
-		Global.limpiar_sesion_nodo_jugable_activo()
-		get_tree().change_scene_to_file(_ruta_escena_retorno)
+		_return_to_map_scene()
 		return
 	if active_track_key == DEFAULT_TRACK_KEY:
 		GameSceneRouter.go_to_map(get_tree())
@@ -230,17 +230,7 @@ func completar_corrida_actual() -> void:
 		SaveManager.registrar_nivel_completado(track_key, level_number)
 
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
-	_pending_streak_feedback = GameStreakTrackerScript.build_feedback(
-		previous_streak,
-		updated_streak,
-		true
-	)
-	_pending_post_game_flow = PostGameFlowControllerScript.build_flow_state(
-		previous_streak,
-		updated_streak,
-		_crear_contexto_post_partida(level_number),
-		_pending_streak_feedback
-	)
+	_on_level_finished(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
 		mostrar_continuacion()
 		run_completed.emit()
@@ -268,7 +258,7 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 func _on_adelante_presionado() -> void:
 	if not es_corrida_completado():
 		return
-	_resolver_flujo_post_partida(true)
+	_on_teaching_finished(true)
 
 
 ## --- Continuación desde mapa ---
@@ -291,6 +281,83 @@ func _guardar_progreso_de_mapa() -> void:
 	Global.marcar_nodo_jugable_completado(active_track_key, _nodo_actual)
 
 
+func _on_level_finished(
+	level_number: int,
+	previous_streak: Dictionary,
+	updated_streak: Dictionary
+) -> void:
+	var completion_context: Dictionary = _build_completion_context(level_number)
+	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
+		previous_streak,
+		updated_streak,
+		true
+	)
+	# La escena solo arma contexto; el controller lo transforma en flow_state.
+	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
+		previous_streak,
+		updated_streak,
+		completion_context,
+		_post_game_streak_feedback
+	)
+
+
+func _build_completion_context(level_number: int) -> Dictionary:
+	return {
+		"source": "level",
+		"level": _build_level_completion_context(level_number),
+		"map": _build_map_completion_context(),
+		"navigation": _build_navigation_completion_context(),
+		"debug": _build_completion_debug_context(),
+	}
+
+
+func _build_level_completion_context(level_number: int) -> Dictionary:
+	return {
+		"track_key": active_track_key,
+		"number": level_number,
+		"track_level_count": Global.obtener_pista_nivel_cantidad(active_track_key),
+		"is_default_track": active_track_key == DEFAULT_TRACK_KEY,
+	}
+
+
+func _build_map_completion_context() -> Dictionary:
+	var node_key: Variant = null
+	if _usa_flujo_mapa and not _nodo_actual.is_empty():
+		node_key = _nodo_actual
+	return {
+		"came_from_map": _usa_flujo_mapa,
+		"node_key": node_key,
+	}
+
+
+func _build_navigation_completion_context() -> Dictionary:
+	return {
+		"return_to": _ruta_escena_retorno,
+	}
+
+
+func _build_completion_debug_context() -> Dictionary:
+	return {
+		"created_by": "Level._build_completion_context",
+	}
+
+
+func _has_post_game_flow_state() -> bool:
+	return not _post_game_flow_state.is_empty()
+
+
+func _take_post_game_flow_state() -> Dictionary:
+	var post_game_flow_state: Dictionary = _post_game_flow_state.duplicate(true)
+	_post_game_flow_state = {}
+	return post_game_flow_state
+
+
+func _take_post_game_streak_feedback() -> Dictionary:
+	var post_game_streak_feedback: Dictionary = _post_game_streak_feedback.duplicate(true)
+	_post_game_streak_feedback = {}
+	return post_game_streak_feedback
+
+
 func mostrar_continuacion() -> void:
 	_ya_continuo = false
 	next_chapter_button.hide()
@@ -302,8 +369,8 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
-	if not _pending_post_game_flow.is_empty():
-		_resolver_flujo_post_partida(true)
+	if _has_post_game_flow_state():
+		_on_teaching_finished(true)
 		return
 
 	if _ya_continuo:
@@ -312,15 +379,24 @@ func continuar_al_siguiente_nodo() -> void:
 	_ya_continuo = true
 	if continuador != null:
 		continuador.detener()
+	_continue_from_map_completion()
 
-	if _nodo_actual.is_empty():
-		Global.limpiar_sesion_nodo_jugable_activo()
-		get_tree().change_scene_to_file(_ruta_escena_retorno)
-		return
 
-	Global.solicitar_continuar(_nodo_actual)
-	Global.limpiar_sesion_nodo_jugable_activo()
-	get_tree().change_scene_to_file(_ruta_escena_retorno)
+func _return_to_map_scene() -> void:
+	if continuador != null:
+		continuador.detener()
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_retorno
+	)
+
+
+func _continue_from_map_completion() -> void:
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_retorno,
+		_nodo_actual
+	)
 
 
 ## --- Guardado rápido ---
@@ -388,23 +464,19 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _resolver_flujo_post_partida(streak_timer_finished: bool) -> void:
-	if _pending_post_game_flow.is_empty():
+func _on_teaching_finished(timer_finished: bool) -> void:
+	if not _has_post_game_flow_state():
 		if _usa_flujo_mapa:
 			_continuar_flujo_mapa_legacy()
 			return
 		GameSceneRouter.go_to_mode_selector(get_tree())
 		return
 
-	var pending_feedback: Dictionary = _pending_streak_feedback.duplicate(true)
-	var pending_flow: Dictionary = _pending_post_game_flow.duplicate(true)
-	_pending_streak_feedback = {}
-	_pending_post_game_flow = {}
 	PostGameFlowControllerScript.navigate_after_teaching(
 		get_tree(),
-		pending_flow,
-		pending_feedback,
-		streak_timer_finished
+		_take_post_game_flow_state(),
+		_take_post_game_streak_feedback(),
+		timer_finished
 	)
 
 
@@ -414,24 +486,7 @@ func _continuar_flujo_mapa_legacy() -> void:
 	_ya_continuo = true
 	if continuador != null:
 		continuador.detener()
-	if _nodo_actual.is_empty():
-		GameSceneRouter.go_to_map(get_tree())
-		return
-	Global.solicitar_continuar(_nodo_actual)
-	Global.limpiar_sesion_nodo_jugable_activo()
-	get_tree().change_scene_to_file(_ruta_escena_retorno)
-
-
-func _crear_contexto_post_partida(level_number: int) -> Dictionary:
-	return {
-		"source_name": "Level",
-		"track_key": active_track_key,
-		"default_track_key": DEFAULT_TRACK_KEY,
-		"current_level_number": level_number,
-		"track_level_count": Global.obtener_pista_nivel_cantidad(active_track_key),
-		"node_key": _nodo_actual,
-		"return_scene_path": _ruta_escena_retorno,
-	}
+	_continue_from_map_completion()
 
 
 func _mostrar_retroalimentacion_tarjeta(

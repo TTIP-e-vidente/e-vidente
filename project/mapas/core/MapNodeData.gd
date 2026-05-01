@@ -197,13 +197,13 @@ func tiene_recurso_legacy() -> bool:
 
 
 # Contexto de sesion ---------------------------------------------------------
-func crear_contexto_sesion(return_scene_path: String) -> Dictionary:
+func crear_contexto_sesion(return_to: String) -> Dictionary:
 	return {
 		"node_key": obtener_clave_nodo(),
 		"node_title": obtener_titulo(),
 		"node_json_path": obtener_ruta_json(),
 		"node_resource_path": obtener_ruta_recurso(),
-		"return_scene_path": return_scene_path,
+		"return_to": return_to,
 	}
 
 

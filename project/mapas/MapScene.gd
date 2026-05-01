@@ -239,17 +239,17 @@ func _crear_contexto_sesion(
 	ruta_json_nodo: String,
 	datos_nodo: Dictionary
 ) -> Dictionary:
-	var nodo_actual: String = str(nodo_mapa.get("node_key", "")).strip_edges()
+	var contexto_sesion: Dictionary = MapNodeDataScript.desde_diccionario(
+		nodo_mapa
+	).crear_contexto_sesion(GameSceneRouter.MAP_SCENE_PATH)
+	var nodo_actual: String = str(contexto_sesion.get("node_key", "")).strip_edges()
 	var indice: int = MapProgressScript.obtener_indice_nodo(nodos_mapa, nodo_actual)
-	return {
-		"track_key": track_key_mapa,
-		"nivel_id": max(0, indice + 1),
-		"node_key": nodo_actual,
-		"node_json_path": ruta_json_nodo,
-		"return_scene_path": GameSceneRouter.MAP_SCENE_PATH,
-		"node_mode": str(datos_nodo.get("mode", "")).strip_edges(),
-		"node_data": datos_nodo
-	}
+	contexto_sesion["track_key"] = track_key_mapa
+	contexto_sesion["nivel_id"] = max(0, indice + 1)
+	contexto_sesion["node_json_path"] = ruta_json_nodo
+	contexto_sesion["node_mode"] = str(datos_nodo.get("mode", "")).strip_edges()
+	contexto_sesion["node_data"] = datos_nodo
+	return contexto_sesion
 
 
 func volver_al_mapa() -> void:

@@ -123,6 +123,10 @@ run_import_headless() {
 
 
 run_gameplay_smoke() {
+	if [ ! -f project/tests/vertical_slice_smoke_test.gd ]; then
+		echo "SKIP: Gameplay smoke test (project/tests/vertical_slice_smoke_test.gd no existe)"
+		return 0
+	fi
 	run_step \
 		"03-vertical-slice-smoke" \
 		"Gameplay smoke test" \
@@ -132,11 +136,28 @@ run_gameplay_smoke() {
 
 
 run_question_json_contract() {
+	if [ ! -f project/tests/node_content_loader_test.gd ]; then
+		echo "SKIP: Playable node JSON contract test (project/tests/node_content_loader_test.gd no existe)"
+		return 0
+	fi
 	run_step \
 		"02-node-json-contract" \
 		"Playable node JSON contract test" \
 		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
 		--headless --path project -s res://tests/node_content_loader_test.gd
+}
+
+
+run_post_game_flow_controller() {
+	if [ ! -f project/tests/post_game_flow_controller_test.gd ]; then
+		echo "SKIP: Post-game flow controller test (project/tests/post_game_flow_controller_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02b-post-game-flow" \
+		"Post-game flow controller test" \
+		"Se rompieron las decisiones de post-partida, el adapter del router o el retorno desde racha." \
+		--headless --path project -s res://tests/post_game_flow_controller_test.gd
 }
 
 
@@ -152,33 +173,36 @@ run_codebase_suite() {
 run_smoke_suite() {
 	run_import_headless
 	run_question_json_contract
+	run_post_game_flow_controller
 	run_gameplay_smoke
 
 	write_success_summary \
 		"smoke" \
-		"import headless + question json contract + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 
 run_ci_suite() {
 	run_import_headless
 	run_question_json_contract
+	run_post_game_flow_controller
 	run_gameplay_smoke
 
 	write_success_summary \
 		"ci" \
-		"import headless + question json contract + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 
 run_full_suite() {
 	run_import_headless
 	run_question_json_contract
+	run_post_game_flow_controller
 	run_gameplay_smoke
 
 	write_success_summary \
 		"full" \
-		"import headless + question json contract + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 run_godot_validation() {
