@@ -11,11 +11,10 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
+const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
-)
-const GameStreakDebugScript := preload(
-	"res://niveles/progress/GameStreakDebug.gd"
 )
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
@@ -75,9 +74,11 @@ var _current_run_completion_handled := false
 var _completion_visual_original_materials: Dictionary = {}
 var _completion_visual_original_modulates: Dictionary = {}
 var _contexto_nodo_mapa: Dictionary = {}
+var current_node: MapNodeData = null
 var _datos_nodo_mapa: Dictionary = {}
 var _usa_flujo_mapa := false
 var _nodo_actual := ""
+var _json_path_nodo_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
 var _ya_continuo := false
@@ -85,21 +86,35 @@ var continuador = null
 
 
 func _ready() -> void:
-	_crear_continuador()
-	_iniciar_flujo_nivel()
-	_configurar_retroalimentacion_guardado_rapida()
+	setup_continue_countdown()
+	start_level_flow()
+	setup_save_feedback()
 
 
 
 ## --- Arranque ---
 
-func _iniciar_flujo_nivel() -> void:
-	_cargar_contexto_sesion()
+func start_level_flow() -> void:
+	load_playable_session()
+	resolve_active_track()
+	reset_run_state()
+	start_manager_level()
+	_reproducir_audio_nivel()
+
+
+func load_playable_session() -> void:
+	_load_playable_session()
+
+
+func resolve_active_track() -> void:
 	var configured_key := track_key_override.strip_edges()
 	if not _track_key_contexto.is_empty():
 		active_track_key = _track_key_contexto
 	else:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
+
+
+func reset_run_state() -> void:
 	_post_game_streak_feedback = {}
 	_post_game_flow_state = {}
 	_current_run_completion_handled = false
@@ -107,7 +122,9 @@ func _iniciar_flujo_nivel() -> void:
 	Item_level.is_dragging = null
 	_restaurar_estado_posterior_finalizacion()
 	next_chapter_button.disabled = true
-	_reproducir_audio_nivel()
+
+
+func start_manager_level() -> void:
 	if manager_level == null:
 		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
 	else:
@@ -117,11 +134,13 @@ func _iniciar_flujo_nivel() -> void:
 		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
 
 
-func _cargar_contexto_sesion() -> void:
+func _load_playable_session() -> void:
 	_contexto_nodo_mapa = Global.obtener_sesion_nodo_jugable_activo()
+	current_node = null
 	_datos_nodo_mapa = {}
 	_usa_flujo_mapa = false
 	_nodo_actual = ""
+	_json_path_nodo_actual = ""
 	_track_key_contexto = ""
 	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
 
@@ -130,6 +149,7 @@ func _cargar_contexto_sesion() -> void:
 
 	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
+	_json_path_nodo_actual = _read_node_json_path(_contexto_nodo_mapa)
 	_ruta_escena_retorno = GameSceneRouter.read_return_to(
 		_contexto_nodo_mapa,
 		GameSceneRouter.MAP_SCENE_PATH
@@ -137,15 +157,53 @@ func _cargar_contexto_sesion() -> void:
 	if _ruta_escena_retorno.is_empty():
 		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
 
-	var datos_nodo: Variant = _contexto_nodo_mapa.get("node_data", {})
-	if datos_nodo is Dictionary:
-		configurar_desde_datos_nodo(datos_nodo)
+	current_node = MapNodeDataScript.new()
+	current_node.node_key = _nodo_actual
+	current_node.title = str(_contexto_nodo_mapa.get("node_title", "")).strip_edges()
+	current_node.json_path = _json_path_nodo_actual
+	current_node.track_key = _track_key_contexto
+	current_node.index = max(0, int(_contexto_nodo_mapa.get("nivel_id", 1)) - 1)
+
+	if not _json_path_nodo_actual.is_empty():
+		load_level_from_json(_json_path_nodo_actual)
 
 	_usa_flujo_mapa = not _nodo_actual.is_empty()
 
 
+func start_from_node(node_data: MapNodeData) -> void:
+	current_node = node_data
+	if current_node == null:
+		return
+	_nodo_actual = current_node.node_key
+	_track_key_contexto = current_node.track_key
+	_json_path_nodo_actual = current_node.json_path
+	_usa_flujo_mapa = not _nodo_actual.is_empty()
+	load_level_from_json(current_node.json_path)
+
+
+func load_level_from_json(json_path: String) -> void:
+	var clean_path: String = json_path.strip_edges()
+	if clean_path.is_empty():
+		push_error("Level: falta json_path para cargar el nivel.")
+		return
+
+	var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(clean_path)
+	if not bool(result.get("ok", false)):
+		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
+		return
+
+	configurar_desde_datos_nodo(result.get("data", {}))
+
+
 func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
+
+
+func _read_node_json_path(session_context: Dictionary) -> String:
+	var clean_path: String = str(session_context.get("json_path", "")).strip_edges()
+	if not clean_path.is_empty():
+		return clean_path
+	return str(session_context.get("node_json_path", "")).strip_edges()
 
 
 func _reproducir_audio_nivel() -> void:
@@ -155,7 +213,7 @@ func _reproducir_audio_nivel() -> void:
 	MusicManager.reproducir_musica(ruta_musica)
 
 
-func _configurar_retroalimentacion_guardado_rapida() -> void:
+func setup_save_feedback() -> void:
 	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
 	save_progress_button.icon = SAVE_ICON_IDLE
 	save_feedback_backdrop.visible = false
@@ -199,6 +257,10 @@ func es_corrida_completado() -> bool:
 
 
 func completar_corrida_actual() -> void:
+	complete_current_run()
+
+
+func complete_current_run() -> void:
 	if _current_run_completion_handled:
 		return
 
@@ -208,9 +270,22 @@ func completar_corrida_actual() -> void:
 		return
 
 	_current_run_completion_handled = true
-	_bloquear_completado_corrida()
+	show_completion_state()
 
 	var previous_streak: Dictionary = Global.obtener_estado_racha()
+	save_completion_progress(track_key, level_number)
+	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	build_post_game_flow(level_number, previous_streak, updated_streak)
+	if _usa_flujo_mapa:
+		mostrar_continuacion()
+		run_completed.emit()
+		return
+
+	_mostrar_completado_corrida_retroalimentacion()
+	run_completed.emit()
+
+
+func save_completion_progress(track_key: String, level_number: int) -> void:
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
 		Global.registrar_actividad_racha(
@@ -221,23 +296,18 @@ func completar_corrida_actual() -> void:
 				"node_key": _nodo_actual,
 			}
 		)
-	else:
-		Global.marcar_nivel_completado(track_key, level_number)
-		Global.registrar_actividad_racha(
-			"level_completed",
-			{"track_key": track_key, "level_number": level_number}
-		)
-		SaveManager.registrar_nivel_completado(track_key, level_number)
-
-	var updated_streak: Dictionary = Global.obtener_estado_racha()
-	_on_level_finished(level_number, previous_streak, updated_streak)
-	if _usa_flujo_mapa:
-		mostrar_continuacion()
-		run_completed.emit()
 		return
 
-	_mostrar_completado_corrida_retroalimentacion()
-	run_completed.emit()
+	Global.marcar_nivel_completado(track_key, level_number)
+	Global.registrar_actividad_racha(
+		"level_completed",
+		{"track_key": track_key, "level_number": level_number}
+	)
+	SaveManager.registrar_nivel_completado(track_key, level_number)
+
+
+func show_completion_state() -> void:
+	_bloquear_completado_corrida()
 
 func _mostrar_completado_corrida_retroalimentacion() -> void:
 	var chapter_fijo := _actual_nivel_numero()
@@ -258,12 +328,12 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 func _on_adelante_presionado() -> void:
 	if not es_corrida_completado():
 		return
-	_on_teaching_finished(true)
+	on_teaching_finished(true)
 
 
 ## --- Continuación desde mapa ---
 
-func _crear_continuador() -> void:
+func setup_continue_countdown() -> void:
 	continuador = ContinueCountdownScene.instantiate()
 	add_child(continuador)
 	_ubicar_continuador()
@@ -281,7 +351,7 @@ func _guardar_progreso_de_mapa() -> void:
 	Global.marcar_nodo_jugable_completado(active_track_key, _nodo_actual)
 
 
-func _on_level_finished(
+func build_post_game_flow(
 	level_number: int,
 	previous_streak: Dictionary,
 	updated_streak: Dictionary
@@ -370,7 +440,7 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 func continuar_al_siguiente_nodo() -> void:
 	if _has_post_game_flow_state():
-		_on_teaching_finished(true)
+		on_teaching_finished(true)
 		return
 
 	if _ya_continuo:
@@ -464,7 +534,7 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
 
 
-func _on_teaching_finished(timer_finished: bool) -> void:
+func on_teaching_finished(timer_finished: bool) -> void:
 	if not _has_post_game_flow_state():
 		if _usa_flujo_mapa:
 			_continuar_flujo_mapa_legacy()
@@ -478,6 +548,10 @@ func _on_teaching_finished(timer_finished: bool) -> void:
 		_take_post_game_streak_feedback(),
 		timer_finished
 	)
+
+
+func _on_teaching_finished(timer_finished: bool) -> void:
+	on_teaching_finished(timer_finished)
 
 
 func _continuar_flujo_mapa_legacy() -> void:

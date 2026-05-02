@@ -16,35 +16,6 @@ const TARGET_KEY_NEXT := "next"
 const TARGET_KEY_FALLBACK := "fallback"
 const TARGET_KEY_RETURN_TO := "return_to"
 
-# completion_context contract:
-# source: obligatorio. "level" o "question".
-# level.track_key: obligatorio. Track actual del flujo.
-# level.number: obligatorio. Numero de nivel actual.
-# level.track_level_count: obligatorio. Cantidad total de niveles del track.
-# level.is_default_track: obligatorio. True si el fallback natural es mapa.
-# map.came_from_map: obligatorio. True si la partida arranco desde el mapa.
-# map.node_key: opcional. Nodo actual si el flujo viene del mapa.
-# navigation.return_to: obligatorio. Escena segura para volver.
-# debug.created_by: obligatorio. Texto corto para rastrear quien creo el contexto.
-
-# flow_state contract:
-# state.streak_was_active: obligatorio. True si la racha ya estaba activa.
-# state.timer_finished: obligatorio. True si termino el countdown post-ensenanza.
-# targets.next: opcional. Destino para continuar al siguiente nivel o nodo.
-# targets.fallback: obligatorio. Destino por defecto si no se continua.
-# targets.return_to: obligatorio. Escena segura para volver.
-# map_continue.return_to: obligatorio en targets internos. El router lo adapta.
-# debug.source: obligatorio. Nombre humano del origen del flujo.
-# debug.level_number: opcional. Nivel actual para debug.
-# debug.node_key: opcional. Nodo actual del mapa para debug.
-# debug.created_by: obligatorio. Texto corto para rastrear quien creo el flow_state.
-
-# Historia del flujo:
-# game_finished -> teaching
-# teaching_finished -> streak | next | fallback
-# streak_finished -> fallback
-
-
 static func build_post_game_flow_state(
 	previous_streak: Dictionary,
 	updated_streak: Dictionary,
@@ -231,9 +202,9 @@ static func navigate_to_return_target(
 			"decision": str(return_target.get("type", "scene_path")).strip_edges(),
 		}
 	)
-	GameSceneRouter.go_to_continue_target(
+	GameSceneRouter.go_to_target(
 		tree,
-		GameSceneRouter.build_router_target_from_flow_target(return_target),
+		return_target,
 		safe_return_to
 	)
 
@@ -335,12 +306,9 @@ static func _go_to_target(
 			"decision": next_step,
 		}
 	)
-	var router_target: Dictionary = GameSceneRouter.build_router_target_from_flow_target(
-		resolved_target
-	)
-	GameSceneRouter.go_to_continue_target(
+	GameSceneRouter.go_to_target(
 		tree,
-		router_target,
+		resolved_target,
 		safe_fallback_scene_path
 	)
 

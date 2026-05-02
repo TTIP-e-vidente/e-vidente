@@ -3,9 +3,11 @@ extends RefCounted
 
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
-const DIRECTORIO_NODOS_ACTUAL := "res://niveles/nodos/"
+const DIRECTORIO_NODOS_ACTUAL := "res://contenido/nodos/"
+const DIRECTORIO_NODOS_ANTERIOR := "res://niveles/nodos/"
 const DIRECTORIO_NODOS_LEGACY := "res://preguntas/json_nodos/"
-const DIRECTORIO_PROYECTO_NODOS_ACTUAL := "project/niveles/nodos/"
+const DIRECTORIO_PROYECTO_NODOS_ACTUAL := "project/contenido/nodos/"
+const DIRECTORIO_PROYECTO_NODOS_ANTERIOR := "project/niveles/nodos/"
 const DIRECTORIO_PROYECTO_NODOS_LEGACY := "project/preguntas/json_nodos/"
 
 
@@ -46,6 +48,11 @@ static func _normalizar_ruta_proyecto(ruta_json: String) -> String:
 			DIRECTORIO_NODOS_ACTUAL,
 			ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_ACTUAL)
 		]
+	if ruta_json.begins_with(DIRECTORIO_PROYECTO_NODOS_ANTERIOR):
+		return "%s%s" % [
+			DIRECTORIO_NODOS_ACTUAL,
+			ruta_json.trim_prefix(DIRECTORIO_PROYECTO_NODOS_ANTERIOR)
+		]
 	if ruta_json.begins_with(DIRECTORIO_PROYECTO_NODOS_LEGACY):
 		return "%s%s" % [
 			DIRECTORIO_NODOS_LEGACY,
@@ -58,7 +65,12 @@ static func _normalizar_ruta_proyecto(ruta_json: String) -> String:
 
 static func _resolver_ruta_legacy(ruta_json: String) -> String:
 	var ruta_migrada: String = ruta_json
-	if ruta_json.begins_with(DIRECTORIO_NODOS_LEGACY):
+	if ruta_json.begins_with(DIRECTORIO_NODOS_ANTERIOR):
+		ruta_migrada = "%s%s" % [
+			DIRECTORIO_NODOS_ACTUAL,
+			ruta_json.trim_prefix(DIRECTORIO_NODOS_ANTERIOR)
+		]
+	elif ruta_json.begins_with(DIRECTORIO_NODOS_LEGACY):
 		ruta_migrada = "%s%s" % [
 			DIRECTORIO_NODOS_ACTUAL,
 			ruta_json.trim_prefix(DIRECTORIO_NODOS_LEGACY)
@@ -75,13 +87,17 @@ static func _debe_advertir_ruta_legacy(ruta_original: String, ruta_resuelta: Str
 		return false
 	return (
 		ruta_original.begins_with(DIRECTORIO_NODOS_LEGACY)
+		or ruta_original.begins_with(DIRECTORIO_NODOS_ANTERIOR)
 		or ruta_original.begins_with(DIRECTORIO_PROYECTO_NODOS_LEGACY)
+		or ruta_original.begins_with(DIRECTORIO_PROYECTO_NODOS_ANTERIOR)
 		or ruta_original.begins_with("res://%s" % DIRECTORIO_PROYECTO_NODOS_LEGACY)
 	)
 
 
 static func _puede_buscar_por_nombre(ruta_json: String) -> bool:
 	if ruta_json.begins_with(DIRECTORIO_NODOS_LEGACY):
+		return true
+	if ruta_json.begins_with(DIRECTORIO_NODOS_ANTERIOR):
 		return true
 	return (
 		ruta_json.begins_with(DIRECTORIO_NODOS_ACTUAL)
