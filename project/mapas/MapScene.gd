@@ -2,28 +2,28 @@ extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const MapContentLoaderScript := preload("res://sistemas/contenido/MapContentLoader.gd")
-const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const MapJsonLoaderScript := preload("res://mapas/core/MapJsonLoader.gd")
 const MapProgressScript := preload("res://mapas/core/MapProgress.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const PlayableNodeRouterScript := preload("res://mapas/core/PlayableNodeRouter.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
-const MAP_JSON_PATH := "res://niveles/mapas/celiaquia_mapa.json"
+
+const MAP_JSON_PATH := "res://contenido/mapas/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
 
-var nodos_mapa: Array = []
+var map_id: String = ""
+var map_title: String = ""
 var track_key_mapa: String = DEFAULT_TRACK_KEY
+var nodos_mapa: Array[MapNodeData] = []
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard
 
 
 func _ready() -> void:
-	if map_hud != null and map_hud.has_signal("back_requested"):
-		map_hud.connect("back_requested", _al_pedir_volver)
-
+	_connect_signals()
 	cargar_mapa()
 	GameSceneRouter.request_scene_preload(
 		GameTrackCatalog.obtener_ruta_escena_nivel(track_key_mapa)
@@ -41,96 +41,129 @@ func _ready() -> void:
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
+func _connect_signals() -> void:
+	if map_hud != null and map_hud.has_signal("back_requested"):
+		map_hud.connect("back_requested", _al_pedir_volver)
+	if map_board != null and map_board.has_signal("node_selected"):
+		map_board.connect("node_selected", al_seleccionar_nodo)
+
+
 func cargar_mapa() -> void:
-	var resultado: Dictionary = MapContentLoaderScript.cargar_mapa(MAP_JSON_PATH)
-	if not bool(resultado.get("ok", false)):
+	var result: Dictionary = MapJsonLoaderScript.load_map(MAP_JSON_PATH)
+	if not bool(result.get("ok", false)):
+		map_id = ""
+		map_title = ""
 		nodos_mapa = []
 		track_key_mapa = DEFAULT_TRACK_KEY
-		_mostrar_error(str(resultado.get("error", "No se pudo cargar el mapa.")))
+		_mostrar_error(str(result.get("error", "No se pudo cargar el mapa.")))
 		return
 
-	var datos_mapa: Dictionary = resultado.get("data", {})
-	var track_key_json: String = str(datos_mapa.get("track_key", DEFAULT_TRACK_KEY)).strip_edges()
-	if track_key_json.is_empty() or not GameTrackCatalog.tiene_pista(track_key_json):
-		track_key_mapa = DEFAULT_TRACK_KEY
-	else:
-		track_key_mapa = track_key_json
-
-	var nodos_cargados: Variant = datos_mapa.get("nodes", [])
+	var map_data: Dictionary = result.get("data", {})
+	map_id = str(map_data.get("id", "")).strip_edges()
+	map_title = str(map_data.get("title", "")).strip_edges()
+	track_key_mapa = _valid_track_key(str(map_data.get("track_key", DEFAULT_TRACK_KEY)))
 	nodos_mapa = []
-	if nodos_cargados is Array:
-		nodos_mapa = (nodos_cargados as Array).duplicate(true)
+
+	var loaded_nodes: Variant = map_data.get("nodes", [])
+	if loaded_nodes is Array:
+		for raw_node in (loaded_nodes as Array):
+			var node_data: MapNodeData = raw_node as MapNodeData
+			if node_data != null:
+				nodos_mapa.append(node_data)
 
 
 func mostrar_nodos() -> void:
-	var nodos_visuales: Array[Node2D] = _obtener_nodos_visuales_mapa()
-	var seleccionar_nodo := Callable(self, "al_seleccionar_nodo")
-	var cantidad_a_mostrar: int = mini(nodos_visuales.size(), nodos_mapa.size())
+	if map_board == null or not map_board.has_method("configurar_nodos"):
+		return
 
-	if nodos_visuales.size() != nodos_mapa.size():
-		push_warning(
-			"MapScene: cantidad de nodos visuales (%d) distinta a nodos_mapa (%d)."
-			% [nodos_visuales.size(), nodos_mapa.size()]
-		)
-
-	for indice in range(cantidad_a_mostrar):
-		var nodo_mapa: Dictionary = nodos_mapa[indice]
-		var nodo_visual: Node2D = nodos_visuales[indice]
-		var datos_nodo: RefCounted = _crear_datos_nodo_mapa(nodo_mapa, nodo_visual, indice)
-		if datos_nodo == null:
-			nodo_visual.hide()
-			continue
-
-		var nodo_actual: String = str(nodo_mapa.get("node_key", "")).strip_edges()
-		var esta_completado: bool = Global.es_nodo_jugable_completado(
+	var unlocked_by_index: Array[bool] = []
+	var completed_by_index: Array[bool] = []
+	for index in range(nodos_mapa.size()):
+		var node_data: MapNodeData = nodos_mapa[index]
+		var completed: bool = Global.es_nodo_jugable_completado(
 			track_key_mapa,
-			nodo_actual
+			node_data.node_key
 		)
-		var esta_desbloqueado: bool = MapProgressScript.nodo_esta_desbloqueado(
-			nodos_mapa,
-			indice,
-			track_key_mapa,
-			esta_completado
+		completed_by_index.append(completed)
+		unlocked_by_index.append(
+			MapProgressScript.nodo_esta_desbloqueado(
+				nodos_mapa,
+				index,
+				track_key_mapa,
+				completed
+			)
 		)
 
-		nodo_visual.show()
-		nodo_visual.configurar(datos_nodo, esta_desbloqueado, esta_completado)
-		if not nodo_visual.is_connected("nodo_seleccionado", seleccionar_nodo):
-			nodo_visual.connect("nodo_seleccionado", seleccionar_nodo)
-
-	for indice in range(cantidad_a_mostrar, nodos_visuales.size()):
-		nodos_visuales[indice].hide()
+	map_board.call("configurar_nodos", nodos_mapa, unlocked_by_index, completed_by_index)
 
 
-func _obtener_nodos_visuales_mapa() -> Array[Node2D]:
-	var nodos_visuales: Array[Node2D] = []
-	for nodo_visual in _obtener_nodos_del_tablero():
-		var datos_nodo: RefCounted = MapNodeDataScript.desde_nodo_mapa(nodo_visual)
-		if datos_nodo == null:
-			nodo_visual.hide()
-			continue
-		nodos_visuales.append(nodo_visual)
-	return nodos_visuales
+func al_seleccionar_nodo(node_data: MapNodeData) -> void:
+	if node_data == null or not node_data.is_valid():
+		_mostrar_error("No se pudo leer el nodo seleccionado.")
+		return
+
+	_guardar_scroll_actual_del_mapa()
+	abrir_nodo_del_mapa(node_data)
 
 
-func _crear_datos_nodo_mapa(
-	nodo_mapa: Dictionary,
-	nodo_visual: Node2D,
-	indice: int
-) -> RefCounted:
-	var datos_visual: RefCounted = MapNodeDataScript.desde_nodo_mapa(nodo_visual)
-	if datos_visual == null:
-		return null
+func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
+	var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(node_data.json_path)
+	if not bool(result.get("ok", false)):
+		_mostrar_error(str(result.get("error", "No se pudo cargar el nodo.")))
+		return
 
-	var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_diccionario(nodo_mapa)
-	var datos_nodo: RefCounted = datos_visual.duplicar_datos()
-	datos_nodo.node_id = indice + 1
-	datos_nodo.question_number = indice + 1
-	datos_nodo.track_key = track_key_mapa
-	datos_nodo.label_text = datos_mapa_nodo.obtener_titulo()
-	datos_nodo.node_key = datos_mapa_nodo.obtener_clave_nodo()
-	datos_nodo.node_json_path = datos_mapa_nodo.obtener_ruta_json()
-	return datos_nodo
+	var level_data: Dictionary = result.get("data", {})
+	var mode: String = str(level_data.get("mode", "")).strip_edges()
+	var scene_path: String = PlayableNodeRouterScript.obtener_escena_jugable(mode)
+	if scene_path.is_empty():
+		_mostrar_error("No existe escena para el modo: %s" % mode)
+		return
+
+	abrir_escena_jugable(scene_path, _crear_contexto_sesion(node_data, mode))
+
+
+func abrir_escena_jugable(scene_path: String, session_context: Dictionary) -> void:
+	Global.establecer_sesion_nodo_jugable_activo(session_context)
+	if scene_path == GameSceneRouter.QUESTIONS_SCENE_PATH:
+		GameSceneRouter.go_to_questions(get_tree())
+		return
+	get_tree().change_scene_to_file(scene_path)
+
+
+func continuar_desde_nodo(node_key: String) -> void:
+	var next_node: MapNodeData = obtener_siguiente_nodo(node_key)
+	if next_node == null:
+		volver_al_mapa()
+		return
+	abrir_nodo_del_mapa(next_node)
+
+
+func obtener_siguiente_nodo(node_key: String) -> MapNodeData:
+	return MapProgressScript.obtener_siguiente_nodo(nodos_mapa, node_key) as MapNodeData
+
+
+func obtener_nodo_mapa(node_key: String) -> MapNodeData:
+	var clean_node_key: String = node_key.strip_edges()
+	for node_data in nodos_mapa:
+		if node_data.node_key == clean_node_key:
+			return node_data
+	return null
+
+
+func volver_al_mapa() -> void:
+	_mostrar_completado_del_mapa_si_corresponde()
+
+
+func _crear_contexto_sesion(node_data: MapNodeData, mode: String) -> Dictionary:
+	return {
+		"node_key": node_data.node_key,
+		"node_title": node_data.title,
+		"json_path": node_data.json_path,
+		"track_key": track_key_mapa,
+		"nivel_id": node_data.index + 1,
+		"node_mode": mode,
+		"return_to": GameSceneRouter.MAP_SCENE_PATH,
+	}
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
@@ -145,115 +178,11 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 	add_child(popup_completado)
 
 
-func obtener_contenedor_de_nodos() -> Node2D:
-	if map_board != null and map_board.has_method("obtener_contenedor_nodos"):
-		return map_board.call("obtener_contenedor_nodos") as Node2D
-	return null
-
-
-func _obtener_nodos_del_tablero() -> Array[Node2D]:
-	var nodos_tablero: Array[Node2D] = []
-	if map_board == null:
-		return nodos_tablero
-	if not map_board.has_method("obtener_nodos_runtime_mapa"):
-		return nodos_tablero
-
-	var nodos_crudos: Array = map_board.call("obtener_nodos_runtime_mapa")
-	for nodo_crudo in nodos_crudos:
-		var nodo_visual: Node2D = nodo_crudo as Node2D
-		if nodo_visual != null:
-			nodos_tablero.append(nodo_visual)
-	return nodos_tablero
-
-
-## --- Flujo de nodo jugable -------------------------------------------------
-
-func al_seleccionar_nodo(destino_seleccionado: Variant) -> void:
-	_guardar_scroll_actual_del_mapa()
-	var datos_nodo: RefCounted = MapNodeDataScript.desde_seleccion(destino_seleccionado)
-	if datos_nodo == null:
-		_mostrar_error("No se pudo leer el nodo seleccionado.")
-		return
-
-	var nodo_actual: String = datos_nodo.obtener_clave_nodo()
-	var nodo_mapa: Dictionary = obtener_nodo_mapa(nodo_actual)
-	if nodo_mapa.is_empty():
-		_mostrar_error("No se encontro el nodo %s en el mapa." % nodo_actual)
-		return
-
-	abrir_nodo_del_mapa(nodo_mapa)
-
-
-func obtener_nodo_mapa(nodo_actual: String) -> Dictionary:
-	for nodo_mapa in nodos_mapa:
-		if str(nodo_mapa.get("node_key", "")).strip_edges() == nodo_actual:
-			return nodo_mapa
-	return {}
-
-
-func abrir_nodo_del_mapa(nodo_mapa: Dictionary) -> void:
-	var datos_mapa_nodo: RefCounted = MapNodeDataScript.desde_diccionario(nodo_mapa)
-	var ruta_json_nodo: String = datos_mapa_nodo.obtener_ruta_json()
-	var resultado: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json_nodo)
-
-	if not bool(resultado.get("ok", false)):
-		_mostrar_error(str(resultado.get("error", "No se pudo cargar el nodo.")))
-		return
-
-	var datos_nodo: Dictionary = resultado.get("data", {})
-	var modo: String = str(datos_nodo.get("mode", "")).strip_edges()
-	var ruta_escena: String = PlayableNodeRouterScript.obtener_escena_jugable(modo)
-
-	if ruta_escena.is_empty():
-		_mostrar_error("No existe escena para el modo.")
-		return
-
-	var contexto_sesion: Dictionary = _crear_contexto_sesion(nodo_mapa, ruta_json_nodo, datos_nodo)
-	abrir_escena_jugable(ruta_escena, contexto_sesion)
-
-
-func abrir_escena_jugable(ruta_escena: String, contexto_sesion: Dictionary) -> void:
-	Global.establecer_sesion_nodo_jugable_activo(contexto_sesion)
-	if ruta_escena == GameSceneRouter.QUESTIONS_SCENE_PATH:
-		GameSceneRouter.go_to_questions(get_tree())
-		return
-	get_tree().change_scene_to_file(ruta_escena)
-
-
-func continuar_desde_nodo(nodo_actual: String) -> void:
-	var siguiente_nodo: Dictionary = obtener_siguiente_nodo(nodo_actual)
-
-	if siguiente_nodo.is_empty():
-		volver_al_mapa()
-		return
-
-	abrir_nodo_del_mapa(siguiente_nodo)
-
-
-func obtener_siguiente_nodo(nodo_actual: String) -> Dictionary:
-	return MapProgressScript.obtener_siguiente_nodo(nodos_mapa, nodo_actual)
-
-
-func _crear_contexto_sesion(
-	nodo_mapa: Dictionary,
-	ruta_json_nodo: String,
-	datos_nodo: Dictionary
-) -> Dictionary:
-	var contexto_sesion: Dictionary = MapNodeDataScript.desde_diccionario(
-		nodo_mapa
-	).crear_contexto_sesion(GameSceneRouter.MAP_SCENE_PATH)
-	var nodo_actual: String = str(contexto_sesion.get("node_key", "")).strip_edges()
-	var indice: int = MapProgressScript.obtener_indice_nodo(nodos_mapa, nodo_actual)
-	contexto_sesion["track_key"] = track_key_mapa
-	contexto_sesion["nivel_id"] = max(0, indice + 1)
-	contexto_sesion["node_json_path"] = ruta_json_nodo
-	contexto_sesion["node_mode"] = str(datos_nodo.get("mode", "")).strip_edges()
-	contexto_sesion["node_data"] = datos_nodo
-	return contexto_sesion
-
-
-func volver_al_mapa() -> void:
-	_mostrar_completado_del_mapa_si_corresponde()
+func _valid_track_key(raw_track_key: String) -> String:
+	var clean_track_key: String = raw_track_key.strip_edges()
+	if clean_track_key.is_empty() or not GameTrackCatalog.tiene_pista(clean_track_key):
+		return DEFAULT_TRACK_KEY
+	return clean_track_key
 
 
 func _mostrar_error(mensaje: String) -> void:

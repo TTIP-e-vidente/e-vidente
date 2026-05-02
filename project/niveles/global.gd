@@ -15,7 +15,6 @@ const SaveEstadoHelperScript := preload(
 
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
 const STREAK_SYSTEM_KEY := "streak"
-# TODO post-demo: renombrar cuando una migracion de save permita eliminar question_progress.
 const QUESTION_PROGRESS_SYSTEM_KEY := "question_progress"
 
 var current_level: int = 1

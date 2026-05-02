@@ -115,7 +115,9 @@ func _reiniciar_sesion_nodo() -> void:
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
 	_aplicar_contexto_sesion(contexto_sesion)
-	var ruta_json: String = str(contexto_sesion.get("node_json_path", "")).strip_edges()
+	var ruta_json: String = str(
+		contexto_sesion.get("json_path", contexto_sesion.get("node_json_path", ""))
+	).strip_edges()
 	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
 		datos_nodo,
 		ruta_json
@@ -548,5 +550,4 @@ func _on_teaching_finished(timer_finished: bool) -> void:
 
 func volver_al_mapa_legacy() -> void:
 	_return_to_map_scene()
-
 

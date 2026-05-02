@@ -149,21 +149,16 @@ static func consume_streak_return_to(
 	return safe_return_to
 
 
-# continue_target interno:
-# - map_continue usa return_to.
-# - El router lo adapta a return_scene_path solo al ejecutar la navegacion.
+# target interno:
+# - return_to es el nombre principal.
+# - return_scene_path queda aceptado solo como compatibilidad legacy.
 static func build_router_target_from_flow_target(target: Dictionary) -> Dictionary:
 	if target.is_empty():
 		return {}
 	var router_target: Dictionary = GameStreakDebugScript.sanitize_continue_target(target)
-	var target_type: String = str(router_target.get("type", "")).strip_edges()
-	if target_type != "map_continue":
-		return router_target
-	router_target[CONTINUE_TARGET_RETURN_SCENE_PATH_KEY] = read_return_to(
-		router_target,
-		MAP_SCENE_PATH
-	)
-	router_target.erase(CONTINUE_TARGET_RETURN_TO_KEY)
+	if router_target.has(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY):
+		router_target[CONTINUE_TARGET_RETURN_TO_KEY] = read_return_to(router_target, MAP_SCENE_PATH)
+		router_target.erase(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY)
 	return router_target
 
 
@@ -230,15 +225,15 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 	_change_scene_to_path(tree, scene_path)
 
 
-static func go_to_continue_target(
+static func go_to_target(
 	tree: SceneTree,
-	continue_target: Dictionary,
+	target: Dictionary,
 	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
 ) -> void:
 	if tree == null:
 		return
 
-	var router_target: Dictionary = build_router_target_from_flow_target(continue_target)
+	var router_target: Dictionary = build_router_target_from_flow_target(target)
 	var target_type: String = str(router_target.get("type", "")).strip_edges()
 	match target_type:
 		"map":
@@ -254,10 +249,7 @@ static func go_to_continue_target(
 			):
 				global_state.call("solicitar_continuar", node_key)
 			_clear_active_playable_session(tree)
-			var return_scene_path: String = read_return_to(router_target, MAP_SCENE_PATH)
-			if return_scene_path.is_empty():
-				return_scene_path = MAP_SCENE_PATH
-			_change_scene_to_path(tree, return_scene_path)
+			_change_scene_to_path(tree, read_return_to(router_target, MAP_SCENE_PATH))
 		"track_level":
 			_clear_active_playable_session(tree)
 			go_to_track_level(
@@ -283,6 +275,14 @@ static func go_to_continue_target(
 		_:
 			_clear_active_playable_session(tree)
 			_change_scene_to_path(tree, fallback_scene_path)
+
+
+static func go_to_continue_target(
+	tree: SceneTree,
+	continue_target: Dictionary,
+	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
+) -> void:
+	go_to_target(tree, continue_target, fallback_scene_path)
 
 
 static func go_to_resume(

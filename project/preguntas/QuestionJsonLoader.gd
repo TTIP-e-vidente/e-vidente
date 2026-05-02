@@ -30,9 +30,24 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	if not datos_nodo.is_empty():
 		return cargar_resultado_desde_datos_nodo(
 			datos_nodo,
-			str(contexto_sesion.get("node_json_path", ""))
+			_read_node_json_path(contexto_sesion)
 		)
+	var ruta_json: String = _read_node_json_path(contexto_sesion)
+	if not ruta_json.is_empty():
+		var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
+		if not bool(resultado_nodo.get("ok", false)):
+			return _resultado_error(
+				str(resultado_nodo.get("error", ERROR_CONTENIDO_NO_DISPONIBLE))
+			)
+		return cargar_resultado_desde_datos_nodo(resultado_nodo.get("data", {}), ruta_json)
 	return _cargar_fallback_legacy(contexto_sesion)
+
+
+static func _read_node_json_path(contexto_sesion: Dictionary) -> String:
+	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
+	if not ruta_json.is_empty():
+		return ruta_json
+	return str(contexto_sesion.get("node_json_path", "")).strip_edges()
 
 
 
