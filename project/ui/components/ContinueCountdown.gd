@@ -3,8 +3,8 @@ class_name ContinueCountdown
 
 signal continuar_solicitado
 
-@onready var flecha_boton: TextureButton = $FlechaButton
-@onready var contador_label: Label = $ContadorLabel
+@onready var flecha_boton: Button = $CenterContainer/Content/FlechaButton
+@onready var contador_label: Label = $CenterContainer/Content/ContadorLabel
 @onready var timer: Timer = $Timer
 
 const ESCALA_PULSO := Vector2(1.06, 1.06)
@@ -28,6 +28,7 @@ func iniciar(segundos: int = 5) -> void:
 	segundos_restantes = max(1, segundos)
 	ya_emitio = false
 	show()
+	_preparar_pivotes_animacion()
 	move_to_front()
 	_actualizar_texto()
 	_animar_entrada()

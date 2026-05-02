@@ -26,7 +26,6 @@ const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
 const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
 const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
 const COMPLETION_DIM_COLOR := Color(0.72, 0.72, 0.72, 1.0)
-const CONTINUADOR_POSICION_FLECHA_DERECHA := Vector2(882.0, 632.0)
 
 ## --- Guardado rápido ---
 
@@ -342,7 +341,11 @@ func setup_continue_countdown() -> void:
 
 
 func _ubicar_continuador() -> void:
-	continuador.position = CONTINUADOR_POSICION_FLECHA_DERECHA
+	var rect_boton: Rect2 = next_chapter_button.get_global_rect()
+	var tamano_continuador: Vector2 = continuador.size
+	if tamano_continuador == Vector2.ZERO:
+		tamano_continuador = continuador.get_combined_minimum_size()
+	continuador.position = rect_boton.get_center() - (tamano_continuador * 0.5)
 
 
 func _guardar_progreso_de_mapa() -> void:
