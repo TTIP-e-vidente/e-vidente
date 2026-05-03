@@ -11,24 +11,24 @@
 [ext_resource type="Texture2D" uid="uid://dnx3efrjymvje" path="res://assets-sistema/interfaz/globito-celiaquia.png" id="9_ahnvr"]
 [ext_resource type="Texture2D" uid="uid://dq3suf5mkecly" path="res://assets-sistema/interfaz/info-lupa.png" id="9_ijval"]
 [ext_resource type="Texture2D" uid="uid://b0elyudr8bno7" path="res://assets-sistema/interfaz/tengo hambre.png" id="10_hom3g"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
+[ext_resource type="Texture2D" uid="uid://c4i8e4vcl6xq7" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
+[ext_resource type="Texture2D" uid="uid://cr64yvwk41aaf" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
 [ext_resource type="Script" uid="uid://bccc2e1y2dp3j" path="res://niveles/PlayerCambiante.gd" id="12_4i2s4"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
+[ext_resource type="Texture2D" uid="uid://dq7hd50u787pl" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
+[ext_resource type="Texture2D" uid="uid://dcllkt8rvg3eg" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
+[ext_resource type="Texture2D" uid="uid://j3xcsp73gt7s" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
+[ext_resource type="Texture2D" uid="uid://c7ux38wlxxak5" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
+[ext_resource type="Texture2D" uid="uid://bdf6112pl5rcs" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
+[ext_resource type="Texture2D" uid="uid://d17m73jarm2qf" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
+[ext_resource type="Texture2D" uid="uid://dsvm6s6rxp3uh" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
+[ext_resource type="Texture2D" uid="uid://bkij3sv8flrik" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
+[ext_resource type="Texture2D" uid="uid://cd8we77rn8sd4" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
+[ext_resource type="Texture2D" uid="uid://wspuru52ew6b" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
+[ext_resource type="Texture2D" uid="uid://cok5hl3rhk70o" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
+[ext_resource type="Texture2D" uid="uid://dv4vm2v8yuh0f" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
+[ext_resource type="Texture2D" uid="uid://bq0rb6fgjaahy" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
+[ext_resource type="Texture2D" uid="uid://vtmg47hyynjc" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
+[ext_resource type="Texture2D" uid="uid://du4nsm38bkm8b" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
 [ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="24_ngqma"]
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="25_gudht"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="25_x7g2d"]
@@ -168,7 +168,6 @@ shadow_size = 8
 script = ExtResource("1_g0f04")
 track_key_override = null
 background_music_path = null
-debug_force_streak_feedback = null
 grayscale_on_completion = null
 
 [node name="FondoFicha2" type="ColorRect" parent="." unique_id=2109054412]
@@ -369,22 +368,20 @@ position = Vector2(108.74133, 118.15442)
 scale = Vector2(1, 1.0000001)
 texture = ExtResource("38_yoibg")
 
-[node name="ContadorSiguienteLabel" type="Label" parent="."]
+[node name="ContadorSiguienteLabel" type="Label" parent="." unique_id=454046490]
 visible = false
 z_index = 12
 offset_left = 894.0
 offset_top = 735.0
 offset_right = 1148.0
 offset_bottom = 773.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
 theme_override_font_sizes/font_size = 24
 text = "Próximo juego en 5s..."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TimerSiguienteNodo" type="Timer" parent="."]
-wait_time = 1.0
+[node name="TimerSiguienteNodo" type="Timer" parent="." unique_id=1265385582]
 
 [node name="SaveProgressButton" type="Button" parent="." unique_id=856988732]
 visible = false
@@ -458,5 +455,5 @@ attenuation = 2.07053
 [connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_sprite_animado_2d_animacion_finalizada"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
-[connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
 [connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]
+[connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
