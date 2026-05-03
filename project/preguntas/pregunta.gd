@@ -191,12 +191,6 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 	if _plantillas_botones_respuesta.is_empty():
 		return
 
-func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
-	if cantidad_necesaria <= botones.size():
-		return
-	if _plantillas_botones_respuesta.is_empty():
-		return
-
 	while botones.size() < cantidad_necesaria:
 		var indice_plantilla: int = botones.size() % _plantillas_botones_respuesta.size()
 		var boton_plantilla: Button = _plantillas_botones_respuesta[indice_plantilla]
@@ -224,11 +218,6 @@ func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
-
-func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
-	_limpiar_media_de_pregunta()
-	if pregunta_recurso == null:
-		return
 
 func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
 	_limpiar_media_de_pregunta()
@@ -444,17 +433,6 @@ func _mostrar_error_bloqueante(mensaje: String) -> void:
 		CONTENT_ERROR_BODY_FONT_SIZE,
 		true
 	)
-
-
-func _establecer_mensaje_de_error(mensaje: String) -> void:
-	var mensaje_limpio: String = mensaje.strip_edges()
-	if mensaje_limpio.is_empty():
-		return
-	if not _mensaje_error_bloqueante.is_empty():
-		return
-	_mensaje_error_bloqueante = mensaje_limpio
-
-	_configurar_panel_final("Aciertos:", str(puntaje, "/", cantidad_preguntas), true, true)
 
 
 func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
