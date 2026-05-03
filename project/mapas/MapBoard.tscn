@@ -55,7 +55,7 @@ vertical_scroll_mode = 3
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")
-custom_minimum_size = Vector2(0, 2550)
+custom_minimum_size = Vector2(0, 2700)
 layout_mode = 2
 
 [node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
@@ -68,6 +68,12 @@ position = Vector2(63.666504, 1982.6145)
 rotation = -6.2831855
 scale = Vector2(0.9532122, 1.0489042)
 texture = ExtResource("6_path2")
+
+[node name="curva3" type="Sprite2D" parent="ScrollContainer/Contenido/curva" unique_id=1610691638]
+position = Vector2(63.666504, 4016.0)
+rotation = -6.2831855
+scale = Vector2(0.9532122, 1.0489042)
+texture = ExtResource("5_path1")
 
 [node name="NodesContainer" type="Node2D" parent="ScrollContainer/Contenido" unique_id=102587014]
 position = Vector2(-52, -198)
