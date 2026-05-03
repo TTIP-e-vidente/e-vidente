@@ -16,7 +16,7 @@ const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
 const CONTENT_ERROR_BODY_FONT_SIZE := 26
-const CONTINUADOR_TAMANIO := Vector2(300.0, 140.0)
+const CONTINUADOR_TAMANIO := Vector2(300.0, 150.0)
 const CONTINUADOR_MARGEN := Vector2(40.0, 30.0)
 
 @export var quiz: ThemePreg
@@ -550,4 +550,3 @@ func _on_teaching_finished(timer_finished: bool) -> void:
 
 func volver_al_mapa_legacy() -> void:
 	_return_to_map_scene()
-

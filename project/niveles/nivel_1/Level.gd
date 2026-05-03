@@ -345,7 +345,12 @@ func _ubicar_continuador() -> void:
 	var tamano_continuador: Vector2 = continuador.size
 	if tamano_continuador == Vector2.ZERO:
 		tamano_continuador = continuador.get_combined_minimum_size()
-	continuador.position = rect_boton.get_center() - (tamano_continuador * 0.5)
+	var pos := rect_boton.get_center() - (tamano_continuador * 0.5)
+	var viewport_size := get_viewport().get_visible_rect().size
+	const MARGEN := 8.0
+	pos.x = clampf(pos.x, MARGEN, viewport_size.x - tamano_continuador.x - MARGEN)
+	pos.y = clampf(pos.y, MARGEN, viewport_size.y - tamano_continuador.y - MARGEN)
+	continuador.position = pos
 
 
 func _guardar_progreso_de_mapa() -> void:
