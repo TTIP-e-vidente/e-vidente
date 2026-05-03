@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_g0f04"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_l8wda"]
-[ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="3_7cyqn"]
+[ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/MenÃº.gd" id="3_7cyqn"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="4_tsdj3"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0hx18"]
 [ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="5_s52e6"]
@@ -11,24 +11,24 @@
 [ext_resource type="Texture2D" uid="uid://dnx3efrjymvje" path="res://assets-sistema/interfaz/globito-celiaquia.png" id="9_ahnvr"]
 [ext_resource type="Texture2D" uid="uid://dq3suf5mkecly" path="res://assets-sistema/interfaz/info-lupa.png" id="9_ijval"]
 [ext_resource type="Texture2D" uid="uid://b0elyudr8bno7" path="res://assets-sistema/interfaz/tengo hambre.png" id="10_hom3g"]
-[ext_resource type="Texture2D" uid="uid://c4i8e4vcl6xq7" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
-[ext_resource type="Texture2D" uid="uid://cr64yvwk41aaf" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
+[ext_resource type="Texture2D" uid="uid://diaxukel2gyv4" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
+[ext_resource type="Texture2D" uid="uid://d0aooje7i5xji" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
 [ext_resource type="Script" uid="uid://bccc2e1y2dp3j" path="res://niveles/PlayerCambiante.gd" id="12_4i2s4"]
-[ext_resource type="Texture2D" uid="uid://dq7hd50u787pl" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
-[ext_resource type="Texture2D" uid="uid://dcllkt8rvg3eg" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
-[ext_resource type="Texture2D" uid="uid://j3xcsp73gt7s" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
-[ext_resource type="Texture2D" uid="uid://c7ux38wlxxak5" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
-[ext_resource type="Texture2D" uid="uid://bdf6112pl5rcs" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
-[ext_resource type="Texture2D" uid="uid://d17m73jarm2qf" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
-[ext_resource type="Texture2D" uid="uid://dsvm6s6rxp3uh" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
-[ext_resource type="Texture2D" uid="uid://bkij3sv8flrik" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
-[ext_resource type="Texture2D" uid="uid://cd8we77rn8sd4" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
-[ext_resource type="Texture2D" uid="uid://wspuru52ew6b" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
-[ext_resource type="Texture2D" uid="uid://cok5hl3rhk70o" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
-[ext_resource type="Texture2D" uid="uid://dv4vm2v8yuh0f" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
-[ext_resource type="Texture2D" uid="uid://bq0rb6fgjaahy" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
-[ext_resource type="Texture2D" uid="uid://vtmg47hyynjc" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
-[ext_resource type="Texture2D" uid="uid://du4nsm38bkm8b" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
+[ext_resource type="Texture2D" uid="uid://dbvcr0vnusx1k" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
+[ext_resource type="Texture2D" uid="uid://crukskhsj5hqf" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
+[ext_resource type="Texture2D" uid="uid://cxcnw6p1q4oia" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
+[ext_resource type="Texture2D" uid="uid://cvmd2ny6yccjy" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
+[ext_resource type="Texture2D" uid="uid://b2a6v31nm3i1a" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
+[ext_resource type="Texture2D" uid="uid://kral12wjj6om" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
+[ext_resource type="Texture2D" uid="uid://c5qrdgn5cfq3f" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
+[ext_resource type="Texture2D" uid="uid://drpae17ssot8j" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
+[ext_resource type="Texture2D" uid="uid://bwisq74efyoda" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
+[ext_resource type="Texture2D" uid="uid://bcnkfv8iqd471" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
+[ext_resource type="Texture2D" uid="uid://cg40y0addno8k" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
+[ext_resource type="Texture2D" uid="uid://dceo5v4ncrkee" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
+[ext_resource type="Texture2D" uid="uid://j2ngl8c1l25w" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
+[ext_resource type="Texture2D" uid="uid://bbkdt7kfdfx7k" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
+[ext_resource type="Texture2D" uid="uid://cq685qadxj6rt" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
 [ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="24_ngqma"]
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="25_gudht"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="25_x7g2d"]
@@ -197,7 +197,7 @@ scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_054us")
 animation = &""
 
-[node name="Menú" type="Area2D" parent="." unique_id=1302028089 groups=["droppable"]]
+[node name="MenÃº" type="Area2D" parent="." unique_id=1302028089 groups=["droppable"]]
 light_mask = 8
 visibility_layer = 9
 z_index = 1
@@ -208,12 +208,12 @@ collision_mask = 8
 input_pickable = false
 script = ExtResource("3_7cyqn")
 
-[node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=311150385]
+[node name="Sprite2D" type="Sprite2D" parent="MenÃº" unique_id=311150385]
 position = Vector2(3.61649, -2.63898)
 scale = Vector2(0.675987, 1.02154)
 texture = ExtResource("6_s2en4")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Menú" unique_id=1864371269]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MenÃº" unique_id=1864371269]
 shape = SubResource("RectangleShape2D_v2l1p")
 
 [node name="Plato" parent="." unique_id=1068386940 instance=ExtResource("4_tsdj3")]
@@ -323,7 +323,7 @@ player_cambiante = NodePath("../..")
 animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
-[node name="Atrás" type="Button" parent="." unique_id=1082464570]
+[node name="AtrÃ¡s" type="Button" parent="." unique_id=1082464570]
 offset_left = 36.0
 offset_top = 632.0
 offset_right = 258.0
@@ -377,7 +377,7 @@ offset_right = 1148.0
 offset_bottom = 773.0
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
 theme_override_font_sizes/font_size = 24
-text = "Próximo juego en 5s..."
+text = "PrÃ³ximo juego en 5s..."
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -453,7 +453,7 @@ attenuation = 2.07053
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]
 [connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_salido"]
 [connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_sprite_animado_2d_animacion_finalizada"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
+[connection signal="pressed" from="AtrÃ¡s" to="." method="_on_atras_presionado"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
 [connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]
 [connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
