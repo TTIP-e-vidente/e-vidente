@@ -1,11 +1,15 @@
 extends Control
 
+signal flow_completed
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DayCircleScript := preload("res://interface/components/DayCircle.gd")
 const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
+const PostGameFlowControllerScript := preload(
+	"res://niveles/progress/PostGameFlowController.gd"
+)
 
-const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
-const STREAK_RETURN_SCENE_META := "streak_return_scene"
+const DEFAULT_RETURN_TO := GameSceneRouter.MAP_SCENE_PATH
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 
@@ -302,48 +306,30 @@ func _mostrar_siguiente_vista_previa_mock() -> bool:
 func _on_boton_continuar_presionado() -> void:
 	if _mostrar_siguiente_vista_previa_mock():
 		return
-	if _feedback_continue_target.is_empty():
-		_on_volver_solicitado()
-		return
-	_ir_a_objetivo_continuar(_feedback_continue_target)
+	flow_completed.emit()
+	_finish_streak_flow()
 
 
-func _ir_a_objetivo_continuar(continue_target: Dictionary) -> void:
-	var target_type: String = str(continue_target.get("type", "")).strip_edges()
-	match target_type:
-		"map":
-			GameSceneRouter.go_to_map(get_tree())
-		"track_level":
-			GameSceneRouter.go_to_track_level(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges(),
-				int(continue_target.get("level_number", -1))
-			)
-		"track_book":
-			GameSceneRouter.go_to_track_book(
-				get_tree(),
-				str(continue_target.get("track_key", "")).strip_edges()
-			)
-		_:
-			_on_volver_solicitado()
+func _finish_streak_flow() -> void:
+	PostGameFlowControllerScript.navigate_after_streak(
+		get_tree(),
+		_consumir_return_to_de_racha()
+	)
 
 
 func _on_volver_solicitado() -> void:
-	if get_tree() == null:
-		return
-	get_tree().change_scene_to_file(_resolver_ruta_escena_retorno())
+	_return_from_streak()
 
 
-func _resolver_ruta_escena_retorno() -> String:
-	if get_tree() == null or get_tree().root == null:
-		return DEFAULT_RETURN_SCENE
-	var tree_root: Window = get_tree().root
-	if not tree_root.has_meta(STREAK_RETURN_SCENE_META):
-		return DEFAULT_RETURN_SCENE
-	var return_scene_path: String = str(
-		tree_root.get_meta(STREAK_RETURN_SCENE_META, "")
-	).strip_edges()
-	tree_root.remove_meta(STREAK_RETURN_SCENE_META)
-	if return_scene_path.is_empty():
-		return DEFAULT_RETURN_SCENE
-	return return_scene_path
+func _return_from_streak() -> void:
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_consumir_return_to_de_racha()
+	)
+
+
+func _consumir_return_to_de_racha() -> String:
+	return GameSceneRouter.consume_streak_return_to(
+		get_tree(),
+		DEFAULT_RETURN_TO
+	)

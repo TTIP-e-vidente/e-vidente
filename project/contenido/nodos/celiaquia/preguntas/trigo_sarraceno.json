@@ -1,0 +1,13 @@
+{
+	"id": "trigo_sarraceno",
+	"theme": "celiaquia",
+	"title": "Trigo sarraceno",
+	"difficulty": "hard",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "El trigo sarraceno no es apto para celiacos. Como dice su nombre, esta relacionado con el trigo convencional y eso asegura que tiene gluten.",
+		"correct_answer": "Falso",
+		"wrong_options": ["Verdadero"],
+		"visual_resource": ""
+	}
+}

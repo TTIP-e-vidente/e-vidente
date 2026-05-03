@@ -24,13 +24,17 @@ const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 
 const RESUME_SCENE_PATH_KEY := "scene_path"
-const STREAK_RETURN_SCENE_META := "streak_return_scene"
+const CONTINUE_TARGET_RETURN_TO_KEY := "return_to"
+const CONTINUE_TARGET_RETURN_SCENE_PATH_KEY := "return_scene_path"
+const STREAK_RETURN_TO_META := "streak_return_to"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 
 static var _preloaded_scenes: Dictionary = {}
 static var _pending_preload_paths: Dictionary = {}
 
+
+# --- Rutas publicas ---------------------------------------------------------
 
 static func go_to_route(
 	tree: SceneTree,
@@ -63,28 +67,28 @@ static func go_to_archivero(tree: SceneTree) -> void:
 
 static func go_to_streak(
 	tree: SceneTree,
-	return_scene_path: String = "",
+	return_to: String = "",
 	feedback: Dictionary = {},
 	continue_target: Dictionary = {}
 ) -> void:
 	if tree == null:
 		return
 	var tree_root: Window = tree.get_root()
+	var router_continue_target: Dictionary = build_router_target_from_flow_target(
+		continue_target
+	)
 	if tree_root != null:
-		if not return_scene_path.is_empty():
-			tree_root.set_meta(STREAK_RETURN_SCENE_META, return_scene_path)
-		elif tree_root.has_meta(STREAK_RETURN_SCENE_META):
-			tree_root.remove_meta(STREAK_RETURN_SCENE_META)
+		set_streak_return_to(tree, return_to)
 
 		if not feedback.is_empty():
 			tree_root.set_meta(STREAK_FEEDBACK_META, feedback.duplicate(true))
 		elif tree_root.has_meta(STREAK_FEEDBACK_META):
 			tree_root.remove_meta(STREAK_FEEDBACK_META)
 
-		if not continue_target.is_empty():
+		if not router_continue_target.is_empty():
 			tree_root.set_meta(
 				STREAK_CONTINUE_TARGET_META,
-				GameStreakDebugScript.sanitize_continue_target(continue_target)
+				GameStreakDebugScript.sanitize_target_for_runtime(router_continue_target)
 			)
 		elif tree_root.has_meta(STREAK_CONTINUE_TARGET_META):
 			tree_root.remove_meta(STREAK_CONTINUE_TARGET_META)
@@ -102,6 +106,86 @@ static func go_to_profile_editor(tree: SceneTree) -> void:
 static func go_to_questions(tree: SceneTree) -> void:
 	go_to_route(tree, ROUTE_QUESTIONS)
 
+
+# --- Racha ------------------------------------------------------------------
+
+static func set_streak_return_to(tree: SceneTree, return_to: String) -> void:
+	if tree == null:
+		return
+	var tree_root: Window = tree.get_root()
+	if tree_root == null:
+		return
+	var safe_return_to: String = return_to.strip_edges()
+	if safe_return_to.is_empty():
+		if tree_root.has_meta(STREAK_RETURN_TO_META):
+			tree_root.remove_meta(STREAK_RETURN_TO_META)
+		return
+	tree_root.set_meta(STREAK_RETURN_TO_META, safe_return_to)
+
+
+static func read_streak_return_to(
+	tree: SceneTree,
+	fallback_scene_path: String = MAP_SCENE_PATH
+) -> String:
+	if tree == null:
+		return fallback_scene_path
+	var tree_root: Window = tree.get_root()
+	if tree_root == null:
+		return fallback_scene_path
+	if not tree_root.has_meta(STREAK_RETURN_TO_META):
+		return fallback_scene_path
+	var return_to: String = str(tree_root.get_meta(STREAK_RETURN_TO_META, "")).strip_edges()
+	if return_to.is_empty():
+		return fallback_scene_path
+	return return_to
+
+
+static func consume_streak_return_to(
+	tree: SceneTree,
+	fallback_scene_path: String = MAP_SCENE_PATH
+) -> String:
+	var safe_return_to: String = read_streak_return_to(tree, fallback_scene_path)
+	if tree == null:
+		return safe_return_to
+	var tree_root: Window = tree.get_root()
+	if tree_root != null and tree_root.has_meta(STREAK_RETURN_TO_META):
+		tree_root.remove_meta(STREAK_RETURN_TO_META)
+	return safe_return_to
+
+
+# --- Targets ----------------------------------------------------------------
+
+# target interno:
+# - return_to es el nombre principal.
+# - return_scene_path queda aceptado solo como compatibilidad legacy.
+static func build_router_target_from_flow_target(target: Dictionary) -> Dictionary:
+	if target.is_empty():
+		return {}
+	var router_target: Dictionary = GameStreakDebugScript.sanitize_target_for_runtime(target)
+	if router_target.has(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY):
+		router_target[CONTINUE_TARGET_RETURN_TO_KEY] = read_return_to(router_target, MAP_SCENE_PATH)
+		router_target.erase(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY)
+	return router_target
+
+
+static func read_return_to(
+	source: Dictionary,
+	fallback_scene_path: String = MAP_SCENE_PATH
+) -> String:
+	if source.is_empty():
+		return fallback_scene_path
+	var return_to: String = str(
+		source.get(
+			CONTINUE_TARGET_RETURN_TO_KEY,
+			source.get(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY, fallback_scene_path)
+		)
+	).strip_edges()
+	if return_to.is_empty():
+		return fallback_scene_path
+	return return_to
+
+
+# --- Precarga ---------------------------------------------------------------
 
 static func request_scene_preload(scene_path: String) -> void:
 	var normalized_scene_path: String = scene_path.strip_edges()
@@ -134,6 +218,8 @@ static func request_initial_scene_preload() -> void:
 	)
 
 
+# --- Navegacion de tracks ---------------------------------------------------
+
 static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
@@ -149,15 +235,81 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 	_change_scene_to_path(tree, scene_path)
 
 
+# --- Navegacion por target --------------------------------------------------
+
+static func go_to_target(
+	tree: SceneTree,
+	target: Dictionary,
+	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
+) -> void:
+	if tree == null:
+		return
+
+	var router_target: Dictionary = build_router_target_from_flow_target(target)
+	var target_type: String = str(router_target.get("type", "")).strip_edges()
+	match target_type:
+		"map":
+			_clear_active_playable_session(tree)
+			go_to_map(tree)
+		"map_continue":
+			var global_state := _get_global_state(tree)
+			var node_key: String = str(router_target.get("node_key", "")).strip_edges()
+			if (
+				global_state != null
+				and not node_key.is_empty()
+				and global_state.has_method("solicitar_continuar")
+			):
+				global_state.call("solicitar_continuar", node_key)
+			_clear_active_playable_session(tree)
+			_change_scene_to_path(tree, read_return_to(router_target, MAP_SCENE_PATH))
+		"track_level":
+			_clear_active_playable_session(tree)
+			go_to_track_level(
+				tree,
+				str(router_target.get("track_key", "")).strip_edges(),
+				int(router_target.get("level_number", -1))
+			)
+		"track_book":
+			_clear_active_playable_session(tree)
+			go_to_track_book(
+				tree,
+				str(router_target.get("track_key", "")).strip_edges()
+			)
+		"scene_path":
+			_clear_active_playable_session(tree)
+			var scene_path: String = str(
+				router_target.get("scene_path", fallback_scene_path)
+			).strip_edges()
+			_change_scene_to_path(
+				tree,
+				scene_path if not scene_path.is_empty() else fallback_scene_path
+			)
+		_:
+			_clear_active_playable_session(tree)
+			_change_scene_to_path(tree, fallback_scene_path)
+
+
+static func go_to_continue_target(
+	tree: SceneTree,
+	continue_target: Dictionary,
+	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
+) -> void:
+	go_to_target(tree, continue_target, fallback_scene_path)
+
+
 static func go_to_resume(
 	tree: SceneTree,
 	resume_state: Dictionary,
 	fallback_scene: String = MODE_SELECTOR_SCENE_PATH
 ) -> void:
-	var scene_path: String = str(resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene)).strip_edges()
+	var scene_path: String = str(
+		resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene)
+	).strip_edges()
 	var safe_scene_path: String = scene_path if not scene_path.is_empty() else fallback_scene
 	_change_scene_to_path(tree, safe_scene_path)
 
+
+# --- Helpers privados -------------------------------------------------------
 
 static func _resolve_route_scene_path(route_name: String, fallback_route: String) -> String:
 	var scene_path: String = _get_scene_path_for_route(route_name)
@@ -246,3 +398,9 @@ static func _get_global_state(tree: SceneTree) -> Node:
 	if tree == null:
 		return null
 	return tree.get_root().get_node_or_null("Global")
+
+
+static func _clear_active_playable_session(tree: SceneTree) -> void:
+	var global_state := _get_global_state(tree)
+	if global_state != null and global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
+		global_state.call("limpiar_sesion_nodo_jugable_activo")

@@ -62,25 +62,44 @@ $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 
 function Get-ValidationSteps {
-    param([string]$ValidationMode)
+    param(
+        [string]$ValidationMode,
+        [string]$RepositoryRoot
+    )
 
     $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') }
     $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/node_content_loader_test.gd') }
+    $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/post_game_flow_controller_test.gd') }
     $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
+
+    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
+    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/post_game_flow_controller_test.gd')
+    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/vertical_slice_smoke_test.gd')
+
+    $smokeSuite = @($importStep)
+    if ($hasNodeJsonTest) {
+        $smokeSuite += $nodeJsonStep
+    }
+    if ($hasPostGameFlowTest) {
+        $smokeSuite += $postGameFlowStep
+    }
+    if ($hasSmokeTest) {
+        $smokeSuite += $smokeStep
+    }
 
     switch ($ValidationMode) {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }
         'technical' { return @($importStep) }
-        'smoke' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'ci' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'pr-fast' { return @($importStep, $nodeJsonStep, $smokeStep) }
-        'full' { return @($importStep, $nodeJsonStep, $smokeStep) }
+        'smoke' { return $smokeSuite }
+        'ci' { return $smokeSuite }
+        'pr-fast' { return $smokeSuite }
+        'full' { return $smokeSuite }
         default { throw "Modo de validacion no soportado: $ValidationMode" }
     }
 }
 
-$steps = Get-ValidationSteps -ValidationMode $Mode
+$steps = Get-ValidationSteps -ValidationMode $Mode -RepositoryRoot $repoRoot
 
 Push-Location $repoRoot
 try {

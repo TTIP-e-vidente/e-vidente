@@ -1,0 +1,32 @@
+{
+	"id": "armar_plato_sin_tacc",
+	"theme": "celiaquia",
+	"title": "Arma un plato apto",
+	"difficulty": "easy",
+	"mode": "drag_drop",
+	"content": {
+		"instruction": "Arrastra al plato solo los alimentos aptos sin TACC.",
+		"targets": [
+			{
+				"id": "plato",
+				"label": "Plato apto"
+			}
+		],
+		"items": [
+			{
+				"id": "arroz",
+				"label": "Arroz",
+				"image": "res://assets-sistema/iconos/arroz-0.png",
+				"correct_target": "plato"
+			},
+			{
+				"id": "pan",
+				"label": "Pan",
+				"image": "res://assets-sistema/iconos/pan-0.png",
+				"correct_target": ""
+			}
+		],
+		"success_message": "Bien! Elegiste alimentos aptos.",
+		"error_message": "Cuidado: ese alimento puede contener gluten."
+	}
+}

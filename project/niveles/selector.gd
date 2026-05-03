@@ -8,7 +8,9 @@ const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverla
 
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
-const MUSICA_FONDO_PREDETERMINADA := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
+const MUSICA_FONDO_PREDETERMINADA := (
+	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
+)
 
 const DESTINO_MAPA := "mapa"
 const DESTINO_PISTA := "pista"
@@ -207,8 +209,8 @@ func _process(_delta: float) -> void:
 
 
 func _actualizar_shader_boton(button: TextureButton, mouse_position: Vector2) -> void:
-	var material: ShaderMaterial = button.material as ShaderMaterial
-	if material == null:
+	var shader_material: ShaderMaterial = button.material as ShaderMaterial
+	if shader_material == null:
 		return
 
 	var button_rect: Rect2 = button.get_global_rect()
@@ -219,10 +221,10 @@ func _actualizar_shader_boton(button: TextureButton, mouse_position: Vector2) ->
 	var button_center: Vector2 = button_rect.position + button_rect.size / 2.0
 	var mouse_distance: float = mouse_position.distance_to(button_center)
 	if mouse_distance < 200.0:
-		material.set_shader_parameter("mouse_pos", mouse_uv)
+		shader_material.set_shader_parameter("mouse_pos", mouse_uv)
 		return
 
-	material.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
+	shader_material.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
 
 
 # --- HUD ----------------------------------------------------------------------
@@ -336,7 +338,7 @@ func _on_superposicion_edit_perfil_presionado() -> void:
 
 func _on_superposicion_guardar_presionado() -> void:
 	SaveManager.guardar_progreso_en_disco()
-	_profile_overlay.refresh()
+	_profile_overlay.refrescar()
 
 
 func _on_superposicion_reiniciar_presionado() -> void:

@@ -1,0 +1,17 @@
+{
+  "id": "lectura_etiquetas_sin_tacc",
+  "theme": "celiaquia",
+  "title": "Lee la etiqueta",
+  "difficulty": "medium",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "Cuando elegis un alimento procesado para una persona con celiaquia, que dato es el mas seguro para revisar?",
+    "correct_answer": "Que el envase indique que es libre de gluten o Sin TACC segun la normativa vigente",
+    "wrong_options": [
+      "Que el paquete sea de color verde",
+      "Que diga artesanal",
+      "Que no tenga harina en el nombre"
+    ],
+    "visual_resource": ""
+  }
+}

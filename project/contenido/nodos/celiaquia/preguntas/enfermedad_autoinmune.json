@@ -1,0 +1,13 @@
+{
+	"id": "enfermedad_autoinmune",
+	"theme": "celiaquia",
+	"title": "Celiaquia autoinmune",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "La celiaquia es una enfermedad autoinmune?",
+		"correct_answer": "Si",
+		"wrong_options": ["No"],
+		"visual_resource": ""
+	}
+}

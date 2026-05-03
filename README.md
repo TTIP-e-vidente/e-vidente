@@ -81,16 +81,50 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 🚧 En desarrollo
 
-## Cómo leer el flujo de nodos jugables
+## Flujo principal
 
-1. El jugador toca un nodo en `project/mapas/MapScene.gd`.
-2. `MapScene.gd` recibe la selección y pide a `MapNodeData.gd` un `contexto_sesion`.
-3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
-4. `project/preguntas/NodeContentLoader.gd` carga el JSON y lo deja en el contrato oficial `{ ok, data, error }`.
-5. `project/mapas/PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
-6. `project/preguntas/pregunta.gd` ejecuta `quiz_choice` y `project/mapas/drag_drop/DragDropNode.gd` ejecuta `drag_drop`.
-7. `project/niveles/global.gd` conserva la sesión activa del nodo y el progreso necesario para volver.
-8. La escena jugable termina y vuelve a `return_scene_path`, que normalmente es el mapa.
+1. `project/mapas/MapScene.gd` maneja el mapa.
+2. `project/mapas/MapNodeData.gd` describe cada nodo.
+3. `project/mapas/LevelNode.gd` muestra el nodo visual.
+4. `project/preguntas/NodeContentLoader.gd` carga JSON.
+5. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
+6. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
+7. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
+8. La modalidad termina y pide continuar.
+9. `MapScene.gd` abre el siguiente nodo.
+10. `project/mapas/drag_drop/DragDropNode.tscn` queda legacy/back-up.
+
+## Responsabilidades del mapa
+
+- `MapScene.gd`: orquesta el mapa, carga contenido y abre nodos jugables.
+- `LevelNode.gd`: representa un nodo visual clickeable y emite `nodo_seleccionado`.
+- `MapNodeData.gd`: describe datos simples del nodo del mapa.
+- `MapProgress.gd`: resuelve progreso, desbloqueo y siguiente nodo.
+- Las modalidades no deciden el siguiente nodo.
+
+## Flujo JSON de mapa
+
+1. `MapContentLoader.gd` carga el JSON del mapa.
+2. `MapScene.gd` guarda `nodes[]` como lista ordenada.
+3. `LevelNode.gd` muestra cada nodo visual.
+4. `MapNodeData.gd` resuelve `node_key` y `json_path`.
+5. `MapScene.gd` pasa `json_path` a `NodeContentLoader.gd`.
+6. `NodeContentLoader.gd` carga el JSON jugable.
+7. `PlayableNodeRouter.gd` usa `mode`.
+8. Al terminar, `MapScene.gd` abre `nodes[indice + 1]`.
+
+## Como crear un mapa
+
+1. Crear un archivo en `project/niveles/mapas/`.
+2. Definir `id`, `track_key` y `title`.
+3. Agregar `nodes[]` en orden.
+4. Cada nodo tiene `node_key`, `title` y `json_path`.
+5. El `mode` vive en el JSON del nodo, no en el mapa.
+6. Para sumar un nodo, agregarlo al array y crear su JSON.
+
+```json
+{"id":"demo_mapa","track_key":"celiaquia","title":"Demo","nodes":[{"node_key":"nodo_01","title":"Primer nodo","json_path":"res://niveles/nodos/celiaquia/nodo_01.json"}]}
+```
 
 Para agregar un nodo nuevo:
 
@@ -110,5 +144,6 @@ Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como
 - `project/niveles/nodos/ejemplos/`: ejemplos oficiales y legacy de referencia.
 - `project/preguntas/`: modalidad `quiz_choice` y su adaptador temporal, no el sistema completo.
 - `project/mapas/`: mapa, routing y contexto de apertura.
-- `project/mapas/drag_drop/`: modalidad `drag_drop`.
+- `project/niveles/nivel_1/`: modalidad oficial `drag_drop` basada en `Level.tscn` y `Level.gd`.
+- `project/mapas/drag_drop/`: legacy/back-up; no es el flujo principal de `drag_drop`.
 - `mode` define la modalidad; `content` contiene solo los datos especificos de esa modalidad.
