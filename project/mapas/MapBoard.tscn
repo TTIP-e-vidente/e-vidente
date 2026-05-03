@@ -5,12 +5,12 @@
 [ext_resource type="PackedScene" uid="uid://ccolhcqvnrd8d" path="res://mapas/MapChapterNode.tscn" id="3_chapternode"]
 [ext_resource type="PackedScene" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
 [ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="5_path1"]
-[ext_resource type="Texture2D" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
+[ext_resource type="Texture2D" uid="uid://mmbv3xon7864" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="7_title"]
 [ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
 [ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
 [ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
-[ext_resource type="Shader" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
+[ext_resource type="Shader" uid="uid://ouiuwpm2wm3h" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
 [ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
 [ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="12_oop13"]
 
@@ -186,7 +186,7 @@ question_number = 8
 node_key = "armar_plato_sin_tacc"
 label_text = "Pregunta 8"
 
-[node name="Pregunta9" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta9" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1275698258 instance=ExtResource("4_questionnode")]
 position = Vector2(210, 1740)
 scale = Vector2(1.18, 1.18)
 nivel_id = 15
@@ -195,7 +195,7 @@ node_key = "celiaquia_basico_evitar_gluten"
 label_text = "Pregunta 9"
 icon_texture = ExtResource("12_oop13")
 
-[node name="Pregunta10" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta10" parent="ScrollContainer/Contenido/NodesContainer" unique_id=949029174 instance=ExtResource("4_questionnode")]
 position = Vector2(470, 1820)
 scale = Vector2(1.22, 1.22)
 nivel_id = 16
@@ -204,7 +204,7 @@ node_key = "alimentos_naturalmente_sin_gluten"
 label_text = "Pregunta 10"
 icon_texture = ExtResource("8_icon5")
 
-[node name="Pregunta11" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta11" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1697269579 instance=ExtResource("4_questionnode")]
 position = Vector2(760, 1900)
 scale = Vector2(1.26, 1.26)
 nivel_id = 17
@@ -213,16 +213,15 @@ node_key = "contaminacion_cruzada_cocina"
 label_text = "Pregunta 11"
 icon_texture = ExtResource("10_icon4")
 
-[node name="Pregunta12" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta12" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1039054974 instance=ExtResource("4_questionnode")]
 position = Vector2(970, 2070)
 scale = Vector2(1.28, 1.28)
 nivel_id = 18
 question_number = 12
 node_key = "lectura_etiquetas_sin_tacc"
 label_text = "Pregunta 12"
-icon_texture = ExtResource("11_oop13")
 
-[node name="Pregunta13" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta13" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1501354289 instance=ExtResource("4_questionnode")]
 position = Vector2(710, 2240)
 scale = Vector2(1.32, 1.32)
 nivel_id = 19
@@ -231,7 +230,7 @@ node_key = "diagnostico_no_suspender_gluten"
 label_text = "Pregunta 13"
 icon_texture = ExtResource("10_m2v86")
 
-[node name="Pregunta14" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta14" parent="ScrollContainer/Contenido/NodesContainer" unique_id=397022552 instance=ExtResource("4_questionnode")]
 position = Vector2(390, 2320)
 scale = Vector2(1.35, 1.35)
 nivel_id = 20
