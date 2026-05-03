@@ -4,7 +4,27 @@ const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 
 
-static func validar_datos_nodo(datos_nodo: Dictionary) -> String:
+static func validate(node_data: Dictionary) -> String:
+	var base_error: String = validate_base_fields(node_data)
+	if not base_error.is_empty():
+		return base_error
+	return validate_content_for_mode(node_data)
+
+
+static func clean(node_data: Dictionary) -> Dictionary:
+	var modo: String = str(node_data.get("mode", "")).strip_edges()
+	var contenido: Dictionary = _leer_diccionario(node_data.get("content", {}))
+	return {
+		"id": str(node_data.get("id", "")).strip_edges(),
+		"theme": str(node_data.get("theme", "")).strip_edges(),
+		"title": str(node_data.get("title", "")).strip_edges(),
+		"difficulty": _normalizar_dificultad(str(node_data.get("difficulty", "")).strip_edges()),
+		"mode": modo,
+		"content": _limpiar_contenido(modo, contenido)
+	}
+
+
+static func validate_base_fields(datos_nodo: Dictionary) -> String:
 	for campo in ["id", "theme", "title", "difficulty", "mode", "content"]:
 		if not datos_nodo.has(campo):
 			return "Falta el campo obligatorio: %s" % campo
@@ -22,7 +42,7 @@ static func validar_datos_nodo(datos_nodo: Dictionary) -> String:
 	return ""
 
 
-static func validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
+static func validate_content_for_mode(datos_nodo: Dictionary) -> String:
 	var modo: String = str(datos_nodo.get("mode", "")).strip_edges()
 	var contenido: Dictionary = _leer_diccionario(datos_nodo.get("content", {}))
 	match modo:
@@ -34,17 +54,16 @@ static func validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
 			return "Modo no soportado: %s" % modo
 
 
+static func validar_datos_nodo(datos_nodo: Dictionary) -> String:
+	return validate_base_fields(datos_nodo)
+
+
+static func validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
+	return validate_content_for_mode(datos_nodo)
+
+
 static func limpiar_datos_nodo(datos_nodo: Dictionary) -> Dictionary:
-	var modo: String = str(datos_nodo.get("mode", "")).strip_edges()
-	var contenido: Dictionary = _leer_diccionario(datos_nodo.get("content", {}))
-	return {
-		"id": str(datos_nodo.get("id", "")).strip_edges(),
-		"theme": str(datos_nodo.get("theme", "")).strip_edges(),
-		"title": str(datos_nodo.get("title", "")).strip_edges(),
-		"difficulty": _normalizar_dificultad(str(datos_nodo.get("difficulty", "")).strip_edges()),
-		"mode": modo,
-		"content": _limpiar_contenido(modo, contenido)
-	}
+	return clean(datos_nodo)
 
 
 static func _validar_quiz(contenido: Dictionary) -> String:
