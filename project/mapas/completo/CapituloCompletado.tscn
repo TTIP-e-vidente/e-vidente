@@ -45,9 +45,34 @@ corner_radius_top_right = 22
 corner_radius_bottom_right = 22
 corner_radius_bottom_left = 22
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip_hover"]
+bg_color = Color(0.878431, 0.866667, 0.815686, 1.0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.184314, 0.137255, 0.2)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip_pressed"]
+bg_color = Color(0.819608, 0.8, 0.74902, 1.0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.184314, 0.137255, 0.25)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
 
 [node name="CapituloCompletado" type="CanvasLayer" unique_id=429467181]
+process_mode = 3
 layer = 70
 script = ExtResource("1_xxxk7")
 
@@ -99,7 +124,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Card" type="PanelContainer" parent="OverlayRoot/MarginContainer/CenterContainer" unique_id=1896057494]
-custom_minimum_size = Vector2(560, 0)
+custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
@@ -154,7 +179,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
 theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 16
-text = "¿Estás listx para dominar otras restricciones alimentarias?"
+text = "¿Querés seguir practicando o volver al inicio?"
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -162,29 +187,50 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 
-[node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1080345016]
-custom_minimum_size = Vector2(336, 76)
+[node name="ButtonRow" type="HBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1234598760]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/separation = 12
+
+[node name="ReplayButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow" unique_id=1080345017]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_colors/font_hover_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_colors/font_pressed_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_colors/font_focus_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_chip")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_chip_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_chip_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_chip")
+text = "Seguir jugando en el mapa"
+flat = true
+
+[node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow" unique_id=1080345016]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.956863, 0.945098, 0.909804, 1)
 theme_override_fonts/font = ExtResource("3_regular")
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxEmpty_button")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
-text = "Continuar"
+text = "Volver al inicio"
 flat = true
 
-[node name="BlobBackground" type="TextureRect" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ContinueButton" unique_id=1161402773]
+[node name="BlobBackground" type="TextureRect" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" unique_id=1161402773]
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 35.0
+offset_left = 20.0
 offset_top = -8.0
-offset_right = -44.0
+offset_right = -20.0
 offset_bottom = 5.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -192,4 +238,5 @@ mouse_filter = 2
 texture = ExtResource("5_blob")
 expand_mode = 1
 
-[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ContinueButton" to="." method="_on_continuar_pressed"]
+[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ReplayButton" to="." method="_on_seguir_jugando_pressed"]
+[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" to="." method="_on_continuar_pressed"]

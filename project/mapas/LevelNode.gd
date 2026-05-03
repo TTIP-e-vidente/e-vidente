@@ -37,6 +37,7 @@ var node_data: MapNodeData = null
 var _base_scale: Vector2 = Vector2.ONE
 var _is_hovering: bool = false
 var _click_in_progress: bool = false
+var _disponible_tween: Tween = null
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
@@ -113,18 +114,36 @@ func _get_title() -> String:
 
 
 func _is_button_disabled() -> bool:
-	return not Engine.is_editor_hint() and (not unlocked or completed)
+	return not Engine.is_editor_hint() and not (unlocked or completed)
 
 
 func _apply_state_color() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
 	elif completed:
+		_cancelar_tween_disponible()
 		modulate = COLOR_COMPLETED
 	elif not unlocked:
+		_cancelar_tween_disponible()
 		modulate = COLOR_LOCKED
 	else:
 		modulate = Color.WHITE
+		_animar_disponible()
+
+
+func _cancelar_tween_disponible() -> void:
+	if _disponible_tween != null:
+		_disponible_tween.kill()
+	_disponible_tween = null
+
+
+func _animar_disponible() -> void:
+	_cancelar_tween_disponible()
+	_disponible_tween = create_tween()
+	_disponible_tween.set_trans(Tween.TRANS_BACK)
+	_disponible_tween.set_ease(Tween.EASE_OUT)
+	_disponible_tween.tween_property(self, "scale", _base_scale * 1.18, 0.4)
+	_disponible_tween.tween_property(self, "scale", _base_scale, 0.3)
 
 
 func _animate_scale_to(target_scale: Vector2) -> void:

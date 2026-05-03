@@ -205,13 +205,34 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
-	boton_respuesta.text = texto_respuesta
+	boton_respuesta.text = _texto_display(texto_respuesta)
 	boton_respuesta.tooltip_text = texto_respuesta
 	boton_respuesta.set_meta("respuesta", texto_respuesta)
 	boton_respuesta.modulate = Color.WHITE
 	boton_respuesta.disabled = false
 	boton_respuesta.scale = Vector2.ONE
 	boton_respuesta.rotation_degrees = 0
+	boton_respuesta.add_theme_font_size_override("font_size", _font_size_para(texto_respuesta))
+
+
+const MAX_DISPLAY_CHARS := 55
+
+func _texto_display(texto: String) -> String:
+	if texto.length() <= MAX_DISPLAY_CHARS:
+		return texto
+	var corte: int = texto.rfind(" ", MAX_DISPLAY_CHARS)
+	if corte < MAX_DISPLAY_CHARS / 2:
+		corte = MAX_DISPLAY_CHARS
+	return texto.substr(0, corte) + "…"
+
+
+func _font_size_para(texto: String) -> int:
+	var largo: int = texto.length()
+	if largo > 40:
+		return 14
+	if largo > 25:
+		return 17
+	return 20
 
 
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
