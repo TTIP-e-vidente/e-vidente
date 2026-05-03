@@ -3,6 +3,8 @@ extends RefCounted
 const SECONDS_PER_DAY := 86400
 
 
+# --- Estado estable ---------------------------------------------------------
+
 static func read(raw_state: Variant) -> Dictionary:
 	if not raw_state is Dictionary:
 		return _empty_streak_state()
@@ -12,7 +14,7 @@ static func read(raw_state: Variant) -> Dictionary:
 	var current_count: int = max(0, int(stored.get("current_count", 0)))
 	var best_count: int = max(0, int(stored.get("best_count", 0)))
 
-	# Si la fecha guardada no es válida, la racha está rota
+	# Si la fecha guardada no es valida, la racha esta rota.
 	if not _is_valid_date(last_day):
 		return _empty_streak_state()
 
@@ -26,7 +28,8 @@ static func read(raw_state: Variant) -> Dictionary:
 	}
 
 
-## Registra una actividad hoy y devuelve el nuevo estado de racha.
+# --- Actividad --------------------------------------------------------------
+
 static func record(
 	current_streak: Dictionary,
 	activity_type: String,
@@ -36,13 +39,10 @@ static func record(
 	var last_day: String = str(current_streak.get("last_activity_day", ""))
 	var old_count: int = int(current_streak.get("current_count", 0))
 
-	# Calcular nueva racha
 	var new_count: int = 1
 	if last_day == today:
-		# Ya jugó hoy → mantener la cuenta actual
 		new_count = old_count
 	elif _days_between(last_day, today) == 1:
-		# Jugó ayer → extender la racha
 		new_count = old_count + 1
 
 	var clean_type: String = activity_type.strip_edges()
@@ -55,7 +55,8 @@ static func record(
 	}
 
 
-## Genera datos para mostrar en la UI del perfil / overlay.
+# --- Datos para UI ----------------------------------------------------------
+
 static func view_model(streak_state: Dictionary) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
@@ -88,6 +89,8 @@ static func view_model(streak_state: Dictionary) -> Dictionary:
 		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy."
 	}
 
+
+# --- Feedback post-partida --------------------------------------------------
 
 static func build_feedback(
 	previous_state: Dictionary,
@@ -127,7 +130,7 @@ static func build_feedback(
 	}
 
 
-# --- Helpers internos ---
+# --- Helpers internos -------------------------------------------------------
 
 static func _empty_streak_state() -> Dictionary:
 	return {
@@ -139,7 +142,6 @@ static func _empty_streak_state() -> Dictionary:
 	}
 
 
-## Devuelve cuántos días hay entre dos fechas "YYYY-MM-DD". Retorna -1 si alguna es inválida.
 static func _days_between(date_a: String, date_b: String) -> int:
 	if date_a.is_empty() or date_b.is_empty():
 		return -1
@@ -148,7 +150,6 @@ static func _days_between(date_a: String, date_b: String) -> int:
 	return int(float(absi(unix_b - unix_a)) / SECONDS_PER_DAY)
 
 
-## Verifica que una fecha "YYYY-MM-DD" sea un formato válido.
 static func _is_valid_date(date_string: String) -> bool:
 	if date_string.is_empty():
 		return false

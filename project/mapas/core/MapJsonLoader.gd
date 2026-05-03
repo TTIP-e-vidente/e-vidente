@@ -1,0 +1,130 @@
+extends RefCounted
+class_name MapJsonLoader
+
+const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const NODE_JSON_ROOT := "res://contenido/nodos/"
+const VALID_NODE_MODES := ["quiz_choice", "drag_drop"]
+
+
+static func load_map(map_json_path: String) -> Dictionary:
+	var raw_result: Dictionary = read_json_file(map_json_path)
+	if not bool(raw_result.get("ok", false)):
+		return raw_result
+
+	return build_map_data(raw_result.get("data", {}))
+
+
+static func read_json_file(map_json_path: String) -> Dictionary:
+	var clean_path: String = map_json_path.strip_edges()
+	if clean_path.is_empty():
+		return _error("Falta la ruta del JSON del mapa.")
+	if not FileAccess.file_exists(clean_path):
+		return _error("No existe el JSON del mapa: %s" % clean_path)
+
+	var file := FileAccess.open(clean_path, FileAccess.READ)
+	if file == null:
+		return _error("No se pudo abrir el JSON del mapa: %s" % clean_path)
+
+	var parser := JSON.new()
+	var parse_result: Error = parser.parse(file.get_as_text())
+	if parse_result != OK:
+		return _error(
+			"JSON invalido en %s linea %d: %s"
+			% [clean_path, parser.get_error_line(), parser.get_error_message()]
+		)
+
+	var raw_data: Variant = parser.get_data()
+	if not raw_data is Dictionary:
+		return _error("El JSON del mapa debe ser un objeto.")
+
+	return _ok(raw_data as Dictionary)
+
+
+static func build_map_data(raw_map: Dictionary) -> Dictionary:
+	var header_error: String = validate_map_header(raw_map)
+	if not header_error.is_empty():
+		return _error(header_error)
+
+	var map_id: String = str(raw_map.get("id", "")).strip_edges()
+	var track_key: String = str(raw_map.get("track_key", "")).strip_edges()
+	var title: String = str(raw_map.get("title", "")).strip_edges()
+	var nodes_result: Dictionary = build_nodes(raw_map.get("nodes", []), track_key)
+	if not bool(nodes_result.get("ok", false)):
+		return nodes_result
+
+	return _ok({
+		"id": map_id,
+		"track_key": track_key,
+		"title": title,
+		"nodes": nodes_result.get("data", []),
+	})
+
+
+static func validate_map_header(raw_map: Dictionary) -> String:
+	var map_id: String = str(raw_map.get("id", "")).strip_edges()
+	var track_key: String = str(raw_map.get("track_key", "")).strip_edges()
+	var title: String = str(raw_map.get("title", "")).strip_edges()
+	var raw_nodes: Variant = raw_map.get("nodes", null)
+	if map_id.is_empty():
+		return "El mapa necesita id."
+	if track_key.is_empty():
+		return "El mapa necesita track_key."
+	if title.is_empty():
+		return "El mapa necesita title."
+	if not raw_nodes is Array:
+		return "El mapa necesita nodes como array."
+	return ""
+
+
+static func build_nodes(raw_nodes: Variant, track_key: String) -> Dictionary:
+	if not raw_nodes is Array:
+		return _error("El mapa necesita nodes como array.")
+	var nodes: Array[MapNodeData] = []
+	for index in range((raw_nodes as Array).size()):
+		var node_result: Dictionary = _build_node((raw_nodes as Array)[index], track_key, index)
+		if not bool(node_result.get("ok", false)):
+			return node_result
+		nodes.append(node_result.get("data") as MapNodeData)
+	return _ok(nodes)
+
+
+static func _build_node(raw_node: Variant, track_key: String, index: int) -> Dictionary:
+	var node_number: int = index + 1
+	if not raw_node is Dictionary:
+		return _error("El nodo %d del mapa debe ser un objeto." % node_number)
+
+	var node := MapNodeDataScript.from_json(raw_node as Dictionary, track_key, index)
+	var path_error: String = validate_node_path(node, node_number)
+	if not path_error.is_empty():
+		return _error(path_error)
+
+	return _ok(node)
+
+
+static func validate_node_path(node: MapNodeData, node_number: int = 0) -> String:
+	var label: String = "El nodo"
+	if node_number > 0:
+		label = "El nodo %d" % node_number
+	if node.node_key.is_empty():
+		return "%s no tiene node_key." % label
+	if node.title.is_empty():
+		return "%s no tiene title." % label
+	if node.mode.is_empty():
+		return "%s no tiene mode." % label
+	if not VALID_NODE_MODES.has(node.mode):
+		return "%s tiene mode no soportado: %s" % [label, node.mode]
+	if node.json_path.is_empty():
+		return "%s no tiene json_path." % label
+	if not node.json_path.begins_with(NODE_JSON_ROOT):
+		return "%s debe apuntar a %s. Ruta actual: %s" % [label, NODE_JSON_ROOT, node.json_path]
+	if not FileAccess.file_exists(node.json_path):
+		return "No existe el JSON de %s: %s" % [label.to_lower(), node.json_path]
+	return ""
+
+
+static func _ok(data: Variant) -> Dictionary:
+	return {"ok": true, "error": "", "data": data}
+
+
+static func _error(message: String) -> Dictionary:
+	return {"ok": false, "error": message, "data": {}}

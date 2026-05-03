@@ -30,6 +30,7 @@ var _streak_state: Dictionary = {}
 var _extra_progress_system_states: Dictionary = {}
 var _playable_node_progress_by_track: Dictionary = {}
 var _active_playable_node_session: Dictionary = {}
+var _nodo_a_continuar: String = ""
 
 
 func _init() -> void:
@@ -39,6 +40,8 @@ func _init() -> void:
 	_partial_state_save_helper = SaveEstadoHelperScript.new()
 	reiniciar_progreso()
 
+
+# --- Nivel actual -----------------------------------------------------------
 
 func obtener_actual_nivel_numero() -> int:
 	return current_level
@@ -52,17 +55,21 @@ func establecer_actual_nivel_numero(level_number: int, track_key: String = "") -
 	current_level = 1 if max_level <= 0 else clampi(level_number, 1, max_level)
 
 
+# --- Progreso de niveles ----------------------------------------------------
+
 func reiniciar_progreso() -> void:
 	current_level = 1
 	_completed_levels_by_track = {}
 	_partial_level_state_by_track = {}
-	_streak_state = {}
 	_extra_progress_system_states = {}
+
 	_playable_node_progress_by_track = {}
 	_active_playable_node_session = {}
+	_nodo_a_continuar = ""
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		_asegurar_pista_progreso_existe(track_key)
 		_partial_level_state_by_track[track_key] = {}
+
 
 func marcar_nivel_completado(track_key: String, level_number: int) -> void:
 	var key := _obtener_clave_pista_valida(track_key)
@@ -72,6 +79,7 @@ func marcar_nivel_completado(track_key: String, level_number: int) -> void:
 	_asegurar_pista_progreso_existe(key)
 	_completed_levels_by_track[key][level_index] = true
 
+
 func es_nivel_desbloqueado(track_key: String, level_number: int) -> bool:
 	var key := _obtener_clave_pista_valida(track_key)
 	if key.is_empty():
@@ -80,6 +88,7 @@ func es_nivel_desbloqueado(track_key: String, level_number: int) -> bool:
 		return true
 	return es_nivel_completado(key, level_number - 1)
 
+
 func es_nivel_completado(track_key: String, level_number: int) -> bool:
 	var key := _obtener_clave_pista_valida(track_key)
 	var level_index := _nivel_a_indice(key, level_number)
@@ -87,6 +96,7 @@ func es_nivel_completado(track_key: String, level_number: int) -> bool:
 		return false
 	_asegurar_pista_progreso_existe(key)
 	return _completed_levels_by_track[key][level_index]
+
 
 func obtener_progreso_resumen() -> Dictionary:
 	var summary: Dictionary = {
@@ -101,6 +111,7 @@ func obtener_progreso_resumen() -> Dictionary:
 		summary[track_key] = count
 		summary["total"] += count
 	return summary
+
 
 func formatear_progreso_resumen_texto(summary: Dictionary = {}) -> String:
 	var by_track: Dictionary = summary if not summary.is_empty() else obtener_progreso_resumen()
@@ -123,12 +134,15 @@ func formatear_progreso_resumen_texto(summary: Dictionary = {}) -> String:
 	return "\n".join(lines)
 
 
+# --- Estado parcial de niveles ---------------------------------------------
+
 func obtener_parcial_nivel_estado(track_key: String, level_number: int) -> Dictionary:
 	var key := _obtener_clave_pista_valida(track_key)
 	var level := _obtener_numero_nivel_valido(key, level_number)
 	if level <= 0:
 		return {}
 	return _partial_level_state_by_track.get(key, {}).get(level, {})
+
 
 func establecer_parcial_nivel_estado(track_key: String, level_number: int, state: Dictionary) -> void:
 	var key := _obtener_clave_pista_valida(track_key)
@@ -142,6 +156,7 @@ func establecer_parcial_nivel_estado(track_key: String, level_number: int, state
 	else:
 		_partial_level_state_by_track[key][level] = state
 
+
 func limpiar_parcial_nivel_estado(track_key: String, level_number: int) -> void:
 	var key := _obtener_clave_pista_valida(track_key)
 	var level := _obtener_numero_nivel_valido(key, level_number)
@@ -151,7 +166,7 @@ func limpiar_parcial_nivel_estado(track_key: String, level_number: int) -> void:
 		_partial_level_state_by_track[key].erase(level)
 
 
-# --- Nodos jugables del mapa ---
+# --- Progreso de nodos del mapa --------------------------------------------
 
 func marcar_nodo_jugable_completado(track_key: String, node_key: String) -> void:
 	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
@@ -162,6 +177,7 @@ func marcar_nodo_jugable_completado(track_key: String, node_key: String) -> void
 	progress_for_track[normalized_node_key] = true
 	_playable_node_progress_by_track[normalized_track_key] = progress_for_track
 
+
 func es_nodo_jugable_completado(track_key: String, node_key: String) -> bool:
 	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
 	var normalized_node_key: String = node_key.strip_edges()
@@ -171,6 +187,9 @@ func es_nodo_jugable_completado(track_key: String, node_key: String) -> bool:
 	if not raw_track_progress is Dictionary:
 		return false
 	return bool(raw_track_progress.get(normalized_node_key, false))
+
+
+# --- Sesion activa de nodo jugable -----------------------------------------
 
 func establecer_sesion_nodo_jugable_activo(session_state: Dictionary) -> void:
 	_active_playable_node_session = session_state.duplicate(true)
@@ -184,7 +203,19 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 	_active_playable_node_session = {}
 
 
-# --- Estados extra de progreso ---
+# --- Continuacion de mapa ---------------------------------------------------
+
+func solicitar_continuar(nodo_actual: String) -> void:
+	_nodo_a_continuar = nodo_actual.strip_edges()
+
+
+func consumir_nodo_a_continuar() -> String:
+	var nodo: String = _nodo_a_continuar
+	_nodo_a_continuar = ""
+	return nodo
+
+
+# --- Estados extra de progreso ---------------------------------------------
 
 func establecer_progreso_sistema_estado(system_key: String, state: Dictionary) -> void:
 	var normalized_system_key: String = system_key.strip_edges()
@@ -194,6 +225,7 @@ func establecer_progreso_sistema_estado(system_key: String, state: Dictionary) -
 		_extra_progress_system_states.erase(normalized_system_key)
 		return
 	_extra_progress_system_states[normalized_system_key] = state.duplicate(true)
+
 
 func obtener_progreso_sistema_estado(system_key: String) -> Dictionary:
 	var normalized_system_key: String = system_key.strip_edges()
@@ -205,18 +237,22 @@ func obtener_progreso_sistema_estado(system_key: String) -> Dictionary:
 	return {}
 
 
-# --- Racha ---
+# --- Racha ------------------------------------------------------------------
 
 func obtener_estado_racha() -> Dictionary:
 	return GameStreakTracker.read(_streak_state)
 
+
 func obtener_modelo_vista_racha() -> Dictionary:
 	return GameStreakTracker.view_model(obtener_estado_racha())
+
 
 func registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
 	_streak_state = GameStreakTracker.record(obtener_estado_racha(), activity_type, metadata)
 	return _streak_state
 
+
+# --- Catalogo de contenido --------------------------------------------------
 
 func obtener_pista_nivel_cantidad(track_key: String = "") -> int:
 	var fallback: int = GameTrackCatalog.obtener_pista_nivel_cantidad(
@@ -224,8 +260,10 @@ func obtener_pista_nivel_cantidad(track_key: String = "") -> int:
 	)
 	return _level_content.obtener_pista_nivel_cantidad(track_key, fallback)
 
+
 func obtener_capitulo_corrida_cantidad(track_key: String, level_number: int) -> int:
 	return _level_content.obtener_capitulo_corrida_cantidad(track_key, level_number)
+
 
 func obtener_capitulo_corrida_definicion(
 	track_key: String, level_number: int, run_index: int = 1
@@ -233,12 +271,25 @@ func obtener_capitulo_corrida_definicion(
 	return _level_content.obtener_capitulo_corrida_definicion(track_key, level_number, run_index)
 
 
+# --- Exportar / importar progreso ------------------------------------------
+
 func exportar_progreso() -> Dictionary:
 	var snapshot: Dictionary = _exportar_campana_progreso()
 	_exportar_estados_parciales_nivel(snapshot)
 	_exportar_estados_sistema_progreso(snapshot)
 	return snapshot
 
+
+func importar_progreso(snapshot: Dictionary) -> void:
+	reiniciar_progreso()
+	if snapshot.is_empty():
+		return
+	_importar_campana_progreso(snapshot)
+	_importar_estados_parciales_nivel(snapshot)
+	_importar_estados_sistema_progreso(snapshot.get("progress_system_states", {}))
+
+
+# --- Helpers privados -------------------------------------------------------
 
 func _exportar_campana_progreso() -> Dictionary:
 	return _campaign_save_helper.exportar_campana(
@@ -256,14 +307,6 @@ func _exportar_estados_sistema_progreso(snapshot: Dictionary) -> void:
 	var systems_state: Dictionary = _construir_snapshot_estados_sistema_progreso()
 	if not systems_state.is_empty():
 		snapshot["progress_system_states"] = systems_state
-
-func importar_progreso(snapshot: Dictionary) -> void:
-	reiniciar_progreso()
-	if snapshot.is_empty():
-		return
-	_importar_campana_progreso(snapshot)
-	_importar_estados_parciales_nivel(snapshot)
-	_importar_estados_sistema_progreso(snapshot.get("progress_system_states", {}))
 
 
 func _importar_campana_progreso(snapshot: Dictionary) -> void:

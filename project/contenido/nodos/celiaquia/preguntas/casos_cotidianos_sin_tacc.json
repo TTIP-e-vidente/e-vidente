@@ -1,0 +1,18 @@
+{
+  "id": "casos_cotidianos_sin_tacc",
+  "theme": "celiaquia",
+  "title": "Decision segura",
+  "difficulty": "hard",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "En una reunion, te ofrecen papas fritas de un paquete abierto junto a pan y galletitas. Que decision es mas segura para alguien con celiaquia?",
+    "correct_answer": "Elegir una opcion cerrada y rotulada como libre de gluten o preguntar por una alternativa segura",
+    "wrong_options": [
+      "Comerlas si parecen de papa",
+      "Sacudir el paquete para sacar posibles migas",
+      "Probar solo una para ver si cae bien",
+      "Mezclarlas con fruta para bajar el riesgo"
+    ],
+    "visual_resource": ""
+  }
+}
