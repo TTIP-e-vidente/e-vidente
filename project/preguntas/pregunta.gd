@@ -185,6 +185,7 @@ func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
 			continue
 		_configurar_boton_respuesta(boton_respuesta, opciones_actuales[indice_boton])
 
+
 func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 	if cantidad_necesaria <= botones.size():
 		return
@@ -218,6 +219,7 @@ func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
+
 
 func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
 	_limpiar_media_de_pregunta()
@@ -435,56 +437,6 @@ func _mostrar_error_bloqueante(mensaje: String) -> void:
 	)
 
 
-func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
-	if not _clave_nodo_activo.is_empty():
-		Global.marcar_nodo_jugable_completado(track_key, _clave_nodo_activo)
-	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
-
-func _configurar_panel_final(
-	texto_titulo: String,
-	texto_puntaje: String,
-	titulo_visible: bool,
-	puntaje_visible: bool,
-	tamano_titulo: int = GAME_OVER_DEFAULT_FONT_SIZE,
-	tamano_puntaje: int = GAME_OVER_DEFAULT_FONT_SIZE,
-	wrap_score: bool = false
-) -> void:
-	_panel_final.show()
-	_titulo_panel_final.visible = titulo_visible
-	_puntaje_panel_final.visible = puntaje_visible
-	_titulo_panel_final.text = texto_titulo
-	_puntaje_panel_final.text = texto_puntaje
-	_titulo_panel_final.add_theme_font_size_override("font_size", tamano_titulo)
-	_puntaje_panel_final.add_theme_font_size_override("font_size", tamano_puntaje)
-	_puntaje_panel_final.autowrap_mode = (
-		TextServer.AUTOWRAP_WORD_SMART
-		if wrap_score
-		else TextServer.AUTOWRAP_OFF
-	)
-
-func _mostrar_error_bloqueante(mensaje: String) -> void:
-	bloqueado = true
-	for boton_respuesta in botones:
-		boton_respuesta.disabled = true
-	_limpiar_media_de_pregunta()
-	for boton_respuesta in botones:
-		_ocultar_boton_respuesta(boton_respuesta)
-
-	var mensaje_limpio: String = mensaje.replace("\n", " ").strip_edges()
-	if mensaje_limpio.is_empty():
-		mensaje_limpio = "Revisa el archivo JSON del nodo."
-	elif mensaje_limpio.length() > 140:
-		mensaje_limpio = "%s..." % mensaje_limpio.substr(0, 137)
-	_configurar_panel_final(
-		"Contenido no disponible",
-		mensaje_limpio,
-		true,
-		true,
-		CONTENT_ERROR_TITLE_FONT_SIZE,
-		CONTENT_ERROR_BODY_FONT_SIZE,
-		true
-	)
-
 func _establecer_mensaje_de_error(mensaje: String) -> void:
 	var mensaje_limpio: String = mensaje.strip_edges()
 	if mensaje_limpio.is_empty():
@@ -492,6 +444,7 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 	if not _mensaje_error_bloqueante.is_empty():
 		return
 	_mensaje_error_bloqueante = mensaje_limpio
+
 
 func _on_jugar_nuevamente_pressed() -> void:
 	volver_al_mapa()
