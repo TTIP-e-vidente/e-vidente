@@ -94,14 +94,14 @@ func _on_button_mouse_entered() -> void:
 	if Engine.is_editor_hint() or _is_hovering or _is_button_disabled():
 		return
 	_is_hovering = true
-	_animate_scale_to(_base_scale * 1.08)
+	_animar_escala_hasta(_base_scale * 1.08)
 
 
 func _on_button_mouse_exited() -> void:
 	if Engine.is_editor_hint() or not _is_hovering:
 		return
 	_is_hovering = false
-	_animate_scale_to(_base_scale)
+	_animar_escala_hasta(_base_scale)
 
 
 func _get_title() -> String:
