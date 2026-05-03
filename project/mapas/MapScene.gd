@@ -107,9 +107,17 @@ func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
 
 
 func continuar_desde_nodo(node_key: String) -> void:
-	var next_node: MapNodeData = obtener_siguiente_nodo(node_key)
+	var nodos_jugables: Array[MapNodeData] = _obtener_nodos_jugables()
+	var next_node: MapNodeData = (
+		MapProgressScript.obtener_siguiente_nodo(nodos_jugables, node_key) as MapNodeData
+	)
 	if next_node == null:
 		volver_al_mapa()
+		return
+	var next_state: Dictionary = MapProgressScript.get_node_state(nodos_jugables, next_node)
+	if bool(next_state.get("is_completed", false)):
+		mostrar_nodos()
+		_desplazar_a_proximo_disponible()
 		return
 	abrir_nodo_del_mapa(next_node)
 
@@ -127,11 +135,22 @@ func obtener_nodo_mapa(node_key: String) -> MapNodeData:
 
 
 func volver_al_mapa() -> void:
+	mostrar_nodos()
+	_desplazar_a_proximo_disponible()
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
+func _desplazar_a_proximo_disponible() -> void:
+	if map_board == null or not map_board.has_method("desplazar_al_primer_nodo_disponible"):
+		return
+	map_board.call("desplazar_al_primer_nodo_disponible")
+
+
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
-	if not MapProgressScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
+	var nodos_jugables: Array[MapNodeData] = _obtener_nodos_jugables()
+	if not MapProgressScript.mapa_esta_completado(nodos_jugables, track_key_mapa):
+		return
+	if _popup_completado_activo():
 		return
 
 	var popup_completado: Node = MAP_COMPLETION_SCENE.instantiate()
@@ -140,6 +159,28 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 	if popup_completado.has_method("configure_for_track"):
 		popup_completado.call("configure_for_track", track_key_mapa)
 	add_child(popup_completado)
+
+
+func _obtener_nodos_jugables() -> Array[MapNodeData]:
+	if map_board == null or not map_board.has_method("obtener_nodos_runtime_mapa"):
+		return nodos_mapa
+	var visual_arr: Array = map_board.call("obtener_nodos_runtime_mapa")
+	var count: int = mini(visual_arr.size(), nodos_mapa.size())
+	if count >= nodos_mapa.size():
+		return nodos_mapa
+	var result: Array[MapNodeData] = []
+	for i in range(count):
+		result.append(nodos_mapa[i])
+	return result
+
+
+func _popup_completado_activo() -> bool:
+	for child in get_children():
+		if child.get_script() != null:
+			var path: String = str(child.get_script().get_path())
+			if path.ends_with("capitulo_completado.gd"):
+				return true
+	return false
 
 
 func _valid_track_key(raw_track_key: String) -> String:

@@ -15,6 +15,20 @@ line_spacing = -6.525
 font = ExtResource("6_x3ikk")
 font_size = 26
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
+texture = ExtResource("4_78ome")
+content_margin_left = 32.0
+content_margin_right = 32.0
+content_margin_top = 14.0
+content_margin_bottom = 14.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn2"]
+texture = ExtResource("5_dlf6l")
+content_margin_left = 32.0
+content_margin_right = 32.0
+content_margin_top = 14.0
+content_margin_bottom = 14.0
+
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
 quiz = ExtResource("2_onqq7")
@@ -85,28 +99,37 @@ offset_bottom = 65.0
 
 [node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 454.0
-offset_right = 899.0
-offset_bottom = 682.0
-theme_override_constants/separation = 20
+offset_left = 288.0
+offset_top = 415.0
+offset_right = 868.0
+offset_bottom = 795.0
+theme_override_constants/separation = 10
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 24
-icon = ExtResource("4_78ome")
-flat = true
-icon_alignment = 1
+custom_minimum_size = Vector2(0, 76)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
 
 [node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.07
-theme_override_font_sizes/font_size = 24
-icon = ExtResource("5_dlf6l")
-flat = true
-icon_alignment = 1
+custom_minimum_size = Vector2(0, 76)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 
 [node name="AtrÃ¡s" type="Button" parent="Contenido" unique_id=1720405508]
 layout_mode = 0
