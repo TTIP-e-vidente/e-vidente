@@ -4,6 +4,9 @@ extends RefCounted
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const DIRECTORIO_NODOS_ACTUAL := "res://contenido/nodos/"
+
+# Compatibilidad temporal para contenido anterior a la migracion a
+# res://contenido/nodos/. Mantener aislado en este archivo.
 const DIRECTORIO_NODOS_ANTERIOR := "res://niveles/nodos/"
 const DIRECTORIO_NODOS_LEGACY := "res://preguntas/json_nodos/"
 const DIRECTORIO_PROYECTO_NODOS_ACTUAL := "project/contenido/nodos/"
@@ -11,35 +14,43 @@ const DIRECTORIO_PROYECTO_NODOS_ANTERIOR := "project/niveles/nodos/"
 const DIRECTORIO_PROYECTO_NODOS_LEGACY := "project/preguntas/json_nodos/"
 
 
-static func resolver_ruta_json(ruta_json: String) -> String:
-	var ruta_limpia: String = ruta_json.strip_edges()
-	if ruta_limpia.is_empty():
+static func resolve_json_path(json_path: String) -> String:
+	var clean_path: String = json_path.strip_edges()
+	if clean_path.is_empty():
 		return ""
-	if FileAccess.file_exists(ruta_limpia):
-		return ruta_limpia
+	if FileAccess.file_exists(clean_path):
+		return clean_path
 
-	var ruta_res: String = _normalizar_ruta_proyecto(ruta_limpia)
-	if FileAccess.file_exists(ruta_res):
-		return ruta_res
+	var res_path: String = _normalizar_ruta_proyecto(clean_path)
+	if FileAccess.file_exists(res_path):
+		return res_path
 
-	var ruta_legacy: String = _resolver_ruta_legacy(ruta_res)
-	if not ruta_legacy.is_empty():
-		if _debe_advertir_ruta_legacy(ruta_limpia, ruta_legacy):
+	var legacy_path: String = _resolver_ruta_legacy(res_path)
+	if not legacy_path.is_empty():
+		if _debe_advertir_ruta_legacy(clean_path, legacy_path):
 			push_warning(
 				"NodeContentLoader: ruta legacy detectada. Usa %s en lugar de %s."
-				% [ruta_legacy, ruta_limpia]
+				% [legacy_path, clean_path]
 			)
-		return ruta_legacy
+		return legacy_path
 
-	return ruta_res
+	return res_path
+
+
+static func normalize_node_data(raw_data: Dictionary) -> Dictionary:
+	if _es_formato_oficial(raw_data):
+		return raw_data.duplicate(true)
+	if _es_quiz_plano(raw_data):
+		return _normalizar_quiz_plano(raw_data)
+	return _normalizar_formato_legacy(raw_data)
+
+
+static func resolver_ruta_json(ruta_json: String) -> String:
+	return resolve_json_path(ruta_json)
 
 
 static func normalizar_datos_nodo(datos_crudos: Dictionary) -> Dictionary:
-	if _es_formato_oficial(datos_crudos):
-		return datos_crudos.duplicate(true)
-	if _es_quiz_plano(datos_crudos):
-		return _normalizar_quiz_plano(datos_crudos)
-	return _normalizar_formato_legacy(datos_crudos)
+	return normalize_node_data(datos_crudos)
 
 
 static func _normalizar_ruta_proyecto(ruta_json: String) -> String:

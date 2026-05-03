@@ -1,0 +1,17 @@
+{
+  "id": "habitos_seguros_celiaquia",
+  "theme": "celiaquia",
+  "title": "Habitos seguros",
+  "difficulty": "hard",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "En una cocina compartida, que habito es mas seguro para preparar comida sin gluten?",
+    "correct_answer": "Leer etiquetas, lavar superficies y separar utensilios antes de cocinar",
+    "wrong_options": [
+      "Cocinar primero con harina de trigo y despues retirar lo visible",
+      "Compartir la misma cuchara si la comida se ve limpia",
+      "Guardar pan comun encima de alimentos sin gluten abiertos"
+    ],
+    "visual_resource": ""
+  }
+}

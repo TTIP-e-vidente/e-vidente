@@ -5,6 +5,7 @@ const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.g
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[Flow]"
+const DEBUG_FLOW_LOGS := false
 const TARGET_TYPE_STREAK := "streak"
 const STEP_STREAK := "streak"
 const STEP_NEXT := "next"
@@ -51,10 +52,10 @@ static func build_post_game_flow_state(
 		},
 	}
 
-	print("%s Game finished" % LOG_PREFIX)
-	print("%s Source: %s" % [LOG_PREFIX, _get_flow_source(flow_state)])
-	print("%s Streak was active: %s" % [LOG_PREFIX, _was_streak_active_before_game(flow_state)])
-	print("%s Has next target: %s" % [LOG_PREFIX, _has_next_target(flow_state)])
+	_log_flow("Game finished")
+	_log_flow("Source: %s" % _get_flow_source(flow_state))
+	_log_flow("Streak was active: %s" % _was_streak_active_before_game(flow_state))
+	_log_flow("Has next target: %s" % _has_next_target(flow_state))
 
 	debug_log(
 		"game_finished",
@@ -67,26 +68,33 @@ static func build_post_game_flow_state(
 	)
 	return flow_state
 
-static func decide_next_step_after_teaching(flow_state: Dictionary) -> String:
-	if flow_state.is_empty():
-		print("%s Teaching finished" % LOG_PREFIX)
-		print("%s Decision: go_to_fallback" % LOG_PREFIX)
+static func decide_next_step_after_teaching(
+	flow_state: Dictionary,
+	timer_finished: Variant = null
+) -> String:
+	var ready_flow_state: Dictionary = flow_state
+	if timer_finished != null:
+		ready_flow_state = _with_timer_finished(flow_state, bool(timer_finished))
+
+	if ready_flow_state.is_empty():
+		_log_flow("Teaching finished")
+		_log_flow("Decision: go_to_fallback")
 		return STEP_FALLBACK
 
-	print("%s Teaching finished" % LOG_PREFIX)
-	print("%s Source: %s" % [LOG_PREFIX, _get_flow_source(flow_state)])
-	print("%s Streak was active: %s" % [LOG_PREFIX, _was_streak_active_before_game(flow_state)])
-	print("%s Timer finished: %s" % [LOG_PREFIX, _did_timer_finish(flow_state)])
+	_log_flow("Teaching finished")
+	_log_flow("Source: %s" % _get_flow_source(ready_flow_state))
+	_log_flow("Streak was active: %s" % _was_streak_active_before_game(ready_flow_state))
+	_log_flow("Timer finished: %s" % _did_timer_finish(ready_flow_state))
 
-	if should_show_streak(flow_state):
-		print("%s Decision: show_streak" % LOG_PREFIX)
+	if should_show_streak(ready_flow_state):
+		_log_flow("Decision: show_streak")
 		return STEP_STREAK
 
-	if should_go_to_next_target(flow_state):
-		print("%s Decision: go_to_next_target" % LOG_PREFIX)
+	if should_go_to_next_target(ready_flow_state):
+		_log_flow("Decision: go_to_next_target")
 		return STEP_NEXT
 
-	print("%s Decision: go_to_fallback" % LOG_PREFIX)
+	_log_flow("Decision: go_to_fallback")
 	return STEP_FALLBACK
 
 
@@ -105,7 +113,7 @@ static func resolve_post_teaching_step(
 	flow_state: Dictionary,
 	timer_finished: bool
 ) -> String:
-	return decide_next_step_after_teaching(_with_timer_finished(flow_state, timer_finished))
+	return decide_next_step_after_teaching(flow_state, timer_finished)
 
 
 static func resolve_post_teaching_target(
@@ -166,8 +174,8 @@ static func navigate_after_streak(
 	if resolved_target.is_empty():
 		resolved_target = _scene_path_target(fallback_scene_path)
 
-	print("%s Streak finished" % LOG_PREFIX)
-	print("%s Decision: go_to_fallback" % LOG_PREFIX)
+	_log_flow("Streak finished")
+	_log_flow("Decision: go_to_fallback")
 	_go_to_target(
 		tree,
 		flow_state,
@@ -193,7 +201,7 @@ static func navigate_to_return_target(
 	)
 
 	_clear_flow_state(tree)
-	print("%s Decision: return_to_target" % LOG_PREFIX)
+	_log_flow("Decision: return_to_target")
 	debug_log(
 		"return_target",
 		{
@@ -223,7 +231,15 @@ static func consume_flow_state(tree: SceneTree) -> Dictionary:
 
 
 static func debug_log(event_name: String, data: Dictionary = {}) -> void:
+	if not DEBUG_FLOW_LOGS:
+		return
 	print("%s %s %s" % [LOG_PREFIX, event_name, JSON.stringify(data)])
+
+
+static func _log_flow(message: String) -> void:
+	if not DEBUG_FLOW_LOGS:
+		return
+	print("%s %s" % [LOG_PREFIX, message])
 
 
 static func _store_flow_state(tree: SceneTree, flow_state: Dictionary) -> void:
@@ -397,7 +413,7 @@ static func _read_flow_section(flow_state: Dictionary, section_name: String) -> 
 static func _read_flow_target(targets_section: Dictionary, target_name: String) -> Dictionary:
 	var raw_target: Variant = targets_section.get(target_name, null)
 	if raw_target is Dictionary:
-		return GameStreakDebugScript.sanitize_continue_target(raw_target)
+		return GameStreakDebugScript.sanitize_target_for_runtime(raw_target)
 	return {}
 
 

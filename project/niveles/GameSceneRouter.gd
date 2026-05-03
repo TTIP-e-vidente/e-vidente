@@ -34,6 +34,8 @@ static var _preloaded_scenes: Dictionary = {}
 static var _pending_preload_paths: Dictionary = {}
 
 
+# --- Rutas publicas ---------------------------------------------------------
+
 static func go_to_route(
 	tree: SceneTree,
 	route_name: String,
@@ -86,7 +88,7 @@ static func go_to_streak(
 		if not router_continue_target.is_empty():
 			tree_root.set_meta(
 				STREAK_CONTINUE_TARGET_META,
-				GameStreakDebugScript.sanitize_continue_target(router_continue_target)
+				GameStreakDebugScript.sanitize_target_for_runtime(router_continue_target)
 			)
 		elif tree_root.has_meta(STREAK_CONTINUE_TARGET_META):
 			tree_root.remove_meta(STREAK_CONTINUE_TARGET_META)
@@ -104,6 +106,8 @@ static func go_to_profile_editor(tree: SceneTree) -> void:
 static func go_to_questions(tree: SceneTree) -> void:
 	go_to_route(tree, ROUTE_QUESTIONS)
 
+
+# --- Racha ------------------------------------------------------------------
 
 static func set_streak_return_to(tree: SceneTree, return_to: String) -> void:
 	if tree == null:
@@ -149,13 +153,15 @@ static func consume_streak_return_to(
 	return safe_return_to
 
 
+# --- Targets ----------------------------------------------------------------
+
 # target interno:
 # - return_to es el nombre principal.
 # - return_scene_path queda aceptado solo como compatibilidad legacy.
 static func build_router_target_from_flow_target(target: Dictionary) -> Dictionary:
 	if target.is_empty():
 		return {}
-	var router_target: Dictionary = GameStreakDebugScript.sanitize_continue_target(target)
+	var router_target: Dictionary = GameStreakDebugScript.sanitize_target_for_runtime(target)
 	if router_target.has(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY):
 		router_target[CONTINUE_TARGET_RETURN_TO_KEY] = read_return_to(router_target, MAP_SCENE_PATH)
 		router_target.erase(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY)
@@ -178,6 +184,8 @@ static func read_return_to(
 		return fallback_scene_path
 	return return_to
 
+
+# --- Precarga ---------------------------------------------------------------
 
 static func request_scene_preload(scene_path: String) -> void:
 	var normalized_scene_path: String = scene_path.strip_edges()
@@ -210,6 +218,8 @@ static func request_initial_scene_preload() -> void:
 	)
 
 
+# --- Navegacion de tracks ---------------------------------------------------
+
 static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
@@ -224,6 +234,8 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 		scene_path = MODE_SELECTOR_SCENE_PATH
 	_change_scene_to_path(tree, scene_path)
 
+
+# --- Navegacion por target --------------------------------------------------
 
 static func go_to_target(
 	tree: SceneTree,
@@ -296,6 +308,8 @@ static func go_to_resume(
 	var safe_scene_path: String = scene_path if not scene_path.is_empty() else fallback_scene
 	_change_scene_to_path(tree, safe_scene_path)
 
+
+# --- Helpers privados -------------------------------------------------------
 
 static func _resolve_route_scene_path(route_name: String, fallback_route: String) -> String:
 	var scene_path: String = _get_scene_path_for_route(route_name)
