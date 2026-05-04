@@ -1,0 +1,83 @@
+WARNING: res://mapas/MapBoard.tscn:8 - ext_resource, invalid UID: uid://mmbv3xon7864 - using text path instead: res://assets-sistema/mapa/camino-mapa2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:14 - ext_resource, invalid UID: uid://c4i8e4vcl6xq7 - using text path instead: res://assets-sistema/player/personaje-idle-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:15 - ext_resource, invalid UID: uid://cr64yvwk41aaf - using text path instead: res://assets-sistema/player/personaje-idle-2.png
+WARNING: res://mapas/MapBoard.tscn:13 - ext_resource, invalid UID: uid://ouiuwpm2wm3h - using text path instead: res://mapas/MapScene.gdshader
+   at: load (scene/resources/resource_format_text.cpp:500)
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:17 - ext_resource, invalid UID: uid://dq7hd50u787pl - using text path instead: res://assets-sistema/player/personaje-mal-mal--malito-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:18 - ext_resource, invalid UID: uid://dcllkt8rvg3eg - using text path instead: res://assets-sistema/player/personaje-idle-3.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:19 - ext_resource, invalid UID: uid://j3xcsp73gt7s - using text path instead: res://assets-sistema/player/personaje-mal-mal--malito-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:20 - ext_resource, invalid UID: uid://c7ux38wlxxak5 - using text path instead: res://assets-sistema/player/personaje-mal-malito-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:21 - ext_resource, invalid UID: uid://bdf6112pl5rcs - using text path instead: res://assets-sistema/player/personaje-mal-malito-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:22 - ext_resource, invalid UID: uid://d17m73jarm2qf - using text path instead: res://assets-sistema/player/personaje-malito-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:23 - ext_resource, invalid UID: uid://dsvm6s6rxp3uh - using text path instead: res://assets-sistema/player/personaje-malito-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:24 - ext_resource, invalid UID: uid://bkij3sv8flrik - using text path instead: res://assets-sistema/player/personaje-malisisisimo-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:25 - ext_resource, invalid UID: uid://cd8we77rn8sd4 - using text path instead: res://assets-sistema/player/personaje-malisisisimo-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:26 - ext_resource, invalid UID: uid://wspuru52ew6b - using text path instead: res://assets-sistema/player/personaje-sintiendose-bien-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:27 - ext_resource, invalid UID: uid://cok5hl3rhk70o - using text path instead: res://assets-sistema/player/personaje-sintiendose-bien-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:28 - ext_resource, invalid UID: uid://dv4vm2v8yuh0f - using text path instead: res://assets-sistema/player/personaje-sintiendose-bien-3.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:29 - ext_resource, invalid UID: uid://bq0rb6fgjaahy - using text path instead: res://assets-sistema/player/personaje-sintiendose-mal-1.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:30 - ext_resource, invalid UID: uid://vtmg47hyynjc - using text path instead: res://assets-sistema/player/personaje-sintiendose-mal-2.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://niveles/nivel_1/Level.tscn:31 - ext_resource, invalid UID: uid://du4nsm38bkm8b - using text path instead: res://assets-sistema/player/personaje-sintiendose-mal-3.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+SCRIPT ERROR: Invalid call. Nonexistent function 'obtener_contenedor_de_nodos (via call)' in base 'Node2D (MapScene.gd)'.
+   at: _run (res://tests/vertical_slice_smoke_test.gd:40)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tests/vertical_slice_smoke_test.gd:40)
+       [1] _call_and_expect (res://tests/vertical_slice_smoke_test.gd:234)
+       [2] _wait_for (res://tests/vertical_slice_smoke_test.gd:241)
+ERROR: BUG: Unreferenced static string to 0: servers
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: Variant
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore_restore
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore_start
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_group
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_category
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_flags
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_node_path
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_range
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_placeholder
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_multiline
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_enum
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @icon
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @tool
+   at: unref (core/string/string_name.cpp:116)
+WARNING: A Thread object is being destroyed without its completion having been realized.
+Please call wait_to_finish() on it to ensure correct cleanup.
+   at: ~Thread (core/os/thread.cpp:102)
+ERROR: 7 RID allocations of type '23NavMeshGeometryParser2D' were leaked at exit.
+ERROR: 6 RID allocations of type '23NavMeshGeometryParser3D' were leaked at exit.
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketLargeE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)

@@ -11,6 +11,9 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
+const ContinuidadDeCorridaDeNodoScript := preload(
+	"res://mapas/core/ContinuidadDeCorridaDeNodo.gd"
+)
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const GameStreakTrackerScript      := preload(
@@ -19,12 +22,10 @@ const GameStreakTrackerScript      := preload(
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
-const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
-const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
-	"res://niveles/level_completion_black_and_white.gdshader"
-)
-const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
-const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
+const CONTINUE_COUNTDOWN_SCENE_PATH := "res://ui/components/ContinueCountdown.tscn"
+const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := "res://niveles/level_completion_black_and_white.gdshader"
+const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
+const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const COMPLETION_DIM_COLOR := Color(0.72, 0.72, 0.72, 1.0)
 
 ## --- Guardado rápido ---
@@ -76,18 +77,33 @@ var _contexto_nodo_mapa: Dictionary = {}
 var current_node: MapNodeData = null
 var _datos_nodo_mapa: Dictionary = {}
 var _usa_flujo_mapa := false
+var _pertenece_a_corrida_de_nodo := false
 var _nodo_actual := ""
 var _json_path_nodo_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
 var _ya_continuo := false
+var _continue_countdown_scene: PackedScene = null
+var _completion_black_and_white_shader: Shader = null
+var _save_icon_idle: Texture2D = null
+var _save_icon_ok: Texture2D = null
 var continuador = null
 
+@onready var _indicador_de_progreso_de_juego: CanvasLayer = $IndicadorProgresoDeJuego
 
 func _ready() -> void:
+	_load_runtime_resources()
 	setup_continue_countdown()
 	start_level_flow()
+	_configurar_indicador_de_progreso_de_juego()
 	setup_save_feedback()
+
+
+func _load_runtime_resources() -> void:
+	_continue_countdown_scene = load(CONTINUE_COUNTDOWN_SCENE_PATH) as PackedScene
+	_completion_black_and_white_shader = load(COMPLETION_BLACK_AND_WHITE_SHADER_PATH) as Shader
+	_save_icon_idle = load(SAVE_ICON_IDLE_PATH) as Texture2D
+	_save_icon_ok = load(SAVE_ICON_OK_PATH) as Texture2D
 
 
 
@@ -134,10 +150,11 @@ func start_manager_level() -> void:
 
 
 func _load_playable_session() -> void:
-	_contexto_nodo_mapa = Global.obtener_sesion_nodo_jugable_activo()
+	_contexto_nodo_mapa = _obtener_contexto_jugable_actual()
 	current_node = null
 	_datos_nodo_mapa = {}
 	_usa_flujo_mapa = false
+	_pertenece_a_corrida_de_nodo = false
 	_nodo_actual = ""
 	_json_path_nodo_actual = ""
 	_track_key_contexto = ""
@@ -146,6 +163,9 @@ func _load_playable_session() -> void:
 	if _contexto_nodo_mapa.is_empty():
 		return
 
+	_pertenece_a_corrida_de_nodo = bool(
+		_contexto_nodo_mapa.get("pertenece_a_corrida_de_nodo", false)
+	)
 	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
 	_json_path_nodo_actual = _read_playable_json_path(_contexto_nodo_mapa)
@@ -168,6 +188,36 @@ func _load_playable_session() -> void:
 		load_level_from_json(_json_path_nodo_actual)
 
 	_usa_flujo_mapa = not _nodo_actual.is_empty()
+
+
+func _obtener_contexto_jugable_actual() -> Dictionary:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_del_nodo()
+	if not juego_actual.is_empty():
+		return juego_actual
+	return Global.obtener_sesion_nodo_jugable_activo()
+
+
+func _configurar_indicador_de_progreso_de_juego() -> void:
+	if _indicador_de_progreso_de_juego == null or not is_instance_valid(_indicador_de_progreso_de_juego):
+		return
+	var contexto: Dictionary = _obtener_contexto_de_progreso_de_juego()
+	var titulo: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+	var juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
+	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
+	if _indicador_de_progreso_de_juego.has_method("actualizar"):
+		_indicador_de_progreso_de_juego.call(
+			"actualizar",
+			titulo,
+			juego_actual,
+			total_juegos
+		)
+		return
+	if _indicador_de_progreso_de_juego.has_method("configurar"):
+		_indicador_de_progreso_de_juego.call("configurar", contexto)
+
+
+func _obtener_contexto_de_progreso_de_juego() -> Dictionary:
+	return Global.obtener_contexto_de_progreso_de_juego()
 
 
 func start_from_node(node_data: MapNodeData) -> void:
@@ -223,7 +273,7 @@ func _reproducir_audio_nivel() -> void:
 
 func setup_save_feedback() -> void:
 	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
-	save_progress_button.icon = SAVE_ICON_IDLE
+	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE
 	save_feedback_title.modulate = SAVE_FEEDBACK_SUCCESS_TITLE_COLOR
@@ -251,6 +301,9 @@ func _exit_tree() -> void:
 func _on_atras_presionado() -> void:
 	if es_corrida_completado():
 		return
+	if _pertenece_a_corrida_de_nodo:
+		_cancelar_corrida_de_nodo()
+		return
 	if _usa_flujo_mapa:
 		_return_to_map_scene()
 		return
@@ -269,6 +322,10 @@ func completar_corrida_actual() -> void:
 
 
 func complete_current_run() -> void:
+	_finalizar_partida()
+
+
+func _finalizar_partida() -> void:
 	if _current_run_completion_handled:
 		return
 
@@ -276,7 +333,12 @@ func complete_current_run() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
+	_finalizar_partida_normal(track_key, level_number)
 
+
+func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 	_current_run_completion_handled = true
 	show_completion_state()
 
@@ -291,6 +353,26 @@ func complete_current_run() -> void:
 
 	_mostrar_completado_corrida_retroalimentacion()
 	run_completed.emit()
+
+
+func _continuar_corrida_de_nodo_si_corresponde() -> bool:
+	if not _pertenece_a_corrida_de_nodo:
+		return false
+	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+		get_tree(),
+		Callable(self, "_preparar_siguiente_juego_de_corrida_en_nivel"),
+		Callable(self, "_limpiar_estado_local_de_corrida_en_nivel")
+	)
+
+
+func _preparar_siguiente_juego_de_corrida_en_nivel() -> void:
+	_current_run_completion_handled = true
+	show_completion_state()
+	run_completed.emit()
+
+
+func _limpiar_estado_local_de_corrida_en_nivel() -> void:
+	_pertenece_a_corrida_de_nodo = false
 
 
 func save_completion_progress(track_key: String, level_number: int) -> void:
@@ -342,7 +424,9 @@ func _on_adelante_presionado() -> void:
 ## --- Continuación desde mapa ---
 
 func setup_continue_countdown() -> void:
-	continuador = ContinueCountdownScene.instantiate()
+	if _continue_countdown_scene == null:
+		return
+	continuador = _continue_countdown_scene.instantiate()
 	add_child(continuador)
 	_ubicar_continuador()
 	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
@@ -478,6 +562,17 @@ func _return_to_map_scene() -> void:
 	)
 
 
+func _cancelar_corrida_de_nodo() -> void:
+	if continuador != null:
+		continuador.detener()
+	Global.finalizar_corrida_de_nodo()
+	Global.limpiar_sesion_nodo_jugable_activo()
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_retorno
+	)
+
+
 func _continue_from_map_completion() -> void:
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -548,7 +643,7 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 		SAVE_FEEDBACK_SUCCESS_TITLE_COLOR if success else SAVE_FEEDBACK_ERROR_TITLE_COLOR,
 		SAVE_FEEDBACK_SUCCESS_BODY_COLOR if success else SAVE_FEEDBACK_ERROR_BODY_COLOR
 	)
-	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
+	save_progress_button.icon = _save_icon_ok if success else _save_icon_idle
 
 
 func on_teaching_finished(timer_finished: bool) -> void:
@@ -602,7 +697,7 @@ func _mostrar_retroalimentacion_tarjeta(
 
 
 func _reiniciar_guardar_retroalimentacion_visual_estado() -> void:
-	save_progress_button.icon = SAVE_ICON_IDLE
+	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 
 
@@ -650,11 +745,11 @@ func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
 
 
 func _aplicar_finalizacion_visual_estado() -> void:
-	if not grayscale_on_completion:
+	if not grayscale_on_completion or _completion_black_and_white_shader == null:
 		return
 
 	var grayscale_material := ShaderMaterial.new()
-	grayscale_material.shader = COMPLETION_BLACK_AND_WHITE_SHADER
+	grayscale_material.shader = _completion_black_and_white_shader
 	for runtime_node in find_children("*", "", true, false):
 		if not runtime_node is CanvasItem:
 			continue

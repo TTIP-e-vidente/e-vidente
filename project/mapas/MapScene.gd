@@ -28,6 +28,7 @@ func _ready() -> void:
 		GameTrackCatalog.obtener_ruta_escena_nivel(track_key_mapa)
 	)
 
+	Global.finalizar_corrida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	refresh_node_states()
 	_restaurar_scroll_guardado_del_mapa()
@@ -100,7 +101,7 @@ func al_seleccionar_nodo(node_data: MapNodeData) -> void:
 
 
 func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
-	var result: Dictionary = PlayableNodeRouterScript.open_node(
+	var result: Dictionary = PlayableNodeRouterScript.abrir_nodo(
 		get_tree(),
 		node_data,
 		GameSceneRouter.MAP_SCENE_PATH

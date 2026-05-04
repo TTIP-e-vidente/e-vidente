@@ -10,10 +10,11 @@
       "json_path": "res://contenido/nodos/celiaquia/arrastre/receta_1_desayuno.json"
     },
     {
-      "node_key": "eliminar_gluten",
-      "title": "Eliminar gluten del trigo",
-      "mode": "quiz_choice",
-      "json_path": "res://contenido/nodos/celiaquia/preguntas/eliminar_gluten.json"
+    "node_key": "eliminar_gluten",
+    "title": "Eliminar gluten del trigo",
+    "mode": "quiz_choice",
+    "difficulty": 1,
+    "json_path": "res://contenido/nodos/celiaquia/preguntas/eliminar_gluten.json"
     },
     {
       "node_key": "receta_2_colacion",

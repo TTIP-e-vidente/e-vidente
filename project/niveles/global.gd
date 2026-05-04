@@ -29,7 +29,9 @@ var _partial_level_state_by_track: Dictionary = {}
 var _streak_state: Dictionary = {}
 var _extra_progress_system_states: Dictionary = {}
 var _playable_node_progress_by_track: Dictionary = {}
-var _active_playable_node_session: Dictionary = {}
+var _active_playable_node: Dictionary = {}
+var _corrida_de_nodo_activa: Dictionary = {}
+var _juego_de_nodo_actual: Dictionary = {}
 var _nodo_a_continuar: String = ""
 
 
@@ -64,7 +66,9 @@ func reiniciar_progreso() -> void:
 	_extra_progress_system_states = {}
 
 	_playable_node_progress_by_track = {}
-	_active_playable_node_session = {}
+	_active_playable_node = {}
+	_corrida_de_nodo_activa = {}
+	_juego_de_nodo_actual = {}
 	_nodo_a_continuar = ""
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		_asegurar_pista_progreso_existe(track_key)
@@ -192,15 +196,160 @@ func es_nodo_jugable_completado(track_key: String, node_key: String) -> bool:
 # --- Sesion activa de nodo jugable -----------------------------------------
 
 func establecer_sesion_nodo_jugable_activo(session_state: Dictionary) -> void:
-	_active_playable_node_session = session_state.duplicate(true)
+	_active_playable_node = session_state.duplicate(true)
 
 
 func obtener_sesion_nodo_jugable_activo() -> Dictionary:
-	return _active_playable_node_session.duplicate(true)
+	return _active_playable_node.duplicate(true)
 
 
 func limpiar_sesion_nodo_jugable_activo() -> void:
-	_active_playable_node_session = {}
+	_active_playable_node = {}
+
+
+# --- Corrida activa de nodo -----------------------------------------------
+
+func iniciar_corrida_de_nodo(plan_de_corrida: Dictionary) -> void:
+	_corrida_de_nodo_activa = _normalizar_corrida_de_nodo(plan_de_corrida)
+	_juego_de_nodo_actual = _construir_juego_actual_del_nodo(_corrida_de_nodo_activa)
+
+
+func obtener_juego_actual_del_nodo() -> Dictionary:
+	return _juego_de_nodo_actual.duplicate(true)
+
+
+func obtener_corrida_de_nodo_actual() -> Dictionary:
+	return _corrida_de_nodo_activa.duplicate(true)
+
+
+func hay_siguiente_juego_del_nodo() -> bool:
+	if _corrida_de_nodo_activa.is_empty():
+		return false
+	var indice_juego_actual: int = int(_corrida_de_nodo_activa.get("indice_juego_actual", 0))
+	var total_juegos: int = int(_corrida_de_nodo_activa.get("total_juegos", 0))
+	return indice_juego_actual + 1 < total_juegos
+
+
+func avanzar_corrida_de_nodo() -> void:
+	if not hay_siguiente_juego_del_nodo():
+		return
+	var corrida_actualizada: Dictionary = _corrida_de_nodo_activa.duplicate(true)
+	corrida_actualizada["indice_juego_actual"] = int(
+		corrida_actualizada.get("indice_juego_actual", 0)
+	) + 1
+	_corrida_de_nodo_activa = corrida_actualizada
+	_juego_de_nodo_actual = _construir_juego_actual_del_nodo(corrida_actualizada)
+
+
+func finalizar_corrida_de_nodo() -> void:
+	_corrida_de_nodo_activa = {}
+	_juego_de_nodo_actual = {}
+
+
+func obtener_contexto_de_progreso_de_juego() -> Dictionary:
+	if not _corrida_de_nodo_activa.is_empty() and not _juego_de_nodo_actual.is_empty():
+		return _construir_contexto_de_progreso_de_juego(
+			str(_corrida_de_nodo_activa.get("titulo_nodo", "")).strip_edges(),
+			int(_corrida_de_nodo_activa.get("indice_juego_actual", 0)) + 1,
+			int(_corrida_de_nodo_activa.get("total_juegos", 1)),
+			int(_corrida_de_nodo_activa.get("dificultad", 0)),
+			_juego_de_nodo_actual,
+			true
+		)
+
+	var sesion_activa: Dictionary = obtener_sesion_nodo_jugable_activo()
+	return _construir_contexto_de_progreso_de_juego(
+		str(sesion_activa.get("node_title", "")).strip_edges(),
+		1,
+		1,
+		int(sesion_activa.get("difficulty", 0)),
+		sesion_activa,
+		false
+	)
+
+
+func _normalizar_corrida_de_nodo(plan_de_corrida: Dictionary) -> Dictionary:
+	if plan_de_corrida.is_empty():
+		return {}
+	var juegos: Array[Dictionary] = _duplicar_juegos_de_corrida(plan_de_corrida.get("juegos", []))
+	if juegos.is_empty():
+		return {}
+	var total_juegos: int = max(1, int(plan_de_corrida.get("total_juegos", juegos.size())))
+	var indice_juego_actual: int = clampi(
+		int(plan_de_corrida.get("indice_juego_actual", 0)),
+		0,
+		juegos.size() - 1
+	)
+	return {
+		"clave_nodo": str(plan_de_corrida.get("clave_nodo", "")).strip_edges(),
+		"titulo_nodo": str(plan_de_corrida.get("titulo_nodo", "")).strip_edges(),
+		"clave_pista": str(plan_de_corrida.get("clave_pista", "")).strip_edges(),
+		"escena_de_retorno": str(plan_de_corrida.get("escena_de_retorno", "")).strip_edges(),
+		"dificultad": max(0, int(plan_de_corrida.get("dificultad", 0))),
+		"numero_nivel": max(1, int(plan_de_corrida.get("numero_nivel", 1))),
+		"indice_juego_actual": indice_juego_actual,
+		"total_juegos": max(total_juegos, juegos.size()),
+		"juegos": juegos,
+	}
+
+
+func _construir_juego_actual_del_nodo(corrida_activa: Dictionary) -> Dictionary:
+	if corrida_activa.is_empty():
+		return {}
+	var juegos: Array[Dictionary] = _duplicar_juegos_de_corrida(corrida_activa.get("juegos", []))
+	if juegos.is_empty():
+		return {}
+	var indice_juego_actual: int = clampi(
+		int(corrida_activa.get("indice_juego_actual", 0)),
+		0,
+		juegos.size() - 1
+	)
+	var juego_actual: Dictionary = juegos[indice_juego_actual].duplicate(true)
+	juego_actual["pertenece_a_corrida_de_nodo"] = true
+	juego_actual["indice_juego_actual"] = indice_juego_actual
+	juego_actual["total_juegos"] = max(1, int(corrida_activa.get("total_juegos", juegos.size())))
+	juego_actual["titulo_nodo"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
+	juego_actual["dificultad"] = max(0, int(corrida_activa.get("dificultad", 0)))
+	juego_actual["track_key"] = str(corrida_activa.get("clave_pista", "")).strip_edges()
+	juego_actual["node_key"] = str(corrida_activa.get("clave_nodo", "")).strip_edges()
+	juego_actual["node_title"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
+	juego_actual["level_number"] = max(1, int(corrida_activa.get("numero_nivel", 1)))
+	juego_actual["return_to"] = str(corrida_activa.get("escena_de_retorno", "")).strip_edges()
+	return juego_actual
+
+
+func _duplicar_juegos_de_corrida(raw_value: Variant) -> Array[Dictionary]:
+	var juegos: Array[Dictionary] = []
+	if not raw_value is Array:
+		return juegos
+	for raw_game in raw_value:
+		if raw_game is Dictionary:
+			juegos.append((raw_game as Dictionary).duplicate(true))
+	return juegos
+
+
+func _construir_contexto_de_progreso_de_juego(
+	titulo: String,
+	indice_juego_actual: int,
+	total_juegos: int,
+	dificultad: int,
+	fuente: Dictionary,
+	pertenece_a_corrida_de_nodo: bool
+) -> Dictionary:
+	var total_juegos_seguro: int = max(1, total_juegos)
+	var indice_juego_seguro: int = clampi(max(1, indice_juego_actual), 1, total_juegos_seguro)
+	return {
+		"actual": indice_juego_seguro,
+		"total": total_juegos_seguro,
+		"titulo": titulo.strip_edges(),
+		"indice_juego_actual": indice_juego_seguro,
+		"total_juegos": total_juegos_seguro,
+		"dificultad": max(0, dificultad),
+		"mode": str(fuente.get("mode", "")).strip_edges(),
+		"json_path": str(fuente.get("json_path", "")).strip_edges(),
+		"titulo_nodo": str(fuente.get("titulo_nodo", titulo)).strip_edges(),
+		"pertenece_a_corrida_de_nodo": pertenece_a_corrida_de_nodo,
+	}
 
 
 # --- Continuacion de mapa ---------------------------------------------------

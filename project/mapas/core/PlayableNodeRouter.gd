@@ -1,111 +1,120 @@
 extends RefCounted
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const PlanDeCorridaDeNodoScript := preload("res://mapas/core/PlanDeCorridaDeNodo.gd")
 
-const SESSION_KEY_NODE_KEY := "node_key"
-const SESSION_KEY_NODE_TITLE := "node_title"
-const SESSION_KEY_JSON_PATH := "json_path"
-const SESSION_KEY_TRACK_KEY := "track_key"
-const SESSION_KEY_MODE := "mode"
-const SESSION_KEY_LEVEL_NUMBER := "level_number"
-const SESSION_KEY_RETURN_TO := "return_to"
+const CLAVE_SESION_NODE_KEY := "node_key"
+const CLAVE_SESION_NODE_TITLE := "node_title"
+const CLAVE_SESION_JSON_PATH := "json_path"
+const CLAVE_SESION_TRACK_KEY := "track_key"
+const CLAVE_SESION_MODE := "mode"
+const CLAVE_SESION_LEVEL_NUMBER := "level_number"
+const CLAVE_SESION_DIFFICULTY := "difficulty"
+const CLAVE_SESION_RETURN_TO := "return_to"
 
-const SCENE_PATH_BY_MODE := {
-	NodeContentLoaderScript.MODE_QUIZ_CHOICE: GameSceneRouter.QUESTIONS_SCENE_PATH,
-	NodeContentLoaderScript.MODE_DRAG_DROP: "res://niveles/nivel_1/Level.tscn",
+const RUTA_ESCENA_POR_MODO := {
+	MapNodeDataScript.MODE_QUIZ_CHOICE: GameSceneRouter.QUESTIONS_SCENE_PATH,
+	MapNodeDataScript.MODE_DRAG_DROP: GameSceneRouter.LEVEL_SCENE_PATH,
 }
-
-
-# Puente simple entre un nodo del mapa y la escena jugable.
-# Flujo nuevo: usar node_data.mode, guardar una sesion minima en Global
-# y abrir la escena correcta. El fallback que lee el JSON solo existe
-# para mapas legacy que todavia no guardan mode en el mapa.
-
 
 static func open_node(
 	tree: SceneTree,
 	node_data: MapNodeData,
-	return_to: String = GameSceneRouter.MAP_SCENE_PATH
+	ruta_retorno: String = GameSceneRouter.MAP_SCENE_PATH
+) -> Dictionary:
+	return abrir_nodo(tree, node_data, ruta_retorno)
+
+
+static func abrir_nodo(
+	tree: SceneTree,
+	node_data: MapNodeData,
+	ruta_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 ) -> Dictionary:
 	if tree == null:
 		return _error("No se pudo abrir el nodo: falta SceneTree.")
 	if node_data == null or not node_data.is_valid():
 		return _error("No se pudo abrir el nodo seleccionado.")
+	var estado_global: Node = _obtener_estado_global(tree)
+	if estado_global == null:
+		return _error("No se encontro el autoload Global.")
 
-	var mode_result: Dictionary = _resolve_mode_for_routing(node_data)
-	if not bool(mode_result.get("ok", false)):
-		return mode_result
+	var modo: String = node_data.mode.strip_edges()
+	var ruta_escena: String = obtener_ruta_escena_jugable(modo)
+	if ruta_escena.is_empty():
+		return _error("No existe escena para el modo: %s" % modo)
 
-	var mode: String = str(mode_result.get("data", "")).strip_edges()
-	var scene_path: String = get_playable_scene_path(mode)
-	if scene_path.is_empty():
-		return _error("No existe escena para el modo: %s" % mode)
+	var ruta_retorno_segura: String = ruta_retorno.strip_edges()
+	if ruta_retorno_segura.is_empty():
+		ruta_retorno_segura = GameSceneRouter.MAP_SCENE_PATH
 
-	Global.establecer_sesion_nodo_jugable_activo(
-		build_playable_session(node_data, return_to, mode)
+	estado_global.call("finalizar_corrida_de_nodo")
+	estado_global.call(
+		"establecer_sesion_nodo_jugable_activo",
+		construir_sesion_jugable(node_data, ruta_retorno_segura)
 	)
-	_open_scene(tree, scene_path)
+	var plan_de_corrida: Dictionary = PlanDeCorridaDeNodoScript.construir_plan_de_corrida(node_data)
+	if plan_de_corrida.is_empty():
+		return _error("No se pudo armar la corrida del nodo.")
+	plan_de_corrida["escena_de_retorno"] = ruta_retorno_segura
+	estado_global.call("iniciar_corrida_de_nodo", plan_de_corrida)
+
+	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_del_nodo")
+	var ruta_escena_actual: String = obtener_ruta_escena_jugable(
+		str(juego_actual.get("mode", "")).strip_edges()
+	)
+	if ruta_escena_actual.is_empty():
+		estado_global.call("finalizar_corrida_de_nodo")
+		estado_global.call("limpiar_sesion_nodo_jugable_activo")
+		return _error("No existe escena para el juego actual del nodo.")
+
+	_abrir_escena(tree, ruta_escena_actual)
 	return _ok()
 
 
-static func build_playable_session(
+static func construir_sesion_jugable(
 	node_data: MapNodeData,
-	return_to: String,
-	mode: String = ""
+	ruta_retorno: String
 ) -> Dictionary:
-	var clean_mode: String = mode.strip_edges()
-	var level_number: int = node_data.index + 1
-	var session_state := {
-		SESSION_KEY_NODE_KEY: node_data.node_key,
-		SESSION_KEY_NODE_TITLE: node_data.title,
-		SESSION_KEY_JSON_PATH: node_data.json_path,
-		SESSION_KEY_TRACK_KEY: node_data.track_key,
-		SESSION_KEY_MODE: clean_mode,
-		SESSION_KEY_LEVEL_NUMBER: level_number,
-		SESSION_KEY_RETURN_TO: return_to.strip_edges(),
+	var numero_nivel: int = node_data.index + 1
+	var estado_sesion := {
+		CLAVE_SESION_NODE_KEY: node_data.node_key,
+		CLAVE_SESION_NODE_TITLE: node_data.title,
+		CLAVE_SESION_JSON_PATH: node_data.json_path,
+		CLAVE_SESION_TRACK_KEY: node_data.track_key,
+		CLAVE_SESION_MODE: node_data.mode.strip_edges(),
+		CLAVE_SESION_LEVEL_NUMBER: numero_nivel,
+		CLAVE_SESION_DIFFICULTY: node_data.difficulty,
+		CLAVE_SESION_RETURN_TO: ruta_retorno.strip_edges(),
 	}
 
 	# El camino feliz solo emite claves nuevas y claras.
 	# Los aliases legacy siguen aceptados por algunos consumidores al leer sesiones viejas.
-	return session_state
+	return estado_sesion
 
 
-static func get_playable_scene_path(mode: String) -> String:
-	return str(SCENE_PATH_BY_MODE.get(mode.strip_edges(), "")).strip_edges()
+static func obtener_ruta_escena_jugable(mode: String) -> String:
+	return str(RUTA_ESCENA_POR_MODO.get(mode.strip_edges(), "")).strip_edges()
 
 
 static func obtener_escena_jugable(modo: String) -> String:
-	return get_playable_scene_path(modo)
+	return obtener_ruta_escena_jugable(modo)
 
 
-static func _resolve_mode_for_routing(node_data: MapNodeData) -> Dictionary:
-	var map_mode: String = node_data.mode.strip_edges()
-	if not map_mode.is_empty():
-		return {"ok": true, "error": "", "data": map_mode}
-
-	# Compatibilidad: mapas viejos no tenian mode y obligaban a leer el JSON del nodo.
-	return _read_node_mode_from_json(node_data)
-
-
-static func _read_node_mode_from_json(node_data: MapNodeData) -> Dictionary:
-	var result: Dictionary = NodeContentLoaderScript.load_node_content(node_data.json_path)
-	if not bool(result.get("ok", false)):
-		return _error(str(result.get("error", "No se pudo cargar el nodo.")))
-
-	var level_data: Dictionary = result.get("data", {})
-	var mode: String = str(level_data.get("mode", "")).strip_edges()
-	if mode.is_empty():
-		return _error("El nodo no define mode.")
-	return {"ok": true, "error": "", "data": mode}
-
-
-static func _open_scene(tree: SceneTree, scene_path: String) -> void:
-	if scene_path == GameSceneRouter.QUESTIONS_SCENE_PATH:
+static func _abrir_escena(tree: SceneTree, ruta_escena: String) -> void:
+	if ruta_escena == GameSceneRouter.QUESTIONS_SCENE_PATH:
 		GameSceneRouter.go_to_questions(tree)
 		return
-	tree.change_scene_to_file(scene_path)
+	if ruta_escena == GameSceneRouter.LEVEL_SCENE_PATH:
+		GameSceneRouter.go_to_level(tree)
+		return
+	tree.change_scene_to_file(ruta_escena)
 
+
+static func _obtener_estado_global(tree: SceneTree) -> Node:
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("/root/Global")
 
 static func _ok() -> Dictionary:
 	return {"ok": true, "error": "", "data": {}}
