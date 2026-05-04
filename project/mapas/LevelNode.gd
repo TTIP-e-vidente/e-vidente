@@ -5,6 +5,9 @@ signal selected(node_data: MapNodeData)
 
 const COLOR_COMPLETED := Color("#db9d4b")
 const COLOR_LOCKED := Color(1, 1, 1, 0.35)
+const STATE_COMPLETED := "completed"
+const STATE_AVAILABLE := "available"
+const STATE_LOCKED := "locked"
 
 @export_group("Runtime")
 @export var nivel_id: int = 0
@@ -15,6 +18,14 @@ const COLOR_LOCKED := Color(1, 1, 1, 0.35)
 @export var completed: bool = false:
 	set(value):
 		completed = value
+		update_view()
+@export var can_play: bool = false:
+	set(value):
+		can_play = value
+		update_view()
+@export_enum("completed", "available", "locked") var visual_state: String = STATE_LOCKED:
+	set(value):
+		visual_state = _sanitize_visual_state(value)
 		update_view()
 
 @export_group("Scene Compatibility")
@@ -37,6 +48,7 @@ var node_data: MapNodeData = null
 var _base_scale: Vector2 = Vector2.ONE
 var _is_hovering: bool = false
 var _click_in_progress: bool = false
+var _disponible_tween: Tween = null
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
@@ -48,15 +60,21 @@ func _ready() -> void:
 	update_view()
 
 
-func setup(data: MapNodeData, is_unlocked: bool, is_completed: bool = false) -> void:
+func setup(data: MapNodeData, progress_state: Variant = {}, is_completed: bool = false) -> void:
 	node_data = data
-	unlocked = is_unlocked
-	completed = is_completed
+	if progress_state is Dictionary:
+		_apply_progress_state(progress_state as Dictionary)
+	else:
+		_apply_legacy_progress_state(bool(progress_state), is_completed)
 	update_view()
 
 
-func configurar(data: MapNodeData, is_unlocked: bool, is_completed: bool = false) -> void:
-	setup(data, is_unlocked, is_completed)
+func configurar(
+	data: MapNodeData,
+	progress_state: Variant = {},
+	is_completed: bool = false
+) -> void:
+	setup(data, progress_state, is_completed)
 
 
 func update_view() -> void:
@@ -113,18 +131,83 @@ func _get_title() -> String:
 
 
 func _is_button_disabled() -> bool:
-	return not Engine.is_editor_hint() and (not unlocked or completed)
+	return not Engine.is_editor_hint() and not can_play
 
 
 func _apply_state_color() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
-	elif completed:
-		modulate = COLOR_COMPLETED
-	elif not unlocked:
-		modulate = COLOR_LOCKED
 	else:
-		modulate = Color.WHITE
+		match visual_state:
+			STATE_COMPLETED:
+				_cancelar_tween_disponible()
+				modulate = COLOR_COMPLETED
+			STATE_LOCKED:
+				_cancelar_tween_disponible()
+				modulate = COLOR_LOCKED
+			_:
+				modulate = Color.WHITE
+				_animar_disponible()
+
+
+func _apply_progress_state(progress_state: Dictionary) -> void:
+	var is_unlocked: bool = bool(progress_state.get("is_unlocked", false))
+	var is_completed: bool = bool(progress_state.get("is_completed", false))
+	unlocked = is_unlocked
+	completed = is_completed
+	can_play = bool(progress_state.get("can_play", is_unlocked or is_completed))
+	visual_state = _resolve_visual_state_name(
+		is_unlocked,
+		is_completed,
+		str(progress_state.get("visual_state", ""))
+	)
+
+
+func _apply_legacy_progress_state(is_unlocked: bool, is_completed: bool) -> void:
+	unlocked = is_unlocked
+	completed = is_completed
+	can_play = is_unlocked or is_completed
+	visual_state = _resolve_visual_state_name(is_unlocked, is_completed)
+
+
+func _resolve_visual_state_name(
+	is_unlocked: bool,
+	is_completed: bool,
+	state_name: String = ""
+) -> String:
+	var clean_state_name: String = state_name.strip_edges()
+	if not clean_state_name.is_empty():
+		return _sanitize_visual_state(clean_state_name)
+	if is_completed:
+		return STATE_COMPLETED
+	if is_unlocked:
+		return STATE_AVAILABLE
+	return STATE_LOCKED
+
+
+func _sanitize_visual_state(state_name: String) -> String:
+	match state_name.strip_edges():
+		STATE_COMPLETED:
+			return STATE_COMPLETED
+		STATE_AVAILABLE:
+			return STATE_AVAILABLE
+		_:
+			return STATE_LOCKED
+
+
+func _cancelar_tween_disponible() -> void:
+	if _disponible_tween != null:
+		_disponible_tween.kill()
+	_disponible_tween = null
+
+
+func _animar_disponible() -> void:
+	_cancelar_tween_disponible()
+	_disponible_tween = create_tween()
+	_disponible_tween.set_trans(Tween.TRANS_BACK)
+	_disponible_tween.set_ease(Tween.EASE_OUT)
+	_disponible_tween.tween_property(self, "scale", _base_scale * 1.18, 0.4)
+	_disponible_tween.tween_property(self, "scale", _base_scale, 0.3)
 
 
 func _animar_escala_hasta(escala_destino: Vector2) -> void:

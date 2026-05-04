@@ -44,13 +44,13 @@ project/
 El flujo completo es este:
 
 1. El jugador toca un nodo del mapa.
-2. `MapScene.gd` recibe la selección y le pide a `MapNodeData.gd` el `contexto_sesion`.
-3. `contexto_sesion` guarda `track_key`, `node_key`, `node_json_path`, `node_resource_path` y `return_scene_path`.
+2. `MapScene.gd` recibe la selección y pasa `node_data` a `PlayableNodeRouter.gd`.
+3. La sesión jugable nueva guarda `track_key`, `node_key`, `node_title`, `mode`, `json_path`, `return_to` y `level_number`.
 4. `NodeContentLoader.gd` carga y normaliza el JSON.
 5. `PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
-6. La escena jugable recibe `node_data`, usa `content` y ejecuta la modalidad.
+6. La escena jugable consume `json_path`, usa `content` y ejecuta la modalidad.
 7. `global.gd` conserva la sesión activa y el progreso del nodo.
-8. Cuando termina, vuelve a `return_scene_path`.
+8. Cuando termina, vuelve a `return_to`.
 
 Si querés explicarlo rápido a alguien nuevo, alcanza con esta frase:
 
@@ -65,12 +65,12 @@ La convención principal hoy es:
 
 el runtime resuelve:
 
-`res://niveles/nodos/celiaquia/gluten_maiz.json`
+`res://contenido/nodos/celiaquia/preguntas/gluten_maiz.json`
 
 Además:
 
-- `node_json_path` y `node_resource_path` son la API principal para casos especiales.
-- `question_key`, `question_json_path` y `question_resource_path` quedan solo como compatibilidad legacy interna de escenas viejas. No son la API nueva.
+- `json_path` es la ruta principal del flujo nuevo.
+- `node_json_path`, `node_resource_path`, `question_json_path`, `question_resource_path` y `return_scene_path` quedan solo como compatibilidad legacy interna. No son la API nueva.
 - si llega una ruta vieja de `res://preguntas/json_nodos/`, el loader intenta migrarla y deja una advertencia controlada.
 
 ## Contrato oficial del loader
@@ -198,8 +198,8 @@ Todavía quedan algunas compatibilidades controladas para no romper contenido vi
 1. Agregar el nuevo `mode` en `NodeContentLoader.gd`.
 2. Validar su `content` mínimo en `NodeContentValidator.gd`.
 3. Agregar su ruta en `PlayableNodeRouter.gd`.
-4. Crear la escena jugable que lea `node_data` desde la sesión.
-5. Resolver su finalización con `return_scene_path` para volver al mapa.
+4. Crear la escena jugable que lea `json_path` desde la sesión.
+5. Resolver su finalización con `return_to` para volver al mapa.
 
 ## Checklist manual
 
@@ -211,4 +211,4 @@ Todavía quedan algunas compatibilidades controladas para no romper contenido vi
 - Probar contenido faltante y verificar error claro.
 - Probar un JSON legacy `select_option` y verificar normalización a `quiz_choice`.
 - Probar una ruta vieja `res://preguntas/json_nodos/...` y verificar migración.
-- Crear un nodo nuevo en `project/niveles/nodos/<track_key>/` y abrirlo desde el mapa.
+- Crear un nodo nuevo en `project/contenido/nodos/<track_key>/preguntas/` o `arrastre/` y abrirlo desde el mapa.

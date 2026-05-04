@@ -9,6 +9,11 @@ const ERROR_CONTENIDO_NO_DISPONIBLE := (
 )
 
 
+# Flujo nuevo: leer json_path desde la sesion jugable y pedirle a
+# NodeContentLoader un nodo oficial { id, theme, title, difficulty, mode, content }.
+# node_data, node_json_path y node_resource_path quedan solo para compatibilidad.
+
+
 static func cargar_resultado_desde_datos_nodo(
 	datos_nodo: Dictionary,
 	etiqueta_origen: String = ""
@@ -30,9 +35,9 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	if not datos_nodo.is_empty():
 		return cargar_resultado_desde_datos_nodo(
 			datos_nodo,
-			_read_node_json_path(contexto_sesion)
+			_read_playable_json_path(contexto_sesion)
 		)
-	var ruta_json: String = _read_node_json_path(contexto_sesion)
+	var ruta_json: String = _read_playable_json_path(contexto_sesion)
 	if not ruta_json.is_empty():
 		var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
 		if not bool(resultado_nodo.get("ok", false)):
@@ -43,7 +48,7 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	return _cargar_fallback_legacy(contexto_sesion)
 
 
-static func _read_node_json_path(contexto_sesion: Dictionary) -> String:
+static func _read_playable_json_path(contexto_sesion: Dictionary) -> String:
 	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
 	if not ruta_json.is_empty():
 		return ruta_json
@@ -123,17 +128,70 @@ static func _crear_pregunta(contenido: Dictionary, etiqueta_origen: String) -> P
 
 
 static func _crear_opciones(contenido: Dictionary, respuesta_correcta: String) -> Array[String]:
-	var opciones: Array[String] = []
-	if not respuesta_correcta.is_empty():
-		opciones.append(respuesta_correcta)
+	var opciones_incorrectas: Array[String] = _limpiar_opciones_incorrectas(
+		contenido,
+		respuesta_correcta
+	)
+	if respuesta_correcta.is_empty():
+		return opciones_incorrectas
 
-	for opcion_cruda in contenido.get("wrong_options", []):
-		var opcion_incorrecta: String = str(opcion_cruda).strip_edges()
-		if opcion_incorrecta.is_empty() or opciones.has(opcion_incorrecta):
+	var total_options: int = opciones_incorrectas.size() + 1
+	var insert_index: int = _calcular_indice_correcto(
+		contenido,
+		respuesta_correcta,
+		total_options
+	)
+	var opciones: Array[String] = []
+	var wrong_index := 0
+	for index in range(total_options):
+		if index == insert_index:
+			opciones.append(respuesta_correcta)
 			continue
-		opciones.append(opcion_incorrecta)
+		opciones.append(opciones_incorrectas[wrong_index])
+		wrong_index += 1
 
 	return opciones
+
+
+static func _limpiar_opciones_incorrectas(
+	contenido: Dictionary,
+	respuesta_correcta: String
+) -> Array[String]:
+	var opciones_incorrectas: Array[String] = []
+	for opcion_cruda in contenido.get("wrong_options", []):
+		var opcion_incorrecta: String = str(opcion_cruda).strip_edges()
+		if (
+			opcion_incorrecta.is_empty()
+			or opcion_incorrecta == respuesta_correcta
+			or opciones_incorrectas.has(opcion_incorrecta)
+		):
+			continue
+		opciones_incorrectas.append(opcion_incorrecta)
+	return opciones_incorrectas
+
+
+static func _calcular_indice_correcto(
+	contenido: Dictionary,
+	respuesta_correcta: String,
+	total_options: int
+) -> int:
+	if total_options <= 1:
+		return 0
+	var source_text: String = "%s|%s" % [
+		str(contenido.get("question", "")).strip_edges(),
+		respuesta_correcta
+	]
+	return _calcular_firma_estable(source_text) % total_options
+
+
+static func _calcular_firma_estable(source_text: String) -> int:
+	var signature := 0
+	var clean_source: String = source_text.strip_edges()
+	for index in range(clean_source.length()):
+		signature = int(
+			(signature * 33 + clean_source.unicode_at(index) + index + 1) % 2147483647
+		)
+	return signature
 
 
 static func _cargar_visual(ruta_visual: String, etiqueta_origen: String) -> Texture2D:

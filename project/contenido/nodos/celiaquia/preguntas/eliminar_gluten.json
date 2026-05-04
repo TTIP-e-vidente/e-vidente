@@ -5,7 +5,7 @@
 	"difficulty": "easy",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnologicos para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro.",
+		"question": "Quitar a simple vista el gluten de un alimento con trigo no lo vuelve apto para celiaquia.",
 		"correct_answer": "Verdadero",
 		"wrong_options": ["Falso"],
 		"visual_resource": ""

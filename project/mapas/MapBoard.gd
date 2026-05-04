@@ -23,11 +23,11 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 	contenedor_scroll.scroll_vertical = clampi(scroll_value, 0, max_scroll)
 
 
-func configurar_nodos(
-	map_nodes: Array,
-	unlocked_by_index: Array[bool],
-	completed_by_index: Array[bool]
-) -> void:
+func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
+	refresh_node_states(map_nodes, node_states)
+
+
+func refresh_node_states(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
 
@@ -40,18 +40,23 @@ func configurar_nodos(
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
+		var node_state: Dictionary = _get_node_state(node_states, index)
 		if node_data == null or not node_data.is_valid():
 			visual_node.hide()
 			continue
 
 		visual_node.show()
-		visual_node.configurar(
-			node_data,
-			_get_bool(unlocked_by_index, index),
-			_get_bool(completed_by_index, index)
-		)
+		if visual_node.has_method("configurar"):
+			visual_node.configurar(node_data, node_state)
+		elif visual_node.has_method("setup"):
+			visual_node.setup(
+				node_data,
+				bool(node_state.get("is_unlocked", false)),
+				bool(node_state.get("is_completed", false))
+			)
 		var callback := Callable(self, "_on_visual_node_selected")
-		if visual_node.has_signal("selected") and not visual_node.is_connected("selected", callback):
+		var already_connected := visual_node.is_connected("selected", callback)
+		if visual_node.has_signal("selected") and not already_connected:
 			visual_node.connect("selected", callback)
 
 	for index in range(visible_count, visual_nodes.size()):
@@ -81,7 +86,29 @@ func _on_visual_node_selected(node_data: RefCounted) -> void:
 		node_selected.emit(node_data as MapNodeData)
 
 
-func _get_bool(values: Array[bool], index: int) -> bool:
-	if index < 0 or index >= values.size():
-		return false
-	return values[index]
+func _get_node_state(node_states: Array[Dictionary], index: int) -> Dictionary:
+	if index < 0 or index >= node_states.size():
+		return {}
+	return node_states[index]
+
+
+func desplazar_al_primer_nodo_disponible() -> void:
+	if contenedor_scroll == null or contenedor_nodos == null:
+		return
+	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
+	for visual_node in visual_nodes:
+		if bool(visual_node.get("unlocked")) and not bool(visual_node.get("completed")):
+			_desplazar_a_nodo.call_deferred(visual_node)
+			return
+
+
+func _desplazar_a_nodo(visual_node: Node2D) -> void:
+	if contenedor_scroll == null or not is_instance_valid(visual_node):
+		return
+	var scroll_target: int = int(
+		visual_node.global_position.y
+		- contenedor_scroll.global_position.y
+		+ contenedor_scroll.scroll_vertical
+		- contenedor_scroll.size.y * 0.4
+	)
+	establecer_scroll_vertical(scroll_target)

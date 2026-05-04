@@ -5,12 +5,12 @@
   "difficulty": "medium",
   "mode": "quiz_choice",
   "content": {
-    "question": "Al elegir un alimento procesado, que dato conviene revisar para una persona con celiaquia?",
-    "correct_answer": "Que el envase indique Libre de Gluten o Sin TACC segun la normativa vigente",
+    "question": "Al elegir un alimento procesado, que conviene revisar para una persona con celiaquia?",
+    "correct_answer": "Que tenga rotulo Libre de Gluten o Sin TACC",
     "wrong_options": [
       "Que diga artesanal, porque siempre es mas natural",
-      "Que no tenga trigo visible en la foto del envase",
-      "Que sea dulce, porque el gluten solo esta en comidas saladas"
+      "Que no tenga trigo en la foto del envase",
+      "Que sea dulce, porque el gluten solo aparece en salados"
     ],
     "visual_resource": ""
   }
