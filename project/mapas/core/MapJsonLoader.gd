@@ -3,19 +3,16 @@ class_name MapJsonLoader
 
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NODE_JSON_ROOT := "res://contenido/nodos/"
-const NODE_JSON_FOLDER_BY_MODE := {
-	MapNodeData.MODE_QUIZ_CHOICE: "/preguntas/",
-	MapNodeData.MODE_DRAG_DROP: "/arrastre/",
+const CONTENT_RULES_BY_MODE := {
+	MapNodeData.MODE_QUIZ_CHOICE: {
+		"root": NODE_JSON_ROOT,
+		"folder": "/preguntas/",
+	},
+	MapNodeData.MODE_DRAG_DROP: {
+		"root": NODE_JSON_ROOT,
+		"folder": "/arrastre/",
+	},
 }
-
-
-# Flujo nuevo del mapa:
-# 1. Leer res://contenido/mapas/*.json
-# 2. Validar el header del mapa
-# 3. Convertir cada entrada de nodes en MapNodeData
-# 4. Devolver { ok, data, error }
-# Este loader no navega, no toca progreso y no carga lecciones.
-
 
 static func load_map(map_json_path: String) -> Dictionary:
 	var raw_result: Dictionary = read_json_file(map_json_path)
@@ -111,14 +108,14 @@ static func _build_node(raw_node: Variant, track_key: String, index: int) -> Dic
 		return _error("El nodo %d del mapa debe ser un objeto." % node_number)
 
 	var node := MapNodeDataScript.from_json(raw_node as Dictionary, track_key, index)
-	var path_error: String = validate_node_path(node, node_number)
-	if not path_error.is_empty():
-		return _error(path_error)
+	var node_error: String = validate_map_node(node, node_number)
+	if not node_error.is_empty():
+		return _error(node_error)
 
 	return _ok(node)
 
 
-static func validate_node_path(node: MapNodeData, node_number: int = 0) -> String:
+static func validate_map_node(node: MapNodeData, node_number: int = 0) -> String:
 	var label: String = "El nodo"
 	if node_number > 0:
 		label = "El nodo %d" % node_number
@@ -128,13 +125,15 @@ static func validate_node_path(node: MapNodeData, node_number: int = 0) -> Strin
 		return "%s no tiene title." % label
 	if node.mode.is_empty():
 		return "%s no tiene mode." % label
-	if not node.is_supported_mode():
+	if not is_supported_map_mode(node.mode):
 		return "%s tiene mode no soportado: %s" % [label, node.mode]
 	if not node.has_content_path():
 		return "%s no tiene json_path." % label
-	if not node.json_path.begins_with(NODE_JSON_ROOT):
-		return "%s debe apuntar a %s. Ruta actual: %s" % [label, NODE_JSON_ROOT, node.json_path]
-	var expected_folder: String = str(NODE_JSON_FOLDER_BY_MODE.get(node.mode, "")).strip_edges()
+	var content_rule: Dictionary = CONTENT_RULES_BY_MODE.get(node.mode, {})
+	var expected_root: String = str(content_rule.get("root", NODE_JSON_ROOT)).strip_edges()
+	if not node.json_path.begins_with(expected_root):
+		return "%s debe apuntar a %s. Ruta actual: %s" % [label, expected_root, node.json_path]
+	var expected_folder: String = str(content_rule.get("folder", "")).strip_edges()
 	if not expected_folder.is_empty() and not node.json_path.contains(expected_folder):
 		return "%s debe apuntar a %s para mode=%s. Ruta actual: %s" % [
 			label,
@@ -145,6 +144,10 @@ static func validate_node_path(node: MapNodeData, node_number: int = 0) -> Strin
 	if not FileAccess.file_exists(node.json_path):
 		return "No existe el JSON de %s: %s" % [label.to_lower(), node.json_path]
 	return ""
+
+
+static func is_supported_map_mode(mode: String) -> bool:
+	return CONTENT_RULES_BY_MODE.has(mode.strip_edges())
 
 
 static func _ok(data: Variant) -> Dictionary:

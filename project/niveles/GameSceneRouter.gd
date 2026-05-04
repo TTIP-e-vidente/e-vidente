@@ -22,6 +22,7 @@ const STREAK_SCENE_PATH := "res://interface/components/ProgressManagerRacha.tscn
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
+const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 
 const RESUME_SCENE_PATH_KEY := "scene_path"
 const CONTINUE_TARGET_RETURN_TO_KEY := "return_to"
@@ -105,6 +106,18 @@ static func go_to_profile_editor(tree: SceneTree) -> void:
 
 static func go_to_questions(tree: SceneTree) -> void:
 	go_to_route(tree, ROUTE_QUESTIONS)
+
+
+static func go_to_level(tree: SceneTree) -> void:
+	_change_scene_to_path(tree, LEVEL_SCENE_PATH)
+
+
+static func ir_a_modo_jugable(tree: SceneTree, mode: String) -> void:
+	match mode.strip_edges():
+		"drag_drop":
+			go_to_level(tree)
+		"quiz_choice":
+			go_to_questions(tree)
 
 
 # --- Racha ------------------------------------------------------------------

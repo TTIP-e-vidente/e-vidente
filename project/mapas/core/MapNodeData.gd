@@ -10,6 +10,7 @@ var mode: String = ""
 var json_path: String = ""
 var track_key: String = ""
 var index: int = 0
+var difficulty: int = 0
 
 
 static func from_json(raw_node: Dictionary, map_track_key: String, node_index: int) -> MapNodeData:
@@ -20,6 +21,7 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 	node.json_path = str(raw_node.get("json_path", "")).strip_edges()
 	node.track_key = map_track_key.strip_edges()
 	node.index = node_index
+	node.difficulty = int(raw_node.get("difficulty", 0))
 	return node
 
 
@@ -29,15 +31,3 @@ func is_valid() -> bool:
 
 func has_content_path() -> bool:
 	return not json_path.is_empty()
-
-
-func is_question() -> bool:
-	return mode == MODE_QUIZ_CHOICE
-
-
-func is_drag_or_level() -> bool:
-	return mode == MODE_DRAG_DROP
-
-
-func is_supported_mode() -> bool:
-	return is_question() or is_drag_or_level()

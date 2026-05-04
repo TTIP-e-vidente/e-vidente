@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://btw41ex60ytny"]
 
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
 [ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/pregunta.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
 [ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
+[ext_resource type="PackedScene" path="res://ui/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = -6.525
@@ -16,22 +17,24 @@ font = ExtResource("6_x3ikk")
 font_size = 26
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
-texture = ExtResource("4_78ome")
 content_margin_left = 32.0
-content_margin_right = 32.0
 content_margin_top = 14.0
+content_margin_right = 32.0
 content_margin_bottom = 14.0
+texture = ExtResource("4_78ome")
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn2"]
-texture = ExtResource("5_dlf6l")
 content_margin_left = 32.0
-content_margin_right = 32.0
 content_margin_top = 14.0
+content_margin_right = 32.0
 content_margin_bottom = 14.0
+texture = ExtResource("5_dlf6l")
 
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
 quiz = ExtResource("2_onqq7")
+
+[node name="IndicadorProgresoDeJuego" parent="." instance=ExtResource("7_4l1i0")]
 
 [node name="Contenido" type="Control" parent="." unique_id=1424383837]
 layout_mode = 3
@@ -106,28 +109,28 @@ offset_bottom = 795.0
 theme_override_constants/separation = 10
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 76)
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxTexture_btn1")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
 
 [node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 76)
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 
@@ -205,10 +208,11 @@ icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
 
-[node name="ContinuacionAutomatica" type="VBoxContainer" parent="Contenido"]
+[node name="ContinuacionAutomatica" type="VBoxContainer" parent="Contenido" unique_id=1187811779]
 visible = false
 z_index = 20
 layout_mode = 1
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -222,23 +226,22 @@ grow_vertical = 0
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="FlechaDerecha" type="Button" parent="Contenido/ContinuacionAutomatica"]
+[node name="FlechaDerecha" type="Button" parent="Contenido/ContinuacionAutomatica" unique_id=589441213]
+custom_minimum_size = Vector2(250, 60)
 layout_mode = 2
 size_flags_horizontal = 4
-custom_minimum_size = Vector2(250, 60)
 theme_override_font_sizes/font_size = 32
 text = "Siguiente →"
 flat = true
 
-[node name="ContadorSiguienteLabel" type="Label" parent="Contenido/ContinuacionAutomatica"]
+[node name="ContadorSiguienteLabel" type="Label" parent="Contenido/ContinuacionAutomatica" unique_id=2057494226]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.06469653, 0.06469653, 0.06469653, 1)
 theme_override_font_sizes/font_size = 24
 text = "Próximo juego en 5..."
 horizontal_alignment = 1
 
-[node name="TimerSiguienteNodo" type="Timer" parent="."]
-wait_time = 1.0
+[node name="TimerSiguienteNodo" type="Timer" parent="." unique_id=671940941]
 
 [connection signal="pressed" from="Contenido/AtrÃ¡s" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]

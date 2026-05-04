@@ -7,6 +7,9 @@ const GameStreakTrackerScript := preload(
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
+const ContinuidadDeCorridaDeNodoScript := preload(
+	"res://mapas/core/ContinuidadDeCorridaDeNodo.gd"
+)
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
 const DEFAULT_TRACK_KEY := "celiaquia"
@@ -31,6 +34,7 @@ var ya_continuo: bool = false
 
 var _nodo_actual: String = ""
 var _tiene_sesion_de_mapa: bool = false
+var _pertenece_a_corrida_de_nodo: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
 var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
@@ -52,6 +56,7 @@ var pregunta_actual: Preguntas:
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
 @onready var _contenedor_continuacion_legacy: VBoxContainer = $Contenido/ContinuacionAutomatica
+@onready var _indicador_de_progreso_de_juego: CanvasLayer = $IndicadorProgresoDeJuego
 
 func _ready() -> void:
 	puntaje = 0
@@ -59,6 +64,7 @@ func _ready() -> void:
 	_ocultar_continuacion_legacy()
 	_recolectar_botones_respuesta()
 	configurar_quiz_desde_sesion()
+	_configurar_indicador_de_progreso_de_juego()
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
@@ -74,9 +80,7 @@ func _recolectar_botones_respuesta() -> void:
 		var boton_respuesta: Button = boton_crudo as Button
 		if boton_respuesta == null:
 			continue
-		var boton_plantilla: Button = boton_respuesta.duplicate() as Button
-		if boton_plantilla != null:
-			_plantillas_botones_respuesta.append(boton_plantilla)
+		_plantillas_botones_respuesta.append(boton_respuesta)
 		_registrar_boton_respuesta(boton_respuesta)
 
 
@@ -89,7 +93,7 @@ func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
 	_mensaje_error_bloqueante = ""
 
-	var contexto_sesion: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	var contexto_sesion: Dictionary = _obtener_contexto_jugable_actual()
 	if contexto_sesion.is_empty():
 		return
 
@@ -105,8 +109,16 @@ func configurar_quiz_desde_sesion() -> void:
 	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
 
 
+func _obtener_contexto_jugable_actual() -> Dictionary:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_del_nodo()
+	if not juego_actual.is_empty():
+		return juego_actual
+	return Global.obtener_sesion_nodo_jugable_activo()
+
+
 func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
+	_pertenece_a_corrida_de_nodo = false
 	_nodo_actual = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_post_game_streak_feedback = {}
@@ -115,9 +127,7 @@ func _reiniciar_sesion_nodo() -> void:
 
 func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
 	_aplicar_contexto_sesion(contexto_sesion)
-	var ruta_json: String = str(
-		contexto_sesion.get("json_path", contexto_sesion.get("node_json_path", ""))
-	).strip_edges()
+	var ruta_json: String = _obtener_json_path_actual(contexto_sesion)
 	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
 		datos_nodo,
 		ruta_json
@@ -136,13 +146,53 @@ func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
 	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
+	_pertenece_a_corrida_de_nodo = bool(
+		contexto_sesion.get("pertenece_a_corrida_de_nodo", false)
+	)
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
 		DEFAULT_RETURN_SCENE
 	)
 	if _ruta_escena_de_retorno.is_empty():
 		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
-	_tiene_sesion_de_mapa = not contexto_sesion.is_empty()
+	_tiene_sesion_de_mapa = not _nodo_actual.is_empty()
+
+
+func _es_juego_de_corrida_de_nodo() -> bool:
+	return _pertenece_a_corrida_de_nodo
+
+
+func _obtener_json_path_actual(contexto_sesion: Dictionary = {}) -> String:
+	var contexto_actual: Dictionary = contexto_sesion
+	if contexto_actual.is_empty():
+		contexto_actual = _obtener_contexto_jugable_actual()
+	var ruta_json: String = str(contexto_actual.get("json_path", "")).strip_edges()
+	if not ruta_json.is_empty():
+		return ruta_json
+	return str(contexto_actual.get("node_json_path", "")).strip_edges()
+
+
+func _configurar_indicador_de_progreso_de_juego() -> void:
+	if _indicador_de_progreso_de_juego == null or not is_instance_valid(_indicador_de_progreso_de_juego):
+		return
+	var contexto: Dictionary = _obtener_contexto_de_progreso_de_juego()
+	var titulo: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+	var juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
+	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
+	if _indicador_de_progreso_de_juego.has_method("actualizar"):
+		_indicador_de_progreso_de_juego.call(
+			"actualizar",
+			titulo,
+			juego_actual,
+			total_juegos
+		)
+		return
+	if _indicador_de_progreso_de_juego.has_method("configurar"):
+		_indicador_de_progreso_de_juego.call("configurar", contexto)
+
+
+func _obtener_contexto_de_progreso_de_juego() -> Dictionary:
+	return Global.obtener_contexto_de_progreso_de_juego()
 
 
 func _puede_iniciar_quiz() -> bool:
@@ -310,7 +360,17 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 
 
 func _finalizar_quiz() -> void:
+	_finalizar_partida()
+
+
+func _finalizar_partida() -> void:
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
+	_finalizar_pregunta_normal(cantidad_preguntas)
+
+
+func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 	var previous_streak: Dictionary = Global.obtener_estado_racha()
 
 	if _tiene_sesion_de_mapa:
@@ -323,6 +383,25 @@ func _finalizar_quiz() -> void:
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	_on_questions_finished(previous_streak, updated_streak)
 	_show_post_game_completion()
+
+
+func _continuar_corrida_de_nodo_si_corresponde() -> bool:
+	if not _es_juego_de_corrida_de_nodo():
+		return false
+	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+		get_tree(),
+		Callable(self, "_preparar_siguiente_juego_de_corrida_en_pregunta"),
+		Callable(self, "_limpiar_estado_local_de_corrida_en_pregunta")
+	)
+
+
+func _preparar_siguiente_juego_de_corrida_en_pregunta() -> void:
+	_limpiar_media_de_pregunta()
+
+
+func _limpiar_estado_local_de_corrida_en_pregunta() -> void:
+	_limpiar_media_de_pregunta()
+	_pertenece_a_corrida_de_nodo = false
 
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
@@ -471,6 +550,9 @@ func _on_jugar_nuevamente_pressed() -> void:
 
 
 func _on_atras_pressed() -> void:
+	if _es_juego_de_corrida_de_nodo():
+		_cancelar_corrida_de_nodo_desde_juego()
+		return
 	volver_al_mapa()
 
 
@@ -496,10 +578,23 @@ func _ubicar_continuador() -> void:
 
 
 func volver_al_mapa() -> void:
+	if _es_juego_de_corrida_de_nodo():
+		_cancelar_corrida_de_nodo_desde_juego()
+		return
 	if _has_post_game_flow_state():
 		_on_teaching_finished(false)
 		return
 	_return_to_map_scene()
+
+
+func _cancelar_corrida_de_nodo_desde_juego() -> void:
+	Global.finalizar_corrida_de_nodo()
+	Global.limpiar_sesion_nodo_jugable_activo()
+	_limpiar_media_de_pregunta()
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_de_retorno
+	)
 
 
 func _return_to_map_scene() -> void:
