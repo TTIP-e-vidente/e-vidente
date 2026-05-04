@@ -1,6 +1,9 @@
 extends RefCounted
 class_name MapNodeData
 
+const MODE_QUIZ_CHOICE := "quiz_choice"
+const MODE_DRAG_DROP := "drag_drop"
+
 var node_key: String = ""
 var title: String = ""
 var mode: String = ""
@@ -21,8 +24,20 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 
 
 func is_valid() -> bool:
-	return not node_key.is_empty() and not json_path.is_empty()
+	return not node_key.is_empty() and has_content_path()
 
 
-func has_level_json() -> bool:
+func has_content_path() -> bool:
 	return not json_path.is_empty()
+
+
+func is_question() -> bool:
+	return mode == MODE_QUIZ_CHOICE
+
+
+func is_drag_or_level() -> bool:
+	return mode == MODE_DRAG_DROP
+
+
+func is_supported_mode() -> bool:
+	return is_question() or is_drag_or_level()

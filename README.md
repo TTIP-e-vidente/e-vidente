@@ -115,21 +115,20 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 ## Como crear un mapa
 
-1. Crear un archivo en `project/niveles/mapas/`.
+1. Crear un archivo en `project/contenido/mapas/`.
 2. Definir `id`, `track_key` y `title`.
 3. Agregar `nodes[]` en orden.
-4. Cada nodo tiene `node_key`, `title` y `json_path`.
-5. El `mode` vive en el JSON del nodo, no en el mapa.
-6. Para sumar un nodo, agregarlo al array y crear su JSON.
+4. Cada nodo tiene `node_key`, `title`, `mode` y `json_path`.
+5. Para sumar un nodo, agregarlo al array y crear su JSON en `preguntas/` o `arrastre/`.
 
 ```json
-{"id":"demo_mapa","track_key":"celiaquia","title":"Demo","nodes":[{"node_key":"nodo_01","title":"Primer nodo","json_path":"res://niveles/nodos/celiaquia/nodo_01.json"}]}
+{"id":"demo_mapa","track_key":"celiaquia","title":"Demo","nodes":[{"node_key":"nodo_01","title":"Primer nodo","mode":"quiz_choice","json_path":"res://contenido/nodos/celiaquia/preguntas/nodo_01.json"}]}
 ```
 
 Para agregar un nodo nuevo:
 
 - autorizarlo visualmente en el mapa con `LevelNode.tscn` o el board del mapa.
-- crear su JSON en `project/niveles/nodos/<track_key>/<node_key>.json`.
+- crear su JSON en `project/contenido/nodos/<track_key>/preguntas/` o `project/contenido/nodos/<track_key>/arrastre/`.
 
 Para agregar una modalidad nueva:
 
@@ -140,9 +139,9 @@ Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como
 
 ## Estructura de contenido jugable
 
-- `project/niveles/nodos/celiaquia/`: contenido real de nodos jugables del track.
-- `project/niveles/nodos/ejemplos/`: ejemplos oficiales y legacy de referencia.
-- `project/preguntas/`: modalidad `quiz_choice` y su adaptador temporal, no el sistema completo.
+- `project/contenido/nodos/celiaquia/preguntas/`: contenido `quiz_choice` del track.
+- `project/contenido/nodos/celiaquia/arrastre/`: contenido `drag_drop` del track.
+- `project/preguntas/`: modalidad `quiz_choice` y su loader de runtime, no el deposito de JSON.
 - `project/mapas/`: mapa, routing y contexto de apertura.
 - `project/niveles/nivel_1/`: modalidad oficial `drag_drop` basada en `Level.tscn` y `Level.gd`.
 - `project/mapas/drag_drop/`: legacy/back-up; no es el flujo principal de `drag_drop`.

@@ -8,6 +8,12 @@ const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 
 
+# Punto unico de entrada para JSON de lecciones.
+# Flujo nuevo: leer archivo oficial desde res://contenido/nodos/*,
+# normalizar solo si el contenido es viejo y devolver un nodo limpio.
+# Toda compatibilidad legacy debe vivir en NodeContentLegacy.gd.
+
+
 static func load_node_content(json_path: String) -> Dictionary:
 	var raw_data: Dictionary = read_json_file(json_path)
 	if raw_data.is_empty():

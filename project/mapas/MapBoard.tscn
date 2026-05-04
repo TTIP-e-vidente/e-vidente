@@ -55,7 +55,7 @@ vertical_scroll_mode = 3
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")
-custom_minimum_size = Vector2(0, 2700)
+custom_minimum_size = Vector2(0, 3400)
 layout_mode = 2
 
 [node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
@@ -244,6 +244,45 @@ question_number = 14
 node_key = "casos_cotidianos_sin_tacc"
 label_text = "Pregunta 14"
 icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta15" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400001 instance=ExtResource("4_questionnode")]
+position = Vector2(180, 2460)
+scale = Vector2(1.22, 1.22)
+nivel_id = 21
+question_number = 15
+label_text = "Pregunta 15"
+icon_texture = ExtResource("12_oop13")
+
+[node name="Pregunta16" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400002 instance=ExtResource("4_questionnode")]
+position = Vector2(450, 2550)
+scale = Vector2(1.24, 1.24)
+nivel_id = 22
+question_number = 16
+label_text = "Pregunta 16"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta17" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400003 instance=ExtResource("4_questionnode")]
+position = Vector2(760, 2640)
+scale = Vector2(1.28, 1.28)
+nivel_id = 23
+question_number = 17
+label_text = "Pregunta 17"
+icon_texture = ExtResource("10_icon4")
+
+[node name="Pregunta18" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400004 instance=ExtResource("4_questionnode")]
+position = Vector2(980, 2810)
+scale = Vector2(1.3, 1.3)
+nivel_id = 24
+question_number = 18
+label_text = "Pregunta 18"
+
+[node name="Pregunta19" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400005 instance=ExtResource("4_questionnode")]
+position = Vector2(700, 2960)
+scale = Vector2(1.34, 1.34)
+nivel_id = 25
+question_number = 19
+label_text = "Pregunta 19"
+icon_texture = ExtResource("10_m2v86")
 
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
 position = Vector2(591.99994, 142)

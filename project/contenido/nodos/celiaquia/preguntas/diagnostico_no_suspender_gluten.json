@@ -5,12 +5,12 @@
   "difficulty": "hard",
   "mode": "quiz_choice",
   "content": {
-    "question": "Si una persona sospecha que tiene celiaquia y todavia no hizo los estudios, cual es la opcion mas segura?",
-    "correct_answer": "Consultar al equipo de salud antes de sacar el gluten, porque la dieta sin gluten puede alterar los resultados",
+    "question": "Si sospechas celiaquia y todavia no te hiciste estudios, cual es la decision mas segura?",
+    "correct_answer": "Consultar al equipo de salud antes de sacar el gluten",
     "wrong_options": [
-      "Sacar el gluten por varios meses y despues hacer el analisis",
+      "Sacar el gluten por meses y despues hacer el analisis",
       "Evitar solo el pan antes del estudio",
-      "Hacer el diagnostico mirando si mejora un dia"
+      "Diagnosticarte solo si mejoras un dia"
     ],
     "visual_resource": ""
   }
