@@ -207,19 +207,19 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 	_active_playable_node = {}
 
 
-# --- Corrida activa de nodo -----------------------------------------------
+# --- Corrida de nodo ------------------------------------------------------
 
 func iniciar_corrida_de_nodo(plan_de_corrida: Dictionary) -> void:
 	_corrida_de_nodo_activa = _normalizar_corrida_de_nodo(plan_de_corrida)
 	_juego_de_nodo_actual = _construir_juego_actual_del_nodo(_corrida_de_nodo_activa)
 
 
-func obtener_juego_actual_del_nodo() -> Dictionary:
-	return _juego_de_nodo_actual.duplicate(true)
-
-
 func obtener_corrida_de_nodo_actual() -> Dictionary:
 	return _corrida_de_nodo_activa.duplicate(true)
+
+
+func obtener_juego_actual_del_nodo() -> Dictionary:
+	return _juego_de_nodo_actual.duplicate(true)
 
 
 func hay_siguiente_juego_del_nodo() -> bool:

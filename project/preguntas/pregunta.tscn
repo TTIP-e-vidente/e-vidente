@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
-[ext_resource type="PackedScene" path="res://ui/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
+[ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = -6.525

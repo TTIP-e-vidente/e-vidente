@@ -37,7 +37,7 @@
 [ext_resource type="Texture2D" uid="uid://811ps8f6u20x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="36_4r6cp"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_yoibg"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_yoibg"]
-[ext_resource type="PackedScene" path="res://ui/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
+[ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_054us"]
 animations = []

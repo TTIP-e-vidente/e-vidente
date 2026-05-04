@@ -21,8 +21,9 @@ var nodos_mapa: Array[MapNodeData] = []
 @onready var map_board: Node2D = $MapBoard
 
 
+# Entrada desde el mapa
 func _ready() -> void:
-	_connect_signals()
+	_conectar_senales()
 	cargar_mapa()
 	GameSceneRouter.request_scene_preload(
 		GameTrackCatalog.obtener_ruta_escena_nivel(track_key_mapa)
@@ -30,7 +31,7 @@ func _ready() -> void:
 
 	Global.finalizar_corrida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
-	refresh_node_states()
+	actualizar_estados_de_nodos()
 	_restaurar_scroll_guardado_del_mapa()
 
 	var nodo_actual: String = Global.consumir_nodo_a_continuar()
@@ -41,7 +42,8 @@ func _ready() -> void:
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
-func _connect_signals() -> void:
+# Flujo del mapa
+func _conectar_senales() -> void:
 	if map_hud != null and map_hud.has_signal("back_requested"):
 		map_hud.connect("back_requested", _al_pedir_volver)
 	if map_board != null and map_board.has_signal("node_selected"):
@@ -61,7 +63,7 @@ func cargar_mapa() -> void:
 	var map_data: Dictionary = result.get("data", {})
 	map_id = str(map_data.get("id", "")).strip_edges()
 	map_title = str(map_data.get("title", "")).strip_edges()
-	track_key_mapa = _valid_track_key(str(map_data.get("track_key", DEFAULT_TRACK_KEY)))
+	track_key_mapa = _obtener_track_key_valida(str(map_data.get("track_key", DEFAULT_TRACK_KEY)))
 	nodos_mapa = []
 
 	var loaded_nodes: Variant = map_data.get("nodes", [])
@@ -73,11 +75,7 @@ func cargar_mapa() -> void:
 				nodos_mapa.append(node_data)
 
 
-func mostrar_nodos() -> void:
-	refresh_node_states()
-
-
-func refresh_node_states() -> void:
+func actualizar_estados_de_nodos() -> void:
 	if map_board == null or not map_board.has_method("configurar_nodos"):
 		return
 
@@ -111,23 +109,18 @@ func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
 
 
 func continuar_desde_nodo(node_key: String) -> void:
-	var nodos_jugables: Array[MapNodeData] = _obtener_nodos_jugables()
 	var next_node: MapNodeData = (
-		MapProgressScript.obtener_siguiente_nodo(nodos_jugables, node_key) as MapNodeData
+		MapProgressScript.obtener_siguiente_nodo(nodos_mapa, node_key) as MapNodeData
 	)
 	if next_node == null:
 		volver_al_mapa()
 		return
-	var next_state: Dictionary = MapProgressScript.get_node_state(nodos_jugables, next_node)
+	var next_state: Dictionary = MapProgressScript.get_node_state(nodos_mapa, next_node)
 	if bool(next_state.get("is_completed", false)):
-		refresh_node_states()
+		actualizar_estados_de_nodos()
 		_desplazar_a_proximo_disponible()
 		return
 	abrir_nodo_del_mapa(next_node)
-
-
-func obtener_siguiente_nodo(node_key: String) -> MapNodeData:
-	return MapProgressScript.obtener_siguiente_nodo(nodos_mapa, node_key) as MapNodeData
 
 
 func obtener_nodo_mapa(node_key: String) -> MapNodeData:
@@ -139,11 +132,12 @@ func obtener_nodo_mapa(node_key: String) -> MapNodeData:
 
 
 func volver_al_mapa() -> void:
-	refresh_node_states()
+	actualizar_estados_de_nodos()
 	_desplazar_a_proximo_disponible()
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
+# Helpers privados
 func _desplazar_a_proximo_disponible() -> void:
 	if map_board == null or not map_board.has_method("desplazar_al_primer_nodo_disponible"):
 		return
@@ -151,8 +145,7 @@ func _desplazar_a_proximo_disponible() -> void:
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
-	var nodos_jugables: Array[MapNodeData] = _obtener_nodos_jugables()
-	if not MapProgressScript.mapa_esta_completado(nodos_jugables, track_key_mapa):
+	if not MapProgressScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
 		return
 	if _popup_completado_activo():
 		return
@@ -165,10 +158,6 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 	add_child(popup_completado)
 
 
-func _obtener_nodos_jugables() -> Array[MapNodeData]:
-	return nodos_mapa
-
-
 func _popup_completado_activo() -> bool:
 	for child in get_children():
 		if child.get_script() != null:
@@ -178,7 +167,7 @@ func _popup_completado_activo() -> bool:
 	return false
 
 
-func _valid_track_key(raw_track_key: String) -> String:
+func _obtener_track_key_valida(raw_track_key: String) -> String:
 	var clean_track_key: String = raw_track_key.strip_edges()
 	if clean_track_key.is_empty() or not GameTrackCatalog.tiene_pista(clean_track_key):
 		return DEFAULT_TRACK_KEY
