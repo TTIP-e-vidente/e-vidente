@@ -1,6 +1,11 @@
 extends RefCounted
 
 
+# Este archivo aisla TODA compatibilidad del flujo anterior al contenido oficial en
+# res://contenido/nodos/. Si aparece una ruta vieja o un shape viejo, debe resolverse aca.
+# El flujo nuevo no deberia agregar dependencias nuevas a res://niveles/nodos/ ni
+# a res://preguntas/json_nodos/ fuera de este adaptador.
+
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const DIRECTORIO_NODOS_ACTUAL := "res://contenido/nodos/"

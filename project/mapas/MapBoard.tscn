@@ -5,12 +5,12 @@
 [ext_resource type="PackedScene" uid="uid://ccolhcqvnrd8d" path="res://mapas/MapChapterNode.tscn" id="3_chapternode"]
 [ext_resource type="PackedScene" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
 [ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="5_path1"]
-[ext_resource type="Texture2D" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
+[ext_resource type="Texture2D" uid="uid://mmbv3xon7864" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="7_title"]
 [ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
 [ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
 [ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
-[ext_resource type="Shader" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
+[ext_resource type="Shader" uid="uid://ouiuwpm2wm3h" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
 [ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
 [ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="12_oop13"]
 
@@ -55,7 +55,7 @@ vertical_scroll_mode = 3
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")
-custom_minimum_size = Vector2(0, 2550)
+custom_minimum_size = Vector2(0, 3400)
 layout_mode = 2
 
 [node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
@@ -68,6 +68,12 @@ position = Vector2(63.666504, 1982.6145)
 rotation = -6.2831855
 scale = Vector2(0.9532122, 1.0489042)
 texture = ExtResource("6_path2")
+
+[node name="curva3" type="Sprite2D" parent="ScrollContainer/Contenido/curva" unique_id=1610691638]
+position = Vector2(63.666504, 4016.0)
+rotation = -6.2831855
+scale = Vector2(0.9532122, 1.0489042)
+texture = ExtResource("5_path1")
 
 [node name="NodesContainer" type="Node2D" parent="ScrollContainer/Contenido" unique_id=102587014]
 position = Vector2(-52, -198)
@@ -186,7 +192,7 @@ question_number = 8
 node_key = "armar_plato_sin_tacc"
 label_text = "Pregunta 8"
 
-[node name="Pregunta9" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta9" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1275698258 instance=ExtResource("4_questionnode")]
 position = Vector2(210, 1740)
 scale = Vector2(1.18, 1.18)
 nivel_id = 15
@@ -195,7 +201,7 @@ node_key = "celiaquia_basico_evitar_gluten"
 label_text = "Pregunta 9"
 icon_texture = ExtResource("12_oop13")
 
-[node name="Pregunta10" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta10" parent="ScrollContainer/Contenido/NodesContainer" unique_id=949029174 instance=ExtResource("4_questionnode")]
 position = Vector2(470, 1820)
 scale = Vector2(1.22, 1.22)
 nivel_id = 16
@@ -204,7 +210,7 @@ node_key = "alimentos_naturalmente_sin_gluten"
 label_text = "Pregunta 10"
 icon_texture = ExtResource("8_icon5")
 
-[node name="Pregunta11" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta11" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1697269579 instance=ExtResource("4_questionnode")]
 position = Vector2(760, 1900)
 scale = Vector2(1.26, 1.26)
 nivel_id = 17
@@ -213,16 +219,15 @@ node_key = "contaminacion_cruzada_cocina"
 label_text = "Pregunta 11"
 icon_texture = ExtResource("10_icon4")
 
-[node name="Pregunta12" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta12" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1039054974 instance=ExtResource("4_questionnode")]
 position = Vector2(970, 2070)
 scale = Vector2(1.28, 1.28)
 nivel_id = 18
 question_number = 12
 node_key = "lectura_etiquetas_sin_tacc"
 label_text = "Pregunta 12"
-icon_texture = ExtResource("11_oop13")
 
-[node name="Pregunta13" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta13" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1501354289 instance=ExtResource("4_questionnode")]
 position = Vector2(710, 2240)
 scale = Vector2(1.32, 1.32)
 nivel_id = 19
@@ -231,7 +236,7 @@ node_key = "diagnostico_no_suspender_gluten"
 label_text = "Pregunta 13"
 icon_texture = ExtResource("10_m2v86")
 
-[node name="Pregunta14" parent="ScrollContainer/Contenido/NodesContainer" instance=ExtResource("4_questionnode")]
+[node name="Pregunta14" parent="ScrollContainer/Contenido/NodesContainer" unique_id=397022552 instance=ExtResource("4_questionnode")]
 position = Vector2(390, 2320)
 scale = Vector2(1.35, 1.35)
 nivel_id = 20
@@ -239,6 +244,45 @@ question_number = 14
 node_key = "casos_cotidianos_sin_tacc"
 label_text = "Pregunta 14"
 icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta15" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400001 instance=ExtResource("4_questionnode")]
+position = Vector2(180, 2460)
+scale = Vector2(1.22, 1.22)
+nivel_id = 21
+question_number = 15
+label_text = "Pregunta 15"
+icon_texture = ExtResource("12_oop13")
+
+[node name="Pregunta16" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400002 instance=ExtResource("4_questionnode")]
+position = Vector2(450, 2550)
+scale = Vector2(1.24, 1.24)
+nivel_id = 22
+question_number = 16
+label_text = "Pregunta 16"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta17" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400003 instance=ExtResource("4_questionnode")]
+position = Vector2(760, 2640)
+scale = Vector2(1.28, 1.28)
+nivel_id = 23
+question_number = 17
+label_text = "Pregunta 17"
+icon_texture = ExtResource("10_icon4")
+
+[node name="Pregunta18" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400004 instance=ExtResource("4_questionnode")]
+position = Vector2(980, 2810)
+scale = Vector2(1.3, 1.3)
+nivel_id = 24
+question_number = 18
+label_text = "Pregunta 18"
+
+[node name="Pregunta19" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400005 instance=ExtResource("4_questionnode")]
+position = Vector2(700, 2960)
+scale = Vector2(1.34, 1.34)
+nivel_id = 25
+question_number = 19
+label_text = "Pregunta 19"
+icon_texture = ExtResource("10_m2v86")
 
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
 position = Vector2(591.99994, 142)

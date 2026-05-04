@@ -134,7 +134,7 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictio
 
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
-	nivel_id = int(contexto_sesion.get("nivel_id", nivel_id))
+	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
 	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
@@ -205,13 +205,34 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
-	boton_respuesta.text = texto_respuesta
+	boton_respuesta.text = _texto_display(texto_respuesta)
 	boton_respuesta.tooltip_text = texto_respuesta
 	boton_respuesta.set_meta("respuesta", texto_respuesta)
 	boton_respuesta.modulate = Color.WHITE
 	boton_respuesta.disabled = false
 	boton_respuesta.scale = Vector2.ONE
 	boton_respuesta.rotation_degrees = 0
+	boton_respuesta.add_theme_font_size_override("font_size", _font_size_para(texto_respuesta))
+
+
+const MAX_DISPLAY_CHARS := 55
+
+func _texto_display(texto: String) -> String:
+	if texto.length() <= MAX_DISPLAY_CHARS:
+		return texto
+	var corte: int = texto.rfind(" ", MAX_DISPLAY_CHARS)
+	if corte < MAX_DISPLAY_CHARS / 2:
+		corte = MAX_DISPLAY_CHARS
+	return texto.substr(0, corte) + "…"
+
+
+func _font_size_para(texto: String) -> int:
+	var largo: int = texto.length()
+	if largo > 40:
+		return 14
+	if largo > 25:
+		return 17
+	return 20
 
 
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
@@ -304,10 +325,9 @@ func _finalizar_quiz() -> void:
 	_show_post_game_completion()
 
 
-func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
+func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
 	if not _nodo_actual.is_empty():
 		Global.marcar_nodo_jugable_completado(track_key, _nodo_actual)
-	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
 
 
 func _on_questions_finished(

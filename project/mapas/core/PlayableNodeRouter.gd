@@ -3,10 +3,24 @@ extends RefCounted
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 
-const RUTAS_POR_MODO := {
+const SESSION_KEY_NODE_KEY := "node_key"
+const SESSION_KEY_NODE_TITLE := "node_title"
+const SESSION_KEY_JSON_PATH := "json_path"
+const SESSION_KEY_TRACK_KEY := "track_key"
+const SESSION_KEY_MODE := "mode"
+const SESSION_KEY_LEVEL_NUMBER := "level_number"
+const SESSION_KEY_RETURN_TO := "return_to"
+
+const SCENE_PATH_BY_MODE := {
 	NodeContentLoaderScript.MODE_QUIZ_CHOICE: GameSceneRouter.QUESTIONS_SCENE_PATH,
 	NodeContentLoaderScript.MODE_DRAG_DROP: "res://niveles/nivel_1/Level.tscn",
 }
+
+
+# Puente simple entre un nodo del mapa y la escena jugable.
+# Flujo nuevo: usar node_data.mode, guardar una sesion minima en Global
+# y abrir la escena correcta. El fallback que lee el JSON solo existe
+# para mapas legacy que todavia no guardan mode en el mapa.
 
 
 static func open_node(
@@ -19,7 +33,7 @@ static func open_node(
 	if node_data == null or not node_data.is_valid():
 		return _error("No se pudo abrir el nodo seleccionado.")
 
-	var mode_result: Dictionary = _resolve_node_mode(node_data)
+	var mode_result: Dictionary = _resolve_mode_for_routing(node_data)
 	if not bool(mode_result.get("ok", false)):
 		return mode_result
 
@@ -40,26 +54,32 @@ static func build_playable_session(
 	return_to: String,
 	mode: String = ""
 ) -> Dictionary:
-	return {
-		"node_key": node_data.node_key,
-		"node_title": node_data.title,
-		"json_path": node_data.json_path,
-		"track_key": node_data.track_key,
-		"nivel_id": node_data.index + 1,
-		"node_mode": mode.strip_edges(),
-		"return_to": return_to.strip_edges(),
+	var clean_mode: String = mode.strip_edges()
+	var level_number: int = node_data.index + 1
+	var session_state := {
+		SESSION_KEY_NODE_KEY: node_data.node_key,
+		SESSION_KEY_NODE_TITLE: node_data.title,
+		SESSION_KEY_JSON_PATH: node_data.json_path,
+		SESSION_KEY_TRACK_KEY: node_data.track_key,
+		SESSION_KEY_MODE: clean_mode,
+		SESSION_KEY_LEVEL_NUMBER: level_number,
+		SESSION_KEY_RETURN_TO: return_to.strip_edges(),
 	}
+
+	# El camino feliz solo emite claves nuevas y claras.
+	# Los aliases legacy siguen aceptados por algunos consumidores al leer sesiones viejas.
+	return session_state
 
 
 static func get_playable_scene_path(mode: String) -> String:
-	return str(RUTAS_POR_MODO.get(mode.strip_edges(), "")).strip_edges()
+	return str(SCENE_PATH_BY_MODE.get(mode.strip_edges(), "")).strip_edges()
 
 
 static func obtener_escena_jugable(modo: String) -> String:
 	return get_playable_scene_path(modo)
 
 
-static func _resolve_node_mode(node_data: MapNodeData) -> Dictionary:
+static func _resolve_mode_for_routing(node_data: MapNodeData) -> Dictionary:
 	var map_mode: String = node_data.mode.strip_edges()
 	if not map_mode.is_empty():
 		return {"ok": true, "error": "", "data": map_mode}

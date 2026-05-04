@@ -161,6 +161,19 @@ run_post_game_flow_controller() {
 }
 
 
+run_map_progress_visual() {
+	if [ ! -f project/tests/map_progress_visual_test.gd ]; then
+		echo "SKIP: Map progress visual test (project/tests/map_progress_visual_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02c-map-progress-visual" \
+		"Map progress visual test" \
+		"Se rompio el contrato del mapa de celiaquia, los estados visuales o el desbloqueo del siguiente nodo." \
+		--headless --path project -s res://tests/map_progress_visual_test.gd
+}
+
+
 run_codebase_suite() {
 	run_import_headless
 
@@ -174,6 +187,7 @@ run_smoke_suite() {
 	run_import_headless
 	run_question_json_contract
 	run_post_game_flow_controller
+	run_map_progress_visual
 	run_gameplay_smoke
 
 	write_success_summary \
@@ -186,6 +200,7 @@ run_ci_suite() {
 	run_import_headless
 	run_question_json_contract
 	run_post_game_flow_controller
+	run_map_progress_visual
 	run_gameplay_smoke
 
 	write_success_summary \
@@ -198,6 +213,7 @@ run_full_suite() {
 	run_import_headless
 	run_question_json_contract
 	run_post_game_flow_controller
+	run_map_progress_visual
 	run_gameplay_smoke
 
 	write_success_summary \

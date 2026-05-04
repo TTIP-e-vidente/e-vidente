@@ -6,9 +6,9 @@
   "mode": "quiz_choice",
   "content": {
     "question": "Si alguien sospecha celiaquia pero todavia no tiene diagnostico, cual es una decision segura?",
-    "correct_answer": "Consultar con profesionales de salud antes de iniciar una dieta sin gluten por cuenta propia",
+    "correct_answer": "Consultar al equipo de salud antes de empezar una dieta sin gluten",
     "wrong_options": [
-      "Sacar el gluten de inmediato y hacer estudios mucho despues",
+      "Sacar el gluten enseguida y hacer estudios despues",
       "Diagnosticar celiaquia solo por dolor de panza",
       "Evitar todos los cereales sin consultar"
     ],
