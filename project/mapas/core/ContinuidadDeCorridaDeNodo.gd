@@ -3,6 +3,7 @@ extends RefCounted
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 
+# Continuidad de la corrida
 static func continuar_o_finalizar_corrida(
 	tree: SceneTree,
 	antes_de_abrir_siguiente_juego: Callable = Callable(),
@@ -33,11 +34,20 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 
 	var juego_actual: Dictionary = estado.call("obtener_juego_actual_del_nodo")
 	var modo_actual: String = str(juego_actual.get("mode", "")).strip_edges()
-	if modo_actual.is_empty():
+	if not _es_modo_jugable_soportado(modo_actual):
 		return false
 
 	GameSceneRouter.ir_a_modo_jugable(tree, modo_actual)
 	return true
+
+
+# Helpers privados
+static func _es_modo_jugable_soportado(modo: String) -> bool:
+	match modo.strip_edges():
+		"drag_drop", "quiz_choice":
+			return true
+		_:
+			return false
 
 
 static func _obtener_estado_global(tree: SceneTree) -> Node:

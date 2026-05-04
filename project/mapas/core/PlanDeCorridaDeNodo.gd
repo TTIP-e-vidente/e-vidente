@@ -11,6 +11,7 @@ const RUTA_MAPA_POR_PISTA := {
 }
 
 
+# Plan de corrida
 static func construir_plan_de_corrida(node_data: MapNodeData) -> Dictionary:
 	if node_data == null or not node_data.is_valid():
 		return {}
@@ -36,6 +37,7 @@ static func obtener_cantidad_de_juegos_para_nodo(node_index: int) -> int:
 	return mini(MAXIMO_JUEGOS_POR_NODO, maxi(1, node_index))
 
 
+# Armado de juegos
 static func construir_juegos_para_nodo(node_data: MapNodeData, total_juegos: int) -> Array[Dictionary]:
 	var total_juegos_seguro: int = maxi(1, total_juegos)
 	var juegos: Array[Dictionary] = []
@@ -66,6 +68,7 @@ static func construir_juegos_para_nodo(node_data: MapNodeData, total_juegos: int
 	return juegos
 
 
+# Helpers privados
 static func _cargar_nodos_de_pista(track_key: String) -> Array[MapNodeData]:
 	var ruta_mapa: String = str(RUTA_MAPA_POR_PISTA.get(track_key.strip_edges(), "")).strip_edges()
 	if ruta_mapa.is_empty():

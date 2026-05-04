@@ -1,9 +1,7 @@
 extends CanvasLayer
 
-const ANCHO_MINIMO_PANEL := 240.0
 const MAXIMO_CARACTERES_TITULO := 28
 
-@onready var _contenedor_margen: MarginContainer = $CapaHud/ContenedorMargen
 @onready var _panel: PanelContainer = $CapaHud/ContenedorMargen/ColumnaHud/FilaSuperior/Panel
 @onready var _texto_contexto: Label = $CapaHud/ContenedorMargen/ColumnaHud/FilaSuperior/Panel/Padding/Fila/TextoContexto
 @onready var _texto_progreso: Label = $CapaHud/ContenedorMargen/ColumnaHud/FilaSuperior/Panel/Padding/Fila/TextoProgreso
@@ -12,19 +10,18 @@ var _entrada_sutil_reproducida := false
 
 
 func _ready() -> void:
-	if _panel != null:
-		_panel.custom_minimum_size = Vector2(ANCHO_MINIMO_PANEL, 0.0)
-	_reproducir_entrada_sutil()
+	_mostrar_con_animacion()
 
 
+# Compatibilidad
 func configurar(contexto: Dictionary) -> void:
 	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
 	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
-	var titulo: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
 	var dificultad: int = int(contexto.get("dificultad", 0))
-	if titulo.is_empty() and dificultad > 0:
-		titulo = "Dificultad %d" % dificultad
-	actualizar(titulo, indice_juego_actual, total_juegos)
+	if titulo_juego.is_empty() and dificultad > 0:
+		titulo_juego = "Dificultad %d" % dificultad
+	actualizar(titulo_juego, indice_juego_actual, total_juegos)
 
 
 func actualizar(titulo: String, indice_juego_actual: int, total_juegos: int) -> void:
@@ -47,7 +44,7 @@ func _acortar_titulo_para_hud(titulo: String) -> String:
 	return titulo_limpio.substr(0, MAXIMO_CARACTERES_TITULO - 3).strip_edges() + "..."
 
 
-func _reproducir_entrada_sutil() -> void:
+func _mostrar_con_animacion() -> void:
 	if _entrada_sutil_reproducida:
 		return
 	if _panel == null:

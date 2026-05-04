@@ -11,7 +11,7 @@ const ContinuidadDeCorridaDeNodoScript := preload(
 	"res://mapas/core/ContinuidadDeCorridaDeNodo.gd"
 )
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
-const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
+const ESCENA_CONTINUADOR := preload("res://interface/components/ContinueCountdown.tscn")
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
@@ -56,8 +56,9 @@ var pregunta_actual: Preguntas:
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
 @onready var _contenedor_continuacion_legacy: VBoxContainer = $Contenido/ContinuacionAutomatica
-@onready var _indicador_de_progreso_de_juego: CanvasLayer = $IndicadorProgresoDeJuego
+@onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
 
+# Entrada del quiz
 func _ready() -> void:
 	puntaje = 0
 	_crear_continuador()
@@ -73,6 +74,7 @@ func _ready() -> void:
 	mostrar_pregunta()
 
 
+# Helpers de preparación
 func _recolectar_botones_respuesta() -> void:
 	botones.clear()
 	_plantillas_botones_respuesta.clear()
@@ -173,22 +175,17 @@ func _obtener_json_path_actual(contexto_sesion: Dictionary = {}) -> String:
 
 
 func _configurar_indicador_de_progreso_de_juego() -> void:
-	if _indicador_de_progreso_de_juego == null or not is_instance_valid(_indicador_de_progreso_de_juego):
+	if _indicador_de_progreso_de_juego == null:
 		return
 	var contexto: Dictionary = _obtener_contexto_de_progreso_de_juego()
-	var titulo: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
-	var juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
+	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
 	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
-	if _indicador_de_progreso_de_juego.has_method("actualizar"):
-		_indicador_de_progreso_de_juego.call(
-			"actualizar",
-			titulo,
-			juego_actual,
-			total_juegos
-		)
-		return
-	if _indicador_de_progreso_de_juego.has_method("configurar"):
-		_indicador_de_progreso_de_juego.call("configurar", contexto)
+	_indicador_de_progreso_de_juego.actualizar(
+		titulo_juego,
+		indice_juego_actual,
+		total_juegos
+	)
 
 
 func _obtener_contexto_de_progreso_de_juego() -> Dictionary:
@@ -209,6 +206,7 @@ func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
 
+# Gameplay del quiz
 func mostrar_pregunta() -> void:
 	bloqueado = false
 
@@ -359,6 +357,7 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
 
 
+# Finalización de partida
 func _finalizar_quiz() -> void:
 	_finalizar_partida()
 
@@ -545,6 +544,7 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 	_mensaje_error_bloqueante = mensaje_limpio
 
 
+# Navegación y continuidad
 func _on_jugar_nuevamente_pressed() -> void:
 	volver_al_mapa()
 
@@ -559,7 +559,7 @@ func _on_atras_pressed() -> void:
 ## --- Continuación desde mapa ---
 
 func _crear_continuador() -> void:
-	continuador = ContinueCountdownScene.instantiate()
+	continuador = ESCENA_CONTINUADOR.instantiate()
 	_contenido.add_child(continuador)
 	_ubicar_continuador()
 	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
