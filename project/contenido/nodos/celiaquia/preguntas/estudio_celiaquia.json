@@ -5,9 +5,9 @@
 	"difficulty": "easy",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "Para hacer un estudio de celiaquia, tenes que dejar de comer cosas con gluten antes del estudio de sangre o de la biopsia intestinal?",
-		"correct_answer": "Si",
-		"wrong_options": ["No"],
+		"question": "Antes de un analisis o biopsia para diagnosticar celiaquia, hay que dejar de comer gluten?",
+		"correct_answer": "No",
+		"wrong_options": ["Si"],
 		"visual_resource": ""
 	}
 }

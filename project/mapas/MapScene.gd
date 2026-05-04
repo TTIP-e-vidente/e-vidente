@@ -29,7 +29,7 @@ func _ready() -> void:
 	)
 
 	Global.limpiar_sesion_nodo_jugable_activo()
-	mostrar_nodos()
+	refresh_node_states()
 	_restaurar_scroll_guardado_del_mapa()
 
 	var nodo_actual: String = Global.consumir_nodo_a_continuar()
@@ -73,18 +73,21 @@ func cargar_mapa() -> void:
 
 
 func mostrar_nodos() -> void:
+	refresh_node_states()
+
+
+func refresh_node_states() -> void:
 	if map_board == null or not map_board.has_method("configurar_nodos"):
 		return
 
-	var unlocked_by_index: Array[bool] = []
-	var completed_by_index: Array[bool] = []
-	for index in range(nodos_mapa.size()):
-		var node_data: MapNodeData = nodos_mapa[index]
-		var progress_state: Dictionary = MapProgressScript.get_node_state(nodos_mapa, node_data)
-		completed_by_index.append(bool(progress_state.get("is_completed", false)))
-		unlocked_by_index.append(bool(progress_state.get("is_unlocked", false)))
+	var node_states: Array[Dictionary] = []
+	for node_data in nodos_mapa:
+		node_states.append(MapProgressScript.get_node_state(nodos_mapa, node_data))
 
-	map_board.call("configurar_nodos", nodos_mapa, unlocked_by_index, completed_by_index)
+	if map_board.has_method("refresh_node_states"):
+		map_board.call("refresh_node_states", nodos_mapa, node_states)
+		return
+	map_board.call("configurar_nodos", nodos_mapa, node_states)
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:
@@ -116,7 +119,7 @@ func continuar_desde_nodo(node_key: String) -> void:
 		return
 	var next_state: Dictionary = MapProgressScript.get_node_state(nodos_jugables, next_node)
 	if bool(next_state.get("is_completed", false)):
-		mostrar_nodos()
+		refresh_node_states()
 		_desplazar_a_proximo_disponible()
 		return
 	abrir_nodo_del_mapa(next_node)
@@ -135,7 +138,7 @@ func obtener_nodo_mapa(node_key: String) -> MapNodeData:
 
 
 func volver_al_mapa() -> void:
-	mostrar_nodos()
+	refresh_node_states()
 	_desplazar_a_proximo_disponible()
 	_mostrar_completado_del_mapa_si_corresponde()
 
@@ -162,16 +165,7 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 
 
 func _obtener_nodos_jugables() -> Array[MapNodeData]:
-	if map_board == null or not map_board.has_method("obtener_nodos_runtime_mapa"):
-		return nodos_mapa
-	var visual_arr: Array = map_board.call("obtener_nodos_runtime_mapa")
-	var count: int = mini(visual_arr.size(), nodos_mapa.size())
-	if count >= nodos_mapa.size():
-		return nodos_mapa
-	var result: Array[MapNodeData] = []
-	for i in range(count):
-		result.append(nodos_mapa[i])
-	return result
+	return nodos_mapa
 
 
 func _popup_completado_activo() -> bool:

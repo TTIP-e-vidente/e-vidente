@@ -69,14 +69,20 @@ static func limpiar_datos_nodo(datos_nodo: Dictionary) -> Dictionary:
 static func _validar_quiz(contenido: Dictionary) -> String:
 	if str(contenido.get("question", "")).strip_edges().is_empty():
 		return "Quiz: falta question."
-	if str(contenido.get("correct_answer", "")).strip_edges().is_empty():
+	var respuesta_correcta: String = str(contenido.get("correct_answer", "")).strip_edges()
+	if respuesta_correcta.is_empty():
 		return "Quiz: falta correct_answer."
 
 	var opciones_incorrectas: Variant = contenido.get("wrong_options", [])
 	if not opciones_incorrectas is Array:
 		return "Quiz: wrong_options debe ser una lista."
-	if _limpiar_textos(opciones_incorrectas).is_empty():
+	var wrong_options: Array[String] = _limpiar_textos(opciones_incorrectas)
+	if wrong_options.is_empty():
 		return "Quiz: wrong_options debe tener al menos una opcion."
+	if wrong_options.has(respuesta_correcta):
+		return "Quiz: wrong_options no puede incluir correct_answer."
+	if wrong_options.size() > 3:
+		return "Quiz: no puede tener mas de 4 opciones totales."
 	return ""
 
 

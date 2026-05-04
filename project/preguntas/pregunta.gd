@@ -134,7 +134,7 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictio
 
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
-	nivel_id = int(contexto_sesion.get("nivel_id", nivel_id))
+	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
 	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
@@ -325,10 +325,9 @@ func _finalizar_quiz() -> void:
 	_show_post_game_completion()
 
 
-func _guardar_progreso_de_mapa(cantidad_preguntas: int) -> void:
+func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
 	if not _nodo_actual.is_empty():
 		Global.marcar_nodo_jugable_completado(track_key, _nodo_actual)
-	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
 
 
 func _on_questions_finished(

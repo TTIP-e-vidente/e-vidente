@@ -148,7 +148,7 @@ func _load_playable_session() -> void:
 
 	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
-	_json_path_nodo_actual = _read_node_json_path(_contexto_nodo_mapa)
+	_json_path_nodo_actual = _read_playable_json_path(_contexto_nodo_mapa)
 	_ruta_escena_retorno = GameSceneRouter.read_return_to(
 		_contexto_nodo_mapa,
 		GameSceneRouter.MAP_SCENE_PATH
@@ -159,9 +159,10 @@ func _load_playable_session() -> void:
 	current_node = MapNodeDataScript.new()
 	current_node.node_key = _nodo_actual
 	current_node.title = str(_contexto_nodo_mapa.get("node_title", "")).strip_edges()
+	current_node.mode = _read_playable_mode(_contexto_nodo_mapa)
 	current_node.json_path = _json_path_nodo_actual
 	current_node.track_key = _track_key_contexto
-	current_node.index = max(0, int(_contexto_nodo_mapa.get("nivel_id", 1)) - 1)
+	current_node.index = max(0, _read_playable_level_number(_contexto_nodo_mapa) - 1)
 
 	if not _json_path_nodo_actual.is_empty():
 		load_level_from_json(_json_path_nodo_actual)
@@ -198,11 +199,19 @@ func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
-func _read_node_json_path(session_context: Dictionary) -> String:
+func _read_playable_json_path(session_context: Dictionary) -> String:
 	var clean_path: String = str(session_context.get("json_path", "")).strip_edges()
 	if not clean_path.is_empty():
 		return clean_path
 	return str(session_context.get("node_json_path", "")).strip_edges()
+
+
+func _read_playable_level_number(session_context: Dictionary) -> int:
+	return int(session_context.get("level_number", session_context.get("nivel_id", 1)))
+
+
+func _read_playable_mode(session_context: Dictionary) -> String:
+	return str(session_context.get("mode", session_context.get("node_mode", ""))).strip_edges()
 
 
 func _reproducir_audio_nivel() -> void:
