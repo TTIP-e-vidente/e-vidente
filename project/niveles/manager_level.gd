@@ -4,6 +4,7 @@ class_name ManagerLevel
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const LevelItemScript := preload("res://resources/level_item.gd")
 const GameTrackItemPoolCatalogScript := preload(
 	"res://niveles/content/catalog/GameTrackItemPoolCatalog.gd"
 )
@@ -17,6 +18,8 @@ const PLATE_ITEM_ROW_SPACING := 48.0
 const PLATE_ITEM_VERTICAL_OFFSET := -12.0
 const PARTIAL_SAVE_UNIT_SINGULAR := "alimento correcto en el plato"
 const PARTIAL_SAVE_UNIT_PLURAL := "alimentos correctos en el plato"
+const RUTA_ESCENA_ELEMENTO_ARRASTRE := "res://items/item_level.tscn"
+const RUTA_TEXTURA_ELEMENTO_POR_DEFECTO := "res://assets-sistema/interfaz/desayuno.png"
 
 @export var level_resource: Resource = null
 @export var level_resource_path := ""
@@ -48,6 +51,220 @@ func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	var saved_level_state: Dictionary = _obtener_estado_guardado_actual()
 	active_run_index = _resolver_indice_partida(saved_level_state)
 	_cargar_partida_actual(saved_level_state)
+
+
+func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dictionary, level_scene: Node) -> bool:
+	# Inicializa el nivel usando directamente el contenido (content) de un JSON de arrastre.
+	# No reemplaza el flujo legacy: es un entrypoint mínimo para consumir JSON oficial.
+	if not _conectar_escena_nodos(level_scene):
+		return false
+
+	active_track_key = track_key.strip_edges()
+	# limpiar runtime previo
+	limpiar_tiempo_ejecucion_elementos()
+	active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+
+	var datos_arrastre: Dictionary = _extraer_datos_de_arrastre(contenido_arrastre)
+	var escena_elemento: PackedScene = _cargar_escena_elemento_de_arrastre()
+	if escena_elemento == null:
+		return false
+
+	var elementos_de_arrastre: Dictionary = _crear_elementos_desde_datos_de_arrastre(
+		datos_arrastre.get("elementos", []),
+		escena_elemento
+	)
+	if not _hay_elementos_de_arrastre_validos(elementos_de_arrastre):
+		push_warning("ManagerLevel: el JSON de arrastre no generó elementos runtime válidos.")
+		return false
+
+	_aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre)
+	_asegurar_recurso_nivel_para_arrastre()
+	_guardar_contenido_de_arrastre_en_recurso(
+		contenido_arrastre,
+		datos_arrastre.get("objetivos", []),
+		elementos_de_arrastre,
+		level_scene
+	)
+	_aplicar_configuracion_de_dificultad_arrastre()
+	_instanciar_elementos_de_arrastre()
+
+	if level_items.is_empty():
+		push_warning("ManagerLevel: no se pudieron instanciar comidas de arrastre desde el JSON.")
+		return false
+
+	level_items.shuffle()
+	distribuir_tiempo_ejecucion_elementos()
+	_aplicar_ayuda_visual_de_arrastre()
+	return true
+
+
+func _extraer_datos_de_arrastre(contenido_arrastre: Dictionary) -> Dictionary:
+	var elementos: Array = []
+	var objetivos: Array = []
+	if contenido_arrastre is Dictionary:
+		elementos = contenido_arrastre.get("items", []) if contenido_arrastre.has("items") else contenido_arrastre.get("content", {}).get("items", [])
+		objetivos = contenido_arrastre.get("targets", []) if contenido_arrastre.has("targets") else contenido_arrastre.get("content", {}).get("targets", [])
+	return {
+		"elementos": elementos,
+		"objetivos": objetivos,
+	}
+
+
+func _cargar_escena_elemento_de_arrastre() -> PackedScene:
+	var escena_elemento: PackedScene = load(RUTA_ESCENA_ELEMENTO_ARRASTRE) as PackedScene
+	if escena_elemento == null:
+		push_warning(
+			"ManagerLevel: no se pudo cargar la escena de arrastre %s."
+			% RUTA_ESCENA_ELEMENTO_ARRASTRE
+		)
+	return escena_elemento
+
+
+func _crear_elementos_desde_datos_de_arrastre(
+	elementos_crudos: Array,
+	escena_elemento: PackedScene
+) -> Dictionary:
+	var positivos: Array = []
+	var negativos: Array = []
+	for elemento_crudo in elementos_crudos:
+		var nivel_item: Resource = _crear_elemento_de_arrastre_desde_datos(
+			elemento_crudo,
+			escena_elemento
+		)
+		if nivel_item == null:
+			continue
+		if bool(nivel_item.esPositivo):
+			positivos.append(nivel_item)
+		else:
+			negativos.append(nivel_item)
+	return {
+		"positivos": positivos,
+		"negativos": negativos,
+	}
+
+
+func _crear_elemento_de_arrastre_desde_datos(
+	elemento_crudo: Variant,
+	escena_elemento: PackedScene
+) -> Resource:
+	if not elemento_crudo is Dictionary:
+		return null
+	var datos_elemento: Dictionary = elemento_crudo as Dictionary
+	var nivel_item = LevelItemScript.new()
+	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(datos_elemento)
+	nivel_item.sprite = textura_elemento
+	nivel_item.escena = escena_elemento
+	nivel_item.info = nivel_item.sprite
+	nivel_item.categoria = str(datos_elemento.get("category", "")).strip_edges()
+	nivel_item.esPositivo = str(datos_elemento.get("correct_target", "")).strip_edges() != ""
+	return nivel_item
+
+
+func _hay_elementos_de_arrastre_validos(elementos_de_arrastre: Dictionary) -> bool:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	return not positivos.is_empty() or not negativos.is_empty()
+
+
+func _aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre: Dictionary) -> void:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	active_positive_item_count = positivos.size()
+	active_negative_item_count = negativos.size()
+
+
+func _asegurar_recurso_nivel_para_arrastre() -> void:
+	if not level_resource:
+		level_resource = LevelResourceScript.new()
+
+
+func _guardar_contenido_de_arrastre_en_recurso(
+	contenido_arrastre: Dictionary,
+	objetivos_crudos: Array,
+	elementos_de_arrastre: Dictionary,
+	level_scene: Node
+) -> void:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	level_resource.itemsPositivos = positivos
+	level_resource.itemsNegativos = negativos
+	level_resource.cantidadPositivos = active_positive_item_count
+	level_resource.cantidadNegativos = active_negative_item_count
+	level_resource.ensenanza = _resolver_textura_de_ensenanza_para_arrastre(level_scene)
+	var mensaje_exito: String = str(contenido_arrastre.get("success_message", "")).strip_edges()
+	var mensaje_error: String = str(contenido_arrastre.get("error_message", "")).strip_edges()
+	level_resource.mechanic_payload = {
+		"targets": objetivos_crudos,
+		"instruction": contenido_arrastre.get("instruction", ""),
+		"mensaje_exito": mensaje_exito,
+		"mensaje_error": mensaje_error,
+	}
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.texture = level_resource.ensenanza
+
+
+func _resolver_textura_de_ensenanza_para_arrastre(level_scene: Node) -> Texture2D:
+	var numero_nivel: int = _obtener_numero_nivel_para_arrastre(level_scene)
+	if numero_nivel <= 0:
+		return null
+	var definicion_capitulo: Dictionary = Global.obtener_capitulo_partida_definicion(
+		active_track_key,
+		numero_nivel,
+		max(1, active_run_index)
+	)
+	if definicion_capitulo.is_empty():
+		return null
+	var ruta_ensenanza: String = str(
+		definicion_capitulo.get("teaching_texture_path", "")
+	).strip_edges()
+	if ruta_ensenanza.is_empty():
+		return null
+	return GameChapterAssetCatalogScript.resolver_textura(ruta_ensenanza)
+
+
+func _obtener_numero_nivel_para_arrastre(level_scene: Node) -> int:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var numero_nivel: int = int(juego_actual.get("level_number", 0))
+	if numero_nivel > 0:
+		return numero_nivel
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	numero_nivel = int(sesion_jugable.get("level_number", sesion_jugable.get("nivel_id", 0)))
+	if numero_nivel > 0:
+		return numero_nivel
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			var contexto_nodo: Dictionary = contexto_variant as Dictionary
+			numero_nivel = int(
+				contexto_nodo.get("level_number", contexto_nodo.get("nivel_id", 0))
+			)
+			if numero_nivel > 0:
+				return numero_nivel
+
+	return int(Global.current_level)
+
+
+func _instanciar_elementos_de_arrastre() -> void:
+	for i in range(min(active_positive_item_count, level_resource.itemsPositivos.size())):
+		generar_nivel_elemento(level_resource.itemsPositivos[i], "positive_%d" % i, true)
+	for j in range(min(active_negative_item_count, level_resource.itemsNegativos.size())):
+		generar_nivel_elemento(level_resource.itemsNegativos[j], "negative_%d" % j, false)
+
+
+func _resolver_textura_elemento_arrastre(elemento_crudo: Dictionary) -> Texture2D:
+	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
+	var textura_elemento: Texture2D = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+	if textura_elemento != null:
+		return textura_elemento
+
+	var identificador_elemento: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
+	push_warning(
+		"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s). Se usará una textura por defecto."
+		% [identificador_elemento, ruta_textura]
+	)
+	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
 
 
 func establecer_configuracion_de_dificultad_arrastre(configuracion: Dictionary) -> void:
@@ -191,8 +408,15 @@ func filtrar_elementos_por_categoria(items: Array, category: String) -> Array:
 
 # --- Runtime de items ---------------------------------------------------------
 func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
+	if level_item == null:
+		push_warning("ManagerLevel: se intentó instanciar un elemento nulo.")
+		return null
+	if level_item.escena == null:
+		push_warning("ManagerLevel: el elemento '%s' no tiene escena instanciable." % instance_id)
+		return null
 	var level_item_instance: Node = level_item.escena.instantiate()
 	if level_item_instance == null:
+		push_warning("ManagerLevel: falló la instanciación del elemento '%s'." % instance_id)
 		return null
 	level_item_instance.setup(level_item, plato, is_positive, instance_id)
 	add_child(level_item_instance)

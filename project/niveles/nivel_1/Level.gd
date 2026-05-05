@@ -52,6 +52,14 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
+@onready var capa_ensenanza_texto: Control = (
+	get_node_or_null("CanvasEnsenanzaTexto/CapaEnsenanzaTexto") as Control
+)
+@onready var label_ensenanza_texto: Label = (
+	get_node_or_null(
+		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/LabelEnsenanzaTexto"
+	) as Label
+)
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
@@ -112,16 +120,28 @@ func _cargar_recursos_runtime() -> void:
 ## --- Arranque ---
 
 func iniciar_flujo_del_nivel() -> void:
-	cargar_sesion_jugable()
+	cargar_contenido_del_nivel()
 	resolver_pista_activa()
 	reiniciar_estado_de_partida()
-	iniciar_runtime_del_nivel()
+	iniciar_runtime_de_arrastre()
 	_reproducir_audio_nivel()
 
 
 # Flujo feliz del nivel
-func cargar_sesion_jugable() -> void:
+func cargar_contenido_del_nivel() -> void:
+	_reiniciar_contexto_jugable_del_nivel()
 	_contexto_nodo_mapa = _obtener_contexto_jugable_actual()
+	if _contexto_nodo_mapa.is_empty():
+		return
+
+	_aplicar_contexto_jugable_del_nivel(_contexto_nodo_mapa)
+	if not _json_path_nodo_actual.is_empty():
+		cargar_contenido_del_nivel_desde_json(_json_path_nodo_actual)
+
+	_usa_flujo_mapa = not _nodo_actual.is_empty()
+
+
+func _reiniciar_contexto_jugable_del_nivel() -> void:
 	current_node = null
 	_datos_nodo_mapa = {}
 	_usa_flujo_mapa = false
@@ -131,17 +151,16 @@ func cargar_sesion_jugable() -> void:
 	_track_key_contexto = ""
 	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
 
-	if _contexto_nodo_mapa.is_empty():
-		return
 
+func _aplicar_contexto_jugable_del_nivel(contexto_jugable: Dictionary) -> void:
 	_pertenece_a_partida_de_nodo = bool(
-		_contexto_nodo_mapa.get("pertenece_a_partida_de_nodo", false)
+		contexto_jugable.get("pertenece_a_partida_de_nodo", false)
 	)
-	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
-	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
-	_json_path_nodo_actual = _leer_json_path_jugable(_contexto_nodo_mapa)
+	_nodo_actual = str(contexto_jugable.get("node_key", "")).strip_edges()
+	_track_key_contexto = str(contexto_jugable.get("track_key", "")).strip_edges()
+	_json_path_nodo_actual = _leer_json_path_jugable(contexto_jugable)
 	_ruta_escena_retorno = GameSceneRouter.read_return_to(
-		_contexto_nodo_mapa,
+		contexto_jugable,
 		GameSceneRouter.MAP_SCENE_PATH
 	)
 	if _ruta_escena_retorno.is_empty():
@@ -149,16 +168,11 @@ func cargar_sesion_jugable() -> void:
 
 	current_node = MapNodeDataScript.new()
 	current_node.node_key = _nodo_actual
-	current_node.title = str(_contexto_nodo_mapa.get("node_title", "")).strip_edges()
-	current_node.mode = _leer_modo_jugable(_contexto_nodo_mapa)
+	current_node.title = str(contexto_jugable.get("node_title", "")).strip_edges()
+	current_node.mode = _leer_modo_jugable(contexto_jugable)
 	current_node.json_path = _json_path_nodo_actual
 	current_node.track_key = _track_key_contexto
-	current_node.index = max(0, _leer_numero_de_nivel_jugable(_contexto_nodo_mapa) - 1)
-
-	if not _json_path_nodo_actual.is_empty():
-		cargar_nivel_desde_json(_json_path_nodo_actual)
-
-	_usa_flujo_mapa = not _nodo_actual.is_empty()
+	current_node.index = max(0, _leer_numero_de_nivel_jugable(contexto_jugable) - 1)
 
 
 func resolver_pista_activa() -> void:
@@ -179,15 +193,62 @@ func reiniciar_estado_de_partida() -> void:
 	next_chapter_button.disabled = true
 
 
-func iniciar_runtime_del_nivel() -> void:
+func iniciar_runtime_de_arrastre() -> void:
 	if manager_level == null:
 		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
 		return
 	_aplicar_dificultad_de_arrastre()
+	# Intentar iniciar arrastre desde JSON oficial; si falla, usar flujo legacy.
+	if _intentar_iniciar_arrastre_desde_json():
+		return
+	_iniciar_arrastre_legacy()
+
+
+func _iniciar_arrastre_legacy() -> void:
 	manager_level.iniciar_nivel_sesion(active_track_key, self)
-	var resolved_level_number := _numero_nivel_valido(active_track_key)
-	if resolved_level_number > 0:
-		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
+	var nivel_numero_resuelto: int = _numero_nivel_valido(active_track_key)
+	if nivel_numero_resuelto > 0:
+		SaveManager.establecer_reanudar_en_nivel(active_track_key, nivel_numero_resuelto)
+
+
+## --- Soporte: iniciar arrastre desde JSON -------------------------------
+func _intentar_iniciar_arrastre_desde_json() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	if current_node == null:
+		return false
+	if str(current_node.mode).strip_edges() != "drag_drop":
+		return false
+
+	# ya puede estar cargado por cargar_contenido_del_nivel_desde_json
+	var nodo_datos: Dictionary = _datos_nodo_mapa
+	if nodo_datos.is_empty():
+		var ruta := _json_path_nodo_actual
+		if ruta.is_empty():
+			return false
+		var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta)
+		if not bool(result.get("ok", false)):
+			push_warning("Level: no se pudo leer JSON de arrastre: %s" % str(result.get("error", "")))
+			return false
+		nodo_datos = result.get("data", {})
+
+	var conversion: Dictionary = NodeContentLoaderScript.convertir_arrastre_a_runtime(nodo_datos)
+	if not bool(conversion.get("ok", false)):
+		push_warning("Level: JSON no válido para arrastre: %s" % str(conversion.get("error", "")))
+		return false
+
+	var contenido_arrastre: Dictionary = conversion.get("data", {})
+	# delegar a ManagerLevel si implementa el entrypoint
+	if manager_level != null and manager_level.has_method("iniciar_desde_datos_de_arrastre"):
+		var inicio_arrastre_ok: bool = bool(
+			manager_level.iniciar_desde_datos_de_arrastre(active_track_key, contenido_arrastre, self)
+		)
+		if not inicio_arrastre_ok:
+			push_warning("Level: no se pudo inicializar el arrastre desde JSON; usando flujo legacy.")
+		return inicio_arrastre_ok
+	# si no existe el método en ManagerLevel, fallback
+	push_warning("ManagerLevel no soporta iniciar desde JSON; usando flujo legacy.")
+	return false
 
 
 func _aplicar_dificultad_de_arrastre() -> void:
@@ -234,7 +295,7 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 	)
 
 
-func cargar_nivel_desde_json(json_path: String) -> void:
+func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 	var clean_path: String = json_path.strip_edges()
 	if clean_path.is_empty():
 		push_error("Level: falta json_path para cargar el nivel.")
@@ -345,6 +406,7 @@ func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
 func _mostrar_ensenanza_del_nivel() -> void:
 	_current_run_completion_handled = true
 	mostrar_estado_de_finalizacion()
+	_mostrar_ensenanza_de_cierre()
 	mostrar_continuacion()
 	run_completed.emit()
 
@@ -358,6 +420,7 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
+		_mostrar_ensenanza_de_cierre()
 		mostrar_continuacion()
 		run_completed.emit()
 		return
@@ -708,7 +771,11 @@ func _bloquear_completado_partida() -> void:
 	Item_level.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	next_chapter_button.disabled = false
-	teaching_sprite.show()
+	_ocultar_ensenanza_textual()
+	if is_instance_valid(teaching_sprite) and teaching_sprite.texture != null:
+		teaching_sprite.show()
+	elif is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
 	_aplicar_finalizacion_visual_estado()
 
 
@@ -717,8 +784,16 @@ func _restaurar_estado_posterior_finalizacion() -> void:
 	_establecer_interacciones_jugabilidad_habilitadas(true)
 	next_chapter_button.show()
 	teaching_sprite.hide()
+	_ocultar_ensenanza_textual()
 	if continuador != null:
 		continuador.ocultar()
+
+
+func _ocultar_ensenanza_textual() -> void:
+	if is_instance_valid(capa_ensenanza_texto):
+		capa_ensenanza_texto.hide()
+	if is_instance_valid(label_ensenanza_texto):
+		label_ensenanza_texto.text = ""
 
 
 func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
@@ -780,6 +855,14 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		return true
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
+	if is_instance_valid(capa_ensenanza_texto) and (
+		runtime_node == capa_ensenanza_texto or capa_ensenanza_texto.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(label_ensenanza_texto) and (
+		runtime_node == label_ensenanza_texto or label_ensenanza_texto.is_ancestor_of(runtime_node)
+	):
+		return true
 	if is_instance_valid(save_feedback_backdrop) and (
 		runtime_node == save_feedback_backdrop
 		or save_feedback_backdrop.is_ancestor_of(runtime_node)
@@ -790,6 +873,78 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 	):
 		return true
 	return false
+
+
+## --- Enseñanza: mostrar imagen o texto -------------------------------
+func _hay_textura_de_ensenanza() -> bool:
+	return is_instance_valid(teaching_sprite) and teaching_sprite.texture != null
+
+
+func _mostrar_imagen_de_ensenanza() -> void:
+	_ocultar_ensenanza_textual()
+	if is_instance_valid(teaching_sprite) and teaching_sprite.texture != null:
+		teaching_sprite.show()
+
+
+func _mostrar_texto_de_ensenanza(mensaje: String) -> void:
+	var mensaje_visible: String = str(mensaje).strip_edges()
+	if mensaje_visible.is_empty():
+		mensaje_visible = _obtener_mensaje_fallback_de_ensenanza()
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+	if not is_instance_valid(capa_ensenanza_texto) or not is_instance_valid(label_ensenanza_texto):
+		push_warning("CapaEnsenanzaTexto o LabelEnsenanzaTexto no encontrados; no se puede mostrar texto de enseñanza.")
+		return
+	# Mostrar el mensaje en una capa dedicada para que no compita con la bandeja inferior.
+	label_ensenanza_texto.modulate = Color(1, 1, 1, 1)
+	label_ensenanza_texto.text = mensaje_visible
+	capa_ensenanza_texto.show()
+
+
+func _obtener_mensaje_de_ensenanza_desde_runtime() -> String:
+	if not is_instance_valid(manager_level):
+		return ""
+	var nivel_recurso: LevelResource = manager_level.level_resource
+	if nivel_recurso == null:
+		return ""
+	var payload: Dictionary = {}
+	if nivel_recurso.has_method("get"):
+		# level_resource podría ser Resource; intentar acceder a mechanic_payload
+		pass
+	payload = nivel_recurso.mechanic_payload if nivel_recurso and nivel_recurso.mechanic_payload else {}
+
+	var es_exito: bool = true
+	if is_instance_valid(manager_level) and manager_level.has_method("tiene_completado_actual_partida"):
+		es_exito = bool(manager_level.tiene_completado_actual_partida())
+
+	if es_exito:
+		var msg_exito: String = str(payload.get("mensaje_exito", "")).strip_edges()
+		if not msg_exito.is_empty():
+			return msg_exito
+	else:
+		var msg_error: String = str(payload.get("mensaje_error", "")).strip_edges()
+		if not msg_error.is_empty():
+			return msg_error
+
+	return ""
+
+
+func _obtener_mensaje_fallback_de_ensenanza() -> String:
+	return "¡Buen trabajo! Completaste este desafío."
+
+
+func _mostrar_ensenanza_de_cierre() -> void:
+	# Decide si mostrar imagen, texto del runtime o fallback.
+	if _hay_textura_de_ensenanza():
+		_mostrar_imagen_de_ensenanza()
+		return
+
+	var mensaje_runtime: String = _obtener_mensaje_de_ensenanza_desde_runtime()
+	if not str(mensaje_runtime).strip_edges().is_empty():
+		_mostrar_texto_de_ensenanza(mensaje_runtime)
+		return
+
+	_mostrar_texto_de_ensenanza(_obtener_mensaje_fallback_de_ensenanza())
 
 
 func restaurar_finalizacion_visual_estado() -> void:

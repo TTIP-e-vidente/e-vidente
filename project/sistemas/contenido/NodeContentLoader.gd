@@ -74,3 +74,36 @@ static func _result_ok(datos_nodo: Dictionary) -> Dictionary:
 
 static func _result_error(mensaje: String) -> Dictionary:
 	return { "ok": false, "data": {}, "error": mensaje }
+
+
+static func convertir_arrastre_a_runtime(node_data: Dictionary) -> Dictionary:
+	# Convierte la sección "content" de un JSON de tipo drag_drop
+	# a una representación mínima y validada lista para que el runtime la consuma.
+	if node_data is Dictionary == false or node_data.is_empty():
+		return { "ok": false, "data": {}, "error": "Nodo vacío o inválido." }
+
+	var mode = str(node_data.get("mode", "")).strip_edges()
+	if mode != MODE_DRAG_DROP:
+		return { "ok": false, "data": {}, "error": "El nodo no es de tipo drag_drop." }
+	var content = node_data.get("content", {})
+	if not content is Dictionary:
+		return { "ok": false, "data": {}, "error": "Falta la clave content en el JSON de arrastre." }
+	var items_variant = content.get("items", [])
+	var targets_variant = content.get("targets", [])
+	if not items_variant is Array or not targets_variant is Array:
+		return { "ok": false, "data": {}, "error": "El JSON de arrastre requiere 'items' y 'targets' como Arrays." }
+	var items: Array = items_variant as Array
+	var targets: Array = targets_variant as Array
+	if items.size() == 0 or targets.size() == 0:
+		return { "ok": false, "data": {}, "error": "El JSON de arrastre requiere 'items' y 'targets' no vacíos." }
+
+	# Devolver una estructura limpia y duplicada para evitar mutaciones externas.
+	var out: Dictionary = {
+		"instruction": str(content.get("instruction", "")).strip_edges(),
+		"items": items.duplicate(true),
+		"targets": targets.duplicate(true),
+		"success_message": str(content.get("success_message", "")).strip_edges(),
+		"error_message": str(content.get("error_message", "")).strip_edges(),
+	}
+
+	return { "ok": true, "data": out, "error": "" }

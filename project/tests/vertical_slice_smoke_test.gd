@@ -186,6 +186,9 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var next_button := level_scene.get_node_or_null("Adelante") as Button
 	var back_button := level_scene.get_node_or_null("Atrás") as Button
 	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
+	var teaching_text_layer := level_scene.get_node_or_null(
+		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto"
+	) as Control
 	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
 	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
 
@@ -198,7 +201,11 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 		back_button != null and back_button.disabled,
 		"El boton atras deberia quedar deshabilitado"
 	)
-	_check(teaching != null and teaching.visible, "La ensenanza final deberia quedar visible")
+	_check(
+		(teaching != null and teaching.visible)
+		or (teaching_text_layer != null and teaching_text_layer.visible),
+		"La ensenanza final deberia quedar visible"
+	)
 	_check(lupa != null, "Falta nodo Lupa")
 	_check(
 		title != null and title.material is ShaderMaterial,
