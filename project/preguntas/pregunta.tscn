@@ -12,9 +12,10 @@
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
-line_spacing = -6.525
+line_spacing = 0.94
+paragraph_spacing = 0.05
 font = ExtResource("6_x3ikk")
-font_size = 26
+font_size = 28
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
 content_margin_left = 32.0
@@ -34,7 +35,8 @@ texture = ExtResource("5_dlf6l")
 script = ExtResource("1_dlf6l")
 quiz = ExtResource("2_onqq7")
 
-[node name="IndicadorProgresoDeJuego" parent="." instance=ExtResource("7_4l1i0")]
+[node name="IndicadorProgresoDeJuego" parent="." unique_id=1084702451 instance=ExtResource("7_4l1i0")]
+visible = false
 
 [node name="Contenido" type="Control" parent="." unique_id=1424383837]
 layout_mode = 3
@@ -51,7 +53,7 @@ offset_right = 1158.0
 offset_bottom = 804.0
 
 [node name="fondo" type="Sprite2D" parent="Contenido" unique_id=24097276]
-position = Vector2(575, 401.00003)
+position = Vector2(575, 405)
 scale = Vector2(0.33295324, 0.32512093)
 texture = ExtResource("1_b7sy5")
 
@@ -78,6 +80,7 @@ scale = Vector2(0.75999546, 0.8016403)
 layout_mode = 2
 label_settings = SubResource("LabelSettings_b7sy5")
 horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="Visual" type="Panel" parent="Contenido/Informacion" unique_id=1334384024]
@@ -102,10 +105,10 @@ offset_bottom = 65.0
 
 [node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
 layout_mode = 0
-offset_left = 288.0
-offset_top = 415.0
-offset_right = 868.0
-offset_bottom = 795.0
+offset_left = 359.0
+offset_top = 430.0
+offset_right = 798.0
+offset_bottom = 735.0
 theme_override_constants/separation = 10
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
@@ -134,7 +137,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 
-[node name="AtrÃ¡s" type="Button" parent="Contenido" unique_id=1720405508]
+[node name="Atrás" type="Button" parent="Contenido" unique_id=1720405508]
 layout_mode = 0
 offset_left = 67.0
 offset_top = 639.00006
@@ -243,7 +246,7 @@ horizontal_alignment = 1
 
 [node name="TimerSiguienteNodo" type="Timer" parent="." unique_id=671940941]
 
-[connection signal="pressed" from="Contenido/AtrÃ¡s" to="." method="_on_atras_pressed"]
+[connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]
 [connection signal="pressed" from="Contenido/ContinuacionAutomatica/FlechaDerecha" to="." method="_on_flecha_derecha_pressed"]
 [connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]
