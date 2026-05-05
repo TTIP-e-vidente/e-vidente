@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://ce668s10g001j"]
+
+[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ci3qi"]
+[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="2_2usb3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_et2q4"]
+
+[node name="TituloNivel" type="Sprite2D" unique_id=74001118]
+z_index = 1
+position = Vector2(241.00003, 112)
+scale = Vector2(0.756, 0.756)
+texture = ExtResource("1_ci3qi")
+
+[node name="tituloDeNivel" type="Label" parent="." unique_id=665724414]
+offset_left = -37.15711
+offset_top = -15.482105
+offset_right = 23.842892
+offset_bottom = 7.5178947
+scale = Vector2(3.1241045, 3.1241045)
+pivot_offset = Vector2(30.066147, 11.120354)
+theme_override_fonts/font = ExtResource("2_2usb3")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxEmpty_et2q4")
+text = "prueba"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 1

@@ -1,35 +1,28 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://d2wpnqbgwk10p"]
 
-[ext_resource type="Script" path="res://interface/libro-vegan.gd" id="1_btrdt"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_elh6m"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-1.png" id="3_i7a8u"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-2.png" id="4_ydatj"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-3.png" id="5_12ycp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-4.png" id="6_cfe55"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="9_8b002"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
+[ext_resource type="Script" uid="uid://bxu8tge6mbt4" path="res://interface/libro-vegan.gd" id="1_btrdt"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_pdbb6"]
+[ext_resource type="Texture2D" uid="uid://h375q3qyl3ew" path="res://assets-sistema/interfaz/cap-1.png" id="3_i7a8u"]
+[ext_resource type="Texture2D" uid="uid://bmwxxvstfqytq" path="res://assets-sistema/interfaz/cap-2.png" id="4_ydatj"]
+[ext_resource type="Texture2D" uid="uid://irrj4tmnsm5x" path="res://assets-sistema/interfaz/cap-3.png" id="5_12ycp"]
+[ext_resource type="Texture2D" uid="uid://bnilp4agslfja" path="res://assets-sistema/interfaz/cap-4.png" id="6_cfe55"]
+[ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
+[ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
+[ext_resource type="Texture2D" uid="uid://drylf5njm8qsj" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="9_8b002"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
 
-[node name="Libro" type="Node2D"]
+[node name="Libro" type="Node2D" unique_id=812958137]
 z_index = 4
 script = ExtResource("1_btrdt")
 
-[node name="ColorRect" type="ColorRect" parent="."]
-offset_right = 1152.0
-offset_bottom = 800.0
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_pdbb6")]
+offset_left = 0.0
+offset_right = 1153.0
 
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect"]
-position = Vector2(577.34393, 394.68747)
-scale = Vector2(0.33670896, 0.33670896)
-texture = ExtResource("2_elh6m")
-flip_h = true
-flip_v = true
-
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=692005408]
 texture_filter = 3
 offset_left = 477.0
 offset_top = 80.0
@@ -40,38 +33,38 @@ size_flags_stretch_ratio = 1.73
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Cap1" type="Button" parent="VBoxContainer"]
+[node name="Cap1" type="Button" parent="VBoxContainer" unique_id=2133105671]
 layout_mode = 2
 size_flags_vertical = 3
 icon = ExtResource("3_i7a8u")
 flat = true
 
-[node name="Cap2" type="Button" parent="VBoxContainer"]
+[node name="Cap2" type="Button" parent="VBoxContainer" unique_id=1250169995]
 layout_mode = 2
 icon = ExtResource("4_ydatj")
 flat = true
 
-[node name="Cap3" type="Button" parent="VBoxContainer"]
+[node name="Cap3" type="Button" parent="VBoxContainer" unique_id=663968704]
 layout_mode = 2
 icon = ExtResource("5_12ycp")
 flat = true
 
-[node name="Cap4" type="Button" parent="VBoxContainer"]
+[node name="Cap4" type="Button" parent="VBoxContainer" unique_id=1019425956]
 layout_mode = 2
 icon = ExtResource("6_cfe55")
 flat = true
 
-[node name="Cap5" type="Button" parent="VBoxContainer"]
+[node name="Cap5" type="Button" parent="VBoxContainer" unique_id=1733109255]
 layout_mode = 2
 icon = ExtResource("7_6xkqp")
 flat = true
 
-[node name="Cap6" type="Button" parent="VBoxContainer"]
+[node name="Cap6" type="Button" parent="VBoxContainer" unique_id=972614416]
 layout_mode = 2
 icon = ExtResource("8_vx58k")
 flat = true
 
-[node name="Atras" type="Button" parent="."]
+[node name="Atras" type="Button" parent="." unique_id=858985361]
 offset_left = 57.0
 offset_top = 640.00006
 offset_right = 282.0
@@ -80,12 +73,12 @@ scale = Vector2(0.4865854, 0.43599772)
 icon = SubResource("CompressedTexture2D_b50jp")
 flat = true
 
-[node name="ArchiveroVegan" type="Sprite2D" parent="."]
+[node name="ArchiveroVegan" type="Sprite2D" parent="." unique_id=333429151]
 position = Vector2(205, 126.00001)
 scale = Vector2(0.5749733, 0.5749733)
 texture = ExtResource("9_8b002")
 
-[node name="Background" type="AudioStreamPlayer2D" parent="."]
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=502405199]
 stream = ExtResource("10_j0ohc")
 volume_db = -4.962
 attenuation = 2.07053

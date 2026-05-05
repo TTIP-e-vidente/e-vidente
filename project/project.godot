@@ -30,6 +30,24 @@ MusicManager="*res://managers/MusicManager.gd"
 window/size/viewport_height=800
 window/stretch/mode="viewport"
 
+[file_customization]
+
+folder_colors={
+"res://assets-sistema/": "red",
+"res://colours/": "orange",
+"res://contenido/": "yellow",
+"res://fonts/": "green",
+"res://interface/": "teal",
+"res://items/": "blue",
+"res://managers/": "purple",
+"res://mapas/": "pink",
+"res://niveles/": "gray",
+"res://preguntas/": "pink",
+"res://resources/": "purple",
+"res://sistemas/": "blue",
+"res://tests/": "teal"
+}
+
 [input]
 
 BUTTON_LEFT={

@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://btw41ex60ytny"]
 
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
 [ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/pregunta.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
 [ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_78ome"]
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="4_78ome"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="4_ecatg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
@@ -45,17 +45,10 @@ offset_right = 1156.0
 offset_bottom = 805.0
 size_flags_horizontal = 4
 
-[node name="Color Fondo" type="ColorRect" parent="Contenido" unique_id=25828125]
+[node name="FondoFicha" parent="Contenido" unique_id=1289609653 instance=ExtResource("4_ecatg")]
 layout_mode = 0
-offset_left = -12.0
-offset_top = -4.0
-offset_right = 1158.0
-offset_bottom = 804.0
-
-[node name="fondo" type="Sprite2D" parent="Contenido" unique_id=24097276]
-position = Vector2(575, 405)
-scale = Vector2(0.33295324, 0.32512093)
-texture = ExtResource("1_b7sy5")
+offset_left = 1.0
+offset_right = 1154.0
 
 [node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
 position = Vector2(165, 98)
