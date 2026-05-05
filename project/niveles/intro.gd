@@ -12,8 +12,8 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 func _ready() -> void:
 	GameSceneRouter.request_initial_scene_preload()
 	_reproducir_musica_fondo()
+	jugar.text = "Jugar"
 	opciones.text = "Cómo jugar?"
-
 	salir.text = "Salir"
 
 

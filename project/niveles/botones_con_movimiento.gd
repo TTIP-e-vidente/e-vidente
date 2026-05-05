@@ -7,14 +7,16 @@ func ajustar_fuente(label: Label, texto: String) -> void:
 	label.text = texto
 
 	var largo := texto.length()
+	var font_size := 42
 
-	if largo > 20:
-		label.add_theme_font_size_override("font_size", 20)
-	elif largo > 12:
-		label.add_theme_font_size_override("font_size", 26)
-	else:
-		label.add_theme_font_size_override("font_size", 34)
+	if largo > 40:
+		font_size = 24
+	elif largo > 32:
+		font_size = 28
+	elif largo > 24:
+		font_size = 34
 
+	label.add_theme_font_size_override("font_size", font_size)
 
 func _ready() -> void:
 	if jugar.material:
