@@ -95,11 +95,14 @@ func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 
 
 func _aplicar_view_model(streak_view_model: Dictionary) -> void:
-	_current_count = max(0, int(streak_view_model.get("current_count", 0)))
+	_current_count = max(
+	0,
+	int(streak_view_model.get("current_count", 0))
+)
 
 	_streak_state = str(
-		streak_view_model.get("streak_state", "inactive")
-	)
+	streak_view_model.get("streak_state", "inactive")
+)
 
 	_refrescar_ui()
 
@@ -155,17 +158,21 @@ func _configurar_boton_hotspot() -> void:
 
 
 func _refrescar_ui() -> void:
-	_aplicar_estado_visual()	
 	if not is_node_ready():
 		return
-		
+
 	if count_label != null:
-		var count_text: String = str(_current_count)
+		var count_text := str(_current_count)
+
 		count_label.text = count_text
+
 		count_label.add_theme_font_size_override(
 			"font_size",
 			_resolver_tamano_fuente_contador(count_text)
 		)
+		_aplicar_estado_visual()
+
+		
 func _aplicar_estado_visual() -> void:
 	match _streak_state:
 		"active":

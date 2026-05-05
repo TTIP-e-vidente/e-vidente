@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://8mlb875rgn"]
 
 [ext_resource type="Script" uid="uid://crve8k6tqymjf" path="res://interface/components/Racha.gd" id="1_racha_script"]
-[ext_resource type="Texture2D" uid="uid://i0h2i5y21tl6" path="res://assets-sistema/racha-diaria/racha-diaria.png" id="2_ua6bm"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_4icum"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_n84xy"]
@@ -18,7 +17,6 @@ layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-texture = ExtResource("2_ua6bm")
 expand_mode = 1
 stretch_mode = 5
 
