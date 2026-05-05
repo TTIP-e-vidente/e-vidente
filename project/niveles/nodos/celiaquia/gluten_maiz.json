@@ -2,10 +2,10 @@
 	"id": "gluten_maiz",
 	"theme": "celiaquia",
 	"title": "Gluten en el maiz",
-	"difficulty": "hard",
+	"difficulty": "easy",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "El gluten esta en el maiz?",
+		"question": "El gluten esta en el maíz?",
 		"correct_answer": "No",
 		"wrong_options": ["Si"],
 		"visual_resource": ""
