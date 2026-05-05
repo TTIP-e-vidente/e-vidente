@@ -30,7 +30,7 @@ var _streak_state: Dictionary = {}
 var _extra_progress_system_states: Dictionary = {}
 var _playable_node_progress_by_track: Dictionary = {}
 var _active_playable_node: Dictionary = {}
-var _corrida_de_nodo_activa: Dictionary = {}
+var _partida_de_nodo_activa: Dictionary = {}
 var _juego_de_nodo_actual: Dictionary = {}
 var _nodo_a_continuar: String = ""
 
@@ -67,7 +67,7 @@ func reiniciar_progreso() -> void:
 
 	_playable_node_progress_by_track = {}
 	_active_playable_node = {}
-	_corrida_de_nodo_activa = {}
+	_partida_de_nodo_activa = {}
 	_juego_de_nodo_actual = {}
 	_nodo_a_continuar = ""
 	for track_key in GameTrackCatalog.TRACK_ORDER:
@@ -207,18 +207,18 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 	_active_playable_node = {}
 
 
-# --- Corrida de nodo ------------------------------------------------------
+# --- Partida de nodo ------------------------------------------------------
 
-func iniciar_corrida_de_nodo(plan_de_corrida: Dictionary) -> void:
-	_corrida_de_nodo_activa = _normalizar_corrida_de_nodo(plan_de_corrida)
-	_juego_de_nodo_actual = _construir_juego_actual_del_nodo(_corrida_de_nodo_activa)
-
-
-func obtener_corrida_de_nodo_actual() -> Dictionary:
-	return _corrida_de_nodo_activa.duplicate(true)
+func iniciar_partida_de_nodo(plan_de_partida: Dictionary) -> void:
+	_partida_de_nodo_activa = _normalizar_partida_de_nodo(plan_de_partida)
+	_juego_de_nodo_actual = _construir_juego_actual_de_partida(_partida_de_nodo_activa)
 
 
-func obtener_juego_actual_del_nodo() -> Dictionary:
+func obtener_partida_de_nodo_actual() -> Dictionary:
+	return _partida_de_nodo_activa.duplicate(true)
+
+
+func obtener_juego_actual_de_partida() -> Dictionary:
 	return _juego_de_nodo_actual.duplicate(true)
 
 
@@ -226,43 +226,43 @@ func obtener_dificultad_del_juego_actual() -> int:
 	if not _juego_de_nodo_actual.is_empty():
 		return _obtener_dificultad_del_juego_actual(
 			_juego_de_nodo_actual,
-			_corrida_de_nodo_activa
+			_partida_de_nodo_activa
 		)
 	var sesion_activa: Dictionary = obtener_sesion_nodo_jugable_activo()
 	return max(0, int(sesion_activa.get("difficulty", 0)))
 
 
-func hay_siguiente_juego_del_nodo() -> bool:
-	if _corrida_de_nodo_activa.is_empty():
+func hay_siguiente_juego_de_partida() -> bool:
+	if _partida_de_nodo_activa.is_empty():
 		return false
-	var indice_juego_actual: int = int(_corrida_de_nodo_activa.get("indice_juego_actual", 0))
-	var total_juegos: int = int(_corrida_de_nodo_activa.get("total_juegos", 0))
+	var indice_juego_actual: int = int(_partida_de_nodo_activa.get("indice_juego_actual", 0))
+	var total_juegos: int = int(_partida_de_nodo_activa.get("total_juegos", 0))
 	return indice_juego_actual + 1 < total_juegos
 
 
-func avanzar_corrida_de_nodo() -> void:
-	if not hay_siguiente_juego_del_nodo():
+func avanzar_partida_de_nodo() -> void:
+	if not hay_siguiente_juego_de_partida():
 		return
-	var corrida_actualizada: Dictionary = _corrida_de_nodo_activa.duplicate(true)
-	corrida_actualizada["indice_juego_actual"] = int(
-		corrida_actualizada.get("indice_juego_actual", 0)
+	var partida_actualizada: Dictionary = _partida_de_nodo_activa.duplicate(true)
+	partida_actualizada["indice_juego_actual"] = int(
+		partida_actualizada.get("indice_juego_actual", 0)
 	) + 1
-	_corrida_de_nodo_activa = corrida_actualizada
-	_juego_de_nodo_actual = _construir_juego_actual_del_nodo(corrida_actualizada)
+	_partida_de_nodo_activa = partida_actualizada
+	_juego_de_nodo_actual = _construir_juego_actual_de_partida(partida_actualizada)
 
 
-func finalizar_corrida_de_nodo() -> void:
-	_corrida_de_nodo_activa = {}
+func finalizar_partida_de_nodo() -> void:
+	_partida_de_nodo_activa = {}
 	_juego_de_nodo_actual = {}
 
 
 func obtener_contexto_de_progreso_de_juego() -> Dictionary:
-	if not _corrida_de_nodo_activa.is_empty() and not _juego_de_nodo_actual.is_empty():
+	if not _partida_de_nodo_activa.is_empty() and not _juego_de_nodo_actual.is_empty():
 		return _construir_contexto_de_progreso_de_juego(
-			str(_corrida_de_nodo_activa.get("titulo_nodo", "")).strip_edges(),
-			int(_corrida_de_nodo_activa.get("indice_juego_actual", 0)) + 1,
-			int(_corrida_de_nodo_activa.get("total_juegos", 1)),
-			int(_corrida_de_nodo_activa.get("dificultad", 0)),
+			str(_partida_de_nodo_activa.get("titulo_nodo", "")).strip_edges(),
+			int(_partida_de_nodo_activa.get("indice_juego_actual", 0)) + 1,
+			int(_partida_de_nodo_activa.get("total_juegos", 1)),
+			int(_partida_de_nodo_activa.get("dificultad", 0)),
 			_juego_de_nodo_actual,
 			true
 		)
@@ -278,57 +278,57 @@ func obtener_contexto_de_progreso_de_juego() -> Dictionary:
 	)
 
 
-func _normalizar_corrida_de_nodo(plan_de_corrida: Dictionary) -> Dictionary:
-	if plan_de_corrida.is_empty():
+func _normalizar_partida_de_nodo(plan_de_partida: Dictionary) -> Dictionary:
+	if plan_de_partida.is_empty():
 		return {}
-	var juegos: Array[Dictionary] = _duplicar_juegos_de_corrida(plan_de_corrida.get("juegos", []))
+	var juegos: Array[Dictionary] = _duplicar_juegos_de_partida(plan_de_partida.get("juegos", []))
 	if juegos.is_empty():
 		return {}
-	var total_juegos: int = max(1, int(plan_de_corrida.get("total_juegos", juegos.size())))
+	var total_juegos: int = max(1, int(plan_de_partida.get("total_juegos", juegos.size())))
 	var indice_juego_actual: int = clampi(
-		int(plan_de_corrida.get("indice_juego_actual", 0)),
+		int(plan_de_partida.get("indice_juego_actual", 0)),
 		0,
 		juegos.size() - 1
 	)
 	return {
-		"clave_nodo": str(plan_de_corrida.get("clave_nodo", "")).strip_edges(),
-		"titulo_nodo": str(plan_de_corrida.get("titulo_nodo", "")).strip_edges(),
-		"clave_pista": str(plan_de_corrida.get("clave_pista", "")).strip_edges(),
-		"escena_de_retorno": str(plan_de_corrida.get("escena_de_retorno", "")).strip_edges(),
-		"dificultad": max(0, int(plan_de_corrida.get("dificultad", 0))),
-		"numero_nivel": max(1, int(plan_de_corrida.get("numero_nivel", 1))),
+		"clave_nodo": str(plan_de_partida.get("clave_nodo", "")).strip_edges(),
+		"titulo_nodo": str(plan_de_partida.get("titulo_nodo", "")).strip_edges(),
+		"clave_pista": str(plan_de_partida.get("clave_pista", "")).strip_edges(),
+		"escena_de_retorno": str(plan_de_partida.get("escena_de_retorno", "")).strip_edges(),
+		"dificultad": max(0, int(plan_de_partida.get("dificultad", 0))),
+		"numero_nivel": max(1, int(plan_de_partida.get("numero_nivel", 1))),
 		"indice_juego_actual": indice_juego_actual,
 		"total_juegos": max(total_juegos, juegos.size()),
 		"juegos": juegos,
 	}
 
 
-func _construir_juego_actual_del_nodo(corrida_activa: Dictionary) -> Dictionary:
-	if corrida_activa.is_empty():
+func _construir_juego_actual_de_partida(partida_activa: Dictionary) -> Dictionary:
+	if partida_activa.is_empty():
 		return {}
-	var juegos: Array[Dictionary] = _duplicar_juegos_de_corrida(corrida_activa.get("juegos", []))
+	var juegos: Array[Dictionary] = _duplicar_juegos_de_partida(partida_activa.get("juegos", []))
 	if juegos.is_empty():
 		return {}
 	var indice_juego_actual: int = clampi(
-		int(corrida_activa.get("indice_juego_actual", 0)),
+		int(partida_activa.get("indice_juego_actual", 0)),
 		0,
 		juegos.size() - 1
 	)
 	var juego_actual: Dictionary = juegos[indice_juego_actual].duplicate(true)
-	juego_actual["pertenece_a_corrida_de_nodo"] = true
+	juego_actual["pertenece_a_partida_de_nodo"] = true
 	juego_actual["indice_juego_actual"] = indice_juego_actual
-	juego_actual["total_juegos"] = max(1, int(corrida_activa.get("total_juegos", juegos.size())))
-	juego_actual["titulo_nodo"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
-	juego_actual["dificultad"] = _obtener_dificultad_del_juego_actual(juego_actual, corrida_activa)
-	juego_actual["track_key"] = str(corrida_activa.get("clave_pista", "")).strip_edges()
-	juego_actual["node_key"] = str(corrida_activa.get("clave_nodo", "")).strip_edges()
-	juego_actual["node_title"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
-	juego_actual["level_number"] = max(1, int(corrida_activa.get("numero_nivel", 1)))
-	juego_actual["return_to"] = str(corrida_activa.get("escena_de_retorno", "")).strip_edges()
+	juego_actual["total_juegos"] = max(1, int(partida_activa.get("total_juegos", juegos.size())))
+	juego_actual["titulo_nodo"] = str(partida_activa.get("titulo_nodo", "")).strip_edges()
+	juego_actual["dificultad"] = _obtener_dificultad_del_juego_actual(juego_actual, partida_activa)
+	juego_actual["track_key"] = str(partida_activa.get("clave_pista", "")).strip_edges()
+	juego_actual["node_key"] = str(partida_activa.get("clave_nodo", "")).strip_edges()
+	juego_actual["node_title"] = str(partida_activa.get("titulo_nodo", "")).strip_edges()
+	juego_actual["level_number"] = max(1, int(partida_activa.get("numero_nivel", 1)))
+	juego_actual["return_to"] = str(partida_activa.get("escena_de_retorno", "")).strip_edges()
 	return juego_actual
 
 
-func _duplicar_juegos_de_corrida(raw_value: Variant) -> Array[Dictionary]:
+func _duplicar_juegos_de_partida(raw_value: Variant) -> Array[Dictionary]:
 	var juegos: Array[Dictionary] = []
 	if not raw_value is Array:
 		return juegos
@@ -340,9 +340,9 @@ func _duplicar_juegos_de_corrida(raw_value: Variant) -> Array[Dictionary]:
 
 func _obtener_dificultad_del_juego_actual(
 	juego_actual: Dictionary,
-	corrida_activa: Dictionary
+	partida_activa: Dictionary
 ) -> int:
-	return max(0, int(juego_actual.get("dificultad", corrida_activa.get("dificultad", 0))))
+	return max(0, int(juego_actual.get("dificultad", partida_activa.get("dificultad", 0))))
 
 
 func _construir_contexto_de_progreso_de_juego(
@@ -351,7 +351,7 @@ func _construir_contexto_de_progreso_de_juego(
 	total_juegos: int,
 	dificultad: int,
 	fuente: Dictionary,
-	pertenece_a_corrida_de_nodo: bool
+	pertenece_a_partida_de_nodo: bool
 ) -> Dictionary:
 	var total_juegos_seguro: int = max(1, total_juegos)
 	var indice_juego_seguro: int = clampi(max(1, indice_juego_actual), 1, total_juegos_seguro)
@@ -365,7 +365,7 @@ func _construir_contexto_de_progreso_de_juego(
 		"mode": str(fuente.get("mode", "")).strip_edges(),
 		"json_path": str(fuente.get("json_path", "")).strip_edges(),
 		"titulo_nodo": str(fuente.get("titulo_nodo", titulo)).strip_edges(),
-		"pertenece_a_corrida_de_nodo": pertenece_a_corrida_de_nodo,
+		"pertenece_a_partida_de_nodo": pertenece_a_partida_de_nodo,
 	}
 
 
@@ -427,14 +427,14 @@ func obtener_pista_nivel_cantidad(track_key: String = "") -> int:
 	return _level_content.obtener_pista_nivel_cantidad(track_key, fallback)
 
 
-func obtener_capitulo_corrida_cantidad(track_key: String, level_number: int) -> int:
-	return _level_content.obtener_capitulo_corrida_cantidad(track_key, level_number)
+func obtener_capitulo_partida_cantidad(track_key: String, level_number: int) -> int:
+	return _level_content.obtener_capitulo_partida_cantidad(track_key, level_number)
 
 
-func obtener_capitulo_corrida_definicion(
+func obtener_capitulo_partida_definicion(
 	track_key: String, level_number: int, run_index: int = 1
 ) -> Dictionary:
-	return _level_content.obtener_capitulo_corrida_definicion(track_key, level_number, run_index)
+	return _level_content.obtener_capitulo_partida_definicion(track_key, level_number, run_index)
 
 
 # --- Exportar / importar progreso ------------------------------------------

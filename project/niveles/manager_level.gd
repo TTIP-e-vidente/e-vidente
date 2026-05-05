@@ -46,28 +46,28 @@ func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	_asegurar_recurso_nivel_cargado()
 
 	var saved_level_state: Dictionary = _obtener_estado_guardado_actual()
-	active_run_index = _resolver_indice_corrida(saved_level_state)
-	_cargar_corrida_actual(saved_level_state)
+	active_run_index = _resolver_indice_partida(saved_level_state)
+	_cargar_partida_actual(saved_level_state)
 
 
 func establecer_configuracion_de_dificultad_arrastre(configuracion: Dictionary) -> void:
 	_configuracion_dificultad_arrastre = configuracion.duplicate(true)
 
 
-func avanzar_a_siguiente_corrida() -> bool:
-	if active_run_index >= obtener_total_corridas():
+func avanzar_a_siguiente_partida() -> bool:
+	if active_run_index >= obtener_total_partidas():
 		return false
 	active_run_index += 1
-	_cargar_corrida_actual({"run_index": active_run_index})
+	_cargar_partida_actual({"run_index": active_run_index})
 	return true
 
 
-func obtener_actual_corrida_indice() -> int:
+func obtener_actual_partida_indice() -> int:
 	return active_run_index
 
 
-func obtener_total_corridas() -> int:
-	return max(1, Global.obtener_capitulo_corrida_cantidad(active_track_key, Global.current_level))
+func obtener_total_partidas() -> int:
+	return max(1, Global.obtener_capitulo_partida_cantidad(active_track_key, Global.current_level))
 
 
 func establecer_tiempo_ejecucion_elementos_interactuable(enabled: bool) -> void:
@@ -115,11 +115,11 @@ func formatear_parcial_guardar_progreso(saved_positive_count: int) -> String:
 	return "%d %s" % [saved_positive_count, unit]
 
 
-func obtener_actual_corrida_guardar_label() -> String:
-	var total_runs: int = obtener_total_corridas()
+func obtener_actual_partida_guardar_label() -> String:
+	var total_runs: int = obtener_total_partidas()
 	if total_runs <= 1:
 		return ""
-	return "Corrida %d de %d" % [active_run_index, total_runs]
+	return "Partida %d de %d" % [active_run_index, total_runs]
 
 
 func _construir_estado_guardado_mecanica() -> Dictionary:
@@ -167,7 +167,7 @@ func obtener_positivo_elementos_in_plato_cantidad() -> int:
 	return plato.cantAlimentosPos.size()
 
 
-func tiene_completado_actual_corrida() -> bool:
+func tiene_completado_actual_partida() -> bool:
 	if not is_instance_valid(plato):
 		return false
 	if level_resource == null:
@@ -222,18 +222,18 @@ func distribuir_tiempo_ejecucion_elementos() -> void:
 		next_item_position.x += 120
 
 
-# --- Carga de corrida ---------------------------------------------------------
-func _cargar_corrida_actual(saved_level_state: Dictionary) -> void:
+# --- Carga de partida ---------------------------------------------------------
+func _cargar_partida_actual(saved_level_state: Dictionary) -> void:
 	limpiar_tiempo_ejecucion_elementos()
 
-	if not _cargar_definicion_corrida_actual():
+	if not _cargar_definicion_partida_actual():
 		return
 
-	_aplicar_activo_corrida_carga()
+	_aplicar_activo_partida_carga()
 	_configurar_nivel_recurso()
 
 	var saved_mechanic_state: Dictionary = _extraer_estado_guardado_mecanica(saved_level_state)
-	if _restaurar_corrida_guardada(saved_mechanic_state):
+	if _restaurar_partida_guardada(saved_mechanic_state):
 		return
 
 	_generar_frescos_elementos()
@@ -241,17 +241,17 @@ func _cargar_corrida_actual(saved_level_state: Dictionary) -> void:
 	distribuir_tiempo_ejecucion_elementos()
 
 
-func _cargar_definicion_corrida_actual() -> bool:
+func _cargar_definicion_partida_actual() -> bool:
 	var level_number: int = Global.current_level
-	active_run_data = Global.obtener_capitulo_corrida_definicion(
+	active_run_data = Global.obtener_capitulo_partida_definicion(
 		active_track_key,
 		level_number,
 		active_run_index
 	)
 	if active_run_data.is_empty():
-		_resetear_estado_corrida_activa()
+		_resetear_estado_partida_activa()
 		push_error(
-			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
+			"ManagerLevel no encontro datos para %s capitulo %d partida %d."
 			% [active_track_key, level_number, active_run_index]
 		)
 		return false
@@ -263,7 +263,7 @@ func _cargar_definicion_corrida_actual() -> bool:
 		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
 
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
-		_resetear_estado_corrida_activa()
+		_resetear_estado_partida_activa()
 		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
 		return false
 
@@ -278,7 +278,7 @@ func _extraer_estado_guardado_mecanica(saved_level_state: Dictionary) -> Diction
 	return saved_mechanic_state
 
 
-func _restaurar_corrida_guardada(saved_mechanic_state: Dictionary) -> bool:
+func _restaurar_partida_guardada(saved_mechanic_state: Dictionary) -> bool:
 	var saved_items: Array = _obtener_items_guardados(saved_mechanic_state)
 	if not _intentar_restaurar_guardado_elementos(saved_items):
 		return false
@@ -295,8 +295,8 @@ func _obtener_items_guardados(saved_mechanic_state: Dictionary) -> Array:
 	return []
 
 
-func _aplicar_activo_corrida_carga() -> void:
-	var run_payload: Dictionary = _obtener_payload_corrida()
+func _aplicar_activo_partida_carga() -> void:
+	var run_payload: Dictionary = _obtener_payload_partida()
 	if run_payload.is_empty():
 		active_negative_item_count = int(active_run_data.get("negative_count", 0))
 		active_positive_item_count = int(active_run_data.get("positive_count", 0))
@@ -310,7 +310,7 @@ func _aplicar_activo_corrida_carga() -> void:
 	_aplicar_configuracion_de_dificultad_arrastre()
 
 
-func _obtener_payload_corrida() -> Dictionary:
+func _obtener_payload_partida() -> Dictionary:
 	var raw_payload: Variant = active_run_data.get("mechanic_payload", {})
 	if raw_payload is Dictionary:
 		return raw_payload as Dictionary
@@ -319,7 +319,7 @@ func _obtener_payload_corrida() -> Dictionary:
 
 func _configurar_nivel_recurso() -> void:
 	level_resource.mechanic_type = active_mechanic_type
-	level_resource.mechanic_payload = _construir_activo_corrida_carga()
+	level_resource.mechanic_payload = _construir_activo_partida_carga()
 	level_resource.cantidadNegativos = active_negative_item_count
 	level_resource.cantidadPositivos = active_positive_item_count
 	level_resource.comida = GameChapterAssetCatalogScript.resolver_textura(
@@ -479,15 +479,15 @@ func _obtener_estado_guardado_actual() -> Dictionary:
 	return Global.obtener_parcial_nivel_estado(active_track_key, Global.current_level)
 
 
-func _resolver_indice_corrida(saved_level_state: Dictionary) -> int:
+func _resolver_indice_partida(saved_level_state: Dictionary) -> int:
 	return clampi(
 		int(saved_level_state.get("run_index", 1)),
 		1,
-		obtener_total_corridas()
+		obtener_total_partidas()
 	)
 
 
-func _construir_activo_corrida_carga() -> Dictionary:
+func _construir_activo_partida_carga() -> Dictionary:
 	return {
 		"negative_count": active_negative_item_count,
 		"positive_count": active_positive_item_count,
@@ -524,13 +524,13 @@ func _aplicar_ayuda_visual_de_arrastre() -> void:
 	condition_sprite.modulate = Color(1, 1, 1, opacidad_condicion)
 
 
-func _resetear_estado_corrida_activa() -> void:
+func _resetear_estado_partida_activa() -> void:
 	active_run_data = {}
 	active_mechanic_type = ""
-	_limpiar_activo_corrida_carga()
+	_limpiar_activo_partida_carga()
 
 
-func _limpiar_activo_corrida_carga() -> void:
+func _limpiar_activo_partida_carga() -> void:
 	active_positive_item_count = 0
 	active_negative_item_count = 0
 	active_category_code = ""

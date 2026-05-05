@@ -45,7 +45,7 @@ const TEACHING_TEXTURE_PATHS := {
 static var _cache_texturas: Dictionary = {}
 
 
-static func construir_rutas_activos_corrida(
+static func construir_rutas_activos_partida(
 	track_key: String,
 	meal_key: String,
 	teaching_key: String
