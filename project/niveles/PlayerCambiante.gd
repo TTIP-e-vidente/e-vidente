@@ -44,7 +44,7 @@ func elemento_sale_plato(item):
 	abstract_state.sale_item_plato(item, self)
 
 
-func preparar_para_siguiente_corrida() -> void:
+func preparar_para_siguiente_partida() -> void:
 	hambre.show()
 	abstract_state = sentir_hambre
 	current_animation = "cagadodehambre"

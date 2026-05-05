@@ -7,8 +7,8 @@ const GameStreakTrackerScript := preload(
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
-const ContinuidadDeCorridaDeNodoScript := preload(
-	"res://mapas/core/ContinuidadDeCorridaDeNodo.gd"
+const ContinuidadDePartidaDeNodoScript := preload(
+	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const ESCENA_CONTINUADOR := preload("res://interface/components/ContinueCountdown.tscn")
@@ -34,7 +34,7 @@ var ya_continuo: bool = false
 
 var _nodo_actual: String = ""
 var _tiene_sesion_de_mapa: bool = false
-var _pertenece_a_corrida_de_nodo: bool = false
+var _pertenece_a_partida_de_nodo: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
 var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
@@ -112,7 +112,7 @@ func configurar_quiz_desde_sesion() -> void:
 
 
 func _obtener_contexto_jugable_actual() -> Dictionary:
-	var juego_actual: Dictionary = Global.obtener_juego_actual_del_nodo()
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
 	if not juego_actual.is_empty():
 		return juego_actual
 	return Global.obtener_sesion_nodo_jugable_activo()
@@ -120,7 +120,7 @@ func _obtener_contexto_jugable_actual() -> Dictionary:
 
 func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
-	_pertenece_a_corrida_de_nodo = false
+	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_post_game_streak_feedback = {}
@@ -131,8 +131,8 @@ func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
 	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_pertenece_a_corrida_de_nodo = bool(
-		contexto_sesion.get("pertenece_a_corrida_de_nodo", false)
+	_pertenece_a_partida_de_nodo = bool(
+		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
 	)
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
@@ -143,8 +143,8 @@ func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	_tiene_sesion_de_mapa = not _nodo_actual.is_empty()
 
 
-func _es_juego_de_corrida_de_nodo() -> bool:
-	return _pertenece_a_corrida_de_nodo
+func _es_juego_de_partida_de_nodo() -> bool:
+	return _pertenece_a_partida_de_nodo
 
 
 func _obtener_json_path_actual(contexto_sesion: Dictionary = {}) -> String:
@@ -346,7 +346,7 @@ func _finalizar_quiz() -> void:
 
 
 func _finalizar_partida() -> void:
-	if _debe_mostrar_ensenanza_antes_de_continuar_corrida():
+	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
 		mostrar_ensenanza_final()
 		return
 
@@ -354,10 +354,10 @@ func _finalizar_partida() -> void:
 	_finalizar_pregunta_normal(cantidad_preguntas)
 
 
-func _debe_mostrar_ensenanza_antes_de_continuar_corrida() -> bool:
-	if not _es_juego_de_corrida_de_nodo():
+func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
+	if not _es_juego_de_partida_de_nodo():
 		return false
-	return ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(get_tree())
+	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
 
 
 func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
@@ -375,19 +375,19 @@ func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 	mostrar_ensenanza_final()
 
 
-func _continuar_corrida_de_nodo_si_corresponde() -> bool:
-	if not _es_juego_de_corrida_de_nodo():
+func _continuar_partida_de_nodo_si_corresponde() -> bool:
+	if not _es_juego_de_partida_de_nodo():
 		return false
-	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
 		Callable(self, "_limpiar_media_de_pregunta"),
-		Callable(self, "_limpiar_estado_local_de_corrida_en_pregunta")
+		Callable(self, "_limpiar_estado_local_de_partida_en_pregunta")
 	)
 
 
-func _limpiar_estado_local_de_corrida_en_pregunta() -> void:
+func _limpiar_estado_local_de_partida_en_pregunta() -> void:
 	_limpiar_media_de_pregunta()
-	_pertenece_a_corrida_de_nodo = false
+	_pertenece_a_partida_de_nodo = false
 
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
@@ -493,7 +493,7 @@ func _on_teaching_finished(timer_finished: bool) -> void:
 
 
 func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if _continuar_corrida_de_nodo_si_corresponde():
+	if _continuar_partida_de_nodo_si_corresponde():
 		return
 	if not _has_post_game_flow_state():
 		_return_to_map_scene()
@@ -586,8 +586,8 @@ func _on_jugar_nuevamente_pressed() -> void:
 
 
 func _on_atras_pressed() -> void:
-	if _es_juego_de_corrida_de_nodo():
-		_cancelar_corrida_de_nodo_desde_juego()
+	if _es_juego_de_partida_de_nodo():
+		_cancelar_partida_de_nodo_desde_juego()
 		return
 	volver_al_mapa()
 
@@ -614,8 +614,8 @@ func _ubicar_continuador() -> void:
 
 
 func volver_al_mapa() -> void:
-	if _es_juego_de_corrida_de_nodo():
-		_cancelar_corrida_de_nodo_desde_juego()
+	if _es_juego_de_partida_de_nodo():
+		_cancelar_partida_de_nodo_desde_juego()
 		return
 	if _has_post_game_flow_state():
 		_on_teaching_finished(false)
@@ -623,8 +623,8 @@ func volver_al_mapa() -> void:
 	_return_to_map_scene()
 
 
-func _cancelar_corrida_de_nodo_desde_juego() -> void:
-	Global.finalizar_corrida_de_nodo()
+func _cancelar_partida_de_nodo_desde_juego() -> void:
+	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(

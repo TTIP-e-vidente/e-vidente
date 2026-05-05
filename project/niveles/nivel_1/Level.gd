@@ -11,8 +11,8 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
-const ContinuidadDeCorridaDeNodoScript := preload(
-	"res://mapas/core/ContinuidadDeCorridaDeNodo.gd"
+const ContinuidadDePartidaDeNodoScript := preload(
+	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
@@ -78,7 +78,7 @@ var _contexto_nodo_mapa: Dictionary = {}
 var current_node: MapNodeData = null
 var _datos_nodo_mapa: Dictionary = {}
 var _usa_flujo_mapa := false
-var _pertenece_a_corrida_de_nodo := false
+var _pertenece_a_partida_de_nodo := false
 var _nodo_actual := ""
 var _json_path_nodo_actual := ""
 var _ruta_escena_retorno := ""
@@ -114,7 +114,7 @@ func _cargar_recursos_runtime() -> void:
 func iniciar_flujo_del_nivel() -> void:
 	cargar_sesion_jugable()
 	resolver_pista_activa()
-	reiniciar_estado_de_corrida()
+	reiniciar_estado_de_partida()
 	iniciar_runtime_del_nivel()
 	_reproducir_audio_nivel()
 
@@ -125,7 +125,7 @@ func cargar_sesion_jugable() -> void:
 	current_node = null
 	_datos_nodo_mapa = {}
 	_usa_flujo_mapa = false
-	_pertenece_a_corrida_de_nodo = false
+	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
 	_json_path_nodo_actual = ""
 	_track_key_contexto = ""
@@ -134,8 +134,8 @@ func cargar_sesion_jugable() -> void:
 	if _contexto_nodo_mapa.is_empty():
 		return
 
-	_pertenece_a_corrida_de_nodo = bool(
-		_contexto_nodo_mapa.get("pertenece_a_corrida_de_nodo", false)
+	_pertenece_a_partida_de_nodo = bool(
+		_contexto_nodo_mapa.get("pertenece_a_partida_de_nodo", false)
 	)
 	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
 	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
@@ -169,7 +169,7 @@ func resolver_pista_activa() -> void:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 
 
-func reiniciar_estado_de_corrida() -> void:
+func reiniciar_estado_de_partida() -> void:
 	_post_game_streak_feedback = {}
 	_post_game_flow_state = {}
 	_current_run_completion_handled = false
@@ -193,7 +193,7 @@ func iniciar_runtime_del_nivel() -> void:
 func _aplicar_dificultad_de_arrastre() -> void:
 	if manager_level == null or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre"):
 		return
-	if not _pertenece_a_corrida_de_nodo:
+	if not _pertenece_a_partida_de_nodo:
 		manager_level.establecer_configuracion_de_dificultad_arrastre({})
 		return
 	var dificultad_actual: int = Global.obtener_dificultad_del_juego_actual()
@@ -214,7 +214,7 @@ func _aplicar_dificultad_de_arrastre() -> void:
 
 
 func _obtener_contexto_jugable_actual() -> Dictionary:
-	var juego_actual: Dictionary = Global.obtener_juego_actual_del_nodo()
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
 	if not juego_actual.is_empty():
 		return juego_actual
 	return Global.obtener_sesion_nodo_jugable_activo()
@@ -304,10 +304,10 @@ func _exit_tree() -> void:
 ## --- Navegación y gameplay ---
 
 func _on_atras_presionado() -> void:
-	if es_corrida_completado():
+	if es_partida_completada():
 		return
-	if _pertenece_a_corrida_de_nodo:
-		_cancelar_corrida_de_nodo()
+	if _pertenece_a_partida_de_nodo:
+		_cancelar_partida_de_nodo()
 		return
 	if _usa_flujo_mapa:
 		_return_to_map_scene()
@@ -318,11 +318,11 @@ func _on_atras_presionado() -> void:
 		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
-func es_corrida_completado() -> bool:
+func es_partida_completada() -> bool:
 	return _current_run_completion_handled
 
 
-func completar_corrida_actual() -> void:
+func completar_partida_actual() -> void:
 	_finalizar_partida()
 
 
@@ -334,16 +334,16 @@ func _finalizar_partida() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
-	if _debe_mostrar_ensenanza_antes_de_continuar_corrida():
+	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
 		_mostrar_ensenanza_del_nivel()
 		return
 	_finalizar_partida_normal(track_key, level_number)
 
 
-func _debe_mostrar_ensenanza_antes_de_continuar_corrida() -> bool:
-	if not _pertenece_a_corrida_de_nodo:
+func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
+	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(get_tree())
+	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
 
 
 func _mostrar_ensenanza_del_nivel() -> void:
@@ -366,22 +366,22 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 		run_completed.emit()
 		return
 
-	_mostrar_completado_corrida_retroalimentacion()
+	_mostrar_completado_partida_retroalimentacion()
 	run_completed.emit()
 
 
-func _continuar_corrida_de_nodo_si_corresponde() -> bool:
-	if not _pertenece_a_corrida_de_nodo:
+func _continuar_partida_de_nodo_si_corresponde() -> bool:
+	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
 		Callable(),
-		Callable(self, "_limpiar_estado_local_de_corrida_en_nivel")
+		Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
 	)
 
 
-func _limpiar_estado_local_de_corrida_en_nivel() -> void:
-	_pertenece_a_corrida_de_nodo = false
+func _limpiar_estado_local_de_partida_en_nivel() -> void:
+	_pertenece_a_partida_de_nodo = false
 
 
 func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> void:
@@ -406,11 +406,11 @@ func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> v
 
 
 func mostrar_estado_de_finalizacion() -> void:
-	_bloquear_completado_corrida()
+	_bloquear_completado_partida()
 
-func _mostrar_completado_corrida_retroalimentacion() -> void:
+func _mostrar_completado_partida_retroalimentacion() -> void:
 	var chapter_fijo := _actual_nivel_numero()
-	while is_inside_tree() and es_corrida_completado() and _actual_nivel_numero() == chapter_fijo:
+	while is_inside_tree() and es_partida_completada() and _actual_nivel_numero() == chapter_fijo:
 		adelante_2.show()
 		await get_tree().create_timer(0.60).timeout
 		adelante_2.hide()
@@ -425,7 +425,7 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 		await get_tree().create_timer(0.60).timeout
 
 func _on_adelante_presionado() -> void:
-	if not es_corrida_completado():
+	if not es_partida_completada():
 		return
 	_continuar_despues_de_ensenanza(true)
 
@@ -451,7 +451,7 @@ func continuar_al_siguiente_nodo() -> void:
 
 
 func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if _continuar_corrida_de_nodo_si_corresponde():
+	if _continuar_partida_de_nodo_si_corresponde():
 		return
 	if not _has_post_game_flow_state():
 		if _usa_flujo_mapa:
@@ -589,10 +589,10 @@ func _return_to_map_scene() -> void:
 	)
 
 
-func _cancelar_corrida_de_nodo() -> void:
+func _cancelar_partida_de_nodo() -> void:
 	if continuador != null:
 		continuador.detener()
-	Global.finalizar_corrida_de_nodo()
+	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -601,7 +601,7 @@ func _cancelar_corrida_de_nodo() -> void:
 ## --- Guardado rápido ---
 
 func _on_guardar_progreso_boton_presionado() -> void:
-	if es_corrida_completado():
+	if es_partida_completada():
 		return
 	if manager_level == null or not is_instance_valid(manager_level):
 		_mostrar_guardar_retroalimentacion(
@@ -644,7 +644,7 @@ func _mostrar_guardar_exito_retroalimentacion(saved_positive_count: int) -> void
 		else "Guardado en este dispositivo"
 	)
 	var detail_lines: Array[String] = [time_line]
-	var run_line: String = manager_level.obtener_actual_corrida_guardar_label()
+	var run_line: String = manager_level.obtener_actual_partida_guardar_label()
 	if not run_line.is_empty():
 		detail_lines.append(run_line)
 	detail_lines.append(manager_level.formatear_parcial_guardar_progreso(saved_positive_count))
@@ -708,7 +708,7 @@ func _on_guardar_retroalimentacion_timeout() -> void:
 	_reiniciar_guardar_retroalimentacion_visual_estado()
 
 
-func _bloquear_completado_corrida() -> void:
+func _bloquear_completado_partida() -> void:
 	Item_level.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	next_chapter_button.disabled = false

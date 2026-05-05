@@ -1,8 +1,8 @@
 extends RefCounted
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const ContinuidadDeCorridaDeNodoScript := preload("res://mapas/core/ContinuidadDeCorridaDeNodo.gd")
-const PlanDeCorridaDeNodoScript := preload("res://mapas/core/PlanDeCorridaDeNodo.gd")
+const ContinuidadDePartidaDeNodoScript := preload("res://mapas/core/ContinuidadDePartidaDeNodo.gd")
+const PlanDePartidaDeNodoScript := preload("res://mapas/core/PlanDePartidaDeNodo.gd")
 
 const CLAVE_SESION_NODE_KEY := "node_key"
 const CLAVE_SESION_NODE_TITLE := "node_title"
@@ -35,11 +35,11 @@ static func abrir_nodo(
 	)
 	if datos_de_apertura.is_empty():
 		_limpiar_estado_de_apertura(estado_global)
-		return _resultado_con_error("No se pudo armar la corrida del nodo.")
+		return _resultado_con_error("No se pudo armar la partida del nodo.")
 
-	_iniciar_corrida_en_global(estado_global, datos_de_apertura)
+	_iniciar_partida_en_global(estado_global, datos_de_apertura)
 
-	if not ContinuidadDeCorridaDeNodoScript.abrir_juego_actual(tree, estado_global):
+	if not ContinuidadDePartidaDeNodoScript.abrir_juego_actual(tree, estado_global):
 		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo abrir el primer juego del nodo.")
 
@@ -80,29 +80,29 @@ static func _construir_datos_de_apertura(
 	ruta_retorno: String
 ) -> Dictionary:
 	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno)
-	var plan_de_corrida: Dictionary = PlanDeCorridaDeNodoScript.construir_plan_de_corrida(node_data)
-	if plan_de_corrida.is_empty():
+	var plan_de_partida: Dictionary = PlanDePartidaDeNodoScript.construir_plan_de_partida(node_data)
+	if plan_de_partida.is_empty():
 		return {}
-	plan_de_corrida["escena_de_retorno"] = ruta_retorno
+	plan_de_partida["escena_de_retorno"] = ruta_retorno
 	return {
 		"sesion_jugable": sesion_jugable,
-		"plan_de_corrida": plan_de_corrida,
+		"plan_de_partida": plan_de_partida,
 	}
 
 
-static func _iniciar_corrida_en_global(estado_global: Node, datos_de_apertura: Dictionary) -> void:
+static func _iniciar_partida_en_global(estado_global: Node, datos_de_apertura: Dictionary) -> void:
 	_limpiar_estado_de_apertura(estado_global)
 	estado_global.call(
 		"establecer_sesion_nodo_jugable_activo",
 		datos_de_apertura.get("sesion_jugable", {})
 	)
-	estado_global.call("iniciar_corrida_de_nodo", datos_de_apertura.get("plan_de_corrida", {}))
+	estado_global.call("iniciar_partida_de_nodo", datos_de_apertura.get("plan_de_partida", {}))
 
 
 static func _limpiar_estado_de_apertura(estado_global: Node) -> void:
 	if estado_global == null:
 		return
-	estado_global.call("finalizar_corrida_de_nodo")
+	estado_global.call("finalizar_partida_de_nodo")
 	estado_global.call("limpiar_sesion_nodo_jugable_activo")
 
 
