@@ -304,6 +304,8 @@ func _cerrar_prueba(codigo_salida: int) -> void:
 		current_scene = null
 		scene.free()
 	GameChapterAssetCatalog.limpiar_cache_texturas()
+	await process_frame
+	await process_frame
 	quit(codigo_salida)
 
 
