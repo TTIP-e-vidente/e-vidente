@@ -5,13 +5,13 @@
   "difficulty": "hard",
   "mode": "quiz_choice",
   "content": {
-    "question": "En una reunion te ofrecen papas fritas de un paquete abierto junto a pan y galletitas. Que opcion es mas segura para alguien con celiaquia?",
-    "correct_answer": "Elegir una opcion cerrada con rotulo Libre de Gluten o pedir una alternativa segura",
-    "wrong_options": [
-      "Comerlas si parecen de papa",
-      "Sacudir el paquete para sacar las migas",
+	"question": "En una reunion te ofrecen papas fritas de un paquete abierto junto a pan y galletitas. Que opcion es mas segura para alguien con celiaquia?",
+	"correct_answer": "Elegir una opcion cerrada con rotulo Libre de Gluten o pedir una alternativa segura",
+	"wrong_options": [
+	  "Comerlas si parecen de papa",
+	  "Sacudir el paquete para sacar las migas",
       "Probar solo una para ver si cae bien"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }
