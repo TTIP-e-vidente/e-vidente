@@ -43,15 +43,15 @@ func conectar_escena_nodos(level_scene: Node = null) -> bool:
 	return false
 
 
-func aplicar_texturas_corrida(recurso_nivel, datos_corrida: Dictionary) -> void:
+func aplicar_texturas_partida(recurso_nivel, datos_partida: Dictionary) -> void:
 	recurso_nivel.comida = GameChapterAssetCatalogScript.resolver_textura(
-		datos_corrida.get("meal_texture_path", "")
+		datos_partida.get("meal_texture_path", "")
 	)
 	recurso_nivel.condicion = GameChapterAssetCatalogScript.resolver_textura(
-		datos_corrida.get("condition_texture_path", "")
+		datos_partida.get("condition_texture_path", "")
 	)
 	recurso_nivel.ensenanza = GameChapterAssetCatalogScript.resolver_textura(
-		datos_corrida.get("teaching_texture_path", "")
+		datos_partida.get("teaching_texture_path", "")
 	)
 	_gestor.meal_sprite.texture = recurso_nivel.comida
 	_gestor.condition_sprite.texture = recurso_nivel.condicion

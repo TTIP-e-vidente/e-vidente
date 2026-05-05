@@ -55,13 +55,13 @@ func obtener_capitulo_definicion(track_key: String, level_number: int) -> Dictio
 	return chapter_definition.duplicate(true)
 
 
-func obtener_capitulo_corrida_cantidad(track_key: String, level_number: int) -> int:
+func obtener_capitulo_partida_cantidad(track_key: String, level_number: int) -> int:
 	var chapter_definition: Dictionary = obtener_capitulo_definicion(track_key, level_number)
 	var runs: Array = chapter_definition.get("runs", [])
 	return runs.size()
 
 
-func obtener_capitulo_corrida_definicion(
+func obtener_capitulo_partida_definicion(
 	track_key: String,
 	level_number: int,
 	run_index: int = 1

@@ -1,6 +1,6 @@
 extends SceneTree
 
-const ContinuidadDeCorridaDeNodoScript := preload("res://mapas/core/ContinuidadDeCorridaDeNodo.gd")
+const ContinuidadDePartidaDeNodoScript := preload("res://mapas/core/ContinuidadDePartidaDeNodo.gd")
 
 const ESCENA_PREGUNTA := "res://preguntas/pregunta.tscn"
 const JSON_PREGUNTA := "res://contenido/nodos/celiaquia/preguntas/eliminar_gluten.json"
@@ -9,7 +9,7 @@ const TIEMPO_MAXIMO_DE_PRUEBA := 8.0
 var fallo := false
 var prueba_finalizada := false
 var preparaciones_de_siguiente_juego := 0
-var finalizaciones_de_corrida := 0
+var finalizaciones_de_partida := 0
 
 
 func _initialize() -> void:
@@ -38,52 +38,52 @@ func ejecutar_prueba() -> void:
 		return
 
 	_limpiar_estado_global(estado_global)
-	estado_global.call("iniciar_corrida_de_nodo", _construir_plan_de_prueba())
+	estado_global.call("iniciar_partida_de_nodo", _construir_plan_de_prueba())
 
 	_verificar(
-		ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(self),
-		"La corrida de prueba debería tener un siguiente juego."
+		ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(self),
+		"La partida de prueba debería tener un siguiente juego."
 	)
 
-	var abrio_siguiente_juego: bool = ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+	var abrio_siguiente_juego: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		self,
 		Callable(self, "_registrar_preparacion_de_siguiente_juego"),
-		Callable(self, "_registrar_finalizacion_de_corrida")
+		Callable(self, "_registrar_finalizacion_de_partida")
 	)
 	_verificar(abrio_siguiente_juego, "La continuidad debería abrir el siguiente juego.")
 	await _esperar_escena(ESCENA_PREGUNTA)
 
-	var corrida_activa: Dictionary = estado_global.call("obtener_corrida_de_nodo_actual")
-	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_del_nodo")
+	var partida_activa: Dictionary = estado_global.call("obtener_partida_de_nodo_actual")
+	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_de_partida")
 	_verificar(preparaciones_de_siguiente_juego == 1, "La continuidad debería preparar un solo siguiente juego.")
-	_verificar(finalizaciones_de_corrida == 0, "La corrida no debería finalizar en la primera continuidad.")
+	_verificar(finalizaciones_de_partida == 0, "La partida no debería finalizar en la primera continuidad.")
 	_verificar(
-		int(corrida_activa.get("indice_juego_actual", -1)) == 1,
-		"La corrida debería avanzar al segundo juego."
+		int(partida_activa.get("indice_juego_actual", -1)) == 1,
+		"La partida debería avanzar al segundo juego."
 	)
 	_verificar(
 		int(juego_actual.get("indice_juego_actual", -1)) == 1,
 		"Global debería exponer el segundo juego como juego actual."
 	)
 	_verificar(
-		not ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(self),
+		not ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(self),
 		"Después de avanzar, ya no debería quedar otro juego."
 	)
 
-	var termino_corrida: bool = ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
+	var termino_partida: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		self,
 		Callable(self, "_registrar_preparacion_de_siguiente_juego"),
-		Callable(self, "_registrar_finalizacion_de_corrida")
+		Callable(self, "_registrar_finalizacion_de_partida")
 	)
-	_verificar(not termino_corrida, "La última continuidad debería finalizar la corrida.")
-	_verificar(finalizaciones_de_corrida == 1, "La finalización de corrida debería ejecutarse una vez.")
+	_verificar(not termino_partida, "La última continuidad debería finalizar la partida.")
+	_verificar(finalizaciones_de_partida == 1, "La finalización de partida debería ejecutarse una vez.")
 	_verificar(
-		(estado_global.call("obtener_corrida_de_nodo_actual") as Dictionary).is_empty(),
-		"La corrida activa debería quedar vacía al finalizar."
+		(estado_global.call("obtener_partida_de_nodo_actual") as Dictionary).is_empty(),
+		"La partida activa debería quedar vacía al finalizar."
 	)
 	_verificar(
-		(estado_global.call("obtener_juego_actual_del_nodo") as Dictionary).is_empty(),
-		"El juego actual debería limpiarse al finalizar la corrida."
+		(estado_global.call("obtener_juego_actual_de_partida") as Dictionary).is_empty(),
+		"El juego actual debería limpiarse al finalizar la partida."
 	)
 
 	_detener_audio()
@@ -139,14 +139,14 @@ func _registrar_preparacion_de_siguiente_juego() -> void:
 	preparaciones_de_siguiente_juego += 1
 
 
-func _registrar_finalizacion_de_corrida() -> void:
-	finalizaciones_de_corrida += 1
+func _registrar_finalizacion_de_partida() -> void:
+	finalizaciones_de_partida += 1
 
 
 func _limpiar_estado_global(estado_global: Node) -> void:
 	if estado_global == null:
 		return
-	estado_global.call("finalizar_corrida_de_nodo")
+	estado_global.call("finalizar_partida_de_nodo")
 	estado_global.call("limpiar_sesion_nodo_jugable_activo")
 	if estado_global.has_method("reiniciar_progreso"):
 		estado_global.call("reiniciar_progreso")
