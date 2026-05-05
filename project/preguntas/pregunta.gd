@@ -147,20 +147,10 @@ func _es_juego_de_partida_de_nodo() -> bool:
 	return _pertenece_a_partida_de_nodo
 
 
-func _obtener_json_path_actual(contexto_sesion: Dictionary = {}) -> String:
-	var contexto_actual: Dictionary = contexto_sesion
-	if contexto_actual.is_empty():
-		contexto_actual = _obtener_contexto_jugable_actual()
-	var ruta_json: String = str(contexto_actual.get("json_path", "")).strip_edges()
-	if not ruta_json.is_empty():
-		return ruta_json
-	return str(contexto_actual.get("node_json_path", "")).strip_edges()
-
-
 func _configurar_indicador_de_progreso_de_juego() -> void:
 	if _indicador_de_progreso_de_juego == null:
 		return
-	var contexto: Dictionary = _obtener_contexto_de_progreso_de_juego()
+	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
 	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
 	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
 	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
@@ -169,10 +159,6 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 		indice_juego_actual,
 		total_juegos
 	)
-
-
-func _obtener_contexto_de_progreso_de_juego() -> Dictionary:
-	return Global.obtener_contexto_de_progreso_de_juego()
 
 
 func _puede_iniciar_quiz() -> bool:
