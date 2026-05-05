@@ -11,6 +11,10 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const MUSICA_FONDO_PREDETERMINADA := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
+@onready var celiaquia: Label = $MenuBar/Celiaquia/Label
+@onready var veganismo: Label = $MenuBar/Veganismo/Label
+@onready var vegan_gf: Label = $"MenuBar/Vegan-GF/Label"
+@onready var cetogenica: Label = $MenuBar/Cetogenica/Label
 
 const DESTINO_MAPA := "mapa"
 const DESTINO_PISTA := "pista"
@@ -29,19 +33,11 @@ const TRACK_CETOGENICA := "cetogenica"
 @onready var resume_backdrop: ColorRect = $PlayBackdrop
 @onready var resume_panel: PanelContainer = $PlayPanel
 
-@onready var celiaquia: TextureButton = $MenuBar/Celiaquia
-@onready var veganismo: TextureButton = $MenuBar/Veganismo
-@onready var vegan_gf: TextureButton = $"MenuBar/Vegan-GF"
-@onready var cetogenica: TextureButton = $MenuBar/Cetogenica
 @onready var diabetes: TextureButton = $MenuBar/Diabetes
 @onready var autismo: TextureButton = $MenuBar/Autismo
 @onready var btn_atras: Button = $"Atrás"
 
 @onready var mode_buttons: Array[TextureButton] = [
-	celiaquia,
-	veganismo,
-	vegan_gf,
-	cetogenica,
 	diabetes,
 	autismo
 ]
@@ -54,6 +50,10 @@ var _hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	celiaquia.text = "Celiaquía"
+	veganismo.text = "Veganismo"
+	vegan_gf.text = "Vegan-gf"
+	cetogenica.text = "Keto"
 	GameSceneRouter.request_initial_scene_preload()
 	_reproducir_musica_fondo()
 	_establecer_reanudar_superposicion_visible(false)
@@ -64,19 +64,6 @@ func _ready() -> void:
 func _configurar_botones() -> void:
 	_establecer_boton_habilitado(diabetes, false)
 	_establecer_boton_habilitado(autismo, false)
-
-	for button in mode_buttons:
-		_registrar_animacion_boton(button)
-	_registrar_animacion_boton(btn_atras)
-
-
-func _registrar_animacion_boton(button: Control) -> void:
-	if button.material:
-		button.material = button.material.duplicate()
-	_button_base_scales[button] = button.scale
-	button.mouse_entered.connect(_on_boton_sobrevuelo.bind(button, true))
-	button.mouse_exited.connect(_on_boton_sobrevuelo.bind(button, false))
-
 
 func _establecer_reanudar_superposicion_visible(overlay_visible: bool) -> void:
 	resume_backdrop.visible = overlay_visible
@@ -89,19 +76,19 @@ func _establecer_boton_habilitado(button: BaseButton, enabled: bool) -> void:
 
 
 # --- Navegación principal -----------------------------------------------------
-func _on_celiaquia_presionado() -> void:
+func _on_celiaquia_pressed() -> void:
 	await _abrir_destino_boton(celiaquia, DESTINO_MAPA)
 
 
-func _on_veganismo_presionado() -> void:
+func _on_veganismo_pressed() -> void:
 	await _abrir_destino_boton(veganismo, DESTINO_PISTA, TRACK_VEGANISMO)
 
 
-func _on_vegan_gf_presionado() -> void:
+func _on_vegan_gf_pressed() -> void:
 	await _abrir_destino_boton(vegan_gf, DESTINO_PISTA, TRACK_VEGANISMO_CELIAQUIA)
 
 
-func _on_cetogenica_presionado() -> void:
+func _on_cetogenica_pressed() -> void:
 	await _abrir_destino_boton(cetogenica, DESTINO_PISTA, TRACK_CETOGENICA)
 
 
@@ -118,7 +105,6 @@ func _abrir_destino_boton(
 	destination_type: String,
 	track_key: String = ""
 ) -> void:
-	_rebote_boton(button)
 	await get_tree().create_timer(BUTTON_NAVIGATION_DELAY).timeout
 
 	match destination_type:
@@ -164,67 +150,9 @@ func _reproducir_musica_fondo() -> void:
 	MusicManager.reproducir_musica(MUSICA_FONDO_PREDETERMINADA)
 
 
-func _on_boton_sobrevuelo(button: Control, entered: bool) -> void:
-	if button is BaseButton and button.disabled:
-		return
-
-	var base_scale: Vector2 = _button_base_scales.get(button, button.scale)
-	var target_scale: Vector2 = base_scale * HOVER_SCALE if entered else base_scale
-
-	if _hover_tweens.has(button) and is_instance_valid(_hover_tweens[button]):
-		_hover_tweens[button].kill()
-
-	var tween := create_tween()
-	var tweener := tween.tween_property(button, "scale", target_scale, HOVER_DURATION)
-	tweener.set_trans(Tween.TRANS_BACK)
-	tweener.set_ease(Tween.EASE_OUT)
-	_hover_tweens[button] = tween
 
 
-func _rebote_boton(button: Control) -> void:
-	var original_position: Vector2 = button.position
-	var tween := create_tween()
-	var down_tweener := tween.tween_property(
-		button,
-		"position",
-		original_position + BUTTON_BOUNCE_OFFSET,
-		BUTTON_BOUNCE_DOWN_DURATION
-	)
-	down_tweener.set_trans(Tween.TRANS_SINE)
-	down_tweener.set_ease(Tween.EASE_OUT)
-	var up_tweener := tween.tween_property(
-		button,
-		"position",
-		original_position,
-		BUTTON_BOUNCE_UP_DURATION
-	)
-	up_tweener.set_trans(Tween.TRANS_BOUNCE)
-	up_tweener.set_ease(Tween.EASE_OUT)
 
-
-func _process(_delta: float) -> void:
-	var mouse_position: Vector2 = get_viewport().get_mouse_position()
-	for button in mode_buttons:
-		_actualizar_shader_boton(button, mouse_position)
-
-
-func _actualizar_shader_boton(button: TextureButton, mouse_position: Vector2) -> void:
-	var shader_material: ShaderMaterial = button.material as ShaderMaterial
-	if shader_material == null:
-		return
-
-	var button_rect: Rect2 = button.get_global_rect()
-	var mouse_uv: Vector2 = (mouse_position - button_rect.position) / button_rect.size
-	mouse_uv.x = clamp(mouse_uv.x, 0.0, 1.0)
-	mouse_uv.y = clamp(mouse_uv.y, 0.0, 1.0)
-
-	var button_center: Vector2 = button_rect.position + button_rect.size / 2.0
-	var mouse_distance: float = mouse_position.distance_to(button_center)
-	if mouse_distance < 200.0:
-		shader_material.set_shader_parameter("mouse_pos", mouse_uv)
-		return
-
-	shader_material.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
 
 
 # --- HUD ----------------------------------------------------------------------

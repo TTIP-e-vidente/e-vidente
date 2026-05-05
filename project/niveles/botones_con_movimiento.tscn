@@ -14,7 +14,7 @@ shader_parameter/radius = 0.5
 [node name="Jugar" type="TextureButton" unique_id=1307767255]
 editor_description = "Jugar"
 material = SubResource("ShaderMaterial_544v7")
-custom_minimum_size = Vector2(1.205, 0)
+custom_minimum_size = Vector2(160, 160)
 anchors_preset = -1
 anchor_top = 0.35200003
 anchor_bottom = 0.35200003
@@ -35,18 +35,17 @@ metadata/_edit_group_ = true
 [node name="Label" type="Label" parent="." unique_id=707747479]
 custom_minimum_size = Vector2(1.825, 1.78)
 layout_mode = 0
-offset_left = 84.05174
-offset_top = 20.315014
-offset_right = 286.05176
-offset_bottom = 111.31502
+offset_left = 31.368824
+offset_top = 21.365637
+offset_right = 336.88385
+offset_bottom = 113.36564
 scale = Vector2(0.9476981, 0.9476981)
-pivot_offset = Vector2(95.74182, 48.89142)
+pivot_offset = Vector2(159.62862, 48.2968)
 theme_override_fonts/font = ExtResource("3_fmovk")
 theme_override_font_sizes/font_size = 77
-text = "Jugar"
+text = "texto"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-clip_text = true
 
 [connection signal="pressed" from="." to="." method="_on_pressed"]
