@@ -113,33 +113,33 @@ func _check_gameplay_scene(global) -> void:
 		return
 
 	_check(
-		ml.has_method("obtener_actual_corrida_indice"),
-		"ManagerLevel sin obtener_actual_corrida_indice"
+		ml.has_method("obtener_actual_partida_indice"),
+		"ManagerLevel sin obtener_actual_partida_indice"
 	)
-	_check(ml.has_method("obtener_total_corridas"), "ManagerLevel sin obtener_total_corridas")
+	_check(ml.has_method("obtener_total_partidas"), "ManagerLevel sin obtener_total_partidas")
 	if failed:
 		return
 
 	_check(str(ml.active_track_key) == "celiaquia", "Track deberia ser celiaquia")
 	_check(
 		ml.active_run_data is Dictionary and not ml.active_run_data.is_empty(),
-		"Sin datos de corrida"
+		"Sin datos de partida"
 	)
-	_check(ml.obtener_actual_corrida_indice() == 1, "Deberia ser la primera corrida")
-	_check(ml.obtener_total_corridas() >= 1, "Deberia haber al menos una corrida")
+	_check(ml.obtener_actual_partida_indice() == 1, "Deberia ser la primera partida")
+	_check(ml.obtener_total_partidas() >= 1, "Deberia haber al menos una partida")
 	_check(global.obtener_actual_nivel_numero() == 1, "Global deberia estar en capitulo 1")
 	_check(
-		level_scene.has_method("completar_corrida_actual"),
-		"El nivel deberia exponer completar_corrida_actual"
+		level_scene.has_method("completar_partida_actual"),
+		"El nivel deberia exponer completar_partida_actual"
 	)
 	_check(
-		level_scene.has_method("es_corrida_completado"),
-		"El nivel deberia exponer es_corrida_completado"
+		level_scene.has_method("es_partida_completada"),
+		"El nivel deberia exponer es_partida_completada"
 	)
 	if failed:
 		return
 
-	level_scene.completar_corrida_actual()
+	level_scene.completar_partida_actual()
 	_check_completed_gameplay_state(level_scene, ml)
 
 
@@ -189,7 +189,7 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
 	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
 
-	_check(level_scene.es_corrida_completado(), "El nivel deberia quedar marcado como completado")
+	_check(level_scene.es_partida_completada(), "El nivel deberia quedar marcado como completado")
 	_check(
 		next_button != null and not next_button.disabled,
 		"La flecha siguiente deberia quedar habilitada"

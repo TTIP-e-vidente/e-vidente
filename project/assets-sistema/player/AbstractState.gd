@@ -33,14 +33,14 @@ func aplicar_animacion():
 	player_cambiante.current_animation = animation_name
 
 func condiciones_de_victoria(player) : 
-	return player.manager_level.tiene_completado_actual_corrida()
+	return player.manager_level.tiene_completado_actual_partida()
 
 
 func _handle_plate_change(item, player, positive_state: Node, negative_state: Node) -> void:
 	_apply_state_transition(item, player, positive_state, negative_state)
 	if not condiciones_de_victoria(player):
 		return
-	level.completar_corrida_actual()
+	level.completar_partida_actual()
 	animation_name = "recontento"
 	player.hambre.hide()
 

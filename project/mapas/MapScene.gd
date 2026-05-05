@@ -29,7 +29,7 @@ func _ready() -> void:
 		GameTrackCatalog.obtener_ruta_escena_nivel(track_key_mapa)
 	)
 
-	Global.finalizar_corrida_de_nodo()
+	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	actualizar_estados_de_nodos()
 	_restaurar_scroll_guardado_del_mapa()

@@ -8,7 +8,7 @@
 ##   partial_level_states:
 ##     [track_key]:
 ##       [level_number]:
-##         run_index        → Índice de la corrida actual dentro del capítulo
+##         run_index        → Índice de la partida actual dentro del capítulo
 ##         mechanic_type    → Tipo de mecánica (ej: "plate_sort")
 ##         mechanic_state   → Estado interno de la mecánica
 ##           items          → Array de items en juego

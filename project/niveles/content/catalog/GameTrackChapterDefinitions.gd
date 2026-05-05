@@ -208,19 +208,19 @@ static func _construir_capitulos_de_pista(track_key: String) -> Dictionary:
 		if not raw_chapter_definition is Dictionary:
 			continue
 		capitulos[chapter_index + 1] = {
-			"runs": [_construir_corrida(track_key, raw_chapter_definition as Dictionary)]
+			"runs": [_construir_partida(track_key, raw_chapter_definition as Dictionary)]
 		}
 
 	return capitulos
 
 
-static func _construir_corrida(track_key: String, chapter_definition: Dictionary) -> Dictionary:
+static func _construir_partida(track_key: String, chapter_definition: Dictionary) -> Dictionary:
 	var meal_key: String = str(chapter_definition.get("meal_key", "")).strip_edges()
 	var teaching_key: String = str(chapter_definition.get("teaching_key", "")).strip_edges()
 	var category: String = str(chapter_definition.get("category", "")).strip_edges()
 	var negative_count: int = int(chapter_definition.get("negative_count", 0))
 	var positive_count: int = int(chapter_definition.get("positive_count", 0))
-	var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_corrida(
+	var asset_paths: Dictionary = GameChapterAssetCatalog.construir_rutas_activos_partida(
 		track_key,
 		meal_key,
 		teaching_key

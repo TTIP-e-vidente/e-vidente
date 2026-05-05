@@ -1,5 +1,5 @@
 extends RefCounted
-class_name PlanDeCorridaDeNodo
+class_name PlanDePartidaDeNodo
 
 const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/core/MapJsonLoader.gd")
@@ -12,8 +12,8 @@ const RUTA_MAPA_POR_PISTA := {
 }
 
 
-# Plan de corrida
-static func construir_plan_de_corrida(node_data: MapNodeData) -> Dictionary:
+# Plan de partida
+static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 	if node_data == null or not node_data.is_valid():
 		return {}
 
