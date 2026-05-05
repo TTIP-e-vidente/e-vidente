@@ -2,10 +2,10 @@
 	"id": "eliminar_gluten",
 	"theme": "celiaquia",
 	"title": "Eliminar gluten del trigo",
-	"difficulty": "easy",
+	"difficulty": "medium",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnologicos para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro.",
+		"question": "El cambio principal es que ahora se certifican productos que han pasado por procesos tecnológicos para eliminar el gluten de ingredientes como la cebada o el trigo, garantizando que el producto final sea seguro.",
 		"correct_answer": "Verdadero",
 		"wrong_options": ["Falso"],
 		"visual_resource": ""
