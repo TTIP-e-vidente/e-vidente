@@ -5,13 +5,13 @@
   "difficulty": "medium",
   "mode": "quiz_choice",
   "content": {
-    "question": "En una cocina compartida, que accion ayuda a reducir el riesgo de contaminacion cruzada con gluten?",
-    "correct_answer": "Usar utensilios limpios y superficies sin migas",
-    "wrong_options": [
-      "Soplar las migas de la mesa",
-      "Usar la misma tostadora con pan comun",
+	"question": "En una cocina compartida, que accion ayuda a reducir el riesgo de contaminacion cruzada con gluten?",
+	"correct_answer": "Usar utensilios limpios y superficies sin migas",
+	"wrong_options": [
+	  "Soplar las migas de la mesa",
+	  "Usar la misma tostadora con pan comun",
       "Separar los alimentos solo despues de cocinar"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }

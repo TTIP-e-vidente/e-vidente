@@ -5,12 +5,12 @@
   "difficulty": "easy",
   "mode": "quiz_choice",
   "content": {
-    "question": "Una persona con celiaquia debe evitar alimentos que contengan trigo, avena, cebada o centeno, salvo que esten certificados como libres de gluten.",
-    "correct_answer": "Verdadero",
-    "wrong_options": [
-      "Falso",
+	"question": "Una persona con celiaquia debe evitar alimentos que contengan trigo, avena, cebada o centeno, salvo que esten certificados como libres de gluten.",
+	"correct_answer": "Verdadero",
+	"wrong_options": [
+	  "Falso",
       "Solo debe evitar lacteos"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }

@@ -5,13 +5,13 @@
   "difficulty": "easy",
   "mode": "quiz_choice",
   "content": {
-    "question": "Cual de estos alimentos es naturalmente libre de gluten si no fue contaminado ni mezclado con ingredientes con TACC?",
-    "correct_answer": "Fruta fresca",
-    "wrong_options": [
-      "Pan comun",
-      "Galletitas de trigo",
+	"question": "Cual de estos alimentos es naturalmente libre de gluten si no fue contaminado ni mezclado con ingredientes con TACC?",
+	"correct_answer": "Fruta fresca",
+	"wrong_options": [
+	  "Pan comun",
+	  "Galletitas de trigo",
       "Fideos tradicionales"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }
