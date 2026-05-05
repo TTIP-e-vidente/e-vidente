@@ -16,6 +16,7 @@ const ContinuidadDeCorridaDeNodoScript := preload(
 )
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
@@ -181,11 +182,35 @@ func reiniciar_estado_de_corrida() -> void:
 func iniciar_runtime_del_nivel() -> void:
 	if manager_level == null:
 		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
-	else:
-		manager_level.iniciar_nivel_sesion(active_track_key, self)
+		return
+	_aplicar_dificultad_de_arrastre()
+	manager_level.iniciar_nivel_sesion(active_track_key, self)
 	var resolved_level_number := _numero_nivel_valido(active_track_key)
 	if resolved_level_number > 0:
 		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
+
+
+func _aplicar_dificultad_de_arrastre() -> void:
+	if manager_level == null or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre"):
+		return
+	if not _pertenece_a_corrida_de_nodo:
+		manager_level.establecer_configuracion_de_dificultad_arrastre({})
+		return
+	var dificultad_actual: int = Global.obtener_dificultad_del_juego_actual()
+	manager_level.establecer_configuracion_de_dificultad_arrastre(
+		{
+			"dificultad": dificultad_actual,
+			"elementos_maximos": DificultadArrastreScript.limitar_elementos_por_dificultad(
+				dificultad_actual
+			),
+			"distractores_maximos": DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
+				dificultad_actual
+			),
+			"mostrar_ayuda_visual": DificultadArrastreScript.deberia_mostrar_ayuda_visual(
+				dificultad_actual
+			),
+		}
+	)
 
 
 func _obtener_contexto_jugable_actual() -> Dictionary:
@@ -224,10 +249,7 @@ func cargar_nivel_desde_json(json_path: String) -> void:
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
 		return
 
-	configurar_desde_datos_nodo(result.get("data", {}))
-
-
-func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
+	var datos_nodo: Dictionary = result.get("data", {})
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
@@ -405,7 +427,49 @@ func _mostrar_completado_corrida_retroalimentacion() -> void:
 func _on_adelante_presionado() -> void:
 	if not es_corrida_completado():
 		return
-	on_teaching_finished(true)
+	_continuar_despues_de_ensenanza(true)
+
+
+func mostrar_continuacion() -> void:
+	_ya_continuo = false
+	next_chapter_button.hide()
+	continuador.iniciar(5)
+
+
+func _on_timer_siguiente_nodo_timeout() -> void:
+	continuar_al_siguiente_nodo()
+
+
+func continuar_al_siguiente_nodo() -> void:
+	if _ya_continuo:
+		return
+
+	_ya_continuo = true
+	if continuador != null:
+		continuador.detener()
+	_continuar_despues_de_ensenanza(true)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
+	if not _has_post_game_flow_state():
+		if _usa_flujo_mapa:
+			_continuar_flujo_mapa_legacy()
+			return
+		GameSceneRouter.go_to_mode_selector(get_tree())
+		return
+
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		_take_post_game_flow_state(),
+		_take_post_game_streak_feedback(),
+		timer_finished
+	)
+
+
+func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
 
 
 ## --- Continuación desde mapa ---
@@ -516,26 +580,6 @@ func _take_post_game_streak_feedback() -> Dictionary:
 	return post_game_streak_feedback
 
 
-func mostrar_continuacion() -> void:
-	_ya_continuo = false
-	next_chapter_button.hide()
-	continuador.iniciar(5)
-
-
-func _on_timer_siguiente_nodo_timeout() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func continuar_al_siguiente_nodo() -> void:
-	if _ya_continuo:
-		return
-
-	_ya_continuo = true
-	if continuador != null:
-		continuador.detener()
-	_continuar_despues_de_ensenanza(true)
-
-
 func _return_to_map_scene() -> void:
 	if continuador != null:
 		continuador.detener()
@@ -554,16 +598,6 @@ func _cancelar_corrida_de_nodo() -> void:
 		get_tree(),
 		_ruta_escena_retorno
 	)
-
-
-func _continue_from_map_completion() -> void:
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_retorno,
-		_nodo_actual
-	)
-
-
 ## --- Guardado rápido ---
 
 func _on_guardar_progreso_boton_presionado() -> void:
@@ -629,39 +663,17 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 	save_progress_button.icon = _save_icon_ok if success else _save_icon_idle
 
 
-func on_teaching_finished(timer_finished: bool) -> void:
-	_continuar_despues_de_ensenanza(timer_finished)
-
-
-func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if _continuar_corrida_de_nodo_si_corresponde():
-		return
-	if not _has_post_game_flow_state():
-		if _usa_flujo_mapa:
-			_continuar_flujo_mapa_legacy()
-			return
-		GameSceneRouter.go_to_mode_selector(get_tree())
-		return
-
-	PostGameFlowControllerScript.navigate_after_teaching(
-		get_tree(),
-		_take_post_game_flow_state(),
-		_take_post_game_streak_feedback(),
-		timer_finished
-	)
-
-
-func _on_teaching_finished(timer_finished: bool) -> void:
-	on_teaching_finished(timer_finished)
-
-
 func _continuar_flujo_mapa_legacy() -> void:
 	if _ya_continuo:
 		return
 	_ya_continuo = true
 	if continuador != null:
 		continuador.detener()
-	_continue_from_map_completion()
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_retorno,
+		_nodo_actual
+	)
 
 
 func _mostrar_retroalimentacion_tarjeta(
@@ -814,8 +826,3 @@ func _numero_nivel_valido(track_key: String) -> int:
 
 func _actual_nivel_numero() -> int:
 	return int(Global.current_level)
-
-
-# Compatibilidad
-func complete_current_run() -> void:
-	completar_corrida_actual()

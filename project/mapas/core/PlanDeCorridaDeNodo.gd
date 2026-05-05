@@ -6,6 +6,7 @@ const CargadorMapaScript := preload("res://mapas/core/MapJsonLoader.gd")
 const DatosNodoMapaScript := preload("res://mapas/core/MapNodeData.gd")
 
 const MAXIMO_JUEGOS_POR_NODO := 5
+const MAXIMA_DIFICULTAD_POR_JUEGO := 5
 const RUTA_MAPA_POR_PISTA := {
 	CatalogoDePistas.TRACK_CELIAQUIA: "res://contenido/mapas/celiaquia_mapa.json",
 }
@@ -25,7 +26,7 @@ static func construir_plan_de_corrida(node_data: MapNodeData) -> Dictionary:
 		"clave_nodo": node_data.node_key,
 		"titulo_nodo": node_data.title,
 		"clave_pista": node_data.track_key,
-		"dificultad": max(1, node_data.difficulty),
+		"dificultad": obtener_dificultad_base_del_nodo(node_data),
 		"numero_nivel": node_data.index + 1,
 		"indice_juego_actual": 0,
 		"total_juegos": juegos.size(),
@@ -40,15 +41,23 @@ static func obtener_cantidad_de_juegos_para_nodo(node_index: int) -> int:
 # Armado de juegos
 static func construir_juegos_para_nodo(node_data: MapNodeData, total_juegos: int) -> Array[Dictionary]:
 	var total_juegos_seguro: int = maxi(1, total_juegos)
+	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
 	var juegos: Array[Dictionary] = []
-	juegos.append(_construir_entrada_de_juego(node_data))
+	juegos.append(_construir_entrada_de_juego_con_indice(node_data, 0, dificultad_base))
 
 	var modo_base: String = _normalizar_modo(node_data.mode)
 	if modo_base.is_empty():
 		return juegos
 
 	var estado_de_seleccion: Dictionary = _construir_estado_de_seleccion_de_juegos(node_data)
-	_agregar_juegos_restantes(juegos, node_data, total_juegos_seguro, modo_base, estado_de_seleccion)
+	_agregar_juegos_restantes(
+		juegos,
+		node_data,
+		total_juegos_seguro,
+		modo_base,
+		dificultad_base,
+		estado_de_seleccion
+	)
 
 	return juegos
 
@@ -197,18 +206,42 @@ static func _agregar_juegos_restantes(
 	node_data: MapNodeData,
 	total_juegos: int,
 	modo_base: String,
+	dificultad_base: int,
 	estado_de_seleccion: Dictionary
 ) -> void:
 	for indice_juego in range(1, total_juegos):
 		juegos.append(
-			_construir_juego_siguiente(node_data, modo_base, indice_juego, estado_de_seleccion)
+			_construir_juego_siguiente(
+				node_data,
+				modo_base,
+				indice_juego,
+				dificultad_base,
+				estado_de_seleccion
+			)
 		)
+
+
+static func obtener_dificultad_base_del_nodo(node_data: MapNodeData) -> int:
+	if node_data == null:
+		return 1
+	var dificultad_autorizada: int = max(
+		int(node_data.difficulty),
+		obtener_cantidad_de_juegos_para_nodo(node_data.index)
+	)
+	return clampi(dificultad_autorizada, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
+
+
+static func obtener_dificultad_para_juego(node_data: MapNodeData, indice_juego: int) -> int:
+	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
+	var dificultad_progresiva: int = indice_juego + 1
+	return clampi(mini(dificultad_base, dificultad_progresiva), 1, MAXIMA_DIFICULTAD_POR_JUEGO)
 
 
 static func _construir_juego_siguiente(
 	node_data: MapNodeData,
 	modo_base: String,
 	indice_juego: int,
+	dificultad_base: int,
 	estado_de_seleccion: Dictionary
 ) -> Dictionary:
 	var modo_objetivo: String = _obtener_modo_para_juego(modo_base, indice_juego)
@@ -222,15 +255,27 @@ static func _construir_juego_siguiente(
 		modo_objetivo,
 		node_data
 	)
-	return _construir_entrada_de_juego(nodo_elegido)
+	return _construir_entrada_de_juego_con_indice(nodo_elegido, indice_juego, dificultad_base)
 
 
 static func _construir_entrada_de_juego(node_data: MapNodeData) -> Dictionary:
+	return _construir_entrada_de_juego_con_indice(
+		node_data,
+		0,
+		obtener_dificultad_base_del_nodo(node_data)
+	)
+
+
+static func _construir_entrada_de_juego_con_indice(
+	node_data: MapNodeData,
+	indice_juego: int,
+	dificultad_base: int
+) -> Dictionary:
 	return {
 		"mode": _normalizar_modo(node_data.mode),
 		"json_path": node_data.json_path,
 		"titulo": node_data.title,
-		"dificultad": max(1, node_data.difficulty),
+		"dificultad": clampi(mini(dificultad_base, indice_juego + 1), 1, MAXIMA_DIFICULTAD_POR_JUEGO),
 		"clave_nodo_de_origen": node_data.node_key,
 	}
 

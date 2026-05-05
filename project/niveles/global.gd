@@ -222,6 +222,16 @@ func obtener_juego_actual_del_nodo() -> Dictionary:
 	return _juego_de_nodo_actual.duplicate(true)
 
 
+func obtener_dificultad_del_juego_actual() -> int:
+	if not _juego_de_nodo_actual.is_empty():
+		return _obtener_dificultad_del_juego_actual(
+			_juego_de_nodo_actual,
+			_corrida_de_nodo_activa
+		)
+	var sesion_activa: Dictionary = obtener_sesion_nodo_jugable_activo()
+	return max(0, int(sesion_activa.get("difficulty", 0)))
+
+
 func hay_siguiente_juego_del_nodo() -> bool:
 	if _corrida_de_nodo_activa.is_empty():
 		return false

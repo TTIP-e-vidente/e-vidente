@@ -34,6 +34,7 @@ var active_mechanic_type: String = ""
 var active_positive_item_count: int = 0
 var active_negative_item_count: int = 0
 var active_category_code: String = ""
+var _configuracion_dificultad_arrastre: Dictionary = {}
 
 
 # --- Flujo público del nivel --------------------------------------------------
@@ -47,6 +48,10 @@ func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	var saved_level_state: Dictionary = _obtener_estado_guardado_actual()
 	active_run_index = _resolver_indice_corrida(saved_level_state)
 	_cargar_corrida_actual(saved_level_state)
+
+
+func establecer_configuracion_de_dificultad_arrastre(configuracion: Dictionary) -> void:
+	_configuracion_dificultad_arrastre = configuracion.duplicate(true)
 
 
 func avanzar_a_siguiente_corrida() -> bool:
@@ -296,11 +301,13 @@ func _aplicar_activo_corrida_carga() -> void:
 		active_negative_item_count = int(active_run_data.get("negative_count", 0))
 		active_positive_item_count = int(active_run_data.get("positive_count", 0))
 		active_category_code = str(active_run_data.get("category", "")).strip_edges()
+		_aplicar_configuracion_de_dificultad_arrastre()
 		return
 
 	active_negative_item_count = int(run_payload.get("negative_count", 0))
 	active_positive_item_count = int(run_payload.get("positive_count", 0))
 	active_category_code = str(run_payload.get("category", "")).strip_edges()
+	_aplicar_configuracion_de_dificultad_arrastre()
 
 
 func _obtener_payload_corrida() -> Dictionary:
@@ -327,6 +334,7 @@ func _configurar_nivel_recurso() -> void:
 	meal_sprite.texture = level_resource.comida
 	condition_sprite.texture = level_resource.condicion
 	teaching_sprite.texture = level_resource.ensenanza
+	_aplicar_ayuda_visual_de_arrastre()
 
 
 func _conectar_escena_nodos(level_scene: Node) -> bool:
@@ -485,6 +493,35 @@ func _construir_activo_corrida_carga() -> Dictionary:
 		"positive_count": active_positive_item_count,
 		"category": active_category_code
 	}
+
+
+func _aplicar_configuracion_de_dificultad_arrastre() -> void:
+	if _configuracion_dificultad_arrastre.is_empty():
+		return
+	active_positive_item_count = max(
+		1,
+		int(_configuracion_dificultad_arrastre.get("elementos_maximos", active_positive_item_count))
+	)
+	active_negative_item_count = max(
+		0,
+		int(
+			_configuracion_dificultad_arrastre.get(
+				"distractores_maximos",
+				active_negative_item_count
+			)
+		)
+	)
+
+
+func _aplicar_ayuda_visual_de_arrastre() -> void:
+	if not is_instance_valid(meal_sprite) or not is_instance_valid(condition_sprite):
+		return
+	meal_sprite.modulate = Color(1, 1, 1, 1)
+	var mostrar_ayuda_visual: bool = bool(
+		_configuracion_dificultad_arrastre.get("mostrar_ayuda_visual", true)
+	)
+	var opacidad_condicion: float = 1.0 if mostrar_ayuda_visual else 0.55
+	condition_sprite.modulate = Color(1, 1, 1, opacidad_condicion)
 
 
 func _resetear_estado_corrida_activa() -> void:

@@ -127,23 +127,6 @@ func _reiniciar_sesion_nodo() -> void:
 	_post_game_flow_state = {}
 
 
-func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
-	_aplicar_contexto_sesion(contexto_sesion)
-	var ruta_json: String = _obtener_json_path_actual(contexto_sesion)
-	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
-		datos_nodo,
-		ruta_json
-	)
-	if not bool(resultado_quiz.get("ok", false)):
-		_establecer_mensaje_de_error(
-			str(resultado_quiz.get("error", "No se pudo adaptar el nodo quiz_choice."))
-		)
-		return false
-
-	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
-	return true
-
-
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
@@ -389,7 +372,7 @@ func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	_on_questions_finished(previous_streak, updated_streak)
-	_show_post_game_completion()
+	mostrar_ensenanza_final()
 
 
 func _continuar_corrida_de_nodo_si_corresponde() -> bool:
@@ -397,13 +380,9 @@ func _continuar_corrida_de_nodo_si_corresponde() -> bool:
 		return false
 	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
 		get_tree(),
-		Callable(self, "_preparar_siguiente_juego_de_corrida_en_pregunta"),
+		Callable(self, "_limpiar_media_de_pregunta"),
 		Callable(self, "_limpiar_estado_local_de_corrida_en_pregunta")
 	)
-
-
-func _preparar_siguiente_juego_de_corrida_en_pregunta() -> void:
-	_limpiar_media_de_pregunta()
 
 
 func _limpiar_estado_local_de_corrida_en_pregunta() -> void:
@@ -476,8 +455,57 @@ func _build_completion_debug_context() -> Dictionary:
 	}
 
 
-func _show_post_game_completion() -> void:
-	mostrar_ensenanza_final()
+func mostrar_ensenanza_final() -> void:
+	mostrar_continuacion()
+
+
+func mostrar_continuacion() -> void:
+	ya_continuo = false
+	_boton_volver_mapa_final.hide()
+	_ocultar_continuacion_legacy()
+	continuador.iniciar(5)
+
+
+func _ocultar_continuacion_legacy() -> void:
+	_contenedor_continuacion_legacy.hide()
+
+
+func _on_timer_siguiente_nodo_timeout() -> void:
+	continuar_al_siguiente_nodo()
+
+
+func continuar_al_siguiente_nodo() -> void:
+	if ya_continuo:
+		return
+
+	ya_continuo = true
+	if continuador != null:
+		continuador.detener()
+	_continuar_despues_de_ensenanza(true)
+
+
+func _on_flecha_derecha_pressed() -> void:
+	continuar_al_siguiente_nodo()
+
+
+func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
+	if not _has_post_game_flow_state():
+		_return_to_map_scene()
+		return
+
+	# La escena solo informa que termino la UI; el controlador decide el destino.
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		_take_post_game_flow_state(),
+		_take_post_game_streak_feedback(),
+		timer_finished
+	)
 
 
 func _has_post_game_flow_state() -> bool:
@@ -613,60 +641,3 @@ func _return_to_map_scene() -> void:
 		get_tree(),
 		_ruta_escena_de_retorno
 	)
-
-
-func mostrar_ensenanza_final() -> void:
-	mostrar_continuacion()
-
-
-func mostrar_continuacion() -> void:
-	ya_continuo = false
-	_boton_volver_mapa_final.hide()
-	_ocultar_continuacion_legacy()
-	continuador.iniciar(5)
-
-
-func _ocultar_continuacion_legacy() -> void:
-	_contenedor_continuacion_legacy.hide()
-
-
-func _on_timer_siguiente_nodo_timeout() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func continuar_al_siguiente_nodo() -> void:
-	if ya_continuo:
-		return
-
-	ya_continuo = true
-	if continuador != null:
-		continuador.detener()
-	_continuar_despues_de_ensenanza(true)
-
-
-func _on_flecha_derecha_pressed() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func _on_teaching_finished(timer_finished: bool) -> void:
-	_continuar_despues_de_ensenanza(timer_finished)
-
-
-func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if _continuar_corrida_de_nodo_si_corresponde():
-		return
-	if not _has_post_game_flow_state():
-		volver_al_mapa_legacy()
-		return
-
-	# La escena solo informa que termino la UI; el controlador decide el destino.
-	PostGameFlowControllerScript.navigate_after_teaching(
-		get_tree(),
-		_take_post_game_flow_state(),
-		_take_post_game_streak_feedback(),
-		timer_finished
-	)
-
-
-func volver_al_mapa_legacy() -> void:
-	_return_to_map_scene()

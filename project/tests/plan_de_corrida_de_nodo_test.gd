@@ -83,13 +83,20 @@ func _probar_construccion_de_plan() -> void:
 		str(segundo_juego.get("mode", "")) == "quiz_choice",
 		"El segundo juego debería alternar al modo opuesto."
 	)
+	var dificultades_obtenidas: Array[int] = []
 
 	for juego_crudo in juegos:
 		var juego: Dictionary = juego_crudo as Dictionary
+		dificultades_obtenidas.append(int(juego.get("dificultad", 0)))
 		_verificar(
 			int(juego.get("dificultad", 0)) >= 1,
 			"Cada juego del plan debería exponer una dificultad simple."
 		)
+
+	_verificar(
+		dificultades_obtenidas == [1, 2, 3, 4],
+		"La corrida debería asignar dificultad progresiva por juego."
+	)
 
 
 func _verificar(condicion: bool, mensaje: String) -> void:
