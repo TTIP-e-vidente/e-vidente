@@ -223,7 +223,7 @@ func _obtener_contexto_jugable_actual() -> Dictionary:
 func _configurar_indicador_de_progreso_de_juego() -> void:
 	if _indicador_de_progreso_de_juego == null:
 		return
-	var contexto: Dictionary = _obtener_contexto_de_progreso_de_juego()
+	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
 	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
 	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
 	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
@@ -232,10 +232,6 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 		indice_juego_actual,
 		total_juegos
 	)
-
-
-func _obtener_contexto_de_progreso_de_juego() -> Dictionary:
-	return Global.obtener_contexto_de_progreso_de_juego()
 
 
 func cargar_nivel_desde_json(json_path: String) -> void:
