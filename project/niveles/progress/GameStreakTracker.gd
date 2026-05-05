@@ -57,19 +57,30 @@ static func record(
 
 # --- Datos para UI ----------------------------------------------------------
 
+static func _resolver_estado_visual(streak_state: Dictionary) -> String:
+	var current_count: int = int(
+		streak_state.get("current_count", 0)
+	)
+
+	if current_count <= 0:
+		return "inactive"
+
+	return "active" 
+	
 static func view_model(streak_state: Dictionary) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_day: String = str(streak_state.get("last_activity_day", ""))
 	var today: String = Time.get_date_string_from_system(false)
-
+	
 	if current_count <= 0:
 		return {
 			"current_count": 0,
 			"best_count": best_count,
 			"status_key": "inactive",
 			"status_title": "Sin racha activa",
-			"status_detail": "Completa una actividad para iniciar la racha."
+			"status_detail": "Completa una actividad para iniciar la racha.",
+			"streak_state": _resolver_estado_visual(streak_state)
 		}
 
 	if last_day == today:
@@ -90,6 +101,7 @@ static func view_model(streak_state: Dictionary) -> Dictionary:
 	}
 
 
+	
 # --- Feedback post-partida --------------------------------------------------
 
 static func build_feedback(
