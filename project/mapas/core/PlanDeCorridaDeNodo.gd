@@ -41,29 +41,14 @@ static func obtener_cantidad_de_juegos_para_nodo(node_index: int) -> int:
 static func construir_juegos_para_nodo(node_data: MapNodeData, total_juegos: int) -> Array[Dictionary]:
 	var total_juegos_seguro: int = maxi(1, total_juegos)
 	var juegos: Array[Dictionary] = []
+	juegos.append(_construir_entrada_de_juego(node_data))
+
 	var modo_base: String = _normalizar_modo(node_data.mode)
 	if modo_base.is_empty():
-		juegos.append(_construir_entrada_de_juego(node_data))
 		return juegos
 
-	var nodos_de_pista: Array[MapNodeData] = _cargar_nodos_de_pista(node_data.track_key)
-	var nodos_por_modo: Dictionary = _construir_grupos_por_modo(nodos_de_pista)
-	var indices_siguientes: Dictionary = _construir_indices_iniciales(nodos_por_modo, node_data)
-	var rutas_usadas: Dictionary = {}
-
-	juegos.append(_construir_entrada_de_juego(node_data))
-	rutas_usadas[node_data.json_path] = true
-
-	for indice_juego in range(1, total_juegos_seguro):
-		var modo_objetivo: String = _obtener_modo_para_juego(modo_base, indice_juego)
-		var nodo_elegido: MapNodeData = _elegir_nodo_para_modo(
-			nodos_por_modo,
-			indices_siguientes,
-			rutas_usadas,
-			modo_objetivo,
-			node_data
-		)
-		juegos.append(_construir_entrada_de_juego(nodo_elegido))
+	var estado_de_seleccion: Dictionary = _construir_estado_de_seleccion_de_juegos(node_data)
+	_agregar_juegos_restantes(juegos, node_data, total_juegos_seguro, modo_base, estado_de_seleccion)
 
 	return juegos
 
@@ -136,9 +121,31 @@ static func _elegir_nodo_para_modo(
 	modo_objetivo: String,
 	nodo_fallback: MapNodeData
 ) -> MapNodeData:
+	var candidato_sin_repetir: MapNodeData = _buscar_candidato_sin_repetir(
+		nodos_por_modo,
+		indices_siguientes,
+		rutas_usadas,
+		modo_objetivo
+	)
+	if candidato_sin_repetir != null:
+		return candidato_sin_repetir
+	return _buscar_candidato_repetido(
+		nodos_por_modo,
+		indices_siguientes,
+		modo_objetivo,
+		nodo_fallback
+	)
+
+
+static func _buscar_candidato_sin_repetir(
+	nodos_por_modo: Dictionary,
+	indices_siguientes: Dictionary,
+	rutas_usadas: Dictionary,
+	modo_objetivo: String
+) -> MapNodeData:
 	var grupo: Array = nodos_por_modo.get(modo_objetivo, [])
 	if grupo.is_empty():
-		return nodo_fallback
+		return null
 
 	var indice_inicial: int = int(indices_siguientes.get(modo_objetivo, 0))
 	for desplazamiento in range(grupo.size()):
@@ -152,6 +159,20 @@ static func _elegir_nodo_para_modo(
 		rutas_usadas[candidato.json_path] = true
 		return candidato
 
+	return null
+
+
+static func _buscar_candidato_repetido(
+	nodos_por_modo: Dictionary,
+	indices_siguientes: Dictionary,
+	modo_objetivo: String,
+	nodo_fallback: MapNodeData
+) -> MapNodeData:
+	var grupo: Array = nodos_por_modo.get(modo_objetivo, [])
+	if grupo.is_empty():
+		return nodo_fallback
+
+	var indice_inicial: int = int(indices_siguientes.get(modo_objetivo, 0))
 	var indice_repetido: int = indice_inicial % grupo.size()
 	var candidato_repetido: MapNodeData = grupo[indice_repetido] as MapNodeData
 	indices_siguientes[modo_objetivo] = indice_repetido + 1
@@ -160,11 +181,56 @@ static func _elegir_nodo_para_modo(
 	return candidato_repetido
 
 
+static func _construir_estado_de_seleccion_de_juegos(node_data: MapNodeData) -> Dictionary:
+	var nodos_de_pista: Array[MapNodeData] = _cargar_nodos_de_pista(node_data.track_key)
+	var nodos_por_modo: Dictionary = _construir_grupos_por_modo(nodos_de_pista)
+	var indices_siguientes: Dictionary = _construir_indices_iniciales(nodos_por_modo, node_data)
+	return {
+		"nodos_por_modo": nodos_por_modo,
+		"indices_siguientes": indices_siguientes,
+		"rutas_usadas": {node_data.json_path: true},
+	}
+
+
+static func _agregar_juegos_restantes(
+	juegos: Array[Dictionary],
+	node_data: MapNodeData,
+	total_juegos: int,
+	modo_base: String,
+	estado_de_seleccion: Dictionary
+) -> void:
+	for indice_juego in range(1, total_juegos):
+		juegos.append(
+			_construir_juego_siguiente(node_data, modo_base, indice_juego, estado_de_seleccion)
+		)
+
+
+static func _construir_juego_siguiente(
+	node_data: MapNodeData,
+	modo_base: String,
+	indice_juego: int,
+	estado_de_seleccion: Dictionary
+) -> Dictionary:
+	var modo_objetivo: String = _obtener_modo_para_juego(modo_base, indice_juego)
+	var nodos_por_modo: Dictionary = estado_de_seleccion.get("nodos_por_modo", {})
+	var indices_siguientes: Dictionary = estado_de_seleccion.get("indices_siguientes", {})
+	var rutas_usadas: Dictionary = estado_de_seleccion.get("rutas_usadas", {})
+	var nodo_elegido: MapNodeData = _elegir_nodo_para_modo(
+		nodos_por_modo,
+		indices_siguientes,
+		rutas_usadas,
+		modo_objetivo,
+		node_data
+	)
+	return _construir_entrada_de_juego(nodo_elegido)
+
+
 static func _construir_entrada_de_juego(node_data: MapNodeData) -> Dictionary:
 	return {
 		"mode": _normalizar_modo(node_data.mode),
 		"json_path": node_data.json_path,
 		"titulo": node_data.title,
+		"dificultad": max(1, node_data.difficulty),
 		"clave_nodo_de_origen": node_data.node_key,
 	}
 

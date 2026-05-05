@@ -25,6 +25,13 @@ static func continuar_o_finalizar_corrida(
 	return false
 
 
+static func hay_siguiente_juego(tree: SceneTree) -> bool:
+	var estado_global: Node = _obtener_estado_global(tree)
+	if estado_global == null:
+		return false
+	return bool(estado_global.call("hay_siguiente_juego_del_nodo"))
+
+
 static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> bool:
 	var estado: Node = estado_global
 	if estado == null:

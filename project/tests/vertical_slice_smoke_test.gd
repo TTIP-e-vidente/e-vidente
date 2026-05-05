@@ -9,15 +9,29 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
+const TIEMPO_MAXIMO_SMOKE_TEST := 8.0
 
 var failed := false
+var prueba_finalizada := false
 
 
 func _initialize() -> void:
-	call_deferred("_run")
+	iniciar_timeout_de_seguridad()
+	call_deferred("ejecutar_prueba")
 
 
-func _run() -> void:
+func iniciar_timeout_de_seguridad() -> void:
+	var temporizador := create_timer(TIEMPO_MAXIMO_SMOKE_TEST)
+	temporizador.timeout.connect(fallar_por_timeout)
+
+
+func fallar_por_timeout() -> void:
+	if prueba_finalizada:
+		return
+	finalizar_con_error("El smoke test superó el tiempo máximo.")
+
+
+func ejecutar_prueba() -> void:
 	await process_frame
 
 	var global_state = root.get_node_or_null("/root/Global")
@@ -25,7 +39,7 @@ func _run() -> void:
 	_check(global_state != null, "Autoload Global no encontrado")
 	_check(save_manager != null, "Autoload SaveManager no encontrado")
 	if failed:
-		await _quit()
+		finalizar_con_error()
 		return
 
 	_reset_test_state(global_state, save_manager)
@@ -37,12 +51,22 @@ func _run() -> void:
 	await _call_and_expect("_on_iniciar_presionado", "res://niveles/selector.tscn", "Selector")
 	await _call_and_expect("_on_celiaquia_presionado", MAP_SCENE, "Mapa")
 	if not failed:
-		var nodes_container := current_scene.call("obtener_contenedor_de_nodos") as Node2D
-		_check(nodes_container != null, "El mapa deberia exponer obtener_contenedor_de_nodos")
-		if nodes_container != null:
+		var tablero_mapa := current_scene.get_node_or_null("MapBoard") as Node
+		_check(tablero_mapa != null, "El mapa deberia tener el nodo MapBoard")
+		_check(
+			tablero_mapa != null and tablero_mapa.has_method("obtener_nodos_runtime_mapa"),
+			"MapBoard deberia exponer obtener_nodos_runtime_mapa"
+		)
+		if tablero_mapa != null and tablero_mapa.has_method("obtener_nodos_runtime_mapa"):
+			var nodos_mapa_cargados := current_scene.get("nodos_mapa") as Array
+			var nodos_runtime: Array = tablero_mapa.call("obtener_nodos_runtime_mapa") as Array
 			_check(
-				nodes_container.get_child_count() == 14,
-				"El mapa deberia renderizar 14 nodos jugables"
+				nodos_mapa_cargados != null and not nodos_mapa_cargados.is_empty(),
+				"El mapa deberia cargar nodos jugables desde el JSON"
+			)
+			_check(
+				nodos_runtime.size() == nodos_mapa_cargados.size(),
+				"El mapa deberia renderizar la misma cantidad de nodos que carga del JSON"
 			)
 
 	if not failed:
@@ -61,9 +85,13 @@ func _run() -> void:
 			await process_frame
 		_check(is_instance_valid(current_scene), "La escena crasheo en los primeros frames")
 
+	if failed:
+		finalizar_con_error()
+		return
+
 
 	_reset_test_state(global_state, save_manager)
-	await _quit()
+	finalizar_ok()
 
 
 func _reset_test_state(global_state, save_manager) -> void:
@@ -128,8 +156,8 @@ func _select_first_map_node_and_expect_level() -> void:
 	if failed:
 		return
 
-	var primer_nodo: Dictionary = current_scene.call("obtener_nodo_mapa", "receta_1_desayuno")
-	_check(not primer_nodo.is_empty(), "El mapa deberia tener el nodo receta_1_desayuno")
+	var primer_nodo = current_scene.call("obtener_nodo_mapa", "receta_1_desayuno")
+	_check(primer_nodo != null, "El mapa deberia tener el nodo receta_1_desayuno")
 	if failed:
 		return
 
@@ -211,7 +239,7 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 
 
 func _go_to(scene_path: String, label: String) -> void:
-	if failed:
+	if failed or prueba_finalizada:
 		return
 	_check(change_scene_to_file(scene_path) == OK, "No se pudo abrir %s" % label)
 	if not failed:
@@ -221,7 +249,7 @@ func _go_to(scene_path: String, label: String) -> void:
 func _call_and_expect(
 	method: String, expected_scene: String, label: String, args: Array = []
 ) -> void:
-	if failed:
+	if failed or prueba_finalizada:
 		return
 	_check(current_scene != null, "No hay escena antes de %s" % label)
 	_check(
@@ -236,6 +264,8 @@ func _call_and_expect(
 
 func _wait_for(expected_path: String, label: String) -> void:
 	for i in 60:
+		if failed or prueba_finalizada:
+			return
 		await process_frame
 		if current_scene != null and current_scene.scene_file_path == expected_path:
 			return
@@ -253,16 +283,28 @@ func _delete_save_files() -> void:
 			DirAccess.remove_absolute(abs_path)
 
 
-func _quit() -> void:
+func finalizar_ok() -> void:
+	_cerrar_prueba(0)
+
+
+func finalizar_con_error(mensaje: String = "") -> void:
+	if not mensaje.is_empty() and not failed:
+		printerr("SMOKE TEST FAILED: %s" % mensaje)
+	failed = true
+	_cerrar_prueba(1)
+
+
+func _cerrar_prueba(codigo_salida: int) -> void:
+	if prueba_finalizada:
+		return
+	prueba_finalizada = true
 	_stop_audio()
 	if is_instance_valid(current_scene):
 		var scene = current_scene
 		current_scene = null
 		scene.free()
 	GameChapterAssetCatalog.limpiar_cache_texturas()
-	await process_frame
-	await process_frame
-	quit(1 if failed else 0)
+	quit(codigo_salida)
 
 
 func _stop_audio() -> void:

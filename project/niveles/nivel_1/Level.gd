@@ -312,9 +312,23 @@ func _finalizar_partida() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
-	if _continuar_corrida_de_nodo_si_corresponde():
+	if _debe_mostrar_ensenanza_antes_de_continuar_corrida():
+		_mostrar_ensenanza_del_nivel()
 		return
 	_finalizar_partida_normal(track_key, level_number)
+
+
+func _debe_mostrar_ensenanza_antes_de_continuar_corrida() -> bool:
+	if not _pertenece_a_corrida_de_nodo:
+		return false
+	return ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(get_tree())
+
+
+func _mostrar_ensenanza_del_nivel() -> void:
+	_current_run_completion_handled = true
+	mostrar_estado_de_finalizacion()
+	mostrar_continuacion()
+	run_completed.emit()
 
 
 func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
@@ -339,15 +353,9 @@ func _continuar_corrida_de_nodo_si_corresponde() -> bool:
 		return false
 	return ContinuidadDeCorridaDeNodoScript.continuar_o_finalizar_corrida(
 		get_tree(),
-		Callable(self, "_preparar_siguiente_juego_de_corrida_en_nivel"),
+		Callable(),
 		Callable(self, "_limpiar_estado_local_de_corrida_en_nivel")
 	)
-
-
-func _preparar_siguiente_juego_de_corrida_en_nivel() -> void:
-	_current_run_completion_handled = true
-	mostrar_estado_de_finalizacion()
-	run_completed.emit()
 
 
 func _limpiar_estado_local_de_corrida_en_nivel() -> void:
@@ -519,17 +527,13 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
-	if _has_post_game_flow_state():
-		on_teaching_finished(true)
-		return
-
 	if _ya_continuo:
 		return
 
 	_ya_continuo = true
 	if continuador != null:
 		continuador.detener()
-	_continue_from_map_completion()
+	_continuar_despues_de_ensenanza(true)
 
 
 func _return_to_map_scene() -> void:
@@ -626,6 +630,12 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 
 
 func on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
 	if not _has_post_game_flow_state():
 		if _usa_flujo_mapa:
 			_continuar_flujo_mapa_legacy()

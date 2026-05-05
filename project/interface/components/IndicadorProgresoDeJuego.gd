@@ -18,9 +18,6 @@ func configurar(contexto: Dictionary) -> void:
 	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
 	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
 	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
-	var dificultad: int = int(contexto.get("dificultad", 0))
-	if titulo_juego.is_empty() and dificultad > 0:
-		titulo_juego = "Dificultad %d" % dificultad
 	actualizar(titulo_juego, indice_juego_actual, total_juegos)
 
 

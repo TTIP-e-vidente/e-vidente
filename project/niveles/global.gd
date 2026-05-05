@@ -309,7 +309,7 @@ func _construir_juego_actual_del_nodo(corrida_activa: Dictionary) -> Dictionary:
 	juego_actual["indice_juego_actual"] = indice_juego_actual
 	juego_actual["total_juegos"] = max(1, int(corrida_activa.get("total_juegos", juegos.size())))
 	juego_actual["titulo_nodo"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
-	juego_actual["dificultad"] = max(0, int(corrida_activa.get("dificultad", 0)))
+	juego_actual["dificultad"] = _obtener_dificultad_del_juego_actual(juego_actual, corrida_activa)
 	juego_actual["track_key"] = str(corrida_activa.get("clave_pista", "")).strip_edges()
 	juego_actual["node_key"] = str(corrida_activa.get("clave_nodo", "")).strip_edges()
 	juego_actual["node_title"] = str(corrida_activa.get("titulo_nodo", "")).strip_edges()
@@ -326,6 +326,13 @@ func _duplicar_juegos_de_corrida(raw_value: Variant) -> Array[Dictionary]:
 		if raw_game is Dictionary:
 			juegos.append((raw_game as Dictionary).duplicate(true))
 	return juegos
+
+
+func _obtener_dificultad_del_juego_actual(
+	juego_actual: Dictionary,
+	corrida_activa: Dictionary
+) -> int:
+	return max(0, int(juego_actual.get("dificultad", corrida_activa.get("dificultad", 0))))
 
 
 func _construir_contexto_de_progreso_de_juego(
