@@ -1,34 +1,34 @@
 [gd_scene format=3 uid="uid://c1bp4qhmya5yi"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_g0f04"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_4r6cp"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_l8wda"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="3_7cyqn"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="4_tsdj3"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0hx18"]
 [ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="5_s52e6"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="6_s2en4"]
 [ext_resource type="Texture2D" uid="uid://cbxk0c1fonh8l" path="res://assets-sistema/interfaz/lupa.png" id="8_l1124"]
 [ext_resource type="Texture2D" uid="uid://dnx3efrjymvje" path="res://assets-sistema/interfaz/globito-celiaquia.png" id="9_ahnvr"]
 [ext_resource type="Texture2D" uid="uid://dq3suf5mkecly" path="res://assets-sistema/interfaz/info-lupa.png" id="9_ijval"]
 [ext_resource type="Texture2D" uid="uid://b0elyudr8bno7" path="res://assets-sistema/interfaz/tengo hambre.png" id="10_hom3g"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
+[ext_resource type="Texture2D" uid="uid://diaxukel2gyv4" path="res://assets-sistema/player/personaje-idle-1.png" id="10_tr7fe"]
+[ext_resource type="Texture2D" uid="uid://d0aooje7i5xji" path="res://assets-sistema/player/personaje-idle-2.png" id="11_w1r46"]
 [ext_resource type="Script" uid="uid://bccc2e1y2dp3j" path="res://niveles/PlayerCambiante.gd" id="12_4i2s4"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
+[ext_resource type="Texture2D" uid="uid://dbvcr0vnusx1k" path="res://assets-sistema/player/personaje-mal-mal--malito-1.png" id="12_eyxs6"]
+[ext_resource type="Texture2D" uid="uid://crukskhsj5hqf" path="res://assets-sistema/player/personaje-idle-3.png" id="12_offgp"]
+[ext_resource type="Texture2D" uid="uid://cxcnw6p1q4oia" path="res://assets-sistema/player/personaje-mal-mal--malito-2.png" id="13_57egu"]
+[ext_resource type="Texture2D" uid="uid://cvmd2ny6yccjy" path="res://assets-sistema/player/personaje-mal-malito-1.png" id="13_go4hp"]
+[ext_resource type="Texture2D" uid="uid://b2a6v31nm3i1a" path="res://assets-sistema/player/personaje-mal-malito-2.png" id="14_hqn7t"]
+[ext_resource type="Texture2D" uid="uid://kral12wjj6om" path="res://assets-sistema/player/personaje-malito-1.png" id="15_qu3yk"]
+[ext_resource type="Texture2D" uid="uid://c5qrdgn5cfq3f" path="res://assets-sistema/player/personaje-malito-2.png" id="16_l3ao5"]
+[ext_resource type="Texture2D" uid="uid://drpae17ssot8j" path="res://assets-sistema/player/personaje-malisisisimo-1.png" id="17_o7baa"]
+[ext_resource type="Texture2D" uid="uid://bwisq74efyoda" path="res://assets-sistema/player/personaje-malisisisimo-2.png" id="18_qaf6e"]
+[ext_resource type="Texture2D" uid="uid://bcnkfv8iqd471" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="19_nxc4x"]
+[ext_resource type="Texture2D" uid="uid://cg40y0addno8k" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="20_ugv60"]
+[ext_resource type="Texture2D" uid="uid://dceo5v4ncrkee" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="21_snoff"]
+[ext_resource type="Texture2D" uid="uid://j2ngl8c1l25w" path="res://assets-sistema/player/personaje-sintiendose-mal-1.png" id="22_p0psy"]
+[ext_resource type="Texture2D" uid="uid://bbkdt7kfdfx7k" path="res://assets-sistema/player/personaje-sintiendose-mal-2.png" id="23_ybm77"]
+[ext_resource type="Texture2D" uid="uid://cq685qadxj6rt" path="res://assets-sistema/player/personaje-sintiendose-mal-3.png" id="24_n3ghu"]
 [ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="24_ngqma"]
 [ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="25_gudht"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="25_x7g2d"]
@@ -167,29 +167,16 @@ shadow_size = 8
 
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
-track_key_override = null
-background_music_path = null
-grayscale_on_completion = null
 
-[node name="IndicadorProgresoDeJuego" parent="." instance=ExtResource("39_g1e6r")]
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_4r6cp")]
+metadata/_edit_use_anchors_ = true
 
-[node name="FondoFicha2" type="ColorRect" parent="." unique_id=2109054412]
-offset_left = 5.0
-offset_top = 1.0
-offset_right = 1158.0
-offset_bottom = 800.0
-mouse_filter = 2
-color = Color(1, 1, 0.996078, 0.988235)
+[node name="IndicadorProgresoDeJuego" parent="." unique_id=2060117129 instance=ExtResource("39_g1e6r")]
+visible = false
 
-[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha2" unique_id=1397654258]
-position = Vector2(589.394, 400.99997)
-scale = Vector2(0.33721843, 0.33721843)
-texture = ExtResource("5_0hx18")
-
-[node name="TituloNivel" type="Sprite2D" parent="." unique_id=2124096868]
-z_index = 1
-position = Vector2(241.00003, 112)
-scale = Vector2(0.6459068, 0.64590687)
+[node name="TituloNivel" type="Sprite2D" parent="." unique_id=2438636]
+position = Vector2(243, 108)
+scale = Vector2(0.52769804, 0.52368784)
 texture = ExtResource("2_l8wda")
 
 [node name="Victory" type="AnimatedSprite2D" parent="." unique_id=1821481986]
@@ -273,7 +260,7 @@ position = Vector2(882, 255)
 script = ExtResource("12_4i2s4")
 
 [node name="hambre" type="Sprite2D" parent="PlayerCambiante" unique_id=1502413191]
-position = Vector2(-128, -149)
+position = Vector2(-185, -135)
 scale = Vector2(0.474684, 0.425234)
 texture = ExtResource("10_hom3g")
 
