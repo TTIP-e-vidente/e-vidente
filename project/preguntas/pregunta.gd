@@ -363,10 +363,18 @@ func _finalizar_quiz() -> void:
 
 
 func _finalizar_partida() -> void:
-	var cantidad_preguntas: int = _cantidad_de_preguntas()
-	if _continuar_corrida_de_nodo_si_corresponde():
+	if _debe_mostrar_ensenanza_antes_de_continuar_corrida():
+		mostrar_ensenanza_final()
 		return
+
+	var cantidad_preguntas: int = _cantidad_de_preguntas()
 	_finalizar_pregunta_normal(cantidad_preguntas)
+
+
+func _debe_mostrar_ensenanza_antes_de_continuar_corrida() -> bool:
+	if not _es_juego_de_corrida_de_nodo():
+		return false
+	return ContinuidadDeCorridaDeNodoScript.hay_siguiente_juego(get_tree())
 
 
 func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
@@ -627,22 +635,13 @@ func _on_timer_siguiente_nodo_timeout() -> void:
 
 
 func continuar_al_siguiente_nodo() -> void:
-	if _has_post_game_flow_state():
-		_on_teaching_finished(true)
-		return
-
 	if ya_continuo:
 		return
 
 	ya_continuo = true
 	if continuador != null:
 		continuador.detener()
-	_limpiar_media_de_pregunta()
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_de_retorno,
-		_nodo_actual
-	)
+	_continuar_despues_de_ensenanza(true)
 
 
 func _on_flecha_derecha_pressed() -> void:
@@ -650,6 +649,12 @@ func _on_flecha_derecha_pressed() -> void:
 
 
 func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	if _continuar_corrida_de_nodo_si_corresponde():
+		return
 	if not _has_post_game_flow_state():
 		volver_al_mapa_legacy()
 		return

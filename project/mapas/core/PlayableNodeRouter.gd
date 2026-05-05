@@ -28,23 +28,19 @@ static func abrir_nodo(
 	if estado_global == null:
 		return _resultado_con_error("No se encontro el autoload Global.")
 
-	var ruta_retorno_segura: String = ruta_retorno.strip_edges()
-	if ruta_retorno_segura.is_empty():
-		ruta_retorno_segura = GameSceneRouter.MAP_SCENE_PATH
-
-	estado_global.call("finalizar_corrida_de_nodo")
-	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno_segura)
-	var plan_de_corrida: Dictionary = PlanDeCorridaDeNodoScript.construir_plan_de_corrida(node_data)
-	if plan_de_corrida.is_empty():
-		estado_global.call("limpiar_sesion_nodo_jugable_activo")
+	var ruta_retorno_segura: String = _normalizar_ruta_de_retorno(ruta_retorno)
+	var datos_de_apertura: Dictionary = _construir_datos_de_apertura(
+		node_data,
+		ruta_retorno_segura
+	)
+	if datos_de_apertura.is_empty():
+		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo armar la corrida del nodo.")
-	estado_global.call("establecer_sesion_nodo_jugable_activo", sesion_jugable)
-	plan_de_corrida["escena_de_retorno"] = ruta_retorno_segura
-	estado_global.call("iniciar_corrida_de_nodo", plan_de_corrida)
+
+	_iniciar_corrida_en_global(estado_global, datos_de_apertura)
 
 	if not ContinuidadDeCorridaDeNodoScript.abrir_juego_actual(tree, estado_global):
-		estado_global.call("finalizar_corrida_de_nodo")
-		estado_global.call("limpiar_sesion_nodo_jugable_activo")
+		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo abrir el primer juego del nodo.")
 
 	return _resultado_ok()
@@ -72,6 +68,44 @@ static func construir_sesion_jugable(
 
 
 # Helpers privados
+static func _normalizar_ruta_de_retorno(ruta_retorno: String) -> String:
+	var ruta_retorno_segura: String = ruta_retorno.strip_edges()
+	if ruta_retorno_segura.is_empty():
+		return GameSceneRouter.MAP_SCENE_PATH
+	return ruta_retorno_segura
+
+
+static func _construir_datos_de_apertura(
+	node_data: MapNodeData,
+	ruta_retorno: String
+) -> Dictionary:
+	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno)
+	var plan_de_corrida: Dictionary = PlanDeCorridaDeNodoScript.construir_plan_de_corrida(node_data)
+	if plan_de_corrida.is_empty():
+		return {}
+	plan_de_corrida["escena_de_retorno"] = ruta_retorno
+	return {
+		"sesion_jugable": sesion_jugable,
+		"plan_de_corrida": plan_de_corrida,
+	}
+
+
+static func _iniciar_corrida_en_global(estado_global: Node, datos_de_apertura: Dictionary) -> void:
+	_limpiar_estado_de_apertura(estado_global)
+	estado_global.call(
+		"establecer_sesion_nodo_jugable_activo",
+		datos_de_apertura.get("sesion_jugable", {})
+	)
+	estado_global.call("iniciar_corrida_de_nodo", datos_de_apertura.get("plan_de_corrida", {}))
+
+
+static func _limpiar_estado_de_apertura(estado_global: Node) -> void:
+	if estado_global == null:
+		return
+	estado_global.call("finalizar_corrida_de_nodo")
+	estado_global.call("limpiar_sesion_nodo_jugable_activo")
+
+
 static func _obtener_estado_global(tree: SceneTree) -> Node:
 	if tree == null or tree.root == null:
 		return null
