@@ -2,9 +2,9 @@ extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const MapJsonLoaderScript := preload("res://mapas/core/MapJsonLoader.gd")
-const MapProgressScript := preload("res://mapas/core/MapProgress.gd")
-const PlayableNodeRouterScript := preload("res://mapas/core/PlayableNodeRouter.gd")
+const MapJsonLoaderScript := preload("res://mapas/logica/CargadorDeMapa.gd")
+const MapProgressScript := preload("res://mapas/logica/AvanceDeNodo.gd")
+const PlayableNodeRouterScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 
 const MAP_JSON_PATH := "res://contenido/mapas/celiaquia_mapa.json"

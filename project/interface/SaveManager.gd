@@ -474,8 +474,13 @@ func _resumir_progreso(progress: Variant) -> Dictionary:
 
 
 func _reiniciar_datos_guardado_actual(profile: Dictionary) -> void:
+	var settings: Dictionary = _obtener_settings_guardado_actual()
+	var streak_state: Dictionary = _obtener_racha_actual_para_preservar()
 	_global_reiniciar_progreso()
+	_global_establecer_racha(streak_state)
 	save_data["profile"] = profile
+	if not settings.is_empty():
+		save_data["settings"] = settings
 	save_data["progress"] = _global_exportar_progreso()
 	save_data["history"] = []
 	save_data["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
@@ -550,6 +555,38 @@ func _global_reiniciar_progreso() -> void:
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("reiniciar_progreso"):
 		global_autoload.call("reiniciar_progreso")
+
+
+func _global_establecer_racha(streak_state: Dictionary) -> void:
+	if streak_state.is_empty():
+		return
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("establecer_estado_racha"):
+		global_autoload.call("establecer_estado_racha", streak_state)
+
+
+func _obtener_racha_actual_para_preservar() -> Dictionary:
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("obtener_estado_racha"):
+		var global_streak: Variant = global_autoload.call("obtener_estado_racha")
+		if global_streak is Dictionary and not (global_streak as Dictionary).is_empty():
+			return (global_streak as Dictionary).duplicate(true)
+
+	var progress_snapshot: Variant = save_data.get("progress", {})
+	if progress_snapshot is Dictionary:
+		var systems: Variant = (progress_snapshot as Dictionary).get("progress_system_states", {})
+		if systems is Dictionary:
+			var streak: Variant = (systems as Dictionary).get("streak", {})
+			if streak is Dictionary:
+				return (streak as Dictionary).duplicate(true)
+	return {}
+
+
+func _obtener_settings_guardado_actual() -> Dictionary:
+	var settings: Variant = save_data.get("settings", {})
+	if settings is Dictionary:
+		return (settings as Dictionary).duplicate(true)
+	return {}
 
 
 func _meta_guardado_vacia() -> Dictionary:
