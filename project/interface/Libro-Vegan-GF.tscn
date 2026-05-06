@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://bnilp4agslfja" path="res://assets-sistema/interfaz/cap-4.png" id="5_5svku"]
 [ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="6_r3bdl"]
 [ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="7_0t5lr"]
-[ext_resource type="Texture2D" uid="uid://barm38m1sq5p7" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="8_06r43"]
+[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="9_73ede"]
 [ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_mgqdr"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
@@ -74,10 +74,9 @@ scale = Vector2(0.49879444, 0.44693744)
 icon = SubResource("CompressedTexture2D_5m2p2")
 flat = true
 
-[node name="Archivero" type="Sprite2D" parent="." unique_id=1043939519]
-position = Vector2(241, 122)
-scale = Vector2(0.5805599, 0.5805599)
-texture = ExtResource("8_06r43")
+[node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("9_73ede")]
+position = Vector2(246, 152)
+scale = Vector2(0.8133369, 0.8133369)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1152640683]
 stream = ExtResource("10_mgqdr")
