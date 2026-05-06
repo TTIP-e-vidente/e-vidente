@@ -7,10 +7,19 @@ const GameStreakTrackerScript := preload(
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
+const ContextoSesionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoSesionDeJuego.gd"
+)
+const ContextoFinalizacionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
+)
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
+const PresentadorContinuarJuegoScript := preload(
+	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
+)
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
@@ -163,13 +172,19 @@ func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
 	_mensaje_error_bloqueante = ""
 
-	var contexto_sesion: Dictionary = _obtener_contexto_jugable_actual()
+	var contexto_sesion: Dictionary = ContextoSesionDeJuegoScript.obtener_contexto_jugable_actual()
 	if contexto_sesion.is_empty():
 		return
 
-	_aplicar_contexto_sesion(contexto_sesion)
+	var contexto_normalizado: Dictionary = ContextoSesionDeJuegoScript.normalizar_contexto_jugable(
+		contexto_sesion,
+		track_key,
+		nivel_id,
+		DEFAULT_RETURN_SCENE
+	)
+	_aplicar_contexto_sesion(contexto_normalizado)
 	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(
-		contexto_sesion
+		contexto_normalizado
 	)
 	if not bool(resultado_quiz.get("ok", false)):
 		_establecer_mensaje_de_error(
@@ -177,13 +192,6 @@ func configurar_quiz_desde_sesion() -> void:
 		)
 		return
 	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
-
-
-func _obtener_contexto_jugable_actual() -> Dictionary:
-	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
-	if not juego_actual.is_empty():
-		return juego_actual
-	return Global.obtener_sesion_nodo_jugable_activo()
 
 
 func _reiniciar_sesion_nodo() -> void:
@@ -196,17 +204,20 @@ func _reiniciar_sesion_nodo() -> void:
 
 
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
-	track_key = _leer_clave_pista_de_sesion(contexto_sesion)
-	nivel_id = _leer_numero_de_nivel_de_sesion(contexto_sesion)
-	_nodo_actual = _leer_clave_nodo_de_sesion(contexto_sesion)
-	_pertenece_a_partida_de_nodo = _leer_pertenece_a_partida_de_nodo(contexto_sesion)
-	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
-		contexto_sesion,
-		DEFAULT_RETURN_SCENE
+	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
+	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
+	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
+	_pertenece_a_partida_de_nodo = bool(
+		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
 	)
+	_ruta_escena_de_retorno = str(
+		contexto_sesion.get("return_to", DEFAULT_RETURN_SCENE)
+	).strip_edges()
 	if _ruta_escena_de_retorno.is_empty():
 		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
-	_tiene_sesion_de_mapa = not _nodo_actual.is_empty()
+	_tiene_sesion_de_mapa = bool(
+		contexto_sesion.get("came_from_map", not _nodo_actual.is_empty())
+	)
 
 
 func _es_juego_de_partida_de_nodo() -> bool:
@@ -216,12 +227,12 @@ func _es_juego_de_partida_de_nodo() -> bool:
 func _configurar_indicador_de_progreso_de_juego() -> void:
 	if _indicador_de_progreso_de_juego == null:
 		return
-	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
 	_indicador_de_progreso_de_juego.show()
 	_indicador_de_progreso_de_juego.actualizar(
-		_leer_titulo_para_indicador(contexto),
-		_leer_indice_para_indicador(contexto),
-		_leer_total_para_indicador(contexto)
+		str(contexto.get("titulo", "")).strip_edges(),
+		int(contexto.get("actual", 1)),
+		int(contexto.get("total", 1))
 	)
 
 
@@ -230,34 +241,6 @@ func _conectar_continuar_juego() -> void:
 		return
 	if _continuar_juego.has_signal("continuar_solicitado"):
 		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_presionar_continuar"))
-
-
-func _leer_clave_pista_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("track_key", track_key)).strip_edges()
-
-
-func _leer_numero_de_nivel_de_sesion(contexto_sesion: Dictionary) -> int:
-	return int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
-
-
-func _leer_clave_nodo_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("node_key", "")).strip_edges()
-
-
-func _leer_pertenece_a_partida_de_nodo(contexto_sesion: Dictionary) -> bool:
-	return bool(contexto_sesion.get("pertenece_a_partida_de_nodo", false))
-
-
-func _leer_titulo_para_indicador(contexto: Dictionary) -> String:
-	return str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
-
-
-func _leer_indice_para_indicador(contexto: Dictionary) -> int:
-	return int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
-
-
-func _leer_total_para_indicador(contexto: Dictionary) -> int:
-	return int(contexto.get("total", contexto.get("total_juegos", 1)))
 
 
 func _puede_iniciar_quiz() -> bool:
@@ -522,17 +505,15 @@ func _mostrar_continuacion_automatica(hay_siguiente_juego: bool) -> void:
 	if _boton_volver_mapa_final != null:
 		_boton_volver_mapa_final.hide()
 		_boton_volver_mapa_final.disabled = true
-	if _continuar_juego == null:
-		return
-	if hay_siguiente_juego:
-		_continuar_juego.call("mostrar_para_siguiente_juego", int(SEGUNDOS_CONTINUACION_AUTOMATICA))
-		return
-	_continuar_juego.call("mostrar_para_finalizar", int(SEGUNDOS_CONTINUACION_AUTOMATICA))
+	PresentadorContinuarJuegoScript.mostrar(
+		_continuar_juego,
+		hay_siguiente_juego,
+		int(SEGUNDOS_CONTINUACION_AUTOMATICA)
+	)
 
 
 func _ocultar_continuacion_automatica() -> void:
-	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
-		_continuar_juego.call("ocultar")
+	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
 
 
 
@@ -562,60 +543,28 @@ func _on_questions_finished(
 	previous_streak: Dictionary,
 	updated_streak: Dictionary
 ) -> void:
-	var completion_context: Dictionary = _build_completion_context()
+	var completion_context: Dictionary = ContextoFinalizacionDeJuegoScript.construir(
+		"question",
+		track_key,
+		nivel_id,
+		Global.obtener_pista_nivel_cantidad(track_key),
+		track_key == DEFAULT_TRACK_KEY,
+		_tiene_sesion_de_mapa,
+		_nodo_actual,
+		_ruta_escena_de_retorno,
+		"pregunta._on_questions_finished"
+	)
 	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
-	# La escena solo arma contexto; el controller lo transforma en flow_state.
 	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
 		previous_streak,
 		updated_streak,
 		completion_context,
 		_post_game_streak_feedback
 	)
-
-
-func _build_completion_context() -> Dictionary:
-	return {
-		"source": "question",
-		"level": _build_level_completion_context(),
-		"map": _build_map_completion_context(),
-		"navigation": _build_navigation_completion_context(),
-		"debug": _build_completion_debug_context(),
-	}
-
-
-func _build_level_completion_context() -> Dictionary:
-	return {
-		"track_key": track_key,
-		"number": nivel_id,
-		"track_level_count": Global.obtener_pista_nivel_cantidad(track_key),
-		"is_default_track": track_key == DEFAULT_TRACK_KEY,
-	}
-
-
-func _build_map_completion_context() -> Dictionary:
-	var node_key: Variant = null
-	if _tiene_sesion_de_mapa and not _nodo_actual.is_empty():
-		node_key = _nodo_actual
-	return {
-		"came_from_map": _tiene_sesion_de_mapa,
-		"node_key": node_key,
-	}
-
-
-func _build_navigation_completion_context() -> Dictionary:
-	return {
-		"return_to": _ruta_escena_de_retorno,
-	}
-
-
-func _build_completion_debug_context() -> Dictionary:
-	return {
-		"created_by": "pregunta._build_completion_context",
-	}
 
 
 
