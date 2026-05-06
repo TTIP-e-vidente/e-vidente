@@ -48,8 +48,8 @@ func ejecutar_prueba() -> void:
 
 	await _go_to("res://interface/evidente.tscn", "Splash")
 	await _call_and_expect("_on_ir_presionado", "res://niveles/intro.tscn", "Intro")
-	await _call_and_expect("_on_iniciar_presionado", "res://niveles/selector.tscn", "Selector")
-	await _call_and_expect("_on_celiaquia_presionado", MAP_SCENE, "Mapa")
+	await _call_and_expect("_on_jugar_pressed", "res://niveles/selector.tscn", "Selector")
+	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
 	if not failed:
 		var tablero_mapa := current_scene.get_node_or_null("MapBoard") as Node
 		_check(tablero_mapa != null, "El mapa deberia tener el nodo MapBoard")
@@ -184,6 +184,14 @@ func _continue_to_next_map_node() -> void:
 
 func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var next_button := level_scene.get_node_or_null("Adelante") as Button
+	var continuar_juego := level_scene.get_node_or_null("ContinuarJuego") as Control
+	var boton_continuar := level_scene.get_node_or_null(
+		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/ContinuarJuego/ColumnaContinuacion/BotonContinuar"
+	) as Button
+	if continuar_juego == null:
+		continuar_juego = level_scene.get_node_or_null(
+			"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/ContinuarJuego"
+		) as Control
 	var back_button := level_scene.get_node_or_null("Atrás") as Button
 	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
 	var teaching_text_layer := level_scene.get_node_or_null(
@@ -194,8 +202,16 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 
 	_check(level_scene.es_partida_completada(), "El nivel deberia quedar marcado como completado")
 	_check(
-		next_button != null and not next_button.disabled,
-		"La flecha siguiente deberia quedar habilitada"
+		next_button != null and (not next_button.visible or next_button.disabled),
+		"La flecha siguiente anterior no deberia quedar activa"
+	)
+	_check(
+		continuar_juego != null and continuar_juego.visible,
+		"ContinuarJuego deberia quedar visible"
+	)
+	_check(
+		boton_continuar != null and not boton_continuar.disabled,
+		"El boton Continuar deberia quedar habilitado"
 	)
 	_check(
 		back_button != null and back_button.disabled,
@@ -212,8 +228,8 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 		"La escena deberia entrar en blanco y negro al completarse"
 	)
 	_check(
-		next_button != null and next_button.material == null,
-		"La flecha siguiente no deberia entrar en blanco y negro"
+		boton_continuar != null and boton_continuar.material == null,
+		"El boton Continuar no deberia entrar en blanco y negro"
 	)
 	if failed:
 		return

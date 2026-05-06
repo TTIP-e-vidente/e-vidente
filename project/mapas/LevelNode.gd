@@ -60,21 +60,17 @@ func _ready() -> void:
 	update_view()
 
 
-func setup(data: MapNodeData, progress_state: Variant = {}, is_completed: bool = false) -> void:
+func configurar(
+	data: MapNodeData,
+	progress_state: Variant = {},
+	is_completed: bool = false
+) -> void:
 	node_data = data
 	if progress_state is Dictionary:
 		_apply_progress_state(progress_state as Dictionary)
 	else:
 		_apply_legacy_progress_state(bool(progress_state), is_completed)
 	update_view()
-
-
-func configurar(
-	data: MapNodeData,
-	progress_state: Variant = {},
-	is_completed: bool = false
-) -> void:
-	setup(data, progress_state, is_completed)
 
 
 func update_view() -> void:

@@ -5,7 +5,7 @@
 	"difficulty": "easy",
 	"mode": "drag_drop",
 	"content": {
-		"instruction": "Arrastra al plato solo los alimentos aptos sin TACC.",
+		"instruction": "Arrastra al plato solo alimentos aptos sin TACC. Si parece una pasta o un rebozado, no alcanza con que se vea rico: importa el ingrediente base y la preparacion segura.",
 		"targets": [
 			{
 				"id": "plato",
@@ -15,18 +15,48 @@
 		"items": [
 			{
 				"id": "arroz",
-				"label": "Arroz",
+				"label": "Arroz simple",
 				"image": "res://assets-sistema/iconos/arroz-0.png",
 				"correct_target": "plato"
 			},
 			{
-				"id": "pan",
-				"label": "Pan",
+				"id": "huevo",
+				"label": "Huevo",
+				"image": "res://assets-sistema/iconos/huevo-0.png",
+				"correct_target": "plato"
+			},
+			{
+				"id": "brocoli",
+				"label": "Brocoli",
+				"image": "res://assets-sistema/iconos/brocoli-0.png",
+				"correct_target": "plato"
+			},
+			{
+				"id": "fideos_arroz",
+				"label": "Fideos de arroz",
+				"image": "res://assets-sistema/iconos/fideos-arroz-0.png",
+				"correct_target": "plato"
+			},
+			{
+				"id": "pan_comun",
+				"label": "Pan comun",
 				"image": "res://assets-sistema/iconos/pan-0.png",
+				"correct_target": ""
+			},
+			{
+				"id": "fideos_trigo",
+				"label": "Fideos de trigo",
+				"image": "res://assets-sistema/iconos/fideos-0.png",
+				"correct_target": ""
+			},
+			{
+				"id": "milanesa_rebozada",
+				"label": "Milanesa rebozada",
+				"image": "res://assets-sistema/iconos/patita-pollo-0.png",
 				"correct_target": ""
 			}
 		],
-		"success_message": "Bien! Elegiste alimentos aptos.",
-		"error_message": "Cuidado: ese alimento puede contener gluten."
+		"success_message": "Bien! Arroz, huevo, brocoli y fideos de arroz pueden formar un plato apto si la preparacion fue segura y sin contaminacion cruzada.",
+		"error_message": "Cuidado: pan comun, fideos de trigo y rebozados comunes contienen gluten o no son preparaciones seguras."
 	}
 }

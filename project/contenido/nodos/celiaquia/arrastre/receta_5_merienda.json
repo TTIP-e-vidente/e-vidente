@@ -5,7 +5,7 @@
   "difficulty": "medium",
   "mode": "drag_drop",
   "content": {
-    "instruction": "Elige una merienda apta sin TACC.",
+    "instruction": "Elige una merienda apta sin TACC. Combina opciones simples y revisa el rotulo cuando hay cereales, avena o productos procesados.",
     "targets": [
       {
         "id": "merienda",
@@ -14,25 +14,43 @@
     ],
     "items": [
       {
-        "id": "yogurt",
-        "label": "Yogurt",
+        "id": "yogurt_natural",
+        "label": "Yogurt natural",
         "image": "res://assets-sistema/iconos/leche-0.png",
         "correct_target": "merienda"
       },
       {
-        "id": "frutilla",
-        "label": "Frutilla",
+        "id": "frutillas_frescas",
+        "label": "Frutillas frescas",
         "image": "res://assets-sistema/iconos/frutilla-0.png",
         "correct_target": "merienda"
       },
       {
-        "id": "churros",
-        "label": "Churros",
+        "id": "nueces",
+        "label": "Nueces",
+        "image": "res://assets-sistema/iconos/nuez-0.png",
+        "correct_target": "merienda"
+      },
+      {
+        "id": "churros_comunes",
+        "label": "Churros comunes",
         "image": "res://assets-sistema/iconos/churros-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "galletitas_sin_rotulo",
+        "label": "Galletitas sin rotulo",
+        "image": "res://assets-sistema/iconos/galleta-pepa-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "yogurt_avena_no_certificada",
+        "label": "Yogurt con avena no certificada",
+        "image": "res://assets-sistema/iconos/yogurt-cereales-0.png",
         "correct_target": ""
       }
     ],
-    "success_message": "Bien! Esa merienda es apta.",
-    "error_message": "Esa opcion no es segura para una persona celiaca."
+    "success_message": "Bien! Una merienda segura combina alimentos simples o productos verificados con rotulo confiable.",
+    "error_message": "Revisa el rotulo: panificados, galletitas sin identificar y avena no certificada pueden no ser opciones seguras."
   }
 }

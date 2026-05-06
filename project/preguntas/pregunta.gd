@@ -11,7 +11,6 @@ const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
-const ESCENA_CONTINUADOR := preload("res://interface/components/ContinueCountdown.tscn")
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
@@ -19,8 +18,7 @@ const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
 const CONTENT_ERROR_BODY_FONT_SIZE := 26
-const CONTINUADOR_TAMANIO := Vector2(300.0, 150.0)
-const CONTINUADOR_MARGEN := Vector2(40.0, 30.0)
+const SEGUNDOS_CONTINUACION_AUTOMATICA := 5.0
 
 
 @onready var boton_1 = $Contenido/Preguntas/Boton1
@@ -53,7 +51,6 @@ var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
 var _post_game_streak_feedback: Dictionary = {}
 var _post_game_flow_state: Dictionary = {}
-var continuador = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -68,6 +65,7 @@ var pregunta_actual: Preguntas:
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
+@onready var _continuar_juego = $Contenido/ContinuarJuego
 
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
 
@@ -76,7 +74,8 @@ func _ready() -> void:
 	puntaje = 0
 	base_positions[boton_1] = boton_1.position
 	base_positions[boton_2] = boton_2.position
-
+	_reiniciar_cierre_del_quiz()
+	_conectar_continuar_juego()
 
 	_recolectar_botones_respuesta()
 	configurar_quiz_desde_sesion()
@@ -197,12 +196,10 @@ func _reiniciar_sesion_nodo() -> void:
 
 
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
-	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
-	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
-	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_pertenece_a_partida_de_nodo = bool(
-		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
-	)
+	track_key = _leer_clave_pista_de_sesion(contexto_sesion)
+	nivel_id = _leer_numero_de_nivel_de_sesion(contexto_sesion)
+	_nodo_actual = _leer_clave_nodo_de_sesion(contexto_sesion)
+	_pertenece_a_partida_de_nodo = _leer_pertenece_a_partida_de_nodo(contexto_sesion)
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
 		DEFAULT_RETURN_SCENE
@@ -220,14 +217,47 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 	if _indicador_de_progreso_de_juego == null:
 		return
 	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
-	var titulo_juego: String = str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
-	var indice_juego_actual: int = int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
-	var total_juegos: int = int(contexto.get("total", contexto.get("total_juegos", 1)))
+	_indicador_de_progreso_de_juego.show()
 	_indicador_de_progreso_de_juego.actualizar(
-		titulo_juego,
-		indice_juego_actual,
-		total_juegos
+		_leer_titulo_para_indicador(contexto),
+		_leer_indice_para_indicador(contexto),
+		_leer_total_para_indicador(contexto)
 	)
+
+
+func _conectar_continuar_juego() -> void:
+	if _continuar_juego == null:
+		return
+	if _continuar_juego.has_signal("continuar_solicitado"):
+		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_presionar_continuar"))
+
+
+func _leer_clave_pista_de_sesion(contexto_sesion: Dictionary) -> String:
+	return str(contexto_sesion.get("track_key", track_key)).strip_edges()
+
+
+func _leer_numero_de_nivel_de_sesion(contexto_sesion: Dictionary) -> int:
+	return int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
+
+
+func _leer_clave_nodo_de_sesion(contexto_sesion: Dictionary) -> String:
+	return str(contexto_sesion.get("node_key", "")).strip_edges()
+
+
+func _leer_pertenece_a_partida_de_nodo(contexto_sesion: Dictionary) -> bool:
+	return bool(contexto_sesion.get("pertenece_a_partida_de_nodo", false))
+
+
+func _leer_titulo_para_indicador(contexto: Dictionary) -> String:
+	return str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+
+
+func _leer_indice_para_indicador(contexto: Dictionary) -> int:
+	return int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
+
+
+func _leer_total_para_indicador(contexto: Dictionary) -> int:
+	return int(contexto.get("total", contexto.get("total_juegos", 1)))
 
 
 func _puede_iniciar_quiz() -> bool:
@@ -414,15 +444,13 @@ func _finalizar_quiz() -> void:
 
 
 func _finalizar_partida() -> void:
-	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
-
-		return
-
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
-	_finalizar_pregunta_normal(cantidad_preguntas)
+	if not _es_juego_de_partida_de_nodo():
+		_finalizar_pregunta_normal(cantidad_preguntas)
+	_mostrar_cierre_del_quiz(cantidad_preguntas)
 
 
-func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
+func _debe_abrir_siguiente_juego_de_partida() -> bool:
 	if not _es_juego_de_partida_de_nodo():
 		return false
 	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
@@ -442,9 +470,76 @@ func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 	_on_questions_finished(previous_streak, updated_streak)
 
 
+func _mostrar_cierre_del_quiz(cantidad_preguntas: int) -> void:
+	bloqueado = true
+	_ocultar_continuacion_automatica()
+	_limpiar_media_de_pregunta()
+	for boton_respuesta in botones:
+		boton_respuesta.disabled = true
+
+	if _debe_mostrar_continuar_de_partida_de_nodo():
+		_ocultar_resultado_final_de_pregunta()
+		_mostrar_continuacion_automatica(_debe_abrir_siguiente_juego_de_partida())
+		return
+
+	var total_preguntas: int = max(1, cantidad_preguntas)
+	_configurar_panel_final(
+		"Aciertos",
+		"%d/%d" % [puntaje, total_preguntas],
+		true,
+		true
+	)
+
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+	_mostrar_continuacion_automatica(false)
+
+
+func _debe_mostrar_continuar_de_partida_de_nodo() -> bool:
+	return _es_juego_de_partida_de_nodo()
+
+
+func _ocultar_resultado_final_de_pregunta() -> void:
+	if _panel_final != null:
+		_panel_final.hide()
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+
+
+func _reiniciar_cierre_del_quiz() -> void:
+	ya_continuo = false
+	_ocultar_continuacion_automatica()
+	if _panel_final != null:
+		_panel_final.hide()
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.show()
+		_boton_volver_mapa_final.disabled = false
+
+
+func _mostrar_continuacion_automatica(hay_siguiente_juego: bool) -> void:
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+	if _continuar_juego == null:
+		return
+	if hay_siguiente_juego:
+		_continuar_juego.call("mostrar_para_siguiente_juego", int(SEGUNDOS_CONTINUACION_AUTOMATICA))
+		return
+	_continuar_juego.call("mostrar_para_finalizar", int(SEGUNDOS_CONTINUACION_AUTOMATICA))
+
+
+func _ocultar_continuacion_automatica() -> void:
+	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
+		_continuar_juego.call("ocultar")
+
+
 
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _es_juego_de_partida_de_nodo():
+		return false
+	if not _debe_abrir_siguiente_juego_de_partida():
 		return false
 	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
@@ -526,21 +621,36 @@ func _build_completion_debug_context() -> Dictionary:
 
 
 func _on_timer_siguiente_nodo_timeout() -> void:
-	continuar_al_siguiente_nodo()
+	_al_presionar_continuar()
 
 
 func continuar_al_siguiente_nodo() -> void:
+	_al_presionar_continuar()
+
+
+func _al_presionar_continuar() -> void:
 	if ya_continuo:
 		return
 
 	ya_continuo = true
-	if continuador != null:
-		continuador.detener()
+	_ocultar_continuacion_automatica()
+	if _continuar_partida_de_nodo_si_corresponde():
+		return
+	if _es_juego_de_partida_de_nodo():
+		_finalizar_ultima_pregunta_de_partida()
+		return
+	_continuar_despues_de_ensenanza(true)
+
+
+func _finalizar_ultima_pregunta_de_partida() -> void:
+	ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(get_tree())
+	_finalizar_pregunta_normal(_cantidad_de_preguntas())
+	_limpiar_estado_local_de_partida_en_pregunta()
 	_continuar_despues_de_ensenanza(true)
 
 
 func _on_flecha_derecha_pressed() -> void:
-	continuar_al_siguiente_nodo()
+	_al_presionar_continuar()
 
 
 func _on_teaching_finished(timer_finished: bool) -> void:
@@ -548,8 +658,6 @@ func _on_teaching_finished(timer_finished: bool) -> void:
 
 
 func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if _continuar_partida_de_nodo_si_corresponde():
-		return
 	if not _has_post_game_flow_state():
 		_return_to_map_scene()
 		return
@@ -604,6 +712,7 @@ func _configurar_panel_final(
 
 func _mostrar_error_bloqueante(mensaje: String) -> void:
 	bloqueado = true
+	_ocultar_continuacion_automatica()
 	for boton_respuesta in botones:
 		boton_respuesta.disabled = true
 	_limpiar_media_de_pregunta()
@@ -664,6 +773,7 @@ func volver_al_mapa() -> void:
 func _cancelar_partida_de_nodo_desde_juego() -> void:
 	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
+	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -672,8 +782,7 @@ func _cancelar_partida_de_nodo_desde_juego() -> void:
 
 
 func _return_to_map_scene() -> void:
-	if continuador != null:
-		continuador.detener()
+	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),

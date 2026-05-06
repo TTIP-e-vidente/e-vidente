@@ -6,9 +6,6 @@ signal pressed
 
 const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
-@onready var active: TextureRect = $Active
-@onready var warning: TextureRect = $Warning
-@onready var inactive: TextureRect = $Inactive
 
 var _current_count: int = 0
 var _streak_state := "inactive"

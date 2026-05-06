@@ -5,7 +5,7 @@
   "difficulty": "medium",
   "mode": "drag_drop",
   "content": {
-    "instruction": "Arrastra al sector seguro solo los ingredientes aptos sin TACC.",
+    "instruction": "Arrastra al sector seguro solo ingredientes aptos sin TACC o productos cerrados y confiables. Evita alimentos comunes abiertos y opciones sin rotulo claro.",
     "targets": [
       {
         "id": "seguro",
@@ -14,25 +14,37 @@
     ],
     "items": [
       {
-        "id": "maicena",
-        "label": "Maicena",
+        "id": "maicena_sin_tacc",
+        "label": "Maicena con sello Sin TACC",
         "image": "res://assets-sistema/iconos/maicena-0.png",
         "correct_target": "seguro"
       },
       {
-        "id": "queso",
-        "label": "Queso",
+        "id": "queso_cerrado",
+        "label": "Queso cerrado",
         "image": "res://assets-sistema/iconos/queso-0.png",
         "correct_target": "seguro"
       },
       {
-        "id": "pizza",
-        "label": "Pizza",
-        "image": "res://assets-sistema/iconos/pizza-0.png",
+        "id": "arroz_cerrado",
+        "label": "Arroz en envase cerrado",
+        "image": "res://assets-sistema/iconos/arroz-0.png",
+        "correct_target": "seguro"
+      },
+      {
+        "id": "pan_comun_mesa_compartida",
+        "label": "Pan comun de mesa compartida",
+        "image": "res://assets-sistema/iconos/pan-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "galletitas_sin_rotulo",
+        "label": "Galletitas sin rotulo",
+        "image": "res://assets-sistema/iconos/galleta-pepitas-0.png",
         "correct_target": ""
       }
     ],
-    "success_message": "Bien! Separaste los productos seguros.",
-    "error_message": "Ese producto puede contaminar la cocina."
+    "success_message": "Bien! Separaste productos seguros y cerrados para reducir errores y contaminacion cruzada en la cocina.",
+    "error_message": "Cuidado: el pan comun de una mesa compartida y los productos sin rotulo claro no van al sector seguro."
   }
 }

@@ -38,6 +38,7 @@
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_yoibg"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_yoibg"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
+[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="40_continuar"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_054us"]
 animations = []
@@ -166,18 +167,32 @@ shadow_color = Color(0, 0, 0, 0.121569)
 shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x8i34"]
-bg_color = Color(0.992157, 0.968627, 0.913725, 0.984314)
+bg_color = Color(0.988235, 0.956863, 0.886275, 0.992157)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.266667, 0.227451, 0.156863, 0.243137)
+border_color = Color(0.266667, 0.227451, 0.156863, 0.294118)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
-shadow_color = Color(0, 0, 0, 0.160784)
-shadow_size = 14
+shadow_color = Color(0, 0, 0, 0.219608)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2s1g1"]
+bg_color = Color(0.952941, 0.917647, 0.85098, 0.968627)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.266667, 0.227451, 0.156863, 0.137255)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.0784314)
+shadow_size = 6
 
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
@@ -339,6 +354,7 @@ icon = ExtResource("25_x7g2d")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=956013369]
+visible = false
 offset_left = 995.99994
 offset_top = 635.0
 offset_right = 1223.0
@@ -348,6 +364,7 @@ text = "
 "
 icon = ExtResource("26_6so0i")
 flat = true
+disabled = true
 
 [node name="adelante1" type="Sprite2D" parent="Adelante" unique_id=674163435]
 visible = false
@@ -371,21 +388,6 @@ visibility_layer = 4
 position = Vector2(108.74133, 118.15442)
 scale = Vector2(1, 1.0000001)
 texture = ExtResource("38_yoibg")
-
-[node name="ContadorSiguienteLabel" type="Label" parent="." unique_id=454046490]
-visible = false
-z_index = 12
-offset_left = 894.0
-offset_top = 735.0
-offset_right = 1148.0
-offset_bottom = 773.0
-theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
-theme_override_font_sizes/font_size = 24
-text = "Próximo juego en 5s..."
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TimerSiguienteNodo" type="Timer" parent="." unique_id=1265385582]
 
 [node name="SaveProgressButton" type="Button" parent="." unique_id=856988732]
 visible = false
@@ -455,13 +457,23 @@ offset_right = 1152.0
 offset_bottom = 800.0
 mouse_filter = 2
 
+[node name="FondoCierre" type="ColorRect" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto" unique_id=1987654308]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0627451, 0.0509804, 0.0313726, 0.62)
+
 [node name="CenterContainer" type="CenterContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto" unique_id=1987654303]
 offset_right = 1152.0
 offset_bottom = 800.0
 mouse_filter = 2
 
 [node name="PanelEnsenanzaTexto" type="PanelContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer" unique_id=1987654304]
-custom_minimum_size = Vector2(700, 220)
+custom_minimum_size = Vector2(780, 520)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_x8i34")
@@ -470,33 +482,63 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_x8i34")
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 34
-theme_override_constants/margin_top = 28
+theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 34
-theme_override_constants/margin_bottom = 28
+theme_override_constants/margin_bottom = 30
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer" unique_id=1987654306]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 22
+alignment = 1
 
 [node name="LabelTituloEnsenanza" type="Label" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" unique_id=1987654307]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.266667, 0.227451, 0.156863, 1)
-theme_override_font_sizes/font_size = 26
-text = "Ensenanza"
+theme_override_font_sizes/font_size = 38
+text = "Buen trabajo"
 horizontal_alignment = 1
 
-[node name="LabelEnsenanzaTexto" type="Label" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" unique_id=1987654321]
+[node name="PanelContenidoEnsenanza" type="PanelContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" unique_id=1987654319]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(632, 110)
-theme_override_font_sizes/font_size = 30
+theme_override_styles/panel = SubResource("StyleBoxFlat_2s1g1")
+
+[node name="MargenContenidoEnsenanza" type="MarginContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza" unique_id=1987654320]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="ColumnaContenidoEnsenanza" type="VBoxContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza" unique_id=1987654322]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="VisualEnsenanza" type="TextureRect" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza" unique_id=1987654323]
+visible = false
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LabelEnsenanzaTexto" type="Label" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza" unique_id=1987654321]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 110)
+theme_override_font_sizes/font_size = 27
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
 autowrap_mode = 3
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ContinuarJuego" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" instance=ExtResource("40_continuar")]
+layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=1848989356]
 script = ExtResource("30_ycctx")
@@ -511,5 +553,4 @@ attenuation = 2.07053
 [connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_sprite_animado_2d_animacion_finalizada"]
 [connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
 [connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
-[connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]
 [connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]

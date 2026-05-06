@@ -60,9 +60,7 @@ func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dict
 		return false
 
 	active_track_key = track_key.strip_edges()
-	# limpiar runtime previo
-	limpiar_tiempo_ejecucion_elementos()
-	active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+	_preparar_runtime_de_arrastre_desde_json()
 
 	var datos_arrastre: Dictionary = _extraer_datos_de_arrastre(contenido_arrastre)
 	var escena_elemento: PackedScene = _cargar_escena_elemento_de_arrastre()
@@ -77,23 +75,49 @@ func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dict
 		push_warning("ManagerLevel: el JSON de arrastre no generó elementos runtime válidos.")
 		return false
 
-	_aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre)
-	_asegurar_recurso_nivel_para_arrastre()
-	_guardar_contenido_de_arrastre_en_recurso(
+	_preparar_recurso_de_arrastre(
 		contenido_arrastre,
 		datos_arrastre.get("objetivos", []),
 		elementos_de_arrastre,
 		level_scene
 	)
+	active_run_data = _construir_datos_de_partida_de_arrastre()
+	return _finalizar_arranque_de_arrastre_desde_json()
+
+
+func _preparar_runtime_de_arrastre_desde_json() -> void:
+	limpiar_tiempo_ejecucion_elementos()
+	active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+
+
+func _preparar_recurso_de_arrastre(
+	contenido_arrastre: Dictionary,
+	objetivos_crudos: Array,
+	elementos_de_arrastre: Dictionary,
+	level_scene: Node
+) -> void:
+	_aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre)
+	_asegurar_recurso_nivel_para_arrastre()
+	_guardar_contenido_de_arrastre_en_recurso(
+		contenido_arrastre,
+		objetivos_crudos,
+		elementos_de_arrastre,
+		level_scene
+	)
 	_aplicar_configuracion_de_dificultad_arrastre()
 
-	# Construir active_run_data mínimo a partir del JSON de arrastre
-	var mec_payload: Dictionary = {}
-	if level_resource != null and level_resource.mechanic_payload is Dictionary and not (level_resource.mechanic_payload as Dictionary).is_empty():
-		mec_payload = (level_resource.mechanic_payload as Dictionary).duplicate(true)
-	active_run_data = {
+
+func _construir_datos_de_partida_de_arrastre() -> Dictionary:
+	var mechanic_payload: Dictionary = {}
+	if (
+		level_resource != null
+		and level_resource.mechanic_payload is Dictionary
+		and not (level_resource.mechanic_payload as Dictionary).is_empty()
+	):
+		mechanic_payload = (level_resource.mechanic_payload as Dictionary).duplicate(true)
+	return {
 		"mechanic_type": active_mechanic_type,
-		"mechanic_payload": mec_payload,
+		"mechanic_payload": mechanic_payload,
 		"negative_count": active_negative_item_count,
 		"positive_count": active_positive_item_count,
 		"category": active_category_code,
@@ -102,12 +126,12 @@ func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dict
 		"teaching_texture_path": "",
 	}
 
-	_instanciar_elementos_de_arrastre()
 
+func _finalizar_arranque_de_arrastre_desde_json() -> bool:
+	_instanciar_elementos_de_arrastre()
 	if level_items.is_empty():
 		push_warning("ManagerLevel: no se pudieron instanciar comidas de arrastre desde el JSON.")
 		return false
-
 	level_items.shuffle()
 	distribuir_tiempo_ejecucion_elementos()
 	_aplicar_ayuda_visual_de_arrastre()

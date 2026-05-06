@@ -5,14 +5,14 @@ const MODO_DRAG_DROP := "drag_drop"
 const MODO_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
 
-static func validate(node_data: Dictionary) -> String:
-	var base_error: String = validate_base_fields(node_data)
+static func validar_datos_nodo(node_data: Dictionary) -> String:
+	var base_error: String = _validar_campos_base(node_data)
 	if not base_error.is_empty():
 		return base_error
-	return validate_content_for_mode(node_data)
+	return _validar_contenido_por_modo(node_data)
 
 
-static func clean(node_data: Dictionary) -> Dictionary:
+static func limpiar_datos_nodo(node_data: Dictionary) -> Dictionary:
 	var modo: String = str(node_data.get("mode", "")).strip_edges()
 	var contenido: Dictionary = _leer_diccionario(node_data.get("content", {}))
 	return {
@@ -25,7 +25,7 @@ static func clean(node_data: Dictionary) -> Dictionary:
 	}
 
 
-static func validate_base_fields(datos_nodo: Dictionary) -> String:
+static func _validar_campos_base(datos_nodo: Dictionary) -> String:
 	for campo in ["id", "theme", "title", "difficulty", "mode", "content"]:
 		if not datos_nodo.has(campo):
 			return "Falta el campo obligatorio: %s" % campo
@@ -43,7 +43,7 @@ static func validate_base_fields(datos_nodo: Dictionary) -> String:
 	return ""
 
 
-static func validate_content_for_mode(datos_nodo: Dictionary) -> String:
+static func _validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
 	var modo: String = str(datos_nodo.get("mode", "")).strip_edges()
 	var contenido: Dictionary = _leer_diccionario(datos_nodo.get("content", {}))
 	match modo:
@@ -55,18 +55,6 @@ static func validate_content_for_mode(datos_nodo: Dictionary) -> String:
 			return _validar_vinculacion(contenido)
 		_:
 			return "Modo no soportado: %s" % modo
-
-
-static func validar_datos_nodo(datos_nodo: Dictionary) -> String:
-	return validate_base_fields(datos_nodo)
-
-
-static func validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
-	return validate_content_for_mode(datos_nodo)
-
-
-static func limpiar_datos_nodo(datos_nodo: Dictionary) -> Dictionary:
-	return clean(datos_nodo)
 
 
 static func _validar_quiz(contenido: Dictionary) -> String:

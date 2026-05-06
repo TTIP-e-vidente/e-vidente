@@ -35,7 +35,16 @@ static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 
 
 static func obtener_cantidad_de_juegos_para_nodo(node_index: int) -> int:
-	return mini(MAXIMO_JUEGOS_POR_NODO, maxi(1, node_index))
+	var indice_seguro: int = maxi(0, node_index)
+	if indice_seguro == 0:
+		return 1
+	if indice_seguro <= 2:
+		return 2
+	if indice_seguro <= 4:
+		return 3
+	if indice_seguro <= 6:
+		return 4
+	return MAXIMO_JUEGOS_POR_NODO
 
 
 # Armado de juegos
@@ -229,17 +238,30 @@ static func _agregar_juegos_restantes(
 static func obtener_dificultad_base_del_nodo(node_data: MapNodeData) -> int:
 	if node_data == null:
 		return 1
-	var dificultad_autorizada: int = max(
-		int(node_data.difficulty),
-		obtener_cantidad_de_juegos_para_nodo(node_data.index)
-	)
-	return clampi(dificultad_autorizada, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
+	var dificultad_definida: int = int(node_data.difficulty)
+	if dificultad_definida > 0:
+		return _limitar_dificultad(dificultad_definida)
+	return _calcular_dificultad_inicial_del_nodo(node_data.index)
+
+
+static func _calcular_dificultad_inicial_del_nodo(indice_nodo: int) -> int:
+	var posicion_nodo: int = maxi(0, indice_nodo)
+	if posicion_nodo <= 0:
+		return 1
+	if posicion_nodo <= 2:
+		return 2
+	if posicion_nodo <= 4:
+		return 2
+	if posicion_nodo <= 6:
+		return 3
+	if posicion_nodo <= 8:
+		return 4
+	return 5
 
 
 static func obtener_dificultad_para_juego(node_data: MapNodeData, indice_juego: int) -> int:
 	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
-	var dificultad_progresiva: int = indice_juego + 1
-	return clampi(mini(dificultad_base, dificultad_progresiva), 1, MAXIMA_DIFICULTAD_POR_JUEGO)
+	return _calcular_dificultad_del_juego(dificultad_base, indice_juego)
 
 
 static func _construir_juego_siguiente(
@@ -280,9 +302,19 @@ static func _construir_entrada_de_juego_con_indice(
 		"mode": _normalizar_modo(node_data.mode),
 		"json_path": node_data.json_path,
 		"titulo": node_data.title,
-		"dificultad": clampi(mini(dificultad_base, indice_juego + 1), 1, MAXIMA_DIFICULTAD_POR_JUEGO),
+		"dificultad": _calcular_dificultad_del_juego(dificultad_base, indice_juego),
 		"clave_nodo_de_origen": node_data.node_key,
 	}
+
+
+static func _calcular_dificultad_del_juego(dificultad_inicial: int, numero_de_juego: int) -> int:
+	var dificultad_segura: int = clampi(dificultad_inicial, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
+	var avance_del_juego: int = maxi(0, numero_de_juego)
+	return _limitar_dificultad(dificultad_segura + avance_del_juego)
+
+
+static func _limitar_dificultad(dificultad: int) -> int:
+	return clampi(dificultad, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
 
 
 static func _construir_rotacion_de_modos(

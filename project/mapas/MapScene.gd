@@ -82,10 +82,6 @@ func actualizar_estados_de_nodos() -> void:
 	var node_states: Array[Dictionary] = []
 	for node_data in nodos_mapa:
 		node_states.append(MapProgressScript.get_node_state(nodos_mapa, node_data))
-
-	if map_board.has_method("refresh_node_states"):
-		map_board.call("refresh_node_states", nodos_mapa, node_states)
-		return
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
 
 

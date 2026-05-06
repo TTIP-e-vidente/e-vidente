@@ -5,7 +5,7 @@
   "difficulty": "hard",
   "mode": "drag_drop",
   "content": {
-    "instruction": "Arma una cena apta sin TACC arrastrando solo las opciones correctas.",
+    "instruction": "Arma una cena apta sin TACC arrastrando solo las opciones correctas. Prioriza ingredientes simples o pastas hechas con arroz, y evita masas y rebozados comunes.",
     "targets": [
       {
         "id": "cena",
@@ -14,8 +14,8 @@
     ],
     "items": [
       {
-        "id": "pescado",
-        "label": "Pescado",
+        "id": "pescado_horno",
+        "label": "Pescado al horno",
         "image": "res://assets-sistema/iconos/pescado-0.png",
         "correct_target": "cena"
       },
@@ -26,13 +26,37 @@
         "correct_target": "cena"
       },
       {
-        "id": "ravioles",
-        "label": "Ravioles",
+        "id": "polenta",
+        "label": "Polenta",
+        "image": "res://assets-sistema/iconos/polenta-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "fideos_arroz_aceite",
+        "label": "Fideos de arroz con aceite",
+        "image": "res://assets-sistema/iconos/fideos-arroz-aceite-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "ravioles_trigo",
+        "label": "Ravioles de trigo",
         "image": "res://assets-sistema/iconos/ravioles-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "empanada_comun",
+        "label": "Empanada comun",
+        "image": "res://assets-sistema/iconos/empanada-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "patitas_rebozadas",
+        "label": "Patitas rebozadas",
+        "image": "res://assets-sistema/iconos/patita-pollo-0.png",
         "correct_target": ""
       }
     ],
-    "success_message": "Bien! Esa cena es apta.",
-    "error_message": "Cuidado: esa cena incluye gluten."
+    "success_message": "Bien! Una cena segura puede armarse con ingredientes simples o pastas de arroz, siempre evitando masas y rebozados comunes.",
+    "error_message": "Cuidado: ravioles de trigo, empanadas comunes y rebozados suelen contener gluten."
   }
 }
