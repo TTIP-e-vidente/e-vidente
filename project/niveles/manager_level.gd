@@ -86,6 +86,22 @@ func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dict
 		level_scene
 	)
 	_aplicar_configuracion_de_dificultad_arrastre()
+
+	# Construir active_run_data mínimo a partir del JSON de arrastre
+	var mec_payload: Dictionary = {}
+	if level_resource != null and level_resource.mechanic_payload is Dictionary and not (level_resource.mechanic_payload as Dictionary).is_empty():
+		mec_payload = (level_resource.mechanic_payload as Dictionary).duplicate(true)
+	active_run_data = {
+		"mechanic_type": active_mechanic_type,
+		"mechanic_payload": mec_payload,
+		"negative_count": active_negative_item_count,
+		"positive_count": active_positive_item_count,
+		"category": active_category_code,
+		"meal_texture_path": "",
+		"condition_texture_path": "",
+		"teaching_texture_path": "",
+	}
+
 	_instanciar_elementos_de_arrastre()
 
 	if level_items.is_empty():

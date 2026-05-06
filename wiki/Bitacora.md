@@ -20,6 +20,23 @@ Esta estructura está pensada para exposición: el histórico previo vive en Pre
 
 ## Lo Que Pasó Recientemente
 
+### [📦 CONTENIDO] 2026-05-05 | Partida por nodo — nodos con múltiples juegos internos
+
+Se implementó el soporte para que cada nodo del mapa represente una "partida" compuesta por uno o varios juegos internos (por ejemplo: arrastre + pregunta). El objetivo es definir el comportamiento desde JSON y mantener el flujo de juego limpio y reutilizable.
+
+Qué se implementó:
+- `PlanDePartidaDeNodo`: arma la lista de `juegos` para un nodo (modo, `json_path`, dificultad, título, etc.) y aplica reglas de selección y alternancia.
+- `PlayableNodeRouter` + `Global`: orquestan la sesión jugable y la `partida_de_nodo` activa; `Global` expone APIs para consultar y avanzar la partida (`iniciar_partida_de_nodo`, `obtener_juego_actual_de_partida`, `avanzar_partida_de_nodo`, `finalizar_partida_de_nodo`, `hay_siguiente_juego_de_partida`).
+- `ManagerLevel`: ahora puede inicializar el runtime desde JSON de tipo `drag_drop` y construye un `active_run_data` mínimo (payload, `positive_count`, `negative_count`, `category`) para que el nivel consuma metadatos cuando procede del contenido.
+- Documentación: nueva página explicativa en [wiki/Partida-por-nodo.md](wiki/Partida-por-nodo.md) con flujo, archivos clave y pasos de verificación manual.
+
+Impacto y siguientes pasos:
+- Permite definir nodos con múltiples juegos directamente desde los JSON en `project/contenido/nodos`.
+- El flujo mínimo Splash → Intro → Selector → Mapa → Gameplay queda soportado desde contenido JSON; recomendamos ejecutar la validación headless (CI) para verificar la integración completa.
+- No se modificaron contratos JSON ni la UI visual; el soporte es compatible con adaptadores legacy (`NodeContentLegacy` / `NodeContentLoader`).
+
+---
+
 ### [📦 CONTENIDO] 2026-04-29 | Contenido desacoplado de nodos (JSON)
 
 Logramos separar por completo el contenido de los desafíos de la lógica del mapa. Ahora, los nodos funcionan de forma dinámica mediante archivos JSON independientes, lo que nos permite sumar niveles y temáticas sin tocar una sola línea de código. Ya dejamos integrados los primeros 9 desafíos de celiaquía (quizzes y actividades de arrastrar)
