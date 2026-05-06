@@ -51,19 +51,8 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
-@onready var capa_ensenanza_texto: Control = (
-	get_node_or_null("CanvasEnsenanzaTexto/CapaEnsenanzaTexto") as Control
-)
-@onready var label_ensenanza_texto: Label = (
-	get_node_or_null(
-		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza/LabelEnsenanzaTexto"
-	) as Label
-)
-@onready var visual_ensenanza: TextureRect = (
-	get_node_or_null(
-		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza/VisualEnsenanza"
-	) as TextureRect
-)
+@onready var tarjeta_ensenanza_cierre: Control = $TarjetaEnsenanzaCierre
+@onready var label_ensenanza_cierre: Label = $TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
@@ -101,9 +90,7 @@ var _save_icon_idle: Texture2D = null
 var _save_icon_ok: Texture2D = null
 
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
-@onready var _continuar_juego = get_node_or_null(
-	"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/ContinuarJuego"
-)
+@onready var _continuar_juego = $ContinuarJuego
 
 # Entrada del nivel
 func _ready() -> void:
@@ -554,14 +541,15 @@ func mostrar_continuacion() -> void:
 
 
 func _asegurar_cierre_visible_para_continuacion() -> void:
-	if not is_instance_valid(capa_ensenanza_texto):
+	if _esta_visible_ensenanza_de_cierre():
 		return
-	if capa_ensenanza_texto.visible:
-		return
-	_mostrar_tarjeta_de_ensenanza(
-		_hay_textura_de_ensenanza(),
-		_resolver_mensaje_visible_de_ensenanza()
-	)
+	_mostrar_ensenanza_de_cierre()
+
+
+func _esta_visible_ensenanza_de_cierre() -> bool:
+	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
+		return true
+	return is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible
 
 
 func _hay_siguiente_juego_de_partida() -> bool:
@@ -860,13 +848,10 @@ func _restaurar_estado_posterior_finalizacion() -> void:
 func _ocultar_ensenanza_textual() -> void:
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.hide()
-	if is_instance_valid(capa_ensenanza_texto):
-		capa_ensenanza_texto.hide()
-	if is_instance_valid(label_ensenanza_texto):
-		label_ensenanza_texto.text = ""
-	if is_instance_valid(visual_ensenanza):
-		visual_ensenanza.texture = null
-		visual_ensenanza.hide()
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		tarjeta_ensenanza_cierre.hide()
+	if is_instance_valid(label_ensenanza_cierre):
+		label_ensenanza_cierre.text = ""
 
 
 func _establecer_visibilidad_indicador_de_progreso(visible: bool) -> void:
@@ -937,12 +922,8 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		return true
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
-	if is_instance_valid(capa_ensenanza_texto) and (
-		runtime_node == capa_ensenanza_texto or capa_ensenanza_texto.is_ancestor_of(runtime_node)
-	):
-		return true
-	if is_instance_valid(label_ensenanza_texto) and (
-		runtime_node == label_ensenanza_texto or label_ensenanza_texto.is_ancestor_of(runtime_node)
+	if is_instance_valid(tarjeta_ensenanza_cierre) and (
+		runtime_node == tarjeta_ensenanza_cierre or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
 	):
 		return true
 	if is_instance_valid(save_feedback_backdrop) and (
@@ -962,34 +943,15 @@ func _hay_textura_de_ensenanza() -> bool:
 	return is_instance_valid(teaching_sprite) and teaching_sprite.texture != null
 
 
-func _mostrar_tarjeta_de_ensenanza(mostrar_imagen: bool, mensaje: String) -> void:
-	if is_instance_valid(teaching_sprite):
-		teaching_sprite.hide()
-	if not is_instance_valid(capa_ensenanza_texto) or not is_instance_valid(label_ensenanza_texto):
-		push_warning("No se encontro la tarjeta de cierre; no se puede mostrar la enseñanza final.")
+func _mostrar_mensaje_simple_de_ensenanza(mensaje: String) -> void:
+	if not is_instance_valid(tarjeta_ensenanza_cierre) or not is_instance_valid(label_ensenanza_cierre):
+		push_warning("No se encontro la tarjeta simple de enseñanza; no se puede mostrar el cierre final.")
 		return
-	_actualizar_visual_de_ensenanza(mostrar_imagen)
-	_actualizar_texto_de_ensenanza(mensaje)
-	_establecer_visibilidad_indicador_de_progreso(false)
-	capa_ensenanza_texto.show()
-
-
-func _actualizar_visual_de_ensenanza(mostrar_imagen: bool) -> void:
-	if not is_instance_valid(visual_ensenanza):
-		return
-	var textura_ensenanza: Texture2D = null
-	if mostrar_imagen and is_instance_valid(teaching_sprite):
-		textura_ensenanza = teaching_sprite.texture
-	visual_ensenanza.texture = textura_ensenanza
-	visual_ensenanza.visible = textura_ensenanza != null
-
-
-func _actualizar_texto_de_ensenanza(mensaje: String) -> void:
 	var mensaje_visible: String = str(mensaje).strip_edges()
 	if mensaje_visible.is_empty():
 		mensaje_visible = _obtener_mensaje_fallback_de_ensenanza()
-	label_ensenanza_texto.modulate = Color(0.0784314, 0.0745098, 0.0666667, 1)
-	label_ensenanza_texto.text = mensaje_visible
+	label_ensenanza_cierre.text = mensaje_visible
+	tarjeta_ensenanza_cierre.show()
 
 
 func _obtener_mensaje_de_ensenanza_desde_runtime() -> String:
@@ -1034,10 +996,16 @@ func _resolver_mensaje_visible_de_ensenanza() -> String:
 
 
 func _mostrar_ensenanza_de_cierre() -> void:
-	_mostrar_tarjeta_de_ensenanza(
-		_hay_textura_de_ensenanza(),
-		_resolver_mensaje_visible_de_ensenanza()
-	)
+	_establecer_visibilidad_indicador_de_progreso(false)
+	if _hay_textura_de_ensenanza():
+		if is_instance_valid(tarjeta_ensenanza_cierre):
+			tarjeta_ensenanza_cierre.hide()
+		if is_instance_valid(teaching_sprite):
+			teaching_sprite.show()
+		return
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+	_mostrar_mensaje_simple_de_ensenanza(_resolver_mensaje_visible_de_ensenanza())
 
 
 func restaurar_finalizacion_visual_estado() -> void:

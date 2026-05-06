@@ -3,13 +3,15 @@ extends Control
 signal continuar_solicitado
 
 const SEGUNDOS_PREDETERMINADOS := 5
+const TEXTO_SIGUIENTE_JUEGO := "se pasara"
+const TEXTO_FINALIZAR := "se pasara"
 
 @onready var _boton_continuar: Button = $ColumnaContinuacion/BotonContinuar
 @onready var _label_contador: Label = $ColumnaContinuacion/ContadorMarco/ContadorPadding/LabelContador
 @onready var _timer_continuacion: Timer = $TimerContinuacion
 
 var _segundos_restantes := SEGUNDOS_PREDETERMINADOS
-var _texto_accion := "Próximo juego"
+var _texto_accion := TEXTO_SIGUIENTE_JUEGO
 var ya_solicito_continuar := false
 
 
@@ -20,11 +22,11 @@ func _ready() -> void:
 
 
 func mostrar_para_siguiente_juego(segundos: int = SEGUNDOS_PREDETERMINADOS) -> void:
-	_mostrar("Próximo juego", segundos)
+	_mostrar(TEXTO_SIGUIENTE_JUEGO, segundos)
 
 
 func mostrar_para_finalizar(segundos: int = SEGUNDOS_PREDETERMINADOS) -> void:
-	_mostrar("Finalizar", segundos)
+	_mostrar(TEXTO_FINALIZAR, segundos)
 
 
 func ocultar() -> void:
@@ -45,7 +47,7 @@ func _mostrar(texto_accion: String, segundos: int) -> void:
 
 
 func _actualizar_contador() -> void:
-	_label_contador.text = "%s en %d..." % [_texto_accion, _segundos_restantes]
+	_label_contador.text = "En %d... %s" % [_segundos_restantes, _texto_accion]
 
 
 func _al_presionar_boton() -> void:

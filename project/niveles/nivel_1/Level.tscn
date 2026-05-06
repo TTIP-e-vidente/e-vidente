@@ -166,33 +166,19 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.121569)
 shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x8i34"]
-bg_color = Color(0.988235, 0.956863, 0.886275, 0.992157)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.266667, 0.227451, 0.156863, 0.294118)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
-shadow_color = Color(0, 0, 0, 0.219608)
-shadow_size = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2s1g1"]
-bg_color = Color(0.952941, 0.917647, 0.85098, 0.968627)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ensenanza_cierre"]
+bg_color = Color(0.952941, 0.917647, 0.85098, 0.952941)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.266667, 0.227451, 0.156863, 0.137255)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-shadow_color = Color(0, 0, 0, 0.0784314)
-shadow_size = 6
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+shadow_color = Color(0, 0, 0, 0.141176)
+shadow_size = 8
 
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
@@ -448,97 +434,39 @@ z_index = 9
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
 
-[node name="CanvasEnsenanzaTexto" type="CanvasLayer" parent="." unique_id=1987654301]
-layer = 6
-
-[node name="CapaEnsenanzaTexto" type="Control" parent="CanvasEnsenanzaTexto" unique_id=1987654302]
+[node name="TarjetaEnsenanzaCierre" type="PanelContainer" parent="." unique_id=1987654301]
 visible = false
-offset_right = 1152.0
-offset_bottom = 800.0
-mouse_filter = 2
-
-[node name="FondoCierre" type="ColorRect" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto" unique_id=1987654308]
+z_index = 10
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -252.0
+offset_right = 320.0
+offset_bottom = -132.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 mouse_filter = 2
-color = Color(0.0627451, 0.0509804, 0.0313726, 0.62)
+theme_override_styles/panel = SubResource("StyleBoxFlat_ensenanza_cierre")
 
-[node name="CenterContainer" type="CenterContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto" unique_id=1987654303]
-offset_right = 1152.0
-offset_bottom = 800.0
-mouse_filter = 2
-
-[node name="PanelEnsenanzaTexto" type="PanelContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer" unique_id=1987654304]
-custom_minimum_size = Vector2(780, 520)
+[node name="MargenEnsenanzaCierre" type="MarginContainer" parent="TarjetaEnsenanzaCierre" unique_id=1987654305]
 layout_mode = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_x8i34")
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 14
 
-[node name="MarginContainer" type="MarginContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto" unique_id=1987654305]
+[node name="LabelEnsenanzaCierre" type="Label" parent="TarjetaEnsenanzaCierre/MargenEnsenanzaCierre" unique_id=1987654321]
 layout_mode = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 34
-theme_override_constants/margin_top = 30
-theme_override_constants/margin_right = 34
-theme_override_constants/margin_bottom = 30
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer" unique_id=1987654306]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-theme_override_constants/separation = 22
-alignment = 1
-
-[node name="LabelTituloEnsenanza" type="Label" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" unique_id=1987654307]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.266667, 0.227451, 0.156863, 1)
-theme_override_font_sizes/font_size = 38
-text = "Buen trabajo"
-horizontal_alignment = 1
-
-[node name="PanelContenidoEnsenanza" type="PanelContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" unique_id=1987654319]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_2s1g1")
-
-[node name="MargenContenidoEnsenanza" type="MarginContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza" unique_id=1987654320]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-
-[node name="ColumnaContenidoEnsenanza" type="VBoxContainer" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza" unique_id=1987654322]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 18
-
-[node name="VisualEnsenanza" type="TextureRect" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza" unique_id=1987654323]
-visible = false
-custom_minimum_size = Vector2(0, 220)
-layout_mode = 2
-size_flags_horizontal = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="LabelEnsenanzaTexto" type="Label" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/PanelContenidoEnsenanza/MargenContenidoEnsenanza/ColumnaContenidoEnsenanza" unique_id=1987654321]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 110)
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
 autowrap_mode = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ContinuarJuego" parent="CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer" instance=ExtResource("40_continuar")]
-layout_mode = 2
-size_flags_horizontal = 4
+[node name="ContinuarJuego" parent="." instance=ExtResource("40_continuar")]
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=1848989356]
 script = ExtResource("30_ycctx")
