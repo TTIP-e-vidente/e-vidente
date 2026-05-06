@@ -5,10 +5,19 @@ const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTrack
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
+const ContextoSesionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoSesionDeJuego.gd"
+)
+const ContextoFinalizacionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
+)
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const PresentadorContinuarJuegoScript := preload(
+	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
+)
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
 
@@ -80,29 +89,39 @@ func _conectar_continuar_juego() -> void:
 
 func configurar_desde_sesion() -> void:
 	_reiniciar_estado_local()
-	var contexto_sesion: Dictionary = _obtener_contexto_jugable_actual()
+	var contexto_sesion: Dictionary = ContextoSesionDeJuegoScript.obtener_contexto_jugable_actual()
 	if contexto_sesion.is_empty():
 		_mensaje_error_bloqueante = "No hay una sesión activa para este juego."
 		return
-	_aplicar_contexto_de_sesion(contexto_sesion)
-	_cargar_datos_de_vinculacion(contexto_sesion)
+	var contexto_normalizado: Dictionary = ContextoSesionDeJuegoScript.normalizar_contexto_jugable(
+		contexto_sesion,
+		clave_pista,
+		nivel_id,
+		ESCENA_RETORNO_PREDETERMINADA
+	)
+	_aplicar_contexto_de_sesion(contexto_normalizado)
+	_cargar_datos_de_vinculacion(contexto_normalizado)
 
 
 func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
-	clave_pista = _leer_clave_pista_de_sesion(contexto_sesion)
-	nivel_id = _leer_numero_de_nivel_de_sesion(contexto_sesion)
-	_nodo_actual = _leer_clave_nodo_de_sesion(contexto_sesion)
-	_pertenece_a_partida_de_nodo = _leer_pertenece_a_partida_de_nodo(contexto_sesion)
-	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
-		contexto_sesion,
-		ESCENA_RETORNO_PREDETERMINADA
+	clave_pista = str(contexto_sesion.get("track_key", clave_pista)).strip_edges()
+	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
+	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
+	_pertenece_a_partida_de_nodo = bool(
+		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
 	)
-	_tiene_sesion_de_mapa = not _nodo_actual.is_empty()
+	_ruta_escena_de_retorno = str(
+		contexto_sesion.get("return_to", ESCENA_RETORNO_PREDETERMINADA)
+	).strip_edges()
+	if _ruta_escena_de_retorno.is_empty():
+		_ruta_escena_de_retorno = ESCENA_RETORNO_PREDETERMINADA
+	_tiene_sesion_de_mapa = bool(
+		contexto_sesion.get("came_from_map", not _nodo_actual.is_empty())
+	)
 
 
 func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
-
-	var ruta_json: String = _leer_ruta_json_de_sesion(contexto_sesion)
+	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
 	if ruta_json.is_empty():
 		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
 		return
@@ -142,56 +161,16 @@ func _reiniciar_estado_local() -> void:
 	_estado_flujo_post_juego = {}
 	_datos_de_ejecucion = {}
 
-
-func _obtener_contexto_jugable_actual() -> Dictionary:
-	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
-	if not juego_actual.is_empty():
-		return juego_actual
-	return Global.obtener_sesion_nodo_jugable_activo()
-
-
 func _configurar_indicador_de_progreso_de_juego() -> void:
 	if indicador_de_progreso_de_juego == null:
 		return
-	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
 	indicador_de_progreso_de_juego.show()
 	indicador_de_progreso_de_juego.actualizar(
-		_leer_titulo_para_indicador(contexto),
-		_leer_indice_para_indicador(contexto),
-		_leer_total_para_indicador(contexto)
+		str(contexto.get("titulo", "")).strip_edges(),
+		int(contexto.get("actual", 1)),
+		int(contexto.get("total", 1))
 	)
-
-
-func _leer_clave_pista_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("track_key", CLAVE_PISTA_PREDETERMINADA)).strip_edges()
-
-
-func _leer_numero_de_nivel_de_sesion(contexto_sesion: Dictionary) -> int:
-	return int(contexto_sesion.get("level_number", 1))
-
-
-func _leer_clave_nodo_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("node_key", "")).strip_edges()
-
-
-func _leer_ruta_json_de_sesion(contexto_sesion: Dictionary) -> String:
-	return str(contexto_sesion.get("json_path", "")).strip_edges()
-
-
-func _leer_pertenece_a_partida_de_nodo(contexto_sesion: Dictionary) -> bool:
-	return bool(contexto_sesion.get("pertenece_a_partida_de_nodo", false))
-
-
-func _leer_titulo_para_indicador(contexto: Dictionary) -> String:
-	return str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
-
-
-func _leer_indice_para_indicador(contexto: Dictionary) -> int:
-	return int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
-
-
-func _leer_total_para_indicador(contexto: Dictionary) -> int:
-	return int(contexto.get("total", contexto.get("total_juegos", 1)))
 
 
 func _aplicar_runtime_en_escena() -> void:
@@ -357,10 +336,21 @@ func _preparar_flujo_post_juego(
 		racha_actualizada,
 		true
 	)
+	var contexto_de_finalizacion: Dictionary = ContextoFinalizacionDeJuegoScript.construir(
+		"vinculacion",
+		clave_pista,
+		nivel_id,
+		Global.obtener_pista_nivel_cantidad(clave_pista),
+		clave_pista == CLAVE_PISTA_PREDETERMINADA,
+		_tiene_sesion_de_mapa,
+		_nodo_actual,
+		_ruta_escena_de_retorno,
+		"vincular_conceptos._preparar_flujo_post_juego"
+	)
 	_estado_flujo_post_juego = PostGameFlowControllerScript.build_post_game_flow_state(
 		racha_anterior,
 		racha_actualizada,
-		_construir_contexto_de_finalizacion(),
+		contexto_de_finalizacion,
 		_retroalimentacion_racha_post_juego
 	)
 
@@ -372,12 +362,7 @@ func _mostrar_cierre_de_vinculacion() -> void:
 
 func _mostrar_continuacion() -> void:
 	ya_continuo = false
-	if _continuar_juego == null:
-		return
-	if _hay_siguiente_juego_de_partida():
-		_continuar_juego.call("mostrar_para_siguiente_juego", 5)
-		return
-	_continuar_juego.call("mostrar_para_finalizar", 5)
+	PresentadorContinuarJuegoScript.mostrar(_continuar_juego, _hay_siguiente_juego_de_partida(), 5)
 
 
 func _hay_siguiente_juego_de_partida() -> bool:
@@ -440,8 +425,7 @@ func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
 
 
 func _limpiar_elementos_temporales() -> void:
-	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
-		_continuar_juego.call("ocultar")
+	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
 
 
 func _limpiar_estado_de_partida_local() -> void:
@@ -459,28 +443,6 @@ func _tomar_retroalimentacion_racha_post_juego() -> Dictionary:
 	var retroalimentacion: Dictionary = _retroalimentacion_racha_post_juego.duplicate(true)
 	_retroalimentacion_racha_post_juego = {}
 	return retroalimentacion
-
-
-func _construir_contexto_de_finalizacion() -> Dictionary:
-	return {
-		"source": "vinculacion",
-		"level": {
-			"track_key": clave_pista,
-			"number": nivel_id,
-			"track_level_count": Global.obtener_pista_nivel_cantidad(clave_pista),
-			"is_default_track": clave_pista == CLAVE_PISTA_PREDETERMINADA,
-		},
-		"map": {
-			"came_from_map": _tiene_sesion_de_mapa,
-			"node_key": _nodo_actual if _tiene_sesion_de_mapa else null,
-		},
-		"navigation": {
-			"return_to": _ruta_escena_de_retorno,
-		},
-		"debug": {
-			"created_by": "vincular_conceptos._construir_contexto_de_finalizacion",
-		},
-	}
 
 
 func _mostrar_error_bloqueante(mensaje: String) -> void:
