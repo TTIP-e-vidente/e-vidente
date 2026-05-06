@@ -63,6 +63,7 @@ func reiniciar_progreso() -> void:
 	current_level = 1
 	_completed_levels_by_track = {}
 	_partial_level_state_by_track = {}
+	_streak_state = {}
 	_extra_progress_system_states = {}
 
 	_playable_node_progress_by_track = {}
@@ -413,9 +414,15 @@ func obtener_modelo_vista_racha() -> Dictionary:
 	return GameStreakTracker.view_model(obtener_estado_racha())
 
 
+func establecer_estado_racha(streak_state: Dictionary) -> void:
+	_streak_state = GameStreakTracker.read(streak_state)
+
 
 func registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
-	_streak_state = GameStreakTracker.record(obtener_estado_racha(), activity_type, metadata)
+	var racha_anterior: Dictionary = obtener_estado_racha()
+	_streak_state = GameStreakTracker.record(racha_anterior, activity_type, metadata)
+	if _actividad_debe_sumar_racha(activity_type):
+		_streak_state = _asegurar_incremento_racha_por_partida(racha_anterior, _streak_state)
 	return _streak_state
 
 
@@ -531,6 +538,37 @@ func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
 
 func _importar_racha_estado_progreso(systems_state: Dictionary) -> void:
 	_streak_state = _streak_save_helper.importar_racha({"progress_system_states": systems_state})
+
+
+func _actividad_debe_sumar_racha(activity_type: String) -> bool:
+	return [
+		"level_completed",
+		"map_node_completed",
+		"question_session_completed",
+	].has(activity_type.strip_edges())
+
+
+func _asegurar_incremento_racha_por_partida(
+	racha_anterior: Dictionary,
+	racha_actualizada: Dictionary
+) -> Dictionary:
+	var conteo_anterior: int = max(0, int(racha_anterior.get("current_count", 0)))
+	var conteo_actualizado: int = max(0, int(racha_actualizada.get("current_count", 0)))
+	if conteo_actualizado > conteo_anterior:
+		return racha_actualizada
+
+	var racha_corregida: Dictionary = racha_actualizada.duplicate(true)
+	var nuevo_conteo: int = conteo_anterior + 1
+	racha_corregida["current_count"] = nuevo_conteo
+	racha_corregida["best_count"] = max(
+		nuevo_conteo,
+		max(
+			int(racha_anterior.get("best_count", 0)),
+			int(racha_actualizada.get("best_count", 0))
+		)
+	)
+	racha_corregida["last_activity_day"] = Time.get_date_string_from_system(false)
+	return racha_corregida
 
 
 func _importar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void:

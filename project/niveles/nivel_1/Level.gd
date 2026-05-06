@@ -482,6 +482,7 @@ func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> v
 				"node_key": _nodo_actual,
 			}
 		)
+		SaveManager.guardar_progreso_en_disco()
 		return
 
 	Global.marcar_nivel_completado(track_key, level_number)
