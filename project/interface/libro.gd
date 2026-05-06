@@ -11,7 +11,10 @@ const MUSICA_FONDO_PREDETERMINADA := "res://assets-sistema/sonidos/simple-relaxi
 
 @onready var chapter_container: VBoxContainer = $VBoxContainer
 @export var track_key_override := ""
+@onready var titulo_nivel: Label = $TituloNivel/Label
 
+
+	
 var _chapter_button_icons: Array[Texture2D] = []
 var _button_template: Button
 var _active_track_key := ""
@@ -19,6 +22,7 @@ var _chapter_hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	titulo_nivel.text = "Celiaquía"
 	_active_track_key = track_key_override.strip_edges()
 	if _active_track_key.is_empty():
 		_active_track_key = _obtener_clave_pista()

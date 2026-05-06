@@ -5,13 +5,13 @@
   "difficulty": "easy",
   "mode": "quiz_choice",
   "content": {
-    "question": "Para una persona con celiaquia, cual opcion suele ser segura si esta limpia y sin contacto con gluten?",
-    "correct_answer": "Verduras frescas lavadas con utensilios limpios",
-    "wrong_options": [
-      "Pan integral porque parece mas saludable",
-      "Galletitas comunes si tienen pocas migas",
+	"question": "Para una persona con celiaquia, cual opcion suele ser segura si esta limpia y sin contacto con gluten?",
+	"correct_answer": "Verduras frescas lavadas con utensilios limpios",
+	"wrong_options": [
+	  "Pan integral porque parece mas saludable",
+	  "Galletitas comunes si tienen pocas migas",
       "Fideos de trigo mezclados con arroz"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }

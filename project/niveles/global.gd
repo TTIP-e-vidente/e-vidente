@@ -413,6 +413,7 @@ func obtener_modelo_vista_racha() -> Dictionary:
 	return GameStreakTracker.view_model(obtener_estado_racha())
 
 
+
 func registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
 	_streak_state = GameStreakTracker.record(obtener_estado_racha(), activity_type, metadata)
 	return _streak_state

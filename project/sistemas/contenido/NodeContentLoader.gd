@@ -5,6 +5,7 @@ const NodeContentValidatorScript := preload("res://sistemas/contenido/NodeConten
 
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
+const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
 static func load_node_content(json_path: String) -> Dictionary:
 	var raw_data: Dictionary = read_json_file(json_path)
@@ -107,3 +108,37 @@ static func convertir_arrastre_a_runtime(node_data: Dictionary) -> Dictionary:
 	}
 
 	return { "ok": true, "data": out, "error": "" }
+
+
+static func convertir_vinculacion_a_runtime(node_data: Dictionary) -> Dictionary:
+	if node_data is Dictionary == false or node_data.is_empty():
+		return {"ok": false, "data": {}, "error": "Nodo vacío o inválido."}
+
+	var mode: String = str(node_data.get("mode", "")).strip_edges()
+	if mode != MODE_VINCULACION_CONCEPTOS:
+		return {"ok": false, "data": {}, "error": "El nodo no es de tipo vinculacion_conceptos."}
+
+	var content: Variant = node_data.get("content", {})
+	if not content is Dictionary:
+		return {"ok": false, "data": {}, "error": "Falta la clave content en el JSON de vinculación."}
+
+	var conceptos_izquierda: Variant = content.get("conceptos_izquierda", [])
+	var conceptos_derecha: Variant = content.get("conceptos_derecha", [])
+	if not conceptos_izquierda is Array or not conceptos_derecha is Array:
+		return {
+			"ok": false,
+			"data": {},
+			"error": "La vinculación requiere conceptos_izquierda y conceptos_derecha como Arrays.",
+		}
+
+	return {
+		"ok": true,
+		"data": {
+			"instruccion": str(content.get("instruccion", "")).strip_edges(),
+			"conceptos_izquierda": (conceptos_izquierda as Array).duplicate(true),
+			"conceptos_derecha": (conceptos_derecha as Array).duplicate(true),
+			"retroalimentacion_ok": str(content.get("retroalimentacion_ok", "")).strip_edges(),
+			"ensenanza": str(content.get("ensenanza", "")).strip_edges(),
+		},
+		"error": "",
+	}

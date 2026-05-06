@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://p1dw52qkjytt"]
 
 [ext_resource type="Script" uid="uid://x7kmrf51ynq0" path="res://mapas/MapBoard.gd" id="1_mapboard"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_btgau"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_oop13"]
 [ext_resource type="PackedScene" uid="uid://ccolhcqvnrd8d" path="res://mapas/MapChapterNode.tscn" id="3_chapternode"]
 [ext_resource type="PackedScene" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
 [ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="5_path1"]
@@ -29,20 +29,9 @@ shader_parameter/fade_size = 0.1270000060325
 [node name="MapBoard" type="Node2D" unique_id=1733738547]
 script = ExtResource("1_mapboard")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=2084717994]
-light_mask = 524288
-visibility_layer = 524288
-offset_right = 1158.0001
-offset_bottom = 807.9999
-metadata/_edit_use_anchors_ = true
-
-[node name="Fondo" type="Sprite2D" parent="." unique_id=797879777]
-light_mask = 524288
-visibility_layer = 524288
-position = Vector2(580.1896, 412.68744)
-rotation = -3.1415927
-scale = Vector2(0.33047423, 0.33076382)
-texture = ExtResource("2_btgau")
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_oop13")]
+offset_left = -1.0
+offset_right = 1152.0
 
 [node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=679278202]
 material = SubResource("ShaderMaterial_scroll")

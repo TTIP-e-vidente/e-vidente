@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://btw41ex60ytny"]
 
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
 [ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/pregunta.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
 [ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_78ome"]
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="4_78ome"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="4_ecatg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
@@ -45,17 +45,10 @@ offset_right = 1156.0
 offset_bottom = 805.0
 size_flags_horizontal = 4
 
-[node name="Color Fondo" type="ColorRect" parent="Contenido" unique_id=25828125]
+[node name="FondoFicha" parent="Contenido" unique_id=1289609653 instance=ExtResource("4_ecatg")]
 layout_mode = 0
-offset_left = -12.0
-offset_top = -4.0
-offset_right = 1158.0
-offset_bottom = 804.0
-
-[node name="fondo" type="Sprite2D" parent="Contenido" unique_id=24097276]
-position = Vector2(575, 405)
-scale = Vector2(0.33295324, 0.32512093)
-texture = ExtResource("1_b7sy5")
+offset_left = 1.0
+offset_right = 1154.0
 
 [node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
 position = Vector2(165, 98)
@@ -103,17 +96,18 @@ offset_top = -45.0
 offset_right = 282.0
 offset_bottom = 65.0
 
-[node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
-layout_mode = 0
+[node name="Preguntas" type="Control" parent="Contenido" unique_id=65404677]
+anchors_preset = 0
 offset_left = 359.0
 offset_top = 430.0
 offset_right = 798.0
 offset_bottom = 735.0
-theme_override_constants/separation = 10
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
 custom_minimum_size = Vector2(0, 76)
-layout_mode = 2
+layout_mode = 0
+offset_right = 439.0
+offset_bottom = 147.0
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -126,7 +120,10 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
 
 [node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
 custom_minimum_size = Vector2(0, 76)
-layout_mode = 2
+layout_mode = 0
+offset_top = 157.0
+offset_right = 439.0
+offset_bottom = 305.0
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -230,6 +227,7 @@ theme_override_constants/separation = 8
 alignment = 1
 
 [node name="FlechaDerecha" type="Button" parent="Contenido/ContinuacionAutomatica" unique_id=589441213]
+visible = false
 custom_minimum_size = Vector2(250, 60)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -238,6 +236,7 @@ text = "Siguiente →"
 flat = true
 
 [node name="ContadorSiguienteLabel" type="Label" parent="Contenido/ContinuacionAutomatica" unique_id=2057494226]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.06469653, 0.06469653, 0.06469653, 1)
 theme_override_font_sizes/font_size = 24

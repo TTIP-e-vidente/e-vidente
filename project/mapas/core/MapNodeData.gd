@@ -3,6 +3,7 @@ class_name MapNodeData
 
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
+const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
 var node_key: String = ""
 var title: String = ""

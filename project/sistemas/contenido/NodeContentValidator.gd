@@ -2,6 +2,7 @@ extends RefCounted
 
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
+const MODO_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
 
 static func validate(node_data: Dictionary) -> String:
@@ -50,6 +51,8 @@ static func validate_content_for_mode(datos_nodo: Dictionary) -> String:
 			return _validar_quiz(contenido)
 		MODO_DRAG_DROP:
 			return _validar_drag_drop(contenido)
+		MODO_VINCULACION_CONCEPTOS:
+			return _validar_vinculacion(contenido)
 		_:
 			return "Modo no soportado: %s" % modo
 
@@ -170,7 +173,124 @@ static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionar
 				"success_message": str(contenido.get("success_message", "")).strip_edges(),
 				"error_message": str(contenido.get("error_message", "")).strip_edges()
 			}
+		MODO_VINCULACION_CONCEPTOS:
+			return {
+				"instruccion": _leer_instruccion_vinculacion(contenido),
+				"conceptos_izquierda": _limpiar_conceptos_vinculacion(
+					_leer_lista_vinculacion(contenido, "conceptos_izquierda", "left_items")
+				),
+				"conceptos_derecha": _limpiar_conceptos_vinculacion(
+					_leer_lista_vinculacion(contenido, "conceptos_derecha", "right_items")
+				),
+				"retroalimentacion_ok": str(
+					contenido.get("retroalimentacion_ok", contenido.get("success_message", ""))
+				).strip_edges(),
+				"ensenanza": str(contenido.get("ensenanza", "")).strip_edges()
+			}
 	return contenido.duplicate(true)
+
+
+static func _validar_vinculacion(contenido: Dictionary) -> String:
+	var instruccion: String = _leer_instruccion_vinculacion(contenido)
+	if instruccion.is_empty():
+		return "Vinculacion: falta instruccion."
+
+	var conceptos_izquierda: Array[Dictionary] = _limpiar_conceptos_vinculacion(
+		_leer_lista_vinculacion(contenido, "conceptos_izquierda", "left_items")
+	)
+	var conceptos_derecha: Array[Dictionary] = _limpiar_conceptos_vinculacion(
+		_leer_lista_vinculacion(contenido, "conceptos_derecha", "right_items")
+	)
+	if conceptos_izquierda.size() < 2:
+		return "Vinculacion: se requieren al menos dos conceptos a la izquierda."
+	if conceptos_derecha.size() < 2:
+		return "Vinculacion: se requieren al menos dos conceptos a la derecha."
+	if conceptos_izquierda.size() != conceptos_derecha.size():
+		return "Vinculacion: la cantidad de conceptos izquierda/derecha debe coincidir."
+
+	var ids_izquierda: Dictionary = {}
+	var ids_derecha: Dictionary = {}
+	for indice in range(conceptos_izquierda.size()):
+		var error_izquierda: String = _validar_concepto_vinculacion(
+			conceptos_izquierda[indice],
+			indice,
+			"izquierda",
+			ids_izquierda
+		)
+		if not error_izquierda.is_empty():
+			return error_izquierda
+
+	for indice in range(conceptos_derecha.size()):
+		var error_derecha: String = _validar_concepto_vinculacion(
+			conceptos_derecha[indice],
+			indice,
+			"derecha",
+			ids_derecha
+		)
+		if not error_derecha.is_empty():
+			return error_derecha
+
+	if ids_izquierda.size() != ids_derecha.size():
+		return "Vinculacion: cada id_par debe existir en ambos lados."
+	for id_par in ids_izquierda.keys():
+		if not ids_derecha.has(id_par):
+			return "Vinculacion: falta el id_par %s en los conceptos de la derecha." % id_par
+
+	return ""
+
+
+static func _validar_concepto_vinculacion(
+	concepto: Dictionary,
+	indice: int,
+	lado: String,
+	ids_por_lado: Dictionary
+) -> String:
+	var etiqueta: String = "Vinculacion: concepto %d de %s" % [indice + 1, lado]
+	var id_concepto: String = str(concepto.get("id", "")).strip_edges()
+	if id_concepto.is_empty():
+		return "%s sin id." % etiqueta
+	var texto: String = str(concepto.get("texto", "")).strip_edges()
+	if texto.is_empty():
+		return "%s sin texto." % etiqueta
+	var id_par: String = str(concepto.get("id_par", "")).strip_edges()
+	if id_par.is_empty():
+		return "%s sin id_par." % etiqueta
+	if ids_por_lado.has(id_par):
+		return "%s repite id_par (%s)." % [etiqueta, id_par]
+	ids_por_lado[id_par] = true
+	return ""
+
+
+static func _leer_instruccion_vinculacion(contenido: Dictionary) -> String:
+	return str(contenido.get("instruccion", contenido.get("instruction", ""))).strip_edges()
+
+
+static func _leer_lista_vinculacion(
+	contenido: Dictionary,
+	clave_principal: String,
+	clave_legacy: String
+) -> Variant:
+	return contenido.get(clave_principal, contenido.get(clave_legacy, []))
+
+
+static func _limpiar_conceptos_vinculacion(conceptos_crudos: Variant) -> Array[Dictionary]:
+	var conceptos: Array[Dictionary] = []
+	if not conceptos_crudos is Array:
+		return conceptos
+
+	for raw_concepto in conceptos_crudos:
+		var concepto: Dictionary = _leer_diccionario(raw_concepto)
+		if concepto.is_empty():
+			continue
+		conceptos.append(
+			{
+				"id": str(concepto.get("id", "")).strip_edges(),
+				"texto": str(concepto.get("texto", concepto.get("label", ""))).strip_edges(),
+				"id_par": str(concepto.get("id_par", concepto.get("pair_id", ""))).strip_edges(),
+			}
+		)
+
+	return conceptos
 
 
 static func _leer_diccionario(valor: Variant) -> Dictionary:

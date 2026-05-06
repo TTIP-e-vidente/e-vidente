@@ -22,6 +22,19 @@ const CONTENT_ERROR_BODY_FONT_SIZE := 26
 const CONTINUADOR_TAMANIO := Vector2(300.0, 150.0)
 const CONTINUADOR_MARGEN := Vector2(40.0, 30.0)
 
+
+@onready var boton_1 = $Contenido/Preguntas/Boton1
+@onready var boton_2 = $Contenido/Preguntas/Boton2
+
+var dodge_offsets := [
+	Vector2(120, 0),
+	Vector2(-120, 0),
+	Vector2(80, -20),
+	Vector2(-80, 20)
+]
+var last_offset := Vector2.ZERO
+
+var base_positions := {}
 @export var quiz: ThemePreg
 @export var nivel_id: int = 2
 @export var track_key: String = "celiaquia"
@@ -48,21 +61,23 @@ var pregunta_actual: Preguntas:
 @onready var pregunta_label: Label = $Contenido/Informacion/Pregunta
 @onready var _visual_panel: Panel = $Contenido/Informacion/Visual
 @onready var _imagen_pregunta: TextureRect = $Contenido/Informacion/Visual/Imagen
-@onready var _contenedor_respuestas: VBoxContainer = $Contenido/Preguntas
+@onready var _contenedor_respuestas: Control = $Contenido/Preguntas
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
 @onready var _contenido: Control = $Contenido
 @onready var _panel_final: ColorRect = $Contenido/GameOver
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
-@onready var _contenedor_continuacion_legacy: VBoxContainer = $Contenido/ContinuacionAutomatica
+
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
 
 # Entrada del quiz
 func _ready() -> void:
 	puntaje = 0
-	_crear_continuador()
-	_ocultar_continuacion_legacy()
+	base_positions[boton_1] = boton_1.position
+	base_positions[boton_2] = boton_2.position
+
+
 	_recolectar_botones_respuesta()
 	configurar_quiz_desde_sesion()
 	_configurar_indicador_de_progreso_de_juego()
@@ -90,6 +105,60 @@ func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
 	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
 
+func dodge_button(button):
+
+	var base_pos = base_positions[button]
+	var available_offsets = dodge_offsets.filter(
+	func(o): return o != last_offset
+	)
+
+	var offset = available_offsets.pick_random()
+	last_offset = offset	
+
+	var target_pos = base_pos + offset
+
+	var tween = create_tween()
+
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+
+	tween.tween_property(
+		button,
+		"scale",
+		Vector2(0.95, 0.95),
+		0.08
+	)
+
+	tween.parallel().tween_property(
+		button,
+		"rotation_degrees",
+		randf_range(-4, 4),
+		0.15
+	)
+
+	tween.parallel().tween_property(
+		button,
+		"position",
+		target_pos,
+		0.28
+	)
+
+	tween.tween_property(
+		button,
+		"scale",
+		Vector2.ONE,
+		0.08
+	)
+	await get_tree().create_timer(1.2).timeout
+
+	var tween_back = create_tween()
+
+	tween_back.tween_property(
+		button,
+		"position",
+		base_pos,
+		0.35
+	)
 
 func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
@@ -290,18 +359,31 @@ func manejar_respuesta(boton: Button) -> void:
 		return
 
 	bloqueado = true
-	for boton_respuesta in botones:
-		boton_respuesta.disabled = true
 
 	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
 	var es_correcta: bool = pregunta_actual.correct == respuesta_elegida
-	if es_correcta:
-		puntaje += 1
 
 	_mostrar_feedback_respuesta(boton, es_correcta)
 
-	await get_tree().create_timer(1.2).timeout
-	_finalizar_quiz()
+	if es_correcta:
+
+		puntaje += 1
+
+		for boton_respuesta in botones:
+			boton_respuesta.disabled = true
+
+		await get_tree().create_timer(1.2).timeout
+		_finalizar_quiz()
+		return
+
+	await dodge_button(boton)
+
+	await get_tree().create_timer(0.4).timeout
+
+	bloqueado = false
+
+	for boton_respuesta in botones:
+		boton_respuesta.disabled = false
 
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
@@ -319,7 +401,7 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 		tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
 		return
 
-	boton.modulate = Color(1, 0, 0)
+	boton.modulate = Color(1.0, 0.4, 0.4)
 	for unused_index in 5:
 		tween.tween_property(boton, "rotation_degrees", 8, 0.03)
 		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
@@ -333,7 +415,7 @@ func _finalizar_quiz() -> void:
 
 func _finalizar_partida() -> void:
 	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
-		mostrar_ensenanza_final()
+
 		return
 
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
@@ -358,7 +440,7 @@ func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	_on_questions_finished(previous_streak, updated_streak)
-	mostrar_ensenanza_final()
+
 
 
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
@@ -441,19 +523,6 @@ func _build_completion_debug_context() -> Dictionary:
 	}
 
 
-func mostrar_ensenanza_final() -> void:
-	mostrar_continuacion()
-
-
-func mostrar_continuacion() -> void:
-	ya_continuo = false
-	_boton_volver_mapa_final.hide()
-	_ocultar_continuacion_legacy()
-	continuador.iniciar(5)
-
-
-func _ocultar_continuacion_legacy() -> void:
-	_contenedor_continuacion_legacy.hide()
 
 
 func _on_timer_siguiente_nodo_timeout() -> void:
@@ -578,25 +647,8 @@ func _on_atras_pressed() -> void:
 	volver_al_mapa()
 
 
-## --- Continuación desde mapa ---
-
-func _crear_continuador() -> void:
-	continuador = ESCENA_CONTINUADOR.instantiate()
-	_contenido.add_child(continuador)
-	_ubicar_continuador()
-	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
-	continuador.ocultar()
 
 
-func _ubicar_continuador() -> void:
-	continuador.anchor_left = 1.0
-	continuador.anchor_top = 1.0
-	continuador.anchor_right = 1.0
-	continuador.anchor_bottom = 1.0
-	continuador.offset_left = -CONTINUADOR_TAMANIO.x - CONTINUADOR_MARGEN.x
-	continuador.offset_top = -CONTINUADOR_TAMANIO.y - CONTINUADOR_MARGEN.y
-	continuador.offset_right = -CONTINUADOR_MARGEN.x
-	continuador.offset_bottom = -CONTINUADOR_MARGEN.y
 
 
 func volver_al_mapa() -> void:
@@ -627,3 +679,5 @@ func _return_to_map_scene() -> void:
 		get_tree(),
 		_ruta_escena_de_retorno
 	)
+	
+	

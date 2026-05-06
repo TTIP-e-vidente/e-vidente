@@ -49,3 +49,9 @@ Decisiones de diseño
 Notas de mantenimiento
 - Al agregar nodos, actualizar `contenido/mapas/*.json` y añadir archivos JSON en `project/contenido/nodos/...`.
 - Para debugging de carga JSON revisar `NodeContentLoader` y `NodeContentLegacy`.
+
+## Modalidad de vinculaciÃ³n de conceptos
+
+La vinculaciÃ³n de conceptos se integra como una modalidad mÃ¡s dentro de `partida por nodo`, sin abrir un flujo paralelo. Se referencia desde el mapa igual que cualquier otro juego mediante `mode: "vinculacion_conceptos"` y `json_path`.
+
+Cuando el juego actual de la partida tiene ese modo, `GameSceneRouter` abre `VincularConceptos.tscn`. Esa escena lee su contenido desde `NodeContentLoader`, usa el mismo HUD `Juego X/Y` y, al terminar, pasa por el mismo esquema de feedback/cierre y continuidad que arrastre y preguntas.

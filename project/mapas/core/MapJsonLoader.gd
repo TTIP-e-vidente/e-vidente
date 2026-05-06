@@ -12,6 +12,10 @@ const CONTENT_RULES_BY_MODE := {
 		"root": NODE_JSON_ROOT,
 		"folder": "/arrastre/",
 	},
+	MapNodeData.MODE_VINCULACION_CONCEPTOS: {
+		"root": NODE_JSON_ROOT,
+		"folder": "/vinculacion/",
+	},
 }
 
 static func load_map(map_json_path: String) -> Dictionary:

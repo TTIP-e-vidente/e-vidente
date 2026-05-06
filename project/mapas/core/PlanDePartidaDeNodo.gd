@@ -50,11 +50,15 @@ static func construir_juegos_para_nodo(node_data: MapNodeData, total_juegos: int
 		return juegos
 
 	var estado_de_seleccion: Dictionary = _construir_estado_de_seleccion_de_juegos(node_data)
+	var rotacion_de_modos: Array[String] = _construir_rotacion_de_modos(
+		modo_base,
+		estado_de_seleccion.get("nodos_por_modo", {})
+	)
 	_agregar_juegos_restantes(
 		juegos,
 		node_data,
 		total_juegos_seguro,
-		modo_base,
+		rotacion_de_modos,
 		dificultad_base,
 		estado_de_seleccion
 	)
@@ -92,6 +96,7 @@ static func _construir_grupos_por_modo(nodos_de_pista: Array[MapNodeData]) -> Di
 	var grupos: Dictionary = {
 		DatosNodoMapaScript.MODE_DRAG_DROP: [],
 		DatosNodoMapaScript.MODE_QUIZ_CHOICE: [],
+		DatosNodoMapaScript.MODE_VINCULACION_CONCEPTOS: [],
 	}
 
 	for nodo_de_pista in nodos_de_pista:
@@ -107,7 +112,7 @@ static func _construir_grupos_por_modo(nodos_de_pista: Array[MapNodeData]) -> Di
 
 static func _construir_indices_iniciales(nodos_por_modo: Dictionary, node_data: MapNodeData) -> Dictionary:
 	var indices_iniciales: Dictionary = {}
-	for modo in [DatosNodoMapaScript.MODE_DRAG_DROP, DatosNodoMapaScript.MODE_QUIZ_CHOICE]:
+	for modo in _obtener_modos_soportados():
 		var grupo: Array = nodos_por_modo.get(modo, [])
 		if grupo.is_empty():
 			indices_iniciales[modo] = 0
@@ -205,7 +210,7 @@ static func _agregar_juegos_restantes(
 	juegos: Array[Dictionary],
 	node_data: MapNodeData,
 	total_juegos: int,
-	modo_base: String,
+	rotacion_de_modos: Array[String],
 	dificultad_base: int,
 	estado_de_seleccion: Dictionary
 ) -> void:
@@ -213,7 +218,7 @@ static func _agregar_juegos_restantes(
 		juegos.append(
 			_construir_juego_siguiente(
 				node_data,
-				modo_base,
+				rotacion_de_modos,
 				indice_juego,
 				dificultad_base,
 				estado_de_seleccion
@@ -239,12 +244,12 @@ static func obtener_dificultad_para_juego(node_data: MapNodeData, indice_juego: 
 
 static func _construir_juego_siguiente(
 	node_data: MapNodeData,
-	modo_base: String,
+	rotacion_de_modos: Array[String],
 	indice_juego: int,
 	dificultad_base: int,
 	estado_de_seleccion: Dictionary
 ) -> Dictionary:
-	var modo_objetivo: String = _obtener_modo_para_juego(modo_base, indice_juego)
+	var modo_objetivo: String = _obtener_modo_para_juego(rotacion_de_modos, indice_juego)
 	var nodos_por_modo: Dictionary = estado_de_seleccion.get("nodos_por_modo", {})
 	var indices_siguientes: Dictionary = estado_de_seleccion.get("indices_siguientes", {})
 	var rutas_usadas: Dictionary = estado_de_seleccion.get("rutas_usadas", {})
@@ -280,16 +285,31 @@ static func _construir_entrada_de_juego_con_indice(
 	}
 
 
-static func _obtener_modo_para_juego(modo_base: String, indice_juego: int) -> String:
-	if indice_juego % 2 == 0:
-		return modo_base
-	return _obtener_modo_opuesto(modo_base)
+static func _construir_rotacion_de_modos(
+	modo_base: String,
+	nodos_por_modo: Dictionary
+) -> Array[String]:
+	var rotacion: Array[String] = []
+	if not modo_base.is_empty():
+		rotacion.append(modo_base)
+
+	for modo in _obtener_modos_soportados():
+		if modo == modo_base:
+			continue
+		var grupo: Array = nodos_por_modo.get(modo, [])
+		if grupo.is_empty():
+			continue
+		rotacion.append(modo)
+
+	if rotacion.is_empty() and not modo_base.is_empty():
+		rotacion.append(modo_base)
+	return rotacion
 
 
-static func _obtener_modo_opuesto(mode: String) -> String:
-	if mode == DatosNodoMapaScript.MODE_DRAG_DROP:
-		return DatosNodoMapaScript.MODE_QUIZ_CHOICE
-	return DatosNodoMapaScript.MODE_DRAG_DROP
+static func _obtener_modo_para_juego(rotacion_de_modos: Array[String], indice_juego: int) -> String:
+	if rotacion_de_modos.is_empty():
+		return ""
+	return rotacion_de_modos[indice_juego % rotacion_de_modos.size()]
 
 
 static func _buscar_nodo_en_grupo(grupo: Array, node_key: String) -> int:
@@ -315,4 +335,13 @@ static func _es_modo_soportado(mode: String) -> bool:
 	return (
 		modo_limpio == DatosNodoMapaScript.MODE_DRAG_DROP
 		or modo_limpio == DatosNodoMapaScript.MODE_QUIZ_CHOICE
+		or modo_limpio == DatosNodoMapaScript.MODE_VINCULACION_CONCEPTOS
 	)
+
+
+static func _obtener_modos_soportados() -> Array[String]:
+	return [
+		DatosNodoMapaScript.MODE_DRAG_DROP,
+		DatosNodoMapaScript.MODE_QUIZ_CHOICE,
+		DatosNodoMapaScript.MODE_VINCULACION_CONCEPTOS,
+	]
