@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
+[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = 0.94
@@ -36,7 +37,7 @@ script = ExtResource("1_dlf6l")
 quiz = ExtResource("2_onqq7")
 
 [node name="IndicadorProgresoDeJuego" parent="." unique_id=1084702451 instance=ExtResource("7_4l1i0")]
-visible = false
+
 
 [node name="Contenido" type="Control" parent="." unique_id=1424383837]
 layout_mode = 3
@@ -78,6 +79,8 @@ autowrap_mode = 2
 
 [node name="Visual" type="Panel" parent="Contenido/Informacion" unique_id=1334384024]
 layout_mode = 2
+
+[node name="ContinuarJuego" parent="Contenido" instance=ExtResource("8_continuar")]
 
 [node name="Imagen" type="TextureRect" parent="Contenido/Informacion/Visual" unique_id=1530920456]
 layout_mode = 0
@@ -208,44 +211,5 @@ icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
 
-[node name="ContinuacionAutomatica" type="VBoxContainer" parent="Contenido" unique_id=1187811779]
-visible = false
-z_index = 20
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -340.0
-offset_top = -170.0
-offset_right = -40.0
-offset_bottom = -40.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="FlechaDerecha" type="Button" parent="Contenido/ContinuacionAutomatica" unique_id=589441213]
-visible = false
-custom_minimum_size = Vector2(250, 60)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 32
-text = "Siguiente →"
-flat = true
-
-[node name="ContadorSiguienteLabel" type="Label" parent="Contenido/ContinuacionAutomatica" unique_id=2057494226]
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(0.06469653, 0.06469653, 0.06469653, 1)
-theme_override_font_sizes/font_size = 24
-text = "Próximo juego en 5..."
-horizontal_alignment = 1
-
-[node name="TimerSiguienteNodo" type="Timer" parent="." unique_id=671940941]
-
 [connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]
-[connection signal="pressed" from="Contenido/ContinuacionAutomatica/FlechaDerecha" to="." method="_on_flecha_derecha_pressed"]
-[connection signal="timeout" from="TimerSiguienteNodo" to="." method="_on_timer_siguiente_nodo_timeout"]

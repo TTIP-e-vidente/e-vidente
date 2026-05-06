@@ -19,7 +19,7 @@ const DIRECTORIO_PROYECTO_NODOS_ANTERIOR := "project/niveles/nodos/"
 const DIRECTORIO_PROYECTO_NODOS_LEGACY := "project/preguntas/json_nodos/"
 
 
-static func resolve_json_path(json_path: String) -> String:
+static func resolver_ruta_json(json_path: String) -> String:
 	var clean_path: String = json_path.strip_edges()
 	if clean_path.is_empty():
 		return ""
@@ -42,20 +42,12 @@ static func resolve_json_path(json_path: String) -> String:
 	return res_path
 
 
-static func normalize_node_data(raw_data: Dictionary) -> Dictionary:
+static func normalizar_datos_nodo(raw_data: Dictionary) -> Dictionary:
 	if _es_formato_oficial(raw_data):
 		return raw_data.duplicate(true)
 	if _es_quiz_plano(raw_data):
 		return _normalizar_quiz_plano(raw_data)
 	return _normalizar_formato_legacy(raw_data)
-
-
-static func resolver_ruta_json(ruta_json: String) -> String:
-	return resolve_json_path(ruta_json)
-
-
-static func normalizar_datos_nodo(datos_crudos: Dictionary) -> Dictionary:
-	return normalize_node_data(datos_crudos)
 
 
 static func _normalizar_ruta_proyecto(ruta_json: String) -> String:

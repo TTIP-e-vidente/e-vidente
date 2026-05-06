@@ -284,6 +284,15 @@ question_number = 19
 label_text = "Pregunta 19"
 icon_texture = ExtResource("10_m2v86")
 
+[node name="Pregunta20" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400006 instance=ExtResource("4_questionnode")]
+position = Vector2(639, 3190)
+scale = Vector2(1.58, 1.58)
+nivel_id = 26
+question_number = 20
+node_key = "vincular_alimentos_seguridad"
+label_text = "Vinculación"
+icon_texture = ExtResource("11_oop13")
+
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
 position = Vector2(591.99994, 142)
 scale = Vector2(0.52793294, 0.52793294)

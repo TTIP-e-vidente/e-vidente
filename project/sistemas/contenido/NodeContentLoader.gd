@@ -7,26 +7,22 @@ const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
-static func load_node_content(json_path: String) -> Dictionary:
-	var raw_data: Dictionary = read_json_file(json_path)
+static func cargar_contenido_nodo(ruta_json_nodo: String) -> Dictionary:
+	var raw_data: Dictionary = _leer_archivo_json(ruta_json_nodo)
 	if raw_data.is_empty():
-		return _result_error("No se pudo leer el JSON: %s" % json_path)
+		return _result_error("No se pudo leer el JSON: %s" % ruta_json_nodo)
 
-	var node_data: Dictionary = normalize_legacy_if_needed(raw_data)
-	var validation_error: String = validate(node_data)
+	var node_data: Dictionary = _normalizar_legado_si_hace_falta(raw_data)
+	var validation_error: String = _validar_datos_nodo(node_data)
 	if not validation_error.is_empty():
 		push_error("NodeContentLoader: " + validation_error)
 		return _result_error(validation_error)
 
-	return _result_ok(NodeContentValidatorScript.clean(node_data))
+	return _result_ok(NodeContentValidatorScript.limpiar_datos_nodo(node_data))
 
 
-static func cargar_contenido_nodo(ruta_json_nodo: String) -> Dictionary:
-	return load_node_content(ruta_json_nodo)
-
-
-static func read_json_file(json_path: String) -> Dictionary:
-	var clean_path: String = NodeContentLegacyScript.resolve_json_path(json_path)
+static func _leer_archivo_json(ruta_json_nodo: String) -> Dictionary:
+	var clean_path: String = NodeContentLegacyScript.resolver_ruta_json(ruta_json_nodo)
 	if clean_path.is_empty():
 		push_error("NodeContentLoader: Falta la ruta del JSON.")
 		return {}
@@ -57,16 +53,12 @@ static func read_json_file(json_path: String) -> Dictionary:
 	return parsed_data as Dictionary
 
 
-static func normalize_legacy_if_needed(raw_data: Dictionary) -> Dictionary:
-	return NodeContentLegacyScript.normalize_node_data(raw_data)
+static func _normalizar_legado_si_hace_falta(raw_data: Dictionary) -> Dictionary:
+	return NodeContentLegacyScript.normalizar_datos_nodo(raw_data)
 
 
-static func validate(node_data: Dictionary) -> String:
-	return NodeContentValidatorScript.validate(node_data)
-
-
-static func _leer_archivo_json(ruta_json_nodo: String) -> Dictionary:
-	return read_json_file(ruta_json_nodo)
+static func _validar_datos_nodo(node_data: Dictionary) -> String:
+	return NodeContentValidatorScript.validar_datos_nodo(node_data)
 
 
 static func _result_ok(datos_nodo: Dictionary) -> Dictionary:

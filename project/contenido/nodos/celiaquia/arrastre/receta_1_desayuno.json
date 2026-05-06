@@ -5,7 +5,7 @@
   "difficulty": "easy",
   "mode": "drag_drop",
   "content": {
-    "instruction": "Arrastra al plato solo las opciones aptas sin TACC para el desayuno.",
+    "instruction": "Arrastra al plato solo las opciones aptas sin TACC para el desayuno. La fruta y los lacteos simples suelen ser seguros; los panificados comunes no.",
     "targets": [
       {
         "id": "plato",
@@ -20,19 +20,19 @@
         "correct_target": "plato"
       },
       {
-        "id": "leche",
-        "label": "Leche",
+        "id": "leche_simple",
+        "label": "Leche simple",
         "image": "res://assets-sistema/iconos/leche-0.png",
         "correct_target": "plato"
       },
       {
-        "id": "medialunas",
-        "label": "Medialunas",
+        "id": "medialunas_comunes",
+        "label": "Medialunas comunes",
         "image": "res://assets-sistema/iconos/medialunas-0.png",
         "correct_target": ""
       }
     ],
-    "success_message": "Bien! Ese desayuno es apto.",
-    "error_message": "Cuidado: esa opcion puede contener gluten."
+    "success_message": "Bien! La fruta y la leche simple suelen ser una base segura para empezar.",
+    "error_message": "Cuidado: las medialunas comunes se hacen con harina de trigo."
   }
 }

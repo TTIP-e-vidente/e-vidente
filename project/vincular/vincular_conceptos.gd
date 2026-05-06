@@ -9,7 +9,6 @@ const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
 )
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
-const ESCENA_CONTINUADOR := preload("res://interface/components/ContinueCountdown.tscn")
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
 
@@ -19,6 +18,7 @@ const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
 @onready var contenedor_derecha: VBoxContainer = $Control/VBoxDerecha
 @onready var boton_atras: Button = $"Atrás"
 @onready var indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _continuar_juego = $ContinuarJuego
 
 var seleccion_izquierda: ConceptoItem = null
 var seleccion_derecha: ConceptoItem = null
@@ -40,12 +40,11 @@ var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
 var _items_izquierda: Array[ConceptoItem] = []
 var _items_derecha: Array[ConceptoItem] = []
-var continuador: ContinueCountdown = null
 
 
 func _ready() -> void:
 	_recolectar_items()
-	_configurar_continuador()
+	_conectar_continuar_juego()
 	if boton_atras != null:
 		boton_atras.pressed.connect(_on_atras_presionado)
 	configurar_desde_sesion()
@@ -72,14 +71,11 @@ func _extraer_conceptos(contenedor: VBoxContainer) -> Array[ConceptoItem]:
 	return items
 
 
-func _configurar_continuador() -> void:
-	continuador = ESCENA_CONTINUADOR.instantiate() as ContinueCountdown
-	if continuador == null:
+func _conectar_continuar_juego() -> void:
+	if _continuar_juego == null:
 		return
-	add_child(continuador)
-	continuador.position = Vector2(470.0, 620.0)
-	continuador.continuar_solicitado.connect(continuar_al_siguiente_juego)
-	continuador.ocultar()
+	if _continuar_juego.has_signal("continuar_solicitado"):
+		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_solicitar_continuar"))
 
 
 func configurar_desde_sesion() -> void:
@@ -88,22 +84,25 @@ func configurar_desde_sesion() -> void:
 	if contexto_sesion.is_empty():
 		_mensaje_error_bloqueante = "No hay una sesión activa para este juego."
 		return
+	_aplicar_contexto_de_sesion(contexto_sesion)
+	_cargar_datos_de_vinculacion(contexto_sesion)
 
-	clave_pista = str(
-		contexto_sesion.get("track_key", CLAVE_PISTA_PREDETERMINADA)
-	).strip_edges()
-	nivel_id = int(contexto_sesion.get("level_number", 1))
-	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_pertenece_a_partida_de_nodo = bool(
-		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
-	)
+
+func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
+	clave_pista = _leer_clave_pista_de_sesion(contexto_sesion)
+	nivel_id = _leer_numero_de_nivel_de_sesion(contexto_sesion)
+	_nodo_actual = _leer_clave_nodo_de_sesion(contexto_sesion)
+	_pertenece_a_partida_de_nodo = _leer_pertenece_a_partida_de_nodo(contexto_sesion)
 	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
 		contexto_sesion,
 		ESCENA_RETORNO_PREDETERMINADA
 	)
 	_tiene_sesion_de_mapa = not _nodo_actual.is_empty()
 
-	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
+
+func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
+
+	var ruta_json: String = _leer_ruta_json_de_sesion(contexto_sesion)
 	if ruta_json.is_empty():
 		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
 		return
@@ -155,11 +154,44 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 	if indicador_de_progreso_de_juego == null:
 		return
 	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	indicador_de_progreso_de_juego.show()
 	indicador_de_progreso_de_juego.actualizar(
-		str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges(),
-		int(contexto.get("actual", contexto.get("indice_juego_actual", 1))),
-		int(contexto.get("total", contexto.get("total_juegos", 1)))
+		_leer_titulo_para_indicador(contexto),
+		_leer_indice_para_indicador(contexto),
+		_leer_total_para_indicador(contexto)
 	)
+
+
+func _leer_clave_pista_de_sesion(contexto_sesion: Dictionary) -> String:
+	return str(contexto_sesion.get("track_key", CLAVE_PISTA_PREDETERMINADA)).strip_edges()
+
+
+func _leer_numero_de_nivel_de_sesion(contexto_sesion: Dictionary) -> int:
+	return int(contexto_sesion.get("level_number", 1))
+
+
+func _leer_clave_nodo_de_sesion(contexto_sesion: Dictionary) -> String:
+	return str(contexto_sesion.get("node_key", "")).strip_edges()
+
+
+func _leer_ruta_json_de_sesion(contexto_sesion: Dictionary) -> String:
+	return str(contexto_sesion.get("json_path", "")).strip_edges()
+
+
+func _leer_pertenece_a_partida_de_nodo(contexto_sesion: Dictionary) -> bool:
+	return bool(contexto_sesion.get("pertenece_a_partida_de_nodo", false))
+
+
+func _leer_titulo_para_indicador(contexto: Dictionary) -> String:
+	return str(contexto.get("titulo", contexto.get("titulo_nodo", ""))).strip_edges()
+
+
+func _leer_indice_para_indicador(contexto: Dictionary) -> int:
+	return int(contexto.get("actual", contexto.get("indice_juego_actual", 1)))
+
+
+func _leer_total_para_indicador(contexto: Dictionary) -> int:
+	return int(contexto.get("total", contexto.get("total_juegos", 1)))
 
 
 func _aplicar_runtime_en_escena() -> void:
@@ -288,6 +320,13 @@ func _resetear_color_si_corresponde(item: ConceptoItem) -> void:
 func _finalizar_vinculacion() -> void:
 	bloqueado = true
 	var racha_anterior: Dictionary = Global.obtener_estado_racha()
+	_guardar_progreso_de_vinculacion()
+	var racha_actualizada: Dictionary = Global.obtener_estado_racha()
+	_preparar_flujo_post_juego(racha_anterior, racha_actualizada)
+	_mostrar_cierre_de_vinculacion()
+
+
+func _guardar_progreso_de_vinculacion() -> void:
 	if _tiene_sesion_de_mapa:
 		Global.marcar_nodo_jugable_completado(clave_pista, _nodo_actual)
 		Global.registrar_actividad_racha(
@@ -299,15 +338,20 @@ func _finalizar_vinculacion() -> void:
 				"mode": NodeContentLoaderScript.MODE_VINCULACION_CONCEPTOS,
 			}
 		)
-	else:
-		Global.marcar_nivel_completado(clave_pista, nivel_id)
-		Global.registrar_actividad_racha(
-			"level_completed",
-			{"track_key": clave_pista, "level_number": nivel_id}
-		)
-		SaveManager.registrar_nivel_completado(clave_pista, nivel_id)
+		return
 
-	var racha_actualizada: Dictionary = Global.obtener_estado_racha()
+	Global.marcar_nivel_completado(clave_pista, nivel_id)
+	Global.registrar_actividad_racha(
+		"level_completed",
+		{"track_key": clave_pista, "level_number": nivel_id}
+	)
+	SaveManager.registrar_nivel_completado(clave_pista, nivel_id)
+
+
+func _preparar_flujo_post_juego(
+	racha_anterior: Dictionary,
+	racha_actualizada: Dictionary
+) -> void:
 	_retroalimentacion_racha_post_juego = GameStreakTrackerScript.build_feedback(
 		racha_anterior,
 		racha_actualizada,
@@ -320,9 +364,26 @@ func _finalizar_vinculacion() -> void:
 		_retroalimentacion_racha_post_juego
 	)
 
+
+func _mostrar_cierre_de_vinculacion() -> void:
 	label_pregunta.text = _resolver_texto_de_cierre()
-	if continuador != null:
-		continuador.iniciar(5)
+	_mostrar_continuacion()
+
+
+func _mostrar_continuacion() -> void:
+	ya_continuo = false
+	if _continuar_juego == null:
+		return
+	if _hay_siguiente_juego_de_partida():
+		_continuar_juego.call("mostrar_para_siguiente_juego", 5)
+		return
+	_continuar_juego.call("mostrar_para_finalizar", 5)
+
+
+func _hay_siguiente_juego_de_partida() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
 
 
 func _resolver_texto_de_cierre() -> String:
@@ -341,20 +402,29 @@ func _resolver_texto_de_cierre() -> String:
 
 
 func continuar_al_siguiente_juego() -> void:
+	_al_solicitar_continuar()
+
+
+func _al_solicitar_continuar() -> void:
 	if ya_continuo:
 		return
 	ya_continuo = true
-	if continuador != null:
-		continuador.detener()
+	_limpiar_elementos_temporales()
 	_continuar_despues_de_ensenanza(true)
 
 
-func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
-	if _pertenece_a_partida_de_nodo and ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+func _continuar_partida_de_nodo_si_corresponde() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
 		Callable(self, "_limpiar_elementos_temporales"),
 		Callable(self, "_limpiar_estado_de_partida_local")
-	):
+	)
+
+
+func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
+	if _continuar_partida_de_nodo_si_corresponde():
 		return
 
 	if _estado_flujo_post_juego.is_empty():
@@ -370,8 +440,8 @@ func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
 
 
 func _limpiar_elementos_temporales() -> void:
-	if continuador != null:
-		continuador.detener()
+	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
+		_continuar_juego.call("ocultar")
 
 
 func _limpiar_estado_de_partida_local() -> void:
@@ -415,6 +485,7 @@ func _construir_contexto_de_finalizacion() -> Dictionary:
 
 func _mostrar_error_bloqueante(mensaje: String) -> void:
 	bloqueado = true
+	_limpiar_elementos_temporales()
 	label_pregunta.text = mensaje
 	for item in _items_izquierda:
 		item.disabled = true
@@ -432,8 +503,7 @@ func _on_atras_presionado() -> void:
 
 
 func _volver_a_escena_de_mapa() -> void:
-	if continuador != null:
-		continuador.detener()
+	_limpiar_elementos_temporales()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
 		_ruta_escena_de_retorno

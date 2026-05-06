@@ -5,7 +5,7 @@
   "difficulty": "easy",
   "mode": "drag_drop",
   "content": {
-    "instruction": "Arrastra solo las colaciones aptas sin TACC.",
+    "instruction": "Arrastra solo las colaciones aptas sin TACC. Si la opcion es procesada, revisa si tiene rotulo seguro.",
     "targets": [
       {
         "id": "colacion",
@@ -20,19 +20,19 @@
         "correct_target": "colacion"
       },
       {
-        "id": "almendra",
-        "label": "Almendra",
+        "id": "almendras_naturales",
+        "label": "Almendras naturales",
         "image": "res://assets-sistema/iconos/almendra-0.png",
         "correct_target": "colacion"
       },
       {
-        "id": "barra_cereal",
-        "label": "Barra de cereal",
+        "id": "barra_cereal_sin_rotulo",
+        "label": "Barra de cereal sin rotulo",
         "image": "res://assets-sistema/iconos/barra-cereal-0.png",
         "correct_target": ""
       }
     ],
-    "success_message": "Bien! Esa colacion es segura.",
-    "error_message": "Revisa bien: esa colacion no es confiable."
+    "success_message": "Bien! La fruta y los frutos secos simples suelen ser opciones seguras.",
+    "error_message": "Revisa bien: una barra procesada necesita rotulo Sin TACC para ser confiable."
   }
 }
