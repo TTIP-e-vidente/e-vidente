@@ -186,17 +186,11 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var next_button := level_scene.get_node_or_null("Adelante") as Button
 	var continuar_juego := level_scene.get_node_or_null("ContinuarJuego") as Control
 	var boton_continuar := level_scene.get_node_or_null(
-		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/ContinuarJuego/ColumnaContinuacion/BotonContinuar"
+		"ContinuarJuego/ColumnaContinuacion/BotonContinuar"
 	) as Button
-	if continuar_juego == null:
-		continuar_juego = level_scene.get_node_or_null(
-			"CanvasEnsenanzaTexto/CapaEnsenanzaTexto/CenterContainer/PanelEnsenanzaTexto/MarginContainer/VBoxContainer/ContinuarJuego"
-		) as Control
 	var back_button := level_scene.get_node_or_null("Atrás") as Button
 	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
-	var teaching_text_layer := level_scene.get_node_or_null(
-		"CanvasEnsenanzaTexto/CapaEnsenanzaTexto"
-	) as Control
+	var teaching_text_layer := level_scene.get_node_or_null("TarjetaEnsenanzaCierre") as Control
 	var title := level_scene.get_node_or_null("TituloNivel") as Sprite2D
 	var lupa := level_scene.get_node_or_null("Lupa") as Area2D
 
