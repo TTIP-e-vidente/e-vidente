@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://blhku5auieiud"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_6hd83"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_6vg4q"]
 [ext_resource type="Texture2D" uid="uid://drylf5njm8qsj" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="3_gaj1j"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_0a2dw"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="6_w25c5"]
@@ -165,6 +165,12 @@ shadow_size = 8
 script = ExtResource("1_64ycw")
 track_key_override = "veganismo"
 
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_6vg4q")]
+offset_left = 3.0
+offset_top = -1.0
+offset_right = 1156.0
+offset_bottom = 798.0
+
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=2016267154]
 z_index = 1
 position = Vector2(233, 109)
@@ -229,16 +235,6 @@ position = Vector2(1021, 434.99997)
 rotation = -0.0939056
 shape = SubResource("CircleShape2D_wvg7e")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=866482302]
-offset_right = 1152.0
-offset_bottom = 800.0
-mouse_filter = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=805849229]
-position = Vector2(579.2062, 397.69672)
-scale = Vector2(0.33399412, 0.35525736)
-texture = ExtResource("2_6hd83")
-
 [node name="Globo texto" type="Sprite2D" parent="." unique_id=1753066151]
 position = Vector2(206, 253)
 scale = Vector2(0.638614, 0.638614)
@@ -254,7 +250,7 @@ position = Vector2(874, 223)
 script = ExtResource("12_xwbtl")
 
 [node name="hambre" type="Sprite2D" parent="PlayerCambiante" unique_id=1249921038]
-position = Vector2(-88, -118)
+position = Vector2(-171, -76.999985)
 scale = Vector2(0.474684, 0.425234)
 texture = ExtResource("13_dqdvd")
 

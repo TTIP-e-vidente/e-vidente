@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://llnw5j83mj4c"]
 
 [ext_resource type="Script" uid="uid://bh345no747w0g" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_alro2"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="4_legacy_bg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_blob"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
@@ -45,30 +45,6 @@ corner_radius_top_right = 22
 corner_radius_bottom_right = 22
 corner_radius_bottom_left = 22
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip_hover"]
-bg_color = Color(0.878431, 0.866667, 0.815686, 1.0)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.2, 0.184314, 0.137255, 0.2)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip_pressed"]
-bg_color = Color(0.819608, 0.8, 0.74902, 1.0)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.2, 0.184314, 0.137255, 0.25)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
 
 [node name="CapituloCompletado" type="CanvasLayer" unique_id=429467181]
@@ -76,18 +52,9 @@ process_mode = 3
 layer = 70
 script = ExtResource("1_xxxk7")
 
-[node name="FondoFicha" type="ColorRect" parent="." unique_id=1862879759]
-offset_left = 5.0
-offset_right = 1158.0
-offset_bottom = 799.0
-mouse_filter = 2
-color = Color(1, 1, 0.996078, 0.988235)
-
-[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha" unique_id=2094211025]
-position = Vector2(566.99994, 416)
-rotation = 3.1415927
-scale = Vector2(0.35245946, 0.35245946)
-texture = ExtResource("4_legacy_bg")
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_alro2")]
+offset_left = 1.0
+offset_right = 1154.0
 
 [node name="OverlayRoot" type="Control" parent="." unique_id=507394411]
 layout_mode = 3
@@ -179,7 +146,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.243137, 0.219608, 0.164706, 0.95)
 theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 16
-text = "¿Querés seguir practicando o volver al inicio?"
+text = "¿Estás listx para dominar otras restricciones alimentarias?"
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -190,23 +157,6 @@ layout_mode = 2
 [node name="ButtonRow" type="HBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1234598760]
 layout_mode = 2
 theme_override_constants/separation = 12
-
-[node name="ReplayButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow" unique_id=1080345017]
-custom_minimum_size = Vector2(0, 76)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
-theme_override_colors/font_hover_color = Color(0.168627, 0.156863, 0.121569, 1)
-theme_override_colors/font_pressed_color = Color(0.168627, 0.156863, 0.121569, 1)
-theme_override_colors/font_focus_color = Color(0.168627, 0.156863, 0.121569, 1)
-theme_override_fonts/font = ExtResource("3_regular")
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_chip")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_chip_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_chip_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_chip")
-text = "Seguir jugando en el mapa"
-flat = true
 
 [node name="ContinueButton" type="Button" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow" unique_id=1080345016]
 custom_minimum_size = Vector2(0, 76)
@@ -219,7 +169,7 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_button")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
-text = "Volver al inicio"
+text = "Continuar"
 flat = true
 
 [node name="BlobBackground" type="TextureRect" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" unique_id=1161402773]
@@ -228,15 +178,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -8.0
-offset_right = -20.0
-offset_bottom = 5.0
+offset_left = 146.99998
+offset_top = -2.0000038
+offset_right = 107.0
+offset_bottom = 11.0
 grow_horizontal = 2
 grow_vertical = 2
+scale = Vector2(0.47123045, 0.86391956)
 mouse_filter = 2
 texture = ExtResource("5_blob")
 expand_mode = 1
 
-[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ReplayButton" to="." method="_on_seguir_jugando_pressed"]
 [connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" to="." method="_on_continuar_pressed"]

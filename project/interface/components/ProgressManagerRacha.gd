@@ -20,6 +20,7 @@ const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 var _current_count: int = 0
 var _best_count: int = 0
 var _status_detail: String = ""
+var _streak_state := "inactive"
 var _feedback_continue_target: Dictionary = {}
 var _mock_preview_counts: Array[int] = []
 
@@ -51,7 +52,7 @@ func _ready() -> void:
 	_conectar_boton_continuar()
 	_conectar_hud_mapa()
 	_cargar_estado_entrada()
-
+	
 
 func _cargar_estado_entrada() -> void:
 	var feedback: Dictionary = _leer_y_limpiar_meta_raiz(STREAK_FEEDBACK_META)
@@ -69,6 +70,8 @@ func renderizar(streak_view_model: Dictionary = {}) -> void:
 	_current_count = max(0, int(resolved_view_model.get("current_count", 0)))
 	_best_count = max(_current_count, int(resolved_view_model.get("best_count", 0)))
 	_status_detail = _resolver_detalle_estado_regular(resolved_view_model)
+	_streak_state = str(
+	resolved_view_model.get("streak_state", "inactive"))
 	_refrescar_ui()
 
 
@@ -135,6 +138,7 @@ func _resolver_detalle_estado_regular(streak_view_model: Dictionary) -> String:
 
 
 func _refrescar_ui() -> void:
+
 	if not is_node_ready():
 		return
 	streak_count_label.text = str(_current_count)
@@ -167,7 +171,15 @@ func _refrescar_ui() -> void:
 		day_circle.call("set_estado", DayCircleScript.Estado.COMPLETO)
 
 
+
+
 func _resolver_texto_detalle() -> String:
+	if _streak_state == "warning":
+		return "Jugá hoy para mantener la racha"
+
+	if _streak_state == "inactive":
+		return "Tu racha se reinicio"
+		
 	if not _status_detail.is_empty():
 		return _status_detail
 	if _best_count > 0:
@@ -314,6 +326,7 @@ func _finish_streak_flow() -> void:
 	PostGameFlowControllerScript.navigate_after_streak(
 		get_tree(),
 		_consumir_return_to_de_racha()
+		
 	)
 
 

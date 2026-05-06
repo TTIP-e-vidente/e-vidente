@@ -153,6 +153,13 @@
       "title": "Decision segura",
       "mode": "quiz_choice",
       "json_path": "res://contenido/nodos/celiaquia/preguntas/casos_cotidianos_sin_tacc.json"
+    },
+    {
+      "node_key": "vincular_alimentos_seguridad",
+      "title": "Vincula alimentos seguros",
+      "mode": "vinculacion_conceptos",
+      "difficulty": 3,
+      "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_alimentos_seguridad.json"
     }
   ]
 }

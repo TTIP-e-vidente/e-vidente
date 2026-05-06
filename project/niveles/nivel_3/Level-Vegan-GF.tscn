@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_wi3ev"]
 [ext_resource type="Texture2D" uid="uid://barm38m1sq5p7" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="2_f1fgs"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="3_catwr"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_u1n7j"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="4_eqa8u"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="5_wrlk6"]
 [ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="6_x2w5f"]
@@ -158,21 +158,13 @@ shadow_size = 8
 script = ExtResource("1_wi3ev")
 track_key_override = "veganismo_celiaquia"
 
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_u1n7j")]
+
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=903181517]
 z_index = 1
 position = Vector2(221, 97.00001)
 scale = Vector2(0.5341749, 0.5341749)
 texture = ExtResource("2_f1fgs")
-
-[node name="ColorRect" type="ColorRect" parent="." unique_id=407455266]
-offset_right = 1152.0
-offset_bottom = 800.0
-mouse_filter = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=1169534297]
-position = Vector2(575.99994, 401.5)
-scale = Vector2(0.33238313, 0.32688433)
-texture = ExtResource("3_catwr")
 
 [node name="Menú" type="Area2D" parent="." unique_id=2130290496 groups=["droppable"]]
 light_mask = 8

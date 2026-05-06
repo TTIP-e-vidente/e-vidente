@@ -12,7 +12,6 @@ const CONTENT_PATH := "OverlayRoot/MarginContainer/CenterContainer/Card/MarginCo
 	get_node(CONTENT_PATH + "/SummaryPanel/MarginContainer/DetailLabel")
 )
 @onready var continue_button: Button = get_node(CONTENT_PATH + "/ButtonRow/ContinueButton")
-@onready var replay_button: Button = get_node(CONTENT_PATH + "/ButtonRow/ReplayButton")
 
 func _ready() -> void:
 	layer = COMPLETION_LAYER
@@ -34,11 +33,6 @@ func _refresh_copy() -> void:
 		return
 	var track_label: String = GameTrackCatalog.obtener_etiqueta_pista(_track_key, "este modo")
 	subtitle_label.text = "Terminaste el mapa de %s" % track_label
-
-
-func _on_seguir_jugando_pressed() -> void:
-	get_tree().paused = false
-	queue_free()
 
 
 func _on_continuar_pressed() -> void:
