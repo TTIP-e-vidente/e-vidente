@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://bnilp4agslfja" path="res://assets-sistema/interfaz/cap-4.png" id="6_lev0w"]
 [ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_xtfd8"]
 [ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_pl0gl"]
-[ext_resource type="Texture2D" uid="uid://cs2ufe4nvu8y" path="res://assets-sistema/interfaz/titulo_keto.png" id="9_83ahj"]
+[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="9_jagfa"]
 [ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_g76et"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
@@ -75,10 +75,9 @@ scale = Vector2(0.43602213, 0.39069122)
 icon = SubResource("CompressedTexture2D_5m2p2")
 flat = true
 
-[node name="Archivero" type="Sprite2D" parent="." unique_id=203178137]
-position = Vector2(227, 142)
-scale = Vector2(0.41094047, 0.41094047)
-texture = ExtResource("9_83ahj")
+[node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("9_jagfa")]
+position = Vector2(247, 173)
+scale = Vector2(0.81621903, 0.81621903)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1512300098]
 stream = ExtResource("10_g76et")

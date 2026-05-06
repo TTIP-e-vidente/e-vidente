@@ -138,7 +138,7 @@ func _resolver_detalle_estado_regular(streak_view_model: Dictionary) -> String:
 
 
 func _refrescar_ui() -> void:
-	_aplicar_estado_visual()
+
 	if not is_node_ready():
 		return
 	streak_count_label.text = str(_current_count)
@@ -170,25 +170,8 @@ func _refrescar_ui() -> void:
 
 		day_circle.call("set_estado", DayCircleScript.Estado.COMPLETO)
 
-func _aplicar_estado_visual() -> void:
-	match _streak_state:
-		"active":
-			_estado_activo()
 
-		"warning":
-			_estado_warning()
 
-		"inactive":
-			_estado_inactivo()
-
-func _estado_activo() -> void:
-	modulate = Color.WHITE
-
-func _estado_warning() -> void:
-	modulate = Color(1.0, 0.95, 0.75)
-	
-func _estado_inactivo() -> void:
-	modulate = Color(0.75, 0.75, 0.75)
 
 func _resolver_texto_detalle() -> String:
 	if _streak_state == "warning":
