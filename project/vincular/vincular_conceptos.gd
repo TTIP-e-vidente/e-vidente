@@ -12,9 +12,11 @@ const ContextoFinalizacionDeJuegoScript := preload(
 	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
 )
 const ContinuidadDePartidaDeNodoScript := preload(
-	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const CargadorDeContenidoDeNodoScript := preload(
+	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
+)
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
@@ -147,14 +149,14 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
 		return
 
-	var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
+	var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
 	if not bool(resultado_nodo.get("ok", false)):
 		_mensaje_error_bloqueante = str(
 			resultado_nodo.get("error", "No se pudo cargar el contenido de vinculación.")
 		)
 		return
 
-	var resultado_runtime: Dictionary = NodeContentLoaderScript.convertir_vinculacion_a_runtime(
+	var resultado_runtime: Dictionary = CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
 		resultado_nodo.get("data", {})
 	)
 	if not bool(resultado_runtime.get("ok", false)):
@@ -488,9 +490,10 @@ func vincular_con_derecha(derecha: ConceptoItem) -> void:
 
 
 func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
-	var izquierda_anterior := _buscar_izquierda_vinculada_a(derecha)
-	if izquierda_anterior != null:
-		izquierda_anterior.limpiar_vinculo()
+	for izquierda in items_izquierda:
+		if izquierda.visible and izquierda.vinculada_con == derecha:
+			izquierda.limpiar_vinculo()
+			return
 
 
 func _actualizar_visual() -> void:
@@ -501,6 +504,10 @@ func _actualizar_visual() -> void:
 
 
 func _actualizar_tarjetas() -> void:
+	for derecha in items_derecha:
+		if derecha.visible:
+			_aplicar_estado_tarjeta(derecha, "normal")
+
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
@@ -513,16 +520,9 @@ func _actualizar_tarjetas() -> void:
 		else:
 			_aplicar_estado_tarjeta(izquierda, "normal")
 
-	for derecha in items_derecha:
-		if not derecha.visible:
-			continue
-		var izquierda_vinculada := _buscar_izquierda_vinculada_a(derecha)
-		if izquierda_vinculada == null:
-			_aplicar_estado_tarjeta(derecha, "normal")
-		elif izquierda_vinculada.tiene_error:
-			_aplicar_estado_tarjeta(derecha, "error")
-		else:
-			_aplicar_estado_tarjeta(derecha, "vinculada")
+		if is_instance_valid(izquierda.vinculada_con) and izquierda.vinculada_con.visible:
+			var estado_derecha := "error" if izquierda.tiene_error else "vinculada"
+			_aplicar_estado_tarjeta(izquierda.vinculada_con, estado_derecha)
 
 
 func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
@@ -535,13 +535,6 @@ func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
 			item.modulate = COLOR_TARJETA_ERROR
 		_:
 			item.modulate = COLOR_TARJETA_NORMAL
-
-
-func _buscar_izquierda_vinculada_a(derecha: ConceptoItem) -> ConceptoItem:
-	for izquierda in items_izquierda:
-		if izquierda.visible and izquierda.vinculada_con == derecha:
-			return izquierda
-	return null
 
 
 func _actualizar_estado_confirmar() -> void:
@@ -741,7 +734,7 @@ func _guardar_progreso_de_vinculacion() -> void:
 				"track_key": clave_pista,
 				"level_number": nivel_id,
 				"node_key": _nodo_actual,
-				"mode": NodeContentLoaderScript.MODE_VINCULACION_CONCEPTOS,
+				"mode": CargadorDeContenidoDeNodoScript.MODE_VINCULACION_CONCEPTOS,
 			}
 		)
 		SaveManager.guardar_progreso_en_disco()

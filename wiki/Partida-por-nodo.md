@@ -7,32 +7,32 @@ Qué problema resuelve
 - Facilita nodos con múltiples juegos internos (por ejemplo: arrastre + pregunta) para crear micro-secuencias pedagógicas.
 
 Cómo funciona (flujo mínimo)
-1. Mapa -> selección de nodo: `MapScene.al_seleccionar_nodo` usa `PlayableNodeRouter.abrir_nodo`.
-2. `PlayableNodeRouter` arma la sesión jugable y el `plan_de_partida` (usando `PlanDePartidaDeNodo`) y llama a `Global.establecer_sesion_nodo_jugable_activo` + `Global.iniciar_partida_de_nodo`.
+1. Mapa -> selección de nodo: `MapScene.al_seleccionar_nodo` usa `AbridorDeNodoJugable.abrir_nodo`.
+2. `AbridorDeNodoJugable` arma la sesión jugable y el `plan_de_partida` (usando `ArmadorDePartida`) y llama a `Global.establecer_sesion_nodo_jugable_activo` + `Global.iniciar_partida_de_nodo`.
 3. `ContinuidadDePartidaDeNodo.abrir_juego_actual` abre la escena de juego correspondiente (`Level.tscn` para `drag_drop`, `pregunta.tscn` para `quiz_choice`).
-4. `Level` carga el contexto de juego desde `Global.obtener_juego_actual_de_partida()` o desde la sesión activa, intenta cargar JSON con `NodeContentLoader.cargar_contenido_nodo` y delega a `ManagerLevel.iniciar_desde_datos_de_arrastre` para inicializar el runtime.
+4. `Level` carga el contexto de juego desde `Global.obtener_juego_actual_de_partida()` o desde la sesión activa, intenta cargar JSON con `CargadorDeContenidoDeNodo.cargar_contenido_nodo` y delega a `ManagerLevel.iniciar_desde_datos_de_arrastre` para inicializar el runtime.
 5. Gameplay -> feedback/enseñanza -> `ContinuidadDePartidaDeNodo` decide avanzar o finalizar la partida.
 
 Cómo se carga el contenido desde JSON
-- Las rutas de nodo usan `res://contenido/nodos/...` y se resuelven/normalizan con `NodeContentLegacy.resolve_json_path`.
-- `NodeContentLoader` valida y normaliza el JSON; para `drag_drop` extrae `content.items` y `content.targets` y genera el payload runtime.
+- Las rutas de nodo usan `res://contenido/nodos/...` y se resuelven/normalizan con `AdaptadorContenidoViejo.resolver_ruta_json`.
+- `CargadorDeContenidoDeNodo` valida y normaliza el JSON; para `drag_drop` extrae `content.items` y `content.targets` y genera el payload runtime.
 - `ManagerLevel.iniciar_desde_datos_de_arrastre` inicializa `level_resource` y ahora también popula `active_run_data` a partir del JSON (para que el resto del runtime encuentre los metadatos de partida).
 
 Nodos con varios juegos internos
-- `PlanDePartidaDeNodo.construir_plan_de_partida` arma la lista `juegos` (cada `juego` tiene `mode`, `json_path`, `dificultad`, `titulo`, etc.).
+- `ArmadorDePartida.construir_plan_de_partida` arma la lista `juegos` (cada `juego` tiene `mode`, `json_path`, `dificultad`, `titulo`, etc.).
 - `Global.iniciar_partida_de_nodo` normaliza el plan y construye el `juego_actual` usado por las escenas.
 
 Uso de la dificultad
-- La dificultad puede venir del `plan_de_partida` o del JSON de nodo; `PlanDePartidaDeNodo` calcula una dificultad base y `Level`/`ManagerLevel` aplican límites para ajustar cantidad de elementos.
+- La dificultad puede venir del `plan_de_partida` o del JSON de nodo; `ArmadorDePartida` calcula una dificultad base y `Level`/`ManagerLevel` aplican límites para ajustar cantidad de elementos.
 
 Archivos principales
-- `project/mapas/core/PlayableNodeRouter.gd`
-- `project/mapas/core/PlanDePartidaDeNodo.gd`
-- `project/mapas/core/ContinuidadDePartidaDeNodo.gd`
+- `project/mapas/logica/AbridorDeNodoJugable.gd`
+- `project/mapas/logica/ArmadorDePartida.gd`
+- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
 - `project/niveles/global.gd`
 - `project/niveles/nivel_1/Level.gd`
 - `project/niveles/manager_level.gd`
-- `project/sistemas/contenido/NodeContentLoader.gd`
+- `project/sistemas/contenido/CargadorDeContenidoDeNodo.gd`
 - `project/contenido/mapas/celiaquia_mapa.json`
 
 Cómo probar manualmente
@@ -48,10 +48,10 @@ Decisiones de diseño
 
 Notas de mantenimiento
 - Al agregar nodos, actualizar `contenido/mapas/*.json` y añadir archivos JSON en `project/contenido/nodos/...`.
-- Para debugging de carga JSON revisar `NodeContentLoader` y `NodeContentLegacy`.
+- Para debugging de carga JSON revisar `CargadorDeContenidoDeNodo` y `AdaptadorContenidoViejo`.
 
 ## Modalidad de vinculaciÃ³n de conceptos
 
 La vinculaciÃ³n de conceptos se integra como una modalidad mÃ¡s dentro de `partida por nodo`, sin abrir un flujo paralelo. Se referencia desde el mapa igual que cualquier otro juego mediante `mode: "vinculacion_conceptos"` y `json_path`.
 
-Cuando el juego actual de la partida tiene ese modo, `GameSceneRouter` abre `VincularConceptos.tscn`. Esa escena lee su contenido desde `NodeContentLoader`, usa el mismo HUD `Juego X/Y` y, al terminar, pasa por el mismo esquema de feedback/cierre y continuidad que arrastre y preguntas.
+Cuando el juego actual de la partida tiene ese modo, `GameSceneRouter` abre `VincularConceptos.tscn`. Esa escena lee su contenido desde `CargadorDeContenidoDeNodo`, usa el mismo HUD `Juego X/Y` y, al terminar, pasa por el mismo esquema de feedback/cierre y continuidad que arrastre y preguntas.

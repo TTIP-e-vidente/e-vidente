@@ -48,10 +48,10 @@ Cada entrada de `nodes` debe tener:
 ## Flujo en runtime
 
 `celiaquia_mapa.json`
--> `MapJsonLoader`
+-> `CargadorDeMapa`
 -> `MapNodeData`
 -> `MapBoard`
--> `PlayableNodeRouter`
+-> `AbridorDeNodoJugable`
 -> `Level` o `pregunta`
 -> `PostGameFlowController`
 -> mapa
@@ -70,7 +70,7 @@ El camino feliz usa solo estas claves:
 
 ## Compatibilidad legacy
 
-- `NodeContentLegacy.gd` es el unico adaptador para rutas o shapes viejos.
+- `AdaptadorContenidoViejo.gd` es el unico adaptador para rutas o shapes viejos.
 - El flujo nuevo no deberia usar `res://niveles/nodos/` ni `res://niveles/mapas/`.
 - Alias como `node_json_path`, `node_resource_path`, `node_mode`, `nivel_id` y `return_scene_path` siguen aceptados solo para no romper contenido o sesiones viejas.
 

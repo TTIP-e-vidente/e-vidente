@@ -1,6 +1,8 @@
 extends SceneTree
 
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const CargadorDeContenidoDeNodoScript := preload(
+	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
+)
 
 var fallo := false
 
@@ -10,7 +12,7 @@ func _initialize() -> void:
 
 
 func _ejecutar() -> void:
-	var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(
+	var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(
 		"res://contenido/nodos/celiaquia/vinculacion/vincular_alimentos_seguridad.json"
 	)
 	_assert(bool(resultado_nodo.get("ok", false)), "No se pudo cargar el JSON de vinculación.")
@@ -18,7 +20,7 @@ func _ejecutar() -> void:
 		quit(1)
 		return
 
-	var resultado_runtime: Dictionary = NodeContentLoaderScript.convertir_vinculacion_a_runtime(
+	var resultado_runtime: Dictionary = CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
 		resultado_nodo.get("data", {})
 	)
 	_assert(

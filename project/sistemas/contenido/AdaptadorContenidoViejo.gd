@@ -27,7 +27,7 @@ static func resolver_ruta_json(json_path: String) -> String:
 	if not legacy_path.is_empty():
 		if _debe_advertir_ruta_legacy(clean_path, legacy_path):
 			push_warning(
-				"NodeContentLoader: ruta legacy detectada. Usa %s en lugar de %s."
+				"CargadorDeContenidoDeNodo: ruta legacy detectada. Usa %s en lugar de %s."
 				% [legacy_path, clean_path]
 			)
 		return legacy_path
