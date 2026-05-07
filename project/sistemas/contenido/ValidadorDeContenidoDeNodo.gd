@@ -164,6 +164,7 @@ static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionar
 			}
 		MODO_DRAG_DROP:
 			return {
+				"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
 				"instruction": str(contenido.get("instruction", "")).strip_edges(),
 				"targets": _limpiar_targets(contenido.get("targets", [])),
 				"items": _limpiar_items(contenido.get("items", []))

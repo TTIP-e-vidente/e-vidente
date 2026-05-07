@@ -835,7 +835,8 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 		clave_pista,
 		clave_ensenanza,
 		_nodo_actual,
-		fallback_path
+		fallback_path,
+		nivel_id
 	)
 
 

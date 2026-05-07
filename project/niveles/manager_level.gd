@@ -238,7 +238,10 @@ func _guardar_contenido_de_arrastre_en_recurso(
 	level_resource.itemsNegativos = negativos
 	level_resource.cantidadPositivos = active_positive_item_count
 	level_resource.cantidadNegativos = active_negative_item_count
-	level_resource.ensenanza = _resolver_textura_de_ensenanza_para_arrastre(level_scene)
+	level_resource.ensenanza = _resolver_textura_de_ensenanza_para_arrastre(
+		level_scene,
+		contenido_arrastre
+	)
 	level_resource.mechanic_payload = {
 		"targets": objetivos_crudos,
 		"instruction": contenido_arrastre.get("instruction", ""),
@@ -247,21 +250,36 @@ func _guardar_contenido_de_arrastre_en_recurso(
 		teaching_sprite.texture = level_resource.ensenanza
 
 
-func _resolver_textura_de_ensenanza_para_arrastre(level_scene: Node) -> Texture2D:
-	var teaching_key: String = _obtener_clave_ensenanza_explicita(level_scene)
-	var node_key: String = _obtener_clave_nodo_de_contexto(level_scene)
+func _resolver_textura_de_ensenanza_para_arrastre(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> Texture2D:
+	var teaching_key: String = _obtener_clave_ensenanza_explicita(
+		level_scene,
+		contenido_arrastre
+	)
+	var node_key: String = _obtener_clave_nodo_de_contexto(level_scene, contenido_arrastre)
 	var fallback_path: String = _obtener_ruta_ensenanza_desde_capitulo(level_scene)
+	var level_number: int = _obtener_numero_nivel_para_arrastre(level_scene)
 	return GameChapterAssetCatalogScript.resolver_textura_ensenanza_para_contexto(
 		active_track_key,
 		teaching_key,
 		node_key,
-		fallback_path
+		fallback_path,
+		level_number
 	)
 
 
-func _obtener_clave_ensenanza_explicita(level_scene: Node) -> String:
+func _obtener_clave_ensenanza_explicita(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> String:
+	var clave: String = _leer_clave_ensenanza_de_diccionario(contenido_arrastre)
+	if not clave.is_empty():
+		return clave
+
 	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
-	var clave: String = _leer_clave_ensenanza_de_diccionario(juego_actual)
+	clave = _leer_clave_ensenanza_de_diccionario(juego_actual)
 	if not clave.is_empty():
 		return clave
 
@@ -287,9 +305,20 @@ func _leer_clave_ensenanza_de_diccionario(datos: Dictionary) -> String:
 	return ""
 
 
-func _obtener_clave_nodo_de_contexto(level_scene: Node) -> String:
+func _obtener_clave_nodo_de_contexto(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> String:
+	var clave_nodo: String = str(
+		contenido_arrastre.get("node_key", contenido_arrastre.get("id", ""))
+	).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
 	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
-	var clave_nodo: String = str(juego_actual.get("node_key", "")).strip_edges()
+	clave_nodo = str(
+		juego_actual.get("clave_nodo_de_origen", juego_actual.get("node_key", ""))
+	).strip_edges()
 	if not clave_nodo.is_empty():
 		return clave_nodo
 
