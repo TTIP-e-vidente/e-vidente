@@ -822,6 +822,7 @@ func _mostrar_asset_de_ensenanza() -> void:
 
 func _resolver_textura_de_ensenanza() -> Texture2D:
 	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
+	var fallback_path := ""
 	if clave_ensenanza.is_empty():
 		var definicion_capitulo: Dictionary = Global.obtener_capitulo_partida_definicion(
 			clave_pista,
@@ -829,28 +830,13 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 			1
 		)
 		clave_ensenanza = str(definicion_capitulo.get("teaching_key", "")).strip_edges()
-	if clave_ensenanza.is_empty():
-		return null
-	var ruta_ensenanza: String = str(
-		GameChapterAssetCatalogScript.TEACHING_TEXTURE_PATHS.get(clave_ensenanza, "")
-	).strip_edges()
-	if ruta_ensenanza.is_empty():
-		return null
-	return GameChapterAssetCatalogScript.resolver_textura(ruta_ensenanza)
-
-
-func _resolver_texto_de_cierre() -> String:
-	return ""
-	var texto_retroalimentacion: String = ""
-	var texto_ensenanza: String = str(_datos_de_ejecucion.get("ensenanza", "")).strip_edges()
-	var partes: Array[String] = []
-	if not texto_retroalimentacion.is_empty():
-		partes.append(texto_retroalimentacion)
-	if not texto_ensenanza.is_empty():
-		partes.append(texto_ensenanza)
-	if partes.is_empty():
-		partes.append("¡Muy bien! Ya podés seguir con el próximo juego.")
-	return "\n".join(partes)
+		fallback_path = str(definicion_capitulo.get("teaching_texture_path", "")).strip_edges()
+	return GameChapterAssetCatalogScript.resolver_textura_ensenanza_para_contexto(
+		clave_pista,
+		clave_ensenanza,
+		_nodo_actual,
+		fallback_path
+	)
 
 
 func continuar_al_siguiente_juego() -> void:

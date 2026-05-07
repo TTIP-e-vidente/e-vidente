@@ -4,7 +4,6 @@ signal flow_completed
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DayCircleScript := preload("res://interface/components/DayCircle.gd")
-const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
@@ -22,7 +21,6 @@ var _best_count: int = 0
 var _status_detail: String = ""
 var _streak_state := "inactive"
 var _feedback_continue_target: Dictionary = {}
-var _mock_preview_counts: Array[int] = []
 
 @onready var map_hud: CanvasLayer = $StreakView/MapHud
 @onready var streak_count_label: Label = $StreakView/nroRacha
@@ -57,7 +55,6 @@ func _ready() -> void:
 func _cargar_estado_entrada() -> void:
 	var feedback: Dictionary = _leer_y_limpiar_meta_raiz(STREAK_FEEDBACK_META)
 	_feedback_continue_target = _leer_y_limpiar_meta_raiz(STREAK_CONTINUE_TARGET_META)
-	_mock_preview_counts = _extraer_conteos_vista_previa_mock(_feedback_continue_target)
 	if feedback.is_empty():
 		renderizar()
 		return
@@ -88,7 +85,7 @@ func _mostrar_feedback(feedback: Dictionary) -> void:
 		int(base_view_model.get("best_count", 0))
 	)
 
-	_current_count = max(1, int(feedback.get("current_count", base_current_count)))
+	_current_count = max(0, int(feedback.get("current_count", base_current_count)))
 	_best_count = max(
 		_current_count,
 		int(feedback.get("best_count", base_best_count))
@@ -103,7 +100,6 @@ func _mostrar_feedback(feedback: Dictionary) -> void:
 
 func _establecer_modo_regular() -> void:
 	_feedback_continue_target = {}
-	_mock_preview_counts.clear()
 	_continue_button.visible = false
 	_continue_button.disabled = true
 	if back_button != null:
@@ -279,45 +275,7 @@ func _leer_y_limpiar_meta_raiz(meta_key: String) -> Dictionary:
 	return {}
 
 
-func _extraer_conteos_vista_previa_mock(continue_target: Dictionary) -> Array[int]:
-	var preview_counts: Array[int] = []
-	var cycle_days: int = _day_circles.size()
-	if cycle_days <= 0:
-		cycle_days = week_messages.size()
-	if continue_target.is_empty():
-		return preview_counts
-	var preview_key: String = GameStreakDebugScript.PREVIEW_COUNTS_KEY
-	var raw_counts: Variant = continue_target.get(preview_key, [])
-	continue_target.erase(preview_key)
-	if not GameStreakDebugScript.is_preview_enabled():
-		return preview_counts
-	if not (raw_counts is Array):
-		return preview_counts
-	for raw_value in raw_counts:
-		var preview_count: int = int(raw_value)
-		if preview_count < 1 or preview_count > cycle_days:
-			continue
-		if preview_counts.has(preview_count):
-			continue
-		preview_counts.append(preview_count)
-	return preview_counts
-
-
-func _mostrar_siguiente_vista_previa_mock() -> bool:
-	if _mock_preview_counts.is_empty():
-		return false
-	var preview_count: int = _mock_preview_counts[0]
-	_mock_preview_counts.remove_at(0)
-	_current_count = preview_count
-	_best_count = max(_best_count, preview_count)
-	_status_detail = _construir_mensaje_racha(preview_count)
-	_refrescar_ui()
-	return true
-
-
 func _on_boton_continuar_presionado() -> void:
-	if _mostrar_siguiente_vista_previa_mock():
-		return
 	flow_completed.emit()
 	_finish_streak_flow()
 

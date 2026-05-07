@@ -1,7 +1,6 @@
 extends RefCounted
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const GameStreakDebugScript := preload("res://niveles/progress/GameStreakDebug.gd")
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[Flow]"
@@ -30,7 +29,6 @@ static func build_post_game_flow_state(
 	var fallback_target: Dictionary = _build_fallback_target_from_completion_context(
 		completion_context
 	)
-	_agregar_vista_previa_mock_racha(fallback_target, streak_feedback)
 
 	var flow_state := {
 		FLOW_SECTION_STATE: {
@@ -413,7 +411,7 @@ static func _read_flow_section(flow_state: Dictionary, section_name: String) -> 
 static func _read_flow_target(targets_section: Dictionary, target_name: String) -> Dictionary:
 	var raw_target: Variant = targets_section.get(target_name, null)
 	if raw_target is Dictionary:
-		return GameStreakDebugScript.sanitize_target_for_runtime(raw_target)
+		return (raw_target as Dictionary).duplicate(true)
 	return {}
 
 
@@ -555,26 +553,6 @@ static func _esta_activa_hoy(streak_state: Dictionary) -> bool:
 	if current_count <= 0:
 		return false
 	return str(streak_state.get("last_activity_day", "")) == Time.get_date_string_from_system(false)
-
-
-static func _agregar_vista_previa_mock_racha(
-	continue_target: Dictionary,
-	streak_feedback: Dictionary = {}
-) -> void:
-	if not GameStreakDebugScript.is_preview_enabled():
-		return
-	var current_count: int = int(streak_feedback.get("current_count", 0))
-	if current_count <= 0 or current_count >= GameStreakDebugScript.PREVIEW_MAX_COUNT:
-		return
-	var preview_counts: Array[int] = []
-	for preview_count in range(
-		current_count + 1,
-		GameStreakDebugScript.PREVIEW_MAX_COUNT + 1
-	):
-		preview_counts.append(preview_count)
-	if preview_counts.is_empty():
-		return
-	continue_target[GameStreakDebugScript.PREVIEW_COUNTS_KEY] = preview_counts
 
 
 static func _scene_path_target(scene_path: String) -> Dictionary:
