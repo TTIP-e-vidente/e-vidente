@@ -64,6 +64,10 @@ static func convertir_arrastre_a_runtime(datos_nodo: Dictionary) -> Dictionary:
 		return _error("El JSON de arrastre requiere 'items' y 'targets' no vacios.")
 
 	return _ok({
+		"node_key": str(datos_nodo.get("id", "")).strip_edges(),
+		"teaching_key": str(
+			contenido.get("teaching_key", datos_nodo.get("teaching_key", ""))
+		).strip_edges(),
 		"instruction": str(contenido.get("instruction", "")).strip_edges(),
 		"items": items.duplicate(true),
 		"targets": targets.duplicate(true),
