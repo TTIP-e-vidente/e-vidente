@@ -166,9 +166,7 @@ static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionar
 			return {
 				"instruction": str(contenido.get("instruction", "")).strip_edges(),
 				"targets": _limpiar_targets(contenido.get("targets", [])),
-				"items": _limpiar_items(contenido.get("items", [])),
-				"success_message": str(contenido.get("success_message", "")).strip_edges(),
-				"error_message": str(contenido.get("error_message", "")).strip_edges()
+				"items": _limpiar_items(contenido.get("items", []))
 			}
 		MODO_VINCULACION_CONCEPTOS:
 			return {
@@ -179,10 +177,7 @@ static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionar
 				"conceptos_derecha": _limpiar_conceptos_vinculacion(
 					_leer_lista_vinculacion(contenido, "conceptos_derecha", "right_items")
 				),
-				"retroalimentacion_ok": str(
-					contenido.get("retroalimentacion_ok", contenido.get("success_message", ""))
-				).strip_edges(),
-				"ensenanza": str(contenido.get("ensenanza", "")).strip_edges()
+				"teaching_key": str(contenido.get("teaching_key", "")).strip_edges()
 			}
 	return contenido.duplicate(true)
 

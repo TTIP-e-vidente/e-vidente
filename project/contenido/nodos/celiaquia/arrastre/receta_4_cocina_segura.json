@@ -43,8 +43,6 @@
         "image": "res://assets-sistema/iconos/galleta-pepitas-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! Separaste productos seguros y cerrados para reducir errores y contaminacion cruzada en la cocina.",
-    "error_message": "Cuidado: el pan comun de una mesa compartida y los productos sin rotulo claro no van al sector seguro."
+    ]
   }
 }

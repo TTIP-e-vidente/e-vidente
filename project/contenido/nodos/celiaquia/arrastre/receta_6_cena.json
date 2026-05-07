@@ -55,8 +55,6 @@
         "image": "res://assets-sistema/iconos/patita-pollo-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! Una cena segura puede armarse con ingredientes simples o pastas de arroz, siempre evitando masas y rebozados comunes.",
-    "error_message": "Cuidado: ravioles de trigo, empanadas comunes y rebozados suelen contener gluten."
+    ]
   }
 }

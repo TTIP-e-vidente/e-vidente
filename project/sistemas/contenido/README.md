@@ -57,8 +57,8 @@ Y deberia usar el shape oficial:
 ## Que formato espera cada minijuego
 
 - `quiz_choice`: usa `content.question`, `content.correct_answer`, `content.wrong_options` y `content.visual_resource`.
-- `drag_drop`: usa `content.instruction`, `content.targets`, `content.items`, `content.success_message` y `content.error_message`.
-- `vinculacion_conceptos`: usa `content.instruccion`, `content.conceptos_izquierda`, `content.conceptos_derecha`, `content.retroalimentacion_ok` y `content.ensenanza`.
+- `drag_drop`: usa `content.instruction`, `content.targets` y `content.items`. El cierre de aprendizaje usa assets de `assets-sistema/ensenanza`.
+- `vinculacion_conceptos`: usa `content.instruccion`, `content.conceptos_izquierda`, `content.conceptos_derecha` y `content.teaching_key`.
 
 ## Que NO tocar antes de demo
 

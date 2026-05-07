@@ -20,6 +20,9 @@ const CargadorDeContenidoDeNodoScript := preload(
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
+const GameChapterAssetCatalogScript := preload(
+	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
+)
 
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
@@ -59,6 +62,7 @@ var boton_confirmar: Button = null
 var boton_continuar_validacion: Button = null
 var feedback_label: Label = null
 var click_areas: Control = null
+var teaching_sprite: Sprite2D = null
 
 var _nodo_actual: String = ""
 var _tiene_sesion_de_mapa := false
@@ -71,6 +75,7 @@ var _datos_de_ejecucion: Dictionary = {}
 
 
 func _ready() -> void:
+	_preparar_sprite_ensenanza()
 	_recolectar_items()
 	_preparar_controles_de_confirmacion()
 	_preparar_click_areas()
@@ -774,7 +779,8 @@ func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: D
 
 
 func _mostrar_cierre_de_vinculacion() -> void:
-	label_pregunta.text = _resolver_texto_de_cierre()
+	label_pregunta.text = ""
+	_mostrar_asset_de_ensenanza()
 	_mostrar_continuacion()
 
 
@@ -789,8 +795,53 @@ func _hay_siguiente_juego_de_partida() -> bool:
 	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
 
 
+func _preparar_sprite_ensenanza() -> void:
+	teaching_sprite = get_node_or_null("Ensenanza") as Sprite2D
+	if teaching_sprite == null:
+		teaching_sprite = Sprite2D.new()
+		teaching_sprite.name = "Ensenanza"
+		add_child(teaching_sprite)
+	teaching_sprite.visible = false
+	teaching_sprite.top_level = true
+	teaching_sprite.z_index = 20
+	teaching_sprite.position = Vector2(577, 407)
+	teaching_sprite.scale = Vector2(1.33952, 1.33952)
+
+
+func _mostrar_asset_de_ensenanza() -> void:
+	if teaching_sprite == null:
+		return
+	var textura: Texture2D = _resolver_textura_de_ensenanza()
+	if textura == null:
+		teaching_sprite.hide()
+		push_warning("VincularConceptos: no se encontro asset de ensenanza.")
+		return
+	teaching_sprite.texture = textura
+	teaching_sprite.show()
+
+
+func _resolver_textura_de_ensenanza() -> Texture2D:
+	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
+	if clave_ensenanza.is_empty():
+		var definicion_capitulo: Dictionary = Global.obtener_capitulo_partida_definicion(
+			clave_pista,
+			nivel_id,
+			1
+		)
+		clave_ensenanza = str(definicion_capitulo.get("teaching_key", "")).strip_edges()
+	if clave_ensenanza.is_empty():
+		return null
+	var ruta_ensenanza: String = str(
+		GameChapterAssetCatalogScript.TEACHING_TEXTURE_PATHS.get(clave_ensenanza, "")
+	).strip_edges()
+	if ruta_ensenanza.is_empty():
+		return null
+	return GameChapterAssetCatalogScript.resolver_textura(ruta_ensenanza)
+
+
 func _resolver_texto_de_cierre() -> String:
-	var texto_retroalimentacion: String = str(_datos_de_ejecucion.get("retroalimentacion_ok", "")).strip_edges()
+	return ""
+	var texto_retroalimentacion: String = ""
 	var texto_ensenanza: String = str(_datos_de_ejecucion.get("ensenanza", "")).strip_edges()
 	var partes: Array[String] = []
 	if not texto_retroalimentacion.is_empty():

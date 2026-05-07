@@ -55,8 +55,6 @@
 				"image": "res://assets-sistema/iconos/patita-pollo-0.png",
 				"correct_target": ""
 			}
-		],
-		"success_message": "Bien! Arroz, huevo, brocoli y fideos de arroz pueden formar un plato apto si la preparacion fue segura y sin contaminacion cruzada.",
-		"error_message": "Cuidado: pan comun, fideos de trigo y rebozados comunes contienen gluten o no son preparaciones seguras."
+		]
 	}
 }

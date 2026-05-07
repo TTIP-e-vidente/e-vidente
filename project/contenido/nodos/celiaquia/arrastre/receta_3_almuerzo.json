@@ -37,8 +37,6 @@
         "image": "res://assets-sistema/iconos/patita-pollo-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! Pollo simple y fideos de arroz pueden ser opciones aptas. La clave es mirar el ingrediente base y evitar rebozados comunes.",
-    "error_message": "Cuidado: los fideos de trigo contienen gluten y las milanesas rebozadas comunes no son seguras."
+    ]
   }
 }

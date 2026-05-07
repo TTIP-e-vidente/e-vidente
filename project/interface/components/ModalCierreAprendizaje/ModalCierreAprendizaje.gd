@@ -3,8 +3,7 @@ class_name ModalCierreAprendizaje
 
 signal continuar_solicitado
 
-const TITULO_FALLBACK := "Buen trabajo"
-const TEXTO_FALLBACK   := "¡Completaste este desafío!"
+const TITULO_FALLBACK := ""
 
 @onready var _control_raiz: Control = $Control
 @onready var _label_titulo: Label = (
@@ -28,12 +27,8 @@ func _ready() -> void:
 
 
 func mostrar_con_texto(titulo: String, texto: String, para_siguiente_juego: bool, segundos: int = 5) -> void:
-	_label_titulo.text = _con_fallback(titulo, TITULO_FALLBACK)
-	_imagen_ensenanza.texture = null
-	_imagen_ensenanza.hide()
-	_texto_ensenanza.text = _con_fallback(texto, TEXTO_FALLBACK)
-	_texto_ensenanza.show()
-	_mostrar_y_activar_continuacion(para_siguiente_juego, segundos)
+	push_warning("ModalCierreAprendizaje: se intento mostrar una ensenanza textual.")
+	ocultar()
 
 
 func mostrar_con_imagen(titulo: String, textura: Texture2D, para_siguiente_juego: bool, segundos: int = 5) -> void:
