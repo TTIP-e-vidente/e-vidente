@@ -31,13 +31,13 @@ static func read(raw_state: Variant) -> Dictionary:
 # --- Actividad --------------------------------------------------------------
 
 static func record(
-	current_streak: Dictionary,
+	streak_state: Dictionary,
 	activity_type: String,
 	metadata: Dictionary
 ) -> Dictionary:
 	var today: String = Time.get_date_string_from_system(false)
-	var last_day: String = str(current_streak.get("last_activity_day", ""))
-	var old_count: int = int(current_streak.get("current_count", 0))
+	var last_day: String = str(streak_state.get("last_activity_day", ""))
+	var old_count: int = int(streak_state.get("current_count", 0))
 
 	var new_count: int = 1
 	if last_day == today:
@@ -48,7 +48,7 @@ static func record(
 	var clean_type: String = activity_type.strip_edges()
 	return {
 		"current_count": new_count,
-		"best_count": max(int(current_streak.get("best_count", 0)), new_count),
+		"best_count": max(int(streak_state.get("best_count", 0)), new_count),
 		"last_activity_day": today,
 		"last_activity_type": "activity" if clean_type.is_empty() else clean_type,
 		"last_track_key": str(metadata.get("track_key", "")).strip_edges()
@@ -58,21 +58,26 @@ static func record(
 # --- Datos para UI ----------------------------------------------------------
 
 static func _resolver_estado_visual(streak_state: Dictionary) -> String:
-	var current_count: int = int(
-		streak_state.get("current_count", 0)
-	)
-
+	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return "inactive"
 
-	return "active" 
-	
+	var today: String = Time.get_date_string_from_system(false)
+	var last_day: String = str(streak_state.get("last_activity_day", ""))
+	if last_day == today:
+		return "active"
+	if _days_between(last_day, today) == 1:
+		return "warning"
+	return "inactive"
+
+
 static func view_model(streak_state: Dictionary) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_day: String = str(streak_state.get("last_activity_day", ""))
 	var today: String = Time.get_date_string_from_system(false)
-	
+	var visual_state: String = _resolver_estado_visual(streak_state)
+
 	if current_count <= 0:
 		return {
 			"current_count": 0,
@@ -80,7 +85,7 @@ static func view_model(streak_state: Dictionary) -> Dictionary:
 			"status_key": "inactive",
 			"status_title": "Sin racha activa",
 			"status_detail": "Completa una actividad para iniciar la racha.",
-			"streak_state": _resolver_estado_visual(streak_state)
+			"streak_state": visual_state
 		}
 
 	if last_day == today:
@@ -89,7 +94,8 @@ static func view_model(streak_state: Dictionary) -> Dictionary:
 			"best_count": best_count,
 			"status_key": "active_today",
 			"status_title": "Racha activa",
-			"status_detail": "Hoy ya registraste una actividad."
+			"status_detail": "Hoy ya registraste una actividad.",
+			"streak_state": visual_state
 		}
 
 	return {
@@ -97,11 +103,11 @@ static func view_model(streak_state: Dictionary) -> Dictionary:
 		"best_count": best_count,
 		"status_key": "pending_today",
 		"status_title": "Racha pendiente hoy",
-		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy."
+		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy.",
+		"streak_state": visual_state
 	}
 
 
-	
 # --- Feedback post-partida --------------------------------------------------
 
 static func build_feedback(
@@ -119,10 +125,12 @@ static func build_feedback(
 		if already_played_today or not streak_updated_today:
 			return {"should_show": false}
 
-	var count: int = max(1, int(updated_state.get("current_count", 1)))
+	var count: int = max(0, int(updated_state.get("current_count", 0)))
+	if count <= 0:
+		return {"should_show": false}
 	var best: int = max(count, int(updated_state.get("best_count", 0)))
 
-	if count <= 1:
+	if count == 1:
 		return {
 			"should_show": true,
 			"feedback_key": "activated",

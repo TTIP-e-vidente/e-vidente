@@ -883,62 +883,9 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 	return false
 
 
-## --- Enseñanza: mostrar imagen o texto -------------------------------
+## --- Enseñanza: mostrar imagen de asset -------------------------------
 func _hay_textura_de_ensenanza() -> bool:
 	return is_instance_valid(teaching_sprite) and teaching_sprite.texture != null
-
-
-func _mostrar_mensaje_simple_de_ensenanza(_mensaje: String) -> void:
-	return
-	if not is_instance_valid(tarjeta_ensenanza_cierre) or not is_instance_valid(label_ensenanza_cierre):
-		push_warning("No se encontro la tarjeta simple de enseñanza; no se puede mostrar el cierre final.")
-		return
-	var mensaje_visible: String = str(_mensaje).strip_edges()
-	if mensaje_visible.is_empty():
-		mensaje_visible = ""
-	label_ensenanza_cierre.text = mensaje_visible
-	tarjeta_ensenanza_cierre.show()
-
-
-func _obtener_mensaje_de_ensenanza_desde_runtime() -> String:
-	var payload: Dictionary = _obtener_payload_de_ensenanza()
-	if payload.is_empty():
-		return ""
-	if _arrastre_actual_completado():
-		return ""
-	return ""
-
-
-func _obtener_payload_de_ensenanza() -> Dictionary:
-	if not is_instance_valid(manager_level):
-		return {}
-	var nivel_recurso: LevelResource = manager_level.level_resource
-	if nivel_recurso == null or nivel_recurso.mechanic_payload.is_empty():
-		return {}
-	return nivel_recurso.mechanic_payload
-
-
-func _arrastre_actual_completado() -> bool:
-	if not is_instance_valid(manager_level):
-		return true
-	if not manager_level.has_method("tiene_completado_actual_partida"):
-		return true
-	return bool(manager_level.tiene_completado_actual_partida())
-
-
-func _leer_mensaje_de_payload(payload: Dictionary, clave: String) -> String:
-	return str(payload.get(clave, "")).strip_edges()
-
-
-func _obtener_mensaje_fallback_de_ensenanza() -> String:
-	return ""
-
-
-func _resolver_mensaje_visible_de_ensenanza() -> String:
-	var mensaje_runtime: String = _obtener_mensaje_de_ensenanza_desde_runtime()
-	if not str(mensaje_runtime).strip_edges().is_empty():
-		return mensaje_runtime
-	return _obtener_mensaje_fallback_de_ensenanza()
 
 
 func _mostrar_ensenanza_de_cierre() -> void:
@@ -953,6 +900,7 @@ func _mostrar_ensenanza_de_cierre() -> void:
 		teaching_sprite.hide()
 	if is_instance_valid(tarjeta_ensenanza_cierre):
 		tarjeta_ensenanza_cierre.hide()
+	push_warning("Level: no hay asset de ensenanza para mostrar.")
 
 
 func restaurar_finalizacion_visual_estado() -> void:

@@ -6,19 +6,13 @@ signal pressed
 
 const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
+const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa.png")
+const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
+const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva.png")
 
 var _current_count: int = 0
-var _streak_state := "inactive"
+var _streak_state: String = "inactive"
 var _is_interactive := true
-var current_streak := 0
-var best_streak := 0
-var last_play_date := ""
-
-const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa.png")
-
-const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
-
-const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva.png")
 
 @onready var background: TextureRect = $Background
 @onready var count_label: Label = $CountLabel
@@ -36,6 +30,10 @@ func renderizar(streak_view_model: Dictionary = {}) -> void:
 	_aplicar_view_model(_resolver_view_model(streak_view_model))
 
 
+func render(streak_view_model: Dictionary = {}) -> void:
+	renderizar(streak_view_model)
+
+
 func establecer_insignia(number_value: int, _next_status_key: String = "") -> void:
 	_current_count = max(0, number_value)
 	_refrescar_ui()
@@ -45,42 +43,6 @@ func establecer_interactivo(enabled: bool) -> void:
 	_is_interactive = enabled
 	_refrescar_interactividad()
 
-func registrar_partida_diaria() -> void:
-	var today := Time.get_date_string_from_system()
-
-	if last_play_date == today:
-		return
-
-	var diff_days := _calcular_diferencia_dias(
-		last_play_date,
-		today
-	)
-
-	if diff_days == 1:
-		current_streak += 1
-	else:
-		current_streak = 1
-
-	best_streak = max(best_streak, current_streak)
-
-	last_play_date = today
-
-func _calcular_diferencia_dias(
-	from_date: String,
-	to_date: String
-) -> int:
-	if from_date.is_empty():
-		return 999
-
-	var from_unix := Time.get_unix_time_from_datetime_string(
-		from_date + "T00:00:00"
-	)
-
-	var to_unix := Time.get_unix_time_from_datetime_string(
-		to_date + "T00:00:00"
-	)
-
-	return int((to_unix - from_unix) / 86400.0)
 
 func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
@@ -93,13 +55,13 @@ func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 
 func _aplicar_view_model(streak_view_model: Dictionary) -> void:
 	_current_count = max(
-	0,
-	int(streak_view_model.get("current_count", 0))
-)
+		0,
+		int(streak_view_model.get("current_count", 0))
+	)
 
 	_streak_state = str(
-	streak_view_model.get("streak_state", "inactive")
-)
+		streak_view_model.get("streak_state", "inactive")
+	)
 
 	_refrescar_ui()
 
@@ -169,7 +131,7 @@ func _refrescar_ui() -> void:
 		)
 		_aplicar_estado_visual()
 
-		
+
 func _aplicar_estado_visual() -> void:
 	match _streak_state:
 		"active":
@@ -180,6 +142,7 @@ func _aplicar_estado_visual() -> void:
 
 		"inactive":
 			_estado_inactivo()
+
 
 func _resolver_tamano_fuente_contador(count_text: String) -> int:
 	if count_text.length() >= 3:
@@ -195,32 +158,21 @@ func _refrescar_interactividad() -> void:
 	hotspot_button.visible = _is_interactive
 	hotspot_button.disabled = not _is_interactive
 
-func obtener_estado_racha() -> Texture2D:
-	var today := Time.get_date_string_from_system()
-
-	if last_play_date == today:
-		return ACTIVE_TEXTURE
-
-	var diff_days := _calcular_diferencia_dias(
-		last_play_date,
-		today
-	)
-
-	if diff_days == 1:
-		return WARNING_TEXTURE
-
-	return INACTIVE_TEXTURE
 
 func _estado_activo() -> void:
 	background.texture = ACTIVE_TEXTURE
-		
+	modulate = Color.WHITE
+
+
 func _estado_warning() -> void:
 	background.texture = WARNING_TEXTURE
 	modulate = Color.WHITE
 
+
 func _estado_inactivo() -> void:
 	background.texture = INACTIVE_TEXTURE
 	modulate = Color(0.8, 0.8, 0.8)
+
 
 func _on_boton_hotspot_presionado() -> void:
 	pressed.emit()

@@ -59,6 +59,51 @@ static func construir_rutas_activos_partida(
 	}
 
 
+static func resolver_ruta_ensenanza_para_contexto(
+	track_key: String,
+	teaching_key: String,
+	node_key: String = "",
+	fallback_texture_path: String = ""
+) -> String:
+	var explicit_path: String = _resolver_ruta_ensenanza(teaching_key)
+	if not explicit_path.is_empty():
+		return explicit_path
+
+	var inferred_key: String = _inferir_clave_ensenanza_desde_nodo(track_key, node_key)
+	var inferred_path: String = _resolver_ruta_ensenanza(inferred_key)
+	if not inferred_path.is_empty():
+		return inferred_path
+
+	var fallback_path: String = fallback_texture_path.strip_edges()
+	if fallback_path.begins_with("res://assets-sistema/ensenanza/"):
+		return fallback_path
+	return ""
+
+
+static func resolver_textura_ensenanza_para_contexto(
+	track_key: String,
+	teaching_key: String,
+	node_key: String = "",
+	fallback_texture_path: String = ""
+) -> Texture2D:
+	var texture_path: String = resolver_ruta_ensenanza_para_contexto(
+		track_key,
+		teaching_key,
+		node_key,
+		fallback_texture_path
+	)
+	if texture_path.is_empty():
+		push_warning(
+			"No se encontro asset de ensenanza para track='%s', teaching_key='%s', node_key='%s'."
+			% [track_key, teaching_key, node_key]
+		)
+		return null
+	var texture: Texture2D = resolver_textura(texture_path)
+	if texture == null:
+		push_warning("No se pudo cargar el asset de ensenanza: %s" % texture_path)
+	return texture
+
+
 static func resolver_textura(texture_ref: Variant) -> Texture2D:
 	if texture_ref is Texture2D:
 		return texture_ref
@@ -81,3 +126,43 @@ static func _buscar_ruta(path_map: Dictionary, raw_key: String) -> String:
 	if clean_key.is_empty():
 		return ""
 	return str(path_map.get(clean_key, ""))
+
+
+static func _resolver_ruta_ensenanza(teaching_ref: String) -> String:
+	var clean_ref: String = teaching_ref.strip_edges()
+	if clean_ref.is_empty():
+		return ""
+	if clean_ref.begins_with("res://assets-sistema/ensenanza/"):
+		return clean_ref
+	return _buscar_ruta(TEACHING_TEXTURE_PATHS, clean_ref)
+
+
+static func _inferir_clave_ensenanza_desde_nodo(track_key: String, node_key: String) -> String:
+	var recipe_number: int = _extraer_numero_receta(node_key)
+	if recipe_number <= 0:
+		return ""
+
+	var track_definition: Dictionary = GameTrackCatalog.obtener_definicion_pista(track_key)
+	var raw_prefixes: Variant = track_definition.get("teaching_key_prefixes", [])
+	if not raw_prefixes is Array or (raw_prefixes as Array).is_empty():
+		return ""
+
+	var prefix: String = str((raw_prefixes as Array)[0]).strip_edges()
+	var inferred_key := "%s%d" % [prefix, recipe_number]
+	return inferred_key if TEACHING_TEXTURE_PATHS.has(inferred_key) else ""
+
+
+static func _extraer_numero_receta(node_key: String) -> int:
+	var marker := "receta_"
+	var start: int = node_key.find(marker)
+	if start < 0:
+		return 0
+	var cursor: int = start + marker.length()
+	var digits := ""
+	while cursor < node_key.length():
+		var character := node_key.substr(cursor, 1)
+		if not character.is_valid_int():
+			break
+		digits += character
+		cursor += 1
+	return int(digits) if not digits.is_empty() else 0
