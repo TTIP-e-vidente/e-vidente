@@ -1,7 +1,7 @@
 extends SceneTree
 
-const MapJsonLoaderScript := preload("res://mapas/core/MapJsonLoader.gd")
-const PlanDePartidaDeNodoScript := preload("res://mapas/core/PlanDePartidaDeNodo.gd")
+const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
+const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 
 var fallo := false
 
@@ -11,7 +11,7 @@ func _initialize() -> void:
 
 
 func _ejecutar() -> void:
-	var resultado_mapa: Dictionary = MapJsonLoaderScript.load_map(
+	var resultado_mapa: Dictionary = CargadorDeMapaScript.load_map(
 		"res://contenido/mapas/celiaquia_mapa.json"
 	)
 	_assert(bool(resultado_mapa.get("ok", false)), "No se pudo cargar el mapa de celiaquía.")
@@ -31,7 +31,7 @@ func _ejecutar() -> void:
 		quit(1)
 		return
 
-	var plan: Dictionary = PlanDePartidaDeNodoScript.construir_plan_de_partida(nodo_vinculacion)
+	var plan: Dictionary = ArmadorDePartidaScript.construir_plan_de_partida(nodo_vinculacion)
 	var juegos: Array = plan.get("juegos", [])
 	_assert(not juegos.is_empty(), "La partida por nodo debería construir juegos.")
 	_assert(

@@ -1,7 +1,7 @@
 extends SceneTree
 
-const MapJsonLoaderScript := preload("res://mapas/core/MapJsonLoader.gd")
-const PlanDePartidaDeNodoScript := preload("res://mapas/core/PlanDePartidaDeNodo.gd")
+const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
+const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 
 var fallo := false
 
@@ -23,7 +23,7 @@ func _ejecutar() -> void:
 		quit(1)
 		return
 
-	var plan: Dictionary = PlanDePartidaDeNodoScript.construir_plan_de_partida(nodo_multiple)
+	var plan: Dictionary = ArmadorDePartidaScript.construir_plan_de_partida(nodo_multiple)
 	var juegos: Array = plan.get("juegos", [])
 	_assert(juegos.size() > 1, "El nodo avanzado debe generar mas de un juego.")
 	_assert(int(plan.get("total_juegos", 0)) == juegos.size(), "El total del plan debe coincidir con juegos.")
@@ -62,7 +62,7 @@ func _ejecutar() -> void:
 
 
 func _obtener_nodo_de_prueba() -> MapNodeData:
-	var resultado_mapa: Dictionary = MapJsonLoaderScript.load_map(
+	var resultado_mapa: Dictionary = CargadorDeMapaScript.load_map(
 		"res://contenido/mapas/celiaquia_mapa.json"
 	)
 	if not bool(resultado_mapa.get("ok", false)):
