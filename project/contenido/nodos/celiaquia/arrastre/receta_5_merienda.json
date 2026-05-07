@@ -49,8 +49,6 @@
         "image": "res://assets-sistema/iconos/yogurt-cereales-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! Una merienda segura combina alimentos simples o productos verificados con rotulo confiable.",
-    "error_message": "Revisa el rotulo: panificados, galletitas sin identificar y avena no certificada pueden no ser opciones seguras."
+    ]
   }
 }

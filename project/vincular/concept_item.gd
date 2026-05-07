@@ -101,7 +101,7 @@ func _actualizar_texto() -> void:
 	label.scale = Vector2.ONE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.autow rap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.clip_text = true
 	label.add_theme_constant_override("line_spacing", -2)
 	label.add_theme_font_size_override("font_size", _calcular_tamano_fuente(texto))

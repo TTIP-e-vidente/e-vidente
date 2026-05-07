@@ -6,8 +6,7 @@
   "mode": "vinculacion_conceptos",
   "content": {
     "instruccion": "Relacioná cada alimento con su condición de consumo.",
-    "retroalimentacion_ok": "¡Buen trabajo! Identificaste las opciones seguras.",
-    "ensenanza": "Priorizar alimentos naturalmente libres de gluten y productos rotulados ayuda a evitar errores cotidianos.",
+    "teaching_key": "celiaquia_9",
     "conceptos_izquierda": [
       {
         "id": "izq_fruta",

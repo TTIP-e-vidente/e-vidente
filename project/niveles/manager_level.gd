@@ -116,6 +116,9 @@ func _construir_datos_de_partida_de_arrastre() -> Dictionary:
 		and not (level_resource.mechanic_payload as Dictionary).is_empty()
 	):
 		mechanic_payload = (level_resource.mechanic_payload as Dictionary).duplicate(true)
+	var ruta_ensenanza := ""
+	if level_resource != null and level_resource.ensenanza != null:
+		ruta_ensenanza = str(level_resource.ensenanza.resource_path).strip_edges()
 	return {
 		"mechanic_type": active_mechanic_type,
 		"mechanic_payload": mechanic_payload,
@@ -124,7 +127,7 @@ func _construir_datos_de_partida_de_arrastre() -> Dictionary:
 		"category": active_category_code,
 		"meal_texture_path": "",
 		"condition_texture_path": "",
-		"teaching_texture_path": "",
+		"teaching_texture_path": ruta_ensenanza,
 	}
 
 
@@ -236,19 +239,19 @@ func _guardar_contenido_de_arrastre_en_recurso(
 	level_resource.cantidadPositivos = active_positive_item_count
 	level_resource.cantidadNegativos = active_negative_item_count
 	level_resource.ensenanza = _resolver_textura_de_ensenanza_para_arrastre(level_scene)
-	var mensaje_exito: String = str(contenido_arrastre.get("success_message", "")).strip_edges()
-	var mensaje_error: String = str(contenido_arrastre.get("error_message", "")).strip_edges()
 	level_resource.mechanic_payload = {
 		"targets": objetivos_crudos,
 		"instruction": contenido_arrastre.get("instruction", ""),
-		"mensaje_exito": mensaje_exito,
-		"mensaje_error": mensaje_error,
 	}
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.texture = level_resource.ensenanza
 
 
 func _resolver_textura_de_ensenanza_para_arrastre(level_scene: Node) -> Texture2D:
+	var textura_por_nodo: Texture2D = _resolver_textura_de_ensenanza_por_nodo(level_scene)
+	if textura_por_nodo != null:
+		return textura_por_nodo
+
 	var numero_nivel: int = _obtener_numero_nivel_para_arrastre(level_scene)
 	if numero_nivel <= 0:
 		return null
@@ -265,6 +268,109 @@ func _resolver_textura_de_ensenanza_para_arrastre(level_scene: Node) -> Texture2
 	if ruta_ensenanza.is_empty():
 		return null
 	return GameChapterAssetCatalogScript.resolver_textura(ruta_ensenanza)
+
+
+func _resolver_textura_de_ensenanza_por_nodo(level_scene: Node) -> Texture2D:
+	var clave_ensenanza: String = _obtener_clave_ensenanza_explicita(level_scene)
+	if clave_ensenanza.is_empty():
+		clave_ensenanza = _inferir_clave_ensenanza_desde_nodo(level_scene)
+	if clave_ensenanza.is_empty():
+		return null
+
+	var ruta_ensenanza: String = str(
+		GameChapterAssetCatalogScript.TEACHING_TEXTURE_PATHS.get(clave_ensenanza, "")
+	).strip_edges()
+	if ruta_ensenanza.is_empty():
+		return null
+	return GameChapterAssetCatalogScript.resolver_textura(ruta_ensenanza)
+
+
+func _obtener_clave_ensenanza_explicita(level_scene: Node) -> String:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var clave: String = _leer_clave_ensenanza_de_diccionario(juego_actual)
+	if not clave.is_empty():
+		return clave
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	clave = _leer_clave_ensenanza_de_diccionario(sesion_jugable)
+	if not clave.is_empty():
+		return clave
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			clave = _leer_clave_ensenanza_de_diccionario(contexto_variant as Dictionary)
+			if not clave.is_empty():
+				return clave
+	return ""
+
+
+func _leer_clave_ensenanza_de_diccionario(datos: Dictionary) -> String:
+	for clave_campo in ["teaching_key", "ensenanza_key", "clave_ensenanza"]:
+		var clave: String = str(datos.get(clave_campo, "")).strip_edges()
+		if not clave.is_empty():
+			return clave
+	return ""
+
+
+func _inferir_clave_ensenanza_desde_nodo(level_scene: Node) -> String:
+	var node_key: String = _obtener_clave_nodo_de_contexto(level_scene)
+	var numero_receta: int = _extraer_numero_de_receta(node_key)
+	if numero_receta <= 0:
+		return ""
+
+	var track_definition: Dictionary = GameTrackCatalog.obtener_definicion_pista(active_track_key)
+	var prefix_list_variant: Variant = track_definition.get("teaching_key_prefixes", [])
+	if not prefix_list_variant is Array:
+		return ""
+	var prefix_list: Array = prefix_list_variant as Array
+	if prefix_list.is_empty():
+		return ""
+	var prefix := str(prefix_list[0]).strip_edges()
+	if prefix.is_empty():
+		return ""
+
+	var clave_ensenanza := "%s%d" % [prefix, numero_receta]
+	if not GameChapterAssetCatalogScript.TEACHING_TEXTURE_PATHS.has(clave_ensenanza):
+		return ""
+	return clave_ensenanza
+
+
+func _obtener_clave_nodo_de_contexto(level_scene: Node) -> String:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var clave_nodo: String = str(juego_actual.get("node_key", "")).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	clave_nodo = str(sesion_jugable.get("node_key", "")).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			var contexto_nodo: Dictionary = contexto_variant as Dictionary
+			clave_nodo = str(contexto_nodo.get("node_key", "")).strip_edges()
+			if not clave_nodo.is_empty():
+				return clave_nodo
+	return ""
+
+
+func _extraer_numero_de_receta(node_key: String) -> int:
+	var marcador := "receta_"
+	var inicio := node_key.find(marcador)
+	if inicio < 0:
+		return 0
+	var cursor := inicio + marcador.length()
+	var digitos := ""
+	while cursor < node_key.length():
+		var caracter := node_key.substr(cursor, 1)
+		if not caracter.is_valid_int():
+			break
+		digitos += caracter
+		cursor += 1
+	return int(digitos) if not digitos.is_empty() else 0
 
 
 func _obtener_numero_nivel_para_arrastre(level_scene: Node) -> int:

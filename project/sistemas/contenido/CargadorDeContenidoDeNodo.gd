@@ -67,8 +67,6 @@ static func convertir_arrastre_a_runtime(datos_nodo: Dictionary) -> Dictionary:
 		"instruction": str(contenido.get("instruction", "")).strip_edges(),
 		"items": items.duplicate(true),
 		"targets": targets.duplicate(true),
-		"success_message": str(contenido.get("success_message", "")).strip_edges(),
-		"error_message": str(contenido.get("error_message", "")).strip_edges(),
 	})
 
 
@@ -96,8 +94,7 @@ static func convertir_vinculacion_a_runtime(datos_nodo: Dictionary) -> Dictionar
 		"instruccion": str(contenido.get("instruccion", "")).strip_edges(),
 		"conceptos_izquierda": (conceptos_izquierda as Array).duplicate(true),
 		"conceptos_derecha": (conceptos_derecha as Array).duplicate(true),
-		"retroalimentacion_ok": str(contenido.get("retroalimentacion_ok", "")).strip_edges(),
-		"ensenanza": str(contenido.get("ensenanza", "")).strip_edges(),
+		"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
 	})
 
 

@@ -277,12 +277,7 @@ static func _crear_nodo_drag_drop(
 		"content": {
 			"instruction": instruccion,
 			"targets": targets,
-			"items": _items_drag_drop(bloque_drag, target_por_defecto),
-			"success_message": _primer_texto(bloque_drag, ["success_message", "success"]),
-			"error_message": _primer_texto(
-				bloque_drag,
-				["error_message", "error", "failure_message"]
-			)
+			"items": _items_drag_drop(bloque_drag, target_por_defecto)
 		}
 	}
 

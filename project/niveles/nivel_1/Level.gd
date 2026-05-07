@@ -888,13 +888,14 @@ func _hay_textura_de_ensenanza() -> bool:
 	return is_instance_valid(teaching_sprite) and teaching_sprite.texture != null
 
 
-func _mostrar_mensaje_simple_de_ensenanza(mensaje: String) -> void:
+func _mostrar_mensaje_simple_de_ensenanza(_mensaje: String) -> void:
+	return
 	if not is_instance_valid(tarjeta_ensenanza_cierre) or not is_instance_valid(label_ensenanza_cierre):
 		push_warning("No se encontro la tarjeta simple de enseñanza; no se puede mostrar el cierre final.")
 		return
-	var mensaje_visible: String = str(mensaje).strip_edges()
+	var mensaje_visible: String = str(_mensaje).strip_edges()
 	if mensaje_visible.is_empty():
-		mensaje_visible = _obtener_mensaje_fallback_de_ensenanza()
+		mensaje_visible = ""
 	label_ensenanza_cierre.text = mensaje_visible
 	tarjeta_ensenanza_cierre.show()
 
@@ -904,8 +905,8 @@ func _obtener_mensaje_de_ensenanza_desde_runtime() -> String:
 	if payload.is_empty():
 		return ""
 	if _arrastre_actual_completado():
-		return _leer_mensaje_de_payload(payload, "mensaje_exito")
-	return _leer_mensaje_de_payload(payload, "mensaje_error")
+		return ""
+	return ""
 
 
 func _obtener_payload_de_ensenanza() -> Dictionary:
@@ -930,7 +931,7 @@ func _leer_mensaje_de_payload(payload: Dictionary, clave: String) -> String:
 
 
 func _obtener_mensaje_fallback_de_ensenanza() -> String:
-	return "¡Buen trabajo! Completaste este desafío."
+	return ""
 
 
 func _resolver_mensaje_visible_de_ensenanza() -> String:
@@ -950,7 +951,8 @@ func _mostrar_ensenanza_de_cierre() -> void:
 		return
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.hide()
-	_mostrar_mensaje_simple_de_ensenanza(_resolver_mensaje_visible_de_ensenanza())
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		tarjeta_ensenanza_cierre.hide()
 
 
 func restaurar_finalizacion_visual_estado() -> void:

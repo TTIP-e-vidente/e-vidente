@@ -31,8 +31,6 @@
         "image": "res://assets-sistema/iconos/medialunas-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! La fruta y la leche simple suelen ser una base segura para empezar.",
-    "error_message": "Cuidado: las medialunas comunes se hacen con harina de trigo."
+    ]
   }
 }

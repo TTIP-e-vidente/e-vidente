@@ -31,8 +31,6 @@
         "image": "res://assets-sistema/iconos/barra-cereal-0.png",
         "correct_target": ""
       }
-    ],
-    "success_message": "Bien! La fruta y los frutos secos simples suelen ser opciones seguras.",
-    "error_message": "Revisa bien: una barra procesada necesita rotulo Sin TACC para ser confiable."
+    ]
   }
 }
