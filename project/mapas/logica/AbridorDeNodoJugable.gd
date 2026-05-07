@@ -3,7 +3,7 @@ class_name AbridorDeNodoJugable
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ContinuidadDePartidaDeNodoScript := preload("res://mapas/logica/ContinuidadDePartidaDeNodo.gd")
-const PlanDePartidaDeNodoScript := preload("res://mapas/logica/ArmadorDePartida.gd")
+const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 
 const CLAVE_SESION_NODE_KEY := "node_key"
 const CLAVE_SESION_NODE_TITLE := "node_title"
@@ -81,7 +81,7 @@ static func _construir_datos_de_apertura(
 	ruta_retorno: String
 ) -> Dictionary:
 	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno)
-	var plan_de_partida: Dictionary = PlanDePartidaDeNodoScript.construir_plan_de_partida(node_data)
+	var plan_de_partida: Dictionary = ArmadorDePartidaScript.construir_plan_de_partida(node_data)
 	if plan_de_partida.is_empty():
 		return {}
 	plan_de_partida["escena_de_retorno"] = ruta_retorno
