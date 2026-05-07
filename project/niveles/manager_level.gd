@@ -38,6 +38,7 @@ var active_positive_item_count: int = 0
 var active_negative_item_count: int = 0
 var active_category_code: String = ""
 var _configuracion_dificultad_arrastre: Dictionary = {}
+var _texturas_info_por_sprite: Dictionary = {}
 
 
 # --- Flujo público del nivel --------------------------------------------------
@@ -192,9 +193,13 @@ func _crear_elemento_de_arrastre_desde_datos(
 	var datos_elemento: Dictionary = elemento_crudo as Dictionary
 	var nivel_item = LevelItemScript.new()
 	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(datos_elemento)
+	var textura_info: Texture2D = _resolver_textura_info_elemento_arrastre(
+		datos_elemento,
+		textura_elemento
+	)
 	nivel_item.sprite = textura_elemento
 	nivel_item.escena = escena_elemento
-	nivel_item.info = nivel_item.sprite
+	nivel_item.info = textura_info if textura_info != null else nivel_item.sprite
 	nivel_item.categoria = str(datos_elemento.get("category", "")).strip_edges()
 	nivel_item.esPositivo = str(datos_elemento.get("correct_target", "")).strip_edges() != ""
 	return nivel_item
@@ -305,6 +310,67 @@ func _resolver_textura_elemento_arrastre(elemento_crudo: Dictionary) -> Texture2
 		% [identificador_elemento, ruta_textura]
 	)
 	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
+
+
+func _resolver_textura_info_elemento_arrastre(
+	elemento_crudo: Dictionary,
+	textura_elemento: Texture2D
+) -> Texture2D:
+	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
+	var texturas_info_por_sprite := _obtener_texturas_info_por_sprite()
+	if not ruta_textura.is_empty() and texturas_info_por_sprite.has(ruta_textura):
+		return texturas_info_por_sprite.get(ruta_textura) as Texture2D
+	if textura_elemento != null:
+		var ruta_textura_cargada := textura_elemento.resource_path.strip_edges()
+		if (
+			not ruta_textura_cargada.is_empty()
+			and texturas_info_por_sprite.has(ruta_textura_cargada)
+		):
+			return texturas_info_por_sprite.get(ruta_textura_cargada) as Texture2D
+	var ruta_info_inferida := _inferir_ruta_info_desde_sprite(ruta_textura)
+	if ruta_info_inferida.is_empty():
+		return null
+	return load(ruta_info_inferida) as Texture2D
+
+
+func _obtener_texturas_info_por_sprite() -> Dictionary:
+	if not _texturas_info_por_sprite.is_empty():
+		return _texturas_info_por_sprite
+	var directorio_items := DirAccess.open("res://items")
+	if directorio_items == null:
+		return _texturas_info_por_sprite
+	directorio_items.list_dir_begin()
+	while true:
+		var nombre_archivo := directorio_items.get_next()
+		if nombre_archivo.is_empty():
+			break
+		if directorio_items.current_is_dir() or not nombre_archivo.ends_with(".tres"):
+			continue
+		var item_recurso := load("res://items/%s" % nombre_archivo)
+		if item_recurso == null:
+			continue
+		var textura_sprite := item_recurso.get("sprite") as Texture2D
+		var textura_info := item_recurso.get("info") as Texture2D
+		if textura_sprite == null or textura_info == null:
+			continue
+		var ruta_sprite := textura_sprite.resource_path.strip_edges()
+		if ruta_sprite.is_empty():
+			continue
+		_texturas_info_por_sprite[ruta_sprite] = textura_info
+	directorio_items.list_dir_end()
+	return _texturas_info_por_sprite
+
+
+func _inferir_ruta_info_desde_sprite(ruta_textura: String) -> String:
+	if ruta_textura.is_empty():
+		return ""
+	var nombre_base := ruta_textura.get_file().get_basename()
+	if nombre_base.ends_with("-0"):
+		nombre_base = nombre_base.substr(0, nombre_base.length() - 2)
+	var ruta_info := "res://assets-sistema/iconos/alimentos-info/%s-info.png" % nombre_base
+	if ResourceLoader.exists(ruta_info, "Texture2D"):
+		return ruta_info
+	return ""
 
 
 func establecer_configuracion_de_dificultad_arrastre(configuracion: Dictionary) -> void:
