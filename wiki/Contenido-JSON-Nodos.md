@@ -25,7 +25,7 @@ project/
     QuestionJsonLoader.gd
   mapas/
     MapScene.gd
-    PlayableNodeRouter.gd
+    AbridorDeNodoJugable.gd
     drag_drop/
       DragDropNode.gd
       DragDropNode.tscn
@@ -44,10 +44,10 @@ project/
 El flujo completo es este:
 
 1. El jugador toca un nodo del mapa.
-2. `MapScene.gd` recibe la selección y pasa `node_data` a `PlayableNodeRouter.gd`.
+2. `MapScene.gd` recibe la selección y pasa `node_data` a `AbridorDeNodoJugable.gd`.
 3. La sesión jugable nueva guarda `track_key`, `node_key`, `node_title`, `mode`, `json_path`, `return_to` y `level_number`.
-4. `NodeContentLoader.gd` carga y normaliza el JSON.
-5. `PlayableNodeRouter.gd` mira `mode` y decide qué escena abrir.
+4. `CargadorDeContenidoDeNodo.gd` carga y normaliza el JSON.
+5. `AbridorDeNodoJugable.gd` mira `mode` y decide qué escena abrir.
 6. La escena jugable consume `json_path`, usa `content` y ejecuta la modalidad.
 7. `global.gd` conserva la sesión activa y el progreso del nodo.
 8. Cuando termina, vuelve a `return_to`.
@@ -75,7 +75,7 @@ Además:
 
 ## Contrato oficial del loader
 
-`NodeContentLoader.gd` siempre devuelve esta estructura:
+`CargadorDeContenidoDeNodo.gd` siempre devuelve esta estructura:
 
 ```json
 {
@@ -174,7 +174,7 @@ La lectura correcta es:
 - `quiz_choice` requiere `question`, `correct_answer` y `wrong_options`.
 - `drag_drop` requiere `instruction`, `targets` e `items`.
 
-Si querés ver dónde se valida eso, el punto canónico es `project/preguntas/NodeContentValidator.gd`.
+Si querés ver dónde se valida eso, el punto canónico es `project/sistemas/contenido/ValidadorDeContenidoDeNodo.gd`.
 
 ## Compatibilidad legacy que sigue viva
 
@@ -195,9 +195,9 @@ Todavía quedan algunas compatibilidades controladas para no romper contenido vi
 
 ## Cómo agregar una modalidad futura
 
-1. Agregar el nuevo `mode` en `NodeContentLoader.gd`.
-2. Validar su `content` mínimo en `NodeContentValidator.gd`.
-3. Agregar su ruta en `PlayableNodeRouter.gd`.
+1. Agregar el nuevo `mode` en `CargadorDeContenidoDeNodo.gd`.
+2. Validar su `content` mínimo en `ValidadorDeContenidoDeNodo.gd`.
+3. Agregar su ruta en `GameSceneRouter.gd` / `AbridorDeNodoJugable.gd`.
 4. Crear la escena jugable que lea `json_path` desde la sesión.
 5. Resolver su finalización con `return_to` para volver al mapa.
 

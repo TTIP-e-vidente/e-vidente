@@ -1,7 +1,9 @@
 extends RefCounted
 class_name QuestionJsonLoader
 
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const CargadorDeContenidoDeNodoScript := preload(
+	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
+)
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
 const PreguntasScript := preload("res://preguntas/recursos/preguntas.gd")
 const ERROR_CONTENIDO_NO_DISPONIBLE := (
@@ -10,7 +12,7 @@ const ERROR_CONTENIDO_NO_DISPONIBLE := (
 
 
 # Flujo nuevo: leer json_path desde la sesion jugable y pedirle a
-# NodeContentLoader un nodo oficial { id, theme, title, difficulty, mode, content }.
+# CargadorDeContenidoDeNodo devuelve un nodo oficial { id, theme, title, difficulty, mode, content }.
 # node_data, node_json_path y node_resource_path quedan solo para compatibilidad.
 
 
@@ -18,7 +20,7 @@ static func cargar_resultado_desde_datos_nodo(
 	datos_nodo: Dictionary,
 	etiqueta_origen: String = ""
 ) -> Dictionary:
-	if str(datos_nodo.get("mode", "")).strip_edges() != NodeContentLoaderScript.MODE_QUIZ_CHOICE:
+	if str(datos_nodo.get("mode", "")).strip_edges() != CargadorDeContenidoDeNodoScript.MODE_QUIZ_CHOICE:
 		return _resultado_error(
 			"QuestionJsonLoader solo soporta quiz_choice. Archivo: %s" % etiqueta_origen
 		)
@@ -39,7 +41,7 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 		)
 	var ruta_json: String = _read_playable_json_path(contexto_sesion)
 	if not ruta_json.is_empty():
-		var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
+		var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
 		if not bool(resultado_nodo.get("ok", false)):
 			return _resultado_error(
 				str(resultado_nodo.get("error", ERROR_CONTENIDO_NO_DISPONIBLE))

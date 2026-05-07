@@ -12,10 +12,12 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const ContinuidadDePartidaDeNodoScript := preload(
-	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const CargadorDeContenidoDeNodoScript := preload(
+	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
+)
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
@@ -228,7 +230,7 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 		push_error("Level: falta json_path para cargar el nivel.")
 		return
 
-	var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(clean_path)
+	var result: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(clean_path)
 	if not bool(result.get("ok", false)):
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
 		return
@@ -278,7 +280,7 @@ func _iniciar_arrastre_desde_json_si_corresponde() -> bool:
 	if nodo_datos.is_empty():
 		return false
 
-	var conversion: Dictionary = NodeContentLoaderScript.convertir_arrastre_a_runtime(nodo_datos)
+	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(nodo_datos)
 	if not bool(conversion.get("ok", false)):
 		push_warning("Level: JSON no válido para arrastre: %s" % str(conversion.get("error", "")))
 		return false
@@ -302,7 +304,7 @@ func _obtener_datos_de_arrastre_del_nodo() -> Dictionary:
 	if ruta_json.is_empty():
 		return {}
 
-	var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(ruta_json)
+	var result: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
 	if not bool(result.get("ok", false)):
 		push_warning(
 			"Level: no se pudo leer JSON de arrastre: %s" % str(result.get("error", ""))

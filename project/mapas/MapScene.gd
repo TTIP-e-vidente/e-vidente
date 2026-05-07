@@ -2,9 +2,9 @@ extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const MapJsonLoaderScript := preload("res://mapas/logica/CargadorDeMapa.gd")
-const MapProgressScript := preload("res://mapas/logica/AvanceDeNodo.gd")
-const PlayableNodeRouterScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
+const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
+const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
+const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 
 const MAP_JSON_PATH := "res://contenido/mapas/celiaquia_mapa.json"
@@ -51,7 +51,7 @@ func _conectar_senales() -> void:
 
 
 func cargar_mapa() -> void:
-	var result: Dictionary = MapJsonLoaderScript.load_map(MAP_JSON_PATH)
+	var result: Dictionary = CargadorDeMapaScript.load_map(MAP_JSON_PATH)
 	if not bool(result.get("ok", false)):
 		map_id = ""
 		map_title = ""
@@ -81,7 +81,7 @@ func actualizar_estados_de_nodos() -> void:
 
 	var node_states: Array[Dictionary] = []
 	for node_data in nodos_mapa:
-		node_states.append(MapProgressScript.get_node_state(nodos_mapa, node_data))
+		node_states.append(AvanceDeNodoScript.get_node_state(nodos_mapa, node_data))
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
 
 
@@ -95,7 +95,7 @@ func al_seleccionar_nodo(node_data: MapNodeData) -> void:
 
 
 func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
-	var result: Dictionary = PlayableNodeRouterScript.abrir_nodo(
+	var result: Dictionary = AbridorDeNodoJugableScript.abrir_nodo(
 		get_tree(),
 		node_data,
 		GameSceneRouter.MAP_SCENE_PATH
@@ -106,12 +106,12 @@ func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
 
 func continuar_desde_nodo(node_key: String) -> void:
 	var next_node: MapNodeData = (
-		MapProgressScript.obtener_siguiente_nodo(nodos_mapa, node_key) as MapNodeData
+		AvanceDeNodoScript.obtener_siguiente_nodo(nodos_mapa, node_key) as MapNodeData
 	)
 	if next_node == null:
 		volver_al_mapa()
 		return
-	var next_state: Dictionary = MapProgressScript.get_node_state(nodos_mapa, next_node)
+	var next_state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, next_node)
 	if bool(next_state.get("is_completed", false)):
 		actualizar_estados_de_nodos()
 		_desplazar_a_proximo_disponible()
@@ -141,7 +141,7 @@ func _desplazar_a_proximo_disponible() -> void:
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
-	if not MapProgressScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
+	if not AvanceDeNodoScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
 		return
 	if _popup_completado_activo():
 		return

@@ -65,7 +65,7 @@ Versión corta para ubicarte rápido:
 | Progreso y Guardado | `interface/SaveManager.gd`, `niveles/global.gd`, `interface/save_local/*` | Guardar, recuperar y consultar avance |
 | Gameplay | `niveles/nivel_1/Level.gd`, `niveles/manager_level.gd`, `niveles/mechanics/*` | Flujo jugable y lógica de mecánicas |
 | Preguntas | `preguntas/pregunta.gd`, `preguntas/QuestionJsonLoader.gd` | Modalidad `quiz_choice` |
-| Contenido de nodos | `niveles/nodos/*.json`, `preguntas/NodeContentLoader.gd` | Contenido de nivel y nodos jugables por JSON |
+| Contenido de nodos | `contenido/nodos/*.json`, `sistemas/contenido/CargadorDeContenidoDeNodo.gd` | Contenido de nivel y nodos jugables por JSON |
 | Mapa | `mapas/MapScene.gd`, `mapas/LevelNode.gd`, `mapas/MapNodeData.gd` | Navegación visual por capítulos |
 | Audio | `managers/MusicManager.gd` | Música de fondo y continuidad |
 | UI de progreso | `interface/components/Racha.tscn`, `interface/components/ProgressManagerRacha.gd` | Feedback de racha y estado |

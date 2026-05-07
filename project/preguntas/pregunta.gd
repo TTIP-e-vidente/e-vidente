@@ -14,7 +14,7 @@ const ContextoFinalizacionDeJuegoScript := preload(
 	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
 )
 const ContinuidadDePartidaDeNodoScript := preload(
-	"res://mapas/core/ContinuidadDePartidaDeNodo.gd"
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const PresentadorContinuarJuegoScript := preload(
