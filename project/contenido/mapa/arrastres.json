@@ -6,6 +6,13 @@
     "teaching_key": "celiaquia_desayuno",
     "pick": { "correct": 2, "incorrect": 1 }
   },
+  "drag_desayuno_dificil": {
+    "mode": "drag_food",
+    "difficulty": 3,
+    "meal": "desayuno",
+    "teaching_key": "celiaquia_desayuno",
+    "pick": { "correct": 3, "incorrect": 3 }
+  },
   "drag_desayuno_normal": {
     "mode": "drag_food",
     "difficulty": 2,
@@ -19,6 +26,13 @@
     "meal": "colacion",
     "teaching_key": "celiaquia_colacion",
     "pick": { "correct": 2, "incorrect": 1 }
+  },
+  "drag_colacion_dificil": {
+    "mode": "drag_food",
+    "difficulty": 3,
+    "meal": "colacion",
+    "teaching_key": "celiaquia_colacion",
+    "pick": { "correct": 3, "incorrect": 3 }
   },
   "drag_colacion_normal": {
     "mode": "drag_food",
@@ -86,6 +100,13 @@
   "drag_bebida_facil": {
     "mode": "drag_food",
     "difficulty": 1,
+    "meal": "bebida",
+    "teaching_key": "celiaquia_bebida",
+    "pick": { "correct": 2, "incorrect": 1 }
+  },
+  "drag_bebida_normal": {
+    "mode": "drag_food",
+    "difficulty": 2,
     "meal": "bebida",
     "teaching_key": "celiaquia_bebida",
     "pick": { "correct": 2, "incorrect": 1 }

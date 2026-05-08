@@ -22,7 +22,7 @@ const PresentadorContinuarJuegoScript := preload(
 )
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
-const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
+const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
@@ -60,6 +60,7 @@ var _mensaje_error_bloqueante: String = ""
 var _plantillas_botones_respuesta: Array[Button] = []
 var _post_game_streak_feedback: Dictionary = {}
 var _post_game_flow_state: Dictionary = {}
+var _correct_answer_sound: AudioStream = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -425,9 +426,10 @@ func manejar_respuesta(boton: Button) -> void:
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
-	if es_correcta and _audio_player != null:
+	var correct_answer_sound := _obtener_sonido_respuesta_correcta()
+	if es_correcta and _audio_player != null and correct_answer_sound != null:
 		_audio_player.stop()
-		_audio_player.stream = CORRECT_ANSWER_SOUND
+		_audio_player.stream = correct_answer_sound
 		_audio_player.play()
 
 	if es_correcta:
@@ -443,6 +445,13 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 		tween.tween_property(boton, "rotation_degrees", 8, 0.03)
 		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
 	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
+
+
+func _obtener_sonido_respuesta_correcta() -> AudioStream:
+	if _correct_answer_sound != null:
+		return _correct_answer_sound
+	_correct_answer_sound = load(CORRECT_ANSWER_SOUND_PATH) as AudioStream
+	return _correct_answer_sound
 
 
 # Finalización de partida

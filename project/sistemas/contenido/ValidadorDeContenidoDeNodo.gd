@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ValidadorDeContenidoDeNodo
 
+# Valida y limpia el runtime que consumen los minijuegos.
+# No carga archivos ni decide que activity se juega.
+
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const MODO_VINCULACION_CONCEPTOS := "vinculacion_conceptos"

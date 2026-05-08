@@ -1,6 +1,9 @@
 extends RefCounted
 class_name NodeContentLoader
 
+# Busca una activity por id dentro de arrastres, preguntas o vinculaciones.
+# Tambien devuelve candidatos random; no arma nodos ni abre escenas.
+
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")
 const LegacyNodeLoaderScript := preload("res://sistemas/contenido/CargadorDeContenidoDeNodo.gd")
 
@@ -12,6 +15,9 @@ const MAPA_DIR_BY_TRACK := {
 }
 const ITEMS_CELIAQUIA_PATH := "res://contenido/catalogos/items_celiaquia.json"
 const DEFAULT_PACK_ID := "celiaquia"
+const LOG_PREFIX_CONTENT_MAP := "[ContentMap]"
+const LOG_PREFIX_CONTENT_MAP_ERROR := "[ContentMapError]"
+const LOG_PREFIX_ACTIVITY_MODE := "[ActivityMode]"
 const CATEGORY_SAFE := "sin_tacc"
 const VALID_CATEGORIES := ["sin_tacc", "con_gluten", "riesgo"]
 const VALID_MEALS := [
@@ -23,6 +29,8 @@ const VALID_MEALS := [
 	"bebida",
 	"cocina_segura",
 ]
+
+static var _default_pack_warning_shown := false
 
 
 static func load_activity_from_node(node_data: Dictionary) -> Dictionary:
@@ -40,28 +48,19 @@ static func load_from_context(context: Dictionary) -> Dictionary:
 		)
 		var pack_result: Dictionary = load_from_pack(pack_id, activity_id, context)
 		if bool(pack_result.get("ok", false)):
-			print(
-				"[ContentPack] node=%s activity=%s mode=%s"
-				% [
-					node_key,
-					activity_id,
-					str(pack_result.get("activity_mode", "")).strip_edges(),
-				]
-			)
-		elif not str(context.get("json_path", "")).strip_edges().is_empty():
+			return pack_result
+		if not str(context.get("json_path", "")).strip_edges().is_empty():
 			push_warning(
-				"[ContentPack] node=%s activity=%s error=%s. Se usa LegacyJSON fallback."
-				% [node_key, activity_id, str(pack_result.get("error", ""))]
+				"%s activity=%s fallback=legacy_json error=%s"
+				% [LOG_PREFIX_CONTENT_MAP, activity_id, str(pack_result.get("error", ""))]
 			)
 			var fallback_path: String = str(context.get("json_path", "")).strip_edges()
-			print("[LegacyJSON] fallback usado path=%s" % fallback_path)
 			return LegacyNodeLoaderScript.cargar_contenido_nodo(fallback_path)
 		return pack_result
 
 	var json_path: String = str(context.get("json_path", "")).strip_edges()
 	if json_path.is_empty():
 		return _error("El nodo no tiene activity_id ni json_path.")
-	print("[LegacyJSON] node=%s path=%s" % [node_key, json_path])
 	return LegacyNodeLoaderScript.cargar_contenido_nodo(json_path)
 
 
@@ -131,11 +130,6 @@ static func load_pack(pack_id: String) -> Dictionary:
 	var validation_error: String = _validate_pack_minimal(pack)
 	if not validation_error.is_empty():
 		return _error("Content Pack %s invalido: %s" % [clean_pack_id, validation_error])
-
-	print(
-		"[ContentPack] pack cargado id=%s version=%d"
-		% [clean_pack_id, int(pack.get("version", 0))]
-	)
 	return {"ok": true, "error": "", "data": pack, "path": pack_path}
 
 
@@ -146,12 +140,29 @@ static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
 		return pack_result
 
 	var pack: Dictionary = pack_result.get("data", {})
-	var activity: Dictionary = get_activity(pack, activity_id)
+	var activity: Dictionary = _get_activity_from_pack(pack, activity_id)
 	if activity.is_empty():
+		print(
+			"%s missing activity=%s source=%s"
+			% [
+				LOG_PREFIX_CONTENT_MAP_ERROR,
+				activity_id.strip_edges(),
+				_guess_source_file_for_activity_id(activity_id),
+			]
+		)
 		return _error(
 			"Content Pack %s no contiene activity_id: %s"
 			% [resolved_pack_id, activity_id.strip_edges()]
 		)
+
+	print(
+		"%s activity=%s mode=%s"
+		% [
+			LOG_PREFIX_CONTENT_MAP,
+			activity_id.strip_edges(),
+			str(activity.get("mode", "")).strip_edges(),
+		]
+	)
 
 	return {
 		"ok": true,
@@ -160,6 +171,13 @@ static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
 		"pack": pack,
 		"path": str(pack_result.get("path", "")),
 	}
+
+
+static func get_activity(pack_id: String, activity_id: String) -> Dictionary:
+	var result: Dictionary = load_activity(pack_id, activity_id)
+	if not bool(result.get("ok", false)):
+		return {}
+	return (result.get("data", {}) as Dictionary).duplicate(true)
 
 
 static func has_activity(pack_id: String, activity_id: String) -> Dictionary:
@@ -176,22 +194,26 @@ static func get_activity_mode(pack_id: String, activity_id: String) -> String:
 		return ""
 	var activity: Dictionary = result.get("data", {})
 	var raw_mode: String = str(activity.get("mode", "")).strip_edges()
-	var runtime_mode := ""
-	match raw_mode:
-		"quiz":
-			runtime_mode = "quiz_choice"
-		"drag", "drag_food":
-			runtime_mode = "drag_drop"
-		"match":
-			runtime_mode = "vinculacion_conceptos"
 	print(
-		"[ActivityMode] track=%s activity=%s mode=%s"
-		% [resolved_pack_id, activity_id.strip_edges(), runtime_mode]
+		"%s activity=%s mode=%s"
+		% [LOG_PREFIX_ACTIVITY_MODE, activity_id.strip_edges(), raw_mode]
 	)
-	return runtime_mode
+	return raw_mode
 
 
-static func get_activity(pack: Dictionary, activity_id: String) -> Dictionary:
+static func to_runtime_mode(raw_mode: String) -> String:
+	match raw_mode.strip_edges():
+		"quiz":
+			return "quiz_choice"
+		"drag", "drag_food":
+			return "drag_drop"
+		"match":
+			return "vinculacion_conceptos"
+		_:
+			return ""
+
+
+static func _get_activity_from_pack(pack: Dictionary, activity_id: String) -> Dictionary:
 	var clean_activity_id: String = activity_id.strip_edges()
 	for raw_activity in pack.get("activities", []):
 		if raw_activity is Dictionary:
@@ -199,6 +221,82 @@ static func get_activity(pack: Dictionary, activity_id: String) -> Dictionary:
 			if str(activity.get("id", "")).strip_edges() == clean_activity_id:
 				return activity.duplicate(true)
 	return {}
+
+
+static func normalize_random_game_type(raw_type: String) -> String:
+	match raw_type.strip_edges().to_lower():
+		"drag", "drag_food":
+			return "drag"
+		"quiz":
+			return "quiz"
+		"match", "vinculacion":
+			return "match"
+		_:
+			return ""
+
+
+static func get_activity_candidates(
+	track_key: String,
+	requested_type: String,
+	requested_difficulty: int
+) -> Array[String]:
+	var normalized_type: String = normalize_random_game_type(requested_type)
+	if normalized_type.is_empty() or requested_difficulty <= 0:
+		return []
+	var pack_result: Dictionary = load_pack(track_key)
+	if not bool(pack_result.get("ok", false)):
+		return []
+	var pack: Dictionary = pack_result.get("data", {})
+	var activity_candidates: Array[String] = []
+	for raw_activity in pack.get("activities", []):
+		if not raw_activity is Dictionary:
+			continue
+		var activity: Dictionary = raw_activity as Dictionary
+		if not _activity_matches_requested_type(activity, normalized_type):
+			continue
+		if int(activity.get("difficulty", 0)) != requested_difficulty:
+			continue
+		var activity_id: String = str(activity.get("id", "")).strip_edges()
+		if not activity_id.is_empty():
+			activity_candidates.append(activity_id)
+	return activity_candidates
+
+
+static func get_activity_candidates_near(
+	track_key: String,
+	requested_type: String,
+	requested_difficulty: int
+) -> Array[String]:
+	var ordered_difficulties: Array[int] = _ordered_requested_difficulties(requested_difficulty)
+	var activity_candidates: Array[String] = []
+	for candidate_difficulty in ordered_difficulties:
+		for activity_id in get_activity_candidates(track_key, requested_type, candidate_difficulty):
+			if not activity_candidates.has(activity_id):
+				activity_candidates.append(activity_id)
+	return activity_candidates
+
+
+static func _ordered_requested_difficulties(requested_difficulty: int) -> Array[int]:
+	var ordered_difficulties: Array[int] = []
+	if requested_difficulty >= 1 and requested_difficulty <= 3:
+		ordered_difficulties.append(requested_difficulty)
+	for lower_difficulty in range(requested_difficulty - 1, 0, -1):
+		ordered_difficulties.append(lower_difficulty)
+	for higher_difficulty in range(requested_difficulty + 1, 4):
+		ordered_difficulties.append(higher_difficulty)
+	return ordered_difficulties
+
+
+static func _activity_matches_requested_type(activity: Dictionary, requested_type: String) -> bool:
+	match normalize_random_game_type(requested_type):
+		"drag":
+			return ["drag", "drag_food"].has(str(activity.get("mode", "")).strip_edges())
+		"quiz":
+			return str(activity.get("mode", "")).strip_edges() == "quiz"
+		"match":
+			return str(activity.get("mode", "")).strip_edges() == "match"
+		_:
+			return false
 
 
 static func _validate_pack_minimal(pack: Dictionary) -> String:
@@ -333,7 +431,6 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 	var validation_error: String = _validate_pack_minimal(pack)
 	if not validation_error.is_empty():
 		return _error("Mapa %s invalido: %s" % [track_id, validation_error])
-	print("[ContentMap] track=%s activities=%d" % [track_id, activities.size()])
 	return {"ok": true, "error": "", "data": pack, "path": mapa_dir}
 
 
@@ -359,7 +456,12 @@ static func _load_activity_dict_file(path: String) -> Dictionary:
 			return _error("%s: actividad '%s' debe ser objeto." % [path, activity_id])
 		var activity: Dictionary = (raw_activity as Dictionary).duplicate(true)
 		activity["id"] = activity_id
+		activity["source_file"] = path.get_file()
 		activities.append(activity)
+	print(
+		"%s loaded %s count=%d"
+		% [LOG_PREFIX_CONTENT_MAP, path.get_file().trim_suffix(".json"), activities.size()]
+	)
 	return {"ok": true, "error": "", "data": activities}
 
 
@@ -370,7 +472,21 @@ static func _resolve_pack_id(pack_id: String, fallback_track_key: String = "") -
 	var clean_track_key: String = fallback_track_key.strip_edges()
 	if not clean_track_key.is_empty():
 		return clean_track_key
+	if not _default_pack_warning_shown:
+		_default_pack_warning_shown = true
+		push_warning("%s pack_id vacio; fallback=%s" % [LOG_PREFIX_CONTENT_MAP, DEFAULT_PACK_ID])
 	return DEFAULT_PACK_ID
+
+
+static func _guess_source_file_for_activity_id(activity_id: String) -> String:
+	var clean_activity_id: String = activity_id.strip_edges().to_lower()
+	if clean_activity_id.begins_with("match_"):
+		return "vinculaciones.json"
+	if clean_activity_id.begins_with("drag_"):
+		return "arrastres.json"
+	if clean_activity_id.begins_with("quiz_"):
+		return "preguntas.json"
+	return "desconocido"
 
 
 static func _error(message: String) -> Dictionary:

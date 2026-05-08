@@ -71,6 +71,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
+@onready var teaching_backdrop: ColorRect = $TeachingBackdrop
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
 @onready var tarjeta_ensenanza_cierre: Control = $TarjetaEnsenanzaCierre
 @onready var label_ensenanza_cierre: Label = (
@@ -111,6 +112,8 @@ var _ya_continuo := false
 var _completion_black_and_white_shader: Shader = null
 var _save_icon_idle: Texture2D = null
 var _save_icon_ok: Texture2D = null
+var _teaching_sprite_base_scale := Vector2.ONE
+var _teaching_card_base_scale := Vector2.ONE
 
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
 @onready var _continuar_juego = $ContinuarJuego
@@ -118,6 +121,10 @@ var _save_icon_ok: Texture2D = null
 # Entrada del nivel
 func _ready() -> void:
 	_cargar_recursos_runtime()
+	if is_instance_valid(teaching_sprite):
+		_teaching_sprite_base_scale = teaching_sprite.scale
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		_teaching_card_base_scale = tarjeta_ensenanza_cierre.scale
 	_conectar_continuar_juego()
 	iniciar_flujo_del_nivel()
 	_configurar_indicador_de_progreso_de_juego()
@@ -459,15 +466,7 @@ func _finalizar_partida() -> void:
 		return
 	var activity_id: String = _obtener_activity_id_actual()
 	var teaching_key: String = _obtener_teaching_key_actual()
-	print(
-		"%s completed_drag activity=%s key=%s"
-		% [LOG_PREFIX_TEACHING, activity_id, teaching_key]
-	)
-	if teaching_key.is_empty():
-		print(
-			"%s missing teaching data for activity=%s"
-			% [LOG_PREFIX_TEACHING, activity_id]
-		)
+	print("%s activity=%s key=%s" % [LOG_PREFIX_TEACHING, activity_id, teaching_key])
 	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
 		print(
 			LOG_PREFIX_ARRASTRE,
@@ -864,10 +863,17 @@ func _restaurar_estado_posterior_finalizacion() -> void:
 
 
 func _ocultar_ensenanza_textual() -> void:
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.hide()
+		teaching_backdrop.modulate.a = 0.0
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.hide()
+		teaching_sprite.modulate.a = 1.0
+		teaching_sprite.scale = _teaching_sprite_base_scale
 	if is_instance_valid(tarjeta_ensenanza_cierre):
 		tarjeta_ensenanza_cierre.hide()
+		tarjeta_ensenanza_cierre.modulate.a = 1.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale
 	if is_instance_valid(label_ensenanza_cierre):
 		label_ensenanza_cierre.text = ""
 
@@ -964,26 +970,14 @@ func _hay_textura_de_ensenanza() -> bool:
 
 func _mostrar_ensenanza_de_cierre() -> void:
 	_establecer_visibilidad_indicador_de_progreso(false)
-	var activity_id: String = _obtener_activity_id_actual()
-	var teaching_key: String = _obtener_teaching_key_actual()
-	print("%s show key=%s" % [LOG_PREFIX_TEACHING, teaching_key])
 	if _hay_textura_de_ensenanza():
 		if is_instance_valid(tarjeta_ensenanza_cierre):
 			tarjeta_ensenanza_cierre.hide()
 		if is_instance_valid(teaching_sprite):
 			teaching_sprite.show()
+		_animar_entrada_de_ensenanza()
 		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
-		print("%s fallback=false" % LOG_PREFIX_TEACHING)
 		return
-	if teaching_key.is_empty():
-		print(
-			"%s missing teaching data for activity=%s"
-			% [LOG_PREFIX_TEACHING, activity_id]
-		)
-	print(
-		"%s missing asset key=%s fallback=true"
-		% [LOG_PREFIX_TEACHING, teaching_key]
-	)
 	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
 	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
 
@@ -1004,14 +998,6 @@ func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 		activity_id,
 		" teaching_key=",
 		teaching_key
-	)
-	print(
-		"%s activity=%s key=%s"
-		% [LOG_PREFIX_TEACHING, activity_id, teaching_key]
-	)
-	print(
-		"%s runtime_has_teaching_key=%s"
-		% [LOG_PREFIX_TEACHING, str(not teaching_key.is_empty())]
 	)
 
 
@@ -1038,8 +1024,43 @@ func _mostrar_ensenanza_textual(texto: String) -> void:
 		label_ensenanza_cierre.text = texto
 	if is_instance_valid(tarjeta_ensenanza_cierre):
 		tarjeta_ensenanza_cierre.show()
+		_animar_entrada_de_ensenanza()
 		return
 	push_warning("Level: no hay tarjeta de ensenanza para mostrar fallback textual.")
+
+
+# Overlay simple para que el cierre se lea mejor en demo.
+func _animar_entrada_de_ensenanza() -> void:
+	var tween := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.show()
+		teaching_backdrop.modulate.a = 0.0
+		tween.parallel().tween_property(teaching_backdrop, "modulate:a", 1.0, 0.18)
+	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
+		teaching_sprite.modulate.a = 0.0
+		teaching_sprite.scale = _teaching_sprite_base_scale * 0.94
+		tween.parallel().tween_property(teaching_sprite, "modulate:a", 1.0, 0.18)
+		tween.parallel().tween_property(
+			teaching_sprite,
+			"scale",
+			_teaching_sprite_base_scale,
+			0.22
+		)
+	if is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible:
+		tarjeta_ensenanza_cierre.modulate.a = 0.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale * 0.94
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"modulate:a",
+			1.0,
+			0.18
+		)
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"scale",
+			_teaching_card_base_scale,
+			0.22
+		)
 
 
 func _leer_teaching_key_de_diccionario(datos: Dictionary) -> String:

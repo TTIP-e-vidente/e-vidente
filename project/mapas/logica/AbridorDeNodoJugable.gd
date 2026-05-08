@@ -1,6 +1,9 @@
 extends RefCounted
 class_name AbridorDeNodoJugable
 
+# Abre el game actual de una partida de nodo.
+# Recibe un nodo ya cargado; no decide games ni adapta contenido.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
@@ -17,10 +20,8 @@ const CLAVE_SESION_MODE := "mode"
 const CLAVE_SESION_LEVEL_NUMBER := "level_number"
 const CLAVE_SESION_DIFFICULTY := "difficulty"
 const CLAVE_SESION_RETURN_TO := "return_to"
-const LOG_PREFIX := "[NODO]"
 
 
-# Recibe un MapNodeData y abre el primer juego del plan ya armado.
 static func abrir_nodo(
 	tree: SceneTree,
 	node_data: MapNodeData,
@@ -42,16 +43,6 @@ static func abrir_nodo(
 	if datos_de_apertura.is_empty():
 		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo armar la partida del nodo.")
-
-	print(
-		LOG_PREFIX,
-		" abrir_nodo=",
-		node_data.node_key,
-		" mode=",
-		node_data.mode,
-		" return_to=",
-		ruta_retorno_segura
-	)
 	_iniciar_partida_en_global(estado_global, datos_de_apertura)
 
 	if not ContinuidadDePartidaDeNodoScript.abrir_juego_actual(tree, estado_global):
@@ -102,13 +93,6 @@ static func _construir_datos_de_apertura(
 	if plan_de_partida.is_empty():
 		return {}
 	plan_de_partida["escena_de_retorno"] = ruta_retorno
-	print(
-		LOG_PREFIX,
-		" plan_nodo=",
-		node_data.node_key,
-		" juegos=",
-		int(plan_de_partida.get("total_juegos", 0))
-	)
 	return {
 		"sesion_jugable": sesion_jugable,
 		"plan_de_partida": plan_de_partida,

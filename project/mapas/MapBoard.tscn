@@ -46,7 +46,7 @@ vertical_scroll_mode = 3
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")
-custom_minimum_size = Vector2(1100, 3400)
+custom_minimum_size = Vector2(1100, 4200)
 layout_mode = 2
 
 [node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
@@ -292,6 +292,38 @@ question_number = 20
 node_key = "vincular_alimentos_seguridad"
 label_text = "Vinculación"
 icon_texture = ExtResource("11_oop13")
+
+[node name="Pregunta21" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400007 instance=ExtResource("4_questionnode")]
+position = Vector2(352, 3418)
+scale = Vector2(1.52, 1.52)
+nivel_id = 27
+question_number = 21
+label_text = "Pregunta 21"
+icon_texture = ExtResource("8_icon5")
+
+[node name="Pregunta22" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400008 instance=ExtResource("4_questionnode")]
+position = Vector2(575, 3598)
+scale = Vector2(1.58, 1.58)
+nivel_id = 28
+question_number = 22
+label_text = "Pregunta 22"
+icon_texture = ExtResource("10_icon4")
+
+[node name="Pregunta23" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400009 instance=ExtResource("4_questionnode")]
+position = Vector2(884, 3746)
+scale = Vector2(1.72, 1.72)
+nivel_id = 29
+question_number = 23
+label_text = "Pregunta 23"
+icon_texture = ExtResource("11_oop13")
+
+[node name="Pregunta24" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1840400010 instance=ExtResource("4_questionnode")]
+position = Vector2(672, 3984)
+scale = Vector2(1.86, 1.86)
+nivel_id = 30
+question_number = 24
+label_text = "Pregunta 24"
+icon_texture = ExtResource("12_oop13")
 
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
 position = Vector2(591.99994, 142)

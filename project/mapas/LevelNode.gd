@@ -3,8 +3,9 @@ extends Node2D
 
 signal selected(node_data: MapNodeData)
 
+const COLOR_AVAILABLE := Color(1.0, 0.96, 0.84, 1.0)
 const COLOR_COMPLETED := Color("#db9d4b")
-const COLOR_LOCKED := Color(1, 1, 1, 0.35)
+const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
@@ -142,7 +143,7 @@ func _apply_state_color() -> void:
 				_cancelar_tween_disponible()
 				modulate = COLOR_LOCKED
 			_:
-				modulate = Color.WHITE
+				modulate = COLOR_AVAILABLE
 				_animar_disponible()
 
 
