@@ -200,7 +200,6 @@ z_index = 1
 position = Vector2(1079, 54)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_054us")
-animation = &""
 
 [node name="Menú" type="Area2D" parent="." unique_id=1302028089 groups=["droppable"]]
 light_mask = 8
@@ -433,6 +432,17 @@ visibility_layer = 256
 z_index = 9
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
+
+[node name="TeachingBackdrop" type="ColorRect" parent="." unique_id=1987654399]
+visible = false
+z_index = 8
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0627451, 0.0705882, 0.0941176, 0.62)
 
 [node name="TarjetaEnsenanzaCierre" type="PanelContainer" parent="." unique_id=1987654301]
 visible = false

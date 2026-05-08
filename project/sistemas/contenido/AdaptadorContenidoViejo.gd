@@ -1,6 +1,9 @@
 extends RefCounted
 class_name AdaptadorContenidoViejo
 
+# Adapta formatos viejos para no romper contenido existente.
+# No es el camino recomendado para contenido nuevo.
+
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const DIRECTORIO_NODOS_ACTUAL := "res://contenido/nodos/"

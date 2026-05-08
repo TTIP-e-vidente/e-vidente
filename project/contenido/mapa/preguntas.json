@@ -112,5 +112,125 @@
       "Se digieren mejor"
     ],
     "answer": "No tienen ingredientes agregados que puedan contener gluten"
+  },
+  "quiz_trazas_gluten": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Por que un producto puede ser riesgoso aunque no tenga trigo visible?",
+    "options": [
+      "Porque puede tener trazas de gluten",
+      "Porque siempre tiene azucar",
+      "Porque es natural",
+      "Porque viene en paquete"
+    ],
+    "answer": "Porque puede tener trazas de gluten"
+  },
+  "quiz_restaurante_preguntar": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que conviene preguntar primero en un restaurante si sos celiaco?",
+    "options": [
+      "Si preparan opciones separadas y sin contaminacion cruzada",
+      "Si el plato viene rapido",
+      "Si tienen bebidas frias",
+      "Si el menu tiene fotos"
+    ],
+    "answer": "Si preparan opciones separadas y sin contaminacion cruzada"
+  },
+  "quiz_aceite_compartido": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Por que una freidora con aceite compartido puede ser riesgosa?",
+    "options": [
+      "Porque puede contaminar alimentos sin TACC",
+      "Porque enfria la comida",
+      "Porque cambia el color",
+      "Porque tiene menos sabor"
+    ],
+    "answer": "Porque puede contaminar alimentos sin TACC"
+  },
+  "quiz_salsa_soja": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Por que la salsa de soja puede ser riesgosa para una persona celiaca?",
+    "options": [
+      "Porque muchas versiones contienen trigo",
+      "Porque siempre contiene avena",
+      "Porque solo se usa fria",
+      "Porque no tiene ingredientes"
+    ],
+    "answer": "Porque muchas versiones contienen trigo"
+  },
+  "quiz_rotulo_preventivo": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que decision es mas segura ante un rotulo que dice 'puede contener gluten'?",
+    "options": [
+      "No elegirlo sin confirmacion apta",
+      "Comer solo una parte",
+      "Elegirlo si es barato",
+      "Elegirlo si no tiene pan"
+    ],
+    "answer": "No elegirlo sin confirmacion apta"
+  },
+  "quiz_producto_artesanal": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que riesgo puede tener un producto artesanal sin rotulo claro?",
+    "options": [
+      "No se puede confirmar si es apto o si hubo contaminacion",
+      "Tiene menos calorias",
+      "Se vence mas rapido",
+      "Siempre es sin TACC"
+    ],
+    "answer": "No se puede confirmar si es apto o si hubo contaminacion"
+  },
+  "quiz_freidora_compartida": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Si unas papas se cocinan en freidora compartida con empanados, cual es el riesgo principal?",
+    "options": [
+      "Contaminacion cruzada",
+      "Exceso de sal",
+      "Falta de coccion",
+      "Que esten frias"
+    ],
+    "answer": "Contaminacion cruzada"
+  },
+  "quiz_harina_maiz_segura": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Cuando una harina de maiz industrial es mas segura para una persona celiaca?",
+    "options": [
+      "Cuando esta certificada o identificada como apta sin TACC",
+      "Cuando el paquete es amarillo",
+      "Cuando se vende a granel",
+      "Cuando parece casera"
+    ],
+    "answer": "Cuando esta certificada o identificada como apta sin TACC"
+  },
+  "quiz_embutidos_riesgo": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Por que algunos embutidos pueden requerir mas cuidado al elegirlos?",
+    "options": [
+      "Porque pueden tener agregados o trazas sin certificacion",
+      "Porque siempre tienen arroz",
+      "Porque se cocinan mal",
+      "Porque solo se comen de noche"
+    ],
+    "answer": "Porque pueden tener agregados o trazas sin certificacion"
+  },
+  "quiz_postre_industrial": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Que decision es mas segura frente a un postre industrial sin sello Sin TACC?",
+    "options": [
+      "No elegirlo hasta confirmar que sea apto",
+      "Elegirlo si tiene chocolate",
+      "Elegirlo si parece liviano",
+      "Elegirlo solo si esta frio"
+    ],
+    "answer": "No elegirlo hasta confirmar que sea apto"
   }
 }

@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ActivityAdapter
 
+# Convierte una activity nueva al formato runtime que espera cada minijuego.
+# No carga mapa, no decide orden de games y no guarda progreso.
+
 const MODE_QUIZ := "quiz"
 const MODE_DRAG := "drag"
 const MODE_DRAG_FOOD := "drag_food"
@@ -11,7 +14,6 @@ const RUNTIME_VINCULACION := "vinculacion_conceptos"
 const TARGET_ID := "target_1"
 const ITEMS_CELIAQUIA_PATH := "res://contenido/catalogos/items_celiaquia.json"
 const CATEGORY_SAFE := "sin_tacc"
-const LOG_PREFIX_TEACHING := "[Teaching]"
 const DRAG_FOOD_TEACHING_KEYS := {
 	"desayuno": "celiaquia_desayuno",
 	"colacion": "celiaquia_colacion",
@@ -62,6 +64,7 @@ static func to_legacy_node(
 	pack: Dictionary = {},
 	options: Dictionary = {}
 ) -> Dictionary:
+	# Elige el adaptador segun el mode del contenido; no toca el mapa.
 	match str(activity.get("mode", "")).strip_edges():
 		MODE_QUIZ:
 			return _quiz_to_legacy(activity, pack_id)
@@ -213,22 +216,7 @@ static func _resolve_drag_food_content(
 		"[DragFood] candidates correct=%d incorrect=%d"
 		% [candidate_correct.size(), candidate_incorrect.size()]
 	)
-	print("[DragFood] selected=%s" % _join_ids(selected_correct + selected_incorrect))
 	print("[DragFood] selected_ids=%s" % _join_ids(selected_correct + selected_incorrect))
-	print(
-		"%s activity=%s key=%s runtime_has_teaching_key=%s"
-		% [
-			LOG_PREFIX_TEACHING,
-			activity_id,
-			teaching_key,
-			str(not teaching_key.is_empty()),
-		]
-	)
-	if teaching_key.is_empty():
-		print(
-			"%s missing teaching data for activity=%s"
-			% [LOG_PREFIX_TEACHING, activity_id]
-		)
 
 	return {
 		"teaching_key": teaching_key,
@@ -246,27 +234,43 @@ static func _resolve_drag_food_content(
 
 static func _match_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary:
 	var teaching_key: String = _resolve_activity_teaching_key(activity)
+	if teaching_key.is_empty():
+		teaching_key = "celiaquia_match"
 	var left: Array[Dictionary] = []
 	var right: Array[Dictionary] = []
+	var activity_id: String = str(activity.get("id", "")).strip_edges()
 	var index := 0
 	for raw_pair in activity.get("pairs", []):
 		if not raw_pair is Array or (raw_pair as Array).size() < 2:
 			continue
 		var pair: Array = raw_pair as Array
 		var pair_key := "pair_%d" % index
+		var left_text: String = str(pair[0]).strip_edges()
+		var right_text: String = str(pair[1]).strip_edges()
+		if left_text.is_empty() or right_text.is_empty():
+			continue
 		left.append({
 			"id": "%s_left" % pair_key,
-			"label": str(pair[0]).strip_edges(),
-			"text": str(pair[0]).strip_edges(),
+			"label": left_text,
+			"text": left_text,
+			"texto": left_text,
 			"par_key": pair_key,
+			"id_par": pair_key,
 		})
 		right.append({
 			"id": "%s_right" % pair_key,
-			"label": str(pair[1]).strip_edges(),
-			"text": str(pair[1]).strip_edges(),
+			"label": right_text,
+			"text": right_text,
+			"texto": right_text,
 			"par_key": pair_key,
+			"id_par": pair_key,
 		})
 		index += 1
+	print("[ActivityAdapter] match id=%s pairs=%d" % [activity_id, left.size()])
+	print(
+		"[ActivityAdapter] match -> vinculacion_conceptos left=%d right=%d"
+		% [left.size(), right.size()]
+	)
 	return _base_node(activity, pack_id, RUNTIME_VINCULACION, {
 		"instruccion": str(activity.get("prompt", "")).strip_edges(),
 		"conceptos_izquierda": left,

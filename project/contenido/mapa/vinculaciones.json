@@ -70,5 +70,61 @@
       ["Sorgo", "Alternativa"],
       ["Almidon", "Espesante"]
     ]
+  },
+  "match_cocina_segura_avanzada": {
+    "mode": "match",
+    "difficulty": 3,
+    "prompt": "Uni cada practica con la decision mas segura.",
+    "pairs": [
+      ["Tabla usada para pan", "Lavar o separar utensilios"],
+      ["Tostadora compartida", "Evitar uso sin equipo exclusivo"],
+      ["Harina suelta en mesada", "Limpiar antes de cocinar"],
+      ["Cuchillo con migas", "Cambiar utensilio"],
+      ["Aceite de fritura comun", "No usar para Sin TACC"]
+    ]
+  },
+  "match_comer_fuera_seguro": {
+    "mode": "match",
+    "difficulty": 3,
+    "prompt": "Uni cada situacion al paso mas seguro.",
+    "pairs": [
+      ["Carta sin opciones claras", "Preguntar ingredientes y manejo"],
+      ["Mozo duda sobre contaminacion", "No arriesgar sin confirmar"],
+      ["Cocina con freidora compartida", "Evitar fritos"],
+      ["Postre sin sello ni info", "Elegir otra opcion"]
+    ]
+  },
+  "match_trazas_y_etiquetas": {
+    "mode": "match",
+    "difficulty": 3,
+    "prompt": "Uni cada situacion con la decision mas segura.",
+    "pairs": [
+      ["Puede contener trazas", "No elegir sin confirmar"],
+      ["Sello Sin TACC", "Producto certificado"],
+      ["Freidora compartida", "Riesgo de contaminacion"],
+      ["Contiene trigo", "No apto"]
+    ]
+  },
+  "match_riesgos_ocultos": {
+    "mode": "match",
+    "difficulty": 3,
+    "prompt": "Relaciona cada producto o practica con su riesgo.",
+    "pairs": [
+      ["Salsa de soja comun", "Puede contener trigo"],
+      ["Embutido sin certificacion", "Ingredientes no confirmados"],
+      ["Producto artesanal sin rotulo", "Aptitud incierta"],
+      ["Mesa con harina visible", "Contaminacion cruzada"]
+    ]
+  },
+  "match_decisiones_seguras": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Relaciona cada caso con la mejor decision.",
+    "pairs": [
+      ["No ves sello Sin TACC", "No elegir hasta confirmar"],
+      ["Utensilios separados", "Practica segura"],
+      ["Tabla con migas", "Lavar antes de usar"],
+      ["Comida frita en aceite compartido", "Evitar el producto"]
+    ]
   }
 }

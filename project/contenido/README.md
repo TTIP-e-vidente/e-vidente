@@ -24,6 +24,19 @@ contenido/
 
 ---
 
+## Como leer el flujo
+
+1. El mapa define nodos.
+2. Cada nodo tiene `games`.
+3. `games` puede ser fijo con strings o random con `{ "type": "...", "difficulty": 1 }`.
+4. `ArmadorDePartida.gd` decide la lista final de games.
+5. `NodeContentLoader.gd` busca la activity por id.
+6. `ActivityAdapter.gd` adapta la activity al minijuego.
+7. El minijuego se ejecuta.
+8. `ContinuidadDePartidaDeNodo.gd` avanza al siguiente game o completa el nodo.
+
+---
+
 ## El .tres y el JSON son cosas distintas
 
 `items_celiaquia.json` **no reemplaza** al `.tres` — lo complementa.
@@ -141,14 +154,15 @@ Abrí `mapa/arrastres.json`. El arrastre solo declara `meal` y `pick`. No lista 
 "drag_desayuno_facil": {
   "mode": "drag_food",
   "difficulty": 1,
-  "prompt": "Arma un desayuno apto sin TACC.",
-  "target": "Desayuno apto",
   "meal": "desayuno",
+  "teaching_key": "celiaquia_desayuno",
   "pick": { "correct": 2, "incorrect": 1 }
 }
 ```
 
-El runtime busca automáticamente en `items_celiaquia.json` todos los items con `"desayuno"` en su `meal_type`, separa correctos de incorrectos, hace shuffle y selecciona.
+`teaching_key` es el cierre educativo. Si falta, `ActivityAdapter.gd` puede derivarlo desde `meal`.
+
+El runtime busca automáticamente en `items_celiaquia.json` todos los items con `"desayuno"` en su `meal_type`, separa correctos de incorrectos, hace shuffle y selecciona. `prompt` y `target` no se escriben en `arrastres.json`: el adapter los completa por defecto.
 
 | difficulty | pick recomendado |
 |-----------|-----------------|
@@ -194,9 +208,14 @@ Abrí `mapa/vinculaciones.json`:
 
 ## Cómo agregar un nodo al mapa
 
-Un nodo es un capítulo. `games` es la lista ordenada de activity_ids que se juegan en ese nodo.
+Un nodo es un capítulo. Usa siempre `games`.
+
+`games` puede ser una lista fija de `activity_id` o una lista random de objetos `{ type, difficulty }`.
+`game_slots` queda solo como alias legacy de compatibilidad.
 
 Abrí `mapa/celiaquia_mapa.json` y agregá la siguiente clave numérica dentro de `"nodes"`:
+
+Ejemplo fijo:
 
 ```json
 "13": {
@@ -205,12 +224,32 @@ Abrí `mapa/celiaquia_mapa.json` y agregá la siguiente clave numérica dentro d
 }
 ```
 
+Ejemplo random:
+
+```json
+"14": {
+  "node_key": "celiaquia_14_nombre_random",
+  "shuffle_games": true,
+  "games": [
+    { "type": "drag", "difficulty": 2 },
+    { "type": "quiz", "difficulty": 3 },
+    { "type": "match", "difficulty": 2 }
+  ]
+}
+```
+
 Reglas:
 - `node_key` debe ser único en todo el mapa.
 - `games` no puede estar vacío.
-- Cada activity_id en `games` debe existir en `preguntas.json`, `arrastres.json` o `vinculaciones.json`.
+- cada `activity_id` en `games` debe existir en `preguntas.json`, `arrastres.json` o `vinculaciones.json`.
+- cada game random en `games` necesita `type` y `difficulty`.
+- `type` acepta `drag`, `quiz`, `match` y aliases simples (`drag_food`, `vinculacion`).
+- `difficulty` usa `1`, `2`, `3`.
+- si un nodo viejo define `games` y `game_slots`, el loader avisa y usa `games`.
+- si `games` mezcla strings y objetos random, el loader rechaza ese nodo.
+- si no hay match exacto para un game random, el armador busca primero dificultad menor y despues mayor.
 - **No usar `label`** — el mapa v2 no lo incluye.
-- `games` puede tener 1, 2 o 3 actividades. La dificultad escala por combinación.
+- `games` puede tener 1, 2 o 3 entradas.
 
 ---
 
@@ -218,40 +257,59 @@ Reglas:
 
 `celiaquia_mapa.json` define los nodos del capitulo.
 
+En el estado actual del proyecto, este mapa usa solo `games`.
+
 Cada nodo usa este modelo simple:
 
 - `node_key`: identifica el nodo.
-- `games`: lista de juegos del nodo.
-- `shuffle_games`: opcional; mezcla el orden de `games`.
+- `games` fijo: lista de juegos exactos del nodo.
+- `games` random: lista que se resuelve por `type` y `difficulty`.
+- `shuffle_games`: opcional; mezcla el orden final despues de resolver el nodo.
 
-Ejemplo:
+Ejemplo fijo:
 
 ```json
 {
-  "node_key": "celiaquia_05_merienda_intro",
+  "node_key": "celiaquia_04_desayuno_y_sello",
   "shuffle_games": true,
-  "games": ["drag_merienda_facil", "quiz_cereales_gluten"]
+  "games": ["drag_desayuno_facil", "quiz_sello_sin_tacc"]
+}
+```
+
+Ejemplo random:
+
+```json
+{
+  "node_key": "celiaquia_05_intro_mixta",
+  "shuffle_games": true,
+  "games": [
+    { "type": "drag", "difficulty": 1 },
+    { "type": "quiz", "difficulty": 1 }
+  ]
 }
 ```
 
 Explicacion:
-Este nodo tiene dos juegos. Cada vez que se arma la partida puede empezar por cualquiera de los dos, pero sigue teniendo exactamente los mismos juegos.
+Un nodo fijo siempre usa las mismas actividades. Un nodo random le pide a `ArmadorDePartida.gd` que busque candidatas reales en `arrastres.json`, `preguntas.json` y `vinculaciones.json`, usando este orden: exacta, menor, mayor.
 
 Reglas de `shuffle_games`:
 
-- ausente o `false`: se usa el orden escrito en `games`;
-- `true`: se mezcla una copia de `games` cada vez que se entra al nodo;
+- ausente o `false`: se usa el orden final resuelto;
+- `true`: se mezcla una copia de la secuencia final cada vez que se entra al nodo;
 - si `games.size() <= 1`, no se mezcla nada;
+- si `games` usa objetos random, primero se eligen las actividades y despues se mezcla;
 - el JSON original no se modifica.
 
-Flujo trainee:
+## Flujo trainee del mapa
 
 1. `CargadorDeMapa.gd` lee `celiaquia_mapa.json`.
 2. `MapNodeData.gd` guarda `order`, `node_key`, `games` y `shuffle_games`.
-3. `ArmadorDePartida.gd` arma la secuencia del nodo.
+3. `ArmadorDePartida.gd` arma la secuencia del nodo y resuelve `games` random cuando existen.
 4. `AbridorDeNodoJugable.gd` abre el juego actual.
-5. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente juego.
-6. `AvanceDeNodo.gd` consulta si el nodo ya quedo completado.
+5. `NodeContentLoader.gd` busca la activity en `arrastres.json`, `preguntas.json` o `vinculaciones.json`, y tambien lista candidatas por request random.
+6. `ActivityAdapter.gd` adapta la activity al formato del minijuego.
+7. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente game o cierra el nodo.
+8. `AvanceDeNodo.gd` consulta si el nodo ya quedo completado.
 
 ---
 

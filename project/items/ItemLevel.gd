@@ -99,7 +99,6 @@ func _process(_delta):
 			global_position = get_global_mouse_position() - offset
 		elif Input.is_action_just_released("click") && is_dragging == self:
 			is_dragging = null
-			var tween = get_tree().create_tween()
 			if is_inside_droppable and is_instance_valid(body_ref):
 				print(
 					"[ARRASTRE] item=",
@@ -109,12 +108,6 @@ func _process(_delta):
 					" correcto=",
 					body_ref == plato and esPositivo
 				)
-				tween.tween_property(
-					self,
-					"global_position",
-					get_global_mouse_position(),
-					0.5
-				).set_ease(Tween.EASE_OUT)
 				if body_ref == plato:
 					print(
 						"[ManagerLevelItem] placed id=%s detail=%s"
@@ -124,6 +117,12 @@ func _process(_delta):
 						]
 					)
 					plato.reaccionar_comida(self)
+					if esPositivo:
+						_animar_feedback_correcto()
+					else:
+						_animar_feedback_incorrecto_y_volver()
+				else:
+					_volver_a_inicio()
 			else:
 				print(
 					"[ARRASTRE] item=",
@@ -133,12 +132,7 @@ func _process(_delta):
 					" correcto=",
 					false
 				)
-				tween.tween_property(
-					self,
-					"global_position",
-					initialPos,
-					0.5
-				).set_ease(Tween.EASE_OUT)
+				_volver_a_inicio()
 
 func _handle_droppable_enter(target):
 	if not interaction_enabled:
@@ -186,6 +180,34 @@ func _on_area_2d_mouse_exited():
 	if !is_dragging:
 		draggable = false
 		scale = Vector2(1,1)
+
+
+func _volver_a_inicio() -> void:
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "global_position", initialPos, 0.22)
+	tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
+
+
+func _animar_feedback_correcto() -> void:
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.08)
+	tween.tween_property(self, "scale", Vector2.ONE, 0.14)
+
+
+func _animar_feedback_incorrecto_y_volver() -> void:
+	var posicion_actual := global_position
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(self, "global_position", posicion_actual + Vector2(18, 0), 0.04)
+	tween.tween_property(self, "global_position", posicion_actual + Vector2(-14, 0), 0.04)
+	tween.tween_property(self, "global_position", posicion_actual + Vector2(10, 0), 0.04)
+	tween.tween_property(self, "global_position", initialPos, 0.18)
+	tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
 
 
 func _reportar_mismatch_si_corresponde() -> void:

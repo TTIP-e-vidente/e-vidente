@@ -14,15 +14,18 @@ La ruta principal para entender el mapa es:
 8. `logica/ArmadorDePartida.gd`
 9. `logica/ContinuidadDePartidaDeNodo.gd`
 
-## Ruta oficial de lectura
+## Flujo trainee del mapa
 
 1. `CargadorDeMapa.gd` lee `res://contenido/mapa/celiaquia_mapa.json`.
-2. `MapNodeData.gd` normaliza cada nodo a un dato simple.
-3. `ArmadorDePartida.gd` arma la secuencia de `games` del nodo.
-4. Si `shuffle_games` es `true`, mezcla una copia de `games`.
-5. `AbridorDeNodoJugable.gd` abre el juego actual del plan.
-6. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente juego o cierra el nodo.
-7. `AvanceDeNodo.gd` consulta si el nodo ya estaba desbloqueado o completado.
+2. `MapNodeData.gd` representa cada nodo como un dato simple.
+3. `ArmadorDePartida.gd` arma la secuencia final del nodo.
+4. Si `games` trae objetos random, ahi mismo resuelve activity_id por `type` y `difficulty`.
+5. Si `shuffle_games` es `true`, mezcla una copia de la secuencia final.
+6. `AbridorDeNodoJugable.gd` abre el juego actual del plan.
+7. `NodeContentLoader.gd` busca la `activity_id` en `arrastres.json`, `preguntas.json` o `vinculaciones.json`.
+8. `ActivityAdapter.gd` adapta la activity al formato del minijuego.
+9. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente game o cierra el nodo.
+10. `AvanceDeNodo.gd` consulta el progreso guardado para desbloqueo y completado.
 
 `MapScene.gd`, `MapBoard.gd` y `LevelNode.gd` siguen siendo la capa visual y de interacción.
 
@@ -36,30 +39,65 @@ La ruta principal para entender el mapa es:
 - `logica/CargadorDeMapa.gd`: carga el mapa, ordena nodos y valida estructura basica.
 - `logica/AvanceDeNodo.gd`: consulta progreso, desbloqueo y completado ya guardados.
 - `logica/AbridorDeNodoJugable.gd`: abre el nodo jugable actual.
-- `logica/ArmadorDePartida.gd`: arma la secuencia de juegos del nodo y aplica `shuffle_games`.
+- `logica/ArmadorDePartida.gd`: arma la secuencia de juegos del nodo, resuelve `games` random y aplica `shuffle_games`.
 - `logica/ContinuidadDePartidaDeNodo.gd`: avanza al siguiente juego o termina el nodo.
+
+## games
+
+El contrato nuevo usa solo `games` para mantener un formato unico.
+`game_slots` queda solo como alias legacy de compatibilidad.
+
+Cada nodo debe usar una sola modalidad:
+
+- `games` fijo: lista de `activity_id`.
+- `games` random: lista de objetos con `type` y `difficulty`.
+
+Reglas:
+
+- si un nodo viejo define `games` y `game_slots`, el loader avisa y usa `games`;
+- `type` acepta `drag`, `quiz`, `match` y aliases simples (`drag_food`, `vinculacion`);
+- `difficulty` usa `1`, `2`, `3`;
+- si no hay match exacto para un game random, el armador busca primero dificultad menor y despues mayor;
+- si `games` mezcla strings y objetos random, el loader marca error para ese nodo;
+- la eleccion random pasa en `ArmadorDePartida.gd`, no en `CargadorDeMapa.gd`.
 
 ## shuffle_games
 
-`shuffle_games` solo cambia el orden de ejecucion de `games` dentro del nodo.
+`shuffle_games` solo cambia el orden de ejecucion final dentro del nodo.
 
 Reglas:
-- si no existe o es `false`, `games` se juega en el orden escrito;
-- si es `true`, se mezcla una copia de `games` cada vez que se arma la partida;
+- si `games` usa strings, conserva esas mismas actividades y solo cambia el orden;
+- si `games` usa objetos random, primero se eligen las actividades y despues se mezcla el resultado;
+- si no existe o es `false`, se usa el orden resuelto por el armador;
+- si es `true`, se mezcla una copia de la secuencia final cada vez que se arma la partida;
 - si el nodo tiene un solo juego, no se aplica shuffle;
 - el array original del JSON nunca se modifica.
 
-Ejemplo:
+Ejemplo fijo:
 
 ```json
 {
-	"node_key": "celiaquia_05_merienda_intro",
+	"node_key": "celiaquia_04_desayuno_y_sello",
 	"shuffle_games": true,
-	"games": ["drag_merienda_facil", "quiz_cereales_gluten"]
+	"games": ["drag_desayuno_facil", "quiz_sello_sin_tacc"]
 }
 ```
 
-Este nodo siempre tiene los mismos dos juegos. Lo unico que cambia entre corridas es cual va primero.
+Ejemplo random:
+
+```json
+{
+	"node_key": "celiaquia_05_intro_mixta",
+	"shuffle_games": true,
+	"games": [
+		{ "type": "drag", "difficulty": 1 },
+		{ "type": "quiz", "difficulty": 1 }
+	]
+}
+```
+
+Explicacion trainee:
+Un nodo fijo siempre usa los mismos `activity_id`. Un nodo random primero resuelve un `activity_id` por cada request y recien despues puede mezclar el orden final.
 
 ## Deuda tecnica visible
 
@@ -105,7 +143,7 @@ Actualmente el archivo importante es:
 - No cambiar navegacion.
 - No tocar `Global`.
 - No tocar `SaveManager`.
-- No cambiar formato JSON.
+- No inventar un tercer formato JSON fuera de `games`.
 - No mover `MapHud`.
 - No convertir layout authored a codigo.
 

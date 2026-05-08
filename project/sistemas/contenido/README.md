@@ -1,22 +1,33 @@
 # Sistemas / Contenido
 
-## Flujo principal (Content Pack)
+## Flujo principal (contenido/mapa)
 
 El punto de entrada es `NodeContentLoader.gd`.
 
 ```
 NodeContentLoader.load_from_context(context)
   → si tiene activity_id: load_from_pack(pack_id, activity_id)
+      → load_activity(pack_id, activity_id)
+          → busca en preguntas.json, arrastres.json y vinculaciones.json
       → ActivityAdapter.to_legacy_node(activity, pack_id, pack, options)
           → si mode == drag_food: filtra items_celiaquia.json por meal_type + categoria
+          → si mode == match: convierte pairs a vinculacion_conceptos
           → devuelve nodo runtime drag_drop
   → si falla y tiene json_path: fallback a CargadorDeContenidoDeNodo (legacy)
   → si solo tiene json_path: usa CargadorDeContenidoDeNodo directamente
 ```
 
+Archivos fuente actuales:
+
+- `res://contenido/mapa/celiaquia_mapa.json`
+- `res://contenido/mapa/arrastres.json`
+- `res://contenido/mapa/preguntas.json`
+- `res://contenido/mapa/vinculaciones.json`
+- `res://contenido/catalogos/items_celiaquia.json`
+
 ## Cómo crear un drag_food nuevo
 
-Solo necesitás agregar esto en `celiaquia_pack.json`:
+Solo necesitás agregar esto en `arrastres.json`:
 
 ```json
 {
@@ -92,16 +103,14 @@ Legacy es compatibilidad para contenido viejo. No es la ruta ideal para escribir
 
 Contenido nuevo deberia vivir en:
 
-`res://contenido/nodos/`
+`res://contenido/mapa/`
 
-Y deberia usar el shape oficial:
+Y deberia usar estos contratos chicos:
 
-- `id`
-- `theme`
-- `title`
-- `difficulty`
-- `mode`
-- `content`
+- `celiaquia_mapa.json` usa `games`
+- `arrastres.json` define `drag_food`
+- `preguntas.json` define `quiz`
+- `vinculaciones.json` define `match`
 
 ## Que formato espera cada minijuego
 
@@ -123,8 +132,5 @@ Y deberia usar el shape oficial:
 
 Despues de tocar contenido, correr:
 
-- `contenido_vinculacion_json_test.gd`
-- `plan_de_partida_de_nodo_test.gd`
-- `partida_de_nodo_multiple_test.gd`
 - `vincular_conceptos_scene_test.gd`
 - `vertical_slice_smoke_test.gd`

@@ -1,10 +1,12 @@
 extends RefCounted
 class_name AvanceDeNodo
 
+# Consulta progreso y calcula desbloqueos del mapa.
+# No arma partidas, no abre escenas y no carga contenido.
+
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
-const LOG_PREFIX := "[AVANCE_NODO]"
 
 
 # Solo consulta el progreso ya guardado; no abre escenas ni arma partidas.
@@ -56,27 +58,11 @@ static func obtener_indice_nodo(nodos_mapa: Array, node_key_actual: String) -> i
 static func obtener_siguiente_nodo(nodos_mapa: Array, node_key_actual: String) -> Variant:
 	var indice_actual: int = obtener_indice_nodo(nodos_mapa, node_key_actual)
 	if indice_actual < 0:
-		print(LOG_PREFIX, " siguiente_nodo=false node_key_no_encontrado=", node_key_actual)
 		return null
 
 	var siguiente_indice: int = indice_actual + 1
 	if siguiente_indice >= nodos_mapa.size():
-		print(
-			LOG_PREFIX,
-			" siguiente_nodo=false indice_actual=",
-			indice_actual,
-			" total=",
-			nodos_mapa.size()
-		)
 		return null
-
-	print(
-		LOG_PREFIX,
-		" siguiente_nodo=true indice_actual=",
-		indice_actual,
-		" siguiente=",
-		siguiente_indice
-	)
 	return nodos_mapa[siguiente_indice]
 
 
@@ -84,14 +70,7 @@ static func hay_siguiente_juego(plan_de_partida: Dictionary) -> bool:
 	# Lee el plan actual y responde si queda otro juego dentro del mismo nodo.
 	var total_juegos: int = _obtener_total_juegos_plan(plan_de_partida)
 	var indice_actual: int = int(plan_de_partida.get("indice_juego_actual", 0))
-	var hay_siguiente: bool = indice_actual >= 0 and indice_actual + 1 < total_juegos
-	print(
-		LOG_PREFIX,
-		" indice_actual=", indice_actual,
-		" total=", total_juegos,
-		" hay_siguiente=", hay_siguiente
-	)
-	return hay_siguiente
+	return indice_actual >= 0 and indice_actual + 1 < total_juegos
 
 
 static func obtener_siguiente_juego(plan_de_partida: Dictionary) -> Dictionary:
@@ -168,6 +147,5 @@ static func _obtener_juegos_plan(plan_de_partida: Dictionary) -> Array[Dictionar
 static func _obtener_total_juegos_plan(plan_de_partida: Dictionary) -> int:
 	var juegos: Array[Dictionary] = _obtener_juegos_plan(plan_de_partida)
 	if juegos.is_empty():
-		print(LOG_PREFIX, " plan invalido: juegos vacios")
 		return 0
 	return juegos.size()

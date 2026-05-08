@@ -1,8 +1,10 @@
 extends RefCounted
 class_name ContinuidadDePartidaDeNodo
 
+# Decide si pasar al proximo game o completar el nodo.
+# Lee el plan activo; no carga contenido ni adapta activities.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const LOG_PREFIX := "[AVANCE_NODO]"
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
 
@@ -21,7 +23,6 @@ static func continuar_o_finalizar_partida(
 		if antes_de_abrir_siguiente_juego.is_valid():
 			antes_de_abrir_siguiente_juego.call()
 		estado_global.call("avanzar_partida_de_nodo")
-		print(LOG_PREFIX, " continuar=siguiente_juego")
 		return abrir_juego_actual(tree, estado_global)
 
 	var partida_actual: Dictionary = estado_global.call("obtener_partida_de_nodo_actual")
@@ -29,7 +30,6 @@ static func continuar_o_finalizar_partida(
 		"%s node=%s"
 		% [LOG_PREFIX_NODE_COMPLETE, str(partida_actual.get("clave_nodo", "")).strip_edges()]
 	)
-	print(LOG_PREFIX, " continuar=finalizar_partida")
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
 		al_finalizar_partida.call()

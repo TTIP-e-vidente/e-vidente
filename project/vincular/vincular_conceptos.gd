@@ -1,5 +1,8 @@
 extends Node2D
 
+# Ejecuta el minijuego de unir conceptos.
+# Recibe conceptos_izquierda y conceptos_derecha; no carga el mapa.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const PostGameFlowControllerScript := preload(
@@ -24,6 +27,7 @@ const PresentadorContinuarJuegoScript := preload(
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const ConceptItemScene := preload("res://vincular/concept_item.tscn")
 
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
@@ -35,6 +39,9 @@ const COLOR_TARJETA_ERROR := Color(1.0, 0.94, 0.94, 1.0)
 const COLOR_LINEA_OK := Color(0.2, 0.62, 0.38, 1.0)
 const COLOR_LINEA_ERROR := Color(0.92, 0.22, 0.2, 1.0)
 const COLOR_LINEA_SOMBRA := Color(0.05, 0.04, 0.03, 0.28)
+const COLOR_FEEDBACK_NEUTRAL := Color(0.18, 0.19, 0.21, 1.0)
+const COLOR_FEEDBACK_OK := Color(0.17, 0.49, 0.28, 1.0)
+const COLOR_FEEDBACK_ERROR := Color(0.74, 0.18, 0.16, 1.0)
 const MARGEN_ANCLAJE_LINEA := 12.0
 const DURACION_ANIMACION_LINEA := 0.16
 
@@ -127,6 +134,8 @@ func _conectar_continuar_juego() -> void:
 
 func _mostrar_continuacion_pendiente_si_corresponde() -> bool:
 	if _continuar_juego == null:
+		return false
+	if not _datos_de_ejecucion.is_empty():
 		return false
 	if not Global.hay_juego_o_nodo_para_continuar():
 		return false
@@ -262,13 +271,17 @@ func _preparar_feedback_label() -> void:
 	if feedback_label == null:
 		feedback_label = Label.new()
 		feedback_label.name = "FeedbackLabel"
-		feedback_label.custom_minimum_size = Vector2(520, 40)
+		feedback_label.custom_minimum_size = Vector2(620, 48)
 		feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		feedback_label.add_theme_font_size_override("font_size", 24)
 		control_principal.add_child(feedback_label)
-	feedback_label.position = Vector2(370, 688)
+	feedback_label.position = Vector2(320, 682)
 	feedback_label.visible = true
 	feedback_label.z_index = 110
 	feedback_label.text = ""
+	feedback_label.modulate = COLOR_FEEDBACK_NEUTRAL
 
 
 func _aplicar_estilo_boton_badge(boton: Button, font_size: int) -> void:
@@ -355,6 +368,7 @@ func _aplicar_runtime_en_escena() -> void:
 	if total_pares <= 0:
 		_mostrar_error_bloqueante("La vinculación no tiene pares suficientes.")
 		return
+	_asegurar_slots_visuales(total_pares)
 	if total_pares > items_izquierda.size() or total_pares > items_derecha.size():
 		_mostrar_error_bloqueante(
 			"La escena de vinculación no tiene suficientes tarjetas visuales."
@@ -375,6 +389,51 @@ func _aplicar_runtime_en_escena() -> void:
 	_mostrar_feedback("")
 	_actualizar_visual()
 	call_deferred("_sincronizar_layout_interactivo")
+
+
+func _asegurar_slots_visuales(total_requerido: int) -> void:
+	_asegurar_slots_en_contenedor(
+		contenedor_izquierda,
+		items_izquierda,
+		total_requerido,
+		"ConceptItemIzq"
+	)
+	_asegurar_slots_en_contenedor(
+		contenedor_derecha,
+		items_derecha,
+		total_requerido,
+		"ConceptItemDer"
+	)
+	_ajustar_layout_para_total_pares(total_requerido)
+
+
+func _asegurar_slots_en_contenedor(
+	contenedor: VBoxContainer,
+	items_existentes: Array[ConceptoItem],
+	total_requerido: int,
+	prefijo_nombre: String
+) -> void:
+	if contenedor == null:
+		return
+	while items_existentes.size() < total_requerido:
+		var nuevo_item := ConceptItemScene.instantiate() as ConceptoItem
+		if nuevo_item == null:
+			return
+		nuevo_item.name = "%s%d" % [prefijo_nombre, items_existentes.size() + 1]
+		contenedor.add_child(nuevo_item)
+		if not nuevo_item.seleccionado.is_connected(_on_item_seleccionado):
+			nuevo_item.seleccionado.connect(_on_item_seleccionado)
+		items_existentes.append(nuevo_item)
+
+
+func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
+	var separacion := 124
+	if total_requerido >= 5:
+		separacion = 48
+	elif total_requerido == 4:
+		separacion = 72
+	contenedor_izquierda.add_theme_constant_override("separation", separacion)
+	contenedor_derecha.add_theme_constant_override("separation", separacion)
 
 
 func _sincronizar_layout_interactivo() -> void:
@@ -411,6 +470,8 @@ func _ordenar_derecha_para_evitar_cruces(
 
 
 func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado: String) -> void:
+	# Contrato principal: texto visible + id_par compartido.
+	# ActivityAdapter mantiene text/par_key solo como compatibilidad legacy.
 	for indice in range(items_escena.size()):
 		var item := items_escena[indice]
 		if indice >= conceptos.size():
@@ -520,6 +581,7 @@ func vincular_con_derecha(derecha: ConceptoItem) -> void:
 	seleccion_actual = null
 	validado = false
 	_ocultar_continuar()
+	_animar_vinculo_creado(izquierda, derecha)
 	_mostrar_feedback("Vínculo creado.")
 	_actualizar_visual()
 
@@ -589,6 +651,25 @@ func faltan_vinculos() -> bool:
 func _mostrar_feedback(texto: String) -> void:
 	if feedback_label != null:
 		feedback_label.text = texto
+		feedback_label.modulate = _resolver_color_feedback(texto)
+
+
+func _resolver_color_feedback(texto: String) -> Color:
+	var texto_normalizado := texto.to_lower()
+	if texto_normalizado.contains("muy bien"):
+		return COLOR_FEEDBACK_OK
+	if texto_normalizado.contains("revis") or texto_normalizado.contains("faltan"):
+		return COLOR_FEEDBACK_ERROR
+	return COLOR_FEEDBACK_NEUTRAL
+
+
+func _animar_vinculo_creado(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
+	for tarjeta in [izquierda, derecha]:
+		if tarjeta == null or not is_instance_valid(tarjeta):
+			continue
+		var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(tarjeta, "scale", Vector2(1.06, 1.06), 0.08)
+		tween.tween_property(tarjeta, "scale", Vector2.ONE, 0.12)
 
 
 func _actualizar_lineas() -> void:
@@ -645,8 +726,7 @@ func _crear_linea(
 	var linea := Line2D.new()
 	linea.width = ancho
 	linea.default_color = color
-	linea.add_point(origen)
-	linea.add_point(origen if animar else destino)
+	linea.points = PackedVector2Array([origen, origen if animar else destino])
 	line_drawer.add_child(linea)
 	if animar:
 		_animar_linea(linea, origen, destino)
@@ -656,17 +736,12 @@ func _animar_linea(linea: Line2D, origen: Vector2, destino: Vector2) -> void:
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_method(
-		Callable(self, "_mover_fin_linea").bind(linea),
-		origen,
-		destino,
+	tween.tween_property(
+		linea,
+		"points",
+		PackedVector2Array([origen, destino]),
 		DURACION_ANIMACION_LINEA
 	)
-
-
-func _mover_fin_linea(punto: Vector2, linea: Line2D) -> void:
-	if is_instance_valid(linea):
-		linea.set_point_position(1, punto)
 
 
 func confirmar() -> void:

@@ -1,6 +1,9 @@
 extends RefCounted
 class_name CargadorDeContenidoDeNodo
 
+# Carga contenido legacy desde json_path y lo deja en formato runtime.
+# El contenido nuevo entra por NodeContentLoader y ActivityAdapter.
+
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
 const ContentValidatorScript := preload("res://sistemas/contenido/ContentValidator.gd")
