@@ -5,13 +5,13 @@
   "difficulty": "medium",
   "mode": "quiz_choice",
   "content": {
-    "question": "Cuando elegis un alimento procesado para alguien con celiaquia, que dato es el mas seguro revisar?",
-    "correct_answer": "Buscar el rotulo Libre de Gluten o Sin TACC",
-    "wrong_options": [
-      "Que el paquete sea de color verde",
-      "Que diga artesanal",
+	"question": "Cuando elegis un alimento procesado para alguien con celiaquia, que dato es el mas seguro revisar?",
+	"correct_answer": "Buscar el rotulo Libre de Gluten o Sin TACC",
+	"wrong_options": [
+	  "Que el paquete sea de color verde",
+	  "Que diga artesanal",
       "Que no tenga harina en el nombre"
-    ],
-    "visual_resource": ""
+	],
+	"visual_resource": ""
   }
 }

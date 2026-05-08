@@ -1,5 +1,8 @@
 extends RefCounted
 
+# ContextoFinalizacionDeJuego.gd
+# Arma el resumen de una partida terminada para que PostGameFlowController
+# decida si sigue juego, racha, mapa o libro.
 
 static func construir(
 	fuente: String,

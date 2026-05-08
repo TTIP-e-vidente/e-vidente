@@ -72,6 +72,7 @@ var _mensaje_error_bloqueante := ""
 var _retroalimentacion_racha_post_juego: Dictionary = {}
 var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
+var _continuar_juego_es_continuacion_pendiente := false
 
 
 func _ready() -> void:
@@ -90,6 +91,8 @@ func _ready() -> void:
 	configurar_desde_sesion()
 	_configurar_indicador_de_progreso_de_juego()
 	if not _mensaje_error_bloqueante.is_empty():
+		if _mostrar_continuacion_pendiente_si_corresponde():
+			return
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	_aplicar_runtime_en_escena()
@@ -116,7 +119,25 @@ func _conectar_continuar_juego() -> void:
 	if _continuar_juego == null:
 		return
 	if _continuar_juego.has_signal("continuar_solicitado"):
-		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_solicitar_continuar"))
+		_continuar_juego.connect(
+			"continuar_solicitado",
+			Callable(self, "_al_solicitar_continuar_juego")
+		)
+
+
+func _mostrar_continuacion_pendiente_si_corresponde() -> bool:
+	if _continuar_juego == null:
+		return false
+	if not Global.hay_juego_o_nodo_para_continuar():
+		return false
+	_continuar_juego_es_continuacion_pendiente = true
+	bloqueado = true
+	label_pregunta.text = ""
+	_limpiar_vinculos_y_errores()
+	_actualizar_visual()
+	_bloquear_tarjetas()
+	_continuar_juego.call("mostrar_para_continuar_pendiente")
+	return true
 
 
 func configurar_desde_sesion() -> void:
@@ -841,6 +862,13 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 
 
 func continuar_al_siguiente_juego() -> void:
+	_al_solicitar_continuar()
+
+
+func _al_solicitar_continuar_juego() -> void:
+	if _continuar_juego_es_continuacion_pendiente:
+		GameSceneRouter.go_to_continue_target(get_tree(), _ruta_escena_de_retorno)
+		return
 	_al_solicitar_continuar()
 
 

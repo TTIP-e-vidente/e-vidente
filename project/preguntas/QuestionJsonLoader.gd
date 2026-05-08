@@ -12,7 +12,8 @@ const ERROR_CONTENIDO_NO_DISPONIBLE := (
 
 
 # Flujo nuevo: leer json_path desde la sesion jugable y pedirle a
-# CargadorDeContenidoDeNodo devuelve un nodo oficial { id, theme, title, difficulty, mode, content }.
+# CargadorDeContenidoDeNodo un nodo oficial
+# { id, theme, title, difficulty, mode, content }.
 # node_data, node_json_path y node_resource_path quedan solo para compatibilidad.
 
 
@@ -20,16 +21,15 @@ static func cargar_resultado_desde_datos_nodo(
 	datos_nodo: Dictionary,
 	etiqueta_origen: String = ""
 ) -> Dictionary:
-	if str(datos_nodo.get("mode", "")).strip_edges() != CargadorDeContenidoDeNodoScript.MODE_QUIZ_CHOICE:
+	var modo: String = str(datos_nodo.get("mode", "")).strip_edges()
+	if modo != CargadorDeContenidoDeNodoScript.MODE_QUIZ_CHOICE:
 		return _resultado_error(
 			"QuestionJsonLoader solo soporta quiz_choice. Archivo: %s" % etiqueta_origen
 		)
 
-	var pregunta_recurso: Preguntas = _crear_pregunta(
-		datos_nodo.get("content", {}),
-		etiqueta_origen
+	return _resultado_ok_con_tema(
+		_crear_tema_desde_contenido(datos_nodo.get("content", {}), etiqueta_origen)
 	)
-	return _resultado_ok_con_tema(_crear_tema(pregunta_recurso))
 
 
 static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
@@ -41,7 +41,9 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 		)
 	var ruta_json: String = _read_playable_json_path(contexto_sesion)
 	if not ruta_json.is_empty():
-		var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
+		var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(
+			ruta_json
+		)
 		if not bool(resultado_nodo.get("ok", false)):
 			return _resultado_error(
 				str(resultado_nodo.get("error", ERROR_CONTENIDO_NO_DISPONIBLE))
@@ -108,6 +110,24 @@ static func _cargar_pregunta_legacy(ruta_recurso_pregunta: String) -> Preguntas:
 static func _crear_tema(pregunta_recurso: Preguntas) -> ThemePreg:
 	var tema: ThemePreg = ThemePregScript.new()
 	tema.theme = [pregunta_recurso]
+	return tema
+
+
+static func _crear_tema_desde_contenido(
+	contenido: Dictionary,
+	etiqueta_origen: String
+) -> ThemePreg:
+	var tema: ThemePreg = ThemePregScript.new()
+	var preguntas: Array[Preguntas] = []
+	var preguntas_crudas: Variant = contenido.get("questions", contenido.get("preguntas", []))
+	if preguntas_crudas is Array and not (preguntas_crudas as Array).is_empty():
+		for raw_pregunta in preguntas_crudas as Array:
+			if not raw_pregunta is Dictionary:
+				continue
+			preguntas.append(_crear_pregunta(raw_pregunta as Dictionary, etiqueta_origen))
+	else:
+		preguntas.append(_crear_pregunta(contenido, etiqueta_origen))
+	tema.theme = preguntas
 	return tema
 
 

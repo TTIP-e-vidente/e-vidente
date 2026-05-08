@@ -1,0 +1,12 @@
+{
+  "id": "desayuno",
+  "tipo": "arrastre",
+  "titulo": "Prepará el desayuno",
+  "consigna": "Arrastrá al plato solo opciones aptas sin TACC.",
+  "plato": "Desayuno apto",
+  "correctos": ["banana", "leche", "manzana", "pera"],
+  "incorrectos": ["medialuna", "pan", "tostado_jyq"],
+  "cantidad_correctos": 2,
+  "cantidad_incorrectos": 1,
+  "ensenanza": "celiaquia_1"
+}

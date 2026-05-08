@@ -81,8 +81,8 @@ var pregunta_actual: Preguntas:
 # Entrada del quiz
 func _ready() -> void:
 	puntaje = 0
-	base_positions[boton_1] = boton_1.position
-	base_positions[boton_2] = boton_2.position
+	_registrar_posicion_base_boton(boton_1)
+	_registrar_posicion_base_boton(boton_2)
 	_reiniciar_cierre_del_quiz()
 	_conectar_continuar_juego()
 
@@ -111,11 +111,24 @@ func _recolectar_botones_respuesta() -> void:
 
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
+	_registrar_posicion_base_boton(boton_respuesta)
 	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
 
-func dodge_button(button):
 
-	var base_pos = base_positions[button]
+func _registrar_posicion_base_boton(boton_respuesta: Button) -> void:
+	if boton_respuesta == null:
+		return
+	if base_positions.has(boton_respuesta):
+		return
+	base_positions[boton_respuesta] = boton_respuesta.position
+
+
+func dodge_button(button: Button) -> void:
+	if button == null:
+		return
+
+	var base_pos: Vector2 = base_positions.get(button, button.position)
+	base_positions[button] = base_pos
 	var available_offsets = dodge_offsets.filter(
 	func(o): return o != last_offset
 	)
@@ -298,6 +311,7 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 		if nuevo_boton == null:
 			return
 		nuevo_boton.name = "Boton%d" % (botones.size() + 1)
+		nuevo_boton.position = _calcular_posicion_boton_respuesta(botones.size())
 		_contenedor_respuestas.add_child(nuevo_boton)
 		_registrar_boton_respuesta(nuevo_boton)
 
@@ -312,6 +326,16 @@ func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: Strin
 	boton_respuesta.scale = Vector2.ONE
 	boton_respuesta.rotation_degrees = 0
 	boton_respuesta.add_theme_font_size_override("font_size", _font_size_para(texto_respuesta))
+
+
+func _calcular_posicion_boton_respuesta(indice_boton: int) -> Vector2:
+	var origen: Vector2 = boton_1.position if boton_1 != null else Vector2.ZERO
+	var separacion_vertical := 157.0
+	if boton_1 != null and boton_2 != null:
+		var distancia_plantillas: float = boton_2.position.y - boton_1.position.y
+		if distancia_plantillas > 0.0:
+			separacion_vertical = distancia_plantillas
+	return origen + Vector2(0.0, separacion_vertical * indice_boton)
 
 
 const MAX_DISPLAY_CHARS := 55

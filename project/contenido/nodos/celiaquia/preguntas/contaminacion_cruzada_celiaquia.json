@@ -5,13 +5,9 @@
   "difficulty": "medium",
   "mode": "quiz_choice",
   "content": {
-	"question": "En una casa donde tambien se come pan comun, que accion ayuda a evitar contaminacion cruzada?",
-	"correct_answer": "Usar tostadora o bolsa de tostado exclusiva para sin gluten",
-	"wrong_options": [
-	  "Soplar las migas de la tostadora antes de usarla",
-	  "Usar el mismo cuchillo con dulce y pan comun",
-      "Apoyar el pan sin gluten sobre la misma tabla con migas"
-	],
+	"question": "Hay contaminación cruzada si se utiliza el mismo cuchillo el cual se utilizo para cortar pan?",
+	"correct_answer": "Verdadero",
+	"wrong_options": ["Falso"],
 	"visual_resource": ""
   }
 }

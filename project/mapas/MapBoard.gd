@@ -42,6 +42,8 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			continue
 
 		visual_node.show()
+		if node_data.has_map_position:
+			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
 			visual_node.configurar(node_data, node_state)
 		var callback := Callable(self, "_on_visual_node_selected")

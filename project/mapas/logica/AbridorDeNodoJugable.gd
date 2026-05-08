@@ -13,6 +13,7 @@ const CLAVE_SESION_MODE := "mode"
 const CLAVE_SESION_LEVEL_NUMBER := "level_number"
 const CLAVE_SESION_DIFFICULTY := "difficulty"
 const CLAVE_SESION_RETURN_TO := "return_to"
+const LOG_PREFIX := "[NODO]"
 
 
 # Apertura del nodo
@@ -38,6 +39,15 @@ static func abrir_nodo(
 		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo armar la partida del nodo.")
 
+	print(
+		LOG_PREFIX,
+		" abrir_nodo=",
+		node_data.node_key,
+		" mode=",
+		node_data.mode,
+		" return_to=",
+		ruta_retorno_segura
+	)
 	_iniciar_partida_en_global(estado_global, datos_de_apertura)
 
 	if not ContinuidadDePartidaDeNodoScript.abrir_juego_actual(tree, estado_global):
@@ -85,6 +95,13 @@ static func _construir_datos_de_apertura(
 	if plan_de_partida.is_empty():
 		return {}
 	plan_de_partida["escena_de_retorno"] = ruta_retorno
+	print(
+		LOG_PREFIX,
+		" plan_nodo=",
+		node_data.node_key,
+		" juegos=",
+		int(plan_de_partida.get("total_juegos", 0))
+	)
 	return {
 		"sesion_jugable": sesion_jugable,
 		"plan_de_partida": plan_de_partida,

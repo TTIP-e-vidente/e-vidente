@@ -3,6 +3,10 @@ class_name Level
 
 signal run_completed
 
+const LOG_PREFIX_ARRASTRE := "[ARRASTRE]"
+const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
+const LOG_PREFIX_POST_GAME := "[POST_GAME]"
+
 ## --- Configuración ---
 
 const DEFAULT_TRACK_KEY            := "celiaquia"
@@ -34,7 +38,9 @@ const ContextoFinalizacionDeJuegoScript := preload(
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
-const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := "res://niveles/level_completion_black_and_white.gdshader"
+const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := (
+	"res://niveles/level_completion_black_and_white.gdshader"
+)
 const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
 const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const COMPLETION_DIM_COLOR := Color(0.62, 0.62, 0.62, 1.0)
@@ -63,7 +69,9 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
 @onready var tarjeta_ensenanza_cierre: Control = $TarjetaEnsenanzaCierre
-@onready var label_ensenanza_cierre: Label = $TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre
+@onready var label_ensenanza_cierre: Label = (
+	$TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre
+)
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
@@ -280,10 +288,14 @@ func _iniciar_arrastre_desde_json_si_corresponde() -> bool:
 	if nodo_datos.is_empty():
 		return false
 
-	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(nodo_datos)
+	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(
+		nodo_datos
+	)
 	if not bool(conversion.get("ok", false)):
 		push_warning("Level: JSON no válido para arrastre: %s" % str(conversion.get("error", "")))
 		return false
+
+	_log_arrastre_cargado(conversion.get("data", {}))
 
 	return _iniciar_runtime_de_arrastre_desde_datos(conversion.get("data", {}))
 
@@ -328,7 +340,10 @@ func _iniciar_runtime_de_arrastre_desde_datos(contenido_arrastre: Dictionary) ->
 
 
 func _aplicar_dificultad_de_arrastre() -> void:
-	if manager_level == null or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre"):
+	if (
+		manager_level == null
+		or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre")
+	):
 		return
 	if not _pertenece_a_partida_de_nodo:
 		manager_level.establecer_configuracion_de_dificultad_arrastre({})
@@ -345,8 +360,10 @@ func _construir_configuracion_de_dificultad_arrastre(dificultad: int) -> Diction
 		"elementos_maximos": DificultadArrastreScript.limitar_elementos_por_dificultad(
 			dificultad
 		),
-		"distractores_maximos": DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
-			dificultad
+		"distractores_maximos": (
+			DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
+				dificultad
+			)
 		),
 		"mostrar_ayuda_visual": DificultadArrastreScript.deberia_mostrar_ayuda_visual(
 			dificultad
@@ -422,6 +439,11 @@ func _finalizar_partida() -> void:
 	if level_number <= 0:
 		return
 	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
+		print(
+			LOG_PREFIX_ARRASTRE,
+			" completado=true llamando_ensenanza=true teaching_key=",
+			_obtener_teaching_key_actual()
+		)
 		_mostrar_ensenanza_del_nivel()
 		return
 	_finalizar_partida_normal(track_key, level_number)
@@ -462,11 +484,15 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+	var habia_siguiente: bool = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	var continuo: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
 		Callable(),
 		Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
 	)
+	if not continuo and habia_siguiente:
+		push_error("[POST_GAME] No se pudo avanzar: falta siguiente juego o target inválido.")
+	return continuo
 
 
 func _limpiar_estado_local_de_partida_en_nivel() -> void:
@@ -549,11 +575,28 @@ func _al_solicitar_continuar() -> void:
 		return
 
 	_ya_continuo = true
+	print(LOG_PREFIX_ENSENANZA, " cerrada=true llamando_post_game=true")
 	_ocultar_continuacion()
 	_continuar_despues_de_ensenanza(true)
 
 
 func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var indice_actual: int = int(juego_actual.get("indice_juego_actual", 0)) + 1
+	var total_juegos: int = int(juego_actual.get("total_juegos", 0))
+	var hay_siguiente := false
+	if _pertenece_a_partida_de_nodo:
+		hay_siguiente = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	print(LOG_PREFIX_POST_GAME, " contexto_recibido=", juego_actual)
+	print(
+		LOG_PREFIX_POST_GAME,
+		" juego_actual=",
+		indice_actual,
+		" total=",
+		total_juegos,
+		" hay_siguiente=",
+		hay_siguiente
+	)
 	if _continuar_partida_de_nodo_si_corresponde():
 		return
 	if not _has_post_game_flow_state():
@@ -868,7 +911,8 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
 	if is_instance_valid(tarjeta_ensenanza_cierre) and (
-		runtime_node == tarjeta_ensenanza_cierre or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
+		runtime_node == tarjeta_ensenanza_cierre
+		or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
 	):
 		return true
 	if is_instance_valid(save_feedback_backdrop) and (
@@ -890,6 +934,7 @@ func _hay_textura_de_ensenanza() -> bool:
 
 func _mostrar_ensenanza_de_cierre() -> void:
 	_establecer_visibilidad_indicador_de_progreso(false)
+	print(LOG_PREFIX_ENSENANZA, " mostrando teaching_key=", _obtener_teaching_key_actual())
 	if _hay_textura_de_ensenanza():
 		if is_instance_valid(tarjeta_ensenanza_cierre):
 			tarjeta_ensenanza_cierre.hide()
@@ -901,6 +946,33 @@ func _mostrar_ensenanza_de_cierre() -> void:
 	if is_instance_valid(tarjeta_ensenanza_cierre):
 		tarjeta_ensenanza_cierre.hide()
 	push_warning("Level: no hay asset de ensenanza para mostrar.")
+
+
+func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
+	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	print(
+		LOG_PREFIX_ARRASTRE,
+		" juego_actual=",
+		int(contexto.get("actual", 1)),
+		" total=",
+		int(contexto.get("total", 1)),
+		" id=",
+		str(datos_arrastre.get("node_key", datos_arrastre.get("id", ""))).strip_edges(),
+		" teaching_key=",
+		str(datos_arrastre.get("teaching_key", "")).strip_edges()
+	)
+
+
+func _obtener_teaching_key_actual() -> String:
+	var contenido: Variant = _datos_nodo_mapa.get("content", {})
+	if contenido is Dictionary:
+		var teaching_key: String = str(
+			(contenido as Dictionary).get("teaching_key", "")
+		).strip_edges()
+		if not teaching_key.is_empty():
+			return teaching_key
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	return str(juego_actual.get("teaching_key", "")).strip_edges()
 
 
 func restaurar_finalizacion_visual_estado() -> void:

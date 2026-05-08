@@ -77,6 +77,14 @@ func _process(_delta):
 			is_dragging = null
 			var tween = get_tree().create_tween()
 			if is_inside_droppable and is_instance_valid(body_ref):
+				print(
+					"[ARRASTRE] item=",
+					save_instance_id if not save_instance_id.is_empty() else item_resource_path,
+					" target=",
+					body_ref.name,
+					" correcto=",
+					body_ref == plato and esPositivo
+				)
 				tween.tween_property(
 					self,
 					"global_position",
@@ -86,6 +94,14 @@ func _process(_delta):
 				if body_ref == plato:
 					plato.reaccionar_comida(self)
 			else:
+				print(
+					"[ARRASTRE] item=",
+					save_instance_id if not save_instance_id.is_empty() else item_resource_path,
+					" target=",
+					"",
+					" correcto=",
+					false
+				)
 				tween.tween_property(
 					self,
 					"global_position",

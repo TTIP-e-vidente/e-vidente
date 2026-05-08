@@ -1,5 +1,9 @@
 extends RefCounted
 
+# ContextoSesionDeJuego.gd
+# Normaliza el contexto que consumen las escenas jugables.
+# Compatibilidad: mantiene claves nuevas y legacy hasta limpiar escenas antiguas.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 

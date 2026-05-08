@@ -1,0 +1,10 @@
+{
+  "id": "celiaquia",
+  "titulo": "Celiaquia",
+  "nodos": [
+    {
+      "id": "receta_1_desayuno",
+      "archivo": "res://contenido/nodos/celiaquia/arrastre/receta_1_desayuno.json"
+    }
+  ]
+}
