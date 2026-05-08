@@ -208,7 +208,7 @@ func _agregar_boton_perfil(hud_root: Control) -> void:
 	_profile_toggle_btn.offset_top = 16.0
 	_profile_toggle_btn.offset_right = -16.0
 	_profile_toggle_btn.offset_bottom = 84.0
-	_profile_toggle_btn.tooltip_text = "Mi progreso"
+	_profile_toggle_btn.tooltip_text = ""
 	_profile_toggle_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	_profile_toggle_btn.pressed.connect(_on_perfil_alternar_presionado)
 	hud_root.add_child(_profile_toggle_btn)

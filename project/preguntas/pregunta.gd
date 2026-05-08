@@ -23,6 +23,7 @@ const PresentadorContinuarJuegoScript := preload(
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
 const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
+const LOG_PREFIX_QUIZ := "[Quiz]"
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
@@ -88,14 +89,14 @@ func _ready() -> void:
 	_conectar_continuar_juego()
 
 	_recolectar_botones_respuesta()
-	configurar_quiz_desde_sesion()
+	_cargar_datos_pregunta()
 	_configurar_indicador_de_progreso_de_juego()
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	if _cantidad_de_preguntas() > 1:
 		quiz.theme.shuffle()
-	mostrar_pregunta()
+	_mostrar_pregunta()
 
 
 # Helpers de preparación
@@ -113,7 +114,7 @@ func _recolectar_botones_respuesta() -> void:
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
 	botones.append(boton_respuesta)
 	_registrar_posicion_base_boton(boton_respuesta)
-	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
+	boton_respuesta.pressed.connect(_on_opcion_seleccionada.bind(boton_respuesta))
 
 
 func _registrar_posicion_base_boton(boton_respuesta: Button) -> void:
@@ -181,6 +182,12 @@ func dodge_button(button: Button) -> void:
 		base_pos,
 		0.35
 	)
+
+func _cargar_datos_pregunta() -> void:
+	configurar_quiz_desde_sesion()
+	if quiz != null:
+		print(LOG_PREFIX_QUIZ, " activity=", _nodo_actual, " options=", _cantidad_de_opciones_actuales())
+
 
 func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
@@ -271,8 +278,18 @@ func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
 
+func _cantidad_de_opciones_actuales() -> int:
+	if quiz == null or quiz.theme.is_empty():
+		return 0
+	return quiz.theme[0].opciones.size()
+
+
 # Gameplay del quiz
 func mostrar_pregunta() -> void:
+	_mostrar_pregunta()
+
+
+func _mostrar_pregunta() -> void:
 	bloqueado = false
 
 	if quiz == null:
@@ -286,7 +303,11 @@ func mostrar_pregunta() -> void:
 
 	pregunta_label.text = pregunta_actual.info_pregunta
 	_mostrar_visual_de_pregunta(pregunta_actual)
-	_mostrar_opciones(pregunta_actual.opciones)
+	_crear_opciones(pregunta_actual.opciones)
+
+
+func _crear_opciones(opciones_actuales: Array[String]) -> void:
+	_mostrar_opciones(opciones_actuales)
 
 
 func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
@@ -319,8 +340,9 @@ func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
 
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
-	boton_respuesta.text = _texto_display(texto_respuesta)
-	boton_respuesta.tooltip_text = texto_respuesta
+	var texto_visible := _texto_display(texto_respuesta)
+	boton_respuesta.text = texto_visible
+	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", texto_respuesta)
 	boton_respuesta.modulate = Color.WHITE
 	boton_respuesta.disabled = false
@@ -393,35 +415,53 @@ func _limpiar_media_de_pregunta() -> void:
 
 
 func manejar_respuesta(boton: Button) -> void:
+	_on_opcion_seleccionada(boton)
+
+
+func _on_opcion_seleccionada(boton: Button) -> void:
 	if bloqueado:
 		return
 
 	bloqueado = true
 
 	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
-	var es_correcta: bool = pregunta_actual.correct == respuesta_elegida
-
-	_mostrar_feedback_respuesta(boton, es_correcta)
+	var es_correcta: bool = _validar_respuesta(respuesta_elegida)
+	print(LOG_PREFIX_QUIZ, " selected=", respuesta_elegida, " correct=", es_correcta)
 
 	if es_correcta:
-
-		puntaje += 1
-
-		for boton_respuesta in botones:
-			boton_respuesta.disabled = true
-
-		await get_tree().create_timer(1.2).timeout
-		_finalizar_quiz()
+		await _mostrar_feedback_correcto(boton)
+		_finalizar_pregunta()
 		return
 
-	await dodge_button(boton)
+	await _mostrar_feedback_error(boton)
+	bloqueado = false
+	_set_opciones_habilitadas(true)
 
+
+func _validar_respuesta(respuesta_elegida: String) -> bool:
+	return pregunta_actual.correct == respuesta_elegida
+
+
+func _mostrar_feedback_correcto(boton: Button) -> void:
+	puntaje += 1
+	_set_opciones_habilitadas(false)
+	_mostrar_feedback_respuesta(boton, true)
+	await get_tree().create_timer(1.2).timeout
+
+
+func _mostrar_feedback_error(boton: Button) -> void:
+	_mostrar_feedback_respuesta(boton, false)
+	await dodge_button(boton)
 	await get_tree().create_timer(0.4).timeout
 
-	bloqueado = false
 
+func _set_opciones_habilitadas(habilitadas: bool) -> void:
 	for boton_respuesta in botones:
-		boton_respuesta.disabled = false
+		boton_respuesta.disabled = not habilitadas
+
+
+func _finalizar_pregunta() -> void:
+	_finalizar_quiz()
 
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
@@ -456,6 +496,7 @@ func _obtener_sonido_respuesta_correcta() -> AudioStream:
 
 # Finalización de partida
 func _finalizar_quiz() -> void:
+	print(LOG_PREFIX_QUIZ, " completed activity=", _nodo_actual)
 	_finalizar_partida()
 
 

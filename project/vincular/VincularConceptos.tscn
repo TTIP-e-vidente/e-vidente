@@ -48,22 +48,16 @@ scale = Vector2(0.90560293, 0.93706816)
 theme_override_constants/separation = 148
 
 [node name="ConceptItemIzq" parent="Control/VBoxIzquierda" unique_id=2030109874 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="ConceptItemIzq2" parent="Control/VBoxIzquierda" unique_id=756252044 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="ConceptItemIzq3" parent="Control/VBoxIzquierda" unique_id=580409669 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="VBoxDerecha" type="VBoxContainer" parent="Control" unique_id=842886414]
 layout_mode = 0
@@ -75,22 +69,16 @@ scale = Vector2(0.8954954, 0.9091898)
 theme_override_constants/separation = 153
 
 [node name="ConceptItemDer" parent="Control/VBoxDerecha" unique_id=1982323240 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="ConceptItemDer2" parent="Control/VBoxDerecha" unique_id=308943551 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="ConceptItemDer3" parent="Control/VBoxDerecha" unique_id=1758347865 instance=ExtResource("4_y4o07")]
-custom_minimum_size = Vector2(0, -5.89)
 layout_mode = 2
-size_flags_horizontal = 0
-stretch_mode = 0
+size_flags_horizontal = 4
 
 [node name="LineDrawer" type="Line2D" parent="Control" unique_id=1431072580]
 position = Vector2(456, 401)

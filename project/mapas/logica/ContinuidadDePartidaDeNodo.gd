@@ -1,9 +1,6 @@
 extends RefCounted
 class_name ContinuidadDePartidaDeNodo
 
-# Decide si pasar al proximo game o completar el nodo.
-# Lee el plan activo; no carga contenido ni adapta activities.
-
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"

@@ -1,7 +1,5 @@
 extends Node2D
 
-# Ejecuta el minijuego de unir conceptos.
-# Recibe conceptos_izquierda y conceptos_derecha; no carga el mapa.
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
@@ -28,6 +26,7 @@ const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
 const ConceptItemScene := preload("res://vincular/concept_item.tscn")
+const LOG_PREFIX_MATCH := "[Match]"
 
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
@@ -42,6 +41,12 @@ const COLOR_LINEA_SOMBRA := Color(0.05, 0.04, 0.03, 0.28)
 const COLOR_FEEDBACK_NEUTRAL := Color(0.18, 0.19, 0.21, 1.0)
 const COLOR_FEEDBACK_OK := Color(0.17, 0.49, 0.28, 1.0)
 const COLOR_FEEDBACK_ERROR := Color(0.74, 0.18, 0.16, 1.0)
+const COLOR_GUIA := Color(0.26, 0.47, 0.37, 1.0)
+const TEXTO_GUIA_INICIAL := "Primero elegi un concepto de la izquierda."
+const TEXTO_GUIA_CON_SELECCION := "Ahora elegi su pareja de la derecha."
+const TEXTO_GUIA_GENERAL := "Elegi una tarjeta de la izquierda y despues su pareja de la derecha."
+const TEXTO_GUIA_CORRECTO := "Bien. Esa relacion es correcta."
+const TEXTO_GUIA_ERROR := "Proba otra combinacion."
 const MARGEN_ANCLAJE_LINEA := 12.0
 const DURACION_ANIMACION_LINEA := 0.16
 
@@ -68,6 +73,8 @@ var validado := false
 var boton_confirmar: Button = null
 var boton_continuar_validacion: Button = null
 var feedback_label: Label = null
+var guide_label: Label = null
+var center_hint: PanelContainer = null
 var click_areas: Control = null
 var teaching_sprite: Sprite2D = null
 
@@ -84,13 +91,14 @@ var _continuar_juego_es_continuacion_pendiente := false
 
 func _ready() -> void:
 	_preparar_sprite_ensenanza()
+	_preparar_layout_ui()
 	_recolectar_items()
 	_preparar_controles_de_confirmacion()
 	_preparar_click_areas()
 	_acomodar_pantalla()
 	if line_drawer != null:
 		line_drawer.z_as_relative = false
-		line_drawer.z_index = 80
+		line_drawer.z_index = 10
 		line_drawer.show()
 	_conectar_continuar_juego()
 	if boton_atras != null:
@@ -132,6 +140,181 @@ func _conectar_continuar_juego() -> void:
 		)
 
 
+func _preparar_layout_ui() -> void:
+	control_principal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	control_principal.offset_left = 0
+	control_principal.offset_top = 0
+	control_principal.offset_right = 0
+	control_principal.offset_bottom = 0
+	control_principal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var screen_margin := _asegurar_margin_container("ScreenMargin", control_principal)
+	screen_margin.z_index = 20
+	screen_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen_margin.offset_left = 96
+	screen_margin.offset_top = 88
+	screen_margin.offset_right = -96
+	screen_margin.offset_bottom = -64
+	_set_margenes(screen_margin, 0, 0, 0, 0)
+
+	var screen_stack := _asegurar_vbox("ScreenStack", screen_margin)
+	screen_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	screen_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	screen_stack.add_theme_constant_override("separation", 18)
+
+	var header := _asegurar_vbox("Header", screen_stack)
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_constant_override("separation", 6)
+	_reparent_control(label_pregunta, header)
+	label_pregunta.custom_minimum_size = Vector2(860, 82)
+
+	var main_layout := _asegurar_hbox("MainLayout", screen_stack)
+	main_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_layout.add_theme_constant_override("separation", 36)
+	main_layout.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	var left_column := _asegurar_vbox("LeftColumn", main_layout)
+	var right_column := _asegurar_vbox("RightColumn", main_layout)
+	center_hint = _asegurar_hint_card(main_layout)
+	_ordenar_hijos_main_layout(main_layout, left_column, center_hint, right_column)
+
+	_configurar_columna(left_column)
+	_configurar_columna(right_column)
+	_reparent_control(contenedor_izquierda, left_column)
+	_reparent_control(contenedor_derecha, right_column)
+
+	var footer := _asegurar_vbox("FeedbackLayer", screen_stack)
+	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.custom_minimum_size = Vector2(0, 106)
+	footer.add_theme_constant_override("separation", 8)
+
+	if line_drawer != null:
+		_reparent_canvas_item(line_drawer, control_principal)
+		line_drawer.z_as_relative = false
+		line_drawer.z_index = 10
+	if is_instance_valid(titulo_nivel):
+		titulo_nivel.text = "Celiaquia"
+
+
+func _asegurar_margin_container(nombre: String, parent: Node) -> MarginContainer:
+	var node := parent.get_node_or_null(nombre) as MarginContainer
+	if node == null:
+		node = MarginContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_vbox(nombre: String, parent: Node) -> VBoxContainer:
+	var node := parent.get_node_or_null(nombre) as VBoxContainer
+	if node == null:
+		node = VBoxContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_hbox(nombre: String, parent: Node) -> HBoxContainer:
+	var node := parent.get_node_or_null(nombre) as HBoxContainer
+	if node == null:
+		node = HBoxContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_hint_card(parent: Node) -> PanelContainer:
+	var node := parent.get_node_or_null("CenterHint") as PanelContainer
+	if node == null:
+		node = PanelContainer.new()
+		node.name = "CenterHint"
+		parent.add_child(node)
+		var padding := MarginContainer.new()
+		padding.name = "Padding"
+		node.add_child(padding)
+		_set_margenes(padding, 18, 14, 18, 14)
+		guide_label = Label.new()
+		guide_label.name = "GuideLabel"
+		padding.add_child(guide_label)
+	else:
+		guide_label = node.get_node_or_null("Padding/GuideLabel") as Label
+	node.custom_minimum_size = Vector2(248, 128)
+	node.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	node.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	node.add_theme_stylebox_override("panel", _crear_estilo_hint())
+	if guide_label != null:
+		guide_label.custom_minimum_size = Vector2(210, 90)
+		guide_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		guide_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		guide_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		guide_label.add_theme_font_size_override("font_size", 22)
+		guide_label.add_theme_color_override("font_color", COLOR_GUIA)
+		guide_label.text = TEXTO_GUIA_GENERAL
+	return node
+
+
+func _ordenar_hijos_main_layout(
+	main_layout: HBoxContainer,
+	left_column: VBoxContainer,
+	hint: PanelContainer,
+	right_column: VBoxContainer
+) -> void:
+	main_layout.move_child(left_column, 0)
+	main_layout.move_child(hint, 1)
+	main_layout.move_child(right_column, 2)
+
+
+func _configurar_columna(columna: VBoxContainer) -> void:
+	columna.custom_minimum_size = Vector2(282, 0)
+	columna.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	columna.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columna.alignment = BoxContainer.ALIGNMENT_CENTER
+	columna.add_theme_constant_override("separation", 0)
+
+
+func _reparent_control(node: Control, nuevo_parent: Node) -> void:
+	if node == null or node.get_parent() == nuevo_parent:
+		return
+	node.get_parent().remove_child(node)
+	nuevo_parent.add_child(node)
+
+
+func _reparent_canvas_item(node: CanvasItem, nuevo_parent: Node) -> void:
+	if node == null or node.get_parent() == nuevo_parent:
+		return
+	node.get_parent().remove_child(node)
+	nuevo_parent.add_child(node)
+
+
+func _set_margenes(
+	node: MarginContainer,
+	left: int,
+	top: int,
+	right: int,
+	bottom: int
+) -> void:
+	node.add_theme_constant_override("margin_left", left)
+	node.add_theme_constant_override("margin_top", top)
+	node.add_theme_constant_override("margin_right", right)
+	node.add_theme_constant_override("margin_bottom", bottom)
+
+
+func _crear_estilo_hint() -> StyleBoxFlat:
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color(1, 1, 1, 0.86)
+	estilo.border_color = Color(0.26, 0.47, 0.37, 0.55)
+	estilo.border_width_left = 2
+	estilo.border_width_top = 2
+	estilo.border_width_right = 2
+	estilo.border_width_bottom = 2
+	estilo.corner_radius_top_left = 8
+	estilo.corner_radius_top_right = 8
+	estilo.corner_radius_bottom_right = 8
+	estilo.corner_radius_bottom_left = 8
+	return estilo
+
+
 func _mostrar_continuacion_pendiente_si_corresponde() -> bool:
 	if _continuar_juego == null:
 		return false
@@ -142,6 +325,7 @@ func _mostrar_continuacion_pendiente_si_corresponde() -> bool:
 	_continuar_juego_es_continuacion_pendiente = true
 	bloqueado = true
 	label_pregunta.text = ""
+	_actualizar_texto_guia("")
 	_limpiar_vinculos_y_errores()
 	_actualizar_visual()
 	_bloquear_tarjetas()
@@ -204,6 +388,13 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		return
 
 	_datos_de_ejecucion = resultado_runtime.get("data", {}).duplicate(true)
+	print(
+		LOG_PREFIX_MATCH,
+		" activity=",
+		str(_datos_de_ejecucion.get("id", _nodo_actual)),
+		" pairs=",
+		int((_datos_de_ejecucion.get("conceptos_izquierda", []) as Array).size())
+	)
 
 
 func _reiniciar_estado_local() -> void:
@@ -230,17 +421,18 @@ func _limpiar_vinculos_y_errores() -> void:
 
 
 func _preparar_controles_de_confirmacion() -> void:
-	boton_confirmar = control_principal.get_node_or_null("ConfirmButton") as Button
+	var feedback_layer := _obtener_feedback_layer()
+	boton_confirmar = feedback_layer.get_node_or_null("ConfirmButton") as Button
 	if boton_confirmar == null:
 		boton_confirmar = Button.new()
 		boton_confirmar.name = "ConfirmButton"
 		boton_confirmar.custom_minimum_size = Vector2(220, 56)
-		control_principal.add_child(boton_confirmar)
-	boton_confirmar.position = Vector2(520, 724)
+		feedback_layer.add_child(boton_confirmar)
 	boton_confirmar.text = "Confirmar"
 	boton_confirmar.visible = true
 	boton_confirmar.disabled = true
 	boton_confirmar.z_index = 110
+	boton_confirmar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_aplicar_estilo_boton_badge(boton_confirmar, 24)
 	if not boton_confirmar.pressed.is_connected(confirmar):
 		boton_confirmar.pressed.connect(confirmar)
@@ -250,24 +442,26 @@ func _preparar_controles_de_confirmacion() -> void:
 
 
 func _preparar_boton_continuar_validacion() -> void:
-	boton_continuar_validacion = control_principal.get_node_or_null("ContinueButton") as Button
+	var feedback_layer := _obtener_feedback_layer()
+	boton_continuar_validacion = feedback_layer.get_node_or_null("ContinueButton") as Button
 	if boton_continuar_validacion == null:
 		boton_continuar_validacion = Button.new()
 		boton_continuar_validacion.name = "ContinueButton"
 		boton_continuar_validacion.custom_minimum_size = Vector2(236, 56)
-		control_principal.add_child(boton_continuar_validacion)
-	boton_continuar_validacion.position = Vector2(512, 724)
+		feedback_layer.add_child(boton_continuar_validacion)
 	boton_continuar_validacion.text = "Continuar"
 	boton_continuar_validacion.visible = false
 	boton_continuar_validacion.disabled = true
 	boton_continuar_validacion.z_index = 111
+	boton_continuar_validacion.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_aplicar_estilo_boton_badge(boton_continuar_validacion, 28)
 	if not boton_continuar_validacion.pressed.is_connected(_on_continuar_pressed):
 		boton_continuar_validacion.pressed.connect(_on_continuar_pressed)
 
 
 func _preparar_feedback_label() -> void:
-	feedback_label = control_principal.get_node_or_null("FeedbackLabel") as Label
+	var feedback_layer := _obtener_feedback_layer()
+	feedback_label = feedback_layer.get_node_or_null("FeedbackLabel") as Label
 	if feedback_label == null:
 		feedback_label = Label.new()
 		feedback_label.name = "FeedbackLabel"
@@ -276,12 +470,22 @@ func _preparar_feedback_label() -> void:
 		feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		feedback_label.add_theme_font_size_override("font_size", 24)
-		control_principal.add_child(feedback_label)
-	feedback_label.position = Vector2(320, 682)
+		feedback_layer.add_child(feedback_label)
+	feedback_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	feedback_label.visible = true
 	feedback_label.z_index = 110
 	feedback_label.text = ""
 	feedback_label.modulate = COLOR_FEEDBACK_NEUTRAL
+	feedback_layer.move_child(feedback_label, 0)
+
+
+func _obtener_feedback_layer() -> VBoxContainer:
+	var feedback_layer := control_principal.get_node_or_null(
+		"ScreenMargin/ScreenStack/FeedbackLayer"
+	) as VBoxContainer
+	if feedback_layer == null:
+		feedback_layer = _asegurar_vbox("FeedbackLayer", control_principal)
+	return feedback_layer
 
 
 func _aplicar_estilo_boton_badge(boton: Button, font_size: int) -> void:
@@ -311,16 +515,22 @@ func _crear_estilo_badge() -> StyleBoxTexture:
 
 
 func _acomodar_pantalla() -> void:
-	label_pregunta.position = Vector2(245, 198)
-	label_pregunta.size = Vector2(730, 86)
+	label_pregunta.custom_minimum_size = Vector2(820, 86)
+	label_pregunta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label_pregunta.scale = Vector2.ONE
 	label_pregunta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label_pregunta.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label_pregunta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label_pregunta.add_theme_font_size_override("font_size", 34)
 
-	contenedor_izquierda.position = Vector2(360, 334)
-	contenedor_derecha.position = Vector2(805, 334)
+	contenedor_izquierda.custom_minimum_size = Vector2(282, 0)
+	contenedor_derecha.custom_minimum_size = Vector2(282, 0)
+	contenedor_izquierda.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	contenedor_derecha.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	contenedor_izquierda.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	contenedor_derecha.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	contenedor_izquierda.alignment = BoxContainer.ALIGNMENT_CENTER
+	contenedor_derecha.alignment = BoxContainer.ALIGNMENT_CENTER
 	contenedor_izquierda.add_theme_constant_override("separation", 124)
 	contenedor_derecha.add_theme_constant_override("separation", 124)
 
@@ -331,7 +541,7 @@ func _preparar_click_areas() -> void:
 		click_areas = Control.new()
 		click_areas.name = "ClickAreas"
 		control_principal.add_child(click_areas)
-	click_areas.visible = true
+	click_areas.visible = false
 	click_areas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	click_areas.z_index = 100
 
@@ -384,11 +594,16 @@ func _aplicar_runtime_en_escena() -> void:
 		conceptos_izquierda,
 		conceptos_derecha
 	)
-	_configurar_lado(items_izquierda, conceptos_izquierda, "izquierda")
-	_configurar_lado(items_derecha, conceptos_derecha_ordenados, "derecha")
-	_mostrar_feedback("")
+	_crear_tarjetas(conceptos_izquierda, conceptos_derecha_ordenados)
+	_mostrar_feedback(TEXTO_GUIA_INICIAL)
+	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
 	_actualizar_visual()
 	call_deferred("_sincronizar_layout_interactivo")
+
+
+func _crear_tarjetas(conceptos_izquierda: Array, conceptos_derecha: Array) -> void:
+	_configurar_lado(items_izquierda, conceptos_izquierda, "izquierda")
+	_configurar_lado(items_derecha, conceptos_derecha, "derecha")
 
 
 func _asegurar_slots_visuales(total_requerido: int) -> void:
@@ -420,6 +635,7 @@ func _asegurar_slots_en_contenedor(
 		if nuevo_item == null:
 			return
 		nuevo_item.name = "%s%d" % [prefijo_nombre, items_existentes.size() + 1]
+		nuevo_item.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		contenedor.add_child(nuevo_item)
 		if not nuevo_item.seleccionado.is_connected(_on_item_seleccionado):
 			nuevo_item.seleccionado.connect(_on_item_seleccionado)
@@ -427,11 +643,11 @@ func _asegurar_slots_en_contenedor(
 
 
 func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
-	var separacion := 124
+	var separacion := 42
 	if total_requerido >= 5:
-		separacion = 48
+		separacion = 4
 	elif total_requerido == 4:
-		separacion = 72
+		separacion = 28
 	contenedor_izquierda.add_theme_constant_override("separation", separacion)
 	contenedor_derecha.add_theme_constant_override("separation", separacion)
 
@@ -479,20 +695,14 @@ func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado:
 			continue
 
 		var concepto: Dictionary = conceptos[indice] as Dictionary
-		item.configurar(
-			str(concepto.get("id", "")).strip_edges(),
-			str(concepto.get("texto", "")).strip_edges(),
-			lado,
-			str(concepto.get("id_par", "")).strip_edges()
-		)
+		item.setup(concepto, lado)
 		_aplicar_estado_tarjeta(item, "normal")
 		_hacer_tarjeta_clickeable(item)
 
 
 func _hacer_tarjeta_clickeable(item: ConceptoItem) -> void:
-	item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ignorar_mouse_en_hijos(item)
-	_crear_area_click_sobre_tarjeta(item)
+	item.mouse_filter = Control.MOUSE_FILTER_STOP
+	item.focus_mode = Control.FOCUS_ALL
 
 
 func _ignorar_mouse_en_hijos(node: Node) -> void:
@@ -556,22 +766,35 @@ func _on_item_seleccionado(item: ConceptoItem) -> void:
 	if bloqueado or validado or item == null or item.bloqueado:
 		return
 	if item.es_izquierda():
-		seleccionar_izquierda(item)
+		_seleccionar_tarjeta_izquierda(item)
 	elif item.es_derecha():
-		vincular_con_derecha(item)
+		_seleccionar_tarjeta_derecha(item)
 
 
 func seleccionar_izquierda(item: ConceptoItem) -> void:
+	_seleccionar_tarjeta_izquierda(item)
+
+
+func _seleccionar_tarjeta_izquierda(item: ConceptoItem) -> void:
 	seleccion_actual = item
+	print(LOG_PREFIX_MATCH, " selected_left=", item.concept_id)
+	_actualizar_texto_guia(TEXTO_GUIA_CON_SELECCION)
 	_mostrar_feedback("Elegí una tarjeta de la derecha.")
 	_actualizar_visual()
 
 
 func vincular_con_derecha(derecha: ConceptoItem) -> void:
+	_seleccionar_tarjeta_derecha(derecha)
+
+
+func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
 	if seleccion_actual == null:
+		_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
+		print(LOG_PREFIX_MATCH, " selected_right_without_left=", derecha.concept_id)
 		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
 		return
 
+	print(LOG_PREFIX_MATCH, " selected_right=", derecha.concept_id)
 	var izquierda := seleccion_actual
 	quitar_vinculo_anterior_de(derecha)
 	if izquierda.vinculada_con != null:
@@ -582,7 +805,8 @@ func vincular_con_derecha(derecha: ConceptoItem) -> void:
 	validado = false
 	_ocultar_continuar()
 	_animar_vinculo_creado(izquierda, derecha)
-	_mostrar_feedback("Vínculo creado.")
+	_validar_par_actual(izquierda, derecha)
+	_actualizar_visual()
 	_actualizar_visual()
 
 
@@ -591,6 +815,40 @@ func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
 		if izquierda.visible and izquierda.vinculada_con == derecha:
 			izquierda.limpiar_vinculo()
 			return
+
+
+func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
+	if _tarjetas_forman_par(izquierda, derecha):
+		_mostrar_feedback_correcto(izquierda)
+		return
+	_mostrar_feedback_error(izquierda)
+
+
+func _tarjetas_forman_par(izquierda: ConceptoItem, derecha: ConceptoItem) -> bool:
+	return (
+		is_instance_valid(izquierda)
+		and is_instance_valid(derecha)
+		and izquierda.par_key == derecha.par_key
+	)
+
+
+func _mostrar_feedback_correcto(izquierda: ConceptoItem) -> void:
+	izquierda.marcar_error(false)
+	_mostrar_feedback(TEXTO_GUIA_CORRECTO)
+	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
+	print(LOG_PREFIX_MATCH, " correct pair=", izquierda.par_key)
+
+
+func _mostrar_feedback_error(izquierda: ConceptoItem) -> void:
+	izquierda.marcar_error(true)
+	_mostrar_feedback(TEXTO_GUIA_ERROR)
+	_actualizar_texto_guia(TEXTO_GUIA_ERROR)
+
+
+func _completar_vinculacion() -> void:
+	_mostrar_feedback("Excelente. Completaste las relaciones.")
+	_actualizar_texto_guia("Excelente. Completaste las relaciones.")
+	print(LOG_PREFIX_MATCH, " completed activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
 
 
 func _actualizar_visual() -> void:
@@ -608,10 +866,10 @@ func _actualizar_tarjetas() -> void:
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
-		if izquierda.tiene_error:
-			_aplicar_estado_tarjeta(izquierda, "error")
-		elif izquierda == seleccion_actual:
+		if izquierda == seleccion_actual:
 			_aplicar_estado_tarjeta(izquierda, "seleccionada")
+		elif izquierda.tiene_error:
+			_aplicar_estado_tarjeta(izquierda, "error")
 		elif izquierda.esta_vinculada():
 			_aplicar_estado_tarjeta(izquierda, "vinculada")
 		else:
@@ -623,6 +881,9 @@ func _actualizar_tarjetas() -> void:
 
 
 func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
+	if item != null and item.has_method("aplicar_estado_visual"):
+		item.call("aplicar_estado_visual", tipo)
+		return
 	match tipo:
 		"seleccionada":
 			item.modulate = COLOR_TARJETA_SELECCIONADA
@@ -654,11 +915,22 @@ func _mostrar_feedback(texto: String) -> void:
 		feedback_label.modulate = _resolver_color_feedback(texto)
 
 
+func _actualizar_texto_guia(texto: String) -> void:
+	if guide_label == null:
+		return
+	guide_label.text = texto
+	guide_label.modulate = _resolver_color_feedback(texto)
+
+
 func _resolver_color_feedback(texto: String) -> Color:
 	var texto_normalizado := texto.to_lower()
-	if texto_normalizado.contains("muy bien"):
+	if texto_normalizado.contains("bien") or texto_normalizado.contains("correct"):
 		return COLOR_FEEDBACK_OK
-	if texto_normalizado.contains("revis") or texto_normalizado.contains("faltan"):
+	if (
+		texto_normalizado.contains("revis")
+		or texto_normalizado.contains("faltan")
+		or texto_normalizado.contains("proba")
+	):
 		return COLOR_FEEDBACK_ERROR
 	return COLOR_FEEDBACK_NEUTRAL
 
@@ -755,13 +1027,13 @@ func confirmar() -> void:
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
-		izquierda.marcar_error(not izquierda.es_correcta())
+		izquierda.marcar_error(not _tarjetas_forman_par(izquierda, izquierda.vinculada_con))
 		if izquierda.tiene_error:
 			todo_bien = false
 
 	validado = todo_bien
 	if todo_bien:
-		_mostrar_feedback("¡Muy bien!")
+		_completar_vinculacion()
 		_mostrar_continuar()
 		_actualizar_visual()
 		return

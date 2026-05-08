@@ -76,7 +76,7 @@ func _construir_hud() -> void:
 	_profile_button.offset_top = -84.0
 	_profile_button.offset_right = -16.0
 	_profile_button.offset_bottom = -16.0
-	_profile_button.tooltip_text = "Mi progreso"
+	_profile_button.tooltip_text = ""
 	_profile_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	_profile_button.pressed.connect(_on_boton_perfil_presionado)
 	_hud_root.add_child(_profile_button)

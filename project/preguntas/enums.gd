@@ -1,3 +1,4 @@
 class_name Enum
 
-enum TipoPregunta { TEXTO, IMAGEN, AUDIO, VIDEO}
+# Tipos de contenido visual que puede mostrar una pregunta.
+enum TipoPregunta { TEXTO, IMAGEN, AUDIO, VIDEO }

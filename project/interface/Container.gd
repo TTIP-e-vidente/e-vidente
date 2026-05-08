@@ -20,7 +20,7 @@ func configurar(track_definition: Dictionary) -> void:
 	var texture_path := str(track_definition.get("archive_texture_path", "")).strip_edges()
 	if not texture_path.is_empty():
 		archive_sprite.texture = load(texture_path) as Texture2D
-	tooltip_text = "Abrir %s" % (track_label if not track_label.is_empty() else "modo")
+	tooltip_text = ""
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 

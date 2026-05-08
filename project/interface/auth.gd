@@ -86,11 +86,7 @@ func _configurar_ui_estatica() -> void:
 	email_input.placeholder_text = "Mail (opcional)"
 	save_profile_button.text = "Guardar perfil"
 	back_button.text = ""
-	back_button.tooltip_text = (
-		"Volver al menu"
-		if _deberia_volver_a_intro()
-		else "Volver al Archivero"
-	)
+	back_button.tooltip_text = ""
 
 
 func _cargar_estado_perfil_actual() -> void:
