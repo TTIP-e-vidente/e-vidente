@@ -11,6 +11,16 @@ const RUNTIME_VINCULACION := "vinculacion_conceptos"
 const TARGET_ID := "target_1"
 const ITEMS_CELIAQUIA_PATH := "res://contenido/catalogos/items_celiaquia.json"
 const CATEGORY_SAFE := "sin_tacc"
+const LOG_PREFIX_TEACHING := "[Teaching]"
+const DRAG_FOOD_TEACHING_KEYS := {
+	"desayuno": "celiaquia_desayuno",
+	"colacion": "celiaquia_colacion",
+	"merienda": "celiaquia_merienda",
+	"almuerzo": "celiaquia_almuerzo",
+	"cena": "celiaquia_cena",
+	"bebida": "celiaquia_bebida",
+	"cocina_segura": "celiaquia_cocina_segura",
+}
 const DRAG_FOOD_DEFAULTS := {
 	"desayuno": {
 		"prompt": "Prepará un desayuno apto sin TACC.",
@@ -84,6 +94,7 @@ static func _quiz_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary
 
 static func _drag_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary:
 	var target_id := "target"
+	var teaching_key: String = _resolve_activity_teaching_key(activity)
 	var items: Array[Dictionary] = []
 	var index := 0
 	for raw_item in activity.get("items", []):
@@ -102,7 +113,8 @@ static func _drag_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary
 		})
 		index += 1
 	return _base_node(activity, pack_id, RUNTIME_DRAG_DROP, {
-		"teaching_key": "",
+		"teaching_key": teaching_key,
+		"ensenanza": teaching_key,
 		"instruction": str(activity.get("prompt", "")).strip_edges(),
 		"targets": [
 			{
@@ -142,6 +154,7 @@ static func _resolve_drag_food_content(
 	var items_catalog: Dictionary = catalog.get("items", {})
 	var prompt: String = _drag_food_prompt(activity, meal)
 	var target_label: String = _drag_food_target(activity, meal)
+	var teaching_key: String = _resolve_drag_food_teaching_key(activity, meal)
 
 	var pick: Dictionary = activity.get("pick", {})
 	var correct_count: int = int(pick.get("correct", 0))
@@ -202,9 +215,24 @@ static func _resolve_drag_food_content(
 	)
 	print("[DragFood] selected=%s" % _join_ids(selected_correct + selected_incorrect))
 	print("[DragFood] selected_ids=%s" % _join_ids(selected_correct + selected_incorrect))
+	print(
+		"%s activity=%s key=%s runtime_has_teaching_key=%s"
+		% [
+			LOG_PREFIX_TEACHING,
+			activity_id,
+			teaching_key,
+			str(not teaching_key.is_empty()),
+		]
+	)
+	if teaching_key.is_empty():
+		print(
+			"%s missing teaching data for activity=%s"
+			% [LOG_PREFIX_TEACHING, activity_id]
+		)
 
 	return {
-		"teaching_key": "",
+		"teaching_key": teaching_key,
+		"ensenanza": teaching_key,
 		"instruction": prompt,
 		"targets": [
 			{
@@ -217,6 +245,7 @@ static func _resolve_drag_food_content(
 
 
 static func _match_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary:
+	var teaching_key: String = _resolve_activity_teaching_key(activity)
 	var left: Array[Dictionary] = []
 	var right: Array[Dictionary] = []
 	var index := 0
@@ -242,7 +271,8 @@ static func _match_to_legacy(activity: Dictionary, pack_id: String) -> Dictionar
 		"instruccion": str(activity.get("prompt", "")).strip_edges(),
 		"conceptos_izquierda": left,
 		"conceptos_derecha": right,
-		"teaching_key": "",
+		"teaching_key": teaching_key,
+		"ensenanza": teaching_key,
 	})
 
 
@@ -253,14 +283,45 @@ static func _base_node(
 	content: Dictionary
 ) -> Dictionary:
 	var activity_id: String = str(activity.get("id", "")).strip_edges()
+	var teaching_key: String = _resolve_runtime_teaching_key(activity, content)
 	return {
 		"id": activity_id,
 		"theme": pack_id.strip_edges(),
 		"title": activity_id,
 		"difficulty": str(int(activity.get("difficulty", 1))),
 		"mode": runtime_mode,
+		"teaching_key": teaching_key,
 		"content": content,
 	}
+
+
+static func _resolve_drag_food_teaching_key(activity: Dictionary, meal: String) -> String:
+	var explicit_teaching_key: String = _resolve_activity_teaching_key(activity)
+	if not explicit_teaching_key.is_empty():
+		return explicit_teaching_key
+	return str(DRAG_FOOD_TEACHING_KEYS.get(meal.strip_edges(), "")).strip_edges()
+
+
+static func _resolve_runtime_teaching_key(
+	activity: Dictionary,
+	content: Dictionary
+) -> String:
+	var teaching_key: String = _read_teaching_key_from_dictionary(content)
+	if not teaching_key.is_empty():
+		return teaching_key
+	return _resolve_activity_teaching_key(activity)
+
+
+static func _resolve_activity_teaching_key(activity: Dictionary) -> String:
+	return _read_teaching_key_from_dictionary(activity)
+
+
+static func _read_teaching_key_from_dictionary(data: Dictionary) -> String:
+	for field in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
+		var teaching_key: String = str(data.get(field, "")).strip_edges()
+		if not teaching_key.is_empty():
+			return teaching_key
+	return ""
 
 
 static func _make_food_item(

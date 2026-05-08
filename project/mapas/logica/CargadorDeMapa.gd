@@ -9,6 +9,8 @@ const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NODE_JSON_ROOT := "res://contenido/nodos/"
 const GAME_JSON_ROOT := "res://contenido/juegos/"
 const LOG_PREFIX := "[MAPA]"
+const LOG_PREFIX_MAP_LOAD := "[MapLoad]"
+const LOG_PREFIX_MAP_NODE := "[MapNode]"
 const DIRECT_PLAYABLE_NODE_TYPES := [
 	"receta_arrastre",
 	"preguntas",
@@ -30,10 +32,11 @@ const CONTENT_RULES_BY_MODE := {
 }
 
 static func load_map(map_json_path: String) -> Dictionary:
-	print(LOG_PREFIX, " cargar_mapa=", map_json_path)
+	# Punto de entrada del mapa: lee el JSON y devuelve nodos normalizados.
+	print("%s path=%s" % [LOG_PREFIX_MAP_LOAD, map_json_path])
 	var raw_result: Dictionary = read_json_file(map_json_path)
 	if not bool(raw_result.get("ok", false)):
-		print(LOG_PREFIX, " error=", str(raw_result.get("error", "")))
+		print("%s error=%s" % [LOG_PREFIX_MAP_LOAD, str(raw_result.get("error", ""))])
 		return raw_result
 
 	return build_map_data(raw_result.get("data", {}), str(raw_result.get("path", map_json_path)))
@@ -226,7 +229,10 @@ static func _validate_activity_games(node: MapNodeData, label: String) -> String
 		if activity_id.is_empty():
 			continue
 		var pack_id: String = str(
-			game_entry.get("pack_id", node.pack_id if not node.pack_id.is_empty() else node.track_key)
+			game_entry.get(
+				"pack_id",
+				node.pack_id if not node.pack_id.is_empty() else node.track_key
+			)
 		).strip_edges()
 		var activity_result: Dictionary = NodeContentLoaderScript.has_activity(pack_id, activity_id)
 		if not bool(activity_result.get("ok", false)):
@@ -296,15 +302,23 @@ static func is_supported_map_mode(mode: String) -> bool:
 
 
 static func _build_v2_mapa(raw_map: Dictionary, source_path: String) -> Dictionary:
+	# Mapa v2: usa nodes como Dictionary ordenado por claves "1", "2", "3".
 	var track_key: String = str(
 		raw_map.get("track", raw_map.get("track_key", ""))
 	).strip_edges()
 	if track_key.is_empty():
 		return _error("El mapa v2 necesita campo 'track'.")
+	if int(raw_map.get("version", 0)) <= 0:
+		return _error("El mapa v2 necesita campo 'version'.")
 	var nodes_dict: Dictionary = raw_map.get("nodes", {}) as Dictionary
 	if nodes_dict.is_empty():
 		return _error("El mapa v2 no tiene nodos.")
-	var sorted_keys: Array = nodes_dict.keys()
+	var sorted_keys: Array[String] = []
+	for raw_key in nodes_dict.keys():
+		var order_key: String = str(raw_key).strip_edges()
+		if not order_key.is_valid_int() or int(order_key) <= 0:
+			return _error("El mapa v2 usa una clave de nodo invalida: %s" % order_key)
+		sorted_keys.append(order_key)
 	sorted_keys.sort_custom(func(a, b): return int(a) < int(b))
 	var nodes: Array[MapNodeData] = []
 	var seen_node_keys: Dictionary = {}
@@ -324,7 +338,9 @@ static func _build_v2_mapa(raw_map: Dictionary, source_path: String) -> Dictiona
 			return _error("El mapa repite node_key: %s" % clean_node_key)
 		seen_node_keys[clean_node_key] = true
 		nodes.append(node_data)
-	print("[MapLoad] path=%s nodes=%d" % [source_path, nodes.size()])
+	if not source_path.is_empty():
+		print("%s path=%s" % [LOG_PREFIX_MAP_LOAD, source_path])
+	print("%s track=%s nodes=%d" % [LOG_PREFIX_MAP_LOAD, track_key, nodes.size()])
 	return _ok({"id": track_key, "track_key": track_key, "title": track_key, "nodes": nodes})
 
 
@@ -334,22 +350,24 @@ static func _build_v2_node(
 	index: int,
 	order_key: String
 ) -> Dictionary:
+	# Cada nodo v2 se mantiene simple: node_key + games + shuffle_games.
 	var node_key: String = str(raw_node.get("node_key", "")).strip_edges()
 	if node_key.is_empty():
 		return _error("El nodo '%s' no tiene node_key." % order_key)
 	var raw_games: Variant = raw_node.get("games", [])
 	if not raw_games is Array or (raw_games as Array).is_empty():
 		return _error("El nodo '%s' no tiene games." % node_key)
+	var games_error: String = _validate_v2_games(raw_games as Array, node_key)
+	if not games_error.is_empty():
+		return _error(games_error)
 	if raw_node.has("shuffle_games") and not (raw_node.get("shuffle_games") is bool):
 		return _error("Nodo '%s': shuffle_games debe ser bool." % node_key)
 	var node: MapNodeData = MapNodeDataScript.from_json(raw_node, track_key, index)
+	var node_error: String = _hydrate_v2_game_entries(node, track_key)
+	if not node_error.is_empty():
+		return _error(node_error)
 	if node.title.is_empty():
 		node.title = "Nodo %d" % (index + 1)
-	if node.mode.is_empty() and not node.activity_id.is_empty():
-		var act_pack_id: String = (
-			node.pack_id if not node.pack_id.is_empty() else track_key
-		)
-		node.mode = NodeContentLoaderScript.get_activity_mode(act_pack_id, node.activity_id)
 	if not node.has_content_path():
 		return _error("Nodo '%s': games no contiene activity_id valido." % node_key)
 	if node.mode.is_empty():
@@ -361,10 +379,68 @@ static func _build_v2_node(
 	if not is_supported_map_mode(node.mode):
 		return _error("Nodo '%s' tiene mode no soportado: %s." % [node_key, node.mode])
 	print(
-		"[MapNode] order=%d node_key=%s games=%d"
-		% [index + 1, node_key, node.game_entries.size()]
+		"%s order=%d node_key=%s games=%d shuffle=%s"
+		% [
+			LOG_PREFIX_MAP_NODE,
+			node.order,
+			node_key,
+			node.get_game_count(),
+			str(node.shuffle_games),
+		]
 	)
 	return _ok(node)
+
+
+static func _validate_v2_games(raw_games: Array, node_key: String) -> String:
+	for raw_game in raw_games:
+		if not raw_game is String:
+			return "Nodo '%s': games debe contener strings." % node_key
+		if str(raw_game).strip_edges().is_empty():
+			return "Nodo '%s': games no puede contener strings vacios." % node_key
+	return ""
+
+
+static func _hydrate_v2_game_entries(node: MapNodeData, track_key: String) -> String:
+	if node == null or node.game_entries.is_empty():
+		return "Nodo sin games validos."
+
+	for game_index in range(node.game_entries.size()):
+		var game_entry: Dictionary = (node.game_entries[game_index] as Dictionary).duplicate(true)
+		var activity_id: String = str(game_entry.get("activity_id", "")).strip_edges()
+		if activity_id.is_empty():
+			return "Nodo '%s': games no contiene activity_id valido." % node.node_key
+		var pack_id: String = str(game_entry.get("pack_id", "")).strip_edges()
+		if pack_id.is_empty():
+			pack_id = node.get_effective_pack_id(track_key)
+		var activity_result: Dictionary = NodeContentLoaderScript.has_activity(
+			pack_id,
+			activity_id
+		)
+		if not bool(activity_result.get("ok", false)):
+			return "Nodo '%s': game '%s' invalido: %s" % [
+				node.node_key,
+				activity_id,
+				str(activity_result.get("error", "")),
+			]
+		var mode: String = NodeContentLoaderScript.get_activity_mode(pack_id, activity_id)
+		if not is_supported_map_mode(mode):
+			return "Nodo '%s': game '%s' tiene mode no soportado." % [
+				node.node_key,
+				activity_id,
+			]
+		game_entry["activity_id"] = activity_id
+		game_entry["pack_id"] = pack_id
+		game_entry["mode"] = mode
+		game_entry["tipo"] = mode
+		node.game_entries[game_index] = game_entry
+
+	var first_game: Dictionary = node.game_entries[0]
+	node.activity_id = str(first_game.get("activity_id", "")).strip_edges()
+	node.pack_id = str(
+		first_game.get("pack_id", node.get_effective_pack_id(track_key))
+	).strip_edges()
+	node.mode = str(first_game.get("mode", "")).strip_edges()
+	return ""
 
 
 static func _ok(data: Variant) -> Dictionary:

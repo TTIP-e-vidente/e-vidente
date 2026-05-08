@@ -11,6 +11,7 @@ const MAPA_DIR_BY_TRACK := {
 	"celiaquia": "res://contenido/mapa/",
 }
 const ITEMS_CELIAQUIA_PATH := "res://contenido/catalogos/items_celiaquia.json"
+const DEFAULT_PACK_ID := "celiaquia"
 const CATEGORY_SAFE := "sin_tacc"
 const VALID_CATEGORIES := ["sin_tacc", "con_gluten", "riesgo"]
 const VALID_MEALS := [
@@ -33,9 +34,10 @@ static func load_from_context(context: Dictionary) -> Dictionary:
 	).strip_edges()
 	var activity_id: String = str(context.get("activity_id", "")).strip_edges()
 	if not activity_id.is_empty():
-		var pack_id: String = str(context.get("pack_id", context.get("track_key", ""))).strip_edges()
-		if pack_id.is_empty():
-			pack_id = "celiaquia"
+		var pack_id: String = _resolve_pack_id(
+			str(context.get("pack_id", "")).strip_edges(),
+			str(context.get("track_key", "")).strip_edges()
+		)
 		var pack_result: Dictionary = load_from_pack(pack_id, activity_id, context)
 		if bool(pack_result.get("ok", false)):
 			print(
@@ -100,7 +102,7 @@ static func load_from_pack(
 
 
 static func load_pack(pack_id: String) -> Dictionary:
-	var clean_pack_id: String = pack_id.strip_edges()
+	var clean_pack_id: String = _resolve_pack_id(pack_id)
 	var mapa_dir: String = str(MAPA_DIR_BY_TRACK.get(clean_pack_id, "")).strip_edges()
 	if not mapa_dir.is_empty():
 		return _load_mapa_pack(clean_pack_id, mapa_dir)
@@ -138,7 +140,8 @@ static func load_pack(pack_id: String) -> Dictionary:
 
 
 static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
-	var pack_result: Dictionary = load_pack(pack_id)
+	var resolved_pack_id: String = _resolve_pack_id(pack_id)
+	var pack_result: Dictionary = load_pack(resolved_pack_id)
 	if not bool(pack_result.get("ok", false)):
 		return pack_result
 
@@ -147,7 +150,7 @@ static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
 	if activity.is_empty():
 		return _error(
 			"Content Pack %s no contiene activity_id: %s"
-			% [pack_id.strip_edges(), activity_id.strip_edges()]
+			% [resolved_pack_id, activity_id.strip_edges()]
 		)
 
 	return {
@@ -160,25 +163,32 @@ static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
 
 
 static func has_activity(pack_id: String, activity_id: String) -> Dictionary:
-	var result: Dictionary = load_activity(pack_id, activity_id)
+	var result: Dictionary = load_activity(_resolve_pack_id(pack_id), activity_id)
 	if bool(result.get("ok", false)):
 		return {"ok": true, "error": ""}
 	return {"ok": false, "error": str(result.get("error", ""))}
 
 
 static func get_activity_mode(pack_id: String, activity_id: String) -> String:
-	var result: Dictionary = load_activity(pack_id, activity_id)
+	var resolved_pack_id: String = _resolve_pack_id(pack_id)
+	var result: Dictionary = load_activity(resolved_pack_id, activity_id)
 	if not bool(result.get("ok", false)):
 		return ""
 	var activity: Dictionary = result.get("data", {})
-	match str(activity.get("mode", "")).strip_edges():
+	var raw_mode: String = str(activity.get("mode", "")).strip_edges()
+	var runtime_mode := ""
+	match raw_mode:
 		"quiz":
-			return "quiz_choice"
+			runtime_mode = "quiz_choice"
 		"drag", "drag_food":
-			return "drag_drop"
+			runtime_mode = "drag_drop"
 		"match":
-			return "vinculacion_conceptos"
-	return ""
+			runtime_mode = "vinculacion_conceptos"
+	print(
+		"[ActivityMode] track=%s activity=%s mode=%s"
+		% [resolved_pack_id, activity_id.strip_edges(), runtime_mode]
+	)
+	return runtime_mode
 
 
 static func get_activity(pack: Dictionary, activity_id: String) -> Dictionary:
@@ -323,7 +333,7 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 	var validation_error: String = _validate_pack_minimal(pack)
 	if not validation_error.is_empty():
 		return _error("Mapa %s invalido: %s" % [track_id, validation_error])
-	print("[ContentPack] mapa cargado id=%s activities=%d" % [track_id, activities.size()])
+	print("[ContentMap] track=%s activities=%d" % [track_id, activities.size()])
 	return {"ok": true, "error": "", "data": pack, "path": mapa_dir}
 
 
@@ -351,6 +361,16 @@ static func _load_activity_dict_file(path: String) -> Dictionary:
 		activity["id"] = activity_id
 		activities.append(activity)
 	return {"ok": true, "error": "", "data": activities}
+
+
+static func _resolve_pack_id(pack_id: String, fallback_track_key: String = "") -> String:
+	var clean_pack_id: String = pack_id.strip_edges()
+	if not clean_pack_id.is_empty():
+		return clean_pack_id
+	var clean_track_key: String = fallback_track_key.strip_edges()
+	if not clean_track_key.is_empty():
+		return clean_track_key
+	return DEFAULT_PACK_ID
 
 
 static func _error(message: String) -> Dictionary:

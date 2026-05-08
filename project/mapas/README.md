@@ -16,27 +16,15 @@ La ruta principal para entender el mapa es:
 
 ## Ruta oficial de lectura
 
-`MapScene.gd` carga el JSON del mapa usando `CargadorDeMapa.gd`.
+1. `CargadorDeMapa.gd` lee `res://contenido/mapa/celiaquia_mapa.json`.
+2. `MapNodeData.gd` normaliza cada nodo a un dato simple.
+3. `ArmadorDePartida.gd` arma la secuencia de `games` del nodo.
+4. Si `shuffle_games` es `true`, mezcla una copia de `games`.
+5. `AbridorDeNodoJugable.gd` abre el juego actual del plan.
+6. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente juego o cierra el nodo.
+7. `AvanceDeNodo.gd` consulta si el nodo ya estaba desbloqueado o completado.
 
-`CargadorDeMapa.gd` valida el JSON y crea objetos `MapNodeData`.
-
-`AvanceDeNodo.gd` calcula si cada nodo esta bloqueado, disponible o completado.
-
-`MapScene.gd` pasa esos datos a `MapBoard.gd`.
-
-`MapBoard.gd` configura los nodos visuales `LevelNode.gd`.
-
-Cuando el jugador toca un nodo, `LevelNode.gd` emite `selected`.
-
-`MapBoard.gd` reemite `node_selected`.
-
-`MapScene.gd` abre el nodo usando `AbridorDeNodoJugable.gd`.
-
-`AbridorDeNodoJugable.gd` arma la sesion y delega en `ArmadorDePartida.gd`.
-
-`ArmadorDePartida.gd` construye la lista de juegos del nodo.
-
-`ContinuidadDePartidaDeNodo.gd` decide si abrir el siguiente juego o terminar la partida del nodo.
+`MapScene.gd`, `MapBoard.gd` y `LevelNode.gd` siguen siendo la capa visual y de interacción.
 
 ## Responsabilidades
 
@@ -44,12 +32,38 @@ Cuando el jugador toca un nodo, `LevelNode.gd` emite `selected`.
 - `MapBoard.gd`: presentacion del tablero, scroll y conexion con nodos visuales.
 - `LevelNode.gd`: nodo visual clickeable del mapa.
 - `MapHud.gd`: HUD del mapa, perfil, racha y boton volver.
-- `core/MapNodeData.gd`: dato puro de un nodo cargado desde JSON.
-- `logica/CargadorDeMapa.gd`: carga y validacion del JSON del mapa.
-- `logica/AvanceDeNodo.gd`: calculo de progreso, desbloqueo y completado.
-- `logica/AbridorDeNodoJugable.gd`: apertura de un nodo jugable.
-- `logica/ArmadorDePartida.gd`: armado de la partida de varios juegos por nodo.
-- `logica/ContinuidadDePartidaDeNodo.gd`: continuidad entre juegos de una partida.
+- `core/MapNodeData.gd`: dato normalizado del nodo (`order`, `node_key`, `games`, `shuffle_games`).
+- `logica/CargadorDeMapa.gd`: carga el mapa, ordena nodos y valida estructura basica.
+- `logica/AvanceDeNodo.gd`: consulta progreso, desbloqueo y completado ya guardados.
+- `logica/AbridorDeNodoJugable.gd`: abre el nodo jugable actual.
+- `logica/ArmadorDePartida.gd`: arma la secuencia de juegos del nodo y aplica `shuffle_games`.
+- `logica/ContinuidadDePartidaDeNodo.gd`: avanza al siguiente juego o termina el nodo.
+
+## shuffle_games
+
+`shuffle_games` solo cambia el orden de ejecucion de `games` dentro del nodo.
+
+Reglas:
+- si no existe o es `false`, `games` se juega en el orden escrito;
+- si es `true`, se mezcla una copia de `games` cada vez que se arma la partida;
+- si el nodo tiene un solo juego, no se aplica shuffle;
+- el array original del JSON nunca se modifica.
+
+Ejemplo:
+
+```json
+{
+	"node_key": "celiaquia_05_merienda_intro",
+	"shuffle_games": true,
+	"games": ["drag_merienda_facil", "quiz_cereales_gluten"]
+}
+```
+
+Este nodo siempre tiene los mismos dos juegos. Lo unico que cambia entre corridas es cual va primero.
+
+## Deuda tecnica visible
+
+`AvanceDeNodo.gd` hoy no persiste progreso por si mismo: consulta y deriva estado desde `Global`. Se mantiene asi para no abrir una refactorizacion grande del flujo de guardado.
 
 ## Que vive en core
 

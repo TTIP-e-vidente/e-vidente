@@ -4,7 +4,6 @@ class_name ArmadorDePartida
 const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
-const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const DatosNodoMapaScript := preload("res://mapas/core/MapNodeData.gd")
 
 const JUEGOS_POR_PARTIDA_DE_NODO := 5
@@ -17,7 +16,7 @@ const MODOS_SOPORTADOS := [
 const RUTA_MAPA_POR_PISTA := {
 	CatalogoDePistas.TRACK_CELIAQUIA: "res://contenido/mapa/celiaquia_mapa.json",
 }
-const LOG_PREFIX := "[ARMADOR_PARTIDA]"
+const LOG_PREFIX := "[RunPlan]"
 const DIFICULTAD_FACIL := 1
 const DIFICULTAD_MEDIA := 3
 const DIFICULTAD_DIFICIL := 5
@@ -25,22 +24,17 @@ const DIFICULTAD_DIFICIL := 5
 static var _cache_dificultad_por_ruta: Dictionary = {}
 
 
-# Plan de partida
+# Arma la corrida del nodo sin tocar el JSON original ni abrir escenas.
 static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 	if node_data == null or not node_data.is_valid():
 		print(LOG_PREFIX, " nodo invalido o sin contenido")
 		return {}
 
+	var effective_pack_id: String = node_data.get_effective_pack_id()
 	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
 	var juegos: Array[Dictionary] = []
 	if node_data.has_explicit_games():
 		juegos = construir_juegos_explicitos(node_data)
-		print(
-			LOG_PREFIX,
-			" nodo=", node_data.node_key,
-			" juegos_explicitos=", juegos.size(),
-			" usa_v1=", not juegos.is_empty()
-		)
 		if juegos.is_empty():
 			push_warning(
 				"ArmadorDePartida: juegos explicitos invalidos en %s. Se usa legacy."
@@ -57,10 +51,8 @@ static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 		print(LOG_PREFIX, " nodo=", node_data.node_key, " juegos=0 usa_v1=false")
 		return {}
 	print(
-		LOG_PREFIX,
-		" nodo=", node_data.node_key,
-		" juegos=", juegos.size(),
-		" modo_inicial=", str(juegos[0].get("mode", ""))
+		"%s track=%s node=%s games=%d"
+		% [LOG_PREFIX, effective_pack_id, node_data.node_key, juegos.size()]
 	)
 
 	return {
@@ -80,18 +72,15 @@ static func obtener_cantidad_de_juegos_para_nodo(node_index: int) -> int:
 
 
 static func construir_juegos_explicitos(node_data: MapNodeData) -> Array[Dictionary]:
+	# Usa exactamente la lista declarada en games; shuffle solo reordena una copia local.
 	var juegos: Array[Dictionary] = []
 	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
 	var game_entries: Array[Dictionary] = _preparar_game_entries_para_plan(node_data)
 	for raw_game in game_entries:
 		var game_entry: Dictionary = raw_game as Dictionary
-		var pack_id: String = str(
-			game_entry.get("pack_id", node_data.pack_id if not node_data.pack_id.is_empty() else node_data.track_key)
-		).strip_edges()
+		var pack_id: String = _resolve_pack_id_for_game_entry(game_entry, node_data)
 		var activity_id: String = str(game_entry.get("activity_id", "")).strip_edges()
 		var mode: String = str(game_entry.get("mode", game_entry.get("tipo", ""))).strip_edges()
-		if mode.is_empty() and not activity_id.is_empty():
-			mode = _runtime_mode_from_activity(pack_id, activity_id)
 		var datos_juego := {
 			"mode": mode,
 			"json_path": str(
@@ -120,7 +109,6 @@ static func construir_juegos_explicitos(node_data: MapNodeData) -> Array[Diction
 			print(LOG_PREFIX, " juego explicito ignorado por json_path vacio: ", game_entry)
 			continue
 		juegos.append(juego)
-	print("[RunPlan] node=%s games=%d" % [node_data.node_key, juegos.size()])
 	return juegos
 
 
@@ -338,10 +326,6 @@ static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dic
 	}
 
 
-static func _runtime_mode_from_activity(pack_id: String, activity_id: String) -> String:
-	return NodeContentLoaderScript.get_activity_mode(pack_id, activity_id)
-
-
 static func _calcular_dificultad_del_juego(dificultad_inicial: int, numero_de_juego: int) -> int:
 	var dificultad_segura: int = clampi(dificultad_inicial, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
 	if dificultad_segura <= 1:
@@ -420,21 +404,23 @@ static func _mezclar_array(valores: Array[String], rng: RandomNumberGenerator) -
 
 
 static func _preparar_game_entries_para_plan(node_data: MapNodeData) -> Array[Dictionary]:
+	# Shuffle trabaja sobre copias; node_data.games y el JSON original quedan intactos.
 	var game_entries: Array[Dictionary] = []
 	for raw_game in node_data.game_entries:
 		if raw_game is Dictionary:
 			game_entries.append((raw_game as Dictionary).duplicate(true))
 	var original_ids: Array[String] = _ids_de_game_entries(game_entries)
-	if node_data.shuffle_games and game_entries.size() > 1:
+	var apply_shuffle: bool = node_data.shuffle_games and game_entries.size() > 1
+	if apply_shuffle:
 		var rng := RandomNumberGenerator.new()
 		rng.randomize()
 		_mezclar_game_entries(game_entries, rng)
 	var final_ids: Array[String] = _ids_de_game_entries(game_entries)
 	print(
-		"[RunPlan] node=%s shuffle=%s games_original=%s games_final=%s"
+		"[RunPlan] node=%s shuffle=%s original=%s final=%s"
 		% [
 			node_data.node_key,
-			str(node_data.shuffle_games),
+			str(apply_shuffle),
 			_unir_strings(original_ids),
 			_unir_strings(final_ids),
 		]
@@ -468,6 +454,18 @@ static func _unir_strings(valores: Array[String]) -> String:
 	for valor in valores:
 		partes.append(valor)
 	return ",".join(partes)
+
+
+static func _resolve_pack_id_for_game_entry(
+	game_entry: Dictionary,
+	node_data: MapNodeData
+) -> String:
+	var pack_id: String = str(game_entry.get("pack_id", "")).strip_edges()
+	if not pack_id.is_empty():
+		return pack_id
+	if node_data != null:
+		return node_data.get_effective_pack_id()
+	return "celiaquia"
 
 
 static func _normalizar_modo(mode: String) -> String:

@@ -214,6 +214,47 @@ Reglas:
 
 ---
 
+## Cómo funciona el mapa
+
+`celiaquia_mapa.json` define los nodos del capitulo.
+
+Cada nodo usa este modelo simple:
+
+- `node_key`: identifica el nodo.
+- `games`: lista de juegos del nodo.
+- `shuffle_games`: opcional; mezcla el orden de `games`.
+
+Ejemplo:
+
+```json
+{
+  "node_key": "celiaquia_05_merienda_intro",
+  "shuffle_games": true,
+  "games": ["drag_merienda_facil", "quiz_cereales_gluten"]
+}
+```
+
+Explicacion:
+Este nodo tiene dos juegos. Cada vez que se arma la partida puede empezar por cualquiera de los dos, pero sigue teniendo exactamente los mismos juegos.
+
+Reglas de `shuffle_games`:
+
+- ausente o `false`: se usa el orden escrito en `games`;
+- `true`: se mezcla una copia de `games` cada vez que se entra al nodo;
+- si `games.size() <= 1`, no se mezcla nada;
+- el JSON original no se modifica.
+
+Flujo trainee:
+
+1. `CargadorDeMapa.gd` lee `celiaquia_mapa.json`.
+2. `MapNodeData.gd` guarda `order`, `node_key`, `games` y `shuffle_games`.
+3. `ArmadorDePartida.gd` arma la secuencia del nodo.
+4. `AbridorDeNodoJugable.gd` abre el juego actual.
+5. `ContinuidadDePartidaDeNodo.gd` pasa al siguiente juego.
+6. `AvanceDeNodo.gd` consulta si el nodo ya quedo completado.
+
+---
+
 ## Flujo completo
 
 ```

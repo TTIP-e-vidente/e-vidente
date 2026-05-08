@@ -3,78 +3,91 @@
     "mode": "drag_food",
     "difficulty": 1,
     "meal": "desayuno",
+    "teaching_key": "celiaquia_desayuno",
     "pick": { "correct": 2, "incorrect": 1 }
   },
   "drag_desayuno_normal": {
     "mode": "drag_food",
     "difficulty": 2,
     "meal": "desayuno",
+    "teaching_key": "celiaquia_desayuno",
     "pick": { "correct": 2, "incorrect": 2 }
   },
   "drag_colacion_facil": {
     "mode": "drag_food",
     "difficulty": 1,
     "meal": "colacion",
+    "teaching_key": "celiaquia_colacion",
     "pick": { "correct": 2, "incorrect": 1 }
   },
   "drag_colacion_normal": {
     "mode": "drag_food",
     "difficulty": 2,
     "meal": "colacion",
+    "teaching_key": "celiaquia_colacion",
     "pick": { "correct": 3, "incorrect": 2 }
   },
   "drag_merienda_facil": {
     "mode": "drag_food",
     "difficulty": 1,
     "meal": "merienda",
+    "teaching_key": "celiaquia_merienda",
     "pick": { "correct": 2, "incorrect": 1 }
   },
   "drag_merienda_normal": {
     "mode": "drag_food",
     "difficulty": 2,
     "meal": "merienda",
+    "teaching_key": "celiaquia_merienda",
     "pick": { "correct": 2, "incorrect": 2 }
   },
   "drag_merienda_dificil": {
     "mode": "drag_food",
     "difficulty": 3,
     "meal": "merienda",
+    "teaching_key": "celiaquia_merienda",
     "pick": { "correct": 3, "incorrect": 3 }
   },
   "drag_almuerzo_facil": {
     "mode": "drag_food",
     "difficulty": 1,
     "meal": "almuerzo",
+    "teaching_key": "celiaquia_almuerzo",
     "pick": { "correct": 2, "incorrect": 1 }
   },
   "drag_almuerzo_normal": {
     "mode": "drag_food",
     "difficulty": 2,
     "meal": "almuerzo",
+    "teaching_key": "celiaquia_almuerzo",
     "pick": { "correct": 3, "incorrect": 2 }
   },
   "drag_almuerzo_dificil": {
     "mode": "drag_food",
     "difficulty": 3,
     "meal": "almuerzo",
+    "teaching_key": "celiaquia_almuerzo",
     "pick": { "correct": 3, "incorrect": 3 }
   },
   "drag_cena_normal": {
     "mode": "drag_food",
     "difficulty": 2,
     "meal": "cena",
+    "teaching_key": "celiaquia_cena",
     "pick": { "correct": 3, "incorrect": 2 }
   },
   "drag_cena_dificil": {
     "mode": "drag_food",
     "difficulty": 3,
     "meal": "cena",
+    "teaching_key": "celiaquia_cena",
     "pick": { "correct": 3, "incorrect": 3 }
   },
   "drag_bebida_facil": {
     "mode": "drag_food",
     "difficulty": 1,
     "meal": "bebida",
+    "teaching_key": "celiaquia_bebida",
     "pick": { "correct": 2, "incorrect": 1 }
   }
 }

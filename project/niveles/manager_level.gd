@@ -414,7 +414,7 @@ func _obtener_clave_ensenanza_explicita(
 
 
 func _leer_clave_ensenanza_de_diccionario(datos: Dictionary) -> String:
-	for clave_campo in ["teaching_key", "ensenanza_key", "clave_ensenanza"]:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
 		var clave: String = str(datos.get(clave_campo, "")).strip_edges()
 		if not clave.is_empty():
 			return clave

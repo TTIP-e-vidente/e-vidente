@@ -7,6 +7,7 @@ const STATE_LOCKED := "locked"
 const LOG_PREFIX := "[AVANCE_NODO]"
 
 
+# Solo consulta el progreso ya guardado; no abre escenas ni arma partidas.
 static func get_node_state(nodos_mapa: Array, node_data: MapNodeData) -> Dictionary:
 	if node_data == null:
 		return _state(false, false, STATE_LOCKED)
@@ -60,14 +61,27 @@ static func obtener_siguiente_nodo(nodos_mapa: Array, node_key_actual: String) -
 
 	var siguiente_indice: int = indice_actual + 1
 	if siguiente_indice >= nodos_mapa.size():
-		print(LOG_PREFIX, " siguiente_nodo=false indice_actual=", indice_actual, " total=", nodos_mapa.size())
+		print(
+			LOG_PREFIX,
+			" siguiente_nodo=false indice_actual=",
+			indice_actual,
+			" total=",
+			nodos_mapa.size()
+		)
 		return null
 
-	print(LOG_PREFIX, " siguiente_nodo=true indice_actual=", indice_actual, " siguiente=", siguiente_indice)
+	print(
+		LOG_PREFIX,
+		" siguiente_nodo=true indice_actual=",
+		indice_actual,
+		" siguiente=",
+		siguiente_indice
+	)
 	return nodos_mapa[siguiente_indice]
 
 
 static func hay_siguiente_juego(plan_de_partida: Dictionary) -> bool:
+	# Lee el plan actual y responde si queda otro juego dentro del mismo nodo.
 	var total_juegos: int = _obtener_total_juegos_plan(plan_de_partida)
 	var indice_actual: int = int(plan_de_partida.get("indice_juego_actual", 0))
 	var hay_siguiente: bool = indice_actual >= 0 and indice_actual + 1 < total_juegos
