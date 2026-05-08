@@ -407,7 +407,7 @@ func _reproducir_audio_nivel() -> void:
 
 
 func configurar_retroalimentacion_de_guardado() -> void:
-	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
+	save_progress_button.tooltip_text = ""
 	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE

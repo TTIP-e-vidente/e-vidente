@@ -1,21 +1,37 @@
-[gd_scene format=3 uid="uid://dreulrv8mq1oa"]
+[gd_scene load_steps=2 format=3 uid="uid://dreulrv8mq1oa"]
 
 [ext_resource type="Script" uid="uid://dlcmeiufgvp20" path="res://vincular/concept_item.gd" id="1_0tgql"]
-[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_nrq2q"]
-[node name="ConceptItem" type="TextureButton" unique_id=2030109874]
-scale = Vector2(0.1264499, 0.1264499)
+
+[node name="ConceptItem" type="PanelContainer" unique_id=2030109874]
+custom_minimum_size = Vector2(260, 78)
+mouse_default_cursor_shape = 2
 script = ExtResource("1_0tgql")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1448171585]
-texture = ExtResource("1_nrq2q")
+[node name="Padding" type="MarginContainer" parent="." unique_id=1448171585]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 10
 
-[node name="Label" type="Label" parent="." unique_id=443793939]
-layout_mode = 0
-offset_left = -75.83918
-offset_top = -31.63308
-offset_right = 57.16082
-offset_bottom = 19.366924
-scale = Vector2(0.99236757, 1)
-pivot_offset = Vector2(75.839195, 37.919594)
-theme_override_font_sizes/font_size = 42
+[node name="Content" type="HBoxContainer" parent="Padding"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="StatusMark" type="Label" parent="Padding/Content" unique_id=1448171586]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="Padding/Content" unique_id=443793939]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
 text = "prueba"
+autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1

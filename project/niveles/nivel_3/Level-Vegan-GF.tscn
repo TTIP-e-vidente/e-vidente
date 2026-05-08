@@ -344,7 +344,7 @@ offset_left = 1023.0
 offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
-tooltip_text = "Guardar progreso"
+tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=1094585921]

@@ -74,7 +74,7 @@ func _reconstruir_botones_capitulo() -> void:
 		if chapter_button == null:
 			continue
 		chapter_button.name = "%s%d" % [CHAPTER_BUTTON_NAME_PREFIX, level_number]
-		chapter_button.tooltip_text = "Abrir capitulo %d" % level_number
+		chapter_button.tooltip_text = ""
 		if level_number - 1 < _chapter_button_icons.size():
 			chapter_button.icon = _chapter_button_icons[level_number - 1]
 			chapter_button.text = ""

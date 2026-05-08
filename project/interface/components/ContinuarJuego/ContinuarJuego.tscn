@@ -1,12 +1,13 @@
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://interface/components/ContinuarJuego/ContinuarJuego.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://d310wsm1t43q5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_flecha"]
+[ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="2_flecha"]
 
 [node name="ContinuarJuego" type="Control"]
 visible = false
 custom_minimum_size = Vector2(128, 128)
-z_index = 20
+z_as_relative = false
+z_index = 200
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -38,7 +39,7 @@ custom_minimum_size = Vector2(128, 128)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_default_cursor_shape = 2
-tooltip_text = "Siguiente"
+tooltip_text = ""
 focus_mode = 0
 icon = ExtResource("2_flecha")
 flat = true

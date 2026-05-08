@@ -82,7 +82,7 @@ func update_view() -> void:
 	if title_label != null:
 		title_label.text = _get_title()
 	if button != null:
-		button.tooltip_text = _get_title()
+		button.tooltip_text = ""
 		button.disabled = _is_button_disabled()
 		button.mouse_default_cursor_shape = (
 			Control.CURSOR_ARROW
