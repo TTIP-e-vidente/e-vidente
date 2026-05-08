@@ -27,7 +27,6 @@ const GameChapterAssetCatalogScript := preload(
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
 const BADGE_TEXTURE := preload("res://assets-sistema/interfaz/pregunta-1.png")
-const BADGE_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TARJETA_SELECCIONADA := Color(0.93, 1.0, 0.95, 1.0)
 const COLOR_TARJETA_VINCULADA := Color(0.97, 1.0, 0.98, 1.0)
@@ -175,15 +174,19 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
 		return
 
-	var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
+	var resultado_nodo: Dictionary = (
+		CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
+	)
 	if not bool(resultado_nodo.get("ok", false)):
 		_mensaje_error_bloqueante = str(
 			resultado_nodo.get("error", "No se pudo cargar el contenido de vinculación.")
 		)
 		return
 
-	var resultado_runtime: Dictionary = CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
-		resultado_nodo.get("data", {})
+	var resultado_runtime: Dictionary = (
+		CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
+			resultado_nodo.get("data", {})
+		)
 	)
 	if not bool(resultado_runtime.get("ok", false)):
 		_mensaje_error_bloqueante = str(
@@ -271,7 +274,6 @@ func _preparar_feedback_label() -> void:
 func _aplicar_estilo_boton_badge(boton: Button, font_size: int) -> void:
 	var estilo := _crear_estilo_badge()
 	boton.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	boton.add_theme_font_override("font", BADGE_FONT)
 	boton.add_theme_font_size_override("font_size", font_size)
 	boton.add_theme_color_override("font_color", Color.WHITE)
 	boton.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -343,7 +345,9 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 
 func _aplicar_runtime_en_escena() -> void:
 	titulo_nivel.text = "Celiaquía"
-	label_pregunta.text = str(_datos_de_ejecucion.get("instruccion", "Relacioná correctamente")).strip_edges()
+	label_pregunta.text = str(
+		_datos_de_ejecucion.get("instruccion", "Relacioná correctamente")
+	).strip_edges()
 
 	var conceptos_izquierda: Array = _datos_de_ejecucion.get("conceptos_izquierda", [])
 	var conceptos_derecha: Array = _datos_de_ejecucion.get("conceptos_derecha", [])
@@ -352,7 +356,9 @@ func _aplicar_runtime_en_escena() -> void:
 		_mostrar_error_bloqueante("La vinculación no tiene pares suficientes.")
 		return
 	if total_pares > items_izquierda.size() or total_pares > items_derecha.size():
-		_mostrar_error_bloqueante("La escena de vinculación no tiene suficientes tarjetas visuales.")
+		_mostrar_error_bloqueante(
+			"La escena de vinculación no tiene suficientes tarjetas visuales."
+		)
 		return
 
 	validado = false
@@ -376,7 +382,10 @@ func _sincronizar_layout_interactivo() -> void:
 	_actualizar_visual()
 
 
-func _ordenar_derecha_para_evitar_cruces(conceptos_izquierda: Array, conceptos_derecha: Array) -> Array:
+func _ordenar_derecha_para_evitar_cruces(
+	conceptos_izquierda: Array,
+	conceptos_derecha: Array
+) -> Array:
 	var ordenados: Array = []
 	var usadas: Array[String] = []
 
@@ -626,7 +635,13 @@ func _get_left_anchor(card: Control) -> Vector2:
 	return line_drawer.to_local(punto_global)
 
 
-func _crear_linea(origen: Vector2, destino: Vector2, color: Color, ancho: float, animar: bool = false) -> void:
+func _crear_linea(
+	origen: Vector2,
+	destino: Vector2,
+	color: Color,
+	ancho: float,
+	animar: bool = false
+) -> void:
 	var linea := Line2D.new()
 	linea.width = ancho
 	linea.default_color = color

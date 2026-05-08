@@ -306,8 +306,8 @@ static func _validar_vinculacion(contenido: Dictionary) -> String:
 		return "Vinculacion: se requieren al menos dos conceptos a la izquierda."
 	if conceptos_derecha.size() < 2:
 		return "Vinculacion: se requieren al menos dos conceptos a la derecha."
-	if conceptos_izquierda.size() != conceptos_derecha.size():
-		return "Vinculacion: la cantidad de conceptos izquierda/derecha debe coincidir."
+	if conceptos_derecha.size() < conceptos_izquierda.size():
+		return "Vinculacion: faltan conceptos a la derecha para todos los pares."
 
 	var ids_izquierda: Dictionary = {}
 	var ids_derecha: Dictionary = {}
@@ -331,8 +331,6 @@ static func _validar_vinculacion(contenido: Dictionary) -> String:
 		if not error_derecha.is_empty():
 			return error_derecha
 
-	if ids_izquierda.size() != ids_derecha.size():
-		return "Vinculacion: cada id_par debe existir en ambos lados."
 	for id_par in ids_izquierda.keys():
 		if not ids_derecha.has(id_par):
 			return "Vinculacion: falta el id_par %s en los conceptos de la derecha." % id_par

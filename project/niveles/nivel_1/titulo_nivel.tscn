@@ -2,8 +2,6 @@
 
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ci3qi"]
 [ext_resource type="Script" uid="uid://ckxox5l28kaoc" path="res://niveles/nivel_1/titulo_nivel.gd" id="2_2usb3"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_ci3qi"]
-
 [node name="TituloNivel" type="Sprite2D" unique_id=74001118]
 z_index = 1
 position = Vector2(241.00003, 112)
@@ -18,7 +16,6 @@ offset_right = 141.78558
 offset_bottom = 41.1877
 scale = Vector2(0.98336244, 0.98336244)
 pivot_offset = Vector2(145.1409, 45.16902)
-theme_override_fonts/font = ExtResource("2_ci3qi")
 theme_override_font_sizes/font_size = 41
 text = "prueba"
 horizontal_alignment = 1

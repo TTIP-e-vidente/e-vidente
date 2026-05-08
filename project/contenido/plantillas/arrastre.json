@@ -1,12 +1,37 @@
 {
-  "id": "desayuno",
-  "tipo": "arrastre",
-  "titulo": "Prepará el desayuno",
-  "consigna": "Arrastrá al plato solo opciones aptas sin TACC.",
-  "plato": "Desayuno apto",
-  "correctos": ["banana", "leche", "manzana", "pera"],
-  "incorrectos": ["medialuna", "pan", "tostado_jyq"],
-  "cantidad_correctos": 2,
-  "cantidad_incorrectos": 1,
-  "ensenanza": "celiaquia_1"
+  "id": "receta_2_colacion",
+  "theme": "celiaquia",
+  "title": "Arma una colacion segura",
+  "difficulty": "easy",
+  "mode": "drag_drop",
+  "content": {
+    "teaching_key": "celiaquia_2",
+    "instruction": "Arrastra solo las colaciones aptas sin TACC. Si la opcion es procesada, revisa si tiene rotulo seguro.",
+    "targets": [
+      {
+        "id": "colacion",
+        "label": "Colacion apta"
+      }
+    ],
+    "items": [
+      {
+        "id": "manzana",
+        "label": "Manzana",
+        "image": "res://assets-sistema/iconos/manzana-0.png",
+        "correct_target": "colacion"
+      },
+      {
+        "id": "almendras_naturales",
+        "label": "Almendras naturales",
+        "image": "res://assets-sistema/iconos/almendra-0.png",
+        "correct_target": "colacion"
+      },
+      {
+        "id": "barra_cereal_sin_rotulo",
+        "label": "Barra de cereal sin rotulo",
+        "image": "res://assets-sistema/iconos/barra-cereal-0.png",
+        "correct_target": ""
+      }
+    ]
+  }
 }

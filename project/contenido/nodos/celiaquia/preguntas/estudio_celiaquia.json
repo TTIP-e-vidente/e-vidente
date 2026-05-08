@@ -5,7 +5,7 @@
 	"difficulty": "easy",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "Antes de un analisis o biopsia para diagnosticar celiaquia, hay que dejar de comer gluten?",
+		"question": "Antes de un anàlisis o biopsia para diagnosticar celiaquía, hay que dejar de comer Gluten?",
 		"correct_answer": "No",
 		"wrong_options": ["Si"],
 		"visual_resource": ""

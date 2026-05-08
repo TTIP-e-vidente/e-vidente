@@ -1,106 +1,197 @@
 # Contenido JSON
 
-La regla recomendada para contenido nuevo es esta:
+La regla oficial para contenido nuevo es esta: 1 JSON = 1 nodo jugable.
 
-- cada JSON nuevo representa un nodo jugable
-- no separar nodo y juego si no hace falta
-- no usar pools
-- no usar `.tres` dentro del JSON del nodo
-- no copiar formatos legacy
+Tipos permitidos para contenido nuevo:
 
-## Ruta oficial para crear arrastre nuevo
+- `arrastre`
+- `preguntas`
+- `vinculacion`
 
-1. Copiá `res://contenido/plantillas/arrastre.json`
-2. Cambiá textos e ids
-3. Usá ids humanos definidos en `res://contenido/items.json`
-4. Agregá el archivo al mapa
+Guardá cada archivo en su carpeta por tipo:
 
-El JSON simple ya es suficiente para jugar.
+- `res://contenido/nodos/celiaquia/arrastre/`
+- `res://contenido/nodos/celiaquia/preguntas/`
+- `res://contenido/nodos/celiaquia/vinculacion/`
 
-## Formato oficial de arrastre
+El único archivo que hoy queda en la raíz es `receta_1_desayuno.json` por compatibilidad con el primer nodo del mapa.
 
-Archivo real de referencia: `res://contenido/nodos/celiaquia/arrastre/receta_1_desayuno.json`
+## Formato actual
 
-Plantilla oficial: `res://contenido/plantillas/arrastre.json`
+Hoy conviven dos formatos activos en el proyecto:
 
-```json
-{
-  "id": "desayuno",
-  "tipo": "arrastre",
-  "titulo": "Prepará el desayuno",
-  "consigna": "Arrastrá al plato solo opciones aptas sin TACC.",
-  "plato": "Desayuno apto",
-  "correctos": ["banana", "leche", "manzana", "pera"],
-  "incorrectos": ["medialuna", "pan", "tostado_jyq"],
-  "cantidad_correctos": 2,
-  "cantidad_incorrectos": 1,
-  "ensenanza": "celiaquia_1"
-}
-```
+- `arrastre` y `preguntas` usan el formato actual de archivos del juego: `theme`, `title`, `difficulty`, `mode` y `content`.
+- `vinculacion` sigue usando el formato simple con `tipo`, `titulo`, `dificultad`, `consigna`, `ensenanza` y `pares`.
 
-Conversión automática del runtime:
+No mezcles ambos formatos dentro del mismo archivo.
 
-- `consigna` se convierte a `instruction`
-- `plato` crea el `target` automáticamente
-- `correctos` e `incorrectos` se resuelven con `res://contenido/items.json`
-- `ensenanza` se convierte a `teaching_key`
-- el runtime asigna `correct_target` sin que tengas que escribirlo
+## Cómo crear arrastre
 
-## Catálogo oficial de items
+1. Copiá `res://contenido/plantillas/arrastre.json`.
+2. Cambiá `id`, `title`, `difficulty`, `content.teaching_key` y `content.instruction`.
+3. En `targets`, definí el destino correcto del plato.
+4. En `items`, cargá `id`, `label`, `image` y `correct_target`.
 
-Usa `res://contenido/items.json`.
+## Cómo crear pregunta
 
-Ese archivo resuelve ids humanos como:
-
-- `banana`
-- `leche`
-- `manzana`
-- `tostado_jyq`
-
-Si necesitas un item nuevo, primero agrégalo en `items.json`.
-
-## Cómo agregar el nodo al mapa
+1. Copiá `res://contenido/plantillas/preguntas.json`.
+2. Cambiá `id`, `title`, `difficulty` y `content.question`.
+3. Definí `content.correct_answer` y `content.wrong_options`.
+4. Si hace falta, usá `content.visual_resource` para una imagen asociada.
 
 Ejemplo mínimo:
 
 ```json
 {
-  "id": "celiaquia",
-  "titulo": "Celiaquia",
-  "nodos": [
-    {
-      "id": "receta_1_desayuno",
-      "archivo": "res://contenido/nodos/celiaquia/arrastre/receta_1_desayuno.json"
-    }
-  ]
+  "id": "eliminar_gluten",
+  "theme": "celiaquia",
+  "title": "Eliminar gluten del trigo",
+  "difficulty": "easy",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "Eliminar el gluten visible de una comida con trigo no evita la contaminación.",
+    "correct_answer": "Verdadero",
+    "wrong_options": ["Falso"],
+    "visual_resource": ""
+  }
 }
 ```
 
-Ejemplo real simple: `res://contenido/mapas/celiaquia.json`
+Ejemplo mínimo de arrastre:
 
-## Qué sigue siendo legacy
+```json
+{
+  "id": "receta_2_colacion",
+  "theme": "celiaquia",
+  "title": "Arma una colacion segura",
+  "difficulty": "easy",
+  "mode": "drag_drop",
+  "content": {
+    "teaching_key": "celiaquia_2",
+    "instruction": "Arrastra solo las colaciones aptas sin TACC.",
+    "targets": [
+      {
+        "id": "colacion",
+        "label": "Colacion apta"
+      }
+    ],
+    "items": [
+      {
+        "id": "manzana",
+        "label": "Manzana",
+        "image": "res://assets-sistema/iconos/manzana-0.png",
+        "correct_target": "colacion"
+      },
+      {
+        "id": "barra_cereal_sin_rotulo",
+        "label": "Barra de cereal sin rotulo",
+        "image": "res://assets-sistema/iconos/barra-cereal-0.png",
+        "correct_target": ""
+      }
+    ]
+  }
+}
+```
 
-Estos archivos siguen funcionando, pero no son la forma recomendada para crear contenido nuevo:
+## Cómo crear vinculación
 
-- `res://contenido/nodos/celiaquia/arrastre/armar_plato_sin_tacc.json`
-- `res://contenido/nodos/celiaquia/arrastre/nuevo_nodo.json`
-- `res://contenido/nodos/celiaquia/arrastre/receta_2_colacion.json`
-- `res://contenido/nodos/celiaquia/arrastre/receta_3_almuerzo.json`
-- y el resto de arrastres/preguntas ya existentes en el mapa demo
+1. Copiá `res://contenido/plantillas/vinculacion.json`.
+2. Cambiá `id`, `titulo`, `dificultad`, `consigna` y `ensenanza`.
+3. Escribí `pares` con `izquierda`, `derecha` y `explicacion`.
+4. Si querés sumar ruido controlado, agregá `distractores`.
 
-No copies esos archivos como base porque usan contratos anteriores mezclados.
+Ejemplo mínimo:
 
-## Compatibilidad que se mantiene
+```json
+{
+  "id": "vincular_alimentos_seguridad",
+  "tipo": "vinculacion",
+  "titulo": "Vincula alimentos seguros",
+  "dificultad": "medium",
+  "consigna": "Uní cada alimento con su clasificación.",
+  "ensenanza": "celiaquia_2",
+  "pares": [
+    {
+      "izquierda": "Banana",
+      "derecha": "Fruta apta",
+      "explicacion": "La banana es naturalmente libre de gluten."
+    },
+    {
+      "izquierda": "Pan",
+      "derecha": "Harina de trigo",
+      "explicacion": "El pan común contiene gluten."
+    }
+  ],
+  "distractores": ["Solo bebida"]
+}
+```
 
-- si un archivo tiene `juegos`, sigue funcionando el flujo multi-juego actual
-- si un archivo no tiene `juegos`, el loader lo trata como una actividad jugable directa
-- `celiaquia_mapa.json` sigue funcionando para la demo actual
-- no se tocó avance de nodo
+## Cómo elegir dificultad
+
+- `easy`: conceptos directos, una decisión evidente, una pregunta por archivo si querés probar rápido.
+- `medium`: distinguir etiquetas, contaminación cruzada o contexto de cocina.
+- `hard`: casos cotidianos, hábitos seguros y decisiones de diagnóstico.
+
+## Cómo agregarlo al mapa
+
+Usá entradas explícitas en `res://contenido/mapas/celiaquia_mapa.json`:
+
+```json
+{
+  "node_key": "eliminar_gluten",
+  "title": "Eliminar gluten del trigo",
+  "mode": "quiz_choice",
+  "difficulty": 1,
+  "json_path": "res://contenido/nodos/celiaquia/preguntas/eliminar_gluten.json"
+}
+```
+
+Para vinculación:
+
+```json
+{
+  "node_key": "vincular_conceptos",
+  "title": "Vincula Conceptos",
+  "mode": "vinculacion_conceptos",
+  "difficulty": 3,
+  "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_conceptos.json"
+}
+```
+
+Para arrastre:
+
+```json
+{
+  "node_key": "receta_2_colacion",
+  "title": "Arma una colación segura",
+  "mode": "drag_drop",
+  "difficulty": 1,
+  "json_path": "res://contenido/nodos/celiaquia/arrastre/receta_2_colacion.json"
+}
+```
+
+No mezcles ejemplos de prueba en la carpeta productiva. Si necesitás samples para tests, dejalos fuera del árbol principal de `contenido/nodos/celiaquia/`.
+
+## Qué no mezclar
+
+No combines formatos dentro del mismo archivo:
+
+- en `preguntas`, no mezcles `question/correct_answer/wrong_options` con `preguntas[].texto/opciones/respuesta`
+- en `arrastre`, no mezcles `targets/items` con `correctos/incorrectos`
+- en `vinculacion`, mantené `pares` y `distractores` como está hoy en `contenido/nodos/celiaquia/vinculacion/`
+
+## Compatibilidad y legacy
+
+Se mantiene compatibilidad con contenido anterior:
+
+- si un archivo tiene `juegos`, sigue funcionando el flujo multi-juego V1
+- si un archivo no tiene `juegos`, se trata como actividad jugable directa
+- los arrastres y nodos legacy ya existentes siguen funcionando
+
+No copies archivos legacy como base para contenido nuevo.
 
 ## Validación recomendada
 
 ```bash
-godot --headless --path project -s res://tests/nodo_jugable_directo_test.gd
-godot --headless --path project -s res://tests/contenido_arrastre_nodo_uno_test.gd
-godot --headless --path project -s res://tests/partida_de_nodo_multiple_test.gd
+godot --headless --path project -s res://tests/vincular_conceptos_scene_test.gd
 ```

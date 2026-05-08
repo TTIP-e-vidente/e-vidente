@@ -5,6 +5,7 @@ extends RefCounted
 # Leer o abrir pantallas no debe incrementar ni recalcular dias.
 
 const SECONDS_PER_DAY := 86400
+const WARNING_START_HOUR_LOCAL := 20
 
 
 # --- Estado estable ---------------------------------------------------------
@@ -61,26 +62,34 @@ static func record(
 
 # --- Datos para UI ----------------------------------------------------------
 
-static func _resolver_estado_visual(streak_state: Dictionary) -> String:
+static func _resolver_estado_visual(
+	streak_state: Dictionary,
+	current_date: String = "",
+	current_hour: int = -1
+) -> String:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return "inactive"
 
-	var today: String = Time.get_date_string_from_system(false)
+	var today: String = _resolver_fecha_actual(current_date)
 	var last_day: String = str(streak_state.get("last_activity_day", ""))
 	if last_day == today:
 		return "active"
 	if _days_between(last_day, today) == 1:
-		return "warning"
+		return "warning" if _esta_en_ventana_de_warning(current_hour) else "active"
 	return "inactive"
 
 
-static func view_model(streak_state: Dictionary) -> Dictionary:
+static func view_model(
+	streak_state: Dictionary,
+	current_date: String = "",
+	current_hour: int = -1
+) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_day: String = str(streak_state.get("last_activity_day", ""))
-	var today: String = Time.get_date_string_from_system(false)
-	var visual_state: String = _resolver_estado_visual(streak_state)
+	var today: String = _resolver_fecha_actual(current_date)
+	var visual_state: String = _resolver_estado_visual(streak_state, today, current_hour)
 
 	if current_count <= 0:
 		return {
@@ -179,3 +188,21 @@ static func _is_valid_date(date_string: String) -> bool:
 		return false
 	var unix: int = int(Time.get_unix_time_from_datetime_string(date_string))
 	return Time.get_date_string_from_unix_time(unix) == date_string
+
+
+static func _resolver_fecha_actual(current_date: String) -> String:
+	var clean_date: String = current_date.strip_edges()
+	if not clean_date.is_empty():
+		return clean_date
+	return Time.get_date_string_from_system(false)
+
+
+static func _esta_en_ventana_de_warning(current_hour: int) -> bool:
+	return _resolver_hora_actual(current_hour) >= WARNING_START_HOUR_LOCAL
+
+
+static func _resolver_hora_actual(current_hour: int) -> int:
+	if current_hour >= 0:
+		return clampi(current_hour, 0, 23)
+	var now: Dictionary = Time.get_datetime_dict_from_system(false)
+	return clampi(int(now.get("hour", 0)), 0, 23)

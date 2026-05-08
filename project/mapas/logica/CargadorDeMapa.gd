@@ -58,7 +58,11 @@ static func build_map_data(raw_map: Dictionary, source_path: String = "") -> Dic
 	var nodes_result: Dictionary = build_nodes(raw_map.get("nodes", []), track_key)
 	if not bool(nodes_result.get("ok", false)):
 		return nodes_result
-	print(LOG_PREFIX, " legacy id=", map_id, " nodos=", (nodes_result.get("data", []) as Array).size())
+	print(
+		LOG_PREFIX,
+		" legacy id=", map_id,
+		" nodos=", (nodes_result.get("data", []) as Array).size()
+	)
 
 	return _ok({
 		"id": map_id,
@@ -127,6 +131,15 @@ static func build_nodes(raw_nodes: Variant, track_key: String) -> Dictionary:
 
 static func _build_node(raw_node: Variant, track_key: String, index: int) -> Dictionary:
 	var node_number: int = index + 1
+	if raw_node is String:
+		return _build_node_from_reference(
+			{
+				"id": str(raw_node).get_file().trim_suffix(".json"),
+				"archivo": str(raw_node).strip_edges(),
+			},
+			track_key,
+			index
+		)
 	if not raw_node is Dictionary:
 		return _error("El nodo %d del mapa debe ser un objeto." % node_number)
 	if _is_content_node_reference(raw_node as Dictionary):
