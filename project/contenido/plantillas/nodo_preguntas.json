@@ -1,0 +1,18 @@
+{
+  "id": "mi_nodo_preguntas",
+  "tipo": "preguntas",
+  "titulo": "Titulo del nodo",
+  "descripcion": "Bloque simple de preguntas.",
+  "preguntas": [
+    {
+      "id": "pregunta_1",
+      "enunciado": "Escribe aqui la pregunta.",
+      "opciones": [
+        {"id": "a", "texto": "Opcion correcta", "correcta": true},
+        {"id": "b", "texto": "Distractor 1", "correcta": false},
+        {"id": "c", "texto": "Distractor 2", "correcta": false}
+      ],
+      "explicacion": "Explicacion breve opcional."
+    }
+  ]
+}

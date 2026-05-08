@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameStreakTracker.gd
+# Calcula la racha solo cuando se registra una actividad real.
+# Leer o abrir pantallas no debe incrementar ni recalcular dias.
+
 const SECONDS_PER_DAY := 86400
 
 

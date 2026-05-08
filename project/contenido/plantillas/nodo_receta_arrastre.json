@@ -1,0 +1,13 @@
+{
+  "id": "mi_nodo_receta_arrastre",
+  "tipo": "receta_arrastre",
+  "titulo": "Titulo del nodo",
+  "descripcion": "Que aprende la persona en esta actividad.",
+  "consigna": "Elegí 2 opciones correctas.",
+  "plato": "Mi plato apto",
+  "correctos": ["banana", "arroz"],
+  "incorrectos": ["pan", "barra-cereal"],
+  "cantidad_correctos": 2,
+  "cantidad_incorrectos": 1,
+  "ensenanza": "mi_ensenanza"
+}

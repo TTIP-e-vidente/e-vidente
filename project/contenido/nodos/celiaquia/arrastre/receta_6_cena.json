@@ -5,6 +5,7 @@
   "difficulty": "hard",
   "mode": "drag_drop",
   "content": {
+    "teaching_key": "celiaquia_6",
     "instruction": "Arma una cena apta sin TACC arrastrando solo las opciones correctas. Prioriza ingredientes simples o pastas hechas con arroz, y evita masas y rebozados comunes.",
     "targets": [
       {

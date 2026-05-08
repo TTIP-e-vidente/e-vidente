@@ -2,6 +2,7 @@ extends RefCounted
 class_name ContinuidadDePartidaDeNodo
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const LOG_PREFIX := "[AVANCE_NODO]"
 
 
 # Continuidad de la partida
@@ -18,8 +19,10 @@ static func continuar_o_finalizar_partida(
 		if antes_de_abrir_siguiente_juego.is_valid():
 			antes_de_abrir_siguiente_juego.call()
 		estado_global.call("avanzar_partida_de_nodo")
+		print(LOG_PREFIX, " continuar=siguiente_juego")
 		return abrir_juego_actual(tree, estado_global)
 
+	print(LOG_PREFIX, " continuar=finalizar_partida")
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
 		al_finalizar_partida.call()
@@ -43,8 +46,10 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 	var juego_actual: Dictionary = estado.call("obtener_juego_actual_de_partida")
 	var modo_actual: String = str(juego_actual.get("mode", "")).strip_edges()
 	if not _es_modo_jugable_soportado(modo_actual):
+		push_error("ContinuidadDePartidaDeNodo: modo no soportado: %s" % JSON.stringify(juego_actual))
 		return false
 
+	print(LOG_PREFIX, " abrir_juego_actual mode=", modo_actual, " juego=", juego_actual)
 	GameSceneRouter.ir_a_modo_jugable(tree, modo_actual)
 	return true
 

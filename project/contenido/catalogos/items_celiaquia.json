@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "id": "items_celiaquia",
+  "tipo": "assets_catalog",
+  "titulo": "Catalogo de items de celiaquia",
+  "descripcion": "Ids simples para resolver recursos de contenido jugable de celiaquia.",
+  "items": {
+    "almendra": {
+      "nombre": "Almendra",
+      "asset": "res://items/almendra.tres",
+      "categoria": "sin_tacc",
+      "tags": ["fruto_seco"]
+    },
+    "arroz": {
+      "nombre": "Arroz",
+      "asset": "res://items/arroz.tres",
+      "categoria": "sin_tacc",
+      "tags": ["grano"]
+    },
+    "banana": {
+      "nombre": "Banana",
+      "asset": "res://items/banana.tres",
+      "categoria": "sin_tacc",
+      "tags": ["fruta"]
+    },
+    "barra-cereal": {
+      "nombre": "Barra de cereal",
+      "asset": "res://items/barra-cereal.tres",
+      "categoria": "con_gluten",
+      "tags": ["snack"]
+    },
+    "cerveza": {
+      "nombre": "Cerveza",
+      "asset": "res://items/cerveza.tres",
+      "categoria": "con_gluten",
+      "tags": ["bebida"]
+    },
+    "empanada": {
+      "nombre": "Empanada",
+      "asset": "res://items/empanada.tres",
+      "categoria": "con_gluten",
+      "tags": ["comida"]
+    },
+    "fideos": {
+      "nombre": "Fideos",
+      "asset": "res://items/fideos.tres",
+      "categoria": "con_gluten",
+      "tags": ["pasta"]
+    },
+    "leche": {
+      "nombre": "Leche",
+      "asset": "res://items/leche.tres",
+      "categoria": "sin_tacc",
+      "tags": ["lacteo"]
+    },
+    "maicena": {
+      "nombre": "Maicena",
+      "asset": "res://items/maicena.tres",
+      "categoria": "sin_tacc",
+      "tags": ["harina"]
+    },
+    "manzana": {
+      "nombre": "Manzana",
+      "asset": "res://items/manzana.tres",
+      "categoria": "sin_tacc",
+      "tags": ["fruta"]
+    },
+    "medialuna": {
+      "nombre": "Medialuna",
+      "asset": "res://items/medialuna.tres",
+      "categoria": "con_gluten",
+      "tags": ["panificado"]
+    },
+    "pan": {
+      "nombre": "Pan comun",
+      "asset": "res://items/pan.tres",
+      "categoria": "con_gluten",
+      "tags": ["panificado"]
+    },
+    "pera": {
+      "nombre": "Pera",
+      "asset": "res://items/pera.tres",
+      "categoria": "sin_tacc",
+      "tags": ["fruta"]
+    },
+    "pescado": {
+      "nombre": "Pescado",
+      "asset": "res://items/pescado.tres",
+      "categoria": "sin_tacc",
+      "tags": ["proteina"]
+    },
+    "pollo": {
+      "nombre": "Pollo",
+      "asset": "res://items/pollo.tres",
+      "categoria": "sin_tacc",
+      "tags": ["proteina"]
+    },
+    "tostado-jyq": {
+      "nombre": "Tostado de jamon y queso",
+      "asset": "res://items/tostado-jyq.tres",
+      "categoria": "con_gluten",
+      "tags": ["sandwich"]
+    },
+    "tostado_jyq": {
+      "nombre": "Tostado de jamon y queso",
+      "asset": "res://items/tostado-jyq.tres",
+      "categoria": "con_gluten",
+      "tags": ["sandwich"]
+    }
+  }
+}

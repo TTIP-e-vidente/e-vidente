@@ -8,6 +8,7 @@ const SaveManagerScript := preload("res://interface/SaveManager.gd")
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
+const VINCULAR_SCENE := "res://vincular/VincularConceptos.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
 const TIEMPO_MAXIMO_SMOKE_TEST := 8.0
 
@@ -179,14 +180,17 @@ func _continue_to_next_map_node() -> void:
 		return
 
 	current_scene.call("continuar_al_siguiente_nodo")
-	await _wait_for(QUESTION_SCENE, "Pregunta siguiente")
+	await _wait_for_any(
+		[LEVEL_SCENE, QUESTION_SCENE, VINCULAR_SCENE],
+		"Siguiente modalidad"
+	)
 
 
 func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 	var next_button := level_scene.get_node_or_null("Adelante") as Button
 	var continuar_juego := level_scene.get_node_or_null("ContinuarJuego") as Control
-	var boton_continuar := level_scene.get_node_or_null(
-		"ContinuarJuego/ColumnaContinuacion/BotonContinuar"
+	var flecha_continuar := level_scene.get_node_or_null(
+		"ContinuarJuego/ColumnaContinuacion/FlechaContinuar"
 	) as Button
 	var back_button := level_scene.get_node_or_null("Atrás") as Button
 	var teaching := level_scene.get_node_or_null("Ensenanza") as Sprite2D
@@ -204,8 +208,8 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 		"ContinuarJuego deberia quedar visible"
 	)
 	_check(
-		boton_continuar != null and not boton_continuar.disabled,
-		"El boton Continuar deberia quedar habilitado"
+		flecha_continuar != null and not flecha_continuar.disabled,
+		"La flecha de continuar deberia quedar habilitada"
 	)
 	_check(
 		back_button != null and back_button.disabled,
@@ -222,8 +226,8 @@ func _check_completed_gameplay_state(level_scene: Node, manager_level) -> void:
 		"La escena deberia entrar en blanco y negro al completarse"
 	)
 	_check(
-		boton_continuar != null and boton_continuar.material == null,
-		"El boton Continuar no deberia entrar en blanco y negro"
+		flecha_continuar != null and flecha_continuar.material == null,
+		"La flecha de continuar no deberia entrar en blanco y negro"
 	)
 	if failed:
 		return
@@ -287,6 +291,16 @@ func _wait_for(expected_path: String, label: String) -> void:
 		if current_scene != null and current_scene.scene_file_path == expected_path:
 			return
 	_check(false, "No se llego a %s (%s)" % [label, expected_path])
+
+
+func _wait_for_any(expected_paths: Array[String], label: String) -> void:
+	for i in 60:
+		if failed or prueba_finalizada:
+			return
+		await process_frame
+		if current_scene != null and expected_paths.has(current_scene.scene_file_path):
+			return
+	_check(false, "No se llego a %s (%s)" % [label, ", ".join(expected_paths)])
 
 
 func _delete_save_files() -> void:

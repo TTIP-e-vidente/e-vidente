@@ -1,8 +1,18 @@
 extends RefCounted
 class_name CargadorDeMapa
 
+const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
+const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
+const ContentValidatorScript := preload("res://sistemas/contenido/ContentValidator.gd")
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NODE_JSON_ROOT := "res://contenido/nodos/"
+const GAME_JSON_ROOT := "res://contenido/juegos/"
+const LOG_PREFIX := "[MAPA]"
+const DIRECT_PLAYABLE_NODE_TYPES := [
+	"receta_arrastre",
+	"preguntas",
+	"vinculacion",
+]
 const CONTENT_RULES_BY_MODE := {
 	MapNodeData.MODE_QUIZ_CHOICE: {
 		"root": NODE_JSON_ROOT,
@@ -19,40 +29,25 @@ const CONTENT_RULES_BY_MODE := {
 }
 
 static func load_map(map_json_path: String) -> Dictionary:
+	print(LOG_PREFIX, " cargar_mapa=", map_json_path)
 	var raw_result: Dictionary = read_json_file(map_json_path)
 	if not bool(raw_result.get("ok", false)):
+		print(LOG_PREFIX, " error=", str(raw_result.get("error", "")))
 		return raw_result
 
-	return build_map_data(raw_result.get("data", {}))
+	return build_map_data(raw_result.get("data", {}), str(raw_result.get("path", map_json_path)))
 
 
 static func read_json_file(map_json_path: String) -> Dictionary:
-	var clean_path: String = map_json_path.strip_edges()
-	if clean_path.is_empty():
-		return _error("Falta la ruta del JSON del mapa.")
-	if not FileAccess.file_exists(clean_path):
-		return _error("No existe el JSON del mapa: %s" % clean_path)
-
-	var file := FileAccess.open(clean_path, FileAccess.READ)
-	if file == null:
-		return _error("No se pudo abrir el JSON del mapa: %s" % clean_path)
-
-	var parser := JSON.new()
-	var parse_result: Error = parser.parse(file.get_as_text())
-	if parse_result != OK:
-		return _error(
-			"JSON invalido en %s linea %d: %s"
-			% [clean_path, parser.get_error_line(), parser.get_error_message()]
-		)
-
-	var raw_data: Variant = parser.get_data()
-	if not raw_data is Dictionary:
-		return _error("El JSON del mapa debe ser un objeto.")
-
-	return _ok(raw_data as Dictionary)
+	return ContentJsonLoaderScript.load_json(map_json_path)
 
 
-static func build_map_data(raw_map: Dictionary) -> Dictionary:
+static func build_map_data(raw_map: Dictionary, source_path: String = "") -> Dictionary:
+	var normalized_result: Dictionary = ContentNormalizerScript.normalize(raw_map, source_path)
+	var normalized_map: Dictionary = normalized_result.get("data", {})
+	if ContentNormalizerScript.is_v1_content(normalized_map):
+		return _build_v1_map(normalized_map, source_path)
+
 	var header_error: String = validate_map_header(raw_map)
 	if not header_error.is_empty():
 		return _error(header_error)
@@ -63,6 +58,7 @@ static func build_map_data(raw_map: Dictionary) -> Dictionary:
 	var nodes_result: Dictionary = build_nodes(raw_map.get("nodes", []), track_key)
 	if not bool(nodes_result.get("ok", false)):
 		return nodes_result
+	print(LOG_PREFIX, " legacy id=", map_id, " nodos=", (nodes_result.get("data", []) as Array).size())
 
 	return _ok({
 		"id": map_id,
@@ -70,6 +66,29 @@ static func build_map_data(raw_map: Dictionary) -> Dictionary:
 		"title": title,
 		"nodes": nodes_result.get("data", []),
 	})
+
+
+static func _build_v1_map(raw_map: Dictionary, source_path: String) -> Dictionary:
+	var validation_result: Dictionary = ContentValidatorScript.validate(raw_map, source_path)
+	if not bool(validation_result.get("ok", false)):
+		return _error(str(validation_result.get("error", "Mapa invalido.")))
+
+	var map_id: String = str(raw_map.get("id", "")).strip_edges()
+	var track_key: String = str(raw_map.get("categoria", "")).strip_edges()
+	var title: String = str(raw_map.get("titulo", "")).strip_edges()
+	var nodes_result: Dictionary = build_nodes(raw_map.get("nodos", []), track_key)
+	if not bool(nodes_result.get("ok", false)):
+		return nodes_result
+	print(LOG_PREFIX, " v1 id=", map_id, " nodos=", (nodes_result.get("data", []) as Array).size())
+
+	return _ok(
+		{
+			"id": map_id,
+			"track_key": track_key,
+			"title": title,
+			"nodes": nodes_result.get("data", []),
+		}
+	)
 
 
 static func validate_map_header(raw_map: Dictionary) -> String:
@@ -110,6 +129,8 @@ static func _build_node(raw_node: Variant, track_key: String, index: int) -> Dic
 	var node_number: int = index + 1
 	if not raw_node is Dictionary:
 		return _error("El nodo %d del mapa debe ser un objeto." % node_number)
+	if _is_content_node_reference(raw_node as Dictionary):
+		return _build_node_from_reference(raw_node as Dictionary, track_key, index)
 
 	var node := MapNodeDataScript.from_json(raw_node as Dictionary, track_key, index)
 	var node_error: String = validate_map_node(node, node_number)
@@ -133,6 +154,16 @@ static func validate_map_node(node: MapNodeData, node_number: int = 0) -> String
 		return "%s tiene mode no soportado: %s" % [label, node.mode]
 	if not node.has_content_path():
 		return "%s no tiene json_path." % label
+	if not node.node_file_path.is_empty() and not node.has_explicit_games():
+		if not FileAccess.file_exists(node.json_path):
+			return "No existe el JSON de %s: %s" % [label.to_lower(), node.json_path]
+		return ""
+	if node.has_explicit_games():
+		for game_entry in node.game_entries:
+			var file_path: String = str(game_entry.get("archivo", "")).strip_edges()
+			if file_path.is_empty() or not FileAccess.file_exists(file_path):
+				return "No existe el JSON de %s: %s" % [label.to_lower(), file_path]
+		return ""
 	var content_rule: Dictionary = CONTENT_RULES_BY_MODE.get(node.mode, {})
 	var expected_root: String = str(content_rule.get("root", NODE_JSON_ROOT)).strip_edges()
 	if not node.json_path.begins_with(expected_root):
@@ -148,6 +179,60 @@ static func validate_map_node(node: MapNodeData, node_number: int = 0) -> String
 	if not FileAccess.file_exists(node.json_path):
 		return "No existe el JSON de %s: %s" % [label.to_lower(), node.json_path]
 	return ""
+
+
+static func _is_content_node_reference(raw_node: Dictionary) -> bool:
+	return not str(raw_node.get("archivo", "")).strip_edges().is_empty()
+
+
+static func _build_node_from_reference(
+	raw_node: Dictionary,
+	track_key: String,
+	index: int
+) -> Dictionary:
+	var node_number: int = index + 1
+	var node_path: String = str(raw_node.get("archivo", "")).strip_edges()
+	var raw_result: Dictionary = ContentJsonLoaderScript.load_json(node_path)
+	if not bool(raw_result.get("ok", false)):
+		return _error(str(raw_result.get("error", "No se pudo cargar el nodo.")))
+
+	var clean_path: String = str(raw_result.get("path", node_path)).strip_edges()
+	var normalized_result: Dictionary = ContentNormalizerScript.normalize(
+		raw_result.get("data", {}),
+		clean_path
+	)
+	var normalized_node: Dictionary = normalized_result.get("data", {})
+	if not ContentNormalizerScript.is_v1_content(normalized_node):
+		return _error("El nodo %d debe usar un archivo V1." % node_number)
+	var node_type: String = str(normalized_node.get("tipo", "")).strip_edges()
+	if node_type != "nodo" and not DIRECT_PLAYABLE_NODE_TYPES.has(node_type):
+		return _error("El archivo referenciado no es un nodo jugable valido: %s" % clean_path)
+
+	var validation_result: Dictionary = ContentValidatorScript.validate(
+		normalized_node,
+		clean_path
+	)
+	if not bool(validation_result.get("ok", false)):
+		return _error(str(validation_result.get("error", "Nodo invalido.")))
+
+	var node := MapNodeDataScript.from_v1_node(
+		normalized_node,
+		track_key,
+		index,
+		raw_node,
+		clean_path
+	)
+	var node_error: String = validate_map_node(node, node_number)
+	if not node_error.is_empty():
+		return _error(node_error)
+	print(
+		LOG_PREFIX,
+		" nodo_v1=", node.node_key,
+		" juegos=", node.game_entries.size(),
+		" mode=", node.mode,
+		" json_path=", node.json_path
+	)
+	return _ok(node)
 
 
 static func is_supported_map_mode(mode: String) -> bool:

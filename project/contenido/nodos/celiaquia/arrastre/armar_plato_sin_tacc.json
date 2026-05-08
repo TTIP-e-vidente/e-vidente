@@ -5,6 +5,7 @@
 	"difficulty": "easy",
 	"mode": "drag_drop",
 	"content": {
+		"teaching_key": "celiaquia_1",
 		"instruction": "Arrastra al plato solo alimentos aptos sin TACC. Si parece una pasta o un rebozado, no alcanza con que se vea rico: importa el ingrediente base y la preparacion segura.",
 		"targets": [
 			{

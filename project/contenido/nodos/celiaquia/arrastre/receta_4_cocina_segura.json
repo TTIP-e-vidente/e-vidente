@@ -5,6 +5,7 @@
   "difficulty": "medium",
   "mode": "drag_drop",
   "content": {
+    "teaching_key": "celiaquia_4",
     "instruction": "Arrastra al sector seguro solo ingredientes aptos sin TACC o productos cerrados y confiables. Evita alimentos comunes abiertos y opciones sin rotulo claro.",
     "targets": [
       {
