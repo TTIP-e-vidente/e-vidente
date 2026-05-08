@@ -1,13 +1,37 @@
 {
   "id": "receta_1_desayuno",
-  "tipo": "arrastre",
-  "titulo": "Prepará el desayuno",
-  "consigna": "Arrastrá al plato solo opciones aptas sin TACC para el desayuno.",
-  "plato": "Desayuno apto",
-  "correctos": ["banana", "leche", "manzana", "pera"],
-  "incorrectos": ["medialuna", "pan", "tostado_jyq"],
-  "cantidad_correctos": 2,
-  "cantidad_incorrectos": 1,
-  "ensenanza": "celiaquia_1",
-  "mostrar_ayuda_visual": true
+  "theme": "celiaquia",
+  "title": "Prepará el desayuno",
+  "difficulty": "easy",
+  "mode": "drag_drop",
+  "content": {
+    "teaching_key": "celiaquia_1",
+    "instruction": "Arrastra solo opciones aptas sin TACC para un desayuno seguro.",
+    "targets": [
+      {
+        "id": "desayuno",
+        "label": "Desayuno apto"
+      }
+    ],
+    "items": [
+      {
+        "id": "banana",
+        "label": "Banana",
+        "image": "res://assets-sistema/iconos/banana-0.png",
+        "correct_target": "desayuno"
+      },
+      {
+        "id": "leche",
+        "label": "Leche",
+        "image": "res://assets-sistema/iconos/leche-0.png",
+        "correct_target": "desayuno"
+      },
+      {
+        "id": "medialuna",
+        "label": "Medialuna",
+        "image": "res://assets-sistema/iconos/medialunas-0.png",
+        "correct_target": ""
+      }
+    ]
+  }
 }

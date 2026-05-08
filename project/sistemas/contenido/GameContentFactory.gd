@@ -29,17 +29,54 @@ static func create_runtime_game(raw_data: Dictionary, source_path: String = "") 
 
 
 static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
+	var overlap_ids: Array[String] = _intersect_item_ids(
+		data.get("correctos", data.get("items_correctos", [])),
+		data.get("incorrectos", data.get("items_incorrectos", []))
+	)
+	if not overlap_ids.is_empty():
+		return _error("Item repetido entre correctos e incorrectos: %s" % ", ".join(overlap_ids))
+
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var warnings: Array[String] = []
 	var target_label: String = str(data.get("label_objetivo", "")).strip_edges()
 	if target_label.is_empty():
 		target_label = "Plato"
+	var correct_sample_result: Dictionary = sample_drag_pool_ids(
+		data.get("correctos", data.get("items_correctos", [])),
+		int(data.get("cantidad_correctos", 0)),
+		"cantidad_correctos",
+		rng
+	)
+	if not bool(correct_sample_result.get("ok", false)):
+		return correct_sample_result
+	var wrong_sample_result: Dictionary = sample_drag_pool_ids(
+		data.get("incorrectos", data.get("items_incorrectos", [])),
+		int(data.get("cantidad_incorrectos", 0)),
+		"cantidad_incorrectos",
+		rng
+	)
+	if not bool(wrong_sample_result.get("ok", false)):
+		return wrong_sample_result
+	warnings.append_array(correct_sample_result.get("warnings", []))
+	warnings.append_array(wrong_sample_result.get("warnings", []))
 
 	var items: Array[Dictionary] = []
-	items.append_array(
-		_build_drag_items(data.get("correctos", data.get("items_correctos", [])), true)
+	var correct_items_result: Dictionary = _build_drag_items(
+		correct_sample_result.get("data", []),
+		true
 	)
-	items.append_array(
-		_build_drag_items(data.get("incorrectos", data.get("items_incorrectos", [])), false)
+	if not bool(correct_items_result.get("ok", false)):
+		return correct_items_result
+	var wrong_items_result: Dictionary = _build_drag_items(
+		wrong_sample_result.get("data", []),
+		false
 	)
+	if not bool(wrong_items_result.get("ok", false)):
+		return wrong_items_result
+	items.append_array(correct_items_result.get("data", []))
+	items.append_array(wrong_items_result.get("data", []))
+	_shuffle_items(items, rng)
 
 	var runtime_data := {
 		"id": str(data.get("id", "")).strip_edges(),
@@ -47,14 +84,14 @@ static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
 		"title": str(data.get("titulo", "")).strip_edges(),
 		"difficulty": _to_runtime_difficulty(int(data.get("dificultad", 1))),
 		"mode": MODE_DRAG_DROP,
+		"warnings": warnings,
 		"content": {
 			"instruction": str(data.get("objetivo", "")).strip_edges(),
 			"teaching_key": str(data.get("teaching_key", "")).strip_edges(),
 			"targets": [{"id": "plato", "label": target_label}],
 			"items": items,
-			"elementos_maximos": int(data.get("cantidad_correctos", 0))
-				+ int(data.get("cantidad_incorrectos", 0)),
-			"distractores_maximos": int(data.get("cantidad_incorrectos", 0)),
+			"elementos_maximos": items.size(),
+			"distractores_maximos": (wrong_items_result.get("data", []) as Array).size(),
 			"mostrar_ayuda_visual": bool(data.get("mostrar_ayuda_visual", false)),
 			"feedback": data.get("feedback", {}),
 		}
@@ -62,30 +99,57 @@ static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
 	return _ok(runtime_data)
 
 
-static func _build_drag_items(item_ids: Array[String], is_correct: bool) -> Array[Dictionary]:
+static func sample_drag_pool_ids(
+	item_ids: Array[String],
+	requested_count: int,
+	field_name: String,
+	rng: RandomNumberGenerator = null
+) -> Dictionary:
+	if requested_count <= 0:
+		return _error("%s invalida" % field_name)
+	var unique_ids: Array[String] = _dedupe_item_ids(item_ids)
+	if unique_ids.is_empty():
+		return _error("Pool vacio para %s" % field_name)
+	var active_rng: RandomNumberGenerator = rng if rng != null else RandomNumberGenerator.new()
+	if rng == null:
+		active_rng.randomize()
+	var shuffled_ids: Array[String] = unique_ids.duplicate()
+	_shuffle_ids(shuffled_ids, active_rng)
+	var sample_count: int = mini(requested_count, shuffled_ids.size())
+	var warnings: Array[String] = []
+	if requested_count > shuffled_ids.size():
+		var warning_message: String = (
+			"%s supera el pool disponible; se usan todos los items." % field_name
+		)
+		push_warning("GameContentFactory: %s" % warning_message)
+		warnings.append(warning_message)
+	return {
+		"ok": true,
+		"data": shuffled_ids.slice(0, sample_count),
+		"error": "",
+		"warnings": warnings,
+	}
+
+
+static func _build_drag_items(item_ids: Array[String], is_correct: bool) -> Dictionary:
 	var items: Array[Dictionary] = []
-	var repeated_ids: Dictionary = {}
 	for item_id in item_ids:
 		var runtime_result: Dictionary = ContentCatalogScript.resolve_item_runtime_data(item_id)
 		if not bool(runtime_result.get("ok", false)):
-			continue
+			return _error(str(runtime_result.get("error", "No se pudo resolver el item.")))
 		var runtime_data: Dictionary = runtime_result.get("data", {})
-		var copies: int = int(repeated_ids.get(item_id, 0)) + 1
-		repeated_ids[item_id] = copies
-		var runtime_item_id: String = item_id
-		if copies > 1:
-			runtime_item_id = "%s_%d" % [item_id, copies]
 		items.append(
 			{
-				"id": runtime_item_id,
+				"id": item_id,
 				"label": str(runtime_data.get("nombre", item_id)).strip_edges(),
 				"image": str(runtime_data.get("image", "")).strip_edges(),
 				"correct_target": "plato" if is_correct else "",
 				"category": str(runtime_data.get("categoria", "")).strip_edges(),
 				"info_image": str(runtime_data.get("info_image", "")).strip_edges(),
+				"resource": str(runtime_data.get("resource", "")).strip_edges(),
 			}
 		)
-	return items
+	return _ok(items)
 
 
 static func _create_questions_runtime(data: Dictionary) -> Dictionary:
@@ -125,6 +189,8 @@ static func _create_questions_runtime(data: Dictionary) -> Dictionary:
 			"difficulty": _to_runtime_difficulty(int(data.get("dificultad", 1))),
 			"mode": MODE_QUIZ_CHOICE,
 			"content": {
+				"instruction": str(data.get("consigna", "")).strip_edges(),
+				"teaching_key": str(data.get("teaching_key", "")).strip_edges(),
 				"questions": runtime_questions,
 			}
 		}
@@ -159,9 +225,44 @@ static func _to_runtime_difficulty(raw_difficulty: int) -> String:
 			return "hard"
 
 
-static func _ok(data: Dictionary) -> Dictionary:
+static func _ok(data: Variant) -> Dictionary:
 	return {"ok": true, "data": data, "error": ""}
 
 
 static func _error(message: String) -> Dictionary:
 	return {"ok": false, "data": {}, "error": message}
+
+
+static func _dedupe_item_ids(item_ids: Array[String]) -> Array[String]:
+	var unique_ids: Array[String] = []
+	for item_id in item_ids:
+		var clean_id: String = str(item_id).strip_edges()
+		if clean_id.is_empty() or unique_ids.has(clean_id):
+			continue
+		unique_ids.append(clean_id)
+	return unique_ids
+
+
+static func _intersect_item_ids(left_ids: Array[String], right_ids: Array[String]) -> Array[String]:
+	var left_unique: Array[String] = _dedupe_item_ids(left_ids)
+	var duplicates: Array[String] = []
+	for item_id in _dedupe_item_ids(right_ids):
+		if left_unique.has(item_id):
+			duplicates.append(item_id)
+	return duplicates
+
+
+static func _shuffle_ids(item_ids: Array[String], rng: RandomNumberGenerator) -> void:
+	for index in range(item_ids.size() - 1, 0, -1):
+		var random_index: int = rng.randi_range(0, index)
+		var temp_id: String = item_ids[index]
+		item_ids[index] = item_ids[random_index]
+		item_ids[random_index] = temp_id
+
+
+static func _shuffle_items(items: Array[Dictionary], rng: RandomNumberGenerator) -> void:
+	for index in range(items.size() - 1, 0, -1):
+		var random_index: int = rng.randi_range(0, index)
+		var temp_item: Dictionary = items[index]
+		items[index] = items[random_index]
+		items[random_index] = temp_item

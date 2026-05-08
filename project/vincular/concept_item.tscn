@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://dlcmeiufgvp20" path="res://vincular/concept_item.gd" id="1_0tgql"]
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_nrq2q"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_8vmuo"]
-
 [node name="ConceptItem" type="TextureButton" unique_id=2030109874]
 scale = Vector2(0.1264499, 0.1264499)
 script = ExtResource("1_0tgql")
@@ -19,6 +17,5 @@ offset_right = 57.16082
 offset_bottom = 19.366924
 scale = Vector2(0.99236757, 1)
 pivot_offset = Vector2(75.839195, 37.919594)
-theme_override_fonts/font = ExtResource("3_8vmuo")
 theme_override_font_sizes/font_size = 42
 text = "prueba"

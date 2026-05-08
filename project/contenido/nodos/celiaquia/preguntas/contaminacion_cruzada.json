@@ -5,12 +5,12 @@
   "difficulty": "medium",
   "mode": "quiz_choice",
   "content": {
-	"question": "Qué puede ocurrir en una casa donde tambien se come Gluten?",
-	"correct_answer": "Contaminación cruzada",
+	"question": "Qué elemento puede contaminar alimentos sin Gluten?",
+	"correct_answer": "Migas",
 	"wrong_options": [
-	  "Soplar las migas de la tostadora antes de usarla",
-	  "Usar el mismo cuchillo con dulce y pan comun",
-      "Apoyar el pan sin gluten sobre la misma tabla con migas"
+	  "Vapor",
+	  "Azucar",
+      "Café"
 	],
 	"visual_resource": ""
   }

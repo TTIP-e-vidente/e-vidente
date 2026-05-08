@@ -7,6 +7,8 @@ const AdaptadorContenidoViejoScript := preload(
 
 
 static func normalize(raw_data: Dictionary, source_path: String = "") -> Dictionary:
+	if bool(raw_data.get("__normalized_v1", false)):
+		return _ok(raw_data.duplicate(true))
 	if is_v1_content(raw_data):
 		return _ok(_normalize_v1(raw_data, source_path))
 	return _ok(AdaptadorContenidoViejoScript.adaptar(raw_data))
@@ -18,6 +20,7 @@ static func is_v1_content(raw_data: Dictionary) -> bool:
 
 static func _normalize_v1(raw_data: Dictionary, source_path: String = "") -> Dictionary:
 	var normalized: Dictionary = raw_data.duplicate(true)
+	normalized["__normalized_v1"] = true
 	normalized["version"] = int(raw_data.get("version", 1))
 	normalized["id"] = _first_text(raw_data, ["id"])
 	normalized["tipo"] = _normalize_content_type(
@@ -60,8 +63,11 @@ static func _normalize_v1(raw_data: Dictionary, source_path: String = "") -> Dic
 				normalized["json_path"] = str(primer_juego.get("json_path", "")).strip_edges()
 		"receta_arrastre":
 			normalized["categoria"] = _read_content_category(raw_data, source_path)
-			normalized["dificultad"] = int(
+			normalized["dificultad"] = _normalize_difficulty_value(
 				raw_data.get("dificultad", raw_data.get("difficulty", 1))
+			)
+			normalized["tiene_dificultad_explicita"] = (
+				raw_data.has("dificultad") or raw_data.has("difficulty")
 			)
 			normalized["objetivo"] = _first_text(
 				raw_data,
@@ -106,9 +112,13 @@ static func _normalize_v1(raw_data: Dictionary, source_path: String = "") -> Dic
 			normalized["difficulty"] = normalized["dificultad"]
 		"vinculacion":
 			normalized["categoria"] = _read_content_category(raw_data, source_path)
-			normalized["dificultad"] = int(
+			normalized["dificultad"] = _normalize_difficulty_value(
 				raw_data.get("dificultad", raw_data.get("difficulty", 1))
 			)
+			normalized["tiene_dificultad_explicita"] = (
+				raw_data.has("dificultad") or raw_data.has("difficulty")
+			)
+			normalized["usa_formato_simple_vinculacion"] = _is_simple_linking_format(raw_data)
 			normalized["instruccion"] = _first_text(
 				raw_data,
 				["instruccion", "consigna", "instruction"]
@@ -117,11 +127,23 @@ static func _normalize_v1(raw_data: Dictionary, source_path: String = "") -> Dic
 				raw_data,
 				["teaching_key", "teachingKey", "clave_ensenanza", "ensenanza"]
 			)
-			normalized["conceptos_izquierda"] = _normalize_link_concepts(
-				raw_data.get("conceptos_izquierda", raw_data.get("left_concepts", []))
+			normalized["pares"] = _normalize_link_pairs(raw_data.get("pares", []))
+			normalized["distractores"] = _normalize_text_array(
+				raw_data.get("distractores", [])
 			)
-			normalized["conceptos_derecha"] = _normalize_link_concepts(
+			var linked_concepts: Dictionary = _normalize_link_content(
+				normalized.get("pares", []),
+				normalized.get("distractores", []),
+				raw_data.get("conceptos_izquierda", raw_data.get("left_concepts", [])),
 				raw_data.get("conceptos_derecha", raw_data.get("right_concepts", []))
+			)
+			normalized["conceptos_izquierda"] = linked_concepts.get(
+				"conceptos_izquierda",
+				[]
+			)
+			normalized["conceptos_derecha"] = linked_concepts.get(
+				"conceptos_derecha",
+				[]
 			)
 			normalized["mode"] = "vinculacion_conceptos"
 			normalized["json_path"] = source_path.strip_edges()
@@ -129,8 +151,23 @@ static func _normalize_v1(raw_data: Dictionary, source_path: String = "") -> Dic
 			normalized["difficulty"] = normalized["dificultad"]
 		"preguntas":
 			normalized["categoria"] = _read_content_category(raw_data, source_path)
-			normalized["dificultad"] = int(
+			normalized["dificultad"] = _normalize_difficulty_value(
 				raw_data.get("dificultad", raw_data.get("difficulty", 1))
+			)
+			normalized["tiene_dificultad_explicita"] = (
+				raw_data.has("dificultad") or raw_data.has("difficulty")
+			)
+			normalized["usa_formato_simple_preguntas"] = _is_simple_questions_format(
+				raw_data,
+				raw_data.get("preguntas", raw_data.get("questions", []))
+			)
+			normalized["consigna"] = _first_text(
+				raw_data,
+				["consigna", "instruction", "objetivo"]
+			)
+			normalized["teaching_key"] = _first_text(
+				raw_data,
+				["teaching_key", "teachingKey", "clave_ensenanza", "ensenanza"]
 			)
 			normalized["preguntas"] = _normalize_questions(
 				raw_data.get("preguntas", raw_data.get("questions", []))
@@ -165,6 +202,8 @@ static func _infer_content_type(raw_data: Dictionary) -> String:
 		return "nodo"
 	if raw_data.has("preguntas") or raw_data.has("questions"):
 		return "preguntas"
+	if raw_data.has("pares"):
+		return "vinculacion"
 	if raw_data.has("conceptos_izquierda") or raw_data.has("left_concepts"):
 		return "vinculacion"
 	if raw_data.has("correctos") or raw_data.has("incorrectos"):
@@ -211,15 +250,32 @@ static func _normalize_map_nodes(raw_nodes: Variant) -> Array[Dictionary]:
 	if not raw_nodes is Array:
 		return nodes
 	for raw_node in raw_nodes:
+		if raw_node is String:
+			var node_path: String = str(raw_node).strip_edges()
+			nodes.append(
+				{
+					"id": _infer_id_from_path(node_path),
+					"node_key": _infer_id_from_path(node_path),
+					"archivo": node_path,
+					"json_path": node_path,
+					"posicion": {},
+					"desbloqueado_por_defecto": false,
+				}
+			)
+			continue
 		if not raw_node is Dictionary:
 			continue
 		var node: Dictionary = raw_node as Dictionary
+		var file_path: String = _first_text(node, ["archivo", "file", "path"])
+		var normalized_id: String = _first_text(node, ["id", "node_key"])
+		if normalized_id.is_empty():
+			normalized_id = _infer_id_from_path(file_path)
 		nodes.append(
 			{
-				"id": _first_text(node, ["id", "node_key"]),
-				"node_key": _first_text(node, ["id", "node_key"]),
-				"archivo": _first_text(node, ["archivo", "file", "path"]),
-				"json_path": _first_text(node, ["archivo", "file", "path"]),
+				"id": normalized_id,
+				"node_key": normalized_id,
+				"archivo": file_path,
+				"json_path": file_path,
 				"posicion": _normalize_position(node.get("posicion", node.get("position", {}))),
 				"desbloqueado_por_defecto": bool(
 					node.get(
@@ -230,6 +286,13 @@ static func _normalize_map_nodes(raw_nodes: Variant) -> Array[Dictionary]:
 			}
 		)
 	return nodes
+
+
+static func _infer_id_from_path(raw_path: String) -> String:
+	var clean_path: String = raw_path.strip_edges()
+	if clean_path.is_empty():
+		return ""
+	return clean_path.get_file().trim_suffix(".json")
 
 
 static func _normalize_node_games(raw_games: Variant) -> Array[Dictionary]:
@@ -285,38 +348,90 @@ static func _normalize_questions(raw_questions: Variant) -> Array[Dictionary]:
 	var questions: Array[Dictionary] = []
 	if not raw_questions is Array:
 		return questions
-	for raw_question in raw_questions:
+	for index in range((raw_questions as Array).size()):
+		var raw_question: Variant = (raw_questions as Array)[index]
 		if not raw_question is Dictionary:
 			continue
 		var question: Dictionary = raw_question as Dictionary
+		var question_id: String = _first_text(question, ["id"])
+		if question_id.is_empty():
+			question_id = "pregunta_%d" % (index + 1)
+		var correct_answer: String = _first_text(
+			question,
+			["respuesta", "correct_answer", "answer"]
+		)
+		var normalized_options: Array[Dictionary] = _normalize_options(
+			question.get(
+				"opciones",
+				question.get("options", _build_options_from_runtime_question(question))
+			),
+			correct_answer
+		)
 		questions.append(
 			{
-				"id": _first_text(question, ["id"]),
-				"enunciado": _first_text(question, ["enunciado", "question", "prompt"]),
-				"opciones": _normalize_options(
-					question.get("opciones", question.get("options", []))
+				"id": question_id,
+				"enunciado": _first_text(
+					question,
+					["texto", "enunciado", "question", "prompt"]
 				),
+				"respuesta": correct_answer,
+				"opciones": normalized_options,
 				"explicacion": _first_text(question, ["explicacion", "explanation"]),
 			}
 		)
 	return questions
 
 
-static func _normalize_options(raw_options: Variant) -> Array[Dictionary]:
+static func _normalize_options(
+	raw_options: Variant,
+	correct_answer: String = ""
+) -> Array[Dictionary]:
 	var options: Array[Dictionary] = []
 	if not raw_options is Array:
 		return options
-	for raw_option in raw_options:
+	for index in range((raw_options as Array).size()):
+		var raw_option: Variant = (raw_options as Array)[index]
+		if raw_option is String:
+			var option_text: String = str(raw_option).strip_edges()
+			if option_text.is_empty():
+				continue
+			options.append(
+				{
+					"id": "opcion_%d" % (index + 1),
+					"texto": option_text,
+					"correcta": option_text == correct_answer,
+				}
+			)
+			continue
 		if not raw_option is Dictionary:
 			continue
 		var option: Dictionary = raw_option as Dictionary
+		var option_id: String = _first_text(option, ["id"])
+		if option_id.is_empty():
+			option_id = "opcion_%d" % (index + 1)
 		options.append(
 			{
-				"id": _first_text(option, ["id"]),
+				"id": option_id,
 				"texto": _first_text(option, ["texto", "text", "label"]),
 				"correcta": bool(option.get("correcta", option.get("correct", false))),
 			}
 		)
+	return options
+
+
+static func _build_options_from_runtime_question(question: Dictionary) -> Array[String]:
+	var options: Array[String] = []
+	var correct_answer: String = _first_text(
+		question,
+		["respuesta", "correct_answer", "answer"]
+	)
+	if not correct_answer.is_empty():
+		options.append(correct_answer)
+	for raw_wrong_option in question.get("wrong_options", []):
+		var wrong_option: String = str(raw_wrong_option).strip_edges()
+		if wrong_option.is_empty() or options.has(wrong_option):
+			continue
+		options.append(wrong_option)
 	return options
 
 
@@ -336,6 +451,78 @@ static func _normalize_link_concepts(raw_concepts: Variant) -> Array[Dictionary]
 			}
 		)
 	return concepts
+
+
+static func _normalize_link_pairs(raw_pairs: Variant) -> Array[Dictionary]:
+	var pairs: Array[Dictionary] = []
+	if not raw_pairs is Array:
+		return pairs
+	for index in range((raw_pairs as Array).size()):
+		var raw_pair: Variant = (raw_pairs as Array)[index]
+		if not raw_pair is Dictionary:
+			continue
+		var pair: Dictionary = raw_pair as Dictionary
+		var pair_id: String = _first_text(pair, ["id"])
+		if pair_id.is_empty():
+			pair_id = "par_%d" % (index + 1)
+		pairs.append(
+			{
+				"id": pair_id,
+				"izquierda": _first_text(pair, ["izquierda", "left"]),
+				"derecha": _first_text(pair, ["derecha", "right"]),
+				"explicacion": _first_text(pair, ["explicacion", "explanation"]),
+			}
+		)
+	return pairs
+
+
+static func _normalize_link_content(
+	raw_pairs: Variant,
+	raw_distractors: Variant,
+	raw_left_concepts: Variant,
+	raw_right_concepts: Variant
+) -> Dictionary:
+	var pairs: Array[Dictionary] = raw_pairs if raw_pairs is Array else []
+	if pairs.is_empty():
+		return {
+			"conceptos_izquierda": _normalize_link_concepts(raw_left_concepts),
+			"conceptos_derecha": _normalize_link_concepts(raw_right_concepts),
+		}
+
+	var left_concepts: Array[Dictionary] = []
+	var right_concepts: Array[Dictionary] = []
+	for index in range(pairs.size()):
+		var pair: Dictionary = pairs[index]
+		var pair_id: String = str(pair.get("id", "par_%d" % (index + 1))).strip_edges()
+		left_concepts.append(
+			{
+				"id": "izq_%s" % pair_id,
+				"texto": str(pair.get("izquierda", "")).strip_edges(),
+				"id_par": pair_id,
+			}
+		)
+		right_concepts.append(
+			{
+				"id": "der_%s" % pair_id,
+				"texto": str(pair.get("derecha", "")).strip_edges(),
+				"id_par": pair_id,
+			}
+		)
+	var distractors: Array[String] = _normalize_text_array(raw_distractors)
+	for index in range(distractors.size()):
+		var distractor: String = distractors[index]
+		var distractor_id: String = "distractor_%d" % (index + 1)
+		right_concepts.append(
+			{
+				"id": distractor_id,
+				"texto": distractor,
+				"id_par": distractor_id,
+			}
+		)
+	return {
+		"conceptos_izquierda": left_concepts,
+		"conceptos_derecha": right_concepts,
+	}
 
 
 static func _normalize_feedback(raw_feedback: Variant) -> Dictionary:
@@ -369,6 +556,69 @@ static func _normalize_id_array(raw_items: Variant) -> Array[String]:
 			continue
 		items.append(item)
 	return items
+
+
+static func _normalize_text_array(raw_items: Variant) -> Array[String]:
+	var items: Array[String] = []
+	if not raw_items is Array:
+		return items
+	for raw_item in raw_items:
+		var item: String = str(raw_item).strip_edges()
+		if item.is_empty() or items.has(item):
+			continue
+		items.append(item)
+	return items
+
+
+static func _normalize_difficulty_value(raw_difficulty: Variant) -> int:
+	match typeof(raw_difficulty):
+		TYPE_INT:
+			return clampi(int(raw_difficulty), 1, 5)
+		TYPE_FLOAT:
+			return clampi(int(round(float(raw_difficulty))), 1, 5)
+		_:
+			var difficulty_text: String = str(raw_difficulty).strip_edges().to_lower()
+			match difficulty_text:
+				"easy":
+					return 1
+				"medium":
+					return 3
+				"hard":
+					return 5
+				_:
+					if difficulty_text.is_valid_int():
+						return clampi(int(difficulty_text), 1, 5)
+	return 1
+
+
+static func _is_simple_questions_format(raw_data: Dictionary, raw_questions: Variant) -> bool:
+	if (
+		raw_data.has("consigna")
+		or raw_data.has("ensenanza")
+		or raw_data.has("dificultad")
+		or raw_data.has("difficulty")
+	):
+		return true
+	if not raw_questions is Array:
+		return false
+	for raw_question in raw_questions as Array:
+		if not raw_question is Dictionary:
+			continue
+		var question: Dictionary = raw_question as Dictionary
+		if question.has("texto") or question.has("respuesta"):
+			return true
+	return false
+
+
+static func _is_simple_linking_format(raw_data: Dictionary) -> bool:
+	return (
+		raw_data.has("pares")
+		or raw_data.has("distractores")
+		or raw_data.has("consigna")
+		or raw_data.has("ensenanza")
+		or raw_data.has("dificultad")
+		or raw_data.has("difficulty")
+	)
 
 
 static func _first_text(source: Dictionary, keys: Array[String]) -> String:

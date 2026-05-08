@@ -1,0 +1,45 @@
+{
+  "id": "vincular_conceptos_1",
+  "theme": "celiaquia",
+  "title": "Vincula Conceptos",
+  "difficulty": "medium",
+  "mode": "vinculacion_conceptos",
+  "content": {
+	"instruccion": "Relacioná cada alimento con su condición de consumo.",
+	"teaching_key": "celiaquia_9",
+	"conceptos_izquierda": [
+	  {
+		"id": "izq_intestinal",
+		"texto": "Atrofia",
+		"id_par": "intestinal"
+	  },
+	  {
+		"id": "izq_cultivo",
+		"texto": "Sorgo",
+		"id_par": "cultivo"
+	  },
+	  {
+		"id": "izq_alimento",
+		"texto": "Almidón",
+		"id_par": "alimento"
+	  }
+	],
+	"conceptos_derecha": [
+	  {
+		"id": "der_alimento",
+		"texto": "Espesante",
+		"id_par": "alimento"
+	  },
+	  {
+		"id": "der_cultivo",
+		"texto": "Alternativa",
+		"id_par": "cultivo"
+	  },
+	  {
+		"id": "der_intestinal",
+		"texto": "Vellosidades",
+		"id_par": "intestinal"
+	  }
+	]
+  }
+}

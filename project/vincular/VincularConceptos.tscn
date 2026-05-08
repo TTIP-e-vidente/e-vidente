@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://bdbfsjbwr8736" path="res://vincular/vincular_conceptos.gd" id="1_xh4rf"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_y4o07"]
 [ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="3_ayk73"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_ayk73"]
 [ext_resource type="PackedScene" uid="uid://dreulrv8mq1oa" path="res://vincular/concept_item.tscn" id="4_y4o07"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_ala0e"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_hud00"]
@@ -35,7 +34,6 @@ offset_bottom = 225.0
 scale = Vector2(0.732087, 0.76974475)
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_constants/line_spacing = -5
-theme_override_fonts/font = ExtResource("4_ayk73")
 theme_override_font_sizes/font_size = 53
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -29,11 +29,11 @@ static func load_catalog() -> Dictionary:
 		return _error("No se pudo cargar ningun catalogo de items de contenido.")
 
 	var catalog: Dictionary = raw_result.get("data", {})
-	var items: Variant = catalog.get("items", {})
-	if not items is Dictionary:
-		return _error("assets_catalog.json necesita items como objeto.")
+	var items: Dictionary = _extract_items(catalog)
+	if items.is_empty():
+		return _error("items.json necesita ids de items como objeto.")
 
-	_catalog_cache = catalog.duplicate(true)
+	_catalog_cache = {"items": items}
 	_catalog_loaded = true
 	return _ok(_catalog_cache.duplicate(true))
 
@@ -61,27 +61,45 @@ static func resolve_item_runtime_data(item_id: String) -> Dictionary:
 
 	var definition: Dictionary = definition_result.get("data", {})
 	var asset_path: String = ContentJsonLoaderScript.resolve_path(
-		str(definition.get("asset", "")).strip_edges()
+		str(definition.get("resource", definition.get("asset", ""))).strip_edges()
 	)
 	if asset_path.is_empty() or not FileAccess.file_exists(asset_path):
-		return _error("Asset no encontrado en assets_catalog.json: \"%s\"." % item_id)
+		return _error(
+			"Resource no encontrado en items.json: \"%s\"." % item_id
+		)
 
 	var item_resource: Resource = load(asset_path) as Resource
 	if item_resource == null:
-		return _error("No se pudo cargar el asset del catalogo: %s" % asset_path)
+		return _error("No se pudo cargar el resource del item: %s" % asset_path)
 
+	var image_path: String = ContentJsonLoaderScript.resolve_path(
+		str(definition.get("imagen", definition.get("image", ""))).strip_edges()
+	)
 	var sprite: Texture2D = item_resource.get("sprite") as Texture2D
 	var info: Texture2D = item_resource.get("info") as Texture2D
 	var runtime_data := {
 		"id": item_id.strip_edges(),
 		"nombre": str(definition.get("nombre", item_id)).strip_edges(),
-		"asset": asset_path,
-		"categoria": str(definition.get("categoria", "")).strip_edges(),
+		"resource": asset_path,
+		"categoria": str(
+			definition.get(
+				"categoria",
+				item_resource.get("categoria") if item_resource != null else ""
+			)
+		).strip_edges(),
 		"tags": definition.get("tags", []),
-		"image": sprite.resource_path if sprite != null else "",
+		"image": image_path if not image_path.is_empty() else (
+			sprite.resource_path if sprite != null else ""
+		),
 		"info_image": info.resource_path if info != null else "",
 	}
 	return _ok(runtime_data)
+
+
+static func _extract_items(catalog: Dictionary) -> Dictionary:
+	if catalog.has("items") and catalog.get("items") is Dictionary:
+		return (catalog.get("items", {}) as Dictionary).duplicate(true)
+	return catalog.duplicate(true)
 
 
 static func _ok(data: Dictionary) -> Dictionary:

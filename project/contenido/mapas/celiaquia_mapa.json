@@ -5,8 +5,9 @@
   "nodes": [
 	{
 	  "node_key": "receta_1_desayuno",
-	  "title": "Prepara el desayuno",
+	  "title": "Prepará el desayuno",
 	  "mode": "drag_drop",
+	  "difficulty": 1,
 	  "json_path": "res://contenido/nodos/celiaquia/arrastre/receta_1_desayuno.json"
 	},
 	{
@@ -167,6 +168,20 @@
 	  "mode": "vinculacion_conceptos",
 	  "difficulty": 3,
 	  "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_alimentos_seguridad.json"
+	},
+	{
+	  "node_key": "vincular_conceptos",
+	  "title": "Vincula Conceptos",
+	  "mode": "vinculacion_conceptos",
+	  "difficulty": 3,
+	  "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_conceptos.json"
+	},
+	{
+	  "node_key": "vincular_conceptos_1",
+	  "title": "Vincula Conceptos",
+	  "mode": "vinculacion_conceptos",
+	  "difficulty": 3,
+	  "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_conceptos_1.json"
 	}
   ]
 }
