@@ -17,6 +17,7 @@ const ContinuidadDePartidaDeNodoScript := preload(
 const CargadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
 )
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
@@ -169,14 +170,13 @@ func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
 
 
 func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
+	var activity_id: String = str(contexto_sesion.get("activity_id", "")).strip_edges()
 	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
-	if ruta_json.is_empty():
-		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
+	if activity_id.is_empty() and ruta_json.is_empty():
+		_mensaje_error_bloqueante = "Falta activity_id o json_path para la vinculacion."
 		return
 
-	var resultado_nodo: Dictionary = (
-		CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
-	)
+	var resultado_nodo: Dictionary = NodeContentLoaderScript.load_from_context(contexto_sesion)
 	if not bool(resultado_nodo.get("ok", false)):
 		_mensaje_error_bloqueante = str(
 			resultado_nodo.get("error", "No se pudo cargar el contenido de vinculación.")

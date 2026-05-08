@@ -4,6 +4,7 @@ class_name QuestionJsonLoader
 const CargadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
 )
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
 const PreguntasScript := preload("res://preguntas/recursos/preguntas.gd")
 const ERROR_CONTENIDO_NO_DISPONIBLE := (
@@ -38,6 +39,16 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 		return cargar_resultado_desde_datos_nodo(
 			datos_nodo,
 			_read_playable_json_path(contexto_sesion)
+		)
+	if not str(contexto_sesion.get("activity_id", "")).strip_edges().is_empty():
+		var resultado_activity: Dictionary = NodeContentLoaderScript.load_from_context(contexto_sesion)
+		if not bool(resultado_activity.get("ok", false)):
+			return _resultado_error(
+				str(resultado_activity.get("error", ERROR_CONTENIDO_NO_DISPONIBLE))
+			)
+		return cargar_resultado_desde_datos_nodo(
+			resultado_activity.get("data", {}),
+			str(contexto_sesion.get("activity_id", ""))
 		)
 	var ruta_json: String = _read_playable_json_path(contexto_sesion)
 	if not ruta_json.is_empty():

@@ -1,0 +1,92 @@
+{
+  "track": "celiaquia",
+  "version": 3,
+  "nodes": {
+    "1": {
+      "node_key": "celiaquia_01_desayuno_basico",
+      "games": ["drag_desayuno_facil"]
+    },
+    "2": {
+      "node_key": "celiaquia_02_colacion_basica",
+      "games": ["drag_colacion_facil"]
+    },
+    "3": {
+      "node_key": "celiaquia_03_quiz_gluten",
+      "games": ["quiz_gluten_natural"]
+    },
+    "4": {
+      "node_key": "celiaquia_04_desayuno_y_sello",
+      "games": ["drag_desayuno_facil", "quiz_sello_sin_tacc"]
+    },
+    "5": {
+      "node_key": "celiaquia_05_merienda_intro",
+      "shuffle_games": true,
+      "games": ["drag_merienda_facil", "quiz_cereales_gluten"]
+    },
+    "6": {
+      "node_key": "celiaquia_06_colacion_y_arroz",
+      "shuffle_games": true,
+      "games": ["drag_colacion_normal", "quiz_gluten_arroz"]
+    },
+    "7": {
+      "node_key": "celiaquia_07_almuerzo_y_match",
+      "shuffle_games": true,
+      "games": ["drag_almuerzo_normal", "match_categorias_alimentos"]
+    },
+    "8": {
+      "node_key": "celiaquia_08_desayuno_y_contaminacion",
+      "shuffle_games": true,
+      "games": ["drag_desayuno_normal", "quiz_contaminacion_cruzada"]
+    },
+    "9": {
+      "node_key": "celiaquia_09_merienda_etiquetas_match",
+      "shuffle_games": true,
+      "games": ["drag_merienda_normal", "quiz_etiquetas_sin_tacc", "match_alimentos_seguridad"]
+    },
+    "10": {
+      "node_key": "celiaquia_10_almuerzo_sello_contaminacion",
+      "shuffle_games": true,
+      "games": ["drag_bebida_facil", "quiz_bebidas_gluten", "quiz_natural_vs_industrial"]
+    },
+    "11": {
+      "node_key": "celiaquia_11_cena_y_riesgos",
+      "shuffle_games": true,
+      "games": ["drag_cena_normal", "match_cerveza_utensilios_diagnostico"]
+    },
+    "12": {
+      "node_key": "celiaquia_12_colacion_procesados_match",
+      "shuffle_games": true,
+      "games": ["drag_colacion_normal", "quiz_productos_procesados", "match_vellosidades_sorgo_almidon"]
+    },
+    "13": {
+      "node_key": "celiaquia_13_almuerzo_cotidiano_match",
+      "shuffle_games": true,
+      "games": ["drag_almuerzo_dificil", "quiz_casos_cotidianos_sin_tacc", "match_alimentos"]
+    },
+    "14": {
+      "node_key": "celiaquia_14_merienda_bebidas_etiquetas",
+      "shuffle_games": true,
+      "games": ["drag_merienda_dificil", "quiz_bebidas_gluten", "match_etiquetas_seguridad"]
+    },
+    "15": {
+      "node_key": "celiaquia_15_cena_utensilios_riesgos",
+      "shuffle_games": true,
+      "games": ["drag_cena_dificil", "quiz_utensilios_compartidos", "match_riesgos_cocina"]
+    },
+    "16": {
+      "node_key": "celiaquia_16_almuerzo_fuera_match",
+      "shuffle_games": true,
+      "games": ["drag_almuerzo_normal", "quiz_comer_fuera", "match_etiquetas_seguridad"]
+    },
+    "17": {
+      "node_key": "celiaquia_17_cierre_cena_riesgos",
+      "shuffle_games": true,
+      "games": ["drag_cena_dificil", "quiz_casos_cotidianos_sin_tacc", "match_riesgos_cocina"]
+    },
+    "18": {
+      "node_key": "celiaquia_18_desafio_final",
+      "shuffle_games": true,
+      "games": ["drag_almuerzo_dificil", "quiz_etiquetas_sin_tacc", "match_etiquetas_seguridad"]
+    }
+  }
+}

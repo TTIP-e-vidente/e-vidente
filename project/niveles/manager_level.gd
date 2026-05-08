@@ -68,6 +68,13 @@ func iniciar_desde_datos_de_arrastre(
 	_preparar_runtime_de_arrastre_desde_json()
 
 	var datos_arrastre: Dictionary = _extraer_datos_de_arrastre(contenido_arrastre)
+	print(
+		"[ManagerLevel] iniciar_desde_datos_de_arrastre items=%d targets=%d"
+		% [
+			(datos_arrastre.get("elementos", []) as Array).size(),
+			(datos_arrastre.get("objetivos", []) as Array).size(),
+		]
+	)
 	var escena_elemento: PackedScene = _cargar_escena_elemento_de_arrastre()
 	if escena_elemento == null:
 		return false
@@ -191,6 +198,15 @@ func _construir_datos_de_partida_de_arrastre() -> Dictionary:
 
 
 func _finalizar_arranque_de_arrastre_desde_json() -> bool:
+	print(
+		"[DragRuntime] mode=drag_drop targets=%d items=%d"
+		% [
+			(level_resource.mechanic_payload.get("targets", []) as Array).size()
+				if level_resource != null and level_resource.mechanic_payload is Dictionary
+				else 0,
+			active_positive_item_count + active_negative_item_count,
+		]
+	)
 	_instanciar_elementos_de_arrastre()
 	if level_items.is_empty():
 		push_warning("ManagerLevel: no se pudieron instanciar comidas de arrastre desde el JSON.")
@@ -238,10 +254,12 @@ func _crear_elementos_desde_datos_de_arrastre(
 ) -> Dictionary:
 	var positivos: Array = []
 	var negativos: Array = []
-	for elemento_crudo in elementos_crudos:
+	for index in range(elementos_crudos.size()):
+		var elemento_crudo: Variant = elementos_crudos[index]
 		var nivel_item: Resource = _crear_elemento_de_arrastre_desde_datos(
 			elemento_crudo,
-			escena_elemento
+			escena_elemento,
+			index
 		)
 		if nivel_item == null:
 			continue
@@ -259,22 +277,50 @@ func _crear_elementos_desde_datos_de_arrastre(
 
 func _crear_elemento_de_arrastre_desde_datos(
 	elemento_crudo: Variant,
-	escena_elemento: PackedScene
+	escena_elemento: PackedScene,
+	index: int = 0
 ) -> Resource:
 	if not elemento_crudo is Dictionary:
 		return null
 	var datos_elemento: Dictionary = elemento_crudo as Dictionary
 	var nivel_item = LevelItemScript.new()
-	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(datos_elemento)
+	var item_id: String = str(datos_elemento.get("id", "sin_id")).strip_edges()
+	var ruta_recurso: String = _resolver_ruta_recurso_elemento_arrastre(datos_elemento)
+	var recurso_item: Resource = _cargar_recurso_elemento_arrastre(ruta_recurso)
+	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(
+		datos_elemento,
+		recurso_item
+	)
 	var textura_info: Texture2D = _resolver_textura_info_elemento_arrastre(
 		datos_elemento,
-		textura_elemento
+		textura_elemento,
+		recurso_item
 	)
+	nivel_item.runtime_id = item_id
+	nivel_item.runtime_resource_path = ruta_recurso
+	nivel_item.runtime_visual_resource_path = (
+		textura_elemento.resource_path if textura_elemento != null else ""
+	)
+	nivel_item.runtime_label = str(
+		datos_elemento.get("label", datos_elemento.get("nombre", item_id))
+	).strip_edges()
+	nivel_item.runtime_feedback = str(datos_elemento.get("feedback", "")).strip_edges()
+	nivel_item.runtime_correct_target = str(datos_elemento.get("correct_target", "")).strip_edges()
 	nivel_item.sprite = textura_elemento
 	nivel_item.escena = escena_elemento
 	nivel_item.info = textura_info if textura_info != null else nivel_item.sprite
 	nivel_item.categoria = str(datos_elemento.get("category", "")).strip_edges()
 	nivel_item.esPositivo = str(datos_elemento.get("correct_target", "")).strip_edges() != ""
+	print(
+		"[ManagerLevelItem] index=%d id=%s resource=%s visual=%s label=%s"
+		% [
+			index,
+			item_id,
+			ruta_recurso,
+			nivel_item.runtime_visual_resource_path,
+			nivel_item.runtime_label,
+		]
+	)
 	return nivel_item
 
 
@@ -450,32 +496,68 @@ func _instanciar_elementos_de_arrastre() -> void:
 		generar_nivel_elemento(level_resource.itemsNegativos[j], "negative_%d" % j, false)
 
 
-func _resolver_textura_elemento_arrastre(elemento_crudo: Dictionary) -> Texture2D:
-	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
-	var textura_elemento: Texture2D = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+func _resolver_textura_elemento_arrastre(
+	elemento_crudo: Dictionary,
+	recurso_item: Resource = null
+) -> Texture2D:
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
+	var textura_elemento: Texture2D = null
+	if ruta_textura.ends_with(".tres"):
+		if recurso_item != null:
+			textura_elemento = recurso_item.get("sprite") as Texture2D
+	else:
+		textura_elemento = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+	var item_id: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
+	print(
+		"[DragFoodItem] id=%s resource=%s exists=%s correct=%s"
+		% [
+			item_id, ruta_textura,
+			str(ResourceLoader.exists(ruta_textura) and textura_elemento != null),
+			str(str(elemento_crudo.get("correct_target", "")).strip_edges() != ""),
+		]
+	)
 	if textura_elemento != null:
 		return textura_elemento
 
-	var identificador_elemento: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
 	push_warning(
-		"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s)."
-		+ " Se usara una textura por defecto."
-		% [identificador_elemento, ruta_textura]
+		(
+			"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s)."
+			+ " Se usara una textura por defecto."
+		) % [item_id, ruta_textura]
 	)
 	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
 
 
+func _resolver_ruta_recurso_elemento_arrastre(elemento_crudo: Dictionary) -> String:
+	for campo in ["resource", "resource_path", "asset", "image", "texture"]:
+		var ruta: String = str(elemento_crudo.get(campo, "")).strip_edges()
+		if not ruta.is_empty():
+			return ruta
+	return ""
+
+
+func _cargar_recurso_elemento_arrastre(ruta_recurso: String) -> Resource:
+	if ruta_recurso.strip_edges().is_empty() or not ruta_recurso.ends_with(".tres"):
+		return null
+	return load(ruta_recurso) as Resource
+
+
 func _resolver_textura_info_elemento_arrastre(
 	elemento_crudo: Dictionary,
-	textura_elemento: Texture2D
+	textura_elemento: Texture2D,
+	recurso_item: Resource = null
 ) -> Texture2D:
 	var ruta_info_explicita: String = str(
 		elemento_crudo.get("info_image", elemento_crudo.get("info", ""))
 	).strip_edges()
 	if not ruta_info_explicita.is_empty():
 		return GameChapterAssetCatalogScript.resolver_textura(ruta_info_explicita)
+	if recurso_item != null:
+		var textura_info_recurso := recurso_item.get("info") as Texture2D
+		if textura_info_recurso != null:
+			return textura_info_recurso
 
-	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
 	var texturas_info_por_sprite := _obtener_texturas_info_por_sprite()
 	if not ruta_textura.is_empty() and texturas_info_por_sprite.has(ruta_textura):
 		return texturas_info_por_sprite.get(ruta_textura) as Texture2D
@@ -699,6 +781,10 @@ func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positi
 	level_item_instance.setup(level_item, plato, is_positive, instance_id)
 	add_child(level_item_instance)
 	level_items.append(level_item_instance)
+	var item_id: String = str(level_item.runtime_id).strip_edges()
+	if item_id.is_empty():
+		item_id = instance_id
+	print("[ManagerLevel] item_instantiated id=%s ok=true" % item_id)
 	return level_item_instance
 
 

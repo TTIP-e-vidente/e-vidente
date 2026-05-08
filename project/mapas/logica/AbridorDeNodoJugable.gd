@@ -8,6 +8,8 @@ const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd"
 const CLAVE_SESION_NODE_KEY := "node_key"
 const CLAVE_SESION_NODE_TITLE := "node_title"
 const CLAVE_SESION_JSON_PATH := "json_path"
+const CLAVE_SESION_ACTIVITY_ID := "activity_id"
+const CLAVE_SESION_PACK_ID := "pack_id"
 const CLAVE_SESION_TRACK_KEY := "track_key"
 const CLAVE_SESION_MODE := "mode"
 const CLAVE_SESION_LEVEL_NUMBER := "level_number"
@@ -66,6 +68,10 @@ static func construir_sesion_jugable(
 		CLAVE_SESION_NODE_KEY: node_data.node_key,
 		CLAVE_SESION_NODE_TITLE: node_data.title,
 		CLAVE_SESION_JSON_PATH: node_data.json_path,
+		CLAVE_SESION_ACTIVITY_ID: node_data.activity_id,
+		CLAVE_SESION_PACK_ID: (
+			node_data.pack_id if not node_data.pack_id.is_empty() else node_data.track_key
+		),
 		CLAVE_SESION_TRACK_KEY: node_data.track_key,
 		CLAVE_SESION_MODE: node_data.mode.strip_edges(),
 		CLAVE_SESION_LEVEL_NUMBER: numero_nivel,
