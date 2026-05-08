@@ -6,6 +6,9 @@ signal run_completed
 const LOG_PREFIX_ARRASTRE := "[ARRASTRE]"
 const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
 const LOG_PREFIX_POST_GAME := "[POST_GAME]"
+const LOG_PREFIX_TEACHING := "[Teaching]"
+const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
+const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
 
 ## --- Configuración ---
 
@@ -253,7 +256,10 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 func cargar_contenido_del_nivel_desde_contexto(contexto_jugable: Dictionary) -> void:
 	var result: Dictionary = NodeContentLoaderScript.load_from_context(contexto_jugable)
 	if not bool(result.get("ok", false)):
-		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el contenido del nivel.")))
+		push_error(
+			"Level: %s"
+			% str(result.get("error", "No se pudo cargar el contenido del nivel."))
+		)
 		return
 
 	var datos_nodo: Dictionary = result.get("data", {})
@@ -451,6 +457,17 @@ func _finalizar_partida() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
+	var activity_id: String = _obtener_activity_id_actual()
+	var teaching_key: String = _obtener_teaching_key_actual()
+	print(
+		"%s completed_drag activity=%s key=%s"
+		% [LOG_PREFIX_TEACHING, activity_id, teaching_key]
+	)
+	if teaching_key.is_empty():
+		print(
+			"%s missing teaching data for activity=%s"
+			% [LOG_PREFIX_TEACHING, activity_id]
+		)
 	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
 		print(
 			LOG_PREFIX_ARRASTRE,
@@ -947,22 +964,36 @@ func _hay_textura_de_ensenanza() -> bool:
 
 func _mostrar_ensenanza_de_cierre() -> void:
 	_establecer_visibilidad_indicador_de_progreso(false)
-	print(LOG_PREFIX_ENSENANZA, " mostrando teaching_key=", _obtener_teaching_key_actual())
+	var activity_id: String = _obtener_activity_id_actual()
+	var teaching_key: String = _obtener_teaching_key_actual()
+	print("%s show key=%s" % [LOG_PREFIX_TEACHING, teaching_key])
 	if _hay_textura_de_ensenanza():
 		if is_instance_valid(tarjeta_ensenanza_cierre):
 			tarjeta_ensenanza_cierre.hide()
 		if is_instance_valid(teaching_sprite):
 			teaching_sprite.show()
+		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
+		print("%s fallback=false" % LOG_PREFIX_TEACHING)
 		return
-	if is_instance_valid(teaching_sprite):
-		teaching_sprite.hide()
-	if is_instance_valid(tarjeta_ensenanza_cierre):
-		tarjeta_ensenanza_cierre.hide()
-	push_warning("Level: no hay asset de ensenanza para mostrar.")
+	if teaching_key.is_empty():
+		print(
+			"%s missing teaching data for activity=%s"
+			% [LOG_PREFIX_TEACHING, activity_id]
+		)
+	print(
+		"%s missing asset key=%s fallback=true"
+		% [LOG_PREFIX_TEACHING, teaching_key]
+	)
+	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
+	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
 
 
 func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	var activity_id: String = str(
+		datos_arrastre.get("node_key", datos_arrastre.get("id", ""))
+	).strip_edges()
+	var teaching_key: String = str(datos_arrastre.get("teaching_key", "")).strip_edges()
 	print(
 		LOG_PREFIX_ARRASTRE,
 		" juego_actual=",
@@ -970,22 +1001,71 @@ func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 		" total=",
 		int(contexto.get("total", 1)),
 		" id=",
-		str(datos_arrastre.get("node_key", datos_arrastre.get("id", ""))).strip_edges(),
+		activity_id,
 		" teaching_key=",
-		str(datos_arrastre.get("teaching_key", "")).strip_edges()
+		teaching_key
+	)
+	print(
+		"%s activity=%s key=%s"
+		% [LOG_PREFIX_TEACHING, activity_id, teaching_key]
+	)
+	print(
+		"%s runtime_has_teaching_key=%s"
+		% [LOG_PREFIX_TEACHING, str(not teaching_key.is_empty())]
 	)
 
 
 func _obtener_teaching_key_actual() -> String:
 	var contenido: Variant = _datos_nodo_mapa.get("content", {})
 	if contenido is Dictionary:
-		var teaching_key: String = str(
-			(contenido as Dictionary).get("teaching_key", "")
-		).strip_edges()
+		var teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
 		if not teaching_key.is_empty():
 			return teaching_key
+	var top_level_teaching_key: String = _leer_teaching_key_de_diccionario(_datos_nodo_mapa)
+	if not top_level_teaching_key.is_empty():
+		return top_level_teaching_key
 	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
-	return str(juego_actual.get("teaching_key", "")).strip_edges()
+	var teaching_key: String = _leer_teaching_key_de_diccionario(juego_actual)
+	if not teaching_key.is_empty():
+		return teaching_key
+	return _leer_teaching_key_de_diccionario(_contexto_nodo_mapa)
+
+
+func _mostrar_ensenanza_textual(texto: String) -> void:
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+	if is_instance_valid(label_ensenanza_cierre):
+		label_ensenanza_cierre.text = texto
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		tarjeta_ensenanza_cierre.show()
+		return
+	push_warning("Level: no hay tarjeta de ensenanza para mostrar fallback textual.")
+
+
+func _leer_teaching_key_de_diccionario(datos: Dictionary) -> String:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
+		var teaching_key: String = str(datos.get(clave_campo, "")).strip_edges()
+		if not teaching_key.is_empty():
+			return teaching_key
+	return ""
+
+
+func _obtener_activity_id_actual() -> String:
+	var activity_id: String = str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	activity_id = str(
+		_datos_nodo_mapa.get("id", _datos_nodo_mapa.get("node_key", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	activity_id = str(
+		juego_actual.get("activity_id", juego_actual.get("id", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	return str(juego_actual.get("node_key", "")).strip_edges()
 
 
 func restaurar_finalizacion_visual_estado() -> void:
