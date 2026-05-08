@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dreulrv8mq1oa" path="res://vincular/concept_item.tscn" id="4_y4o07"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_ala0e"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_hud00"]
-[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
+[ext_resource type="PackedScene" uid="uid://xuxywhubl1u5" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 
 [node name="VincularConceptos" type="Node2D" unique_id=1460006904]
 script = ExtResource("1_xh4rf")
@@ -17,7 +17,7 @@ script = ExtResource("1_xh4rf")
 
 [node name="IndicadorProgresoDeJuego" parent="." unique_id=1577780001 instance=ExtResource("7_hud00")]
 
-[node name="ContinuarJuego" parent="." instance=ExtResource("8_continuar")]
+[node name="ContinuarJuego" parent="." unique_id=1443894936 instance=ExtResource("8_continuar")]
 
 [node name="Control" type="Control" parent="." unique_id=1892591276]
 layout_mode = 3
@@ -34,7 +34,7 @@ offset_bottom = 225.0
 scale = Vector2(0.732087, 0.76974475)
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_constants/line_spacing = -5
-theme_override_font_sizes/font_size = 53
+theme_override_font_sizes/font_size = 23
 horizontal_alignment = 1
 vertical_alignment = 1
 
