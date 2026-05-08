@@ -1,0 +1,74 @@
+{
+  "match_alimentos": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Uni cada alimento con su clasificacion.",
+    "pairs": [
+      ["Banana", "Fruta apta"],
+      ["Pan", "Contiene gluten"],
+      ["Arroz", "Grano apto"]
+    ]
+  },
+  "match_categorias_alimentos": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Uni cada alimento con su categoria.",
+    "pairs": [
+      ["Arroz", "Sin TACC"],
+      ["Fideos de trigo", "Con gluten"],
+      ["Manzana", "Sin TACC"],
+      ["Medialuna", "Con gluten"]
+    ]
+  },
+  "match_riesgos_cocina": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Uni cada situacion con su riesgo.",
+    "pairs": [
+      ["Misma tabla para pan y frutas", "Contaminacion cruzada"],
+      ["Producto sin sello Sin TACC", "No confirmado como apto"],
+      ["Aceite compartido con empanadas", "Riesgo de contaminacion"]
+    ]
+  },
+  "match_etiquetas_seguridad": {
+    "mode": "match",
+    "difficulty": 3,
+    "prompt": "Uni cada etiqueta con lo que indica.",
+    "pairs": [
+      ["Sello Sin TACC", "Certificado apto para celiacos"],
+      ["Sin rotulo Sin TACC", "No confirmado como seguro"],
+      ["Contiene trigo", "No apto para celiacos"]
+    ]
+  },
+  "match_alimentos_seguridad": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Uni cada alimento con su clasificacion.",
+    "pairs": [
+      ["Banana", "Fruta apta"],
+      ["Pan", "Harina de trigo"],
+      ["Arroz", "Grano apto"]
+    ],
+    "distractors": ["Solo bebida"]
+  },
+  "match_cerveza_utensilios_diagnostico": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Relaciona cada concepto con su condicion de consumo.",
+    "pairs": [
+      ["Malta", "Cebada"],
+      ["Utensilios", "Exclusivos"],
+      ["Biopsia", "Diagnostico"]
+    ]
+  },
+  "match_vellosidades_sorgo_almidon": {
+    "mode": "match",
+    "difficulty": 2,
+    "prompt": "Relaciona cada concepto con su significado.",
+    "pairs": [
+      ["Atrofia", "Vellosidades"],
+      ["Sorgo", "Alternativa"],
+      ["Almidon", "Espesante"]
+    ]
+  }
+}

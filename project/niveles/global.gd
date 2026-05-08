@@ -376,6 +376,8 @@ func _construir_juego_actual_de_partida(partida_activa: Dictionary) -> Dictionar
 	juego_actual["node_title"] = str(partida_activa.get("titulo_nodo", "")).strip_edges()
 	juego_actual["level_number"] = max(1, int(partida_activa.get("numero_nivel", 1)))
 	juego_actual["return_to"] = str(partida_activa.get("escena_de_retorno", "")).strip_edges()
+	juego_actual["activity_id"] = str(juego_actual.get("activity_id", "")).strip_edges()
+	juego_actual["pack_id"] = str(juego_actual.get("pack_id", juego_actual.get("track_key", ""))).strip_edges()
 	return juego_actual
 
 
@@ -415,6 +417,8 @@ func _construir_contexto_de_progreso_de_juego(
 		"dificultad": max(0, dificultad),
 		"mode": str(fuente.get("mode", "")).strip_edges(),
 		"json_path": str(fuente.get("json_path", "")).strip_edges(),
+		"activity_id": str(fuente.get("activity_id", "")).strip_edges(),
+		"pack_id": str(fuente.get("pack_id", "")).strip_edges(),
 		"titulo_nodo": str(fuente.get("titulo_nodo", titulo)).strip_edges(),
 		"pertenece_a_partida_de_nodo": pertenece_a_partida_de_nodo,
 	}

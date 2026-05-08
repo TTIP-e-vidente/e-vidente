@@ -1,197 +1,250 @@
-# Contenido JSON
+# Contenido — Guía trainee
 
-La regla oficial para contenido nuevo es esta: 1 JSON = 1 nodo jugable.
+## Estructura
 
-Tipos permitidos para contenido nuevo:
+```
+contenido/
+├── catalogos/
+│   └── items_celiaquia.json   ← catálogo semántico de items (único activo)
+│
+├── mapa/
+│   ├── celiaquia_mapa.json    ← nodos del capítulo (orden + games por nodo)
+│   ├── preguntas.json         ← todas las actividades quiz
+│   ├── arrastres.json         ← todas las actividades drag_food
+│   └── vinculaciones.json     ← todas las actividades match
+│
+├── backup/
+│   ├── arrastre/              ← drag_drop legacy (json_path viejo)
+│   ├── preguntas/             ← quiz legacy
+│   ├── vinculacion/           ← match legacy
+│   └── celiaquia_pack*.json   ← packs anteriores
+│
+└── README.md                  ← este archivo
+```
 
-- `arrastre`
-- `preguntas`
-- `vinculacion`
+---
 
-Guardá cada archivo en su carpeta por tipo:
+## El .tres y el JSON son cosas distintas
 
-- `res://contenido/nodos/celiaquia/arrastre/`
-- `res://contenido/nodos/celiaquia/preguntas/`
-- `res://contenido/nodos/celiaquia/vinculacion/`
+`items_celiaquia.json` **no reemplaza** al `.tres` — lo complementa.
 
-El único archivo que hoy queda en la raíz es `receta_1_desayuno.json` por compatibilidad con el primer nodo del mapa.
+| Qué | Quién lo define |
+|-----|----------------|
+| Visual del alimento (imagen, sprite) | `res://items/nombre.tres` |
+| Nombre visible en el juego | `res://items/nombre.tres` |
+| Si es correcto o incorrecto en celiaquía | `items_celiaquia.json` → `categoria` |
+| En qué comida puede aparecer | `items_celiaquia.json` → `meal_type` |
+| Qué tags tiene (fruta, trigo, etc.) | `items_celiaquia.json` → `tags` |
+| Texto educativo al seleccionarlo | `items_celiaquia.json` → `feedback` |
 
-## Formato actual
+El sistema resuelve el recurso automáticamente:
+```
+"banana" → res://items/banana.tres
+```
 
-Hoy conviven dos formatos activos en el proyecto:
-
-- `arrastre` y `preguntas` usan el formato actual de archivos del juego: `theme`, `title`, `difficulty`, `mode` y `content`.
-- `vinculacion` sigue usando el formato simple con `tipo`, `titulo`, `dificultad`, `consigna`, `ensenanza` y `pares`.
-
-No mezcles ambos formatos dentro del mismo archivo.
-
-## Cómo crear arrastre
-
-1. Copiá `res://contenido/plantillas/arrastre.json`.
-2. Cambiá `id`, `title`, `difficulty`, `content.teaching_key` y `content.instruction`.
-3. En `targets`, definí el destino correcto del plato.
-4. En `items`, cargá `id`, `label`, `image` y `correct_target`.
-
-## Cómo crear pregunta
-
-1. Copiá `res://contenido/plantillas/preguntas.json`.
-2. Cambiá `id`, `title`, `difficulty` y `content.question`.
-3. Definí `content.correct_answer` y `content.wrong_options`.
-4. Si hace falta, usá `content.visual_resource` para una imagen asociada.
-
-Ejemplo mínimo:
-
+Si el archivo tiene guiones en el nombre, se usa el campo `resource`:
 ```json
-{
-  "id": "eliminar_gluten",
-  "theme": "celiaquia",
-  "title": "Eliminar gluten del trigo",
-  "difficulty": "easy",
-  "mode": "quiz_choice",
-  "content": {
-    "question": "Eliminar el gluten visible de una comida con trigo no evita la contaminación.",
-    "correct_answer": "Verdadero",
-    "wrong_options": ["Falso"],
-    "visual_resource": ""
-  }
+"cafe_leche": {
+  "resource": "res://items/cafe-leche.tres",
+  ...
 }
 ```
 
-Ejemplo mínimo de arrastre:
+---
+
+## Qué archivo tocar para cada tarea
+
+| Quiero hacer... | Qué hago |
+|-----------------|---------|
+| Agregar un alimento visual al juego | Crear `res://items/nombre.tres` |
+| Usarlo en celiaquía | Agregar key en `catalogos/items_celiaquia.json` |
+| Marcarlo como correcto | `categoria: "sin_tacc"` |
+| Marcarlo como incorrecto | `categoria: "con_gluten"` o `"riesgo"` |
+| Decir dónde puede aparecer | `meal_type: [...]` |
+| Crear actividad drag_food | `mapa/arrastres.json` con `meal + pick` |
+| Crear actividad quiz | `mapa/preguntas.json` |
+| Crear actividad match | `mapa/vinculaciones.json` |
+| Agregar un nodo al mapa | `mapa/celiaquia_mapa.json` |
+| Ver contenido viejo o recuperar algo | `backup/` |
+
+---
+
+## Equivalencia con level_1.tres
+
+| level_1.tres | JSON nuevo | Dónde |
+|---|---|---|
+| `itemsPositivos` | items con `"categoria": "sin_tacc"` | `items_celiaquia.json` |
+| `itemsNegativos` | items con `"categoria": "con_gluten"` o `"riesgo"` | `items_celiaquia.json` |
+| `cantidadPositivos` | `pick.correct` | `arrastres.json` |
+| `cantidadNegativos` | `pick.incorrect` | `arrastres.json` |
+| Pool filtrado por momento | `meal_type` | `items_celiaquia.json` |
+| Shuffle por partida | `RandomNumberGenerator` + anti-repetición | `ActivityAdapter.gd` |
+
+Antes el nivel listaba manualmente qué alimentos mostrar. Ahora el sistema filtra dinámicamente: si la actividad pide `meal: "desayuno"`, solo aparecen items que tengan `"desayuno"` en su `meal_type`.
+
+Cada vez que se juega el mismo nodo, el sistema elige una combinación distinta al azar — igual que el shuffle original.
+
+---
+
+## Formato de items_celiaquia.json
 
 ```json
 {
-  "id": "receta_2_colacion",
-  "theme": "celiaquia",
-  "title": "Arma una colacion segura",
-  "difficulty": "easy",
-  "mode": "drag_drop",
-  "content": {
-    "teaching_key": "celiaquia_2",
-    "instruction": "Arrastra solo las colaciones aptas sin TACC.",
-    "targets": [
-      {
-        "id": "colacion",
-        "label": "Colacion apta"
-      }
-    ],
-    "items": [
-      {
-        "id": "manzana",
-        "label": "Manzana",
-        "image": "res://assets-sistema/iconos/manzana-0.png",
-        "correct_target": "colacion"
-      },
-      {
-        "id": "barra_cereal_sin_rotulo",
-        "label": "Barra de cereal sin rotulo",
-        "image": "res://assets-sistema/iconos/barra-cereal-0.png",
-        "correct_target": ""
-      }
-    ]
-  }
-}
-```
-
-## Cómo crear vinculación
-
-1. Copiá `res://contenido/plantillas/vinculacion.json`.
-2. Cambiá `id`, `titulo`, `dificultad`, `consigna` y `ensenanza`.
-3. Escribí `pares` con `izquierda`, `derecha` y `explicacion`.
-4. Si querés sumar ruido controlado, agregá `distractores`.
-
-Ejemplo mínimo:
-
-```json
-{
-  "id": "vincular_alimentos_seguridad",
-  "tipo": "vinculacion",
-  "titulo": "Vincula alimentos seguros",
-  "dificultad": "medium",
-  "consigna": "Uní cada alimento con su clasificación.",
-  "ensenanza": "celiaquia_2",
-  "pares": [
-    {
-      "izquierda": "Banana",
-      "derecha": "Fruta apta",
-      "explicacion": "La banana es naturalmente libre de gluten."
-    },
-    {
-      "izquierda": "Pan",
-      "derecha": "Harina de trigo",
-      "explicacion": "El pan común contiene gluten."
+  "version": 3,
+  "id": "items_celiaquia",
+  "tipo": "items_catalog",
+  "base_path": "res://items/",
+  "items": {
+    "banana": {
+      "categoria": "sin_tacc",
+      "meal_type": ["desayuno", "merienda", "colacion"],
+      "tags": ["fruta", "natural"],
+      "feedback": "La banana es naturalmente libre de gluten."
     }
-  ],
-  "distractores": ["Solo bebida"]
+  }
 }
 ```
 
-## Cómo elegir dificultad
+**`categoria`** — define si el alimento es correcto o incorrecto en el juego:
 
-- `easy`: conceptos directos, una decisión evidente, una pregunta por archivo si querés probar rápido.
-- `medium`: distinguir etiquetas, contaminación cruzada o contexto de cocina.
-- `hard`: casos cotidianos, hábitos seguros y decisiones de diagnóstico.
+| Valor | En el juego |
+|-------|------------|
+| `sin_tacc` | Correcto |
+| `con_gluten` | Incorrecto |
+| `riesgo` | Incorrecto (producto sin rotulo o con riesgo de contaminación) |
 
-## Cómo agregarlo al mapa
+**`meal_type`** — define cuándo puede aparecer:
 
-Usá entradas explícitas en `res://contenido/mapas/celiaquia_mapa.json`:
+```
+desayuno  merienda  colacion  almuerzo  cena  bebida  cocina_segura
+```
+
+Un alimento no declarado en `"desayuno"` nunca aparece en un drag_food de desayuno.
+
+**`resource`** — solo si el id JSON no coincide con el nombre del archivo .tres (cuando el archivo tiene guiones):
 
 ```json
-{
-  "node_key": "eliminar_gluten",
-  "title": "Eliminar gluten del trigo",
-  "mode": "quiz_choice",
+"cafe_leche": {
+  "resource": "res://items/cafe-leche.tres",
+  "categoria": "sin_tacc",
+  "meal_type": ["desayuno", "merienda", "bebida"]
+}
+```
+
+---
+
+## Cómo crear una actividad drag_food
+
+Abrí `mapa/arrastres.json`. El arrastre solo declara `meal` y `pick`. No lista alimentos.
+
+```json
+"drag_desayuno_facil": {
+  "mode": "drag_food",
   "difficulty": 1,
-  "json_path": "res://contenido/nodos/celiaquia/preguntas/eliminar_gluten.json"
+  "prompt": "Arma un desayuno apto sin TACC.",
+  "target": "Desayuno apto",
+  "meal": "desayuno",
+  "pick": { "correct": 2, "incorrect": 1 }
 }
 ```
 
-Para vinculación:
+El runtime busca automáticamente en `items_celiaquia.json` todos los items con `"desayuno"` en su `meal_type`, separa correctos de incorrectos, hace shuffle y selecciona.
+
+| difficulty | pick recomendado |
+|-----------|-----------------|
+| 1 (fácil) | correct: 2, incorrect: 1 |
+| 2 (normal) | correct: 3, incorrect: 2 |
+| 3 (difícil) | correct: 3, incorrect: 3 |
+
+---
+
+## Cómo crear una actividad quiz
+
+Abrí `mapa/preguntas.json`:
 
 ```json
-{
-  "node_key": "vincular_conceptos",
-  "title": "Vincula Conceptos",
-  "mode": "vinculacion_conceptos",
-  "difficulty": 3,
-  "json_path": "res://contenido/nodos/celiaquia/vinculacion/vincular_conceptos.json"
+"quiz_gluten_arroz": {
+  "mode": "quiz",
+  "difficulty": 2,
+  "prompt": "El gluten esta en el arroz?",
+  "options": ["No", "Si"],
+  "answer": "No"
 }
 ```
 
-Para arrastre:
+---
+
+## Cómo crear una actividad match
+
+Abrí `mapa/vinculaciones.json`:
 
 ```json
-{
-  "node_key": "receta_2_colacion",
-  "title": "Arma una colación segura",
-  "mode": "drag_drop",
-  "difficulty": 1,
-  "json_path": "res://contenido/nodos/celiaquia/arrastre/receta_2_colacion.json"
+"match_alimentos": {
+  "mode": "match",
+  "difficulty": 2,
+  "prompt": "Uni cada alimento con su clasificacion.",
+  "pairs": [
+    ["Banana", "Fruta apta"],
+    ["Pan", "Contiene gluten"]
+  ]
 }
 ```
 
-No mezcles ejemplos de prueba en la carpeta productiva. Si necesitás samples para tests, dejalos fuera del árbol principal de `contenido/nodos/celiaquia/`.
+---
 
-## Qué no mezclar
+## Cómo agregar un nodo al mapa
 
-No combines formatos dentro del mismo archivo:
+Un nodo es un capítulo. `games` es la lista ordenada de activity_ids que se juegan en ese nodo.
 
-- en `preguntas`, no mezcles `question/correct_answer/wrong_options` con `preguntas[].texto/opciones/respuesta`
-- en `arrastre`, no mezcles `targets/items` con `correctos/incorrectos`
-- en `vinculacion`, mantené `pares` y `distractores` como está hoy en `contenido/nodos/celiaquia/vinculacion/`
+Abrí `mapa/celiaquia_mapa.json` y agregá la siguiente clave numérica dentro de `"nodes"`:
 
-## Compatibilidad y legacy
-
-Se mantiene compatibilidad con contenido anterior:
-
-- si un archivo tiene `juegos`, sigue funcionando el flujo multi-juego V1
-- si un archivo no tiene `juegos`, se trata como actividad jugable directa
-- los arrastres y nodos legacy ya existentes siguen funcionando
-
-No copies archivos legacy como base para contenido nuevo.
-
-## Validación recomendada
-
-```bash
-godot --headless --path project -s res://tests/vincular_conceptos_scene_test.gd
+```json
+"13": {
+  "node_key": "celiaquia_13_nombre_descriptivo",
+  "games": ["drag_desayuno_facil", "quiz_gluten_natural"]
+}
 ```
+
+Reglas:
+- `node_key` debe ser único en todo el mapa.
+- `games` no puede estar vacío.
+- Cada activity_id en `games` debe existir en `preguntas.json`, `arrastres.json` o `vinculaciones.json`.
+- **No usar `label`** — el mapa v2 no lo incluye.
+- `games` puede tener 1, 2 o 3 actividades. La dificultad escala por combinación.
+
+---
+
+## Flujo completo
+
+```
+mapa/celiaquia_mapa.json
+  → ArmadorDePartida
+    → NodeContentLoader
+        carga preguntas.json + arrastres.json + vinculaciones.json
+        arma activity_by_id internamente
+      → ActivityAdapter (para drag_food)
+          lee items_celiaquia.json
+          filtra por meal_type + categoria
+          resuelve base_path + item_id + ".tres"
+          → escena drag_drop / quiz / vinculacion
+```
+
+---
+
+## Logs en Godot
+
+```
+[ContentPack] mapa cargado id=celiaquia activities=11
+[Catalog] items_celiaquia count=85
+[DragFood] activity=drag_desayuno_facil meal=desayuno correct=2 incorrect=1
+[DragFood] candidates correct=18 incorrect=7
+[DragFood] selected=banana,arandano,medialuna
+```
+
+---
+
+## backup/
+
+Contiene JSON legacy del sistema anterior (json_path) y packs anteriores. No se cargan como flujo principal. Son respaldo por si hay que recuperar contenido.
+
+No borrar definitivo.

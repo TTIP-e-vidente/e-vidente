@@ -1,0 +1,116 @@
+{
+  "quiz_gluten_natural": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Cual de estos alimentos es naturalmente libre de gluten?",
+    "options": ["Banana", "Cerveza", "Pan", "Fideos"],
+    "answer": "Banana"
+  },
+  "quiz_contaminacion_cruzada": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Hay contaminacion cruzada si se utiliza el mismo cuchillo que fue usado previamente para cortar alimentos con gluten?",
+    "options": ["Verdadero", "Falso"],
+    "answer": "Verdadero"
+  },
+  "quiz_casos_cotidianos_sin_tacc": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que problema puede ocurrir al compartir utensilios de cocina con alimentos con y sin TACC?",
+    "options": ["Contaminacion", "Fermentacion", "Congelamiento", "Calentamiento"],
+    "answer": "Contaminacion"
+  },
+  "quiz_gluten_arroz": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "El gluten esta en el arroz?",
+    "options": ["No", "Si"],
+    "answer": "No"
+  },
+  "quiz_etiquetas_sin_tacc": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Si un alimento procesado no muestra el sello oficial Sin TACC, que decision es mas segura?",
+    "options": [
+      "No elegirlo hasta confirmar que sea apto",
+      "Elegirlo si el envase es verde",
+      "Elegirlo si parece casero",
+      "Elegirlo si no menciona trigo en grande"
+    ],
+    "answer": "No elegirlo hasta confirmar que sea apto"
+  },
+  "quiz_sello_sin_tacc": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Que indica el sello Sin TACC en un producto?",
+    "options": [
+      "Que fue certificado como apto para celiacos",
+      "Que no tiene azucar",
+      "Que es casero",
+      "Que el envase es reciclable"
+    ],
+    "answer": "Que fue certificado como apto para celiacos"
+  },
+  "quiz_bebidas_gluten": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Cual de estas bebidas contiene gluten?",
+    "options": ["Cerveza", "Agua mineral", "Jugo de naranja", "Mate"],
+    "answer": "Cerveza"
+  },
+  "quiz_utensilios_compartidos": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Que riesgo hay en usar la misma tabla para cortar pan y alimentos sin TACC?",
+    "options": [
+      "Contaminacion cruzada",
+      "Cambio de color",
+      "Perdida de sabor",
+      "Ninguno"
+    ],
+    "answer": "Contaminacion cruzada"
+  },
+  "quiz_productos_procesados": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Por que los productos industriales sin rotulo Sin TACC pueden ser riesgosos?",
+    "options": [
+      "Pueden tener trazas de gluten",
+      "Siempre tienen gluten",
+      "Solo son riesgosos si tienen trigo",
+      "No representan riesgo"
+    ],
+    "answer": "Pueden tener trazas de gluten"
+  },
+  "quiz_comer_fuera": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Al comer en un restaurante, que es lo mas seguro para una persona celiaca?",
+    "options": [
+      "Avisar y preguntar por opciones Sin TACC",
+      "Evitar solo el pan",
+      "Pedir la ensalada",
+      "Comer cualquier cosa si parece casero"
+    ],
+    "answer": "Avisar y preguntar por opciones Sin TACC"
+  },
+  "quiz_cereales_gluten": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Cual de estos cereales contiene gluten?",
+    "options": ["Trigo", "Arroz", "Maiz", "Quinoa"],
+    "answer": "Trigo"
+  },
+  "quiz_natural_vs_industrial": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Por que las frutas y carnes naturales son mas seguras para celiacos que los productos industriales?",
+    "options": [
+      "No tienen ingredientes agregados que puedan contener gluten",
+      "Son mas baratos",
+      "Tienen mas vitaminas",
+      "Se digieren mejor"
+    ],
+    "answer": "No tienen ingredientes agregados que puedan contener gluten"
+  }
+}

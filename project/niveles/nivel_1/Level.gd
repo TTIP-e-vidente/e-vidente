@@ -22,6 +22,7 @@ const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const CargadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
 )
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
@@ -158,7 +159,9 @@ func cargar_contenido_del_nivel() -> void:
 		return
 
 	_aplicar_contexto_jugable_del_nivel(_contexto_nodo_mapa)
-	if not _json_path_nodo_actual.is_empty():
+	if not str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges().is_empty():
+		cargar_contenido_del_nivel_desde_contexto(_contexto_nodo_mapa)
+	elif not _json_path_nodo_actual.is_empty():
 		cargar_contenido_del_nivel_desde_json(_json_path_nodo_actual)
 
 	_usa_flujo_mapa = bool(_contexto_nodo_mapa.get("came_from_map", false))
@@ -241,6 +244,16 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 	var result: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(clean_path)
 	if not bool(result.get("ok", false)):
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
+		return
+
+	var datos_nodo: Dictionary = result.get("data", {})
+	_datos_nodo_mapa = datos_nodo.duplicate(true)
+
+
+func cargar_contenido_del_nivel_desde_contexto(contexto_jugable: Dictionary) -> void:
+	var result: Dictionary = NodeContentLoaderScript.load_from_context(contexto_jugable)
+	if not bool(result.get("ok", false)):
+		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el contenido del nivel.")))
 		return
 
 	var datos_nodo: Dictionary = result.get("data", {})
