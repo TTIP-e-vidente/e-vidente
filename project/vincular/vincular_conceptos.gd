@@ -558,11 +558,20 @@ func _aplicar_runtime_en_escena() -> void:
 	_limpiar_click_areas()
 	_limpiar_vinculos_y_errores()
 
-	var conceptos_derecha_ordenados: Array = _ordenar_derecha_para_evitar_cruces(
-		conceptos_izquierda,
-		conceptos_derecha
+	var conceptos_izquierda_mezclados: Array = _mezclar_columna(conceptos_izquierda)
+	var conceptos_derecha_mezclados: Array = _mezclar_columna(conceptos_derecha)
+	conceptos_derecha_mezclados = _evitar_alineacion_por_fila(
+		conceptos_izquierda_mezclados,
+		conceptos_derecha_mezclados
 	)
-	_crear_tarjetas(conceptos_izquierda, conceptos_derecha_ordenados)
+	print(
+		"[MatchShuffle] left_order=%s right_order=%s"
+		% [
+			_unir_ids_para_log(conceptos_izquierda_mezclados),
+			_unir_ids_para_log(conceptos_derecha_mezclados)
+		]
+	)
+	_crear_tarjetas(conceptos_izquierda_mezclados, conceptos_derecha_mezclados)
 	_mostrar_feedback(TEXTO_GUIA_INICIAL)
 	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
 	_actualizar_visual()
@@ -623,6 +632,53 @@ func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
 func _sincronizar_layout_interactivo() -> void:
 	await get_tree().process_frame
 	_actualizar_visual()
+
+
+func _mezclar_columna(conceptos: Array) -> Array:
+	var copia: Array = conceptos.duplicate(true)
+	copia.shuffle()
+	return copia
+
+
+func _evitar_alineacion_por_fila(
+	izquierda: Array,
+	derecha: Array
+) -> Array:
+	# Si por azar quedó algún par correcto en la misma fila, intercambia esa
+	# fila con otra para que la columna no luzca pre-alineada.
+	var resultado: Array = derecha.duplicate(true)
+	var total: int = mini(izquierda.size(), resultado.size())
+	if total < 2:
+		return resultado
+	for fila in range(total):
+		var par_izq := str((izquierda[fila] as Dictionary).get("id_par", "")).strip_edges()
+		var par_der := str((resultado[fila] as Dictionary).get("id_par", "")).strip_edges()
+		if par_izq.is_empty() or par_der.is_empty() or par_izq != par_der:
+			continue
+		var swap_idx := -1
+		for otra in range(total):
+			if otra == fila:
+				continue
+			var par_izq_otra := str((izquierda[otra] as Dictionary).get("id_par", "")).strip_edges()
+			var par_der_otra := str((resultado[otra] as Dictionary).get("id_par", "")).strip_edges()
+			# Buscamos una fila donde intercambiar no genere otra alineación.
+			if par_der_otra != par_izq and par_der != par_izq_otra:
+				swap_idx = otra
+				break
+		if swap_idx >= 0:
+			var tmp = resultado[fila]
+			resultado[fila] = resultado[swap_idx]
+			resultado[swap_idx] = tmp
+	return resultado
+
+
+func _unir_ids_para_log(conceptos: Array) -> String:
+	var ids: Array[String] = []
+	for c in conceptos:
+		var d: Dictionary = c as Dictionary
+		var id_str := str(d.get("id", d.get("id_par", "")))
+		ids.append(id_str)
+	return ",".join(ids)
 
 
 func _ordenar_derecha_para_evitar_cruces(
