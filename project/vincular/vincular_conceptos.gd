@@ -135,6 +135,17 @@ func _extraer_conceptos(contenedor: VBoxContainer) -> Array[ConceptoItem]:
 func _conectar_continuar_juego() -> void:
 	if _continuar_juego == null:
 		return
+	# El componente vive bajo un Node2D: los anchors no resuelven contra el viewport,
+	# asi que forzamos posicion absoluta para que la flecha sea visible.
+	_continuar_juego.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_continuar_juego.offset_left = 0.0
+	_continuar_juego.offset_top = 0.0
+	_continuar_juego.offset_right = 0.0
+	_continuar_juego.offset_bottom = 0.0
+	_continuar_juego.position = Vector2(960.0, 632.0)
+	_continuar_juego.size = Vector2(128.0, 128.0)
+	_continuar_juego.z_as_relative = false
+	_continuar_juego.z_index = 250
 	if _continuar_juego.has_signal("continuar_solicitado"):
 		_continuar_juego.connect(
 			"continuar_solicitado",
@@ -1053,10 +1064,30 @@ func _finalizar_validacion_completa() -> void:
 
 func _mostrar_continuar() -> void:
 	if _continuar_juego == null:
+		print("[MatchContinue] show=false reason=null_node")
 		return
 	_continuar_juego_es_validacion_pendiente = true
-	if _continuar_juego.has_method("mostrar_para_continuar_pendiente"):
+	# Reposicionar por las dudas (si la escena cambio en runtime).
+	_continuar_juego.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_continuar_juego.position = Vector2(960.0, 632.0)
+	_continuar_juego.size = Vector2(128.0, 128.0)
+	_continuar_juego.z_as_relative = false
+	_continuar_juego.z_index = 250
+	_continuar_juego.modulate = Color(1, 1, 1, 1)
+	# Usar la version con temporizador para que la flecha se anime y, si el jugador no la ve,
+	# avance solo despues de unos segundos.
+	var hay_siguiente := _hay_siguiente_juego_de_partida()
+	if _continuar_juego.has_method("mostrar_para_siguiente_juego") and hay_siguiente:
+		_continuar_juego.call("mostrar_para_siguiente_juego", 5)
+	elif _continuar_juego.has_method("mostrar_para_finalizar"):
+		_continuar_juego.call("mostrar_para_finalizar", 5)
+	elif _continuar_juego.has_method("mostrar_para_continuar_pendiente"):
 		_continuar_juego.call("mostrar_para_continuar_pendiente")
+	print(
+		"[MatchContinue] show=true visible=", _continuar_juego.visible,
+		" pos=", _continuar_juego.position,
+		" hay_siguiente=", hay_siguiente
+	)
 	_set_click_areas_habilitadas(false)
 
 
@@ -1071,6 +1102,7 @@ func _ocultar_continuar() -> void:
 func _on_continuar_pressed() -> void:
 	if not validado or bloqueado:
 		return
+	print("[MatchContinue] pressed=true")
 	_finalizar_vinculacion()
 
 

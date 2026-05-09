@@ -8,10 +8,10 @@ const CARD_SIZE := Vector2(300, 84)
 const COLOR_TEXTO := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TEXTO_BLOQUEADO := Color(1.0, 1.0, 1.0, 0.55)
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
-const COLOR_TARJETA_HOVER := Color(1.0, 0.97, 0.87, 1.0)
-const COLOR_TARJETA_SELECCIONADA := Color(1.0, 0.92, 0.72, 1.0)
-const COLOR_TARJETA_VINCULADA := Color(0.88, 1.0, 0.9, 1.0)
-const COLOR_TARJETA_ERROR := Color(1.0, 0.84, 0.84, 1.0)
+const COLOR_TARJETA_HOVER := Color(1.05, 1.05, 1.05, 1.0)
+const COLOR_TARJETA_SELECCIONADA := Color(1.6, 1.4, 0.6, 1.0)
+const COLOR_TARJETA_VINCULADA := Color(0.7, 1.4, 0.85, 1.0)
+const COLOR_TARJETA_ERROR := Color(1.7, 0.55, 0.55, 1.0)
 const COLOR_TARJETA_BLOQUEADA := Color(1.0, 1.0, 1.0, 0.62)
 
 @onready var label: Label = $Label
@@ -189,10 +189,10 @@ func animar_error() -> void:
 
 
 func _animar_seleccion() -> void:
-	pivot_offset = Vector2.ZERO
+	pivot_offset = size * 0.5
 	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", _base_scale * 1.08, 0.08)
-	tween.tween_property(self, "scale", _base_scale * 1.03, 0.08)
+	tween.tween_property(self, "scale", _base_scale * 1.18, 0.10)
+	tween.tween_property(self, "scale", _base_scale * 1.10, 0.10)
 
 
 func _aplicar_estilo(tipo: String) -> void:
@@ -214,7 +214,7 @@ func _aplicar_estilo(tipo: String) -> void:
 	if is_instance_valid(label):
 		label.modulate = COLOR_TEXTO_BLOQUEADO if tipo == "disabled" else COLOR_TEXTO
 	if tipo == "seleccionada":
-		scale = _base_scale * 1.03
+		scale = _base_scale * 1.10
 	else:
 		scale = _base_scale
 
