@@ -46,6 +46,12 @@ static var _last_random_combo_by_node_key: Dictionary = {}
 static var _session_used_activity_ids_by_request: Dictionary = {}
 const SESSION_HISTORY_MAX_PER_REQUEST: int = 6
 
+static var _save_manager_ref: Node = null
+
+
+static func init_with_save_manager(sm: Node) -> void:
+	_save_manager_ref = sm
+
 
 static func reset_session_history() -> void:
 	_session_used_activity_ids_by_request.clear()
@@ -201,6 +207,7 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 		)
 		if str(juego.get("mode", "")).strip_edges().is_empty():
 			continue
+		juego["request_key"] = str(game_entry.get("request_key", "")).strip_edges()
 		final_games.append(juego)
 	return final_games
 
@@ -232,58 +239,54 @@ static func _select_random_game_entries(
 		var used_activity_ids: Array[String] = _extract_activity_ids_from_game_entries(
 			selected_game_entries
 		)
-		var available_activity_candidates: Array[String] = []
-		var fallback_reason := ""
-		available_activity_candidates = _filter_activity_candidates(
-			NodeContentLoaderScript.get_activity_candidates(
-				pack_id,
-				requested_type,
-				requested_difficulty,
-				requested_options_count
-			),
-			used_activity_ids
+		var candidates_result: Dictionary = _resolve_candidates_with_fallback(
+			pack_id, requested_type, requested_difficulty, requested_options_count, used_activity_ids
 		)
-		if available_activity_candidates.is_empty() and requested_options_count > 0:
-			available_activity_candidates = _filter_activity_candidates(
-				NodeContentLoaderScript.get_activity_candidates(
-					pack_id,
-					requested_type,
-					requested_difficulty
-				),
-				used_activity_ids
-			)
-			fallback_reason = "without_options_count"
-		if available_activity_candidates.is_empty() and requested_options_count > 0:
-			available_activity_candidates = _filter_activity_candidates(
-				NodeContentLoaderScript.get_activity_candidates_near(
-					pack_id,
-					requested_type,
-					requested_difficulty,
-					requested_options_count
-				),
-				used_activity_ids
-			)
-			fallback_reason = "near_difficulty_with_options_count"
-		if available_activity_candidates.is_empty():
-			available_activity_candidates = _filter_activity_candidates(
-				NodeContentLoaderScript.get_activity_candidates_near(
-					pack_id,
-					requested_type,
-					requested_difficulty
-				),
-				used_activity_ids
-			)
-			if not available_activity_candidates.is_empty():
-				fallback_reason = (
-					"near_difficulty_without_options_count"
-					if requested_options_count > 0
-					else "near_difficulty"
-				)
+		var available_activity_candidates: Array[String] = candidates_result.get("candidates", [])
+		var fallback_reason: String = str(candidates_result.get("fallback_reason", ""))
 		var request_key: String = "%s|%d|%d" % [
 			requested_type,
 			requested_difficulty,
 			requested_options_count,
 		]
+		# --- Filtro anti-repetición persistente (por perfil) ---
+		var all_candidates_count: int = available_activity_candidates.size()
+		var persistent_completed_ids: Array[String] = []
+		if _save_manager_ref != null and _save_manager_ref.has_method("get_completed_activity_ids"):
+			persistent_completed_ids = _save_manager_ref.call(
+				"get_completed_activity_ids", request_key
+			)
+		if not persistent_completed_ids.is_empty():
+			var candidates_avoiding_persistent: Array[String] = _filter_out_persistent_completed(
+				available_activity_candidates,
+				persistent_completed_ids
+			)
+			if not candidates_avoiding_persistent.is_empty():
+				for skipped_id in persistent_completed_ids:
+					if available_activity_candidates.has(skipped_id):
+						print(
+							"[PersistentRandom] skip_completed activity=%s request=%s"
+							% [skipped_id, request_key]
+						)
+				available_activity_candidates = candidates_avoiding_persistent
+			else:
+				# Pool agotado: resetear solo este request_key
+				if _save_manager_ref != null and _save_manager_ref.has_method("reset_completed_activity_pool"):
+					_save_manager_ref.call("reset_completed_activity_pool", request_key)
+				print(
+					"[PersistentRandom] reset_pool request=%s reason=all_completed candidates=%d"
+					% [request_key, all_candidates_count]
+				)
+		print(
+			"[PersistentRandom] request=%s candidates=%d completed=%d available=%d"
+			% [
+				request_key,
+				all_candidates_count,
+				persistent_completed_ids.size(),
+				available_activity_candidates.size(),
+			]
+		)
+		# --- Fin filtro persistente ---
 		var session_used_ids: Array[String] = _read_session_used_ids(request_key)
 		var candidates_avoiding_session: Array[String] = _filter_out_session_used(
 			available_activity_candidates,
@@ -331,6 +334,12 @@ static func _select_random_game_entries(
 				selected_activity_id,
 				requested_difficulty
 			)
+			if not selected_game_entry.is_empty():
+				selected_game_entry["request_key"] = request_key
+				print(
+					"[PersistentRandom] selected=%s request=%s"
+					% [selected_activity_id, request_key]
+				)
 		var candidate_summary: String = _unir_strings(available_activity_candidates)
 		if not fallback_reason.is_empty() and not selected_game_entry.is_empty():
 			if requested_options_count > 0:
@@ -540,20 +549,6 @@ static func obtener_dificultad_base_del_nodo(node_data: MapNodeData) -> int:
 	return patron[0]
 
 
-static func _calcular_dificultad_inicial_del_nodo(indice_nodo: int) -> int:
-	var posicion_nodo: int = maxi(0, indice_nodo)
-	if posicion_nodo <= 0:
-		return 1
-	if posicion_nodo <= 2:
-		return 2
-	if posicion_nodo <= 4:
-		return 2
-	if posicion_nodo <= 6:
-		return 3
-	if posicion_nodo <= 8:
-		return 4
-	return 5
-
 
 static func _crear_juego(
 	node_data: MapNodeData,
@@ -589,13 +584,6 @@ static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dic
 		"clave_nodo_de_origen": str(datos_juego.get("clave_nodo_de_origen", "")).strip_edges(),
 	}
 
-
-static func _calcular_dificultad_del_juego(dificultad_inicial: int, numero_de_juego: int) -> int:
-	var dificultad_segura: int = clampi(dificultad_inicial, 1, MAXIMA_DIFICULTAD_POR_JUEGO)
-	if dificultad_segura <= 1:
-		return 1
-	var avance_del_juego: int = int(floor(float(maxi(0, numero_de_juego)) / 2.0))
-	return _limitar_dificultad(dificultad_segura + avance_del_juego)
 
 
 static func _limitar_dificultad(dificultad: int) -> int:
@@ -706,6 +694,60 @@ static func _filter_activity_candidates(
 	return activity_candidates
 
 
+# Resuelve candidatos para un game request con cadena de fallbacks:
+#   1. Exacto (tipo + dificultad + options_count)
+#   2. Sin options_count           (solo si options_count > 0)
+#   3. Dificultad cercana con options_count  (solo si options_count > 0)
+#   4. Dificultad cercana sin options_count  (siempre, si sigue vacío)
+# Devuelve {"candidates": Array[String], "fallback_reason": String}.
+static func _resolve_candidates_with_fallback(
+	pack_id: String,
+	requested_type: String,
+	requested_difficulty: int,
+	requested_options_count: int,
+	used_activity_ids: Array[String]
+) -> Dictionary:
+	var candidates: Array[String] = _filter_activity_candidates(
+		NodeContentLoaderScript.get_activity_candidates(
+			pack_id, requested_type, requested_difficulty, requested_options_count
+		),
+		used_activity_ids
+	)
+	if not candidates.is_empty():
+		return {"candidates": candidates, "fallback_reason": ""}
+	if requested_options_count > 0:
+		candidates = _filter_activity_candidates(
+			NodeContentLoaderScript.get_activity_candidates(
+				pack_id, requested_type, requested_difficulty
+			),
+			used_activity_ids
+		)
+		if not candidates.is_empty():
+			return {"candidates": candidates, "fallback_reason": "without_options_count"}
+		candidates = _filter_activity_candidates(
+			NodeContentLoaderScript.get_activity_candidates_near(
+				pack_id, requested_type, requested_difficulty, requested_options_count
+			),
+			used_activity_ids
+		)
+		if not candidates.is_empty():
+			return {"candidates": candidates, "fallback_reason": "near_difficulty_with_options_count"}
+	candidates = _filter_activity_candidates(
+		NodeContentLoaderScript.get_activity_candidates_near(
+			pack_id, requested_type, requested_difficulty
+		),
+		used_activity_ids
+	)
+	var reason: String = ""
+	if not candidates.is_empty():
+		reason = (
+			"near_difficulty_without_options_count"
+			if requested_options_count > 0
+			else "near_difficulty"
+		)
+	return {"candidates": candidates, "fallback_reason": reason}
+
+
 static func _filter_out_session_used(
 	activity_candidates: Array[String],
 	session_used_ids: Array[String]
@@ -747,6 +789,19 @@ static func _pick_random_activity_id(
 	if candidate_ids.is_empty():
 		return ""
 	return candidate_ids[rng.randi_range(0, candidate_ids.size() - 1)]
+
+
+static func _filter_out_persistent_completed(
+	activity_candidates: Array[String],
+	completed_ids: Array[String]
+) -> Array[String]:
+	if completed_ids.is_empty():
+		return activity_candidates
+	var filtered: Array[String] = []
+	for candidate_id in activity_candidates:
+		if not completed_ids.has(candidate_id):
+			filtered.append(candidate_id)
+	return filtered
 
 
 static func _read_requested_options_count(
