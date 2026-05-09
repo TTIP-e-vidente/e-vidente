@@ -1,6 +1,9 @@
 extends RefCounted
 class_name CargadorDeContenidoDeNodo
 
+# LEGACY_COMPAT: Usado por Level.gd, QuestionJsonLoader y NodeContentLoader (fallback).
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 # Carga contenido legacy desde json_path y lo deja en formato runtime.
 # El contenido nuevo entra por NodeContentLoader y ActivityAdapter.
 

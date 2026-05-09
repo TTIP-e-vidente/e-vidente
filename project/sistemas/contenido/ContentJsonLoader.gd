@@ -1,6 +1,8 @@
 extends RefCounted
 class_name ContentJsonLoader
 
+# LEGACY_COMPAT: Usado por CargadorDeMapa, CargadorDeContenidoDeNodo,
+# ContentCatalog, ContentValidator. No agregar lógica nueva aquí.
 
 static func load_json(json_path: String) -> Dictionary:
 	var clean_path: String = resolve_path(json_path)

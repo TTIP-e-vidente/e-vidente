@@ -3,6 +3,13 @@ class_name AbridorDeNodoJugable
 
 # Abre el game actual de una partida de nodo.
 # Recibe un nodo ya cargado; no decide games ni adapta contenido.
+#
+# Responsabilidad única: armar la sesión y delegar al Global + ContinuidadDePartidaDeNodo.
+# Flujo:
+#   abrir_nodo(tree, node_data, ruta_retorno)
+#     → _construir_datos_de_apertura  (arma sesión + plan via ArmadorDePartida)
+#     → _iniciar_partida_en_global     (guarda en autoload Global)
+#     → ContinuidadDePartidaDeNodo.abrir_juego_actual
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ContinuidadDePartidaDeNodoScript := preload(
@@ -52,7 +59,7 @@ static func abrir_nodo(
 	return _resultado_ok()
 
 
-static func construir_sesion_jugable(
+static func _construir_sesion_jugable(
 	node_data: MapNodeData,
 	ruta_retorno: String
 ) -> Dictionary:
@@ -88,7 +95,7 @@ static func _construir_datos_de_apertura(
 	node_data: MapNodeData,
 	ruta_retorno: String
 ) -> Dictionary:
-	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno)
+	var sesion_jugable: Dictionary = _construir_sesion_jugable(node_data, ruta_retorno)
 	var plan_de_partida: Dictionary = ArmadorDePartidaScript.construir_plan_de_partida(node_data)
 	if plan_de_partida.is_empty():
 		return {}

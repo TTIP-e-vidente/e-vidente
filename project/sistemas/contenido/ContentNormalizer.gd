@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ContentNormalizer
 
+# LEGACY_COMPAT: Usado por CargadorDeMapa, CargadorDeContenidoDeNodo,
+# ContentValidator, GameContentFactory. No agregar lógica nueva aquí.
+
 const AdaptadorContenidoViejoScript := preload(
 	"res://sistemas/contenido/AdaptadorContenidoViejo.gd"
 )

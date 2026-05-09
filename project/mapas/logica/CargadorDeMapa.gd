@@ -1,8 +1,17 @@
 extends RefCounted
 class_name CargadorDeMapa
 
-# Lee el JSON del mapa y lo transforma en nodos ordenados.
-# Valida estructura basica; no abre juegos ni adapta contenido.
+# Lee el JSON del mapa y lo transforma en un array de MapNodeData.
+# Responsabilidad única: parsear + validar estructura del mapa.
+# No abre juegos, no adapta contenido, no interactúa con escenas.
+#
+# Dos formatos de mapa soportados:
+#   V1 (legacy): campo "nodos" / "categoria" — usa _build_v1_map.
+#   V2 (moderno): campo "nodes" (Dictionary) + "track" — usa _build_v2_mapa.
+#
+# Flujo simplificado:
+#   load_map(path) → build_map_data() → _build_v1_map / _build_v2_mapa
+#                                    → Array[MapNodeData]
 
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
@@ -553,13 +562,14 @@ static func _normalize_v2_random_game_type(raw_type: String) -> String:
 
 static func _hydrate_v2_fixed_games(node: MapNodeData, track_key: String) -> String:
 	# Resuelve pack_id y mode de los games fijos sin abrir escenas ni alterar el JSON original.
-	if node == null or node.fixed_game_entries.is_empty():
+	if node == null or not node.has_fixed_games():
 		return "Nodo sin games validos."
 
-	for game_index in range(node.fixed_game_entries.size()):
-		var game_entry: Dictionary = (
-			node.fixed_game_entries[game_index] as Dictionary
-		).duplicate(true)
+	var first_fixed: Dictionary = {}
+	for game_index in range(node.games.size()):
+		if MapNodeData.is_random_game_request(node.games[game_index]):
+			continue
+		var game_entry: Dictionary = (node.games[game_index] as Dictionary).duplicate(true)
 		var activity_id: String = str(game_entry.get("activity_id", "")).strip_edges()
 		if activity_id.is_empty():
 			return "Nodo '%s': games no contiene activity_id valido." % node.node_key
@@ -589,17 +599,15 @@ static func _hydrate_v2_fixed_games(node: MapNodeData, track_key: String) -> Str
 		game_entry["pack_id"] = pack_id
 		game_entry["mode"] = mode
 		game_entry["tipo"] = mode
-		node.fixed_game_entries[game_index] = game_entry
+		node.games[game_index] = game_entry
+		if first_fixed.is_empty():
+			first_fixed = game_entry
 
-	node.game_entries = node.fixed_game_entries
-	var first_game: Dictionary = node.fixed_game_entries[0]
-	node.activity_id = str(first_game.get("activity_id", "")).strip_edges()
+	node.activity_id = str(first_fixed.get("activity_id", "")).strip_edges()
 	node.pack_id = str(
-		first_game.get("pack_id", node.get_effective_pack_id(track_key))
+		first_fixed.get("pack_id", node.get_effective_pack_id(track_key))
 	).strip_edges()
-	node.mode = str(first_game.get("mode", "")).strip_edges()
-	node.fixed_games = MapNodeDataScript.extract_fixed_game_ids(node.fixed_game_entries)
-	node.games = node.fixed_games
+	node.mode = str(first_fixed.get("mode", "")).strip_edges()
 	return ""
 
 

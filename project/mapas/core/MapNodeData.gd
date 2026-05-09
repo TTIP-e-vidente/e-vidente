@@ -1,36 +1,53 @@
 extends RefCounted
 class_name MapNodeData
 
-# Representa los datos simples de un nodo del mapa.
-# Guarda games fijos, requests random y shuffle_games.
+# Representa los datos de un nodo del mapa.
+#
+# Responsabilidad única: guardar qué nodo es y qué games tiene.
 # No carga JSON, no busca activities y no abre escenas.
+#
+# Todos los games del nodo van en el array "games".
+# Cómo distinguir si una entrada es fija o random:
+#   - fija:  tiene "activity_id" no vacío (sabe exactamente qué activity cargar).
+#   - random: tiene "type" y "difficulty" pero "activity_id" vacío (pide un game por criterio).
+#
+# Lectura simple:
+#   node.has_fixed_games()          → hay al menos un game con activity_id explícito.
+#   node.has_random_game_requests() → hay al menos un request de game random.
+#   node.uses_random_games()        → es un nodo con games aleatorios (sin fijos).
+#   node.get_fixed_games()          → devuelve sólo las entradas fijas.
+#   node.get_random_game_requests() → devuelve sólo los requests random.
 
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
-var node_key: String = ""
-var order: int = 0
-var title: String = ""
-var mode: String = ""
-var json_path: String = ""
-var activity_id: String = ""
-var pack_id: String = ""
-var track_key: String = ""
-var index: int = 0
-var fixed_games: Array[String] = []
-var random_game_requests: Array[Dictionary] = []
-var fixed_game_entries: Array[Dictionary] = []
+# Identidad del nodo.
+var node_key: String = ""       # ID único del nodo en el mapa.
+var order: int = 0              # Posición 1-based (usada en logs).
+var index: int = 0              # Posición 0-based (usada en código).
+var title: String = ""          # Título visible del nodo.
+var track_key: String = ""      # Pista a la que pertenece (ej: "celiaquia").
 
-var games: Array[String] = []
-var game_slots: Array[Dictionary] = []
-var difficulty: int = 0
-var description: String = ""
-var node_file_path: String = ""
-var game_entries: Array[Dictionary] = []
-var shuffle_games := false
-var default_unlocked := false
-var reward: Dictionary = {}
+# Configuración de games.
+var shuffle_games := false      # Si true, ArmadorDePartida mezcla el orden de los games.
+var default_unlocked := false   # Si true, el nodo empieza desbloqueado.
+
+# Todos los games del nodo, fijos y random juntos.
+# Entradas fijas:  activity_id no vacío.
+# Requests random: type no vacío, activity_id vacío.
+var games: Array[Dictionary] = []
+
+# Campos de la ruta legacy (nodos V1 con json_path directo).
+# En nodos nuevos, estos quedan vacíos y se usan fixed_game_entries.
+var mode: String = ""           # Mode del primer game (legacy/V1).
+var json_path: String = ""      # Ruta al JSON legacy (si no hay activity_id).
+var activity_id: String = ""    # activity_id del primer game (camino feliz).
+var pack_id: String = ""        # Pack al que pertenece el activity_id.
+var difficulty: int = 0         # Dificultad base del nodo (0 = auto).
+var node_file_path: String = "" # Ruta del archivo del nodo V1 (legacy).
+
+# Posición visual en el mapa (solo nodos V1 con coordenadas explícitas).
 var map_position := Vector2.ZERO
 var has_map_position := false
 
@@ -49,23 +66,20 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 	node.shuffle_games = bool(raw_node.get("shuffle_games", false))
 	var raw_games: Variant = raw_node.get("games", [])
 	var raw_legacy_game_slots: Variant = raw_node.get("game_slots", [])
-	node.fixed_game_entries = _normalize_fixed_game_entries(raw_games)
-	node.random_game_requests = _normalize_random_game_requests(raw_games)
-	if node.random_game_requests.is_empty():
-		node.random_game_requests = _normalize_random_game_requests(raw_legacy_game_slots)
-	if node.fixed_game_entries.is_empty() and not node.activity_id.is_empty():
-		node.fixed_game_entries.append({
+	var fixed_games := _normalize_fixed_game_entries(raw_games)
+	var random_requests := _normalize_random_game_requests(raw_games)
+	if random_requests.is_empty():
+		random_requests = _normalize_random_game_requests(raw_legacy_game_slots)
+	if fixed_games.is_empty() and not node.activity_id.is_empty():
+		fixed_games.push_back({
 			"activity_id": node.activity_id,
 			"pack_id": node.pack_id,
 			"difficulty": node.difficulty,
 			"dificultad": node.difficulty,
 		})
-	node.fixed_games = _extract_fixed_game_ids(node.fixed_game_entries)
-	node.games = node.fixed_games
-	node.game_entries = node.fixed_game_entries
-	node.game_slots = node.random_game_requests
-	if not node.fixed_game_entries.is_empty():
-		var first_game: Dictionary = node.fixed_game_entries[0]
+	node.games = fixed_games + random_requests
+	if not fixed_games.is_empty():
+		var first_game: Dictionary = fixed_games[0]
 		if node.activity_id.is_empty():
 			node.activity_id = str(first_game.get("activity_id", "")).strip_edges()
 		if node.pack_id.is_empty():
@@ -89,17 +103,12 @@ static func from_v1_node(
 	node.index = node_index
 	node.order = node_index + 1
 	node.difficulty = int(raw_node.get("dificultad", 0))
-	node.description = str(raw_node.get("descripcion", "")).strip_edges()
 	node.node_file_path = node_path.strip_edges()
 	node.default_unlocked = bool(map_entry.get("desbloqueado_por_defecto", false))
 	node.shuffle_games = false
-	node.reward = raw_node.get("recompensa", {})
-	node.fixed_game_entries = _normalize_fixed_game_entries(raw_node.get("juegos", []))
-	node.fixed_games = _extract_fixed_game_ids(node.fixed_game_entries)
-	node.games = node.fixed_games
-	node.game_entries = node.fixed_game_entries
-	if not node.fixed_game_entries.is_empty():
-		var first_game: Dictionary = node.fixed_game_entries[0]
+	node.games = _normalize_fixed_game_entries(raw_node.get("juegos", []))
+	if not node.games.is_empty():
+		var first_game: Dictionary = node.games[0]
 		node.mode = str(first_game.get("mode", "")).strip_edges()
 		node.json_path = str(first_game.get("archivo", "")).strip_edges()
 	else:
@@ -127,11 +136,17 @@ func has_content_path() -> bool:
 
 
 func has_fixed_games() -> bool:
-	return not fixed_game_entries.is_empty()
+	for g in games:
+		if not is_random_game_request(g):
+			return true
+	return false
 
 
 func has_random_game_requests() -> bool:
-	return not random_game_requests.is_empty()
+	for g in games:
+		if is_random_game_request(g):
+			return true
+	return false
 
 
 func uses_fixed_games() -> bool:
@@ -143,32 +158,44 @@ func uses_random_games() -> bool:
 
 
 func get_fixed_game_count() -> int:
-	return fixed_games.size() if not fixed_games.is_empty() else fixed_game_entries.size()
+	var count := 0
+	for g in games:
+		if not is_random_game_request(g):
+			count += 1
+	return count
 
 
 func get_random_game_request_count() -> int:
-	return random_game_requests.size()
+	var count := 0
+	for g in games:
+		if is_random_game_request(g):
+			count += 1
+	return count
 
 
-# Alias legacy internos.
-func has_explicit_games() -> bool:
-	return has_fixed_games()
+# Devuelve solo las entradas fijas del array games (las que tienen activity_id).
+func get_fixed_games() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for g in games:
+		if not is_random_game_request(g):
+			result.append(g)
+	return result
 
 
-func has_game_slots() -> bool:
-	return has_random_game_requests()
+# Devuelve solo los requests random del array games (los que tienen type pero no activity_id).
+func get_random_game_requests() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for g in games:
+		if is_random_game_request(g):
+			result.append(g)
+	return result
 
 
-func uses_random_slots() -> bool:
-	return uses_random_games()
-
-
-func get_game_count() -> int:
-	return get_fixed_game_count()
-
-
-func get_game_slot_count() -> int:
-	return get_random_game_request_count()
+# Devuelve true si la entrada es un request random (tiene type, no tiene activity_id).
+static func is_random_game_request(game: Dictionary) -> bool:
+	var has_type := not str(game.get("type", "")).strip_edges().is_empty()
+	var has_activity_id := not str(game.get("activity_id", "")).strip_edges().is_empty()
+	return has_type and not has_activity_id
 
 
 func get_effective_pack_id(fallback_pack_id: String = "celiaquia") -> String:
@@ -210,9 +237,9 @@ static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionar
 		)
 		var game_mode: String = _map_v1_game_type_to_mode(game_type)
 		var file_path: String = str(game.get("archivo", game.get("json_path", ""))).strip_edges()
-		var activity_id: String = str(game.get("activity_id", "")).strip_edges()
-		var pack_id: String = str(game.get("pack_id", "")).strip_edges()
-		if activity_id.is_empty() and (
+		var entry_activity_id: String = str(game.get("activity_id", "")).strip_edges()
+		var entry_pack_id: String = str(game.get("pack_id", "")).strip_edges()
+		if entry_activity_id.is_empty() and (
 			game_type.is_empty() or game_mode.is_empty() or file_path.is_empty()
 		):
 			continue
@@ -223,8 +250,8 @@ static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionar
 				"mode": game_mode,
 				"archivo": file_path,
 				"json_path": file_path,
-				"activity_id": activity_id,
-				"pack_id": pack_id,
+				"activity_id": entry_activity_id,
+				"pack_id": entry_pack_id,
 				"difficulty": int(game.get("difficulty", game.get("dificultad", 0))),
 				"dificultad": int(game.get("difficulty", game.get("dificultad", 0))),
 				"titulo": str(game.get("titulo", "")).strip_edges(),
@@ -232,21 +259,6 @@ static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionar
 			}
 		)
 	return normalized_games
-
-
-static func _extract_fixed_game_ids(fixed_game_entries: Array[Dictionary]) -> Array[String]:
-	var activity_ids: Array[String] = []
-	for game_entry in fixed_game_entries:
-		var activity_id: String = str(game_entry.get("activity_id", "")).strip_edges()
-		if activity_id.is_empty():
-			activity_id = str(game_entry.get("id", game_entry.get("json_path", ""))).strip_edges()
-		if not activity_id.is_empty():
-			activity_ids.append(activity_id)
-	return activity_ids
-
-
-static func extract_fixed_game_ids(fixed_game_entries: Array[Dictionary]) -> Array[String]:
-	return _extract_fixed_game_ids(fixed_game_entries)
 
 
 static func _normalize_random_game_requests(raw_games: Variant) -> Array[Dictionary]:
@@ -277,9 +289,9 @@ static func _normalize_random_game_requests(raw_games: Variant) -> Array[Diction
 
 
 static func _has_fixed_game_fields(game: Dictionary) -> bool:
-	var activity_id: String = str(game.get("activity_id", "")).strip_edges()
+	var entry_activity_id: String = str(game.get("activity_id", "")).strip_edges()
 	var file_path: String = str(game.get("archivo", game.get("json_path", ""))).strip_edges()
-	return not activity_id.is_empty() or not file_path.is_empty()
+	return not entry_activity_id.is_empty() or not file_path.is_empty()
 
 
 static func _normalize_random_game_type(raw_type: String) -> String:

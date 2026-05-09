@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ContentCatalog
 
+# LEGACY_COMPAT: Usado por GameContentFactory, Global, ContentValidator.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 
 const CATALOG_PATHS := [

@@ -3,6 +3,14 @@ class_name ActivityAdapter
 
 # Convierte una activity nueva al formato runtime que espera cada minijuego.
 # No carga mapa, no decide orden de games y no guarda progreso.
+#
+# Responsabilidad única: transformar el formato del Content Pack al formato legacy.
+# Punto de entrada: to_legacy_node(activity, pack_id, pack, options)
+# Modos soportados:
+#   quiz      → quiz_choice   (_quiz_to_legacy)
+#   drag      → drag_drop     (_drag_to_legacy)
+#   drag_food → drag_drop     (_drag_food_to_legacy + _resolve_drag_food_content)
+#   match     → vinculacion_conceptos (_match_to_legacy)
 
 const MODE_QUIZ := "quiz"
 const MODE_DRAG := "drag"
@@ -61,7 +69,7 @@ static var _items_catalog_cache: Dictionary = {}
 static func to_legacy_node(
 	activity: Dictionary,
 	pack_id: String = "",
-	pack: Dictionary = {},
+	_pack: Dictionary = {},
 	options: Dictionary = {}
 ) -> Dictionary:
 	# Elige el adaptador segun el mode del contenido; no toca el mapa.
@@ -71,7 +79,7 @@ static func to_legacy_node(
 		MODE_DRAG:
 			return _drag_to_legacy(activity, pack_id)
 		MODE_DRAG_FOOD:
-			return _drag_food_to_legacy(activity, pack_id, pack, options)
+			return _drag_food_to_legacy(activity, pack_id, options)
 		MODE_MATCH:
 			return _match_to_legacy(activity, pack_id)
 		_:
@@ -132,10 +140,9 @@ static func _drag_to_legacy(activity: Dictionary, pack_id: String) -> Dictionary
 static func _drag_food_to_legacy(
 	activity: Dictionary,
 	pack_id: String,
-	pack: Dictionary,
 	options: Dictionary
 ) -> Dictionary:
-	var content: Dictionary = _resolve_drag_food_content(activity, pack, options)
+	var content: Dictionary = _resolve_drag_food_content(activity, options)
 	if content.is_empty():
 		return {}
 	return _base_node(activity, pack_id, RUNTIME_DRAG_DROP, content)
@@ -143,7 +150,6 @@ static func _drag_food_to_legacy(
 
 static func _resolve_drag_food_content(
 	activity: Dictionary,
-	_pack: Dictionary,
 	options: Dictionary
 ) -> Dictionary:
 	var activity_id: String = str(activity.get("id", "")).strip_edges()
@@ -266,10 +272,9 @@ static func _match_to_legacy(activity: Dictionary, pack_id: String) -> Dictionar
 			"id_par": pair_key,
 		})
 		index += 1
-	print("[ActivityAdapter] match id=%s pairs=%d" % [activity_id, left.size()])
 	print(
-		"[ActivityAdapter] match -> vinculacion_conceptos left=%d right=%d"
-		% [left.size(), right.size()]
+		"[ActivityAdapter] match id=%s pairs=%d left=%d right=%d"
+		% [activity_id, left.size(), left.size(), right.size()]
 	)
 	return _base_node(activity, pack_id, RUNTIME_VINCULACION, {
 		"instruccion": str(activity.get("prompt", "")).strip_edges(),
@@ -350,16 +355,6 @@ static func _make_food_item(
 		"category": str(food.get("categoria", "")).strip_edges(),
 		"feedback": feedback,
 	}
-	print(
-		"[DragFoodItem] id=%s resource=%s exists=%s correct=%s label=%s"
-		% [
-			food_id,
-			resource_path,
-			str(ResourceLoader.exists(resource_path)),
-			str(not correct_target.strip_edges().is_empty()),
-			label,
-		]
-	)
 	return item
 
 

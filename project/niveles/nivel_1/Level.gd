@@ -71,12 +71,12 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
-@onready var teaching_backdrop: ColorRect = $TeachingBackdrop
+@onready var teaching_backdrop: ColorRect = get_node_or_null("TeachingBackdrop") as ColorRect
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
-@onready var tarjeta_ensenanza_cierre: Control = $TarjetaEnsenanzaCierre
-@onready var label_ensenanza_cierre: Label = (
-	$TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre
-)
+@onready var tarjeta_ensenanza_cierre: Control = get_node_or_null("TarjetaEnsenanzaCierre") as Control
+@onready var label_ensenanza_cierre: Label = get_node_or_null(
+	"TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre"
+) as Label
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
@@ -115,7 +115,7 @@ var _save_icon_ok: Texture2D = null
 var _teaching_sprite_base_scale := Vector2.ONE
 var _teaching_card_base_scale := Vector2.ONE
 
-@onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
 @onready var _continuar_juego = $ContinuarJuego
 
 # Entrada del nivel
