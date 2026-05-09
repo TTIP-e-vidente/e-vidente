@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ContentValidator
 
+# LEGACY_COMPAT: Usado por CargadorDeMapa, CargadorDeContenidoDeNodo.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 const ContentCatalogScript := preload("res://sistemas/contenido/ContentCatalog.gd")
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")

@@ -3,6 +3,17 @@ class_name NodeContentLoader
 
 # Busca una activity por id dentro de arrastres, preguntas o vinculaciones.
 # Tambien devuelve candidatos random; no arma nodos ni abre escenas.
+#
+# Responsabilidad única: cargar y adaptar activities del Content Pack.
+# Flujo:
+#   load_from_context(context)  → load_from_pack (si hay activity_id)
+#                               → LegacyNodeLoader (si hay json_path)
+#   load_from_pack(pack_id, activity_id, options)
+#     → load_activity → JSON del pack → ActivityAdapter.to_legacy_node
+#
+# Para ArmadorDePartida:
+#   get_activity_candidates(track, type, difficulty)  → lista de activity_id coincidentes
+#   get_activity_candidates_near(...)                 → idem, busca dificultad cercana
 
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")
 const LegacyNodeLoaderScript := preload("res://sistemas/contenido/CargadorDeContenidoDeNodo.gd")
@@ -32,9 +43,6 @@ const VALID_MEALS := [
 
 static var _default_pack_warning_shown := false
 
-
-static func load_activity_from_node(node_data: Dictionary) -> Dictionary:
-	return load_from_context(node_data)
 
 static func load_from_context(context: Dictionary) -> Dictionary:
 	var node_key: String = str(
@@ -185,20 +193,6 @@ static func has_activity(pack_id: String, activity_id: String) -> Dictionary:
 	if bool(result.get("ok", false)):
 		return {"ok": true, "error": ""}
 	return {"ok": false, "error": str(result.get("error", ""))}
-
-
-static func get_activity_mode(pack_id: String, activity_id: String) -> String:
-	var resolved_pack_id: String = _resolve_pack_id(pack_id)
-	var result: Dictionary = load_activity(resolved_pack_id, activity_id)
-	if not bool(result.get("ok", false)):
-		return ""
-	var activity: Dictionary = result.get("data", {})
-	var raw_mode: String = str(activity.get("mode", "")).strip_edges()
-	print(
-		"%s activity=%s mode=%s"
-		% [LOG_PREFIX_ACTIVITY_MODE, activity_id.strip_edges(), raw_mode]
-	)
-	return raw_mode
 
 
 static func to_runtime_mode(raw_mode: String) -> String:

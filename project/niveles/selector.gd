@@ -45,8 +45,6 @@ const TRACK_CETOGENICA := "cetogenica"
 var _profile_overlay: ProfileOverlayPanel
 var _profile_toggle_btn: Button
 var _racha_badge: Control
-var _button_base_scales: Dictionary = {}
-var _hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
@@ -101,7 +99,7 @@ func _on_autismo_presionado() -> void:
 
 
 func _abrir_destino_boton(
-	button: Control,
+	_button: Control,
 	destination_type: String,
 	track_key: String = ""
 ) -> void:

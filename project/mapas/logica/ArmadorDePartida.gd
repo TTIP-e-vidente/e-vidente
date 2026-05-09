@@ -1,6 +1,24 @@
 extends RefCounted
 class_name ArmadorDePartida
 
+# Construye el plan de juego para un nodo del mapa.
+# Responsabilidad única: decidir qué games se juegan y en qué orden.
+# No carga JSON, no abre escenas, no navega entre pantallas.
+#
+# Dos caminos para construir los juegos:
+#   Fijos (has_fixed_games):  construir_juegos_fijos()  → toma los games del nodo directamente.
+#   Random (uses_random_games): construir_juegos_random()
+#     → elige por tipo/dificultad con anti-repetición.
+#
+# Anti-repetición:
+#   _session_used_activity_ids_by_request  → evita repetir activity_id en la sesión.
+#   _last_random_combo_by_node_key         → evita repetir la misma combinación en el nodo.
+#   Ambos se resetean con reset_session_history().
+#
+# Salida: Dictionary con keys:
+#   clave_nodo, titulo_nodo, clave_pista, dificultad,
+#   numero_nivel, indice_juego_actual, total_juegos, juegos: Array[Dictionary]
+
 
 const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
@@ -193,7 +211,7 @@ static func _select_random_game_entries(
 	rng: RandomNumberGenerator
 ) -> Array[Dictionary]:
 	var selected_game_entries: Array[Dictionary] = []
-	for raw_request in node_data.random_game_requests:
+	for raw_request in node_data.get_random_game_requests():
 		if not raw_request is Dictionary:
 			continue
 		var game_request: Dictionary = raw_request as Dictionary
@@ -537,16 +555,6 @@ static func _calcular_dificultad_inicial_del_nodo(indice_nodo: int) -> int:
 	return 5
 
 
-static func obtener_dificultad_para_juego(node_data: MapNodeData, indice_juego: int) -> int:
-	if node_data == null:
-		return DIFICULTAD_FACIL
-	var patron: Array[int] = _obtener_patron_dificultad_para_nodo(node_data.index)
-	if patron.is_empty():
-		return DIFICULTAD_FACIL
-	var indice_seguro: int = clampi(indice_juego, 0, patron.size() - 1)
-	return patron[indice_seguro]
-
-
 static func _crear_juego(
 	node_data: MapNodeData,
 	dificultad_objetivo: int
@@ -664,7 +672,7 @@ static func _prepare_fixed_game_entries(node_data: MapNodeData) -> Array[Diction
 	return _build_final_game_entries(
 		node_data.node_key,
 		node_data.shuffle_games,
-		node_data.fixed_game_entries
+		node_data.get_fixed_games()
 	)
 
 

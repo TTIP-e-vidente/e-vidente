@@ -1,6 +1,9 @@
 extends RefCounted
 class_name ValidadorDeContenidoDeNodo
 
+# LEGACY_COMPAT: Usado por CargadorDeContenidoDeNodo.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 # Valida y limpia el runtime que consumen los minijuegos.
 # No carga archivos ni decide que activity se juega.
 

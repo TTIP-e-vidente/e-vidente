@@ -1,6 +1,9 @@
 extends RefCounted
 class_name AdaptadorContenidoViejo
 
+# LEGACY_COMPAT: Usado por ContentNormalizer.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 # Adapta formatos viejos para no romper contenido existente.
 # No es el camino recomendado para contenido nuevo.
 

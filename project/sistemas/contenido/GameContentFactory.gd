@@ -1,6 +1,9 @@
 extends RefCounted
 class_name GameContentFactory
 
+# LEGACY_COMPAT: Usado por CargadorDeContenidoDeNodo.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
 const ContentCatalogScript := preload("res://sistemas/contenido/ContentCatalog.gd")
 const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
 
