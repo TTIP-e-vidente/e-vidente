@@ -214,7 +214,7 @@ static func validate_map_node(node: MapNodeData, node_number: int = 0) -> String
 			return "No existe el JSON de %s: %s" % [label.to_lower(), node.json_path]
 		return ""
 	if node.has_fixed_games():
-		for game_entry in node.fixed_game_entries:
+		for game_entry in node.get_fixed_games():
 			var file_path: String = str(game_entry.get("archivo", "")).strip_edges()
 			if file_path.is_empty() or not FileAccess.file_exists(file_path):
 				return "No existe el JSON de %s: %s" % [label.to_lower(), file_path]
@@ -237,7 +237,7 @@ static func validate_map_node(node: MapNodeData, node_number: int = 0) -> String
 
 
 static func _validate_activity_games(node: MapNodeData, label: String) -> String:
-	for game_entry in node.fixed_game_entries:
+	for game_entry in node.get_fixed_games():
 		var activity_id: String = str(game_entry.get("activity_id", "")).strip_edges()
 		if activity_id.is_empty():
 			continue
@@ -303,7 +303,7 @@ static func _build_node_from_reference(
 	print(
 		LOG_PREFIX,
 		" nodo_v1=", node.node_key,
-		" juegos=", node.fixed_game_entries.size(),
+		" juegos=", node.get_fixed_game_count(),
 		" mode=", node.mode,
 		" json_path=", node.json_path
 	)

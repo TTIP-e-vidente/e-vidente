@@ -16,6 +16,9 @@ static func continuar_o_finalizar_partida(
 	if estado_global == null:
 		return false
 
+	# Marcar la activity actual como completada antes de avanzar/finalizar
+	_marcar_activity_actual_completada(tree, estado_global)
+
 	if bool(estado_global.call("hay_siguiente_juego_de_partida")):
 		if antes_de_abrir_siguiente_juego.is_valid():
 			antes_de_abrir_siguiente_juego.call()
@@ -94,3 +97,18 @@ static func _resolver_identificador_de_juego(juego_actual: Dictionary) -> String
 	if not json_path.is_empty():
 		return json_path.get_file().trim_suffix(".json")
 	return str(juego_actual.get("clave_nodo_de_origen", "")).strip_edges()
+
+
+static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: Node) -> void:
+	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_de_partida")
+	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
+	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
+	if request_key.is_empty() or activity_id.is_empty():
+		return
+	if tree == null or tree.root == null:
+		return
+	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
+	if save_manager == null:
+		return
+	if save_manager.has_method("mark_activity_completed"):
+		save_manager.call("mark_activity_completed", request_key, activity_id)

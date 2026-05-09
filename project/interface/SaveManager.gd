@@ -65,6 +65,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	cargar_datos()
+	ArmadorDePartida.init_with_save_manager(self)
 
 
 func _notification(what: int) -> void:
@@ -229,6 +230,60 @@ func registrar_sesion_preguntas_completada(question_count: int, score: int) -> v
 			"score": score
 		}
 	)
+
+
+# --- Anti-repetición persistente de activities ---------------------
+
+func mark_activity_completed(request_key: String, activity_id: String) -> void:
+	var clean_key: String = request_key.strip_edges()
+	var clean_id: String = activity_id.strip_edges()
+	if clean_key.is_empty() or clean_id.is_empty():
+		return
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	var completed_map: Dictionary = stored if stored is Dictionary else {}
+	var raw_ids: Variant = completed_map.get(clean_key, [])
+	var id_list: Array = raw_ids if raw_ids is Array else []
+	if id_list.has(clean_id):
+		return
+	id_list.append(clean_id)
+	completed_map[clean_key] = id_list
+	save_data["completed_activity_ids_by_request"] = completed_map
+	_marcar_guardado_sucio()
+	print("[PersistentRandom] mark_completed request=%s activity=%s" % [clean_key, clean_id])
+	guardar_progreso_en_disco()
+	print("[PersistentRandom] save_updated=true")
+
+
+func get_completed_activity_ids(request_key: String) -> Array[String]:
+	var clean_key: String = request_key.strip_edges()
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return []
+	var raw_ids: Variant = (stored as Dictionary).get(clean_key, [])
+	if not raw_ids is Array:
+		return []
+	var result: Array[String] = []
+	for entry in (raw_ids as Array):
+		result.append(str(entry))
+	return result
+
+
+func reset_completed_activity_pool(request_key: String) -> void:
+	var clean_key: String = request_key.strip_edges()
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return
+	var completed_map: Dictionary = stored as Dictionary
+	if completed_map.has(clean_key):
+		completed_map.erase(clean_key)
+		save_data["completed_activity_ids_by_request"] = completed_map
+		_marcar_guardado_sucio()
+
+
+func debug_clear_completed_activity_history() -> void:
+	save_data["completed_activity_ids_by_request"] = {}
+	_marcar_guardado_sucio()
+	print("[PersistentRandom] debug_clear_completed_activity_history done")
 
 
 func reiniciar_todo_progreso() -> Dictionary:

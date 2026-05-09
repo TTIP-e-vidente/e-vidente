@@ -39,7 +39,7 @@ var default_unlocked := false   # Si true, el nodo empieza desbloqueado.
 var games: Array[Dictionary] = []
 
 # Campos de la ruta legacy (nodos V1 con json_path directo).
-# En nodos nuevos, estos quedan vacíos y se usan fixed_game_entries.
+# En nodos nuevos, estos quedan vacíos; los games se leen desde el array games.
 var mode: String = ""           # Mode del primer game (legacy/V1).
 var json_path: String = ""      # Ruta al JSON legacy (si no hay activity_id).
 var activity_id: String = ""    # activity_id del primer game (camino feliz).
