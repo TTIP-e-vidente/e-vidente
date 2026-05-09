@@ -87,6 +87,7 @@ var _retroalimentacion_racha_post_juego: Dictionary = {}
 var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
 var _continuar_juego_es_continuacion_pendiente := false
+var _continuar_juego_es_validacion_pendiente := false
 
 
 func _ready() -> void:
@@ -148,53 +149,13 @@ func _preparar_layout_ui() -> void:
 	control_principal.offset_bottom = 0
 	control_principal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var screen_margin := _asegurar_margin_container("ScreenMargin", control_principal)
-	screen_margin.z_index = 20
-	screen_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	screen_margin.offset_left = 96
-	screen_margin.offset_top = 88
-	screen_margin.offset_right = -96
-	screen_margin.offset_bottom = -64
-	_set_margenes(screen_margin, 0, 0, 0, 0)
-
-	var screen_stack := _asegurar_vbox("ScreenStack", screen_margin)
-	screen_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	screen_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	screen_stack.add_theme_constant_override("separation", 18)
-
-	var header := _asegurar_vbox("Header", screen_stack)
-	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_theme_constant_override("separation", 6)
-	_reparent_control(label_pregunta, header)
-	label_pregunta.custom_minimum_size = Vector2(860, 82)
-
-	var main_layout := _asegurar_hbox("MainLayout", screen_stack)
-	main_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_layout.add_theme_constant_override("separation", 36)
-	main_layout.alignment = BoxContainer.ALIGNMENT_CENTER
-
-	var left_column := _asegurar_vbox("LeftColumn", main_layout)
-	var right_column := _asegurar_vbox("RightColumn", main_layout)
-	center_hint = _asegurar_hint_card(main_layout)
-	_ordenar_hijos_main_layout(main_layout, left_column, center_hint, right_column)
-
-	_configurar_columna(left_column)
-	_configurar_columna(right_column)
-	_reparent_control(contenedor_izquierda, left_column)
-	_reparent_control(contenedor_derecha, right_column)
-
-	var footer := _asegurar_vbox("FeedbackLayer", screen_stack)
-	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.custom_minimum_size = Vector2(0, 106)
-	footer.add_theme_constant_override("separation", 8)
-
 	if line_drawer != null:
-		_reparent_canvas_item(line_drawer, control_principal)
 		line_drawer.z_as_relative = false
 		line_drawer.z_index = 10
+		line_drawer.show()
+
 	if is_instance_valid(titulo_nivel):
-		titulo_nivel.text = "Celiaquia"
+		titulo_nivel.text = "Celiaquía"
 
 
 func _asegurar_margin_container(nombre: String, parent: Node) -> MarginContainer:
@@ -411,6 +372,8 @@ func _reiniciar_estado_local() -> void:
 	_retroalimentacion_racha_post_juego = {}
 	_estado_flujo_post_juego = {}
 	_datos_de_ejecucion = {}
+	_continuar_juego_es_continuacion_pendiente = false
+	_continuar_juego_es_validacion_pendiente = false
 	_limpiar_vinculos_y_errores()
 
 
@@ -421,62 +384,68 @@ func _limpiar_vinculos_y_errores() -> void:
 
 
 func _preparar_controles_de_confirmacion() -> void:
-	var feedback_layer := _obtener_feedback_layer()
-	boton_confirmar = feedback_layer.get_node_or_null("ConfirmButton") as Button
+	boton_confirmar = control_principal.get_node_or_null("ConfirmButton") as Button
 	if boton_confirmar == null:
 		boton_confirmar = Button.new()
 		boton_confirmar.name = "ConfirmButton"
-		boton_confirmar.custom_minimum_size = Vector2(220, 56)
-		feedback_layer.add_child(boton_confirmar)
+		boton_confirmar.layout_mode = 0
+		control_principal.add_child(boton_confirmar)
+	boton_confirmar.offset_left = 456.0
+	boton_confirmar.offset_top = 736.0
+	boton_confirmar.offset_right = 700.0
+	boton_confirmar.offset_bottom = 794.0
 	boton_confirmar.text = "Confirmar"
 	boton_confirmar.visible = true
 	boton_confirmar.disabled = true
 	boton_confirmar.z_index = 110
-	boton_confirmar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_aplicar_estilo_boton_badge(boton_confirmar, 24)
+	_aplicar_estilo_boton_badge(boton_confirmar, 22)
 	if not boton_confirmar.pressed.is_connected(confirmar):
 		boton_confirmar.pressed.connect(confirmar)
 
-	_preparar_boton_continuar_validacion()
 	_preparar_feedback_label()
 
 
 func _preparar_boton_continuar_validacion() -> void:
-	var feedback_layer := _obtener_feedback_layer()
-	boton_continuar_validacion = feedback_layer.get_node_or_null("ContinueButton") as Button
+	boton_continuar_validacion = control_principal.get_node_or_null("ContinueButton") as Button
 	if boton_continuar_validacion == null:
 		boton_continuar_validacion = Button.new()
 		boton_continuar_validacion.name = "ContinueButton"
-		boton_continuar_validacion.custom_minimum_size = Vector2(236, 56)
-		feedback_layer.add_child(boton_continuar_validacion)
+		boton_continuar_validacion.layout_mode = 0
+		control_principal.add_child(boton_continuar_validacion)
+	boton_continuar_validacion.offset_left = 456.0
+	boton_continuar_validacion.offset_top = 736.0
+	boton_continuar_validacion.offset_right = 700.0
+	boton_continuar_validacion.offset_bottom = 794.0
 	boton_continuar_validacion.text = "Continuar"
 	boton_continuar_validacion.visible = false
 	boton_continuar_validacion.disabled = true
 	boton_continuar_validacion.z_index = 111
-	boton_continuar_validacion.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_aplicar_estilo_boton_badge(boton_continuar_validacion, 28)
+	_aplicar_estilo_boton_badge(boton_continuar_validacion, 24)
 	if not boton_continuar_validacion.pressed.is_connected(_on_continuar_pressed):
 		boton_continuar_validacion.pressed.connect(_on_continuar_pressed)
 
 
 func _preparar_feedback_label() -> void:
-	var feedback_layer := _obtener_feedback_layer()
-	feedback_label = feedback_layer.get_node_or_null("FeedbackLabel") as Label
+	feedback_label = control_principal.get_node_or_null("FeedbackLabel") as Label
 	if feedback_label == null:
 		feedback_label = Label.new()
 		feedback_label.name = "FeedbackLabel"
-		feedback_label.custom_minimum_size = Vector2(620, 48)
-		feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		feedback_label.add_theme_font_size_override("font_size", 24)
-		feedback_layer.add_child(feedback_label)
-	feedback_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		feedback_label.layout_mode = 0
+		control_principal.add_child(feedback_label)
+	feedback_label.offset_left = 230.0
+	feedback_label.offset_top = 672.0
+	feedback_label.offset_right = 926.0
+	feedback_label.offset_bottom = 728.0
+	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback_label.add_theme_font_size_override("font_size", 22)
+	feedback_label.add_theme_color_override("font_color", COLOR_FEEDBACK_NEUTRAL)
 	feedback_label.visible = true
-	feedback_label.z_index = 110
+	feedback_label.z_index = 20
 	feedback_label.text = ""
-	feedback_label.modulate = COLOR_FEEDBACK_NEUTRAL
-	feedback_layer.move_child(feedback_label, 0)
+	# Una sola guia: guide_label apunta al mismo nodo que feedback_label
+	guide_label = feedback_label
 
 
 func _obtener_feedback_layer() -> VBoxContainer:
@@ -515,24 +484,10 @@ func _crear_estilo_badge() -> StyleBoxTexture:
 
 
 func _acomodar_pantalla() -> void:
-	label_pregunta.custom_minimum_size = Vector2(820, 86)
-	label_pregunta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label_pregunta.scale = Vector2.ONE
 	label_pregunta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label_pregunta.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label_pregunta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label_pregunta.add_theme_font_size_override("font_size", 34)
-
 	contenedor_izquierda.custom_minimum_size = Vector2(282, 0)
 	contenedor_derecha.custom_minimum_size = Vector2(282, 0)
-	contenedor_izquierda.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	contenedor_derecha.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	contenedor_izquierda.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	contenedor_derecha.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	contenedor_izquierda.alignment = BoxContainer.ALIGNMENT_CENTER
-	contenedor_derecha.alignment = BoxContainer.ALIGNMENT_CENTER
-	contenedor_izquierda.add_theme_constant_override("separation", 124)
-	contenedor_derecha.add_theme_constant_override("separation", 124)
 
 
 func _preparar_click_areas() -> void:
@@ -643,11 +598,11 @@ func _asegurar_slots_en_contenedor(
 
 
 func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
-	var separacion := 42
+	var separacion := 72
 	if total_requerido >= 5:
-		separacion = 4
+		separacion = 12
 	elif total_requerido == 4:
-		separacion = 28
+		separacion = 36
 	contenedor_izquierda.add_theme_constant_override("separation", separacion)
 	contenedor_derecha.add_theme_constant_override("separation", separacion)
 
@@ -702,7 +657,7 @@ func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado:
 
 func _hacer_tarjeta_clickeable(item: ConceptoItem) -> void:
 	item.mouse_filter = Control.MOUSE_FILTER_STOP
-	item.focus_mode = Control.FOCUS_ALL
+	item.focus_mode = Control.FOCUS_NONE
 
 
 func _ignorar_mouse_en_hijos(node: Node) -> void:
@@ -807,7 +762,6 @@ func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
 	_animar_vinculo_creado(izquierda, derecha)
 	_validar_par_actual(izquierda, derecha)
 	_actualizar_visual()
-	_actualizar_visual()
 
 
 func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
@@ -848,7 +802,11 @@ func _mostrar_feedback_error(izquierda: ConceptoItem) -> void:
 func _completar_vinculacion() -> void:
 	_mostrar_feedback("Excelente. Completaste las relaciones.")
 	_actualizar_texto_guia("Excelente. Completaste las relaciones.")
-	print(LOG_PREFIX_MATCH, " completed activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
+	print(
+		LOG_PREFIX_MATCH,
+		" completed activity=",
+		str(_datos_de_ejecucion.get("id", _nodo_actual))
+	)
 
 
 func _actualizar_visual() -> void:
@@ -939,9 +897,10 @@ func _animar_vinculo_creado(izquierda: ConceptoItem, derecha: ConceptoItem) -> v
 	for tarjeta in [izquierda, derecha]:
 		if tarjeta == null or not is_instance_valid(tarjeta):
 			continue
+		var escala_base: Vector2 = tarjeta.scale
 		var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_property(tarjeta, "scale", Vector2(1.06, 1.06), 0.08)
-		tween.tween_property(tarjeta, "scale", Vector2.ONE, 0.12)
+		tween.tween_property(tarjeta, "scale", escala_base * 1.06, 0.08)
+		tween.tween_property(tarjeta, "scale", escala_base, 0.12)
 
 
 func _actualizar_lineas() -> void:
@@ -1045,19 +1004,18 @@ func confirmar() -> void:
 
 
 func _mostrar_continuar() -> void:
-	if boton_continuar_validacion == null:
+	if _continuar_juego == null:
 		return
-	boton_continuar_validacion.disabled = false
-	boton_continuar_validacion.visible = true
-	boton_continuar_validacion.modulate = Color(1, 1, 1, 1)
+	_continuar_juego_es_validacion_pendiente = true
+	if _continuar_juego.has_method("mostrar_para_continuar_pendiente"):
+		_continuar_juego.call("mostrar_para_continuar_pendiente")
 	_set_click_areas_habilitadas(false)
 
 
 func _ocultar_continuar() -> void:
-	if boton_continuar_validacion == null:
-		return
-	boton_continuar_validacion.visible = false
-	boton_continuar_validacion.disabled = true
+	_continuar_juego_es_validacion_pendiente = false
+	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
+		_continuar_juego.call("ocultar")
 	if not bloqueado:
 		_set_click_areas_habilitadas(true)
 
@@ -1169,6 +1127,7 @@ func _mostrar_cierre_de_vinculacion() -> void:
 
 func _mostrar_continuacion() -> void:
 	ya_continuo = false
+	_continuar_juego_es_validacion_pendiente = false
 	PresentadorContinuarJuegoScript.mostrar(_continuar_juego, _hay_siguiente_juego_de_partida(), 5)
 
 
@@ -1224,10 +1183,16 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 
 
 func continuar_al_siguiente_juego() -> void:
+	if validado and not bloqueado:
+		_on_continuar_pressed()
+		return
 	_al_solicitar_continuar()
 
 
 func _al_solicitar_continuar_juego() -> void:
+	if _continuar_juego_es_validacion_pendiente:
+		_on_continuar_pressed()
+		return
 	if _continuar_juego_es_continuacion_pendiente:
 		GameSceneRouter.go_to_continue_target(get_tree(), _ruta_escena_de_retorno)
 		return
@@ -1269,6 +1234,7 @@ func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
 
 
 func _limpiar_elementos_temporales() -> void:
+	_continuar_juego_es_validacion_pendiente = false
 	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
 
 

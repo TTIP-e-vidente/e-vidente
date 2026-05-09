@@ -26,6 +26,7 @@ const DIFICULTAD_MEDIA := 3
 const DIFICULTAD_DIFICIL := 5
 
 static var _cache_dificultad_por_ruta: Dictionary = {}
+static var _last_random_combo_by_node_key: Dictionary = {}
 
 
 # Arma la corrida del nodo sin tocar el JSON original ni abrir escenas.
@@ -134,90 +135,31 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 	var pack_id: String = node_data.get_effective_pack_id()
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
+	var previous_combo: Array[String] = _read_last_random_combo(node_data.node_key)
 	var selected_game_entries: Array[Dictionary] = []
-	for raw_request in node_data.random_game_requests:
-		if not raw_request is Dictionary:
-			continue
-		var game_request: Dictionary = raw_request as Dictionary
-		var requested_type: String = NodeContentLoaderScript.normalize_random_game_type(
-			str(game_request.get("type", "")).strip_edges()
-		)
-		var requested_difficulty: int = int(game_request.get("difficulty", 0))
-		if requested_type.is_empty() or requested_difficulty <= 0:
-			push_warning(
-				"ArmadorDePartida: game random invalido en %s: %s"
-				% [node_data.node_key, str(game_request)]
-			)
-			continue
-		var exact_activity_candidates: Array[String] = (
-			NodeContentLoaderScript.get_activity_candidates(
-			pack_id,
-			requested_type,
-			requested_difficulty
-			)
-		)
-		var activity_candidates: Array[String] = (
-			NodeContentLoaderScript.get_activity_candidates_near(
-			pack_id,
-			requested_type,
-			requested_difficulty
-			)
-		)
-		var exact_available_candidates: Array[String] = _filter_activity_candidates(
-			exact_activity_candidates,
+	var selected_combo: Array[String] = []
+	for attempt in range(2):
+		selected_game_entries = _select_random_game_entries(node_data, pack_id, rng)
+		if selected_game_entries.is_empty():
+			break
+		selected_combo = _normalize_activity_combo(
 			_extract_activity_ids_from_game_entries(selected_game_entries)
 		)
-		var fallback_available_candidates: Array[String] = _filter_activity_candidates(
-			activity_candidates,
-			_extract_activity_ids_from_game_entries(selected_game_entries)
-		)
-		var available_activity_candidates: Array[String] = exact_available_candidates
-		var using_fallback_candidates := false
-		if available_activity_candidates.is_empty():
-			available_activity_candidates = fallback_available_candidates
-			using_fallback_candidates = not available_activity_candidates.is_empty()
-		var selected_activity_id: String = _pick_random_activity_id(
-			available_activity_candidates,
-			rng
-		)
-		var selected_game_entry: Dictionary = {}
-		if not selected_activity_id.is_empty():
-			selected_game_entry = _build_random_game_entry(
-				node_data,
-				pack_id,
-				selected_activity_id,
-				requested_difficulty
-			)
-		var candidate_summary: String = _unir_strings(available_activity_candidates)
-		if using_fallback_candidates and not selected_game_entry.is_empty():
+		if attempt == 0 and _activity_combos_match(selected_combo, previous_combo):
 			print(
-				"[RunRequestWarning] type=%s difficulty=%d fallback=%d selected=%s"
-				% [
-					requested_type,
-					requested_difficulty,
-					int(selected_game_entry.get("difficulty", requested_difficulty)),
-					selected_activity_id,
-				]
-			)
-		else:
-			print(
-				"[RunRequest] type=%s difficulty=%d candidates=%s selected=%s"
-				% [
-					requested_type,
-					requested_difficulty,
-					candidate_summary if not candidate_summary.is_empty() else "-",
-					selected_activity_id if not selected_activity_id.is_empty() else "-",
-				]
-			)
-		if selected_game_entry.is_empty():
-			push_warning(
-				"ArmadorDePartida: no se pudo resolver game random %s/%d en %s."
-				% [requested_type, requested_difficulty, node_data.node_key]
+				"[RunRequestWarning] node=%s repeated_combo=%s retry=1"
+				% [node_data.node_key, _unir_strings(selected_combo)]
 			)
 			continue
-		selected_game_entries.append(selected_game_entry)
+		break
 	if selected_game_entries.is_empty():
 		return final_games
+	if _activity_combos_match(selected_combo, previous_combo) and not previous_combo.is_empty():
+		push_warning(
+			"ArmadorDePartida: combo random repetido en %s; se reutiliza por falta de alternativas."
+			% node_data.node_key
+		)
+	_store_last_random_combo(node_data.node_key, selected_combo)
 	var final_game_entries: Array[Dictionary] = _build_final_game_entries(
 		node_data.node_key,
 		node_data.shuffle_games,
@@ -239,6 +181,147 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 			continue
 		final_games.append(juego)
 	return final_games
+
+
+static func _select_random_game_entries(
+	node_data: MapNodeData,
+	pack_id: String,
+	rng: RandomNumberGenerator
+) -> Array[Dictionary]:
+	var selected_game_entries: Array[Dictionary] = []
+	for raw_request in node_data.random_game_requests:
+		if not raw_request is Dictionary:
+			continue
+		var game_request: Dictionary = raw_request as Dictionary
+		var requested_type: String = NodeContentLoaderScript.normalize_random_game_type(
+			str(game_request.get("type", "")).strip_edges()
+		)
+		var requested_difficulty: int = int(game_request.get("difficulty", 0))
+		var requested_options_count: int = _read_requested_options_count(
+			game_request,
+			requested_type
+		)
+		if requested_type.is_empty() or requested_difficulty <= 0:
+			push_warning(
+				"ArmadorDePartida: game random invalido en %s: %s"
+				% [node_data.node_key, str(game_request)]
+			)
+			continue
+		var used_activity_ids: Array[String] = _extract_activity_ids_from_game_entries(
+			selected_game_entries
+		)
+		var available_activity_candidates: Array[String] = []
+		var fallback_reason := ""
+		available_activity_candidates = _filter_activity_candidates(
+			NodeContentLoaderScript.get_activity_candidates(
+				pack_id,
+				requested_type,
+				requested_difficulty,
+				requested_options_count
+			),
+			used_activity_ids
+		)
+		if available_activity_candidates.is_empty() and requested_options_count > 0:
+			available_activity_candidates = _filter_activity_candidates(
+				NodeContentLoaderScript.get_activity_candidates(
+					pack_id,
+					requested_type,
+					requested_difficulty
+				),
+				used_activity_ids
+			)
+			fallback_reason = "without_options_count"
+		if available_activity_candidates.is_empty() and requested_options_count > 0:
+			available_activity_candidates = _filter_activity_candidates(
+				NodeContentLoaderScript.get_activity_candidates_near(
+					pack_id,
+					requested_type,
+					requested_difficulty,
+					requested_options_count
+				),
+				used_activity_ids
+			)
+			fallback_reason = "near_difficulty_with_options_count"
+		if available_activity_candidates.is_empty():
+			available_activity_candidates = _filter_activity_candidates(
+				NodeContentLoaderScript.get_activity_candidates_near(
+					pack_id,
+					requested_type,
+					requested_difficulty
+				),
+				used_activity_ids
+			)
+			if not available_activity_candidates.is_empty():
+				fallback_reason = (
+					"near_difficulty_without_options_count"
+					if requested_options_count > 0
+					else "near_difficulty"
+				)
+		var selected_activity_id: String = _pick_random_activity_id(
+			available_activity_candidates,
+			rng
+		)
+		var selected_game_entry: Dictionary = {}
+		if not selected_activity_id.is_empty():
+			selected_game_entry = _build_random_game_entry(
+				node_data,
+				pack_id,
+				selected_activity_id,
+				requested_difficulty
+			)
+		var candidate_summary: String = _unir_strings(available_activity_candidates)
+		if not fallback_reason.is_empty() and not selected_game_entry.is_empty():
+			if requested_options_count > 0:
+				print(
+					"[RunRequestWarning] type=%s difficulty=%d options=%d fallback=%s selected=%s"
+					% [
+						requested_type,
+						requested_difficulty,
+						requested_options_count,
+						fallback_reason,
+						selected_activity_id,
+					]
+				)
+			else:
+				print(
+					"[RunRequestWarning] type=%s difficulty=%d fallback=%s selected=%s"
+					% [
+						requested_type,
+						requested_difficulty,
+						fallback_reason,
+						selected_activity_id,
+					]
+				)
+		else:
+			if requested_options_count > 0:
+				print(
+					"[RunRequest] type=%s difficulty=%d options=%d candidates=%s selected=%s"
+					% [
+						requested_type,
+						requested_difficulty,
+						requested_options_count,
+						candidate_summary if not candidate_summary.is_empty() else "-",
+						selected_activity_id if not selected_activity_id.is_empty() else "-",
+					]
+				)
+			else:
+				print(
+					"[RunRequest] type=%s difficulty=%d candidates=%s selected=%s"
+					% [
+						requested_type,
+						requested_difficulty,
+						candidate_summary if not candidate_summary.is_empty() else "-",
+						selected_activity_id if not selected_activity_id.is_empty() else "-",
+					]
+				)
+		if selected_game_entry.is_empty():
+			push_warning(
+				"ArmadorDePartida: no se pudo resolver game random %s/%d en %s."
+				% [requested_type, requested_difficulty, node_data.node_key]
+			)
+			continue
+		selected_game_entries.append(selected_game_entry)
+	return selected_game_entries
 
 
 # Armado de juegos
@@ -578,6 +661,51 @@ static func _pick_random_activity_id(
 	if candidate_ids.is_empty():
 		return ""
 	return candidate_ids[rng.randi_range(0, candidate_ids.size() - 1)]
+
+
+static func _read_requested_options_count(
+	game_request: Dictionary,
+	requested_type: String
+) -> int:
+	if requested_type != "quiz":
+		return 0
+	return maxi(0, int(game_request.get("options_count", 0)))
+
+
+static func _read_last_random_combo(node_key: String) -> Array[String]:
+	var stored_combo: Variant = _last_random_combo_by_node_key.get(node_key, [])
+	if not stored_combo is Array:
+		return []
+	return _normalize_activity_combo(stored_combo as Array)
+
+
+static func _store_last_random_combo(node_key: String, activity_ids: Array[String]) -> void:
+	if node_key.strip_edges().is_empty() or activity_ids.is_empty():
+		return
+	_last_random_combo_by_node_key[node_key] = _normalize_activity_combo(activity_ids)
+
+
+static func _normalize_activity_combo(raw_activity_ids: Array) -> Array[String]:
+	var normalized_ids: Array[String] = []
+	for raw_activity_id in raw_activity_ids:
+		var activity_id: String = str(raw_activity_id).strip_edges()
+		if activity_id.is_empty():
+			continue
+		normalized_ids.append(activity_id)
+	normalized_ids.sort()
+	return normalized_ids
+
+
+static func _activity_combos_match(
+	left_combo: Array[String],
+	right_combo: Array[String]
+) -> bool:
+	if left_combo.size() != right_combo.size():
+		return false
+	for index in range(left_combo.size()):
+		if left_combo[index] != right_combo[index]:
+			return false
+	return not left_combo.is_empty()
 
 
 static func _build_random_game_entry(

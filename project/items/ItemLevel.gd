@@ -22,9 +22,11 @@ var item_feedback := ""
 var item_correct_target := ""
 var save_instance_id := ""
 var interaction_enabled := true
+var base_scale := Vector2.ONE
 static var is_dragging: Object = null
 
 func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
+	base_scale = scale
 	textSprite = level_item.sprite
 	$Sprite2D.texture = textSprite
 	condiciones = level_item.condiciones.duplicate()
@@ -79,7 +81,7 @@ func set_interaction_enabled(enabled: bool) -> void:
 	if not interaction_enabled and is_dragging == self:
 		is_dragging = null
 	draggable = false
-	scale = Vector2.ONE
+	scale = base_scale
 	if is_instance_valid(area_2d):
 		area_2d.input_pickable = interaction_enabled
 
@@ -172,14 +174,14 @@ func _on_area_2d_mouse_entered():
 		return
 	if !is_dragging:
 		draggable = true
-		scale = Vector2(1.2, 1.2)
+		scale = base_scale * 1.2
 
 func _on_area_2d_mouse_exited():
 	if not interaction_enabled:
 		return
 	if !is_dragging:
 		draggable = false
-		scale = Vector2(1,1)
+		scale = base_scale
 
 
 func _volver_a_inicio() -> void:
@@ -187,15 +189,15 @@ func _volver_a_inicio() -> void:
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", initialPos, 0.22)
-	tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
+	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
 
 
 func _animar_feedback_correcto() -> void:
 	var tween := get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.08)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.14)
+	tween.tween_property(self, "scale", base_scale * 1.12, 0.08)
+	tween.tween_property(self, "scale", base_scale, 0.14)
 
 
 func _animar_feedback_incorrecto_y_volver() -> void:
@@ -207,7 +209,7 @@ func _animar_feedback_incorrecto_y_volver() -> void:
 	tween.tween_property(self, "global_position", posicion_actual + Vector2(-14, 0), 0.04)
 	tween.tween_property(self, "global_position", posicion_actual + Vector2(10, 0), 0.04)
 	tween.tween_property(self, "global_position", initialPos, 0.18)
-	tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
+	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
 
 
 func _reportar_mismatch_si_corresponde() -> void:

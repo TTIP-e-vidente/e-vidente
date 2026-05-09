@@ -14,6 +14,7 @@ const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
 const NODE_5_KEY := "celiaquia_05_intro_mixta"
 const NODE_6_KEY := "celiaquia_06_practica_simple"
+const NODE_8_KEY := "celiaquia_08_riesgos_basicos"
 const NODE_14_KEY := "celiaquia_14_comer_fuera"
 const NODE_18_KEY := "celiaquia_18_desafio_final"
 const NODE_19_KEY := "celiaquia_19_cocina_segura"
@@ -67,6 +68,7 @@ func ejecutar_prueba() -> void:
 	var resultado_nodo_1 := {}
 	var firmas_nodo_5 := {}
 	var resultado_match_d2 := {}
+	var resultado_nodo_8 := {}
 	var resultado_match_d3 := {}
 	var resultado_nodo_18 := {}
 	var resultado_nodo_19 := {}
@@ -105,6 +107,19 @@ func ejecutar_prueba() -> void:
 			int(resultado_match_d2.get("match_pairs_max", 0)) >= 2,
 			"La vinculacion de dificultad 2 deberia tener al menos 2 pares."
 		)
+		_check(bool(resultado_match_d2.get("completed", false)), "Nodo 6 deberia completarse.")
+
+	if not failed:
+		resultado_nodo_8 = await _validar_nodo(global_state, NODE_8_KEY, "Nodo 8")
+		_check(
+			bool(resultado_nodo_8.get("match_seen", false)),
+			"Nodo 8 deberia abrir vinculacion de dificultad 2."
+		)
+		_check(
+			int(resultado_nodo_8.get("match_pairs_max", 0)) >= 2,
+			"La vinculacion de Nodo 8 deberia tener al menos 2 pares."
+		)
+		_check(bool(resultado_nodo_8.get("completed", false)), "Nodo 8 deberia completarse.")
 
 	if not failed:
 		resultado_match_d3 = await _validar_nodo(global_state, NODE_14_KEY, "Nodo 14")
@@ -385,7 +400,34 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 	_check(bool(match_scene.get("validado")), "%s: match deberia validar correctamente." % label)
 	if failed:
 		return
-	match_scene.call("continuar_al_siguiente_juego")
+	var continuar_validacion := match_scene.get_node_or_null("ContinuarJuego") as Control
+	_check(
+		continuar_validacion != null and continuar_validacion.visible,
+		"%s: match deberia mostrar continuar al validar." % label
+	)
+	if failed:
+		return
+	match_scene.call("_al_solicitar_continuar_juego")
+	for unused_frame in range(3):
+		await process_frame
+	var continuar_cierre := match_scene.get_node_or_null("ContinuarJuego") as Control
+	var feedback_label := match_scene.get_node_or_null("Control/FeedbackLabel") as Label
+	var teaching_sprite := match_scene.get_node_or_null("Ensenanza") as Sprite2D
+	var cierre_visible := (
+		continuar_cierre != null
+		and continuar_cierre.visible
+		and (
+			(teaching_sprite != null and teaching_sprite.visible)
+			or (
+				feedback_label != null
+				and feedback_label.text.contains("Excelente. Completaste las relaciones.")
+			)
+		)
+	)
+	_check(cierre_visible, "%s: match deberia mostrar cierre con continuar visible." % label)
+	if failed:
+		return
+	match_scene.call("_al_solicitar_continuar_juego")
 
 
 func _resolver_vinculacion_correcta(match_scene: Node) -> void:

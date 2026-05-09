@@ -1,47 +1,20 @@
-extends PanelContainer
+extends TextureButton
 
 class_name ConceptoItem
 
 signal seleccionado(item)
 
-const CARD_SIZE := Vector2(260, 78)
-const COLOR_TEXTO := Color(0.95, 0.95, 0.93, 1.0)
-const COLOR_TEXTO_BLOQUEADO := Color(0.95, 0.95, 0.93, 0.58)
-const ESTILOS := {
-	"normal": {
-		"bg": Color(0.11, 0.11, 0.1, 0.98),
-		"border": Color(0.04, 0.04, 0.035, 1.0),
-		"width": 3,
-	},
-	"hover": {
-		"bg": Color(0.15, 0.15, 0.13, 0.98),
-		"border": Color(0.83, 0.74, 0.42, 1.0),
-		"width": 4,
-	},
-	"seleccionada": {
-		"bg": Color(0.18, 0.15, 0.11, 0.98),
-		"border": Color(0.95, 0.58, 0.18, 1.0),
-		"width": 5,
-	},
-	"vinculada": {
-		"bg": Color(0.12, 0.16, 0.13, 0.98),
-		"border": Color(0.38, 0.68, 0.45, 1.0),
-		"width": 4,
-	},
-	"error": {
-		"bg": Color(0.22, 0.12, 0.12, 0.98),
-		"border": Color(0.9, 0.28, 0.24, 1.0),
-		"width": 5,
-	},
-	"disabled": {
-		"bg": Color(0.1, 0.1, 0.095, 0.62),
-		"border": Color(0.04, 0.04, 0.035, 0.72),
-		"width": 2,
-	},
-}
+const COLOR_TEXTO := Color(0.16, 0.15, 0.12, 1.0)
+const COLOR_TEXTO_BLOQUEADO := Color(0.16, 0.15, 0.12, 0.55)
+const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_TARJETA_HOVER := Color(1.0, 0.97, 0.87, 1.0)
+const COLOR_TARJETA_SELECCIONADA := Color(1.0, 0.92, 0.72, 1.0)
+const COLOR_TARJETA_VINCULADA := Color(0.88, 1.0, 0.9, 1.0)
+const COLOR_TARJETA_ERROR := Color(1.0, 0.84, 0.84, 1.0)
+const COLOR_TARJETA_BLOQUEADA := Color(1.0, 1.0, 1.0, 0.62)
 
-@onready var label: Label = $Padding/Content/Label
-@onready var status_mark: Label = $Padding/Content/StatusMark
+@onready var sprite: Sprite2D = $Sprite2D
+@onready var label: Label = $Label
 
 var concept_id := ""
 var texto := ""
@@ -53,25 +26,27 @@ var animar_vinculo := false
 var bloqueado := false
 var _estado_visual := "normal"
 var _hover := false
+var _base_scale := Vector2.ONE
+var _base_label_scale := Vector2.ONE
 
 
 func _ready() -> void:
-	custom_minimum_size = CARD_SIZE
+	_base_scale = scale
+	if is_instance_valid(label):
+		_base_label_scale = label.scale
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	focus_mode = Control.FOCUS_ALL
-	gui_input.connect(_on_gui_input)
+	focus_mode = Control.FOCUS_NONE
+	if not pressed.is_connected(_on_pressed):
+		pressed.connect(_on_pressed)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	_aplicar_estilo("normal")
 
 
-func _on_gui_input(event: InputEvent) -> void:
+func _on_pressed() -> void:
 	if bloqueado:
 		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		seleccionado.emit(self)
-	if event.is_action_pressed("ui_accept"):
-		seleccionado.emit(self)
+	seleccionado.emit(self)
 
 
 func _on_mouse_entered() -> void:
@@ -156,20 +131,17 @@ func set_wrong() -> void:
 	marcar_error(true)
 
 
-func set_disabled() -> void:
-	bloquear_interaccion()
-
-
 func restaurar_interaccion() -> void:
 	bloqueado = false
+	disabled = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	modulate = Color.WHITE
-	if is_inside_tree():
+	if is_inside_tree() and is_instance_valid(label):
 		label.modulate = COLOR_TEXTO
 
 
 func bloquear_interaccion() -> void:
 	bloqueado = true
+	disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	aplicar_estado_visual("disabled")
 
@@ -193,11 +165,11 @@ func es_correcta() -> bool:
 
 func _actualizar_texto() -> void:
 	label.text = texto
-	label.scale = Vector2.ONE
+	label.scale = _base_label_scale
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.clip_text = true
+	label.clip_text = false
 	label.add_theme_constant_override("line_spacing", -2)
 	label.add_theme_font_size_override("font_size", _calcular_tamano_fuente(texto))
 
@@ -207,20 +179,8 @@ func aplicar_estado_visual(tipo: String) -> void:
 		return
 	_estado_visual = tipo
 	_aplicar_estilo(tipo)
-	match tipo:
-		"seleccionada":
-			status_mark.text = ">"
-			_animar_seleccion()
-		"vinculada":
-			status_mark.text = "OK"
-		"error":
-			status_mark.text = "X"
-		"disabled":
-			status_mark.text = ""
-			scale = Vector2.ONE
-		_:
-			status_mark.text = ""
-			scale = Vector2.ONE
+	if tipo == "seleccionada":
+		_animar_seleccion()
 
 
 func animar_error() -> void:
@@ -232,44 +192,45 @@ func animar_error() -> void:
 
 
 func _animar_seleccion() -> void:
-	pivot_offset = size * 0.5
+	pivot_offset = Vector2.ZERO
 	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2(1.04, 1.04), 0.08)
+	tween.tween_property(self, "scale", _base_scale * 1.08, 0.08)
+	tween.tween_property(self, "scale", _base_scale * 1.03, 0.08)
 
 
 func _aplicar_estilo(tipo: String) -> void:
-	var datos: Dictionary = ESTILOS.get(tipo, ESTILOS["normal"])
-	var estilo := StyleBoxFlat.new()
-	estilo.bg_color = datos["bg"]
-	estilo.border_color = datos["border"]
-	var ancho := int(datos["width"])
-	estilo.border_width_left = ancho
-	estilo.border_width_top = ancho
-	estilo.border_width_right = ancho
-	estilo.border_width_bottom = ancho
-	estilo.corner_radius_top_left = 8
-	estilo.corner_radius_top_right = 8
-	estilo.corner_radius_bottom_right = 8
-	estilo.corner_radius_bottom_left = 8
-	estilo.content_margin_left = 0
-	estilo.content_margin_top = 0
-	estilo.content_margin_right = 0
-	estilo.content_margin_bottom = 0
-	add_theme_stylebox_override("panel", estilo)
+	var color_tarjeta := COLOR_TARJETA_NORMAL
+	match tipo:
+		"hover":
+			color_tarjeta = COLOR_TARJETA_HOVER
+		"seleccionada":
+			color_tarjeta = COLOR_TARJETA_SELECCIONADA
+		"vinculada":
+			color_tarjeta = COLOR_TARJETA_VINCULADA
+		"error":
+			color_tarjeta = COLOR_TARJETA_ERROR
+		"disabled":
+			color_tarjeta = COLOR_TARJETA_BLOQUEADA
+		_:
+			color_tarjeta = COLOR_TARJETA_NORMAL
+	if is_instance_valid(sprite):
+		sprite.self_modulate = color_tarjeta
 	if is_instance_valid(label):
 		label.modulate = COLOR_TEXTO_BLOQUEADO if tipo == "disabled" else COLOR_TEXTO
-	if is_instance_valid(status_mark):
-		status_mark.modulate = COLOR_TEXTO_BLOQUEADO if tipo == "disabled" else COLOR_TEXTO
+	if tipo == "seleccionada":
+		scale = _base_scale * 1.03
+	else:
+		scale = _base_scale
 
 
 func _calcular_tamano_fuente(texto: String) -> int:
 	var largo := texto.length()
-	if largo > 30:
-		return 18
-	if largo > 24:
-		return 20
-	if largo > 17:
-		return 23
-	if largo > 10:
-		return 27
-	return 30
+	if largo > 42:
+		return 48
+	if largo > 34:
+		return 52
+	if largo > 26:
+		return 56
+	if largo > 18:
+		return 60
+	return 64
