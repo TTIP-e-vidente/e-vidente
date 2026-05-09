@@ -27,6 +27,15 @@ const DIFICULTAD_DIFICIL := 5
 
 static var _cache_dificultad_por_ruta: Dictionary = {}
 static var _last_random_combo_by_node_key: Dictionary = {}
+# Anti-repetición a nivel sesión (no persiste en disco):
+# request_key ("type|difficulty|options_count") -> Array[String] de activity_id usados.
+static var _session_used_activity_ids_by_request: Dictionary = {}
+const SESSION_HISTORY_MAX_PER_REQUEST: int = 6
+
+
+static func reset_session_history() -> void:
+	_session_used_activity_ids_by_request.clear()
+	_last_random_combo_by_node_key.clear()
 
 
 # Arma la corrida del nodo sin tocar el JSON original ni abrir escenas.
@@ -257,10 +266,50 @@ static func _select_random_game_entries(
 					if requested_options_count > 0
 					else "near_difficulty"
 				)
+		var request_key: String = "%s|%d|%d" % [
+			requested_type,
+			requested_difficulty,
+			requested_options_count,
+		]
+		var session_used_ids: Array[String] = _read_session_used_ids(request_key)
+		var candidates_avoiding_session: Array[String] = _filter_out_session_used(
+			available_activity_candidates,
+			session_used_ids
+		)
+		var session_avoid_applied: bool = false
+		if not candidates_avoiding_session.is_empty():
+			if candidates_avoiding_session.size() != available_activity_candidates.size():
+				session_avoid_applied = true
+				print(
+					"[RandomAvoidRepeat] request=%s cand=%d avail=%d prev=%s"
+					% [
+						request_key,
+						available_activity_candidates.size(),
+						candidates_avoiding_session.size(),
+						_unir_strings(session_used_ids),
+					]
+				)
+			available_activity_candidates = candidates_avoiding_session
+		elif not session_used_ids.is_empty() and not available_activity_candidates.is_empty():
+			print(
+				"[RandomAvoidRepeat] no_alternative=true request=%s cand=%d prev=%s"
+				% [
+					request_key,
+					available_activity_candidates.size(),
+					_unir_strings(session_used_ids),
+				]
+			)
 		var selected_activity_id: String = _pick_random_activity_id(
 			available_activity_candidates,
 			rng
 		)
+		if not selected_activity_id.is_empty():
+			_register_session_used_id(request_key, selected_activity_id)
+			if session_avoid_applied:
+				print(
+					"[RandomAvoidRepeat] selected=%s request=%s"
+					% [selected_activity_id, request_key]
+				)
 		var selected_game_entry: Dictionary = {}
 		if not selected_activity_id.is_empty():
 			selected_game_entry = _build_random_game_entry(
@@ -652,6 +701,40 @@ static func _filter_activity_candidates(
 	if not filtered_candidates.is_empty():
 		return filtered_candidates
 	return activity_candidates
+
+
+static func _filter_out_session_used(
+	activity_candidates: Array[String],
+	session_used_ids: Array[String]
+) -> Array[String]:
+	if session_used_ids.is_empty():
+		return activity_candidates
+	var filtered: Array[String] = []
+	for candidate_id in activity_candidates:
+		if not session_used_ids.has(candidate_id):
+			filtered.append(candidate_id)
+	return filtered
+
+
+static func _read_session_used_ids(request_key: String) -> Array[String]:
+	var stored: Variant = _session_used_activity_ids_by_request.get(request_key, [])
+	if not stored is Array:
+		return []
+	var result: Array[String] = []
+	for entry in (stored as Array):
+		result.append(str(entry))
+	return result
+
+
+static func _register_session_used_id(request_key: String, activity_id: String) -> void:
+	if activity_id.is_empty():
+		return
+	var history: Array[String] = _read_session_used_ids(request_key)
+	history.erase(activity_id)
+	history.append(activity_id)
+	while history.size() > SESSION_HISTORY_MAX_PER_REQUEST:
+		history.pop_front()
+	_session_used_activity_ids_by_request[request_key] = history
 
 
 static func _pick_random_activity_id(
