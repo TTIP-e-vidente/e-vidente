@@ -83,14 +83,14 @@
       "games": [
         { "type": "drag", "difficulty": 2 },
         { "type": "match", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 2 }
+        { "type": "quiz", "difficulty": 2, "options_count": 4 }
       ]
     },
     "12": {
       "node_key": "celiaquia_12_productos_procesados",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 2, "options_count": 2 },
         { "type": "match", "difficulty": 2 },
         { "type": "drag", "difficulty": 2 }
       ]
