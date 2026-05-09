@@ -238,7 +238,8 @@ static func normalize_random_game_type(raw_type: String) -> String:
 static func get_activity_candidates(
 	track_key: String,
 	requested_type: String,
-	requested_difficulty: int
+	requested_difficulty: int,
+	requested_options_count: int = 0
 ) -> Array[String]:
 	var normalized_type: String = normalize_random_game_type(requested_type)
 	if normalized_type.is_empty() or requested_difficulty <= 0:
@@ -256,6 +257,12 @@ static func get_activity_candidates(
 			continue
 		if int(activity.get("difficulty", 0)) != requested_difficulty:
 			continue
+		if not _activity_matches_requested_options_count(
+			activity,
+			normalized_type,
+			requested_options_count
+		):
+			continue
 		var activity_id: String = str(activity.get("id", "")).strip_edges()
 		if not activity_id.is_empty():
 			activity_candidates.append(activity_id)
@@ -265,12 +272,18 @@ static func get_activity_candidates(
 static func get_activity_candidates_near(
 	track_key: String,
 	requested_type: String,
-	requested_difficulty: int
+	requested_difficulty: int,
+	requested_options_count: int = 0
 ) -> Array[String]:
 	var ordered_difficulties: Array[int] = _ordered_requested_difficulties(requested_difficulty)
 	var activity_candidates: Array[String] = []
 	for candidate_difficulty in ordered_difficulties:
-		for activity_id in get_activity_candidates(track_key, requested_type, candidate_difficulty):
+		for activity_id in get_activity_candidates(
+			track_key,
+			requested_type,
+			candidate_difficulty,
+			requested_options_count
+		):
 			if not activity_candidates.has(activity_id):
 				activity_candidates.append(activity_id)
 	return activity_candidates
@@ -297,6 +310,19 @@ static func _activity_matches_requested_type(activity: Dictionary, requested_typ
 			return str(activity.get("mode", "")).strip_edges() == "match"
 		_:
 			return false
+
+
+static func _activity_matches_requested_options_count(
+	activity: Dictionary,
+	normalized_type: String,
+	requested_options_count: int
+) -> bool:
+	if requested_options_count <= 0 or normalized_type != "quiz":
+		return true
+	var options: Variant = activity.get("options", [])
+	if not options is Array:
+		return false
+	return (options as Array).size() == requested_options_count
 
 
 static func _validate_pack_minimal(pack: Dictionary) -> String:

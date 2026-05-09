@@ -232,5 +232,228 @@
       "Elegirlo solo si esta frio"
     ],
     "answer": "No elegirlo hasta confirmar que sea apto"
+  },
+  "quiz_3op_sello_sin_tacc_basico": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Que marca conviene buscar primero en un producto industrial para saber si fue certificado como apto para celiacos?",
+    "options": [
+      "Sello Sin TACC",
+      "Tabla nutricional",
+      "Fecha de vencimiento"
+    ],
+    "answer": "Sello Sin TACC"
+  },
+  "quiz_3op_alimento_natural_apto": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Cual de estos alimentos es naturalmente libre de gluten?",
+    "options": [
+      "Manzana",
+      "Pan lactal",
+      "Galletitas dulces"
+    ],
+    "answer": "Manzana"
+  },
+  "quiz_3op_cereal_seguro": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Cual de estos granos es naturalmente libre de gluten?",
+    "options": [
+      "Maiz",
+      "Trigo",
+      "Cebada"
+    ],
+    "answer": "Maiz"
+  },
+  "quiz_3op_bebida_simple": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Cual de estas bebidas suele ser segura para una persona celiaca?",
+    "options": [
+      "Agua mineral",
+      "Cerveza",
+      "Bebida malteada"
+    ],
+    "answer": "Agua mineral"
+  },
+  "quiz_3op_tabla_limpia_basica": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Para cortar fruta apta, que opcion es mas segura?",
+    "options": [
+      "Usar una tabla limpia o exclusiva",
+      "Usar la tabla con migas de pan",
+      "Usar la tabla con harina"
+    ],
+    "answer": "Usar una tabla limpia o exclusiva"
+  },
+  "quiz_3op_contaminacion_utensilios": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Que situacion genera mas riesgo de contaminacion cruzada?",
+    "options": [
+      "Usar el mismo cuchillo para pan y queso apto",
+      "Lavar el cuchillo con agua y detergente",
+      "Usar un cuchillo exclusivo"
+    ],
+    "answer": "Usar el mismo cuchillo para pan y queso apto"
+  },
+  "quiz_3op_producto_sin_rotulo": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Ante una salsa industrial sin sello Sin TACC, que decision es mas segura?",
+    "options": [
+      "No elegirla hasta confirmar que sea apta",
+      "Elegirla si la marca es conocida",
+      "Elegirla si el frasco es chico"
+    ],
+    "answer": "No elegirla hasta confirmar que sea apta"
+  },
+  "quiz_3op_merienda_segura": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Cual de estas meriendas es la mas segura para una persona celiaca?",
+    "options": [
+      "Fruta con queso",
+      "Alfajor relleno",
+      "Donas glaseadas"
+    ],
+    "answer": "Fruta con queso"
+  },
+  "quiz_3op_cocina_compartida": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Que practica ayuda mas en una cocina compartida?",
+    "options": [
+      "Separar utensilios y superficies",
+      "Apilar todos los utensilios juntos",
+      "Cocinar primero con gluten"
+    ],
+    "answer": "Separar utensilios y superficies"
+  },
+  "quiz_3op_trazas_gluten": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que decision es mas segura frente a un rotulo que dice 'puede contener gluten'?",
+    "options": [
+      "Evitarlo si no hay certificacion apta",
+      "Elegirlo si la lista de ingredientes es corta",
+      "Elegirlo si otra persona lo come"
+    ],
+    "answer": "Evitarlo si no hay certificacion apta"
+  },
+  "quiz_3op_restaurante_riesgo": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que senal muestra mas riesgo en un restaurante?",
+    "options": [
+      "No saben explicar como evitan contaminacion cruzada",
+      "El menu tiene pocas fotos",
+      "La cocina cierra temprano"
+    ],
+    "answer": "No saben explicar como evitan contaminacion cruzada"
+  },
+  "quiz_3op_freidora_compartida": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Cual de estas opciones es riesgosa si se cocina en aceite compartido con empanados?",
+    "options": [
+      "Papas fritas",
+      "Ensalada simple",
+      "Fruta fresca"
+    ],
+    "answer": "Papas fritas"
+  },
+  "quiz_3op_producto_artesanal": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Que dato falta en un producto artesanal para poder confiar en que es apto?",
+    "options": [
+      "Confirmacion clara de aptitud sin TACC",
+      "Que tenga pocos ingredientes",
+      "Que venga envuelto en papel"
+    ],
+    "answer": "Confirmacion clara de aptitud sin TACC"
+  },
+  "quiz_2op_sello_certificado_basico": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celiacas?",
+    "options": [
+      "Si",
+      "No"
+    ],
+    "answer": "Si"
+  },
+  "quiz_2op_fruta_natural_basica": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Una fruta fresca sin agregados contiene gluten por si sola?",
+    "options": [
+      "No",
+      "Si"
+    ],
+    "answer": "No"
+  },
+  "quiz_2op_tostadora_compartida_basica": {
+    "mode": "quiz",
+    "difficulty": 1,
+    "prompt": "Usar una tostadora compartida con migas de pan puede contaminar un pan sin TACC?",
+    "options": [
+      "Si",
+      "No"
+    ],
+    "answer": "Si"
+  },
+  "quiz_2op_cuchillo_contaminacion": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Si cortas pan comun y despues queso apto con el mismo cuchillo sin lavarlo, hay contaminacion cruzada?",
+    "options": [
+      "Si",
+      "No"
+    ],
+    "answer": "Si"
+  },
+  "quiz_2op_salsa_sin_rotulo": {
+    "mode": "quiz",
+    "difficulty": 2,
+    "prompt": "Una salsa industrial sin sello Sin TACC se considera segura solo porque no destaca trigo en el frente?",
+    "options": [
+      "No",
+      "Si"
+    ],
+    "answer": "No"
+  },
+  "quiz_2op_trazas_rotulo_avanzado": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Si un envase dice 'puede contener gluten', alcanza con mirar solo los ingredientes para asumir que es apto?",
+    "options": [
+      "No",
+      "Si"
+    ],
+    "answer": "No"
+  },
+  "quiz_2op_freidora_compartida_avanzado": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Las papas fritas pueden contaminarse si salen de una freidora compartida con empanados?",
+    "options": [
+      "Si",
+      "No"
+    ],
+    "answer": "Si"
+  },
+  "quiz_2op_artesanal_sin_confirmacion": {
+    "mode": "quiz",
+    "difficulty": 3,
+    "prompt": "Un producto artesanal es apto por ser casero aunque nadie confirme como evita la contaminacion cruzada?",
+    "options": [
+      "No",
+      "Si"
+    ],
+    "answer": "No"
   }
 }

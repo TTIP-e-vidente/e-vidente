@@ -6,13 +6,14 @@ const SEGUNDOS_PREDETERMINADOS := 5
 const TOOLTIP_SIGUIENTE_JUEGO := "Siguiente modalidad"
 const TOOLTIP_FINALIZAR := "Volver al mapa"
 const TOOLTIP_CONTINUAR_PENDIENTE := "Continuar partida"
-const TEXTURA_FLECHA_PREDETERMINADA := preload(
+const TEXTURA_FLECHA_3 := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png"
 )
+const TEXTURA_FLECHA_PREDETERMINADA := TEXTURA_FLECHA_3
 const TEXTURAS_FLECHA_ANIMADA := [
 	preload("res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png"),
 	preload("res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png"),
-	preload("res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png"),
+	TEXTURA_FLECHA_3,
 ]
 
 @export var textura_flecha: Texture2D
@@ -29,6 +30,8 @@ var _animacion_flecha: Tween = null
 func _ready() -> void:
 	z_as_relative = false
 	z_index = 200
+	_flecha_continuar.focus_mode = Control.FOCUS_NONE
+	_flecha_continuar.mouse_filter = Control.MOUSE_FILTER_STOP
 	_aplicar_textura_flecha()
 	_aplicar_colores_de_icono()
 	_flecha_continuar.pressed.connect(_al_presionar_flecha)
@@ -64,7 +67,6 @@ func _mostrar(tooltip_accion: String, segundos: int) -> void:
 	move_to_front()
 	_iniciar_animacion_flecha()
 	_timer_continuacion.start()
-	_flecha_continuar.grab_focus()
 
 
 func _mostrar_sin_temporizador(tooltip_accion: String) -> void:

@@ -64,7 +64,7 @@
       "shuffle_games": true,
       "games": [
         { "type": "drag", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 2, "options_count": 3 },
         { "type": "match", "difficulty": 2 }
       ]
     },
@@ -73,8 +73,8 @@
       "shuffle_games": true,
       "games": [
         { "type": "drag", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 1 },
-        { "type": "quiz", "difficulty": 2 }
+        { "type": "quiz", "difficulty": 1, "options_count": 2 },
+        { "type": "match", "difficulty": 2 }
       ]
     },
     "11": {
@@ -118,7 +118,7 @@
       "shuffle_games": true,
       "games": [
         { "type": "drag", "difficulty": 3 },
-        { "type": "quiz", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 2, "options_count": 4 },
         { "type": "match", "difficulty": 2 }
       ]
     },
@@ -162,7 +162,7 @@
       "node_key": "celiaquia_20_contaminacion_cruzada",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 2, "options_count": 2 },
         { "type": "match", "difficulty": 2 },
         { "type": "drag", "difficulty": 2 }
       ]
@@ -171,16 +171,15 @@
       "node_key": "celiaquia_21_utensilios_y_cocina",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 2 },
-        { "type": "match", "difficulty": 2 }
+        { "type": "drag", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 3, "options_count": 2 }
       ]
     },
     "22": {
       "node_key": "celiaquia_22_comer_fuera",
       "shuffle_games": true,
       "games": [
-        { "type": "drag", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 3 },
+        { "type": "quiz", "difficulty": 3, "options_count": 4 },
         { "type": "match", "difficulty": 2 }
       ]
     },
@@ -188,8 +187,8 @@
       "node_key": "celiaquia_23_restaurante_seguro",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 3 },
-        { "type": "match", "difficulty": 2 }
+        { "type": "drag", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 3, "options_count": 3 }
       ]
     },
     "24": {
@@ -197,15 +196,15 @@
       "shuffle_games": true,
       "games": [
         { "type": "drag", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 2 },
-        { "type": "quiz", "difficulty": 3 }
+        { "type": "quiz", "difficulty": 3, "options_count": 4 },
+        { "type": "match", "difficulty": 3 }
       ]
     },
     "25": {
       "node_key": "celiaquia_25_etiquetas_y_trazas",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 3 },
+        { "type": "quiz", "difficulty": 3, "options_count": 3 },
         { "type": "match", "difficulty": 3 },
         { "type": "drag", "difficulty": 3 }
       ]
@@ -214,9 +213,9 @@
       "node_key": "celiaquia_26_decisiones_confusas",
       "shuffle_games": true,
       "games": [
-        { "type": "quiz", "difficulty": 3 },
-        { "type": "match", "difficulty": 2 },
-        { "type": "drag", "difficulty": 3 }
+        { "type": "drag", "difficulty": 3 },
+        { "type": "quiz", "difficulty": 2, "options_count": 2 },
+        { "type": "match", "difficulty": 2 }
       ]
     },
     "27": {
@@ -224,34 +223,8 @@
       "shuffle_games": true,
       "games": [
         { "type": "match", "difficulty": 3 },
-        { "type": "quiz", "difficulty": 3 }
-      ]
-    },
-    "28": {
-      "node_key": "celiaquia_28_desafio_integrador_1",
-      "shuffle_games": true,
-      "games": [
-        { "type": "drag", "difficulty": 3 },
-        { "type": "quiz", "difficulty": 3 },
-        { "type": "match", "difficulty": 2 }
-      ]
-    },
-    "29": {
-      "node_key": "celiaquia_29_desafio_integrador_2",
-      "shuffle_games": true,
-      "games": [
-        { "type": "drag", "difficulty": 3 },
-        { "type": "quiz", "difficulty": 3 },
-        { "type": "match", "difficulty": 3 }
-      ]
-    },
-    "30": {
-      "node_key": "celiaquia_30_desafio_final_extendido",
-      "shuffle_games": true,
-      "games": [
-        { "type": "drag", "difficulty": 3 },
-        { "type": "quiz", "difficulty": 3 },
-        { "type": "match", "difficulty": 3 }
+        { "type": "quiz", "difficulty": 3, "options_count": 4 },
+        { "type": "drag", "difficulty": 3 }
       ]
     }
   }
