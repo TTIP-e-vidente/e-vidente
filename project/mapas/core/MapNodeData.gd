@@ -22,7 +22,6 @@ var fixed_games: Array[String] = []
 var random_game_requests: Array[Dictionary] = []
 var fixed_game_entries: Array[Dictionary] = []
 
-# Alias legacy internos. El flujo nuevo usa fixed/random games.
 var games: Array[String] = []
 var game_slots: Array[Dictionary] = []
 var difficulty: int = 0

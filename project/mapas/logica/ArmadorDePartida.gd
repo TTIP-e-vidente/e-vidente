@@ -1,8 +1,6 @@
 extends RefCounted
 class_name ArmadorDePartida
 
-# Convierte un MapNodeData en la lista final de games para jugar.
-# Resuelve requests random y shuffle; no abre escenas ni adapta activities.
 
 const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
@@ -27,8 +25,6 @@ const DIFICULTAD_DIFICIL := 5
 
 static var _cache_dificultad_por_ruta: Dictionary = {}
 static var _last_random_combo_by_node_key: Dictionary = {}
-# Anti-repetición a nivel sesión (no persiste en disco):
-# request_key ("type|difficulty|options_count") -> Array[String] de activity_id usados.
 static var _session_used_activity_ids_by_request: Dictionary = {}
 const SESSION_HISTORY_MAX_PER_REQUEST: int = 6
 
@@ -38,7 +34,6 @@ static func reset_session_history() -> void:
 	_last_random_combo_by_node_key.clear()
 
 
-# Arma la corrida del nodo sin tocar el JSON original ni abrir escenas.
 static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 	if node_data == null or not node_data.is_valid():
 		print(LOG_PREFIX, " nodo invalido o sin contenido")

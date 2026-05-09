@@ -34,7 +34,6 @@ const CONTENT_RULES_BY_MODE := {
 }
 
 static func load_map(map_json_path: String) -> Dictionary:
-	# Punto de entrada del mapa: lee el JSON y devuelve nodos normalizados.
 	print("%s path=%s" % [LOG_PREFIX_MAP_LOAD, map_json_path])
 	var raw_result: Dictionary = read_json_file(map_json_path)
 	if not bool(raw_result.get("ok", false)):
