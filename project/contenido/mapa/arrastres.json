@@ -18,7 +18,7 @@
     "difficulty": 2,
     "meal": "desayuno",
     "teaching_key": "celiaquia_desayuno",
-    "pick": { "correct": 2, "incorrect": 2 }
+    "pick": { "correct": 3, "incorrect": 2 }
   },
   "drag_desayuno_normal_plus": {
     "mode": "drag_food",
@@ -81,7 +81,7 @@
     "difficulty": 2,
     "meal": "merienda",
     "teaching_key": "celiaquia_merienda",
-    "pick": { "correct": 2, "incorrect": 2 }
+    "pick": { "correct": 3, "incorrect": 2 }
   },
   "drag_merienda_normal_plus": {
     "mode": "drag_food",

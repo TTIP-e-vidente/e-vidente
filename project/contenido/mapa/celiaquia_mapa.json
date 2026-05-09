@@ -226,6 +226,33 @@
         { "type": "quiz", "difficulty": 3, "options_count": 4 },
         { "type": "drag", "difficulty": 3 }
       ]
+    },
+    "28": {
+      "node_key": "celiaquia_28_repaso_general",
+      "shuffle_games": true,
+      "games": [
+        { "type": "drag", "difficulty": 2 },
+        { "type": "quiz", "difficulty": 2, "options_count": 3 },
+        { "type": "match", "difficulty": 2 }
+      ]
+    },
+    "29": {
+      "node_key": "celiaquia_29_situaciones_reales",
+      "shuffle_games": true,
+      "games": [
+        { "type": "quiz", "difficulty": 3, "options_count": 4 },
+        { "type": "match", "difficulty": 3 },
+        { "type": "drag", "difficulty": 3 }
+      ]
+    },
+    "30": {
+      "node_key": "celiaquia_30_desafio_final_extendido",
+      "shuffle_games": true,
+      "games": [
+        { "type": "match", "difficulty": 3 },
+        { "type": "drag", "difficulty": 3 },
+        { "type": "quiz", "difficulty": 3, "options_count": 4 }
+      ]
     }
   }
 }
