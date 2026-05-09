@@ -63,6 +63,7 @@ const DURACION_ANIMACION_LINEA := 0.16
 var items_izquierda: Array[ConceptoItem] = []
 var items_derecha: Array[ConceptoItem] = []
 var seleccion_actual: ConceptoItem = null
+var seleccion_derecha_pendiente: ConceptoItem = null
 
 var total_pares := 0
 var clave_pista := CLAVE_PISTA_PREDETERMINADA
@@ -379,6 +380,7 @@ func _reiniciar_estado_local() -> void:
 
 func _limpiar_vinculos_y_errores() -> void:
 	seleccion_actual = null
+	seleccion_derecha_pendiente = null
 	for item in _todos_los_items():
 		item.limpiar_vinculo()
 
@@ -391,9 +393,9 @@ func _preparar_controles_de_confirmacion() -> void:
 		boton_confirmar.layout_mode = 0
 		control_principal.add_child(boton_confirmar)
 	boton_confirmar.offset_left = 456.0
-	boton_confirmar.offset_top = 736.0
+	boton_confirmar.offset_top = 728.0
 	boton_confirmar.offset_right = 700.0
-	boton_confirmar.offset_bottom = 794.0
+	boton_confirmar.offset_bottom = 784.0
 	boton_confirmar.text = "Confirmar"
 	boton_confirmar.visible = true
 	boton_confirmar.disabled = true
@@ -432,10 +434,10 @@ func _preparar_feedback_label() -> void:
 		feedback_label.name = "FeedbackLabel"
 		feedback_label.layout_mode = 0
 		control_principal.add_child(feedback_label)
-	feedback_label.offset_left = 230.0
-	feedback_label.offset_top = 672.0
-	feedback_label.offset_right = 926.0
-	feedback_label.offset_bottom = 728.0
+	feedback_label.offset_left = 180.0
+	feedback_label.offset_top = 668.0
+	feedback_label.offset_right = 976.0
+	feedback_label.offset_bottom = 716.0
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -598,11 +600,11 @@ func _asegurar_slots_en_contenedor(
 
 
 func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
-	var separacion := 72
+	var separacion := 28
 	if total_requerido >= 5:
-		separacion = 12
+		separacion = 8
 	elif total_requerido == 4:
-		separacion = 36
+		separacion = 18
 	contenedor_izquierda.add_theme_constant_override("separation", separacion)
 	contenedor_derecha.add_theme_constant_override("separation", separacion)
 
@@ -720,6 +722,7 @@ func _obtener_rect_visual_tarjeta(card: Control) -> Rect2:
 func _on_item_seleccionado(item: ConceptoItem) -> void:
 	if bloqueado or validado or item == null or item.bloqueado:
 		return
+	print("[MatchClick] item=", item.concept_id, " side=", item.lado, " id_par=", item.par_key)
 	if item.es_izquierda():
 		_seleccionar_tarjeta_izquierda(item)
 	elif item.es_derecha():
@@ -732,6 +735,7 @@ func seleccionar_izquierda(item: ConceptoItem) -> void:
 
 func _seleccionar_tarjeta_izquierda(item: ConceptoItem) -> void:
 	seleccion_actual = item
+	seleccion_derecha_pendiente = null
 	print(LOG_PREFIX_MATCH, " selected_left=", item.concept_id)
 	_actualizar_texto_guia(TEXTO_GUIA_CON_SELECCION)
 	_mostrar_feedback("Elegí una tarjeta de la derecha.")
@@ -739,7 +743,21 @@ func _seleccionar_tarjeta_izquierda(item: ConceptoItem) -> void:
 
 
 func vincular_con_derecha(derecha: ConceptoItem) -> void:
-	_seleccionar_tarjeta_derecha(derecha)
+	# API publica usada por tests automatizados: vincula directo sin pasar por Confirmar.
+	if seleccion_actual == null:
+		return
+	var izquierda := seleccion_actual
+	quitar_vinculo_anterior_de(derecha)
+	if izquierda.vinculada_con != null:
+		izquierda.limpiar_vinculo()
+	izquierda.vincular_con(derecha)
+	seleccion_actual = null
+	seleccion_derecha_pendiente = null
+	validado = false
+	_ocultar_continuar()
+	_animar_vinculo_creado(izquierda, derecha)
+	_validar_par_actual(izquierda, derecha)
+	_actualizar_visual()
 
 
 func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
@@ -748,19 +766,10 @@ func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
 		print(LOG_PREFIX_MATCH, " selected_right_without_left=", derecha.concept_id)
 		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
 		return
-
+	seleccion_derecha_pendiente = derecha
 	print(LOG_PREFIX_MATCH, " selected_right=", derecha.concept_id)
-	var izquierda := seleccion_actual
-	quitar_vinculo_anterior_de(derecha)
-	if izquierda.vinculada_con != null:
-		izquierda.limpiar_vinculo()
-
-	izquierda.vincular_con(derecha)
-	seleccion_actual = null
-	validado = false
-	_ocultar_continuar()
-	_animar_vinculo_creado(izquierda, derecha)
-	_validar_par_actual(izquierda, derecha)
+	_actualizar_texto_guia("Apretá Confirmar para validar la relación.")
+	_mostrar_feedback("Apretá Confirmar para validar la relación.")
 	_actualizar_visual()
 
 
@@ -772,7 +781,15 @@ func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
 
 
 func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
-	if _tarjetas_forman_par(izquierda, derecha):
+	var correcto := _tarjetas_forman_par(izquierda, derecha)
+	print(
+		"[MatchValidate] left=", izquierda.concept_id,
+		" right=", derecha.concept_id,
+		" id_par_left=", izquierda.par_key,
+		" id_par_right=", derecha.par_key,
+		" correct=", correcto
+	)
+	if correcto:
 		_mostrar_feedback_correcto(izquierda)
 		return
 	_mostrar_feedback_error(izquierda)
@@ -818,7 +835,11 @@ func _actualizar_visual() -> void:
 
 func _actualizar_tarjetas() -> void:
 	for derecha in items_derecha:
-		if derecha.visible:
+		if not derecha.visible:
+			continue
+		if derecha == seleccion_derecha_pendiente:
+			_aplicar_estado_tarjeta(derecha, "seleccionada")
+		else:
 			_aplicar_estado_tarjeta(derecha, "normal")
 
 	for izquierda in items_izquierda:
@@ -857,7 +878,10 @@ func _actualizar_estado_confirmar() -> void:
 	if boton_confirmar == null:
 		return
 	boton_confirmar.visible = not validado
-	boton_confirmar.disabled = faltan_vinculos() or bloqueado or validado
+	var pareja_pendiente := seleccion_actual != null and seleccion_derecha_pendiente != null
+	var puede_validar_total := not faltan_vinculos()
+	var habilitar_confirmar := pareja_pendiente or puede_validar_total
+	boton_confirmar.disabled = bloqueado or validado or not habilitar_confirmar
 
 
 func faltan_vinculos() -> bool:
@@ -976,12 +1000,35 @@ func _animar_linea(linea: Line2D, origen: Vector2, destino: Vector2) -> void:
 
 
 func confirmar() -> void:
-	if bloqueado:
+	if bloqueado or validado:
 		return
+
+	# Caso 1: hay un par pendiente desde clicks (izquierda + derecha) -> validar ese par.
+	if seleccion_actual != null and seleccion_derecha_pendiente != null:
+		var izquierda := seleccion_actual
+		var derecha := seleccion_derecha_pendiente
+		print("[MatchSelect] left=", izquierda.concept_id, " right=", derecha.concept_id)
+		quitar_vinculo_anterior_de(derecha)
+		if izquierda.vinculada_con != null:
+			izquierda.limpiar_vinculo()
+		izquierda.vincular_con(derecha)
+		seleccion_actual = null
+		seleccion_derecha_pendiente = null
+		_animar_vinculo_creado(izquierda, derecha)
+		_validar_par_actual(izquierda, derecha)
+		_actualizar_visual()
+		if not faltan_vinculos():
+			_finalizar_validacion_completa()
+		return
+
+	# Caso 2: ya estan todos los vinculos (por API de test) -> validar todo.
 	if faltan_vinculos():
 		_mostrar_feedback("Faltan relaciones por completar.")
 		return
+	_finalizar_validacion_completa()
 
+
+func _finalizar_validacion_completa() -> void:
 	var todo_bien := true
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
@@ -992,6 +1039,7 @@ func confirmar() -> void:
 
 	validado = todo_bien
 	if todo_bien:
+		print("[MatchComplete] activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
 		_completar_vinculacion()
 		_mostrar_continuar()
 		_actualizar_visual()

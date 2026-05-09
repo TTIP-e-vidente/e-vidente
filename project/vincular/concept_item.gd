@@ -4,8 +4,9 @@ class_name ConceptoItem
 
 signal seleccionado(item)
 
-const COLOR_TEXTO := Color(0.16, 0.15, 0.12, 1.0)
-const COLOR_TEXTO_BLOQUEADO := Color(0.16, 0.15, 0.12, 0.55)
+const CARD_SIZE := Vector2(300, 84)
+const COLOR_TEXTO := Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_TEXTO_BLOQUEADO := Color(1.0, 1.0, 1.0, 0.55)
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TARJETA_HOVER := Color(1.0, 0.97, 0.87, 1.0)
 const COLOR_TARJETA_SELECCIONADA := Color(1.0, 0.92, 0.72, 1.0)
@@ -13,7 +14,6 @@ const COLOR_TARJETA_VINCULADA := Color(0.88, 1.0, 0.9, 1.0)
 const COLOR_TARJETA_ERROR := Color(1.0, 0.84, 0.84, 1.0)
 const COLOR_TARJETA_BLOQUEADA := Color(1.0, 1.0, 1.0, 0.62)
 
-@onready var sprite: Sprite2D = $Sprite2D
 @onready var label: Label = $Label
 
 var concept_id := ""
@@ -27,13 +27,11 @@ var bloqueado := false
 var _estado_visual := "normal"
 var _hover := false
 var _base_scale := Vector2.ONE
-var _base_label_scale := Vector2.ONE
 
 
 func _ready() -> void:
+	custom_minimum_size = CARD_SIZE
 	_base_scale = scale
-	if is_instance_valid(label):
-		_base_label_scale = label.scale
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_NONE
 	if not pressed.is_connected(_on_pressed):
@@ -165,7 +163,6 @@ func es_correcta() -> bool:
 
 func _actualizar_texto() -> void:
 	label.text = texto
-	label.scale = _base_label_scale
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -213,8 +210,7 @@ func _aplicar_estilo(tipo: String) -> void:
 			color_tarjeta = COLOR_TARJETA_BLOQUEADA
 		_:
 			color_tarjeta = COLOR_TARJETA_NORMAL
-	if is_instance_valid(sprite):
-		sprite.self_modulate = color_tarjeta
+	self_modulate = color_tarjeta
 	if is_instance_valid(label):
 		label.modulate = COLOR_TEXTO_BLOQUEADO if tipo == "disabled" else COLOR_TEXTO
 	if tipo == "seleccionada":
@@ -225,12 +221,12 @@ func _aplicar_estilo(tipo: String) -> void:
 
 func _calcular_tamano_fuente(texto: String) -> int:
 	var largo := texto.length()
-	if largo > 42:
-		return 48
-	if largo > 34:
-		return 52
-	if largo > 26:
-		return 56
-	if largo > 18:
-		return 60
-	return 64
+	if largo > 30:
+		return 20
+	if largo > 22:
+		return 22
+	if largo > 14:
+		return 24
+	if largo > 8:
+		return 26
+	return 28
