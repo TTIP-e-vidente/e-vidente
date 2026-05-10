@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://dp64ipg5ra7p8"]
+
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="1_2gmc3"]
+[ext_resource type="Script" uid="uid://d0ltygdjpgagg" path="res://mapas/finalización_partida.gd" id="1_k2l4b"]
+[ext_resource type="PackedScene" uid="uid://beyesjpejg0a4" path="res://mapas/StatsContainer.tscn" id="2_k2l4b"]
+[ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="3_fqejo"]
+
+[node name="FinalizaciónPartida" type="Node2D" unique_id=2003681950]
+script = ExtResource("1_k2l4b")
+
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("1_2gmc3")]
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 1152.0
+offset_bottom = 798.0
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1179425159]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1592032878]
+layout_mode = 2
+
+[node name="Container" parent="CenterContainer/VBoxContainer" unique_id=1924378753 instance=ExtResource("2_k2l4b")]
+layout_mode = 2
+
+[node name="Container2" parent="CenterContainer/VBoxContainer" unique_id=221282800 instance=ExtResource("2_k2l4b")]
+layout_mode = 2
+
+[node name="Container3" parent="CenterContainer/VBoxContainer" unique_id=802382880 instance=ExtResource("2_k2l4b")]
+layout_mode = 2
+
+[node name="Continuar" parent="." unique_id=1307767255 instance=ExtResource("3_fqejo")]
+offset_left = 390.0
+offset_top = 529.0
+offset_right = 758.27
+offset_bottom = 689.0
