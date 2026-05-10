@@ -299,7 +299,7 @@
 	],
 	"answer": "Compartir utensilios"
   },
-  "quiz_3op_producto_sin_rotulo": {
+  "quiz_3op_accionable": {
 	"mode": "quiz",
 	"difficulty": 2,
 	"prompt": "Qué acción NO vuelve apto un alimento con gluten?",
@@ -310,7 +310,7 @@
 	],
 	"answer": "Ninguna"
   },
-  "quiz_3op_merienda_segura": {
+  "quiz_3op_escondido": {
 	"mode": "quiz",
 	"difficulty": 2,
 	"prompt": "Qué ingrediente suele esconder gluten?",
@@ -332,54 +332,54 @@
 	],
 	"answer": "Compartir aceite"
   },
-  "quiz_3op_trazas_gluten": {
+  "quiz_3op_riesgos_gluten": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que decision es mas segura frente a un rotulo que dice 'puede contener gluten'?",
-	"options": [
-	  "Evitarlo si no hay certificacion apta",
-	  "Elegirlo si la lista de ingredientes es corta",
-      "Elegirlo si otra persona lo come"
-	],
-	"answer": "Evitarlo si no hay certificacion apta"
-  },
-  "quiz_3op_restaurante_riesgo": {
-	"mode": "quiz",
-	"difficulty": 3,
-	"prompt": "Que senal muestra mas riesgo en un restaurante?",
-	"options": [
-	  "No saben explicar como evitan contaminacion cruzada",
-	  "El menu tiene pocas fotos",
-      "La cocina cierra temprano"
-	],
-	"answer": "No saben explicar como evitan contaminacion cruzada"
-  },
-  "quiz_3op_freidora_compartida": {
-	"mode": "quiz",
-	"difficulty": 3,
-	"prompt": "Cual de estas opciones es riesgosa si se cocina en aceite compartido con empanados?",
+	"prompt": "Qué opción representa un riesgo aunque parezca apta?",
 	"options": [
 	  "Papas fritas",
-	  "Ensalada simple",
-      "Fruta fresca"
+	  "Fruta fresca",
+      "Arroz hervido"
 	],
 	"answer": "Papas fritas"
+  },
+  "quiz_3op_aspecto_riesgo": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué aspecto confirma que un producto es apto?",
+	"options": [
+	  "Publicidad",
+	  "Sello",
+      "Tamaño"
+	],
+	"answer": "Sello"
+  },
+  "quiz_3op_mate_compartida": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué alimentos pueden dejar restos de gluten al compartir una ronda de mate?",
+	"options": [
+	  "Bizcochitos",
+	  "Facturas",
+      "Todas las opciones"
+	],
+	"answer": "Todas las opciones"
   },
   "quiz_3op_producto_artesanal": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que dato falta en un producto artesanal para poder confiar en que es apto?",
+	"prompt": "Qué puede ocurrir aunque una persona celíaca no tenga síntomas?",
 	"options": [
-	  "Confirmacion clara de aptitud sin TACC",
-	  "Que tenga pocos ingredientes",
-      "Que venga envuelto en papel"
+	  "Curación",
+	  "Daño intestinal",
+      "Inmunidad"
 	],
-	"answer": "Confirmacion clara de aptitud sin TACC"
+	"answer": "Daño intestinal"
   },
   "quiz_2op_sello_certificado_basico": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celiacas?",
+	"prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celíaacas?",
 	"options": [
 	  "Si",
       "No"
@@ -389,7 +389,7 @@
   "quiz_2op_fruta_natural_basica": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Una fruta fresca sin agregados contiene gluten por si sola?",
+	"prompt": "Una fruta fresca contiene gluten?",
 	"options": [
 	  "No",
       "Si"
@@ -409,22 +409,22 @@
   "quiz_2op_cuchillo_contaminacion": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Si cortas pan comun y despues queso apto con el mismo cuchillo sin lavarlo, hay contaminacion cruzada?",
+	"prompt": "Un producto artesanal puede contaminarse aunque no use harina.",
 	"options": [
-	  "Si",
-      "No"
+	  "Verdadero",
+      "Falso"
 	],
-	"answer": "Si"
+	"answer": "Verdadero"
   },
-  "quiz_2op_salsa_sin_rotulo": {
+  "quiz_2op_almacenamiento": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Una salsa industrial sin sello Sin TACC se considera segura solo porque no destaca trigo en el frente?",
+	"prompt": "La contaminación cruzada puede ocurrir durante el almacenamiento",
 	"options": [
-	  "No",
-      "Si"
+	  "Verdadero",
+      "Falso"
 	],
-	"answer": "No"
+	"answer": "Verdadero"
   },
   "quiz_2op_trazas_rotulo_avanzado": {
 	"mode": "quiz",
@@ -446,14 +446,194 @@
 	],
 	"answer": "Si"
   },
-  "quiz_2op_artesanal_sin_confirmacion": {
+  "quiz_2op_minima_cantidad": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Un producto artesanal es apto por ser casero aunque nadie confirme como evita la contaminacion cruzada?",
+	"prompt": "Una mínima cantidad de gluten puede afectar a una persona celíaca?",
 	"options": [
 	  "No",
       "Si"
 	],
-	"answer": "No"
-  }
+	"answer": "Si"
+  },
+	"quiz_3op_freidora": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué elemento puede contaminar papas fritas aptas?",
+	  "options": [
+		"Freidora",
+		"Heladera",
+	    "Microondas"
+	  ],
+	  "answer": "Freidora"
+	},
+	"quiz_3op_mate_contaminacion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué puede contaminar una ronda de mate?",
+	  "options": [
+		"Migas",
+		"Agua",
+	    "Yerba"
+	  ],
+	  "answer": "Migas"
+	},
+	"quiz_3op_autoinmune": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué tipo de enfermedad es la celiaquía?",
+	  "options": [
+		"Autoinmune",
+		"Viral",
+	    "Bacteriana"
+	  ],
+	  "answer": "Autoinmune"
+	},	
+	"quiz_3op_genetica": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué factor influye en desarrollar celiaquía?",
+	  "options": [
+		"Genética",
+		"Altura",
+	    "Hidratación"
+	  ],
+	  "answer": "Genética"
+	},	
+	"quiz_3op_dq2_dq8": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué genes se asocian a la celiaquía?",
+	  "options": [
+		"DQ2/DQ8",
+		"BRCA1",
+	    "RH+"
+	  ],
+	  "answer": "DQ2/DQ8"
+	},
+	"quiz_3op_vellosidades": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué estructura intestinal se daña en la celiaquía?",
+	  "options": [
+		"Vellosidades",
+		"Neuronas",
+	    "Bronquios"
+	  ],
+	  "answer": "Vellosidades"
+	},
+	"quiz_3op_malabsorcion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué problema puede causar el daño intestinal?",
+	  "options": [
+		"Malabsorción",
+		"Hipertensión",
+	    "Deshidratación"
+	  ],
+	  "answer": "Malabsorción"
+	},
+	"quiz_3op_anticuerpos": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué puede detectarse en estudios de celiaquía?",
+	  "options": [
+		"Anticuerpos",
+		"Plaquetas",
+	    "Hormonas"
+	  ],
+	  "answer": "Anticuerpos"
+	},	
+	"quiz_3op_biopsia": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué estudio confirma el daño intestinal?",
+	  "options": [
+		"Biopsia",
+		"Radiografía",
+	    "Electrocardiograma"
+	  ],
+	  "answer": "Biopsia"
+	},
+	"quiz_3op_respuesta": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué sistema reacciona al gluten en la celiaquía?",
+	  "options": [
+		"Inmunológico",
+		"Respiratorio",
+	    "Muscular"
+	  ],
+	  "answer": "Inmunológico"
+	},
+	"quiz_2op_vellosidades": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La celiaquía puede dañar las vellosidades intestinales?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_genetica": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La genética influye en el desarrollo de la celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_dq2": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Los genes DQ2 y DQ8 se asocian a la celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_biopsia": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La biopsia intestinal puede ayudar a confirmar celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_anticuerpos": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Los análisis de sangre pueden detectar anticuerpos relacionados con celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_sintomas": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Una persona celíaca puede tener daño intestinal sin síntomas visibles?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_malabsorcion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿La celiaquía puede provocar malabsorción de nutrientes?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	}
 }
