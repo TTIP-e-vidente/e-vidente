@@ -31,9 +31,9 @@ offset_bottom = 40.0
 [node name="LabelPregunta" type="Label" parent="Control" unique_id=525672010]
 layout_mode = 0
 offset_left = 60.0
-offset_top = 165.0
+offset_top = 184.0
 offset_right = 1092.0
-offset_bottom = 249.0
+offset_bottom = 268.0
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_constants/line_spacing = -2
 theme_override_fonts/font = ExtResource("4_ayk73")
@@ -44,12 +44,11 @@ autowrap_mode = 3
 
 [node name="VBoxIzquierda" type="VBoxContainer" parent="Control" unique_id=576085657]
 layout_mode = 0
-offset_left = 220.0
-offset_top = 244.0
-offset_right = 520.0
-offset_bottom = 664.0
-scale = Vector2(1.0986408, 1.2154517)
-theme_override_constants/separation = 16
+offset_left = 156.0
+offset_top = 280.0
+offset_right = 456.0
+offset_bottom = 700.0
+theme_override_constants/separation = 28
 
 [node name="ConceptItemIzq" parent="Control/VBoxIzquierda" unique_id=2030109874 instance=ExtResource("4_y4o07")]
 layout_mode = 2
@@ -63,18 +62,13 @@ size_flags_horizontal = 4
 layout_mode = 2
 size_flags_horizontal = 4
 
-[node name="ConceptItemIzq4" parent="Control/VBoxIzquierda" unique_id=1994616234 instance=ExtResource("4_y4o07")]
-layout_mode = 2
-size_flags_horizontal = 4
-
 [node name="VBoxDerecha" type="VBoxContainer" parent="Control" unique_id=842886414]
 layout_mode = 0
-offset_left = 610.0
-offset_top = 239.0
-offset_right = 910.0
-offset_bottom = 659.0
-scale = Vector2(1.0834064, 1.2441492)
-theme_override_constants/separation = 16
+offset_left = 696.0
+offset_top = 280.0
+offset_right = 996.0
+offset_bottom = 700.0
+theme_override_constants/separation = 28
 
 [node name="ConceptItemDer" parent="Control/VBoxDerecha" unique_id=1982323240 instance=ExtResource("4_y4o07")]
 layout_mode = 2
@@ -85,10 +79,6 @@ layout_mode = 2
 size_flags_horizontal = 4
 
 [node name="ConceptItemDer3" parent="Control/VBoxDerecha" unique_id=1758347865 instance=ExtResource("4_y4o07")]
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="ConceptItemDer4" parent="Control/VBoxDerecha" unique_id=1091455788 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
 
