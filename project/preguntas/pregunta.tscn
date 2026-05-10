@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 [ext_resource type="Texture2D" uid="uid://c8tvilgr1cn4r" path="res://assets-sistema/preguntas/boton-4.png" id="10_2g6ed"]
 [ext_resource type="Texture2D" uid="uid://b3mugenb3628v" path="res://assets-sistema/preguntas/boton-3.png" id="11_mwqfo"]
+[ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="12_2g6ed"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = 0.94
@@ -162,11 +163,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3" unique_id=410306524]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -175,11 +174,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Boton4" type="Button" parent="Contenido/Preguntasx3" unique_id=340003962]
 custom_minimum_size = Vector2(0, 76)
@@ -201,11 +199,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4" unique_id=2082465361]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -214,11 +210,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Boton5" type="Button" parent="Contenido/Preguntasx3" unique_id=473953632]
 custom_minimum_size = Vector2(0, 76)
@@ -240,11 +235,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5" unique_id=900251680]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -253,11 +246,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Preguntasx4" type="Control" parent="Contenido" unique_id=527732730]
 visible = false
@@ -287,11 +279,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6" unique_id=307100761]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -300,11 +290,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Boton7" type="Button" parent="Contenido/Preguntasx4" unique_id=1170575801]
 custom_minimum_size = Vector2(0, 76)
@@ -326,11 +315,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7" unique_id=880931666]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -339,11 +326,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Boton8" type="Button" parent="Contenido/Preguntasx4" unique_id=508660480]
 custom_minimum_size = Vector2(0, 76)
@@ -365,11 +351,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8" unique_id=1584580164]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -378,11 +362,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Boton9" type="Button" parent="Contenido/Preguntasx4" unique_id=38775949]
 custom_minimum_size = Vector2(0, 76)
@@ -404,11 +387,9 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9"]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9" unique_id=357416750]
 layout_mode = 1
 anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 80.0
@@ -417,11 +398,10 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="Atrás" type="Button" parent="Contenido" unique_id=1720405508]
 layout_mode = 0
@@ -496,6 +476,8 @@ text = "Volver al mapa"
 icon = ExtResource("5_dlf6l")
 flat = true
 icon_alignment = 1
+
+[node name="ProgressBar" parent="." unique_id=478823511 instance=ExtResource("12_2g6ed")]
 
 [connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atras_pressed"]
 [connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]

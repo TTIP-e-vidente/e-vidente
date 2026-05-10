@@ -1,130 +1,130 @@
 {
   "match_alimentos": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Uni cada alimento con su clasificacion.",
-    "pairs": [
-      ["Banana", "Fruta apta"],
-      ["Pan", "Contiene gluten"],
-      ["Arroz", "Grano apto"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uni cada alimento con su clasificacion.",
+	"pairs": [
+	  ["Banana", "Fruta apta"],
+	  ["Pan", "Contiene gluten"],
+	  ["Arroz", "Grano apto"]
+	]
   },
   "match_categorias_alimentos": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Uni cada alimento con su categoria.",
-    "pairs": [
-      ["Arroz", "Sin TACC"],
-      ["Fideos de trigo", "Con gluten"],
-      ["Manzana", "Sin TACC"],
-      ["Medialuna", "Con gluten"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uni cada alimento con su categoria.",
+	"pairs": [
+	  ["Arroz", "Sin TACC"],
+	  ["Fideos de trigo", "Con gluten"],
+	  ["Manzana", "Sin TACC"],
+	  ["Medialuna", "Con gluten"]
+	]
   },
   "match_riesgos_cocina": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Uni cada situacion con su riesgo.",
-    "pairs": [
-      ["Misma tabla para pan y frutas", "Contaminacion cruzada"],
-      ["Producto sin sello Sin TACC", "No confirmado como apto"],
-      ["Aceite compartido con empanadas", "Riesgo de contaminacion"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uni cada situacion con su riesgo.",
+	"pairs": [
+	  ["Misma tabla para pan y frutas", "Contaminacion cruzada"],
+	  ["Producto sin sello Sin TACC", "No confirmado como apto"],
+	  ["Aceite compartido con empanadas", "Riesgo de contaminacion"]
+	]
   },
   "match_etiquetas_seguridad": {
-    "mode": "match",
-    "difficulty": 3,
-    "prompt": "Uni cada etiqueta con lo que indica.",
-    "pairs": [
-      ["Sello Sin TACC", "Certificado apto para celiacos"],
-      ["Sin rotulo Sin TACC", "No confirmado como seguro"],
-      ["Contiene trigo", "No apto para celiacos"]
-    ]
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Uni cada etiqueta con lo que indica.",
+	"pairs": [
+	  ["Sello Sin TACC", "Certificado apto para celiacos"],
+	  ["Sin rotulo Sin TACC", "No confirmado como seguro"],
+	  ["Contiene trigo", "No apto para celiacos"]
+	]
   },
   "match_alimentos_seguridad": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Uni cada alimento con su clasificacion.",
-    "pairs": [
-      ["Banana", "Fruta apta"],
-      ["Pan", "Harina de trigo"],
-      ["Arroz", "Grano apto"]
-    ],
-    "distractors": ["Solo bebida"]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uni cada alimento con su clasificacion.",
+	"pairs": [
+	  ["Banana", "Fruta apta"],
+	  ["Pan", "Harina de trigo"],
+	  ["Arroz", "Grano apto"]
+	],
+	"distractors": ["Solo bebida"]
   },
   "match_cerveza_utensilios_diagnostico": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Relaciona cada concepto con su condicion de consumo.",
-    "pairs": [
-      ["Malta", "Cebada"],
-      ["Utensilios", "Exclusivos"],
-      ["Biopsia", "Diagnostico"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Relaciona cada concepto con su condicion de consumo.",
+	"pairs": [
+	  ["Malta", "Cebada"],
+	  ["Utensilios", "Exclusivos"],
+	  ["Biopsia", "Diagnostico"]
+	]
   },
   "match_vellosidades_sorgo_almidon": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Relaciona cada concepto con su significado.",
-    "pairs": [
-      ["Atrofia", "Vellosidades"],
-      ["Sorgo", "Alternativa"],
-      ["Almidon", "Espesante"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Relaciona cada concepto con su significado.",
+	"pairs": [
+	  ["Atrofia", "Vellosidades"],
+	  ["Sorgo", "Alternativa"],
+	  ["Almidon", "Espesante"]
+	]
   },
   "match_cocina_segura_avanzada": {
-    "mode": "match",
-    "difficulty": 3,
-    "prompt": "Uni cada practica con la decision mas segura.",
-    "pairs": [
-      ["Tabla usada para pan", "Lavar o separar utensilios"],
-      ["Tostadora compartida", "Evitar uso sin equipo exclusivo"],
-      ["Harina suelta en mesada", "Limpiar antes de cocinar"],
-      ["Cuchillo con migas", "Cambiar utensilio"],
-      ["Aceite de fritura comun", "No usar para Sin TACC"]
-    ]
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Uni cada practica con la decision mas segura.",
+	"pairs": [
+	  ["Tabla usada para pan", "Lavar o separar utensilios"],
+	  ["Tostadora compartida", "Evitar uso sin equipo exclusivo"],
+	  ["Harina suelta en mesada", "Limpiar antes de cocinar"],
+	  ["Cuchillo con migas", "Cambiar utensilio"],
+	  ["Aceite de fritura comun", "No usar para Sin TACC"]
+	]
   },
   "match_comer_fuera_seguro": {
-    "mode": "match",
-    "difficulty": 3,
-    "prompt": "Uni cada situacion al paso mas seguro.",
-    "pairs": [
-      ["Carta sin opciones claras", "Preguntar ingredientes y manejo"],
-      ["Mozo duda sobre contaminacion", "No arriesgar sin confirmar"],
-      ["Cocina con freidora compartida", "Evitar fritos"],
-      ["Postre sin sello ni info", "Elegir otra opcion"]
-    ]
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Uni cada situacion al paso mas seguro.",
+	"pairs": [
+	  ["Carta sin opciones claras", "Preguntar ingredientes y manejo"],
+	  ["Mozo duda sobre contaminacion", "No arriesgar sin confirmar"],
+	  ["Cocina con freidora compartida", "Evitar fritos"],
+	  ["Postre sin sello ni info", "Elegir otra opcion"]
+	]
   },
   "match_trazas_y_etiquetas": {
-    "mode": "match",
-    "difficulty": 3,
-    "prompt": "Uni cada situacion con la decision mas segura.",
-    "pairs": [
-      ["Puede contener trazas", "No elegir sin confirmar"],
-      ["Sello Sin TACC", "Producto certificado"],
-      ["Freidora compartida", "Riesgo de contaminacion"],
-      ["Contiene trigo", "No apto"]
-    ]
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Uni cada situacion con la decision mas segura.",
+	"pairs": [
+	  ["Puede contener trazas", "No elegir sin confirmar"],
+	  ["Sello Sin TACC", "Producto certificado"],
+	  ["Freidora compartida", "Riesgo de contaminacion"],
+	  ["Contiene trigo", "No apto"]
+	]
   },
   "match_riesgos_ocultos": {
-    "mode": "match",
-    "difficulty": 3,
-    "prompt": "Relaciona cada producto o practica con su riesgo.",
-    "pairs": [
-      ["Salsa de soja comun", "Puede contener trigo"],
-      ["Embutido sin certificacion", "Ingredientes no confirmados"],
-      ["Producto artesanal sin rotulo", "Aptitud incierta"],
-      ["Mesa con harina visible", "Contaminacion cruzada"]
-    ]
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relaciona cada producto o practica con su riesgo.",
+	"pairs": [
+	  ["Salsa de soja comun", "Puede contener trigo"],
+	  ["Embutido sin certificacion", "Ingredientes no confirmados"],
+	  ["Producto artesanal sin rotulo", "Aptitud incierta"],
+	  ["Mesa con harina visible", "Contaminacion cruzada"]
+	]
   },
   "match_decisiones_seguras": {
-    "mode": "match",
-    "difficulty": 2,
-    "prompt": "Relaciona cada caso con la mejor decision.",
-    "pairs": [
-      ["No ves sello Sin TACC", "No elegir hasta confirmar"],
-      ["Utensilios separados", "Practica segura"],
-      ["Tabla con migas", "Lavar antes de usar"],
-      ["Comida frita en aceite compartido", "Evitar el producto"]
-    ]
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Relaciona cada caso con la mejor decision.",
+	"pairs": [
+	  ["No ves sello Sin TACC", "No elegir hasta confirmar"],
+	  ["Utensilios separados", "Practica segura"],
+	  ["Tabla con migas", "Lavar antes de usar"],
+	  ["Comida frita en aceite compartido", "Evitar el producto"]
+	]
   }
 }
