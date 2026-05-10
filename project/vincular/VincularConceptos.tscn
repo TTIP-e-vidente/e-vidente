@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dreulrv8mq1oa" path="res://vincular/concept_item.tscn" id="4_y4o07"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_ala0e"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_hud00"]
-[ext_resource type="PackedScene" uid="uid://xuxywhubl1u5" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
+[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 
 [node name="VincularConceptos" type="Node2D" unique_id=1460006904]
 script = ExtResource("1_xh4rf")
@@ -19,6 +19,7 @@ script = ExtResource("1_xh4rf")
 [node name="IndicadorProgresoDeJuego" parent="." unique_id=1577780001 instance=ExtResource("7_hud00")]
 
 [node name="ContinuarJuego" parent="." unique_id=1443894936 instance=ExtResource("8_continuar")]
+layout_mode = 3
 
 [node name="Control" type="Control" parent="." unique_id=1892591276]
 layout_mode = 3
@@ -29,9 +30,9 @@ offset_bottom = 40.0
 [node name="LabelPregunta" type="Label" parent="Control" unique_id=525672010]
 layout_mode = 0
 offset_left = 60.0
-offset_top = 184.0
+offset_top = 165.0
 offset_right = 1092.0
-offset_bottom = 268.0
+offset_bottom = 249.0
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_constants/line_spacing = -2
 theme_override_fonts/font = ExtResource("4_ayk73")
@@ -39,53 +40,56 @@ theme_override_font_sizes/font_size = 36
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-clip_text = false
 
 [node name="VBoxIzquierda" type="VBoxContainer" parent="Control" unique_id=576085657]
 layout_mode = 0
-offset_left = 156.0
-offset_top = 280.0
-offset_right = 456.0
-offset_bottom = 700.0
-theme_override_constants/separation = 28
+offset_left = 220.0
+offset_top = 244.0
+offset_right = 520.0
+offset_bottom = 664.0
+scale = Vector2(1.0986408, 1.2154517)
+theme_override_constants/separation = 16
 
 [node name="ConceptItemIzq" parent="Control/VBoxIzquierda" unique_id=2030109874 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
 
 [node name="ConceptItemIzq2" parent="Control/VBoxIzquierda" unique_id=756252044 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
 
 [node name="ConceptItemIzq3" parent="Control/VBoxIzquierda" unique_id=580409669 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
+
+[node name="ConceptItemIzq4" parent="Control/VBoxIzquierda" unique_id=1994616234 instance=ExtResource("4_y4o07")]
+layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="VBoxDerecha" type="VBoxContainer" parent="Control" unique_id=842886414]
 layout_mode = 0
-offset_left = 696.0
-offset_top = 280.0
-offset_right = 996.0
-offset_bottom = 700.0
-theme_override_constants/separation = 28
+offset_left = 610.0
+offset_top = 239.0
+offset_right = 910.0
+offset_bottom = 659.0
+scale = Vector2(1.0834064, 1.2441492)
+theme_override_constants/separation = 16
 
 [node name="ConceptItemDer" parent="Control/VBoxDerecha" unique_id=1982323240 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
 
 [node name="ConceptItemDer2" parent="Control/VBoxDerecha" unique_id=308943551 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
 
 [node name="ConceptItemDer3" parent="Control/VBoxDerecha" unique_id=1758347865 instance=ExtResource("4_y4o07")]
 layout_mode = 2
 size_flags_horizontal = 4
-stretch_mode = 0
+
+[node name="ConceptItemDer4" parent="Control/VBoxDerecha" unique_id=1091455788 instance=ExtResource("4_y4o07")]
+layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="LineDrawer" type="Line2D" parent="Control" unique_id=1431072580]
 position = Vector2(456, 401)
