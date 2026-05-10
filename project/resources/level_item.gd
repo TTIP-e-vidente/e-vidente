@@ -14,6 +14,12 @@ enum Condicion {KETO, CELIACO, VEGANO, DIABETICO, VEGETARIANO}
 @export var categoria : String
 @export var allowed_track_keys: PackedStringArray = []
 @export var blocked_track_keys: PackedStringArray = []
+@export var runtime_id := ""
+@export var runtime_resource_path := ""
+@export var runtime_visual_resource_path := ""
+@export var runtime_label := ""
+@export var runtime_feedback := ""
+@export var runtime_correct_target := ""
 
 
 func is_explicitly_allowed_for_track(track_key: String) -> bool:

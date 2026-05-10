@@ -3,6 +3,13 @@ class_name Level
 
 signal run_completed
 
+const LOG_PREFIX_ARRASTRE := "[ARRASTRE]"
+const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
+const LOG_PREFIX_POST_GAME := "[POST_GAME]"
+const LOG_PREFIX_TEACHING := "[Teaching]"
+const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
+const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
+
 ## --- Configuración ---
 
 const DEFAULT_TRACK_KEY            := "celiaquia"
@@ -18,6 +25,7 @@ const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const CargadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
 )
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
@@ -34,7 +42,9 @@ const ContextoFinalizacionDeJuegoScript := preload(
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
-const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := "res://niveles/level_completion_black_and_white.gdshader"
+const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := (
+	"res://niveles/level_completion_black_and_white.gdshader"
+)
 const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
 const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const COMPLETION_DIM_COLOR := Color(0.62, 0.62, 0.62, 1.0)
@@ -61,9 +71,12 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
+@onready var teaching_backdrop: ColorRect = get_node_or_null("TeachingBackdrop") as ColorRect
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
-@onready var tarjeta_ensenanza_cierre: Control = $TarjetaEnsenanzaCierre
-@onready var label_ensenanza_cierre: Label = $TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre
+@onready var tarjeta_ensenanza_cierre: Control = get_node_or_null("TarjetaEnsenanzaCierre") as Control
+@onready var label_ensenanza_cierre: Label = get_node_or_null(
+	"TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre"
+) as Label
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
@@ -99,13 +112,19 @@ var _ya_continuo := false
 var _completion_black_and_white_shader: Shader = null
 var _save_icon_idle: Texture2D = null
 var _save_icon_ok: Texture2D = null
+var _teaching_sprite_base_scale := Vector2.ONE
+var _teaching_card_base_scale := Vector2.ONE
 
-@onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
 @onready var _continuar_juego = $ContinuarJuego
 
 # Entrada del nivel
 func _ready() -> void:
 	_cargar_recursos_runtime()
+	if is_instance_valid(teaching_sprite):
+		_teaching_sprite_base_scale = teaching_sprite.scale
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		_teaching_card_base_scale = tarjeta_ensenanza_cierre.scale
 	_conectar_continuar_juego()
 	iniciar_flujo_del_nivel()
 	_configurar_indicador_de_progreso_de_juego()
@@ -150,7 +169,9 @@ func cargar_contenido_del_nivel() -> void:
 		return
 
 	_aplicar_contexto_jugable_del_nivel(_contexto_nodo_mapa)
-	if not _json_path_nodo_actual.is_empty():
+	if not str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges().is_empty():
+		cargar_contenido_del_nivel_desde_contexto(_contexto_nodo_mapa)
+	elif not _json_path_nodo_actual.is_empty():
 		cargar_contenido_del_nivel_desde_json(_json_path_nodo_actual)
 
 	_usa_flujo_mapa = bool(_contexto_nodo_mapa.get("came_from_map", false))
@@ -239,6 +260,19 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
+func cargar_contenido_del_nivel_desde_contexto(contexto_jugable: Dictionary) -> void:
+	var result: Dictionary = NodeContentLoaderScript.load_from_context(contexto_jugable)
+	if not bool(result.get("ok", false)):
+		push_error(
+			"Level: %s"
+			% str(result.get("error", "No se pudo cargar el contenido del nivel."))
+		)
+		return
+
+	var datos_nodo: Dictionary = result.get("data", {})
+	_datos_nodo_mapa = datos_nodo.duplicate(true)
+
+
 ## --- Estado inicial --------------------------------------------------------
 
 func reiniciar_estado_de_partida() -> void:
@@ -280,10 +314,14 @@ func _iniciar_arrastre_desde_json_si_corresponde() -> bool:
 	if nodo_datos.is_empty():
 		return false
 
-	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(nodo_datos)
+	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(
+		nodo_datos
+	)
 	if not bool(conversion.get("ok", false)):
 		push_warning("Level: JSON no válido para arrastre: %s" % str(conversion.get("error", "")))
 		return false
+
+	_log_arrastre_cargado(conversion.get("data", {}))
 
 	return _iniciar_runtime_de_arrastre_desde_datos(conversion.get("data", {}))
 
@@ -328,7 +366,10 @@ func _iniciar_runtime_de_arrastre_desde_datos(contenido_arrastre: Dictionary) ->
 
 
 func _aplicar_dificultad_de_arrastre() -> void:
-	if manager_level == null or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre"):
+	if (
+		manager_level == null
+		or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre")
+	):
 		return
 	if not _pertenece_a_partida_de_nodo:
 		manager_level.establecer_configuracion_de_dificultad_arrastre({})
@@ -345,8 +386,10 @@ func _construir_configuracion_de_dificultad_arrastre(dificultad: int) -> Diction
 		"elementos_maximos": DificultadArrastreScript.limitar_elementos_por_dificultad(
 			dificultad
 		),
-		"distractores_maximos": DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
-			dificultad
+		"distractores_maximos": (
+			DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
+				dificultad
+			)
 		),
 		"mostrar_ayuda_visual": DificultadArrastreScript.deberia_mostrar_ayuda_visual(
 			dificultad
@@ -364,7 +407,7 @@ func _reproducir_audio_nivel() -> void:
 
 
 func configurar_retroalimentacion_de_guardado() -> void:
-	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
+	save_progress_button.tooltip_text = ""
 	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE
@@ -421,7 +464,15 @@ func _finalizar_partida() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
+	var activity_id: String = _obtener_activity_id_actual()
+	var teaching_key: String = _obtener_teaching_key_actual()
+	print("%s activity=%s key=%s" % [LOG_PREFIX_TEACHING, activity_id, teaching_key])
 	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
+		print(
+			LOG_PREFIX_ARRASTRE,
+			" completado=true llamando_ensenanza=true teaching_key=",
+			_obtener_teaching_key_actual()
+		)
 		_mostrar_ensenanza_del_nivel()
 		return
 	_finalizar_partida_normal(track_key, level_number)
@@ -462,11 +513,15 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+	var habia_siguiente: bool = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	var continuo: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
 		Callable(),
 		Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
 	)
+	if not continuo and habia_siguiente:
+		push_error("[POST_GAME] No se pudo avanzar: falta siguiente juego o target inválido.")
+	return continuo
 
 
 func _limpiar_estado_local_de_partida_en_nivel() -> void:
@@ -549,11 +604,28 @@ func _al_solicitar_continuar() -> void:
 		return
 
 	_ya_continuo = true
+	print(LOG_PREFIX_ENSENANZA, " cerrada=true llamando_post_game=true")
 	_ocultar_continuacion()
 	_continuar_despues_de_ensenanza(true)
 
 
 func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var indice_actual: int = int(juego_actual.get("indice_juego_actual", 0)) + 1
+	var total_juegos: int = int(juego_actual.get("total_juegos", 0))
+	var hay_siguiente := false
+	if _pertenece_a_partida_de_nodo:
+		hay_siguiente = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	print(LOG_PREFIX_POST_GAME, " contexto_recibido=", juego_actual)
+	print(
+		LOG_PREFIX_POST_GAME,
+		" juego_actual=",
+		indice_actual,
+		" total=",
+		total_juegos,
+		" hay_siguiente=",
+		hay_siguiente
+	)
 	if _continuar_partida_de_nodo_si_corresponde():
 		return
 	if not _has_post_game_flow_state():
@@ -791,10 +863,17 @@ func _restaurar_estado_posterior_finalizacion() -> void:
 
 
 func _ocultar_ensenanza_textual() -> void:
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.hide()
+		teaching_backdrop.modulate.a = 0.0
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.hide()
+		teaching_sprite.modulate.a = 1.0
+		teaching_sprite.scale = _teaching_sprite_base_scale
 	if is_instance_valid(tarjeta_ensenanza_cierre):
 		tarjeta_ensenanza_cierre.hide()
+		tarjeta_ensenanza_cierre.modulate.a = 1.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale
 	if is_instance_valid(label_ensenanza_cierre):
 		label_ensenanza_cierre.text = ""
 
@@ -868,7 +947,8 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
 	if is_instance_valid(tarjeta_ensenanza_cierre) and (
-		runtime_node == tarjeta_ensenanza_cierre or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
+		runtime_node == tarjeta_ensenanza_cierre
+		or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
 	):
 		return true
 	if is_instance_valid(save_feedback_backdrop) and (
@@ -895,12 +975,118 @@ func _mostrar_ensenanza_de_cierre() -> void:
 			tarjeta_ensenanza_cierre.hide()
 		if is_instance_valid(teaching_sprite):
 			teaching_sprite.show()
+		_animar_entrada_de_ensenanza()
+		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
 		return
+	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
+	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
+
+
+func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
+	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	var activity_id: String = str(
+		datos_arrastre.get("node_key", datos_arrastre.get("id", ""))
+	).strip_edges()
+	var teaching_key: String = str(datos_arrastre.get("teaching_key", "")).strip_edges()
+	print(
+		LOG_PREFIX_ARRASTRE,
+		" juego_actual=",
+		int(contexto.get("actual", 1)),
+		" total=",
+		int(contexto.get("total", 1)),
+		" id=",
+		activity_id,
+		" teaching_key=",
+		teaching_key
+	)
+
+
+func _obtener_teaching_key_actual() -> String:
+	var contenido: Variant = _datos_nodo_mapa.get("content", {})
+	if contenido is Dictionary:
+		var teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
+		if not teaching_key.is_empty():
+			return teaching_key
+	var top_level_teaching_key: String = _leer_teaching_key_de_diccionario(_datos_nodo_mapa)
+	if not top_level_teaching_key.is_empty():
+		return top_level_teaching_key
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var teaching_key: String = _leer_teaching_key_de_diccionario(juego_actual)
+	if not teaching_key.is_empty():
+		return teaching_key
+	return _leer_teaching_key_de_diccionario(_contexto_nodo_mapa)
+
+
+func _mostrar_ensenanza_textual(texto: String) -> void:
 	if is_instance_valid(teaching_sprite):
 		teaching_sprite.hide()
+	if is_instance_valid(label_ensenanza_cierre):
+		label_ensenanza_cierre.text = texto
 	if is_instance_valid(tarjeta_ensenanza_cierre):
-		tarjeta_ensenanza_cierre.hide()
-	push_warning("Level: no hay asset de ensenanza para mostrar.")
+		tarjeta_ensenanza_cierre.show()
+		_animar_entrada_de_ensenanza()
+		return
+	push_warning("Level: no hay tarjeta de ensenanza para mostrar fallback textual.")
+
+
+# Overlay simple para que el cierre se lea mejor en demo.
+func _animar_entrada_de_ensenanza() -> void:
+	var tween := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.show()
+		teaching_backdrop.modulate.a = 0.0
+		tween.parallel().tween_property(teaching_backdrop, "modulate:a", 1.0, 0.18)
+	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
+		teaching_sprite.modulate.a = 0.0
+		teaching_sprite.scale = _teaching_sprite_base_scale * 0.94
+		tween.parallel().tween_property(teaching_sprite, "modulate:a", 1.0, 0.18)
+		tween.parallel().tween_property(
+			teaching_sprite,
+			"scale",
+			_teaching_sprite_base_scale,
+			0.22
+		)
+	if is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible:
+		tarjeta_ensenanza_cierre.modulate.a = 0.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale * 0.94
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"modulate:a",
+			1.0,
+			0.18
+		)
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"scale",
+			_teaching_card_base_scale,
+			0.22
+		)
+
+
+func _leer_teaching_key_de_diccionario(datos: Dictionary) -> String:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
+		var teaching_key: String = str(datos.get(clave_campo, "")).strip_edges()
+		if not teaching_key.is_empty():
+			return teaching_key
+	return ""
+
+
+func _obtener_activity_id_actual() -> String:
+	var activity_id: String = str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	activity_id = str(
+		_datos_nodo_mapa.get("id", _datos_nodo_mapa.get("node_key", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	activity_id = str(
+		juego_actual.get("activity_id", juego_actual.get("id", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	return str(juego_actual.get("node_key", "")).strip_edges()
 
 
 func restaurar_finalizacion_visual_estado() -> void:

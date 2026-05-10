@@ -162,6 +162,9 @@ func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 		normalized["resume_state"] = (source_resume_state as Dictionary).duplicate(true)
 
 	normalized["history"] = _schema.normalizar_historial(source.get("history", []))
+	var source_completed: Variant = source.get("completed_activity_ids_by_request", {})
+	if source_completed is Dictionary:
+		normalized["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
 	return normalized
 
 

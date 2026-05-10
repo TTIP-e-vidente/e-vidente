@@ -1,6 +1,12 @@
 extends RefCounted
 class_name ValidadorDeContenidoDeNodo
 
+# LEGACY_COMPAT: Usado por CargadorDeContenidoDeNodo.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
+# Valida y limpia el runtime que consumen los minijuegos.
+# No carga archivos ni decide que activity se juega.
+
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const MODO_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
@@ -67,6 +73,10 @@ static func _validar_contenido_por_modo(datos_nodo: Dictionary) -> String:
 
 
 static func _validar_quiz(contenido: Dictionary) -> String:
+	var preguntas_crudas: Variant = contenido.get("questions", contenido.get("preguntas", []))
+	if preguntas_crudas is Array and not (preguntas_crudas as Array).is_empty():
+		return _validar_quiz_con_multiples_preguntas(preguntas_crudas as Array)
+
 	if str(contenido.get("question", "")).strip_edges().is_empty():
 		return "Quiz: falta question."
 	var respuesta_correcta: String = str(contenido.get("correct_answer", "")).strip_edges()
@@ -83,6 +93,31 @@ static func _validar_quiz(contenido: Dictionary) -> String:
 		return "Quiz: wrong_options no puede incluir correct_answer."
 	if wrong_options.size() > 3:
 		return "Quiz: no puede tener mas de 4 opciones totales."
+	return ""
+
+
+static func _validar_quiz_con_multiples_preguntas(preguntas: Array) -> String:
+	for indice in range(preguntas.size()):
+		if not preguntas[indice] is Dictionary:
+			return "Quiz: question %d debe ser un objeto." % (indice + 1)
+		var pregunta: Dictionary = preguntas[indice] as Dictionary
+		if str(pregunta.get("question", "")).strip_edges().is_empty():
+			return "Quiz: question %d sin question." % (indice + 1)
+		var respuesta_correcta: String = str(
+			pregunta.get("correct_answer", "")
+		).strip_edges()
+		if respuesta_correcta.is_empty():
+			return "Quiz: question %d sin correct_answer." % (indice + 1)
+		var opciones_incorrectas: Variant = pregunta.get("wrong_options", [])
+		if not opciones_incorrectas is Array:
+			return "Quiz: question %d wrong_options debe ser una lista." % (indice + 1)
+		var wrong_options: Array[String] = _limpiar_textos(opciones_incorrectas)
+		if wrong_options.is_empty():
+			return "Quiz: question %d necesita al menos una opcion incorrecta." % (indice + 1)
+		if wrong_options.has(respuesta_correcta):
+			return "Quiz: question %d repite correct_answer en wrong_options." % (indice + 1)
+		if wrong_options.size() > 3:
+			return "Quiz: question %d no puede tener mas de 4 opciones totales." % (indice + 1)
 	return ""
 
 
@@ -150,25 +185,53 @@ static func _validar_drag_drop(contenido: Dictionary) -> String:
 
 	if not hay_items_correctos:
 		return "DragDrop: no hay items correctos para completar la actividad."
+
+	var error_configuracion: String = _validar_configuracion_opcional_drag_drop(contenido)
+	if not error_configuracion.is_empty():
+		return error_configuracion
 	return ""
+
+
+static func _validar_configuracion_opcional_drag_drop(contenido: Dictionary) -> String:
+	var elementos_maximos: Variant = contenido.get("elementos_maximos", null)
+	if elementos_maximos != null:
+		if not _es_entero_de_configuracion_drag_drop(elementos_maximos):
+			return "DragDrop: elementos_maximos debe ser un entero."
+		if int(elementos_maximos) < 1:
+			return "DragDrop: elementos_maximos debe ser mayor o igual a 1."
+
+	var distractores_maximos: Variant = contenido.get("distractores_maximos", null)
+	if distractores_maximos != null:
+		if not _es_entero_de_configuracion_drag_drop(distractores_maximos):
+			return "DragDrop: distractores_maximos debe ser un entero."
+		if int(distractores_maximos) < 0:
+			return "DragDrop: distractores_maximos no puede ser negativo."
+		if elementos_maximos != null and int(distractores_maximos) >= int(elementos_maximos):
+			return "DragDrop: distractores_maximos debe dejar al menos un item correcto."
+
+	var mostrar_ayuda_visual: Variant = contenido.get("mostrar_ayuda_visual", null)
+	if mostrar_ayuda_visual != null and not mostrar_ayuda_visual is bool:
+		return "DragDrop: mostrar_ayuda_visual debe ser booleano."
+
+	return ""
+
+
+static func _es_entero_de_configuracion_drag_drop(valor: Variant) -> bool:
+	match typeof(valor):
+		TYPE_INT:
+			return true
+		TYPE_FLOAT:
+			return is_equal_approx(float(valor), round(float(valor)))
+		_:
+			return false
 
 
 static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionary:
 	match modo:
 		MODO_QUIZ_CHOICE:
-			return {
-				"question": str(contenido.get("question", "")).strip_edges(),
-				"correct_answer": str(contenido.get("correct_answer", "")).strip_edges(),
-				"wrong_options": _limpiar_textos(contenido.get("wrong_options", [])),
-				"visual_resource": str(contenido.get("visual_resource", "")).strip_edges()
-			}
+			return _limpiar_contenido_quiz(contenido)
 		MODO_DRAG_DROP:
-			return {
-				"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
-				"instruction": str(contenido.get("instruction", "")).strip_edges(),
-				"targets": _limpiar_targets(contenido.get("targets", [])),
-				"items": _limpiar_items(contenido.get("items", []))
-			}
+			return _limpiar_contenido_drag_drop(contenido)
 		MODO_VINCULACION_CONCEPTOS:
 			return {
 				"instruccion": _leer_instruccion_vinculacion(contenido),
@@ -181,6 +244,57 @@ static func _limpiar_contenido(modo: String, contenido: Dictionary) -> Dictionar
 				"teaching_key": str(contenido.get("teaching_key", "")).strip_edges()
 			}
 	return contenido.duplicate(true)
+
+
+static func _limpiar_contenido_quiz(contenido: Dictionary) -> Dictionary:
+	var preguntas_crudas: Variant = contenido.get("questions", contenido.get("preguntas", []))
+	if preguntas_crudas is Array and not (preguntas_crudas as Array).is_empty():
+		return {"questions": _limpiar_preguntas_quiz(preguntas_crudas as Array)}
+	return {
+		"question": str(contenido.get("question", "")).strip_edges(),
+		"correct_answer": str(contenido.get("correct_answer", "")).strip_edges(),
+		"wrong_options": _limpiar_textos(contenido.get("wrong_options", [])),
+		"visual_resource": str(contenido.get("visual_resource", "")).strip_edges()
+	}
+
+
+static func _limpiar_preguntas_quiz(preguntas_crudas: Array) -> Array[Dictionary]:
+	var preguntas: Array[Dictionary] = []
+	for raw_pregunta in preguntas_crudas:
+		var pregunta: Dictionary = _leer_diccionario(raw_pregunta)
+		if pregunta.is_empty():
+			continue
+		preguntas.append(
+			{
+				"id": str(pregunta.get("id", "")).strip_edges(),
+				"question": str(pregunta.get("question", "")).strip_edges(),
+				"correct_answer": str(pregunta.get("correct_answer", "")).strip_edges(),
+				"wrong_options": _limpiar_textos(pregunta.get("wrong_options", [])),
+				"visual_resource": str(pregunta.get("visual_resource", "")).strip_edges(),
+				"explanation": str(pregunta.get("explanation", "")).strip_edges(),
+			}
+		)
+	return preguntas
+
+
+static func _limpiar_contenido_drag_drop(contenido: Dictionary) -> Dictionary:
+	var contenido_limpio := {
+		"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
+		"instruction": str(contenido.get("instruction", "")).strip_edges(),
+		"targets": _limpiar_targets(contenido.get("targets", [])),
+		"items": _limpiar_items(contenido.get("items", []))
+	}
+	if contenido.has("elementos_maximos"):
+		contenido_limpio["elementos_maximos"] = int(contenido.get("elementos_maximos", 0))
+	if contenido.has("distractores_maximos"):
+		contenido_limpio["distractores_maximos"] = int(
+			contenido.get("distractores_maximos", 0)
+		)
+	if contenido.has("mostrar_ayuda_visual"):
+		contenido_limpio["mostrar_ayuda_visual"] = bool(
+			contenido.get("mostrar_ayuda_visual", true)
+		)
+	return contenido_limpio
 
 
 static func _validar_vinculacion(contenido: Dictionary) -> String:
@@ -198,8 +312,8 @@ static func _validar_vinculacion(contenido: Dictionary) -> String:
 		return "Vinculacion: se requieren al menos dos conceptos a la izquierda."
 	if conceptos_derecha.size() < 2:
 		return "Vinculacion: se requieren al menos dos conceptos a la derecha."
-	if conceptos_izquierda.size() != conceptos_derecha.size():
-		return "Vinculacion: la cantidad de conceptos izquierda/derecha debe coincidir."
+	if conceptos_derecha.size() < conceptos_izquierda.size():
+		return "Vinculacion: faltan conceptos a la derecha para todos los pares."
 
 	var ids_izquierda: Dictionary = {}
 	var ids_derecha: Dictionary = {}
@@ -223,8 +337,6 @@ static func _validar_vinculacion(contenido: Dictionary) -> String:
 		if not error_derecha.is_empty():
 			return error_derecha
 
-	if ids_izquierda.size() != ids_derecha.size():
-		return "Vinculacion: cada id_par debe existir en ambos lados."
 	for id_par in ids_izquierda.keys():
 		if not ids_derecha.has(id_par):
 			return "Vinculacion: falta el id_par %s en los conceptos de la derecha." % id_par
@@ -324,6 +436,10 @@ static func _limpiar_items(items_crudos: Variant) -> Array[Dictionary]:
 			"image": str(item.get("image", "")).strip_edges(),
 			"correct_target": str(item.get("correct_target", "")).strip_edges()
 		})
+		if item.has("category"):
+			items[items.size() - 1]["category"] = str(item.get("category", "")).strip_edges()
+		if item.has("info_image"):
+			items[items.size() - 1]["info_image"] = str(item.get("info_image", "")).strip_edges()
 
 	return items
 

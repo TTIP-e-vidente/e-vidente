@@ -1,5 +1,9 @@
 extends RefCounted
 
+# ContextoSesionDeJuego.gd
+# Normaliza el contexto que consumen las escenas jugables.
+# Compatibilidad: mantiene claves nuevas y legacy hasta limpiar escenas antiguas.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 
@@ -40,6 +44,8 @@ static func normalizar_contexto_jugable(
 		contexto_sesion.get("node_title", contexto_sesion.get("titulo_nodo", ""))
 	).strip_edges()
 	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
+	var activity_id: String = str(contexto_sesion.get("activity_id", "")).strip_edges()
+	var pack_id: String = str(contexto_sesion.get("pack_id", clave_pista)).strip_edges()
 	var modo: String = str(contexto_sesion.get("mode", contexto_sesion.get("node_mode", ""))).strip_edges()
 	var escena_retorno: String = _leer_escena_retorno(
 		contexto_sesion,
@@ -56,6 +62,8 @@ static func normalizar_contexto_jugable(
 	contexto_normalizado["node_title"] = titulo_nodo
 	contexto_normalizado["titulo_nodo"] = titulo_nodo
 	contexto_normalizado["json_path"] = ruta_json
+	contexto_normalizado["activity_id"] = activity_id
+	contexto_normalizado["pack_id"] = pack_id
 	contexto_normalizado["mode"] = modo
 	contexto_normalizado["node_mode"] = modo
 	contexto_normalizado["return_to"] = escena_retorno

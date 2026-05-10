@@ -3,54 +3,124 @@ extends Control
 signal continuar_solicitado
 
 const SEGUNDOS_PREDETERMINADOS := 5
-const TEXTO_SIGUIENTE_JUEGO := "se pasara"
-const TEXTO_FINALIZAR := "se pasara"
+const TOOLTIP_SIGUIENTE_JUEGO := "Siguiente modalidad"
+const TOOLTIP_FINALIZAR := "Volver al mapa"
+const TOOLTIP_CONTINUAR_PENDIENTE := "Continuar partida"
+const TEXTURA_FLECHA_3 := preload(
+	"res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png"
+)
+const TEXTURA_FLECHA_PREDETERMINADA := TEXTURA_FLECHA_3
+const TEXTURAS_FLECHA_ANIMADA := [
+	preload("res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png"),
+	preload("res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png"),
+	TEXTURA_FLECHA_3,
+]
 
-@onready var _boton_continuar: Button = $ColumnaContinuacion/BotonContinuar
-@onready var _label_contador: Label = $ColumnaContinuacion/ContadorMarco/ContadorPadding/LabelContador
+@export var textura_flecha: Texture2D
+
+@onready var _flecha_continuar: Button = $ColumnaContinuacion/FlechaContinuar
 @onready var _timer_continuacion: Timer = $TimerContinuacion
 
 var _segundos_restantes := SEGUNDOS_PREDETERMINADOS
-var _texto_accion := TEXTO_SIGUIENTE_JUEGO
+var _tooltip_accion := TOOLTIP_SIGUIENTE_JUEGO
 var ya_solicito_continuar := false
+var _animacion_flecha: Tween = null
 
 
 func _ready() -> void:
-	_boton_continuar.pressed.connect(_al_presionar_boton)
+	z_as_relative = false
+	z_index = 200
+	_flecha_continuar.focus_mode = Control.FOCUS_NONE
+	_flecha_continuar.mouse_filter = Control.MOUSE_FILTER_STOP
+	_aplicar_textura_flecha()
+	_aplicar_colores_de_icono()
+	_flecha_continuar.pressed.connect(_al_presionar_flecha)
 	_timer_continuacion.timeout.connect(_al_terminar_segundo)
 	ocultar()
 
 
 func mostrar_para_siguiente_juego(segundos: int = SEGUNDOS_PREDETERMINADOS) -> void:
-	_mostrar(TEXTO_SIGUIENTE_JUEGO, segundos)
+	_mostrar(TOOLTIP_SIGUIENTE_JUEGO, segundos)
 
 
 func mostrar_para_finalizar(segundos: int = SEGUNDOS_PREDETERMINADOS) -> void:
-	_mostrar(TEXTO_FINALIZAR, segundos)
+	_mostrar(TOOLTIP_FINALIZAR, segundos)
+
+
+func mostrar_para_continuar_pendiente() -> void:
+	_mostrar_sin_temporizador(TOOLTIP_CONTINUAR_PENDIENTE)
 
 
 func ocultar() -> void:
 	_timer_continuacion.stop()
+	_detener_animacion_flecha()
 	hide()
 
 
-func _mostrar(texto_accion: String, segundos: int) -> void:
-	_texto_accion = texto_accion.strip_edges()
+func _mostrar(tooltip_accion: String, segundos: int) -> void:
+	_tooltip_accion = tooltip_accion.strip_edges()
 	_segundos_restantes = max(1, segundos)
 	ya_solicito_continuar = false
-	_boton_continuar.disabled = false
+	_flecha_continuar.disabled = false
+	_flecha_continuar.tooltip_text = ""
 	show()
 	move_to_front()
-	_actualizar_contador()
+	_iniciar_animacion_flecha()
 	_timer_continuacion.start()
-	_boton_continuar.grab_focus()
 
 
-func _actualizar_contador() -> void:
-	_label_contador.text = "En %d... %s" % [_segundos_restantes, _texto_accion]
+func _mostrar_sin_temporizador(tooltip_accion: String) -> void:
+	_tooltip_accion = tooltip_accion.strip_edges()
+	ya_solicito_continuar = false
+	_timer_continuacion.stop()
+	_flecha_continuar.disabled = false
+	_flecha_continuar.tooltip_text = ""
+	show()
+	move_to_front()
+	_iniciar_animacion_flecha()
 
 
-func _al_presionar_boton() -> void:
+func _aplicar_textura_flecha() -> void:
+	if textura_flecha != null:
+		_flecha_continuar.icon = textura_flecha
+	else:
+		_flecha_continuar.icon = TEXTURA_FLECHA_PREDETERMINADA
+	_flecha_continuar.modulate = Color.WHITE
+
+
+func _aplicar_colores_de_icono() -> void:
+	for color_name in [
+		"icon_normal_color",
+		"icon_hover_color",
+		"icon_pressed_color",
+		"icon_hover_pressed_color",
+		"icon_focus_color",
+		"icon_disabled_color",
+	]:
+		_flecha_continuar.add_theme_color_override(color_name, Color.WHITE)
+
+
+func _iniciar_animacion_flecha() -> void:
+	_detener_animacion_flecha()
+	_animacion_flecha = create_tween().set_loops()
+	for textura in TEXTURAS_FLECHA_ANIMADA:
+		_animacion_flecha.tween_callback(_aplicar_icono_animado.bind(textura))
+		_animacion_flecha.tween_interval(0.4)
+
+
+func _detener_animacion_flecha() -> void:
+	if _animacion_flecha != null:
+		_animacion_flecha.kill()
+		_animacion_flecha = null
+	_aplicar_textura_flecha()
+
+
+func _aplicar_icono_animado(textura: Texture2D) -> void:
+	if is_instance_valid(_flecha_continuar):
+		_flecha_continuar.icon = textura
+
+
+func _al_presionar_flecha() -> void:
 	_emitir_continuar_una_sola_vez()
 
 
@@ -59,7 +129,6 @@ func _al_terminar_segundo() -> void:
 	if _segundos_restantes <= 0:
 		_emitir_continuar_una_sola_vez()
 		return
-	_actualizar_contador()
 
 
 func _emitir_continuar_una_sola_vez() -> void:
@@ -67,5 +136,5 @@ func _emitir_continuar_una_sola_vez() -> void:
 		return
 	ya_solicito_continuar = true
 	_timer_continuacion.stop()
-	_boton_continuar.disabled = true
+	_flecha_continuar.disabled = true
 	continuar_solicitado.emit()

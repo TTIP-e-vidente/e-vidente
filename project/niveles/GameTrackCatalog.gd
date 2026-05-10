@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameTrackCatalog.gd
+# Catalogo estatico de pistas de la demo.
+# Track = tema jugable; category = grupo usado para filtrar alimentos.
+
 const LevelItemScript := preload("res://resources/level_item.gd")
 
 

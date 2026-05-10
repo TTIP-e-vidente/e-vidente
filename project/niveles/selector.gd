@@ -45,8 +45,6 @@ const TRACK_CETOGENICA := "cetogenica"
 var _profile_overlay: ProfileOverlayPanel
 var _profile_toggle_btn: Button
 var _racha_badge: Control
-var _button_base_scales: Dictionary = {}
-var _hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
@@ -101,7 +99,7 @@ func _on_autismo_presionado() -> void:
 
 
 func _abrir_destino_boton(
-	button: Control,
+	_button: Control,
 	destination_type: String,
 	track_key: String = ""
 ) -> void:
@@ -208,7 +206,7 @@ func _agregar_boton_perfil(hud_root: Control) -> void:
 	_profile_toggle_btn.offset_top = 16.0
 	_profile_toggle_btn.offset_right = -16.0
 	_profile_toggle_btn.offset_bottom = 84.0
-	_profile_toggle_btn.tooltip_text = "Mi progreso"
+	_profile_toggle_btn.tooltip_text = ""
 	_profile_toggle_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	_profile_toggle_btn.pressed.connect(_on_perfil_alternar_presionado)
 	hud_root.add_child(_profile_toggle_btn)

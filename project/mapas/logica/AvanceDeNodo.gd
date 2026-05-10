@@ -1,11 +1,15 @@
 extends RefCounted
 class_name AvanceDeNodo
 
+# Consulta progreso y calcula desbloqueos del mapa.
+# No arma partidas, no abre escenas y no carga contenido.
+
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
 
 
+# Solo consulta el progreso ya guardado; no abre escenas ni arma partidas.
 static func get_node_state(nodos_mapa: Array, node_data: MapNodeData) -> Dictionary:
 	if node_data == null:
 		return _state(false, false, STATE_LOCKED)
@@ -28,6 +32,8 @@ static func is_node_unlocked(
 ) -> bool:
 	if node_data == null:
 		return false
+	if node_data.default_unlocked:
+		return true
 	var index: int = obtener_indice_nodo(nodos_mapa, node_data.node_key)
 	if index < 0:
 		index = node_data.index
@@ -57,8 +63,22 @@ static func obtener_siguiente_nodo(nodos_mapa: Array, node_key_actual: String) -
 	var siguiente_indice: int = indice_actual + 1
 	if siguiente_indice >= nodos_mapa.size():
 		return null
-
 	return nodos_mapa[siguiente_indice]
+
+
+static func hay_siguiente_juego(plan_de_partida: Dictionary) -> bool:
+	# Lee el plan actual y responde si queda otro juego dentro del mismo nodo.
+	var total_juegos: int = _obtener_total_juegos_plan(plan_de_partida)
+	var indice_actual: int = int(plan_de_partida.get("indice_juego_actual", 0))
+	return indice_actual >= 0 and indice_actual + 1 < total_juegos
+
+
+static func obtener_siguiente_juego(plan_de_partida: Dictionary) -> Dictionary:
+	if not hay_siguiente_juego(plan_de_partida):
+		return {}
+	var juegos: Array[Dictionary] = _obtener_juegos_plan(plan_de_partida)
+	var siguiente_indice: int = int(plan_de_partida.get("indice_juego_actual", 0)) + 1
+	return juegos[siguiente_indice].duplicate(true)
 
 
 static func nodo_esta_desbloqueado(
@@ -111,3 +131,21 @@ static func _obtener_node_key(nodo_mapa: Variant) -> String:
 	if nodo_mapa is Dictionary:
 		return str((nodo_mapa as Dictionary).get("node_key", "")).strip_edges()
 	return ""
+
+
+static func _obtener_juegos_plan(plan_de_partida: Dictionary) -> Array[Dictionary]:
+	var juegos: Array[Dictionary] = []
+	var raw_juegos: Variant = plan_de_partida.get("juegos", [])
+	if not raw_juegos is Array:
+		return juegos
+	for raw_juego in raw_juegos as Array:
+		if raw_juego is Dictionary:
+			juegos.append((raw_juego as Dictionary).duplicate(true))
+	return juegos
+
+
+static func _obtener_total_juegos_plan(plan_de_partida: Dictionary) -> int:
+	var juegos: Array[Dictionary] = _obtener_juegos_plan(plan_de_partida)
+	if juegos.is_empty():
+		return 0
+	return juegos.size()

@@ -1,24 +1,24 @@
-[gd_scene format=3 uid="uid://dreulrv8mq1oa"]
+[gd_scene load_steps=3 format=3 uid="uid://dreulrv8mq1oa"]
 
 [ext_resource type="Script" uid="uid://dlcmeiufgvp20" path="res://vincular/concept_item.gd" id="1_0tgql"]
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_nrq2q"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_8vmuo"]
 
-[node name="ConceptItem" type="TextureButton" unique_id=2030109874]
-scale = Vector2(0.1264499, 0.1264499)
+[node name="ConceptItem" type="TextureButton"]
+texture_normal = ExtResource("1_nrq2q")
+stretch_mode = 0
+ignore_texture_size = true
 script = ExtResource("1_0tgql")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1448171585]
-texture = ExtResource("1_nrq2q")
-
-[node name="Label" type="Label" parent="." unique_id=443793939]
-layout_mode = 0
-offset_left = -75.83918
-offset_top = -31.63308
-offset_right = 57.16082
-offset_bottom = 19.366924
-scale = Vector2(0.99236757, 1)
-pivot_offset = Vector2(75.839195, 37.919594)
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+offset_left = 12.0
+offset_top = 4.0
+offset_right = -12.0
+offset_bottom = -4.0
+mouse_filter = 2
 theme_override_fonts/font = ExtResource("3_8vmuo")
-theme_override_font_sizes/font_size = 42
-text = "prueba"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3

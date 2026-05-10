@@ -1,41 +1,23 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://interface/components/ContinuarJuego/ContinuarJuego.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="2_boton"]
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_boton_continuar"]
-content_margin_left = 32.0
-content_margin_top = 14.0
-content_margin_right = 32.0
-content_margin_bottom = 14.0
-texture = ExtResource("2_boton")
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_contador"]
-bg_color = Color(0.129412, 0.117647, 0.109804, 0.9)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 0.121569)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+[ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="2_flecha"]
 
 [node name="ContinuarJuego" type="Control"]
 visible = false
-custom_minimum_size = Vector2(272, 120)
-z_index = 20
+custom_minimum_size = Vector2(128, 128)
+z_as_relative = false
+z_index = 200
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -296.0
-offset_top = -132.0
-offset_right = -24.0
-offset_bottom = -12.0
+offset_left = -156.0
+offset_top = -168.0
+offset_right = -28.0
+offset_bottom = -40.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
@@ -52,44 +34,16 @@ mouse_filter = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="BotonContinuar" type="Button" parent="ColumnaContinuacion"]
-custom_minimum_size = Vector2(236, 56)
+[node name="FlechaContinuar" type="Button" parent="ColumnaContinuacion"]
+custom_minimum_size = Vector2(128, 128)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
-theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.65)
-theme_override_font_sizes/font_size = 28
-theme_override_styles/normal = SubResource("StyleBoxTexture_boton_continuar")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_boton_continuar")
-theme_override_styles/hover = SubResource("StyleBoxTexture_boton_continuar")
-theme_override_styles/disabled = SubResource("StyleBoxTexture_boton_continuar")
-theme_override_styles/focus = SubResource("StyleBoxTexture_boton_continuar")
-text = "Continuar"
-
-[node name="ContadorMarco" type="PanelContainer" parent="ColumnaContinuacion"]
-custom_minimum_size = Vector2(236, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_styles/panel = SubResource("StyleBoxFlat_contador")
-
-[node name="ContadorPadding" type="MarginContainer" parent="ColumnaContinuacion/ContadorMarco"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
-
-[node name="LabelContador" type="Label" parent="ColumnaContinuacion/ContadorMarco/ContadorPadding"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.96)
-theme_override_font_sizes/font_size = 16
-text = "En 5... se pasara"
-horizontal_alignment = 1
-vertical_alignment = 1
+tooltip_text = ""
+focus_mode = 0
+icon = ExtResource("2_flecha")
+flat = true
+expand_icon = true
 
 [node name="TimerContinuacion" type="Timer" parent="."]
 wait_time = 1.0

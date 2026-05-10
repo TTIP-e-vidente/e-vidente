@@ -1,5 +1,10 @@
 extends Node
 
+# Global.gd
+# Estado global liviano de la demo.
+# Guarda progreso local, sesion de nodo y datos necesarios para continuar una partida.
+# No maneja UI ni decide como se dibuja cada pantalla.
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload("res://niveles/content/GameLevelContentCatalog.gd")
 const GameStreakTracker := preload("res://niveles/progress/GameStreakTracker.gd")
@@ -15,6 +20,7 @@ const SaveEstadoHelperScript := preload(
 
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
 const STREAK_SYSTEM_KEY := "streak"
+const LOG_PREFIX_PARTIDA_NODO := "[GLOBAL]"
 # TODO post-demo: renombrar cuando una migracion de save permita eliminar question_progress.
 const QUESTION_PROGRESS_SYSTEM_KEY := "question_progress"
 
@@ -50,7 +56,9 @@ func obtener_actual_nivel_numero() -> int:
 
 
 func establecer_actual_nivel_numero(level_number: int, track_key: String = "") -> void:
-	var max_level: int = _level_content.obtener_maximo_pista_nivel_cantidad(GameTrackCatalog.DEFAULT_LEVEL_COUNT)
+	var max_level: int = _level_content.obtener_maximo_pista_nivel_cantidad(
+		GameTrackCatalog.DEFAULT_LEVEL_COUNT
+	)
 	var key: String = track_key.strip_edges()
 	if not key.is_empty() and GameTrackCatalog.tiene_pista(key):
 		max_level = obtener_pista_nivel_cantidad(key)
@@ -106,7 +114,9 @@ func es_nivel_completado(track_key: String, level_number: int) -> bool:
 func obtener_progreso_resumen() -> Dictionary:
 	var summary: Dictionary = {
 		"total": 0,
-		"max_total": _level_content.obtener_total_nivel_cantidad(GameTrackCatalog.obtener_total_nivel_cantidad())
+		"max_total": _level_content.obtener_total_nivel_cantidad(
+			GameTrackCatalog.obtener_total_nivel_cantidad()
+		)
 	}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		var count: int = 0
@@ -149,7 +159,11 @@ func obtener_parcial_nivel_estado(track_key: String, level_number: int) -> Dicti
 	return _partial_level_state_by_track.get(key, {}).get(level, {})
 
 
-func establecer_parcial_nivel_estado(track_key: String, level_number: int, state: Dictionary) -> void:
+func establecer_parcial_nivel_estado(
+	track_key: String,
+	level_number: int,
+	state: Dictionary
+) -> void:
 	var key := _obtener_clave_pista_valida(track_key)
 	var level := _obtener_numero_nivel_valido(key, level_number)
 	if level <= 0:
@@ -178,7 +192,10 @@ func marcar_nodo_jugable_completado(track_key: String, node_key: String) -> void
 	var normalized_node_key: String = node_key.strip_edges()
 	if normalized_track_key.is_empty() or normalized_node_key.is_empty():
 		return
-	var progress_for_track: Dictionary = _playable_node_progress_by_track.get(normalized_track_key, {})
+	var progress_for_track: Dictionary = _playable_node_progress_by_track.get(
+		normalized_track_key,
+		{}
+	)
 	progress_for_track[normalized_node_key] = true
 	_playable_node_progress_by_track[normalized_track_key] = progress_for_track
 
@@ -213,6 +230,12 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 func iniciar_partida_de_nodo(plan_de_partida: Dictionary) -> void:
 	_partida_de_nodo_activa = _normalizar_partida_de_nodo(plan_de_partida)
 	_juego_de_nodo_actual = _construir_juego_actual_de_partida(_partida_de_nodo_activa)
+	print(
+		LOG_PREFIX_PARTIDA_NODO,
+		" iniciar_partida nodo=", str(_partida_de_nodo_activa.get("clave_nodo", "")),
+		" total=", int(_partida_de_nodo_activa.get("total_juegos", 0)),
+		" juego=", _juego_de_nodo_actual
+	)
 
 
 func obtener_partida_de_nodo_actual() -> Dictionary:
@@ -235,10 +258,23 @@ func obtener_dificultad_del_juego_actual() -> int:
 
 func hay_siguiente_juego_de_partida() -> bool:
 	if _partida_de_nodo_activa.is_empty():
+		print("[AVANCE] Plan inválido: total=0.")
 		return false
 	var indice_juego_actual: int = int(_partida_de_nodo_activa.get("indice_juego_actual", 0))
 	var total_juegos: int = int(_partida_de_nodo_activa.get("total_juegos", 0))
-	return indice_juego_actual + 1 < total_juegos
+	if total_juegos <= 0:
+		print("[AVANCE] Plan inválido: total=0.")
+		return false
+	var siguiente_indice: int = indice_juego_actual + 1
+	var hay_siguiente: bool = indice_juego_actual + 1 < total_juegos
+	print(
+		"[AVANCE] indice_actual=",
+		" indice_actual=", indice_juego_actual,
+		" total=", total_juegos,
+		" siguiente_indice=", siguiente_indice,
+		" hay_siguiente=", hay_siguiente
+	)
+	return hay_siguiente
 
 
 func avanzar_partida_de_nodo() -> void:
@@ -250,9 +286,22 @@ func avanzar_partida_de_nodo() -> void:
 	) + 1
 	_partida_de_nodo_activa = partida_actualizada
 	_juego_de_nodo_actual = _construir_juego_actual_de_partida(partida_actualizada)
+	print(
+		"[AVANCE] avanzar_partida indice_actual=",
+		" avanzar_partida indice_actual=",
+		int(_partida_de_nodo_activa.get("indice_juego_actual", 0)),
+		" juego=",
+		_juego_de_nodo_actual
+	)
 
 
 func finalizar_partida_de_nodo() -> void:
+	if not _partida_de_nodo_activa.is_empty():
+		print(
+			LOG_PREFIX_PARTIDA_NODO,
+			" finalizar_partida nodo=",
+			str(_partida_de_nodo_activa.get("clave_nodo", ""))
+		)
 	_partida_de_nodo_activa = {}
 	_juego_de_nodo_actual = {}
 
@@ -284,8 +333,9 @@ func _normalizar_partida_de_nodo(plan_de_partida: Dictionary) -> Dictionary:
 		return {}
 	var juegos: Array[Dictionary] = _duplicar_juegos_de_partida(plan_de_partida.get("juegos", []))
 	if juegos.is_empty():
+		print(LOG_PREFIX_PARTIDA_NODO, " plan invalido: juegos vacios")
 		return {}
-	var total_juegos: int = max(1, int(plan_de_partida.get("total_juegos", juegos.size())))
+	var total_juegos: int = juegos.size()
 	var indice_juego_actual: int = clampi(
 		int(plan_de_partida.get("indice_juego_actual", 0)),
 		0,
@@ -299,7 +349,7 @@ func _normalizar_partida_de_nodo(plan_de_partida: Dictionary) -> Dictionary:
 		"dificultad": max(0, int(plan_de_partida.get("dificultad", 0))),
 		"numero_nivel": max(1, int(plan_de_partida.get("numero_nivel", 1))),
 		"indice_juego_actual": indice_juego_actual,
-		"total_juegos": max(total_juegos, juegos.size()),
+		"total_juegos": total_juegos,
 		"juegos": juegos,
 	}
 
@@ -318,7 +368,7 @@ func _construir_juego_actual_de_partida(partida_activa: Dictionary) -> Dictionar
 	var juego_actual: Dictionary = juegos[indice_juego_actual].duplicate(true)
 	juego_actual["pertenece_a_partida_de_nodo"] = true
 	juego_actual["indice_juego_actual"] = indice_juego_actual
-	juego_actual["total_juegos"] = max(1, int(partida_activa.get("total_juegos", juegos.size())))
+	juego_actual["total_juegos"] = juegos.size()
 	juego_actual["titulo_nodo"] = str(partida_activa.get("titulo_nodo", "")).strip_edges()
 	juego_actual["dificultad"] = _obtener_dificultad_del_juego_actual(juego_actual, partida_activa)
 	juego_actual["track_key"] = str(partida_activa.get("clave_pista", "")).strip_edges()
@@ -326,6 +376,8 @@ func _construir_juego_actual_de_partida(partida_activa: Dictionary) -> Dictionar
 	juego_actual["node_title"] = str(partida_activa.get("titulo_nodo", "")).strip_edges()
 	juego_actual["level_number"] = max(1, int(partida_activa.get("numero_nivel", 1)))
 	juego_actual["return_to"] = str(partida_activa.get("escena_de_retorno", "")).strip_edges()
+	juego_actual["activity_id"] = str(juego_actual.get("activity_id", "")).strip_edges()
+	juego_actual["pack_id"] = str(juego_actual.get("pack_id", juego_actual.get("track_key", ""))).strip_edges()
 	return juego_actual
 
 
@@ -365,6 +417,8 @@ func _construir_contexto_de_progreso_de_juego(
 		"dificultad": max(0, dificultad),
 		"mode": str(fuente.get("mode", "")).strip_edges(),
 		"json_path": str(fuente.get("json_path", "")).strip_edges(),
+		"activity_id": str(fuente.get("activity_id", "")).strip_edges(),
+		"pack_id": str(fuente.get("pack_id", "")).strip_edges(),
 		"titulo_nodo": str(fuente.get("titulo_nodo", titulo)).strip_edges(),
 		"pertenece_a_partida_de_nodo": pertenece_a_partida_de_nodo,
 	}
@@ -380,6 +434,37 @@ func consumir_nodo_a_continuar() -> String:
 	var nodo: String = _nodo_a_continuar
 	_nodo_a_continuar = ""
 	return nodo
+
+
+# --- Continuacion pendiente -------------------------------------------------
+# Fuente unica para que las pantallas sepan si deben mostrar la flecha de retomar.
+
+func hay_juego_o_nodo_para_continuar() -> bool:
+	return not obtener_destino_de_continuacion().is_empty()
+
+
+func obtener_destino_de_continuacion() -> Dictionary:
+	var destino_partida: Dictionary = _obtener_destino_partida_de_nodo_activa()
+	if not destino_partida.is_empty():
+		return destino_partida
+
+	var destino_sesion: Dictionary = _obtener_destino_sesion_nodo_activa()
+	if not destino_sesion.is_empty():
+		return destino_sesion
+
+	var destino_guardado: Dictionary = _obtener_destino_reanudacion_guardada()
+	if not destino_guardado.is_empty():
+		return destino_guardado
+
+	return {}
+
+
+func limpiar_continuacion_si_corresponde() -> void:
+	if not _partida_de_nodo_activa.is_empty():
+		return
+	if not _active_playable_node.is_empty():
+		return
+	_nodo_a_continuar = ""
 
 
 # --- Estados extra de progreso ---------------------------------------------
@@ -521,7 +606,9 @@ func _agregar_estado_progreso_racha(systems_state: Dictionary) -> void:
 
 func _agregar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void:
 	if not _playable_node_progress_by_track.is_empty():
-		systems_state[QUESTION_PROGRESS_SYSTEM_KEY] = _playable_node_progress_by_track.duplicate(true)
+		systems_state[QUESTION_PROGRESS_SYSTEM_KEY] = (
+			_playable_node_progress_by_track.duplicate(true)
+		)
 
 
 func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
@@ -553,7 +640,9 @@ func _importar_estados_sistema_progreso_personalizados(systems_state: Dictionary
 			continue
 		var raw_state: Variant = systems_state.get(system_key, {})
 		if raw_state is Dictionary:
-			_extra_progress_system_states[normalized_system_key] = (raw_state as Dictionary).duplicate(true)
+			_extra_progress_system_states[normalized_system_key] = (
+				(raw_state as Dictionary).duplicate(true)
+			)
 
 
 func _obtener_clave_pista_valida(track_key: String) -> String:
@@ -587,3 +676,54 @@ func _asegurar_pista_progreso_existe(track_key: String) -> void:
 	flags.resize(count)
 	flags.fill(false)
 	_completed_levels_by_track[track_key] = flags
+
+
+func _obtener_destino_partida_de_nodo_activa() -> Dictionary:
+	if _juego_de_nodo_actual.is_empty():
+		return {}
+	return _construir_destino_jugable(_juego_de_nodo_actual)
+
+
+func _obtener_destino_sesion_nodo_activa() -> Dictionary:
+	if _active_playable_node.is_empty():
+		return {}
+	return _construir_destino_jugable(_active_playable_node)
+
+
+func _construir_destino_jugable(contexto_jugable: Dictionary) -> Dictionary:
+	var modo: String = str(
+		contexto_jugable.get("mode", contexto_jugable.get("node_mode", ""))
+	).strip_edges()
+	if modo.is_empty():
+		return {}
+	return {
+		"type": "playable_mode",
+		"mode": modo,
+		"track_key": str(contexto_jugable.get("track_key", "")).strip_edges(),
+		"node_key": str(contexto_jugable.get("node_key", "")).strip_edges(),
+		"return_to": str(contexto_jugable.get("return_to", "")).strip_edges(),
+	}
+
+
+func _obtener_destino_reanudacion_guardada() -> Dictionary:
+	var save_manager: Node = get_node_or_null("/root/SaveManager")
+	if save_manager == null:
+		return {}
+	if not save_manager.has_method("puede_reanudar_guardado_actual"):
+		return {}
+	if not bool(save_manager.call("puede_reanudar_guardado_actual")):
+		return {}
+	if not save_manager.has_method("recargar_desde_disco_y_obtener_reanudacion"):
+		return {}
+	var estado_reanudacion: Variant = save_manager.call(
+		"recargar_desde_disco_y_obtener_reanudacion"
+	)
+	if not estado_reanudacion is Dictionary:
+		return {}
+	var estado: Dictionary = (estado_reanudacion as Dictionary).duplicate(true)
+	if estado.is_empty():
+		return {}
+	return {
+		"type": "resume",
+		"resume_state": estado,
+	}

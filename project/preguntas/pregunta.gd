@@ -22,7 +22,9 @@ const PresentadorContinuarJuegoScript := preload(
 )
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
-const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
+const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
+const LOG_PREFIX_QUIZ := "[Quiz]"
+const LOG_PREFIX_QUIZ_LAYOUT := "[QuizLayout]"
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
@@ -30,8 +32,19 @@ const CONTENT_ERROR_BODY_FONT_SIZE := 26
 const SEGUNDOS_CONTINUACION_AUTOMATICA := 5.0
 
 
-@onready var boton_1 = $Contenido/Preguntas/Boton1
-@onready var boton_2 = $Contenido/Preguntas/Boton2
+@onready var _layout_preguntas_2: Control = $Contenido/Preguntas
+@onready var _layout_preguntas_3: Control = $Contenido/Preguntasx3
+@onready var _layout_preguntas_4: Control = $Contenido/Preguntasx4
+
+@onready var boton_1: Button = $Contenido/Preguntas/Boton1
+@onready var boton_2: Button = $Contenido/Preguntas/Boton2
+@onready var boton_3: Button = $Contenido/Preguntasx3/Boton3
+@onready var boton_4: Button = $Contenido/Preguntasx3/Boton4
+@onready var boton_5: Button = $Contenido/Preguntasx3/Boton5
+@onready var boton_6: Button = $Contenido/Preguntasx4/Boton6
+@onready var boton_7: Button = $Contenido/Preguntasx4/Boton7
+@onready var boton_8: Button = $Contenido/Preguntasx4/Boton8
+@onready var boton_9: Button = $Contenido/Preguntasx4/Boton9
 
 var dodge_offsets := [
 	Vector2(120, 0),
@@ -42,11 +55,17 @@ var dodge_offsets := [
 var last_offset := Vector2.ZERO
 
 var base_positions := {}
+var _base_scales := {}
+var _base_rotations := {}
 @export var quiz: ThemePreg
 @export var nivel_id: int = 2
 @export var track_key: String = "celiaquia"
 
 var botones: Array[Button] = []
+var _todos_los_botones: Array[Button] = []
+var _botones_layout_2: Array[Button] = []
+var _botones_layout_3: Array[Button] = []
+var _botones_layout_4: Array[Button] = []
 var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
@@ -57,9 +76,9 @@ var _tiene_sesion_de_mapa: bool = false
 var _pertenece_a_partida_de_nodo: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
 var _mensaje_error_bloqueante: String = ""
-var _plantillas_botones_respuesta: Array[Button] = []
 var _post_game_streak_feedback: Dictionary = {}
 var _post_game_flow_state: Dictionary = {}
+var _correct_answer_sound: AudioStream = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -67,7 +86,6 @@ var pregunta_actual: Preguntas:
 @onready var pregunta_label: Label = $Contenido/Informacion/Pregunta
 @onready var _visual_panel: Panel = $Contenido/Informacion/Visual
 @onready var _imagen_pregunta: TextureRect = $Contenido/Informacion/Visual/Imagen
-@onready var _contenedor_respuestas: Control = $Contenido/Preguntas
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
 @onready var _contenido: Control = $Contenido
 @onready var _panel_final: ColorRect = $Contenido/GameOver
@@ -81,41 +99,89 @@ var pregunta_actual: Preguntas:
 # Entrada del quiz
 func _ready() -> void:
 	puntaje = 0
-	base_positions[boton_1] = boton_1.position
-	base_positions[boton_2] = boton_2.position
+	_configurar_layouts_de_opciones()
 	_reiniciar_cierre_del_quiz()
 	_conectar_continuar_juego()
 
-	_recolectar_botones_respuesta()
-	configurar_quiz_desde_sesion()
+	_cargar_datos_pregunta()
 	_configurar_indicador_de_progreso_de_juego()
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	if _cantidad_de_preguntas() > 1:
 		quiz.theme.shuffle()
-	mostrar_pregunta()
+	_mostrar_pregunta()
 
 
 # Helpers de preparación
-func _recolectar_botones_respuesta() -> void:
+func _configurar_layouts_de_opciones() -> void:
+	_botones_layout_2 = [boton_1, boton_2]
+	_botones_layout_3 = [boton_3, boton_4, boton_5]
+	_botones_layout_4 = [boton_6, boton_7, boton_8, boton_9]
+
 	botones.clear()
-	_plantillas_botones_respuesta.clear()
-	for boton_crudo in _contenedor_respuestas.get_children():
-		var boton_respuesta: Button = boton_crudo as Button
-		if boton_respuesta == null:
-			continue
-		_plantillas_botones_respuesta.append(boton_respuesta)
+	_todos_los_botones.clear()
+	_registrar_botones_de_layout(_botones_layout_2)
+	_registrar_botones_de_layout(_botones_layout_3)
+	_registrar_botones_de_layout(_botones_layout_4)
+	_ocultar_todos_los_layouts_de_opciones()
+
+
+func _registrar_botones_de_layout(botones_layout: Array[Button]) -> void:
+	for boton_respuesta in botones_layout:
 		_registrar_boton_respuesta(boton_respuesta)
 
 
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
-	botones.append(boton_respuesta)
-	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
+	if boton_respuesta == null:
+		return
+	if not _todos_los_botones.has(boton_respuesta):
+		_todos_los_botones.append(boton_respuesta)
+	_registrar_posicion_base_boton(boton_respuesta)
+	_registrar_transform_base_boton(boton_respuesta)
+	var callback := _on_opcion_seleccionada.bind(boton_respuesta)
+	if not boton_respuesta.pressed.is_connected(callback):
+		boton_respuesta.pressed.connect(callback)
 
-func dodge_button(button):
 
-	var base_pos = base_positions[button]
+func _registrar_posicion_base_boton(boton_respuesta: Button) -> void:
+	if boton_respuesta == null:
+		return
+	if base_positions.has(boton_respuesta):
+		return
+	base_positions[boton_respuesta] = boton_respuesta.position
+
+
+func _registrar_transform_base_boton(boton_respuesta: Button) -> void:
+	if boton_respuesta == null:
+		return
+	if not _base_scales.has(boton_respuesta):
+		_base_scales[boton_respuesta] = boton_respuesta.scale
+	if not _base_rotations.has(boton_respuesta):
+		_base_rotations[boton_respuesta] = boton_respuesta.rotation_degrees
+
+
+func _obtener_escala_base_boton(boton_respuesta: Button) -> Vector2:
+	return _base_scales.get(boton_respuesta, boton_respuesta.scale)
+
+
+func _obtener_rotacion_base_boton(boton_respuesta: Button) -> float:
+	return float(_base_rotations.get(boton_respuesta, boton_respuesta.rotation_degrees))
+
+
+func _escalar_escala_base(boton_respuesta: Button, factor_x: float, factor_y: float) -> Vector2:
+	var escala_base: Vector2 = _obtener_escala_base_boton(boton_respuesta)
+	return Vector2(escala_base.x * factor_x, escala_base.y * factor_y)
+
+
+func dodge_button(button: Button) -> void:
+	if button == null:
+		return
+
+	var base_pos: Vector2 = base_positions.get(button, button.position)
+	var base_scale: Vector2 = _obtener_escala_base_boton(button)
+	var base_rotation: float = _obtener_rotacion_base_boton(button)
+	base_positions[button] = base_pos
 	var available_offsets = dodge_offsets.filter(
 	func(o): return o != last_offset
 	)
@@ -133,14 +199,14 @@ func dodge_button(button):
 	tween.tween_property(
 		button,
 		"scale",
-		Vector2(0.95, 0.95),
+		_escalar_escala_base(button, 0.95, 0.95),
 		0.08
 	)
 
 	tween.parallel().tween_property(
 		button,
 		"rotation_degrees",
-		randf_range(-4, 4),
+		base_rotation + randf_range(-4, 4),
 		0.15
 	)
 
@@ -154,7 +220,7 @@ func dodge_button(button):
 	tween.tween_property(
 		button,
 		"scale",
-		Vector2.ONE,
+		base_scale,
 		0.08
 	)
 	await get_tree().create_timer(1.2).timeout
@@ -167,6 +233,20 @@ func dodge_button(button):
 		base_pos,
 		0.35
 	)
+	tween_back.parallel().tween_property(button, "scale", base_scale, 0.2)
+	tween_back.parallel().tween_property(button, "rotation_degrees", base_rotation, 0.2)
+
+func _cargar_datos_pregunta() -> void:
+	configurar_quiz_desde_sesion()
+	if quiz != null:
+		print(
+			LOG_PREFIX_QUIZ,
+			" activity=",
+			_nodo_actual,
+			" options=",
+			_cantidad_de_opciones_actuales()
+		)
+
 
 func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
@@ -220,6 +300,37 @@ func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	)
 
 
+func _obtener_global_autoload() -> Node:
+	var scene_tree := get_tree()
+	if scene_tree == null or scene_tree.root == null:
+		return null
+	return scene_tree.root.get_node_or_null("/root/Global")
+
+
+func _obtener_save_manager_autoload() -> Node:
+	var scene_tree := get_tree()
+	if scene_tree == null or scene_tree.root == null:
+		return null
+	return scene_tree.root.get_node_or_null("/root/SaveManager")
+
+
+func _obtener_estado_racha_global() -> Dictionary:
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("obtener_estado_racha"):
+		return {}
+	var estado_racha: Variant = global_autoload.call("obtener_estado_racha")
+	if estado_racha is Dictionary:
+		return (estado_racha as Dictionary).duplicate(true)
+	return {}
+
+
+func _obtener_cantidad_de_niveles_de_pista() -> int:
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("obtener_pista_nivel_cantidad"):
+		return 1
+	return int(global_autoload.call("obtener_pista_nivel_cantidad", track_key))
+
+
 func _es_juego_de_partida_de_nodo() -> bool:
 	return _pertenece_a_partida_de_nodo
 
@@ -257,8 +368,20 @@ func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
 
+func _cantidad_de_opciones_actuales() -> int:
+	if quiz == null or quiz.theme.is_empty():
+		return 0
+	if indice_pregunta_actual >= quiz.theme.size():
+		return 0
+	return pregunta_actual.opciones.size()
+
+
 # Gameplay del quiz
 func mostrar_pregunta() -> void:
+	_mostrar_pregunta()
+
+
+func _mostrar_pregunta() -> void:
 	bloqueado = false
 
 	if quiz == null:
@@ -272,46 +395,130 @@ func mostrar_pregunta() -> void:
 
 	pregunta_label.text = pregunta_actual.info_pregunta
 	_mostrar_visual_de_pregunta(pregunta_actual)
-	_mostrar_opciones(pregunta_actual.opciones)
+	_crear_opciones(pregunta_actual.opciones)
+
+
+func _crear_opciones(opciones_actuales: Array[String]) -> void:
+	_mostrar_opciones(opciones_actuales)
 
 
 func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
-	_asegurar_cantidad_de_botones(opciones_actuales.size())
-	for indice_boton in range(botones.size()):
-		var boton_respuesta: Button = botones[indice_boton]
-		if indice_boton >= opciones_actuales.size():
+	_mostrar_layout_por_cantidad(opciones_actuales.size())
+	_cargar_opciones_en_botones(opciones_actuales, botones)
+
+
+func _mostrar_layout_por_cantidad(cantidad_opciones: int) -> void:
+	botones = _obtener_botones_para_cantidad(cantidad_opciones)
+
+
+func _obtener_botones_para_cantidad(cantidad_opciones: int) -> Array[Button]:
+	_ocultar_todos_los_layouts_de_opciones()
+	if cantidad_opciones <= 0:
+		push_warning(
+			"%s options=%d sin opciones jugables." % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				cantidad_opciones
+			]
+		)
+		return []
+
+	var cantidad_layout: int = _resolver_cantidad_layout(cantidad_opciones)
+	if cantidad_layout != cantidad_opciones:
+		push_warning(
+			"%s options=%d fallback=%s" % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				cantidad_opciones,
+				_nombre_layout_para_cantidad(cantidad_layout)
+			]
+		)
+
+	var botones_layout: Array[Button] = []
+	match cantidad_layout:
+		2:
+			_layout_preguntas_2.show()
+			botones_layout = _botones_layout_2
+		3:
+			_layout_preguntas_3.show()
+			botones_layout = _botones_layout_3
+		_:
+			_layout_preguntas_4.show()
+			botones_layout = _botones_layout_4
+
+	print(
+		LOG_PREFIX_QUIZ_LAYOUT,
+		" options=",
+		cantidad_opciones,
+		" layout=",
+		_nombre_layout_para_cantidad(cantidad_layout)
+	)
+	return botones_layout
+
+
+func _resolver_cantidad_layout(cantidad_opciones: int) -> int:
+	if cantidad_opciones <= 2:
+		return 2
+	if cantidad_opciones == 3:
+		return 3
+	return 4
+
+
+func _nombre_layout_para_cantidad(cantidad_layout: int) -> String:
+	match cantidad_layout:
+		2:
+			return _layout_preguntas_2.name
+		3:
+			return _layout_preguntas_3.name
+		4:
+			return _layout_preguntas_4.name
+		_:
+			return "desconocido"
+
+
+func _ocultar_todos_los_layouts_de_opciones() -> void:
+	botones.clear()
+	if _layout_preguntas_2 != null:
+		_layout_preguntas_2.hide()
+	if _layout_preguntas_3 != null:
+		_layout_preguntas_3.hide()
+	if _layout_preguntas_4 != null:
+		_layout_preguntas_4.hide()
+	for boton_respuesta in _todos_los_botones:
+		_ocultar_boton_respuesta(boton_respuesta)
+
+
+func _cargar_opciones_en_botones(
+	opciones_actuales: Array[String],
+	botones_layout: Array[Button]
+) -> void:
+	if botones_layout.is_empty():
+		return
+
+	var cantidad_a_cargar: int = min(opciones_actuales.size(), botones_layout.size())
+	if opciones_actuales.size() > botones_layout.size():
+		push_warning(
+			"%s options=%d buttons=%d; se omiten excedentes." % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				opciones_actuales.size(),
+				botones_layout.size()
+			]
+		)
+
+	for indice_boton in range(botones_layout.size()):
+		var boton_respuesta: Button = botones_layout[indice_boton]
+		if indice_boton >= cantidad_a_cargar:
 			_ocultar_boton_respuesta(boton_respuesta)
 			continue
 		_configurar_boton_respuesta(boton_respuesta, opciones_actuales[indice_boton])
 
 
-func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
-	if cantidad_necesaria <= botones.size():
-		return
-	if _plantillas_botones_respuesta.is_empty():
-		return
-
-	while botones.size() < cantidad_necesaria:
-		var indice_plantilla: int = botones.size() % _plantillas_botones_respuesta.size()
-		var boton_plantilla: Button = _plantillas_botones_respuesta[indice_plantilla]
-		var nuevo_boton: Button = boton_plantilla.duplicate() as Button
-		if nuevo_boton == null:
-			return
-		nuevo_boton.name = "Boton%d" % (botones.size() + 1)
-		_contenedor_respuestas.add_child(nuevo_boton)
-		_registrar_boton_respuesta(nuevo_boton)
-
-
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
-	boton_respuesta.text = _texto_display(texto_respuesta)
-	boton_respuesta.tooltip_text = texto_respuesta
+	_restablecer_estado_visual_boton(boton_respuesta)
+	var texto_visible := _texto_display(texto_respuesta)
+	_set_texto_boton_opcion(boton_respuesta, texto_visible, _font_size_para(texto_respuesta))
+	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", texto_respuesta)
-	boton_respuesta.modulate = Color.WHITE
 	boton_respuesta.disabled = false
-	boton_respuesta.scale = Vector2.ONE
-	boton_respuesta.rotation_degrees = 0
-	boton_respuesta.add_theme_font_size_override("font_size", _font_size_para(texto_respuesta))
 
 
 const MAX_DISPLAY_CHARS := 55
@@ -334,11 +541,43 @@ func _font_size_para(texto: String) -> int:
 	return 20
 
 
+func _restablecer_estado_visual_boton(boton_respuesta: Button) -> void:
+	boton_respuesta.modulate = Color.WHITE
+	boton_respuesta.scale = _obtener_escala_base_boton(boton_respuesta)
+	boton_respuesta.rotation_degrees = _obtener_rotacion_base_boton(boton_respuesta)
+
+
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
+	_restablecer_estado_visual_boton(boton_respuesta)
 	boton_respuesta.hide()
+	boton_respuesta.text = ""
+	var label_ocultar := _buscar_label_de_boton(boton_respuesta)
+	if label_ocultar:
+		label_ocultar.text = ""
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
+
+
+func _buscar_label_de_boton(boton: Button) -> Label:
+	for nombre in ["TextoOpcion", "Texto", "Label", "OptionLabel"]:
+		var nodo := boton.get_node_or_null(nombre)
+		if nodo is Label:
+			return nodo as Label
+	return null
+
+
+func _set_texto_boton_opcion(boton: Button, texto: String, font_size_visual: int) -> void:
+	var label := _buscar_label_de_boton(boton)
+	if label:
+		label.text = texto
+		boton.text = ""
+		var scale_x: float = boton.scale.x if boton.scale.x > 0.01 else 1.0
+		label.add_theme_font_size_override("font_size", int(round(float(font_size_visual) / scale_x)))
+		print("[QuizOption] button=", boton.name, " label=", label.name, " found=true text=\"", texto.left(30), "\"")
+	else:
+		boton.text = texto
+		boton.add_theme_font_size_override("font_size", font_size_visual)
 
 
 func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
@@ -368,61 +607,90 @@ func _limpiar_media_de_pregunta() -> void:
 
 
 func manejar_respuesta(boton: Button) -> void:
+	_on_opcion_seleccionada(boton)
+
+
+func _on_opcion_seleccionada(boton: Button) -> void:
 	if bloqueado:
 		return
 
 	bloqueado = true
 
 	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
-	var es_correcta: bool = pregunta_actual.correct == respuesta_elegida
-
-	_mostrar_feedback_respuesta(boton, es_correcta)
+	var es_correcta: bool = _validar_respuesta(respuesta_elegida)
+	print(LOG_PREFIX_QUIZ, " selected=", respuesta_elegida, " correct=", es_correcta)
 
 	if es_correcta:
-
-		puntaje += 1
-
-		for boton_respuesta in botones:
-			boton_respuesta.disabled = true
-
-		await get_tree().create_timer(1.2).timeout
-		_finalizar_quiz()
+		await _mostrar_feedback_correcto(boton)
+		_finalizar_pregunta()
 		return
 
-	await dodge_button(boton)
+	await _mostrar_feedback_error(boton)
+	bloqueado = false
+	_set_opciones_habilitadas(true)
 
+
+func _validar_respuesta(respuesta_elegida: String) -> bool:
+	return pregunta_actual.correct == respuesta_elegida
+
+
+func _mostrar_feedback_correcto(boton: Button) -> void:
+	puntaje += 1
+	_set_opciones_habilitadas(false)
+	_mostrar_feedback_respuesta(boton, true)
+	await get_tree().create_timer(1.2).timeout
+
+
+func _mostrar_feedback_error(boton: Button) -> void:
+	_mostrar_feedback_respuesta(boton, false)
+	await dodge_button(boton)
 	await get_tree().create_timer(0.4).timeout
 
-	bloqueado = false
 
+func _set_opciones_habilitadas(habilitadas: bool) -> void:
 	for boton_respuesta in botones:
-		boton_respuesta.disabled = false
+		boton_respuesta.disabled = not habilitadas
+
+
+func _finalizar_pregunta() -> void:
+	_finalizar_quiz()
 
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
-	if es_correcta and _audio_player != null:
+	var base_scale: Vector2 = _obtener_escala_base_boton(boton)
+	var base_rotation: float = _obtener_rotacion_base_boton(boton)
+	var correct_answer_sound := _obtener_sonido_respuesta_correcta()
+	if es_correcta and _audio_player != null and correct_answer_sound != null:
 		_audio_player.stop()
-		_audio_player.stream = CORRECT_ANSWER_SOUND
+		_audio_player.stream = correct_answer_sound
 		_audio_player.play()
 
 	if es_correcta:
 		boton.modulate = Color(0, 1, 0)
-		tween.tween_property(boton, "scale", Vector2(1.2, 0.8), 0.08)
-		tween.tween_property(boton, "scale", Vector2(0.9, 1.1), 0.08)
-		tween.tween_property(boton, "scale", Vector2(1.05, 0.95), 0.08)
-		tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.08, 0.92), 0.08)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 0.95, 1.05), 0.08)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.03, 0.97), 0.08)
+		tween.tween_property(boton, "scale", base_scale, 0.1)
 		return
 
 	boton.modulate = Color(1.0, 0.4, 0.4)
 	for unused_index in 5:
-		tween.tween_property(boton, "rotation_degrees", 8, 0.03)
-		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
-	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
+		tween.tween_property(boton, "rotation_degrees", base_rotation + 8, 0.03)
+		tween.tween_property(boton, "rotation_degrees", base_rotation - 8, 0.03)
+	tween.tween_property(boton, "rotation_degrees", base_rotation, 0.05)
+
+
+func _obtener_sonido_respuesta_correcta() -> AudioStream:
+	if _correct_answer_sound != null:
+		return _correct_answer_sound
+	_correct_answer_sound = load(CORRECT_ANSWER_SOUND_PATH) as AudioStream
+	return _correct_answer_sound
 
 
 # Finalización de partida
 func _finalizar_quiz() -> void:
+	print(LOG_PREFIX_QUIZ, " completed activity=", _nodo_actual)
 	_finalizar_partida()
 
 
@@ -440,16 +708,21 @@ func _debe_abrir_siguiente_juego_de_partida() -> bool:
 
 
 func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
-	var previous_streak: Dictionary = Global.obtener_estado_racha()
+	var global_autoload := _obtener_global_autoload()
+	var save_manager := _obtener_save_manager_autoload()
+	var previous_streak: Dictionary = _obtener_estado_racha_global()
 
 	if _tiene_sesion_de_mapa:
 		_guardar_progreso_de_mapa(cantidad_preguntas)
 	else:
-		Global.marcar_nivel_completado(track_key, nivel_id)
-		SaveManager.registrar_nivel_completado(track_key, nivel_id)
+		if global_autoload != null and global_autoload.has_method("marcar_nivel_completado"):
+			global_autoload.call("marcar_nivel_completado", track_key, nivel_id)
+		if save_manager != null and save_manager.has_method("registrar_nivel_completado"):
+			save_manager.call("registrar_nivel_completado", track_key, nivel_id)
 
-	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
-	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	if save_manager != null and save_manager.has_method("registrar_sesion_preguntas_completada"):
+		save_manager.call("registrar_sesion_preguntas_completada", cantidad_preguntas, puntaje)
+	var updated_streak: Dictionary = _obtener_estado_racha_global()
 	_on_questions_finished(previous_streak, updated_streak)
 
 
@@ -536,7 +809,9 @@ func _limpiar_estado_local_de_partida_en_pregunta() -> void:
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
 	if not _nodo_actual.is_empty():
-		Global.marcar_nodo_jugable_completado(track_key, _nodo_actual)
+		var global_autoload := _obtener_global_autoload()
+		if global_autoload != null and global_autoload.has_method("marcar_nodo_jugable_completado"):
+			global_autoload.call("marcar_nodo_jugable_completado", track_key, _nodo_actual)
 
 
 func _on_questions_finished(
@@ -547,7 +822,7 @@ func _on_questions_finished(
 		"question",
 		track_key,
 		nivel_id,
-		Global.obtener_pista_nivel_cantidad(track_key),
+		_obtener_cantidad_de_niveles_de_pista(),
 		track_key == DEFAULT_TRACK_KEY,
 		_tiene_sesion_de_mapa,
 		_nodo_actual,
@@ -720,8 +995,12 @@ func volver_al_mapa() -> void:
 
 
 func _cancelar_partida_de_nodo_desde_juego() -> void:
-	Global.finalizar_partida_de_nodo()
-	Global.limpiar_sesion_nodo_jugable_activo()
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null:
+		if global_autoload.has_method("finalizar_partida_de_nodo"):
+			global_autoload.call("finalizar_partida_de_nodo")
+		if global_autoload.has_method("limpiar_sesion_nodo_jugable_activo"):
+			global_autoload.call("limpiar_sesion_nodo_jugable_activo")
 	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(

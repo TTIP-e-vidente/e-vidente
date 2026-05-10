@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameSceneRouter.gd
+# Punto unico para cambiar de escena.
+# Recibe targets simples y decide que escena abrir sin que la UI duplique rutas.
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 const ROUTE_SPLASH := "splash"
@@ -11,6 +15,7 @@ const ROUTE_STREAK := "streak"
 const ROUTE_OPTIONS := "options"
 const ROUTE_PROFILE := "profile"
 const ROUTE_QUESTIONS := "questions"
+const ROUTE_VINCULACION := "vinculacion"
 
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const MAIN_MENU_SCENE_PATH := "res://niveles/intro.tscn"
@@ -24,12 +29,26 @@ const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
 
+const ROUTES := {
+	ROUTE_SPLASH: SPLASH_SCENE_PATH,
+	ROUTE_MAIN_MENU: MAIN_MENU_SCENE_PATH,
+	ROUTE_MODE_SELECTOR: MODE_SELECTOR_SCENE_PATH,
+	ROUTE_MAP: MAP_SCENE_PATH,
+	ROUTE_ARCHIVERO: ARCHIVERO_SCENE_PATH,
+	ROUTE_STREAK: STREAK_SCENE_PATH,
+	ROUTE_OPTIONS: OPTIONS_SCENE_PATH,
+	ROUTE_PROFILE: PROFILE_SCENE_PATH,
+	ROUTE_QUESTIONS: QUESTIONS_SCENE_PATH,
+	ROUTE_VINCULACION: VINCULACION_CONCEPTOS_SCENE_PATH,
+}
+
 const RESUME_SCENE_PATH_KEY := "scene_path"
 const CONTINUE_TARGET_RETURN_TO_KEY := "return_to"
 const CONTINUE_TARGET_RETURN_SCENE_PATH_KEY := "return_scene_path"
 const STREAK_RETURN_TO_META := "streak_return_to"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
+const LOG_PREFIX := "[ROUTER]"
 
 static var _preloaded_scenes: Dictionary = {}
 static var _pending_preload_paths: Dictionary = {}
@@ -108,18 +127,38 @@ static func go_to_questions(tree: SceneTree) -> void:
 	go_to_route(tree, ROUTE_QUESTIONS)
 
 
+static func go_to_vinculacion(tree: SceneTree) -> void:
+	go_to_route(tree, ROUTE_VINCULACION)
+
+
 static func go_to_level(tree: SceneTree) -> void:
 	_change_scene_to_path(tree, LEVEL_SCENE_PATH)
 
 
 static func ir_a_modo_jugable(tree: SceneTree, mode: String) -> void:
+	var archivo_actual := ""
+	var global_state := _get_global_state(tree)
+	if global_state != null and global_state.has_method("obtener_juego_actual_de_partida"):
+		var juego_actual: Variant = global_state.call("obtener_juego_actual_de_partida")
+		if juego_actual is Dictionary:
+			archivo_actual = str((juego_actual as Dictionary).get("json_path", "")).strip_edges()
+	print(
+		LOG_PREFIX,
+		" abriendo_siguiente tipo=",
+		mode.strip_edges(),
+		" archivo=",
+		archivo_actual
+	)
 	match mode.strip_edges():
 		"drag_drop":
 			go_to_level(tree)
 		"quiz_choice":
 			go_to_questions(tree)
 		"vinculacion_conceptos":
-			_change_scene_to_path(tree, VINCULACION_CONCEPTOS_SCENE_PATH)
+			go_to_vinculacion(tree)
+		_:
+			push_error("GameSceneRouter: modo jugable desconocido: %s" % mode)
+			print(LOG_PREFIX, " modo_desconocido=", mode)
 
 
 # --- Racha ------------------------------------------------------------------
@@ -262,6 +301,10 @@ static func go_to_target(
 
 	var router_target: Dictionary = build_router_target_from_flow_target(target)
 	var target_type: String = str(router_target.get("type", "")).strip_edges()
+	print(LOG_PREFIX, " target=", router_target, " fallback=", fallback_scene_path)
+	if target_type.is_empty():
+		push_error("[ROUTER] Target inválido: %s" % JSON.stringify(router_target))
+		return
 	match target_type:
 		"map":
 			_clear_active_playable_session(tree)
@@ -299,17 +342,38 @@ static func go_to_target(
 				tree,
 				scene_path if not scene_path.is_empty() else fallback_scene_path
 			)
+		"playable_mode":
+			ir_a_modo_jugable(
+				tree,
+				str(router_target.get("mode", "")).strip_edges()
+			)
+		"resume":
+			go_to_resume(
+				tree,
+				_read_resume_state(router_target),
+				fallback_scene_path
+			)
 		_:
-			_clear_active_playable_session(tree)
-			_change_scene_to_path(tree, fallback_scene_path)
+			push_error("[ROUTER] Target inválido: %s" % JSON.stringify(router_target))
+			print(LOG_PREFIX, " target_desconocido=", router_target)
 
 
 static func go_to_continue_target(
 	tree: SceneTree,
-	continue_target: Dictionary,
-	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
+	fallback_return_to: String = ""
 ) -> void:
-	go_to_target(tree, continue_target, fallback_scene_path)
+	var fallback_scene_path: String = fallback_return_to.strip_edges()
+	if fallback_scene_path.is_empty():
+		fallback_scene_path = MODE_SELECTOR_SCENE_PATH
+	var global_state := _get_global_state(tree)
+	if global_state == null or not global_state.has_method("obtener_destino_de_continuacion"):
+		_change_scene_to_path(tree, fallback_scene_path)
+		return
+	var continue_target: Variant = global_state.call("obtener_destino_de_continuacion")
+	if not continue_target is Dictionary or (continue_target as Dictionary).is_empty():
+		_change_scene_to_path(tree, fallback_scene_path)
+		return
+	go_to_target(tree, continue_target as Dictionary, fallback_scene_path)
 
 
 static func go_to_resume(
@@ -336,26 +400,14 @@ static func _resolve_route_scene_path(route_name: String, fallback_route: String
 
 
 static func _get_scene_path_for_route(route_name: String) -> String:
-	match route_name:
-		ROUTE_SPLASH:
-			return SPLASH_SCENE_PATH
-		ROUTE_MAIN_MENU:
-			return MAIN_MENU_SCENE_PATH
-		ROUTE_MODE_SELECTOR:
-			return MODE_SELECTOR_SCENE_PATH
-		ROUTE_MAP:
-			return MAP_SCENE_PATH
-		ROUTE_ARCHIVERO:
-			return ARCHIVERO_SCENE_PATH
-		ROUTE_STREAK:
-			return STREAK_SCENE_PATH
-		ROUTE_OPTIONS:
-			return OPTIONS_SCENE_PATH
-		ROUTE_PROFILE:
-			return PROFILE_SCENE_PATH
-		ROUTE_QUESTIONS:
-			return QUESTIONS_SCENE_PATH
-	return ""
+	return str(ROUTES.get(route_name, "")).strip_edges()
+
+
+static func _read_resume_state(target: Dictionary) -> Dictionary:
+	var raw_resume_state: Variant = target.get("resume_state", {})
+	if raw_resume_state is Dictionary:
+		return (raw_resume_state as Dictionary).duplicate(true)
+	return {}
 
 
 static func _store_requested_level(

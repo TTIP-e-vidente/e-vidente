@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameLevelContentCatalog.gd
+# Fachada de lectura de capitulos legacy.
+# Chapter = capitulo del libro; run = partida concreta dentro del capitulo.
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameTrackChapterDefinitionsScript := preload(
 	"res://niveles/content/catalog/GameTrackChapterDefinitions.gd"

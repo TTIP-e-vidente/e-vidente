@@ -2,20 +2,20 @@
 
 [ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/pregunta.gd" id="1_dlf6l"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
-[ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_78ome"]
 [ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="4_78ome"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="4_ecatg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
-[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_2g6ed"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
+[ext_resource type="Texture2D" uid="uid://c8tvilgr1cn4r" path="res://assets-sistema/preguntas/boton-4.png" id="10_2g6ed"]
+[ext_resource type="Texture2D" uid="uid://b3mugenb3628v" path="res://assets-sistema/preguntas/boton-3.png" id="11_mwqfo"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
 line_spacing = 0.94
 paragraph_spacing = 0.05
-font = ExtResource("6_x3ikk")
 font_size = 28
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
@@ -34,10 +34,8 @@ texture = ExtResource("5_dlf6l")
 
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
-quiz = ExtResource("2_onqq7")
 
 [node name="IndicadorProgresoDeJuego" parent="." unique_id=1084702451 instance=ExtResource("7_4l1i0")]
-
 
 [node name="Contenido" type="Control" parent="." unique_id=1424383837]
 layout_mode = 3
@@ -52,7 +50,7 @@ offset_left = 1.0
 offset_right = 1154.0
 
 [node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
-position = Vector2(165, 98)
+position = Vector2(183, 108.00001)
 scale = Vector2(0.46648043, 0.46648043)
 texture = ExtResource("2_4my4u")
 
@@ -72,6 +70,7 @@ scale = Vector2(0.75999546, 0.8016403)
 
 [node name="Pregunta" type="Label" parent="Contenido/Informacion" unique_id=1328656126]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("6_2g6ed")
 label_settings = SubResource("LabelSettings_b7sy5")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -79,8 +78,6 @@ autowrap_mode = 2
 
 [node name="Visual" type="Panel" parent="Contenido/Informacion" unique_id=1334384024]
 layout_mode = 2
-
-[node name="ContinuarJuego" parent="Contenido" instance=ExtResource("8_continuar")]
 
 [node name="Imagen" type="TextureRect" parent="Contenido/Informacion/Visual" unique_id=1530920456]
 layout_mode = 0
@@ -99,6 +96,8 @@ offset_top = -45.0
 offset_right = 282.0
 offset_bottom = 65.0
 
+[node name="ContinuarJuego" parent="Contenido" unique_id=872199267 instance=ExtResource("8_continuar")]
+
 [node name="Preguntas" type="Control" parent="Contenido" unique_id=65404677]
 anchors_preset = 0
 offset_left = 359.0
@@ -106,7 +105,7 @@ offset_top = 430.0
 offset_right = 798.0
 offset_bottom = 735.0
 
-[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
+[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=1288158361]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
 offset_right = 439.0
@@ -136,6 +135,281 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+
+[node name="Preguntasx3" type="Control" parent="Contenido" unique_id=1755994207]
+visible = false
+anchors_preset = 0
+offset_left = 359.0
+offset_top = 430.0
+offset_right = 798.0
+offset_bottom = 735.0
+
+[node name="Boton3" type="Button" parent="Contenido/Preguntasx3" unique_id=38068594]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = -191.0
+offset_top = 3.0
+offset_right = 592.0
+offset_bottom = 736.0
+scale = Vector2(0.3617424, 0.3352122)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("10_2g6ed")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3" unique_id=1028540422]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton4" type="Button" parent="Contenido/Preguntasx3" unique_id=340003962]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = 92.0
+offset_top = -2.0
+offset_right = 875.0
+offset_bottom = 731.0
+scale = Vector2(0.3617424, 0.3352122)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("10_2g6ed")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4" unique_id=708087474]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton5" type="Button" parent="Contenido/Preguntasx3" unique_id=473953632]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = 369.0
+offset_top = -1.0
+offset_right = 1152.0
+offset_bottom = 732.0
+scale = Vector2(0.3617424, 0.3352122)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("10_2g6ed")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5" unique_id=2125012403]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Preguntasx4" type="Control" parent="Contenido" unique_id=527732730]
+visible = false
+anchors_preset = 0
+offset_left = 359.0
+offset_top = 430.0
+offset_right = 798.0
+offset_bottom = 735.0
+
+[node name="Boton6" type="Button" parent="Contenido/Preguntasx4" unique_id=1732213079]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = -175.0
+offset_top = -2.0
+offset_right = 608.0
+offset_bottom = 738.0
+scale = Vector2(0.27749327, 0.27749327)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("11_mwqfo")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6" unique_id=1717085935]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton7" type="Button" parent="Contenido/Preguntasx4" unique_id=1170575801]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = 34.0
+offset_top = -2.0
+offset_right = 817.0
+offset_bottom = 738.0
+scale = Vector2(0.27749327, 0.27749327)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("11_mwqfo")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7" unique_id=103893030]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton8" type="Button" parent="Contenido/Preguntasx4" unique_id=508660480]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = 242.0
+offset_top = -2.0
+offset_right = 1025.0
+offset_bottom = 738.0
+scale = Vector2(0.27749327, 0.27749327)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("11_mwqfo")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8" unique_id=280705612]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton9" type="Button" parent="Contenido/Preguntasx4" unique_id=38775949]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 0
+offset_left = 449.0
+offset_top = -2.0
+offset_right = 1232.0
+offset_bottom = 738.0
+scale = Vector2(0.27749327, 0.27749327)
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("11_mwqfo")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9" unique_id=1006172006]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
 
 [node name="Atrás" type="Button" parent="Contenido" unique_id=1720405508]
 layout_mode = 0

@@ -36,6 +36,7 @@
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_pfc42"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_0m5ih"]
 [ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
+[ext_resource type="PackedScene" uid="uid://xuxywhubl1u5" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="38_cjuego"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bbluw"]
 size = Vector2(600, 100)
@@ -346,7 +347,7 @@ offset_left = 1023.0
 offset_top = 141.0
 offset_right = 1127.0
 offset_bottom = 245.0
-tooltip_text = "Guardar progreso"
+tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=2035953237]
@@ -406,6 +407,8 @@ level_resource_path = "res://niveles/nivel_4/level_4.tres"
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1123792084]
 volume_db = -4.962
 attenuation = 2.07053
+
+[node name="ContinuarJuego" parent="." instance=ExtResource("38_cjuego")]
 
 [connection signal="input_event" from="Menú" to="Menú" method="_on_evento_entrada"]
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]

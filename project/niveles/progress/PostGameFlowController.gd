@@ -1,10 +1,14 @@
 extends RefCounted
 
+# PostGameFlowController.gd
+# Decide que ocurre despues de mostrar una ensenanza: racha, siguiente juego,
+# vuelta al mapa/libro o fallback. No dibuja UI.
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
-const LOG_PREFIX := "[Flow]"
-const DEBUG_FLOW_LOGS := false
+const LOG_PREFIX := "[POST_GAME]"
+const DEBUG_FLOW_LOGS := true
 const TARGET_TYPE_STREAK := "streak"
 const STEP_STREAK := "streak"
 const STEP_NEXT := "next"
@@ -20,8 +24,9 @@ static func build_post_game_flow_state(
 	previous_streak: Dictionary,
 	updated_streak: Dictionary,
 	completion_context: Dictionary,
-	streak_feedback: Dictionary = {}
+	_streak_feedback: Dictionary = {}
 ) -> Dictionary:
+	print(LOG_PREFIX, " contexto_recibido=", completion_context)
 	var next_target: Variant = _build_next_target_from_completion_context(completion_context)
 	if next_target is Dictionary and (next_target as Dictionary).is_empty():
 		next_target = null
@@ -50,6 +55,15 @@ static func build_post_game_flow_state(
 		},
 	}
 
+	print(
+		LOG_PREFIX,
+		" resultado=",
+		completion_context,
+		" hay_siguiente=",
+		(next_target is Dictionary and not (next_target as Dictionary).is_empty()),
+		" return_to=",
+		_read_completion_return_to(completion_context)
+	)
 	_log_flow("Game finished")
 	_log_flow("Source: %s" % _get_flow_source(flow_state))
 	_log_flow("Streak was active: %s" % _was_streak_active_before_game(flow_state))
@@ -84,11 +98,11 @@ static func decide_next_step_after_teaching(
 	_log_flow("Streak was active: %s" % _was_streak_active_before_game(ready_flow_state))
 	_log_flow("Timer finished: %s" % _did_timer_finish(ready_flow_state))
 
-	if should_show_streak(ready_flow_state):
+	if _debe_mostrar_racha(ready_flow_state):
 		_log_flow("Decision: show_streak")
 		return STEP_STREAK
 
-	if should_go_to_next_target(ready_flow_state):
+	if _debe_continuar_siguiente_juego(ready_flow_state):
 		_log_flow("Decision: go_to_next_target")
 		return STEP_NEXT
 
@@ -133,6 +147,14 @@ static func should_go_to_next_target(flow_state: Dictionary) -> bool:
 	return _did_timer_finish(flow_state) and _has_next_target(flow_state)
 
 
+static func _debe_mostrar_racha(flow_state: Dictionary) -> bool:
+	return should_show_streak(flow_state)
+
+
+static func _debe_continuar_siguiente_juego(flow_state: Dictionary) -> bool:
+	return should_go_to_next_target(flow_state)
+
+
 static func resolve_after_streak_flow(flow_state: Dictionary) -> Dictionary:
 	if flow_state.is_empty():
 		return {}
@@ -157,7 +179,10 @@ static func navigate_after_teaching(
 		_show_streak(tree, ready_flow_state, streak_feedback)
 		return
 
-	_go_to_step_target(tree, ready_flow_state, next_step)
+	if next_step == STEP_NEXT:
+		_abrir_siguiente_juego(tree, ready_flow_state)
+		return
+	_volver_a_fallback(tree, ready_flow_state)
 
 
 static func navigate_after_streak(
@@ -288,6 +313,14 @@ static func _show_streak(
 	)
 
 
+static func _abrir_siguiente_juego(tree: SceneTree, flow_state: Dictionary) -> void:
+	_go_to_step_target(tree, flow_state, STEP_NEXT)
+
+
+static func _volver_a_fallback(tree: SceneTree, flow_state: Dictionary) -> void:
+	_go_to_step_target(tree, flow_state, STEP_FALLBACK)
+
+
 static func _go_to_step_target(
 	tree: SceneTree,
 	flow_state: Dictionary,
@@ -305,6 +338,8 @@ static func _go_to_target(
 	fallback_scene_path: String = "",
 	debug_source: String = ""
 ) -> void:
+	if next_step == STEP_NEXT and resolved_target.is_empty():
+		push_error("[POST_GAME] No se pudo avanzar: falta siguiente juego o target inválido.")
 	_clear_flow_state(tree)
 	var safe_source_name: String = debug_source.strip_edges()
 	if safe_source_name.is_empty():
@@ -420,11 +455,9 @@ static func _build_next_target_from_completion_context(
 ) -> Dictionary:
 	var node_key: String = _read_completion_node_key(completion_context)
 	if _completion_came_from_map(completion_context) and not node_key.is_empty():
-		return {
-			"type": "map_continue",
-			"node_key": node_key,
-			TARGET_KEY_RETURN_TO: _read_completion_return_to(completion_context),
-		}
+		# Una partida de nodo avanza sus juegos con ContinuidadDePartidaDeNodo.
+		# Cuando ya llega aca, el nodo termino y debe volver al mapa.
+		return {}
 
 	var track_key: String = _read_completion_track_key(completion_context)
 	var current_level_number: int = _read_completion_level_number(completion_context)

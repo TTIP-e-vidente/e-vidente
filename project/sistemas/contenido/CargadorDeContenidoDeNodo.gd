@@ -1,7 +1,19 @@
 extends RefCounted
 class_name CargadorDeContenidoDeNodo
 
-const AdaptadorContenidoViejoScript := preload("res://sistemas/contenido/AdaptadorContenidoViejo.gd")
+# LEGACY_COMPAT: Usado por Level.gd, QuestionJsonLoader y NodeContentLoader (fallback).
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
+# Carga contenido legacy desde json_path y lo deja en formato runtime.
+# El contenido nuevo entra por NodeContentLoader y ActivityAdapter.
+
+const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
+const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
+const ContentValidatorScript := preload("res://sistemas/contenido/ContentValidator.gd")
+const GameContentFactoryScript := preload("res://sistemas/contenido/GameContentFactory.gd")
+const AdaptadorContenidoViejoScript := preload(
+	"res://sistemas/contenido/AdaptadorContenidoViejo.gd"
+)
 const ValidadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/ValidadorDeContenidoDeNodo.gd"
 )
@@ -23,11 +35,31 @@ static func cargar_desde_nodo(datos_nodo: Variant) -> Dictionary:
 
 
 static func cargar_desde_ruta(ruta_json: String) -> Dictionary:
-	var datos_crudos: Dictionary = _leer_json(ruta_json)
-	if datos_crudos.is_empty():
-		return _error("No se pudo cargar el contenido: %s" % ruta_json)
+	var raw_result: Dictionary = ContentJsonLoaderScript.load_json(ruta_json)
+	if not bool(raw_result.get("ok", false)):
+		return _error(str(raw_result.get("error", "No se pudo cargar el contenido.")))
 
-	var datos_adaptados: Dictionary = AdaptadorContenidoViejoScript.adaptar(datos_crudos)
+	var clean_path: String = str(raw_result.get("path", ruta_json)).strip_edges()
+	var datos_crudos: Dictionary = raw_result.get("data", {})
+	var normalized_result: Dictionary = ContentNormalizerScript.normalize(datos_crudos, clean_path)
+	var datos_adaptados: Dictionary = normalized_result.get("data", {})
+
+	if ContentNormalizerScript.is_v1_content(datos_adaptados):
+		var validation_result: Dictionary = ContentValidatorScript.validate(
+			datos_adaptados,
+			clean_path
+		)
+		if not bool(validation_result.get("ok", false)):
+			return _error(str(validation_result.get("error", "Contenido invalido.")))
+
+		var runtime_result: Dictionary = GameContentFactoryScript.create_runtime_game(
+			datos_adaptados,
+			clean_path
+		)
+		if not bool(runtime_result.get("ok", false)):
+			return _error(str(runtime_result.get("error", "No se pudo convertir el contenido.")))
+		datos_adaptados = runtime_result.get("data", {})
+
 	var error_validacion: String = ValidadorDeContenidoDeNodoScript.validar(datos_adaptados)
 	if not error_validacion.is_empty():
 		push_error("CargadorDeContenidoDeNodo: " + error_validacion)
@@ -63,7 +95,7 @@ static func convertir_arrastre_a_runtime(datos_nodo: Dictionary) -> Dictionary:
 	if items.is_empty() or targets.is_empty():
 		return _error("El JSON de arrastre requiere 'items' y 'targets' no vacios.")
 
-	return _ok({
+	var datos_runtime := {
 		"node_key": str(datos_nodo.get("id", "")).strip_edges(),
 		"teaching_key": str(
 			contenido.get("teaching_key", datos_nodo.get("teaching_key", ""))
@@ -71,7 +103,9 @@ static func convertir_arrastre_a_runtime(datos_nodo: Dictionary) -> Dictionary:
 		"instruction": str(contenido.get("instruction", "")).strip_edges(),
 		"items": items.duplicate(true),
 		"targets": targets.duplicate(true),
-	})
+	}
+	_agregar_configuracion_arrastre_a_runtime(datos_runtime, contenido)
+	return _ok(datos_runtime)
 
 
 static func convertir_vinculacion_a_runtime(datos_nodo: Dictionary) -> Dictionary:
@@ -100,6 +134,16 @@ static func convertir_vinculacion_a_runtime(datos_nodo: Dictionary) -> Dictionar
 		"conceptos_derecha": (conceptos_derecha as Array).duplicate(true),
 		"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
 	})
+
+
+static func _agregar_configuracion_arrastre_a_runtime(
+	datos_runtime: Dictionary,
+	contenido: Dictionary
+) -> void:
+	for campo in ["elementos_maximos", "distractores_maximos", "mostrar_ayuda_visual"]:
+		if not contenido.has(campo):
+			continue
+		datos_runtime[campo] = contenido.get(campo)
 
 
 static func _leer_json(ruta_json: String) -> Dictionary:

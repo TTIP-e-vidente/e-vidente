@@ -1,9 +1,20 @@
 extends RefCounted
 class_name AdaptadorContenidoViejo
 
+# LEGACY_COMPAT: Usado por ContentNormalizer.
+# No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
+
+# Adapta formatos viejos para no romper contenido existente.
+# No es el camino recomendado para contenido nuevo.
+
 const MODO_QUIZ_CHOICE := "quiz_choice"
 const MODO_DRAG_DROP := "drag_drop"
 const DIRECTORIO_NODOS_ACTUAL := "res://contenido/nodos/"
+const TARGET_ARRASTRE_POR_DEFECTO := "plato"
+const LABEL_TARGET_ARRASTRE_POR_DEFECTO := "Plato"
+
+const DIRECTORIO_ITEMS_ACTUAL := "res://items/"
+const DIRECTORIO_PROYECTO_ITEMS_ACTUAL := "project/items/"
 
 const DIRECTORIO_NODOS_ANTERIOR := "res://niveles/nodos/"
 const DIRECTORIO_NODOS_LEGACY := "res://preguntas/json_nodos/"
@@ -36,11 +47,357 @@ static func resolver_ruta_json(json_path: String) -> String:
 
 
 static func adaptar(datos_crudos: Dictionary) -> Dictionary:
+	return _adaptar_interno(datos_crudos, [])
+
+
+static func _adaptar_interno(datos_crudos: Dictionary, pool_stack: Array[String]) -> Dictionary:
 	if _es_formato_oficial(datos_crudos):
-		return datos_crudos.duplicate(true)
+		return _normalizar_formato_oficial(datos_crudos, pool_stack)
 	if _es_quiz_plano(datos_crudos):
 		return _normalizar_quiz_plano(datos_crudos)
 	return _normalizar_formato_legacy(datos_crudos)
+
+
+static func _normalizar_formato_oficial(
+	datos_crudos: Dictionary,
+	pool_stack: Array[String] = []
+) -> Dictionary:
+	var datos_normalizados: Dictionary = datos_crudos.duplicate(true)
+	if _normalizar_modo(str(datos_normalizados.get("mode", "")).strip_edges()) != MODO_DRAG_DROP:
+		return datos_normalizados
+
+	var contenido: Dictionary = _leer_diccionario(datos_normalizados.get("content", {}))
+	contenido = _resolver_pool_ref_drag_drop(contenido, pool_stack)
+	if not _usa_contenido_arrastre_tipo_level_resource(contenido):
+		datos_normalizados["content"] = contenido
+		return datos_normalizados
+
+	datos_normalizados["content"] = _normalizar_contenido_drag_drop_tipo_level_resource(contenido)
+	return datos_normalizados
+
+
+static func _resolver_pool_ref_drag_drop(
+	contenido: Dictionary,
+	pool_stack: Array[String]
+) -> Dictionary:
+	var pool_ref: String = _primer_texto(contenido, ["pool_ref", "pool_json_path"])
+	if pool_ref.is_empty():
+		return contenido
+
+	var ruta_pool: String = resolver_ruta_json(pool_ref)
+	if ruta_pool.is_empty():
+		return _contenido_sin_clave_pool(contenido)
+	if pool_stack.has(ruta_pool):
+		push_error("AdaptadorContenidoViejo: pool_ref circular detectado: %s" % ruta_pool)
+		return _contenido_sin_clave_pool(contenido)
+
+	var datos_pool_crudos: Dictionary = _leer_json_desde_ruta(ruta_pool)
+	if datos_pool_crudos.is_empty():
+		push_warning("AdaptadorContenidoViejo: no se pudo cargar pool_ref: %s" % ruta_pool)
+		return _contenido_sin_clave_pool(contenido)
+
+	var siguiente_pool_stack: Array[String] = pool_stack.duplicate()
+	siguiente_pool_stack.append(ruta_pool)
+	if _normalizar_modo(str(datos_pool_crudos.get("mode", "")).strip_edges()) != MODO_DRAG_DROP:
+		push_warning("AdaptadorContenidoViejo: pool_ref no apunta a un drag_drop: %s" % ruta_pool)
+		return _contenido_sin_clave_pool(contenido)
+
+	var contenido_pool: Dictionary = _leer_diccionario(datos_pool_crudos.get("content", {}))
+	contenido_pool = _resolver_pool_ref_drag_drop(contenido_pool, siguiente_pool_stack)
+	return _combinar_contenido_drag_drop(contenido_pool, contenido)
+
+
+static func _contenido_sin_clave_pool(contenido: Dictionary) -> Dictionary:
+	var contenido_limpio: Dictionary = contenido.duplicate(true)
+	contenido_limpio.erase("pool_ref")
+	contenido_limpio.erase("pool_json_path")
+	return contenido_limpio
+
+
+static func _combinar_contenido_drag_drop(
+	contenido_pool: Dictionary,
+	contenido_override: Dictionary
+) -> Dictionary:
+	var contenido_combinado: Dictionary = contenido_pool.duplicate(true)
+	for clave in contenido_override.keys():
+		if [
+			"pool_ref",
+			"pool_json_path",
+			"itemsPositivosExtra",
+			"itemsNegativosExtra",
+			"itemsExtra",
+			"targetsExtra",
+		].has(clave):
+			continue
+		contenido_combinado[clave] = contenido_override[clave]
+
+	_agregar_array_extra_drag_drop(
+		contenido_combinado,
+		contenido_override,
+		"itemsPositivos",
+		"itemsPositivosExtra"
+	)
+	_agregar_array_extra_drag_drop(
+		contenido_combinado,
+		contenido_override,
+		"itemsNegativos",
+		"itemsNegativosExtra"
+	)
+	_agregar_array_extra_drag_drop(
+		contenido_combinado,
+		contenido_override,
+		"items",
+		"itemsExtra"
+	)
+	_agregar_array_extra_drag_drop(
+		contenido_combinado,
+		contenido_override,
+		"targets",
+		"targetsExtra"
+	)
+	return contenido_combinado
+
+
+static func _agregar_array_extra_drag_drop(
+	contenido_combinado: Dictionary,
+	contenido_override: Dictionary,
+	clave_base: String,
+	clave_extra: String
+) -> void:
+	var extras: Variant = contenido_override.get(clave_extra, [])
+	if not extras is Array:
+		return
+	if not contenido_combinado.has(clave_base):
+		contenido_combinado[clave_base] = []
+	var base: Variant = contenido_combinado.get(clave_base, [])
+	if not base is Array:
+		return
+	contenido_combinado[clave_base] = (
+		(base as Array).duplicate(true) + (extras as Array).duplicate(true)
+	)
+
+
+static func _leer_json_desde_ruta(ruta_json: String) -> Dictionary:
+	var ruta_limpia: String = resolver_ruta_json(ruta_json)
+	if ruta_limpia.is_empty() or not FileAccess.file_exists(ruta_limpia):
+		return {}
+	var archivo: FileAccess = FileAccess.open(ruta_limpia, FileAccess.READ)
+	if archivo == null:
+		return {}
+	var parser := JSON.new()
+	if parser.parse(archivo.get_as_text()) != OK:
+		return {}
+	var datos_parseados: Variant = parser.get_data()
+	if not datos_parseados is Dictionary:
+		return {}
+	return datos_parseados as Dictionary
+
+
+static func _usa_formato_arrastre_tipo_level_resource(datos_crudos: Dictionary) -> bool:
+	if _normalizar_modo(str(datos_crudos.get("mode", "")).strip_edges()) != MODO_DRAG_DROP:
+		return false
+	var contenido: Dictionary = _leer_diccionario(datos_crudos.get("content", {}))
+	return _usa_contenido_arrastre_tipo_level_resource(contenido)
+
+
+static func _usa_contenido_arrastre_tipo_level_resource(contenido: Dictionary) -> bool:
+	for clave in [
+		"itemsPositivos",
+		"itemsNegativos",
+		"items_positivos",
+		"items_negativos",
+		"cantidadPositivos",
+		"cantidadNegativos",
+		"cantidad_positivos",
+		"cantidad_negativos",
+	]:
+		if contenido.has(clave):
+			return true
+	return false
+
+
+static func _normalizar_contenido_drag_drop_tipo_level_resource(
+	contenido: Dictionary
+) -> Dictionary:
+	var target_fallback := {
+		"id": _primer_texto(contenido, ["targetId", "target_id"]),
+		"label": _primer_texto(contenido, ["targetLabel", "target_label"]),
+	}
+	if str(target_fallback.get("id", "")).strip_edges().is_empty():
+		target_fallback["id"] = TARGET_ARRASTRE_POR_DEFECTO
+	if str(target_fallback.get("label", "")).strip_edges().is_empty():
+		target_fallback["label"] = LABEL_TARGET_ARRASTRE_POR_DEFECTO
+
+	var targets: Array[Dictionary] = _targets(contenido, target_fallback)
+	var target_por_defecto: String = str(targets[0].get("id", TARGET_ARRASTRE_POR_DEFECTO))
+	var items_positivos: Array[Dictionary] = _items_drag_drop_tipo_level_resource(
+		contenido.get("itemsPositivos", contenido.get("items_positivos", [])),
+		target_por_defecto,
+		true
+	)
+	var items_negativos: Array[Dictionary] = _items_drag_drop_tipo_level_resource(
+		contenido.get("itemsNegativos", contenido.get("items_negativos", [])),
+		target_por_defecto,
+		false
+	)
+	var contenido_normalizado := {
+		"teaching_key": str(contenido.get("teaching_key", "")).strip_edges(),
+		"instruction": _primer_texto(contenido, ["instruction", "prompt", "consigna"]),
+		"targets": targets,
+		"items": items_positivos + items_negativos,
+	}
+	_agregar_cantidades_tipo_level_resource(
+		contenido,
+		contenido_normalizado,
+		items_positivos.size(),
+		items_negativos.size()
+	)
+	if contenido.has("mostrar_ayuda_visual"):
+		contenido_normalizado["mostrar_ayuda_visual"] = bool(
+			contenido.get("mostrar_ayuda_visual", true)
+		)
+	return contenido_normalizado
+
+
+static func _agregar_cantidades_tipo_level_resource(
+	contenido: Dictionary,
+	contenido_normalizado: Dictionary,
+	total_positivos: int,
+	total_negativos: int
+) -> void:
+	var cantidad_positivos: int = _leer_entero_arrastre(
+		contenido,
+		["cantidadPositivos", "cantidad_positivos"],
+		total_positivos
+	)
+	var cantidad_negativos: int = _leer_entero_arrastre(
+		contenido,
+		["cantidadNegativos", "cantidad_negativos"],
+		total_negativos
+	)
+	if cantidad_positivos > 0 or cantidad_negativos > 0:
+		contenido_normalizado["elementos_maximos"] = maxi(
+			1,
+			cantidad_positivos + cantidad_negativos
+		)
+		contenido_normalizado["distractores_maximos"] = maxi(0, cantidad_negativos)
+
+
+static func _leer_entero_arrastre(
+	contenido: Dictionary,
+	claves: Array[String],
+	valor_por_defecto: int
+) -> int:
+	for clave in claves:
+		if not contenido.has(clave):
+			continue
+		return int(contenido.get(clave, valor_por_defecto))
+	return valor_por_defecto
+
+
+static func _items_drag_drop_tipo_level_resource(
+	items_crudos: Variant,
+	target_por_defecto: String,
+	es_positivo: bool
+) -> Array[Dictionary]:
+	var items: Array[Dictionary] = []
+	if not items_crudos is Array:
+		return items
+
+	for raw_item in items_crudos:
+		var item_normalizado: Dictionary = _normalizar_item_tipo_level_resource(
+			raw_item,
+			target_por_defecto,
+			es_positivo
+		)
+		if item_normalizado.is_empty():
+			continue
+		items.append(item_normalizado)
+	return items
+
+
+static func _normalizar_item_tipo_level_resource(
+	raw_item: Variant,
+	target_por_defecto: String,
+	es_positivo: bool
+) -> Dictionary:
+	var datos_item: Dictionary = _leer_diccionario(raw_item)
+	var ruta_item: String = ""
+	if raw_item is String:
+		ruta_item = str(raw_item).strip_edges()
+	else:
+		ruta_item = _primer_texto(datos_item, ["item_path", "resource_path", "path"])
+
+	var datos_recurso: Dictionary = _cargar_item_de_recurso(ruta_item)
+	var item_id: String = str(datos_item.get("id", datos_recurso.get("id", ""))).strip_edges()
+	if item_id.is_empty():
+		return {}
+
+	var label: String = str(
+		datos_item.get("label", datos_recurso.get("label", item_id))
+	).strip_edges()
+	var image: String = _primer_texto(datos_item, ["image", "image_path", "sprite"])
+	if image.is_empty():
+		image = str(datos_recurso.get("image", "")).strip_edges()
+
+	var item_normalizado := {
+		"id": item_id,
+		"label": label,
+		"image": image,
+		"correct_target": target_por_defecto if es_positivo else "",
+	}
+
+	var categoria: String = _primer_texto(datos_item, ["category", "categoria"])
+	if categoria.is_empty():
+		categoria = str(datos_recurso.get("category", "")).strip_edges()
+	if not categoria.is_empty():
+		item_normalizado["category"] = categoria
+
+	var info_image: String = _primer_texto(datos_item, ["info_image", "info", "info_path"])
+	if info_image.is_empty():
+		info_image = str(datos_recurso.get("info_image", "")).strip_edges()
+	if not info_image.is_empty():
+		item_normalizado["info_image"] = info_image
+
+	return item_normalizado
+
+
+static func _cargar_item_de_recurso(ruta_item: String) -> Dictionary:
+	var ruta_limpia: String = _normalizar_ruta_item(ruta_item)
+	if ruta_limpia.is_empty():
+		return {}
+
+	var recurso: Resource = load(ruta_limpia) as Resource
+	if recurso == null:
+		return {}
+
+	var sprite: Texture2D = recurso.get("sprite") as Texture2D
+	var info: Texture2D = recurso.get("info") as Texture2D
+	var categoria: String = ""
+	if recurso.get("categoria") != null:
+		categoria = str(recurso.get("categoria")).strip_edges()
+	var item_id: String = ruta_limpia.get_file().get_basename().strip_edges()
+	return {
+		"id": item_id,
+		"label": item_id.replace("_", " ").replace("-", " "),
+		"image": sprite.resource_path if sprite != null else "",
+		"info_image": info.resource_path if info != null else "",
+		"category": categoria,
+	}
+
+
+static func _normalizar_ruta_item(ruta_item: String) -> String:
+	var ruta_limpia: String = ruta_item.strip_edges()
+	if ruta_limpia.is_empty():
+		return ""
+	if ruta_limpia.begins_with(DIRECTORIO_PROYECTO_ITEMS_ACTUAL):
+		return "%s%s" % [
+			DIRECTORIO_ITEMS_ACTUAL,
+			ruta_limpia.trim_prefix(DIRECTORIO_PROYECTO_ITEMS_ACTUAL)
+		]
+	if ruta_limpia.begins_with("res://project/"):
+		return "res://%s" % ruta_limpia.trim_prefix("res://project/")
+	return ruta_limpia
 
 
 static func normalizar_datos_nodo(raw_data: Dictionary) -> Dictionary:

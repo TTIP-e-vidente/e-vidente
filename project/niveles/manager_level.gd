@@ -54,7 +54,11 @@ func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
 	_cargar_partida_actual(saved_level_state)
 
 
-func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dictionary, level_scene: Node) -> bool:
+func iniciar_desde_datos_de_arrastre(
+	track_key: String,
+	contenido_arrastre: Dictionary,
+	level_scene: Node
+) -> bool:
 	# Inicializa el nivel usando directamente el contenido (content) de un JSON de arrastre.
 	# No reemplaza el flujo legacy: es un entrypoint mínimo para consumir JSON oficial.
 	if not _conectar_escena_nodos(level_scene):
@@ -64,6 +68,13 @@ func iniciar_desde_datos_de_arrastre(track_key: String, contenido_arrastre: Dict
 	_preparar_runtime_de_arrastre_desde_json()
 
 	var datos_arrastre: Dictionary = _extraer_datos_de_arrastre(contenido_arrastre)
+	print(
+		"[ManagerLevel] iniciar_desde_datos_de_arrastre items=%d targets=%d"
+		% [
+			(datos_arrastre.get("elementos", []) as Array).size(),
+			(datos_arrastre.get("objetivos", []) as Array).size(),
+		]
+	)
 	var escena_elemento: PackedScene = _cargar_escena_elemento_de_arrastre()
 	if escena_elemento == null:
 		return false
@@ -97,6 +108,7 @@ func _preparar_recurso_de_arrastre(
 	elementos_de_arrastre: Dictionary,
 	level_scene: Node
 ) -> void:
+	_aplicar_override_de_configuracion_de_arrastre(contenido_arrastre)
 	_aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre)
 	_asegurar_recurso_nivel_para_arrastre()
 	_guardar_contenido_de_arrastre_en_recurso(
@@ -106,6 +118,60 @@ func _preparar_recurso_de_arrastre(
 		level_scene
 	)
 	_aplicar_configuracion_de_dificultad_arrastre()
+
+
+func _aplicar_override_de_configuracion_de_arrastre(contenido_arrastre: Dictionary) -> void:
+	var override_configuracion: Dictionary = _extraer_override_de_configuracion_de_arrastre(
+		contenido_arrastre
+	)
+	if override_configuracion.is_empty():
+		return
+
+	var configuracion_merged: Dictionary = _configuracion_dificultad_arrastre.duplicate(true)
+	for clave in override_configuracion.keys():
+		configuracion_merged[clave] = override_configuracion[clave]
+	_configuracion_dificultad_arrastre = configuracion_merged
+
+
+func _extraer_override_de_configuracion_de_arrastre(contenido_arrastre: Dictionary) -> Dictionary:
+	var override_configuracion: Dictionary = {}
+
+	var elementos_maximos: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"elementos_maximos"
+	)
+	if elementos_maximos != null and int(elementos_maximos) > 0:
+		override_configuracion["elementos_maximos"] = int(elementos_maximos)
+
+	var distractores_maximos: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"distractores_maximos"
+	)
+	if distractores_maximos != null and int(distractores_maximos) >= 0:
+		override_configuracion["distractores_maximos"] = int(distractores_maximos)
+
+	var mostrar_ayuda_visual: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"mostrar_ayuda_visual"
+	)
+	if mostrar_ayuda_visual is bool:
+		override_configuracion["mostrar_ayuda_visual"] = bool(mostrar_ayuda_visual)
+
+	return override_configuracion
+
+
+func _leer_campo_configuracion_de_arrastre(
+	contenido_arrastre: Dictionary,
+	campo: String
+) -> Variant:
+	if contenido_arrastre.has(campo):
+		return contenido_arrastre.get(campo)
+
+	var contenido: Variant = contenido_arrastre.get("content", {})
+	if contenido is Dictionary and (contenido as Dictionary).has(campo):
+		return (contenido as Dictionary).get(campo)
+
+	return null
 
 
 func _construir_datos_de_partida_de_arrastre() -> Dictionary:
@@ -132,6 +198,15 @@ func _construir_datos_de_partida_de_arrastre() -> Dictionary:
 
 
 func _finalizar_arranque_de_arrastre_desde_json() -> bool:
+	print(
+		"[DragRuntime] mode=drag_drop targets=%d items=%d"
+		% [
+			(level_resource.mechanic_payload.get("targets", []) as Array).size()
+				if level_resource != null and level_resource.mechanic_payload is Dictionary
+				else 0,
+			active_positive_item_count + active_negative_item_count,
+		]
+	)
 	_instanciar_elementos_de_arrastre()
 	if level_items.is_empty():
 		push_warning("ManagerLevel: no se pudieron instanciar comidas de arrastre desde el JSON.")
@@ -146,8 +221,17 @@ func _extraer_datos_de_arrastre(contenido_arrastre: Dictionary) -> Dictionary:
 	var elementos: Array = []
 	var objetivos: Array = []
 	if contenido_arrastre is Dictionary:
-		elementos = contenido_arrastre.get("items", []) if contenido_arrastre.has("items") else contenido_arrastre.get("content", {}).get("items", [])
-		objetivos = contenido_arrastre.get("targets", []) if contenido_arrastre.has("targets") else contenido_arrastre.get("content", {}).get("targets", [])
+		var contenido: Dictionary = contenido_arrastre.get("content", {})
+		elementos = (
+			contenido_arrastre.get("items", [])
+			if contenido_arrastre.has("items")
+			else contenido.get("items", [])
+		)
+		objetivos = (
+			contenido_arrastre.get("targets", [])
+			if contenido_arrastre.has("targets")
+			else contenido.get("targets", [])
+		)
 	return {
 		"elementos": elementos,
 		"objetivos": objetivos,
@@ -170,10 +254,12 @@ func _crear_elementos_desde_datos_de_arrastre(
 ) -> Dictionary:
 	var positivos: Array = []
 	var negativos: Array = []
-	for elemento_crudo in elementos_crudos:
+	for index in range(elementos_crudos.size()):
+		var elemento_crudo: Variant = elementos_crudos[index]
 		var nivel_item: Resource = _crear_elemento_de_arrastre_desde_datos(
 			elemento_crudo,
-			escena_elemento
+			escena_elemento,
+			index
 		)
 		if nivel_item == null:
 			continue
@@ -181,6 +267,8 @@ func _crear_elementos_desde_datos_de_arrastre(
 			positivos.append(nivel_item)
 		else:
 			negativos.append(nivel_item)
+	positivos.shuffle()
+	negativos.shuffle()
 	return {
 		"positivos": positivos,
 		"negativos": negativos,
@@ -189,22 +277,50 @@ func _crear_elementos_desde_datos_de_arrastre(
 
 func _crear_elemento_de_arrastre_desde_datos(
 	elemento_crudo: Variant,
-	escena_elemento: PackedScene
+	escena_elemento: PackedScene,
+	index: int = 0
 ) -> Resource:
 	if not elemento_crudo is Dictionary:
 		return null
 	var datos_elemento: Dictionary = elemento_crudo as Dictionary
 	var nivel_item = LevelItemScript.new()
-	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(datos_elemento)
+	var item_id: String = str(datos_elemento.get("id", "sin_id")).strip_edges()
+	var ruta_recurso: String = _resolver_ruta_recurso_elemento_arrastre(datos_elemento)
+	var recurso_item: Resource = _cargar_recurso_elemento_arrastre(ruta_recurso)
+	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(
+		datos_elemento,
+		recurso_item
+	)
 	var textura_info: Texture2D = _resolver_textura_info_elemento_arrastre(
 		datos_elemento,
-		textura_elemento
+		textura_elemento,
+		recurso_item
 	)
+	nivel_item.runtime_id = item_id
+	nivel_item.runtime_resource_path = ruta_recurso
+	nivel_item.runtime_visual_resource_path = (
+		textura_elemento.resource_path if textura_elemento != null else ""
+	)
+	nivel_item.runtime_label = str(
+		datos_elemento.get("label", datos_elemento.get("nombre", item_id))
+	).strip_edges()
+	nivel_item.runtime_feedback = str(datos_elemento.get("feedback", "")).strip_edges()
+	nivel_item.runtime_correct_target = str(datos_elemento.get("correct_target", "")).strip_edges()
 	nivel_item.sprite = textura_elemento
 	nivel_item.escena = escena_elemento
 	nivel_item.info = textura_info if textura_info != null else nivel_item.sprite
 	nivel_item.categoria = str(datos_elemento.get("category", "")).strip_edges()
 	nivel_item.esPositivo = str(datos_elemento.get("correct_target", "")).strip_edges() != ""
+	print(
+		"[ManagerLevelItem] index=%d id=%s resource=%s visual=%s label=%s"
+		% [
+			index,
+			item_id,
+			ruta_recurso,
+			nivel_item.runtime_visual_resource_path,
+			nivel_item.runtime_label,
+		]
+	)
 	return nivel_item
 
 
@@ -298,7 +414,7 @@ func _obtener_clave_ensenanza_explicita(
 
 
 func _leer_clave_ensenanza_de_diccionario(datos: Dictionary) -> String:
-	for clave_campo in ["teaching_key", "ensenanza_key", "clave_ensenanza"]:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
 		var clave: String = str(datos.get(clave_campo, "")).strip_edges()
 		if not clave.is_empty():
 			return clave
@@ -380,25 +496,68 @@ func _instanciar_elementos_de_arrastre() -> void:
 		generar_nivel_elemento(level_resource.itemsNegativos[j], "negative_%d" % j, false)
 
 
-func _resolver_textura_elemento_arrastre(elemento_crudo: Dictionary) -> Texture2D:
-	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
-	var textura_elemento: Texture2D = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+func _resolver_textura_elemento_arrastre(
+	elemento_crudo: Dictionary,
+	recurso_item: Resource = null
+) -> Texture2D:
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
+	var textura_elemento: Texture2D = null
+	if ruta_textura.ends_with(".tres"):
+		if recurso_item != null:
+			textura_elemento = recurso_item.get("sprite") as Texture2D
+	else:
+		textura_elemento = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+	var item_id: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
+	print(
+		"[DragFoodItem] id=%s resource=%s exists=%s correct=%s"
+		% [
+			item_id, ruta_textura,
+			str(ResourceLoader.exists(ruta_textura) and textura_elemento != null),
+			str(str(elemento_crudo.get("correct_target", "")).strip_edges() != ""),
+		]
+	)
 	if textura_elemento != null:
 		return textura_elemento
 
-	var identificador_elemento: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
 	push_warning(
-		"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s). Se usará una textura por defecto."
-		% [identificador_elemento, ruta_textura]
+		(
+			"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s)."
+			+ " Se usara una textura por defecto."
+		) % [item_id, ruta_textura]
 	)
 	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
 
 
+func _resolver_ruta_recurso_elemento_arrastre(elemento_crudo: Dictionary) -> String:
+	for campo in ["resource", "resource_path", "asset", "image", "texture"]:
+		var ruta: String = str(elemento_crudo.get(campo, "")).strip_edges()
+		if not ruta.is_empty():
+			return ruta
+	return ""
+
+
+func _cargar_recurso_elemento_arrastre(ruta_recurso: String) -> Resource:
+	if ruta_recurso.strip_edges().is_empty() or not ruta_recurso.ends_with(".tres"):
+		return null
+	return load(ruta_recurso) as Resource
+
+
 func _resolver_textura_info_elemento_arrastre(
 	elemento_crudo: Dictionary,
-	textura_elemento: Texture2D
+	textura_elemento: Texture2D,
+	recurso_item: Resource = null
 ) -> Texture2D:
-	var ruta_textura: String = str(elemento_crudo.get("image", "")).strip_edges()
+	var ruta_info_explicita: String = str(
+		elemento_crudo.get("info_image", elemento_crudo.get("info", ""))
+	).strip_edges()
+	if not ruta_info_explicita.is_empty():
+		return GameChapterAssetCatalogScript.resolver_textura(ruta_info_explicita)
+	if recurso_item != null:
+		var textura_info_recurso := recurso_item.get("info") as Texture2D
+		if textura_info_recurso != null:
+			return textura_info_recurso
+
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
 	var texturas_info_por_sprite := _obtener_texturas_info_por_sprite()
 	if not ruta_textura.is_empty() and texturas_info_por_sprite.has(ruta_textura):
 		return texturas_info_por_sprite.get(ruta_textura) as Texture2D
@@ -577,10 +736,23 @@ func tiene_completado_actual_partida() -> bool:
 		return false
 	if level_resource == null:
 		return false
-	return (
-		int(level_resource.cantidadPositivos) == obtener_positivo_elementos_in_plato_cantidad()
+	var correctos_colocados: int = obtener_positivo_elementos_in_plato_cantidad()
+	var correctos_necesarios: int = active_positive_item_count
+	if correctos_necesarios <= 0:
+		correctos_necesarios = int(level_resource.cantidadPositivos)
+	var completado: bool = (
+		correctos_necesarios == correctos_colocados
 		and plato.cantAlimentosNeg.is_empty()
 	)
+	print(
+		"[ARRASTRE] correctos_colocados=",
+		correctos_colocados,
+		" correctos_necesarios=",
+		correctos_necesarios,
+		" completado=",
+		completado
+	)
+	return completado
 
 
 func filtrar_elementos_por_categoria(items: Array, category: String) -> Array:
@@ -609,6 +781,10 @@ func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positi
 	level_item_instance.setup(level_item, plato, is_positive, instance_id)
 	add_child(level_item_instance)
 	level_items.append(level_item_instance)
+	var item_id: String = str(level_item.runtime_id).strip_edges()
+	if item_id.is_empty():
+		item_id = instance_id
+	print("[ManagerLevel] item_instantiated id=%s ok=true" % item_id)
 	return level_item_instance
 
 
@@ -910,19 +1086,37 @@ func _construir_activo_partida_carga() -> Dictionary:
 func _aplicar_configuracion_de_dificultad_arrastre() -> void:
 	if _configuracion_dificultad_arrastre.is_empty():
 		return
-	active_positive_item_count = max(
+	var positivos_disponibles: int = active_positive_item_count
+	var negativos_disponibles: int = active_negative_item_count
+	var total_disponible: int = positivos_disponibles + negativos_disponibles
+	var total_deseado: int = clampi(
+		int(_configuracion_dificultad_arrastre.get("elementos_maximos", total_disponible)),
 		1,
-		int(_configuracion_dificultad_arrastre.get("elementos_maximos", active_positive_item_count))
+		maxi(1, total_disponible)
 	)
-	active_negative_item_count = max(
+	var distractores_deseados: int = clampi(
+		int(_configuracion_dificultad_arrastre.get("distractores_maximos", negativos_disponibles)),
 		0,
-		int(
-			_configuracion_dificultad_arrastre.get(
-				"distractores_maximos",
-				active_negative_item_count
-			)
-		)
+		mini(negativos_disponibles, maxi(0, total_deseado - 1))
 	)
+	var positivos_deseados: int = clampi(
+		total_deseado - distractores_deseados,
+		1,
+		maxi(1, positivos_disponibles)
+	)
+	active_positive_item_count = mini(positivos_deseados, positivos_disponibles)
+	active_negative_item_count = mini(
+		negativos_disponibles,
+		total_deseado - active_positive_item_count
+	)
+	_sincronizar_recurso_con_cantidades_activas()
+
+
+func _sincronizar_recurso_con_cantidades_activas() -> void:
+	if level_resource == null:
+		return
+	level_resource.cantidadPositivos = active_positive_item_count
+	level_resource.cantidadNegativos = active_negative_item_count
 
 
 func _aplicar_ayuda_visual_de_arrastre() -> void:

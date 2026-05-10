@@ -7,7 +7,7 @@ const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
 
-const MAP_JSON_PATH := "res://contenido/mapas/celiaquia_mapa.json"
+const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"

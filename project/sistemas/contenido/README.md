@@ -1,14 +1,63 @@
 # Sistemas / Contenido
 
-## Archivo de entrada oficial
+## Flujo principal (contenido/mapa)
 
-El punto de entrada para cargar contenido jugable es:
+El punto de entrada es `NodeContentLoader.gd`.
 
-`CargadorDeContenidoDeNodo.gd`
+```
+NodeContentLoader.load_from_context(context)
+  → si tiene activity_id: load_from_pack(pack_id, activity_id)
+      → load_activity(pack_id, activity_id)
+          → busca en preguntas.json, arrastres.json y vinculaciones.json
+      → ActivityAdapter.to_legacy_node(activity, pack_id, pack, options)
+          → si mode == drag_food: filtra items_celiaquia.json por meal_type + categoria
+          → si mode == match: convierte pairs a vinculacion_conceptos
+          → devuelve nodo runtime drag_drop
+  → si falla y tiene json_path: fallback a CargadorDeContenidoDeNodo (legacy)
+  → si solo tiene json_path: usa CargadorDeContenidoDeNodo directamente
+```
 
-Usalo cuando una escena o test necesita leer el JSON de un nodo jugable.
+Archivos fuente actuales:
 
-## Flujo de carga
+- `res://contenido/mapa/celiaquia_mapa.json`
+- `res://contenido/mapa/arrastres.json`
+- `res://contenido/mapa/preguntas.json`
+- `res://contenido/mapa/vinculaciones.json`
+- `res://contenido/catalogos/items_celiaquia.json`
+
+## Cómo crear un drag_food nuevo
+
+Solo necesitás agregar esto en `arrastres.json`:
+
+```json
+{
+  "id": "drag_merienda_facil",
+  "mode": "drag_food",
+  "difficulty": 1,
+  "prompt": "Arma una merienda apta sin TACC.",
+  "target": "Merienda apta",
+  "meal": "merienda",
+  "pick": { "correct": 2, "incorrect": 1 }
+}
+```
+
+El runtime busca automáticamente en `items_celiaquia.json` todos los items con `"merienda"` en su `meal_type`, separa los `sin_tacc` (correctos) de los demás (incorrectos), hace shuffle y selecciona. No es necesario listar alimentos manualmente.
+
+## Fuente de verdad de alimentos
+
+`res://contenido/catalogos/items_celiaquia.json`
+
+Cada item define:
+- `nombre` — texto visible
+- `asset` — ruta al icono PNG
+- `categoria` — `sin_tacc` | `con_gluten` | `riesgo`
+- `meal_type` — array con: `desayuno`, `merienda`, `colacion`, `almuerzo`, `cena`, `bebida`, `cocina_segura`
+- `tags` — opcional, para filtros futuros
+- `feedback` — opcional, explicación educativa
+
+Un alimento se define una sola vez. No duplicar en `meal_pools`.
+
+## Flujo legacy (fallback)
 
 1. `CargadorDeContenidoDeNodo.gd` recibe una ruta `json_path`.
 2. `AdaptadorContenidoViejo.gd` normaliza rutas viejas y formatos legacy.
@@ -18,7 +67,18 @@ Usalo cuando una escena o test necesita leer el JSON de un nodo jugable.
 6. `ValidadorDeContenidoDeNodo.gd` devuelve una version limpia.
 7. El minijuego convierte ese nodo limpio a su runtime si necesita un formato propio.
 
-## Que se valida
+## Validaciones automáticas
+
+`NodeContentLoader._validate_pack_minimal()` valida al cargar el pack:
+- Que cada `drag_food` tenga `prompt`, `target`, `meal` válido y `pick` con valores positivos.
+- Que el catálogo `items_celiaquia.json` sea válido y tenga suficientes items para el `meal` pedido.
+
+`ActivityAdapter._validate_items_catalog()` valida el catálogo:
+- Todos los items tienen `nombre`, `asset`, `categoria` y `meal_type` no vacío.
+- `categoria` pertenece a `[sin_tacc, con_gluten, riesgo]`.
+- Cada valor de `meal_type` es uno de los permitidos.
+
+## Que se valida (legacy)
 
 `ValidadorDeContenidoDeNodo.gd` valida:
 
@@ -43,16 +103,14 @@ Legacy es compatibilidad para contenido viejo. No es la ruta ideal para escribir
 
 Contenido nuevo deberia vivir en:
 
-`res://contenido/nodos/`
+`res://contenido/mapa/`
 
-Y deberia usar el shape oficial:
+Y deberia usar estos contratos chicos:
 
-- `id`
-- `theme`
-- `title`
-- `difficulty`
-- `mode`
-- `content`
+- `celiaquia_mapa.json` usa `games`
+- `arrastres.json` define `drag_food`
+- `preguntas.json` define `quiz`
+- `vinculaciones.json` define `match`
 
 ## Que formato espera cada minijuego
 
@@ -74,8 +132,5 @@ Y deberia usar el shape oficial:
 
 Despues de tocar contenido, correr:
 
-- `contenido_vinculacion_json_test.gd`
-- `plan_de_partida_de_nodo_test.gd`
-- `partida_de_nodo_multiple_test.gd`
 - `vincular_conceptos_scene_test.gd`
 - `vertical_slice_smoke_test.gd`

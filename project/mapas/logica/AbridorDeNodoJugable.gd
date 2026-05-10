@@ -1,13 +1,27 @@
 extends RefCounted
 class_name AbridorDeNodoJugable
 
+# Abre el game actual de una partida de nodo.
+# Recibe un nodo ya cargado; no decide games ni adapta contenido.
+#
+# Responsabilidad única: armar la sesión y delegar al Global + ContinuidadDePartidaDeNodo.
+# Flujo:
+#   abrir_nodo(tree, node_data, ruta_retorno)
+#     → _construir_datos_de_apertura  (arma sesión + plan via ArmadorDePartida)
+#     → _iniciar_partida_en_global     (guarda en autoload Global)
+#     → ContinuidadDePartidaDeNodo.abrir_juego_actual
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-const ContinuidadDePartidaDeNodoScript := preload("res://mapas/logica/ContinuidadDePartidaDeNodo.gd")
+const ContinuidadDePartidaDeNodoScript := preload(
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
+)
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 
 const CLAVE_SESION_NODE_KEY := "node_key"
 const CLAVE_SESION_NODE_TITLE := "node_title"
 const CLAVE_SESION_JSON_PATH := "json_path"
+const CLAVE_SESION_ACTIVITY_ID := "activity_id"
+const CLAVE_SESION_PACK_ID := "pack_id"
 const CLAVE_SESION_TRACK_KEY := "track_key"
 const CLAVE_SESION_MODE := "mode"
 const CLAVE_SESION_LEVEL_NUMBER := "level_number"
@@ -15,7 +29,6 @@ const CLAVE_SESION_DIFFICULTY := "difficulty"
 const CLAVE_SESION_RETURN_TO := "return_to"
 
 
-# Apertura del nodo
 static func abrir_nodo(
 	tree: SceneTree,
 	node_data: MapNodeData,
@@ -37,7 +50,6 @@ static func abrir_nodo(
 	if datos_de_apertura.is_empty():
 		_limpiar_estado_de_apertura(estado_global)
 		return _resultado_con_error("No se pudo armar la partida del nodo.")
-
 	_iniciar_partida_en_global(estado_global, datos_de_apertura)
 
 	if not ContinuidadDePartidaDeNodoScript.abrir_juego_actual(tree, estado_global):
@@ -47,15 +59,18 @@ static func abrir_nodo(
 	return _resultado_ok()
 
 
-static func construir_sesion_jugable(
+static func _construir_sesion_jugable(
 	node_data: MapNodeData,
 	ruta_retorno: String
 ) -> Dictionary:
+	# La sesion jugable solo guarda contexto del nodo; no arma la secuencia.
 	var numero_nivel: int = node_data.index + 1
 	var estado_sesion := {
 		CLAVE_SESION_NODE_KEY: node_data.node_key,
 		CLAVE_SESION_NODE_TITLE: node_data.title,
 		CLAVE_SESION_JSON_PATH: node_data.json_path,
+		CLAVE_SESION_ACTIVITY_ID: node_data.activity_id,
+		CLAVE_SESION_PACK_ID: node_data.get_effective_pack_id(),
 		CLAVE_SESION_TRACK_KEY: node_data.track_key,
 		CLAVE_SESION_MODE: node_data.mode.strip_edges(),
 		CLAVE_SESION_LEVEL_NUMBER: numero_nivel,
@@ -80,7 +95,7 @@ static func _construir_datos_de_apertura(
 	node_data: MapNodeData,
 	ruta_retorno: String
 ) -> Dictionary:
-	var sesion_jugable: Dictionary = construir_sesion_jugable(node_data, ruta_retorno)
+	var sesion_jugable: Dictionary = _construir_sesion_jugable(node_data, ruta_retorno)
 	var plan_de_partida: Dictionary = ArmadorDePartidaScript.construir_plan_de_partida(node_data)
 	if plan_de_partida.is_empty():
 		return {}

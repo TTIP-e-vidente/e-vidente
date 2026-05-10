@@ -1,5 +1,6 @@
 extends Node2D
 
+
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const PostGameFlowControllerScript := preload(
@@ -17,17 +18,19 @@ const ContinuidadDePartidaDeNodoScript := preload(
 const CargadorDeContenidoDeNodoScript := preload(
 	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
 )
+const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const ConceptItemScene := preload("res://vincular/concept_item.tscn")
+const LOG_PREFIX_MATCH := "[Match]"
 
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
 const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
 const BADGE_TEXTURE := preload("res://assets-sistema/interfaz/pregunta-1.png")
-const BADGE_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TARJETA_SELECCIONADA := Color(0.93, 1.0, 0.95, 1.0)
 const COLOR_TARJETA_VINCULADA := Color(0.97, 1.0, 0.98, 1.0)
@@ -35,6 +38,15 @@ const COLOR_TARJETA_ERROR := Color(1.0, 0.94, 0.94, 1.0)
 const COLOR_LINEA_OK := Color(0.2, 0.62, 0.38, 1.0)
 const COLOR_LINEA_ERROR := Color(0.92, 0.22, 0.2, 1.0)
 const COLOR_LINEA_SOMBRA := Color(0.05, 0.04, 0.03, 0.28)
+const COLOR_FEEDBACK_NEUTRAL := Color(0.18, 0.19, 0.21, 1.0)
+const COLOR_FEEDBACK_OK := Color(0.17, 0.49, 0.28, 1.0)
+const COLOR_FEEDBACK_ERROR := Color(0.74, 0.18, 0.16, 1.0)
+const COLOR_GUIA := Color(0.26, 0.47, 0.37, 1.0)
+const TEXTO_GUIA_INICIAL := "Primero elegi un concepto de la izquierda."
+const TEXTO_GUIA_CON_SELECCION := "Ahora elegi su pareja de la derecha."
+const TEXTO_GUIA_GENERAL := "Elegi una tarjeta de la izquierda y despues su pareja de la derecha."
+const TEXTO_GUIA_CORRECTO := "Bien. Esa relacion es correcta."
+const TEXTO_GUIA_ERROR := "Proba otra combinacion."
 const MARGEN_ANCLAJE_LINEA := 12.0
 const DURACION_ANIMACION_LINEA := 0.16
 
@@ -51,6 +63,7 @@ const DURACION_ANIMACION_LINEA := 0.16
 var items_izquierda: Array[ConceptoItem] = []
 var items_derecha: Array[ConceptoItem] = []
 var seleccion_actual: ConceptoItem = null
+var seleccion_derecha_pendiente: ConceptoItem = null
 
 var total_pares := 0
 var clave_pista := CLAVE_PISTA_PREDETERMINADA
@@ -61,6 +74,8 @@ var validado := false
 var boton_confirmar: Button = null
 var boton_continuar_validacion: Button = null
 var feedback_label: Label = null
+var guide_label: Label = null
+var center_hint: PanelContainer = null
 var click_areas: Control = null
 var teaching_sprite: Sprite2D = null
 
@@ -72,17 +87,20 @@ var _mensaje_error_bloqueante := ""
 var _retroalimentacion_racha_post_juego: Dictionary = {}
 var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
+var _continuar_juego_es_continuacion_pendiente := false
+var _continuar_juego_es_validacion_pendiente := false
 
 
 func _ready() -> void:
 	_preparar_sprite_ensenanza()
+	_preparar_layout_ui()
 	_recolectar_items()
 	_preparar_controles_de_confirmacion()
 	_preparar_click_areas()
 	_acomodar_pantalla()
 	if line_drawer != null:
 		line_drawer.z_as_relative = false
-		line_drawer.z_index = 80
+		line_drawer.z_index = 10
 		line_drawer.show()
 	_conectar_continuar_juego()
 	if boton_atras != null:
@@ -90,6 +108,8 @@ func _ready() -> void:
 	configurar_desde_sesion()
 	_configurar_indicador_de_progreso_de_juego()
 	if not _mensaje_error_bloqueante.is_empty():
+		if _mostrar_continuacion_pendiente_si_corresponde():
+			return
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	_aplicar_runtime_en_escena()
@@ -115,8 +135,175 @@ func _extraer_conceptos(contenedor: VBoxContainer) -> Array[ConceptoItem]:
 func _conectar_continuar_juego() -> void:
 	if _continuar_juego == null:
 		return
+	# El componente vive bajo un Node2D: los anchors no resuelven contra el viewport,
+	# asi que forzamos posicion absoluta para que la flecha sea visible.
+	_continuar_juego.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_continuar_juego.offset_left = 0.0
+	_continuar_juego.offset_top = 0.0
+	_continuar_juego.offset_right = 0.0
+	_continuar_juego.offset_bottom = 0.0
+	_continuar_juego.position = Vector2(960.0, 632.0)
+	_continuar_juego.size = Vector2(128.0, 128.0)
+	_continuar_juego.z_as_relative = false
+	_continuar_juego.z_index = 250
 	if _continuar_juego.has_signal("continuar_solicitado"):
-		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_solicitar_continuar"))
+		_continuar_juego.connect(
+			"continuar_solicitado",
+			Callable(self, "_al_solicitar_continuar_juego")
+		)
+
+
+func _preparar_layout_ui() -> void:
+	control_principal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	control_principal.offset_left = 0
+	control_principal.offset_top = 0
+	control_principal.offset_right = 0
+	control_principal.offset_bottom = 0
+	control_principal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	if line_drawer != null:
+		line_drawer.z_as_relative = false
+		line_drawer.z_index = 10
+		line_drawer.show()
+
+	if is_instance_valid(titulo_nivel):
+		titulo_nivel.text = "Celiaquía"
+
+
+func _asegurar_margin_container(nombre: String, parent: Node) -> MarginContainer:
+	var node := parent.get_node_or_null(nombre) as MarginContainer
+	if node == null:
+		node = MarginContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_vbox(nombre: String, parent: Node) -> VBoxContainer:
+	var node := parent.get_node_or_null(nombre) as VBoxContainer
+	if node == null:
+		node = VBoxContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_hbox(nombre: String, parent: Node) -> HBoxContainer:
+	var node := parent.get_node_or_null(nombre) as HBoxContainer
+	if node == null:
+		node = HBoxContainer.new()
+		node.name = nombre
+		parent.add_child(node)
+	return node
+
+
+func _asegurar_hint_card(parent: Node) -> PanelContainer:
+	var node := parent.get_node_or_null("CenterHint") as PanelContainer
+	if node == null:
+		node = PanelContainer.new()
+		node.name = "CenterHint"
+		parent.add_child(node)
+		var padding := MarginContainer.new()
+		padding.name = "Padding"
+		node.add_child(padding)
+		_set_margenes(padding, 18, 14, 18, 14)
+		guide_label = Label.new()
+		guide_label.name = "GuideLabel"
+		padding.add_child(guide_label)
+	else:
+		guide_label = node.get_node_or_null("Padding/GuideLabel") as Label
+	node.custom_minimum_size = Vector2(248, 128)
+	node.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	node.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	node.add_theme_stylebox_override("panel", _crear_estilo_hint())
+	if guide_label != null:
+		guide_label.custom_minimum_size = Vector2(210, 90)
+		guide_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		guide_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		guide_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		guide_label.add_theme_font_size_override("font_size", 22)
+		guide_label.add_theme_color_override("font_color", COLOR_GUIA)
+		guide_label.text = TEXTO_GUIA_GENERAL
+	return node
+
+
+func _ordenar_hijos_main_layout(
+	main_layout: HBoxContainer,
+	left_column: VBoxContainer,
+	hint: PanelContainer,
+	right_column: VBoxContainer
+) -> void:
+	main_layout.move_child(left_column, 0)
+	main_layout.move_child(hint, 1)
+	main_layout.move_child(right_column, 2)
+
+
+func _configurar_columna(columna: VBoxContainer) -> void:
+	columna.custom_minimum_size = Vector2(282, 0)
+	columna.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	columna.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columna.alignment = BoxContainer.ALIGNMENT_CENTER
+	columna.add_theme_constant_override("separation", 0)
+
+
+func _reparent_control(node: Control, nuevo_parent: Node) -> void:
+	if node == null or node.get_parent() == nuevo_parent:
+		return
+	node.get_parent().remove_child(node)
+	nuevo_parent.add_child(node)
+
+
+func _reparent_canvas_item(node: CanvasItem, nuevo_parent: Node) -> void:
+	if node == null or node.get_parent() == nuevo_parent:
+		return
+	node.get_parent().remove_child(node)
+	nuevo_parent.add_child(node)
+
+
+func _set_margenes(
+	node: MarginContainer,
+	left: int,
+	top: int,
+	right: int,
+	bottom: int
+) -> void:
+	node.add_theme_constant_override("margin_left", left)
+	node.add_theme_constant_override("margin_top", top)
+	node.add_theme_constant_override("margin_right", right)
+	node.add_theme_constant_override("margin_bottom", bottom)
+
+
+func _crear_estilo_hint() -> StyleBoxFlat:
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color(1, 1, 1, 0.86)
+	estilo.border_color = Color(0.26, 0.47, 0.37, 0.55)
+	estilo.border_width_left = 2
+	estilo.border_width_top = 2
+	estilo.border_width_right = 2
+	estilo.border_width_bottom = 2
+	estilo.corner_radius_top_left = 8
+	estilo.corner_radius_top_right = 8
+	estilo.corner_radius_bottom_right = 8
+	estilo.corner_radius_bottom_left = 8
+	return estilo
+
+
+func _mostrar_continuacion_pendiente_si_corresponde() -> bool:
+	if _continuar_juego == null:
+		return false
+	if not _datos_de_ejecucion.is_empty():
+		return false
+	if not Global.hay_juego_o_nodo_para_continuar():
+		return false
+	_continuar_juego_es_continuacion_pendiente = true
+	bloqueado = true
+	label_pregunta.text = ""
+	_actualizar_texto_guia("")
+	_limpiar_vinculos_y_errores()
+	_actualizar_visual()
+	_bloquear_tarjetas()
+	_continuar_juego.call("mostrar_para_continuar_pendiente")
+	return true
 
 
 func configurar_desde_sesion() -> void:
@@ -149,20 +336,23 @@ func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
 
 
 func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
+	var activity_id: String = str(contexto_sesion.get("activity_id", "")).strip_edges()
 	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
-	if ruta_json.is_empty():
-		_mensaje_error_bloqueante = "Falta json_path para la vinculación."
+	if activity_id.is_empty() and ruta_json.is_empty():
+		_mensaje_error_bloqueante = "Falta activity_id o json_path para la vinculacion."
 		return
 
-	var resultado_nodo: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
+	var resultado_nodo: Dictionary = NodeContentLoaderScript.load_from_context(contexto_sesion)
 	if not bool(resultado_nodo.get("ok", false)):
 		_mensaje_error_bloqueante = str(
 			resultado_nodo.get("error", "No se pudo cargar el contenido de vinculación.")
 		)
 		return
 
-	var resultado_runtime: Dictionary = CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
-		resultado_nodo.get("data", {})
+	var resultado_runtime: Dictionary = (
+		CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
+			resultado_nodo.get("data", {})
+		)
 	)
 	if not bool(resultado_runtime.get("ok", false)):
 		_mensaje_error_bloqueante = str(
@@ -171,6 +361,13 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		return
 
 	_datos_de_ejecucion = resultado_runtime.get("data", {}).duplicate(true)
+	print(
+		LOG_PREFIX_MATCH,
+		" activity=",
+		str(_datos_de_ejecucion.get("id", _nodo_actual)),
+		" pairs=",
+		int((_datos_de_ejecucion.get("conceptos_izquierda", []) as Array).size())
+	)
 
 
 func _reiniciar_estado_local() -> void:
@@ -187,11 +384,14 @@ func _reiniciar_estado_local() -> void:
 	_retroalimentacion_racha_post_juego = {}
 	_estado_flujo_post_juego = {}
 	_datos_de_ejecucion = {}
+	_continuar_juego_es_continuacion_pendiente = false
+	_continuar_juego_es_validacion_pendiente = false
 	_limpiar_vinculos_y_errores()
 
 
 func _limpiar_vinculos_y_errores() -> void:
 	seleccion_actual = null
+	seleccion_derecha_pendiente = null
 	for item in _todos_los_items():
 		item.limpiar_vinculo()
 
@@ -201,18 +401,20 @@ func _preparar_controles_de_confirmacion() -> void:
 	if boton_confirmar == null:
 		boton_confirmar = Button.new()
 		boton_confirmar.name = "ConfirmButton"
-		boton_confirmar.custom_minimum_size = Vector2(220, 56)
+		boton_confirmar.layout_mode = 0
 		control_principal.add_child(boton_confirmar)
-	boton_confirmar.position = Vector2(520, 724)
+	boton_confirmar.offset_left = 456.0
+	boton_confirmar.offset_top = 728.0
+	boton_confirmar.offset_right = 700.0
+	boton_confirmar.offset_bottom = 784.0
 	boton_confirmar.text = "Confirmar"
 	boton_confirmar.visible = true
 	boton_confirmar.disabled = true
 	boton_confirmar.z_index = 110
-	_aplicar_estilo_boton_badge(boton_confirmar, 24)
+	_aplicar_estilo_boton_badge(boton_confirmar, 22)
 	if not boton_confirmar.pressed.is_connected(confirmar):
 		boton_confirmar.pressed.connect(confirmar)
 
-	_preparar_boton_continuar_validacion()
 	_preparar_feedback_label()
 
 
@@ -221,14 +423,17 @@ func _preparar_boton_continuar_validacion() -> void:
 	if boton_continuar_validacion == null:
 		boton_continuar_validacion = Button.new()
 		boton_continuar_validacion.name = "ContinueButton"
-		boton_continuar_validacion.custom_minimum_size = Vector2(236, 56)
+		boton_continuar_validacion.layout_mode = 0
 		control_principal.add_child(boton_continuar_validacion)
-	boton_continuar_validacion.position = Vector2(512, 724)
+	boton_continuar_validacion.offset_left = 456.0
+	boton_continuar_validacion.offset_top = 736.0
+	boton_continuar_validacion.offset_right = 700.0
+	boton_continuar_validacion.offset_bottom = 794.0
 	boton_continuar_validacion.text = "Continuar"
 	boton_continuar_validacion.visible = false
 	boton_continuar_validacion.disabled = true
 	boton_continuar_validacion.z_index = 111
-	_aplicar_estilo_boton_badge(boton_continuar_validacion, 28)
+	_aplicar_estilo_boton_badge(boton_continuar_validacion, 24)
 	if not boton_continuar_validacion.pressed.is_connected(_on_continuar_pressed):
 		boton_continuar_validacion.pressed.connect(_on_continuar_pressed)
 
@@ -238,19 +443,36 @@ func _preparar_feedback_label() -> void:
 	if feedback_label == null:
 		feedback_label = Label.new()
 		feedback_label.name = "FeedbackLabel"
-		feedback_label.custom_minimum_size = Vector2(520, 40)
-		feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		feedback_label.layout_mode = 0
 		control_principal.add_child(feedback_label)
-	feedback_label.position = Vector2(370, 688)
+	feedback_label.offset_left = 180.0
+	feedback_label.offset_top = 668.0
+	feedback_label.offset_right = 976.0
+	feedback_label.offset_bottom = 716.0
+	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback_label.add_theme_font_size_override("font_size", 22)
+	feedback_label.add_theme_color_override("font_color", COLOR_FEEDBACK_NEUTRAL)
 	feedback_label.visible = true
-	feedback_label.z_index = 110
+	feedback_label.z_index = 20
 	feedback_label.text = ""
+	# Una sola guia: guide_label apunta al mismo nodo que feedback_label
+	guide_label = feedback_label
+
+
+func _obtener_feedback_layer() -> VBoxContainer:
+	var feedback_layer := control_principal.get_node_or_null(
+		"ScreenMargin/ScreenStack/FeedbackLayer"
+	) as VBoxContainer
+	if feedback_layer == null:
+		feedback_layer = _asegurar_vbox("FeedbackLayer", control_principal)
+	return feedback_layer
 
 
 func _aplicar_estilo_boton_badge(boton: Button, font_size: int) -> void:
 	var estilo := _crear_estilo_badge()
 	boton.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	boton.add_theme_font_override("font", BADGE_FONT)
 	boton.add_theme_font_size_override("font_size", font_size)
 	boton.add_theme_color_override("font_color", Color.WHITE)
 	boton.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -275,18 +497,10 @@ func _crear_estilo_badge() -> StyleBoxTexture:
 
 
 func _acomodar_pantalla() -> void:
-	label_pregunta.position = Vector2(245, 198)
-	label_pregunta.size = Vector2(730, 86)
-	label_pregunta.scale = Vector2.ONE
 	label_pregunta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label_pregunta.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label_pregunta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label_pregunta.add_theme_font_size_override("font_size", 34)
-
-	contenedor_izquierda.position = Vector2(360, 334)
-	contenedor_derecha.position = Vector2(805, 334)
-	contenedor_izquierda.add_theme_constant_override("separation", 124)
-	contenedor_derecha.add_theme_constant_override("separation", 124)
+	contenedor_izquierda.custom_minimum_size = Vector2(282, 0)
+	contenedor_derecha.custom_minimum_size = Vector2(282, 0)
 
 
 func _preparar_click_areas() -> void:
@@ -295,7 +509,7 @@ func _preparar_click_areas() -> void:
 		click_areas = Control.new()
 		click_areas.name = "ClickAreas"
 		control_principal.add_child(click_areas)
-	click_areas.visible = true
+	click_areas.visible = false
 	click_areas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	click_areas.z_index = 100
 
@@ -322,7 +536,9 @@ func _configurar_indicador_de_progreso_de_juego() -> void:
 
 func _aplicar_runtime_en_escena() -> void:
 	titulo_nivel.text = "Celiaquía"
-	label_pregunta.text = str(_datos_de_ejecucion.get("instruccion", "Relacioná correctamente")).strip_edges()
+	label_pregunta.text = str(
+		_datos_de_ejecucion.get("instruccion", "Relacioná correctamente")
+	).strip_edges()
 
 	var conceptos_izquierda: Array = _datos_de_ejecucion.get("conceptos_izquierda", [])
 	var conceptos_derecha: Array = _datos_de_ejecucion.get("conceptos_derecha", [])
@@ -330,8 +546,11 @@ func _aplicar_runtime_en_escena() -> void:
 	if total_pares <= 0:
 		_mostrar_error_bloqueante("La vinculación no tiene pares suficientes.")
 		return
+	_asegurar_slots_visuales(total_pares)
 	if total_pares > items_izquierda.size() or total_pares > items_derecha.size():
-		_mostrar_error_bloqueante("La escena de vinculación no tiene suficientes tarjetas visuales.")
+		_mostrar_error_bloqueante(
+			"La escena de vinculación no tiene suficientes tarjetas visuales."
+		)
 		return
 
 	validado = false
@@ -339,15 +558,75 @@ func _aplicar_runtime_en_escena() -> void:
 	_limpiar_click_areas()
 	_limpiar_vinculos_y_errores()
 
-	var conceptos_derecha_ordenados: Array = _ordenar_derecha_para_evitar_cruces(
-		conceptos_izquierda,
-		conceptos_derecha
+	var conceptos_izquierda_mezclados: Array = _mezclar_columna(conceptos_izquierda)
+	var conceptos_derecha_mezclados: Array = _mezclar_columna(conceptos_derecha)
+	conceptos_derecha_mezclados = _evitar_alineacion_por_fila(
+		conceptos_izquierda_mezclados,
+		conceptos_derecha_mezclados
 	)
-	_configurar_lado(items_izquierda, conceptos_izquierda, "izquierda")
-	_configurar_lado(items_derecha, conceptos_derecha_ordenados, "derecha")
-	_mostrar_feedback("")
+	print(
+		"[MatchShuffle] left_order=%s right_order=%s"
+		% [
+			_unir_ids_para_log(conceptos_izquierda_mezclados),
+			_unir_ids_para_log(conceptos_derecha_mezclados)
+		]
+	)
+	_crear_tarjetas(conceptos_izquierda_mezclados, conceptos_derecha_mezclados)
+	_mostrar_feedback(TEXTO_GUIA_INICIAL)
+	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
 	_actualizar_visual()
 	call_deferred("_sincronizar_layout_interactivo")
+
+
+func _crear_tarjetas(conceptos_izquierda: Array, conceptos_derecha: Array) -> void:
+	_configurar_lado(items_izquierda, conceptos_izquierda, "izquierda")
+	_configurar_lado(items_derecha, conceptos_derecha, "derecha")
+
+
+func _asegurar_slots_visuales(total_requerido: int) -> void:
+	_asegurar_slots_en_contenedor(
+		contenedor_izquierda,
+		items_izquierda,
+		total_requerido,
+		"ConceptItemIzq"
+	)
+	_asegurar_slots_en_contenedor(
+		contenedor_derecha,
+		items_derecha,
+		total_requerido,
+		"ConceptItemDer"
+	)
+	_ajustar_layout_para_total_pares(total_requerido)
+
+
+func _asegurar_slots_en_contenedor(
+	contenedor: VBoxContainer,
+	items_existentes: Array[ConceptoItem],
+	total_requerido: int,
+	prefijo_nombre: String
+) -> void:
+	if contenedor == null:
+		return
+	while items_existentes.size() < total_requerido:
+		var nuevo_item := ConceptItemScene.instantiate() as ConceptoItem
+		if nuevo_item == null:
+			return
+		nuevo_item.name = "%s%d" % [prefijo_nombre, items_existentes.size() + 1]
+		nuevo_item.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		contenedor.add_child(nuevo_item)
+		if not nuevo_item.seleccionado.is_connected(_on_item_seleccionado):
+			nuevo_item.seleccionado.connect(_on_item_seleccionado)
+		items_existentes.append(nuevo_item)
+
+
+func _ajustar_layout_para_total_pares(total_requerido: int) -> void:
+	var separacion := 28
+	if total_requerido >= 5:
+		separacion = 8
+	elif total_requerido == 4:
+		separacion = 18
+	contenedor_izquierda.add_theme_constant_override("separation", separacion)
+	contenedor_derecha.add_theme_constant_override("separation", separacion)
 
 
 func _sincronizar_layout_interactivo() -> void:
@@ -355,7 +634,57 @@ func _sincronizar_layout_interactivo() -> void:
 	_actualizar_visual()
 
 
-func _ordenar_derecha_para_evitar_cruces(conceptos_izquierda: Array, conceptos_derecha: Array) -> Array:
+func _mezclar_columna(conceptos: Array) -> Array:
+	var copia: Array = conceptos.duplicate(true)
+	copia.shuffle()
+	return copia
+
+
+func _evitar_alineacion_por_fila(
+	izquierda: Array,
+	derecha: Array
+) -> Array:
+	# Si por azar quedó algún par correcto en la misma fila, intercambia esa
+	# fila con otra para que la columna no luzca pre-alineada.
+	var resultado: Array = derecha.duplicate(true)
+	var total: int = mini(izquierda.size(), resultado.size())
+	if total < 2:
+		return resultado
+	for fila in range(total):
+		var par_izq := str((izquierda[fila] as Dictionary).get("id_par", "")).strip_edges()
+		var par_der := str((resultado[fila] as Dictionary).get("id_par", "")).strip_edges()
+		if par_izq.is_empty() or par_der.is_empty() or par_izq != par_der:
+			continue
+		var swap_idx := -1
+		for otra in range(total):
+			if otra == fila:
+				continue
+			var par_izq_otra := str((izquierda[otra] as Dictionary).get("id_par", "")).strip_edges()
+			var par_der_otra := str((resultado[otra] as Dictionary).get("id_par", "")).strip_edges()
+			# Buscamos una fila donde intercambiar no genere otra alineación.
+			if par_der_otra != par_izq and par_der != par_izq_otra:
+				swap_idx = otra
+				break
+		if swap_idx >= 0:
+			var tmp = resultado[fila]
+			resultado[fila] = resultado[swap_idx]
+			resultado[swap_idx] = tmp
+	return resultado
+
+
+func _unir_ids_para_log(conceptos: Array) -> String:
+	var ids: Array[String] = []
+	for c in conceptos:
+		var d: Dictionary = c as Dictionary
+		var id_str := str(d.get("id", d.get("id_par", "")))
+		ids.append(id_str)
+	return ",".join(ids)
+
+
+func _ordenar_derecha_para_evitar_cruces(
+	conceptos_izquierda: Array,
+	conceptos_derecha: Array
+) -> Array:
 	var ordenados: Array = []
 	var usadas: Array[String] = []
 
@@ -381,6 +710,8 @@ func _ordenar_derecha_para_evitar_cruces(conceptos_izquierda: Array, conceptos_d
 
 
 func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado: String) -> void:
+	# Contrato principal: texto visible + id_par compartido.
+	# ActivityAdapter mantiene text/par_key solo como compatibilidad legacy.
 	for indice in range(items_escena.size()):
 		var item := items_escena[indice]
 		if indice >= conceptos.size():
@@ -388,20 +719,14 @@ func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado:
 			continue
 
 		var concepto: Dictionary = conceptos[indice] as Dictionary
-		item.configurar(
-			str(concepto.get("id", "")).strip_edges(),
-			str(concepto.get("texto", "")).strip_edges(),
-			lado,
-			str(concepto.get("id_par", "")).strip_edges()
-		)
+		item.setup(concepto, lado)
 		_aplicar_estado_tarjeta(item, "normal")
 		_hacer_tarjeta_clickeable(item)
 
 
 func _hacer_tarjeta_clickeable(item: ConceptoItem) -> void:
-	item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ignorar_mouse_en_hijos(item)
-	_crear_area_click_sobre_tarjeta(item)
+	item.mouse_filter = Control.MOUSE_FILTER_STOP
+	item.focus_mode = Control.FOCUS_NONE
 
 
 func _ignorar_mouse_en_hijos(node: Node) -> void:
@@ -464,33 +789,54 @@ func _obtener_rect_visual_tarjeta(card: Control) -> Rect2:
 func _on_item_seleccionado(item: ConceptoItem) -> void:
 	if bloqueado or validado or item == null or item.bloqueado:
 		return
+	print("[MatchClick] item=", item.concept_id, " side=", item.lado, " id_par=", item.par_key)
 	if item.es_izquierda():
-		seleccionar_izquierda(item)
+		_seleccionar_tarjeta_izquierda(item)
 	elif item.es_derecha():
-		vincular_con_derecha(item)
+		_seleccionar_tarjeta_derecha(item)
 
 
 func seleccionar_izquierda(item: ConceptoItem) -> void:
+	_seleccionar_tarjeta_izquierda(item)
+
+
+func _seleccionar_tarjeta_izquierda(item: ConceptoItem) -> void:
 	seleccion_actual = item
+	seleccion_derecha_pendiente = null
+	print(LOG_PREFIX_MATCH, " selected_left=", item.concept_id)
+	_actualizar_texto_guia(TEXTO_GUIA_CON_SELECCION)
 	_mostrar_feedback("Elegí una tarjeta de la derecha.")
 	_actualizar_visual()
 
 
 func vincular_con_derecha(derecha: ConceptoItem) -> void:
+	# API publica usada por tests automatizados: vincula directo sin pasar por Confirmar.
 	if seleccion_actual == null:
-		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
 		return
-
 	var izquierda := seleccion_actual
 	quitar_vinculo_anterior_de(derecha)
 	if izquierda.vinculada_con != null:
 		izquierda.limpiar_vinculo()
-
 	izquierda.vincular_con(derecha)
 	seleccion_actual = null
+	seleccion_derecha_pendiente = null
 	validado = false
 	_ocultar_continuar()
-	_mostrar_feedback("Vínculo creado.")
+	_animar_vinculo_creado(izquierda, derecha)
+	_validar_par_actual(izquierda, derecha)
+	_actualizar_visual()
+
+
+func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
+	if seleccion_actual == null:
+		_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
+		print(LOG_PREFIX_MATCH, " selected_right_without_left=", derecha.concept_id)
+		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
+		return
+	seleccion_derecha_pendiente = derecha
+	print(LOG_PREFIX_MATCH, " selected_right=", derecha.concept_id)
+	_actualizar_texto_guia("Apretá Confirmar para validar la relación.")
+	_mostrar_feedback("Apretá Confirmar para validar la relación.")
 	_actualizar_visual()
 
 
@@ -499,6 +845,52 @@ func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
 		if izquierda.visible and izquierda.vinculada_con == derecha:
 			izquierda.limpiar_vinculo()
 			return
+
+
+func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
+	var correcto := _tarjetas_forman_par(izquierda, derecha)
+	print(
+		"[MatchValidate] left=", izquierda.concept_id,
+		" right=", derecha.concept_id,
+		" id_par_left=", izquierda.par_key,
+		" id_par_right=", derecha.par_key,
+		" correct=", correcto
+	)
+	if correcto:
+		_mostrar_feedback_correcto(izquierda)
+		return
+	_mostrar_feedback_error(izquierda)
+
+
+func _tarjetas_forman_par(izquierda: ConceptoItem, derecha: ConceptoItem) -> bool:
+	return (
+		is_instance_valid(izquierda)
+		and is_instance_valid(derecha)
+		and izquierda.par_key == derecha.par_key
+	)
+
+
+func _mostrar_feedback_correcto(izquierda: ConceptoItem) -> void:
+	izquierda.marcar_error(false)
+	_mostrar_feedback(TEXTO_GUIA_CORRECTO)
+	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
+	print(LOG_PREFIX_MATCH, " correct pair=", izquierda.par_key)
+
+
+func _mostrar_feedback_error(izquierda: ConceptoItem) -> void:
+	izquierda.marcar_error(true)
+	_mostrar_feedback(TEXTO_GUIA_ERROR)
+	_actualizar_texto_guia(TEXTO_GUIA_ERROR)
+
+
+func _completar_vinculacion() -> void:
+	_mostrar_feedback("Excelente. Completaste las relaciones.")
+	_actualizar_texto_guia("Excelente. Completaste las relaciones.")
+	print(
+		LOG_PREFIX_MATCH,
+		" completed activity=",
+		str(_datos_de_ejecucion.get("id", _nodo_actual))
+	)
 
 
 func _actualizar_visual() -> void:
@@ -510,16 +902,20 @@ func _actualizar_visual() -> void:
 
 func _actualizar_tarjetas() -> void:
 	for derecha in items_derecha:
-		if derecha.visible:
+		if not derecha.visible:
+			continue
+		if derecha == seleccion_derecha_pendiente:
+			_aplicar_estado_tarjeta(derecha, "seleccionada")
+		else:
 			_aplicar_estado_tarjeta(derecha, "normal")
 
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
-		if izquierda.tiene_error:
-			_aplicar_estado_tarjeta(izquierda, "error")
-		elif izquierda == seleccion_actual:
+		if izquierda == seleccion_actual:
 			_aplicar_estado_tarjeta(izquierda, "seleccionada")
+		elif izquierda.tiene_error:
+			_aplicar_estado_tarjeta(izquierda, "error")
 		elif izquierda.esta_vinculada():
 			_aplicar_estado_tarjeta(izquierda, "vinculada")
 		else:
@@ -531,6 +927,9 @@ func _actualizar_tarjetas() -> void:
 
 
 func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
+	if item != null and item.has_method("aplicar_estado_visual"):
+		item.call("aplicar_estado_visual", tipo)
+		return
 	match tipo:
 		"seleccionada":
 			item.modulate = COLOR_TARJETA_SELECCIONADA
@@ -546,7 +945,10 @@ func _actualizar_estado_confirmar() -> void:
 	if boton_confirmar == null:
 		return
 	boton_confirmar.visible = not validado
-	boton_confirmar.disabled = faltan_vinculos() or bloqueado or validado
+	var pareja_pendiente := seleccion_actual != null and seleccion_derecha_pendiente != null
+	var puede_validar_total := not faltan_vinculos()
+	var habilitar_confirmar := pareja_pendiente or puede_validar_total
+	boton_confirmar.disabled = bloqueado or validado or not habilitar_confirmar
 
 
 func faltan_vinculos() -> bool:
@@ -559,6 +961,37 @@ func faltan_vinculos() -> bool:
 func _mostrar_feedback(texto: String) -> void:
 	if feedback_label != null:
 		feedback_label.text = texto
+		feedback_label.modulate = _resolver_color_feedback(texto)
+
+
+func _actualizar_texto_guia(texto: String) -> void:
+	if guide_label == null:
+		return
+	guide_label.text = texto
+	guide_label.modulate = _resolver_color_feedback(texto)
+
+
+func _resolver_color_feedback(texto: String) -> Color:
+	var texto_normalizado := texto.to_lower()
+	if texto_normalizado.contains("bien") or texto_normalizado.contains("correct"):
+		return COLOR_FEEDBACK_OK
+	if (
+		texto_normalizado.contains("revis")
+		or texto_normalizado.contains("faltan")
+		or texto_normalizado.contains("proba")
+	):
+		return COLOR_FEEDBACK_ERROR
+	return COLOR_FEEDBACK_NEUTRAL
+
+
+func _animar_vinculo_creado(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
+	for tarjeta in [izquierda, derecha]:
+		if tarjeta == null or not is_instance_valid(tarjeta):
+			continue
+		var escala_base: Vector2 = tarjeta.scale
+		var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(tarjeta, "scale", escala_base * 1.06, 0.08)
+		tween.tween_property(tarjeta, "scale", escala_base, 0.12)
 
 
 func _actualizar_lineas() -> void:
@@ -605,12 +1038,17 @@ func _get_left_anchor(card: Control) -> Vector2:
 	return line_drawer.to_local(punto_global)
 
 
-func _crear_linea(origen: Vector2, destino: Vector2, color: Color, ancho: float, animar: bool = false) -> void:
+func _crear_linea(
+	origen: Vector2,
+	destino: Vector2,
+	color: Color,
+	ancho: float,
+	animar: bool = false
+) -> void:
 	var linea := Line2D.new()
 	linea.width = ancho
 	linea.default_color = color
-	linea.add_point(origen)
-	linea.add_point(origen if animar else destino)
+	linea.points = PackedVector2Array([origen, origen if animar else destino])
 	line_drawer.add_child(linea)
 	if animar:
 		_animar_linea(linea, origen, destino)
@@ -620,37 +1058,56 @@ func _animar_linea(linea: Line2D, origen: Vector2, destino: Vector2) -> void:
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_method(
-		Callable(self, "_mover_fin_linea").bind(linea),
-		origen,
-		destino,
+	tween.tween_property(
+		linea,
+		"points",
+		PackedVector2Array([origen, destino]),
 		DURACION_ANIMACION_LINEA
 	)
 
 
-func _mover_fin_linea(punto: Vector2, linea: Line2D) -> void:
-	if is_instance_valid(linea):
-		linea.set_point_position(1, punto)
-
-
 func confirmar() -> void:
-	if bloqueado:
+	if bloqueado or validado:
 		return
+
+	# Caso 1: hay un par pendiente desde clicks (izquierda + derecha) -> validar ese par.
+	if seleccion_actual != null and seleccion_derecha_pendiente != null:
+		var izquierda := seleccion_actual
+		var derecha := seleccion_derecha_pendiente
+		print("[MatchSelect] left=", izquierda.concept_id, " right=", derecha.concept_id)
+		quitar_vinculo_anterior_de(derecha)
+		if izquierda.vinculada_con != null:
+			izquierda.limpiar_vinculo()
+		izquierda.vincular_con(derecha)
+		seleccion_actual = null
+		seleccion_derecha_pendiente = null
+		_animar_vinculo_creado(izquierda, derecha)
+		_validar_par_actual(izquierda, derecha)
+		_actualizar_visual()
+		if not faltan_vinculos():
+			_finalizar_validacion_completa()
+		return
+
+	# Caso 2: ya estan todos los vinculos (por API de test) -> validar todo.
 	if faltan_vinculos():
 		_mostrar_feedback("Faltan relaciones por completar.")
 		return
+	_finalizar_validacion_completa()
 
+
+func _finalizar_validacion_completa() -> void:
 	var todo_bien := true
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
-		izquierda.marcar_error(not izquierda.es_correcta())
+		izquierda.marcar_error(not _tarjetas_forman_par(izquierda, izquierda.vinculada_con))
 		if izquierda.tiene_error:
 			todo_bien = false
 
 	validado = todo_bien
 	if todo_bien:
-		_mostrar_feedback("¡Muy bien!")
+		print("[MatchComplete] activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
+		_completar_vinculacion()
 		_mostrar_continuar()
 		_actualizar_visual()
 		return
@@ -662,19 +1119,38 @@ func confirmar() -> void:
 
 
 func _mostrar_continuar() -> void:
-	if boton_continuar_validacion == null:
+	if _continuar_juego == null:
+		print("[MatchContinue] show=false reason=null_node")
 		return
-	boton_continuar_validacion.disabled = false
-	boton_continuar_validacion.visible = true
-	boton_continuar_validacion.modulate = Color(1, 1, 1, 1)
+	_continuar_juego_es_validacion_pendiente = true
+	# Reposicionar por las dudas (si la escena cambio en runtime).
+	_continuar_juego.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_continuar_juego.position = Vector2(960.0, 632.0)
+	_continuar_juego.size = Vector2(128.0, 128.0)
+	_continuar_juego.z_as_relative = false
+	_continuar_juego.z_index = 250
+	_continuar_juego.modulate = Color(1, 1, 1, 1)
+	# Usar la version con temporizador para que la flecha se anime y, si el jugador no la ve,
+	# avance solo despues de unos segundos.
+	var hay_siguiente := _hay_siguiente_juego_de_partida()
+	if _continuar_juego.has_method("mostrar_para_siguiente_juego") and hay_siguiente:
+		_continuar_juego.call("mostrar_para_siguiente_juego", 5)
+	elif _continuar_juego.has_method("mostrar_para_finalizar"):
+		_continuar_juego.call("mostrar_para_finalizar", 5)
+	elif _continuar_juego.has_method("mostrar_para_continuar_pendiente"):
+		_continuar_juego.call("mostrar_para_continuar_pendiente")
+	print(
+		"[MatchContinue] show=true visible=", _continuar_juego.visible,
+		" pos=", _continuar_juego.position,
+		" hay_siguiente=", hay_siguiente
+	)
 	_set_click_areas_habilitadas(false)
 
 
 func _ocultar_continuar() -> void:
-	if boton_continuar_validacion == null:
-		return
-	boton_continuar_validacion.visible = false
-	boton_continuar_validacion.disabled = true
+	_continuar_juego_es_validacion_pendiente = false
+	if _continuar_juego != null and _continuar_juego.has_method("ocultar"):
+		_continuar_juego.call("ocultar")
 	if not bloqueado:
 		_set_click_areas_habilitadas(true)
 
@@ -682,6 +1158,7 @@ func _ocultar_continuar() -> void:
 func _on_continuar_pressed() -> void:
 	if not validado or bloqueado:
 		return
+	print("[MatchContinue] pressed=true")
 	_finalizar_vinculacion()
 
 
@@ -786,6 +1263,7 @@ func _mostrar_cierre_de_vinculacion() -> void:
 
 func _mostrar_continuacion() -> void:
 	ya_continuo = false
+	_continuar_juego_es_validacion_pendiente = false
 	PresentadorContinuarJuegoScript.mostrar(_continuar_juego, _hay_siguiente_juego_de_partida(), 5)
 
 
@@ -841,6 +1319,19 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 
 
 func continuar_al_siguiente_juego() -> void:
+	if validado and not bloqueado:
+		_on_continuar_pressed()
+		return
+	_al_solicitar_continuar()
+
+
+func _al_solicitar_continuar_juego() -> void:
+	if _continuar_juego_es_validacion_pendiente:
+		_on_continuar_pressed()
+		return
+	if _continuar_juego_es_continuacion_pendiente:
+		GameSceneRouter.go_to_continue_target(get_tree(), _ruta_escena_de_retorno)
+		return
 	_al_solicitar_continuar()
 
 
@@ -879,6 +1370,7 @@ func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
 
 
 func _limpiar_elementos_temporales() -> void:
+	_continuar_juego_es_validacion_pendiente = false
 	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
 
 
