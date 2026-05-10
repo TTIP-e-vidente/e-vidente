@@ -2,20 +2,20 @@
   "match_alimentos": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Uni cada alimento con su clasificacion.",
+	"prompt": "Une cada alimento con su clasificación.",
 	"pairs": [
-	  ["Banana", "Fruta apta"],
-	  ["Pan", "Contiene gluten"],
-	  ["Arroz", "Grano apto"]
+	  ["Banana", "Fruta"],
+	  ["Pan", "Gluten"],
+	  ["Arroz", "Grano"]
 	]
   },
   "match_categorias_alimentos": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Uni cada alimento con su categoria.",
+	"prompt": "Une cada alimento con su categoría.",
 	"pairs": [
-	  ["Arroz", "Sin TACC"],
-	  ["Fideos de trigo", "Con gluten"],
+	  ["Kiwi", "Sin TACC"],
+	  ["Bizcochos", "Con gluten"],
 	  ["Manzana", "Sin TACC"],
 	  ["Medialuna", "Con gluten"]
 	]
@@ -23,108 +23,329 @@
   "match_riesgos_cocina": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Uni cada situacion con su riesgo.",
+	"prompt": "Une cada situación con su riesgo.",
 	"pairs": [
-	  ["Misma tabla para pan y frutas", "Contaminacion cruzada"],
-	  ["Producto sin sello Sin TACC", "No confirmado como apto"],
-	  ["Aceite compartido con empanadas", "Riesgo de contaminacion"]
+	  ["Mismo Mate", "Riesgo de Contaminación"],
+	  ["Producto sin sello", "No confirmado como apto"],
+	  ["Aceite compartido", "Contaminación cruzada"]
 	]
   },
   "match_etiquetas_seguridad": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uni cada etiqueta con lo que indica.",
+	"prompt": "Une los conceptos.",
 	"pairs": [
-	  ["Sello Sin TACC", "Certificado apto para celiacos"],
-	  ["Sin rotulo Sin TACC", "No confirmado como seguro"],
-	  ["Contiene trigo", "No apto para celiacos"]
+	  ["Sello Sin TACC", "Certificado apto"],
+	  ["Sin Sello", "Inseguro"],
+	  ["Contiene trigo", "No apto"]
 	]
   },
-  "match_alimentos_seguridad": {
+  "match_celiaquia_complejo_1": {
 	"mode": "match",
-	"difficulty": 2,
-	"prompt": "Uni cada alimento con su clasificacion.",
-	"pairs": [
-	  ["Banana", "Fruta apta"],
-	  ["Pan", "Harina de trigo"],
-	  ["Arroz", "Grano apto"]
-	],
-	"distractors": ["Solo bebida"]
-  },
-  "match_cerveza_utensilios_diagnostico": {
-	"mode": "match",
-	"difficulty": 2,
-	"prompt": "Relaciona cada concepto con su condicion de consumo.",
+	"difficulty": 3,
+	"prompt": "Une cada concepto con su relació correcta.",
 	"pairs": [
 	  ["Malta", "Cebada"],
-	  ["Utensilios", "Exclusivos"],
-	  ["Biopsia", "Diagnostico"]
+	  ["Biopsia", "Diagnóstico"],
+	  ["Utensilios", "Exclusivos"]
+	]
+  },
+   "match_celiaquia_complejo_2": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná correctamente los conceptos.",
+	"pairs": [
+	  ["Anticuerpos", "Análisis"],
+	  ["Bandeja", "Contaminación"],
+	  ["Quinoa", "Pseudocereal"]
 	]
   },
   "match_vellosidades_sorgo_almidon": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Relaciona cada concepto con su significado.",
+	"prompt": "Relacioná cada concepto con su significado.",
 	"pairs": [
 	  ["Atrofia", "Vellosidades"],
 	  ["Sorgo", "Alternativa"],
 	  ["Almidon", "Espesante"]
 	]
   },
-  "match_cocina_segura_avanzada": {
+   "match_celiaquia_complejo_4": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uni cada practica con la decision mas segura.",
+	"prompt": "Relacioná cada término con su definición.",
 	"pairs": [
-	  ["Tabla usada para pan", "Lavar o separar utensilios"],
-	  ["Tostadora compartida", "Evitar uso sin equipo exclusivo"],
-	  ["Harina suelta en mesada", "Limpiar antes de cocinar"],
-	  ["Cuchillo con migas", "Cambiar utensilio"],
-	  ["Aceite de fritura comun", "No usar para Sin TACC"]
+	  ["Atrofia", "Vellosidades"],
+	  ["Freidora", "Compartida"],
+	  ["Sorgo", "Alternativa"]
 	]
   },
-  "match_comer_fuera_seguro": {
+   "match_celiaquia_complejo_5": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uni cada situacion al paso mas seguro.",
+	"prompt": "Uní correctamente cada concepto.",
 	"pairs": [
-	  ["Carta sin opciones claras", "Preguntar ingredientes y manejo"],
-	  ["Mozo duda sobre contaminacion", "No arriesgar sin confirmar"],
-	  ["Cocina con freidora compartida", "Evitar fritos"],
-	  ["Postre sin sello ni info", "Elegir otra opcion"]
+	  ["Inmunidad", "Reacción"],
+	  ["Rotulado", "Obligatorio"],
+	  ["Fécula", "Mandioca"]
 	]
   },
-  "match_trazas_y_etiquetas": {
+	"match_celiaquia_complejo_6": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uni cada situacion con la decision mas segura.",
+	"prompt": "Emparejá los conceptos relacionados.",
 	"pairs": [
-	  ["Puede contener trazas", "No elegir sin confirmar"],
-	  ["Sello Sin TACC", "Producto certificado"],
-	  ["Freidora compartida", "Riesgo de contaminacion"],
-	  ["Contiene trigo", "No apto"]
+	  ["Transgresión", "Exposición"],
+	  ["Aditivos", "Industrializados"],
+	  ["Mesada", "Higienizada"]
 	]
   },
-  "match_riesgos_ocultos": {
+   "match_celiaquia_complejo_7": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Relaciona cada producto o practica con su riesgo.",
+	"prompt": "Relacioná cada palabra correctamente.",
 	"pairs": [
-	  ["Salsa de soja comun", "Puede contener trigo"],
-	  ["Embutido sin certificacion", "Ingredientes no confirmados"],
-	  ["Producto artesanal sin rotulo", "Aptitud incierta"],
-	  ["Mesa con harina visible", "Contaminacion cruzada"]
+	  ["Enteropatía", "Intestinal"],
+	  ["Licencia", "ANMAT"],
+	  ["Amaranto", "Proteína"]
 	]
   },
-  "match_decisiones_seguras": {
+  "match_celiaquia_complejo_8": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Uní cada concepto con su correspondiente.",
+	"pairs": [
+	  ["TACC", "Trigo"],
+	  ["Conservantes", "Procesados"],
+	  ["Celiaquía", "Crónica"]
+	]
+	  },
+	"match_celiaquia_media_1": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná correctamente los conceptos.",
+		"pairs": [
+		  ["Trigo", "Gluten"],
+		  ["Arroz", "Apto"],
+		  ["Etiqueta", "Ingredientes"]
+		]
+	  },
+
+	  "match_celiaquia_media_2": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní cada concepto con su relación.",
+		"pairs": [
+		  ["Migas", "Contaminación"],
+		  ["Síntomas", "Dolor"],
+		  ["Maíz", "Natural"]
+		]
+	  },
+
+	  "match_celiaquia_media_3": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Emparejá correctamente.",
+		"pairs": [
+		  ["Cocina", "Separada"],
+		  ["Centeno", "Gluten"],
+		  ["Envase", "Sellado"]
+		]
+	  },
+
+	  "match_celiaquia_media_4": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná los conceptos vinculados.",
+		"pairs": [
+		  ["Celiaquía", "Autoinmune"],
+		  ["Tostadora", "Riesgo"],
+		  ["Sello", "Certificado"]
+		]
+	  },
+
+	  "match_celiaquia_media_5": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní correctamente cada opción.",
+		"pairs": [
+		  ["Etiqueta", "Sin TACC"],
+		  ["Harina", "Arroz"],
+		  ["Pan", "Gluten"]
+		]
+	  },
+
+	  "match_celiaquia_facil_1": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Uní cada alimento con su clasificación.",
+		"pairs": [
+		  ["Pan", "Gluten"],
+		  ["Arroz", "Apto"],
+		  ["Trigo", "Cereal"]
+		]
+	  },
+
+	  "match_celiaquia_facil_2": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Relacioná correctamente.",
+		"pairs": [
+		  ["Maíz", "Apto"],
+		  ["Cebada", "Gluten"],
+		  ["Dolor", "Síntoma"]
+		]
+	  },
+
+	  "match_celiaquia_facil_3": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Emparejá los conceptos.",
+		"pairs": [
+		  ["Sin TACC", "Seguro"],
+		  ["Migas", "Riesgo"],
+		  ["Quinoa", "Apta"]
+		]
+	  },
+
+	  "match_celiaquia_facil_4": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Uní las palabras relacionadas.",
+		"pairs": [
+		  ["Gluten", "Proteína"],
+		  ["Fideos", "Trigo"],
+		  ["Etiqueta", "Envase"]
+		]
+	  },
+
+	  "match_celiaquia_facil_5": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Relacioná cada concepto.",
+		"pairs": [
+		  ["Cocina", "Limpieza"],
+		  ["Centeno", "Gluten"],
+		  ["Arroz", "Natural"]
+		]
+	  },
+	  "match_celiaquia_media_6": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Relaciona cada caso con la mejor decision.",
+	"prompt": "Relacioná correctamente los conceptos.",
 	"pairs": [
-	  ["No ves sello Sin TACC", "No elegir hasta confirmar"],
-	  ["Utensilios separados", "Practica segura"],
-	  ["Tabla con migas", "Lavar antes de usar"],
-	  ["Comida frita en aceite compartido", "Evitar el producto"]
+	  ["Malta", "Cebada"],
+	  ["Mesada", "Higiene"],
+	  ["Fécula", "Mandioca"]
 	]
-  }
-}
+  },
+
+  "match_celiaquia_media_7": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uní cada concepto con su relación.",
+	"pairs": [
+	  ["Rotulado", "Obligatorio"],
+	  ["Freidora", "Compartida"],
+	  ["Sorgo", "Alternativa"]
+	]
+  },
+
+  "match_celiaquia_media_8": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Emparejá correctamente.",
+	"pairs": [
+	  ["Atrofia", "Intestino"],
+	  ["Anticuerpos", "Análisis"],
+	  ["Semáforo", "Etiqueta"]
+	]
+  },
+
+	  "match_celiaquia_media_9": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná los conceptos vinculados.",
+		"pairs": [
+		  ["Enteropatía", "Digestiva"],
+		  ["Bandeja", "Residuos"],
+		  ["Quinoa", "Pseudocereal"]
+		]
+	  },
+
+	  "match_celiaquia_media_10": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní correctamente cada opción.",
+		"pairs": [
+		  ["Dermatitis", "Picazón"],
+		  ["Licencia", "ANMAT"],
+		  ["Aditivos", "Procesados"]
+		]
+	  },
+
+	  "match_celiaquia_media_11": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná correctamente.",
+		"pairs": [
+		  ["Transgresión", "Exposición"],
+		  ["Utensilios", "Separados"],
+		  ["Almidón", "Espesante"]
+		]
+	  },
+		"match_celiaquia_proteinas_1": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná cada cereal con su proteína.",
+		"pairs": [
+		  ["Trigo", "Gliadina"],
+		  ["Cebada", "Hordeína"],
+		  ["Centeno", "Secalina"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_2": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní correctamente los conceptos.",
+		"pairs": [
+		  ["Avena", "Avenina"],
+		  ["Trigo", "Gliadina"],
+		  ["Centeno", "Secalina"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_3": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Emparejá cada proteína con su origen.",
+		"pairs": [
+		  ["Gliadina", "Trigo"],
+		  ["Hordeína", "Cebada"],
+		  ["Avenina", "Avena"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_4": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná correctamente.",
+		"pairs": [
+		  ["Secalina", "Centeno"],
+		  ["Gliadina", "Gluten"],
+		  ["Hordeína", "Cebada"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_5": {
+		"mode": "match",
+		"difficulty": 3,
+		"prompt": "Uní cada proteína con su cereal.",
+		"pairs": [
+		  ["Avenina", "Avena"],
+		  ["Secalina", "Centeno"],
+		  ["Gliadina", "Trigo"]
+		]
+	  }
+	}

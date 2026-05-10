@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="4_ecatg"]
 [ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_2g6ed"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 [ext_resource type="Texture2D" uid="uid://c8tvilgr1cn4r" path="res://assets-sistema/preguntas/boton-4.png" id="10_2g6ed"]
@@ -50,7 +51,7 @@ offset_left = 1.0
 offset_right = 1154.0
 
 [node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
-position = Vector2(165, 98)
+position = Vector2(183, 108.00001)
 scale = Vector2(0.46648043, 0.46648043)
 texture = ExtResource("2_4my4u")
 
@@ -70,6 +71,7 @@ scale = Vector2(0.75999546, 0.8016403)
 
 [node name="Pregunta" type="Label" parent="Contenido/Informacion" unique_id=1328656126]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("6_2g6ed")
 label_settings = SubResource("LabelSettings_b7sy5")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -163,7 +165,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3" unique_id=410306524]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3" unique_id=1028540422]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -175,6 +177,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -199,7 +202,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4" unique_id=2082465361]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4" unique_id=708087474]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -211,6 +214,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -235,7 +239,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("10_2g6ed")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5" unique_id=900251680]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5" unique_id=2125012403]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -247,6 +251,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -279,7 +284,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6" unique_id=307100761]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6" unique_id=1717085935]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -291,6 +296,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -315,7 +321,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7" unique_id=880931666]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7" unique_id=103893030]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -327,6 +333,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -351,7 +358,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8" unique_id=1584580164]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8" unique_id=280705612]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -363,6 +370,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -387,7 +395,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
 icon = ExtResource("11_mwqfo")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9" unique_id=357416750]
+[node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9" unique_id=1006172006]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -399,6 +407,7 @@ offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_2g6ed")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3

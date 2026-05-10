@@ -2,27 +2,27 @@
   "quiz_gluten_natural": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Cual de estos alimentos es naturalmente libre de gluten?",
+	"prompt": "Cual de estos alimentos es naturalmente Libre de Gluten?",
 	"options": ["Banana", "Cerveza", "Pan", "Fideos"],
 	"answer": "Banana"
   },
   "quiz_contaminacion_cruzada": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Hay contaminacion cruzada si se utiliza el mismo cuchillo que fue usado previamente para cortar alimentos con gluten?",
+	"prompt": "Hay contaminacion cruzada si se utiliza el mismo cuchillo que fue usado previamente para cortar alimentos con Gluten?",
 	"options": ["Verdadero", "Falso"],
 	"answer": "Verdadero"
   },
   "quiz_casos_cotidianos_sin_tacc": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que problema puede ocurrir al compartir utensilios de cocina con alimentos con y sin TACC?",
-	"options": ["Contaminacion", "Fermentacion", "Congelamiento", "Calentamiento"],
-	"answer": "Contaminacion"
+	"prompt": "Qué problema puede ocurrir al compartir utensilios de cocina con alimentos con y sin TACC?",
+	"options": ["Contaminación", "Fermentacion", "Congelamiento", "Calentamiento"],
+	"answer": "Contaminación"
   },
   "quiz_gluten_arroz": {
 	"mode": "quiz",
-	"difficulty": 2,
+	"difficulty": 1,
 	"prompt": "El gluten esta en el arroz?",
 	"options": ["No", "Si"],
 	"answer": "No"
@@ -30,26 +30,26 @@
   "quiz_etiquetas_sin_tacc": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Si un alimento procesado no muestra el sello oficial Sin TACC, que decision es mas segura?",
+	"prompt": "Si un alimento procesado no muestra el sello oficial Sin Gluten, qué decisión es mas segura?",
 	"options": [
-	  "No elegirlo hasta confirmar que sea apto",
-	  "Elegirlo si el envase es verde",
-	  "Elegirlo si parece casero",
-      "Elegirlo si no menciona trigo en grande"
+	  "No elegirlo",
+	  "Comerlo igual",
+	  "Es casero",
+      "Seguro no tiene trigo"
 	],
-	"answer": "No elegirlo hasta confirmar que sea apto"
+	"answer": "No elegirlo"
   },
   "quiz_sello_sin_tacc": {
 	"mode": "quiz",
 	"difficulty": 1,
 	"prompt": "Que indica el sello Sin TACC en un producto?",
 	"options": [
-	  "Que fue certificado como apto para celiacos",
-	  "Que no tiene azucar",
-	  "Que es casero",
-      "Que el envase es reciclable"
+	  "Está Certificado",
+	  "Es sin azúcar",
+	  "Está hecho en casa",
+      "Es Reciclable"
 	],
-	"answer": "Que fue certificado como apto para celiacos"
+	"answer": "Está Certificado"
   },
   "quiz_bebidas_gluten": {
 	"mode": "quiz",
@@ -61,19 +61,19 @@
   "quiz_utensilios_compartidos": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Que riesgo hay en usar la misma tabla para cortar pan y alimentos sin TACC?",
+	"prompt": "Qué riesgo hay en usar la misma tabla para cortar pan y alimentos sin TACC?",
 	"options": [
-	  "Contaminacion cruzada",
+	  "Contaminación cruzada",
 	  "Cambio de color",
 	  "Perdida de sabor",
       "Ninguno"
 	],
-	"answer": "Contaminacion cruzada"
+	"answer": "Contaminación cruzada"
   },
   "quiz_productos_procesados": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Por que los productos industriales sin rotulo Sin TACC pueden ser riesgosos?",
+	"prompt": "Por qué los productos industriales sin rotulo Sin TACC pueden ser riesgosos?",
 	"options": [
 	  "Pueden tener trazas de gluten",
 	  "Siempre tienen gluten",
@@ -85,169 +85,169 @@
   "quiz_comer_fuera": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Al comer en un restaurante, que es lo mas seguro para una persona celiaca?",
+	"prompt": "Al comer en un restaurante, qué es lo mas seguro para una persona celíaca?",
 	"options": [
 	  "Avisar y preguntar por opciones Sin TACC",
 	  "Evitar solo el pan",
 	  "Pedir la ensalada",
-      "Comer cualquier cosa si parece casero"
+      "Comer cualquier cosa si no tiene pan"
 	],
 	"answer": "Avisar y preguntar por opciones Sin TACC"
   },
   "quiz_cereales_gluten": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Cual de estos cereales contiene gluten?",
-	"options": ["Trigo", "Arroz", "Maiz", "Quinoa"],
+	"prompt": "Cuál de estos cereales contiene gluten?",
+	"options": ["Trigo", "Arroz", "Maíz", "Quinoa"],
 	"answer": "Trigo"
   },
   "quiz_natural_vs_industrial": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Por que las frutas y carnes naturales son mas seguras para celiacos que los productos industriales?",
+	"prompt": "Por qué las frutas y carnes naturales son mas seguras para celíacos que los productos industriales?",
 	"options": [
-	  "No tienen ingredientes agregados que puedan contener gluten",
+	  "No tienen ingredientes agregados",
 	  "Son mas baratos",
 	  "Tienen mas vitaminas",
       "Se digieren mejor"
 	],
-	"answer": "No tienen ingredientes agregados que puedan contener gluten"
+	"answer": "No tienen ingredientes agregados"
   },
   "quiz_trazas_gluten": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Por que un producto puede ser riesgoso aunque no tenga trigo visible?",
+	"prompt": "Por qué un producto puede ser riesgoso aunque no tenga trigo visible?",
 	"options": [
-	  "Porque puede tener trazas de gluten",
-	  "Porque siempre tiene azucar",
-	  "Porque es natural",
-      "Porque viene en paquete"
+	  "Por las trazas de gluten",
+	  "Por el azúcar",
+	  "Por lo natural",
+      "Porque viene envasado"
 	],
-	"answer": "Porque puede tener trazas de gluten"
+	"answer": "Por las trazas de gluten"
   },
   "quiz_restaurante_preguntar": {
 	"mode": "quiz",
-	"difficulty": 3,
-	"prompt": "Que conviene preguntar primero en un restaurante si sos celiaco?",
+	"difficulty": 2,
+	"prompt": "Qué acción ayuda a evitar riesgos en la ingesta de comida?",
 	"options": [
-	  "Si preparan opciones separadas y sin contaminacion cruzada",
-	  "Si el plato viene rapido",
-	  "Si tienen bebidas frias",
-      "Si el menu tiene fotos"
+	  "Leer las etiquetas",
+	  "Mezclar varios alimentos",
+	  "Hervirlos a más de 90º",
+      "Comer y evaluar si cae bien"
 	],
-	"answer": "Si preparan opciones separadas y sin contaminacion cruzada"
+	"answer": "Leer las etiquetas"
   },
   "quiz_aceite_compartido": {
 	"mode": "quiz",
 	"difficulty": 2,
 	"prompt": "Por que una freidora con aceite compartido puede ser riesgosa?",
 	"options": [
-	  "Porque puede contaminar alimentos sin TACC",
+	  "Porque la puede contaminar",
 	  "Porque enfria la comida",
 	  "Porque cambia el color",
       "Porque tiene menos sabor"
 	],
-	"answer": "Porque puede contaminar alimentos sin TACC"
+	"answer": "Porque puede contaminar"
   },
   "quiz_salsa_soja": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Por que la salsa de soja puede ser riesgosa para una persona celiaca?",
+	"prompt": "Por que la salsa de soja puede ser riesgosa para una persona celíaca?",
 	"options": [
-	  "Porque muchas versiones contienen trigo",
 	  "Porque siempre contiene avena",
-	  "Porque solo se usa fria",
-      "Porque no tiene ingredientes"
+	  "Porque está hecha con soja",
+	  "Porque muchas versiones contienen Trigo",
+      "Porque tiene azúcar agregada"
 	],
 	"answer": "Porque muchas versiones contienen trigo"
   },
   "quiz_rotulo_preventivo": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que decision es mas segura ante un rotulo que dice 'puede contener gluten'?",
+	"prompt": "Qué decisión es más segura ante un rótulo que dice 'puede contener gluten'?",
 	"options": [
-	  "No elegirlo sin confirmacion apta",
-	  "Comer solo una parte",
+	  "No elegirlo",
+	  "Comer la mitad",
 	  "Elegirlo si es barato",
-      "Elegirlo si no tiene pan"
+      "Elegirlo si está envasado"
 	],
-	"answer": "No elegirlo sin confirmacion apta"
+	"answer": "No elegirlo"
   },
   "quiz_producto_artesanal": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que riesgo puede tener un producto artesanal sin rotulo claro?",
+	"prompt": "Qué utensilio puede generar contaminación cruzada?",
 	"options": [
-	  "No se puede confirmar si es apto o si hubo contaminacion",
-	  "Tiene menos calorias",
-	  "Se vence mas rapido",
-      "Siempre es sin TACC"
+	  "Licuadora",
+	  "Sartén",
+	  "Todas las opciones",
+      "Tostadora"
 	],
-	"answer": "No se puede confirmar si es apto o si hubo contaminacion"
+	"answer": "Todas las opciones"
   },
-  "quiz_freidora_compartida": {
+  "quiz_tratamiento": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Si unas papas se cocinan en freidora compartida con empanados, cual es el riesgo principal?",
+	"prompt": "Qué tratamiento existe actualmente para la celiaquía?",
 	"options": [
-	  "Contaminacion cruzada",
-	  "Exceso de sal",
-	  "Falta de coccion",
-      "Que esten frias"
+	  "Pastilla",
+	  "Cirugía",
+	  "Vacuna",
+      "Dieta"
 	],
-	"answer": "Contaminacion cruzada"
+	"answer": "Dieta"
   },
   "quiz_harina_maiz_segura": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Cuando una harina de maiz industrial es mas segura para una persona celiaca?",
+	"prompt": "Cuándo una harina de maíz industrial es más segura para una persona celíaca?",
 	"options": [
-	  "Cuando esta certificada o identificada como apta sin TACC",
+	  "Cuando tiene el logo sin TACC",
 	  "Cuando el paquete es amarillo",
 	  "Cuando se vende a granel",
-      "Cuando parece casera"
+      "Siempre es segura"
 	],
-	"answer": "Cuando esta certificada o identificada como apta sin TACC"
+	"answer": "Cuando tiene el logo sin TACC"
   },
-  "quiz_embutidos_riesgo": {
+  "quiz_sintomas": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Por que algunos embutidos pueden requerir mas cuidado al elegirlos?",
+	"prompt": "Qué puede ocurrir aunque no haya síntomas?",
 	"options": [
-	  "Porque pueden tener agregados o trazas sin certificacion",
-	  "Porque siempre tienen arroz",
-	  "Porque se cocinan mal",
-      "Porque solo se comen de noche"
+	  "Sueño",
+	  "Inflamación",
+	  "Hambre",
+      "Resequedad"
 	],
-	"answer": "Porque pueden tener agregados o trazas sin certificacion"
+	"answer": "Inflamación"
   },
-  "quiz_postre_industrial": {
+  "quiz_proteina_basic": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Que decision es mas segura frente a un postre industrial sin sello Sin TACC?",
+	"prompt": "Qué proteína afecta a personas celíacas?",
 	"options": [
-	  "No elegirlo hasta confirmar que sea apto",
-	  "Elegirlo si tiene chocolate",
-	  "Elegirlo si parece liviano",
-      "Elegirlo solo si esta frio"
+	  "Lactosa",
+	  "Fibra",
+	  "Caseína",
+      "Gluten"
 	],
-	"answer": "No elegirlo hasta confirmar que sea apto"
+	"answer": "Gluten"
   },
-  "quiz_3op_sello_sin_tacc_basico": {
+  "quiz_3op_prod": {
 	"mode": "quiz",
-	"difficulty": 1,
-	"prompt": "Que marca conviene buscar primero en un producto industrial para saber si fue certificado como apto para celiacos?",
+	"difficulty": 2,
+	"prompt": "Qué producto puede contener gluten oculto?",
 	"options": [
-	  "Sello Sin TACC",
-	  "Tabla nutricional",
-      "Fecha de vencimiento"
+	  "Shampoo",
+	  "Miel",
+      "Agua"
 	],
-	"answer": "Sello Sin TACC"
+	"answer": "Shampoo"
   },
   "quiz_3op_alimento_natural_apto": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Cual de estos alimentos es naturalmente libre de gluten?",
+	"prompt": "Cuál de estos alimentos es naturalmente libre de gluten?",
 	"options": [
 	  "Manzana",
 	  "Pan lactal",
@@ -258,18 +258,18 @@
   "quiz_3op_cereal_seguro": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Cual de estos granos es naturalmente libre de gluten?",
+	"prompt": "Cuál de estos granos es naturalmente libre de gluten?",
 	"options": [
 	  "Maiz",
 	  "Trigo",
-      "Cebada"
+      "Centeno"
 	],
 	"answer": "Maiz"
   },
   "quiz_3op_bebida_simple": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Cual de estas bebidas suele ser segura para una persona celiaca?",
+	"prompt": "Cuál de estas bebidas suele ser segura para una persona celíaca?",
 	"options": [
 	  "Agua mineral",
 	  "Cerveza",
@@ -277,109 +277,109 @@
 	],
 	"answer": "Agua mineral"
   },
-  "quiz_3op_tabla_limpia_basica": {
+  "quiz_3op_prod_apto_simple": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Para cortar fruta apta, que opcion es mas segura?",
+	"prompt": "Qué producto es apto?",
 	"options": [
-	  "Usar una tabla limpia o exclusiva",
-	  "Usar la tabla con migas de pan",
-      "Usar la tabla con harina"
+	  "Polenta",
+	  "Facturas",
+      "Fideos"
 	],
-	"answer": "Usar una tabla limpia o exclusiva"
+	"answer": "Polenta"
   },
   "quiz_3op_contaminacion_utensilios": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Que situacion genera mas riesgo de contaminacion cruzada?",
+	"prompt": "Qué práctica es peligrosa para celíacos?",
 	"options": [
-	  "Usar el mismo cuchillo para pan y queso apto",
-	  "Lavar el cuchillo con agua y detergente",
-      "Usar un cuchillo exclusivo"
+	  "Congelar",
+	  "Lavar todo",
+      "Compartir utensilios"
 	],
-	"answer": "Usar el mismo cuchillo para pan y queso apto"
+	"answer": "Compartir utensilios"
   },
-  "quiz_3op_producto_sin_rotulo": {
+  "quiz_3op_accionable": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Ante una salsa industrial sin sello Sin TACC, que decision es mas segura?",
+	"prompt": "Qué acción NO vuelve apto un alimento con gluten?",
 	"options": [
-	  "No elegirla hasta confirmar que sea apta",
-	  "Elegirla si la marca es conocida",
-      "Elegirla si el frasco es chico"
+	  "Ninguna",
+	  "Hervirlo",
+      "Congelarlo"
 	],
-	"answer": "No elegirla hasta confirmar que sea apta"
+	"answer": "Ninguna"
   },
-  "quiz_3op_merienda_segura": {
+  "quiz_3op_escondido": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Cual de estas meriendas es la mas segura para una persona celiaca?",
+	"prompt": "Qué ingrediente suele esconder gluten?",
 	"options": [
-	  "Fruta con queso",
-	  "Alfajor relleno",
-      "Donas glaseadas"
+	  "Condimentos",
+	  "Azúcar",
+      "Agua"
 	],
-	"answer": "Fruta con queso"
+	"answer": "Condimentos"
   },
   "quiz_3op_cocina_compartida": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Que practica ayuda mas en una cocina compartida?",
+	"prompt": "Qué acción es incorrecta en una cocina para celíacos?",
 	"options": [
-	  "Separar utensilios y superficies",
-	  "Apilar todos los utensilios juntos",
-      "Cocinar primero con gluten"
+	  "Limpiar superficies",
+	  "Separar utensilios",
+      "Compartir aceite"
 	],
-	"answer": "Separar utensilios y superficies"
+	"answer": "Compartir aceite"
   },
-  "quiz_3op_trazas_gluten": {
+  "quiz_3op_riesgos_gluten": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que decision es mas segura frente a un rotulo que dice 'puede contener gluten'?",
-	"options": [
-	  "Evitarlo si no hay certificacion apta",
-	  "Elegirlo si la lista de ingredientes es corta",
-      "Elegirlo si otra persona lo come"
-	],
-	"answer": "Evitarlo si no hay certificacion apta"
-  },
-  "quiz_3op_restaurante_riesgo": {
-	"mode": "quiz",
-	"difficulty": 3,
-	"prompt": "Que senal muestra mas riesgo en un restaurante?",
-	"options": [
-	  "No saben explicar como evitan contaminacion cruzada",
-	  "El menu tiene pocas fotos",
-      "La cocina cierra temprano"
-	],
-	"answer": "No saben explicar como evitan contaminacion cruzada"
-  },
-  "quiz_3op_freidora_compartida": {
-	"mode": "quiz",
-	"difficulty": 3,
-	"prompt": "Cual de estas opciones es riesgosa si se cocina en aceite compartido con empanados?",
+	"prompt": "Qué opción representa un riesgo aunque parezca apta?",
 	"options": [
 	  "Papas fritas",
-	  "Ensalada simple",
-      "Fruta fresca"
+	  "Fruta fresca",
+      "Arroz hervido"
 	],
 	"answer": "Papas fritas"
+  },
+  "quiz_3op_aspecto_riesgo": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué aspecto confirma que un producto es apto?",
+	"options": [
+	  "Publicidad",
+	  "Sello",
+      "Tamaño"
+	],
+	"answer": "Sello"
+  },
+  "quiz_3op_mate_compartida": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué alimentos pueden dejar restos de gluten al compartir una ronda de mate?",
+	"options": [
+	  "Bizcochitos",
+	  "Facturas",
+      "Todas las opciones"
+	],
+	"answer": "Todas las opciones"
   },
   "quiz_3op_producto_artesanal": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Que dato falta en un producto artesanal para poder confiar en que es apto?",
+	"prompt": "Qué puede ocurrir aunque una persona celíaca no tenga síntomas?",
 	"options": [
-	  "Confirmacion clara de aptitud sin TACC",
-	  "Que tenga pocos ingredientes",
-      "Que venga envuelto en papel"
+	  "Curación",
+	  "Daño intestinal",
+      "Inmunidad"
 	],
-	"answer": "Confirmacion clara de aptitud sin TACC"
+	"answer": "Daño intestinal"
   },
   "quiz_2op_sello_certificado_basico": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celiacas?",
+	"prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celíaacas?",
 	"options": [
 	  "Si",
       "No"
@@ -389,7 +389,7 @@
   "quiz_2op_fruta_natural_basica": {
 	"mode": "quiz",
 	"difficulty": 1,
-	"prompt": "Una fruta fresca sin agregados contiene gluten por si sola?",
+	"prompt": "Una fruta fresca contiene gluten?",
 	"options": [
 	  "No",
       "Si"
@@ -409,22 +409,22 @@
   "quiz_2op_cuchillo_contaminacion": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Si cortas pan comun y despues queso apto con el mismo cuchillo sin lavarlo, hay contaminacion cruzada?",
+	"prompt": "Un producto artesanal puede contaminarse aunque no use harina.",
 	"options": [
-	  "Si",
-      "No"
+	  "Verdadero",
+      "Falso"
 	],
-	"answer": "Si"
+	"answer": "Verdadero"
   },
-  "quiz_2op_salsa_sin_rotulo": {
+  "quiz_2op_almacenamiento": {
 	"mode": "quiz",
 	"difficulty": 2,
-	"prompt": "Una salsa industrial sin sello Sin TACC se considera segura solo porque no destaca trigo en el frente?",
+	"prompt": "La contaminación cruzada puede ocurrir durante el almacenamiento",
 	"options": [
-	  "No",
-      "Si"
+	  "Verdadero",
+      "Falso"
 	],
-	"answer": "No"
+	"answer": "Verdadero"
   },
   "quiz_2op_trazas_rotulo_avanzado": {
 	"mode": "quiz",
@@ -446,14 +446,194 @@
 	],
 	"answer": "Si"
   },
-  "quiz_2op_artesanal_sin_confirmacion": {
+  "quiz_2op_minima_cantidad": {
 	"mode": "quiz",
 	"difficulty": 3,
-	"prompt": "Un producto artesanal es apto por ser casero aunque nadie confirme como evita la contaminacion cruzada?",
+	"prompt": "Una mínima cantidad de gluten puede afectar a una persona celíaca?",
 	"options": [
 	  "No",
       "Si"
 	],
-	"answer": "No"
-  }
+	"answer": "Si"
+  },
+	"quiz_3op_freidora": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué elemento puede contaminar papas fritas aptas?",
+	  "options": [
+		"Freidora",
+		"Heladera",
+	    "Microondas"
+	  ],
+	  "answer": "Freidora"
+	},
+	"quiz_3op_mate_contaminacion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué puede contaminar una ronda de mate?",
+	  "options": [
+		"Migas",
+		"Agua",
+	    "Yerba"
+	  ],
+	  "answer": "Migas"
+	},
+	"quiz_3op_autoinmune": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué tipo de enfermedad es la celiaquía?",
+	  "options": [
+		"Autoinmune",
+		"Viral",
+	    "Bacteriana"
+	  ],
+	  "answer": "Autoinmune"
+	},	
+	"quiz_3op_genetica": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué factor influye en desarrollar celiaquía?",
+	  "options": [
+		"Genética",
+		"Altura",
+	    "Hidratación"
+	  ],
+	  "answer": "Genética"
+	},	
+	"quiz_3op_dq2_dq8": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué genes se asocian a la celiaquía?",
+	  "options": [
+		"DQ2/DQ8",
+		"BRCA1",
+	    "RH+"
+	  ],
+	  "answer": "DQ2/DQ8"
+	},
+	"quiz_3op_vellosidades": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué estructura intestinal se daña en la celiaquía?",
+	  "options": [
+		"Vellosidades",
+		"Neuronas",
+	    "Bronquios"
+	  ],
+	  "answer": "Vellosidades"
+	},
+	"quiz_3op_malabsorcion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué problema puede causar el daño intestinal?",
+	  "options": [
+		"Malabsorción",
+		"Hipertensión",
+	    "Deshidratación"
+	  ],
+	  "answer": "Malabsorción"
+	},
+	"quiz_3op_anticuerpos": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué puede detectarse en estudios de celiaquía?",
+	  "options": [
+		"Anticuerpos",
+		"Plaquetas",
+	    "Hormonas"
+	  ],
+	  "answer": "Anticuerpos"
+	},	
+	"quiz_3op_biopsia": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué estudio confirma el daño intestinal?",
+	  "options": [
+		"Biopsia",
+		"Radiografía",
+	    "Electrocardiograma"
+	  ],
+	  "answer": "Biopsia"
+	},
+	"quiz_3op_respuesta": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Qué sistema reacciona al gluten en la celiaquía?",
+	  "options": [
+		"Inmunológico",
+		"Respiratorio",
+	    "Muscular"
+	  ],
+	  "answer": "Inmunológico"
+	},
+	"quiz_2op_vellosidades": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La celiaquía puede dañar las vellosidades intestinales?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_genetica": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La genética influye en el desarrollo de la celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_dq2": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Los genes DQ2 y DQ8 se asocian a la celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_biopsia": {
+	  "mode": "quiz",
+	  "difficulty": 2,
+	  "prompt": "¿La biopsia intestinal puede ayudar a confirmar celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_anticuerpos": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Los análisis de sangre pueden detectar anticuerpos relacionados con celiaquía?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_sintomas": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿Una persona celíaca puede tener daño intestinal sin síntomas visibles?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	},
+	"quiz_2op_malabsorcion": {
+	  "mode": "quiz",
+	  "difficulty": 3,
+	  "prompt": "¿La celiaquía puede provocar malabsorción de nutrientes?",
+	  "options": [
+		"Verdadero",
+	    "Falso"
+	  ],
+	  "answer": "Verdadero"
+	}
 }
