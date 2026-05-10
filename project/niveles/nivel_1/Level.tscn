@@ -39,6 +39,7 @@
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_yoibg"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="40_continuar"]
+[ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="40_m0gd1"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_054us"]
 animations = []
@@ -200,6 +201,7 @@ z_index = 1
 position = Vector2(1079, 54)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_054us")
+animation = &""
 
 [node name="Menú" type="Area2D" parent="." unique_id=1302028089 groups=["droppable"]]
 light_mask = 8
@@ -345,11 +347,11 @@ offset_top = 635.0
 offset_right = 1223.0
 offset_bottom = 868.0
 scale = Vector2(0.49980462, 0.4870445)
+disabled = true
 text = "
 "
 icon = ExtResource("26_6so0i")
 flat = true
-disabled = true
 
 [node name="adelante1" type="Sprite2D" parent="Adelante" unique_id=674163435]
 visible = false
@@ -380,7 +382,6 @@ offset_left = 1023.0
 offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
-tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=1129301431]
@@ -447,7 +448,7 @@ color = Color(0.0627451, 0.0705882, 0.0941176, 0.62)
 [node name="TarjetaEnsenanzaCierre" type="PanelContainer" parent="." unique_id=1987654301]
 visible = false
 z_index = 10
-layout_mode = 1
+anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -470,13 +471,14 @@ theme_override_constants/margin_bottom = 14
 
 [node name="LabelEnsenanzaCierre" type="Label" parent="TarjetaEnsenanzaCierre/MargenEnsenanzaCierre" unique_id=1987654321]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
-autowrap_mode = 3
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="ContinuarJuego" parent="." instance=ExtResource("40_continuar")]
+[node name="ContinuarJuego" parent="." unique_id=1587037214 instance=ExtResource("40_continuar")]
+layout_mode = 3
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=1848989356]
 script = ExtResource("30_ycctx")
@@ -485,6 +487,8 @@ level_resource_path = "res://niveles/nivel_1/level_1.tres"
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1104681376]
 volume_db = -4.962
 attenuation = 2.07053
+
+[node name="ProgressBar" parent="." unique_id=478823511 instance=ExtResource("40_m0gd1")]
 
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]
 [connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_salido"]
