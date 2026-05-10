@@ -30,6 +30,10 @@ static func continuar_o_finalizar_partida(
 		"%s node=%s"
 		% [LOG_PREFIX_NODE_COMPLETE, str(partida_actual.get("clave_nodo", "")).strip_edges()]
 	)
+
+	# Calcular y persistir EXP antes de limpiar la partida
+	_registrar_exp_finalizacion(tree, estado_global, partida_actual)
+
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
 		al_finalizar_partida.call()
@@ -112,3 +116,89 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 		return
 	if save_manager.has_method("mark_activity_completed"):
 		save_manager.call("mark_activity_completed", request_key, activity_id)
+
+
+static func _registrar_exp_finalizacion(
+	tree: SceneTree,
+	estado_global: Node,
+	partida_actual: Dictionary
+) -> void:
+	if tree == null or tree.root == null:
+		return
+	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
+	if save_manager == null:
+		return
+	var titulo_nodo: String = str(partida_actual.get("titulo_nodo", "")).strip_edges()
+	var dificultad_fallback: int = max(1, int(partida_actual.get("dificultad", 1)))
+
+	# EXP base: suma de la EXP individual de cada mini juego según su dificultad
+	var juegos: Array = partida_actual.get("juegos", [])
+	var exp_base_total: int = _calcular_exp_base_total(juegos, dificultad_fallback)
+
+	# Precision real desde el acumulador de stats del nodo
+	var stats: Dictionary = {}
+	if estado_global.has_method("obtener_stats_nodo_actual"):
+		stats = estado_global.call("obtener_stats_nodo_actual")
+	var aciertos: int = int(stats.get("aciertos", 0))
+	var errores: int = int(stats.get("errores", 0))
+	var intentos: int = int(stats.get("intentos", 0))
+
+	var precision_ratio: float = 1.0
+	if intentos > 0:
+		precision_ratio = clampf(float(aciertos) / float(intentos), 0.0, 1.0)
+	var precision_percent: int = int(round(precision_ratio * 100.0))
+
+	# EXP penalizada por precision
+	var exp_ganada: int = clampi(int(round(float(exp_base_total) * precision_ratio)), 0, exp_base_total)
+
+	var total_exp_nuevo: int = 0
+	if save_manager.has_method("add_exp"):
+		total_exp_nuevo = save_manager.call("add_exp", exp_ganada)
+	print(
+		"%s exp_base=%d precision=%d%% exp_ganada=%d total_exp=%d aciertos=%d errores=%d intentos=%d"
+		% [
+			LOG_PREFIX_NODE_COMPLETE,
+			exp_base_total,
+			precision_percent,
+			exp_ganada,
+			total_exp_nuevo,
+			aciertos,
+			errores,
+			intentos,
+		]
+	)
+
+	# Tiempo transcurrido desde que inicio la partida
+	var tiempo_str: String = "—"
+	if estado_global.has_method("obtener_tiempo_nodo_formato"):
+		tiempo_str = str(estado_global.call("obtener_tiempo_nodo_formato")).strip_edges()
+
+	if estado_global.has_method("establecer_ultima_finalizacion"):
+		estado_global.call("establecer_ultima_finalizacion", {
+			"exp_base": exp_base_total,
+			"exp_ganada": exp_ganada,
+			"total_exp": total_exp_nuevo,
+			"titulo_nodo": titulo_nodo,
+			"dificultad": dificultad_fallback,
+			"precision": precision_percent,
+			"tiempo": tiempo_str,
+			"aciertos": aciertos,
+			"errores": errores,
+			"intentos": intentos,
+		})
+
+
+static func _calcular_exp_base_total(juegos: Array, dificultad_fallback: int) -> int:
+	## Suma la EXP base de cada mini juego según su dificultad individual.
+	## d1=6, d2=9, d3=12
+	var total: int = 0
+	for raw_juego in juegos:
+		var juego: Dictionary = raw_juego as Dictionary
+		if juego == null:
+			continue
+		var d: int = max(1, int(juego.get("dificultad", dificultad_fallback)))
+		total += 6 + (d - 1) * 3
+	if total <= 0:
+		# Fallback: al menos un juego con la dificultad del nodo
+		total = 6 + (max(1, dificultad_fallback) - 1) * 3
+	return total

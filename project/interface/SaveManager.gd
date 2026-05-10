@@ -286,6 +286,41 @@ func debug_clear_completed_activity_history() -> void:
 	print("[PersistentRandom] debug_clear_completed_activity_history done")
 
 
+# --- Experiencia acumulada (EXP) ------------------------------------------
+
+func get_total_exp() -> int:
+	return max(0, int(save_data.get("total_exp", 0)))
+
+
+## Acumula `amount` EXP, persiste en disco y retorna el nuevo total.
+func add_exp(amount: int) -> int:
+	if amount <= 0:
+		return get_total_exp()
+	var nuevo_total: int = get_total_exp() + amount
+	save_data["total_exp"] = nuevo_total
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+	return nuevo_total
+
+
+func get_ranking_position() -> int:
+	return _calcular_ranking(get_total_exp())
+
+
+func _calcular_ranking(total: int) -> int:
+	if total >= 300:
+		return 1
+	if total >= 200:
+		return 2
+	if total >= 120:
+		return 3
+	if total >= 60:
+		return 5
+	if total >= 30:
+		return 10
+	return 20
+
+
 func reiniciar_todo_progreso() -> Dictionary:
 	var current_profile: Dictionary = obtener_perfil_usuario_actual()
 	_reiniciar_datos_guardado_actual(current_profile)

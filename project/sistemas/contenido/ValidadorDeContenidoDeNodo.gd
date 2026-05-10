@@ -32,14 +32,6 @@ static func limpiar(datos_nodo: Dictionary) -> Dictionary:
 	}
 
 
-static func validar_datos_nodo(node_data: Dictionary) -> String:
-	return validar(node_data)
-
-
-static func limpiar_datos_nodo(node_data: Dictionary) -> Dictionary:
-	return limpiar(node_data)
-
-
 static func _validar_campos_base(datos_nodo: Dictionary) -> String:
 	for campo in ["id", "theme", "title", "difficulty", "mode", "content"]:
 		if not datos_nodo.has(campo):

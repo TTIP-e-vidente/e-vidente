@@ -290,9 +290,16 @@ func _validar_nodo(global_state: Node, node_key: String, label: String) -> Dicti
 		if failed:
 			return result
 
-		var next_scenes: Array[String] = [MAP_SCENE]
+		var next_scenes: Array[String] = [MAP_SCENE, "res://mapas/Finalización-Partida.tscn"]
 		next_scenes.append_array(GAME_SCENES)
 		await _wait_for_any(next_scenes, "%s continuar" % label)
+		if (
+			current_scene != null
+			and current_scene.scene_file_path == "res://mapas/Finalización-Partida.tscn"
+			and current_scene.has_method("continuar_al_mapa")
+		):
+			current_scene.call("continuar_al_mapa")
+			await _wait_for(MAP_SCENE, "%s post-finalizacion" % label)
 		safety += 1
 
 	_check(
@@ -338,8 +345,9 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 		return
 
 	level_scene.call("completar_partida_actual")
-	for unused_frame in range(3):
-		await process_frame
+	# La enseñanza aparece tras un timer de 0.8 s en _finalizar_partida_normal.
+	# Esperamos 1.5 s reales para que el timer dispare antes de verificar visibilidad.
+	await create_timer(1.5).timeout
 	_check(
 		bool(level_scene.call("es_partida_completada")),
 		"%s: drag deberia quedar completado." % label

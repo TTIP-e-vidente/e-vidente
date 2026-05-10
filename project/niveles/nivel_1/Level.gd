@@ -22,9 +22,6 @@ const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
-const CargadorDeContenidoDeNodoScript := preload(
-	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
-)
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
@@ -80,6 +77,7 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
+@onready var _player_cambiante: Node                 = get_node_or_null("PlayerCambiante")
 
 ## Guardado rápido (UI)
 @onready var save_progress_button:  Button         = $SaveProgressButton
@@ -116,6 +114,7 @@ var _teaching_sprite_base_scale := Vector2.ONE
 var _teaching_card_base_scale := Vector2.ONE
 
 @onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
+@onready var _progress_bar = get_node_or_null("ProgressBar")
 @onready var _continuar_juego = $ContinuarJuego
 
 # Entrada del nivel
@@ -232,15 +231,17 @@ func resolver_pista_activa() -> void:
 ## --- HUD / progreso --------------------------------------------------------
 
 func _configurar_indicador_de_progreso_de_juego() -> void:
-	if _indicador_de_progreso_de_juego == null:
+	# Ocultar el badge "Juego X/Y" — la barra inferior es el único indicador de progreso
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
+	# Actualizar barra inferior con la posición actual dentro del nodo
+	if _progress_bar == null:
 		return
 	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
-	_indicador_de_progreso_de_juego.show()
-	_indicador_de_progreso_de_juego.actualizar(
-		str(contexto.get("titulo", "")).strip_edges(),
-		int(contexto.get("actual", 1)),
-		int(contexto.get("total", 1))
-	)
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.actualizar_progreso(actual, total)
 
 
 ## --- Carga de contenido ----------------------------------------------------
@@ -251,7 +252,7 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 		push_error("Level: falta json_path para cargar el nivel.")
 		return
 
-	var result: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(clean_path)
+	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": clean_path})
 	if not bool(result.get("ok", false)):
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
 		return
@@ -314,7 +315,7 @@ func _iniciar_arrastre_desde_json_si_corresponde() -> bool:
 	if nodo_datos.is_empty():
 		return false
 
-	var conversion: Dictionary = CargadorDeContenidoDeNodoScript.convertir_arrastre_a_runtime(
+	var conversion: Dictionary = NodeContentLoaderScript.convertir_arrastre_a_runtime(
 		nodo_datos
 	)
 	if not bool(conversion.get("ok", false)):
@@ -342,7 +343,7 @@ func _obtener_datos_de_arrastre_del_nodo() -> Dictionary:
 	if ruta_json.is_empty():
 		return {}
 
-	var result: Dictionary = CargadorDeContenidoDeNodoScript.cargar_contenido_nodo(ruta_json)
+	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": ruta_json})
 	if not bool(result.get("ok", false)):
 		push_warning(
 			"Level: no se pudo leer JSON de arrastre: %s" % str(result.get("error", ""))
@@ -486,7 +487,13 @@ func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
 
 func _mostrar_ensenanza_del_nivel() -> void:
 	_current_run_completion_handled = true
-	mostrar_estado_de_finalizacion()
+	# Bloquear input sin aplicar el efecto grayscale de finalizacion —
+	# la ensenanza cubre el gameplay de inmediato, el "dim" generaba
+	# una pantalla gris congelada de ~0.8s antes de mostrar la ensenanza.
+	Item_level.is_dragging = null
+	_establecer_interacciones_jugabilidad_habilitadas(false)
+	_ocultar_boton_adelante_anterior()
+	_ocultar_ensenanza_textual()
 	_mostrar_ensenanza_de_cierre()
 	mostrar_continuacion()
 	run_completed.emit()
@@ -494,18 +501,23 @@ func _mostrar_ensenanza_del_nivel() -> void:
 
 func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 	_current_run_completion_handled = true
-	mostrar_estado_de_finalizacion()
 
 	var previous_streak: Dictionary = Global.obtener_estado_racha()
 	guardar_progreso_de_finalizacion(track_key, level_number)
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
+		# Bloquear input sin dim/grayscale: la ensenanza cubre el gameplay inmediatamente.
+		Item_level.is_dragging = null
+		_establecer_interacciones_jugabilidad_habilitadas(false)
+		_ocultar_boton_adelante_anterior()
+		_ocultar_ensenanza_textual()
 		_mostrar_ensenanza_de_cierre()
 		mostrar_continuacion()
 		run_completed.emit()
 		return
 
+	mostrar_estado_de_finalizacion()
 	mostrar_continuacion()
 	run_completed.emit()
 
@@ -513,6 +525,9 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
+	# Arrastre completado: registrar 1 acierto (drag trata la partida como unitaria).
+	# Convencion: 1 intento por mini juego de arrastre, siempre acierto al completar.
+	Global.registrar_resultado_mini_juego(true)
 	var habia_siguiente: bool = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
 	var continuo: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
 		get_tree(),
@@ -878,13 +893,10 @@ func _ocultar_ensenanza_textual() -> void:
 		label_ensenanza_cierre.text = ""
 
 
-func _establecer_visibilidad_indicador_de_progreso(visible: bool) -> void:
-	if _indicador_de_progreso_de_juego == null:
-		return
-	if visible:
-		_indicador_de_progreso_de_juego.show()
-		return
-	_indicador_de_progreso_de_juego.hide()
+func _establecer_visibilidad_indicador_de_progreso(_visible: bool) -> void:
+	# El badge de texto está desactivado — siempre ocultar
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
 
 
 func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
@@ -958,6 +970,14 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		return true
 	if is_instance_valid(_continuar_juego) and (
 		runtime_node == _continuar_juego or _continuar_juego.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(manager_level) and (
+		runtime_node == manager_level or manager_level.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(_player_cambiante) and (
+		runtime_node == _player_cambiante or _player_cambiante.is_ancestor_of(runtime_node)
 	):
 		return true
 	return false

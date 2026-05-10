@@ -740,6 +740,8 @@ func tiene_completado_actual_partida() -> bool:
 	var correctos_necesarios: int = active_positive_item_count
 	if correctos_necesarios <= 0:
 		correctos_necesarios = int(level_resource.cantidadPositivos)
+	if correctos_necesarios <= 0:
+		return false
 	var completado: bool = (
 		correctos_necesarios == correctos_colocados
 		and plato.cantAlimentosNeg.is_empty()

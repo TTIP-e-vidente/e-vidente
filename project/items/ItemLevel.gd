@@ -193,6 +193,7 @@ func _volver_a_inicio() -> void:
 
 
 func _animar_feedback_correcto() -> void:
+	modulate = Color(1, 1, 1, 1)
 	var tween := get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)

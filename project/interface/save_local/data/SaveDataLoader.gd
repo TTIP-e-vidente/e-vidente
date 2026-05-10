@@ -85,6 +85,10 @@ func reparar_estructura(save_snapshot: Dictionary) -> bool:
 			save_snapshot.get("save_meta", {})
 		)
 
+	if save_snapshot.get("total_exp", null) == null:
+		save_snapshot["total_exp"] = 0
+		changed = true
+
 	return changed
 
 
@@ -165,6 +169,7 @@ func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 	var source_completed: Variant = source.get("completed_activity_ids_by_request", {})
 	if source_completed is Dictionary:
 		normalized["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
+	normalized["total_exp"] = max(0, int(source.get("total_exp", 0)))
 	return normalized
 
 

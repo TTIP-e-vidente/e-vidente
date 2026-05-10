@@ -6,6 +6,10 @@ const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
+# Pantalla oficial de resultados (escena diseñada en /mapas/)
+const FINALIZACION_PARTIDA_SCENE := "res://mapas/Finalización-Partida.tscn"
+# FALLBACK_TEMP_NO_USAR: los overlays code-only de completo/ ya no se usan como pantalla principal
+# const FinalizacionDeNodoScript := preload("res://mapas/completo/finalizacion_de_nodo.gd")
 
 const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
@@ -33,6 +37,10 @@ func _ready() -> void:
 	Global.limpiar_sesion_nodo_jugable_activo()
 	actualizar_estados_de_nodos()
 	_restaurar_scroll_guardado_del_mapa()
+
+	# Si hay resultado de EXP pendiente, abrir pantalla de finalización oficial y salir
+	if _mostrar_finalizacion_de_nodo_si_corresponde():
+		return
 
 	var nodo_actual: String = Global.consumir_nodo_a_continuar()
 	if not nodo_actual.is_empty():
@@ -138,6 +146,15 @@ func _desplazar_a_proximo_disponible() -> void:
 	if map_board == null or not map_board.has_method("desplazar_al_primer_nodo_disponible"):
 		return
 	map_board.call("desplazar_al_primer_nodo_disponible")
+
+
+func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
+	## Abre Finalización-Partida.tscn si hay EXP pendiente de mostrar.
+	## Devuelve true cuando se inicia el cambio de escena (para que _ready() pueda retornar).
+	if not Global.hay_ultima_finalizacion():
+		return false
+	get_tree().change_scene_to_file(FINALIZACION_PARTIDA_SCENE)
+	return true
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
