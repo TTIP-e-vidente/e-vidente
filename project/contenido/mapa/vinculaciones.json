@@ -160,7 +160,7 @@
 		"pairs": [
 		  ["Celiaquía", "Autoinmune"],
 		  ["Tostadora", "Riesgo"],
-		  ["Avena", "Certificada"]
+		  ["Sello", "Certificado"]
 		]
 	  },
 
@@ -227,6 +227,125 @@
 		  ["Cocina", "Limpieza"],
 		  ["Centeno", "Gluten"],
 		  ["Arroz", "Natural"]
+		]
+	  },
+	  "match_celiaquia_media_6": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Relacioná correctamente los conceptos.",
+	"pairs": [
+	  ["Malta", "Cebada"],
+	  ["Mesada", "Higiene"],
+	  ["Fécula", "Mandioca"]
+	]
+  },
+
+  "match_celiaquia_media_7": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Uní cada concepto con su relación.",
+	"pairs": [
+	  ["Rotulado", "Obligatorio"],
+	  ["Freidora", "Compartida"],
+	  ["Sorgo", "Alternativa"]
+	]
+  },
+
+  "match_celiaquia_media_8": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Emparejá correctamente.",
+	"pairs": [
+	  ["Atrofia", "Intestino"],
+	  ["Anticuerpos", "Análisis"],
+	  ["Semáforo", "Etiqueta"]
+	]
+  },
+
+	  "match_celiaquia_media_9": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná los conceptos vinculados.",
+		"pairs": [
+		  ["Enteropatía", "Digestiva"],
+		  ["Bandeja", "Residuos"],
+		  ["Quinoa", "Pseudocereal"]
+		]
+	  },
+
+	  "match_celiaquia_media_10": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní correctamente cada opción.",
+		"pairs": [
+		  ["Dermatitis", "Picazón"],
+		  ["Licencia", "ANMAT"],
+		  ["Aditivos", "Procesados"]
+		]
+	  },
+
+	  "match_celiaquia_media_11": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná correctamente.",
+		"pairs": [
+		  ["Transgresión", "Exposición"],
+		  ["Utensilios", "Separados"],
+		  ["Almidón", "Espesante"]
+		]
+	  },
+		"match_celiaquia_proteinas_1": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná cada cereal con su proteína.",
+		"pairs": [
+		  ["Trigo", "Gliadina"],
+		  ["Cebada", "Hordeína"],
+		  ["Centeno", "Secalina"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_2": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Uní correctamente los conceptos.",
+		"pairs": [
+		  ["Avena", "Avenina"],
+		  ["Trigo", "Gliadina"],
+		  ["Centeno", "Secalina"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_3": {
+		"mode": "match",
+		"difficulty": 1,
+		"prompt": "Emparejá cada proteína con su origen.",
+		"pairs": [
+		  ["Gliadina", "Trigo"],
+		  ["Hordeína", "Cebada"],
+		  ["Avenina", "Avena"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_4": {
+		"mode": "match",
+		"difficulty": 2,
+		"prompt": "Relacioná correctamente.",
+		"pairs": [
+		  ["Secalina", "Centeno"],
+		  ["Gliadina", "Gluten"],
+		  ["Hordeína", "Cebada"]
+		]
+	  },
+
+	  "match_celiaquia_proteinas_5": {
+		"mode": "match",
+		"difficulty": 3,
+		"prompt": "Uní cada proteína con su cereal.",
+		"pairs": [
+		  ["Avenina", "Avena"],
+		  ["Secalina", "Centeno"],
+		  ["Gliadina", "Trigo"]
 		]
 	  }
 	}
