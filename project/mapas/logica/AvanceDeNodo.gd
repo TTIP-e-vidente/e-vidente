@@ -110,11 +110,6 @@ static func mapa_esta_completado(nodos_mapa: Array, track_key: String) -> bool:
 	return true
 
 
-static func can_play_node(nodos_mapa: Array, node_data: MapNodeData) -> bool:
-	var state := get_node_state(nodos_mapa, node_data)
-	return bool(state.get("can_play", false))
-
-
 static func _state(is_unlocked: bool, is_completed: bool, state_name: String) -> Dictionary:
 	return {
 		"is_unlocked": is_unlocked,

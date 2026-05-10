@@ -30,7 +30,8 @@ func datos_guardado_predeterminados() -> Dictionary:
 		"resume_state": estado_reanudacion_predeterminado().duplicate(true),
 		"progress": {},
 		"history": [],
-		"completed_activity_ids_by_request": {}
+		"completed_activity_ids_by_request": {},
+		"total_exp": 0
 	}
 
 

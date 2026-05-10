@@ -1,25 +1,6 @@
 extends RefCounted
 class_name ArmadorDePartida
 
-# Construye el plan de juego para un nodo del mapa.
-# Responsabilidad única: decidir qué games se juegan y en qué orden.
-# No carga JSON, no abre escenas, no navega entre pantallas.
-#
-# Dos caminos para construir los juegos:
-#   Fijos (has_fixed_games):  construir_juegos_fijos()  → toma los games del nodo directamente.
-#   Random (uses_random_games): construir_juegos_random()
-#     → elige por tipo/dificultad con anti-repetición.
-#
-# Anti-repetición:
-#   _session_used_activity_ids_by_request  → evita repetir activity_id en la sesión.
-#   _last_random_combo_by_node_key         → evita repetir la misma combinación en el nodo.
-#   Ambos se resetean con reset_session_history().
-#
-# Salida: Dictionary con keys:
-#   clave_nodo, titulo_nodo, clave_pista, dificultad,
-#   numero_nivel, indice_juego_actual, total_juegos, juegos: Array[Dictionary]
-
-
 const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")

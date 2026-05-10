@@ -15,9 +15,6 @@ const ContextoFinalizacionDeJuegoScript := preload(
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
-const CargadorDeContenidoDeNodoScript := preload(
-	"res://sistemas/contenido/CargadorDeContenidoDeNodo.gd"
-)
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
@@ -58,6 +55,7 @@ const DURACION_ANIMACION_LINEA := 0.16
 @onready var line_drawer: Line2D = $Control/LineDrawer
 @onready var boton_atras: Button = $"Atrás"
 @onready var indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _progress_bar = get_node_or_null("ProgressBar")
 @onready var _continuar_juego = $ContinuarJuego
 
 var items_izquierda: Array[ConceptoItem] = []
@@ -350,7 +348,7 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		return
 
 	var resultado_runtime: Dictionary = (
-		CargadorDeContenidoDeNodoScript.convertir_vinculacion_a_runtime(
+		NodeContentLoaderScript.convertir_vinculacion_a_runtime(
 			resultado_nodo.get("data", {})
 		)
 	)
@@ -408,7 +406,7 @@ func _preparar_controles_de_confirmacion() -> void:
 	boton_confirmar.offset_right = 700.0
 	boton_confirmar.offset_bottom = 784.0
 	boton_confirmar.text = "Confirmar"
-	boton_confirmar.visible = true
+	boton_confirmar.visible = false
 	boton_confirmar.disabled = true
 	boton_confirmar.z_index = 110
 	_aplicar_estilo_boton_badge(boton_confirmar, 22)
@@ -523,15 +521,17 @@ func _limpiar_click_areas() -> void:
 
 
 func _configurar_indicador_de_progreso_de_juego() -> void:
-	if indicador_de_progreso_de_juego == null:
+	# Ocultar el badge "Juego X/Y" — la barra inferior es el único indicador de progreso
+	if indicador_de_progreso_de_juego != null:
+		indicador_de_progreso_de_juego.hide()
+	# Actualizar barra inferior con la posición actual dentro del nodo
+	if _progress_bar == null:
 		return
 	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
-	indicador_de_progreso_de_juego.show()
-	indicador_de_progreso_de_juego.actualizar(
-		str(contexto.get("titulo", "")).strip_edges(),
-		int(contexto.get("actual", 1)),
-		int(contexto.get("total", 1))
-	)
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.actualizar_progreso(actual, total)
 
 
 func _aplicar_runtime_en_escena() -> void:
@@ -833,11 +833,9 @@ func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
 		print(LOG_PREFIX_MATCH, " selected_right_without_left=", derecha.concept_id)
 		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
 		return
-	seleccion_derecha_pendiente = derecha
 	print(LOG_PREFIX_MATCH, " selected_right=", derecha.concept_id)
-	_actualizar_texto_guia("Apretá Confirmar para validar la relación.")
-	_mostrar_feedback("Apretá Confirmar para validar la relación.")
-	_actualizar_visual()
+	seleccion_derecha_pendiente = derecha
+	confirmar()
 
 
 func quitar_vinculo_anterior_de(derecha: ConceptoItem) -> void:
@@ -856,6 +854,8 @@ func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void
 		" id_par_right=", derecha.par_key,
 		" correct=", correcto
 	)
+	# Registrar resultado por par vinculado: cada intento de vinculacion cuenta
+	Global.registrar_resultado_mini_juego(correcto)
 	if correcto:
 		_mostrar_feedback_correcto(izquierda)
 		return
@@ -944,11 +944,8 @@ func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
 func _actualizar_estado_confirmar() -> void:
 	if boton_confirmar == null:
 		return
-	boton_confirmar.visible = not validado
-	var pareja_pendiente := seleccion_actual != null and seleccion_derecha_pendiente != null
-	var puede_validar_total := not faltan_vinculos()
-	var habilitar_confirmar := pareja_pendiente or puede_validar_total
-	boton_confirmar.disabled = bloqueado or validado or not habilitar_confirmar
+	boton_confirmar.visible = false
+	boton_confirmar.disabled = true
 
 
 func faltan_vinculos() -> bool:
@@ -1216,7 +1213,7 @@ func _guardar_progreso_de_vinculacion() -> void:
 				"track_key": clave_pista,
 				"level_number": nivel_id,
 				"node_key": _nodo_actual,
-				"mode": CargadorDeContenidoDeNodoScript.MODE_VINCULACION_CONCEPTOS,
+				"mode": NodeContentLoaderScript.MODE_VINCULACION_CONCEPTOS,
 			}
 		)
 		SaveManager.guardar_progreso_en_disco()

@@ -61,10 +61,11 @@ func refrescar() -> void:
 	var summary_text := Global.formatear_progreso_resumen_texto(
 		Global.obtener_progreso_resumen()
 	).strip_edges()
+	var exp_text := "EXP total: %d" % SaveManager.get_total_exp()
 	_progress_label.text = (
-		summary_text
+		(summary_text + "\n" + exp_text)
 		if not summary_text.is_empty()
-		else "Todavia no hay capitulos completos"
+		else exp_text
 	)
 
 	_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())

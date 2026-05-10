@@ -1,7 +1,9 @@
 extends RefCounted
 class_name CargadorDeContenidoDeNodo
 
-# LEGACY_COMPAT: Usado por Level.gd, QuestionJsonLoader y NodeContentLoader (fallback).
+# LEGACY_COMPAT: Backend interno de NodeContentLoader (fachada unica).
+# Los callers externos (Level.gd, QuestionJsonLoader, vincular_conceptos) ya no importan
+# este archivo directamente — todo pasa por NodeContentLoader.
 # No agregar lógica nueva aquí; el contenido nuevo entra por NodeContentLoader.
 
 # Carga contenido legacy desde json_path y lo deja en formato runtime.

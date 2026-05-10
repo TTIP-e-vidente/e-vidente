@@ -1,17 +1,9 @@
 extends RefCounted
 class_name AbridorDeNodoJugable
 
-# Abre el game actual de una partida de nodo.
-# Recibe un nodo ya cargado; no decide games ni adapta contenido.
-#
-# Responsabilidad única: armar la sesión y delegar al Global + ContinuidadDePartidaDeNodo.
-# Flujo:
-#   abrir_nodo(tree, node_data, ruta_retorno)
-#     → _construir_datos_de_apertura  (arma sesión + plan via ArmadorDePartida)
-#     → _iniciar_partida_en_global     (guarda en autoload Global)
-#     → ContinuidadDePartidaDeNodo.abrir_juego_actual
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
@@ -34,28 +26,9 @@ static func abrir_nodo(
 	node_data: MapNodeData,
 	ruta_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 ) -> Dictionary:
-	if tree == null:
-		return _resultado_con_error("No se pudo abrir el nodo: falta SceneTree.")
-	if node_data == null or not node_data.is_valid():
-		return _resultado_con_error("No se pudo abrir el nodo seleccionado.")
-	var estado_global: Node = _obtener_estado_global(tree)
-	if estado_global == null:
-		return _resultado_con_error("No se encontro el autoload Global.")
-
-	var ruta_retorno_segura: String = _normalizar_ruta_de_retorno(ruta_retorno)
-	var datos_de_apertura: Dictionary = _construir_datos_de_apertura(
-		node_data,
-		ruta_retorno_segura
-	)
-	if datos_de_apertura.is_empty():
-		_limpiar_estado_de_apertura(estado_global)
-		return _resultado_con_error("No se pudo armar la partida del nodo.")
-	_iniciar_partida_en_global(estado_global, datos_de_apertura)
-
-	if not ContinuidadDePartidaDeNodoScript.abrir_juego_actual(tree, estado_global):
-		_limpiar_estado_de_apertura(estado_global)
-		return _resultado_con_error("No se pudo abrir el primer juego del nodo.")
-
+	var resultado: Dictionary = NodoRuntimeScript.iniciar(tree, node_data, ruta_retorno)
+	if not bool(resultado.get("ok", false)):
+		return _resultado_con_error(str(resultado.get("error", "No se pudo abrir el nodo.")))
 	return _resultado_ok()
 
 

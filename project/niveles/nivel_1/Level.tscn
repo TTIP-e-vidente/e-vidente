@@ -430,13 +430,13 @@ self_modulate = Color(1, 1, 1, 0.921569)
 top_level = true
 light_mask = 256
 visibility_layer = 256
-z_index = 9
+z_index = 13
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
 
 [node name="TeachingBackdrop" type="ColorRect" parent="." unique_id=1987654399]
 visible = false
-z_index = 8
+z_index = 12
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -447,7 +447,7 @@ color = Color(0.0627451, 0.0705882, 0.0941176, 0.62)
 
 [node name="TarjetaEnsenanzaCierre" type="PanelContainer" parent="." unique_id=1987654301]
 visible = false
-z_index = 10
+z_index = 14
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0

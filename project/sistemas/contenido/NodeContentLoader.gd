@@ -18,6 +18,11 @@ class_name NodeContentLoader
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")
 const LegacyNodeLoaderScript := preload("res://sistemas/contenido/CargadorDeContenidoDeNodo.gd")
 
+# Constantes de modo: re-exportadas para que callers no importen CargadorDeContenidoDeNodo
+const MODE_QUIZ_CHOICE := LegacyNodeLoaderScript.MODE_QUIZ_CHOICE
+const MODE_DRAG_DROP := LegacyNodeLoaderScript.MODE_DRAG_DROP
+const MODE_VINCULACION_CONCEPTOS := LegacyNodeLoaderScript.MODE_VINCULACION_CONCEPTOS
+
 const PACK_PATH_BY_ID := {
 	"celiaquia": "res://contenido/packs/celiaquia_pack.json",
 }
@@ -508,6 +513,18 @@ static func _guess_source_file_for_activity_id(activity_id: String) -> String:
 		return "preguntas.json"
 	return "desconocido"
 
+
+## --- Delegados de transformacion runtime (fachada sobre CargadorDeContenidoDeNodo) ---
+
+static func convertir_arrastre_a_runtime(datos_nodo: Dictionary) -> Dictionary:
+	return LegacyNodeLoaderScript.convertir_arrastre_a_runtime(datos_nodo)
+
+
+static func convertir_vinculacion_a_runtime(datos_nodo: Dictionary) -> Dictionary:
+	return LegacyNodeLoaderScript.convertir_vinculacion_a_runtime(datos_nodo)
+
+
+## ---------------------------------------------------------------------------
 
 static func _error(message: String) -> Dictionary:
 	push_error("NodeContentLoader: %s" % message)

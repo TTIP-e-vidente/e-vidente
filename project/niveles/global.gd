@@ -39,6 +39,9 @@ var _active_playable_node: Dictionary = {}
 var _partida_de_nodo_activa: Dictionary = {}
 var _juego_de_nodo_actual: Dictionary = {}
 var _nodo_a_continuar: String = ""
+var _ultima_finalizacion: Dictionary = {}
+var _inicio_nodo_msec: int = 0  # Timestamp para calcular tiempo transcurrido de partida
+var _stats_nodo_actual: Dictionary = {}  # Acumulador de aciertos/errores/intentos del nodo
 
 
 func _init() -> void:
@@ -79,6 +82,8 @@ func reiniciar_progreso() -> void:
 	_partida_de_nodo_activa = {}
 	_juego_de_nodo_actual = {}
 	_nodo_a_continuar = ""
+	_inicio_nodo_msec = 0
+	_stats_nodo_actual = {}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		_asegurar_pista_progreso_existe(track_key)
 		_partial_level_state_by_track[track_key] = {}
@@ -230,6 +235,8 @@ func limpiar_sesion_nodo_jugable_activo() -> void:
 func iniciar_partida_de_nodo(plan_de_partida: Dictionary) -> void:
 	_partida_de_nodo_activa = _normalizar_partida_de_nodo(plan_de_partida)
 	_juego_de_nodo_actual = _construir_juego_actual_de_partida(_partida_de_nodo_activa)
+	_inicio_nodo_msec = Time.get_ticks_msec()
+	_stats_nodo_actual = {"aciertos": 0, "errores": 0, "intentos": 0}
 	print(
 		LOG_PREFIX_PARTIDA_NODO,
 		" iniciar_partida nodo=", str(_partida_de_nodo_activa.get("clave_nodo", "")),
@@ -304,6 +311,8 @@ func finalizar_partida_de_nodo() -> void:
 		)
 	_partida_de_nodo_activa = {}
 	_juego_de_nodo_actual = {}
+	_inicio_nodo_msec = 0
+	_stats_nodo_actual = {}
 
 
 func obtener_contexto_de_progreso_de_juego() -> Dictionary:
@@ -434,6 +443,49 @@ func consumir_nodo_a_continuar() -> String:
 	var nodo: String = _nodo_a_continuar
 	_nodo_a_continuar = ""
 	return nodo
+
+
+# --- Finalizacion de nodo (EXP) -------------------------------------------
+
+func establecer_ultima_finalizacion(datos: Dictionary) -> void:
+	_ultima_finalizacion = datos.duplicate(true)
+
+
+func obtener_y_limpiar_ultima_finalizacion() -> Dictionary:
+	var datos: Dictionary = _ultima_finalizacion.duplicate(true)
+	_ultima_finalizacion = {}
+	return datos
+
+
+func hay_ultima_finalizacion() -> bool:
+	## Devuelve true si existe una finalizacion de nodo pendiente de mostrar.
+	## No limpia los datos — la pantalla de finalización los lee y limpia en su _ready().
+	return not _ultima_finalizacion.is_empty()
+
+
+func obtener_tiempo_nodo_formato() -> String:
+	## Devuelve el tiempo transcurrido desde iniciar_partida_de_nodo() como "m:ss".
+	## Retorna "—" si no hay partida activa o no se inició el cronómetro.
+	if _inicio_nodo_msec <= 0:
+		return "—"
+	var elapsed_ms: int = Time.get_ticks_msec() - _inicio_nodo_msec
+	var seconds: int = elapsed_ms / 1000
+	return "%d:%02d" % [seconds / 60, seconds % 60]
+
+
+func registrar_resultado_mini_juego(acierto: bool) -> void:
+	## Registra 1 intento (acierto o error) para el acumulador de stats del nodo activo.
+	## Llamar desde cada modalidad al completar un intento o mini juego.
+	_stats_nodo_actual["intentos"] = int(_stats_nodo_actual.get("intentos", 0)) + 1
+	if acierto:
+		_stats_nodo_actual["aciertos"] = int(_stats_nodo_actual.get("aciertos", 0)) + 1
+	else:
+		_stats_nodo_actual["errores"] = int(_stats_nodo_actual.get("errores", 0)) + 1
+
+
+func obtener_stats_nodo_actual() -> Dictionary:
+	## Devuelve copia de los stats acumulados del nodo activo.
+	return _stats_nodo_actual.duplicate(true)
 
 
 # --- Continuacion pendiente -------------------------------------------------

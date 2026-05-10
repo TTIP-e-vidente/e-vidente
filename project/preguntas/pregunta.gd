@@ -95,6 +95,7 @@ var pregunta_actual: Preguntas:
 @onready var _continuar_juego = $Contenido/ContinuarJuego
 
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _progress_bar = get_node_or_null("ProgressBar")
 
 # Entrada del quiz
 func _ready() -> void:
@@ -336,15 +337,17 @@ func _es_juego_de_partida_de_nodo() -> bool:
 
 
 func _configurar_indicador_de_progreso_de_juego() -> void:
-	if _indicador_de_progreso_de_juego == null:
+	# Ocultar el badge "Juego X/Y" — la barra inferior es el único indicador de progreso
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
+	# Actualizar barra inferior con la posición actual dentro del nodo
+	if _progress_bar == null:
 		return
 	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
-	_indicador_de_progreso_de_juego.show()
-	_indicador_de_progreso_de_juego.actualizar(
-		str(contexto.get("titulo", "")).strip_edges(),
-		int(contexto.get("actual", 1)),
-		int(contexto.get("total", 1))
-	)
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.actualizar_progreso(actual, total)
 
 
 func _conectar_continuar_juego() -> void:
@@ -638,11 +641,18 @@ func _mostrar_feedback_correcto(boton: Button) -> void:
 	puntaje += 1
 	_set_opciones_habilitadas(false)
 	_mostrar_feedback_respuesta(boton, true)
+	boton.disabled = false
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
+		global_autoload.call("registrar_resultado_mini_juego", true)
 	await get_tree().create_timer(1.2).timeout
 
 
 func _mostrar_feedback_error(boton: Button) -> void:
 	_mostrar_feedback_respuesta(boton, false)
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
+		global_autoload.call("registrar_resultado_mini_juego", false)
 	await dodge_button(boton)
 	await get_tree().create_timer(0.4).timeout
 
@@ -667,7 +677,9 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 		_audio_player.play()
 
 	if es_correcta:
-		boton.modulate = Color(0, 1, 0)
+		# Tinte verde suave: Color(0,1,0) puro multiplicaba a cero los canales R/B
+		# del fondo del boton y lo hacia ver "transparenton" en pantalla.
+		boton.modulate = Color(0.4, 1.0, 0.4)
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.08, 0.92), 0.08)
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 0.95, 1.05), 0.08)
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.03, 0.97), 0.08)
