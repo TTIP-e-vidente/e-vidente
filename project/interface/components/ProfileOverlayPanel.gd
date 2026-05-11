@@ -21,6 +21,7 @@ signal close_requested
 @onready var _save_status_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/SaveCard/VBox/SaveStatusLabel
 @onready var _resume_hint_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeHintLabel
 @onready var _resume_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeButton
+@onready var _weekly_summary: Node = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/WeeklyLearningSummary
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
@@ -89,6 +90,10 @@ func refrescar() -> void:
 	)
 	_resume_btn.visible = can_resume
 	_resume_btn.disabled = not can_resume
+
+	# Refrescar resumen semanal
+	if is_instance_valid(_weekly_summary) and _weekly_summary.has_method("refrescar"):
+		_weekly_summary.call("refrescar")
 
 
 # --- Helpers ---

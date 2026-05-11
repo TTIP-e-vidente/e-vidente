@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://interface/components/ProfileOverlayPanel.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://interface/components/WeeklyLearningSummary.tscn" id="2_weekly_summary"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_session_panel"]
 bg_color = Color(0.995, 0.992, 0.985, 1)
@@ -418,6 +419,9 @@ text = "Continuar"
 theme_override_styles/normal = SubResource("StyleBoxFlat_resume_btn_normal")
 theme_override_styles/hover = SubResource("StyleBoxFlat_resume_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_resume_btn_pressed")
+
+[node name="WeeklyLearningSummary" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("2_weekly_summary")]
+layout_mode = 2
 
 [node name="ActionsRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
