@@ -1,8 +1,5 @@
+# Determina si el nodo avanza al siguiente juego o finaliza la partida.
 extends RefCounted
-class_name AvanceDeNodo
-
-# Consulta progreso y calcula desbloqueos del mapa.
-# No arma partidas, no abre escenas y no carga contenido.
 
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"

@@ -1,5 +1,4 @@
 extends RefCounted
-class_name ModalidadRouter
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 

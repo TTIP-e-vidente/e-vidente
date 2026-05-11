@@ -1,3 +1,5 @@
+# HELPER_INTERNO
+# HUD global (CanvasLayer 75) con botón de perfil y badge de racha.
 extends CanvasLayer
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")

@@ -27,17 +27,9 @@ layout_mode = 1
 anchors_preset = 0
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 152.0
-offset_bottom = 152.0
+offset_right = 236.0
+offset_bottom = 196.0
 mouse_filter = 2
-
-[node name="Racha" parent="HudRoot/TopLeftAnchor" unique_id=514990148 instance=ExtResource("2_racha")]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="TopRightAnchor" type="Control" parent="HudRoot" unique_id=1513381945]
 layout_mode = 1
@@ -99,6 +91,53 @@ focus_mode = 0
 icon = ExtResource("5_back")
 flat = true
 expand_icon = true
+
+[node name="RachaAnchor" type="Control" parent="HudRoot" unique_id=901234567]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 152.0
+offset_bottom = 152.0
+mouse_filter = 2
+
+[node name="Racha" parent="HudRoot/RachaAnchor" unique_id=514990148 instance=ExtResource("2_racha")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ExpMapaAnchor" type="Control" parent="HudRoot" unique_id=2123456781]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -236.0
+offset_top = 96.0
+offset_right = -16.0
+offset_bottom = 196.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="HudRoot/ExpMapaAnchor" unique_id=2123456782]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+mouse_filter = 2
+
+[node name="ExpTitle" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456783]
+layout_mode = 2
+text = "EXP"
+
+[node name="ExpNumero" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456784]
+layout_mode = 2
+text = "0"
 
 [node name="ProfileOverlayPanel" parent="." unique_id=779278941 instance=ExtResource("4_overlay")]
 layout_mode = 3

@@ -16,7 +16,9 @@ const ContextoFinalizacionDeJuegoScript := preload(
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
+const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
@@ -716,7 +718,7 @@ func _finalizar_partida() -> void:
 func _debe_abrir_siguiente_juego_de_partida() -> bool:
 	if not _es_juego_de_partida_de_nodo():
 		return false
-	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
 
 
 func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
@@ -807,7 +809,7 @@ func _continuar_partida_de_nodo_si_corresponde() -> bool:
 		return false
 	if not _debe_abrir_siguiente_juego_de_partida():
 		return false
-	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+	return NodoRuntimeScript.finalizar_mini_juego(
 		get_tree(),
 		Callable(self, "_limpiar_media_de_pregunta"),
 		Callable(self, "_limpiar_estado_local_de_partida_en_pregunta")
@@ -817,6 +819,14 @@ func _continuar_partida_de_nodo_si_corresponde() -> bool:
 func _limpiar_estado_local_de_partida_en_pregunta() -> void:
 	_limpiar_media_de_pregunta()
 	_pertenece_a_partida_de_nodo = false
+
+
+## Cumple el contrato de ModalidadBase. Devuelve el resultado de este mini juego de pregunta.
+func obtener_resultado() -> ResultadoDeMiniJuego:
+	var total := maxi(1, _cantidad_de_preguntas())
+	return ResultadoDeMiniJuegoScript.crear_detallado(
+		"pregunta", puntaje, total - puntaje, total
+	)
 
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
@@ -879,7 +889,7 @@ func _al_presionar_continuar() -> void:
 
 
 func _finalizar_ultima_pregunta_de_partida() -> void:
-	ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(get_tree())
+	NodoRuntimeScript.finalizar_mini_juego(get_tree())
 	_finalizar_pregunta_normal(_cantidad_de_preguntas())
 	_limpiar_estado_local_de_partida_en_pregunta()
 	_continuar_despues_de_ensenanza(true)

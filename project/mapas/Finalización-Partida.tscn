@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dp64ipg5ra7p8"]
 
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="1_2gmc3"]
-[ext_resource type="Script" uid="uid://d0ltygdjpgagg" path="res://mapas/finalización_partida.gd" id="1_k2l4b"]
+[ext_resource type="Script" uid="uid://hv4f5op7qb4b" path="res://mapas/finalización_partida.gd" id="1_k2l4b"]
 [ext_resource type="PackedScene" uid="uid://beyesjpejg0a4" path="res://mapas/StatsContainer.tscn" id="2_k2l4b"]
 [ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="3_fqejo"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_uokky"]

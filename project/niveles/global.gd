@@ -1,10 +1,5 @@
 extends Node
 
-# Global.gd
-# Estado global liviano de la demo.
-# Guarda progreso local, sesion de nodo y datos necesarios para continuar una partida.
-# No maneja UI ni decide como se dibuja cada pantalla.
-
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameLevelContentCatalogScript := preload("res://niveles/content/GameLevelContentCatalog.gd")
 const GameStreakTracker := preload("res://niveles/progress/GameStreakTracker.gd")
