@@ -1,4 +1,5 @@
 extends RefCounted
+class_name NodoRuntime
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")

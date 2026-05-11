@@ -1,5 +1,6 @@
 # Orquesta avance entre mini juegos y cierre del nodo. Delega cálculos a NodoProgressionRules.
 extends RefCounted
+class_name ContinuidadDePartidaDeNodo
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
@@ -143,6 +144,12 @@ static func _registrar_exp_finalizacion(
 	var aciertos: int = int(stats.get("aciertos", 0))
 	var errores: int = int(stats.get("errores", 0))
 	var intentos: int = int(stats.get("intentos", 0))
+	if intentos == 0:
+		push_warning(
+			"[FlujoBug] Nodo '%s' finalizado con 0 intentos. "
+			% titulo_nodo
+			+ "¿Las modalidades llamaron registrar_resultado_mini_juego()?"
+		)
 
 	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(aciertos, intentos)
 	var precision_percent: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
