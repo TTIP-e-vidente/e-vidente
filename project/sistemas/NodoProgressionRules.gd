@@ -1,4 +1,5 @@
 extends RefCounted
+class_name NodoProgressionRules
 
 enum Difficulty {
 	EASY,    

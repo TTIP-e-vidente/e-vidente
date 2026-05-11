@@ -1,7 +1,6 @@
-# PUBLICO_TRAINEE
-# Pantalla de resultado de un nodo. Solo muestra EXP, precisión y tiempo.
-# No calcula EXP. El botón Continuar vuelve al mapa.
 extends Node2D
+
+const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
@@ -31,12 +30,21 @@ func _ready() -> void:
 	numero_2.modulate = Color("#DB9D4B")
 	numero_3.modulate = Color("#4B79DB")
 
+	# Asegurar tipografía correcta en los números (redundante con tscn, pero explícito)
+	for lbl in [numero, numero_2, numero_3]:
+		lbl.add_theme_font_override("font", RUBIK_SPRAY)
+
 	# Texto del boton continuar (se actualiza en mostrar_resultados si hay ranking)
 	if continuar_label != null:
 		continuar_label.text = "Continuar"
 
 	# Leer datos reales del Global y mostrar
 	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+	if stats.is_empty():
+		push_warning(
+			"[FinalizaciónPartida] Sin datos de finalización en Global. "
+			+ "¿El nodo completó correctamente?"
+		)
 	var exp_ganada: int = int(stats.get("exp_ganada", 0))
 	var precision: int = int(stats.get("precision", 100))
 	var tiempo: String = str(stats.get("tiempo", "--")).strip_edges()

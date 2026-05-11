@@ -1,4 +1,3 @@
-# HELPER_INTERNO
 # HUD del mapa: racha (arriba-izquierda), ProfileButton (arriba-derecha), bloque EXP.
 extends CanvasLayer
 
@@ -9,16 +8,11 @@ const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
 const RUBIK_SPRAY_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
-const EXP_POR_NIVEL := 30
 
 @onready var racha: Control = $HudRoot/RachaAnchor/Racha
 @onready var profile_button: Button = $HudRoot/TopRightAnchor/ProfileButton
 @onready var profile_overlay: ProfileOverlayPanel = $ProfileOverlayPanel
 
-var _nivel_label: Label = null
-var _exp_bar: ProgressBar = null
-var _exp_detalle_label: Label = null
-var _exp_tween: Tween = null
 @onready var _map_exp_numero: Label = $HudRoot/ExpMapaAnchor/VBox/ExpNumero
 @onready var _map_exp_titulo: Label = $HudRoot/ExpMapaAnchor/VBox/ExpTitle
 
@@ -27,9 +21,17 @@ func _ready() -> void:
 	_ocultar_superposicion_perfil()
 	_conectar_insignia_racha()
 	_conectar_senales_guardado()
-	_agregar_nivel_exp_a_overlay()
-	_aplicar_fuentes_bloque_exp_mapa()
 	_actualizar_hud()
+	_aplicar_fuentes_exp()
+
+
+func _aplicar_fuentes_exp() -> void:
+	if is_instance_valid(_map_exp_numero):
+		_map_exp_numero.add_theme_font_override("font", RUBIK_SPRAY_FONT)
+		_map_exp_numero.add_theme_font_size_override("font_size", 30)
+	if is_instance_valid(_map_exp_titulo):
+		_map_exp_titulo.add_theme_font_override("font", RUBIK_SPRAY_FONT)
+		_map_exp_titulo.add_theme_font_size_override("font_size", 24)
 
 
 func _exit_tree() -> void:
@@ -69,7 +71,6 @@ func _actualizar_hud() -> void:
 		profile_button.call("refresh_profile_icon")
 	if profile_overlay != null and profile_overlay.visible:
 		profile_overlay.refrescar()
-	_actualizar_panel_nivel_exp()
 	_actualizar_bloque_exp_mapa()
 
 
@@ -134,122 +135,6 @@ func _al_cambiar_perfil_guardado(_profile: Dictionary) -> void:
 	_actualizar_hud()
 
 
-# ─── Nivel y EXP (dentro del drawer/overlay de perfil) ─────────────────────
-
-func _calcular_nivel(total_exp: int) -> int:
-	return int(total_exp / EXP_POR_NIVEL) + 1
-
-
-func _calcular_exp_inicio_nivel(nivel: int) -> int:
-	return (nivel - 1) * EXP_POR_NIVEL
-
-
-func _calcular_ratio_exp(total_exp: int) -> float:
-	var nivel := _calcular_nivel(total_exp)
-	var inicio := _calcular_exp_inicio_nivel(nivel)
-	return clampf(float(total_exp - inicio) / float(EXP_POR_NIVEL), 0.0, 1.0)
-
-
-func _agregar_nivel_exp_a_overlay() -> void:
-	if profile_overlay == null:
-		return
-	var vbox: VBoxContainer = profile_overlay.get_node_or_null(
-		"SessionPanel/ScrollContainer/MarginContainer/VBoxContainer"
-	)
-	if vbox == null:
-		return
-
-	# Card con estilo consistente con ProfileOverlayPanel
-	var card := PanelContainer.new()
-	card.name = "NivelExpCard"
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color(0.962, 0.957, 0.937, 1.0)
-	card_style.corner_radius_top_left = 20
-	card_style.corner_radius_top_right = 20
-	card_style.corner_radius_bottom_left = 20
-	card_style.corner_radius_bottom_right = 20
-	card_style.border_width_left = 1
-	card_style.border_width_top = 1
-	card_style.border_width_right = 1
-	card_style.border_width_bottom = 1
-	card_style.border_color = Color(0.204, 0.247, 0.173, 0.08)
-	card_style.content_margin_left = 20.0
-	card_style.content_margin_right = 20.0
-	card_style.content_margin_top = 16.0
-	card_style.content_margin_bottom = 16.0
-	card.add_theme_stylebox_override("panel", card_style)
-
-	var inner_vbox := VBoxContainer.new()
-	inner_vbox.add_theme_constant_override("separation", 6)
-	card.add_child(inner_vbox)
-
-	var nivel_prefix := Label.new()
-	nivel_prefix.text = "Nivel"
-	nivel_prefix.add_theme_font_override("font", RUBIK_FONT)
-	nivel_prefix.add_theme_font_size_override("font_size", 13)
-	nivel_prefix.add_theme_color_override("font_color", Color(0.278, 0.251, 0.184, 0.58))
-	inner_vbox.add_child(nivel_prefix)
-
-	_nivel_label = Label.new()
-	_nivel_label.name = "NivelLabel"
-	_nivel_label.text = "1"
-	_nivel_label.add_theme_font_override("font", RUBIK_FONT)
-	_nivel_label.add_theme_font_size_override("font_size", 34)
-	_nivel_label.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1.0))
-	inner_vbox.add_child(_nivel_label)
-
-	_exp_bar = ProgressBar.new()
-	_exp_bar.name = "ExpBar"
-	_exp_bar.min_value = 0.0
-	_exp_bar.max_value = 100.0
-	_exp_bar.value = 0.0
-	_exp_bar.show_percentage = false
-	_exp_bar.custom_minimum_size = Vector2(0.0, 10.0)
-	var bar_bg := StyleBoxFlat.new()
-	bar_bg.bg_color = Color(0.80, 0.80, 0.80, 1.0)
-	bar_bg.corner_radius_top_left = 5
-	bar_bg.corner_radius_top_right = 5
-	bar_bg.corner_radius_bottom_left = 5
-	bar_bg.corner_radius_bottom_right = 5
-	_exp_bar.add_theme_stylebox_override("background", bar_bg)
-	var bar_fill := StyleBoxFlat.new()
-	bar_fill.bg_color = Color(0.31, 0.373, 0.267, 1.0)
-	bar_fill.corner_radius_top_left = 5
-	bar_fill.corner_radius_top_right = 5
-	bar_fill.corner_radius_bottom_left = 5
-	bar_fill.corner_radius_bottom_right = 5
-	_exp_bar.add_theme_stylebox_override("fill", bar_fill)
-	inner_vbox.add_child(_exp_bar)
-
-	_exp_detalle_label = Label.new()
-	_exp_detalle_label.name = "ExpDetalleLabel"
-	_exp_detalle_label.text = "0 / %d EXP" % EXP_POR_NIVEL
-	_exp_detalle_label.add_theme_font_override("font", RUBIK_FONT)
-	_exp_detalle_label.add_theme_font_size_override("font_size", 12)
-	_exp_detalle_label.add_theme_color_override("font_color", Color(0.278, 0.251, 0.184, 0.58))
-	inner_vbox.add_child(_exp_detalle_label)
-
-	# Insertar antes de StatusRow para que aparezca después del resumen de perfil
-	var status_row: Control = vbox.get_node_or_null("StatusRow")
-	vbox.add_child(card)
-	if status_row != null:
-		vbox.move_child(card, status_row.get_index())
-
-
-func _aplicar_fuentes_bloque_exp_mapa() -> void:
-	# Fonts se aplican en runtime; el layout (posición/tamaño) lo maneja el TSCN.
-	if is_instance_valid(_map_exp_titulo):
-		_map_exp_titulo.add_theme_font_override("font", RUBIK_FONT)
-		_map_exp_titulo.add_theme_font_size_override("font_size", 13)
-		_map_exp_titulo.add_theme_color_override("font_color", Color(0.40, 0.40, 0.40, 1.0))
-		_map_exp_titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	if is_instance_valid(_map_exp_numero):
-		_map_exp_numero.add_theme_font_override("font", RUBIK_SPRAY_FONT)
-		_map_exp_numero.add_theme_font_size_override("font_size", 36)
-		_map_exp_numero.add_theme_color_override("font_color", Color(0.10, 0.10, 0.10, 1.0))
-		_map_exp_numero.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-
-
 func _actualizar_bloque_exp_mapa() -> void:
 	if not is_instance_valid(_map_exp_numero):
 		return
@@ -259,28 +144,7 @@ func _actualizar_bloque_exp_mapa() -> void:
 	_map_exp_numero.text = str(total_exp)
 
 
-func _actualizar_panel_nivel_exp() -> void:
-	if _nivel_label == null or _exp_bar == null:
-		return
-	var total_exp: int = 0
-	if SaveManager != null:
-		total_exp = SaveManager.get_total_exp()
-	var nivel: int = _calcular_nivel(total_exp)
-	var ratio: float = _calcular_ratio_exp(total_exp)
-	var exp_en_nivel: int = total_exp - _calcular_exp_inicio_nivel(nivel)
-
-	_nivel_label.text = str(nivel)
-	if _exp_detalle_label != null:
-		_exp_detalle_label.text = "%d / %d EXP" % [exp_en_nivel, EXP_POR_NIVEL]
-	var target := ratio * 100.0
-	if _exp_tween != null and _exp_tween.is_valid():
-		_exp_tween.kill()
-	_exp_tween = create_tween()
-	_exp_tween.tween_property(_exp_bar, "value", target, 0.35)
-
-
 func _mostrar_superposicion_perfil() -> void:
-	_actualizar_panel_nivel_exp()
 	profile_button.visible = false
 	profile_overlay.mostrar_superposicion()
 

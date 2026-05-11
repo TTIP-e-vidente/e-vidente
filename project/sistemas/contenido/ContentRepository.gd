@@ -1,4 +1,5 @@
 extends RefCounted
+class_name ContentRepository
 
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")

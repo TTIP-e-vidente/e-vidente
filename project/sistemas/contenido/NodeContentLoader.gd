@@ -1,9 +1,9 @@
 extends RefCounted
+class_name NodeContentLoader
 
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")
 const LegacyNodeLoaderScript := preload("res://sistemas/contenido/CargadorDeContenidoDeNodo.gd")
 
-# Constantes de modo: re-exportadas para que callers no importen CargadorDeContenidoDeNodo
 const MODE_QUIZ_CHOICE := LegacyNodeLoaderScript.MODE_QUIZ_CHOICE
 const MODE_DRAG_DROP := LegacyNodeLoaderScript.MODE_DRAG_DROP
 const MODE_VINCULACION_CONCEPTOS := LegacyNodeLoaderScript.MODE_VINCULACION_CONCEPTOS
