@@ -1,10 +1,7 @@
-﻿extends Node2D
-
-## Pantalla oficial de resultados al completar una leccion/nodo.
-##
-## Lee los datos de Global.obtener_y_limpiar_ultima_finalizacion() en _ready()
-## y actualiza los tres StatsContainer del diseno existente.
-## El boton Continuar regresa al mapa.
+# PUBLICO_TRAINEE
+# Pantalla de resultado de un nodo. Solo muestra EXP, precisión y tiempo.
+# No calcula EXP. El botón Continuar vuelve al mapa.
+extends Node2D
 
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
@@ -34,7 +31,7 @@ func _ready() -> void:
 	numero_2.modulate = Color("#DB9D4B")
 	numero_3.modulate = Color("#4B79DB")
 
-	# Texto del boton continuar
+	# Texto del boton continuar (se actualiza en mostrar_resultados si hay ranking)
 	if continuar_label != null:
 		continuar_label.text = "Continuar"
 
@@ -43,7 +40,6 @@ func _ready() -> void:
 	var exp_ganada: int = int(stats.get("exp_ganada", 0))
 	var precision: int = int(stats.get("precision", 100))
 	var tiempo: String = str(stats.get("tiempo", "--")).strip_edges()
-
 	mostrar_resultados(exp_ganada, precision, tiempo)
 
 	# Conectar boton Continuar (script = null en la instancia, conectamos aqui)
@@ -56,6 +52,8 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 	numero.text = str(exp_ganada)
 	numero_2.text = str(clamp(precision, 0, 100)) + "%"
 	numero_3.text = tiempo if not tiempo.is_empty() else "--"
+	if continuar_label != null:
+		continuar_label.text = "Continuar"
 
 
 ## Alias publico para que otros sistemas puedan forzar el retorno al mapa.

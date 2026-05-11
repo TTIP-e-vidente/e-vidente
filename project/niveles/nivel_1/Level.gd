@@ -18,6 +18,8 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
+# Mantenemos el alias interno por si queda algún consumidor legacy
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
@@ -45,6 +47,7 @@ const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := (
 const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
 const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
 const COMPLETION_DIM_COLOR := Color(0.62, 0.62, 0.62, 1.0)
+const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 
 ## --- Guardado rápido ---
 
@@ -106,6 +109,7 @@ var _nodo_actual := ""
 var _json_path_nodo_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
+var _arrastre_tuvo_error := false
 var _ya_continuo := false
 var _completion_black_and_white_shader: Shader = null
 var _save_icon_idle: Texture2D = null
@@ -281,6 +285,7 @@ func reiniciar_estado_de_partida() -> void:
 	_post_game_flow_state = {}
 	_current_run_completion_handled = false
 	_ya_continuo = false
+	_arrastre_tuvo_error = false
 	Item_level.is_dragging = null
 	_restaurar_estado_posterior_finalizacion()
 	next_chapter_button.disabled = true
@@ -295,8 +300,10 @@ func iniciar_runtime_de_arrastre() -> void:
 	_aplicar_dificultad_de_arrastre()
 	# Intentar iniciar arrastre desde JSON oficial; si falla, usar flujo legacy.
 	if _iniciar_arrastre_desde_json_si_corresponde():
+		_conectar_senales_items_arrastre()
 		return
 	_iniciar_arrastre_legacy()
+	_conectar_senales_items_arrastre()
 
 
 func _iniciar_arrastre_legacy() -> void:
@@ -482,7 +489,7 @@ func _finalizar_partida() -> void:
 func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
 
 
 func _mostrar_ensenanza_del_nivel() -> void:
@@ -525,11 +532,11 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	# Arrastre completado: registrar 1 acierto (drag trata la partida como unitaria).
-	# Convencion: 1 intento por mini juego de arrastre, siempre acierto al completar.
-	Global.registrar_resultado_mini_juego(true)
-	var habia_siguiente: bool = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
-	var continuo: bool = ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+	# Convencion minima: 1 intento por mini juego de arrastre.
+	# Si el jugador soltó al menos un item negativo en el plato → incorrecto.
+	Global.registrar_resultado_mini_juego(not _arrastre_tuvo_error)
+	var habia_siguiente: bool = NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+	var continuo: bool = NodoRuntimeScript.finalizar_mini_juego(
 		get_tree(),
 		Callable(),
 		Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
@@ -539,8 +546,31 @@ func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	return continuo
 
 
+func _on_item_intento_incorrecto() -> void:
+	_arrastre_tuvo_error = true
+
+
+func _conectar_senales_items_arrastre() -> void:
+	if manager_level == null:
+		return
+	for item in manager_level.level_items:
+		if item is Item_level:
+			if not item.intento_incorrecto.is_connected(_on_item_intento_incorrecto):
+				item.intento_incorrecto.connect(_on_item_intento_incorrecto)
+
+
 func _limpiar_estado_local_de_partida_en_nivel() -> void:
 	_pertenece_a_partida_de_nodo = false
+
+
+## Cumple el contrato de ModalidadBase. Devuelve el resultado de este mini juego de arrastre.
+func obtener_resultado() -> ResultadoDeMiniJuego:
+	return ResultadoDeMiniJuegoScript.crear_detallado(
+		"arrastre",
+		1 if not _arrastre_tuvo_error else 0,
+		1 if _arrastre_tuvo_error else 0,
+		1
+	)
 
 
 func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> void:
@@ -603,7 +633,7 @@ func _esta_visible_ensenanza_de_cierre() -> bool:
 func _hay_siguiente_juego_de_partida() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
 
 
 func _on_timer_siguiente_nodo_timeout() -> void:
@@ -630,7 +660,7 @@ func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
 	var total_juegos: int = int(juego_actual.get("total_juegos", 0))
 	var hay_siguiente := false
 	if _pertenece_a_partida_de_nodo:
-		hay_siguiente = ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+		hay_siguiente = NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
 	print(LOG_PREFIX_POST_GAME, " contexto_recibido=", juego_actual)
 	print(
 		LOG_PREFIX_POST_GAME,

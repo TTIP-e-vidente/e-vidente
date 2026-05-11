@@ -1,6 +1,8 @@
 extends Node2D
 class_name Item_level
 
+signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el plato
+
 @onready var sprite_2d = $Sprite2D
 @onready var area_2d = $Area2D
 var condiciones: Array[int] = []
@@ -122,6 +124,7 @@ func _process(_delta):
 					if esPositivo:
 						_animar_feedback_correcto()
 					else:
+						intento_incorrecto.emit()
 						_animar_feedback_incorrecto_y_volver()
 				else:
 					_volver_a_inicio()

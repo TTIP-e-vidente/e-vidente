@@ -1,18 +1,6 @@
 extends RefCounted
 class_name CargadorDeMapa
 
-# Lee el JSON del mapa y lo transforma en un array de MapNodeData.
-# Responsabilidad única: parsear + validar estructura del mapa.
-# No abre juegos, no adapta contenido, no interactúa con escenas.
-#
-# Dos formatos de mapa soportados:
-#   V1 (legacy): campo "nodos" / "categoria" — usa _build_v1_map.
-#   V2 (moderno): campo "nodes" (Dictionary) + "track" — usa _build_v2_mapa.
-#
-# Flujo simplificado:
-#   load_map(path) → build_map_data() → _build_v1_map / _build_v2_mapa
-#                                    → Array[MapNodeData]
-
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormalizer.gd")
 const ContentValidatorScript := preload("res://sistemas/contenido/ContentValidator.gd")

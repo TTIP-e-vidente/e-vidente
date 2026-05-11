@@ -1,3 +1,4 @@
+# Construye el plan de juegos (lista ordenada de actividades) para un nodo.
 extends RefCounted
 class_name ArmadorDePartida
 

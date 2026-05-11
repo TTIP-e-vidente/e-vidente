@@ -1,3 +1,6 @@
+# HELPER_INTERNO
+# Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
+# Solo renderiza — no decide flujo ni calcula EXP.
 extends Node2D
 
 signal node_selected(node_data: MapNodeData)

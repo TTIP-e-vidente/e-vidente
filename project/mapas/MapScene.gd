@@ -1,3 +1,6 @@
+# PUBLICO_TRAINEE
+# Dueño visual del mapa. Muestra nodos, racha y perfil.
+# Selecciona un nodo y delega el flujo jugable en NodoRuntime.
 extends Node2D
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")

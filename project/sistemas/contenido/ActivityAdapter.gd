@@ -1,17 +1,5 @@
 extends RefCounted
 class_name ActivityAdapter
-
-# Convierte una activity nueva al formato runtime que espera cada minijuego.
-# No carga mapa, no decide orden de games y no guarda progreso.
-#
-# Responsabilidad única: transformar el formato del Content Pack al formato legacy.
-# Punto de entrada: to_legacy_node(activity, pack_id, pack, options)
-# Modos soportados:
-#   quiz      → quiz_choice   (_quiz_to_legacy)
-#   drag      → drag_drop     (_drag_to_legacy)
-#   drag_food → drag_drop     (_drag_food_to_legacy + _resolve_drag_food_content)
-#   match     → vinculacion_conceptos (_match_to_legacy)
-
 const MODE_QUIZ := "quiz"
 const MODE_DRAG := "drag"
 const MODE_DRAG_FOOD := "drag_food"

@@ -15,7 +15,9 @@ const ContextoFinalizacionDeJuegoScript := preload(
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
 )
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
@@ -64,6 +66,8 @@ var seleccion_actual: ConceptoItem = null
 var seleccion_derecha_pendiente: ConceptoItem = null
 
 var total_pares := 0
+var _pares_vinculados_correctos: int = 0
+var _pares_vinculados_total: int = 0
 var clave_pista := CLAVE_PISTA_PREDETERMINADA
 var nivel_id := 1
 var bloqueado := false
@@ -371,6 +375,8 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 func _reiniciar_estado_local() -> void:
 	seleccion_actual = null
 	total_pares = 0
+	_pares_vinculados_correctos = 0
+	_pares_vinculados_total = 0
 	bloqueado = false
 	ya_continuo = false
 	validado = false
@@ -854,6 +860,9 @@ func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void
 		" id_par_right=", derecha.par_key,
 		" correct=", correcto
 	)
+	_pares_vinculados_total += 1
+	if correcto:
+		_pares_vinculados_correctos += 1
 	# Registrar resultado por par vinculado: cada intento de vinculacion cuenta
 	Global.registrar_resultado_mini_juego(correcto)
 	if correcto:
@@ -1267,7 +1276,7 @@ func _mostrar_continuacion() -> void:
 func _hay_siguiente_juego_de_partida() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.hay_siguiente_juego(get_tree())
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
 
 
 func _preparar_sprite_ensenanza() -> void:
@@ -1340,10 +1349,21 @@ func _al_solicitar_continuar() -> void:
 	_continuar_despues_de_ensenanza(true)
 
 
+## Cumple el contrato de ModalidadBase. Devuelve el resultado de este mini juego de vinculacion.
+func obtener_resultado() -> ResultadoDeMiniJuego:
+	var total := maxi(1, _pares_vinculados_total)
+	return ResultadoDeMiniJuegoScript.crear_detallado(
+		"vinculacion",
+		_pares_vinculados_correctos,
+		total - _pares_vinculados_correctos,
+		total
+	)
+
+
 func _continuar_partida_de_nodo_si_corresponde() -> bool:
 	if not _pertenece_a_partida_de_nodo:
 		return false
-	return ContinuidadDePartidaDeNodoScript.continuar_o_finalizar_partida(
+	return NodoRuntimeScript.finalizar_mini_juego(
 		get_tree(),
 		Callable(self, "_limpiar_elementos_temporales"),
 		Callable(self, "_limpiar_estado_de_partida_local")

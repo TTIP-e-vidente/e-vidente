@@ -1,7 +1,8 @@
+# Orquesta avance entre mini juegos y cierre del nodo. Delega cálculos a NodoProgressionRules.
 extends RefCounted
-class_name ContinuidadDePartidaDeNodo
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
 
@@ -143,13 +144,11 @@ static func _registrar_exp_finalizacion(
 	var errores: int = int(stats.get("errores", 0))
 	var intentos: int = int(stats.get("intentos", 0))
 
-	var precision_ratio: float = 1.0
-	if intentos > 0:
-		precision_ratio = clampf(float(aciertos) / float(intentos), 0.0, 1.0)
-	var precision_percent: int = int(round(precision_ratio * 100.0))
+	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(aciertos, intentos)
+	var precision_percent: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
 
 	# EXP penalizada por precision
-	var exp_ganada: int = clampi(int(round(float(exp_base_total) * precision_ratio)), 0, exp_base_total)
+	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(exp_base_total, precision_ratio)
 
 	var total_exp_nuevo: int = 0
 	if save_manager.has_method("add_exp"):
@@ -181,6 +180,7 @@ static func _registrar_exp_finalizacion(
 			"titulo_nodo": titulo_nodo,
 			"dificultad": dificultad_fallback,
 			"precision": precision_percent,
+			"error_percent": NodoProgressionRulesScript.calculate_error_percent(errores, intentos),
 			"tiempo": tiempo_str,
 			"aciertos": aciertos,
 			"errores": errores,
@@ -189,16 +189,5 @@ static func _registrar_exp_finalizacion(
 
 
 static func _calcular_exp_base_total(juegos: Array, dificultad_fallback: int) -> int:
-	## Suma la EXP base de cada mini juego según su dificultad individual.
-	## d1=6, d2=9, d3=12
-	var total: int = 0
-	for raw_juego in juegos:
-		var juego: Dictionary = raw_juego as Dictionary
-		if juego == null:
-			continue
-		var d: int = max(1, int(juego.get("dificultad", dificultad_fallback)))
-		total += 6 + (d - 1) * 3
-	if total <= 0:
-		# Fallback: al menos un juego con la dificultad del nodo
-		total = 6 + (max(1, dificultad_fallback) - 1) * 3
-	return total
+	## Delega a NodoProgressionRules para mantener un único punto de definición.
+	return NodoProgressionRulesScript.calculate_base_exp(juegos, dificultad_fallback)
