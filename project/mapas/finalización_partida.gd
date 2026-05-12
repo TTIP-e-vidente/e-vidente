@@ -1,6 +1,7 @@
 extends Node2D
 
 const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
+const ResultsFlowScript := preload("res://flow/results/results_flow.gd")
 
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
@@ -18,8 +19,12 @@ const TIEMPO := preload("res://assets-sistema/final-leccion/tiempo.png")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 
+var _results_flow: ResultsFlow = null  # procesa resultado y navega de vuelta al mapa
+
 
 func _ready() -> void:
+	_results_flow = ResultsFlowScript.new()
+
 	# Asignar iconos a los tres bloques de stats
 	textura.texture = PTOS_EXPERIENCIA
 	textura_2.texture = PRESICION
@@ -45,10 +50,9 @@ func _ready() -> void:
 			"[FinalizaciónPartida] Sin datos de finalización en Global. "
 			+ "¿El nodo completó correctamente?"
 		)
-	var exp_ganada: int = int(stats.get("exp_ganada", 0))
-	var precision: int = int(stats.get("precision", 100))
-	var tiempo: String = str(stats.get("tiempo", "--")).strip_edges()
-	mostrar_resultados(exp_ganada, precision, tiempo)
+	# save_manager=null porque ContinuidadDePartidaDeNodo ya guardó al llamar a add_exp.
+	var resultado: RefCounted = _results_flow.procesar_resultado_de_partida(stats, null)
+	mostrar_resultados(resultado.exp_ganada, resultado.precision, resultado.tiempo)
 
 	# Conectar boton Continuar (script = null en la instancia, conectamos aqui)
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(_al_continuar):
@@ -70,4 +74,4 @@ func continuar_al_mapa() -> void:
 
 
 func _al_continuar() -> void:
-	continuar_al_mapa()
+	_results_flow.volver_al_mapa(get_tree())

@@ -7,6 +7,7 @@ const ContinuidadScript := preload("res://mapas/logica/ContinuidadDePartidaDeNod
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 const NodoStatsScript := preload("res://sistemas/NodoStats.gd")
 const ResultadoDeNodoScript := preload("res://nodo/ResultadoDeNodo.gd")
+const GameSessionDataScript := preload("res://flow/session/game_session_data.gd")
 
 
 static func iniciar(
@@ -37,6 +38,9 @@ static func iniciar(
 	_limpiar(global_state)
 	global_state.call("establecer_sesion_nodo_jugable_activo", sesion)
 	global_state.call("iniciar_partida_de_nodo", plan)
+
+	var sesion_de_partida := _crear_sesion_de_partida(plan, node_data)
+	global_state.call("establecer_sesion_de_juego", sesion_de_partida)
 
 	if not ContinuidadScript.abrir_juego_actual(tree, global_state):
 		_limpiar(global_state)
@@ -184,7 +188,9 @@ static func crear_resultado_de_nodo(tree: SceneTree) -> Dictionary:
 	var aciertos: int = int(stats.get("aciertos", 0))
 	var errores: int = int(stats.get("errores", 0))
 	var intentos: int = int(stats.get("intentos", 0))
-	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(aciertos, intentos)
+	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(
+		aciertos, intentos
+	)
 	var precision: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
 	var error_pct: int = NodoProgressionRulesScript.calculate_error_percent(errores, intentos)
 	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(exp_base, precision_ratio)
@@ -218,6 +224,23 @@ static func crear_resultado_de_nodo(tree: SceneTree) -> Dictionary:
 ## Conveniente para code que prefiere objetos sobre Dictionaries.
 static func crear_resultado_tipado(tree: SceneTree) -> ResultadoDeNodo:
 	return ResultadoDeNodoScript.desde_diccionario(crear_resultado_de_nodo(tree))
+
+
+static func _crear_sesion_de_partida(plan: Dictionary, node_data: MapNodeData) -> Resource:
+	var juegos: Array = plan.get("juegos", [])
+	var dificultad: int = max(1, int(plan.get("dificultad", 1)))
+	var exp_base: int = NodoProgressionRulesScript.calculate_base_exp(juegos, dificultad)
+	var modo: String = node_data.mode.strip_edges()
+	if modo.is_empty():
+		var primer_juego: Dictionary = juegos[0] if not juegos.is_empty() else {}
+		modo = str(primer_juego.get("mode", "")).strip_edges()
+	return GameSessionDataScript.crear(
+		str(plan.get("clave_pista", "")),
+		node_data.node_key,
+		modo,
+		dificultad,
+		exp_base
+	)
 
 
 static func _construir_sesion(node_data: MapNodeData, return_to: String) -> Dictionary:

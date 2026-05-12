@@ -9,20 +9,19 @@ const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
-# Pantalla oficial de resultados (escena diseñada en /mapas/)
 const FINALIZACION_PARTIDA_SCENE := "res://mapas/Finalización-Partida.tscn"
-# FALLBACK_TEMP_NO_USAR: los overlays code-only de completo/ ya no se usan como pantalla principal
-# const FinalizacionDeNodoScript := preload("res://mapas/completo/finalizacion_de_nodo.gd")
 
 const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
+const MapFlowScript := preload("res://flow/map/map_flow.gd")
 
 var map_id: String = ""
 var map_title: String = ""
 var track_key_mapa: String = DEFAULT_TRACK_KEY
 var nodos_mapa: Array[MapNodeData] = []
+var _map_flow: MapFlow = null  # gestiona selección de nodo desde el mapa
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard
@@ -30,6 +29,9 @@ var nodos_mapa: Array[MapNodeData] = []
 
 # Entrada desde el mapa
 func _ready() -> void:
+	# Inicializar MapFlow y conectar señal de error antes de cualquier otra cosa.
+	_map_flow = MapFlowScript.new()
+	_map_flow.apertura_fallida.connect(_mostrar_error)
 	_conectar_senales()
 	cargar_mapa()
 	GameSceneRouter.request_scene_preload(
@@ -102,7 +104,7 @@ func al_seleccionar_nodo(node_data: MapNodeData) -> void:
 		return
 
 	_guardar_scroll_actual_del_mapa()
-	abrir_nodo_del_mapa(node_data)
+	_map_flow.seleccionar_nodo(get_tree(), nodos_mapa, node_data)
 
 
 func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:

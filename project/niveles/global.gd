@@ -37,6 +37,8 @@ var _nodo_a_continuar: String = ""
 var _ultima_finalizacion: Dictionary = {}
 var _inicio_nodo_msec: int = 0  # Timestamp para calcular tiempo transcurrido de partida
 var _stats_nodo_actual: Dictionary = {}  # Acumulador de aciertos/errores/intentos del nodo
+# GameSessionData activo; leido por ResultsFlow al finalizar.
+var _game_session_data: Resource = null
 
 
 func _init() -> void:
@@ -79,9 +81,25 @@ func reiniciar_progreso() -> void:
 	_nodo_a_continuar = ""
 	_inicio_nodo_msec = 0
 	_stats_nodo_actual = {}
+	_game_session_data = null
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		_asegurar_pista_progreso_existe(track_key)
 		_partial_level_state_by_track[track_key] = {}
+
+
+# --- Sesión de juego activa (GameSessionData) --------------------------------
+# Guardada al abrir un nodo; leída por ResultsFlow al mostrar resultados.
+
+func establecer_sesion_de_juego(session_data: Resource) -> void:
+	_game_session_data = session_data
+
+
+func obtener_sesion_de_juego() -> Resource:
+	return _game_session_data
+
+
+func limpiar_sesion_de_juego() -> void:
+	_game_session_data = null
 
 
 func marcar_nivel_completado(track_key: String, level_number: int) -> void:
