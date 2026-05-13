@@ -1,0 +1,17 @@
+{
+  "id": "diagnostico_no_suspender_gluten",
+  "theme": "celiaquia",
+  "title": "Antes del estudio",
+  "difficulty": "hard",
+  "mode": "quiz_choice",
+  "content": {
+	"question": "Qué producto no alimenticio puede contener Gluten?",
+	"correct_answer": "Cosmético",
+	"wrong_options": [
+	  "Jabón",
+	  "Toalla",
+      "Cepillo"
+	],
+	"visual_resource": ""
+  }
+}

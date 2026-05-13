@@ -1,0 +1,17 @@
+{
+  "id": "contaminacion_cruzada_cocina",
+  "theme": "celiaquia",
+  "title": "Cocina sin migas",
+  "difficulty": "medium",
+  "mode": "quiz_choice",
+  "content": {
+	"question": "Qué órgano se daña principalmente en la Celiaquía?",
+	"correct_answer": "Intestinos",
+	"wrong_options": [
+	  "Corazón",
+	  "Riñón",
+    "Hígado"
+	],
+	"visual_resource": ""
+  }
+}

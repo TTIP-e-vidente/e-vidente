@@ -1,0 +1,61 @@
+{
+  "id": "receta_6_cena",
+  "theme": "celiaquia",
+  "title": "Prepara la cena",
+  "difficulty": "hard",
+  "mode": "drag_drop",
+  "content": {
+    "teaching_key": "celiaquia_6",
+    "instruction": "Arma una cena apta sin TACC arrastrando solo las opciones correctas. Prioriza ingredientes simples o pastas hechas con arroz, y evita masas y rebozados comunes.",
+    "targets": [
+      {
+        "id": "cena",
+        "label": "Cena apta"
+      }
+    ],
+    "items": [
+      {
+        "id": "pescado_horno",
+        "label": "Pescado al horno",
+        "image": "res://assets-sistema/iconos/pescado-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "brocoli",
+        "label": "Brocoli",
+        "image": "res://assets-sistema/iconos/brocoli-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "polenta",
+        "label": "Polenta",
+        "image": "res://assets-sistema/iconos/polenta-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "fideos_arroz_aceite",
+        "label": "Fideos de arroz con aceite",
+        "image": "res://assets-sistema/iconos/fideos-arroz-aceite-0.png",
+        "correct_target": "cena"
+      },
+      {
+        "id": "ravioles_trigo",
+        "label": "Ravioles de trigo",
+        "image": "res://assets-sistema/iconos/ravioles-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "empanada_comun",
+        "label": "Empanada comun",
+        "image": "res://assets-sistema/iconos/empanada-0.png",
+        "correct_target": ""
+      },
+      {
+        "id": "patitas_rebozadas",
+        "label": "Patitas rebozadas",
+        "image": "res://assets-sistema/iconos/patita-pollo-0.png",
+        "correct_target": ""
+      }
+    ]
+  }
+}

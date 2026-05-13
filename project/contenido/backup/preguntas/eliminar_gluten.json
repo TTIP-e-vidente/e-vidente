@@ -1,0 +1,13 @@
+{
+	"id": "eliminar_gluten",
+	"theme": "celiaquia",
+	"title": "Eliminar gluten del trigo",
+	"difficulty": "easy",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "Eliminar el gluten visible de una comida con trigo no evita la contaminación.",
+		"correct_answer": "Verdadero",
+		"wrong_options": ["Falso"],
+		"visual_resource": ""
+	}
+}

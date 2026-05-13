@@ -108,12 +108,12 @@ Cada vez que se juega el mismo nodo, el sistema elige una combinación distinta 
   "tipo": "items_catalog",
   "base_path": "res://items/",
   "items": {
-	"banana": {
-	  "categoria": "sin_tacc",
-	  "meal_type": ["desayuno", "merienda", "colacion"],
-	  "tags": ["fruta", "natural"],
-	  "feedback": "La banana es naturalmente libre de gluten."
-	}
+    "banana": {
+      "categoria": "sin_tacc",
+      "meal_type": ["desayuno", "merienda", "colacion"],
+      "tags": ["fruta", "natural"],
+      "feedback": "La banana es naturalmente libre de gluten."
+    }
   }
 }
 ```
@@ -198,8 +198,8 @@ Abrí `mapa/vinculaciones.json`:
   "difficulty": 2,
   "prompt": "Uni cada alimento con su clasificacion.",
   "pairs": [
-	["Banana", "Fruta apta"],
-	["Pan", "Contiene gluten"]
+    ["Banana", "Fruta apta"],
+    ["Pan", "Contiene gluten"]
   ]
 }
 ```
@@ -231,9 +231,9 @@ Ejemplo random:
   "node_key": "celiaquia_14_nombre_random",
   "shuffle_games": true,
   "games": [
-	{ "type": "drag", "difficulty": 2 },
-	{ "type": "quiz", "difficulty": 3 },
-	{ "type": "match", "difficulty": 2 }
+    { "type": "drag", "difficulty": 2 },
+    { "type": "quiz", "difficulty": 3 },
+    { "type": "match", "difficulty": 2 }
   ]
 }
 ```
@@ -283,8 +283,8 @@ Ejemplo random:
   "node_key": "celiaquia_05_intro_mixta",
   "shuffle_games": true,
   "games": [
-	{ "type": "drag", "difficulty": 1 },
-	{ "type": "quiz", "difficulty": 1 }
+    { "type": "drag", "difficulty": 1 },
+    { "type": "quiz", "difficulty": 1 }
   ]
 }
 ```
@@ -318,14 +318,14 @@ Reglas de `shuffle_games`:
 ```
 mapa/celiaquia_mapa.json
   → ArmadorDePartida
-	→ NodeContentLoader
-		carga preguntas.json + arrastres.json + vinculaciones.json
-		arma activity_by_id internamente
-	  → ActivityAdapter (para drag_food)
-		  lee items_celiaquia.json
-		  filtra por meal_type + categoria
-		  resuelve base_path + item_id + ".tres"
-		  → escena drag_drop / quiz / vinculacion
+    → NodeContentLoader
+        carga preguntas.json + arrastres.json + vinculaciones.json
+        arma activity_by_id internamente
+      → ActivityAdapter (para drag_food)
+          lee items_celiaquia.json
+          filtra por meal_type + categoria
+          resuelve base_path + item_id + ".tres"
+          → escena drag_drop / quiz / vinculacion
 ```
 
 ---
