@@ -5,18 +5,24 @@
 	"1": {
 	  "node_key": "celiaquia_01_desayuno_basico",
 	  "games": [
+		{ "type": "drag", "difficulty": 1 },
+		{ "type": "drag", "difficulty": 1 },
 		{ "type": "drag", "difficulty": 1 }
 	  ]
 	},
 	"2": {
 	  "node_key": "celiaquia_02_colacion_basica",
 	  "games": [
+		{ "type": "drag", "difficulty": 1 },
+		{ "type": "drag", "difficulty": 1 },
 		{ "type": "drag", "difficulty": 1 }
 	  ]
 	},
 	"3": {
 	  "node_key": "celiaquia_03_quiz_gluten",
 	  "games": [
+		{ "type": "quiz", "difficulty": 1 },
+		{ "type": "drag", "difficulty": 1 },
 		{ "type": "quiz", "difficulty": 1 }
 	  ]
 	},
@@ -24,7 +30,8 @@
 	  "node_key": "celiaquia_04_desayuno_y_sello",
 	  "games": [
 		{ "type": "drag", "difficulty": 1 },
-		{ "type": "quiz", "difficulty": 1 }
+		{ "type": "quiz", "difficulty": 1 },
+		{ "type": "drag", "difficulty": 1 }
 	  ]
 	},
 	"5": {
@@ -32,7 +39,8 @@
 	  "shuffle_games": true,
 	  "games": [
 		{ "type": "drag", "difficulty": 1 },
-		{ "type": "quiz", "difficulty": 1 }
+		{ "type": "quiz", "difficulty": 1 },
+		{ "type": "drag", "difficulty": 1 }
 	  ]
 	},
 	"6": {
@@ -40,6 +48,7 @@
 	  "shuffle_games": true,
 	  "games": [
 		{ "type": "drag", "difficulty": 1 },
+		{ "type": "match", "difficulty": 2 },
 		{ "type": "match", "difficulty": 2 }
 	  ]
 	},
@@ -47,6 +56,7 @@
 	  "node_key": "celiaquia_07_practica_normal",
 	  "shuffle_games": true,
 	  "games": [
+		{ "type": "quiz", "difficulty": 2 },
 		{ "type": "drag", "difficulty": 2 },
 		{ "type": "quiz", "difficulty": 2 }
 	  ]
@@ -55,6 +65,7 @@
 	  "node_key": "celiaquia_08_riesgos_basicos",
 	  "shuffle_games": true,
 	  "games": [
+		{ "type": "match", "difficulty": 2 },
 		{ "type": "quiz", "difficulty": 2 },
 		{ "type": "match", "difficulty": 2 }
 	  ]
