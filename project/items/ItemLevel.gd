@@ -8,8 +8,7 @@ signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el 
 var condiciones: Array[int] = []
 var body_ref 
 var plato 
-var offset: Vector2
-var initialPos: Vector2
+var offset = get_global_mouse_position() - global_position
 var esPositivo = true
 var draggable = false
 var categoria 
@@ -62,7 +61,6 @@ func show_texture():
 
 func set_home_position(target_position: Vector2) -> void:
 	global_position = target_position
-	initialPos = target_position
 
 
 func restore_to_plate(target_position: Vector2) -> void:
@@ -96,7 +94,6 @@ func _process(_delta):
 		return
 	if draggable:
 		if Input.is_action_just_pressed("click"):
-			initialPos = global_position
 			offset = get_global_mouse_position() - global_position
 			is_dragging = self
 		if Input.is_action_pressed("click") && is_dragging == self:
@@ -125,7 +122,7 @@ func _process(_delta):
 						_animar_feedback_correcto()
 					else:
 						intento_incorrecto.emit()
-						_animar_feedback_incorrecto_y_volver()
+						_animar_feedback_incorrecto()
 				else:
 					_volver_a_inicio()
 			else:
@@ -191,7 +188,6 @@ func _volver_a_inicio() -> void:
 	var tween := get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "global_position", initialPos, 0.22)
 	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
 
 
@@ -204,15 +200,12 @@ func _animar_feedback_correcto() -> void:
 	tween.tween_property(self, "scale", base_scale, 0.14)
 
 
-func _animar_feedback_incorrecto_y_volver() -> void:
+func _animar_feedback_incorrecto() -> void:
 	var posicion_actual := global_position
 	var tween := get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(self, "global_position", posicion_actual + Vector2(18, 0), 0.04)
-	tween.tween_property(self, "global_position", posicion_actual + Vector2(-14, 0), 0.04)
-	tween.tween_property(self, "global_position", posicion_actual + Vector2(10, 0), 0.04)
-	tween.tween_property(self, "global_position", initialPos, 0.18)
+
 	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
 
 
