@@ -12,6 +12,8 @@ const ResultsFlowScript := preload("res://flow/results/results_flow.gd")
 @onready var continuar_label: Label = $Continuar/Label
 @onready var continuar_btn: TextureButton = $Continuar
 @onready var mensaje: Label = $Mensaje
+@onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
+@onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 
 const PTOS_EXPERIENCIA := preload("res://assets-sistema/final-leccion/ptos-experiencia.png")
 const PRESICION := preload("res://assets-sistema/final-leccion/presicion.png")
@@ -59,13 +61,21 @@ func _ready() -> void:
 		continuar_btn.pressed.connect(_al_continuar)
 
 
-## Actualiza los tres bloques de stats con los valores reales de la partida.
 func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void:
 	numero.text = str(exp_ganada)
 	numero_2.text = str(clamp(precision, 0, 100)) + "%"
 	numero_3.text = tiempo if not tiempo.is_empty() else "--"
+
 	if continuar_label != null:
 		continuar_label.text = "Continuar"
+
+
+	if precision >= 100:
+		if not audio_perfecto.playing:
+			audio_perfecto.play()
+	else:
+		if not audio_normal.playing:
+			audio_normal.play()
 
 
 ## Alias publico para que otros sistemas puedan forzar el retorno al mapa.

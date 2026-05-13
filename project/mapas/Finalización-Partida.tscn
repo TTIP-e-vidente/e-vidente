@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="3_fqejo"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_uokky"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_uokky"]
+[ext_resource type="AudioStream" uid="uid://cbukx38vl5g7d" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
+[ext_resource type="AudioStream" uid="uid://7ej3tir1dmri" path="res://assets-sistema/sonidos/leccion-terminada.mp3" id="8_j2nsx"]
 
 [node name="FinalizaciónPartida" type="Node2D" unique_id=2003681950]
 script = ExtResource("1_k2l4b")
@@ -73,3 +75,9 @@ offset_top = 529.0
 offset_right = 758.27
 offset_bottom = 689.0
 script = null
+
+[node name="AudioPerfecto" type="AudioStreamPlayer2D" parent="." unique_id=1547098035]
+stream = ExtResource("7_4j0lp")
+
+[node name="AudioNormal" type="AudioStreamPlayer2D" parent="." unique_id=1587941963]
+stream = ExtResource("8_j2nsx")
