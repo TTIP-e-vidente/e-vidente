@@ -1,0 +1,13 @@
+{
+	"id": "limite_ingesta",
+	"theme": "celiaquia",
+	"title": "Limite de ingesta",
+	"difficulty": "medium",
+	"mode": "quiz_choice",
+	"content": {
+		"question": "No alcanza con que un alimento tenga poquito gluten: debe cumplir la normativa para ser apto.",
+		"correct_answer": "Verdadero",
+		"wrong_options": ["Falso"],
+		"visual_resource": ""
+	}
+}
