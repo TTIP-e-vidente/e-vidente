@@ -1,39 +1,39 @@
-# 🏗️ Cómo Funciona E-VIDENTE
+﻿# ≡ƒÅù∩╕Å C├│mo Funciona E-VIDENTE
 
-Te mostramos visualmente cómo está armado el proyecto, dónde vive cada cosa importante, y cómo todo se conecta.
+Te mostramos visualmente c├│mo est├í armado el proyecto, d├│nde vive cada cosa importante, y c├│mo todo se conecta.
 
-> Si necesitás entender "por qué" de cambios grandes, mirá los [ADR/](adr/).  
-> Si necesitás saber qué cambió últimamente, mirá [Bitacora.md](Bitacora.md).
+> Si necesit├ís entender "por qu├⌐" de cambios grandes, mir├í los [ADR/](adr/).  
+> Si necesit├ís saber qu├⌐ cambi├│ ├║ltimamente, mir├í [Bitacora.md](Bitacora.md).
 
 ---
 
 ## El Flujo en 2 Minutos
 
-Así funciona el juego desde que lo abrís:
+As├¡ funciona el juego desde que lo abr├¡s:
 
 1. Primero ves el splash (la pantalla de bienvenida con el logo animado)
-2. Después el menú principal
-3. Elegís qué querés hacer: jugar, preguntas, o retomar donde dejaste
-4. Si jugás, ves un mapa, entras a un nivel, y jugás
+2. Despu├⌐s el men├║ principal
+3. Eleg├¡s qu├⌐ quer├⌐s hacer: jugar, preguntas, o retomar donde dejaste
+4. Si jug├ís, ves un mapa, entras a un nivel, y jug├ís
 5. Al terminar, se guarda todo en el disco y ves la pantalla de racha
 
-Acá está el diagrama visualizado:
+Ac├í est├í el diagrama visualizado:
 
 ```mermaid
-graph TD
-    A["🎬 Splash<br/>evidente.tscn"] -->|bounce_button| B["🏠 Main Menu<br/>intro.tscn"]
-    B -->|jugar| C["🎯 Mode Selector<br/>selector.tscn"]
+flowchart TD
+    A["≡ƒÄ¼ Splash<br/>evidente.tscn"] -->|bounce_button| B["≡ƒÅá Main Menu<br/>intro.tscn"]
+    B -->|jugar| C["≡ƒÄ» Mode Selector<br/>selector.tscn"]
     C -->|choose| D{Flujo}
-    D -->|Recipes| E["📖 Track Book<br/>libro.gd"]
-    D -->|Quiz| F["❓ Questions<br/>pregunta.gd"]
-    D -->|Resume| G["⏮️ Last Save<br/>SaveManager"]
-    E -->|open_chapter| H["📍 Map/Level<br/>MapScene.gd"]
-    H -->|start| I["🎮 Gameplay<br/>Level.gd"]
+    D -->|Recipes| E["≡ƒôû Track Book<br/>libro.gd"]
+    D -->|Quiz| F["Γ¥ô Questions<br/>pregunta.gd"]
+    D -->|Resume| G["ΓÅ«∩╕Å Last Save<br/>SaveManager"]
+    E -->|open_chapter| H["≡ƒôì Map/Level<br/>MapScene.gd"]
+    H -->|start| I["≡ƒÄ« Gameplay<br/>Level.gd"]
     F -->|answer_q| I
-    I -->|complete| J["🎉 Streak Feedback<br/>ProgressManagerRacha.gd"]
-    I -->|save| K["💾 Persistence<br/>SaveManager"]
-    J -->|continue| L["↩️ Back to Menu<br/>GameSceneRouter"]
-    K -->|disk| M["📁 Local Storage"]
+    I -->|complete| J["≡ƒÄë Streak Feedback<br/>ProgressManagerRacha.gd"]
+    I -->|save| K["≡ƒÆ╛ Persistence<br/>SaveManager"]
+    J -->|continue| L["Γå⌐∩╕Å Back to Menu<br/>GameSceneRouter"]
+    K -->|disk| M["≡ƒôü Local Storage"]
     style A fill:#ff9900
     style B fill:#ff9900
     style C fill:#ff9900
@@ -43,72 +43,72 @@ graph TD
 
 ---
 
-## Ruta Rápida Para Exponer (5 Minutos)
+## Ruta R├ípida Para Exponer (5 Minutos)
 
-Si esto lo vas a mostrar en clase, seguí este orden:
+Si esto lo vas a mostrar en clase, segu├¡ este orden:
 
 1. Diagrama principal de flujo (arriba): explica el recorrido completo.
-2. Tabla de "Si necesitás cambiar algo": muestra cómo ubicarse rápido en el código.
-3. Sistemas clave: audio, guardado, navegación y racha.
+2. Tabla de "Si necesit├ís cambiar algo": muestra c├│mo ubicarse r├ípido en el c├│digo.
+3. Sistemas clave: audio, guardado, navegaci├│n y racha.
 
-Con esa secuencia, cualquiera entiende el proyecto sin perderse en detalles técnicos.
+Con esa secuencia, cualquiera entiende el proyecto sin perderse en detalles t├⌐cnicos.
 
 ---
 
-## Dónde Vive Cada Cosa
+## D├│nde Vive Cada Cosa
 
-Versión corta para ubicarte rápido:
+Versi├│n corta para ubicarte r├ípido:
 
-| Área | Componentes principales | Para qué sirve |
+| ├ürea | Componentes principales | Para qu├⌐ sirve |
 |---|---|---|
-| Entrada y Menú | `interface/evidente.gd`, `interface/intro.gd`, `niveles/selector.gd` | Arranque y navegación inicial |
+| Entrada y Men├║ | `interface/evidente.gd`, `interface/intro.gd`, `niveles/selector.gd` | Arranque y navegaci├│n inicial |
 | Progreso y Guardado | `interface/SaveManager.gd`, `niveles/global.gd`, `interface/save_local/*` | Guardar, recuperar y consultar avance |
-| Gameplay | `niveles/nivel_1/Level.gd`, `niveles/manager_level.gd`, `niveles/mechanics/*` | Flujo jugable y lógica de mecánicas |
+| Gameplay | `niveles/nivel_1/Level.gd`, `niveles/manager_level.gd`, `niveles/mechanics/*` | Flujo jugable y l├│gica de mec├ínicas |
 | Preguntas | `preguntas/pregunta.gd`, `preguntas/QuestionJsonLoader.gd` | Modalidad `quiz_choice` |
 | Contenido de nodos | `contenido/nodos/*.json`, `sistemas/contenido/CargadorDeContenidoDeNodo.gd` | Contenido de nivel y nodos jugables por JSON |
-| Mapa | `mapas/MapScene.gd`, `mapas/LevelNode.gd`, `mapas/MapNodeData.gd` | Navegación visual por capítulos |
-| Audio | `managers/MusicManager.gd` | Música de fondo y continuidad |
+| Mapa | `mapas/MapScene.gd`, `mapas/LevelNode.gd`, `mapas/MapNodeData.gd` | Navegaci├│n visual por cap├¡tulos |
+| Audio | `managers/MusicManager.gd` | M├║sica de fondo y continuidad |
 | UI de progreso | `interface/components/Racha.tscn`, `interface/components/ProgressManagerRacha.gd` | Feedback de racha y estado |
 
-Si necesitás detalle carpeta por carpeta, se puede expandir en una sección aparte. Por ahora dejamos lo esencial para que sea más fácil de leer.
+Si necesit├ís detalle carpeta por carpeta, se puede expandir en una secci├│n aparte. Por ahora dejamos lo esencial para que sea m├ís f├ícil de leer.
 
 ---
 
-## Si Necesitás Cambiar Algo, ¿Por Dónde Empiezo?
+## Si Necesit├ís Cambiar Algo, ┬┐Por D├│nde Empiezo?
 
-Acá te decimos "si querés cambiar X cosa, toca este archivo":
+Ac├í te decimos "si quer├⌐s cambiar X cosa, toca este archivo":
 
-| Si querés cambiar... | Toca aquí | Dificultad | Dónde está el detalle |
+| Si quer├⌐s cambiar... | Toca aqu├¡ | Dificultad | D├│nde est├í el detalle |
 |---|---|---|---|
-| 🎵 La música de fondo | `managers/MusicManager.gd` | ⭐ fácil | Ver resumen en [Bitacora.md](Bitacora.md) |
-| 🏠 El menú principal (botones, colores, etc) | `interface/intro.gd` | ⭐ fácil | Solo UI, nada de lógica |
-| 🎯 El selector de modos | `interface/selector.gd` | ⭐ fácil | Botones + eventos |
-| 📖 Los libros / selección de capítulos | `interface/libro.gd` | ⭐ fácil | Genera botones dinámicamente |
-| 🎮 Cómo funciona un nivel (lo que ves cuando jugás) | `niveles/nivel_1/Level.gd` | ⭐⭐ medio | Es el template para todos los niveles |
-| 🎮 La mecánica de gameplay (validación de comida, scoring) | `niveles/mechanics/PlateSortMechanicController.gd` | ⭐⭐⭐ difícil | Lógica compleja |
-| 💾 Cómo guardamos el progreso | `interface/SaveManager.gd` | ⭐⭐⭐ difícil | Serialización y compatibilidad |
-| 📊 El progreso que ves en pantalla | `niveles/global.gd` | ⭐⭐ medio | Métodos para preguntar si completaste cosas |
-| 🏃 La racha diaria (contadores, lógica) | `niveles/progress/GameStreakTracker.gd` | ⭐ fácil | Timestamps + regla simple |
-| 🗺️ El mapa visual | `mapas/MapScene.gd` | ⭐⭐ medio | Cómo se ve cada nivel, si está desbloqueado |
-| 🍎 Los alimentos (propiedades, condiciones) | `items/*.tres` | ⭐ fácil | Son Resources con datos |
-| 🌈 Los colores de la app | `colours/miPaleta.gd` | ⭐ fácil | Cambias acá y cambia todo |
-| 🎛️ El catálogo de tracks (celiaquia, veganismo, etc) | `niveles/GameTrackCatalog.gd` | ⭐⭐ medio | 4 tracks: define cuál es cuál |
-| 🔄 Navegar entre pantallas | `niveles/GameSceneRouter.gd` | ⭐ fácil | Todos los `change_scene` en un lugar |
-| 🔧 Cómo se valida el proyecto automáticamente | `.github/workflows/` | ⭐⭐⭐ difícil | Pipelines complejos |
+| ≡ƒÄ╡ La m├║sica de fondo | `managers/MusicManager.gd` | Γ¡É f├ícil | Ver resumen en [Bitacora.md](Bitacora.md) |
+| ≡ƒÅá El men├║ principal (botones, colores, etc) | `interface/intro.gd` | Γ¡É f├ícil | Solo UI, nada de l├│gica |
+| ≡ƒÄ» El selector de modos | `interface/selector.gd` | Γ¡É f├ícil | Botones + eventos |
+| ≡ƒôû Los libros / selecci├│n de cap├¡tulos | `interface/libro.gd` | Γ¡É f├ícil | Genera botones din├ímicamente |
+| ≡ƒÄ« C├│mo funciona un nivel (lo que ves cuando jug├ís) | `niveles/nivel_1/Level.gd` | Γ¡ÉΓ¡É medio | Es el template para todos los niveles |
+| ≡ƒÄ« La mec├ínica de gameplay (validaci├│n de comida, scoring) | `niveles/mechanics/PlateSortMechanicController.gd` | Γ¡ÉΓ¡ÉΓ¡É dif├¡cil | L├│gica compleja |
+| ≡ƒÆ╛ C├│mo guardamos el progreso | `interface/SaveManager.gd` | Γ¡ÉΓ¡ÉΓ¡É dif├¡cil | Serializaci├│n y compatibilidad |
+| ≡ƒôè El progreso que ves en pantalla | `niveles/global.gd` | Γ¡ÉΓ¡É medio | M├⌐todos para preguntar si completaste cosas |
+| ≡ƒÅâ La racha diaria (contadores, l├│gica) | `niveles/progress/GameStreakTracker.gd` | Γ¡É f├ícil | Timestamps + regla simple |
+| ≡ƒù║∩╕Å El mapa visual | `mapas/MapScene.gd` | Γ¡ÉΓ¡É medio | C├│mo se ve cada nivel, si est├í desbloqueado |
+| ≡ƒìÄ Los alimentos (propiedades, condiciones) | `items/*.tres` | Γ¡É f├ícil | Son Resources con datos |
+| ≡ƒîê Los colores de la app | `colours/miPaleta.gd` | Γ¡É f├ícil | Cambias ac├í y cambia todo |
+| ≡ƒÄ¢∩╕Å El cat├ílogo de tracks (celiaquia, veganismo, etc) | `niveles/GameTrackCatalog.gd` | Γ¡ÉΓ¡É medio | 4 tracks: define cu├íl es cu├íl |
+| ≡ƒöä Navegar entre pantallas | `niveles/GameSceneRouter.gd` | Γ¡É f├ícil | Todos los `change_scene` en un lugar |
+| ≡ƒöº C├│mo se valida el proyecto autom├íticamente | `.github/workflows/` | Γ¡ÉΓ¡ÉΓ¡É dif├¡cil | Pipelines complejos |
 
 ---
 
-## Cómo Fluyen los Datos
+## C├│mo Fluyen los Datos
 
-Esto es simplificado, pero así es cómo funciona:
+Esto es simplificado, pero as├¡ es c├│mo funciona:
 
 ```mermaid
-graph LR
-    A["👆 Input<br/>Mouse/Key"] -->|evento| B["🎯 Script<br/>de Escena"]
-    B -->|validar| C["✅ Lógica<br/>de Negocio"]
-    C -->|actualizar| D["💾 Estado<br/>Global + SaveManager"]
-    D -->|emit| E["🎨 Feedback<br/>Visual + Sonoro"]
-    E -->|se ve| F["👁️ Jugador"]
+flowchart LR
+    A["≡ƒæå Input<br/>Mouse/Key"] -->|evento| B["≡ƒÄ» Script<br/>de Escena"]
+    B -->|validar| C["Γ£à L├│gica<br/>de Negocio"]
+    C -->|actualizar| D["≡ƒÆ╛ Estado<br/>Global + SaveManager"]
+    D -->|emit| E["≡ƒÄ¿ Feedback<br/>Visual + Sonoro"]
+    E -->|se ve| F["≡ƒæü∩╕Å Jugador"]
     F -->|reacciona| A
     style A fill:#66cc66
     style B fill:#ff9900
@@ -122,37 +122,37 @@ graph LR
 
 ## Los 6 Sistemas Clave
 
-### 🎵 Audio - Música Centralizada
+### ≡ƒÄ╡ Audio - M├║sica Centralizada
 
-**Dónde**: `managers/MusicManager.gd` ⭐  
-**Qué hace**: Un solo gestor que maneja toda la música del juego. Cuando termina una canción, la reinicia automáticamente. Sin silencios incómodos en sesiones largas.
+**D├│nde**: `managers/MusicManager.gd` Γ¡É  
+**Qu├⌐ hace**: Un solo gestor que maneja toda la m├║sica del juego. Cuando termina una canci├│n, la reinicia autom├íticamente. Sin silencios inc├│modos en sesiones largas.
 
 **Lo importante**:
-- Música se reinicia sola
-- Controlás volumen desde un lugar
+- M├║sica se reinicia sola
+- Control├ís volumen desde un lugar
 - Transiciones suaves
 
-**Cómo se usa**:
+**C├│mo se usa**:
 ```gdscript
 MusicManager.reproducir_musica("ruta/cancion.ogg")
 MusicManager.establecer_volumen(0.8)
 ```
 
-[Resumen del cambio](Bitacora.md#lo-que-pasó-recientemente)
+[Resumen del cambio](Bitacora.md#lo-que-pas├│-recientemente)
 
 ---
 
-### 💾 Persistencia - Dónde Guardamos Todo
+### ≡ƒÆ╛ Persistencia - D├│nde Guardamos Todo
 
-**Dónde**: `interface/SaveManager.gd` ⭐  
-**Qué hace**: Punto único por donde pasa TODO lo que guardamos. Perfil, progreso, historial.
+**D├│nde**: `interface/SaveManager.gd` Γ¡É  
+**Qu├⌐ hace**: Punto ├║nico por donde pasa TODO lo que guardamos. Perfil, progreso, historial.
 
 **Lo importante**:
 - Un solo lugar para guardar
-- Maneja múltiples sesiones
+- Maneja m├║ltiples sesiones
 - Cuida compatibilidad con guardos viejos
 
-**Cómo se usa**:
+**C├│mo se usa**:
 ```gdscript
 SaveManager.load_data()
 SaveManager.save_data()
@@ -163,17 +163,17 @@ SaveManager.is_level_completed("celiaquia", 1)
 
 ---
 
-### 🎮 Navegación - El Control de Tráfico
+### ≡ƒÄ« Navegaci├│n - El Control de Tr├ífico
 
-**Dónde**: `niveles/GameSceneRouter.gd` ⭐  
-**Qué hace**: Hub central que maneja TODOS los cambios entre pantallas. Todo pasa por aquí.
+**D├│nde**: `niveles/GameSceneRouter.gd` Γ¡É  
+**Qu├⌐ hace**: Hub central que maneja TODOS los cambios entre pantallas. Todo pasa por aqu├¡.
 
 **Lo importante**:
-- Un solo lugar para entender la navegación
-- Más fácil debuggear si algo falla
-- Pasás contexto entre pantallas
+- Un solo lugar para entender la navegaci├│n
+- M├ís f├ícil debuggear si algo falla
+- Pas├ís contexto entre pantallas
 
-**Cómo se usa**:
+**C├│mo se usa**:
 ```gdscript
 GameSceneRouter.go_to_main_menu(get_tree())
 GameSceneRouter.go_to_map(get_tree())
@@ -182,54 +182,54 @@ GameSceneRouter.go_to_track_level(get_tree(), track_key, level_num)
 
 ---
 
-### 🏃 Racha Diaria - El Contador
+### ≡ƒÅâ Racha Diaria - El Contador
 
-**Dónde**: `niveles/progress/GameStreakTracker.gd` ⭐  
-**Qué hace**: Lógica de la racha. Si jugás hoy sube +1. Si pasó más de un día, se reinicia.
+**D├│nde**: `niveles/progress/GameStreakTracker.gd` Γ¡É  
+**Qu├⌐ hace**: L├│gica de la racha. Si jug├ís hoy sube +1. Si pas├│ m├ís de un d├¡a, se reinicia.
 
 **Lo importante**:
-- Usa timestamps Unix para precisión
-- Lógica simple pero poderosa
-- Fácil de testear
+- Usa timestamps Unix para precisi├│n
+- L├│gica simple pero poderosa
+- F├ícil de testear
 
 **La regla**:
 ```
-días_pasados = (hoy - última_fecha) / 86400
-if días_pasados == 1: racha += 1
-if días_pasados == 0: racha se mantiene
-if días_pasados > 1: racha = 1
+d├¡as_pasados = (hoy - ├║ltima_fecha) / 86400
+if d├¡as_pasados == 1: racha += 1
+if d├¡as_pasados == 0: racha se mantiene
+if d├¡as_pasados > 1: racha = 1
 ```
 
 ---
 
-### 🍎 Alimentos - Propiedades Centralizadas
+### ≡ƒìÄ Alimentos - Propiedades Centralizadas
 
-**Dónde**: `items/*.tres`  
-**Qué hace**: Cada alimento es un archivo con sus propiedades. Gluten sí/no, vegano sí/no, etc.
+**D├│nde**: `items/*.tres`  
+**Qu├⌐ hace**: Cada alimento es un archivo con sus propiedades. Gluten s├¡/no, vegano s├¡/no, etc.
 
 **Lo importante**:
 - Una sola fuente de verdad por alimento
-- Fácil agregar más
-- La lógica los lee dinámicamente
+- F├ícil agregar m├ís
+- La l├│gica los lee din├ímicamente
 
-**Qué guardan**:
+**Qu├⌐ guardan**:
 - Condiciones (restricciones)
 - Tracks permitidos
-- Nombre, descripción, imagen
+- Nombre, descripci├│n, imagen
 
 ---
 
-### 🌈 Paleta de Colores - Un Solo Lugar
+### ≡ƒîê Paleta de Colores - Un Solo Lugar
 
-**Dónde**: `colours/miPaleta.gd`  
-**Qué hace**: Todos los colores de la app en un archivo. Cambias acá y cambian en todo.
+**D├│nde**: `colours/miPaleta.gd`  
+**Qu├⌐ hace**: Todos los colores de la app en un archivo. Cambias ac├í y cambian en todo.
 
 **Lo importante**:
 - Consistencia en todo
-- Si necesitás naranja, buscás 1 solo lugar
+- Si necesit├ís naranja, busc├ís 1 solo lugar
 - DRY (Don't Repeat Yourself)
 
-**Cómo se usa**:
+**C├│mo se usa**:
 ```gdscript
 var color = miPaleta.naranja_tierra
 self.modulate = color
@@ -237,69 +237,70 @@ self.modulate = color
 
 ---
 
-## Cómo Aprender el Código
+## C├│mo Aprender el C├│digo
 
 ### Ruta trainee para mapa y niveles
 
-Si querés tocar solo mapa, nodos jugables por JSON o niveles sin entender todo el repo, seguí este orden:
+Si quer├⌐s tocar solo mapa, nodos jugables por JSON o niveles sin entender todo el repo, segu├¡ este orden:
 
-1. `mapas/MapBoard.tscn` - dónde están los nodos visibles.
-2. `mapas/LevelNode.gd` - qué datos tiene cada nodo.
+1. `mapas/MapBoard.tscn` - d├│nde est├ín los nodos visibles.
+2. `mapas/LevelNode.gd` - qu├⌐ datos tiene cada nodo.
 3. `niveles/nodos/*.json` - contenido de nodos jugables.
-4. `preguntas/pregunta.gd` o `mapas/DragDropNode.gd` - cómo se consume el JSON según la modalidad.
+4. `preguntas/pregunta.gd` o `mapas/DragDropNode.gd` - c├│mo se consume el JSON seg├║n la modalidad.
 5. `niveles/nivel_1/Level.gd` - nivel visible.
-6. `niveles/manager_level.gd` - armado real de la sesión.
+6. `niveles/manager_level.gd` - armado real de la sesi├│n.
 
-No necesitás leerlo TODO de una. Depende cuánto tiempo tengas:
+No necesit├ís leerlo TODO de una. Depende cu├ínto tiempo tengas:
 
-**10 minutos**: Leé lo que estás leyendo ahora. Mirá el Mermaid de arriba. Ya sabés cómo funciona todo.
+**10 minutos**: Le├⌐ lo que est├ís leyendo ahora. Mir├í el Mermaid de arriba. Ya sab├⌐s c├│mo funciona todo.
 
-**30 minutos**: Lee [Home.md](Home.md) completo. Abrí `interface/evidente.gd` en tu editor y leé hasta `_ready()`. Hace lo mismo con `niveles/GameSceneRouter.gd` completo. Ya sabés cómo arranca y navega.
+**30 minutos**: Lee [Home.md](Home.md) completo. Abr├¡ `interface/evidente.gd` en tu editor y le├⌐ hasta `_ready()`. Hace lo mismo con `niveles/GameSceneRouter.gd` completo. Ya sab├⌐s c├│mo arranca y navega.
 
-**1 hora**: Seguí la ruta:
-1. `interface/evidente.gd` - Cómo arranca
-2. `niveles/intro.gd` - El menú
+**1 hora**: Segu├¡ la ruta:
+1. `interface/evidente.gd` - C├│mo arranca
+2. `niveles/intro.gd` - El men├║
 3. `niveles/selector.gd` - El selector
 4. `interface/SaveManager.gd` - El guardado
-5. `interface/libro.gd` - Capítulos
-6. `niveles/nivel_1/Level.gd` - Cómo se juega
-7. `niveles/manager_level.gd` - Orquestación
+5. `interface/libro.gd` - Cap├¡tulos
+6. `niveles/nivel_1/Level.gd` - C├│mo se juega
+7. `niveles/manager_level.gd` - Orquestaci├│n
 
-Después, los docs te dan contexto:
+Despu├⌐s, los docs te dan contexto:
 - [Persistencia Local](Persistencia-Local.md) - Deep dive del guardado
-- [Bitacora.md](Bitacora.md) - Qué cambió y cuándo
+- [Bitacora.md](Bitacora.md) - Qu├⌐ cambi├│ y cu├índo
 - [adr/](adr/) - Decisiones importantes
 
 ---
 
 ## Otros Docs
 
-| Doc | Qué Es | Cuándo |
+| Doc | Qu├⌐ Es | Cu├índo |
 |---|---|---|
-| [Home.md](Home.md) | Índice | Primero |
+| [Home.md](Home.md) | ├ìndice | Primero |
 | [Getting-Started.md](Getting-Started.md) | Setup | Primera vez |
+| [Modelo-Entidad-Relacion.md](Modelo-Entidad-Relacion.md) | MER l├│gico editable | Entrega TTIP |
 | [Persistencia-Local.md](Persistencia-Local.md) | Deep dive | Trabajando con saves |
 | [CI.md](CI.md) | Validaciones | Cuando falla un check |
-| [Bitacora.md](Bitacora.md) | Historial | Buscando "cuándo cambió X" |
-| [adr/](adr/) | Decisiones | "Por qué se hizo así" |
+| [Bitacora.md](Bitacora.md) | Historial | Buscando "cu├índo cambi├│ X" |
+| [adr/](adr/) | Decisiones | "Por qu├⌐ se hizo as├¡" |
 
 ---
 
-## Convenciones en el Código
+## Convenciones en el C├│digo
 
-**Nombres**: Explícito > Críptico
-- ✅ `background_music`
-- ❌ `bgm`
-- ✅ `_play_level_audio()`
-- ❌ `_playAudio()`
+**Nombres**: Expl├¡cito > Cr├¡ptico
+- Γ£à `background_music`
+- Γ¥î `bgm`
+- Γ£à `_play_level_audio()`
+- Γ¥î `_playAudio()`
 
-**Estructura típica**:
+**Estructura t├¡pica**:
 ```gdscript
 extends Node
 class_name MiClase
 
 # === Signals ===
-signal algo_pasó
+signal algo_pas├│
 
 # === Constants ===
 const MI_VALOR = 42
@@ -324,13 +325,13 @@ func _ayudante() -> void:
 ```
 
 **Comentarios**:
-- ✅ `## Descripción clara` (docstring)
-- ✅ `# Lógica compleja explicada` (útil)
-- ❌ `# increment x` (obvio, no necesita)
+- Γ£à `## Descripci├│n clara` (docstring)
+- Γ£à `# L├│gica compleja explicada` (├║til)
+- Γ¥î `# increment x` (obvio, no necesita)
 
 ---
 
-## Links Útiles
+## Links ├Ütiles
 
 - **Repositorio**: https://github.com/TTIP-e-vidente/e-vidente
 - **Godot**: https://godotengine.org/download/windows/
