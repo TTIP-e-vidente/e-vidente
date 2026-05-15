@@ -51,10 +51,6 @@ Terminada.
 - UNQ-128 — Modalidad Vincular - proceso
 - UNQ-110 — Implementar nuevos niveles de preguntas de Celiaquía con dificultad progresiva
 
-### Mockups / evidencia visual
-
-Pendiente de adjuntar captura o mockup.
-
 **Cómo se valida:** se puede completar una actividad de cada modalidad (Plato, Pregunta, Vincular); la respuesta incorrecta da señal y permite reintentar; nodos de mayor nivel presentan contenido más exigente.
 
 ### Estado
@@ -83,10 +79,6 @@ Terminada.
 - UNQ-97 — Implementar experiencia de usuario con EXP acumulada
 - UNQ-115 — Implementar resumen semanal de progreso
 
-### Mockups / evidencia visual
-
-Pendiente de adjuntar captura o mockup.
-
 **Cómo se valida:** la barra de progreso se actualiza durante la partida, el indicador de racha refleja el estado correcto al ingresar, y el EXP se acredita al finalizar el nodo.
 
 ### Estado
@@ -112,10 +104,6 @@ Terminada.
 - UNQ-94 — Implementar pantalla de Lección Terminada
 - UNQ-118 — Diseñar pantalla de Lección Terminada
 - UNQ-116 — Implementar sonido especial por nodo perfecto
-
-### Mockups / evidencia visual
-
-Pendiente de adjuntar captura o mockup.
 
 **Cómo se valida:** al completar todos los pasos de una lección aparece la pantalla de cierre; si el nodo fue perfecto se reproduce el sonido diferenciado; volver al mapa funciona sin errores.
 
@@ -144,10 +132,6 @@ Terminada.
 - UNQ-106 — Implementar dificultad progresiva por nodo
 - UNQ-119 — Implementar contenido desacoplado de nodos mediante JSON
 - UNQ-104 — Corregir corte de música durante sesiones prolongadas
-
-### Mockups / evidencia visual
-
-Pendiente de adjuntar captura o mockup.
 
 **Cómo se valida:** el audio no se corta en sesiones largas; la modalidad se asigna con dificultad progresiva correcta; las respuestas incorrectas se reposicionan al reintentar; el contenido cargado proviene de un archivo JSON externo.
 
@@ -204,15 +188,3 @@ Se corrigió el corte de música en sesiones largas. Se implementó el reposicio
 - **Separar bugs de features nuevas** en la trazabilidad — para mostrar que hubo trabajo de estabilización, no solo suma de funcionalidades.
 
 ---
-
-## Mockups y evidencia visual 
-
-- [ ] Captura del mapa con avance visual entre nodos — Pendiente de adjuntar.
-- [ ] Captura de actividad Plato en funcionamiento — Pendiente de adjuntar.
-- [ ] Captura de actividad Pregunta — Pendiente de adjuntar.
-- [ ] Captura de actividad Vincular conceptos — Pendiente de adjuntar.
-- [ ] Captura de barra de progreso durante partida — Pendiente de adjuntar.
-- [ ] Captura de pantalla Lección Terminada — Pendiente de adjuntar.
-- [ ] Captura de indicador de racha o EXP — Pendiente de adjuntar.
-- [ ] Captura o video del flujo completo (mapa → nodo → modalidad → cierre) — Pendiente de adjuntar.
-- [ ] Captura del board con los tickets terminados — Pendiente de adjuntar.
