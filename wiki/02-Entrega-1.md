@@ -63,15 +63,15 @@ En esta iteración se consolidó una demo local más completa y clara de E-VIDEN
 
 | Bloque | Resultado | Estado |
 |---|---|---|
-| Flujo del recorrido | Mapa con nodos jugables, actualización visual, rejugar | Listo |
+| Flujo del recorrido | Mapa con partidas jugables, actualización visual, rejugar | Listo |
 | Modalidades jugables | Plato, Pregunta y Vincular con dificultad progresiva | Listo |
 | Progreso y feedback | Barra de progreso, racha, EXP durante partida | Listo |
-| Cierre de lección | Pantalla de lección terminada con sonido especial | Listo |
+| Cierre de lección | Pantalla de lección terminada con sonido especial, exp, precisión, tiempo | Listo |
 | Estabilidad y contenido | Audio corregido, contenido desacoplado vía JSON | Listo |
 
 ### Fuera de alcance
 
-Backend, autenticación, leaderboard, base de datos remota, panel de administración y telemetría no forman parte de Entrega 1. La demo corre completamente en local.
+Backend, autenticación, leaderboard, base de datos, panel de administración no forman parte de Entrega 1. La demo corre completamente en local.
 
 ## Documentación
 
