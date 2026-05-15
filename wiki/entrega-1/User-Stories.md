@@ -19,9 +19,6 @@
 - UNQ-93 — Permitir rejugar lecciones completadas del Mapa
 - UNQ-124 — Corregir lineamiento del Mapa
 
-### Mockups / evidencia visual
-
-Pendiente de adjuntar captura o mockup.
 
 **Cómo se valida:** se puede iniciar y completar una lección desde el mapa, el nodo queda marcado visualmente como terminado, y se puede rejugar sin restricción.
 
@@ -40,7 +37,7 @@ Terminada.
 ### Criterios de aceptación
 
 - Dado que el jugador inicia una partida, cuando se le presenta una modalidad (Plato, Pregunta o Vincular), entonces puede interactuar y completarla.
-- Dado que el jugador responde, cuando la respuesta es incorrecta, entonces la actividad da una señal clara y permite reintentar o continuar.
+- Dado que el jugador responde, cuando la respuesta es incorrecta, entonces la actividad da una señal clara y permite reintentar.
 - Dado que el jugador avanza en nodos, cuando el nodo tiene mayor dificultad configurada, entonces el contenido presentado es más exigente.
 
 ### Tickets relacionados
