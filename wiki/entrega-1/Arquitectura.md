@@ -4,7 +4,7 @@
 
 [Abrir diagrama interactivo MER](mer.html) — *Usa zoom (+/-), rueda del mouse o arrastra para navegar*
 
-![Modelo de Entidades y Relaciones](mer.png)
+![Modelo de Entidades y Relaciones](Mer.png)
 
 ## Historia testigo
 
