@@ -6,7 +6,7 @@ Demo local en Godot.
 
 El jugador selecciona una restricción alimentaria desde el menú desplegado, una vez que selecciona alguno de ellos se abre un mapa con diferentes lecciones. Dentro de una lección existen varias modalidades de juego que van iterando entre arrastre, preguntas o vinculaciones, de manera aleatoria. A medida que uno va avanzando en el mapa va aumentando la dificultad según la lección, cada una está programada según su nivel de dificultad. Una vez finalizada una lección se registra la renovación de racha si ha mantenido una, y sino se vuelve a cargar una nueva racha. Junto con eso se suman puntos de experiencia al jugador y se desbloquean nuevas lecciones del mapa elegido.
 
-## Componentes confirmados
+## Componentes 
 
 | Componente | Rol |
 |---|---|
