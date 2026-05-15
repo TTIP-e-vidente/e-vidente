@@ -32,6 +32,23 @@ Esta guía organiza la wiki por etapas de trabajo TTIP y por documentación téc
 
 ---
 
+## Entregas TTIP
+
+### 📦 [Entrega 1](02-Entrega-1.md)
+
+Resumen ejecutivo, qué se hizo, decisiones tomadas y trazabilidad de tickets. Las páginas de detalle están en la subcarpeta:
+
+| Página | Descripción |
+|---|---|
+| [Resumen](02-Entrega-1.md) | Qué se hizo, decisiones, desafíos y trazabilidad de tickets |
+| [User Stories](entrega-1/User-Stories.md) | Historias de usuario de la entrega |
+| [Arquitectura](entrega-1/Arquitectura.md) | Decisiones de arquitectura específicas de esta entrega |
+| [Decisiones](entrega-1/Decisiones.md) | ADRs y decisiones tomadas |
+| [Evidencia](entrega-1/Evidencia.md) | Capturas y evidencia de lo entregado |
+| [Próximos Pasos](entrega-1/Proximos-Pasos.md) | Qué queda pendiente para la próxima entrega |
+
+---
+
 ## Lo Que Hay en Cada Doc
 
 ### 🎬 [Architecture.md](Architecture.md)
