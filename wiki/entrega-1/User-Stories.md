@@ -9,8 +9,9 @@
 ### Criterios de aceptación
 
 - Dado que el jugador está en el mapa, cuando elige un nodo habilitado, entonces puede iniciar y completar esa lección.
-- Dado que el jugador completó un nodo, cuando vuelve al mapa, entonces ese nodo aparece visualmente como terminado.
-- Dado que el jugador quiere repasar, cuando elige un nodo ya completado, entonces puede rejugarlo sin restricción.
+- Dado que el jugador completó una partida, cuando vuelve al mapa, entonces esa partida aparece visualmente como terminado.
+- Dado que el jugador quiere repasar, cuando elige una partida ya completada, entonces puede rejugarlo sin restricción.
+
 
 ### Tickets relacionados
 
