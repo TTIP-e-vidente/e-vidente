@@ -26,8 +26,4 @@ El jugador selecciona un capítulo desde el libro de recorrido. El libro actuali
 
 `MapScene.gd`, `GameSceneRouter.gd`, `SaveManager.gd`, `pregunta.gd`, `vincular_conceptos.gd`, `ArmadorDePartida.gd`, `ContinuidadDePartidaDeNodo.gd`, barra de progreso, contenido por JSON.
 
-## Ver tambien
 
-- [MER logico](../Modelo-Entidad-Relacion.md)
-- [MR logico](Modelo-Relacional.md)
-- [Arquitectura general](../Architecture.md)
