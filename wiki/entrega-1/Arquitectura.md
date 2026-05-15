@@ -8,14 +8,14 @@
 
 ## Historia testigo
 
-**Como jugador quiero elegir un nodo en el mapa y resolver la partida asignada para avanzar en mi recorrido educativo.**
+**Como jugador quiero elegir una partida en el mapa y resolver una lección asignada para avanzar en mi recorrido educativo.**
 
 Recorrido técnico de esa historia:
 
 1. El jugador elige una restricción alimentaria → `libro.gd` / `libro-vegan.gd` abre el mapa correspondiente.
-2. `MapScene.gd` construye el mapa y muestra los nodos disponibles.
-3. Al elegir un nodo, `GameSceneRouter.gd` navega a la escena de partida.
-4. `manager_level.gd` arma el `LevelResource` con el contenido del nodo (cargado desde JSON).
+2. `MapScene.gd` construye el mapa y muestra las partidas disponibles.
+3. Al elegir una partida, `GameSceneRouter.gd` navega a la escena que corresponde al modo ya decidido.
+4. `manager_level.gd` arma el `LevelResource` con el contenido de la partida (cargado desde JSON).
 5. `ArmadorDePartida.gd` asigna la modalidad (Plato, Pregunta o Vincular) según la configuración del nodo.
 6. `Level.gd` ejecuta la actividad y registra la victoria al completar.
 7. `global.gd` actualiza el estado de la sesión y desbloquea el siguiente nodo.

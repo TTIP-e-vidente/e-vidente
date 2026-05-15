@@ -13,12 +13,6 @@ Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 | 🎬 Ver cómo funciona el proyecto | [Architecture.md](Architecture.md) - El tour visual |
 | 🆕 Levantar el proyecto en tu PC | [Getting-Started.md](Getting-Started.md) |
 | 🔍 Saber qué cambió en los últimos días | [Bitacora.md](Bitacora.md) - Resúmenes cortos |
-| 🗂️ Ver histórico anterior al POC | [Pre-POC.md](Pre-POC.md) |
-| 💾 Entender cómo funciona el guardado | [Persistencia-Local.md](Persistencia-Local.md) |
-| 🧩 Cargar nodos desde JSON | [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md) |
-| 🧠 Ver el modelo de datos de negocio (MER lógico) | [Modelo-Entidad-Relacion.md](Modelo-Entidad-Relacion.md) |
-| 🧱 Ver el modelo relacional lógico del flujo | [Modelo-Relacional.md](entrega-1/Modelo-Relacional.md) |
-| 🤔 Entender por qué se hizo algo así (solo cambios grandes) | [adr/](adr/) - Decisiones de alto impacto |
 | 🔧 Saber de CI y deploy | [CI.md](CI.md) |
 | 🎯 Necesito cambiar algo, ¿por dónde empiezo? | [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) - La tabla de "toco esto" |
 
@@ -30,24 +24,11 @@ Esta guía organiza la wiki por etapas de trabajo TTIP y por documentación téc
 
 | Etapa / bloque | Documento principal | Estado |
 |---|---|---|
-| Pre-POC | [Pre-POC.md](Pre-POC.md) | Confirmado |
 | POC | [Bitacora.md#poc-falta-confirmar](Bitacora.md#poc-falta-confirmar) | Falta confirmar consolidación en página propia |
 | Entrega 1 | [02-Entrega-1.md](02-Entrega-1.md) | User stories, casos de uso, avances, decisiones y evidencia |
 | Entrega 2 | [Bitacora.md#entrega-2-falta-confirmar](Bitacora.md#entrega-2-falta-confirmar) | Falta confirmar contenido final |
 | Próximas entregas | [Bitacora.md#proximas-entregas-falta-confirmar](Bitacora.md#proximas-entregas-falta-confirmar) | Falta confirmar planificación |
-| Documentación técnica | [Architecture.md](Architecture.md), [Persistencia-Local.md](Persistencia-Local.md), [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md), [Modelo-Entidad-Relacion.md](Modelo-Entidad-Relacion.md), [CI.md](CI.md), [Getting-Started.md](Getting-Started.md) | Confirmado |
-
----
-
-## Si Lo Vas a Mostrar en Clase
-
-Si querés presentar el proyecto sin que nadie se pierda, usá esta ruta corta:
-
-1. Abrí [Architecture.md](Architecture.md) y mostrá primero el diagrama principal.
-2. Bajá a la sección de sistemas clave para explicar audio, guardado, navegación y racha.
-3. Cerrá con [Bitacora.md](Bitacora.md) para mostrar qué se mejoró recientemente.
-
-Con ese recorrido, en 5 minutos se entiende qué hace el juego y cómo está organizado.
+| Documentación técnica | [Architecture.md](Architecture.md), [Persistencia-Local.md](Persistencia-Local.md), [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md), [CI.md](CI.md), [Getting-Started.md](Getting-Started.md) | Confirmado |
 
 ---
 
@@ -67,30 +48,6 @@ Paso a paso para tener el proyecto corriendo en tu PC. Qué necesitás instalar,
 Cambios recientes resumidos en 3 líneas. Todo categorizado (🎵 Audio, 🎮 Gameplay, etc.) así encontrás rápido.
 
 **Ideal para**: Saber qué cambió recientemente sin tener que leer todo.
-
-### 🗂️ [Pre-POC.md](Pre-POC.md)
-Archivo histórico con todo lo que pasó antes del POC.
-
-**Ideal para**: Mostrar contexto inicial sin mezclarlo con la etapa actual.
-
-### 🤔 [adr/](adr/) - Por Qué Se Hizo Así
-Carpeta con las decisiones importantes del proyecto. Para cada decisión importante hay un archivo que explica:
-- El problema que teníamos
-- Qué alternativas consideramos
-- Qué elegimos y por qué
-- Qué cambió en el proyecto por eso
-
-**Ideal para**: Entender el "por qué" detrás de cambios grandes (no hace falta para ajustes chicos).
-
-### 💾 [Persistencia-Local.md](Persistencia-Local.md)
-Todo sobre cómo guardamos el progreso del jugador en el disco. Qué guardamos, cómo lo guardamos, cómo lo recuperamos.
-
-**Ideal para**: Trabajando con guardado de partidas.
-
-### 🧠 [Modelo-Entidad-Relacion.md](Modelo-Entidad-Relacion.md)
-Modelo Entidad-Relación lógico del juego. Explica entidades de negocio, relaciones, flujo de experiencia y qué se guarda localmente.
-
-**Ideal para**: Entrega TTIP, defensa funcional y trazabilidad entre producto y datos.
 
 ### ⚙️ [CI.md](CI.md)
 Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cosas se chequean cada vez que subimos cambios.
@@ -118,15 +75,6 @@ Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cos
 4. Si es una parte grande del sistema y hay un ADR, leélo para entender por qué se hizo así
 5. Corre los tests antes de hacer PR: ver [Getting-Started.md](Getting-Started.md#testing)
 
-### Voy a Agregar una Feature Completamente Nueva
-1. Leé [Architecture.md](Architecture.md) completo para entender cómo encaja
-2. Mirá los [adr/](adr/) para ver cómo documentamos decisiones grandes
-3. Si la feature cambia arquitectura, escribí un ADR explicando:
-   - El problema que estás resolviendo
-   - Qué alternativas consideraste
-   - Qué elegiste y por qué
-   - Cómo cambia el proyecto
-4. Si no cambia arquitectura, alcanza con [Bitacora.md](Bitacora.md)
 
 ### Estoy Por Mergear a Main
 1. Verificá que los checks en [CI.md](CI.md) pasen (acá está qué se chequea)
@@ -166,15 +114,6 @@ Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cos
 - Los nombres de variables y funciones explícitos (no abreviaturas raras)
 - Comentarios solo cuando la lógica es difícil
 - Bitácora se actualiza si cambió algo que el jugador ve
-
----
-
-## Links Útiles
-
-- **GitHub Repo**: https://github.com/TTIP-e-vidente/e-vidente
-- **Godot Download**: https://godotengine.org/download/windows/
-- **Godot Docs**: https://docs.godotengine.org/en/stable/
-- **GDScript Guide**: https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/
 
 ---
 
