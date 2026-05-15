@@ -22,6 +22,8 @@
 
 Pendiente de adjuntar captura o mockup.
 
+**Cómo se valida:** se puede iniciar y completar una lección desde el mapa, el nodo queda marcado visualmente como terminado, y se puede rejugar sin restricción.
+
 ### Estado
 
 Terminada.
@@ -53,6 +55,8 @@ Terminada.
 
 Pendiente de adjuntar captura o mockup.
 
+**Cómo se valida:** se puede completar una actividad de cada modalidad (Plato, Pregunta, Vincular); la respuesta incorrecta da señal y permite reintentar; nodos de mayor nivel presentan contenido más exigente.
+
 ### Estado
 
 Terminada.
@@ -83,6 +87,8 @@ Terminada.
 
 Pendiente de adjuntar captura o mockup.
 
+**Cómo se valida:** la barra de progreso se actualiza durante la partida, el indicador de racha refleja el estado correcto al ingresar, y el EXP se acredita al finalizar el nodo.
+
 ### Estado
 
 Terminada.
@@ -111,6 +117,8 @@ Terminada.
 
 Pendiente de adjuntar captura o mockup.
 
+**Cómo se valida:** al completar todos los pasos de una lección aparece la pantalla de cierre; si el nodo fue perfecto se reproduce el sonido diferenciado; volver al mapa funciona sin errores.
+
 ### Estado
 
 Terminada.
@@ -136,12 +144,75 @@ Terminada.
 - UNQ-106 — Implementar dificultad progresiva por nodo
 - UNQ-119 — Implementar contenido desacoplado de nodos mediante JSON
 - UNQ-104 — Corregir corte de música durante sesiones prolongadas
-- UNQ-92 — Implementar reposicionamiento dinámico de respuestas incorrectas
 
 ### Mockups / evidencia visual
 
 Pendiente de adjuntar captura o mockup.
 
+**Cómo se valida:** el audio no se corta en sesiones largas; la modalidad se asigna con dificultad progresiva correcta; las respuestas incorrectas se reposicionan al reintentar; el contenido cargado proviene de un archivo JSON externo.
+
 ### Estado
 
 Terminada.
+
+---
+
+## Resumen de trabajo realizado en Entrega 1
+
+### Recorrido y mapa
+
+Se actualizó el mapa para reflejar visualmente los nodos completados. Se corrigió el lineamiento visual del mapa que generaba una experiencia confusa. Se habilitó la opción de rejugar lecciones ya terminadas para que el jugador pueda repasar sin restricciones.
+
+### Modalidades educativas
+
+Se incorporó la modalidad Vincular conceptos desde diseño hasta implementación del proceso completo. Se corrigieron errores en la modalidad Plato y se mejoró la transparencia de la modalidad Pregunta para que la interacción sea más clara. Se agregaron niveles de preguntas con dificultad progresiva por nodo.
+
+### Progreso, racha y EXP
+
+Se implementó y diseñó la barra de progreso durante la partida, el indicador de racha al ingresar al juego, la acumulación de EXP al completar nodos y un resumen semanal de progreso. Estas piezas juntas dan al jugador una lectura clara de cuánto avanzó.
+
+### Cierre de lección
+
+Se diseñó e implementó la pantalla de Lección Terminada que aparece al completar un nodo. Se agregó un sonido diferenciado cuando el nodo fue completado de forma perfecta. El jugador ahora tiene un cierre explícito en lugar de volver abruptamente al mapa.
+
+### Estabilidad, audio y base técnica
+
+Se corrigió el corte de música en sesiones largas. Se implementó el reposicionamiento dinámico de respuestas incorrectas para evitar que el jugador memorice posiciones. Se desacopló el contenido del código mediante JSON para facilitar actualizaciones sin recompilar. Las partidas por nodo ahora asignan modalidades con dificultad progresiva configurable.
+
+---
+
+## Bugs y correcciones relevantes
+
+| Ticket | Problema | Corrección | Impacto | Estado |
+|---|---|---|---|---|
+| UNQ-127 | Error en la modalidad Plato que podía dejar la actividad trabada | Corrección del flujo de validación | La actividad se puede completar sin quedar bloqueada | Resuelto |
+| UNQ-124 | Lineamiento visual del mapa roto; los nodos no se leían bien | Corrección del layout del mapa | El recorrido se entiende de un vistazo | Resuelto |
+| UNQ-104 | El audio se cortaba en sesiones largas | Corrección del loop de música | El sonido es continuo durante toda la sesión | Resuelto |
+| UNQ-92 | Las respuestas incorrectas no se movían; el jugador memorizaba posiciones | Reposicionamiento dinámico de opciones incorrectas | El jugador necesita razonar la respuesta en cada intento | Resuelto |
+| UNQ-126 | La modalidad Pregunta no dejaba claro si la respuesta fue correcta o no | Ajuste del feedback visual | El estado de la pregunta se entiende sin ambigüedad | Resuelto |
+| UNQ-128 | Inconsistencias en el flujo de la modalidad Vincular | Estabilización del proceso de vinculación | La modalidad se puede completar de punta a punta | Resuelto |
+
+---
+
+## Decisiones tomadas durante la iteración
+
+- **Agrupar tickets en 5 user stories** — evita documentación repetitiva y facilita defender el trabajo como bloques coherentes.
+- **Priorizar demo local jugable** — antes de abrir infraestructura online (backend, auth, leaderboard, base de datos real).
+- **Mejorar claridad visual y feedback** antes de agregar nuevas pantallas secundarias — el jugador necesita entender qué pasa antes de que haya más contenido.
+- **Incorporar modalidades sin romper el flujo principal** — Vincular y Pregunta se integran sobre la misma estructura de partida existente.
+- **Desacoplar contenido mediante JSON** — para que futuras iteraciones puedan cambiar niveles y preguntas sin tocar código.
+- **Separar bugs de features nuevas** en la trazabilidad — para mostrar que hubo trabajo de estabilización, no solo suma de funcionalidades.
+
+---
+
+## Mockups y evidencia visual 
+
+- [ ] Captura del mapa con avance visual entre nodos — Pendiente de adjuntar.
+- [ ] Captura de actividad Plato en funcionamiento — Pendiente de adjuntar.
+- [ ] Captura de actividad Pregunta — Pendiente de adjuntar.
+- [ ] Captura de actividad Vincular conceptos — Pendiente de adjuntar.
+- [ ] Captura de barra de progreso durante partida — Pendiente de adjuntar.
+- [ ] Captura de pantalla Lección Terminada — Pendiente de adjuntar.
+- [ ] Captura de indicador de racha o EXP — Pendiente de adjuntar.
+- [ ] Captura o video del flujo completo (mapa → nodo → modalidad → cierre) — Pendiente de adjuntar.
+- [ ] Captura del board con los tickets terminados — Pendiente de adjuntar.
