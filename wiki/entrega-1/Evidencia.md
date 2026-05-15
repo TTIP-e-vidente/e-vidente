@@ -20,15 +20,16 @@
 | Cierre de lección | `final-leccion/`, `sonidos/nodo-perfecto` | Falta confirmar archivo |
 | Estabilidad y contenido | `contenido/catalogos/`, archivos JSON por nodo | Confirmado por código |
 
-## Evidencia visual pendiente
 
-| Elemento | Estado |
-|---|---|
-| Captura del mapa con nodos completados y sin completar | Pendiente captura |
-| Captura de modalidad Plato en curso | Pendiente captura |
-| Captura de modalidad Pregunta en curso | Pendiente captura |
-| Captura de modalidad Vincular en curso | Pendiente captura |
-| Captura de barra de progreso durante partida | Pendiente captura |
-| Captura del indicador de racha al ingresar | Pendiente captura |
-| Captura de pantalla Lección Terminada | Pendiente captura |
-| Video o GIF del flujo completo (mapa → lección → cierre) | Pendiente captura |
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/5b5c96bb-0809-4ae4-9748-636ecf0ba8e7" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/6331dd7d-d094-4f4c-b009-30f56c03ae05" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/f415f011-458f-4d48-83ca-86d34492c5e5" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/687217fd-3aea-4ecf-80cc-353cc01ce5f5" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/d70b0a14-2222-4f6d-8c01-9f97e1fbd062" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/26a797ba-fa49-4d1b-9c1b-05e925ca94c6" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/0ea00057-1479-4a6f-9042-e759e2121467" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/4d831e61-4e94-4e25-b374-675f0b52ef2d" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/bab39ca2-9187-48f1-91d3-6c1b18f6b487" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/61337301-7a24-442a-b235-f84145f89c2e" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/9cca0d7f-f0ce-4d04-bc9b-1d7fe1398d85" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/7f08a75c-56d2-4ddc-aa11-d8ea25e2eee0" />
