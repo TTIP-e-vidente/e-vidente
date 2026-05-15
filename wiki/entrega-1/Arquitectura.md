@@ -1,27 +1,59 @@
 # Arquitectura — Entrega 1
 
-Demo local en Godot. 
+Demo local en Godot 4. No hay backend, autenticación, base de datos remota ni leaderboard en este alcance.
 
-## Flujo confirmado
+## Historia testigo
 
-El jugador selecciona una restricción alimentaria desde el menú desplegado, una vez que selecciona alguno de ellos se abre un mapa con diferentes lecciones. Dentro de una lección existen varias modalidades de juego que van iterando entre arrastre, preguntas o vinculaciones, de manera aleatoria. A medida que uno va avanzando en el mapa va aumentando la dificultad según la lección, cada una está programada según su nivel de dificultad. Una vez finalizada una lección se registra la renovación de racha si ha mantenido una, y sino se vuelve a cargar una nueva racha. Junto con eso se suman puntos de experiencia al jugador y se desbloquean nuevas lecciones del mapa elegido.
+**Como jugador quiero elegir un nodo en el mapa y resolver la lección asignada para avanzar en mi recorrido educativo.**
 
-## Componentes confirmados
+Recorrido técnico de esa historia:
+
+1. El jugador elige una restricción alimentaria → `libro.gd` / `libro-vegan.gd` abre el mapa correspondiente.
+2. `MapScene.gd` construye el mapa y muestra los nodos disponibles.
+3. Al elegir un nodo, `GameSceneRouter.gd` navega a la escena de lección.
+4. `manager_level.gd` arma el `LevelResource` con el contenido del nodo (cargado desde JSON).
+5. `ArmadorDePartida.gd` asigna la modalidad (Plato, Pregunta o Vincular) según la configuración del nodo.
+6. `Level.gd` ejecuta la actividad y registra la victoria al completar.
+7. `global.gd` actualiza el estado de la sesión y desbloquea el siguiente nodo.
+
+## Componentes por responsabilidad
+
+### UI / Vista
 
 | Componente | Rol |
 |---|---|
-| `libro.gd` / `libro-vegan.gd` / `Libro-Vegan-GF.gd` | Selección de restricción por recorrido |
-| `global.gd` | Estado global: `current_level`, flags de completado |
-| `manager_level.gd` | Arma el `LevelResource` activo |
-| `Level.gd` | Ejecuta la actividad y marca victoria |
-| `level_resource.gd` / `level_item.gd` / `.tres` | Definición de contenido de la lección |
-| `ItemLevel.gd` | Comportamiento visual del ítem arrastrable |
+| `libro.gd` / `libro-vegan.gd` / `Libro-Vegan-GF.gd` | Selector de recorrido según restricción alimentaria |
+| `MapScene.gd` | Mapa visual del recorrido con nodos disponibles |
+| `barra de progreso.tscn` | Indicador de progreso durante la partida |
+
+### Coordinación y navegación
+
+| Componente | Rol |
+|---|---|
+| `global.gd` | Estado global de la sesión: nodo activo, flags de completado |
+| `GameSceneRouter.gd` | Navegación entre escenas del juego |
+| `manager_level.gd` | Arma el `LevelResource` activo según el nodo elegido |
+| `ArmadorDePartida.gd` | Asigna modalidad y ejecuta el armado de cada lección |
+
+### Gameplay
+
+| Componente | Rol |
+|---|---|
+| `Level.gd` | Ejecuta la actividad activa y registra la victoria |
+| `ItemLevel.gd` | Comportamiento visual del ítem arrastrable (modalidad Plato) |
+| `pregunta.gd` | Modalidad Pregunta con dificultad progresiva |
+| `vincular_conceptos.gd` | Modalidad Vincular conceptos |
+
+### Datos y estado
+
+| Componente | Rol |
+|---|---|
+| `level_resource.gd` / `level_item.gd` / `.tres` | Definición del contenido de cada lección |
 | `ensenanzas.gd` / `ensenanzaveganismo.gd` | Catálogo de enseñanzas por recorrido |
-|`MapScene.gd`, `GameSceneRouter.gd`| Mapa donde se colocan las lecciones por restricción alimentaria |
-|`pregunta.gd`| Modalidad de juego de preguntas y respuestas |
-|`vincular_conceptos.gd`| Modalidad de juego de vincular conceptos | 
-|`ArmadorDePartida.gd`| Ejecuta el armado de cada lección | 
-|`barra de progreso.tscn`| Muestra el progreso visualmente para cada lección |
-|contenidos por JSON| Documentos json que permiten hacer preguntas, vinculaciones y niveles de arrastre de manera rápida y fácil |
+| Contenido por JSON | Archivos externos para preguntas, vinculaciones y niveles de arrastre |
+
+## Fuera de alcance en Entrega 1
+
+Backend, autenticación, leaderboard, base de datos remota, panel de administración y telemetría no están incluidos. La demo corre completamente en local.
 
 

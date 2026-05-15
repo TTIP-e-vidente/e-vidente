@@ -2,11 +2,17 @@
 
 ## Resumen ejecutivo
 
-En esta iteración se consolidó una demo local más clara y jugable. El foco estuvo en mejorar la experiencia del jugador: el mapa ahora refleja el progreso, hay tres modalidades educativas funcionales (Plato, Pregunta, Vincular), el jugador recibe feedback visual en tiempo real (barra de progreso, racha, EXP) y cada lección termina con una pantalla de cierre explícita.
+En esta iteración se consolidó una demo local más completa y clara de E-VIDENTE. Se trabajó sobre el recorrido del jugador, el mapa, modalidades educativas, feedback de progreso, cierre de lección, dificultad progresiva, audio y estabilidad general. La entrega priorizó que el jugador entienda qué hacer, vea su avance y reciba una experiencia más consistente antes de abrir funcionalidades de infraestructura como backend, autenticación o leaderboard.
 
-Se priorizó robustez y claridad antes que agregar más funcionalidades. El audio fue corregido para sesiones largas, el contenido se desacopló del código mediante JSON y la dificultad se volvió progresiva por nodo. Los 22 tickets terminados se agrupan en 5 historias principales para facilitar la defensa.
+## Qué se agregó o modificó
 
-Sin backend, sin base de datos real, sin auth, sin leaderboard, sin servicios externos.
+- **Mapa y continuidad del recorrido** — actualización visual al completar un capítulo, lineamiento corregido, rejugar lecciones habilitado.
+- **Modalidades Plato, Pregunta y Vincular** — incorporación de Vincular desde diseño hasta proceso; corrección de errores en Plato y Pregunta.
+- **Barra de progreso, racha, EXP y resumen semanal** — feedback visual completo durante y después de cada partida.
+- **Pantalla de Lección Terminada** — cierre explícito de cada nodo con sonido diferenciado para nodo perfecto.
+- **Contenido desacoplado por JSON** — el contenido de los nodos se carga desde archivos externos, sin hardcodear.
+- **Dificultad progresiva** — cada nodo puede configurar un nivel de dificultad; las preguntas de Celiaquía tienen niveles diferenciados.
+- **Corrección de bugs** — audio cortado en sesiones largas, reposicionamiento de respuestas incorrectas, errores en modalidades.
 
 ## Decisiones tomadas
 
@@ -62,6 +68,10 @@ Sin backend, sin base de datos real, sin auth, sin leaderboard, sin servicios ex
 | Estabilidad y contenido | Audio corregido, contenido desacoplado vía JSON | Confirmado |
 | Persistencia local | SaveManager para retomar sesiones entre aperturas | Falta confirmar |
 
+### Fuera de alcance
+
+Backend, autenticación, leaderboard, base de datos remota, panel de administración y telemetría no forman parte de Entrega 1. La demo corre completamente en local.
+
 ## Documentación
 
 - [User Stories](entrega-1/User-Stories.md)
@@ -70,4 +80,3 @@ Sin backend, sin base de datos real, sin auth, sin leaderboard, sin servicios ex
 - [Evidencia](entrega-1/Evidencia.md)
 - [Decisiones](entrega-1/Decisiones.md)
 - [Próximos pasos](entrega-1/Proximos-Pasos.md)
-- [MER lógico](Modelo-Entidad-Relacion.md)
