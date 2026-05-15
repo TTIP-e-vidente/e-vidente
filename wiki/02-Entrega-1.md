@@ -16,12 +16,10 @@ En esta iteración se consolidó una demo local más completa y clara de E-VIDEN
 
 ## Decisiones tomadas
 
-- **Agrupar tickets en 5 user stories** para evitar documentación repetitiva y facilitar la defensa.
 - **Priorizar demo local en Godot** antes que abrir infraestructura innecesaria (backend, SQL, servicios).
 - **Mejorar la experiencia del jugador** mediante progreso visible, feedback inmediato, mapa actualizado y cierre de lección.
 - **Incorporar y corregir las tres modalidades** (Plato, Pregunta, Vincular) sin abrir flujos paralelos incompletos.
 - **Desacoplar contenido via JSON** para poder editar sin tocar scripts.
-- **Dejar pendiente la persistencia local** entre sesiones: no hay evidencia suficiente de SaveManager activo en esta rama.
 
 ## Desafíos técnicos
 
