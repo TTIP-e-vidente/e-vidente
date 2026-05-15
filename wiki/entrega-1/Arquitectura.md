@@ -1,5 +1,11 @@
 # Arquitectura — Entrega 1
 
+## Modelo de Entidades y Relaciones
+
+[Abrir diagrama interactivo MER](mer.html) — *Usa zoom (+/-), rueda del mouse o arrastra para navegar*
+
+![Modelo de Entidades y Relaciones](mer.png)
+
 ## Historia testigo
 
 **Como jugador quiero elegir un nodo en el mapa y resolver la partida asignada para avanzar en mi recorrido educativo.**
