@@ -1,6 +1,4 @@
-# Evidencia — Entrega 1
-
-## Evidencia funcional confirmada
+# Entrega 1
 
 | Funcionalidad | Evidencia | Estado |
 |---|---|---|
@@ -11,7 +9,7 @@
 | Enseñanza al completar | [project/niveles/nivel_1/Level.gd](../../project/niveles/nivel_1/Level.gd), [project/niveles/ensenanzas.gd](../../project/niveles/ensenanzas.gd), [project/niveles/ensenanzaveganismo.gd](../../project/niveles/ensenanzaveganismo.gd) | Confirmada |
 | Workflow de CI | [CI.md](../CI.md), [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Parcial |
 
-## Evidencia documentada pero falta confirmar
+
 
 | Tema | Evidencia documental | Estado |
 |---|---|---|
@@ -21,7 +19,7 @@
 | Preguntas y vinculación como modalidades integradas | [Architecture.md](../Architecture.md), [Bitacora.md](../Bitacora.md) | Falta confirmar |
 | JSON de contenido en `project/` | [Contenido-JSON-Nodos.md](../Contenido-JSON-Nodos.md) | Falta confirmar |
 
-## Evidencia técnica útil para defensa
+
 
 | Área | Archivo o documento | Qué demuestra |
 |---|---|---|
@@ -33,16 +31,3 @@
 | Catálogo de alimentos | `project/items/*.tres` | Instancias concretas del contenido jugable |
 | Modelo conceptual | [Modelo-Entidad-Relacion.md](../Modelo-Entidad-Relacion.md) | Entidades de negocio y trazabilidad con código |
 
-## Evidencia pendiente
-
-- Capturas de pantalla de la demo.
-- Video corto de recorrido jugable.
-- Confirmación de los componentes de mapa, nodo y persistencia local si existen en otra rama.
-
-## Checklist visual para presentar
-
-- [ ] Captura del libro o selector de capítulos.
-- [ ] Captura del desafío de arrastre.
-- [ ] Captura de una enseñanza al completar.
-- [ ] Captura del progreso reflejado en capítulos desbloqueados.
-- [ ] Captura del workflow o check de CI si se quiere mostrar validación.
