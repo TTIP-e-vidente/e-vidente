@@ -1,27 +1,56 @@
 ﻿# Próximos Pasos
-
 ## Para Entrega 2
 
-- Grabar o capturar el flujo completo: mapa → nodo → modalidad → cierre de lección.
-- Confirmar e integrar persistencia local (SaveManager) para retomar partidas entre sesiones.
-- Consolidar el resumen semanal de progreso dentro del flujo jugable.
-- Evaluar cobertura de tests en las tres modalidades.
 
-## Fuera de alcance
+```
+                    ┌─────────────────────────────┐
+                    │       Entrega 2 - Inicio     │
+                    └──────────────┬──────────────┘
+                                   │
+               ┌───────────────────┴───────────────────┐
+               │                                       │
+               ▼                                       ▼
+  ┌────────────────────────┐           ┌────────────────────────┐
+  │  Opción A              │           │  Opción B              │
+  │  Funcionalidades en    │           │  Implementar           │
+  │  el mapa de Celiaquía  │           │  el Backend            │
+  └────────────────────────┘           └────────────────────────┘
+```
 
-Backend, base de datos real, autenticación, leaderboard, telemetría remota, administración de contenido.
+---
 
-Opcion B (Profundizar el backend)
+## Opción A — Seguir con funcionalidades en el mapa de Celiaquía
 
-[US-19]  AAAAAAAAAAAA
-[US-29]  AAAAAAAAAAAAA
-[US-59]  AAAAAAAAAAAAAAAAAA
-[US-79]  AAAAAAAAAAAA
-[US-89]  AAAAAAAAAAAAA
-[US-109] AAAAAAAAAAAAAAAAAA
+Profundizar la experiencia de juego dentro del mapa de Celiaquía ya existente: nuevas modalidades, mensajes, transiciones y feedback visual. No requiere infraestructura externa.
 
-Opcion A (Seguir integrando funcionalidades)
+| ID | Tarea |
+|----|-------|
+| UNQ-125 | Parametrizar los niveles según la modalidad |
+| UNQ-102 | Implementar felicitación por lección perfecta |
+| UNQ-101 | Implementar felicitación por completar 3 modalidades sin errores (dentro de UNA partida) |
+| UNQ-142 | Implementar Mensaje de Plato con el tipo de comida y restricción al que pertenece |
+| UNQ-149 | Implementar Mensaje de Pérdida de Racha |
+| UNQ-28  | Implementar feedback layer visual |
+| UNQ-111 | Implementar transición suave de mapa a partida |
+| UNQ-112 | Implementar transición suave de partida a resultados |
+| UNQ-113 | Implementar transición suave de resultados a mapa |
+| UNQ-95  | Implementar nueva modalidad de juego — completar con opciones de palabras |
+| UNQ-99  | Implementar nueva modalidad de juego — selector de imágenes |
+| UNQ-98  | Implementar nueva modalidad de juego — escala de opciones |
 
-[US-17] AAAAAAAAAAAA
-[US-27] AAAAAAAAAAAAA
-[US-57] AAAAAAAAAAAAAAAAAA
+---
+
+## Opción B — Implementar el Backend
+
+Construir la infraestructura de usuarios, autenticación y persistencia remota. Habilita funcionalidades sociales y progreso multi-dispositivo.
+
+> Base ya disponible: UNQ-85 (PostgreSQL con Docker), UNQ-87 (conexión validada), UNQ-86 (modelo inicial de persistencia) ✓
+
+| ID | Tarea |
+|----|-------|
+| UNQ-90 | Implementar registro de usuario |
+| UNQ-91 | Implementar login de usuario |
+| UNQ-27 | Implementar escena de perfil de usuario |
+| UNQ-69 | Implementar cambio de contraseña del usuario |
+| UNQ-96 | Implementar tabla de posiciones global |
+| UNQ-64 | Implementar notificaciones por email para racha diaria en riesgo |
