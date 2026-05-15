@@ -1,41 +1,41 @@
-﻿# ≡ƒôï Bit├ícora
+﻿# Bitácora
 
-Cambios importantes que anotamos para no perder de vista la evoluci├│n del proyecto.
+Cambios importantes que anotamos para no perder de vista la evolución del proyecto.
 
-Esta p├ígina no reemplaza documentos de entrega. Su rol es dejar trazabilidad clara de qu├⌐ se hizo, por qu├⌐ se hizo, qu├⌐ problema resolvi├│, qu├⌐ impacto tuvo para el jugador y qu├⌐ evidencia t├⌐cnica lo respalda.
+Esta página no reemplaza documentos de entrega. Su rol es dejar trazabilidad clara de qué se hizo, por qué se hizo, qué problema resolvió, qué impacto tuvo para el jugador y qué evidencia técnica lo respalda.
 
-## Navegaci├│n por etapas
+## Navegación por etapas
 
 - [Pre-POC](Pre-POC.md)
 - [POC](01-POC.md)
 - [Entrega 1](02-Entrega-1.md)
 - [Entrega 2](03-Entrega-2.md)
-- [Pr├│ximas entregas](04-Entrega-3.md)
+- [Próximas entregas](04-Entrega-3.md)
 - [Entrega final](05-Entrega-Final.md)
 
 Estado de rutas de entrega:
-- Falta confirmar si ya est├ín creados `01-POC.md`, `02-Entrega-1.md`, `03-Entrega-2.md`, `04-Entrega-3.md` y `05-Entrega-Final.md`.
+- Falta confirmar si ya están creados `01-POC.md`, `02-Entrega-1.md`, `03-Entrega-2.md`, `04-Entrega-3.md` y `05-Entrega-Final.md`.
 
-## Lo que pas├│ recientemente
+## Lo que pasó recientemente
 
-Ac├í est├ín los cambios m├ís nuevos y relevantes para demo, defensa TTIP y continuidad t├⌐cnica.
+Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y continuidad técnica.
 
-### [≡ƒÉ₧ BUG / GAMEPLAY] 2026-05-13 | Correcci├│n del comportamiento del plato
+### [ BUG / GAMEPLAY] 2026-05-13 | Corrección del comportamiento del plato
 
-Se corrigi├│ un problema en la actividad de arrastre donde la interacci├│n con el plato pod├¡a generar respuestas inconsistentes para ciertos intentos incorrectos.
+Se corrigió un problema en la actividad de arrastre donde la interacción con el plato podía generar respuestas inconsistentes para ciertos intentos incorrectos.
 
-Qu├⌐ problema resolvi├│:
-- En la pr├íctica, hab├¡a casos donde el feedback no era suficientemente consistente cuando un ├¡tem se soltaba en una condici├│n inv├ílida.
+Qué problema resolvió:
+- En la práctica, había casos donde el feedback no era suficientemente consistente cuando un ítem se soltaba en una condición inválida.
 
-Qu├⌐ se ajust├│:
-- Se reforz├│ el flujo de intento incorrecto en el ├¡tem arrastrable.
-- Se dej├│ se├▒al expl├¡cita para el caso incorrecto.
-- Se mantuvo la recuperaci├│n visual para no cortar la interacci├│n.
+Qué se ajustó:
+- Se reforzó el flujo de intento incorrecto en el ítem arrastrable.
+- Se dejó señal explícita para el caso incorrecto.
+- Se mantuvo la recuperación visual para no cortar la interacción.
 
 Impacto para el jugador:
-- El gameplay se siente m├ís estable.
+- El gameplay se siente más estable.
 - Se reducen respuestas confusas durante la actividad.
-- La demo queda m├ís predecible para exposici├│n.
+- La demo queda más predecible para exposición.
 
 Evidencia:
 - `project/items/ItemLevel.gd`
@@ -45,21 +45,21 @@ Evidencia:
 Falta confirmar:
 - ID o referencia formal del bug en ticket externo.
 
-### [≡ƒôè UI / PROGRESO] 2026-05-10 | Barra de progreso durante la actividad
+### [ UI / PROGRESO] 2026-05-10 | Barra de progreso durante la actividad
 
-Se incorpor├│ y consolid├│ una barra de progreso para que el jugador entienda cu├ínto avanz├│ dentro de la secuencia del nodo.
+Se incorporó y consolidó una barra de progreso para que el jugador entienda cuánto avanzó dentro de la secuencia del nodo.
 
-Qu├⌐ problema resolvi├│:
-- Antes, el avance pod├¡a sentirse opaco en actividades encadenadas.
+Qué problema resolvió:
+- Antes, el avance podía sentirse opaco en actividades encadenadas.
 
-Qu├⌐ se implement├│:
+Qué se implementó:
 - Indicador visual de avance en escenas de modalidad.
-- Actualizaci├│n del progreso con contexto `actual/total` del juego activo.
-- Unificaci├│n del criterio visual para evitar duplicidad de indicadores.
+- Actualización del progreso con contexto `actual/total` del juego activo.
+- Unificación del criterio visual para evitar duplicidad de indicadores.
 
 Impacto para el jugador:
-- Ahora entiende cu├ínto le falta para terminar.
-- La experiencia se siente m├ís guiada.
+- Ahora entiende cuánto le falta para terminar.
+- La experiencia se siente más guiada.
 - Se reduce incertidumbre entre un juego interno y el siguiente.
 
 Evidencia:
@@ -70,48 +70,48 @@ Evidencia:
 - `project/niveles/nivel_1/Level.gd`
 - Commit: `e02c1d8` (Feature/barra progreso)
 
-### [Γ£à UX / CIERRE] 2026-05-10 | Estado de lecci├│n terminada y finalizaci├│n de nodo
+### [ UX / CIERRE] 2026-05-10 | Estado de lección terminada y finalización de nodo
 
-Se agreg├│ una instancia clara de finalizaci├│n para comunicar cierre de lecci├│n/nodo y sostener una salida ordenada al mapa.
+Se agregó una instancia clara de finalización para comunicar cierre de lección/nodo y sostener una salida ordenada al mapa.
 
-Qu├⌐ problema resolvi├│:
-- El cierre pod├¡a sentirse abrupto cuando terminaba la actividad.
+Qué problema resolvió:
+- El cierre podía sentirse abrupto cuando terminaba la actividad.
 
-Qu├⌐ se implement├│:
-- Pantalla de finalizaci├│n de partida con m├⌐tricas.
-- Registro de finalizaci├│n en estado global para mostrarla en el momento correcto.
-- Retorno controlado al mapa despu├⌐s del cierre.
+Qué se implementó:
+- Pantalla de finalización de partida con métricas.
+- Registro de finalización en estado global para mostrarla en el momento correcto.
+- Retorno controlado al mapa después del cierre.
 
 Impacto para el jugador:
 - La actividad ya no termina de forma abrupta.
-- Se refuerza la sensaci├│n de logro.
-- El flujo de demo queda m├ís defendible de punta a punta.
+- Se refuerza la sensación de logro.
+- El flujo de demo queda más defendible de punta a punta.
 
 Evidencia:
-- `project/mapas/Finalizaci├│n-Partida.tscn`
-- `project/mapas/finalizaci├│n_partida.gd`
+- `project/mapas/Finalización-Partida.tscn`
+- `project/mapas/finalización_partida.gd`
 - `project/mapas/completo/finalizacion_de_nodo.gd`
 - `project/mapas/MapScene.gd`
 - `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
 - `project/niveles/global.gd`
-- Commit: `893b57a` (Lecci├│n Completa)
+- Commit: `893b57a` (Lección Completa)
 
-### [≡ƒº⌐ GAMEPLAY / MODALIDAD] Falta confirmar fecha exacta | Vinculaci├│n de conceptos como nueva modalidad
+### [ GAMEPLAY / MODALIDAD] Falta confirmar fecha exacta | Vinculación de conceptos como nueva modalidad
 
-Se incorpor├│ `vinculacion_conceptos` dentro del flujo de partida por nodo, sin abrir un camino paralelo al resto de modalidades.
+Se incorporó `vinculacion_conceptos` dentro del flujo de partida por nodo, sin abrir un camino paralelo al resto de modalidades.
 
-Qu├⌐ problema resolvi├│:
-- El nodo ten├¡a menos variedad de interacci├│n y menor capacidad de trabajar relaciones conceptuales.
+Qué problema resolvió:
+- El nodo tenía menos variedad de interacción y menor capacidad de trabajar relaciones conceptuales.
 
-Qu├⌐ se implement├│:
+Qué se implementó:
 - Nuevo modo `vinculacion_conceptos` en routing y continuidad.
-- Integraci├│n de escena y runtime dentro del mismo esquema post-juego.
+- Integración de escena y runtime dentro del mismo esquema post-juego.
 - Cobertura en smoke del recorrido que incluye la modalidad.
 
 Impacto para el jugador:
 - El contenido educativo gana variedad.
-- Los nodos pueden mezclar m├ís de una forma de actividad.
-- La arquitectura muestra extensibilidad real, no te├│rica.
+- Los nodos pueden mezclar más de una forma de actividad.
+- La arquitectura muestra extensibilidad real, no teórica.
 
 Evidencia:
 - `project/sistemas/ModalidadRouter.gd`
@@ -123,24 +123,24 @@ Evidencia:
 - `project/contenido/mapa/vinculaciones.json`
 
 Falta confirmar:
-- Fecha ├║nica de corte para declarar la modalidad como cerrada en todos los tracks.
+- Fecha única de corte para declarar la modalidad como cerrada en todos los tracks.
 
-### [≡ƒº⌐ GAMEPLAY / ARQUITECTURA] 2026-05-05 | Partida por nodo con m├║ltiples juegos internos
+### [ GAMEPLAY / ARQUITECTURA] 2026-05-05 | Partida por nodo con múltiples juegos internos
 
-Se consolid├│ el modelo donde un nodo puede ejecutar una secuencia de juegos internos, evitando hardcodeo de escenas y habilitando composici├│n por datos.
+Se consolidó el modelo donde un nodo puede ejecutar una secuencia de juegos internos, evitando hardcodeo de escenas y habilitando composición por datos.
 
-Qu├⌐ problema resolvi├│:
-- Un nodo r├¡gido limita variaciones de gameplay y obliga a cambios de c├│digo para cada ajuste de contenido.
+Qué problema resolvió:
+- Un nodo rígido limita variaciones de gameplay y obliga a cambios de código para cada ajuste de contenido.
 
-Qu├⌐ se implement├│:
+Qué se implementó:
 - Armado de `plan_de_partida` con `juegos` internos y continuidad.
 - APIs globales para iniciar, consultar, avanzar y finalizar partida de nodo.
-- Orquestaci├│n mapa -> apertura -> juego -> continuidad -> cierre.
+- Orquestación mapa -> apertura -> juego -> continuidad -> cierre.
 
 Impacto para el jugador y para producto:
-- Un nodo puede combinar m├ís de una actividad sin hardcodear escenas.
+- Un nodo puede combinar más de una actividad sin hardcodear escenas.
 - Se escala contenido con menor costo de mantenimiento.
-- El dise├▒o pedag├│gico gana flexibilidad.
+- El diseño pedagógico gana flexibilidad.
 
 Evidencia:
 - `wiki/Partida-por-nodo.md`
@@ -151,22 +151,22 @@ Evidencia:
 - `project/contenido/mapa/celiaquia_mapa.json`
 - Commit: `30760ef` (multi-game node support)
 
-### [≡ƒôª CONTENIDO] 2026-05-03 | Contenido JSON desacoplado para nodos jugables
+### [ CONTENIDO] 2026-05-03 | Contenido JSON desacoplado para nodos jugables
 
-Se reforz├│ el desacople entre l├│gica del juego y contenido de actividades, priorizando nodos definidos por JSON.
+Se reforzó el desacople entre lógica del juego y contenido de actividades, priorizando nodos definidos por JSON.
 
-Qu├⌐ problema resolvi├│:
-- Con contenido embebido en escenas, cada cambio de actividad obligaba a tocar c├│digo o assets de gameplay.
+Qué problema resolvió:
+- Con contenido embebido en escenas, cada cambio de actividad obligaba a tocar código o assets de gameplay.
 
-Qu├⌐ se implement├│:
-- Contrato de carga/validaci├│n de contenido por nodo.
-- Soporte de modos y normalizaci├│n de payload para runtime.
+Qué se implementó:
+- Contrato de carga/validación de contenido por nodo.
+- Soporte de modos y normalización de payload para runtime.
 - Mapa con nodos que contienen `games` y rutas JSON.
 
 Impacto:
 - Se pueden sumar actividades por JSON sin tocar la arquitectura base.
 - Mejora mantenibilidad de contenido.
-- Facilita expansi├│n de recorridos.
+- Facilita expansión de recorridos.
 
 Evidencia:
 - `wiki/Contenido-JSON-Nodos.md`
@@ -176,26 +176,26 @@ Evidencia:
 - `project/niveles/nodos/celiaquia/*.json`
 - Commit: `6850568` (JSON content flow)
 
-### [≡ƒº¬ TESTING / CI] Falta confirmar fecha exacta | Validaciones de smoke y CI por objetivos
+### [ TESTING / CI] Falta confirmar fecha exacta | Validaciones de smoke y CI por objetivos
 
-Se orden├│ la validaci├│n en CI para cubrir flujo jugable m├¡nimo y salud t├⌐cnica sin mezclar objetivos.
+Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técnica sin mezclar objetivos.
 
-Qu├⌐ valida el smoke:
+Qué valida el smoke:
 - Arranque de flujo principal y paso por mapa/gameplay.
-- Nodos cr├¡ticos del runtime y contratos m├¡nimos de escena.
-- Cierre y retorno en flujo de finalizaci├│n.
+- Nodos críticos del runtime y contratos mínimos de escena.
+- Cierre y retorno en flujo de finalización.
 
-Qu├⌐ cubre CI hoy:
+Qué cubre CI hoy:
 - `Docs / Tracking`: trazabilidad documental en PR.
 - `Technical Health`: guardrails de estructura y lint condicional.
-- `Gameplay Smoke`: flujo m├¡nimo jugable con import headless y logs.
+- `Gameplay Smoke`: flujo mínimo jugable con import headless y logs.
 
-Qu├⌐ queda fuera:
+Qué queda fuera:
 - Persistencia profunda, todos los tracks y UI fina por modalidad.
 
-Por qu├⌐ reduce riesgo para la demo:
-- Detecta temprano roturas visibles de navegaci├│n y gameplay.
-- Evita merges sin documentaci├│n m├¡nima.
+Por qué reduce riesgo para la demo:
+- Detecta temprano roturas visibles de navegación y gameplay.
+- Evita merges sin documentación mínima.
 - Mantiene un gate liviano para iterar sin perder control.
 
 Evidencia:
@@ -208,42 +208,42 @@ Evidencia:
 - `scripts/run-godot-validation.ps1`
 
 Falta confirmar:
-- Fecha exacta de consolidaci├│n final del esquema actual de workflows.
+- Fecha exacta de consolidación final del esquema actual de workflows.
 
-## Organizado por categor├¡a
+## Organizado por categoría
 
-### ≡ƒÉ₧ Bugs / Estabilidad
-- **2026-05-13** - **Correcci├│n del plato** - Se ajust├│ la interacci├│n de arrastre para evitar respuestas inconsistentes en intentos incorrectos.
+### Bugs / Estabilidad
+- **2026-05-13** - **Corrección del plato** - Se ajustó la interacción de arrastre para evitar respuestas inconsistentes en intentos incorrectos.
 
-### ≡ƒôè UI & Progreso
+### UI & Progreso
 - **2026-05-10** - **Barra de progreso** - El jugador ahora ve su avance dentro de la secuencia del nodo con un indicador consistente.
 
-### Γ£à UX & Cierre
-- **2026-05-10** - **Lecci├│n terminada / finalizaci├│n de nodo** - Se agreg├│ un cierre expl├¡cito con retorno ordenado al mapa.
+### UX & Cierre
+- **2026-05-10** - **Lección terminada / finalización de nodo** - Se agregó un cierre explícito con retorno ordenado al mapa.
 
-### ≡ƒº⌐ Gameplay & Modalidades
+### Gameplay & Modalidades
 - **2026-05-05** - **Partida por nodo** - Un nodo puede combinar varios juegos internos sin hardcodear escenas.
-- **Falta confirmar fecha** - **Vinculaci├│n de conceptos** - Modalidad integrada al mismo flujo de continuidad del nodo.
+- **Falta confirmar fecha** - **Vinculación de conceptos** - Modalidad integrada al mismo flujo de continuidad del nodo.
 
-### ≡ƒôª Contenido
-- **2026-05-03** - **Contenido JSON desacoplado** - El contenido jugable se define por JSON con contrato de carga y validaci├│n.
-- **2026-05-13** - **Actualizaci├│n de cat├ílogo celiaqu├¡a** - Se ajust├│ cat├ílogo de ├¡tems y archivos de contenido para sostener actividades del track.
+### Contenido
+- **2026-05-03** - **Contenido JSON desacoplado** - El contenido jugable se define por JSON con contrato de carga y validación.
+- **2026-05-13** - **Actualización de catálogo celiaquía** - Se ajustó catálogo de ítems y archivos de contenido para sostener actividades del track.
 
-### ≡ƒÆ╛ Persistencia
-- **2026-04-02** - **Persistencia local base** - Se consolid├│ guardado de perfil y progreso local sin backend.
-- **2026-04-04** - **Multi-partida interna** - El formato pas├│ a soportar m├ís de una sesi├│n por perfil.
+### Persistencia
+- **2026-04-02** - **Persistencia local base** - Se consolidó guardado de perfil y progreso local sin backend.
+- **2026-04-04** - **Multi-partida interna** - El formato pasó a soportar más de una sesión por perfil.
 - **2026-04-06** - **Guardado parcial** - Se guarda progreso parcial para retomar actividades.
 
-### ≡ƒöº Infraestructura
-- **Falta confirmar fecha** - **Split de workflows por objetivo** - Se separ├│ documentaci├│n, salud t├⌐cnica y smoke jugable en pipelines distintos.
+### Infraestructura
+- **Falta confirmar fecha** - **Split de workflows por objetivo** - Se separó documentación, salud técnica y smoke jugable en pipelines distintos.
 
-### ≡ƒº¬ Testing / CI
-- **Falta confirmar fecha** - **Smoke test vertical** - Se valid├│ el flujo m├¡nimo jugable y contratos cr├¡ticos de escena/runtime.
-- **Falta confirmar fecha** - **Script de validaci├│n local** - Se estandariz├│ ejecuci├│n local por modo (`technical`, `smoke`, `ci`, `full`).
+### Testing / CI
+- **Falta confirmar fecha** - **Smoke test vertical** - Se validó el flujo mínimo jugable y contratos críticos de escena/runtime.
+- **Falta confirmar fecha** - **Script de validación local** - Se estandarizó ejecución local por modo (`technical`, `smoke`, `ci`, `full`).
 
 ## Historial completo
 
-No se borra historial ├║til. Esta secci├│n conserva contexto por etapa y ayuda a reconstruir decisiones.
+No se borra historial útil. Esta sección conserva contexto por etapa y ayuda a reconstruir decisiones.
 
 ### Pre-POC
 
@@ -251,64 +251,64 @@ No se borra historial ├║til. Esta secci├│n conserva contexto por etapa y
 
 ### POC
 
-- Falta confirmar consolidaci├│n de POC en [01-POC.md](01-POC.md).
-- Mientras tanto, el contexto t├⌐cnico relevante queda repartido entre [Architecture.md](Architecture.md), [Partida-por-nodo.md](Partida-por-nodo.md) y esta Bit├ícora.
+- Falta confirmar consolidación de POC en [01-POC.md](01-POC.md).
+- Mientras tanto, el contexto técnico relevante queda repartido entre [Architecture.md](Architecture.md), [Partida-por-nodo.md](Partida-por-nodo.md) y esta Bitácora.
 
 ### Entrega 1
 
 #### 2026-04-02 | Persistencia local + CI base
-Se agreg├│ persistencia local de usuario con progreso y se formaliz├│ validaci├│n inicial en CI para sostener la continuidad de demo.
+Se agregó persistencia local de usuario con progreso y se formalizó validación inicial en CI para sostener la continuidad de demo.
 
 #### 2026-04-04 | Persistencia multi-partida interna
-El formato dej├│ de depender de un ├║nico save impl├¡cito y pas├│ a soportar varias sesiones por perfil, aunque la UI visible prioriza continuidad simple.
+El formato dejó de depender de un único save implícito y pasó a soportar varias sesiones por perfil, aunque la UI visible prioriza continuidad simple.
 
 #### 2026-04-06 | Guardado parcial por nivel
-Se incorpor├│ guardado parcial de avance para retomar actividades sin reiniciar desde cero.
+Se incorporó guardado parcial de avance para retomar actividades sin reiniciar desde cero.
 
 #### 2026-04-08 | Endurecimiento de quick save
-Se ajust├│ serializaci├│n para tolerar estados incompletos y sostener compatibilidad.
+Se ajustó serialización para tolerar estados incompletos y sostener compatibilidad.
 
 #### 2026-05-03 | Mejora de flujo JSON en mapa
-Se reforz├│ el esquema de nodos desde JSON para reducir acoplamiento con escenas.
+Se reforzó el esquema de nodos desde JSON para reducir acoplamiento con escenas.
 
 #### 2026-05-05 | Partida por nodo multi-juego
-Se habilit├│ secuencia de juegos internos por nodo con continuidad.
+Se habilitó secuencia de juegos internos por nodo con continuidad.
 
 #### 2026-05-10 | Barra de progreso
-Se incorpor├│ visual de avance en modalidad para mejorar lectura de progreso.
+Se incorporó visual de avance en modalidad para mejorar lectura de progreso.
 
-#### 2026-05-10 | Lecci├│n completa
-Se agreg├│ escena y flujo de finalizaci├│n para cierre m├ís claro.
+#### 2026-05-10 | Lección completa
+Se agregó escena y flujo de finalización para cierre más claro.
 
-#### 2026-05-10 a 2026-05-12 | Vinculaci├│n integrada
-Se integr├│ modalidad de vinculaci├│n al flujo de nodo y continuidad compartida con el resto de modalidades.
+#### 2026-05-10 a 2026-05-12 | Vinculación integrada
+Se integró modalidad de vinculación al flujo de nodo y continuidad compartida con el resto de modalidades.
 
 #### 2026-05-13 | Bug del plato
-Se corrigi├│ comportamiento inconsistente en arrastre sobre plato.
+Se corrigió comportamiento inconsistente en arrastre sobre plato.
 
 #### 2026-05-14 | Mapa completo
 Se actualizaron elementos visuales del mapa para reflejar continuidad del recorrido.
 
 ### Entrega 2
 
-- Falta confirmar alcance y versi├│n final de [03-Entrega-2.md](03-Entrega-2.md).
+- Falta confirmar alcance y versión final de [03-Entrega-2.md](03-Entrega-2.md).
 
-### Pr├│ximas entregas
+### Próximas entregas
 
 - Falta confirmar hoja de ruta consolidada en [04-Entrega-3.md](04-Entrega-3.md).
 
 ## Insumo para Entrega 1
 
-> La s├¡ntesis formal de la Entrega 1 se encuentra en [02-Entrega-1.md](02-Entrega-1.md).
+> La síntesis formal de la Entrega 1 se encuentra en [02-Entrega-1.md](02-Entrega-1.md).
 
-Estos avances deber├¡an pasar a [02-Entrega-1.md](02-Entrega-1.md) como n├║cleo defendible de producto:
+Estos avances deberían pasar a [02-Entrega-1.md](02-Entrega-1.md) como núcleo defendible de producto:
 
 - Persistencia local: el jugador puede retomar su progreso sin depender de servicios externos.
 - Guardado parcial: evita reinicios completos y mejora continuidad de uso.
-- Contenido JSON desacoplado: sumar o ajustar actividades requiere menos cambios de c├│digo.
+- Contenido JSON desacoplado: sumar o ajustar actividades requiere menos cambios de código.
 - Partida por nodo: un nodo puede combinar varios juegos internos sin hardcodear escenas.
-- Barra de progreso: el jugador ahora entiende cu├ínto le falta para terminar.
-- Lecci├│n terminada: la actividad ya no termina de forma abrupta y deja un cierre legible.
-- Vinculaci├│n de conceptos: agrega variedad pedag├│gica y demuestra extensibilidad del flujo.
+- Barra de progreso: el jugador ahora entiende cuánto le falta para terminar.
+- Lección terminada: la actividad ya no termina de forma abrupta y deja un cierre legible.
+- Vinculación de conceptos: agrega variedad pedagógica y demuestra extensibilidad del flujo.
 - Correcciones de estabilidad: reduce errores visibles en gameplay durante demo.
-- Validaciones CI / smoke test: baja riesgo de regresiones en navegaci├│n y flujo jugable m├¡nimo.
+- Validaciones CI / smoke test: baja riesgo de regresiones en navegación y flujo jugable mínimo.

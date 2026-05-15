@@ -1,4 +1,4 @@
-# 🏗️ Propuesta: Wiki Moderna con GitHub Native Features
+﻿# 🏗️ Propuesta: Wiki Moderna con GitHub Native Features
 
 ## Opciones Modernas Disponibles
 
@@ -83,8 +83,8 @@ graph TD
 ```markdown
 # ADR-001: MusicManager Centralizado
 
-**Estado**: Aprobado ✅  
-**Fecha**: 2026-04-27  
+**Estado**: Aprobado ✅
+**Fecha**: 2026-04-27
 **Stakeholders**: @Agusdiisanto
 
 ## Problema

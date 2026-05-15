@@ -1,181 +1,147 @@
-# User Stories — Entrega 1
+﻿# User Stories — Entrega 1
 
-## Resumen
+## US-01 — Avanzar en un recorrido educativo
 
-Estas historias fueron simplificadas para que reflejen el alcance real y defendible de la demo. La prioridad no es mostrar una plataforma completa, sino una base jugable clara, con evidencia concreta en código y sin inventar componentes no confirmados.
-
-## US-01 — Elegir un capítulo jugable
-
-**Actor:** Jugador  
-**Funcionalidad:** Seleccionar un capítulo habilitado desde el recorrido.  
-**Valor:** Entrar al juego de forma simple y entender qué contenido puede jugar.
+**Actor/es:** Jugador
+**Funcionalidad:** Elegir un nodo en el mapa y avanzar dentro del recorrido educativo. El mapa refleja visualmente el progreso y permite rejugar lecciones ya completadas.
+**Valor que aporta:** El jugador sabe dónde está, qué puede jugar y siente que su avance queda registrado.
 
 ### Criterios de aceptación
 
-- Dado un recorrido disponible,
-- Cuando el jugador abre el libro correspondiente,
-- Entonces puede seleccionar un capítulo habilitado.
+- Dado que el jugador está en el mapa, cuando elige un nodo habilitado, entonces puede iniciar y completar esa lección.
+- Dado que el jugador completó un nodo, cuando vuelve al mapa, entonces ese nodo aparece visualmente como terminado.
+- Dado que el jugador quiere repasar, cuando elige un nodo ya completado, entonces puede rejugarlo sin restricción.
 
-### Evidencia
+### Tickets relacionados
 
-- [project/interface/libro.gd](../../project/interface/libro.gd)
-- [project/interface/libro-vegan.gd](../../project/interface/libro-vegan.gd)
-- [project/interface/Libro-Vegan-GF.gd](../../project/interface/Libro-Vegan-GF.gd)
-- [project/niveles/global.gd](../../project/niveles/global.gd)
+- UNQ-84 — Implementar actualización visual del mapa al completar un capítulo
+- UNQ-93 — Permitir rejugar lecciones completadas del Mapa
+- UNQ-124 — Corregir lineamiento del Mapa
+
+### Mockups / evidencia visual
+
+Pendiente de adjuntar captura o mockup.
 
 ### Estado
 
-Confirmada.
+Terminada.
 
-## US-02 — Resolver un desafío de arrastre
+---
 
-**Actor:** Jugador  
-**Funcionalidad:** Completar una actividad de clasificación de alimentos.  
-**Valor:** Aprender contenido alimentario mediante una interacción directa.
+## US-02 — Resolver modalidades educativas
+
+**Actor/es:** Jugador
+**Funcionalidad:** Resolver actividades interactivas de tipo Plato, Pregunta o Vincular conceptos, con dificultad progresiva y niveles de contenido diferenciados.
+**Valor que aporta:** El jugador aprende contenido alimentario mediante interacción, no solo leyendo.
 
 ### Criterios de aceptación
 
-- Dado un capítulo activo,
-- Cuando el jugador arrastra ítems al área de juego,
-- Entonces la actividad valida la acción y permite completar el desafío.
+- Dado que el jugador inicia una partida, cuando se le presenta una modalidad (Plato, Pregunta o Vincular), entonces puede interactuar y completarla.
+- Dado que el jugador responde, cuando la respuesta es incorrecta, entonces la actividad da una señal clara y permite reintentar o continuar.
+- Dado que el jugador avanza en nodos, cuando el nodo tiene mayor dificultad configurada, entonces el contenido presentado es más exigente.
 
-### Evidencia
+### Tickets relacionados
 
-- [project/niveles/nivel_1/Level.gd](../../project/niveles/nivel_1/Level.gd)
-- [project/niveles/manager_level.gd](../../project/niveles/manager_level.gd)
-- [project/resources/level_resource.gd](../../project/resources/level_resource.gd)
-- [project/resources/level_item.gd](../../project/resources/level_item.gd)
-- [project/items/ItemLevel.gd](../../project/items/ItemLevel.gd)
+- UNQ-127 — Modalidad Plato - error
+- UNQ-126 — Transparencia Pregunta
+- UNQ-60 — Implementar nueva modalidad de juego - vincular
+- UNQ-123 — Diseñar modalidad de juego - Vincular conceptos
+- UNQ-128 — Modalidad Vincular - proceso
+- UNQ-110 — Implementar nuevos niveles de preguntas de Celiaquía con dificultad progresiva
+
+### Mockups / evidencia visual
+
+Pendiente de adjuntar captura o mockup.
 
 ### Estado
 
-Confirmada.
+Terminada.
 
-## US-03 — Ver el progreso del recorrido
+---
 
-**Actor:** Jugador  
-**Funcionalidad:** Reconocer qué capítulos completó y cuáles siguen disponibles.  
-**Valor:** Entender su avance sin necesitar infraestructura adicional.
+## US-03 — Ver progreso y motivación durante la partida
+
+**Actor/es:** Jugador
+**Funcionalidad:** Ver señales de avance en tiempo real: barra de progreso, estado de racha, EXP acumulada y resumen de progreso semanal.
+**Valor que aporta:** El jugador entiende cuánto avanzó dentro de la sesión y siente motivación para continuar.
 
 ### Criterios de aceptación
 
-- Dado un capítulo completado,
-- Cuando el jugador vuelve al libro,
-- Entonces el estado de desbloqueo refleja el avance alcanzado.
+- Dado que el jugador está dentro de una partida, cuando avanza, entonces la barra de progreso se actualiza.
+- Dado que el jugador mantiene una racha activa, cuando llega al juego, entonces el indicador de racha refleja su estado actual.
+- Dado que el jugador completa un nodo, cuando termina, entonces se le acredita EXP y puede ver cuánto acumuló.
 
-### Evidencia
+### Tickets relacionados
 
-- [project/niveles/global.gd](../../project/niveles/global.gd)
-- [project/interface/libro.gd](../../project/interface/libro.gd)
-- [project/niveles/nivel_1/Level.gd](../../project/niveles/nivel_1/Level.gd)
+- UNQ-89 — Implementar barra de progreso durante partida
+- UNQ-121 — Diseñar indicador de progreso durante partida
+- UNQ-83 — Diseñar indicador visual de estado de racha al ingresar al juego
+- UNQ-97 — Implementar experiencia de usuario con EXP acumulada
+- UNQ-115 — Implementar resumen semanal de progreso
+
+### Mockups / evidencia visual
+
+Pendiente de adjuntar captura o mockup.
 
 ### Estado
 
-Confirmada.
+Terminada.
 
-## US-04 — Recibir un cierre pedagógico al terminar
+---
 
-**Actor:** Jugador  
-**Funcionalidad:** Ver una enseñanza asociada al capítulo al completar la actividad.  
-**Valor:** Vincular el resultado del juego con el contenido educativo.
+## US-04 — Recibir un cierre claro de lección
+
+**Actor/es:** Jugador
+**Funcionalidad:** Ver una pantalla de lección terminada con feedback de resultado, EXP obtenida y, si el nodo fue perfecto, un sonido o señal especial.
+**Valor que aporta:** El jugador cierra la actividad con una experiencia completa, sin corte abrupto, y con sensación real de logro.
 
 ### Criterios de aceptación
 
-- Dado un capítulo resuelto correctamente,
-- Cuando el jugador llega al cierre de la actividad,
-- Entonces se muestra una enseñanza antes de continuar.
+- Dado que el jugador completa todos los pasos de una lección, cuando termina, entonces aparece la pantalla de cierre con el resultado.
+- Dado que la pantalla de cierre se muestra, cuando el nodo fue completado de forma perfecta, entonces se reproduce un sonido o efecto diferenciado.
+- Dado que el jugador ve la pantalla de cierre, cuando decide continuar, entonces vuelve al mapa sin errores.
 
-### Evidencia
+### Tickets relacionados
 
-- [project/niveles/nivel_1/Level.gd](../../project/niveles/nivel_1/Level.gd)
-- [project/niveles/ensenanzas.gd](../../project/niveles/ensenanzas.gd)
-- [project/niveles/ensenanzaveganismo.gd](../../project/niveles/ensenanzaveganismo.gd)
+- UNQ-94 — Implementar pantalla de Lección Terminada
+- UNQ-118 — Diseñar pantalla de Lección Terminada
+- UNQ-116 — Implementar sonido especial por nodo perfecto
+
+### Mockups / evidencia visual
+
+Pendiente de adjuntar captura o mockup.
 
 ### Estado
 
-Confirmada.
+Terminada.
 
-## US-05 — Retomar progreso local entre sesiones
+---
 
-**Actor:** Jugador  
-**Funcionalidad:** Recuperar avance guardado al volver a entrar.  
-**Valor:** No perder contexto entre partidas.
+## US-05 — Mejorar continuidad, estabilidad y base técnica
+
+**Actor/es:** Jugador / Equipo de desarrollo
+**Funcionalidad:** Corregir errores críticos (audio, dificultad, reposicionamiento), desacoplar contenido del código mediante JSON, y sostener partidas por nodo con modalidades aleatorias.
+**Valor que aporta:** La demo corre de forma más robusta, el contenido se puede actualizar sin tocar scripts, y la experiencia es más consistente para el jugador.
 
 ### Criterios de aceptación
 
-- Dado un progreso guardado localmente,
-- Cuando el jugador vuelve a abrir la demo,
-- Entonces puede continuar desde un estado previo.
+- Dado que el jugador juega una sesión prolongada, cuando el audio termina su loop, entonces no se corta ni genera silencio.
+- Dado que el jugador selecciona un nodo, cuando inicia la partida, entonces la modalidad se asigna correctamente con dificultad progresiva.
+- Dado que una respuesta incorrecta es reposicionada, cuando el jugador vuelve a verla, entonces aparece en una posición distinta.
+- Dado que el contenido de una lección se carga, cuando el sistema lo lee, entonces proviene de un archivo JSON externo, no hardcodeado.
 
-### Evidencia
+### Tickets relacionados
 
-- [Bitacora.md](../Bitacora.md)
-- [Persistencia-Local.md](../Persistencia-Local.md)
+- UNQ-100 — Implementar partidas por nodo con modalidades aleatorias
+- UNQ-106 — Implementar dificultad progresiva por nodo
+- UNQ-119 — Implementar contenido desacoplado de nodos mediante JSON
+- UNQ-104 — Corregir corte de música durante sesiones prolongadas
+- UNQ-92 — Implementar reposicionamiento dinámico de respuestas incorrectas
 
-### Estado
+### Mockups / evidencia visual
 
-Falta confirmar.
-
-Motivo: en esta rama no se encontró `SaveManager.gd` ni otra implementación verificable de persistencia local explícita.
-
-## US-06 — Abrir un nodo y recorrer juegos internos
-
-**Actor:** Jugador  
-**Funcionalidad:** Iniciar un nodo jugable que organice varias modalidades.  
-**Valor:** Tener una experiencia más cercana al recorrido completo planteado en producto.
-
-### Criterios de aceptación
-
-- Dado un nodo del mapa,
-- Cuando el jugador lo abre,
-- Entonces puede atravesar una secuencia de juegos internos hasta completar el nodo.
-
-### Evidencia
-
-- [Bitacora.md](../Bitacora.md)
-- [Architecture.md](../Architecture.md)
+Pendiente de adjuntar captura o mockup.
 
 ### Estado
 
-Falta confirmar.
-
-Motivo: los componentes técnicos citados en la wiki para este flujo no están presentes en `project/` dentro de esta rama.
-
-Falta confirmar:
-- Referencia formal de ticket o ID externo del bug.
-
-## US-09 — Validaciones CI / smoke
-
-**Como** equipo de desarrollo,  
-**quiero** validar el flujo mínimo jugable de forma automática,  
-**para** reducir el riesgo de romper la demo.
-
-### Descripción
-
-Se consolidó un esquema de CI por objetivos con un smoke test enfocado en el recorrido crítico.
-
-### Valor que aporta
-
-Detecta regresiones tempranas en navegación y apertura de gameplay antes de mergear.
-
-### Criterios de aceptación
-
-- Dado un cambio en pull request,
-- Cuando corren los workflows de validación,
-- Entonces se ejecutan checks de documentación, salud técnica y flujo jugable mínimo.
-
-### Evidencia
-
-- [Bitacora.md](../Bitacora.md)
-- [CI.md](../CI.md)
-- [.github/workflows/docs-pr.yml](../../.github/workflows/docs-pr.yml)
-- [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
-- [.github/workflows/gameplay-smoke-pr.yml](../../.github/workflows/gameplay-smoke-pr.yml)
-- [project/tests/vertical_slice_smoke_test.gd](../../project/tests/vertical_slice_smoke_test.gd)
-
-### Estado
-
-Parcial.
-
-Falta confirmar:
-- Fecha de consolidación final del esquema de workflows actual.
+Terminada.
