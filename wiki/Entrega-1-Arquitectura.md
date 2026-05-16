@@ -4,7 +4,8 @@
 
 [Abrir diagrama interactivo MER](mer.html) — *Usa zoom (+/-), rueda del mouse o arrastra para navegar*
 
-![Modelo de Entidades y Relaciones](Mer.png)
+<img width="5038" height="2178" alt="image" src="https://github.com/user-attachments/assets/dbfaec38-674b-4f3a-a068-0f339783ed3f" />
+
 
 ## Historia testigo
 
