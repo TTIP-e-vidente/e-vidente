@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+msg_file="${1:-}"
+if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+	exit 0
+fi
+
+# Remove Copilot/Autopilot co-author trailers before commit is finalized.
+perl -i -ne "print unless /^Co-authored-by:.*(?:copilot|autopilot)/i" "$msg_file"
