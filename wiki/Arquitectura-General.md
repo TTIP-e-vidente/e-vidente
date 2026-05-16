@@ -136,7 +136,7 @@ self.modulate = color
 | Doc | Qué Es | Cuándo |
 |---|---|---|
 | [Home.md](Home.md) | Índice | Primero |
-| [Getting-Started.md](Getting-Started.md) | Setup | Primera vez |
+| [Como-Empezar.md](Como-Empezar.md) | Setup | Primera vez |
 | [Modelo-Entidad-Relacion.md](Modelo-Entidad-Relacion.md) | MER lógico editable | Entrega TTIP |
 | [Persistencia-Local.md](Persistencia-Local.md) | Deep dive | Trabajando con saves |
 | [CI.md](CI.md) | Validaciones | Cuando falla un check |
