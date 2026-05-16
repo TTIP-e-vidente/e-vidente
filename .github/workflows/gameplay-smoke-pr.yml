@@ -39,8 +39,10 @@ jobs:
 
       - name: Upload validation logs
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: gameplay-smoke-logs-run-${{ github.run_number }}-attempt-${{ github.run_attempt }}
           path: validation-logs/gameplay
+          if-no-files-found: warn
           retention-days: 14
