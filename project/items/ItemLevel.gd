@@ -89,6 +89,20 @@ func set_interaction_enabled(enabled: bool) -> void:
 func is_interaction_enabled() -> bool:
 	return interaction_enabled
 
+
+func set_interaction_enabled(enabled: bool) -> void:
+	interaction_enabled = enabled
+	if not interaction_enabled and is_dragging == self:
+		is_dragging = null
+	draggable = false
+	scale = Vector2.ONE
+	if is_instance_valid(area_2d):
+		area_2d.input_pickable = interaction_enabled
+
+
+func is_interaction_enabled() -> bool:
+	return interaction_enabled
+
 func _process(_delta):
 	if not interaction_enabled:
 		return

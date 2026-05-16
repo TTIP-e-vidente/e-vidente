@@ -1,0 +1,187 @@
+[gd_scene format=3 uid="uid://btw41ex60ytny"]
+
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_b7sy5"]
+[ext_resource type="Script" uid="uid://3x2o6jicuftb" path="res://preguntas/preguntas_control.gd" id="1_dlf6l"]
+[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_4my4u"]
+[ext_resource type="Resource" uid="uid://yt3ganvy1l4o" path="res://preguntas/theme/theme_varias_preguntas.tres" id="2_onqq7"]
+[ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="3_78ome"]
+[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="4_78ome"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_dlf6l"]
+[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_dlf6l"]
+[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_x3ikk"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
+line_spacing = -6.525
+font = ExtResource("6_x3ikk")
+font_size = 26
+
+[node name="Preguntas" type="Node2D" unique_id=653993520]
+script = ExtResource("1_dlf6l")
+quiz = ExtResource("2_onqq7")
+correcto = Color(0.25544092, 0.55395013, 0.24246675, 1)
+incorrecto = Color(0.8098167, 0.29154578, 0.21364143, 1)
+
+[node name="Contenido" type="Control" parent="." unique_id=1424383837]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1156.0
+offset_bottom = 805.0
+size_flags_horizontal = 4
+
+[node name="Color Fondo" type="ColorRect" parent="Contenido" unique_id=25828125]
+layout_mode = 0
+offset_left = -12.0
+offset_top = -4.0
+offset_right = 1158.0
+offset_bottom = 804.0
+
+[node name="fondo" type="Sprite2D" parent="Contenido" unique_id=24097276]
+position = Vector2(575, 401.00003)
+scale = Vector2(0.33295324, 0.32512093)
+texture = ExtResource("1_b7sy5")
+
+[node name="tematica" type="Sprite2D" parent="Contenido" unique_id=812734645]
+position = Vector2(165, 98)
+scale = Vector2(0.46648043, 0.46648043)
+texture = ExtResource("2_4my4u")
+
+[node name="fondoPregunta" type="Sprite2D" parent="Contenido" unique_id=1552939648]
+position = Vector2(582, 300)
+scale = Vector2(0.71999997, 1)
+texture = ExtResource("3_78ome")
+flip_h = true
+
+[node name="Informacion" type="VBoxContainer" parent="Contenido" unique_id=1312854159]
+layout_mode = 0
+offset_left = 282.0
+offset_top = 251.00002
+offset_right = 1065.0
+offset_bottom = 382.0
+scale = Vector2(0.75999546, 0.8016403)
+
+[node name="Pregunta" type="Label" parent="Contenido/Informacion" unique_id=1328656126]
+layout_mode = 2
+label_settings = SubResource("LabelSettings_b7sy5")
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Visual" type="Panel" parent="Contenido/Informacion" unique_id=1334384024]
+layout_mode = 2
+
+[node name="Imagen" type="TextureRect" parent="Contenido/Informacion/Visual" unique_id=1530920456]
+layout_mode = 0
+offset_left = -66.66677
+offset_top = 38.584396
+offset_right = 122.33323
+offset_bottom = 247.5844
+scale = Vector2(4.7051425, 0.33421043)
+expand_mode = 2
+
+[node name="Video" type="VideoStreamPlayer" parent="Contenido/Informacion/Visual" unique_id=846459775]
+visible = false
+layout_mode = 0
+offset_left = 167.0
+offset_top = -45.0
+offset_right = 282.0
+offset_bottom = 65.0
+
+[node name="Preguntas" type="VBoxContainer" parent="Contenido" unique_id=420108498]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 454.0
+offset_right = 899.0
+offset_bottom = 682.0
+theme_override_constants/separation = 20
+
+[node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=807593821]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 24
+icon = ExtResource("4_78ome")
+flat = true
+icon_alignment = 1
+
+[node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.07
+theme_override_font_sizes/font_size = 24
+icon = ExtResource("5_dlf6l")
+flat = true
+icon_alignment = 1
+
+[node name="Atrás" type="Button" parent="Contenido" unique_id=1720405508]
+layout_mode = 0
+offset_left = 67.0
+offset_top = 639.00006
+offset_right = 296.0
+offset_bottom = 907.00006
+scale = Vector2(0.43999937, 0.38499945)
+text = "
+"
+icon = ExtResource("4_dlf6l")
+flat = true
+
+[node name="Audio" type="AudioStreamPlayer2D" parent="Contenido" unique_id=1701779833]
+scale = Vector2(1.001928, 1)
+
+[node name="GameOver" type="ColorRect" parent="Contenido" unique_id=1092518321]
+visible = false
+layout_mode = 0
+offset_left = 214.0
+offset_top = 65.0
+offset_right = 988.0
+offset_bottom = 739.0
+color = Color(0.9169994, 0.91966766, 0.88444364, 1)
+
+[node name="Aciertos" type="Label" parent="Contenido/GameOver" unique_id=1446434173]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -205.0
+offset_top = -169.0
+offset_right = 198.0
+offset_bottom = -58.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.06469653, 0.06469653, 0.06469653, 1)
+theme_override_font_sizes/font_size = 81
+text = "Aciertos:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Puntaje" type="Label" parent="Contenido/GameOver" unique_id=1733394229]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -205.0
+offset_top = -38.0
+offset_right = 198.0
+offset_bottom = 73.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.06469653, 0.06469653, 0.06469653, 1)
+theme_override_font_sizes/font_size = 81
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="JugarNuevamente" type="Button" parent="Contenido/GameOver" unique_id=2025710647]
+layout_mode = 0
+offset_left = 199.0
+offset_top = 436.0
+offset_right = 568.0
+offset_bottom = 575.0
+theme_override_font_sizes/font_size = 28
+text = "Volver a Jugar"
+icon = ExtResource("5_dlf6l")
+flat = true
+icon_alignment = 1
+
+[connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]

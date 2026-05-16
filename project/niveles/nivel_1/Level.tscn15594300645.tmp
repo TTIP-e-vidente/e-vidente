@@ -1,10 +1,12 @@
 [gd_scene format=3 uid="uid://c1bp4qhmya5yi"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_g0f04"]
-[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_4r6cp"]
 [ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="2_l8wda"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="3_7cyqn"]
+[ext_resource type="Texture2D" uid="uid://bbjh2hk0e038c" path="res://assets-sistema/iconos/alimentos-info/victoria-1.png" id="3_see7y"]
+[ext_resource type="Texture2D" uid="uid://donqsx85yrnt7" path="res://assets-sistema/iconos/alimentos-info/victoria-2.png" id="4_n0nr7"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="4_tsdj3"]
+[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="5_0hx18"]
 [ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="5_s52e6"]
 [ext_resource type="Texture2D" uid="uid://dmn87wiwf0fx" path="res://assets-sistema/interfaz/menu-fondo.png" id="6_s2en4"]
 [ext_resource type="Texture2D" uid="uid://cbxk0c1fonh8l" path="res://assets-sistema/interfaz/lupa.png" id="8_l1124"]
@@ -37,12 +39,20 @@
 [ext_resource type="Texture2D" uid="uid://811ps8f6u20x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="36_4r6cp"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_yoibg"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_yoibg"]
-[ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
-[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="40_continuar"]
-[ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="40_m0gd1"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_054us"]
-animations = []
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_see7y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_n0nr7")
+}],
+"loop": true,
+"name": &"victory",
+"speed": 5.0
+}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v2l1p"]
 size = Vector2(600, 100)
@@ -167,36 +177,15 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.121569)
 shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ensenanza_cierre"]
-bg_color = Color(0.952941, 0.917647, 0.85098, 0.952941)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.266667, 0.227451, 0.156863, 0.137255)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-shadow_color = Color(0, 0, 0, 0.141176)
-shadow_size = 8
-
 [node name="Level" type="Node" unique_id=1219538818 groups=["pickable"]]
 script = ExtResource("1_g0f04")
 track_key_override = null
 background_music_path = null
-debug_force_streak_feedback = null
-grayscale_on_completion = null
 
-[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_4r6cp")]
-metadata/_edit_use_anchors_ = true
-
-[node name="IndicadorProgresoDeJuego" parent="." unique_id=2060117129 instance=ExtResource("39_g1e6r")]
-visible = false
-
-[node name="TituloNivel" type="Sprite2D" parent="." unique_id=2438636]
-position = Vector2(243, 108)
-scale = Vector2(0.52769804, 0.52368784)
+[node name="TituloNivel" type="Sprite2D" parent="." unique_id=2124096868]
+z_index = 1
+position = Vector2(241.00003, 112)
+scale = Vector2(0.6459068, 0.64590687)
 texture = ExtResource("2_l8wda")
 
 [node name="Victory" type="AnimatedSprite2D" parent="." unique_id=1821481986]
@@ -205,7 +194,7 @@ z_index = 1
 position = Vector2(1079, 54)
 scale = Vector2(0.252046, 0.252046)
 sprite_frames = SubResource("SpriteFrames_054us")
-animation = &""
+animation = &"victory"
 
 [node name="Menú" type="Area2D" parent="." unique_id=1302028089 groups=["droppable"]]
 light_mask = 8
@@ -265,6 +254,19 @@ position = Vector2(998, 432.99997)
 rotation = -0.0939056
 shape = SubResource("CircleShape2D_tpp3g")
 
+[node name="FondoFicha" type="ColorRect" parent="." unique_id=2109054412]
+offset_left = 5.0
+offset_top = 1.0
+offset_right = 1158.0
+offset_bottom = 800.0
+mouse_filter = 2
+color = Color(1, 1, 0.996078, 0.988235)
+
+[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha" unique_id=1397654258]
+position = Vector2(589.394, 400.99997)
+scale = Vector2(0.33721843, 0.33721843)
+texture = ExtResource("5_0hx18")
+
 [node name="Globo texto" type="Sprite2D" parent="." unique_id=943880878]
 position = Vector2(206, 253)
 scale = Vector2(0.638614, 0.638614)
@@ -280,7 +282,7 @@ position = Vector2(882, 255)
 script = ExtResource("12_4i2s4")
 
 [node name="hambre" type="Sprite2D" parent="PlayerCambiante" unique_id=1502413191]
-position = Vector2(-185, -135)
+position = Vector2(-128, -149)
 scale = Vector2(0.474684, 0.425234)
 texture = ExtResource("10_hom3g")
 
@@ -334,24 +336,22 @@ animation_name = "muelto"
 sale_item_negativo = NodePath("../SentirseBastanteMal")
 
 [node name="Atrás" type="Button" parent="." unique_id=1082464570]
-offset_left = 36.0
-offset_top = 632.0
-offset_right = 258.0
-offset_bottom = 907.14294
-scale = Vector2(0.5006558, 0.44468418)
+offset_left = 14.0
+offset_top = 623.0
+offset_right = 243.0
+offset_bottom = 891.0
+scale = Vector2(0.64, 0.56)
 text = "
 "
 icon = ExtResource("25_x7g2d")
 flat = true
 
 [node name="Adelante" type="Button" parent="." unique_id=956013369]
-visible = false
-offset_left = 995.99994
-offset_top = 635.0
-offset_right = 1223.0
-offset_bottom = 868.0
-scale = Vector2(0.49980462, 0.4870445)
-disabled = true
+offset_left = 994.0
+offset_top = 632.0
+offset_right = 1221.0
+offset_bottom = 865.0
+scale = Vector2(0.625337, 0.609372)
 text = "
 "
 icon = ExtResource("26_6so0i")
@@ -386,6 +386,7 @@ offset_left = 1023.0
 offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
+tooltip_text = "Guardar progreso"
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=1129301431]
@@ -434,55 +435,9 @@ self_modulate = Color(1, 1, 1, 0.921569)
 top_level = true
 light_mask = 256
 visibility_layer = 256
-z_index = 13
+z_index = 9
 position = Vector2(577, 407)
 scale = Vector2(1.33952, 1.33952)
-
-[node name="TeachingBackdrop" type="ColorRect" parent="." unique_id=1987654399]
-visible = false
-z_index = 12
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.0627451, 0.0705882, 0.0941176, 0.62)
-
-[node name="TarjetaEnsenanzaCierre" type="PanelContainer" parent="." unique_id=1987654301]
-visible = false
-z_index = 14
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -320.0
-offset_top = -252.0
-offset_right = 320.0
-offset_bottom = -132.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_ensenanza_cierre")
-
-[node name="MargenEnsenanzaCierre" type="MarginContainer" parent="TarjetaEnsenanzaCierre" unique_id=1987654305]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 14
-
-[node name="LabelEnsenanzaCierre" type="Label" parent="TarjetaEnsenanzaCierre/MargenEnsenanzaCierre" unique_id=1987654321]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0784314, 0.0745098, 0.0666667, 1)
-theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 3
-
-[node name="ContinuarJuego" parent="." unique_id=1587037214 instance=ExtResource("40_continuar")]
-layout_mode = 3
 
 [node name="ManagerLevel" type="Node" parent="." unique_id=1848989356]
 script = ExtResource("30_ycctx")
@@ -492,11 +447,9 @@ level_resource_path = "res://niveles/nivel_1/level_1.tres"
 volume_db = -4.962
 attenuation = 2.07053
 
-[node name="ProgressBar" parent="." unique_id=478823511 instance=ExtResource("40_m0gd1")]
-
-[connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]
-[connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_salido"]
-[connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_sprite_animado_2d_animacion_finalizada"]
-[connection signal="pressed" from="Atrás" to="." method="_on_atras_presionado"]
-[connection signal="pressed" from="Adelante" to="." method="_on_adelante_presionado"]
-[connection signal="pressed" from="SaveProgressButton" to="." method="_on_guardar_progreso_boton_presionado"]
+[connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entered"]
+[connection signal="area_exited" from="Lupa" to="Lupa" method="_on_area_exited"]
+[connection signal="animation_finished" from="PlayerCambiante/AnimatedSprite2D" to="PlayerCambiante" method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="pressed" from="Atrás" to="." method="_on_atras_pressed"]
+[connection signal="pressed" from="Adelante" to="." method="_on_adelante_pressed"]
+[connection signal="pressed" from="SaveProgressButton" to="." method="_on_save_progress_button_pressed"]

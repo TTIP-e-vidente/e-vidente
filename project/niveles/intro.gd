@@ -19,6 +19,10 @@ func _ready() -> void:
 	_conectar_continuar_pendiente()
 	_actualizar_continuar_pendiente()
 
+	
+	for b in buttons:
+		if b.material:
+			b.material = b.material.duplicate()
 
 func _on_jugar_pressed() -> void:
 	_abrir_modo_selector()
