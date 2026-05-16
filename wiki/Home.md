@@ -1,8 +1,8 @@
 ﻿# 🎮 E-VIDENTE Docs
 
-Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
+Bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 
-> 🎓 **E-VIDENTE** es un juego educativo sobre alimentación. Tenés 4 recorridos jugables (celiaquia, veganismo, mixto, keto) y un modo preguntas para reforzar.
+> 🎓 **E-VIDENTE** es un juego educativo sobre alimentación. Tenés 4 recorridos jugables.
 
 ---
 
@@ -32,23 +32,6 @@ Esta guía organiza la wiki por etapas de trabajo TTIP y por documentación téc
 
 ---
 
-## Entregas TTIP
-
-### 📦 [Entrega 1](02-Entrega-1.md)
-
-Resumen ejecutivo, qué se hizo, decisiones tomadas y trazabilidad de tickets. Las páginas de detalle están en la subcarpeta:
-
-| Página | Descripción |
-|---|---|
-| [Resumen](02-Entrega-1.md) | Qué se hizo, decisiones, desafíos y trazabilidad de tickets |
-| [User Stories](entrega-1/User-Stories.md) | Historias de usuario de la entrega |
-| [Arquitectura](entrega-1/Arquitectura.md) | Decisiones de arquitectura específicas de esta entrega |
-| [Decisiones](entrega-1/Decisiones.md) | ADRs y decisiones tomadas |
-| [Evidencia](entrega-1/Evidencia.md) | Capturas y evidencia de lo entregado |
-| [Próximos Pasos](entrega-1/Proximos-Pasos.md) | Qué queda pendiente para la próxima entrega |
-
----
-
 ## Lo Que Hay en Cada Doc
 
 ### 🎬 [Architecture.md](Architecture.md)
@@ -70,34 +53,6 @@ Cambios recientes resumidos en 3 líneas. Todo categorizado (🎵 Audio, 🎮 Ga
 Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cosas se chequean cada vez que subimos cambios.
 
 **Ideal para**: Entender por qué pasan o fallan los checks.
-
----
-
-## Según Qué Estés Haciendo
-
-### Soy Nuevo Acá
-1. Leé este archivo
-2. Mirá el diagrama en [Architecture.md](Architecture.md)
-3. Seguí los pasos en [Getting-Started.md](Getting-Started.md)
-4. Levantá el proyecto en tu PC
-5. Leé el código en este orden:
-   - `interface/evidente.gd` - Cómo arranca todo
-   - `niveles/GameSceneRouter.gd` - Cómo navegamos entre pantallas
-   - `interface/SaveManager.gd` - Cómo se guarda todo
-
-### Voy a Cambiar Algo en el Código
-1. Abrí la tabla en [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar)
-2. Buscá lo que querés cambiar
-3. La tabla te dice en qué archivo tocar
-4. Si es una parte grande del sistema y hay un ADR, leélo para entender por qué se hizo así
-5. Corre los tests antes de hacer PR: ver [Getting-Started.md](Getting-Started.md#testing)
-
-
-### Estoy Por Mergear a Main
-1. Verificá que los checks en [CI.md](CI.md) pasen (acá está qué se chequea)
-2. Si tocaste algo en `project/`, actualizá [Bitacora.md](Bitacora.md) con lo que cambiaste
-3. Revisá que la entrada en [Bitacora.md](Bitacora.md) esté clara y breve
-4. Mergeá cuando todo esté verde
 
 ---
 
@@ -133,11 +88,3 @@ Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cos
 - Bitácora se actualiza si cambió algo que el jugador ve
 
 ---
-
-## Tips Para Navegar la Wiki
-
-- **Búsqueda**: `Ctrl+F` en Architecture.md si necesitás encontrar un archivo o sistema rápido
-- **Mermaid**: El diagrama en Architecture.md es clickeable en GitHub (prueba hacer click en una caja)
-- **Bitácora**: Ahí está el resumen cronológico de cambios del equipo
-- **ADR**: Ahí te explicamos el "por qué" de las cosas, no solo el "qué"
-- **Tabla de cambios**: Si no sabés por dónde empezar, la tabla en Architecture.md te lo dice

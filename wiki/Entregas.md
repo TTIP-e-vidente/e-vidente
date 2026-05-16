@@ -8,12 +8,12 @@ Documentación organizada por entrega del proyecto **e-vidente**.
 
 | Página | Descripción |
 |--------|-------------|
-| [Resumen ejecutivo](02-Entrega-1) | Qué se hizo, decisiones, desafíos|
-| [User Stories](entrega-1/User-Stories) | Historias de usuario de la entrega |
-| [Arquitectura](entrega-1/Arquitectura) | Decisiones de arquitectura específicas de esta entrega |
-| [Decisiones](entrega-1/Decisiones) | ADRs y decisiones tomadas |
-| [Evidencia](entrega-1/Evidencia) |  Evidencia de lo entregado |
-| [Próximos Pasos](entrega-1/Proximos-Pasos) | Opciones y tareas para la siguiente entrega |
+| [Resumen ejecutivo](Entrega-1) | Qué se hizo, decisiones, desafíos|
+| [User Stories](Entrega-1-User-Stories) | Historias de usuario de la entrega |
+| [Arquitectura](Entrega-1-Arquitectura) | Decisiones de arquitectura específicas de esta entrega |
+| [Decisiones](Entrega-1-Decisiones) | ADRs y decisiones tomadas |
+| [Evidencia](Entrega-1-Evidencia) |  Evidencia de lo entregado |
+| [Próximos Pasos](Entrega-1-Proximos-Pasos) | Opciones y tareas para la siguiente entrega |
 
 ---
 

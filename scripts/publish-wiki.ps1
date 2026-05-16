@@ -24,11 +24,15 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $tmpPath)) {
     throw "No se pudo clonar la wiki. Verifica que este habilitada en GitHub Settings > Features > Wikis. URL: $wikiUrl"
 }
 
+# Borrar todo excepto .git para hacer un mirror limpio
+Get-ChildItem -Path $tmpPath -Exclude ".git" | Remove-Item -Recurse -Force
+
+# Copiar el contenido local completo
 Copy-Item -Path (Join-Path $wikiSource "*") -Destination $tmpPath -Recurse -Force
 
 Push-Location $tmpPath
 try {
-    git add .
+    git add -A
     $status = git status --porcelain
 
     if (-not $status) {
