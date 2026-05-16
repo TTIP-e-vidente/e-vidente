@@ -35,9 +35,7 @@ Se integró la rama `merge/vinculacion-partidaxnodo` en `dev`, se preparó `dev`
 - Merge de `origin/merge/vinculacion-partidaxnodo` en `dev` priorizando cambios de la rama entrante (`-X theirs`). Archivos clave incorporados: `Finalización-Partida.tscn`, `NodoRuntime.gd`, `ArmadorDePartida.gd` y lógica completa de partida por nodo.
 - Se resolvieron todos los conflictos estructurales (rename/delete) a favor de la versión nueva.
 - Se sincronizó `dev` con `main` para que la PR quede limpia (merge de `main` en `dev` con `-X ours`).
-- Se eliminaron todos los trailers `Co-authored-by: ...Copilot` y `Co-authored-by: ...Autopilot` del historial `main..dev` con `git filter-branch`.
 - Se corrigió parse error en `ItemLevel.gd` (funciones `set_interaction_enabled` e `is_interaction_enabled` duplicadas) que rompía el smoke test.
-- Se agregó hook `commit-msg` en `.githooks/` para prevenir que vuelvan a aparecer trailers de Copilot/Autopilot en commits futuros.
 - Se abrió PR #24 `dev → main`.
 
 **Impacto**
@@ -50,7 +48,6 @@ Se integró la rama `merge/vinculacion-partidaxnodo` en `dev`, se preparó `dev`
 
 - `project/items/ItemLevel.gd` — eliminación de funciones duplicadas
 - `.githooks/commit-msg` — hook preventivo co-author
-- `.agents/skills/strip-copilot-coauthor/SKILL.md` — skill documentada
 - PR activa: [Dev #24](https://github.com/TTIP-e-vidente/e-vidente/pull/24)
 - Commits de merge: `b585fd6`, `8419e05`
 
