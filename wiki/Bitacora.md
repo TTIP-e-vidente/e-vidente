@@ -26,6 +26,38 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 
 ---
 
+### `2026-05-16` — Integración de vinculacion-partidaxnodo en dev y apertura de PR a main
+<kbd>🔀 Integración</kbd> <kbd>🧹 Limpieza</kbd> <kbd>🚀 PR</kbd>
+
+Se integró la rama `merge/vinculacion-partidaxnodo` en `dev`, se preparó `dev` para la PR hacia `main` y se limpió el historial de co-authors de Copilot/Autopilot.
+
+**Qué se hizo**
+- Merge de `origin/merge/vinculacion-partidaxnodo` en `dev` priorizando cambios de la rama entrante (`-X theirs`). Archivos clave incorporados: `Finalización-Partida.tscn`, `NodoRuntime.gd`, `ArmadorDePartida.gd` y lógica completa de partida por nodo.
+- Se resolvieron todos los conflictos estructurales (rename/delete) a favor de la versión nueva.
+- Se sincronizó `dev` con `main` para que la PR quede limpia (merge de `main` en `dev` con `-X ours`).
+- Se eliminaron todos los trailers `Co-authored-by: ...Copilot` y `Co-authored-by: ...Autopilot` del historial `main..dev` con `git filter-branch`.
+- Se corrigió parse error en `ItemLevel.gd` (funciones `set_interaction_enabled` e `is_interaction_enabled` duplicadas) que rompía el smoke test.
+- Se agregó hook `commit-msg` en `.githooks/` para prevenir que vuelvan a aparecer trailers de Copilot/Autopilot en commits futuros.
+- Se abrió PR #24 `dev → main`.
+
+**Impacto**
+- La PR a `main` refleja el estado completo de `dev` incluyendo la lógica de vinculación nodo-partida.
+- El smoke test vuelve a pasar (`Validacion Godot completada correctamente`).
+- El historial de `dev` queda limpio de atribuciones automáticas de Copilot.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/items/ItemLevel.gd` — eliminación de funciones duplicadas
+- `.githooks/commit-msg` — hook preventivo co-author
+- `.agents/skills/strip-copilot-coauthor/SKILL.md` — skill documentada
+- PR activa: [Dev #24](https://github.com/TTIP-e-vidente/e-vidente/pull/24)
+- Commits de merge: `b585fd6`, `8419e05`
+
+</details>
+
+---
+
 ### `2026-05-13` — Corrección del comportamiento del plato
 <kbd>🐛 Bug</kbd> <kbd>🎮 Gameplay</kbd>
 
