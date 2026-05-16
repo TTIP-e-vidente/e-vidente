@@ -19,15 +19,19 @@ jobs:
   gameplay-smoke:
     name: Gameplay Smoke
     runs-on: ubuntu-latest
-    container: barichello/godot-ci:4.6.2
     timeout-minutes: 12
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install libraries
-        run: apt-get update -y && apt-get install -y libfontconfig1
+      - name: Install Godot 4.6.2 headless
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_linux.x86_64.zip -O godot.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.6.2-stable_linux.x86_64
+          sudo mv Godot_v4.6.2-stable_linux.x86_64 /usr/local/bin/godot
+          sudo apt-get install -y --no-install-recommends libfontconfig1 libgles2
 
       - name: Gameplay smoke validation
         shell: sh
