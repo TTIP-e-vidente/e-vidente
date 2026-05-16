@@ -1,7 +1,5 @@
 # Decisiones — Entrega 1
 
-> Documento en estado de boceto. La idea es registrar las decisiones tomadas durante el sprint y dejar espacio para completar detalles con el equipo antes de la entrega final.
-
 ## Criterio general del sprint
 
 Durante esta iteración se priorizó consolidar una demo local más clara, jugable y defendible. La decisión principal fue enfocar el esfuerzo en mejorar la experiencia visible del jugador antes que abrir funcionalidades de infraestructura como backend, autenticación, leaderboard o servicios remotos.
