@@ -1,8 +1,0 @@
-WARNING: NodeContentLoader: ruta legacy detectada. Usa res://niveles/nodos/celiaquia/eliminar_gluten.json en lugar de res://preguntas/json_nodos/eliminar_gluten.json.
-   at: push_warning (core/variant/variant_utility.cpp:1034)
-   GDScript backtrace (most recent call first):
-       [0] resolver_ruta_json (res://preguntas/NodeContentLegacy.gd:32)
-       [1] _leer_archivo_json (res://preguntas/NodeContentLoader.gd:28)
-       [2] cargar_contenido_nodo (res://preguntas/NodeContentLoader.gd:12)
-       [3] _probar_ruta_vieja (res://tests/node_content_loader_test.gd:87)
-       [4] _run (res://tests/node_content_loader_test.gd:18)
