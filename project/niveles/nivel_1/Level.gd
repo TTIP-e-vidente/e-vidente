@@ -286,7 +286,7 @@ func reiniciar_estado_de_partida() -> void:
 	_current_run_completion_handled = false
 	_ya_continuo = false
 	_arrastre_tuvo_error = false
-	Item_level.is_dragging = null
+	ItemLevel.is_dragging = null
 	_restaurar_estado_posterior_finalizacion()
 	next_chapter_button.disabled = true
 
@@ -497,7 +497,7 @@ func _mostrar_ensenanza_del_nivel() -> void:
 	# Bloquear input sin aplicar el efecto grayscale de finalizacion —
 	# la ensenanza cubre el gameplay de inmediato, el "dim" generaba
 	# una pantalla gris congelada de ~0.8s antes de mostrar la ensenanza.
-	Item_level.is_dragging = null
+	ItemLevel.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	_ocultar_boton_adelante_anterior()
 	_ocultar_ensenanza_textual()
@@ -515,7 +515,7 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
 		# Bloquear input sin dim/grayscale: la ensenanza cubre el gameplay inmediatamente.
-		Item_level.is_dragging = null
+		ItemLevel.is_dragging = null
 		_establecer_interacciones_jugabilidad_habilitadas(false)
 		_ocultar_boton_adelante_anterior()
 		_ocultar_ensenanza_textual()
@@ -554,7 +554,7 @@ func _conectar_senales_items_arrastre() -> void:
 	if manager_level == null:
 		return
 	for item in manager_level.level_items:
-		if item is Item_level:
+		if item is ItemLevel:
 			if not item.intento_incorrecto.is_connected(_on_item_intento_incorrecto):
 				item.intento_incorrecto.connect(_on_item_intento_incorrecto)
 
@@ -887,7 +887,7 @@ func _on_guardar_retroalimentacion_timeout() -> void:
 
 
 func _bloquear_completado_partida() -> void:
-	Item_level.is_dragging = null
+	ItemLevel.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	_ocultar_boton_adelante_anterior()
 	_ocultar_ensenanza_textual()

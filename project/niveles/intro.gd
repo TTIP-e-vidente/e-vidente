@@ -8,6 +8,11 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 @onready var opciones: Label = $MenuBar/Opciones/Label
 @onready var salir: Label = $MenuBar/Salir/Label
 @onready var _continuar_juego = $ContinuarJuego
+@onready var buttons: Array[TextureButton] = [
+	$MenuBar/Jugar,
+	$MenuBar/Opciones,
+	$MenuBar/Salir,
+]
 
 
 func _ready() -> void:

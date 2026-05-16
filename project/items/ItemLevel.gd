@@ -1,5 +1,5 @@
 extends Node2D
-class_name Item_level
+class_name ItemLevel
 
 signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el plato
 
@@ -8,13 +8,13 @@ signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el 
 var condiciones: Array[int] = []
 var body_ref 
 var plato 
-var offset = get_global_mouse_position() - global_position
-var esPositivo = true
+var offset := Vector2.ZERO
+var es_positivo = true
 var draggable = false
 var categoria 
 var is_inside_droppable = false
 var info: Texture2D
-var textSprite: Texture2D
+var text_sprite: Texture2D
 var item_resource_path := ""
 var item_visual_resource_path := ""
 var item_id := ""
@@ -28,11 +28,11 @@ static var is_dragging: Object = null
 
 func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
 	base_scale = scale
-	textSprite = level_item.sprite
-	$Sprite2D.texture = textSprite
+	text_sprite = level_item.sprite
+	$Sprite2D.texture = text_sprite
 	condiciones = level_item.condiciones.duplicate()
 	plato = superficie
-	esPositivo = is_positive
+	es_positivo = is_positive
 	info = level_item.info
 	categoria = level_item.categoria
 	item_id = str(level_item.runtime_id).strip_edges()
@@ -55,7 +55,7 @@ func show_info():
 	_reportar_mismatch_si_corresponde()
 	
 func show_texture():
-	$Sprite2D.texture = textSprite
+	$Sprite2D.texture = text_sprite
 	_reportar_mismatch_si_corresponde()
 
 
@@ -107,7 +107,7 @@ func _process(_delta):
 					" target=",
 					body_ref.name,
 					" correcto=",
-					body_ref == plato and esPositivo
+					body_ref == plato and es_positivo
 				)
 				if body_ref == plato:
 					print(
@@ -118,7 +118,7 @@ func _process(_delta):
 						]
 					)
 					plato.reaccionar_comida(self)
-					if esPositivo:
+					if es_positivo:
 						_animar_feedback_correcto()
 					else:
 						intento_incorrecto.emit()
@@ -213,8 +213,8 @@ func _reportar_mismatch_si_corresponde() -> void:
 	if item_id.is_empty():
 		return
 	var visual_id: String = _normalizar_id_visual(item_visual_resource_path)
-	if visual_id.is_empty() and textSprite != null:
-		visual_id = _normalizar_id_visual(textSprite.resource_path)
+	if visual_id.is_empty() and text_sprite != null:
+		visual_id = _normalizar_id_visual(text_sprite.resource_path)
 	var logical_id: String = _normalizar_id_visual(item_id)
 	if visual_id.is_empty() or logical_id.is_empty() or visual_id == logical_id:
 		return

@@ -36,7 +36,7 @@ func _ready():
 
 func elemento_en_plato(item):
 	abstract_state.entra_item_plato(item, self)
-	if item.esPositivo: 
+	if item.es_positivo:
 		current_animation = "resonrison"
 	else : 
 		current_animation = "retriston"

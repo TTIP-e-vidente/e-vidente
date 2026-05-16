@@ -4,7 +4,7 @@ class_name ResultsFlow
 # Normaliza el resultado del minijuego y coordina la vuelta al mapa.
 # No renderiza. No arma planes de partida. No contiene reglas del minijuego.
 
-const ResultadoDeNodo := preload("res://nodo/ResultadoDeNodo.gd")
+const ResultadoDeNodoScript := preload("res://nodo/ResultadoDeNodo.gd")
 const ReglasDeProgreso := preload("res://nodo/ReglasDeProgresoDeNodo.gd")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
@@ -15,7 +15,7 @@ func procesar_resultado_de_partida(
 	result_data: Dictionary,
 	save_manager: Node
 ) -> ResultadoDeNodo:
-	var resultado_de_nodo := ResultadoDeNodo.desde_diccionario(result_data)
+	var resultado_de_nodo := ResultadoDeNodoScript.desde_diccionario(result_data)
 	# ContinuidadDePartidaDeNodo ya llamó add_exp() antes de llegar aquí.
 	# Se acepta save_manager explícito solo como llamada de seguridad adicional.
 	_guardar_progreso_local(save_manager)

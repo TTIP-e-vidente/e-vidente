@@ -48,7 +48,7 @@ func _handle_plate_change(
 	_apply_state_transition(item, player, positive_state, negative_state)
 	if not es_entrada:
 		return
-	if not item.esPositivo:
+	if not item.es_positivo:
 		return
 	if not condiciones_de_victoria(player):
 		return
@@ -58,6 +58,6 @@ func _handle_plate_change(
 
 
 func _apply_state_transition(item, player, positive_state: Node, negative_state: Node) -> void:
-	var next_state: Node = positive_state if item.esPositivo else negative_state
+	var next_state: Node = positive_state if item.es_positivo else negative_state
 	if next_state != null:
 		player.abstract_state = next_state

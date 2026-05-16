@@ -16,7 +16,7 @@ func reaccionar_comida(item) -> void:
 
 
 func _reaccionar_comida(item):
-	if  item.esPositivo:
+	if item.es_positivo:
 		cantAlimentosPos[item] = null
 		bien.play()
 	else:
@@ -38,7 +38,7 @@ func tiene_positivo_elemento(item) -> bool:
 
 func _on_area_2d_area_salido(area):
 	var item_level = area.get_parent()
-	if item_level.esPositivo:
+	if item_level.es_positivo:
 		cantAlimentosPos.erase(item_level)
 	else:
 		cantAlimentosNeg.erase(item_level)

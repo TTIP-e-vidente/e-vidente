@@ -182,7 +182,7 @@ func ejecutar_prueba() -> void:
 
 func _reset_test_state(global_state, save_manager) -> void:
 	global_state.reiniciar_progreso()
-	Item_level.is_dragging = null
+	ItemLevel.is_dragging = null
 	_delete_save_files()
 	save_manager.cargar_datos()
 	global_state.registrar_actividad_racha("smoke_setup", {"track_key": "celiaquia"})
