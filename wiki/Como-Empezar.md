@@ -6,7 +6,7 @@ Guia corta para iniciar desarrollo sobre e-vidente sin friccion.
 
 ## 📋 Requisitos previos
 
-- **Godot:** 4.2 o compatible  
+- **Godot:** 4.6 o compatible  
 - **Git:** instalado y configurado  
 - **Acceso:** permisos en el repositorio (push/PR)  
 
@@ -59,17 +59,6 @@ cd e-vidente
 6. [Abrir PR en GitHub]
    └─ Describir cambio en la PR
 ```
-
-## ✅ Checklist antes de PR
-
-- [ ] El proyecto abre en Godot sin errores criticos
-- [ ] Las escenas se ven como esperado
-- [ ] Probaste cambios funcionales localmente
-- [ ] La descripcion de la PR es clara
-- [ ] Si cambiaste `project/`, actualizaste `wiki/Bitacora.md`
-- [ ] CI pasa: validate ✅ + build-web ✅
-
-## 🐛 Troubleshooting
 
 ### "Proyecto no importa"
 - Verifica que `project/project.godot` exista

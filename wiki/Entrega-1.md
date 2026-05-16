@@ -75,8 +75,8 @@ Backend, autenticación, leaderboard, base de datos, panel de administración no
 
 ## Documentación
 
-- [User Stories](entrega-1/User-Stories.md)
-- [Arquitectura](entrega-1/Arquitectura.md)
-- [Evidencia](entrega-1/Evidencia.md)
-- [Decisiones](entrega-1/Decisiones.md)
-- [Próximos pasos](entrega-1/Proximos-Pasos.md)
+- [User Stories](Entrega-1-User-Stories)
+- [Arquitectura](Entrega-1-Arquitectura)
+- [Evidencia](Entrega-1-Evidencia)
+- [Decisiones](Entrega-1-Decisiones)
+- [Próximos pasos](Entrega-1-Proximos-Pasos)

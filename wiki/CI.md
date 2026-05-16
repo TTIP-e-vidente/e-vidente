@@ -1,109 +1,94 @@
-﻿# 🔄 CI Pipeline
+﻿# 🔄 Integración Continua
 
-Documentacion del workflow de integracion continua (GitHub Actions).
+Documentación de los workflows de GitHub Actions activos en el proyecto.
 
 ---
 
 ## 🎯 Objetivo
 
-Detectar problemas **temprano** sin bloquear iteraciones, usando validaciones no disruptivas.
-
-## ⚙️ Configuracion
-
-**Archivo:** `.github/workflows/ci.yml`
-
-**Se ejecuta en:**
-- `push` (cualquier rama)
-- `pull_request` (cualquier rama)
-- `workflow_dispatch` (manual)
-
-**Concurrencia:** Solo una ejecucion por rama activa (cancela anteriores)
+Detectar problemas **antes de mergear** sin bloquear iteraciones. Todos los workflows corren en PR hacia `main` o `dev`.
 
 ---
 
-## 📊 Pipeline de Jobs
+## 📋 Workflows activos
 
-### 1️⃣ `quality` — Guardrails (Non-blocking) ⚠️
+| Workflow | Archivo | Cuándo corre | Qué protege |
+|---|---|---|---|
+| **Technical Health** | `ci.yml` | PR a main/dev + manual | Estructura del repo y linting |
+| **Gameplay Smoke PR** | `gameplay-smoke-pr.yml` | PR a main/dev + manual | Que el proyecto abra y el slice principal llegue a gameplay |
+| **Docs PR** | `docs-pr.yml` | PR a main/dev | Que el PR tenga documentación suficiente |
 
-**Que hace:**
-- ✓ Valida estructura minima del repo (directorios y archivos esperados)
-- ✓ Ejecuta ESLint si existe config Node + ESLint
-- ✓ Verifica documentacion base (README, wiki/Home, wiki/Bitacora)
-- ✓ Emite recordatorio si hubo cambios en `project/` sin cambios en `wiki/`
-- ✓ Genera resumen de calidad
+---
 
-**Bloquea?** NO — todos los pasos usan `continue-on-error`
+## 1️⃣ Technical Health (`ci.yml`)
+
+**Jobs:**
+
+### `structure` — Estructura del repo
+
+- Valida que existan los directorios y archivos críticos esperados
+- Script: `scripts/ci/check-structure-guardrails.sh`
+
+### `lint` — Linting
+
+- Ejecuta ESLint si existe `package.json` con config ESLint
+- Script: `scripts/ci/check-lint-guardrails.sh`
 
 **Warnings comunes:**
-- "Missing required file wiki/Bitacora.md" → crear el archivo
-- "Project files changed without wiki updates" → agregar entrada en Bitacora
+- Directorio o archivo crítico faltante → revisar `check-structure-guardrails.sh`
 
 ---
 
-### 2️⃣ `validate` — Godot Import (Blocking) ✅
+## 2️⃣ Gameplay Smoke PR (`gameplay-smoke-pr.yml`)
 
-**Que hace:**
-- Corre en contenedor `barichello/godot-ci:4.2`
-- Descarga proyecto
-- ReUtiliza cache de imports previos
-- Ejecuta import headless: `godot --headless --path project --editor --quit`
+**Contenedor:** `barichello/godot-ci:4.6.2`
+**Timeout:** 12 minutos
 
-**Bloquea?** SI — Si falla, detiene resto de pipeline
+**Qué hace:**
+1. Import headless: `godot --headless --path project --editor --quit`
+2. Vertical slice smoke test: `godot --headless --path project -s res://tests/vertical_slice_smoke_test.gd`
 
-**Razon de fallo comun:**
-- Archivos Godot (.tscn, .gd) con syntax invalido
-- Paths rotos en escenas
+**Flujo que cubre:** `Splash → Intro → Selector → Archivero → Libro → Gameplay`
 
----
+**Baseline:** track `celiaquia`, capítulo `1`
 
-### 3️⃣ `build-web` — Export Web (Blocking) ✅
+**Si falla `Import headless`** → problema antes del gameplay (parse error, autoload, ruta rota)
+**Si falla `Gameplay smoke test`** → se rompió el slice principal
 
-**Dependencias:** Espera a `validate` + `quality`
-
-**Que hace:**
-- Importa proyecto (cached)
-- Exporta a preset "index" → `build/web/index.html`
-- Si Godot lo exporta a otro lugar, intenta copiar
-- Verifica salida (*.html + *.pck/zip existentes)
-
-**Bloquea?** SI en export; NO en verificacion final
-
-**Razon de fallo comun:**
-- `export_presets.cfg` sin preset "index"
-- Templates web faltantes en contenedor Godot
+**Logs:** se suben como artifact `gameplay-smoke-logs-run-N-attempt-N` (14 días de retención)
 
 ---
 
-## 🟢 🟡 🔴 Como interpretar resultados
+## 3️⃣ Docs PR (`docs-pr.yml`)
 
-| Estado | Significa | Accion |
+**Qué hace:**
+- Verifica que existan los archivos de documentación base
+- Chequea que el PR incluya actualizaciones de docs si tocó código
+- Scripts: `scripts/ci/check-docs-guardrails.sh` + `scripts/ci/check-pr-docs.sh`
+
+---
+
+## 🟢 🟡 🔴 Cómo interpretar resultados
+
+| Estado | Significa | Acción |
 |---|---|---|
 | ✅ Todos pasan | Todo bien | Listo para merge |
-| ⚠️ quality warnings | Deuda documental | Considerar fix pero no bloquea |
-| ❌ validate falla | Error en proyecto Godot | Corregir antes de merge |
-| ❌ build-web falla | Export no funciona | Revisar export_presets.cfg |
+| ❌ `structure` falla | Falta dir/archivo crítico | Revisar `check-structure-guardrails.sh` |
+| ❌ `lint` falla | Error de linting | Corregir antes de merge |
+| ❌ `Import headless` falla | Error en proyecto Godot | Corregir parse error o autoload roto |
+| ❌ `Gameplay smoke` falla | Se rompió el flujo principal | Revisar escena o contrato mínimo del slice |
+| ❌ `Docs PR` falla | PR sin documentación suficiente | Agregar entrada en Bitácora o docs |
 
 ---
 
-## 🔧 Mantenimiento
+## 🔧 Correr localmente
 
-Si cambias estructura del repo:
-
-```bash
-# Editar .github/workflows/ci.yml
-# Actualizar listas REQUIRED_DIRS y REQUIRED_FILES
-
-REQUIRED_DIRS=(
-  ".github/workflows"
-  "project"
-  "project/interface"
-  # Agregar aqui si creas nuevas carpetas criticas
-)
+```sh
+# Smoke test
+sh scripts/run-godot-validation.sh --run smoke godot
 ```
 
-Si adoptas linting:
-- Mantener `package.json` y config ESLint validos
-- Actualizar pasos de quality job
-
-Si changes gameplay/escenas:
-- Siempre sumar nota en `wiki/Bitacora.md`
+```powershell
+# PowerShell
+./scripts/run-godot-validation.ps1 -Mode smoke
+```
