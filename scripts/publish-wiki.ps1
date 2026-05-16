@@ -1,7 +1,8 @@
 param(
     [string]$Owner = "TTIP-e-vidente",
     [string]$Repo = "e-vidente",
-    [string]$Message = "Initialize wiki starter"
+    [string]$Message = "Initialize wiki starter",
+    [string]$Username = "agusdiisanto"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +14,7 @@ if (-not (Test-Path $wikiSource)) {
     throw "No se encontro la carpeta wiki en $wikiSource"
 }
 
-$wikiUrl = "https://github.com/$Owner/$Repo.wiki.git"
+$wikiUrl = "https://$Username@github.com/$Owner/$Repo.wiki.git"
 $tmpPath = Join-Path $env:TEMP ("wiki-init-" + [guid]::NewGuid().ToString())
 
 Write-Host "Clonando wiki en: $tmpPath"
@@ -37,6 +38,9 @@ try {
 
     git commit -m $Message | Out-Host
     git push origin HEAD | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "Error al hacer push a la wiki ($LASTEXITCODE). Verificá permisos en $wikiUrl"
+    }
     Write-Host "Wiki publicada correctamente en $wikiUrl"
 }
 finally {
