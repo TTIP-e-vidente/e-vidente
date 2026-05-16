@@ -1,3 +1,6 @@
+# PUBLICO_TRAINEE
+# Fuente de verdad para persistencia local: total_exp, racha, ranking, perfil.
+# No decide gameplay. No abre escenas.
 extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
@@ -65,6 +68,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	cargar_datos()
+	ArmadorDePartida.init_with_save_manager(self)
 
 
 func _notification(what: int) -> void:
@@ -229,6 +233,95 @@ func registrar_sesion_preguntas_completada(question_count: int, score: int) -> v
 			"score": score
 		}
 	)
+
+
+# --- Anti-repetición persistente de activities ---------------------
+
+func mark_activity_completed(request_key: String, activity_id: String) -> void:
+	var clean_key: String = request_key.strip_edges()
+	var clean_id: String = activity_id.strip_edges()
+	if clean_key.is_empty() or clean_id.is_empty():
+		return
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	var completed_map: Dictionary = stored if stored is Dictionary else {}
+	var raw_ids: Variant = completed_map.get(clean_key, [])
+	var id_list: Array = raw_ids if raw_ids is Array else []
+	if id_list.has(clean_id):
+		return
+	id_list.append(clean_id)
+	completed_map[clean_key] = id_list
+	save_data["completed_activity_ids_by_request"] = completed_map
+	_marcar_guardado_sucio()
+	print("[PersistentRandom] mark_completed request=%s activity=%s" % [clean_key, clean_id])
+	guardar_progreso_en_disco()
+	print("[PersistentRandom] save_updated=true")
+
+
+func get_completed_activity_ids(request_key: String) -> Array[String]:
+	var clean_key: String = request_key.strip_edges()
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return []
+	var raw_ids: Variant = (stored as Dictionary).get(clean_key, [])
+	if not raw_ids is Array:
+		return []
+	var result: Array[String] = []
+	for entry in (raw_ids as Array):
+		result.append(str(entry))
+	return result
+
+
+func reset_completed_activity_pool(request_key: String) -> void:
+	var clean_key: String = request_key.strip_edges()
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return
+	var completed_map: Dictionary = stored as Dictionary
+	if completed_map.has(clean_key):
+		completed_map.erase(clean_key)
+		save_data["completed_activity_ids_by_request"] = completed_map
+		_marcar_guardado_sucio()
+
+
+func debug_clear_completed_activity_history() -> void:
+	save_data["completed_activity_ids_by_request"] = {}
+	_marcar_guardado_sucio()
+	print("[PersistentRandom] debug_clear_completed_activity_history done")
+
+
+# --- Experiencia acumulada (EXP) ------------------------------------------
+
+func get_total_exp() -> int:
+	return max(0, int(save_data.get("total_exp", 0)))
+
+
+## Acumula `amount` EXP, persiste en disco y retorna el nuevo total.
+func add_exp(amount: int) -> int:
+	if amount <= 0:
+		return get_total_exp()
+	var nuevo_total: int = get_total_exp() + amount
+	save_data["total_exp"] = nuevo_total
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+	return nuevo_total
+
+
+func get_ranking_position() -> int:
+	return _calcular_ranking(get_total_exp())
+
+
+func _calcular_ranking(total: int) -> int:
+	if total >= 300:
+		return 1
+	if total >= 200:
+		return 2
+	if total >= 120:
+		return 3
+	if total >= 60:
+		return 5
+	if total >= 30:
+		return 10
+	return 20
 
 
 func reiniciar_todo_progreso() -> Dictionary:
@@ -474,8 +567,13 @@ func _resumir_progreso(progress: Variant) -> Dictionary:
 
 
 func _reiniciar_datos_guardado_actual(profile: Dictionary) -> void:
+	var settings: Dictionary = _obtener_settings_guardado_actual()
+	var streak_state: Dictionary = _obtener_racha_actual_para_preservar()
 	_global_reiniciar_progreso()
+	_global_establecer_racha(streak_state)
 	save_data["profile"] = profile
+	if not settings.is_empty():
+		save_data["settings"] = settings
 	save_data["progress"] = _global_exportar_progreso()
 	save_data["history"] = []
 	save_data["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
@@ -550,6 +648,38 @@ func _global_reiniciar_progreso() -> void:
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("reiniciar_progreso"):
 		global_autoload.call("reiniciar_progreso")
+
+
+func _global_establecer_racha(streak_state: Dictionary) -> void:
+	if streak_state.is_empty():
+		return
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("establecer_estado_racha"):
+		global_autoload.call("establecer_estado_racha", streak_state)
+
+
+func _obtener_racha_actual_para_preservar() -> Dictionary:
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("obtener_estado_racha"):
+		var global_streak: Variant = global_autoload.call("obtener_estado_racha")
+		if global_streak is Dictionary and not (global_streak as Dictionary).is_empty():
+			return (global_streak as Dictionary).duplicate(true)
+
+	var progress_snapshot: Variant = save_data.get("progress", {})
+	if progress_snapshot is Dictionary:
+		var systems: Variant = (progress_snapshot as Dictionary).get("progress_system_states", {})
+		if systems is Dictionary:
+			var streak: Variant = (systems as Dictionary).get("streak", {})
+			if streak is Dictionary:
+				return (streak as Dictionary).duplicate(true)
+	return {}
+
+
+func _obtener_settings_guardado_actual() -> Dictionary:
+	var settings: Variant = save_data.get("settings", {})
+	if settings is Dictionary:
+		return (settings as Dictionary).duplicate(true)
+	return {}
 
 
 func _meta_guardado_vacia() -> Dictionary:

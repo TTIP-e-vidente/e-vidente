@@ -7,23 +7,67 @@ const GameStreakTrackerScript := preload(
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
+const ContextoSesionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoSesionDeJuego.gd"
+)
+const ContextoFinalizacionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
+)
+const ContinuidadDePartidaDeNodoScript := preload(
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
+)
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
-const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
+const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
+const PresentadorContinuarJuegoScript := preload(
+	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
+)
 const DEFAULT_TRACK_KEY := "celiaquia"
 const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
-const CORRECT_ANSWER_SOUND := preload("res://assets-sistema/sonidos/bonus-points-190035.mp3")
+const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
+const LOG_PREFIX_QUIZ := "[Quiz]"
+const LOG_PREFIX_QUIZ_LAYOUT := "[QuizLayout]"
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
 const CONTENT_ERROR_BODY_FONT_SIZE := 26
-const CONTINUADOR_TAMANIO := Vector2(300.0, 150.0)
-const CONTINUADOR_MARGEN := Vector2(40.0, 30.0)
+const SEGUNDOS_CONTINUACION_AUTOMATICA := 5.0
 
+
+@onready var _layout_preguntas_2: Control = $Contenido/Preguntas
+@onready var _layout_preguntas_3: Control = $Contenido/Preguntasx3
+@onready var _layout_preguntas_4: Control = $Contenido/Preguntasx4
+
+@onready var boton_1: Button = $Contenido/Preguntas/Boton1
+@onready var boton_2: Button = $Contenido/Preguntas/Boton2
+@onready var boton_3: Button = $Contenido/Preguntasx3/Boton3
+@onready var boton_4: Button = $Contenido/Preguntasx3/Boton4
+@onready var boton_5: Button = $Contenido/Preguntasx3/Boton5
+@onready var boton_6: Button = $Contenido/Preguntasx4/Boton6
+@onready var boton_7: Button = $Contenido/Preguntasx4/Boton7
+@onready var boton_8: Button = $Contenido/Preguntasx4/Boton8
+@onready var boton_9: Button = $Contenido/Preguntasx4/Boton9
+
+var dodge_offsets := [
+	Vector2(120, 0),
+	Vector2(-120, 0),
+	Vector2(80, -20),
+	Vector2(-80, 20)
+]
+var last_offset := Vector2.ZERO
+
+var base_positions := {}
+var _base_scales := {}
+var _base_rotations := {}
 @export var quiz: ThemePreg
 @export var nivel_id: int = 2
 @export var track_key: String = "celiaquia"
 
 var botones: Array[Button] = []
+var _todos_los_botones: Array[Button] = []
+var _botones_layout_2: Array[Button] = []
+var _botones_layout_3: Array[Button] = []
+var _botones_layout_4: Array[Button] = []
 var indice_pregunta_actual: int = 0
 var puntaje: int = 0
 var bloqueado: bool = false
@@ -31,12 +75,12 @@ var ya_continuo: bool = false
 
 var _nodo_actual: String = ""
 var _tiene_sesion_de_mapa: bool = false
+var _pertenece_a_partida_de_nodo: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
 var _mensaje_error_bloqueante: String = ""
-var _plantillas_botones_respuesta: Array[Button] = []
 var _post_game_streak_feedback: Dictionary = {}
 var _post_game_flow_state: Dictionary = {}
-var continuador = null
+var _correct_answer_sound: AudioStream = null
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -44,58 +88,186 @@ var pregunta_actual: Preguntas:
 @onready var pregunta_label: Label = $Contenido/Informacion/Pregunta
 @onready var _visual_panel: Panel = $Contenido/Informacion/Visual
 @onready var _imagen_pregunta: TextureRect = $Contenido/Informacion/Visual/Imagen
-@onready var _contenedor_respuestas: VBoxContainer = $Contenido/Preguntas
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
 @onready var _contenido: Control = $Contenido
 @onready var _panel_final: ColorRect = $Contenido/GameOver
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje
 @onready var _boton_volver_mapa_final: Button = $Contenido/GameOver/JugarNuevamente
-@onready var _contenedor_continuacion_legacy: VBoxContainer = $Contenido/ContinuacionAutomatica
+@onready var _continuar_juego = $Contenido/ContinuarJuego
 
+@onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
+@onready var _progress_bar = get_node_or_null("ProgressBar")
+
+# Entrada del quiz
 func _ready() -> void:
 	puntaje = 0
-	_crear_continuador()
-	_ocultar_continuacion_legacy()
-	_recolectar_botones_respuesta()
-	configurar_quiz_desde_sesion()
+	_configurar_layouts_de_opciones()
+	_reiniciar_cierre_del_quiz()
+	_conectar_continuar_juego()
+
+	_cargar_datos_pregunta()
+	_configurar_indicador_de_progreso_de_juego()
 	if not _puede_iniciar_quiz():
 		_mostrar_error_bloqueante(_mensaje_error_bloqueante)
 		return
 	if _cantidad_de_preguntas() > 1:
 		quiz.theme.shuffle()
-	mostrar_pregunta()
+	_mostrar_pregunta()
 
 
-func _recolectar_botones_respuesta() -> void:
+# Helpers de preparación
+func _configurar_layouts_de_opciones() -> void:
+	_botones_layout_2 = [boton_1, boton_2]
+	_botones_layout_3 = [boton_3, boton_4, boton_5]
+	_botones_layout_4 = [boton_6, boton_7, boton_8, boton_9]
+
 	botones.clear()
-	_plantillas_botones_respuesta.clear()
-	for boton_crudo in _contenedor_respuestas.get_children():
-		var boton_respuesta: Button = boton_crudo as Button
-		if boton_respuesta == null:
-			continue
-		var boton_plantilla: Button = boton_respuesta.duplicate() as Button
-		if boton_plantilla != null:
-			_plantillas_botones_respuesta.append(boton_plantilla)
+	_todos_los_botones.clear()
+	_registrar_botones_de_layout(_botones_layout_2)
+	_registrar_botones_de_layout(_botones_layout_3)
+	_registrar_botones_de_layout(_botones_layout_4)
+	_ocultar_todos_los_layouts_de_opciones()
+
+
+func _registrar_botones_de_layout(botones_layout: Array[Button]) -> void:
+	for boton_respuesta in botones_layout:
 		_registrar_boton_respuesta(boton_respuesta)
 
 
 func _registrar_boton_respuesta(boton_respuesta: Button) -> void:
-	botones.append(boton_respuesta)
-	boton_respuesta.pressed.connect(manejar_respuesta.bind(boton_respuesta))
+	if boton_respuesta == null:
+		return
+	if not _todos_los_botones.has(boton_respuesta):
+		_todos_los_botones.append(boton_respuesta)
+	_registrar_posicion_base_boton(boton_respuesta)
+	_registrar_transform_base_boton(boton_respuesta)
+	var callback := _on_opcion_seleccionada.bind(boton_respuesta)
+	if not boton_respuesta.pressed.is_connected(callback):
+		boton_respuesta.pressed.connect(callback)
+
+
+func _registrar_posicion_base_boton(boton_respuesta: Button) -> void:
+	if boton_respuesta == null:
+		return
+	if base_positions.has(boton_respuesta):
+		return
+	base_positions[boton_respuesta] = boton_respuesta.position
+
+
+func _registrar_transform_base_boton(boton_respuesta: Button) -> void:
+	if boton_respuesta == null:
+		return
+	if not _base_scales.has(boton_respuesta):
+		_base_scales[boton_respuesta] = boton_respuesta.scale
+	if not _base_rotations.has(boton_respuesta):
+		_base_rotations[boton_respuesta] = boton_respuesta.rotation_degrees
+
+
+func _obtener_escala_base_boton(boton_respuesta: Button) -> Vector2:
+	return _base_scales.get(boton_respuesta, boton_respuesta.scale)
+
+
+func _obtener_rotacion_base_boton(boton_respuesta: Button) -> float:
+	return float(_base_rotations.get(boton_respuesta, boton_respuesta.rotation_degrees))
+
+
+func _escalar_escala_base(boton_respuesta: Button, factor_x: float, factor_y: float) -> Vector2:
+	var escala_base: Vector2 = _obtener_escala_base_boton(boton_respuesta)
+	return Vector2(escala_base.x * factor_x, escala_base.y * factor_y)
+
+
+func dodge_button(button: Button) -> void:
+	if button == null:
+		return
+
+	var base_pos: Vector2 = base_positions.get(button, button.position)
+	var base_scale: Vector2 = _obtener_escala_base_boton(button)
+	var base_rotation: float = _obtener_rotacion_base_boton(button)
+	base_positions[button] = base_pos
+	var available_offsets = dodge_offsets.filter(
+	func(o): return o != last_offset
+	)
+
+	var offset = available_offsets.pick_random()
+	last_offset = offset	
+
+	var target_pos = base_pos + offset
+
+	var tween = create_tween()
+
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+
+	tween.tween_property(
+		button,
+		"scale",
+		_escalar_escala_base(button, 0.95, 0.95),
+		0.08
+	)
+
+	tween.parallel().tween_property(
+		button,
+		"rotation_degrees",
+		base_rotation + randf_range(-4, 4),
+		0.15
+	)
+
+	tween.parallel().tween_property(
+		button,
+		"position",
+		target_pos,
+		0.28
+	)
+
+	tween.tween_property(
+		button,
+		"scale",
+		base_scale,
+		0.08
+	)
+	await get_tree().create_timer(1.2).timeout
+
+	var tween_back = create_tween()
+
+	tween_back.tween_property(
+		button,
+		"position",
+		base_pos,
+		0.35
+	)
+	tween_back.parallel().tween_property(button, "scale", base_scale, 0.2)
+	tween_back.parallel().tween_property(button, "rotation_degrees", base_rotation, 0.2)
+
+func _cargar_datos_pregunta() -> void:
+	configurar_quiz_desde_sesion()
+	if quiz != null:
+		print(
+			LOG_PREFIX_QUIZ,
+			" activity=",
+			_nodo_actual,
+			" options=",
+			_cantidad_de_opciones_actuales()
+		)
 
 
 func configurar_quiz_desde_sesion() -> void:
 	_reiniciar_sesion_nodo()
 	_mensaje_error_bloqueante = ""
 
-	var contexto_sesion: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	var contexto_sesion: Dictionary = ContextoSesionDeJuegoScript.obtener_contexto_jugable_actual()
 	if contexto_sesion.is_empty():
 		return
 
-	_aplicar_contexto_sesion(contexto_sesion)
+	var contexto_normalizado: Dictionary = ContextoSesionDeJuegoScript.normalizar_contexto_jugable(
+		contexto_sesion,
+		track_key,
+		nivel_id,
+		DEFAULT_RETURN_SCENE
+	)
+	_aplicar_contexto_sesion(contexto_normalizado)
 	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_tema_desde_sesion(
-		contexto_sesion
+		contexto_normalizado
 	)
 	if not bool(resultado_quiz.get("ok", false)):
 		_establecer_mensaje_de_error(
@@ -107,42 +279,84 @@ func configurar_quiz_desde_sesion() -> void:
 
 func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
+	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_post_game_streak_feedback = {}
 	_post_game_flow_state = {}
 
 
-func configurar_desde_datos_nodo(datos_nodo: Dictionary, contexto_sesion: Dictionary) -> bool:
-	_aplicar_contexto_sesion(contexto_sesion)
-	var ruta_json: String = str(
-		contexto_sesion.get("json_path", contexto_sesion.get("node_json_path", ""))
-	).strip_edges()
-	var resultado_quiz: Dictionary = QuestionJsonLoaderScript.cargar_resultado_desde_datos_nodo(
-		datos_nodo,
-		ruta_json
-	)
-	if not bool(resultado_quiz.get("ok", false)):
-		_establecer_mensaje_de_error(
-			str(resultado_quiz.get("error", "No se pudo adaptar el nodo quiz_choice."))
-		)
-		return false
-
-	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
-	return true
-
-
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
 	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
 	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
 	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_ruta_escena_de_retorno = GameSceneRouter.read_return_to(
-		contexto_sesion,
-		DEFAULT_RETURN_SCENE
+	_pertenece_a_partida_de_nodo = bool(
+		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
 	)
+	_ruta_escena_de_retorno = str(
+		contexto_sesion.get("return_to", DEFAULT_RETURN_SCENE)
+	).strip_edges()
 	if _ruta_escena_de_retorno.is_empty():
 		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
-	_tiene_sesion_de_mapa = not contexto_sesion.is_empty()
+	_tiene_sesion_de_mapa = bool(
+		contexto_sesion.get("came_from_map", not _nodo_actual.is_empty())
+	)
+
+
+func _obtener_global_autoload() -> Node:
+	var scene_tree := get_tree()
+	if scene_tree == null or scene_tree.root == null:
+		return null
+	return scene_tree.root.get_node_or_null("/root/Global")
+
+
+func _obtener_save_manager_autoload() -> Node:
+	var scene_tree := get_tree()
+	if scene_tree == null or scene_tree.root == null:
+		return null
+	return scene_tree.root.get_node_or_null("/root/SaveManager")
+
+
+func _obtener_estado_racha_global() -> Dictionary:
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("obtener_estado_racha"):
+		return {}
+	var estado_racha: Variant = global_autoload.call("obtener_estado_racha")
+	if estado_racha is Dictionary:
+		return (estado_racha as Dictionary).duplicate(true)
+	return {}
+
+
+func _obtener_cantidad_de_niveles_de_pista() -> int:
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload == null or not global_autoload.has_method("obtener_pista_nivel_cantidad"):
+		return 1
+	return int(global_autoload.call("obtener_pista_nivel_cantidad", track_key))
+
+
+func _es_juego_de_partida_de_nodo() -> bool:
+	return _pertenece_a_partida_de_nodo
+
+
+func _configurar_indicador_de_progreso_de_juego() -> void:
+	# Ocultar el badge "Juego X/Y" — la barra inferior es el único indicador de progreso
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
+	# Actualizar barra inferior con la posición actual dentro del nodo
+	if _progress_bar == null:
+		return
+	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.actualizar_progreso(actual, total)
+
+
+func _conectar_continuar_juego() -> void:
+	if _continuar_juego == null:
+		return
+	if _continuar_juego.has_signal("continuar_solicitado"):
+		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_presionar_continuar"))
 
 
 func _puede_iniciar_quiz() -> bool:
@@ -159,7 +373,20 @@ func _cantidad_de_preguntas() -> int:
 	return 0 if quiz == null else quiz.theme.size()
 
 
+func _cantidad_de_opciones_actuales() -> int:
+	if quiz == null or quiz.theme.is_empty():
+		return 0
+	if indice_pregunta_actual >= quiz.theme.size():
+		return 0
+	return pregunta_actual.opciones.size()
+
+
+# Gameplay del quiz
 func mostrar_pregunta() -> void:
+	_mostrar_pregunta()
+
+
+func _mostrar_pregunta() -> void:
 	bloqueado = false
 
 	if quiz == null:
@@ -173,46 +400,130 @@ func mostrar_pregunta() -> void:
 
 	pregunta_label.text = pregunta_actual.info_pregunta
 	_mostrar_visual_de_pregunta(pregunta_actual)
-	_mostrar_opciones(pregunta_actual.opciones)
+	_crear_opciones(pregunta_actual.opciones)
+
+
+func _crear_opciones(opciones_actuales: Array[String]) -> void:
+	_mostrar_opciones(opciones_actuales)
 
 
 func _mostrar_opciones(opciones_actuales: Array[String]) -> void:
-	_asegurar_cantidad_de_botones(opciones_actuales.size())
-	for indice_boton in range(botones.size()):
-		var boton_respuesta: Button = botones[indice_boton]
-		if indice_boton >= opciones_actuales.size():
+	_mostrar_layout_por_cantidad(opciones_actuales.size())
+	_cargar_opciones_en_botones(opciones_actuales, botones)
+
+
+func _mostrar_layout_por_cantidad(cantidad_opciones: int) -> void:
+	botones = _obtener_botones_para_cantidad(cantidad_opciones)
+
+
+func _obtener_botones_para_cantidad(cantidad_opciones: int) -> Array[Button]:
+	_ocultar_todos_los_layouts_de_opciones()
+	if cantidad_opciones <= 0:
+		push_warning(
+			"%s options=%d sin opciones jugables." % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				cantidad_opciones
+			]
+		)
+		return []
+
+	var cantidad_layout: int = _resolver_cantidad_layout(cantidad_opciones)
+	if cantidad_layout != cantidad_opciones:
+		push_warning(
+			"%s options=%d fallback=%s" % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				cantidad_opciones,
+				_nombre_layout_para_cantidad(cantidad_layout)
+			]
+		)
+
+	var botones_layout: Array[Button] = []
+	match cantidad_layout:
+		2:
+			_layout_preguntas_2.show()
+			botones_layout = _botones_layout_2
+		3:
+			_layout_preguntas_3.show()
+			botones_layout = _botones_layout_3
+		_:
+			_layout_preguntas_4.show()
+			botones_layout = _botones_layout_4
+
+	print(
+		LOG_PREFIX_QUIZ_LAYOUT,
+		" options=",
+		cantidad_opciones,
+		" layout=",
+		_nombre_layout_para_cantidad(cantidad_layout)
+	)
+	return botones_layout
+
+
+func _resolver_cantidad_layout(cantidad_opciones: int) -> int:
+	if cantidad_opciones <= 2:
+		return 2
+	if cantidad_opciones == 3:
+		return 3
+	return 4
+
+
+func _nombre_layout_para_cantidad(cantidad_layout: int) -> String:
+	match cantidad_layout:
+		2:
+			return _layout_preguntas_2.name
+		3:
+			return _layout_preguntas_3.name
+		4:
+			return _layout_preguntas_4.name
+		_:
+			return "desconocido"
+
+
+func _ocultar_todos_los_layouts_de_opciones() -> void:
+	botones.clear()
+	if _layout_preguntas_2 != null:
+		_layout_preguntas_2.hide()
+	if _layout_preguntas_3 != null:
+		_layout_preguntas_3.hide()
+	if _layout_preguntas_4 != null:
+		_layout_preguntas_4.hide()
+	for boton_respuesta in _todos_los_botones:
+		_ocultar_boton_respuesta(boton_respuesta)
+
+
+func _cargar_opciones_en_botones(
+	opciones_actuales: Array[String],
+	botones_layout: Array[Button]
+) -> void:
+	if botones_layout.is_empty():
+		return
+
+	var cantidad_a_cargar: int = min(opciones_actuales.size(), botones_layout.size())
+	if opciones_actuales.size() > botones_layout.size():
+		push_warning(
+			"%s options=%d buttons=%d; se omiten excedentes." % [
+				LOG_PREFIX_QUIZ_LAYOUT,
+				opciones_actuales.size(),
+				botones_layout.size()
+			]
+		)
+
+	for indice_boton in range(botones_layout.size()):
+		var boton_respuesta: Button = botones_layout[indice_boton]
+		if indice_boton >= cantidad_a_cargar:
 			_ocultar_boton_respuesta(boton_respuesta)
 			continue
 		_configurar_boton_respuesta(boton_respuesta, opciones_actuales[indice_boton])
 
 
-func _asegurar_cantidad_de_botones(cantidad_necesaria: int) -> void:
-	if cantidad_necesaria <= botones.size():
-		return
-	if _plantillas_botones_respuesta.is_empty():
-		return
-
-	while botones.size() < cantidad_necesaria:
-		var indice_plantilla: int = botones.size() % _plantillas_botones_respuesta.size()
-		var boton_plantilla: Button = _plantillas_botones_respuesta[indice_plantilla]
-		var nuevo_boton: Button = boton_plantilla.duplicate() as Button
-		if nuevo_boton == null:
-			return
-		nuevo_boton.name = "Boton%d" % (botones.size() + 1)
-		_contenedor_respuestas.add_child(nuevo_boton)
-		_registrar_boton_respuesta(nuevo_boton)
-
-
 func _configurar_boton_respuesta(boton_respuesta: Button, texto_respuesta: String) -> void:
 	boton_respuesta.show()
-	boton_respuesta.text = _texto_display(texto_respuesta)
-	boton_respuesta.tooltip_text = texto_respuesta
+	_restablecer_estado_visual_boton(boton_respuesta)
+	var texto_visible := _texto_display(texto_respuesta)
+	_set_texto_boton_opcion(boton_respuesta, texto_visible, _font_size_para(texto_respuesta))
+	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", texto_respuesta)
-	boton_respuesta.modulate = Color.WHITE
 	boton_respuesta.disabled = false
-	boton_respuesta.scale = Vector2.ONE
-	boton_respuesta.rotation_degrees = 0
-	boton_respuesta.add_theme_font_size_override("font_size", _font_size_para(texto_respuesta))
 
 
 const MAX_DISPLAY_CHARS := 55
@@ -235,11 +546,43 @@ func _font_size_para(texto: String) -> int:
 	return 20
 
 
+func _restablecer_estado_visual_boton(boton_respuesta: Button) -> void:
+	boton_respuesta.modulate = Color.WHITE
+	boton_respuesta.scale = _obtener_escala_base_boton(boton_respuesta)
+	boton_respuesta.rotation_degrees = _obtener_rotacion_base_boton(boton_respuesta)
+
+
 func _ocultar_boton_respuesta(boton_respuesta: Button) -> void:
+	_restablecer_estado_visual_boton(boton_respuesta)
 	boton_respuesta.hide()
+	boton_respuesta.text = ""
+	var label_ocultar := _buscar_label_de_boton(boton_respuesta)
+	if label_ocultar:
+		label_ocultar.text = ""
 	boton_respuesta.disabled = true
 	boton_respuesta.tooltip_text = ""
 	boton_respuesta.set_meta("respuesta", "")
+
+
+func _buscar_label_de_boton(boton: Button) -> Label:
+	for nombre in ["TextoOpcion", "Texto", "Label", "OptionLabel"]:
+		var nodo := boton.get_node_or_null(nombre)
+		if nodo is Label:
+			return nodo as Label
+	return null
+
+
+func _set_texto_boton_opcion(boton: Button, texto: String, font_size_visual: int) -> void:
+	var label := _buscar_label_de_boton(boton)
+	if label:
+		label.text = texto
+		boton.text = ""
+		var scale_x: float = boton.scale.x if boton.scale.x > 0.01 else 1.0
+		label.add_theme_font_size_override("font_size", int(round(float(font_size_visual) / scale_x)))
+		print("[QuizOption] button=", boton.name, " label=", label.name, " found=true text=\"", texto.left(30), "\"")
+	else:
+		boton.text = texto
+		boton.add_theme_font_size_override("font_size", font_size_visual)
 
 
 func _mostrar_visual_de_pregunta(pregunta_recurso: Preguntas) -> void:
@@ -269,78 +612,250 @@ func _limpiar_media_de_pregunta() -> void:
 
 
 func manejar_respuesta(boton: Button) -> void:
+	_on_opcion_seleccionada(boton)
+
+
+func _on_opcion_seleccionada(boton: Button) -> void:
 	if bloqueado:
 		return
 
 	bloqueado = true
-	for boton_respuesta in botones:
-		boton_respuesta.disabled = true
 
 	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
-	var es_correcta: bool = pregunta_actual.correct == respuesta_elegida
+	var es_correcta: bool = _validar_respuesta(respuesta_elegida)
+	print(LOG_PREFIX_QUIZ, " selected=", respuesta_elegida, " correct=", es_correcta)
+
 	if es_correcta:
-		puntaje += 1
+		await _mostrar_feedback_correcto(boton)
+		_finalizar_pregunta()
+		return
 
-	_mostrar_feedback_respuesta(boton, es_correcta)
+	await _mostrar_feedback_error(boton)
+	bloqueado = false
+	_set_opciones_habilitadas(true)
 
+
+func _validar_respuesta(respuesta_elegida: String) -> bool:
+	return pregunta_actual.correct == respuesta_elegida
+
+
+func _mostrar_feedback_correcto(boton: Button) -> void:
+	puntaje += 1
+	_set_opciones_habilitadas(false)
+	_mostrar_feedback_respuesta(boton, true)
+	boton.disabled = false
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
+		global_autoload.call("registrar_resultado_mini_juego", true)
 	await get_tree().create_timer(1.2).timeout
+
+
+func _mostrar_feedback_error(boton: Button) -> void:
+	_mostrar_feedback_respuesta(boton, false)
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
+		global_autoload.call("registrar_resultado_mini_juego", false)
+	await dodge_button(boton)
+	await get_tree().create_timer(0.4).timeout
+
+
+func _set_opciones_habilitadas(habilitadas: bool) -> void:
+	for boton_respuesta in botones:
+		boton_respuesta.disabled = not habilitadas
+
+
+func _finalizar_pregunta() -> void:
 	_finalizar_quiz()
 
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	var tween = create_tween()
-	if es_correcta and _audio_player != null:
+	var base_scale: Vector2 = _obtener_escala_base_boton(boton)
+	var base_rotation: float = _obtener_rotacion_base_boton(boton)
+	var correct_answer_sound := _obtener_sonido_respuesta_correcta()
+	if es_correcta and _audio_player != null and correct_answer_sound != null:
 		_audio_player.stop()
-		_audio_player.stream = CORRECT_ANSWER_SOUND
+		_audio_player.stream = correct_answer_sound
 		_audio_player.play()
 
 	if es_correcta:
-		boton.modulate = Color(0, 1, 0)
-		tween.tween_property(boton, "scale", Vector2(1.2, 0.8), 0.08)
-		tween.tween_property(boton, "scale", Vector2(0.9, 1.1), 0.08)
-		tween.tween_property(boton, "scale", Vector2(1.05, 0.95), 0.08)
-		tween.tween_property(boton, "scale", Vector2(1, 1), 0.1)
+		# Tinte verde suave: Color(0,1,0) puro multiplicaba a cero los canales R/B
+		# del fondo del boton y lo hacia ver "transparenton" en pantalla.
+		boton.modulate = Color(0.4, 1.0, 0.4)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.08, 0.92), 0.08)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 0.95, 1.05), 0.08)
+		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.03, 0.97), 0.08)
+		tween.tween_property(boton, "scale", base_scale, 0.1)
 		return
 
-	boton.modulate = Color(1, 0, 0)
+	boton.modulate = Color(1.0, 0.4, 0.4)
 	for unused_index in 5:
-		tween.tween_property(boton, "rotation_degrees", 8, 0.03)
-		tween.tween_property(boton, "rotation_degrees", -8, 0.03)
-	tween.tween_property(boton, "rotation_degrees", 0, 0.05)
+		tween.tween_property(boton, "rotation_degrees", base_rotation + 8, 0.03)
+		tween.tween_property(boton, "rotation_degrees", base_rotation - 8, 0.03)
+	tween.tween_property(boton, "rotation_degrees", base_rotation, 0.05)
 
 
+func _obtener_sonido_respuesta_correcta() -> AudioStream:
+	if _correct_answer_sound != null:
+		return _correct_answer_sound
+	_correct_answer_sound = load(CORRECT_ANSWER_SOUND_PATH) as AudioStream
+	return _correct_answer_sound
+
+
+# Finalización de partida
 func _finalizar_quiz() -> void:
+	print(LOG_PREFIX_QUIZ, " completed activity=", _nodo_actual)
+	_finalizar_partida()
+
+
+func _finalizar_partida() -> void:
 	var cantidad_preguntas: int = _cantidad_de_preguntas()
-	var previous_streak: Dictionary = Global.obtener_estado_racha()
+	if not _es_juego_de_partida_de_nodo():
+		_finalizar_pregunta_normal(cantidad_preguntas)
+	_mostrar_cierre_del_quiz(cantidad_preguntas)
+
+
+func _debe_abrir_siguiente_juego_de_partida() -> bool:
+	if not _es_juego_de_partida_de_nodo():
+		return false
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+
+
+func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
+	var global_autoload := _obtener_global_autoload()
+	var save_manager := _obtener_save_manager_autoload()
+	var previous_streak: Dictionary = _obtener_estado_racha_global()
 
 	if _tiene_sesion_de_mapa:
 		_guardar_progreso_de_mapa(cantidad_preguntas)
 	else:
-		Global.marcar_nivel_completado(track_key, nivel_id)
-		SaveManager.registrar_nivel_completado(track_key, nivel_id)
+		if global_autoload != null and global_autoload.has_method("marcar_nivel_completado"):
+			global_autoload.call("marcar_nivel_completado", track_key, nivel_id)
+		if save_manager != null and save_manager.has_method("registrar_nivel_completado"):
+			save_manager.call("registrar_nivel_completado", track_key, nivel_id)
 
-	SaveManager.registrar_sesion_preguntas_completada(cantidad_preguntas, puntaje)
-	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	if save_manager != null and save_manager.has_method("registrar_sesion_preguntas_completada"):
+		save_manager.call("registrar_sesion_preguntas_completada", cantidad_preguntas, puntaje)
+	var updated_streak: Dictionary = _obtener_estado_racha_global()
 	_on_questions_finished(previous_streak, updated_streak)
-	_show_post_game_completion()
+
+
+func _mostrar_cierre_del_quiz(cantidad_preguntas: int) -> void:
+	bloqueado = true
+	_ocultar_continuacion_automatica()
+	_limpiar_media_de_pregunta()
+	for boton_respuesta in botones:
+		boton_respuesta.disabled = true
+
+	if _debe_mostrar_continuar_de_partida_de_nodo():
+		_ocultar_resultado_final_de_pregunta()
+		_mostrar_continuacion_automatica(_debe_abrir_siguiente_juego_de_partida())
+		return
+
+	var total_preguntas: int = max(1, cantidad_preguntas)
+	_configurar_panel_final(
+		"Aciertos",
+		"%d/%d" % [puntaje, total_preguntas],
+		true,
+		true
+	)
+
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+	_mostrar_continuacion_automatica(false)
+
+
+func _debe_mostrar_continuar_de_partida_de_nodo() -> bool:
+	return _es_juego_de_partida_de_nodo()
+
+
+func _ocultar_resultado_final_de_pregunta() -> void:
+	if _panel_final != null:
+		_panel_final.hide()
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+
+
+func _reiniciar_cierre_del_quiz() -> void:
+	ya_continuo = false
+	_ocultar_continuacion_automatica()
+	if _panel_final != null:
+		_panel_final.hide()
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.show()
+		_boton_volver_mapa_final.disabled = false
+
+
+func _mostrar_continuacion_automatica(hay_siguiente_juego: bool) -> void:
+	if _boton_volver_mapa_final != null:
+		_boton_volver_mapa_final.hide()
+		_boton_volver_mapa_final.disabled = true
+	PresentadorContinuarJuegoScript.mostrar(
+		_continuar_juego,
+		hay_siguiente_juego,
+		int(SEGUNDOS_CONTINUACION_AUTOMATICA)
+	)
+
+
+func _ocultar_continuacion_automatica() -> void:
+	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
+
+
+
+func _continuar_partida_de_nodo_si_corresponde() -> bool:
+	if not _es_juego_de_partida_de_nodo():
+		return false
+	if not _debe_abrir_siguiente_juego_de_partida():
+		return false
+	return NodoRuntimeScript.finalizar_mini_juego(
+		get_tree(),
+		Callable(self, "_limpiar_media_de_pregunta"),
+		Callable(self, "_limpiar_estado_local_de_partida_en_pregunta")
+	)
+
+
+func _limpiar_estado_local_de_partida_en_pregunta() -> void:
+	_limpiar_media_de_pregunta()
+	_pertenece_a_partida_de_nodo = false
+
+
+## Cumple el contrato de ModalidadBase. Devuelve el resultado de este mini juego de pregunta.
+func obtener_resultado() -> ResultadoDeMiniJuego:
+	var total := maxi(1, _cantidad_de_preguntas())
+	return ResultadoDeMiniJuegoScript.crear_detallado(
+		"pregunta", puntaje, total - puntaje, total
+	)
 
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
 	if not _nodo_actual.is_empty():
-		Global.marcar_nodo_jugable_completado(track_key, _nodo_actual)
+		var global_autoload := _obtener_global_autoload()
+		if global_autoload != null and global_autoload.has_method("marcar_nodo_jugable_completado"):
+			global_autoload.call("marcar_nodo_jugable_completado", track_key, _nodo_actual)
 
 
 func _on_questions_finished(
 	previous_streak: Dictionary,
 	updated_streak: Dictionary
 ) -> void:
-	var completion_context: Dictionary = _build_completion_context()
+	var completion_context: Dictionary = ContextoFinalizacionDeJuegoScript.construir(
+		"question",
+		track_key,
+		nivel_id,
+		_obtener_cantidad_de_niveles_de_pista(),
+		track_key == DEFAULT_TRACK_KEY,
+		_tiene_sesion_de_mapa,
+		_nodo_actual,
+		_ruta_escena_de_retorno,
+		"pregunta._on_questions_finished"
+	)
 	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
-	# La escena solo arma contexto; el controller lo transforma en flow_state.
 	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
 		previous_streak,
 		updated_streak,
@@ -349,49 +864,57 @@ func _on_questions_finished(
 	)
 
 
-func _build_completion_context() -> Dictionary:
-	return {
-		"source": "question",
-		"level": _build_level_completion_context(),
-		"map": _build_map_completion_context(),
-		"navigation": _build_navigation_completion_context(),
-		"debug": _build_completion_debug_context(),
-	}
 
 
-func _build_level_completion_context() -> Dictionary:
-	return {
-		"track_key": track_key,
-		"number": nivel_id,
-		"track_level_count": Global.obtener_pista_nivel_cantidad(track_key),
-		"is_default_track": track_key == DEFAULT_TRACK_KEY,
-	}
+func _on_timer_siguiente_nodo_timeout() -> void:
+	_al_presionar_continuar()
 
 
-func _build_map_completion_context() -> Dictionary:
-	var node_key: Variant = null
-	if _tiene_sesion_de_mapa and not _nodo_actual.is_empty():
-		node_key = _nodo_actual
-	return {
-		"came_from_map": _tiene_sesion_de_mapa,
-		"node_key": node_key,
-	}
+func continuar_al_siguiente_nodo() -> void:
+	_al_presionar_continuar()
 
 
-func _build_navigation_completion_context() -> Dictionary:
-	return {
-		"return_to": _ruta_escena_de_retorno,
-	}
+func _al_presionar_continuar() -> void:
+	if ya_continuo:
+		return
+
+	ya_continuo = true
+	_ocultar_continuacion_automatica()
+	if _continuar_partida_de_nodo_si_corresponde():
+		return
+	if _es_juego_de_partida_de_nodo():
+		_finalizar_ultima_pregunta_de_partida()
+		return
+	_continuar_despues_de_ensenanza(true)
 
 
-func _build_completion_debug_context() -> Dictionary:
-	return {
-		"created_by": "pregunta._build_completion_context",
-	}
+func _finalizar_ultima_pregunta_de_partida() -> void:
+	NodoRuntimeScript.finalizar_mini_juego(get_tree())
+	_finalizar_pregunta_normal(_cantidad_de_preguntas())
+	_limpiar_estado_local_de_partida_en_pregunta()
+	_continuar_despues_de_ensenanza(true)
 
 
-func _show_post_game_completion() -> void:
-	mostrar_ensenanza_final()
+func _on_flecha_derecha_pressed() -> void:
+	_al_presionar_continuar()
+
+
+func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	if not _has_post_game_flow_state():
+		_return_to_map_scene()
+		return
+
+	# La escena solo informa que termino la UI; el controlador decide el destino.
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		_take_post_game_flow_state(),
+		_take_post_game_streak_feedback(),
+		timer_finished
+	)
 
 
 func _has_post_game_flow_state() -> bool:
@@ -435,6 +958,7 @@ func _configurar_panel_final(
 
 func _mostrar_error_bloqueante(mensaje: String) -> void:
 	bloqueado = true
+	_ocultar_continuacion_automatica()
 	for boton_respuesta in botones:
 		boton_respuesta.disabled = true
 	_limpiar_media_de_pregunta()
@@ -466,45 +990,40 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 	_mensaje_error_bloqueante = mensaje_limpio
 
 
+# Navegación y continuidad
 func _on_jugar_nuevamente_pressed() -> void:
 	volver_al_mapa()
 
 
 func _on_atras_pressed() -> void:
+	if _es_juego_de_partida_de_nodo():
+		_cancelar_partida_de_nodo_desde_juego()
+		return
 	volver_al_mapa()
 
 
-## --- Continuación desde mapa ---
-
-func _crear_continuador() -> void:
-	continuador = ContinueCountdownScene.instantiate()
-	_contenido.add_child(continuador)
-	_ubicar_continuador()
-	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
-	continuador.ocultar()
 
 
-func _ubicar_continuador() -> void:
-	continuador.anchor_left = 1.0
-	continuador.anchor_top = 1.0
-	continuador.anchor_right = 1.0
-	continuador.anchor_bottom = 1.0
-	continuador.offset_left = -CONTINUADOR_TAMANIO.x - CONTINUADOR_MARGEN.x
-	continuador.offset_top = -CONTINUADOR_TAMANIO.y - CONTINUADOR_MARGEN.y
-	continuador.offset_right = -CONTINUADOR_MARGEN.x
-	continuador.offset_bottom = -CONTINUADOR_MARGEN.y
 
 
 func volver_al_mapa() -> void:
+	if _es_juego_de_partida_de_nodo():
+		_cancelar_partida_de_nodo_desde_juego()
+		return
 	if _has_post_game_flow_state():
 		_on_teaching_finished(false)
 		return
 	_return_to_map_scene()
 
 
-func _return_to_map_scene() -> void:
-	if continuador != null:
-		continuador.detener()
+func _cancelar_partida_de_nodo_desde_juego() -> void:
+	var global_autoload := _obtener_global_autoload()
+	if global_autoload != null:
+		if global_autoload.has_method("finalizar_partida_de_nodo"):
+			global_autoload.call("finalizar_partida_de_nodo")
+		if global_autoload.has_method("limpiar_sesion_nodo_jugable_activo"):
+			global_autoload.call("limpiar_sesion_nodo_jugable_activo")
+	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -512,61 +1031,12 @@ func _return_to_map_scene() -> void:
 	)
 
 
-func mostrar_ensenanza_final() -> void:
-	mostrar_continuacion()
-
-
-func mostrar_continuacion() -> void:
-	ya_continuo = false
-	_boton_volver_mapa_final.hide()
-	_ocultar_continuacion_legacy()
-	continuador.iniciar(5)
-
-
-func _ocultar_continuacion_legacy() -> void:
-	_contenedor_continuacion_legacy.hide()
-
-
-func _on_timer_siguiente_nodo_timeout() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func continuar_al_siguiente_nodo() -> void:
-	if _has_post_game_flow_state():
-		_on_teaching_finished(true)
-		return
-
-	if ya_continuo:
-		return
-
-	ya_continuo = true
-	if continuador != null:
-		continuador.detener()
+func _return_to_map_scene() -> void:
+	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
-		_ruta_escena_de_retorno,
-		_nodo_actual
+		_ruta_escena_de_retorno
 	)
-
-
-func _on_flecha_derecha_pressed() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func _on_teaching_finished(timer_finished: bool) -> void:
-	if not _has_post_game_flow_state():
-		volver_al_mapa_legacy()
-		return
-
-	# La escena solo informa que termino la UI; el controlador decide el destino.
-	PostGameFlowControllerScript.navigate_after_teaching(
-		get_tree(),
-		_take_post_game_flow_state(),
-		_take_post_game_streak_feedback(),
-		timer_finished
-	)
-
-
-func volver_al_mapa_legacy() -> void:
-	_return_to_map_scene()
+	
+	

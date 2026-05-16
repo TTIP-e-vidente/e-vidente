@@ -84,10 +84,10 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 ## Flujo principal
 
 1. `project/mapas/MapScene.gd` maneja el mapa.
-2. `project/mapas/MapNodeData.gd` describe cada nodo.
+2. `project/mapas/core/MapNodeData.gd` describe cada nodo.
 3. `project/mapas/LevelNode.gd` muestra el nodo visual.
-4. `project/preguntas/NodeContentLoader.gd` carga JSON.
-5. `project/mapas/PlayableNodeRouter.gd` elige escena por `mode`.
+4. `project/sistemas/contenido/CargadorDeContenidoDeNodo.gd` carga JSON.
+5. `project/mapas/logica/AbridorDeNodoJugable.gd` abre el nodo jugable.
 6. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
 7. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
 8. La modalidad termina y pide continuar.
@@ -98,19 +98,19 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 - `MapScene.gd`: orquesta el mapa, carga contenido y abre nodos jugables.
 - `LevelNode.gd`: representa un nodo visual clickeable y emite `nodo_seleccionado`.
-- `MapNodeData.gd`: describe datos simples del nodo del mapa.
-- `MapProgress.gd`: resuelve progreso, desbloqueo y siguiente nodo.
+- `core/MapNodeData.gd`: describe datos simples del nodo del mapa.
+- `logica/AvanceDeNodo.gd`: resuelve progreso, desbloqueo y siguiente nodo.
 - Las modalidades no deciden el siguiente nodo.
 
 ## Flujo JSON de mapa
 
-1. `MapContentLoader.gd` carga el JSON del mapa.
+1. `logica/CargadorDeMapa.gd` carga el JSON del mapa.
 2. `MapScene.gd` guarda `nodes[]` como lista ordenada.
 3. `LevelNode.gd` muestra cada nodo visual.
 4. `MapNodeData.gd` resuelve `node_key` y `json_path`.
-5. `MapScene.gd` pasa `json_path` a `NodeContentLoader.gd`.
-6. `NodeContentLoader.gd` carga el JSON jugable.
-7. `PlayableNodeRouter.gd` usa `mode`.
+5. `MapScene.gd` pasa `json_path` a `CargadorDeContenidoDeNodo.gd`.
+6. `CargadorDeContenidoDeNodo.gd` carga el JSON jugable.
+7. `logica/AbridorDeNodoJugable.gd` usa `mode`.
 8. Al terminar, `MapScene.gd` abre `nodes[indice + 1]`.
 
 ## Como crear un mapa
@@ -132,8 +132,8 @@ Para agregar un nodo nuevo:
 
 Para agregar una modalidad nueva:
 
-- definir su `mode` y validar su `content` en `NodeContentLoader.gd` y `NodeContentValidator.gd`.
-- rutear la escena en `PlayableNodeRouter.gd` y crear la nueva escena jugable.
+- definir su `mode` y validar su `content` en `CargadorDeContenidoDeNodo.gd` y `ValidadorDeContenidoDeNodo.gd`.
+- rutear la escena en `GameSceneRouter.gd` / `AbridorDeNodoJugable.gd` y crear la nueva escena jugable.
 
 Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como API nueva.
 

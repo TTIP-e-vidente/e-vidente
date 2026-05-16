@@ -1,3 +1,4 @@
+# HUD del mapa: racha (arriba-izquierda), ProfileButton (arriba-derecha), bloque EXP.
 extends CanvasLayer
 
 signal back_requested
@@ -5,10 +6,15 @@ signal back_requested
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
+const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
+const RUBIK_SPRAY_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 
-@onready var racha: Control = $HudRoot/TopLeftAnchor/Racha
+@onready var racha: Control = $HudRoot/RachaAnchor/Racha
 @onready var profile_button: Button = $HudRoot/TopRightAnchor/ProfileButton
 @onready var profile_overlay: ProfileOverlayPanel = $ProfileOverlayPanel
+
+@onready var _map_exp_numero: Label = $HudRoot/ExpMapaAnchor/VBox/ExpNumero
+@onready var _map_exp_titulo: Label = $HudRoot/ExpMapaAnchor/VBox/ExpTitle
 
 
 func _ready() -> void:
@@ -16,6 +22,16 @@ func _ready() -> void:
 	_conectar_insignia_racha()
 	_conectar_senales_guardado()
 	_actualizar_hud()
+	_aplicar_fuentes_exp()
+
+
+func _aplicar_fuentes_exp() -> void:
+	if is_instance_valid(_map_exp_numero):
+		_map_exp_numero.add_theme_font_override("font", RUBIK_SPRAY_FONT)
+		_map_exp_numero.add_theme_font_size_override("font_size", 30)
+	if is_instance_valid(_map_exp_titulo):
+		_map_exp_titulo.add_theme_font_override("font", RUBIK_SPRAY_FONT)
+		_map_exp_titulo.add_theme_font_size_override("font_size", 24)
 
 
 func _exit_tree() -> void:
@@ -55,6 +71,7 @@ func _actualizar_hud() -> void:
 		profile_button.call("refresh_profile_icon")
 	if profile_overlay != null and profile_overlay.visible:
 		profile_overlay.refrescar()
+	_actualizar_bloque_exp_mapa()
 
 
 func _conectar_insignia_racha() -> void:
@@ -116,6 +133,15 @@ func _al_cambiar_estado_guardado(_status: Dictionary) -> void:
 
 func _al_cambiar_perfil_guardado(_profile: Dictionary) -> void:
 	_actualizar_hud()
+
+
+func _actualizar_bloque_exp_mapa() -> void:
+	if not is_instance_valid(_map_exp_numero):
+		return
+	var total_exp: int = 0
+	if SaveManager != null:
+		total_exp = SaveManager.get_total_exp()
+	_map_exp_numero.text = str(total_exp)
 
 
 func _mostrar_superposicion_perfil() -> void:

@@ -29,6 +29,7 @@ var abstract_state = null :
 @onready var manager_level = $"../ManagerLevel"
 
 func _ready():
+	z_index = 11
 	tipo = LevelItemScript.Condicion.CELIACO
 	abstract_state = sentir_hambre
 	anim.play(current_animation)
@@ -44,7 +45,7 @@ func elemento_sale_plato(item):
 	abstract_state.sale_item_plato(item, self)
 
 
-func preparar_para_siguiente_corrida() -> void:
+func preparar_para_siguiente_partida() -> void:
 	hambre.show()
 	abstract_state = sentir_hambre
 	current_animation = "cagadodehambre"

@@ -6,8 +6,12 @@ signal pressed
 
 const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
+const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa.png")
+const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
+const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva.png")
 
 var _current_count: int = 0
+var _streak_state: String = "inactive"
 var _is_interactive := true
 
 @onready var background: TextureRect = $Background
@@ -24,6 +28,10 @@ func _ready() -> void:
 
 func renderizar(streak_view_model: Dictionary = {}) -> void:
 	_aplicar_view_model(_resolver_view_model(streak_view_model))
+
+
+func render(streak_view_model: Dictionary = {}) -> void:
+	renderizar(streak_view_model)
 
 
 func establecer_insignia(number_value: int, _next_status_key: String = "") -> void:
@@ -46,7 +54,15 @@ func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 
 
 func _aplicar_view_model(streak_view_model: Dictionary) -> void:
-	_current_count = max(0, int(streak_view_model.get("current_count", 0)))
+	_current_count = max(
+		0,
+		int(streak_view_model.get("current_count", 0))
+	)
+
+	_streak_state = str(
+		streak_view_model.get("streak_state", "inactive")
+	)
+
 	_refrescar_ui()
 
 
@@ -105,12 +121,27 @@ func _refrescar_ui() -> void:
 		return
 
 	if count_label != null:
-		var count_text: String = str(_current_count)
+		var count_text := str(_current_count)
+
 		count_label.text = count_text
+
 		count_label.add_theme_font_size_override(
 			"font_size",
 			_resolver_tamano_fuente_contador(count_text)
 		)
+		_aplicar_estado_visual()
+
+
+func _aplicar_estado_visual() -> void:
+	match _streak_state:
+		"active":
+			_estado_activo()
+
+		"warning":
+			_estado_warning()
+
+		"inactive":
+			_estado_inactivo()
 
 
 func _resolver_tamano_fuente_contador(count_text: String) -> int:
@@ -126,6 +157,21 @@ func _refrescar_interactividad() -> void:
 		return
 	hotspot_button.visible = _is_interactive
 	hotspot_button.disabled = not _is_interactive
+
+
+func _estado_activo() -> void:
+	background.texture = ACTIVE_TEXTURE
+	modulate = Color.WHITE
+
+
+func _estado_warning() -> void:
+	background.texture = WARNING_TEXTURE
+	modulate = Color.WHITE
+
+
+func _estado_inactivo() -> void:
+	background.texture = INACTIVE_TEXTURE
+	modulate = Color(0.8, 0.8, 0.8)
 
 
 func _on_boton_hotspot_presionado() -> void:

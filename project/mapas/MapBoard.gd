@@ -1,3 +1,6 @@
+# HELPER_INTERNO
+# Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
+# Solo renderiza — no decide flujo ni calcula EXP.
 extends Node2D
 
 signal node_selected(node_data: MapNodeData)
@@ -24,10 +27,6 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 
 
 func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
-	refresh_node_states(map_nodes, node_states)
-
-
-func refresh_node_states(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
 
@@ -46,14 +45,10 @@ func refresh_node_states(map_nodes: Array, node_states: Array[Dictionary]) -> vo
 			continue
 
 		visual_node.show()
+		if node_data.has_map_position:
+			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
 			visual_node.configurar(node_data, node_state)
-		elif visual_node.has_method("setup"):
-			visual_node.setup(
-				node_data,
-				bool(node_state.get("is_unlocked", false)),
-				bool(node_state.get("is_completed", false))
-			)
 		var callback := Callable(self, "_on_visual_node_selected")
 		var already_connected := visual_node.is_connected("selected", callback)
 		if visual_node.has_signal("selected") and not already_connected:
@@ -69,7 +64,7 @@ func obtener_nodos_runtime_mapa() -> Array[Node2D]:
 		var nodo_mapa: Node2D = nodo_hijo as Node2D
 		if nodo_mapa == null:
 			continue
-		if not nodo_mapa.has_method("setup"):
+		if not nodo_mapa.has_method("configurar"):
 			continue
 		nodos_ordenados.append(nodo_mapa)
 

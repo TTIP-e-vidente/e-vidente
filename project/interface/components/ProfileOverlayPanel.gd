@@ -1,6 +1,9 @@
 extends Control
 class_name ProfileOverlayPanel
 
+const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
+const RUBIK_MAPS_FONT := preload("res://fonts/RubikMaps-Regular.ttf")
+
 signal resume_pressed
 signal save_pressed
 signal edit_profile_pressed
@@ -18,6 +21,7 @@ signal close_requested
 @onready var _save_status_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/SaveCard/VBox/SaveStatusLabel
 @onready var _resume_hint_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeHintLabel
 @onready var _resume_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeButton
+@onready var _weekly_summary: Node = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/WeeklyLearningSummary
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
@@ -31,6 +35,16 @@ func _ready() -> void:
 	_guardar_btn.pressed.connect(func(): save_pressed.emit())
 	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
 	_reset_btn.pressed.connect(func(): reset_progress_pressed.emit())
+	_aplicar_fuentes()
+
+
+func _aplicar_fuentes() -> void:
+	for lbl: Label in [
+		_username_label, _email_label, _age_label, _progress_label,
+		_save_status_label, _resume_hint_label, _avatar_label,
+	]:
+		if is_instance_valid(lbl):
+			lbl.add_theme_font_override("font", RUBIK_FONT)
 
 
 func mostrar_superposicion() -> void:
@@ -61,10 +75,11 @@ func refrescar() -> void:
 	var summary_text := Global.formatear_progreso_resumen_texto(
 		Global.obtener_progreso_resumen()
 	).strip_edges()
+	var exp_text := "EXP total: %d" % SaveManager.get_total_exp()
 	_progress_label.text = (
-		summary_text
+		(summary_text + "\n" + exp_text)
 		if not summary_text.is_empty()
-		else "Todavia no hay capitulos completos"
+		else exp_text
 	)
 
 	_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
@@ -75,6 +90,10 @@ func refrescar() -> void:
 	)
 	_resume_btn.visible = can_resume
 	_resume_btn.disabled = not can_resume
+
+	# Refrescar resumen semanal
+	if is_instance_valid(_weekly_summary) and _weekly_summary.has_method("refrescar"):
+		_weekly_summary.call("refrescar")
 
 
 # --- Helpers ---

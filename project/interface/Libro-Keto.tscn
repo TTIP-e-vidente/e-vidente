@@ -1,15 +1,15 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://d1tduql4qrmmo"]
 
-[ext_resource type="Script" path="res://interface/Libro-Keto.gd" id="1_jagfa"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_jagfa"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-1.png" id="3_hmfro"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-2.png" id="4_icqtb"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-3.png" id="5_ngp6x"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-4.png" id="6_lev0w"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-5.png" id="7_xtfd8"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cap-6.png" id="8_pl0gl"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo_keto.png" id="9_83ahj"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_g76et"]
+[ext_resource type="Script" uid="uid://c850s6ojxbeh7" path="res://interface/Libro-Keto.gd" id="1_jagfa"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_jagfa"]
+[ext_resource type="Texture2D" uid="uid://h375q3qyl3ew" path="res://assets-sistema/interfaz/cap-1.png" id="3_hmfro"]
+[ext_resource type="Texture2D" uid="uid://bmwxxvstfqytq" path="res://assets-sistema/interfaz/cap-2.png" id="4_icqtb"]
+[ext_resource type="Texture2D" uid="uid://irrj4tmnsm5x" path="res://assets-sistema/interfaz/cap-3.png" id="5_ngp6x"]
+[ext_resource type="Texture2D" uid="uid://bnilp4agslfja" path="res://assets-sistema/interfaz/cap-4.png" id="6_lev0w"]
+[ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_xtfd8"]
+[ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_pl0gl"]
+[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="9_jagfa"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_g76et"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_5m2p2"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
@@ -18,15 +18,11 @@ load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da
 position = Vector2(0, 1)
 script = ExtResource("1_jagfa")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1026954693]
-offset_right = 1152.0
-offset_bottom = 800.0
-
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=322121528]
-position = Vector2(577.34393, 394.68747)
-scale = Vector2(0.33670896, 0.33670896)
-texture = ExtResource("2_jagfa")
-flip_v = true
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_jagfa")]
+offset_left = -4.0
+offset_top = -1.0
+offset_right = 1149.0
+offset_bottom = 798.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1458987539]
 texture_filter = 3
@@ -79,10 +75,9 @@ scale = Vector2(0.43602213, 0.39069122)
 icon = SubResource("CompressedTexture2D_5m2p2")
 flat = true
 
-[node name="Archivero" type="Sprite2D" parent="." unique_id=203178137]
-position = Vector2(227, 142)
-scale = Vector2(0.41094047, 0.41094047)
-texture = ExtResource("9_83ahj")
+[node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("9_jagfa")]
+position = Vector2(247, 173)
+scale = Vector2(0.81621903, 0.81621903)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1512300098]
 stream = ExtResource("10_g76et")

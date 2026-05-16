@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://interface/components/ContinuarJuego/ContinuarJuego.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="2_flecha"]
+
+[node name="ContinuarJuego" type="Control"]
+visible = false
+custom_minimum_size = Vector2(128, 128)
+z_as_relative = false
+z_index = 200
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -156.0
+offset_top = -168.0
+offset_right = -28.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="ColumnaContinuacion" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="FlechaContinuar" type="Button" parent="ColumnaContinuacion"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_default_cursor_shape = 2
+tooltip_text = ""
+focus_mode = 0
+icon = ExtResource("2_flecha")
+flat = true
+expand_icon = true
+
+[node name="TimerContinuacion" type="Timer" parent="."]
+wait_time = 1.0

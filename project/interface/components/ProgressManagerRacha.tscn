@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://deghb1a1oj2sb"]
 
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_4j5vn"]
 [ext_resource type="Texture2D" uid="uid://d310wsm1t43q5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="1_arrow"]
 [ext_resource type="PackedScene" uid="uid://l486egq1vfiq" path="res://interface/components/DayCircle.tscn" id="1_ivdk2"]
 [ext_resource type="Script" uid="uid://cn3g8p845jkil" path="res://interface/components/ProgressManagerRacha.gd" id="1_wg76n"]
 [ext_resource type="Texture2D" uid="uid://bkv7pi87jsgvx" path="res://assets-sistema/racha-diaria/racha-2-dias.png" id="2_3ji3y"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_uu7jb"]
 [ext_resource type="PackedScene" uid="uid://jjtcsaulb7id" path="res://mapas/MapHud.tscn" id="2_wus86"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_1jrfl"]
 [ext_resource type="Texture2D" uid="uid://ckfskmif7pdle" path="res://assets-sistema/racha-diaria/racha-3-dias.png" id="3_3ttp0"]
@@ -23,21 +23,17 @@ layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_wg76n")
 
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_uu7jb")]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -4.0
+offset_right = 1154.0
+offset_bottom = 795.0
+
 [node name="StreakView" type="Control" parent="." unique_id=1710265920]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-
-[node name="ColorRect" type="ColorRect" parent="StreakView" unique_id=345130278]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-scale = Vector2(29, 20.079998)
-
-[node name="fondo" type="Sprite2D" parent="StreakView" unique_id=468604043]
-position = Vector2(573, 402)
-scale = Vector2(-0.3335385, -0.3335385)
-texture = ExtResource("1_4j5vn")
 
 [node name="MapHud" parent="StreakView" unique_id=852306528 instance=ExtResource("2_wus86")]
 

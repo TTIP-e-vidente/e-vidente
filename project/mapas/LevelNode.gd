@@ -1,10 +1,14 @@
+# HELPER_INTERNO
+# Nodo visual individual del mapa (estrella/candado/completado).
+# Solo renderiza estado — no decide flujo.
 @tool
 extends Node2D
 
 signal selected(node_data: MapNodeData)
 
+const COLOR_AVAILABLE := Color(1.0, 0.96, 0.84, 1.0)
 const COLOR_COMPLETED := Color("#db9d4b")
-const COLOR_LOCKED := Color(1, 1, 1, 0.35)
+const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
@@ -60,21 +64,17 @@ func _ready() -> void:
 	update_view()
 
 
-func setup(data: MapNodeData, progress_state: Variant = {}, is_completed: bool = false) -> void:
+func configurar(
+	data: MapNodeData,
+	progress_state: Variant = {},
+	is_completed: bool = false
+) -> void:
 	node_data = data
 	if progress_state is Dictionary:
 		_apply_progress_state(progress_state as Dictionary)
 	else:
 		_apply_legacy_progress_state(bool(progress_state), is_completed)
 	update_view()
-
-
-func configurar(
-	data: MapNodeData,
-	progress_state: Variant = {},
-	is_completed: bool = false
-) -> void:
-	setup(data, progress_state, is_completed)
 
 
 func update_view() -> void:
@@ -85,7 +85,7 @@ func update_view() -> void:
 	if title_label != null:
 		title_label.text = _get_title()
 	if button != null:
-		button.tooltip_text = _get_title()
+		button.tooltip_text = ""
 		button.disabled = _is_button_disabled()
 		button.mouse_default_cursor_shape = (
 			Control.CURSOR_ARROW
@@ -146,7 +146,7 @@ func _apply_state_color() -> void:
 				_cancelar_tween_disponible()
 				modulate = COLOR_LOCKED
 			_:
-				modulate = Color.WHITE
+				modulate = COLOR_AVAILABLE
 				_animar_disponible()
 
 

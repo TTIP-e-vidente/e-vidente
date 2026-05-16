@@ -3,6 +3,13 @@ class_name Level
 
 signal run_completed
 
+const LOG_PREFIX_ARRASTRE := "[ARRASTRE]"
+const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
+const LOG_PREFIX_POST_GAME := "[POST_GAME]"
+const LOG_PREFIX_TEACHING := "[Teaching]"
+const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
+const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
+
 ## --- Configuración ---
 
 const DEFAULT_TRACK_KEY            := "celiaquia"
@@ -11,21 +18,36 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 )
 
 const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
+# Mantenemos el alias interno por si queda algún consumidor legacy
+const ContinuidadDePartidaDeNodoScript := preload(
+	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"
+)
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
-const ContinueCountdownScene := preload("res://ui/components/ContinueCountdown.tscn")
-const COMPLETION_BLACK_AND_WHITE_SHADER := preload(
+const ContextoSesionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoSesionDeJuego.gd"
+)
+const ContextoFinalizacionDeJuegoScript := preload(
+	"res://niveles/progress/ContextoFinalizacionDeJuego.gd"
+)
+const PresentadorContinuarJuegoScript := preload(
+	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
+)
+const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := (
 	"res://niveles/level_completion_black_and_white.gdshader"
 )
-const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-guardar.svg")
-const SAVE_ICON_OK   := preload("res://assets-sistema/interfaz/icono-guardar-ok.svg")
-const COMPLETION_DIM_COLOR := Color(0.72, 0.72, 0.72, 1.0)
+const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
+const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+const COMPLETION_DIM_COLOR := Color(0.62, 0.62, 0.62, 1.0)
+const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 
 ## --- Guardado rápido ---
 
@@ -49,10 +71,16 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_1: Sprite2D					 = $Adelante/adelante1
 @onready var adelante_2: Sprite2D 					 = $Adelante/adelante2
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
+@onready var teaching_backdrop: ColorRect = get_node_or_null("TeachingBackdrop") as ColorRect
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
+@onready var tarjeta_ensenanza_cierre: Control = get_node_or_null("TarjetaEnsenanzaCierre") as Control
+@onready var label_ensenanza_cierre: Label = get_node_or_null(
+	"TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre"
+) as Label
 @onready var menu_area:          Area2D              = $Menú
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
+@onready var _player_cambiante: Node                 = get_node_or_null("PlayerCambiante")
 
 ## Guardado rápido (UI)
 @onready var save_progress_button:  Button         = $SaveProgressButton
@@ -76,36 +104,127 @@ var _contexto_nodo_mapa: Dictionary = {}
 var current_node: MapNodeData = null
 var _datos_nodo_mapa: Dictionary = {}
 var _usa_flujo_mapa := false
+var _pertenece_a_partida_de_nodo := false
 var _nodo_actual := ""
 var _json_path_nodo_actual := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
+var _arrastre_tuvo_error := false
 var _ya_continuo := false
-var continuador = null
+var _completion_black_and_white_shader: Shader = null
+var _save_icon_idle: Texture2D = null
+var _save_icon_ok: Texture2D = null
+var _teaching_sprite_base_scale := Vector2.ONE
+var _teaching_card_base_scale := Vector2.ONE
 
+@onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
+@onready var _progress_bar = get_node_or_null("ProgressBar")
+@onready var _continuar_juego = $ContinuarJuego
 
+# Entrada del nivel
 func _ready() -> void:
-	setup_continue_countdown()
-	start_level_flow()
-	setup_save_feedback()
+	_cargar_recursos_runtime()
+	if is_instance_valid(teaching_sprite):
+		_teaching_sprite_base_scale = teaching_sprite.scale
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		_teaching_card_base_scale = tarjeta_ensenanza_cierre.scale
+	_conectar_continuar_juego()
+	iniciar_flujo_del_nivel()
+	_configurar_indicador_de_progreso_de_juego()
+	configurar_retroalimentacion_de_guardado()
+
+
+func _cargar_recursos_runtime() -> void:
+	_completion_black_and_white_shader = load(COMPLETION_BLACK_AND_WHITE_SHADER_PATH) as Shader
+	_save_icon_idle = load(SAVE_ICON_IDLE_PATH) as Texture2D
+	_save_icon_ok = load(SAVE_ICON_OK_PATH) as Texture2D
+
+
+func _conectar_continuar_juego() -> void:
+	if _continuar_juego == null:
+		return
+	if _continuar_juego.has_signal("continuar_solicitado"):
+		_continuar_juego.connect("continuar_solicitado", Callable(self, "_al_solicitar_continuar"))
 
 
 
 ## --- Arranque ---
 
-func start_level_flow() -> void:
-	load_playable_session()
-	resolve_active_track()
-	reset_run_state()
-	start_manager_level()
+func iniciar_flujo_del_nivel() -> void:
+	cargar_contenido_del_nivel()
+	resolver_pista_activa()
+	reiniciar_estado_de_partida()
+	iniciar_runtime_de_arrastre()
 	_reproducir_audio_nivel()
 
 
-func load_playable_session() -> void:
-	_load_playable_session()
+## --- Contexto jugable ------------------------------------------------------
+
+func cargar_contenido_del_nivel() -> void:
+	_reiniciar_contexto_jugable_del_nivel()
+	_contexto_nodo_mapa = ContextoSesionDeJuegoScript.normalizar_contexto_jugable(
+		ContextoSesionDeJuegoScript.obtener_contexto_jugable_actual(),
+		track_key_override.strip_edges(),
+		1,
+		GameSceneRouter.MAP_SCENE_PATH
+	)
+	if _contexto_nodo_mapa.is_empty():
+		return
+
+	_aplicar_contexto_jugable_del_nivel(_contexto_nodo_mapa)
+	if not str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges().is_empty():
+		cargar_contenido_del_nivel_desde_contexto(_contexto_nodo_mapa)
+	elif not _json_path_nodo_actual.is_empty():
+		cargar_contenido_del_nivel_desde_json(_json_path_nodo_actual)
+
+	_usa_flujo_mapa = bool(_contexto_nodo_mapa.get("came_from_map", false))
 
 
-func resolve_active_track() -> void:
+func _reiniciar_contexto_jugable_del_nivel() -> void:
+	current_node = null
+	_contexto_nodo_mapa = {}
+	_datos_nodo_mapa = {}
+	_usa_flujo_mapa = false
+	_pertenece_a_partida_de_nodo = false
+	_nodo_actual = ""
+	_json_path_nodo_actual = ""
+	_track_key_contexto = ""
+	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+
+
+func _aplicar_contexto_jugable_del_nivel(contexto_jugable: Dictionary) -> void:
+	_pertenece_a_partida_de_nodo = bool(
+		contexto_jugable.get("pertenece_a_partida_de_nodo", false)
+	)
+	_nodo_actual = str(contexto_jugable.get("node_key", "")).strip_edges()
+	_track_key_contexto = str(contexto_jugable.get("track_key", "")).strip_edges()
+	_json_path_nodo_actual = str(contexto_jugable.get("json_path", "")).strip_edges()
+	_ruta_escena_retorno = str(
+		contexto_jugable.get("return_to", GameSceneRouter.MAP_SCENE_PATH)
+	).strip_edges()
+	if _ruta_escena_retorno.is_empty():
+		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+
+	var titulo_nodo: String = str(
+		contexto_jugable.get("node_title", contexto_jugable.get("titulo_nodo", ""))
+	).strip_edges()
+	var modo_jugable: String = str(
+		contexto_jugable.get("mode", contexto_jugable.get("node_mode", ""))
+	).strip_edges()
+	var numero_nivel_jugable: int = int(
+		contexto_jugable.get("level_number", contexto_jugable.get("nivel_id", 1))
+	)
+
+	current_node = MapNodeDataScript.new()
+	current_node.node_key = _nodo_actual
+	current_node.title = titulo_nodo
+	current_node.mode = modo_jugable
+	current_node.json_path = _json_path_nodo_actual
+	current_node.track_key = _track_key_contexto
+	current_node.index = max(0, numero_nivel_jugable - 1)
+
+
+func resolver_pista_activa() -> void:
 	var configured_key := track_key_override.strip_edges()
 	if not _track_key_contexto.is_empty():
 		active_track_key = _track_key_contexto
@@ -113,106 +232,180 @@ func resolve_active_track() -> void:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
 
 
-func reset_run_state() -> void:
-	_post_game_streak_feedback = {}
-	_post_game_flow_state = {}
-	_current_run_completion_handled = false
-	_ya_continuo = false
-	Item_level.is_dragging = null
-	_restaurar_estado_posterior_finalizacion()
-	next_chapter_button.disabled = true
+## --- HUD / progreso --------------------------------------------------------
 
-
-func start_manager_level() -> void:
-	if manager_level == null:
-		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
-	else:
-		manager_level.iniciar_nivel_sesion(active_track_key, self)
-	var resolved_level_number := _numero_nivel_valido(active_track_key)
-	if resolved_level_number > 0:
-		SaveManager.establecer_reanudar_en_nivel(active_track_key, resolved_level_number)
-
-
-func _load_playable_session() -> void:
-	_contexto_nodo_mapa = Global.obtener_sesion_nodo_jugable_activo()
-	current_node = null
-	_datos_nodo_mapa = {}
-	_usa_flujo_mapa = false
-	_nodo_actual = ""
-	_json_path_nodo_actual = ""
-	_track_key_contexto = ""
-	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
-
-	if _contexto_nodo_mapa.is_empty():
+func _configurar_indicador_de_progreso_de_juego() -> void:
+	# Ocultar el badge "Juego X/Y" — la barra inferior es el único indicador de progreso
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
+	# Actualizar barra inferior con la posición actual dentro del nodo
+	if _progress_bar == null:
 		return
-
-	_nodo_actual = str(_contexto_nodo_mapa.get("node_key", "")).strip_edges()
-	_track_key_contexto = str(_contexto_nodo_mapa.get("track_key", "")).strip_edges()
-	_json_path_nodo_actual = _read_playable_json_path(_contexto_nodo_mapa)
-	_ruta_escena_retorno = GameSceneRouter.read_return_to(
-		_contexto_nodo_mapa,
-		GameSceneRouter.MAP_SCENE_PATH
-	)
-	if _ruta_escena_retorno.is_empty():
-		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
-
-	current_node = MapNodeDataScript.new()
-	current_node.node_key = _nodo_actual
-	current_node.title = str(_contexto_nodo_mapa.get("node_title", "")).strip_edges()
-	current_node.mode = _read_playable_mode(_contexto_nodo_mapa)
-	current_node.json_path = _json_path_nodo_actual
-	current_node.track_key = _track_key_contexto
-	current_node.index = max(0, _read_playable_level_number(_contexto_nodo_mapa) - 1)
-
-	if not _json_path_nodo_actual.is_empty():
-		load_level_from_json(_json_path_nodo_actual)
-
-	_usa_flujo_mapa = not _nodo_actual.is_empty()
+	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.actualizar_progreso(actual, total)
 
 
-func start_from_node(node_data: MapNodeData) -> void:
-	current_node = node_data
-	if current_node == null:
-		return
-	_nodo_actual = current_node.node_key
-	_track_key_contexto = current_node.track_key
-	_json_path_nodo_actual = current_node.json_path
-	_usa_flujo_mapa = not _nodo_actual.is_empty()
-	load_level_from_json(current_node.json_path)
+## --- Carga de contenido ----------------------------------------------------
 
-
-func load_level_from_json(json_path: String) -> void:
+func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 	var clean_path: String = json_path.strip_edges()
 	if clean_path.is_empty():
 		push_error("Level: falta json_path para cargar el nivel.")
 		return
 
-	var result: Dictionary = NodeContentLoaderScript.cargar_contenido_nodo(clean_path)
+	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": clean_path})
 	if not bool(result.get("ok", false)):
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
 		return
 
-	configurar_desde_datos_nodo(result.get("data", {}))
-
-
-func configurar_desde_datos_nodo(datos_nodo: Dictionary) -> void:
+	var datos_nodo: Dictionary = result.get("data", {})
 	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
-func _read_playable_json_path(session_context: Dictionary) -> String:
-	var clean_path: String = str(session_context.get("json_path", "")).strip_edges()
-	if not clean_path.is_empty():
-		return clean_path
-	return str(session_context.get("node_json_path", "")).strip_edges()
+func cargar_contenido_del_nivel_desde_contexto(contexto_jugable: Dictionary) -> void:
+	var result: Dictionary = NodeContentLoaderScript.load_from_context(contexto_jugable)
+	if not bool(result.get("ok", false)):
+		push_error(
+			"Level: %s"
+			% str(result.get("error", "No se pudo cargar el contenido del nivel."))
+		)
+		return
+
+	var datos_nodo: Dictionary = result.get("data", {})
+	_datos_nodo_mapa = datos_nodo.duplicate(true)
 
 
-func _read_playable_level_number(session_context: Dictionary) -> int:
-	return int(session_context.get("level_number", session_context.get("nivel_id", 1)))
+## --- Estado inicial --------------------------------------------------------
+
+func reiniciar_estado_de_partida() -> void:
+	_post_game_streak_feedback = {}
+	_post_game_flow_state = {}
+	_current_run_completion_handled = false
+	_ya_continuo = false
+	_arrastre_tuvo_error = false
+	Item_level.is_dragging = null
+	_restaurar_estado_posterior_finalizacion()
+	next_chapter_button.disabled = true
 
 
-func _read_playable_mode(session_context: Dictionary) -> String:
-	return str(session_context.get("mode", session_context.get("node_mode", ""))).strip_edges()
+## --- Runtime de arrastre ---------------------------------------------------
 
+func iniciar_runtime_de_arrastre() -> void:
+	if manager_level == null:
+		push_error("Level no pudo inicializar el runtime de ManagerLevel.")
+		return
+	_aplicar_dificultad_de_arrastre()
+	# Intentar iniciar arrastre desde JSON oficial; si falla, usar flujo legacy.
+	if _iniciar_arrastre_desde_json_si_corresponde():
+		_conectar_senales_items_arrastre()
+		return
+	_iniciar_arrastre_legacy()
+	_conectar_senales_items_arrastre()
+
+
+func _iniciar_arrastre_legacy() -> void:
+	manager_level.iniciar_nivel_sesion(active_track_key, self)
+	var nivel_numero_resuelto: int = _numero_nivel_valido(active_track_key)
+	if nivel_numero_resuelto > 0:
+		SaveManager.establecer_reanudar_en_nivel(active_track_key, nivel_numero_resuelto)
+
+
+## --- Soporte: iniciar arrastre desde JSON -------------------------------
+func _iniciar_arrastre_desde_json_si_corresponde() -> bool:
+	if not _puede_iniciar_arrastre_desde_json():
+		return false
+
+	var nodo_datos: Dictionary = _obtener_datos_de_arrastre_del_nodo()
+	if nodo_datos.is_empty():
+		return false
+
+	var conversion: Dictionary = NodeContentLoaderScript.convertir_arrastre_a_runtime(
+		nodo_datos
+	)
+	if not bool(conversion.get("ok", false)):
+		push_warning("Level: JSON no válido para arrastre: %s" % str(conversion.get("error", "")))
+		return false
+
+	_log_arrastre_cargado(conversion.get("data", {}))
+
+	return _iniciar_runtime_de_arrastre_desde_datos(conversion.get("data", {}))
+
+
+func _puede_iniciar_arrastre_desde_json() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	if current_node == null:
+		return false
+	return str(current_node.mode).strip_edges() == "drag_drop"
+
+
+func _obtener_datos_de_arrastre_del_nodo() -> Dictionary:
+	if not _datos_nodo_mapa.is_empty():
+		return _datos_nodo_mapa
+
+	var ruta_json: String = _json_path_nodo_actual
+	if ruta_json.is_empty():
+		return {}
+
+	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": ruta_json})
+	if not bool(result.get("ok", false)):
+		push_warning(
+			"Level: no se pudo leer JSON de arrastre: %s" % str(result.get("error", ""))
+		)
+		return {}
+
+	return result.get("data", {})
+
+
+func _iniciar_runtime_de_arrastre_desde_datos(contenido_arrastre: Dictionary) -> bool:
+	if manager_level == null or not manager_level.has_method("iniciar_desde_datos_de_arrastre"):
+		push_warning("ManagerLevel no soporta iniciar desde JSON; usando flujo legacy.")
+		return false
+
+	var inicio_arrastre_ok: bool = bool(
+		manager_level.iniciar_desde_datos_de_arrastre(active_track_key, contenido_arrastre, self)
+	)
+	if not inicio_arrastre_ok:
+		push_warning("Level: no se pudo inicializar el arrastre desde JSON; usando flujo legacy.")
+	return inicio_arrastre_ok
+
+
+func _aplicar_dificultad_de_arrastre() -> void:
+	if (
+		manager_level == null
+		or not manager_level.has_method("establecer_configuracion_de_dificultad_arrastre")
+	):
+		return
+	if not _pertenece_a_partida_de_nodo:
+		manager_level.establecer_configuracion_de_dificultad_arrastre({})
+		return
+	var dificultad_actual: int = Global.obtener_dificultad_del_juego_actual()
+	manager_level.establecer_configuracion_de_dificultad_arrastre(
+		_construir_configuracion_de_dificultad_arrastre(dificultad_actual)
+	)
+
+
+func _construir_configuracion_de_dificultad_arrastre(dificultad: int) -> Dictionary:
+	return {
+		"dificultad": dificultad,
+		"elementos_maximos": DificultadArrastreScript.limitar_elementos_por_dificultad(
+			dificultad
+		),
+		"distractores_maximos": (
+			DificultadArrastreScript.obtener_cantidad_de_distractores_por_dificultad(
+				dificultad
+			)
+		),
+		"mostrar_ayuda_visual": DificultadArrastreScript.deberia_mostrar_ayuda_visual(
+			dificultad
+		),
+	}
+
+
+## --- Recursos visuales y feedback inicial ---------------------------------
 
 func _reproducir_audio_nivel() -> void:
 	if background_music_path.strip_edges().is_empty():
@@ -221,9 +414,9 @@ func _reproducir_audio_nivel() -> void:
 	MusicManager.reproducir_musica(ruta_musica)
 
 
-func setup_save_feedback() -> void:
-	save_progress_button.tooltip_text = "Guardar este avance en el dispositivo"
-	save_progress_button.icon = SAVE_ICON_IDLE
+func configurar_retroalimentacion_de_guardado() -> void:
+	save_progress_button.tooltip_text = ""
+	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 	save_feedback_title.text = SAVE_FEEDBACK_DEFAULT_TITLE
 	save_feedback_title.modulate = SAVE_FEEDBACK_SUCCESS_TITLE_COLOR
@@ -242,14 +435,17 @@ func setup_save_feedback() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(save_feedback_timer):
 		save_feedback_timer.stop()
-	if continuador != null:
-		continuador.detener()
+	_ocultar_continuacion()
 
 
+# Finalización de partida
 ## --- Navegación y gameplay ---
 
 func _on_atras_presionado() -> void:
-	if es_corrida_completado():
+	if es_partida_completada():
+		return
+	if _pertenece_a_partida_de_nodo:
+		_cancelar_partida_de_nodo()
 		return
 	if _usa_flujo_mapa:
 		_return_to_map_scene()
@@ -260,15 +456,15 @@ func _on_atras_presionado() -> void:
 		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
 
-func es_corrida_completado() -> bool:
+func es_partida_completada() -> bool:
 	return _current_run_completion_handled
 
 
-func completar_corrida_actual() -> void:
-	complete_current_run()
+func completar_partida_actual() -> void:
+	_finalizar_partida()
 
 
-func complete_current_run() -> void:
+func _finalizar_partida() -> void:
 	if _current_run_completion_handled:
 		return
 
@@ -276,24 +472,108 @@ func complete_current_run() -> void:
 	var level_number := _numero_nivel_valido(track_key)
 	if level_number <= 0:
 		return
+	var activity_id: String = _obtener_activity_id_actual()
+	var teaching_key: String = _obtener_teaching_key_actual()
+	print("%s activity=%s key=%s" % [LOG_PREFIX_TEACHING, activity_id, teaching_key])
+	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
+		print(
+			LOG_PREFIX_ARRASTRE,
+			" completado=true llamando_ensenanza=true teaching_key=",
+			_obtener_teaching_key_actual()
+		)
+		_mostrar_ensenanza_del_nivel()
+		return
+	_finalizar_partida_normal(track_key, level_number)
 
+
+func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+
+
+func _mostrar_ensenanza_del_nivel() -> void:
 	_current_run_completion_handled = true
-	show_completion_state()
+	# Bloquear input sin aplicar el efecto grayscale de finalizacion —
+	# la ensenanza cubre el gameplay de inmediato, el "dim" generaba
+	# una pantalla gris congelada de ~0.8s antes de mostrar la ensenanza.
+	Item_level.is_dragging = null
+	_establecer_interacciones_jugabilidad_habilitadas(false)
+	_ocultar_boton_adelante_anterior()
+	_ocultar_ensenanza_textual()
+	_mostrar_ensenanza_de_cierre()
+	mostrar_continuacion()
+	run_completed.emit()
+
+
+func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
+	_current_run_completion_handled = true
 
 	var previous_streak: Dictionary = Global.obtener_estado_racha()
-	save_completion_progress(track_key, level_number)
+	guardar_progreso_de_finalizacion(track_key, level_number)
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
-	build_post_game_flow(level_number, previous_streak, updated_streak)
+	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
+		# Bloquear input sin dim/grayscale: la ensenanza cubre el gameplay inmediatamente.
+		Item_level.is_dragging = null
+		_establecer_interacciones_jugabilidad_habilitadas(false)
+		_ocultar_boton_adelante_anterior()
+		_ocultar_ensenanza_textual()
+		_mostrar_ensenanza_de_cierre()
 		mostrar_continuacion()
 		run_completed.emit()
 		return
 
-	_mostrar_completado_corrida_retroalimentacion()
+	mostrar_estado_de_finalizacion()
+	mostrar_continuacion()
 	run_completed.emit()
 
 
-func save_completion_progress(track_key: String, level_number: int) -> void:
+func _continuar_partida_de_nodo_si_corresponde() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	# Convencion minima: 1 intento por mini juego de arrastre.
+	# Si el jugador soltó al menos un item negativo en el plato → incorrecto.
+	Global.registrar_resultado_mini_juego(not _arrastre_tuvo_error)
+	var habia_siguiente: bool = NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+	var continuo: bool = NodoRuntimeScript.finalizar_mini_juego(
+		get_tree(),
+		Callable(),
+		Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
+	)
+	if not continuo and habia_siguiente:
+		push_error("[POST_GAME] No se pudo avanzar: falta siguiente juego o target inválido.")
+	return continuo
+
+
+func _on_item_intento_incorrecto() -> void:
+	_arrastre_tuvo_error = true
+
+
+func _conectar_senales_items_arrastre() -> void:
+	if manager_level == null:
+		return
+	for item in manager_level.level_items:
+		if item is Item_level:
+			if not item.intento_incorrecto.is_connected(_on_item_intento_incorrecto):
+				item.intento_incorrecto.connect(_on_item_intento_incorrecto)
+
+
+func _limpiar_estado_local_de_partida_en_nivel() -> void:
+	_pertenece_a_partida_de_nodo = false
+
+
+## Cumple el contrato de ModalidadBase. Devuelve el resultado de este mini juego de arrastre.
+func obtener_resultado() -> ResultadoDeMiniJuego:
+	return ResultadoDeMiniJuegoScript.crear_detallado(
+		"arrastre",
+		1 if not _arrastre_tuvo_error else 0,
+		1 if _arrastre_tuvo_error else 0,
+		1
+	)
+
+
+func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> void:
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
 		Global.registrar_actividad_racha(
@@ -304,6 +584,7 @@ func save_completion_progress(track_key: String, level_number: int) -> void:
 				"node_key": _nodo_actual,
 			}
 		)
+		SaveManager.guardar_progreso_en_disco()
 		return
 
 	Global.marcar_nivel_completado(track_key, level_number)
@@ -314,52 +595,119 @@ func save_completion_progress(track_key: String, level_number: int) -> void:
 	SaveManager.registrar_nivel_completado(track_key, level_number)
 
 
-func show_completion_state() -> void:
-	_bloquear_completado_corrida()
+func mostrar_estado_de_finalizacion() -> void:
+	_bloquear_completado_partida()
 
-func _mostrar_completado_corrida_retroalimentacion() -> void:
-	var chapter_fijo := _actual_nivel_numero()
-	while is_inside_tree() and es_corrida_completado() and _actual_nivel_numero() == chapter_fijo:
-		adelante_2.show()
-		await get_tree().create_timer(0.60).timeout
-		adelante_2.hide()
-		await get_tree().create_timer(0.60).timeout
-		adelante_1.show()
-		await get_tree().create_timer(0.60).timeout
-		adelante_1.hide()
-		await get_tree().create_timer(0.60).timeout
-		adelante_3.show()
-		await get_tree().create_timer(0.60).timeout
-		adelante_3.hide()
-		await get_tree().create_timer(0.60).timeout
+func _mostrar_completado_partida_retroalimentacion() -> void:
+	_ocultar_boton_adelante_anterior()
 
 func _on_adelante_presionado() -> void:
-	if not es_corrida_completado():
+	if not es_partida_completada():
 		return
-	on_teaching_finished(true)
+	_al_solicitar_continuar()
+
+
+func mostrar_continuacion() -> void:
+	_ya_continuo = false
+	_ocultar_boton_adelante_anterior()
+	_asegurar_cierre_visible_para_continuacion()
+	PresentadorContinuarJuegoScript.mostrar(
+		_continuar_juego,
+		_hay_siguiente_juego_de_partida(),
+		5
+	)
+
+
+func _asegurar_cierre_visible_para_continuacion() -> void:
+	if _esta_visible_ensenanza_de_cierre():
+		return
+	_mostrar_ensenanza_de_cierre()
+
+
+func _esta_visible_ensenanza_de_cierre() -> bool:
+	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
+		return true
+	return is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible
+
+
+func _hay_siguiente_juego_de_partida() -> bool:
+	if not _pertenece_a_partida_de_nodo:
+		return false
+	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+
+
+func _on_timer_siguiente_nodo_timeout() -> void:
+	_al_solicitar_continuar()
+
+
+func continuar_al_siguiente_nodo() -> void:
+	_al_solicitar_continuar()
+
+
+func _al_solicitar_continuar() -> void:
+	if _ya_continuo:
+		return
+
+	_ya_continuo = true
+	print(LOG_PREFIX_ENSENANZA, " cerrada=true llamando_post_game=true")
+	_ocultar_continuacion()
+	_continuar_despues_de_ensenanza(true)
+
+
+func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var indice_actual: int = int(juego_actual.get("indice_juego_actual", 0)) + 1
+	var total_juegos: int = int(juego_actual.get("total_juegos", 0))
+	var hay_siguiente := false
+	if _pertenece_a_partida_de_nodo:
+		hay_siguiente = NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+	print(LOG_PREFIX_POST_GAME, " contexto_recibido=", juego_actual)
+	print(
+		LOG_PREFIX_POST_GAME,
+		" juego_actual=",
+		indice_actual,
+		" total=",
+		total_juegos,
+		" hay_siguiente=",
+		hay_siguiente
+	)
+	if _continuar_partida_de_nodo_si_corresponde():
+		return
+	if not _has_post_game_flow_state():
+		if _usa_flujo_mapa:
+			_continuar_flujo_mapa_legacy()
+			return
+		GameSceneRouter.go_to_mode_selector(get_tree())
+		return
+
+	PostGameFlowControllerScript.navigate_after_teaching(
+		get_tree(),
+		_take_post_game_flow_state(),
+		_take_post_game_streak_feedback(),
+		timer_finished
+	)
+
+
+func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
 
 
 ## --- Continuación desde mapa ---
 
-func setup_continue_countdown() -> void:
-	continuador = ContinueCountdownScene.instantiate()
-	add_child(continuador)
-	_ubicar_continuador()
-	continuador.continuar_solicitado.connect(continuar_al_siguiente_nodo)
-	continuador.ocultar()
+func _ocultar_continuacion() -> void:
+	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
 
 
-func _ubicar_continuador() -> void:
-	var rect_boton: Rect2 = next_chapter_button.get_global_rect()
-	var tamano_continuador: Vector2 = continuador.size
-	if tamano_continuador == Vector2.ZERO:
-		tamano_continuador = continuador.get_combined_minimum_size()
-	var pos := rect_boton.get_center() - (tamano_continuador * 0.5)
-	var viewport_size := get_viewport().get_visible_rect().size
-	const MARGEN := 8.0
-	pos.x = clampf(pos.x, MARGEN, viewport_size.x - tamano_continuador.x - MARGEN)
-	pos.y = clampf(pos.y, MARGEN, viewport_size.y - tamano_continuador.y - MARGEN)
-	continuador.position = pos
+func _ocultar_boton_adelante_anterior() -> void:
+	if is_instance_valid(next_chapter_button):
+		next_chapter_button.hide()
+		next_chapter_button.disabled = true
+	if is_instance_valid(adelante_1):
+		adelante_1.hide()
+	if is_instance_valid(adelante_2):
+		adelante_2.hide()
+	if is_instance_valid(adelante_3):
+		adelante_3.hide()
 
 
 func _guardar_progreso_de_mapa() -> void:
@@ -368,65 +716,33 @@ func _guardar_progreso_de_mapa() -> void:
 	Global.marcar_nodo_jugable_completado(active_track_key, _nodo_actual)
 
 
-func build_post_game_flow(
+func construir_flujo_post_game(
 	level_number: int,
 	previous_streak: Dictionary,
 	updated_streak: Dictionary
 ) -> void:
-	var completion_context: Dictionary = _build_completion_context(level_number)
+	var completion_context: Dictionary = ContextoFinalizacionDeJuegoScript.construir(
+		"level",
+		active_track_key,
+		level_number,
+		Global.obtener_pista_nivel_cantidad(active_track_key),
+		active_track_key == DEFAULT_TRACK_KEY,
+		_usa_flujo_mapa,
+		_nodo_actual,
+		_ruta_escena_retorno,
+		"Level.construir_flujo_post_game"
+	)
 	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
-	# La escena solo arma contexto; el controller lo transforma en flow_state.
 	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
 		previous_streak,
 		updated_streak,
 		completion_context,
 		_post_game_streak_feedback
 	)
-
-
-func _build_completion_context(level_number: int) -> Dictionary:
-	return {
-		"source": "level",
-		"level": _build_level_completion_context(level_number),
-		"map": _build_map_completion_context(),
-		"navigation": _build_navigation_completion_context(),
-		"debug": _build_completion_debug_context(),
-	}
-
-
-func _build_level_completion_context(level_number: int) -> Dictionary:
-	return {
-		"track_key": active_track_key,
-		"number": level_number,
-		"track_level_count": Global.obtener_pista_nivel_cantidad(active_track_key),
-		"is_default_track": active_track_key == DEFAULT_TRACK_KEY,
-	}
-
-
-func _build_map_completion_context() -> Dictionary:
-	var node_key: Variant = null
-	if _usa_flujo_mapa and not _nodo_actual.is_empty():
-		node_key = _nodo_actual
-	return {
-		"came_from_map": _usa_flujo_mapa,
-		"node_key": node_key,
-	}
-
-
-func _build_navigation_completion_context() -> Dictionary:
-	return {
-		"return_to": _ruta_escena_retorno,
-	}
-
-
-func _build_completion_debug_context() -> Dictionary:
-	return {
-		"created_by": "Level._build_completion_context",
-	}
 
 
 func _has_post_game_flow_state() -> bool:
@@ -445,51 +761,26 @@ func _take_post_game_streak_feedback() -> Dictionary:
 	return post_game_streak_feedback
 
 
-func mostrar_continuacion() -> void:
-	_ya_continuo = false
-	next_chapter_button.hide()
-	continuador.iniciar(5)
-
-
-func _on_timer_siguiente_nodo_timeout() -> void:
-	continuar_al_siguiente_nodo()
-
-
-func continuar_al_siguiente_nodo() -> void:
-	if _has_post_game_flow_state():
-		on_teaching_finished(true)
-		return
-
-	if _ya_continuo:
-		return
-
-	_ya_continuo = true
-	if continuador != null:
-		continuador.detener()
-	_continue_from_map_completion()
-
-
 func _return_to_map_scene() -> void:
-	if continuador != null:
-		continuador.detener()
+	_ocultar_continuacion()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
 		_ruta_escena_retorno
 	)
 
 
-func _continue_from_map_completion() -> void:
+func _cancelar_partida_de_nodo() -> void:
+	_ocultar_continuacion()
+	Global.finalizar_partida_de_nodo()
+	Global.limpiar_sesion_nodo_jugable_activo()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
-		_ruta_escena_retorno,
-		_nodo_actual
+		_ruta_escena_retorno
 	)
-
-
 ## --- Guardado rápido ---
 
 func _on_guardar_progreso_boton_presionado() -> void:
-	if es_corrida_completado():
+	if es_partida_completada():
 		return
 	if manager_level == null or not is_instance_valid(manager_level):
 		_mostrar_guardar_retroalimentacion(
@@ -532,7 +823,7 @@ func _mostrar_guardar_exito_retroalimentacion(saved_positive_count: int) -> void
 		else "Guardado en este dispositivo"
 	)
 	var detail_lines: Array[String] = [time_line]
-	var run_line: String = manager_level.obtener_actual_corrida_guardar_label()
+	var run_line: String = manager_level.obtener_actual_partida_guardar_label()
 	if not run_line.is_empty():
 		detail_lines.append(run_line)
 	detail_lines.append(manager_level.formatear_parcial_guardar_progreso(saved_positive_count))
@@ -548,36 +839,19 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 		SAVE_FEEDBACK_SUCCESS_TITLE_COLOR if success else SAVE_FEEDBACK_ERROR_TITLE_COLOR,
 		SAVE_FEEDBACK_SUCCESS_BODY_COLOR if success else SAVE_FEEDBACK_ERROR_BODY_COLOR
 	)
-	save_progress_button.icon = SAVE_ICON_OK if success else SAVE_ICON_IDLE
-
-
-func on_teaching_finished(timer_finished: bool) -> void:
-	if not _has_post_game_flow_state():
-		if _usa_flujo_mapa:
-			_continuar_flujo_mapa_legacy()
-			return
-		GameSceneRouter.go_to_mode_selector(get_tree())
-		return
-
-	PostGameFlowControllerScript.navigate_after_teaching(
-		get_tree(),
-		_take_post_game_flow_state(),
-		_take_post_game_streak_feedback(),
-		timer_finished
-	)
-
-
-func _on_teaching_finished(timer_finished: bool) -> void:
-	on_teaching_finished(timer_finished)
+	save_progress_button.icon = _save_icon_ok if success else _save_icon_idle
 
 
 func _continuar_flujo_mapa_legacy() -> void:
 	if _ya_continuo:
 		return
 	_ya_continuo = true
-	if continuador != null:
-		continuador.detener()
-	_continue_from_map_completion()
+	_ocultar_continuacion()
+	PostGameFlowControllerScript.navigate_to_return_target(
+		get_tree(),
+		_ruta_escena_retorno,
+		_nodo_actual
+	)
 
 
 func _mostrar_retroalimentacion_tarjeta(
@@ -602,7 +876,7 @@ func _mostrar_retroalimentacion_tarjeta(
 
 
 func _reiniciar_guardar_retroalimentacion_visual_estado() -> void:
-	save_progress_button.icon = SAVE_ICON_IDLE
+	save_progress_button.icon = _save_icon_idle
 	save_feedback_backdrop.visible = false
 
 
@@ -612,21 +886,47 @@ func _on_guardar_retroalimentacion_timeout() -> void:
 	_reiniciar_guardar_retroalimentacion_visual_estado()
 
 
-func _bloquear_completado_corrida() -> void:
+func _bloquear_completado_partida() -> void:
 	Item_level.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
-	next_chapter_button.disabled = false
-	teaching_sprite.show()
+	_ocultar_boton_adelante_anterior()
+	_ocultar_ensenanza_textual()
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
 	_aplicar_finalizacion_visual_estado()
 
 
 func _restaurar_estado_posterior_finalizacion() -> void:
 	restaurar_finalizacion_visual_estado()
 	_establecer_interacciones_jugabilidad_habilitadas(true)
-	next_chapter_button.show()
-	teaching_sprite.hide()
-	if continuador != null:
-		continuador.ocultar()
+	_ocultar_boton_adelante_anterior()
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+	_ocultar_ensenanza_textual()
+	_establecer_visibilidad_indicador_de_progreso(true)
+	_ocultar_continuacion()
+
+
+func _ocultar_ensenanza_textual() -> void:
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.hide()
+		teaching_backdrop.modulate.a = 0.0
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+		teaching_sprite.modulate.a = 1.0
+		teaching_sprite.scale = _teaching_sprite_base_scale
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		tarjeta_ensenanza_cierre.hide()
+		tarjeta_ensenanza_cierre.modulate.a = 1.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale
+	if is_instance_valid(label_ensenanza_cierre):
+		label_ensenanza_cierre.text = ""
+
+
+func _establecer_visibilidad_indicador_de_progreso(_visible: bool) -> void:
+	# El badge de texto está desactivado — siempre ocultar
+	if _indicador_de_progreso_de_juego != null:
+		_indicador_de_progreso_de_juego.hide()
 
 
 func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
@@ -650,11 +950,11 @@ func _establecer_interacciones_jugabilidad_habilitadas(enabled: bool) -> void:
 
 
 func _aplicar_finalizacion_visual_estado() -> void:
-	if not grayscale_on_completion:
+	if not grayscale_on_completion or _completion_black_and_white_shader == null:
 		return
 
 	var grayscale_material := ShaderMaterial.new()
-	grayscale_material.shader = COMPLETION_BLACK_AND_WHITE_SHADER
+	grayscale_material.shader = _completion_black_and_white_shader
 	for runtime_node in find_children("*", "", true, false):
 		if not runtime_node is CanvasItem:
 			continue
@@ -688,16 +988,155 @@ func _deberia_omitir_finalizacion_visual(runtime_node: Node) -> bool:
 		return true
 	if is_instance_valid(teaching_sprite) and runtime_node == teaching_sprite:
 		return true
+	if is_instance_valid(tarjeta_ensenanza_cierre) and (
+		runtime_node == tarjeta_ensenanza_cierre
+		or tarjeta_ensenanza_cierre.is_ancestor_of(runtime_node)
+	):
+		return true
 	if is_instance_valid(save_feedback_backdrop) and (
 		runtime_node == save_feedback_backdrop
 		or save_feedback_backdrop.is_ancestor_of(runtime_node)
 	):
 		return true
-	if is_instance_valid(continuador) and (
-		runtime_node == continuador or continuador.is_ancestor_of(runtime_node)
+	if is_instance_valid(_continuar_juego) and (
+		runtime_node == _continuar_juego or _continuar_juego.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(manager_level) and (
+		runtime_node == manager_level or manager_level.is_ancestor_of(runtime_node)
+	):
+		return true
+	if is_instance_valid(_player_cambiante) and (
+		runtime_node == _player_cambiante or _player_cambiante.is_ancestor_of(runtime_node)
 	):
 		return true
 	return false
+
+
+## --- Enseñanza: mostrar imagen de asset -------------------------------
+func _hay_textura_de_ensenanza() -> bool:
+	return is_instance_valid(teaching_sprite) and teaching_sprite.texture != null
+
+
+func _mostrar_ensenanza_de_cierre() -> void:
+	_establecer_visibilidad_indicador_de_progreso(false)
+	if _hay_textura_de_ensenanza():
+		if is_instance_valid(tarjeta_ensenanza_cierre):
+			tarjeta_ensenanza_cierre.hide()
+		if is_instance_valid(teaching_sprite):
+			teaching_sprite.show()
+		_animar_entrada_de_ensenanza()
+		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
+		return
+	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
+	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
+
+
+func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
+	var contexto: Dictionary = Global.obtener_contexto_de_progreso_de_juego()
+	var activity_id: String = str(
+		datos_arrastre.get("node_key", datos_arrastre.get("id", ""))
+	).strip_edges()
+	var teaching_key: String = str(datos_arrastre.get("teaching_key", "")).strip_edges()
+	print(
+		LOG_PREFIX_ARRASTRE,
+		" juego_actual=",
+		int(contexto.get("actual", 1)),
+		" total=",
+		int(contexto.get("total", 1)),
+		" id=",
+		activity_id,
+		" teaching_key=",
+		teaching_key
+	)
+
+
+func _obtener_teaching_key_actual() -> String:
+	var contenido: Variant = _datos_nodo_mapa.get("content", {})
+	if contenido is Dictionary:
+		var teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
+		if not teaching_key.is_empty():
+			return teaching_key
+	var top_level_teaching_key: String = _leer_teaching_key_de_diccionario(_datos_nodo_mapa)
+	if not top_level_teaching_key.is_empty():
+		return top_level_teaching_key
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var teaching_key: String = _leer_teaching_key_de_diccionario(juego_actual)
+	if not teaching_key.is_empty():
+		return teaching_key
+	return _leer_teaching_key_de_diccionario(_contexto_nodo_mapa)
+
+
+func _mostrar_ensenanza_textual(texto: String) -> void:
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.hide()
+	if is_instance_valid(label_ensenanza_cierre):
+		label_ensenanza_cierre.text = texto
+	if is_instance_valid(tarjeta_ensenanza_cierre):
+		tarjeta_ensenanza_cierre.show()
+		_animar_entrada_de_ensenanza()
+		return
+	push_warning("Level: no hay tarjeta de ensenanza para mostrar fallback textual.")
+
+
+# Overlay simple para que el cierre se lea mejor en demo.
+func _animar_entrada_de_ensenanza() -> void:
+	var tween := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(teaching_backdrop):
+		teaching_backdrop.show()
+		teaching_backdrop.modulate.a = 0.0
+		tween.parallel().tween_property(teaching_backdrop, "modulate:a", 1.0, 0.18)
+	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
+		teaching_sprite.modulate.a = 0.0
+		teaching_sprite.scale = _teaching_sprite_base_scale * 0.94
+		tween.parallel().tween_property(teaching_sprite, "modulate:a", 1.0, 0.18)
+		tween.parallel().tween_property(
+			teaching_sprite,
+			"scale",
+			_teaching_sprite_base_scale,
+			0.22
+		)
+	if is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible:
+		tarjeta_ensenanza_cierre.modulate.a = 0.0
+		tarjeta_ensenanza_cierre.scale = _teaching_card_base_scale * 0.94
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"modulate:a",
+			1.0,
+			0.18
+		)
+		tween.parallel().tween_property(
+			tarjeta_ensenanza_cierre,
+			"scale",
+			_teaching_card_base_scale,
+			0.22
+		)
+
+
+func _leer_teaching_key_de_diccionario(datos: Dictionary) -> String:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
+		var teaching_key: String = str(datos.get(clave_campo, "")).strip_edges()
+		if not teaching_key.is_empty():
+			return teaching_key
+	return ""
+
+
+func _obtener_activity_id_actual() -> String:
+	var activity_id: String = str(_contexto_nodo_mapa.get("activity_id", "")).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	activity_id = str(
+		_datos_nodo_mapa.get("id", _datos_nodo_mapa.get("node_key", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	activity_id = str(
+		juego_actual.get("activity_id", juego_actual.get("id", ""))
+	).strip_edges()
+	if not activity_id.is_empty():
+		return activity_id
+	return str(juego_actual.get("node_key", "")).strip_edges()
 
 
 func restaurar_finalizacion_visual_estado() -> void:
@@ -730,5 +1169,3 @@ func _numero_nivel_valido(track_key: String) -> int:
 
 func _actual_nivel_numero() -> int:
 	return int(Global.current_level)
-	
-	

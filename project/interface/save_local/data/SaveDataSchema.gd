@@ -29,7 +29,9 @@ func datos_guardado_predeterminados() -> Dictionary:
 		"save_meta": {"last_saved_at": "", "last_saved_reason": "", "write_count": 0},
 		"resume_state": estado_reanudacion_predeterminado().duplicate(true),
 		"progress": {},
-		"history": []
+		"history": [],
+		"completed_activity_ids_by_request": {},
+		"total_exp": 0
 	}
 
 

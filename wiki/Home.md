@@ -1,8 +1,8 @@
 ﻿# 🎮 E-VIDENTE Docs
 
-Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
+Bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 
-> 🎓 **E-VIDENTE** es un juego educativo sobre alimentación. Tenés 4 recorridos jugables (celiaquia, veganismo, mixto, keto) y un modo preguntas para reforzar.
+> 🎓 **E-VIDENTE** es un juego educativo sobre alimentación. Tenés 4 recorridos jugables.
 
 ---
 
@@ -13,26 +13,9 @@ Hey, bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 | 🎬 Ver cómo funciona el proyecto | [Architecture.md](Architecture.md) - El tour visual |
 | 🆕 Levantar el proyecto en tu PC | [Getting-Started.md](Getting-Started.md) |
 | 🔍 Saber qué cambió en los últimos días | [Bitacora.md](Bitacora.md) - Resúmenes cortos |
-| 🗂️ Ver histórico anterior al POC | [Pre-POC.md](Pre-POC.md) |
-| 💾 Entender cómo funciona el guardado | [Persistencia-Local.md](Persistencia-Local.md) |
-| 🧩 Cargar nodos desde JSON | [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md) |
-| 🤔 Entender por qué se hizo algo así (solo cambios grandes) | [adr/](adr/) - Decisiones de alto impacto |
 | 🔧 Saber de CI y deploy | [CI.md](CI.md) |
 | 🎯 Necesito cambiar algo, ¿por dónde empiezo? | [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) - La tabla de "toco esto" |
 
----
-
-## Si Lo Vas a Mostrar en Clase
-
-Si querés presentar el proyecto sin que nadie se pierda, usá esta ruta corta:
-
-1. Abrí [Architecture.md](Architecture.md) y mostrá primero el diagrama principal.
-2. Bajá a la sección de sistemas clave para explicar audio, guardado, navegación y racha.
-3. Cerrá con [Bitacora.md](Bitacora.md) para mostrar qué se mejoró recientemente.
-
-Con ese recorrido, en 5 minutos se entiende qué hace el juego y cómo está organizado.
-
----
 
 ## Lo Que Hay en Cada Doc
 
@@ -51,66 +34,10 @@ Cambios recientes resumidos en 3 líneas. Todo categorizado (🎵 Audio, 🎮 Ga
 
 **Ideal para**: Saber qué cambió recientemente sin tener que leer todo.
 
-### 🗂️ [Pre-POC.md](Pre-POC.md)
-Archivo histórico con todo lo que pasó antes del POC.
-
-**Ideal para**: Mostrar contexto inicial sin mezclarlo con la etapa actual.
-
-### 🤔 [adr/](adr/) - Por Qué Se Hizo Así
-Carpeta con las decisiones importantes del proyecto. Para cada decisión importante hay un archivo que explica:
-- El problema que teníamos
-- Qué alternativas consideramos
-- Qué elegimos y por qué
-- Qué cambió en el proyecto por eso
-
-**Ideal para**: Entender el "por qué" detrás de cambios grandes (no hace falta para ajustes chicos).
-
-### 💾 [Persistencia-Local.md](Persistencia-Local.md)
-Todo sobre cómo guardamos el progreso del jugador en el disco. Qué guardamos, cómo lo guardamos, cómo lo recuperamos.
-
-**Ideal para**: Trabajando con guardado de partidas.
-
 ### ⚙️ [CI.md](CI.md)
 Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cosas se chequean cada vez que subimos cambios.
 
 **Ideal para**: Entender por qué pasan o fallan los checks.
-
----
-
-## Según Qué Estés Haciendo
-
-### Soy Nuevo Acá
-1. Leé este archivo
-2. Mirá el diagrama en [Architecture.md](Architecture.md)
-3. Seguí los pasos en [Getting-Started.md](Getting-Started.md)
-4. Levantá el proyecto en tu PC
-5. Leé el código en este orden:
-   - `interface/evidente.gd` - Cómo arranca todo
-   - `niveles/GameSceneRouter.gd` - Cómo navegamos entre pantallas
-   - `interface/SaveManager.gd` - Cómo se guarda todo
-
-### Voy a Cambiar Algo en el Código
-1. Abrí la tabla en [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar)
-2. Buscá lo que querés cambiar
-3. La tabla te dice en qué archivo tocar
-4. Si es una parte grande del sistema y hay un ADR, leélo para entender por qué se hizo así
-5. Corre los tests antes de hacer PR: ver [Getting-Started.md](Getting-Started.md#testing)
-
-### Voy a Agregar una Feature Completamente Nueva
-1. Leé [Architecture.md](Architecture.md) completo para entender cómo encaja
-2. Mirá los [adr/](adr/) para ver cómo documentamos decisiones grandes
-3. Si la feature cambia arquitectura, escribí un ADR explicando:
-   - El problema que estás resolviendo
-   - Qué alternativas consideraste
-   - Qué elegiste y por qué
-   - Cómo cambia el proyecto
-4. Si no cambia arquitectura, alcanza con [Bitacora.md](Bitacora.md)
-
-### Estoy Por Mergear a Main
-1. Verificá que los checks en [CI.md](CI.md) pasen (acá está qué se chequea)
-2. Si tocaste algo en `project/`, actualizá [Bitacora.md](Bitacora.md) con lo que cambiaste
-3. Revisá que la entrada en [Bitacora.md](Bitacora.md) esté clara y breve
-4. Mergeá cuando todo esté verde
 
 ---
 
@@ -146,20 +73,3 @@ Cómo están configuradas nuestras validaciones automáticas en GitHub. Qué cos
 - Bitácora se actualiza si cambió algo que el jugador ve
 
 ---
-
-## Links Útiles
-
-- **GitHub Repo**: https://github.com/TTIP-e-vidente/e-vidente
-- **Godot Download**: https://godotengine.org/download/windows/
-- **Godot Docs**: https://docs.godotengine.org/en/stable/
-- **GDScript Guide**: https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/
-
----
-
-## Tips Para Navegar la Wiki
-
-- **Búsqueda**: `Ctrl+F` en Architecture.md si necesitás encontrar un archivo o sistema rápido
-- **Mermaid**: El diagrama en Architecture.md es clickeable en GitHub (prueba hacer click en una caja)
-- **Bitácora**: Ahí está el resumen cronológico de cambios del equipo
-- **ADR**: Ahí te explicamos el "por qué" de las cosas, no solo el "qué"
-- **Tabla de cambios**: Si no sabés por dónde empezar, la tabla en Architecture.md te lo dice

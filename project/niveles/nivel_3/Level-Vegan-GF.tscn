@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_wi3ev"]
 [ext_resource type="Texture2D" uid="uid://barm38m1sq5p7" path="res://assets-sistema/interfaz/titulo-celiaquia-veganismo.png" id="2_f1fgs"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="3_catwr"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_u1n7j"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="4_eqa8u"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="5_wrlk6"]
 [ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="6_x2w5f"]
@@ -36,6 +36,7 @@
 [ext_resource type="Texture2D" uid="uid://811ps8f6u20x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="35_7gq85"]
 [ext_resource type="Texture2D" uid="uid://071hky3p3hhb" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_284cr"]
 [ext_resource type="Texture2D" uid="uid://bap7w3y20eoh5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_ma8ur"]
+[ext_resource type="PackedScene" uid="uid://xuxywhubl1u5" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="38_cjuego"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bbluw"]
 size = Vector2(600, 100)
@@ -158,21 +159,13 @@ shadow_size = 8
 script = ExtResource("1_wi3ev")
 track_key_override = "veganismo_celiaquia"
 
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_u1n7j")]
+
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=903181517]
 z_index = 1
 position = Vector2(221, 97.00001)
 scale = Vector2(0.5341749, 0.5341749)
 texture = ExtResource("2_f1fgs")
-
-[node name="ColorRect" type="ColorRect" parent="." unique_id=407455266]
-offset_right = 1152.0
-offset_bottom = 800.0
-mouse_filter = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=1169534297]
-position = Vector2(575.99994, 401.5)
-scale = Vector2(0.33238313, 0.32688433)
-texture = ExtResource("3_catwr")
 
 [node name="Menú" type="Area2D" parent="." unique_id=2130290496 groups=["droppable"]]
 light_mask = 8
@@ -352,7 +345,7 @@ offset_left = 1023.0
 offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
-tooltip_text = "Guardar progreso"
+tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=1094585921]
@@ -408,6 +401,8 @@ level_resource_path = "res://niveles/nivel_3/level_3.tres"
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=149865390]
 volume_db = -4.962
 attenuation = 2.07053
+
+[node name="ContinuarJuego" parent="." instance=ExtResource("38_cjuego")]
 
 [connection signal="input_event" from="Menú" to="Menú" method="_on_evento_entrada"]
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]

@@ -1,30 +1,23 @@
 [gd_scene format=3 uid="uid://doiqthmyie8r8"]
 
-[ext_resource type="Texture2D" uid="uid://dysil3bswgsvv" path="res://assets-sistema/interfaz/fondo-capitulo-01.png" id="1_1hc87"]
 [ext_resource type="Script" uid="uid://cgqsye7obpa77" path="res://interface/opciones.gd" id="1_2m0nt"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_f52wo"]
 [ext_resource type="Texture2D" uid="uid://cr1pjw52vos0x" path="res://assets-sistema/interfaz/opciones-info.png" id="2_r8s3h"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="4_uk3o2"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="5_5gqb0"]
 
 [node name="Opciones" type="Node2D" unique_id=254036246]
 script = ExtResource("1_2m0nt")
 
-[node name="FondoFicha" type="ColorRect" parent="." unique_id=1877503441]
-offset_left = 5.0
-offset_right = 1158.0
-offset_bottom = 799.0
-mouse_filter = 2
-color = Color(1, 1, 0.996078, 0.988235)
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_f52wo")]
+offset_left = 1.0
+offset_top = 2.0
+offset_right = 1154.0
+offset_bottom = 801.0
 
-[node name="ImagenFicha" type="Sprite2D" parent="FondoFicha" unique_id=28862414]
-position = Vector2(577, 407)
-scale = Vector2(1.09575, 1.09575)
-texture = ExtResource("1_1hc87")
-
-[node name="Opciones" type="Sprite2D" parent="FondoFicha" unique_id=2051477611]
-position = Vector2(572, 376)
-rotation = 0.0127772
-scale = Vector2(0.690741, 0.690741)
+[node name="Opciones2" type="Sprite2D" parent="FondoFicha" unique_id=232189674]
+position = Vector2(572.00006, 405)
+scale = Vector2(0.70345336, 0.71187997)
 texture = ExtResource("2_r8s3h")
 
 [node name="Atrás" type="Button" parent="." unique_id=572936451]
