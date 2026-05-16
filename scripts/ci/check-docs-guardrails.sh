@@ -26,9 +26,9 @@ missing=0
 required_docs="
 README.md
 wiki/Home.md
-wiki/Getting-Started.md
+wiki/Como-Empezar.md
 wiki/CI.md
-wiki/Architecture.md
+wiki/Arquitectura-General.md
 wiki/Bitacora.md
 "
 
