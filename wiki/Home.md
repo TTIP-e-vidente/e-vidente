@@ -16,21 +16,6 @@ Bienvenido. Acá encontrás todo lo que necesitás saber del proyecto.
 | 🔧 Saber de CI y deploy | [CI.md](CI.md) |
 | 🎯 Necesito cambiar algo, ¿por dónde empiezo? | [Architecture.md](Architecture.md#-qué-tocar-según-qué-quieras-cambiar) - La tabla de "toco esto" |
 
----
-
-## Navegación por Etapas
-
-Esta guía organiza la wiki por etapas de trabajo TTIP y por documentación técnica transversal.
-
-| Etapa / bloque | Documento principal | Estado |
-|---|---|---|
-| POC | [Bitacora.md#poc-falta-confirmar](Bitacora.md#poc-falta-confirmar) | Falta confirmar consolidación en página propia |
-| Entrega 1 | [02-Entrega-1.md](02-Entrega-1.md) | User stories, casos de uso, avances, decisiones y evidencia |
-| Entrega 2 | [Bitacora.md#entrega-2-falta-confirmar](Bitacora.md#entrega-2-falta-confirmar) | Falta confirmar contenido final |
-| Próximas entregas | [Bitacora.md#proximas-entregas-falta-confirmar](Bitacora.md#proximas-entregas-falta-confirmar) | Falta confirmar planificación |
-| Documentación técnica | [Architecture.md](Architecture.md), [Persistencia-Local.md](Persistencia-Local.md), [Contenido-JSON-Nodos.md](Contenido-JSON-Nodos.md), [CI.md](CI.md), [Getting-Started.md](Getting-Started.md) | Confirmado |
-
----
 
 ## Lo Que Hay en Cada Doc
 
