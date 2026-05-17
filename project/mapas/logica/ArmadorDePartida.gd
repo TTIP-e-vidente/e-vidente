@@ -14,6 +14,7 @@ const MODOS_SOPORTADOS := [
 	DatosNodoMapaScript.MODE_DRAG_DROP,
 	DatosNodoMapaScript.MODE_QUIZ_CHOICE,
 	DatosNodoMapaScript.MODE_VINCULACION_CONCEPTOS,
+	DatosNodoMapaScript.MODE_WORD_OPTIONS,
 ]
 const RUTA_MAPA_POR_PISTA := {
 	CatalogoDePistas.TRACK_CELIAQUIA: "res://contenido/mapa/celiaquia_mapa.json",

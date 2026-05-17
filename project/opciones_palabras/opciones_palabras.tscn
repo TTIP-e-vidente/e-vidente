@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://word_options_scene"]
+
+[ext_resource type="Script" path="res://opciones_palabras/opciones_palabras.gd" id="1_wopt"]
+
+[node name="OpcionesPalabras" type="Control"]
+script = ExtResource("1_wopt")
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 100.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="PromptLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Completá la frase con la palabra correcta."
+
+[node name="SentenceLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text = "Tomar ____ es bueno."
+
+[node name="OptionsContainer" type="FlowContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 12
+
+[node name="FeedbackLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="ConfirmButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+custom_minimum_size = Vector2(0, 52)
+theme_override_font_sizes/font_size = 22
+text = "Confirmar"

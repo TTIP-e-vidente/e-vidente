@@ -28,6 +28,7 @@ const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
+const WORD_OPTIONS_SCENE_PATH := "res://opciones_palabras/opciones_palabras.tscn"
 
 const ROUTES := {
 	ROUTE_SPLASH: SPLASH_SCENE_PATH,
@@ -156,6 +157,8 @@ static func ir_a_modo_jugable(tree: SceneTree, mode: String) -> void:
 			go_to_questions(tree)
 		"vinculacion_conceptos":
 			go_to_vinculacion(tree)
+		"word_options":
+			_change_scene_to_path(tree, WORD_OPTIONS_SCENE_PATH)
 		_:
 			push_error("GameSceneRouter: modo jugable desconocido: %s" % mode)
 			print(LOG_PREFIX, " modo_desconocido=", mode)

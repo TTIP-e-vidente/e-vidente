@@ -6,6 +6,9 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
+const MODE_WORD_OPTIONS := "word_options"
+
+const WORD_OPTIONS_SCENE_PATH := "res://opciones_palabras/opciones_palabras.tscn"
 
 
 static func abrir_modalidad(tree: SceneTree, activity: Dictionary) -> void:
@@ -26,6 +29,8 @@ static func resolver_scene_path(activity: Dictionary) -> String:
 			return GameSceneRouter.QUESTIONS_SCENE_PATH
 		MODE_VINCULACION_CONCEPTOS:
 			return GameSceneRouter.VINCULACION_CONCEPTOS_SCENE_PATH
+		MODE_WORD_OPTIONS:
+			return WORD_OPTIONS_SCENE_PATH
 		_:
 			return ""
 
@@ -42,5 +47,7 @@ static func _normalizar_modo(raw_mode: String) -> String:
 			return MODE_QUIZ_CHOICE
 		"vinculacion_conceptos", "match":
 			return MODE_VINCULACION_CONCEPTOS
+		"word_options":
+			return MODE_WORD_OPTIONS
 		_:
 			return ""

@@ -544,6 +544,8 @@ static func _normalize_v2_random_game_type(raw_type: String) -> String:
 			return "quiz"
 		"match", "vinculacion":
 			return "match"
+		"word_options":
+			return "word_options"
 		_:
 			return ""
 
