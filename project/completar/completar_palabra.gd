@@ -1,5 +1,5 @@
-extends Control
-class_name OpcionesPalabras
+extends Node2D
+class_name CompletarPalabra
 ## Modalidad "Completar con opciones de palabras".
 ##
 ## FLUJO INTERNO:
@@ -54,14 +54,10 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)   # verde suave para opció
 # El .tscn definitivo debe tener estos nodos con exactamente estos nombres.
 # Si alguno falta, _ready() logea un push_error claro.
 # ===========================================================================
-@onready var _prompt_label: Label           = $VBoxContainer/PromptLabel
-@onready var _sentence_label: Label         = $VBoxContainer/SentenceLabel
-@onready var _options_container: Container  = $VBoxContainer/OptionsContainer
-@onready var _feedback_label: Label         = $VBoxContainer/FeedbackLabel
-
-# ConfirmButton es opcional: solo aparece si hay más de 1 blank.
-# Si el .tscn no lo tiene, se ignora sin error.
-@onready var _confirm_button: Button = $VBoxContainer/ConfirmButton
+@onready var titulo_nivel: Label            = $Control/TituloNivel/Label if has_node("Control/TituloNivel/Label") else null
+@onready var _prompt_label: Label           = $Control/Escoge
+@onready var _sentence_label: Label         = $Control/Label
+@onready var _options_container: Container  = $Control/Label/Container/HBoxContainer
 
 # ===========================================================================
 # ESTADO INTERNO
@@ -81,12 +77,8 @@ var _interaction_locked: bool = false     # Bloquea durante animación de retorn
 func _ready() -> void:
 	_validate_scene_nodes()
 
-	if _confirm_button != null:
-		_confirm_button.pressed.connect(_on_confirm_pressed)
-		_confirm_button.hide()
-
-	if _feedback_label != null:
-		_feedback_label.text = ""
+	if titulo_nivel != null:
+		titulo_nivel.text = "Celiaquía"
 
 	# Leer actividad de la sesión activa (flujo normal de partida)
 	var activity: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
@@ -103,17 +95,18 @@ func _ready() -> void:
 		setup(challenge_data)
 
 
+func _on_atrás_pressed() -> void:
+	get_tree().change_scene_to_file("res://mapas/MapScene.tscn")
+
+
 ## Verifica que los nodos esperados existan. Loga errores claros si faltan.
 func _validate_scene_nodes() -> void:
 	if _prompt_label == null:
-		push_error("CompletarPalabra: falta el nodo VBoxContainer/PromptLabel.")
+		push_error("CompletarPalabra: falta el nodo Control/Escoge.")
 	if _sentence_label == null:
-		push_error("CompletarPalabra: falta el nodo VBoxContainer/SentenceLabel.")
+		push_error("CompletarPalabra: falta el nodo Control/Label.")
 	if _options_container == null:
-		push_error("CompletarPalabra: falta el nodo VBoxContainer/OptionsContainer.")
-	if _feedback_label == null:
-		push_error("CompletarPalabra: falta el nodo VBoxContainer/FeedbackLabel.")
-	# ConfirmButton no es obligatorio — solo se usa si el .tscn lo incluye.
+		push_error("CompletarPalabra: falta el nodo Control/Label/Container/HBoxContainer.")
 
 
 # ===========================================================================
@@ -143,44 +136,65 @@ func setup(challenge_data: Dictionary) -> void:
 ## Muestra el desafío completo: prompt, frase y opciones.
 func _render(challenge_data: Dictionary) -> void:
 	if _prompt_label != null:
-		_prompt_label.text = str(challenge_data.get("prompt", ""))
+		_prompt_label.text = str(challenge_data.get("prompt", _prompt_label.text))
 	if _sentence_label != null:
 		_sentence_label.text = _sentence_original
-	if _feedback_label != null:
-		_feedback_label.text = ""
-		_feedback_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
 
 	_render_options(challenge_data.get("options", []))
-	_update_confirm_button()
 
 
-## Crea un botón por cada opción. Guarda la posición original para el Tween de retorno.
+## Reutiliza y duplica los botones existentes para preservar el estilo visual.
 func _render_options(options: Array) -> void:
 	if _options_container == null:
 		return
+
+	var existing_buttons: Array[Button] = []
 	for child in _options_container.get_children():
-		child.queue_free()
+		if child is Button:
+			existing_buttons.append(child)
+			
+	var prototype_btn: Button = null
+	if existing_buttons.size() > 0:
+		prototype_btn = existing_buttons[0]
+		
+	# Crear nuevos botones si faltan
+	while existing_buttons.size() < options.size():
+		if prototype_btn != null:
+			var new_btn = prototype_btn.duplicate()
+			_options_container.add_child(new_btn)
+			existing_buttons.append(new_btn)
+		else:
+			var new_btn = Button.new()
+			_options_container.add_child(new_btn)
+			existing_buttons.append(new_btn)
+			prototype_btn = new_btn
+			
+	# Configurar los botones
+	for i in range(existing_buttons.size()):
+		var btn: Button = existing_buttons[i]
+		if i < options.size():
+			btn.show()
+			var option_text = str(options[i])
+			btn.set_meta("original_text", option_text)
+			
+			_set_button_text(btn, option_text)
+			
+			# Desconectar señales viejas
+			var connections = btn.pressed.get_connections()
+			for conn in connections:
+				btn.pressed.disconnect(conn.callable)
+				
+			btn.pressed.connect(_on_option_pressed.bind(option_text, btn))
+		else:
+			btn.hide()
 
-	for option_text in options:
-		var btn := Button.new()
-		btn.text = str(option_text)
-		btn.custom_minimum_size = Vector2(120, 48)
-		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		# Guardar texto original para restaurar al volver
-		btn.set_meta("original_text", str(option_text))
-		btn.pressed.connect(_on_option_pressed.bind(str(option_text), btn))
-		_options_container.add_child(btn)
 
-
-## Muestra el ConfirmButton solo cuando hay más de 1 blank.
-func _update_confirm_button() -> void:
-	if _confirm_button == null:
-		return
-	if _answers.size() > 1:
-		_confirm_button.show()
-		_confirm_button.disabled = true
+func _set_button_text(btn: Button, new_text: String) -> void:
+	var texto_label = btn.get_node_or_null("TextoOpcion")
+	if texto_label != null:
+		texto_label.text = new_text
 	else:
-		_confirm_button.hide()
+		btn.text = new_text
 
 
 # ===========================================================================
@@ -189,7 +203,7 @@ func _update_confirm_button() -> void:
 # Cada vez que el jugador presiona una opción:
 #   1. Se verifica si es correcta para el blank actual (_is_correct_for_current_slot).
 #   2. Si CORRECTA  → _place_option_in_slot() → _check_if_completed()
-#   3. Si INCORRECTA → _show_error_feedback() → _return_option_to_origin() (shake + unlock)
+#   3. Si INCORRECTA → _return_option_to_origin() (shake + unlock)
 #
 # El jugador puede reintentar ilimitadas veces. El juego NUNCA termina con error.
 # ===========================================================================
@@ -204,18 +218,8 @@ func _on_option_pressed(option: String, btn: Button) -> void:
 		_place_option_in_slot(option, btn)
 		_check_if_completed()
 	else:
-		# INCORRECTO: feedback + shake + el botón vuelve disponible
-		_show_error_feedback()
+		# INCORRECTO: shake + el botón vuelve disponible
 		_return_option_to_origin(btn)
-
-
-func _on_confirm_pressed() -> void:
-	# Con el retry loop slot a slot, ConfirmButton generalmente no es necesario.
-	# Se mantiene por compatibilidad en caso de que el .tscn definitivo lo incluya.
-	if _already_finished or _interaction_locked:
-		return
-	if _placed.size() == _answers.size():
-		_finish(true)
 
 
 # ===========================================================================
@@ -244,45 +248,31 @@ func _is_correct_for_current_slot(option: String) -> bool:
 func _place_option_in_slot(option: String, btn: Button) -> void:
 	_placed.append(option)
 	btn.disabled = true
-	btn.text = "✓ " + option
-	btn.add_theme_color_override("font_color", COLOR_PLACED)
+	_set_button_text(btn, "✓ " + option)
+	
+	var texto_label = btn.get_node_or_null("TextoOpcion")
+	if texto_label != null:
+		texto_label.add_theme_color_override("font_color", COLOR_PLACED)
+	else:
+		btn.add_theme_color_override("font_color", COLOR_PLACED)
+		
 	_update_sentence_display()
-	_update_slot_progress()   # Mostrar cuántos blanks quedan
 
 
 ## Verifica si ya se completaron todos los blanks.
 func _check_if_completed() -> void:
 	if _placed.size() == _answers.size():
 		_finish(true)
-	else:
-		# Todavía faltan blanks: habilitar Confirmar si aplica
-		if _confirm_button != null and _confirm_button.visible:
-			_confirm_button.disabled = (_placed.size() < _answers.size())
 
 
 # ===========================================================================
 # FEEDBACK DE ERROR — palabra incorrecta vuelve a su lugar
 # ===========================================================================
 
-## Muestra feedback de error breve (texto temporal en FeedbackLabel).
-func _show_error_feedback() -> void:
-	if _feedback_label == null:
-		return
-	_feedback_label.add_theme_color_override("font_color", COLOR_ERROR)
-	_feedback_label.text = "Esa no es. Intentá de nuevo."
-	# El texto se limpiará cuando el Tween termine (en _reset_option_state)
-
-
 ## Anima el botón de vuelta a su posición original usando Tween.
 ## Bloquea la interacción mientras dura la animación.
 func _return_option_to_origin(btn: Button) -> void:
 	_interaction_locked = true
-
-	# La posición "original" en un FlowContainer/HBoxContainer es la que asignó el container.
-	# Para hacer el efecto visual, moveemos el botón fuera del container temporalmente,
-	# lo ponemos como overlay, hacemos el Tween, y lo restauramos.
-	# Si el .tscn definitivo usa un layout diferente, esta función se adapta al nodo real.
-	var origin_pos: Vector2 = btn.global_position
 
 	# Crear un Tween de "shake" como feedback visual inmediato
 	var tween := create_tween()
@@ -303,11 +293,14 @@ func _return_option_to_origin(btn: Button) -> void:
 ## Restaura el botón a su estado original después del error.
 func _reset_option_state(btn: Button) -> void:
 	btn.disabled = false
-	btn.text = str(btn.get_meta("original_text", btn.text))
-	btn.remove_theme_color_override("font_color")
+	var orig_text = str(btn.get_meta("original_text", btn.text))
+	_set_button_text(btn, orig_text)
 
-	if _feedback_label != null:
-		_feedback_label.text = ""
+	var texto_label = btn.get_node_or_null("TextoOpcion")
+	if texto_label != null:
+		texto_label.remove_theme_color_override("font_color")
+	else:
+		btn.remove_theme_color_override("font_color")
 
 	_interaction_locked = false
 
@@ -328,20 +321,6 @@ func _update_sentence_display() -> void:
 	_sentence_label.text = sentence
 
 
-## Muestra el progreso de slots completados en FeedbackLabel.
-## Solo aparece cuando hay más de 1 blank y todavía quedan blanks por completar.
-## Usa FeedbackLabel para no requerir un nodo extra en el .tscn.
-## El texto se sobreescribe con el feedback de error o éxito cuando corresponde.
-func _update_slot_progress() -> void:
-	if _feedback_label == null:
-		return
-	var remaining := _answers.size() - _placed.size()
-	if remaining <= 0 or _answers.size() <= 1:
-		return   # Sin progreso visible para single-blank o cuando ya terminó
-	_feedback_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
-	_feedback_label.text = "Palabra %d de %d: elegí la siguiente." % [_placed.size(), _answers.size()]
-
-
 # ===========================================================================
 # FINALIZACIÓN — solo cuando todo está correcto
 # ===========================================================================
@@ -354,7 +333,6 @@ func _finish(success: bool) -> void:
 	_already_finished = true
 
 	_disable_interaction()
-	_show_success_feedback()
 
 	await get_tree().create_timer(FINISH_DELAY).timeout
 
@@ -366,14 +344,6 @@ func _finish(success: bool) -> void:
 	NODO_RUNTIME.finalizar_mini_juego(get_tree(), Callable(), Callable())
 
 
-## Muestra feedback de éxito al completar el desafío.
-func _show_success_feedback() -> void:
-	if _feedback_label == null:
-		return
-	_feedback_label.add_theme_color_override("font_color", COLOR_OK)
-	_feedback_label.text = "¡Correcto!"
-
-
 ## Deshabilita toda interacción al finalizar.
 func _disable_interaction() -> void:
 	_interaction_locked = true
@@ -382,8 +352,6 @@ func _disable_interaction() -> void:
 			var btn := child as Button
 			if btn != null:
 				btn.disabled = true
-	if _confirm_button != null:
-		_confirm_button.disabled = true
 
 
 # ===========================================================================
