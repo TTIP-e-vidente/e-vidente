@@ -1,17 +1,17 @@
 extends RefCounted
-class_name WordOptionsLoader
+class_name CargadorCompletar
 ## Carga y selecciona desafíos de la modalidad "Completar con opciones de palabras".
 ##
 ## Flujo de uso:
-##   WordOptionsLoader.pick(1)  →  Dictionary con el desafío listo para setup()
-##   WordOptionsLoader.pick(2)  →  {}  si no hay desafíos para esa dificultad
+##   CargadorCompletar.pick(1)  →  Dictionary con el desafío listo para setup()
+##   CargadorCompletar.pick(2)  →  {}  si no hay desafíos para esa dificultad
 ##
 ## El JSON se carga una sola vez y se guarda en caché (_cache).
 ## Para forzar recarga (tests), llamar limpiar_cache().
 
 # === Constantes ===
-const JSON_PATH := "res://contenido/mapa/opciones_palabras.json"
-const MODE := "word_options"
+const JSON_PATH := "res://contenido/mapa/completar_palabra.json"
+const MODE := "completar_palabra"
 const BLANK := "____"
 const VALID_DIFFICULTIES := [1, 2, 3]
 
@@ -33,7 +33,7 @@ static func pick(difficulty: int) -> Dictionary:
 	var candidates := _get_candidates_by_difficulty(all_challenges, difficulty)
 	if candidates.is_empty():
 		push_warning(
-			"WordOptionsLoader: sin desafíos para difficulty=%d en %s" % [difficulty, JSON_PATH]
+			"CargadorCompletar: sin desafíos para difficulty=%d en %s" % [difficulty, JSON_PATH]
 		)
 		return {}
 
@@ -77,20 +77,20 @@ static func load_all() -> Dictionary:
 static func _load_json_file() -> Dictionary:
 	var file := FileAccess.open(JSON_PATH, FileAccess.READ)
 	if file == null:
-		push_error("WordOptionsLoader: no se pudo abrir '%s'." % JSON_PATH)
+		push_error("CargadorCompletar: no se pudo abrir '%s'." % JSON_PATH)
 		return {}
 
 	var parser := JSON.new()
 	if parser.parse(file.get_as_text()) != OK:
 		push_error(
-			"WordOptionsLoader: JSON inválido en línea %d — %s"
+			"CargadorCompletar: JSON inválido en línea %d — %s"
 			% [parser.get_error_line(), parser.get_error_message()]
 		)
 		return {}
 
 	var data: Variant = parser.get_data()
 	if not data is Dictionary:
-		push_error("WordOptionsLoader: el JSON debe ser un objeto raíz {}.")
+		push_error("CargadorCompletar: el JSON debe ser un objeto raíz {}.")
 		return {}
 
 	# Inyectar el id de cada entrada como campo "id"
@@ -122,10 +122,10 @@ static func _get_candidates_by_difficulty(
 ## Loga un error claro si algo falla. Devuelve true si es válido.
 static func _validate_challenge(id: String, entry: Dictionary) -> bool:
 	if str(entry.get("mode", "")) != MODE:
-		push_error("WordOptionsLoader: '%s' tiene mode incorrecto." % id)
+		push_error("CargadorCompletar: '%s' tiene mode incorrecto." % id)
 		return false
 	if not VALID_DIFFICULTIES.has(int(entry.get("difficulty", 0))):
-		push_error("WordOptionsLoader: '%s' tiene difficulty inválido (debe ser 1, 2 o 3)." % id)
+		push_error("CargadorCompletar: '%s' tiene difficulty inválido (debe ser 1, 2 o 3)." % id)
 		return false
 
 	var answers: Array = entry.get("answers", [])
@@ -133,19 +133,19 @@ static func _validate_challenge(id: String, entry: Dictionary) -> bool:
 	var sentence: String = str(entry.get("sentence", ""))
 
 	if answers.is_empty():
-		push_error("WordOptionsLoader: '%s' no tiene answers." % id)
+		push_error("CargadorCompletar: '%s' no tiene answers." % id)
 		return false
 	if options.is_empty():
-		push_error("WordOptionsLoader: '%s' no tiene options." % id)
+		push_error("CargadorCompletar: '%s' no tiene options." % id)
 		return false
 	if not _has_all_answers_in_options(answers, options):
 		push_error(
-			"WordOptionsLoader: '%s' tiene answers que no están en options." % id
+			"CargadorCompletar: '%s' tiene answers que no están en options." % id
 		)
 		return false
 	if _count_blanks(sentence) != answers.size():
 		push_error(
-			"WordOptionsLoader: '%s' tiene %d blanks (____) pero %d answers."
+			"CargadorCompletar: '%s' tiene %d blanks (____) pero %d answers."
 			% [id, _count_blanks(sentence), answers.size()]
 		)
 		return false

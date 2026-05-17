@@ -9,7 +9,7 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
 const VINCULAR_SCENE := "res://vincular/VincularConceptos.tscn"
-const WORD_OPTIONS_SCENE := "res://opciones_palabras/opciones_palabras.tscn"
+const completar_palabra_SCENE := "res://opciones_palabras/opciones_palabras.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
 const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
@@ -21,7 +21,7 @@ const NODE_18_KEY := "celiaquia_18_desafio_final"
 const NODE_19_KEY := "celiaquia_19_cocina_segura"
 const NODE_25_KEY := "celiaquia_25_etiquetas_y_trazas"
 const NODE_30_KEY := "celiaquia_30_desafio_final_extendido"
-const GAME_SCENES := [LEVEL_SCENE, QUESTION_SCENE, VINCULAR_SCENE, WORD_OPTIONS_SCENE]
+const GAME_SCENES := [LEVEL_SCENE, QUESTION_SCENE, VINCULAR_SCENE, completar_palabra_SCENE]
 const LOG_PREFIX_VALIDATION := "[ManualValidation]"
 
 var failed := false
@@ -172,9 +172,9 @@ func ejecutar_prueba() -> void:
 			await process_frame
 		_check(is_instance_valid(current_scene), "La escena crasheo en los primeros frames")
 
-	# --- Tests unitarios de word_options (no necesitan escena cargada) ---
+	# --- Tests unitarios de completar_palabra (no necesitan escena cargada) ---
 	if not failed:
-		ejecutar_tests_word_options()
+		ejecutar_tests_completar_palabra()
 
 	if failed:
 		finalizar_con_error()
@@ -291,8 +291,8 @@ func _validar_nodo(global_state: Node, node_key: String, label: String) -> Dicti
 				await _completar_escena_quiz(label)
 			VINCULAR_SCENE:
 				await _completar_escena_match(result, label)
-			WORD_OPTIONS_SCENE:
-				await _completar_escena_word_options(label)
+			completar_palabra_SCENE:
+				await _completar_escena_completar_palabra(label)
 
 		if failed:
 			return result
@@ -474,11 +474,11 @@ func _match_slots_cubren_total(match_scene: Node, total_pares: int) -> bool:
 		return false
 	return items_izquierda.size() >= total_pares and items_derecha.size() >= total_pares
 
-func _completar_escena_word_options(label: String) -> void:
+func _completar_escena_completar_palabra(label: String) -> void:
 	var wo_scene := current_scene
 	_check(
 		wo_scene.has_method("setup"),
-		"%s: word_options deberia exponer setup()." % label
+		"%s: completar_palabra deberia exponer setup()." % label
 	)
 	if failed:
 		return
@@ -488,7 +488,7 @@ func _completar_escena_word_options(label: String) -> void:
 	var options_container := wo_scene.get_node_or_null("VBoxContainer/OptionsContainer") as FlowContainer
 	_check(
 		options_container != null,
-		"%s: word_options deberia tener VBoxContainer/OptionsContainer (FlowContainer)." % label
+		"%s: completar_palabra deberia tener VBoxContainer/OptionsContainer (FlowContainer)." % label
 	)
 	if failed or options_container == null:
 		return
@@ -498,7 +498,7 @@ func _completar_escena_word_options(label: String) -> void:
 	for child in options_container.get_children():
 		if child is Button and not (child as Button).disabled:
 			buttons.append(child as Button)
-	_check(not buttons.is_empty(), "%s: word_options deberia tener botones de opciones." % label)
+	_check(not buttons.is_empty(), "%s: completar_palabra deberia tener botones de opciones." % label)
 	if failed:
 		return
 
@@ -533,8 +533,8 @@ func _scene_kind(scene_path: String) -> String:
 			return "quiz"
 		VINCULAR_SCENE:
 			return "match"
-		WORD_OPTIONS_SCENE:
-			return "word_options"
+		completar_palabra_SCENE:
+			return "completar_palabra"
 		_:
 			return scene_path
 
@@ -651,11 +651,11 @@ func _check(condition: bool, message: String) -> void:
 
 
 # ===========================================================================
-# Tests unitarios: WordOptionsLoader
+# Tests unitarios: CargadorCompletar
 # ===========================================================================
 
-func _test_word_options_loader_carga_json_valido() -> void:
-	var Loader := load("res://opciones_palabras/WordOptionsLoader.gd")
+func _test_completar_palabra_loader_carga_json_valido() -> void:
+	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
 	Loader.limpiar_cache()
 	var result: Dictionary = Loader.pick(1)
 	_check(not result.is_empty(), "[WO] pick(1) debe devolver un desafío no vacío")
@@ -665,16 +665,16 @@ func _test_word_options_loader_carga_json_valido() -> void:
 	_check(result.has("id"), "[WO] pick(1) debe incluir el id del desafío")
 
 
-func _test_word_options_loader_filtra_dificultad_invalida() -> void:
-	var Loader := load("res://opciones_palabras/WordOptionsLoader.gd")
+func _test_completar_palabra_loader_filtra_dificultad_invalida() -> void:
+	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
 	Loader.limpiar_cache()
 	var result: Dictionary = Loader.pick(99)
 	_check(result.is_empty(), "[WO] pick(99) debe devolver {} (sin desafíos para esa dificultad)")
 
 
-func _test_word_options_contrato_json() -> void:
+func _test_completar_palabra_contrato_json() -> void:
 	# Verificar que TODOS los desafíos del JSON cumplen el contrato
-	var Loader := load("res://opciones_palabras/WordOptionsLoader.gd")
+	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
 	Loader.limpiar_cache()
 	var all_challenges: Dictionary = Loader.load_all()
 	_check(not all_challenges.is_empty(), "[WO] el JSON debe tener al menos un desafío válido")
@@ -694,8 +694,8 @@ func _test_word_options_contrato_json() -> void:
 		)
 
 
-func _test_word_options_loader_tiene_dificultades_1_2_3() -> void:
-	var Loader := load("res://opciones_palabras/WordOptionsLoader.gd")
+func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
+	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
 	Loader.limpiar_cache()
 	_check(not Loader.pick(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
 	_check(not Loader.pick(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
@@ -707,7 +707,7 @@ func _test_word_options_loader_tiene_dificultades_1_2_3() -> void:
 # API del nuevo game loop: _placed, _is_correct_for_current_slot()
 # ===========================================================================
 
-func _test_word_options_respuesta_correcta_single() -> void:
+func _test_completar_palabra_respuesta_correcta_single() -> void:
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
 	scene._answers = ["agua"]
@@ -721,7 +721,7 @@ func _test_word_options_respuesta_correcta_single() -> void:
 	scene.free()
 
 
-func _test_word_options_respuesta_incorrecta_single() -> void:
+func _test_completar_palabra_respuesta_incorrecta_single() -> void:
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
 	scene._answers = ["agua"]
@@ -735,7 +735,7 @@ func _test_word_options_respuesta_incorrecta_single() -> void:
 	scene.free()
 
 
-func _test_word_options_incorrect_no_finaliza() -> void:
+func _test_completar_palabra_incorrect_no_finaliza() -> void:
 	# Una respuesta incorrecta NO debe cambiar _already_finished
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
@@ -754,7 +754,7 @@ func _test_word_options_incorrect_no_finaliza() -> void:
 	scene.free()
 
 
-func _test_word_options_correct_avanza_slot() -> void:
+func _test_completar_palabra_correct_avanza_slot() -> void:
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
 	scene._answers = ["contaminación", "separados"]
@@ -780,7 +780,7 @@ func _test_word_options_correct_avanza_slot() -> void:
 	scene.free()
 
 
-func _test_word_options_multiple_sin_orden() -> void:
+func _test_completar_palabra_multiple_sin_orden() -> void:
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
 	scene._answers = ["contaminación", "separados"]
@@ -806,7 +806,7 @@ func _test_word_options_multiple_sin_orden() -> void:
 	scene.free()
 
 
-func _test_word_options_doble_finalizacion_bloqueada() -> void:
+func _test_completar_palabra_doble_finalizacion_bloqueada() -> void:
 	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
 	var scene := scene_script.new()
 	scene._already_finished = false
@@ -822,33 +822,33 @@ func _test_word_options_doble_finalizacion_bloqueada() -> void:
 	scene.free()
 
 
-func _test_word_options_router_conoce_modo() -> void:
+func _test_completar_palabra_router_conoce_modo() -> void:
 	var RouterScript := load("res://sistemas/ModalidadRouter.gd")
-	var path: String = RouterScript.resolver_scene_path({"mode": "word_options"})
-	_check(not path.is_empty(), "[WO] ModalidadRouter debe resolver escena para word_options")
+	var path: String = RouterScript.resolver_scene_path({"mode": "completar_palabra"})
+	_check(not path.is_empty(), "[WO] ModalidadRouter debe resolver escena para completar_palabra")
 	_check(path.ends_with(".tscn"), "[WO] La ruta resuelta debe ser una escena .tscn")
 
 
 # ===========================================================================
-# Ejecutor de todos los tests word_options
+# Ejecutor de todos los tests completar_palabra
 # ===========================================================================
 
-func ejecutar_tests_word_options() -> void:
+func ejecutar_tests_completar_palabra() -> void:
 	print("[WordOptions] ── Iniciando tests unitarios ──")
 	# JSON y Loader
-	_test_word_options_loader_carga_json_valido()
-	_test_word_options_loader_filtra_dificultad_invalida()
-	_test_word_options_contrato_json()
-	_test_word_options_loader_tiene_dificultades_1_2_3()
+	_test_completar_palabra_loader_carga_json_valido()
+	_test_completar_palabra_loader_filtra_dificultad_invalida()
+	_test_completar_palabra_contrato_json()
+	_test_completar_palabra_loader_tiene_dificultades_1_2_3()
 	# Lógica de game loop (sin SceneTree)
-	_test_word_options_respuesta_correcta_single()
-	_test_word_options_respuesta_incorrecta_single()
-	_test_word_options_incorrect_no_finaliza()
-	_test_word_options_correct_avanza_slot()
-	_test_word_options_multiple_sin_orden()
-	_test_word_options_doble_finalizacion_bloqueada()
+	_test_completar_palabra_respuesta_correcta_single()
+	_test_completar_palabra_respuesta_incorrecta_single()
+	_test_completar_palabra_incorrect_no_finaliza()
+	_test_completar_palabra_correct_avanza_slot()
+	_test_completar_palabra_multiple_sin_orden()
+	_test_completar_palabra_doble_finalizacion_bloqueada()
 	# Integración
-	_test_word_options_router_conoce_modo()
+	_test_completar_palabra_router_conoce_modo()
 	if not failed:
 		print("[WordOptions] ✓ Todos los tests pasaron.")
 	else:

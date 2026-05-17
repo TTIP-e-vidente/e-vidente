@@ -94,11 +94,11 @@ func _ready() -> void:
 		var challenge_data: Dictionary = activity.get("content", activity)
 		
 		# Si la actividad no tiene 'sentence', es solo la configuración del mapa
-		# (por ejemplo: {"type": "word_options", "difficulty": 1}).
+		# (por ejemplo: {"type": "completar_palabra", "difficulty": 1}).
 		# Usamos el loader para elegir un desafío aleatorio de esa dificultad.
 		if not challenge_data.has("sentence"):
 			var diff := int(challenge_data.get("difficulty", 1))
-			challenge_data = WordOptionsLoader.pick(diff)
+			challenge_data = CargadorCompletar.pick(diff)
 			
 		setup(challenge_data)
 
@@ -106,13 +106,13 @@ func _ready() -> void:
 ## Verifica que los nodos esperados existan. Loga errores claros si faltan.
 func _validate_scene_nodes() -> void:
 	if _prompt_label == null:
-		push_error("OpcionesPalabras: falta el nodo VBoxContainer/PromptLabel.")
+		push_error("CompletarPalabra: falta el nodo VBoxContainer/PromptLabel.")
 	if _sentence_label == null:
-		push_error("OpcionesPalabras: falta el nodo VBoxContainer/SentenceLabel.")
+		push_error("CompletarPalabra: falta el nodo VBoxContainer/SentenceLabel.")
 	if _options_container == null:
-		push_error("OpcionesPalabras: falta el nodo VBoxContainer/OptionsContainer.")
+		push_error("CompletarPalabra: falta el nodo VBoxContainer/OptionsContainer.")
 	if _feedback_label == null:
-		push_error("OpcionesPalabras: falta el nodo VBoxContainer/FeedbackLabel.")
+		push_error("CompletarPalabra: falta el nodo VBoxContainer/FeedbackLabel.")
 	# ConfirmButton no es obligatorio — solo se usa si el .tscn lo incluye.
 
 
@@ -121,7 +121,7 @@ func _validate_scene_nodes() -> void:
 # ===========================================================================
 
 ## Punto de entrada de la modalidad.
-## challenge_data viene de WordOptionsLoader.pick() vía NodoRuntime.
+## challenge_data viene de CargadorCompletar.pick() vía NodoRuntime.
 func setup(challenge_data: Dictionary) -> void:
 	if not _is_valid_challenge(challenge_data):
 		return
@@ -393,14 +393,14 @@ func _disable_interaction() -> void:
 ## Valida que challenge_data tenga los campos mínimos necesarios.
 func _is_valid_challenge(data: Dictionary) -> bool:
 	if data.is_empty():
-		push_error("OpcionesPalabras.setup: challenge_data está vacío.")
+		push_error("CompletarPalabra.setup: challenge_data está vacío.")
 		return false
 	for field in ["sentence", "answers", "options"]:
 		if not data.has(field):
-			push_error("OpcionesPalabras.setup: falta el campo requerido '%s'." % field)
+			push_error("CompletarPalabra.setup: falta el campo requerido '%s'." % field)
 			return false
 	if (data.get("answers", []) as Array).is_empty():
-		push_error("OpcionesPalabras.setup: 'answers' no puede estar vacío.")
+		push_error("CompletarPalabra.setup: 'answers' no puede estar vacío.")
 		return false
 	return true
 

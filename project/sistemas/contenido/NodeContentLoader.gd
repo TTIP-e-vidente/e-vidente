@@ -193,8 +193,8 @@ static func to_runtime_mode(raw_mode: String) -> String:
 			return "drag_drop"
 		"match":
 			return "vinculacion_conceptos"
-		"word_options":
-			return "word_options"
+		"completar_palabra":
+			return "completar_palabra"
 		_:
 			return ""
 
@@ -217,8 +217,8 @@ static func normalize_random_game_type(raw_type: String) -> String:
 			return "quiz"
 		"match", "vinculacion":
 			return "match"
-		"word_options":
-			return "word_options"
+		"completar_palabra":
+			return "completar_palabra"
 		_:
 			return ""
 
@@ -296,8 +296,8 @@ static func _activity_matches_requested_type(activity: Dictionary, requested_typ
 			return str(activity.get("mode", "")).strip_edges() == "quiz"
 		"match":
 			return str(activity.get("mode", "")).strip_edges() == "match"
-		"word_options":
-			return str(activity.get("mode", "")).strip_edges() == "word_options"
+		"completar_palabra":
+			return str(activity.get("mode", "")).strip_edges() == "completar_palabra"
 		_:
 			return false
 
@@ -445,7 +445,7 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 			return result
 		activities.append_array(result.get("data", []))
 	# Archivos opcionales: si faltan, se ignoran con warning (no rompen las otras modalidades).
-	for filename in ["opciones_palabras.json"]:
+	for filename in ["completar_palabra.json"]:
 		var path: String = mapa_dir + str(filename)
 		if not FileAccess.file_exists(path):
 			push_warning(

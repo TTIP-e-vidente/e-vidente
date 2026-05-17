@@ -21,7 +21,7 @@ class_name MapNodeData
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
-const MODE_WORD_OPTIONS := "word_options"
+const MODE_COMPLETAR_PALABRA := "completar_palabra"
 
 # Identidad del nodo.
 var node_key: String = ""       # ID único del nodo en el mapa.
@@ -303,8 +303,8 @@ static func _normalize_random_game_type(raw_type: String) -> String:
 			return "quiz"
 		"match", "vinculacion":
 			return "match"
-		"word_options":
-			return "word_options"
+		"completar_palabra":
+			return "completar_palabra"
 		_:
 			return ""
 

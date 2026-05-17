@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://word_options_scene"]
 
-[ext_resource type="Script" path="res://opciones_palabras/opciones_palabras.gd" id="1_wopt"]
+[ext_resource type="Script" path="res://completar/completar_palabra.gd" id="1_wopt"]
 
-[node name="OpcionesPalabras" type="Control"]
+[node name="CompletarPalabra" type="Control"]
 script = ExtResource("1_wopt")
 layout_mode = 3
 anchors_preset = 15
