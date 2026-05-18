@@ -49,36 +49,38 @@ theme_override_fonts/font = ExtResource("3_f2j53")
 theme_override_font_sizes/font_size = 37
 text = "Escoge la palabra que falta"
 
-[node name="Label" type="Label" parent="Control"]
+[node name="Label" type="RichTextLabel" parent="Control"]
 layout_mode = 0
 offset_left = 100.0
 offset_top = 288.0
 offset_right = 1052.0
 offset_bottom = 400.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("4_rmwwa")
-theme_override_font_sizes/font_size = 32
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 3
-text = "texto de prueba para completar________________________"
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("4_rmwwa")
+theme_override_fonts/bold_font = ExtResource("4_rmwwa")
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+bbcode_enabled = true
+scroll_active = false
+fit_content = true
+text = "[center]texto de prueba para completar________________________[/center]"
 
-[node name="Container" type="Container" parent="Control/Label"]
+[node name="Container" type="Container" parent="Control"]
 layout_mode = 0
-offset_left = -100.0
-offset_top = 131.0
+offset_left = 0.0
+offset_top = 419.0
 offset_right = 4150.0
-offset_bottom = 500.0
+offset_bottom = 788.0
 scale = Vector2(0.2713283, 0.26301467)
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Control/Label/Container"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/Container"]
 layout_mode = 2
 offset_right = 4250.0
 offset_bottom = 500.0
 theme_override_constants/separation = 60
 alignment = 1
 
-[node name="Boton3" type="Button" parent="Control/Label/Container/HBoxContainer"]
+[node name="Boton3" type="Button" parent="Control/Container/HBoxContainer"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
@@ -93,7 +95,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
 icon = ExtResource("7_k2voh")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Control/Label/Container/HBoxContainer/Boton3"]
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton3"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -111,7 +113,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Boton4" type="Button" parent="Control/Label/Container/HBoxContainer"]
+[node name="Boton4" type="Button" parent="Control/Container/HBoxContainer"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
@@ -126,7 +128,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
 icon = ExtResource("7_k2voh")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Control/Label/Container/HBoxContainer/Boton4"]
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton4"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -144,7 +146,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Boton5" type="Button" parent="Control/Label/Container/HBoxContainer"]
+[node name="Boton5" type="Button" parent="Control/Container/HBoxContainer"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
@@ -159,7 +161,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
 icon = ExtResource("7_k2voh")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Control/Label/Container/HBoxContainer/Boton5"]
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton5"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -177,7 +179,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Boton6" type="Button" parent="Control/Label/Container/HBoxContainer"]
+[node name="Boton6" type="Button" parent="Control/Container/HBoxContainer"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_vertical = 3
@@ -192,7 +194,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
 icon = ExtResource("7_k2voh")
 flat = true
 
-[node name="TextoOpcion" type="Label" parent="Control/Label/Container/HBoxContainer/Boton6"]
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton6"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

@@ -43,6 +43,10 @@ const NODO_RUNTIME := preload("res://sistemas/NodoRuntime.gd")
 const RETURN_TWEEN_DURATION := 0.35   # segundos para que la palabra vuelva a su lugar
 const FINISH_DELAY          := 1.5    # segundos antes de llamar finalizar_mini_juego
 
+const ENABLE_TYPEWRITER := true
+const TYPEWRITER_CHAR_DELAY := 0.018
+const TYPEWRITER_AFTER_FINISH_DELAY := 0.05
+
 # === Colores de feedback ===
 const COLOR_OK       := Color(0.17, 0.49, 0.28, 1.0)
 const COLOR_ERROR    := Color(0.74, 0.18, 0.16, 1.0)
@@ -56,8 +60,8 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)   # verde suave para opció
 # ===========================================================================
 @onready var titulo_nivel: Label            = $Control/TituloNivel/Label if has_node("Control/TituloNivel/Label") else null
 @onready var _prompt_label: Label           = $Control/Escoge
-@onready var _sentence_label: Label         = $Control/Label
-@onready var _options_container: Container  = $Control/Label/Container/HBoxContainer
+@onready var _sentence_label: RichTextLabel = $Control/Label
+@onready var _options_container: Container  = $Control/Container/HBoxContainer
 
 # ===========================================================================
 # ESTADO INTERNO
@@ -65,9 +69,11 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)   # verde suave para opció
 var _answers: Array[String] = []          # Respuestas correctas en orden del JSON
 var _placed: Array[String]  = []          # Respuestas ya colocadas correctamente
 var _order_matters: bool    = false       # Si el orden de selección importa
-var _sentence_original: String = ""       # Frase con ____ tal como viene del JSON
+var _sentence_template: String = ""       # Frase con ____ tal como viene del JSON
 var _already_finished: bool = false       # Evita doble finalización
 var _interaction_locked: bool = false     # Bloquea durante animación de retorno
+var _is_typewriting: bool = false
+var _typewriter_version: int = 0
 
 
 # ===========================================================================
@@ -106,7 +112,7 @@ func _validate_scene_nodes() -> void:
 	if _sentence_label == null:
 		push_error("CompletarPalabra: falta el nodo Control/Label.")
 	if _options_container == null:
-		push_error("CompletarPalabra: falta el nodo Control/Label/Container/HBoxContainer.")
+		push_error("CompletarPalabra: falta el nodo Control/Container/HBoxContainer.")
 
 
 # ===========================================================================
@@ -120,11 +126,16 @@ func setup(challenge_data: Dictionary) -> void:
 		return
 
 	_answers          = _to_string_array(challenge_data.get("answers", []))
+	var options = challenge_data.get("options", [])
+	print("[WordOptions] challenge_data=", challenge_data)
+	print("[WordOptions] options=", options)
+	print("[WordOptions] options count=", options.size())
+
 	_order_matters    = bool(challenge_data.get("order_matters", false))
 	_placed           = []
 	_already_finished = false
 	_interaction_locked = false
-	_sentence_original = str(challenge_data.get("sentence", ""))
+	_sentence_template = str(challenge_data.get("sentence", ""))
 
 	_render(challenge_data)
 
@@ -137,8 +148,7 @@ func setup(challenge_data: Dictionary) -> void:
 func _render(challenge_data: Dictionary) -> void:
 	if _prompt_label != null:
 		_prompt_label.text = str(challenge_data.get("prompt", _prompt_label.text))
-	if _sentence_label != null:
-		_sentence_label.text = _sentence_original
+	_render_sentence_with_typewriter()
 
 	_render_options(challenge_data.get("options", []))
 
@@ -256,7 +266,7 @@ func _place_option_in_slot(option: String, btn: Button) -> void:
 	else:
 		btn.add_theme_color_override("font_color", COLOR_PLACED)
 		
-	_update_sentence_display()
+	_render_sentence_direct()
 
 
 ## Verifica si ya se completaron todos los blanks.
@@ -306,19 +316,77 @@ func _reset_option_state(btn: Button) -> void:
 
 
 # ===========================================================================
-# ACTUALIZACIÓN DE LA FRASE
+# ACTUALIZACIÓN DE LA FRASE Y TYPEWRITER
 # ===========================================================================
 
-## Reemplaza ____ por las palabras ya colocadas.
-func _update_sentence_display() -> void:
+func _render_sentence_direct() -> void:
+	_set_sentence_text(_build_sentence_with_placed_answers())
+
+func _render_sentence_with_typewriter() -> void:
+	var rendered := _build_sentence_with_placed_answers()
+
+	if not ENABLE_TYPEWRITER:
+		_set_sentence_text(rendered)
+		return
+
+	if _placed.size() > 0:
+		_set_sentence_text(rendered)
+		return
+
+	_start_typewriter(_strip_bbcode(rendered))
+
+func _start_typewriter(text: String) -> void:
+	_typewriter_version += 1
+	var current_version := _typewriter_version
+	_is_typewriting = true
+
+	_set_sentence_text("")
+
+	for i in range(text.length()):
+		if current_version != _typewriter_version:
+			return
+
+		_set_sentence_text(text.substr(0, i + 1))
+		await get_tree().create_timer(TYPEWRITER_CHAR_DELAY).timeout
+
+	if current_version != _typewriter_version:
+		return
+
+	_is_typewriting = false
+	await get_tree().create_timer(TYPEWRITER_AFTER_FINISH_DELAY).timeout
+
+func _set_sentence_text(value: String) -> void:
 	if _sentence_label == null:
 		return
-	var sentence := _sentence_original
-	for word in _placed:
-		var idx := sentence.find("____")
-		if idx != -1:
-			sentence = sentence.left(idx) + ("[%s]" % word) + sentence.substr(idx + 4)
-	_sentence_label.text = sentence
+	if _sentence_label is RichTextLabel:
+		_sentence_label.bbcode_enabled = true
+		_sentence_label.text = "[center]" + value + "[/center]"
+	else:
+		_sentence_label.text = _strip_bbcode(value)
+
+func _build_sentence_with_placed_answers() -> String:
+	var result := _sentence_template
+
+	for i in range(_answers.size()):
+		var replacement := "____"
+
+		if i < _placed.size():
+			replacement = "[b]%s[/b]" % str(_placed[i])
+
+		result = _replace_first(result, "____", replacement)
+
+	return result
+
+func _replace_first(text: String, search: String, replacement: String) -> String:
+	var idx := text.find(search)
+	if idx != -1:
+		return text.left(idx) + replacement + text.substr(idx + search.length())
+	return text
+
+func _strip_bbcode(text: String) -> String:
+	var regex = RegEx.new()
+	regex.compile("\\[.*?\\]")
+	return regex.sub(text, "", true)
 
 
 # ===========================================================================
@@ -334,13 +402,19 @@ func _finish(success: bool) -> void:
 
 	_disable_interaction()
 
+	# 1) Registrar resultado en el sistema central para Score, EXP y progreso
+	var global_state: Node = get_tree().root.get_node_or_null("/root/Global")
+	if global_state != null and global_state.has_method("registrar_resultado_mini_juego"):
+		global_state.call("registrar_resultado_mini_juego", success)
+
+	# 2) Esperar para dar feedback visual antes de transicionar
 	await get_tree().create_timer(FINISH_DELAY).timeout
 
 	# Emitir señal si hay listeners (útil para tests o escenas standalone)
 	if completed.get_connections().size() > 0:
 		completed.emit(success)
 
-	# Reportar al sistema central — score, EXP y progreso se calculan allí
+	# 3) Reportar al sistema central — avanza al siguiente mini-juego o resulta
 	NODO_RUNTIME.finalizar_mini_juego(get_tree(), Callable(), Callable())
 
 
