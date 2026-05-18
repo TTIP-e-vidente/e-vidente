@@ -36,16 +36,43 @@ class_name CompletarPalabra
 # === Señales ===
 signal completed(success: bool)
 
+const DEBUG_WORD_OPTIONS := false
+
 # === Dependencia externa ===
 const NODO_RUNTIME := preload("res://sistemas/NodoRuntime.gd")
+const PresentadorContinuarJuegoScript := preload("res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd")
+const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
+const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 # === Timing ===
 const RETURN_TWEEN_DURATION := 0.35   # segundos para que la palabra vuelva a su lugar
 const FINISH_DELAY          := 1.5    # segundos antes de llamar finalizar_mini_juego
 
+const ENABLE_SCREEN_INTRO := true
 const ENABLE_TYPEWRITER := true
+const ENABLE_OPTION_STAGGER := true
+const ENABLE_BUTTON_HOVER := true
+const ENABLE_SUCCESS_TRANSITION := true
+
 const TYPEWRITER_CHAR_DELAY := 0.018
 const TYPEWRITER_AFTER_FINISH_DELAY := 0.05
+const TYPEWRITER_CURSOR := "▌"
+
+const SCREEN_INTRO_DURATION := 0.30
+const OPTION_STAGGER_DELAY := 0.05
+const OPTION_FADE_DURATION := 0.20
+const OPTION_SLIDE_OFFSET := 16.0
+
+const OPTION_HOVER_SCALE := Vector2(1.06, 1.06)
+const OPTION_PRESS_SCALE := Vector2(0.94, 0.94)
+const OPTION_CORRECT_SCALE := Vector2(1.12, 1.12)
+
+const WRONG_SHAKE_DISTANCE := 12.0
+const WRONG_SHAKE_STEP := 0.05
+
+const SENTENCE_POP_SCALE := Vector2(1.03, 1.03)
+const SUCCESS_SENTENCE_SCALE := Vector2(1.06, 1.06)
+const SUCCESS_HOLD_SECONDS := 0.65
 
 # === Colores de feedback ===
 const COLOR_OK       := Color(0.17, 0.49, 0.28, 1.0)
@@ -62,6 +89,7 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)   # verde suave para opció
 @onready var _prompt_label: Label           = $Control/Escoge
 @onready var _sentence_label: RichTextLabel = $Control/Label
 @onready var _options_container: Container  = $Control/Container/HBoxContainer
+@onready var _continuar_juego: Node         = $Control/ContinuarJuego if has_node("Control/ContinuarJuego") else null
 
 # ===========================================================================
 # ESTADO INTERNO
@@ -74,6 +102,8 @@ var _already_finished: bool = false       # Evita doble finalización
 var _interaction_locked: bool = false     # Bloquea durante animación de retorno
 var _is_typewriting: bool = false
 var _typewriter_version: int = 0
+var _ruta_escena_de_retorno: String = GameSceneRouter.MAP_SCENE_PATH
+var _continue_requested: bool = false
 
 
 # ===========================================================================
@@ -83,6 +113,9 @@ var _typewriter_version: int = 0
 func _ready() -> void:
 	_validate_scene_nodes()
 
+	if _continuar_juego != null:
+		_continuar_juego.continuar_solicitado.connect(_al_solicitar_continuar_juego)
+
 	if titulo_nivel != null:
 		titulo_nivel.text = "Celiaquía"
 
@@ -91,6 +124,11 @@ func _ready() -> void:
 	if not activity.is_empty():
 		var challenge_data: Dictionary = activity.get("content", activity)
 		
+		# Extraer return_to si existe
+		var return_to: String = str(activity.get("return_to", "")).strip_edges()
+		if not return_to.is_empty():
+			_ruta_escena_de_retorno = return_to
+
 		# Si la actividad no tiene 'sentence', es solo la configuración del mapa
 		# (por ejemplo: {"type": "completar_palabra", "difficulty": 1}).
 		# Usamos el loader para elegir un desafío aleatorio de esa dificultad.
@@ -99,6 +137,15 @@ func _ready() -> void:
 			challenge_data = CargadorCompletar.pick(diff)
 			
 		setup(challenge_data)
+	else:
+		push_warning("CompletarPalabra: Abierto en modo standalone (F6). Usando desafío de fallback.")
+		_ruta_escena_de_retorno = GameSceneRouter.MAP_SCENE_PATH
+		setup(CargadorCompletar.pick(1))
+
+
+func _debug_log(message: String) -> void:
+	if DEBUG_WORD_OPTIONS:
+		print("[WordOptions] " + message)
 
 
 func _on_atrás_pressed() -> void:
@@ -189,15 +236,40 @@ func _render_options(options: Array) -> void:
 			
 			_set_button_text(btn, option_text)
 			
-			# Desconectar señales viejas
+			# Configurar señales y estilos
 			var connections = btn.pressed.get_connections()
 			for conn in connections:
 				btn.pressed.disconnect(conn.callable)
 				
 			btn.pressed.connect(_on_option_pressed.bind(option_text, btn))
+
+			if ENABLE_BUTTON_HOVER:
+				# Limpiar conexiones previas de hover
+				for conn in btn.button_down.get_connections(): btn.button_down.disconnect(conn.callable)
+				for conn in btn.button_up.get_connections(): btn.button_up.disconnect(conn.callable)
+				for conn in btn.mouse_entered.get_connections(): btn.mouse_entered.disconnect(conn.callable)
+				for conn in btn.mouse_exited.get_connections(): btn.mouse_exited.disconnect(conn.callable)
+				
+				btn.pivot_offset = btn.size / 2.0
+				btn.button_down.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_PRESS_SCALE))
+				btn.button_up.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_HOVER_SCALE if btn.is_hovered() else Vector2.ONE))
+				btn.mouse_entered.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_HOVER_SCALE))
+				btn.mouse_exited.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, Vector2.ONE))
+
+			# Entrada animada
+			if ENABLE_OPTION_STAGGER:
+				btn.modulate.a = 0.0
+				btn.position.y += OPTION_SLIDE_OFFSET
+				var t := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+				t.tween_property(btn, "modulate:a", 1.0, OPTION_FADE_DURATION).set_delay(i * OPTION_STAGGER_DELAY)
+				t.tween_property(btn, "position:y", btn.position.y - OPTION_SLIDE_OFFSET, OPTION_FADE_DURATION).set_delay(i * OPTION_STAGGER_DELAY)
 		else:
 			btn.hide()
 
+func _animate_button_scale(btn: Button, target_scale: Vector2) -> void:
+	if not is_instance_valid(btn): return
+	var t := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(btn, "scale", target_scale, 0.15)
 
 func _set_button_text(btn: Button, new_text: String) -> void:
 	var texto_label = btn.get_node_or_null("TextoOpcion")
@@ -260,6 +332,11 @@ func _place_option_in_slot(option: String, btn: Button) -> void:
 	btn.disabled = true
 	_set_button_text(btn, "✓ " + option)
 	
+	if ENABLE_BUTTON_HOVER:
+		_animate_button_scale(btn, OPTION_CORRECT_SCALE)
+		var t := create_tween()
+		t.tween_property(btn, "scale", Vector2.ONE, 0.2).set_delay(0.15)
+	
 	var texto_label = btn.get_node_or_null("TextoOpcion")
 	if texto_label != null:
 		texto_label.add_theme_color_override("font_color", COLOR_PLACED)
@@ -267,6 +344,12 @@ func _place_option_in_slot(option: String, btn: Button) -> void:
 		btn.add_theme_color_override("font_color", COLOR_PLACED)
 		
 	_render_sentence_direct()
+	
+	if ENABLE_SUCCESS_TRANSITION and _sentence_label != null:
+		_sentence_label.pivot_offset = _sentence_label.size / 2.0
+		var t := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		t.tween_property(_sentence_label, "scale", SENTENCE_POP_SCALE, 0.15)
+		t.tween_property(_sentence_label, "scale", Vector2.ONE, 0.15)
 
 
 ## Verifica si ya se completaron todos los blanks.
@@ -291,10 +374,11 @@ func _return_option_to_origin(btn: Button) -> void:
 
 	# Pequeño shake horizontal para feedback de error
 	var original_x: float = btn.position.x
-	tween.tween_property(btn, "position:x", original_x - 8.0, RETURN_TWEEN_DURATION * 0.25)
-	tween.tween_property(btn, "position:x", original_x + 8.0, RETURN_TWEEN_DURATION * 0.25)
-	tween.tween_property(btn, "position:x", original_x - 4.0, RETURN_TWEEN_DURATION * 0.25)
-	tween.tween_property(btn, "position:x", original_x,       RETURN_TWEEN_DURATION * 0.25)
+	tween.tween_property(btn, "position:x", original_x - WRONG_SHAKE_DISTANCE, WRONG_SHAKE_STEP)
+	tween.tween_property(btn, "position:x", original_x + WRONG_SHAKE_DISTANCE, WRONG_SHAKE_STEP)
+	tween.tween_property(btn, "position:x", original_x - (WRONG_SHAKE_DISTANCE / 2.0), WRONG_SHAKE_STEP)
+	tween.tween_property(btn, "position:x", original_x + (WRONG_SHAKE_DISTANCE / 2.0), WRONG_SHAKE_STEP)
+	tween.tween_property(btn, "position:x", original_x, WRONG_SHAKE_STEP)
 
 	await tween.finished
 	_reset_option_state(btn)
@@ -346,7 +430,11 @@ func _start_typewriter(text: String) -> void:
 		if current_version != _typewriter_version:
 			return
 
-		_set_sentence_text(text.substr(0, i + 1))
+		var cursor_text = text.substr(0, i + 1)
+		if i < text.length() - 1:
+			cursor_text += TYPEWRITER_CURSOR
+
+		_set_sentence_text(cursor_text)
 		await get_tree().create_timer(TYPEWRITER_CHAR_DELAY).timeout
 
 	if current_version != _typewriter_version:
@@ -398,34 +486,94 @@ func _strip_bbcode(text: String) -> String:
 func _finish(success: bool) -> void:
 	if _already_finished:
 		return
+	
 	_already_finished = true
-
+	_interaction_locked = true
+	
 	_disable_interaction()
 
-	# 1) Registrar resultado en el sistema central para Score, EXP y progreso
-	var global_state: Node = get_tree().root.get_node_or_null("/root/Global")
-	if global_state != null and global_state.has_method("registrar_resultado_mini_juego"):
-		global_state.call("registrar_resultado_mini_juego", success)
+	# Transición visual de éxito
+	if ENABLE_SUCCESS_TRANSITION and _sentence_label != null:
+		var t := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+		t.tween_property(_sentence_label, "scale", SUCCESS_SENTENCE_SCALE, 0.3)
+		await get_tree().create_timer(SUCCESS_HOLD_SECONDS).timeout
+	else:
+		await get_tree().create_timer(FINISH_DELAY).timeout
 
-	# 2) Esperar para dar feedback visual antes de transicionar
-	await get_tree().create_timer(FINISH_DELAY).timeout
+	_register_result(success)
 
 	# Emitir señal si hay listeners (útil para tests o escenas standalone)
 	if completed.get_connections().size() > 0:
 		completed.emit(success)
 
-	# 3) Reportar al sistema central — avanza al siguiente mini-juego o resulta
-	NODO_RUNTIME.finalizar_mini_juego(get_tree(), Callable(), Callable())
+	_mostrar_continuacion()
+
+
+## Registra el resultado en el sistema central. La escena no calcula score ni EXP.
+func _register_result(success: bool) -> void:
+	var global_state: Node = get_tree().root.get_node_or_null("/root/Global")
+	if global_state != null and global_state.has_method("registrar_resultado_mini_juego"):
+		global_state.call("registrar_resultado_mini_juego", success)
+
+
+## Muestra la flecha de continuar para que el jugador decida cuándo avanzar.
+func _mostrar_continuacion() -> void:
+	if _continuar_juego == null:
+		# Fallback si no hay presentador
+		_continue_or_close_node()
+		return
+	PresentadorContinuarJuegoScript.mostrar(
+		_continuar_juego, 
+		NODO_RUNTIME.hay_siguiente_mini_juego(get_tree()), 
+		5
+	)
+
+
+## Se ejecuta cuando el jugador presiona la flecha de continuar.
+func _al_solicitar_continuar_juego() -> void:
+	if _continue_requested:
+		return
+	
+	_continue_requested = true
+	_disable_back_button_if_present()
+	PresentadorContinuarJuegoScript.ocultar(_continuar_juego)
+	_continue_or_close_node()
+
+
+## Evalúa si hay otro juego pendiente en el Nodo o si debemos cerrar el flujo.
+## NodoRuntime decide el progreso internamente.
+func _continue_or_close_node() -> void:
+	# finalizar_mini_juego avanza la partida internamente y devuelve TRUE si hay siguiente juego.
+	var hay_siguiente_juego: bool = NODO_RUNTIME.finalizar_mini_juego(get_tree(), Callable(), Callable())
+	
+	# Si devolvió FALSE, significa que no hay más juegos en este nodo.
+	if not hay_siguiente_juego:
+		_go_to_post_game_flow()
+
+
+## Navega al flujo de post-juego (Pantalla de "Lección Terminada", Racha o Mapa).
+## PostGameFlowController es el encargado de rutear usando el _ruta_escena_de_retorno.
+func _go_to_post_game_flow() -> void:
+	PostGameFlowControllerScript.navigate_to_return_target(get_tree(), _ruta_escena_de_retorno)
 
 
 ## Deshabilita toda interacción al finalizar.
 func _disable_interaction() -> void:
 	_interaction_locked = true
+	_disable_back_button_if_present()
 	if _options_container != null:
 		for child in _options_container.get_children():
 			var btn := child as Button
 			if btn != null:
 				btn.disabled = true
+
+func _disable_back_button_if_present() -> void:
+	var back_button := find_child("Atrás", true, false)
+	if back_button == null:
+		back_button = find_child("BackButton", true, false)
+
+	if back_button is BaseButton:
+		back_button.disabled = true
 
 
 # ===========================================================================

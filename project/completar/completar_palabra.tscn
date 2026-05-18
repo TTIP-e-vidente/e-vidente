@@ -24,8 +24,8 @@ script = ExtResource("1_ffl8v")
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 1152.0
+offset_bottom = 800.0
 metadata/_edit_use_anchors_ = true
 
 [node name="FondoFicha" parent="Control" instance=ExtResource("1_ymp6c")]
