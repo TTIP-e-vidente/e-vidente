@@ -1,31 +1,11 @@
 [gd_scene format=3 uid="uid://r20wgxspx7pc"]
 
 [ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
-[ext_resource type="Texture2D" uid="uid://mgktu2igdmpr" path="res://assets-sistema/interfaz/titulo-jugar.png" id="2_68fep"]
 [ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_dj2xn"]
 [ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_dj2xn"]
-[ext_resource type="Texture2D" uid="uid://ca1j3rta585tu" path="res://assets-sistema/interfaz/titulo-opciones.png" id="4_mji7j"]
-[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_rimye"]
-[ext_resource type="Texture2D" uid="uid://c1rpcmmn8vr4b" path="res://assets-sistema/interfaz/titulo-salir.png" id="5_nvq7f"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
-shader = ExtResource("4_rimye")
-shader_parameter/mouse_pos = Vector2(0.5, 0.5)
-shader_parameter/strength = 0.25
-shader_parameter/radius = 0.5
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_rimye"]
-shader = ExtResource("4_rimye")
-shader_parameter/mouse_pos = Vector2(0.5, 0.5)
-shader_parameter/strength = 0.25
-shader_parameter/radius = 0.5
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kkk1x"]
-shader = ExtResource("4_rimye")
-shader_parameter/mouse_pos = Vector2(0.5, 0.5)
-shader_parameter/strength = 0.25
-shader_parameter/radius = 0.5
+[ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="4_544v7"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="7_continuar"]
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
@@ -48,58 +28,50 @@ scale = Vector2(0.43902442, 0.4390244)
 texture = ExtResource("3_dj2xn")
 
 [node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
-offset_left = 400.0
-offset_top = 153.0
-offset_right = 772.0
-offset_bottom = 649.0
-scale = Vector2(1.14996, 1.14996)
+offset_left = 363.0
+offset_top = 99.99999
+offset_right = 735.0
+offset_bottom = 596.0
+scale = Vector2(1.4113977, 1.4113977)
 
-[node name="Jugar" type="TextureButton" parent="MenuBar" unique_id=91319419]
-editor_description = "Jugar"
-material = SubResource("ShaderMaterial_544v7")
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.35200003
-anchor_bottom = 0.35200003
-offset_left = 16.695953
-offset_top = -78.93651
-offset_right = 548.6959
-offset_bottom = 119.06351
-scale = Vector2(0.48045883, 0.4908836)
-accessibility_live = 2
-texture_normal = ExtResource("2_68fep")
+[node name="Jugar" parent="MenuBar" unique_id=1307767255 instance=ExtResource("4_544v7")]
+layout_mode = 0
+anchors_preset = 0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = 16.29591
+offset_top = 94.232834
+offset_right = 384.5659
+offset_bottom = 230.55281
+scale = Vector2(0.6881337, 0.7030646)
 
-[node name="Opciones" type="TextureButton" parent="MenuBar" unique_id=713939385]
-material = SubResource("ShaderMaterial_rimye")
+[node name="Opciones" parent="MenuBar" unique_id=1629673275 instance=ExtResource("4_544v7")]
 layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.47500002
-anchor_bottom = 0.47500002
-offset_left = 16.695953
-offset_top = -2.5484161
-offset_right = 548.6959
-offset_bottom = 195.45157
-scale = Vector2(0.48045886, 0.48045886)
-texture_normal = ExtResource("4_mji7j")
+offset_left = 16.522308
+offset_top = 45.415634
+offset_right = 384.7923
+offset_bottom = 181.73563
+scale = Vector2(0.67718536, 0.68857664)
 
-[node name="Salir" type="TextureButton" parent="MenuBar" unique_id=1519213975]
-material = SubResource("ShaderMaterial_kkk1x")
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.34300002
-anchor_bottom = 0.34300002
-offset_left = 16.522324
-offset_top = 198.58043
-offset_right = 548.52234
-offset_bottom = 396.58044
-scale = Vector2(0.48045886, 0.48045886)
-texture_normal = ExtResource("5_nvq7f")
+[node name="Salir" parent="MenuBar" unique_id=1149333447 instance=ExtResource("4_544v7")]
+layout_mode = 0
+anchors_preset = 0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = 16.295906
+offset_top = 353.55023
+offset_right = 377.2959
+offset_bottom = 484.55026
+scale = Vector2(0.6786507, 0.6914755)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
 stream = ExtResource("6_eoqxh")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_start_pressed"]
+[node name="ContinuarJuego" parent="." unique_id=747364389 instance=ExtResource("7_continuar")]
+layout_mode = 3
+
+[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_jugar_pressed"]
 [connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]

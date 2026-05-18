@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameLevelContentCatalog.gd
+# Fachada de lectura de capitulos legacy.
+# Chapter = capitulo del libro; run = partida concreta dentro del capitulo.
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameTrackChapterDefinitionsScript := preload(
 	"res://niveles/content/catalog/GameTrackChapterDefinitions.gd"
@@ -14,59 +18,59 @@ var _chapters_by_track: Dictionary = {}
 
 
 func _init() -> void:
-	_chapters_by_track = GameTrackChapterDefinitionsScript.build_track_chapter_catalog()
+	_chapters_by_track = GameTrackChapterDefinitionsScript.construir_catalogo_capitulo_pista()
 
 
-func filter_items_by_category(items: Array, category_code: String) -> Array:
+func filtrar_elementos_por_categoria(items: Array, category_code: String) -> Array:
 	if category_code.strip_edges().is_empty():
 		return items.duplicate()
 	var filtered_items: Array = []
-	var wanted_category: String = GameTrackCatalog.normalize_category_code(
+	var wanted_category: String = GameTrackCatalog.normalizar_codigo_categoria(
 		category_code
 	)
 	for item in items:
-		if GameTrackCatalog.categories_match(str(item.categoria), wanted_category):
+		if GameTrackCatalog.categorias_coinciden(str(item.categoria), wanted_category):
 			filtered_items.append(item)
 	return filtered_items
 
 
-func get_track_level_count(track_key: String, fallback: int = 0) -> int:
+func obtener_pista_nivel_cantidad(track_key: String, fallback: int = 0) -> int:
 	var track_chapters: Dictionary = _chapters_by_track.get(track_key, {})
 	return track_chapters.size() if not track_chapters.is_empty() else fallback
 
 
-func get_max_track_level_count(fallback: int = 0) -> int:
+func obtener_maximo_pista_nivel_cantidad(fallback: int = 0) -> int:
 	var max_level_count := fallback
-	for track_key in GameTrackCatalog.get_track_keys():
-		max_level_count = max(max_level_count, get_track_level_count(track_key, fallback))
+	for track_key in GameTrackCatalog.obtener_claves_pista():
+		max_level_count = max(max_level_count, obtener_pista_nivel_cantidad(track_key, fallback))
 	return max_level_count
 
 
-func get_total_level_count(fallback: int = 0) -> int:
+func obtener_total_nivel_cantidad(fallback: int = 0) -> int:
 	var total_levels := 0
-	for track_key in GameTrackCatalog.get_track_keys():
-		total_levels += get_track_level_count(track_key, fallback)
+	for track_key in GameTrackCatalog.obtener_claves_pista():
+		total_levels += obtener_pista_nivel_cantidad(track_key, fallback)
 	return total_levels
 
 
-func get_chapter_definition(track_key: String, level_number: int) -> Dictionary:
+func obtener_capitulo_definicion(track_key: String, level_number: int) -> Dictionary:
 	var track_chapters: Dictionary = _chapters_by_track.get(track_key, {})
 	var chapter_definition: Dictionary = track_chapters.get(level_number, {})
 	return chapter_definition.duplicate(true)
 
 
-func get_chapter_run_count(track_key: String, level_number: int) -> int:
-	var chapter_definition: Dictionary = get_chapter_definition(track_key, level_number)
+func obtener_capitulo_partida_cantidad(track_key: String, level_number: int) -> int:
+	var chapter_definition: Dictionary = obtener_capitulo_definicion(track_key, level_number)
 	var runs: Array = chapter_definition.get("runs", [])
 	return runs.size()
 
 
-func get_chapter_run_definition(
+func obtener_capitulo_partida_definicion(
 	track_key: String,
 	level_number: int,
 	run_index: int = 1
 ) -> Dictionary:
-	var chapter_definition: Dictionary = get_chapter_definition(track_key, level_number)
+	var chapter_definition: Dictionary = obtener_capitulo_definicion(track_key, level_number)
 	var chapter_runs: Array = chapter_definition.get("runs", [])
 	if chapter_runs.is_empty():
 		return {}
@@ -75,18 +79,18 @@ func get_chapter_run_definition(
 	return run_definition.duplicate(true)
 
 
-func resolve_texture(texture_ref: Variant) -> Texture2D:
-	return GameChapterAssetCatalogScript.resolve_texture(texture_ref)
+func resolver_textura(texture_ref: Variant) -> Texture2D:
+	return GameChapterAssetCatalogScript.resolver_textura(texture_ref)
 
 
-func build_default_track_progress_state() -> Dictionary:
+func construir_predeterminado_pista_progreso_estado() -> Dictionary:
 	var progress_by_track: Dictionary = {}
-	for track_key in GameTrackCatalog.get_track_keys():
-		progress_by_track[track_key] = build_default_track_progress_for_track(track_key)
+	for track_key in GameTrackCatalog.obtener_claves_pista():
+		progress_by_track[track_key] = construir_predeterminado_progreso_pista_por_pista(track_key)
 	return progress_by_track
 
 
-func build_default_track_progress_for_track(track_key: String) -> Dictionary:
+func construir_predeterminado_progreso_pista_por_pista(track_key: String) -> Dictionary:
 	var track_progress: Dictionary = {}
 	var track_chapters: Dictionary = _chapters_by_track.get(track_key, {})
 	for raw_level_number in track_chapters.keys():

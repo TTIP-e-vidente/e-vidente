@@ -559,8 +559,8 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.webp ; WEBP")
 
-[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
-[connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton" to="." method="_on_choose_avatar_button_pressed"]
-[connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton" to="." method="_on_clear_avatar_button_pressed"]
-[connection signal="pressed" from="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton" to="." method="_on_register_button_pressed"]
-[connection signal="file_selected" from="AvatarDialog" to="." method="_on_avatar_dialog_file_selected"]
+[connection signal="pressed" from="BackButton" to="." method="_on_boton_volver_presionado"]
+[connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton" to="." method="_on_boton_elegir_avatar_presionado"]
+[connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton" to="." method="_on_boton_limpiar_avatar_presionado"]
+[connection signal="pressed" from="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton" to="." method="_on_boton_registrar_presionado"]
+[connection signal="file_selected" from="AvatarDialog" to="." method="_on_archivo_avatar_seleccionado"]

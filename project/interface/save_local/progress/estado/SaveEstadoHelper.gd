@@ -8,7 +8,7 @@
 ##   partial_level_states:
 ##     [track_key]:
 ##       [level_number]:
-##         run_index        → Índice de la corrida actual dentro del capítulo
+##         run_index        → Índice de la partida actual dentro del capítulo
 ##         mechanic_type    → Tipo de mecánica (ej: "plate_sort")
 ##         mechanic_state   → Estado interno de la mecánica
 ##           items          → Array de items en juego
@@ -29,8 +29,8 @@
 ##   }
 ##
 ## Flujo:
-##   Runtime (Global._partial_states) → export_estado() → save_data.json
-##   save_data.json → import_estado() → Runtime (Global._partial_states)
+##   Runtime (Global._partial_states) → exportar_estado() → save_data.json
+##   save_data.json → importar_estado() → Runtime (Global._partial_states)
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
@@ -47,7 +47,7 @@ const PLATE_SORT_MECHANIC := "plate_sort"
 
 
 ## Exporta los estados parciales al snapshot de progreso para disco.
-func export_estado(partial_states: Dictionary) -> Dictionary:
+func exportar_estado(partial_states: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
 		var track_states: Dictionary = partial_states.get(track_key, {})
@@ -61,7 +61,7 @@ func export_estado(partial_states: Dictionary) -> Dictionary:
 
 
 ## Importa los estados parciales desde el snapshot leído de disco.
-func import_estado(
+func importar_estado(
 	snapshot: Variant,
 	is_level_completed_fn: Callable,
 	get_track_level_count_fn: Callable
@@ -69,7 +69,7 @@ func import_estado(
 	var stored: Dictionary = snapshot if snapshot is Dictionary else {}
 	var result: Dictionary = {}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
-		result[track_key] = _parse_partial_track(
+		result[track_key] = _parsear_pista_parcial(
 			stored.get(track_key, {}),
 			track_key,
 			is_level_completed_fn,
@@ -78,7 +78,7 @@ func import_estado(
 	return result
 
 
-func _parse_partial_track(
+func _parsear_pista_parcial(
 	raw: Variant,
 	track_key: String,
 	is_level_completed_fn: Callable,
@@ -94,13 +94,13 @@ func _parse_partial_track(
 		var level: int = clampi(int(str(raw_key)), 1, max_level)
 		if is_level_completed_fn.call(track_key, level):
 			continue
-		var parsed: Dictionary = _parse_partial_level(raw[raw_key])
+		var parsed: Dictionary = _parsear_nivel_parcial(raw[raw_key])
 		if not parsed.is_empty():
 			result[level] = parsed
 	return result
 
 
-func _parse_partial_level(raw: Variant) -> Dictionary:
+func _parsear_nivel_parcial(raw: Variant) -> Dictionary:
 	if not raw is Dictionary:
 		return {}
 	var saved: Dictionary = raw
@@ -112,8 +112,8 @@ func _parse_partial_level(raw: Variant) -> Dictionary:
 		if raw_mechanic is Dictionary and not (raw_mechanic as Dictionary).is_empty()
 		else saved
 	)
-	var items: Array = _parse_partial_items(source)
-	var placed_ids: Array = _parse_partial_placed_ids(source, items)
+	var items: Array = _parsear_items_parciales(source)
+	var placed_ids: Array = _parsear_ids_colocados_parciales(source, items)
 	if mechanic_type.is_empty() and (run_index > 1 or not items.is_empty()):
 		mechanic_type = PLATE_SORT_MECHANIC
 	if items.is_empty() and run_index <= 1:
@@ -128,7 +128,7 @@ func _parse_partial_level(raw: Variant) -> Dictionary:
 	}
 
 
-func _parse_partial_items(source: Dictionary) -> Array:
+func _parsear_items_parciales(source: Dictionary) -> Array:
 	var raw_items: Variant = source.get(PLS_ITEMS, [])
 	if not raw_items is Array:
 		return []
@@ -148,7 +148,7 @@ func _parse_partial_items(source: Dictionary) -> Array:
 	return items
 
 
-func _parse_partial_placed_ids(source: Dictionary, items: Array) -> Array:
+func _parsear_ids_colocados_parciales(source: Dictionary, items: Array) -> Array:
 	var positive_ids: Dictionary = {}
 	for item in items:
 		if bool(item.get(PLS_IS_POSITIVE, false)):

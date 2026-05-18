@@ -4,6 +4,7 @@ class_name ManagerLevel
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const LevelItemScript := preload("res://resources/level_item.gd")
 const GameTrackItemPoolCatalogScript := preload(
 	"res://niveles/content/catalog/GameTrackItemPoolCatalog.gd"
 )
@@ -17,6 +18,8 @@ const PLATE_ITEM_ROW_SPACING := 48.0
 const PLATE_ITEM_VERTICAL_OFFSET := -12.0
 const PARTIAL_SAVE_UNIT_SINGULAR := "alimento correcto en el plato"
 const PARTIAL_SAVE_UNIT_PLURAL := "alimentos correctos en el plato"
+const RUTA_ESCENA_ELEMENTO_ARRASTRE := "res://items/item_level.tscn"
+const RUTA_TEXTURA_ELEMENTO_POR_DEFECTO := "res://assets-sistema/interfaz/desayuno.png"
 
 @export var level_resource: Resource = null
 @export var level_resource_path := ""
@@ -34,43 +37,604 @@ var active_mechanic_type: String = ""
 var active_positive_item_count: int = 0
 var active_negative_item_count: int = 0
 var active_category_code: String = ""
+var _configuracion_dificultad_arrastre: Dictionary = {}
+var _texturas_info_por_sprite: Dictionary = {}
 
 
-func start_level_session(track_key: String, level_scene: Node) -> void:
-	if not _connect_scene_nodes(level_scene):
+# --- Flujo público del nivel --------------------------------------------------
+func iniciar_nivel_sesion(track_key: String, level_scene: Node) -> void:
+	if not _conectar_escena_nodos(level_scene):
 		return
 
 	active_track_key = track_key.strip_edges()
-	_ensure_level_resource_loaded()
+	_asegurar_recurso_nivel_cargado()
 
-	var saved_level_state: Dictionary = Global.get_partial_level_state(
-		active_track_key, Global.current_level
-	)
-	active_run_index = clampi(
-		int(saved_level_state.get("run_index", 1)),
-		1,
-		get_total_runs()
-	)
-	_load_current_run(saved_level_state)
+	var saved_level_state: Dictionary = _obtener_estado_guardado_actual()
+	active_run_index = _resolver_indice_partida(saved_level_state)
+	_cargar_partida_actual(saved_level_state)
 
 
-func advance_to_next_run() -> bool:
-	if active_run_index >= get_total_runs():
+func iniciar_desde_datos_de_arrastre(
+	track_key: String,
+	contenido_arrastre: Dictionary,
+	level_scene: Node
+) -> bool:
+	# Inicializa el nivel usando directamente el contenido (content) de un JSON de arrastre.
+	# No reemplaza el flujo legacy: es un entrypoint mínimo para consumir JSON oficial.
+	if not _conectar_escena_nodos(level_scene):
 		return false
-	active_run_index += 1
-	_load_current_run({"run_index": active_run_index})
+
+	active_track_key = track_key.strip_edges()
+	_preparar_runtime_de_arrastre_desde_json()
+
+	var datos_arrastre: Dictionary = _extraer_datos_de_arrastre(contenido_arrastre)
+	print(
+		"[ManagerLevel] iniciar_desde_datos_de_arrastre items=%d targets=%d"
+		% [
+			(datos_arrastre.get("elementos", []) as Array).size(),
+			(datos_arrastre.get("objetivos", []) as Array).size(),
+		]
+	)
+	var escena_elemento: PackedScene = _cargar_escena_elemento_de_arrastre()
+	if escena_elemento == null:
+		return false
+
+	var elementos_de_arrastre: Dictionary = _crear_elementos_desde_datos_de_arrastre(
+		datos_arrastre.get("elementos", []),
+		escena_elemento
+	)
+	if not _hay_elementos_de_arrastre_validos(elementos_de_arrastre):
+		push_warning("ManagerLevel: el JSON de arrastre no generó elementos runtime válidos.")
+		return false
+
+	_preparar_recurso_de_arrastre(
+		contenido_arrastre,
+		datos_arrastre.get("objetivos", []),
+		elementos_de_arrastre,
+		level_scene
+	)
+	active_run_data = _construir_datos_de_partida_de_arrastre()
+	return _finalizar_arranque_de_arrastre_desde_json()
+
+
+func _preparar_runtime_de_arrastre_desde_json() -> void:
+	limpiar_tiempo_ejecucion_elementos()
+	active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+
+
+func _preparar_recurso_de_arrastre(
+	contenido_arrastre: Dictionary,
+	objetivos_crudos: Array,
+	elementos_de_arrastre: Dictionary,
+	level_scene: Node
+) -> void:
+	_aplicar_override_de_configuracion_de_arrastre(contenido_arrastre)
+	_aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre)
+	_asegurar_recurso_nivel_para_arrastre()
+	_guardar_contenido_de_arrastre_en_recurso(
+		contenido_arrastre,
+		objetivos_crudos,
+		elementos_de_arrastre,
+		level_scene
+	)
+	_aplicar_configuracion_de_dificultad_arrastre()
+
+
+func _aplicar_override_de_configuracion_de_arrastre(contenido_arrastre: Dictionary) -> void:
+	var override_configuracion: Dictionary = _extraer_override_de_configuracion_de_arrastre(
+		contenido_arrastre
+	)
+	if override_configuracion.is_empty():
+		return
+
+	var configuracion_merged: Dictionary = _configuracion_dificultad_arrastre.duplicate(true)
+	for clave in override_configuracion.keys():
+		configuracion_merged[clave] = override_configuracion[clave]
+	_configuracion_dificultad_arrastre = configuracion_merged
+
+
+func _extraer_override_de_configuracion_de_arrastre(contenido_arrastre: Dictionary) -> Dictionary:
+	var override_configuracion: Dictionary = {}
+
+	var elementos_maximos: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"elementos_maximos"
+	)
+	if elementos_maximos != null and int(elementos_maximos) > 0:
+		override_configuracion["elementos_maximos"] = int(elementos_maximos)
+
+	var distractores_maximos: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"distractores_maximos"
+	)
+	if distractores_maximos != null and int(distractores_maximos) >= 0:
+		override_configuracion["distractores_maximos"] = int(distractores_maximos)
+
+	var mostrar_ayuda_visual: Variant = _leer_campo_configuracion_de_arrastre(
+		contenido_arrastre,
+		"mostrar_ayuda_visual"
+	)
+	if mostrar_ayuda_visual is bool:
+		override_configuracion["mostrar_ayuda_visual"] = bool(mostrar_ayuda_visual)
+
+	return override_configuracion
+
+
+func _leer_campo_configuracion_de_arrastre(
+	contenido_arrastre: Dictionary,
+	campo: String
+) -> Variant:
+	if contenido_arrastre.has(campo):
+		return contenido_arrastre.get(campo)
+
+	var contenido: Variant = contenido_arrastre.get("content", {})
+	if contenido is Dictionary and (contenido as Dictionary).has(campo):
+		return (contenido as Dictionary).get(campo)
+
+	return null
+
+
+func _construir_datos_de_partida_de_arrastre() -> Dictionary:
+	var mechanic_payload: Dictionary = {}
+	if (
+		level_resource != null
+		and level_resource.mechanic_payload is Dictionary
+		and not (level_resource.mechanic_payload as Dictionary).is_empty()
+	):
+		mechanic_payload = (level_resource.mechanic_payload as Dictionary).duplicate(true)
+	var ruta_ensenanza := ""
+	if level_resource != null and level_resource.ensenanza != null:
+		ruta_ensenanza = str(level_resource.ensenanza.resource_path).strip_edges()
+	return {
+		"mechanic_type": active_mechanic_type,
+		"mechanic_payload": mechanic_payload,
+		"negative_count": active_negative_item_count,
+		"positive_count": active_positive_item_count,
+		"category": active_category_code,
+		"meal_texture_path": "",
+		"condition_texture_path": "",
+		"teaching_texture_path": ruta_ensenanza,
+	}
+
+
+func _finalizar_arranque_de_arrastre_desde_json() -> bool:
+	print(
+		"[DragRuntime] mode=drag_drop targets=%d items=%d"
+		% [
+			(level_resource.mechanic_payload.get("targets", []) as Array).size()
+				if level_resource != null and level_resource.mechanic_payload is Dictionary
+				else 0,
+			active_positive_item_count + active_negative_item_count,
+		]
+	)
+	_instanciar_elementos_de_arrastre()
+	if level_items.is_empty():
+		push_warning("ManagerLevel: no se pudieron instanciar comidas de arrastre desde el JSON.")
+		return false
+	level_items.shuffle()
+	distribuir_tiempo_ejecucion_elementos()
+	_aplicar_ayuda_visual_de_arrastre()
 	return true
 
 
-func get_current_run_index() -> int:
+func _extraer_datos_de_arrastre(contenido_arrastre: Dictionary) -> Dictionary:
+	var elementos: Array = []
+	var objetivos: Array = []
+	if contenido_arrastre is Dictionary:
+		var contenido: Dictionary = contenido_arrastre.get("content", {})
+		elementos = (
+			contenido_arrastre.get("items", [])
+			if contenido_arrastre.has("items")
+			else contenido.get("items", [])
+		)
+		objetivos = (
+			contenido_arrastre.get("targets", [])
+			if contenido_arrastre.has("targets")
+			else contenido.get("targets", [])
+		)
+	return {
+		"elementos": elementos,
+		"objetivos": objetivos,
+	}
+
+
+func _cargar_escena_elemento_de_arrastre() -> PackedScene:
+	var escena_elemento: PackedScene = load(RUTA_ESCENA_ELEMENTO_ARRASTRE) as PackedScene
+	if escena_elemento == null:
+		push_warning(
+			"ManagerLevel: no se pudo cargar la escena de arrastre %s."
+			% RUTA_ESCENA_ELEMENTO_ARRASTRE
+		)
+	return escena_elemento
+
+
+func _crear_elementos_desde_datos_de_arrastre(
+	elementos_crudos: Array,
+	escena_elemento: PackedScene
+) -> Dictionary:
+	var positivos: Array = []
+	var negativos: Array = []
+	for index in range(elementos_crudos.size()):
+		var elemento_crudo: Variant = elementos_crudos[index]
+		var nivel_item: Resource = _crear_elemento_de_arrastre_desde_datos(
+			elemento_crudo,
+			escena_elemento,
+			index
+		)
+		if nivel_item == null:
+			continue
+		if bool(nivel_item.esPositivo):
+			positivos.append(nivel_item)
+		else:
+			negativos.append(nivel_item)
+	positivos.shuffle()
+	negativos.shuffle()
+	return {
+		"positivos": positivos,
+		"negativos": negativos,
+	}
+
+
+func _crear_elemento_de_arrastre_desde_datos(
+	elemento_crudo: Variant,
+	escena_elemento: PackedScene,
+	index: int = 0
+) -> Resource:
+	if not elemento_crudo is Dictionary:
+		return null
+	var datos_elemento: Dictionary = elemento_crudo as Dictionary
+	var nivel_item = LevelItemScript.new()
+	var item_id: String = str(datos_elemento.get("id", "sin_id")).strip_edges()
+	var ruta_recurso: String = _resolver_ruta_recurso_elemento_arrastre(datos_elemento)
+	var recurso_item: Resource = _cargar_recurso_elemento_arrastre(ruta_recurso)
+	var textura_elemento: Texture2D = _resolver_textura_elemento_arrastre(
+		datos_elemento,
+		recurso_item
+	)
+	var textura_info: Texture2D = _resolver_textura_info_elemento_arrastre(
+		datos_elemento,
+		textura_elemento,
+		recurso_item
+	)
+	nivel_item.runtime_id = item_id
+	nivel_item.runtime_resource_path = ruta_recurso
+	nivel_item.runtime_visual_resource_path = (
+		textura_elemento.resource_path if textura_elemento != null else ""
+	)
+	nivel_item.runtime_label = str(
+		datos_elemento.get("label", datos_elemento.get("nombre", item_id))
+	).strip_edges()
+	nivel_item.runtime_feedback = str(datos_elemento.get("feedback", "")).strip_edges()
+	nivel_item.runtime_correct_target = str(datos_elemento.get("correct_target", "")).strip_edges()
+	nivel_item.sprite = textura_elemento
+	nivel_item.escena = escena_elemento
+	nivel_item.info = textura_info if textura_info != null else nivel_item.sprite
+	nivel_item.categoria = str(datos_elemento.get("category", "")).strip_edges()
+	nivel_item.esPositivo = str(datos_elemento.get("correct_target", "")).strip_edges() != ""
+	print(
+		"[ManagerLevelItem] index=%d id=%s resource=%s visual=%s label=%s"
+		% [
+			index,
+			item_id,
+			ruta_recurso,
+			nivel_item.runtime_visual_resource_path,
+			nivel_item.runtime_label,
+		]
+	)
+	return nivel_item
+
+
+func _hay_elementos_de_arrastre_validos(elementos_de_arrastre: Dictionary) -> bool:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	return not positivos.is_empty() or not negativos.is_empty()
+
+
+func _aplicar_cantidad_de_elementos_de_arrastre(elementos_de_arrastre: Dictionary) -> void:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	active_positive_item_count = positivos.size()
+	active_negative_item_count = negativos.size()
+
+
+func _asegurar_recurso_nivel_para_arrastre() -> void:
+	if not level_resource:
+		level_resource = LevelResourceScript.new()
+
+
+func _guardar_contenido_de_arrastre_en_recurso(
+	contenido_arrastre: Dictionary,
+	objetivos_crudos: Array,
+	elementos_de_arrastre: Dictionary,
+	level_scene: Node
+) -> void:
+	var positivos: Array = elementos_de_arrastre.get("positivos", [])
+	var negativos: Array = elementos_de_arrastre.get("negativos", [])
+	level_resource.itemsPositivos = positivos
+	level_resource.itemsNegativos = negativos
+	level_resource.cantidadPositivos = active_positive_item_count
+	level_resource.cantidadNegativos = active_negative_item_count
+	level_resource.ensenanza = _resolver_textura_de_ensenanza_para_arrastre(
+		level_scene,
+		contenido_arrastre
+	)
+	level_resource.mechanic_payload = {
+		"targets": objetivos_crudos,
+		"instruction": contenido_arrastre.get("instruction", ""),
+	}
+	if is_instance_valid(teaching_sprite):
+		teaching_sprite.texture = level_resource.ensenanza
+
+
+func _resolver_textura_de_ensenanza_para_arrastre(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> Texture2D:
+	var teaching_key: String = _obtener_clave_ensenanza_explicita(
+		level_scene,
+		contenido_arrastre
+	)
+	var node_key: String = _obtener_clave_nodo_de_contexto(level_scene, contenido_arrastre)
+	var fallback_path: String = _obtener_ruta_ensenanza_desde_capitulo(level_scene)
+	var level_number: int = _obtener_numero_nivel_para_arrastre(level_scene)
+	return GameChapterAssetCatalogScript.resolver_textura_ensenanza_para_contexto(
+		active_track_key,
+		teaching_key,
+		node_key,
+		fallback_path,
+		level_number
+	)
+
+
+func _obtener_clave_ensenanza_explicita(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> String:
+	var clave: String = _leer_clave_ensenanza_de_diccionario(contenido_arrastre)
+	if not clave.is_empty():
+		return clave
+
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	clave = _leer_clave_ensenanza_de_diccionario(juego_actual)
+	if not clave.is_empty():
+		return clave
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	clave = _leer_clave_ensenanza_de_diccionario(sesion_jugable)
+	if not clave.is_empty():
+		return clave
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			clave = _leer_clave_ensenanza_de_diccionario(contexto_variant as Dictionary)
+			if not clave.is_empty():
+				return clave
+	return ""
+
+
+func _leer_clave_ensenanza_de_diccionario(datos: Dictionary) -> String:
+	for clave_campo in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
+		var clave: String = str(datos.get(clave_campo, "")).strip_edges()
+		if not clave.is_empty():
+			return clave
+	return ""
+
+
+func _obtener_clave_nodo_de_contexto(
+	level_scene: Node,
+	contenido_arrastre: Dictionary = {}
+) -> String:
+	var clave_nodo: String = str(
+		contenido_arrastre.get("node_key", contenido_arrastre.get("id", ""))
+	).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	clave_nodo = str(
+		juego_actual.get("clave_nodo_de_origen", juego_actual.get("node_key", ""))
+	).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	clave_nodo = str(sesion_jugable.get("node_key", "")).strip_edges()
+	if not clave_nodo.is_empty():
+		return clave_nodo
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			var contexto_nodo: Dictionary = contexto_variant as Dictionary
+			clave_nodo = str(contexto_nodo.get("node_key", "")).strip_edges()
+			if not clave_nodo.is_empty():
+				return clave_nodo
+	return ""
+
+
+func _obtener_ruta_ensenanza_desde_capitulo(level_scene: Node) -> String:
+	var numero_nivel: int = _obtener_numero_nivel_para_arrastre(level_scene)
+	if numero_nivel <= 0:
+		return ""
+	var definicion_capitulo: Dictionary = Global.obtener_capitulo_partida_definicion(
+		active_track_key,
+		numero_nivel,
+		max(1, active_run_index)
+	)
+	return str(definicion_capitulo.get("teaching_texture_path", "")).strip_edges()
+
+
+func _obtener_numero_nivel_para_arrastre(level_scene: Node) -> int:
+	var juego_actual: Dictionary = Global.obtener_juego_actual_de_partida()
+	var numero_nivel: int = int(juego_actual.get("level_number", 0))
+	if numero_nivel > 0:
+		return numero_nivel
+
+	var sesion_jugable: Dictionary = Global.obtener_sesion_nodo_jugable_activo()
+	numero_nivel = int(sesion_jugable.get("level_number", sesion_jugable.get("nivel_id", 0)))
+	if numero_nivel > 0:
+		return numero_nivel
+
+	if is_instance_valid(level_scene):
+		var contexto_variant: Variant = level_scene.get("_contexto_nodo_mapa")
+		if contexto_variant is Dictionary:
+			var contexto_nodo: Dictionary = contexto_variant as Dictionary
+			numero_nivel = int(
+				contexto_nodo.get("level_number", contexto_nodo.get("nivel_id", 0))
+			)
+			if numero_nivel > 0:
+				return numero_nivel
+
+	return int(Global.current_level)
+
+
+func _instanciar_elementos_de_arrastre() -> void:
+	for i in range(min(active_positive_item_count, level_resource.itemsPositivos.size())):
+		generar_nivel_elemento(level_resource.itemsPositivos[i], "positive_%d" % i, true)
+	for j in range(min(active_negative_item_count, level_resource.itemsNegativos.size())):
+		generar_nivel_elemento(level_resource.itemsNegativos[j], "negative_%d" % j, false)
+
+
+func _resolver_textura_elemento_arrastre(
+	elemento_crudo: Dictionary,
+	recurso_item: Resource = null
+) -> Texture2D:
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
+	var textura_elemento: Texture2D = null
+	if ruta_textura.ends_with(".tres"):
+		if recurso_item != null:
+			textura_elemento = recurso_item.get("sprite") as Texture2D
+	else:
+		textura_elemento = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
+	var item_id: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
+	print(
+		"[DragFoodItem] id=%s resource=%s exists=%s correct=%s"
+		% [
+			item_id, ruta_textura,
+			str(ResourceLoader.exists(ruta_textura) and textura_elemento != null),
+			str(str(elemento_crudo.get("correct_target", "")).strip_edges() != ""),
+		]
+	)
+	if textura_elemento != null:
+		return textura_elemento
+
+	push_warning(
+		(
+			"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s)."
+			+ " Se usara una textura por defecto."
+		) % [item_id, ruta_textura]
+	)
+	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
+
+
+func _resolver_ruta_recurso_elemento_arrastre(elemento_crudo: Dictionary) -> String:
+	for campo in ["resource", "resource_path", "asset", "image", "texture"]:
+		var ruta: String = str(elemento_crudo.get(campo, "")).strip_edges()
+		if not ruta.is_empty():
+			return ruta
+	return ""
+
+
+func _cargar_recurso_elemento_arrastre(ruta_recurso: String) -> Resource:
+	if ruta_recurso.strip_edges().is_empty() or not ruta_recurso.ends_with(".tres"):
+		return null
+	return load(ruta_recurso) as Resource
+
+
+func _resolver_textura_info_elemento_arrastre(
+	elemento_crudo: Dictionary,
+	textura_elemento: Texture2D,
+	recurso_item: Resource = null
+) -> Texture2D:
+	var ruta_info_explicita: String = str(
+		elemento_crudo.get("info_image", elemento_crudo.get("info", ""))
+	).strip_edges()
+	if not ruta_info_explicita.is_empty():
+		return GameChapterAssetCatalogScript.resolver_textura(ruta_info_explicita)
+	if recurso_item != null:
+		var textura_info_recurso := recurso_item.get("info") as Texture2D
+		if textura_info_recurso != null:
+			return textura_info_recurso
+
+	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
+	var texturas_info_por_sprite := _obtener_texturas_info_por_sprite()
+	if not ruta_textura.is_empty() and texturas_info_por_sprite.has(ruta_textura):
+		return texturas_info_por_sprite.get(ruta_textura) as Texture2D
+	if textura_elemento != null:
+		var ruta_textura_cargada := textura_elemento.resource_path.strip_edges()
+		if (
+			not ruta_textura_cargada.is_empty()
+			and texturas_info_por_sprite.has(ruta_textura_cargada)
+		):
+			return texturas_info_por_sprite.get(ruta_textura_cargada) as Texture2D
+	var ruta_info_inferida := _inferir_ruta_info_desde_sprite(ruta_textura)
+	if ruta_info_inferida.is_empty():
+		return null
+	return load(ruta_info_inferida) as Texture2D
+
+
+func _obtener_texturas_info_por_sprite() -> Dictionary:
+	if not _texturas_info_por_sprite.is_empty():
+		return _texturas_info_por_sprite
+	var directorio_items := DirAccess.open("res://items")
+	if directorio_items == null:
+		return _texturas_info_por_sprite
+	directorio_items.list_dir_begin()
+	while true:
+		var nombre_archivo := directorio_items.get_next()
+		if nombre_archivo.is_empty():
+			break
+		if directorio_items.current_is_dir() or not nombre_archivo.ends_with(".tres"):
+			continue
+		var item_recurso := load("res://items/%s" % nombre_archivo)
+		if item_recurso == null:
+			continue
+		var textura_sprite := item_recurso.get("sprite") as Texture2D
+		var textura_info := item_recurso.get("info") as Texture2D
+		if textura_sprite == null or textura_info == null:
+			continue
+		var ruta_sprite := textura_sprite.resource_path.strip_edges()
+		if ruta_sprite.is_empty():
+			continue
+		_texturas_info_por_sprite[ruta_sprite] = textura_info
+	directorio_items.list_dir_end()
+	return _texturas_info_por_sprite
+
+
+func _inferir_ruta_info_desde_sprite(ruta_textura: String) -> String:
+	if ruta_textura.is_empty():
+		return ""
+	var nombre_base := ruta_textura.get_file().get_basename()
+	if nombre_base.ends_with("-0"):
+		nombre_base = nombre_base.substr(0, nombre_base.length() - 2)
+	var ruta_info := "res://assets-sistema/iconos/alimentos-info/%s-info.png" % nombre_base
+	if ResourceLoader.exists(ruta_info, "Texture2D"):
+		return ruta_info
+	return ""
+
+
+func establecer_configuracion_de_dificultad_arrastre(configuracion: Dictionary) -> void:
+	_configuracion_dificultad_arrastre = configuracion.duplicate(true)
+
+
+func avanzar_a_siguiente_partida() -> bool:
+	if active_run_index >= obtener_total_partidas():
+		return false
+	active_run_index += 1
+	_cargar_partida_actual({"run_index": active_run_index})
+	return true
+
+
+func obtener_actual_partida_indice() -> int:
 	return active_run_index
 
 
-func get_total_runs() -> int:
-	return max(1, Global.get_chapter_run_count(active_track_key, Global.current_level))
+func obtener_total_partidas() -> int:
+	return max(1, Global.obtener_capitulo_partida_cantidad(active_track_key, Global.current_level))
 
 
-func set_runtime_items_interactable(enabled: bool) -> void:
+func establecer_tiempo_ejecucion_elementos_interactuable(enabled: bool) -> void:
 	for runtime_item in level_items:
 		if not is_instance_valid(runtime_item):
 			continue
@@ -78,40 +642,15 @@ func set_runtime_items_interactable(enabled: bool) -> void:
 			runtime_item.set_interaction_enabled(enabled)
 
 
-# Solo arma y devuelve el dict de estado parcial. No guarda nada.
-func build_partial_level_state() -> Dictionary:
+# --- Guardado parcial ---------------------------------------------------------
+func construir_parcial_nivel_estado() -> Dictionary:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
 		return {}
 
-	var saved_item_entries: Array = []
-	var placed_positive_item_ids: Array = []
-
-	for runtime_item in level_items:
-		if not is_instance_valid(runtime_item):
-			continue
-
-		var item_path: String = str(runtime_item.item_resource_path).strip_edges()
-		var instance_id: String = str(runtime_item.save_instance_id).strip_edges()
-		if item_path.is_empty() or instance_id.is_empty():
-			continue
-
-		var saved_item_entry: Dictionary = {
-			"item_path": item_path,
-			"instance_id": instance_id,
-			"is_positive": bool(runtime_item.esPositivo)
-		}
-		saved_item_entries.append(saved_item_entry)
-
-		if bool(runtime_item.esPositivo) and plato.has_positive_item(runtime_item):
-			placed_positive_item_ids.append(instance_id)
-
-	if saved_item_entries.is_empty() and active_run_index <= 1:
+	var mechanic_state: Dictionary = _construir_estado_guardado_mecanica()
+	if mechanic_state.is_empty() and active_run_index <= 1:
 		return {}
 
-	var mechanic_state: Dictionary = {
-		"items": saved_item_entries,
-		"placed_item_ids": placed_positive_item_ids
-	}
 	return {
 		"run_index": active_run_index,
 		"mechanic_type": active_mechanic_type,
@@ -119,19 +658,19 @@ func build_partial_level_state() -> Dictionary:
 	}
 
 
-func store_partial_level_state(track_key: String) -> int:
-	var partial_level_state: Dictionary = build_partial_level_state()
-	Global.set_partial_level_state(
+func almacenar_parcial_nivel_estado(track_key: String) -> int:
+	var partial_level_state: Dictionary = construir_parcial_nivel_estado()
+	Global.establecer_parcial_nivel_estado(
 		track_key,
 		Global.current_level,
 		partial_level_state
 	)
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
 		return 0
-	return get_positive_items_in_plate_count()
+	return obtener_positivo_elementos_in_plato_cantidad()
 
 
-func format_partial_save_progress(saved_positive_count: int) -> String:
+func formatear_parcial_guardar_progreso(saved_positive_count: int) -> String:
 	if saved_positive_count <= 0:
 		return "Capitulo %d listo para retomar" % Global.current_level
 	var unit: String = PARTIAL_SAVE_UNIT_SINGULAR
@@ -140,52 +679,118 @@ func format_partial_save_progress(saved_positive_count: int) -> String:
 	return "%d %s" % [saved_positive_count, unit]
 
 
-func get_current_run_save_label() -> String:
-	var total_runs: int = get_total_runs()
+func obtener_actual_partida_guardar_label() -> String:
+	var total_runs: int = obtener_total_partidas()
 	if total_runs <= 1:
 		return ""
-	return "Corrida %d de %d" % [active_run_index, total_runs]
+	return "Partida %d de %d" % [active_run_index, total_runs]
 
 
-func get_positive_items_in_plate_count() -> int:
+func _construir_estado_guardado_mecanica() -> Dictionary:
+	var saved_item_entries: Array = []
+	var placed_positive_item_ids: Array = []
+
+	for runtime_item in level_items:
+		var saved_item_entry: Dictionary = _construir_entrada_guardado_item(runtime_item)
+		if saved_item_entry.is_empty():
+			continue
+		saved_item_entries.append(saved_item_entry)
+
+		if bool(runtime_item.esPositivo) and plato.tiene_positivo_elemento(runtime_item):
+			placed_positive_item_ids.append(str(runtime_item.save_instance_id))
+
+	if saved_item_entries.is_empty():
+		return {}
+
+	return {
+		"items": saved_item_entries,
+		"placed_item_ids": placed_positive_item_ids
+	}
+
+
+func _construir_entrada_guardado_item(runtime_item: Node) -> Dictionary:
+	if not is_instance_valid(runtime_item):
+		return {}
+
+	var item_path: String = str(runtime_item.item_resource_path).strip_edges()
+	var instance_id: String = str(runtime_item.save_instance_id).strip_edges()
+	if item_path.is_empty() or instance_id.is_empty():
+		return {}
+
+	return {
+		"item_path": item_path,
+		"instance_id": instance_id,
+		"is_positive": bool(runtime_item.esPositivo)
+	}
+
+
+# --- Consultas de gameplay ----------------------------------------------------
+func obtener_positivo_elementos_in_plato_cantidad() -> int:
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE or not is_instance_valid(plato):
 		return 0
 	return plato.cantAlimentosPos.size()
 
 
-func has_completed_current_run() -> bool:
+func tiene_completado_actual_partida() -> bool:
 	if not is_instance_valid(plato):
 		return false
 	if level_resource == null:
 		return false
-	return (
-		int(level_resource.cantidadPositivos) == get_positive_items_in_plate_count()
+	var correctos_colocados: int = obtener_positivo_elementos_in_plato_cantidad()
+	var correctos_necesarios: int = active_positive_item_count
+	if correctos_necesarios <= 0:
+		correctos_necesarios = int(level_resource.cantidadPositivos)
+	if correctos_necesarios <= 0:
+		return false
+	var completado: bool = (
+		correctos_necesarios == correctos_colocados
 		and plato.cantAlimentosNeg.is_empty()
 	)
+	print(
+		"[ARRASTRE] correctos_colocados=",
+		correctos_colocados,
+		" correctos_necesarios=",
+		correctos_necesarios,
+		" completado=",
+		completado
+	)
+	return completado
 
 
-func filter_items_by_category(items: Array, category: String) -> Array:
+func filtrar_elementos_por_categoria(items: Array, category: String) -> Array:
 	if category.strip_edges().is_empty():
 		return items.duplicate()
-	var wanted: String = GameTrackCatalog.normalize_category_code(category)
-	var result: Array = []
+	var wanted_category: String = GameTrackCatalog.normalizar_codigo_categoria(category)
+	var filtered_items: Array = []
 	for item in items:
-		if GameTrackCatalog.categories_match(str(item.categoria), wanted):
-			result.append(item)
-	return result
+		if GameTrackCatalog.categorias_coinciden(str(item.categoria), wanted_category):
+			filtered_items.append(item)
+	return filtered_items
 
 
-func spawn_level_item(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
+# --- Runtime de items ---------------------------------------------------------
+func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positive: bool) -> Node:
+	if level_item == null:
+		push_warning("ManagerLevel: se intentó instanciar un elemento nulo.")
+		return null
+	if level_item.escena == null:
+		push_warning("ManagerLevel: el elemento '%s' no tiene escena instanciable." % instance_id)
+		return null
 	var level_item_instance: Node = level_item.escena.instantiate()
 	if level_item_instance == null:
+		push_warning("ManagerLevel: falló la instanciación del elemento '%s'." % instance_id)
 		return null
 	level_item_instance.setup(level_item, plato, is_positive, instance_id)
 	add_child(level_item_instance)
 	level_items.append(level_item_instance)
+	var item_id: String = str(level_item.runtime_id).strip_edges()
+	if item_id.is_empty():
+		item_id = instance_id
+	print("[ManagerLevel] item_instantiated id=%s ok=true" % item_id)
 	return level_item_instance
 
 
-func clear_runtime_items() -> void:
+func limpiar_tiempo_ejecucion_elementos() -> void:
 	for item in level_items:
 		if is_instance_valid(item):
 			item.queue_free()
@@ -197,11 +802,9 @@ func clear_runtime_items() -> void:
 	plato.cantAlimentosNeg.clear()
 
 
-func layout_runtime_items() -> void:
+func distribuir_tiempo_ejecucion_elementos() -> void:
 	var next_item_position := Vector2(230, 680)
-	var total_items: int = (
-		level_resource.cantidadNegativos + level_resource.cantidadPositivos
-	)
+	var total_items: int = level_resource.cantidadNegativos + level_resource.cantidadPositivos
 	if total_items < 5:
 		next_item_position = Vector2(420, 680)
 	for item in level_items:
@@ -209,92 +812,122 @@ func layout_runtime_items() -> void:
 		next_item_position.x += 120
 
 
+# --- Carga de partida ---------------------------------------------------------
+func _cargar_partida_actual(saved_level_state: Dictionary) -> void:
+	limpiar_tiempo_ejecucion_elementos()
 
-func _load_current_run(saved_level_state: Dictionary) -> void:
-	clear_runtime_items()
+	if not _cargar_definicion_partida_actual():
+		return
 
+	_aplicar_activo_partida_carga()
+	_configurar_nivel_recurso()
+
+	var saved_mechanic_state: Dictionary = _extraer_estado_guardado_mecanica(saved_level_state)
+	if _restaurar_partida_guardada(saved_mechanic_state):
+		return
+
+	_generar_frescos_elementos()
+	level_items.shuffle()
+	distribuir_tiempo_ejecucion_elementos()
+
+
+func _cargar_definicion_partida_actual() -> bool:
 	var level_number: int = Global.current_level
-	active_run_data = Global.get_chapter_run_definition(
-		active_track_key, level_number, active_run_index
+	active_run_data = Global.obtener_capitulo_partida_definicion(
+		active_track_key,
+		level_number,
+		active_run_index
 	)
 	if active_run_data.is_empty():
-		active_run_data = {}
-		active_mechanic_type = ""
-		_clear_active_run_payload()
+		_resetear_estado_partida_activa()
 		push_error(
-			"ManagerLevel no encontro datos para %s capitulo %d corrida %d."
+			"ManagerLevel no encontro datos para %s capitulo %d partida %d."
 			% [active_track_key, level_number, active_run_index]
 		)
-		return
+		return false
 
-	active_mechanic_type = str(active_run_data.get("mechanic_type", "")).strip_edges()
+	active_mechanic_type = str(
+		active_run_data.get("mechanic_type", PLATE_SORT_MECHANIC_TYPE)
+	).strip_edges()
 	if active_mechanic_type.is_empty():
 		active_mechanic_type = PLATE_SORT_MECHANIC_TYPE
+
 	if active_mechanic_type != PLATE_SORT_MECHANIC_TYPE:
-		_clear_active_run_payload()
+		_resetear_estado_partida_activa()
 		push_error("ManagerLevel no soporta la mecanica '%s'." % active_mechanic_type)
-		return
+		return false
 
-	_apply_active_run_payload()
-	_setup_level_resource()
+	return true
 
-	# Extraer items guardados (legacy: pueden estar anidados en mechanic_state o en la raíz)
+
+func _extraer_estado_guardado_mecanica(saved_level_state: Dictionary) -> Dictionary:
 	var saved_mechanic_state: Dictionary = saved_level_state
-	if saved_level_state.get("mechanic_state", null) is Dictionary:
-		var mechanic_dict: Dictionary = saved_level_state["mechanic_state"]
-		if not mechanic_dict.is_empty():
-			saved_mechanic_state = mechanic_dict
+	var raw_mechanic_state: Variant = saved_level_state.get("mechanic_state", null)
+	if raw_mechanic_state is Dictionary and not (raw_mechanic_state as Dictionary).is_empty():
+		saved_mechanic_state = raw_mechanic_state as Dictionary
+	return saved_mechanic_state
 
-	var saved_items: Array = []
-	if saved_mechanic_state.get("items", null) is Array:
-		saved_items = saved_mechanic_state["items"]
 
-	if _try_restore_saved_items(saved_items):
-		layout_runtime_items()
-		_place_saved_items_on_plate(saved_mechanic_state)
+func _restaurar_partida_guardada(saved_mechanic_state: Dictionary) -> bool:
+	var saved_items: Array = _obtener_items_guardados(saved_mechanic_state)
+	if not _intentar_restaurar_guardado_elementos(saved_items):
+		return false
+
+	distribuir_tiempo_ejecucion_elementos()
+	_colocar_guardado_elementos_on_plato(saved_mechanic_state)
+	return true
+
+
+func _obtener_items_guardados(saved_mechanic_state: Dictionary) -> Array:
+	var raw_saved_items: Variant = saved_mechanic_state.get("items", [])
+	if raw_saved_items is Array:
+		return raw_saved_items as Array
+	return []
+
+
+func _aplicar_activo_partida_carga() -> void:
+	var run_payload: Dictionary = _obtener_payload_partida()
+	if run_payload.is_empty():
+		active_negative_item_count = int(active_run_data.get("negative_count", 0))
+		active_positive_item_count = int(active_run_data.get("positive_count", 0))
+		active_category_code = str(active_run_data.get("category", "")).strip_edges()
+		_aplicar_configuracion_de_dificultad_arrastre()
 		return
 
-	_spawn_fresh_items()
-	level_items.shuffle()
-	layout_runtime_items()
+	active_negative_item_count = int(run_payload.get("negative_count", 0))
+	active_positive_item_count = int(run_payload.get("positive_count", 0))
+	active_category_code = str(run_payload.get("category", "")).strip_edges()
+	_aplicar_configuracion_de_dificultad_arrastre()
 
 
-func _apply_active_run_payload() -> void:
-	var run_payload: Dictionary = {}
-	if active_run_data.get("mechanic_payload", null) is Dictionary:
-		run_payload = active_run_data["mechanic_payload"]
-
-	if not run_payload.is_empty():
-		active_negative_item_count = int(run_payload.get("negative_count", 0))
-		active_positive_item_count = int(run_payload.get("positive_count", 0))
-		active_category_code = str(run_payload.get("category", "")).strip_edges()
-		return
-
-	active_negative_item_count = int(active_run_data.get("negative_count", 0))
-	active_positive_item_count = int(active_run_data.get("positive_count", 0))
-	active_category_code = str(active_run_data.get("category", "")).strip_edges()
+func _obtener_payload_partida() -> Dictionary:
+	var raw_payload: Variant = active_run_data.get("mechanic_payload", {})
+	if raw_payload is Dictionary:
+		return raw_payload as Dictionary
+	return {}
 
 
-func _setup_level_resource() -> void:
+func _configurar_nivel_recurso() -> void:
 	level_resource.mechanic_type = active_mechanic_type
-	level_resource.mechanic_payload = _build_active_run_payload()
+	level_resource.mechanic_payload = _construir_activo_partida_carga()
 	level_resource.cantidadNegativos = active_negative_item_count
 	level_resource.cantidadPositivos = active_positive_item_count
-	level_resource.comida = GameChapterAssetCatalogScript.resolve_texture(
+	level_resource.comida = GameChapterAssetCatalogScript.resolver_textura(
 		active_run_data.get("meal_texture_path", "")
 	)
-	level_resource.condicion = GameChapterAssetCatalogScript.resolve_texture(
+	level_resource.condicion = GameChapterAssetCatalogScript.resolver_textura(
 		active_run_data.get("condition_texture_path", "")
 	)
-	level_resource.ensenanza = GameChapterAssetCatalogScript.resolve_texture(
+	level_resource.ensenanza = GameChapterAssetCatalogScript.resolver_textura(
 		active_run_data.get("teaching_texture_path", "")
 	)
 	meal_sprite.texture = level_resource.comida
 	condition_sprite.texture = level_resource.condicion
 	teaching_sprite.texture = level_resource.ensenanza
+	_aplicar_ayuda_visual_de_arrastre()
 
 
-func _connect_scene_nodes(level_scene: Node) -> bool:
+func _conectar_escena_nodos(level_scene: Node) -> bool:
 	if not is_instance_valid(plato):
 		plato = level_scene.get_node_or_null("Plato")
 	meal_sprite = level_scene.get_node_or_null("Globo texto/Meal") as Sprite2D
@@ -314,53 +947,60 @@ func _connect_scene_nodes(level_scene: Node) -> bool:
 	return all_connected
 
 
-func _spawn_fresh_items() -> void:
-	var item_pools: Dictionary = GameTrackItemPoolCatalogScript.build_item_pool_for_track(
+# --- Generación y restauración de items --------------------------------------
+func _generar_frescos_elementos() -> void:
+	var item_pools: Dictionary = GameTrackItemPoolCatalogScript.construir_fondo_elemento_pista(
 		active_track_key,
 		level_resource.itemsPositivos,
 		level_resource.itemsNegativos
 	)
 
-	var positive_items: Array = filter_items_by_category(
+	_generar_items_desde_pool(
 		item_pools.get("positive_items", []),
-		active_category_code
+		active_positive_item_count,
+		true,
+		"positive"
 	)
-	positive_items.shuffle()
-	for item_index in range(active_positive_item_count):
-		if positive_items.is_empty():
-			break
-		var level_item = positive_items.pop_front()
-		if level_item == null:
-			continue
-		spawn_level_item(level_item, "positive_%d" % item_index, true)
-
-	var negative_items: Array = filter_items_by_category(
+	_generar_items_desde_pool(
 		item_pools.get("negative_items", []),
-		active_category_code
+		active_negative_item_count,
+		false,
+		"negative"
 	)
-	negative_items.shuffle()
-	for item_index in range(active_negative_item_count):
-		if negative_items.is_empty():
+
+
+func _generar_items_desde_pool(
+	source_items: Array,
+	wanted_count: int,
+	is_positive: bool,
+	instance_prefix: String
+) -> void:
+	var filtered_items: Array = filtrar_elementos_por_categoria(source_items, active_category_code)
+	filtered_items.shuffle()
+
+	for item_index in range(wanted_count):
+		if filtered_items.is_empty():
 			break
-		var level_item = negative_items.pop_front()
+		var level_item: Resource = filtered_items.pop_front()
 		if level_item == null:
 			continue
-		spawn_level_item(level_item, "negative_%d" % item_index, false)
+		generar_nivel_elemento(level_item, "%s_%d" % [instance_prefix, item_index], is_positive)
 
 
-func _try_restore_saved_items(saved_item_entries: Array) -> bool:
+func _intentar_restaurar_guardado_elementos(saved_item_entries: Array) -> bool:
 	if saved_item_entries.is_empty():
 		return false
 
 	for raw_saved_item in saved_item_entries:
-		if not _spawn_saved_item(raw_saved_item):
-			clear_runtime_items()
-			return false
+		if _generar_guardado_elemento(raw_saved_item):
+			continue
+		limpiar_tiempo_ejecucion_elementos()
+		return false
 
 	return not level_items.is_empty()
 
 
-func _place_saved_items_on_plate(saved_mechanic_state: Dictionary) -> void:
+func _colocar_guardado_elementos_on_plato(saved_mechanic_state: Dictionary) -> void:
 	var raw_saved_positive_item_ids: Variant = saved_mechanic_state.get("placed_item_ids", [])
 	if not raw_saved_positive_item_ids is Array:
 		return
@@ -371,7 +1011,7 @@ func _place_saved_items_on_plate(saved_mechanic_state: Dictionary) -> void:
 		if instance_id.is_empty():
 			continue
 
-		var runtime_item = _find_runtime_item_by_instance_id(instance_id)
+		var runtime_item = _buscar_tiempo_ejecucion_elemento_por_instance_id(instance_id)
 		if runtime_item == null or not runtime_item.esPositivo:
 			continue
 
@@ -380,12 +1020,12 @@ func _place_saved_items_on_plate(saved_mechanic_state: Dictionary) -> void:
 	for item_index in range(runtime_positive_items.size()):
 		var runtime_item = runtime_positive_items[item_index]
 		runtime_item.restore_to_plate(
-			_get_plate_position(item_index, runtime_positive_items.size())
+			_obtener_plato_posicion(item_index, runtime_positive_items.size())
 		)
-		plato.restore_positive_item(runtime_item)
+		plato.restaurar_positivo_elemento(runtime_item)
 
 
-func _spawn_saved_item(raw_saved_item: Variant) -> bool:
+func _generar_guardado_elemento(raw_saved_item: Variant) -> bool:
 	if not raw_saved_item is Dictionary:
 		return false
 
@@ -400,10 +1040,10 @@ func _spawn_saved_item(raw_saved_item: Variant) -> bool:
 		return false
 
 	var is_positive: bool = bool(saved_item.get("is_positive", false))
-	return spawn_level_item(level_item, instance_id, is_positive) != null
+	return generar_nivel_elemento(level_item, instance_id, is_positive) != null
 
 
-func _find_runtime_item_by_instance_id(instance_id: String) -> Node:
+func _buscar_tiempo_ejecucion_elemento_por_instance_id(instance_id: String) -> Node:
 	for runtime_item in level_items:
 		if not is_instance_valid(runtime_item):
 			continue
@@ -412,7 +1052,7 @@ func _find_runtime_item_by_instance_id(instance_id: String) -> Node:
 	return null
 
 
-func _get_plate_position(index: int, total_items: int) -> Vector2:
+func _obtener_plato_posicion(index: int, total_items: int) -> Vector2:
 	var columns: int = clampi(total_items, 1, MAX_PLATE_COLUMNS)
 	var row: int = floori(float(index) / float(columns))
 	var column: int = index % columns
@@ -424,7 +1064,20 @@ func _get_plate_position(index: int, total_items: int) -> Vector2:
 	return plato.global_position + offset
 
 
-func _build_active_run_payload() -> Dictionary:
+# --- Helpers internos ---------------------------------------------------------
+func _obtener_estado_guardado_actual() -> Dictionary:
+	return Global.obtener_parcial_nivel_estado(active_track_key, Global.current_level)
+
+
+func _resolver_indice_partida(saved_level_state: Dictionary) -> int:
+	return clampi(
+		int(saved_level_state.get("run_index", 1)),
+		1,
+		obtener_total_partidas()
+	)
+
+
+func _construir_activo_partida_carga() -> Dictionary:
 	return {
 		"negative_count": active_negative_item_count,
 		"positive_count": active_positive_item_count,
@@ -432,13 +1085,66 @@ func _build_active_run_payload() -> Dictionary:
 	}
 
 
-func _clear_active_run_payload() -> void:
+func _aplicar_configuracion_de_dificultad_arrastre() -> void:
+	if _configuracion_dificultad_arrastre.is_empty():
+		return
+	var positivos_disponibles: int = active_positive_item_count
+	var negativos_disponibles: int = active_negative_item_count
+	var total_disponible: int = positivos_disponibles + negativos_disponibles
+	var total_deseado: int = clampi(
+		int(_configuracion_dificultad_arrastre.get("elementos_maximos", total_disponible)),
+		1,
+		maxi(1, total_disponible)
+	)
+	var distractores_deseados: int = clampi(
+		int(_configuracion_dificultad_arrastre.get("distractores_maximos", negativos_disponibles)),
+		0,
+		mini(negativos_disponibles, maxi(0, total_deseado - 1))
+	)
+	var positivos_deseados: int = clampi(
+		total_deseado - distractores_deseados,
+		1,
+		maxi(1, positivos_disponibles)
+	)
+	active_positive_item_count = mini(positivos_deseados, positivos_disponibles)
+	active_negative_item_count = mini(
+		negativos_disponibles,
+		total_deseado - active_positive_item_count
+	)
+	_sincronizar_recurso_con_cantidades_activas()
+
+
+func _sincronizar_recurso_con_cantidades_activas() -> void:
+	if level_resource == null:
+		return
+	level_resource.cantidadPositivos = active_positive_item_count
+	level_resource.cantidadNegativos = active_negative_item_count
+
+
+func _aplicar_ayuda_visual_de_arrastre() -> void:
+	if not is_instance_valid(meal_sprite) or not is_instance_valid(condition_sprite):
+		return
+	meal_sprite.modulate = Color(1, 1, 1, 1)
+	var mostrar_ayuda_visual: bool = bool(
+		_configuracion_dificultad_arrastre.get("mostrar_ayuda_visual", true)
+	)
+	var opacidad_condicion: float = 1.0 if mostrar_ayuda_visual else 0.55
+	condition_sprite.modulate = Color(1, 1, 1, opacidad_condicion)
+
+
+func _resetear_estado_partida_activa() -> void:
+	active_run_data = {}
+	active_mechanic_type = ""
+	_limpiar_activo_partida_carga()
+
+
+func _limpiar_activo_partida_carga() -> void:
 	active_positive_item_count = 0
 	active_negative_item_count = 0
 	active_category_code = ""
 
 
-func _ensure_level_resource_loaded() -> void:
+func _asegurar_recurso_nivel_cargado() -> void:
 	if level_resource is Resource:
 		return
 

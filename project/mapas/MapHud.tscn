@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bdu85qoabpbhh" path="res://assets-sistema/perfil/perfil-menu.png" id="4_c1si2"]
 [ext_resource type="PackedScene" path="res://interface/components/ProfileOverlayPanel.tscn" id="4_overlay"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="5_back"]
+[ext_resource type="Font" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_rubik"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_c1si2"]
 
@@ -27,17 +28,9 @@ layout_mode = 1
 anchors_preset = 0
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 152.0
-offset_bottom = 152.0
+offset_right = 236.0
+offset_bottom = 196.0
 mouse_filter = 2
-
-[node name="Racha" parent="HudRoot/TopLeftAnchor" unique_id=514990148 instance=ExtResource("2_racha")]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="TopRightAnchor" type="Control" parent="HudRoot" unique_id=1513381945]
 layout_mode = 1
@@ -94,11 +87,67 @@ offset_right = -26.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
-tooltip_text = "Volver"
+tooltip_text = ""
 focus_mode = 0
 icon = ExtResource("5_back")
 flat = true
 expand_icon = true
+
+[node name="RachaAnchor" type="Control" parent="HudRoot" unique_id=901234567]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 152.0
+offset_bottom = 152.0
+mouse_filter = 2
+
+[node name="Racha" parent="HudRoot/RachaAnchor" unique_id=514990148 instance=ExtResource("2_racha")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ExpMapaAnchor" type="Control" parent="HudRoot" unique_id=2123456781]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -168.0
+offset_top = 86.0
+offset_right = -16.0
+offset_bottom = 122.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="VBox" type="HBoxContainer" parent="HudRoot/ExpMapaAnchor" unique_id=2123456782]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 5
+mouse_filter = 2
+
+[node name="ExpTitle" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456783]
+layout_mode = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("6_rubik")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+text = "EXP"
+
+[node name="ExpNumero" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456784]
+layout_mode = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("6_rubik")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+text = "0"
 
 [node name="ProfileOverlayPanel" parent="." unique_id=779278941 instance=ExtResource("4_overlay")]
 layout_mode = 3
@@ -107,8 +156,8 @@ grow_vertical = 2
 
 [connection signal="pressed" from="HudRoot/TopRightAnchor/ProfileButton" to="." method="_on_profile_button_pressed"]
 [connection signal="pressed" from="HudRoot/BackAnchor/BackButton" to="." method="_on_back_button_pressed"]
-[connection signal="close_requested" from="ProfileOverlayPanel" to="." method="_on_overlay_close_requested"]
-[connection signal="edit_profile_pressed" from="ProfileOverlayPanel" to="." method="_on_overlay_edit_profile_pressed"]
-[connection signal="reset_progress_pressed" from="ProfileOverlayPanel" to="." method="_on_overlay_reset_pressed"]
-[connection signal="resume_pressed" from="ProfileOverlayPanel" to="." method="_on_overlay_resume_pressed"]
+[connection signal="close_requested" from="ProfileOverlayPanel" to="." method="_on_superposicion_cerrar_solicitado"]
+[connection signal="edit_profile_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_edit_perfil_presionado"]
+[connection signal="reset_progress_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reiniciar_presionado"]
+[connection signal="resume_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reanudar_presionado"]
 [connection signal="save_pressed" from="ProfileOverlayPanel" to="." method="_on_overlay_save_pressed"]

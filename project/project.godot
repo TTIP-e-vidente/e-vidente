@@ -23,11 +23,31 @@ config/icon="res://icon.svg"
 
 Global="*res://niveles/global.gd"
 SaveManager="*res://interface/SaveManager.gd"
+MusicManager="*res://managers/MusicManager.gd"
 
 [display]
 
 window/size/viewport_height=800
 window/stretch/mode="viewport"
+
+[file_customization]
+
+folder_colors={
+"res://assets-sistema/": "red",
+"res://colours/": "orange",
+"res://contenido/": "yellow",
+"res://fonts/": "green",
+"res://interface/": "teal",
+"res://items/": "blue",
+"res://managers/": "purple",
+"res://mapas/": "pink",
+"res://niveles/": "gray",
+"res://preguntas/": "pink",
+"res://resources/": "purple",
+"res://sistemas/": "blue",
+"res://tests/": "teal",
+"res://vincular/": "yellow"
+}
 
 [input]
 

@@ -1,3 +1,5 @@
+# HELPER_INTERNO
+# HUD global (CanvasLayer 75) con botón de perfil y badge de racha.
 extends CanvasLayer
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
@@ -25,26 +27,26 @@ var _profile_overlay: ProfileOverlayPanel
 
 func _ready() -> void:
 	layer = 75
-	_build_hud()
+	_construir_hud()
 	_profile_overlay = PROFILE_OVERLAY_SCENE.instantiate()
 	add_child(_profile_overlay)
-	_profile_overlay.resume_pressed.connect(_on_overlay_resume_pressed)
-	_profile_overlay.save_pressed.connect(_on_overlay_guardar_pressed)
-	_profile_overlay.edit_profile_pressed.connect(_on_overlay_edit_profile_pressed)
-	_profile_overlay.reset_progress_pressed.connect(_on_overlay_reset_pressed)
-	_profile_overlay.close_requested.connect(_on_overlay_close_requested)
-	_connect_save_manager_signals()
-	get_tree().node_added.connect(_on_tree_node_added)
-	_refresh_hud()
+	_profile_overlay.resume_pressed.connect(_on_superposicion_reanudar_presionado)
+	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
+	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_editar_perfil_presionado)
+	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.close_requested.connect(_on_superposicion_cierre_solicitado)
+	_conectar_senales_save_manager()
+	get_tree().node_added.connect(_on_nodo_arbol_agregado)
+	_refrescar_hud()
 
 
 func _exit_tree() -> void:
-	_disconnect_save_manager_signals()
-	if get_tree() != null and get_tree().node_added.is_connected(_on_tree_node_added):
-		get_tree().node_added.disconnect(_on_tree_node_added)
+	_desconectar_senales_save_manager()
+	if get_tree() != null and get_tree().node_added.is_connected(_on_nodo_arbol_agregado):
+		get_tree().node_added.disconnect(_on_nodo_arbol_agregado)
 
 
-func _build_hud() -> void:
+func _construir_hud() -> void:
 	_hud_root = Control.new()
 	_hud_root.name = "GlobalProfileRachaHudRoot"
 	_hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -63,7 +65,7 @@ func _build_hud() -> void:
 		_racha.offset_right = _RACHA_OFFSETS.size.x
 		_racha.offset_bottom = _RACHA_OFFSETS.size.y
 		_hud_root.add_child(_racha)
-		_connect_streak_badge()
+		_conectar_badge_racha()
 
 	_profile_button = Button.new()
 	_profile_button.name = "GlobalProfileButton"
@@ -76,65 +78,65 @@ func _build_hud() -> void:
 	_profile_button.offset_top = -84.0
 	_profile_button.offset_right = -16.0
 	_profile_button.offset_bottom = -16.0
-	_profile_button.tooltip_text = "Mi progreso"
+	_profile_button.tooltip_text = ""
 	_profile_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	_profile_button.pressed.connect(_on_profile_button_pressed)
+	_profile_button.pressed.connect(_on_boton_perfil_presionado)
 	_hud_root.add_child(_profile_button)
 
 
-func _connect_save_manager_signals() -> void:
+func _conectar_senales_save_manager() -> void:
 	if SaveManager == null:
 		return
-	if not SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
-		SaveManager.save_status_changed.connect(_on_save_manager_changed)
-	if not SaveManager.progress_loaded.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_loaded.connect(_on_save_manager_profile_changed)
-	if not SaveManager.progress_saved.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_saved.connect(_on_save_manager_profile_changed)
-	if not SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
-		SaveManager.user_registered.connect(_on_save_manager_profile_changed)
+	if not SaveManager.save_status_changed.is_connected(_on_save_manager_cambiado):
+		SaveManager.save_status_changed.connect(_on_save_manager_cambiado)
+	if not SaveManager.progress_loaded.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.progress_loaded.connect(_on_save_manager_perfil_cambiado)
+	if not SaveManager.progress_saved.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.progress_saved.connect(_on_save_manager_perfil_cambiado)
+	if not SaveManager.user_registered.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.user_registered.connect(_on_save_manager_perfil_cambiado)
 
 
-func _disconnect_save_manager_signals() -> void:
+func _desconectar_senales_save_manager() -> void:
 	if SaveManager == null:
 		return
-	if SaveManager.save_status_changed.is_connected(_on_save_manager_changed):
-		SaveManager.save_status_changed.disconnect(_on_save_manager_changed)
-	if SaveManager.progress_loaded.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_loaded.disconnect(_on_save_manager_profile_changed)
-	if SaveManager.progress_saved.is_connected(_on_save_manager_profile_changed):
-		SaveManager.progress_saved.disconnect(_on_save_manager_profile_changed)
-	if SaveManager.user_registered.is_connected(_on_save_manager_profile_changed):
-		SaveManager.user_registered.disconnect(_on_save_manager_profile_changed)
+	if SaveManager.save_status_changed.is_connected(_on_save_manager_cambiado):
+		SaveManager.save_status_changed.disconnect(_on_save_manager_cambiado)
+	if SaveManager.progress_loaded.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.progress_loaded.disconnect(_on_save_manager_perfil_cambiado)
+	if SaveManager.progress_saved.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.progress_saved.disconnect(_on_save_manager_perfil_cambiado)
+	if SaveManager.user_registered.is_connected(_on_save_manager_perfil_cambiado):
+		SaveManager.user_registered.disconnect(_on_save_manager_perfil_cambiado)
 
 
-func _on_tree_node_added(_node: Node) -> void:
-	call_deferred("_refresh_hud")
+func _on_nodo_arbol_agregado(_node: Node) -> void:
+	call_deferred("_refrescar_hud")
 
 
-func _on_save_manager_changed(_status: Dictionary) -> void:
-	_refresh_hud()
+func _on_save_manager_cambiado(_status: Dictionary) -> void:
+	_refrescar_hud()
 
 
-func _on_save_manager_profile_changed(_profile: Dictionary) -> void:
-	_refresh_hud()
+func _on_save_manager_perfil_cambiado(_profile: Dictionary) -> void:
+	_refrescar_hud()
 
 
-func _refresh_hud() -> void:
-	var scene_path := _get_current_scene_path()
+func _refrescar_hud() -> void:
+	var scene_path := _obtener_ruta_escena_actual()
 	if scene_path != _last_scene_path:
 		_last_scene_path = scene_path
-		_apply_scene_visibility(scene_path)
+		_aplicar_visibilidad_escena(scene_path)
 		if _profile_overlay != null and _profile_overlay.visible:
 			_profile_overlay.visible = false
 			_profile_button.visible = true
-	if _racha != null and _racha.has_method("render"):
-		_racha.call("render")
-	if _profile_button != null and _profile_button.has_method("refresh_profile_icon"):
-		_profile_button.call("refresh_profile_icon")
+	if _racha != null and _racha.has_method("renderizar"):
+		_racha.call("renderizar")
+	if _profile_button != null and _profile_button.has_method("refrescar_icono_perfil"):
+		_profile_button.call("refrescar_icono_perfil")
 
 
-func _apply_scene_visibility(scene_path: String) -> void:
+func _aplicar_visibilidad_escena(scene_path: String) -> void:
 	var hidden_scenes := [
 		ARCHIVERO_SCENE_PATH,
 		PROFILE_EDITOR_SCENE_PATH,
@@ -147,68 +149,68 @@ func _apply_scene_visibility(scene_path: String) -> void:
 	_hud_root.visible = not hidden_scenes.has(scene_path) and not is_level_scene
 
 
-func _connect_streak_badge() -> void:
+func _conectar_badge_racha() -> void:
 	if _racha == null or not _racha.has_signal("pressed"):
 		return
-	var callback := Callable(self, "_on_racha_pressed")
+	var callback := Callable(self, "_on_racha_presionada")
 	if not _racha.is_connected("pressed", callback):
 		_racha.connect("pressed", callback)
 
 
 # --- Profile overlay callbacks ---
 
-func _on_profile_button_pressed() -> void:
+func _on_boton_perfil_presionado() -> void:
 	_profile_button.visible = false
-	_profile_overlay.show_overlay()
+	_profile_overlay.mostrar_superposicion()
 
 
-func _on_racha_pressed() -> void:
-	var current_scene_path := _get_current_scene_path()
+func _on_racha_presionada() -> void:
+	var current_scene_path := _obtener_ruta_escena_actual()
 	if current_scene_path.is_empty() or current_scene_path == STREAK_SCENE_PATH:
 		return
 	if _profile_overlay != null:
-		_profile_overlay.hide_overlay()
+		_profile_overlay.ocultar_superposicion()
 	if _profile_button != null:
 		_profile_button.visible = true
 	GameSceneRouter.go_to_streak(get_tree(), current_scene_path)
 
 
-func _on_overlay_close_requested() -> void:
+func _on_superposicion_cierre_solicitado() -> void:
 	_profile_button.visible = true
-	_profile_overlay.hide_overlay()
+	_profile_overlay.ocultar_superposicion()
 
 
-func _on_overlay_resume_pressed() -> void:
+func _on_superposicion_reanudar_presionado() -> void:
 	_profile_button.visible = true
-	_profile_overlay.hide_overlay()
-	if not SaveManager.can_resume_current_save():
+	_profile_overlay.ocultar_superposicion()
+	if not SaveManager.puede_reanudar_guardado_actual():
 		return
-	var resume_state := SaveManager.reload_from_disk_and_get_resume()
+	var resume_state := SaveManager.recargar_desde_disco_y_obtener_reanudacion()
 	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
-func _on_overlay_edit_profile_pressed() -> void:
-	SaveManager.save_progress_to_disk()
-	var current_scene_path := _get_current_scene_path()
+func _on_superposicion_editar_perfil_presionado() -> void:
+	SaveManager.guardar_progreso_en_disco()
+	var current_scene_path := _obtener_ruta_escena_actual()
 	if current_scene_path.is_empty():
 		current_scene_path = RESUME_FALLBACK_SCENE
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, current_scene_path)
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
-func _on_overlay_guardar_pressed() -> void:
-	SaveManager.save_progress_to_disk()
-	_profile_overlay.refresh()
+func _on_superposicion_guardar_presionado() -> void:
+	SaveManager.guardar_progreso_en_disco()
+	_profile_overlay.refrescar()
 
 
-func _on_overlay_reset_pressed() -> void:
-	SaveManager.reset_all_progress()
+func _on_superposicion_reiniciar_presionado() -> void:
+	SaveManager.reiniciar_todo_progreso()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
-func _get_current_scene_path() -> String:
+func _obtener_ruta_escena_actual() -> String:
 	if get_tree() == null or get_tree().current_scene == null:
 		return ""
 	return str(get_tree().current_scene.scene_file_path).strip_edges()

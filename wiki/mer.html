@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MER — E-VIDENTE</title>
+    <style>
+        @font-face {
+            font-family: 'Rubik';
+            src: url('../../../project/fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d1117; font-family: 'Rubik', sans-serif; overflow: hidden; height: 100vh; }
+
+        #canvas {
+            width: 100vw; height: 100vh;
+            position: relative; overflow: hidden;
+            cursor: grab;
+        }
+        #canvas.panning { cursor: grabbing; }
+        #wrapper { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+
+        .entity-bg { transition: filter 0.2s ease; }
+        .entity:hover .entity-bg { filter: brightness(1.14) drop-shadow(0 0 10px rgba(255,255,255,0.18)); }
+        text { user-select: none; font-family: 'Rubik', sans-serif; }
+
+        .conn { stroke: rgba(180,195,235,0.25); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .label { font-size: 10px; font-weight: 500; fill: rgba(200,215,245,0.55); }
+        .card  { font-size: 9px;  font-weight: 700; fill: rgba(200,215,245,0.80); letter-spacing: 0.4px; }
+
+        /* ─── Overlay UI ─── */
+        .ov { position: fixed; z-index: 100; }
+
+        .title { top: 22px; left: 26px; }
+        .title h1 { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .title p  { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 500;
+                    letter-spacing: 1.8px; text-transform: uppercase; margin-top: 4px; }
+
+        .legend {
+            top: 22px; right: 26px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px; padding: 12px 16px;
+            display: flex; flex-direction: column; gap: 9px;
+            backdrop-filter: blur(10px);
+        }
+        .leg-row { display: flex; align-items: center; gap: 9px; }
+        .leg-dot  { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+        .leg-lbl  { color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 500; }
+
+        .controls {
+            bottom: 22px; right: 26px;
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 10px; padding: 7px 10px;
+            backdrop-filter: blur(12px);
+        }
+        .btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            width: 30px; height: 30px; border-radius: 6px;
+            cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; font-family: 'Rubik', sans-serif;
+        }
+        .btn:hover { background: rgba(255,255,255,0.14); color: white; }
+        .zoom-val { color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 600;
+                    min-width: 34px; text-align: center; }
+
+        .hint { bottom: 22px; left: 26px; color: rgba(255,255,255,0.18); font-size: 10px; }
+    </style>
+</head>
+<body>
+<div id="canvas">
+  <div id="wrapper">
+    <svg width="1500" height="720" viewBox="0 0 1500 720" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Dot grid -->
+        <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+          <circle cx="0.8" cy="0.8" r="0.8" fill="rgba(255,255,255,0.055)"/>
+        </pattern>
+        <!-- Gradients -->
+        <linearGradient id="g-blue"   x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#6B8BFF"/>
+          <stop offset="100%" stop-color="#3A5AC4"/>
+        </linearGradient>
+        <linearGradient id="g-green"  x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#56CE84"/>
+          <stop offset="100%" stop-color="#2A9056"/>
+        </linearGradient>
+        <linearGradient id="g-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#FFA94D"/>
+          <stop offset="100%" stop-color="#CE701A"/>
+        </linearGradient>
+        <linearGradient id="g-yellow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#FFD666"/>
+          <stop offset="100%" stop-color="#C49820"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Background -->
+      <rect width="1500" height="720" fill="#0d1117"/>
+      <rect width="1500" height="720" fill="url(#dots)"/>
+
+      <!-- Dashed group zones -->
+      <rect x="55"   y="65"  width="425" height="565" rx="18" fill="none"
+            stroke="rgba(107,139,255,0.1)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <rect x="563"  y="118" width="390" height="455" rx="18" fill="none"
+            stroke="rgba(86,206,132,0.1)"  stroke-width="1.5" stroke-dasharray="6 4"/>
+      <rect x="1002" y="128" width="170" height="400" rx="18" fill="none"
+            stroke="rgba(255,169,77,0.1)"  stroke-width="1.5" stroke-dasharray="6 4"/>
+      <rect x="1183" y="118" width="300" height="165" rx="18" fill="none"
+            stroke="rgba(255,214,102,0.1)" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+      <!-- ═══════════ CONNECTIONS ═══════════ -->
+
+      <!-- Jugador → Perfil -->
+      <path class="conn" d="M 190 288 L 250 288"/>
+      <text class="label" x="220" y="278" text-anchor="middle">posee</text>
+      <text class="card"  x="220" y="301" text-anchor="middle">1:1</text>
+
+      <!-- Perfil → Racha -->
+      <path class="conn" d="M 315 253 C 315 210, 300 188, 300 160"/>
+      <text class="label" x="332" y="205" text-anchor="start">registra</text>
+      <text class="card"  x="332" y="218" text-anchor="start">1:1</text>
+
+      <!-- Perfil → Ptos Exp -->
+      <path class="conn" d="M 315 323 C 315 368, 300 402, 300 428"/>
+      <text class="label" x="332" y="372" text-anchor="start">tiene</text>
+      <text class="card"  x="332" y="385" text-anchor="start">1:1</text>
+
+      <!-- Perfil → Progreso -->
+      <path class="conn" d="M 380 288 L 440 288"/>
+      <text class="label" x="410" y="278" text-anchor="middle">conserva</text>
+      <text class="card"  x="410" y="301" text-anchor="middle">1:1</text>
+
+      <!-- Progreso → Mapa -->
+      <path class="conn" d="M 570 288 L 610 288"/>
+      <text class="label" x="590" y="278" text-anchor="middle">avanza en</text>
+      <text class="card"  x="590" y="301" text-anchor="middle">1:N</text>
+
+      <!-- Restricción → Mapa -->
+      <path class="conn" d="M 660 210 C 660 234, 680 248, 695 253"/>
+      <text class="label" x="646" y="229" text-anchor="end">org. en</text>
+      <text class="card"  x="646" y="243" text-anchor="end">1:N</text>
+
+      <!-- Mapa → Partida -->
+      <path class="conn" d="M 770 288 L 830 288"/>
+      <text class="label" x="800" y="278" text-anchor="middle">contiene</text>
+      <text class="card"  x="800" y="301" text-anchor="middle">1:N</text>
+
+      <!-- Partida → Enseñanza -->
+      <path class="conn" d="M 895 323 L 895 413"/>
+      <text class="label" x="912" y="368" text-anchor="start">muestra</text>
+      <text class="card"  x="912" y="381" text-anchor="start">1:N</text>
+
+      <!-- Partida → Arrastre -->
+      <path class="conn" d="M 960 268 C 978 248, 994 212, 1005 185"/>
+      <text class="label" x="952" y="218" text-anchor="end">modo</text>
+      <text class="card"  x="952" y="231" text-anchor="end">1:N</text>
+
+      <!-- Partida → Vinculacion -->
+      <path class="conn" d="M 960 288 C 980 288, 996 295, 1005 298"/>
+      <text class="label" x="982" y="276" text-anchor="middle">modo</text>
+      <text class="card"  x="982" y="314" text-anchor="middle">1:N</text>
+
+      <!-- Partida → Pregunta -->
+      <path class="conn" d="M 960 308 C 978 332, 998 388, 1005 428"/>
+      <text class="label" x="952" y="365" text-anchor="end">modo</text>
+      <text class="card"  x="952" y="378" text-anchor="end">1:N</text>
+
+      <!-- Arrastre → Item -->
+      <path class="conn" d="M 1130 175 L 1185 175"/>
+      <text class="label" x="1157" y="163" text-anchor="middle">utiliza</text>
+      <text class="card"  x="1157" y="190" text-anchor="middle">1:N</text>
+
+      <!-- Item → Condición Alimentaria -->
+      <path class="conn" d="M 1293 168 C 1312 165, 1326 158, 1340 150"/>
+      <text class="label" x="1314" y="148" text-anchor="middle">valida</text>
+      <text class="card"  x="1314" y="168" text-anchor="middle">1:N</text>
+
+      <!-- ═══════════ ENTITIES ═══════════ -->
+
+      <!-- Jugador -->
+      <g class="entity">
+        <rect class="entity-bg" x="70" y="253" width="120" height="70" rx="12"
+              fill="url(#g-blue)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="130" y="288" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Jugador</text>
+      </g>
+
+      <!-- Racha -->
+      <g class="entity">
+        <rect class="entity-bg" x="240" y="90" width="120" height="70" rx="12"
+              fill="url(#g-blue)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="300" y="125" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Racha</text>
+      </g>
+
+      <!-- Perfil -->
+      <g class="entity">
+        <rect class="entity-bg" x="250" y="253" width="130" height="70" rx="12"
+              fill="url(#g-blue)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="315" y="288" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Perfil</text>
+      </g>
+
+      <!-- Ptos Exp -->
+      <g class="entity">
+        <rect class="entity-bg" x="240" y="428" width="120" height="70" rx="12"
+              fill="url(#g-blue)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="300" y="463" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="13" font-weight="700">Ptos Exp</text>
+      </g>
+
+      <!-- Progreso -->
+      <g class="entity">
+        <rect class="entity-bg" x="440" y="253" width="130" height="70" rx="12"
+              fill="url(#g-blue)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="505" y="288" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Progreso</text>
+      </g>
+
+      <!-- Restricción Alimentaria -->
+      <g class="entity">
+        <rect class="entity-bg" x="573" y="130" width="174" height="80" rx="12"
+              fill="url(#g-green)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="660" y="163" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="13" font-weight="700">Restricción</text>
+        <text x="660" y="183" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="13" font-weight="700">Alimentaria</text>
+      </g>
+
+      <!-- Mapa -->
+      <g class="entity">
+        <rect class="entity-bg" x="610" y="253" width="160" height="70" rx="12"
+              fill="url(#g-green)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="690" y="288" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Mapa</text>
+      </g>
+
+      <!-- Partida -->
+      <g class="entity">
+        <rect class="entity-bg" x="830" y="253" width="130" height="70" rx="12"
+              fill="url(#g-green)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="895" y="288" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Partida</text>
+      </g>
+
+      <!-- Enseñanza -->
+      <g class="entity">
+        <rect class="entity-bg" x="825" y="413" width="140" height="70" rx="12"
+              fill="url(#g-green)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="895" y="448" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="13" font-weight="700">Enseñanza</text>
+      </g>
+
+      <!-- Arrastre -->
+      <g class="entity">
+        <rect class="entity-bg" x="1005" y="150" width="125" height="70" rx="12"
+              fill="url(#g-orange)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="1068" y="185" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Arrastre</text>
+      </g>
+
+      <!-- Vinculacion -->
+      <g class="entity">
+        <rect class="entity-bg" x="1005" y="263" width="125" height="70" rx="12"
+              fill="url(#g-orange)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="1068" y="298" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="13" font-weight="700">Vinculación</text>
+      </g>
+
+      <!-- Pregunta -->
+      <g class="entity">
+        <rect class="entity-bg" x="1005" y="393" width="125" height="70" rx="12"
+              fill="url(#g-orange)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="1068" y="428" text-anchor="middle" dominant-baseline="middle"
+              fill="white" font-size="14" font-weight="700">Pregunta</text>
+      </g>
+
+      <!-- Item -->
+      <g class="entity">
+        <rect class="entity-bg" x="1185" y="140" width="108" height="70" rx="12"
+              fill="url(#g-yellow)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="1239" y="175" text-anchor="middle" dominant-baseline="middle"
+              fill="#1a1a2e" font-size="14" font-weight="700">Item</text>
+      </g>
+
+      <!-- Condición Alimentaria -->
+      <g class="entity">
+        <rect class="entity-bg" x="1340" y="110" width="148" height="80" rx="12"
+              fill="url(#g-yellow)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <text x="1414" y="143" text-anchor="middle" dominant-baseline="middle"
+              fill="#1a1a2e" font-size="13" font-weight="700">Condición</text>
+        <text x="1414" y="163" text-anchor="middle" dominant-baseline="middle"
+              fill="#1a1a2e" font-size="13" font-weight="700">Alimentaria</text>
+      </g>
+
+    </svg>
+  </div>
+</div>
+
+<!-- Title -->
+<div class="ov title">
+  <h1>e-vidente</h1>
+  <p>Modelo de entidades y relaciones</p>
+</div>
+
+<!-- Legend -->
+<div class="ov legend">
+  <div class="leg-row"><div class="leg-dot" style="background:#6B8BFF"></div><span class="leg-lbl">Jugador / Perfil</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:#56CE84"></div><span class="leg-lbl">Recorrido / Juego</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:#FFA94D"></div><span class="leg-lbl">Modalidades</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:#FFD666"></div><span class="leg-lbl">Contenido</span></div>
+</div>
+
+<!-- Zoom controls -->
+<div class="ov controls">
+  <button class="btn" id="btn-out">−</button>
+  <span class="zoom-val" id="zoom-val">100%</span>
+  <button class="btn" id="btn-in">+</button>
+  <button class="btn" id="btn-reset" title="Resetear">↺</button>
+</div>
+
+<!-- Hint -->
+<div class="ov hint">Rueda del mouse para zoom &nbsp;·&nbsp; Arrastrá para mover</div>
+
+<script>
+  let scale = 1, ox = 0, oy = 0, panning = false, lx = 0, ly = 0;
+  const canvas  = document.getElementById('canvas');
+  const wrapper = document.getElementById('wrapper');
+  const zv      = document.getElementById('zoom-val');
+
+  function draw() {
+    wrapper.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+    zv.textContent = Math.round(scale * 100) + '%';
+  }
+
+  function zoomTo(x, y, d) {
+    const ns = Math.max(0.25, Math.min(4, scale + d));
+    const r = ns / scale;
+    ox = x - r * (x - ox);
+    oy = y - r * (y - oy);
+    scale = ns;
+    draw();
+  }
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    zoomTo(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 0.1 : -0.1);
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    panning = true; lx = e.clientX; ly = e.clientY;
+    canvas.classList.add('panning');
+  });
+  window.addEventListener('mousemove', e => {
+    if (!panning) return;
+    ox += e.clientX - lx; oy += e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    draw();
+  });
+  window.addEventListener('mouseup', () => { panning = false; canvas.classList.remove('panning'); });
+
+  document.getElementById('btn-in').onclick  = () => zoomTo(canvas.clientWidth/2, canvas.clientHeight/2,  0.15);
+  document.getElementById('btn-out').onclick = () => zoomTo(canvas.clientWidth/2, canvas.clientHeight/2, -0.15);
+  document.getElementById('btn-reset').onclick = () => { scale = 1; ox = 0; oy = 0; draw(); };
+
+  draw();
+</script>
+</body>
+</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Entidades y Relaciones - E-VIDENTE</title>
+    <style>
+        @font-face {
+            font-family: 'Rubik';
+            src: url('../../../project/fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+            font-weight: normal;
+        }
+        
+        @font-face {
+            font-family: 'Rubik';
+            src: url('../../../project/fonts/Rubik-Italic-VariableFont_wght.ttf') format('truetype');
+            font-weight: normal;
+            font-style: italic;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Rubik', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: auto;
+            cursor: grab;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .container.grabbing {
+            cursor: grabbing;
+        }
+        
+        .svg-container {
+            position: relative;
+            width: 1400px;
+            height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        svg {
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+        }
+        
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            z-index: 10;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        
+        .zoom-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Rubik', sans-serif;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+        
+        .zoom-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .zoom-level {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-family: 'Rubik', sans-serif;
+            min-width: 60px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .entity {
+            opacity: 0.9;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .entity:hover {
+            opacity: 1;
+            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+        }
+
+        .entity rect {
+            transition: all 0.3s ease;
+        }
+
+        .entity:hover rect {
+            filter: brightness(1.1);
+        }
+
+        text {
+            font-family: 'Rubik', sans-serif;
+            user-select: none;
+        }
+
+        .connection-line {
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .relationship-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .cardinality-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+    </style>
+</head>
+</body>
+</html>

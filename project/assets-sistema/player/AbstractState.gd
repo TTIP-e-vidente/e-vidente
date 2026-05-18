@@ -17,7 +17,8 @@ func entra_item_plato(item, player):
 		item,
 		player,
 		entra_item_positivo,
-		entra_item_negativo
+		entra_item_negativo,
+		true
 	)
 
 func sale_item_plato(item, player):
@@ -25,7 +26,8 @@ func sale_item_plato(item, player):
 		item,
 		player,
 		sale_item_positivo,
-		sale_item_negativo
+		sale_item_negativo,
+		false
 	)
 		
 		
@@ -33,19 +35,29 @@ func aplicar_animacion():
 	player_cambiante.current_animation = animation_name
 
 func condiciones_de_victoria(player) : 
-	return player.manager_level.has_completed_current_run()
+	return player.manager_level.tiene_completado_actual_partida()
 
 
-func _handle_plate_change(item, player, positive_state: Node, negative_state: Node) -> void:
+func _handle_plate_change(
+	item,
+	player,
+	positive_state: Node,
+	negative_state: Node,
+	es_entrada: bool
+) -> void:
 	_apply_state_transition(item, player, positive_state, negative_state)
+	if not es_entrada:
+		return
+	if not item.es_positivo:
+		return
 	if not condiciones_de_victoria(player):
 		return
-	level.complete_current_run()
+	level.completar_partida_actual()
 	animation_name = "recontento"
 	player.hambre.hide()
 
 
 func _apply_state_transition(item, player, positive_state: Node, negative_state: Node) -> void:
-	var next_state: Node = positive_state if item.esPositivo else negative_state
+	var next_state: Node = positive_state if item.es_positivo else negative_state
 	if next_state != null:
 		player.abstract_state = next_state

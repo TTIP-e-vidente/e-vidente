@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://bqej50i0i8jv6"]
+
+[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ecd81"]
+[ext_resource type="Script" uid="uid://char88e1ctc35" path="res://preguntas/botones_preguntas.gd" id="2_bxuur"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
+content_margin_left = 32.0
+content_margin_top = 14.0
+content_margin_right = 32.0
+content_margin_bottom = 14.0
+texture = ExtResource("1_ecd81")
+
+[node name="Rta" type="Button" unique_id=619830924]
+custom_minimum_size = Vector2(0, 76)
+offset_left = -217.0
+offset_top = -60.0
+offset_right = 222.0
+offset_bottom = 87.0
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn1")
+theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
+script = ExtResource("2_bxuur")
+
+[node name="Label" type="Label" parent="." unique_id=1807157504]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0

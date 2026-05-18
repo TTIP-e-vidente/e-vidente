@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://cqyj1c1bgccqe"]
 
 [ext_resource type="Script" uid="uid://jcy27l58wkqx" path="res://interface/libro.gd" id="1_o1qid"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_tlk3q"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_a2mtn"]
 [ext_resource type="Texture2D" uid="uid://h375q3qyl3ew" path="res://assets-sistema/interfaz/cap-1.png" id="3_7d1hq"]
 [ext_resource type="Texture2D" uid="uid://bmwxxvstfqytq" path="res://assets-sistema/interfaz/cap-2.png" id="4_d0fp7"]
 [ext_resource type="Texture2D" uid="uid://irrj4tmnsm5x" path="res://assets-sistema/interfaz/cap-3.png" id="5_cr3ii"]
 [ext_resource type="Texture2D" uid="uid://bnilp4agslfja" path="res://assets-sistema/interfaz/cap-4.png" id="6_5yxmo"]
 [ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_ci3cu"]
 [ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_g4om8"]
-[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="9_0j0nq"]
-[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_ejgq3"]
+[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="10_a2mtn"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_ejgq3"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
@@ -18,14 +18,7 @@ load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da
 z_index = 4
 script = ExtResource("1_o1qid")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=870056099]
-offset_right = 1152.0
-offset_bottom = 800.0
-
-[node name="Sprite2D" type="Sprite2D" parent="ColorRect" unique_id=840420611]
-position = Vector2(574.37585, 395)
-scale = Vector2(0.33216885, 0.337321)
-texture = ExtResource("2_tlk3q")
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_a2mtn")]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1733733205]
 texture_filter = 3
@@ -78,14 +71,13 @@ scale = Vector2(0.56162536, 0.4904915)
 icon = SubResource("CompressedTexture2D_b50jp")
 flat = true
 
-[node name="ArchiveroCeliaquia" type="Sprite2D" parent="." unique_id=1944675345]
-position = Vector2(229, 115)
-scale = Vector2(0.67553186, 0.67553186)
-texture = ExtResource("9_0j0nq")
-
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1696729776]
 stream = ExtResource("10_ejgq3")
 volume_db = -4.962
 attenuation = 2.07053
 
-[connection signal="pressed" from="Atras" to="." method="_on_atras_pressed"]
+[node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("10_a2mtn")]
+position = Vector2(251.00002, 152)
+scale = Vector2(0.816005, 0.816005)
+
+[connection signal="pressed" from="Atras" to="." method="_on_atras_presionado"]

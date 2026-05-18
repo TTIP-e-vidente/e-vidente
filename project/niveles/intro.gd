@@ -2,102 +2,80 @@ extends Node2D
 class_name MainMenu
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
-@onready var background_music: AudioStreamPlayer2D = $Background
-
-@onready var buttons := [
+@onready var jugar: Label = $MenuBar/Jugar/Label
+@onready var opciones: Label = $MenuBar/Opciones/Label
+@onready var salir: Label = $MenuBar/Salir/Label
+@onready var _continuar_juego = $ContinuarJuego
+@onready var buttons: Array[TextureButton] = [
 	$MenuBar/Jugar,
 	$MenuBar/Opciones,
-	$MenuBar/Salir
+	$MenuBar/Salir,
 ]
 
 
 func _ready() -> void:
 	GameSceneRouter.request_initial_scene_preload()
-	_play_background_music()
+	_reproducir_musica_fondo()
+	jugar.text = "Jugar"
+	opciones.text = "Como jugar?"
+	salir.text = "Salir"
+	_conectar_continuar_pendiente()
+	_actualizar_continuar_pendiente()
 
-	
-	for b in buttons:
-		if b.material:
-			b.material = b.material.duplicate()
 
-func _on_start_pressed() -> void:
-	_bounce_button($MenuBar/Jugar)
-	await get_tree().create_timer(0.15).timeout
-	_open_mode_selector()
+func _on_jugar_pressed() -> void:
+	_abrir_modo_selector()
 
 
 func _on_opciones_pressed() -> void:
-	_bounce_button($MenuBar/Opciones)
-	await get_tree().create_timer(0.15).timeout
-	_open_options_menu()
+	_abrir_opciones_menu()
 
 
 func _on_salir_pressed() -> void:
-	_bounce_button($MenuBar/Salir)
-	await get_tree().create_timer(0.15).timeout
-	_quit_game()
+	_salir_juego()
 
 
-func _play_background_music() -> void:
-	background_music.play()
+func _conectar_continuar_pendiente() -> void:
+	if _continuar_juego == null:
+		return
+	if _continuar_juego.has_signal("continuar_solicitado"):
+		_continuar_juego.connect(
+			"continuar_solicitado",
+			Callable(self, "_on_continuar_pendiente_presionado")
+		)
 
 
-func _exit_tree() -> void:
-	if is_instance_valid(background_music):
-		background_music.stop()
-		background_music.stream = null
-
-
-func _update_button_shader(button: Button, mat: ShaderMaterial):
-	var mouse_global = get_viewport().get_mouse_position()
-	var local_mouse = button.to_local(mouse_global)
-	
-	var uv_mouse = local_mouse / button.size
-	
-	if uv_mouse.x >= 0 and uv_mouse.x <= 1 and uv_mouse.y >= 0 and uv_mouse.y <= 1:
-		mat.set_shader_parameter("mouse_pos", uv_mouse)
+func _actualizar_continuar_pendiente() -> void:
+	if _continuar_juego == null:
+		return
+	var global: Node = get_node_or_null("/root/Global")
+	if (
+		global != null
+		and global.has_method("hay_juego_o_nodo_para_continuar")
+		and bool(global.call("hay_juego_o_nodo_para_continuar"))
+	):
+		_continuar_juego.call("mostrar_para_continuar_pendiente")
 	else:
-		mat.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
+		_continuar_juego.call("ocultar")
 
-func _process(_delta: float) -> void:
-	var mouse = get_viewport().get_mouse_position()
-	
-	for b in buttons:
-		var mat = b.material as ShaderMaterial
-		if mat:
-			var rect = b.get_global_rect()
-			var uv = (mouse - rect.position) / rect.size
-			
-			uv.x = clamp(uv.x, 0.0, 1.0)
-			uv.y = clamp(uv.y, 0.0, 1.0)
-			
-			var center: Vector2 = rect.position + rect.size / 2.0
-			var dist = mouse.distance_to(center)
-			
-			if dist < 200:
-				mat.set_shader_parameter("mouse_pos", uv)
-			else:
-				mat.set_shader_parameter("mouse_pos", Vector2(0.5, 0.5))
-				
-func _open_mode_selector() -> void:
+
+func _on_continuar_pendiente_presionado() -> void:
+	GameSceneRouter.go_to_continue_target(get_tree(), GameSceneRouter.MODE_SELECTOR_SCENE_PATH)
+
+
+func _reproducir_musica_fondo() -> void:
+	MusicManager.reproducir_musica(MUSICA_FONDO)
+
+
+func _abrir_modo_selector() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
-func _open_options_menu() -> void:
+func _abrir_opciones_menu() -> void:
 	GameSceneRouter.go_to_options(get_tree())
 
 
-func _quit_game() -> void:
+func _salir_juego() -> void:
 	get_tree().quit()
-
-func _bounce_button(button: Control):
-	var tween = create_tween()
-	
-	var original_pos = button.position
-	
-	tween.tween_property(button, "position", original_pos + Vector2(0, 4), 0.05)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	
-	tween.tween_property(button, "position", original_pos, 0.08)\
-		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)

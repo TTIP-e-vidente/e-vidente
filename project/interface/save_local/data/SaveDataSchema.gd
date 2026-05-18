@@ -19,7 +19,7 @@ const HISTORY_LIMIT := 25
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 
 
-func default_save_data() -> Dictionary:
+func datos_guardado_predeterminados() -> Dictionary:
 	return {
 		"version": SAVE_VERSION,
 		"profile": {
@@ -27,13 +27,15 @@ func default_save_data() -> Dictionary:
 			"avatar_path": "", "created_at": "", "updated_at": ""
 		},
 		"save_meta": {"last_saved_at": "", "last_saved_reason": "", "write_count": 0},
-		"resume_state": default_resume_state().duplicate(true),
+		"resume_state": estado_reanudacion_predeterminado().duplicate(true),
 		"progress": {},
-		"history": []
+		"history": [],
+		"completed_activity_ids_by_request": {},
+		"total_exp": 0
 	}
 
 
-func default_resume_state() -> Dictionary:
+func estado_reanudacion_predeterminado() -> Dictionary:
 	return {
 		"context": "hub",
 		"track_key": "",
@@ -42,7 +44,7 @@ func default_resume_state() -> Dictionary:
 	}
 
 
-func normalize_save_meta(raw: Variant) -> Dictionary:
+func normalizar_meta_guardado(raw: Variant) -> Dictionary:
 	if not raw is Dictionary:
 		return {"last_saved_at": "", "last_saved_reason": "", "write_count": 0}
 	return {
@@ -52,7 +54,7 @@ func normalize_save_meta(raw: Variant) -> Dictionary:
 	}
 
 
-func normalize_history(raw: Variant) -> Array:
+func normalizar_historial(raw: Variant) -> Array:
 	var result: Array = []
 	if raw is Array:
 		for entry in raw:
@@ -61,7 +63,7 @@ func normalize_history(raw: Variant) -> Array:
 	return result
 
 
-func append_history(save_data: Dictionary, message: String, metadata: Dictionary = {}) -> void:
+func agregar_historial(save_data: Dictionary, message: String, metadata: Dictionary = {}) -> void:
 	var stored: Variant = save_data.get("history", [])
 	var entries: Array = stored if stored is Array else []
 	entries.push_front({

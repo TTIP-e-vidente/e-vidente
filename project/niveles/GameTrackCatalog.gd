@@ -1,5 +1,9 @@
 extends RefCounted
 
+# GameTrackCatalog.gd
+# Catalogo estatico de pistas de la demo.
+# Track = tema jugable; category = grupo usado para filtrar alimentos.
+
 const LevelItemScript := preload("res://resources/level_item.gd")
 
 
@@ -110,79 +114,79 @@ const CATEGORY_DEFINITIONS := {
 }
 
 
-static func get_track_keys() -> Array:
+static func obtener_claves_pista() -> Array:
 	return TRACK_ORDER.duplicate()
 
 
-static func has_track(track_key: String) -> bool:
+static func tiene_pista(track_key: String) -> bool:
 	return TRACK_DEFINITIONS.has(track_key.strip_edges())
 
 
-static func get_track_definition(track_key: String) -> Dictionary:
+static func obtener_definicion_pista(track_key: String) -> Dictionary:
 	var key := track_key.strip_edges()
 	if not TRACK_DEFINITIONS.has(key):
 		return {}
 	return (TRACK_DEFINITIONS[key] as Dictionary).duplicate(true)
 
 
-static func get_track_label(track_key: String, fallback: String = "") -> String:
-	return str(get_track_definition(track_key).get("label", fallback)).strip_edges()
+static func obtener_etiqueta_pista(track_key: String, fallback: String = "") -> String:
+	return str(obtener_definicion_pista(track_key).get("label", fallback)).strip_edges()
 
 
-static func get_track_summary_label(track_key: String, fallback: String = "") -> String:
-	return str(get_track_definition(track_key).get("summary_label", fallback)).strip_edges()
+static func obtener_etiqueta_resumen_pista(track_key: String, fallback: String = "") -> String:
+	return str(obtener_definicion_pista(track_key).get("summary_label", fallback)).strip_edges()
 
 
-static func get_book_scene_path(track_key: String) -> String:
-	return str(get_track_definition(track_key).get("book_scene_path", "")).strip_edges()
+static func obtener_ruta_escena_libro(track_key: String) -> String:
+	return str(obtener_definicion_pista(track_key).get("book_scene_path", "")).strip_edges()
 
 
-static func get_level_scene_path(track_key: String) -> String:
-	return str(get_track_definition(track_key).get("level_scene_path", "")).strip_edges()
+static func obtener_ruta_escena_nivel(track_key: String) -> String:
+	return str(obtener_definicion_pista(track_key).get("level_scene_path", "")).strip_edges()
 
 
-static func get_archive_texture_path(track_key: String) -> String:
-	return str(get_track_definition(track_key).get("archive_texture_path", "")).strip_edges()
+static func obtener_ruta_textura_archivero(track_key: String) -> String:
+	return str(obtener_definicion_pista(track_key).get("archive_texture_path", "")).strip_edges()
 
 
-static func get_track_definitions() -> Array:
+static func obtener_definiciones_pista() -> Array:
 	var result: Array = []
 	for track_key in TRACK_ORDER:
-		result.append(get_track_definition(track_key))
+		result.append(obtener_definicion_pista(track_key))
 	return result
 
 
-static func get_track_level_count(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
-	var definition := get_track_definition(track_key)
+static func obtener_pista_nivel_cantidad(track_key: String, fallback: int = DEFAULT_LEVEL_COUNT) -> int:
+	var definition := obtener_definicion_pista(track_key)
 	return max(1, int(definition.get("level_count", fallback)))
 
 
-static func get_total_level_count() -> int:
+static func obtener_total_nivel_cantidad() -> int:
 	var total := 0
 	for track_key in TRACK_ORDER:
-		total += get_track_level_count(track_key)
+		total += obtener_pista_nivel_cantidad(track_key)
 	return total
 
 
 # ─── Helpers de categorias ────────────────────────────────────────────────────
 
-static func normalize_category_code(category_code: String) -> String:
+static func normalizar_codigo_categoria(category_code: String) -> String:
 	var clean := category_code.strip_edges().to_upper()
 	if clean == CATEGORY_DESAYUNO_MERIENDA_LEGACY:
 		return CATEGORY_DESAYUNO_MERIENDA
 	return clean
 
 
-static func get_category_label(
+static func obtener_etiqueta_categoria(
 	category_code: String,
 	fallback: String = DEFAULT_CATEGORY_LABEL
 ) -> String:
-	var code := normalize_category_code(category_code)
+	var code := normalizar_codigo_categoria(category_code)
 	if code.is_empty():
 		return fallback
 	var definition := CATEGORY_DEFINITIONS.get(code, {}) as Dictionary
 	return str(definition.get("label", fallback))
 
 
-static func categories_match(left_category: String, right_category: String) -> bool:
-	return normalize_category_code(left_category) == normalize_category_code(right_category)
+static func categorias_coinciden(left_category: String, right_category: String) -> bool:
+	return normalizar_codigo_categoria(left_category) == normalizar_codigo_categoria(right_category)

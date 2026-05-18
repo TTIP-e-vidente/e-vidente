@@ -62,24 +62,69 @@ $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
 
 function Get-ValidationSteps {
-    param([string]$ValidationMode)
+    param(
+        [string]$ValidationMode,
+        [string]$RepositoryRoot
+    )
 
     $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') }
+    $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/node_content_loader_test.gd') }
+    $planDeCorridaDeNodoStep = @{ Label = 'Plan de corrida de nodo'; Hint = 'Revisar la regla 1,1,2,3,4,5 y la alternancia simple por nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/plan_de_corrida_de_nodo_test.gd') }
+    $indicadorProgresoPreguntaStep = @{ Label = 'Indicador de progreso en pregunta'; Hint = 'Revisar que pregunta.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/indicador_progreso_pregunta_test.gd') }
+    $indicadorProgresoNivelStep = @{ Label = 'Indicador de progreso en nivel'; Hint = 'Revisar que Level.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/indicador_progreso_nivel_test.gd') }
+    $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/post_game_flow_controller_test.gd') }
+    $mapProgressVisualStep = @{ Label = 'Map progress visual test'; Hint = 'Revisar contrato del mapa de celiaquia, estados visuales y desbloqueo del siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/map_progress_visual_test.gd') }
+    $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
     $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
+
+    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
+    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')
+    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_pregunta_test.gd')
+    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_nivel_test.gd')
+    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/post_game_flow_controller_test.gd')
+    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/map_progress_visual_test.gd')
+    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/flujo_progresivo_de_nodo_test.gd')
+    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/vertical_slice_smoke_test.gd')
+
+    $smokeSuite = @($importStep)
+    if ($hasNodeJsonTest) {
+        $smokeSuite += $nodeJsonStep
+    }
+    if ($hasPlanDeCorridaDeNodoTest) {
+        $smokeSuite += $planDeCorridaDeNodoStep
+    }
+    if ($hasIndicadorProgresoPreguntaTest) {
+        $smokeSuite += $indicadorProgresoPreguntaStep
+    }
+    if ($hasIndicadorProgresoNivelTest) {
+        $smokeSuite += $indicadorProgresoNivelStep
+    }
+    if ($hasPostGameFlowTest) {
+        $smokeSuite += $postGameFlowStep
+    }
+    if ($hasMapProgressVisualTest) {
+        $smokeSuite += $mapProgressVisualStep
+    }
+    if ($hasFlujoProgresivoDeNodoTest) {
+        $smokeSuite += $flujoProgresivoDeNodoStep
+    }
+    if ($hasSmokeTest) {
+        $smokeSuite += $smokeStep
+    }
 
     switch ($ValidationMode) {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }
         'technical' { return @($importStep) }
-        'smoke' { return @($importStep, $smokeStep) }
-        'ci' { return @($importStep, $smokeStep) }
-        'pr-fast' { return @($importStep, $smokeStep) }
-        'full' { return @($importStep, $smokeStep) }
+        'smoke' { return $smokeSuite }
+        'ci' { return $smokeSuite }
+        'pr-fast' { return $smokeSuite }
+        'full' { return $smokeSuite }
         default { throw "Modo de validacion no soportado: $ValidationMode" }
     }
 }
 
-$steps = Get-ValidationSteps -ValidationMode $Mode
+$steps = Get-ValidationSteps -ValidationMode $Mode -RepositoryRoot $repoRoot
 
 Push-Location $repoRoot
 try {

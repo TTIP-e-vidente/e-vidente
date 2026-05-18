@@ -7,11 +7,14 @@ const CHAPTER_BUTTON_DUPLICATE_FLAGS := 14
 const CHAPTER_BUTTON_NAME_PREFIX := "Cap"
 const HOVER_SCALE := 1.06
 const HOVER_DURATION := 0.12
+const MUSICA_FONDO_PREDETERMINADA := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
-@onready var background_music: AudioStreamPlayer2D = $Background
 @onready var chapter_container: VBoxContainer = $VBoxContainer
 @export var track_key_override := ""
+@onready var titulo_nivel: Label = $TituloNivel/Label
 
+
+	
 var _chapter_button_icons: Array[Texture2D] = []
 var _button_template: Button
 var _active_track_key := ""
@@ -19,35 +22,33 @@ var _chapter_hover_tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	titulo_nivel.text = "Celiaquía"
 	_active_track_key = track_key_override.strip_edges()
 	if _active_track_key.is_empty():
-		_active_track_key = _get_track_key()
+		_active_track_key = _obtener_clave_pista()
 	if _active_track_key.is_empty():
 		_active_track_key = DEFAULT_TRACK_KEY
-	background_music.play()
-	_load_button_template_from_scene()
-	_rebuild_chapter_buttons()
-	SaveManager.set_resume_to_book(_active_track_key)
+	MusicManager.reproducir_musica(MUSICA_FONDO_PREDETERMINADA)
+	_cargar_plantilla_boton_desde_escena()
+	_reconstruir_botones_capitulo()
+	SaveManager.establecer_reanudar_en_libro(_active_track_key)
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(background_music):
-		background_music.stop()
-		background_music.stream = null
 	if _button_template != null:
 		_button_template.free()
 		_button_template = null
 	_chapter_button_icons.clear()
 
 
-func _get_track_key() -> String:
+func _obtener_clave_pista() -> String:
 	return ""
 
 
-func _load_button_template_from_scene() -> void:
+func _cargar_plantilla_boton_desde_escena() -> void:
 	if _button_template != null:
 		return
-	var chapter_buttons := _get_chapter_buttons()
+	var chapter_buttons := _obtener_botones_capitulo()
 	if chapter_buttons.is_empty():
 		return
 	_chapter_button_icons.clear()
@@ -59,13 +60,13 @@ func _load_button_template_from_scene() -> void:
 	)
 
 
-func _rebuild_chapter_buttons() -> void:
-	for chapter_button in _get_chapter_buttons():
+func _reconstruir_botones_capitulo() -> void:
+	for chapter_button in _obtener_botones_capitulo():
 		chapter_container.remove_child(chapter_button)
 		chapter_button.free()
 	if _button_template == null:
 		return
-	var level_count: int = max(1, Global.get_track_level_count(_active_track_key))
+	var level_count: int = max(1, Global.obtener_pista_nivel_cantidad(_active_track_key))
 	for level_number in range(1, level_count + 1):
 		var chapter_button := (
 			_button_template.duplicate(CHAPTER_BUTTON_DUPLICATE_FLAGS) as Button
@@ -73,21 +74,21 @@ func _rebuild_chapter_buttons() -> void:
 		if chapter_button == null:
 			continue
 		chapter_button.name = "%s%d" % [CHAPTER_BUTTON_NAME_PREFIX, level_number]
-		chapter_button.tooltip_text = "Abrir capitulo %d" % level_number
+		chapter_button.tooltip_text = ""
 		if level_number - 1 < _chapter_button_icons.size():
 			chapter_button.icon = _chapter_button_icons[level_number - 1]
 			chapter_button.text = ""
 		else:
 			chapter_button.icon = null
 			chapter_button.text = "Capitulo %d" % level_number
-		chapter_button.disabled = not Global.is_level_unlocked(_active_track_key, level_number)
-		chapter_button.pressed.connect(_on_chapter_button_pressed.bind(level_number))
-		chapter_button.mouse_entered.connect(_on_chapter_hover.bind(chapter_button, true))
-		chapter_button.mouse_exited.connect(_on_chapter_hover.bind(chapter_button, false))
+		chapter_button.disabled = not Global.es_nivel_desbloqueado(_active_track_key, level_number)
+		chapter_button.pressed.connect(_on_boton_capitulo_presionado.bind(level_number))
+		chapter_button.mouse_entered.connect(_on_hover_capitulo.bind(chapter_button, true))
+		chapter_button.mouse_exited.connect(_on_hover_capitulo.bind(chapter_button, false))
 		chapter_container.add_child(chapter_button)
 
 
-func _get_chapter_buttons() -> Array[Button]:
+func _obtener_botones_capitulo() -> Array[Button]:
 	var buttons: Array[Button] = []
 	for child in chapter_container.get_children():
 		var chapter_button := child as Button
@@ -97,11 +98,11 @@ func _get_chapter_buttons() -> Array[Button]:
 	return buttons
 
 
-func _on_chapter_button_pressed(level_number: int) -> void:
+func _on_boton_capitulo_presionado(level_number: int) -> void:
 	GameSceneRouter.go_to_track_level(get_tree(), _active_track_key, level_number)
 
 
-func _on_chapter_hover(button: Button, entered: bool) -> void:
+func _on_hover_capitulo(button: Button, entered: bool) -> void:
 	if button.disabled:
 		return
 	var target_scale := Vector2(HOVER_SCALE, HOVER_SCALE) if entered else Vector2.ONE
@@ -113,5 +114,5 @@ func _on_chapter_hover(button: Button, entered: bool) -> void:
 	_chapter_hover_tweens[button] = tw
 
 
-func _on_atras_pressed() -> void:
+func _on_atras_presionado() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())

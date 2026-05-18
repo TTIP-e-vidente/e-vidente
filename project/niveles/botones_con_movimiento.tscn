@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://d28gt7lkl6ff4"]
+
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_b6oox"]
+[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="2_8er4v"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_fmovk"]
+[ext_resource type="Script" uid="uid://bddtbmjjaef31" path="res://niveles/botones_con_movimiento.gd" id="3_r8t42"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
+shader = ExtResource("1_b6oox")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
+
+[node name="Jugar" type="TextureButton" unique_id=1307767255]
+editor_description = "Jugar"
+material = SubResource("ShaderMaterial_544v7")
+custom_minimum_size = Vector2(160, 160)
+anchors_preset = -1
+anchor_top = 0.35200003
+anchor_bottom = 0.35200003
+offset_left = 16.695953
+offset_top = -78.93651
+offset_right = 384.96594
+offset_bottom = 57.383484
+scale = Vector2(0.93417746, 0.95183116)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+size_flags_stretch_ratio = 9.99
+accessibility_live = 2
+texture_normal = ExtResource("2_8er4v")
+flip_v = true
+script = ExtResource("3_r8t42")
+metadata/_edit_group_ = true
+
+[node name="Label" type="Label" parent="." unique_id=707747479]
+custom_minimum_size = Vector2(1.825, 1.78)
+layout_mode = 0
+offset_left = 31.368824
+offset_top = 21.365637
+offset_right = 336.88385
+offset_bottom = 113.36564
+scale = Vector2(0.9476981, 0.9476981)
+pivot_offset = Vector2(159.62862, 48.2968)
+theme_override_fonts/font = ExtResource("3_fmovk")
+theme_override_font_sizes/font_size = 45
+text = "texto"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

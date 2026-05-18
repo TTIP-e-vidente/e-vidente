@@ -1,53 +1,79 @@
 extends Node2D
-class_name Item_level
+class_name ItemLevel
+
+signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el plato
 
 @onready var sprite_2d = $Sprite2D
 @onready var area_2d = $Area2D
 var condiciones: Array[int] = []
 var body_ref 
 var plato 
-var offset: Vector2
-var initialPos: Vector2
-var esPositivo = true
+var offset := Vector2.ZERO
+var es_positivo = true
 var draggable = false
 var categoria 
 var is_inside_droppable = false
 var info: Texture2D
-var textSprite: Texture2D
+var text_sprite: Texture2D
 var item_resource_path := ""
+var item_visual_resource_path := ""
+var item_id := ""
+var item_label := ""
+var item_feedback := ""
+var item_correct_target := ""
 var save_instance_id := ""
 var interaction_enabled := true
+var base_scale := Vector2.ONE
 static var is_dragging: Object = null
 
 func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
-	textSprite = level_item.sprite
-	$Sprite2D.texture = textSprite
+	base_scale = scale
+	text_sprite = level_item.sprite
+	$Sprite2D.texture = text_sprite
 	condiciones = level_item.condiciones.duplicate()
 	plato = superficie
-	esPositivo = is_positive
+	es_positivo = is_positive
 	info = level_item.info
 	categoria = level_item.categoria
-	item_resource_path = level_item.resource_path
-	save_instance_id = instance_id.strip_edges()
+	item_id = str(level_item.runtime_id).strip_edges()
+	item_label = str(level_item.runtime_label).strip_edges()
+	item_feedback = str(level_item.runtime_feedback).strip_edges()
+	item_correct_target = str(level_item.runtime_correct_target).strip_edges()
+	item_resource_path = str(level_item.runtime_resource_path).strip_edges()
+	if item_resource_path.is_empty():
+		item_resource_path = level_item.resource_path
+	item_visual_resource_path = str(level_item.runtime_visual_resource_path).strip_edges()
+	save_instance_id = item_id
+	if save_instance_id.is_empty():
+		save_instance_id = instance_id.strip_edges()
 	if save_instance_id.is_empty():
 		save_instance_id = item_resource_path.get_file().get_basename()
+	_reportar_mismatch_si_corresponde()
 
 func show_info():
 	$Sprite2D.texture = info
+	_reportar_mismatch_si_corresponde()
 	
 func show_texture():
-	$Sprite2D.texture = textSprite
+	$Sprite2D.texture = text_sprite
+	_reportar_mismatch_si_corresponde()
 
 
 func set_home_position(target_position: Vector2) -> void:
 	global_position = target_position
-	initialPos = target_position
 
 
 func restore_to_plate(target_position: Vector2) -> void:
 	set_home_position(target_position)
 	body_ref = plato
 	is_inside_droppable = true
+	print(
+		"[ManagerLevelItem] placed id=%s detail=%s"
+		% [
+			item_id if not item_id.is_empty() else save_instance_id,
+			info.resource_path if info != null else "",
+		]
+	)
 
 
 func set_interaction_enabled(enabled: bool) -> void:
@@ -55,7 +81,7 @@ func set_interaction_enabled(enabled: bool) -> void:
 	if not interaction_enabled and is_dragging == self:
 		is_dragging = null
 	draggable = false
-	scale = Vector2.ONE
+	scale = base_scale
 	if is_instance_valid(area_2d):
 		area_2d.input_pickable = interaction_enabled
 
@@ -68,30 +94,47 @@ func _process(_delta):
 		return
 	if draggable:
 		if Input.is_action_just_pressed("click"):
-			initialPos = global_position
 			offset = get_global_mouse_position() - global_position
 			is_dragging = self
 		if Input.is_action_pressed("click") && is_dragging == self:
 			global_position = get_global_mouse_position() - offset
 		elif Input.is_action_just_released("click") && is_dragging == self:
 			is_dragging = null
-			var tween = get_tree().create_tween()
 			if is_inside_droppable and is_instance_valid(body_ref):
-				tween.tween_property(
-					self,
-					"global_position",
-					get_global_mouse_position(),
-					0.5
-				).set_ease(Tween.EASE_OUT)
+				print(
+					"[ARRASTRE] item=",
+					save_instance_id if not save_instance_id.is_empty() else item_resource_path,
+					" target=",
+					body_ref.name,
+					" correcto=",
+					body_ref == plato and es_positivo
+				)
 				if body_ref == plato:
-					plato.react_food(self)
+					print(
+						"[ManagerLevelItem] placed id=%s detail=%s"
+						% [
+							item_id if not item_id.is_empty() else save_instance_id,
+							info.resource_path if info != null else "",
+						]
+					)
+					plato.reaccionar_comida(self)
+					if es_positivo:
+						_animar_feedback_correcto()
+					else:
+						intento_incorrecto.emit()
+						_animar_feedback_incorrecto()
+				else:
+					_volver_a_inicio()
 			else:
-				tween.tween_property(
-					self,
-					"global_position",
-					initialPos,
-					0.5
-				).set_ease(Tween.EASE_OUT)
+				print(
+					"[ARRASTRE] item=",
+					save_instance_id if not save_instance_id.is_empty() else item_resource_path,
+					" target=",
+					"",
+					" correcto=",
+					false
+				)
+				_volver_a_inicio()
 
 func _handle_droppable_enter(target):
 	if not interaction_enabled:
@@ -123,7 +166,7 @@ func _on_area_2d_body_exited(body):
 func _on_area_2d_area_entered(area):
 	_handle_droppable_enter(area)
 
-func _on_area_2d_area_exited(area):
+func _on_area_2d_area_salido(area):
 	_handle_droppable_exit(area)
 
 func _on_area_2d_mouse_entered():
@@ -131,11 +174,55 @@ func _on_area_2d_mouse_entered():
 		return
 	if !is_dragging:
 		draggable = true
-		scale = Vector2(1.2, 1.2)
+		scale = base_scale * 1.2
 
 func _on_area_2d_mouse_exited():
 	if not interaction_enabled:
 		return
 	if !is_dragging:
 		draggable = false
-		scale = Vector2(1,1)
+		scale = base_scale
+
+
+func _volver_a_inicio() -> void:
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
+
+
+func _animar_feedback_correcto() -> void:
+	modulate = Color(1, 1, 1, 1)
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", base_scale * 1.12, 0.08)
+	tween.tween_property(self, "scale", base_scale, 0.14)
+
+
+func _animar_feedback_incorrecto() -> void:
+	var posicion_actual := global_position
+	var tween := get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+
+	tween.parallel().tween_property(self, "scale", base_scale, 0.18)
+
+
+func _reportar_mismatch_si_corresponde() -> void:
+	if item_id.is_empty():
+		return
+	var visual_id: String = _normalizar_id_visual(item_visual_resource_path)
+	if visual_id.is_empty() and text_sprite != null:
+		visual_id = _normalizar_id_visual(text_sprite.resource_path)
+	var logical_id: String = _normalizar_id_visual(item_id)
+	if visual_id.is_empty() or logical_id.is_empty() or visual_id == logical_id:
+		return
+	print("[ItemMismatch] visual_id=%s logical_id=%s" % [visual_id, logical_id])
+
+
+func _normalizar_id_visual(raw_value: String) -> String:
+	var clean := raw_value.strip_edges().get_file().get_basename().to_lower()
+	if clean.ends_with("-0"):
+		clean = clean.substr(0, clean.length() - 2)
+	return clean.replace("-", "_")
