@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://bqo1erivdcxmk"]
+
+[ext_resource type="Shader" uid="uid://bvy7m7fn80642" path="res://interface/transicion_escenas.gdshader" id="1_5sl8e"]
+[ext_resource type="Script" uid="uid://3ekwokfawthu" path="res://interface/transicion_escenas.gd" id="1_ajmns"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5sl8e"]
+shader = ExtResource("1_5sl8e")
+shader_parameter/circle_size = 0.0
+shader_parameter/edge_blur = 0.05
+shader_parameter/blur_radius = 0.008
+
+[sub_resource type="Animation" id="Animation_5sl8e"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material:shader_parameter/circle_size")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_37ud2"]
+resource_name = "close"
+length = 0.7
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material:shader_parameter/circle_size")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.6666667),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+
+[sub_resource type="Animation" id="Animation_ajmns"]
+resource_name = "open"
+length = 0.7
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material:shader_parameter/circle_size")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.7),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_37ud2"]
+_data = {
+&"RESET": SubResource("Animation_5sl8e"),
+&"close": SubResource("Animation_37ud2"),
+&"open": SubResource("Animation_ajmns")
+}
+
+[node name="TransicionEscenas" type="CanvasLayer" unique_id=1403128878]
+layer = 100
+script = ExtResource("1_ajmns")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=391440731]
+top_level = true
+material = SubResource("ShaderMaterial_5sl8e")
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(28.93059, 20.01214)
+color = Color(0.9367016, 0.9367016, 0.93670154, 1)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ColorRect" unique_id=1650097274]
+libraries/ = SubResource("AnimationLibrary_37ud2")
