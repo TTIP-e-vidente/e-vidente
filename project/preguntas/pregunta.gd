@@ -532,7 +532,7 @@ func _texto_display(texto: String) -> String:
 	if texto.length() <= MAX_DISPLAY_CHARS:
 		return texto
 	var corte: int = texto.rfind(" ", MAX_DISPLAY_CHARS)
-	if corte < MAX_DISPLAY_CHARS / 2:
+	if corte < int(MAX_DISPLAY_CHARS / 2.0):
 		corte = MAX_DISPLAY_CHARS
 	return texto.substr(0, corte) + "…"
 

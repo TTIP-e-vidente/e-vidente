@@ -35,7 +35,7 @@ static var _default_pack_warning_shown := false
 
 
 static func load_from_context(context: Dictionary) -> Dictionary:
-	var node_key: String = str(
+	var _node_key: String = str(
 		context.get("node_key", context.get("clave_nodo_de_origen", ""))
 	).strip_edges()
 	var activity_id: String = str(context.get("activity_id", "")).strip_edges()

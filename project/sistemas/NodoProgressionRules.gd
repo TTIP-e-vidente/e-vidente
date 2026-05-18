@@ -84,7 +84,7 @@ static func calculate_final_exp(base_exp: int, precision_ratio: float) -> int:
 static func format_duration(ms: int) -> String:
 	if ms <= 0:
 		return "0:00"
-	var total_seconds: int = ms / 1000
-	var minutes: int = total_seconds / 60
+	var total_seconds: int = int(ms / 1000.0)
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
 	return "%d:%02d" % [minutes, seconds]
