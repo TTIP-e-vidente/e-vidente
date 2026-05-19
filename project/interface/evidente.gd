@@ -27,7 +27,11 @@ func animar_rebote_boton(button: Control):
 	tween.tween_property(button, "position:y", original_pos.y, 0.06)
 
 func _on_ir_presionado() -> void:
-	GameSceneRouter.go_to_main_menu(get_tree())
+	TransicionEscenas.change_normal_scene(_escena_princ())
+	
+
+func _escena_princ() -> String:
+	return GameSceneRouter.MAIN_MENU_SCENE_PATH
 
 
 func _exit_tree() -> void:

@@ -25,6 +25,7 @@ Global="*res://niveles/global.gd"
 SaveManager="*res://interface/SaveManager.gd"
 MusicManager="*res://managers/MusicManager.gd"
 TransicionEscenas="*uid://bqo1erivdcxmk"
+GameSceneRouter="*uid://cmx7rnj15vkd"
 
 [display]
 

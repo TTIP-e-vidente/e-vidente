@@ -23,11 +23,11 @@ func _ready() -> void:
 
 
 func _on_jugar_pressed() -> void:
-	TransicionEscenas.change_scene(_abrir_modo_selector())
+	TransicionEscenas.change_normal_scene(_abrir_modo_selector())
 
 
 func _on_opciones_pressed() -> void:
-	TransicionEscenas.change_scene(_abrir_opciones_menu())
+	TransicionEscenas.change_normal_scene(_abrir_opciones_menu())
 
 
 func _on_salir_pressed() -> void:
