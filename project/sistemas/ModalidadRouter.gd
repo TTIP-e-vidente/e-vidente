@@ -39,6 +39,11 @@ static func _resolver_modo(activity: Dictionary) -> String:
 	return _normalizar_modo(raw_mode)
 
 
+## Versión pública de _normalizar_modo para uso externo (e.g. GameSceneRouter).
+static func normalizar_modo(raw_mode: String) -> String:
+	return _normalizar_modo(raw_mode)
+
+
 static func _normalizar_modo(raw_mode: String) -> String:
 	match raw_mode:
 		"drag_drop", "drag", "drag_food":
