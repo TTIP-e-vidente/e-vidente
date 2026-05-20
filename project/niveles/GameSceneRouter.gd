@@ -1,9 +1,6 @@
 extends RefCounted
 
-# GameSceneRouter.gd
-# Punto unico para cambiar de escena.
-# Recibe targets simples y decide que escena abrir sin que la UI duplique rutas.
-
+const ModalidadRouter := preload("res://sistemas/ModalidadRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 const ROUTE_SPLASH := "splash"
@@ -28,6 +25,7 @@ const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
+const COMPLETAR_PALABRA_SCENE_PATH := "res://completar/completar_palabra.tscn"
 
 const ROUTES := {
 	ROUTE_SPLASH: SPLASH_SCENE_PATH,
@@ -40,6 +38,13 @@ const ROUTES := {
 	ROUTE_PROFILE: PROFILE_SCENE_PATH,
 	ROUTE_QUESTIONS: QUESTIONS_SCENE_PATH,
 	ROUTE_VINCULACION: VINCULACION_CONCEPTOS_SCENE_PATH,
+}
+
+const MODE_TO_SCENE_PATH := {
+	"drag_drop": LEVEL_SCENE_PATH,
+	"quiz_choice": QUESTIONS_SCENE_PATH,
+	"vinculacion_conceptos": VINCULACION_CONCEPTOS_SCENE_PATH,
+	"completar_palabra": COMPLETAR_PALABRA_SCENE_PATH,
 }
 
 const RESUME_SCENE_PATH_KEY := "scene_path"
@@ -135,30 +140,32 @@ static func go_to_level(tree: SceneTree) -> void:
 	_change_scene_to_path(tree, LEVEL_SCENE_PATH)
 
 
-static func ir_a_modo_jugable(tree: SceneTree, mode: String) -> void:
-	var archivo_actual := ""
+static func get_scene_path_for_mode(mode: String) -> String:
+	var normalized_mode := ModalidadRouter.normalizar_modo(mode)
+	if not MODE_TO_SCENE_PATH.has(normalized_mode):
+		push_error(LOG_PREFIX + " Modalidad sin escena asignada: " + str(mode))
+		return ""
+	return MODE_TO_SCENE_PATH[normalized_mode]
+
+
+static func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
+	var archivo_actual := _obtener_json_actual_debug(tree)
+	print(LOG_PREFIX, " abriendo_siguiente tipo=", content_mode.strip_edges(), " archivo=", archivo_actual)
+	
+	var scene_path := get_scene_path_for_mode(content_mode)
+	if scene_path.is_empty():
+		return
+		
+	_change_scene_to_path(tree, scene_path)
+
+
+static func _obtener_json_actual_debug(tree: SceneTree) -> String:
 	var global_state := _get_global_state(tree)
 	if global_state != null and global_state.has_method("obtener_juego_actual_de_partida"):
 		var juego_actual: Variant = global_state.call("obtener_juego_actual_de_partida")
 		if juego_actual is Dictionary:
-			archivo_actual = str((juego_actual as Dictionary).get("json_path", "")).strip_edges()
-	print(
-		LOG_PREFIX,
-		" abriendo_siguiente tipo=",
-		mode.strip_edges(),
-		" archivo=",
-		archivo_actual
-	)
-	match mode.strip_edges():
-		"drag_drop":
-			go_to_level(tree)
-		"quiz_choice":
-			go_to_questions(tree)
-		"vinculacion_conceptos":
-			go_to_vinculacion(tree)
-		_:
-			push_error("GameSceneRouter: modo jugable desconocido: %s" % mode)
-			print(LOG_PREFIX, " modo_desconocido=", mode)
+			return str((juego_actual as Dictionary).get("json_path", "")).strip_edges()
+	return ""
 
 
 # --- Racha ------------------------------------------------------------------

@@ -35,7 +35,7 @@ static var _default_pack_warning_shown := false
 
 
 static func load_from_context(context: Dictionary) -> Dictionary:
-	var node_key: String = str(
+	var _node_key: String = str(
 		context.get("node_key", context.get("clave_nodo_de_origen", ""))
 	).strip_edges()
 	var activity_id: String = str(context.get("activity_id", "")).strip_edges()
@@ -193,6 +193,8 @@ static func to_runtime_mode(raw_mode: String) -> String:
 			return "drag_drop"
 		"match":
 			return "vinculacion_conceptos"
+		"completar_palabra":
+			return "completar_palabra"
 		_:
 			return ""
 
@@ -215,6 +217,8 @@ static func normalize_random_game_type(raw_type: String) -> String:
 			return "quiz"
 		"match", "vinculacion":
 			return "match"
+		"completar_palabra":
+			return "completar_palabra"
 		_:
 			return ""
 
@@ -292,6 +296,8 @@ static func _activity_matches_requested_type(activity: Dictionary, requested_typ
 			return str(activity.get("mode", "")).strip_edges() == "quiz"
 		"match":
 			return str(activity.get("mode", "")).strip_edges() == "match"
+		"completar_palabra":
+			return str(activity.get("mode", "")).strip_edges() == "completar_palabra"
 		_:
 			return false
 
@@ -432,10 +438,27 @@ static func _item_matches_meal(item: Dictionary, meal: String) -> bool:
 
 static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 	var activities: Array = []
+	# Archivos obligatorios: si falta uno, el pack entero falla.
 	for filename in ["preguntas.json", "arrastres.json", "vinculaciones.json"]:
 		var result: Dictionary = _load_activity_dict_file(mapa_dir + filename)
 		if not bool(result.get("ok", false)):
 			return result
+		activities.append_array(result.get("data", []))
+	# Archivos opcionales: si faltan, se ignoran con warning (no rompen las otras modalidades).
+	for filename in ["completar_palabra.json"]:
+		var path: String = mapa_dir + str(filename)
+		if not FileAccess.file_exists(path):
+			push_warning(
+				"NodeContentLoader: archivo opcional no encontrado, se omite: %s" % path
+			)
+			continue
+		var result: Dictionary = _load_activity_dict_file(path)
+		if not bool(result.get("ok", false)):
+			push_warning(
+				"NodeContentLoader: error cargando archivo opcional %s — %s"
+				% [filename, str(result.get("error", ""))]
+			)
+			continue
 		activities.append_array(result.get("data", []))
 	var pack: Dictionary = {"id": track_id, "version": 1, "activities": activities}
 	var validation_error: String = _validate_pack_minimal(pack)
@@ -496,6 +519,8 @@ static func _guess_source_file_for_activity_id(activity_id: String) -> String:
 		return "arrastres.json"
 	if clean_activity_id.begins_with("quiz_"):
 		return "preguntas.json"
+	if clean_activity_id.begins_with("word_"):
+		return "opciones_palabras.json"
 	return "desconocido"
 
 

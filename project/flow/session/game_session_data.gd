@@ -13,20 +13,20 @@ class_name GameSessionData
 
 
 static func crear(
-	map_id: String,
-	node_id: String,
-	mode_id: String,
-	difficulty_id: int,
-	exp_base: int = 0,
-	payload: Dictionary = {}
+	p_map_id: String,
+	p_node_id: String,
+	p_mode_id: String,
+	p_difficulty_id: int,
+	p_exp_base: int = 0,
+	p_payload: Dictionary = {}
 ) -> GameSessionData:
 	var sesion := GameSessionData.new()
-	sesion.map_id = map_id
-	sesion.node_id = node_id
-	sesion.mode_id = mode_id
-	sesion.difficulty_id = difficulty_id
-	sesion.exp_base = exp_base
-	sesion.payload = payload.duplicate()
+	sesion.map_id = p_map_id
+	sesion.node_id = p_node_id
+	sesion.mode_id = p_mode_id
+	sesion.difficulty_id = p_difficulty_id
+	sesion.exp_base = p_exp_base
+	sesion.payload = p_payload.duplicate()
 	return sesion
 
 

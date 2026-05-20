@@ -83,7 +83,7 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 # Helpers privados
 static func _es_modo_jugable_soportado(modo: String) -> bool:
 	match modo.strip_edges():
-		"drag_drop", "quiz_choice", "vinculacion_conceptos":
+		"drag_drop", "quiz_choice", "vinculacion_conceptos", "completar_palabra":
 			return true
 		_:
 			return false

@@ -1,0 +1,101 @@
+{
+  "word_celiaquia_agua_01": {
+    "mode": "completar_palabra",
+    "difficulty": 1,
+    "sentence": "Tomar ____ ayuda a mantener el cuerpo hidratado.",
+    "answers": ["agua"],
+    "options": ["agua", "gaseosa", "cerveza"],
+    "order_matters": false,
+    "teaching_key": "celiaquia_bebida"
+  },
+  "word_celiaquia_tacc_01": {
+    "mode": "completar_palabra",
+    "difficulty": 1,
+    "sentence": "Los productos sin TACC están libres de ____.",
+    "answers": ["gluten"],
+    "options": ["gluten", "azúcar", "sal"],
+    "order_matters": false,
+    "teaching_key": "celiaquia_desayuno"
+  },
+  "word_celiaquia_sello_01": {
+    "mode": "completar_palabra",
+    "difficulty": 1,
+    "sentence": "El sello Sin TACC indica que el producto fue ____ para celíacos.",
+    "answers": ["certificado"],
+    "options": ["certificado", "prohibido", "fabricado"],
+    "order_matters": false,
+    "teaching_key": "celiaquia_desayuno"
+  },
+  "word_celiaquia_cereal_01": {
+    "mode": "completar_palabra",
+    "difficulty": 1,
+    "sentence": "El ____ es un cereal que contiene gluten.",
+    "answers": ["trigo"],
+    "options": ["trigo", "arroz", "maíz"],
+    "order_matters": false,
+    "teaching_key": "celiaquia_desayuno"
+  },
+  "word_celiaquia_contaminacion_02": {
+    "mode": "completar_palabra",
+    "difficulty": 2,
+    "sentence": "Para evitar ____ cruzada conviene usar utensilios ____.",
+    "answers": ["contaminación", "separados"],
+    "options": ["contaminación", "separados", "mezcla", "juntos"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_cocina_segura"
+  },
+  "word_celiaquia_etiqueta_02": {
+    "mode": "completar_palabra",
+    "difficulty": 2,
+    "sentence": "Un producto sin ____ en el envase puede tener ____ de gluten.",
+    "answers": ["sello", "trazas"],
+    "options": ["sello", "trazas", "color", "olor"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_desayuno"
+  },
+  "word_celiaquia_restaurante_02": {
+    "mode": "completar_palabra",
+    "difficulty": 2,
+    "sentence": "Al comer fuera conviene ____ y confirmar que no haya ____ cruzada.",
+    "answers": ["avisar", "contaminación"],
+    "options": ["avisar", "contaminación", "callar", "sabor"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_cena"
+  },
+  "word_celiaquia_freidora_02": {
+    "mode": "completar_palabra",
+    "difficulty": 2,
+    "sentence": "Una freidora ____ con aceite de empanadas puede ____ alimentos sin TACC.",
+    "answers": ["compartida", "contaminar"],
+    "options": ["compartida", "contaminar", "exclusiva", "limpiar"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_almuerzo"
+  },
+  "word_celiaquia_diagnostico_03": {
+    "mode": "completar_palabra",
+    "difficulty": 3,
+    "sentence": "La celiaquía se diagnostica con una ____ y se trata con una dieta ____ de gluten.",
+    "answers": ["biopsia", "libre"],
+    "options": ["biopsia", "libre", "radiografía", "cargada"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_desayuno"
+  },
+  "word_celiaquia_trazas_03": {
+    "mode": "completar_palabra",
+    "difficulty": 3,
+    "sentence": "Un producto ____ no siempre es seguro si fue procesado en planta que también maneja ____.",
+    "answers": ["artesanal", "gluten"],
+    "options": ["artesanal", "gluten", "industrial", "agua"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_almuerzo"
+  },
+  "word_celiaquia_avena_03": {
+    "mode": "completar_palabra",
+    "difficulty": 3,
+    "sentence": "La avena es ____ para la mayoría de los celíacos porque puede estar ____ con gluten durante su ____.",
+    "answers": ["riesgosa", "contaminada", "procesamiento"],
+    "options": ["riesgosa", "contaminada", "procesamiento", "segura", "limpia", "envasado"],
+    "order_matters": true,
+    "teaching_key": "celiaquia_colacion"
+  }
+}

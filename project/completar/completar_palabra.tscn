@@ -1,0 +1,231 @@
+[gd_scene format=3 uid="uid://r1c3u80r6hk0"]
+
+[ext_resource type="Script" path="res://completar/completar_palabra.gd" id="1_ffl8v"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="1_ymp6c"]
+[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="2_ffl8v"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_f2j53"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_rmwwa"]
+[ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="5_tin7n"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_k2voh"]
+[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="6_tin7n"]
+[ext_resource type="Texture2D" uid="uid://c8tvilgr1cn4r" path="res://assets-sistema/preguntas/boton-4.png" id="7_k2voh"]
+[ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="10_yqu7m"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_wpoht"]
+content_margin_left = 32.0
+content_margin_top = 14.0
+content_margin_right = 32.0
+content_margin_bottom = 14.0
+texture = ExtResource("6_tin7n")
+
+[node name="CompletarPalabra" type="Node2D"]
+script = ExtResource("1_ffl8v")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1152.0
+offset_bottom = 800.0
+metadata/_edit_use_anchors_ = true
+
+[node name="FondoFicha" parent="Control" instance=ExtResource("1_ymp6c")]
+layout_mode = 0
+offset_left = -4.0
+offset_top = -2.0
+offset_right = 1149.0
+offset_bottom = 797.0
+
+[node name="TituloNivel" parent="Control" instance=ExtResource("2_ffl8v")]
+position = Vector2(197.00002, 107.00001)
+
+[node name="Escoge" type="Label" parent="Control"]
+layout_mode = 0
+offset_left = 213.0
+offset_top = 206.0
+offset_right = 733.0
+offset_bottom = 251.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_f2j53")
+theme_override_font_sizes/font_size = 37
+text = "Escoge la palabra que falta"
+
+[node name="Label" type="RichTextLabel" parent="Control"]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 288.0
+offset_right = 1052.0
+offset_bottom = 400.0
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("4_rmwwa")
+theme_override_fonts/bold_font = ExtResource("4_rmwwa")
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+bbcode_enabled = true
+scroll_active = false
+fit_content = true
+text = "[center]texto de prueba para completar________________________[/center]"
+
+[node name="Container" type="Container" parent="Control"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 419.0
+offset_right = 4150.0
+offset_bottom = 788.0
+scale = Vector2(0.2713283, 0.26301467)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/Container"]
+layout_mode = 2
+offset_right = 4250.0
+offset_bottom = 500.0
+theme_override_constants/separation = 60
+alignment = 1
+
+[node name="Boton3" type="Button" parent="Control/Container/HBoxContainer"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/hover = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
+icon = ExtResource("7_k2voh")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_rmwwa")
+theme_override_font_sizes/font_size = 120
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton4" type="Button" parent="Control/Container/HBoxContainer"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/hover = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
+icon = ExtResource("7_k2voh")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_rmwwa")
+theme_override_font_sizes/font_size = 120
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton5" type="Button" parent="Control/Container/HBoxContainer"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/hover = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
+icon = ExtResource("7_k2voh")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_rmwwa")
+theme_override_font_sizes/font_size = 120
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Boton6" type="Button" parent="Control/Container/HBoxContainer"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/hover = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_wpoht")
+theme_override_styles/focus = SubResource("StyleBoxTexture_wpoht")
+icon = ExtResource("7_k2voh")
+flat = true
+
+[node name="TextoOpcion" type="Label" parent="Control/Container/HBoxContainer/Boton6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_rmwwa")
+theme_override_font_sizes/font_size = 120
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ProgressBar" parent="Control" instance=ExtResource("5_tin7n")]
+layout_mode = 0
+scale = Vector2(1, 0.99618554)
+
+[node name="Atrás" type="Button" parent="Control/ProgressBar"]
+layout_mode = 0
+offset_left = 67.0
+offset_top = 639.00006
+offset_right = 296.0
+offset_bottom = 907.00006
+scale = Vector2(0.43999937, 0.38499945)
+icon = ExtResource("6_k2voh")
+flat = true
+
+[node name="ContinuarJuego" parent="Control" instance=ExtResource("10_yqu7m")]
+
+[connection signal="pressed" from="Control/ProgressBar/Atrás" to="." method="_on_atrás_pressed"]

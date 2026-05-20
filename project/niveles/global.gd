@@ -482,8 +482,8 @@ func obtener_tiempo_nodo_formato() -> String:
 	if _inicio_nodo_msec <= 0:
 		return "—"
 	var elapsed_ms: int = Time.get_ticks_msec() - _inicio_nodo_msec
-	var seconds: int = elapsed_ms / 1000
-	return "%d:%02d" % [seconds / 60, seconds % 60]
+	var seconds: int = int(elapsed_ms / 1000.0)
+	return "%d:%02d" % [int(seconds / 60.0), seconds % 60]
 
 
 func registrar_resultado_mini_juego(acierto: bool) -> void:
