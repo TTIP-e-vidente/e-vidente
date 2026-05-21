@@ -53,10 +53,12 @@ var _base_scale: Vector2 = Vector2.ONE
 var _is_hovering: bool = false
 var _click_in_progress: bool = false
 var _disponible_tween: Tween = null
+var _best_accuracy: float = 0.0
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
 @onready var title_label: Label = get_node_or_null("TitleLabel") as Label
+@onready var star_progress: Node2D = get_node_or_null("StarProgress")
 
 
 func _ready() -> void:
@@ -93,6 +95,14 @@ func update_view() -> void:
 			else Control.CURSOR_POINTING_HAND
 		)
 	_apply_state_color()
+	_refresh_star_progress()
+
+
+func _refresh_star_progress() -> void:
+	if star_progress == null or Engine.is_editor_hint():
+		return
+	if star_progress.has_method("set_progress"):
+		star_progress.call("set_progress", _best_accuracy / 100.0)
 
 
 func _on_button_pressed() -> void:
@@ -161,6 +171,7 @@ func _apply_progress_state(progress_state: Dictionary) -> void:
 		is_completed,
 		str(progress_state.get("visual_state", ""))
 	)
+	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 
 
 func _apply_legacy_progress_state(is_unlocked: bool, is_completed: bool) -> void:

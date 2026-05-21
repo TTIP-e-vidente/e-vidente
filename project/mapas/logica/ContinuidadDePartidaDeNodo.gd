@@ -1,14 +1,13 @@
-# Orquesta avance entre mini juegos y cierre del nodo. Delega cálculos a NodoProgressionRules.
 extends RefCounted
 class_name ContinuidadDePartidaDeNodo
 
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
 
 
-# Decide si abrir el siguiente juego del plan o cerrar el nodo actual.
 static func continuar_o_finalizar_partida(
 	tree: SceneTree,
 	antes_de_abrir_siguiente_juego: Callable = Callable(),
@@ -18,7 +17,6 @@ static func continuar_o_finalizar_partida(
 	if estado_global == null:
 		return false
 
-	# Marcar la activity actual como completada antes de avanzar/finalizar
 	_marcar_activity_actual_completada(tree, estado_global)
 
 	if bool(estado_global.call("hay_siguiente_juego_de_partida")):
@@ -33,8 +31,8 @@ static func continuar_o_finalizar_partida(
 		% [LOG_PREFIX_NODE_COMPLETE, str(partida_actual.get("clave_nodo", "")).strip_edges()]
 	)
 
-	# Calcular y persistir EXP antes de limpiar la partida
 	_registrar_exp_finalizacion(tree, estado_global, partida_actual)
+	_guardar_precision_nodo(tree, partida_actual) # debe ir antes de finalizar: Global limpia los stats ahí
 
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
@@ -50,7 +48,6 @@ static func hay_siguiente_juego(tree: SceneTree) -> bool:
 
 
 static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> bool:
-	# Abre el juego actual ya armado por el plan; no altera el orden del nodo.
 	var estado: Node = estado_global
 	if estado == null:
 		estado = _obtener_estado_global(tree)
@@ -80,7 +77,6 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 	return true
 
 
-# Helpers privados
 static func _es_modo_jugable_soportado(modo: String) -> bool:
 	match modo.strip_edges():
 		"drag_drop", "quiz_choice", "vinculacion_conceptos", "completar_palabra":
@@ -109,15 +105,26 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_de_partida")
 	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
 	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
-	if request_key.is_empty() or activity_id.is_empty():
+	var save_manager: Node = _get_save_manager(tree)
+	if request_key.is_empty() or activity_id.is_empty() or save_manager == null:
 		return
+	save_manager.call("mark_activity_completed", request_key, activity_id)
+
+
+static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary) -> void:
+	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
+	var save_manager: Node = _get_save_manager(tree)
+	if node_key.is_empty() or save_manager == null:
+		return
+	var precision: int = NodoRuntimeScript.calcular_precision(tree)
+	save_manager.call("save_node_accuracy", node_key, float(precision))
+	print("%s accuracy=%d node=%s" % [LOG_PREFIX_NODE_COMPLETE, precision, node_key])
+
+
+static func _get_save_manager(tree: SceneTree) -> Node:
 	if tree == null or tree.root == null:
-		return
-	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
-	if save_manager == null:
-		return
-	if save_manager.has_method("mark_activity_completed"):
-		save_manager.call("mark_activity_completed", request_key, activity_id)
+		return null
+	return tree.root.get_node_or_null("/root/SaveManager")
 
 
 static func _registrar_exp_finalizacion(
@@ -125,19 +132,15 @@ static func _registrar_exp_finalizacion(
 	estado_global: Node,
 	partida_actual: Dictionary
 ) -> void:
-	if tree == null or tree.root == null:
-		return
-	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
+	var save_manager: Node = _get_save_manager(tree)
 	if save_manager == null:
 		return
 	var titulo_nodo: String = str(partida_actual.get("titulo_nodo", "")).strip_edges()
 	var dificultad_fallback: int = max(1, int(partida_actual.get("dificultad", 1)))
 
-	# EXP base: suma de la EXP individual de cada mini juego según su dificultad
 	var juegos: Array = partida_actual.get("juegos", [])
 	var exp_base_total: int = _calcular_exp_base_total(juegos, dificultad_fallback)
 
-	# Precision real desde el acumulador de stats del nodo
 	var stats: Dictionary = {}
 	if estado_global.has_method("obtener_stats_nodo_actual"):
 		stats = estado_global.call("obtener_stats_nodo_actual")
@@ -154,7 +157,6 @@ static func _registrar_exp_finalizacion(
 	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(aciertos, intentos)
 	var precision_percent: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
 
-	# EXP penalizada por precision
 	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(exp_base_total, precision_ratio)
 
 	var total_exp_nuevo: int = 0
@@ -174,7 +176,6 @@ static func _registrar_exp_finalizacion(
 		]
 	)
 
-	# Tiempo transcurrido desde que inicio la partida
 	var tiempo_str: String = "—"
 	if estado_global.has_method("obtener_tiempo_nodo_formato"):
 		tiempo_str = str(estado_global.call("obtener_tiempo_nodo_formato")).strip_edges()
@@ -196,5 +197,4 @@ static func _registrar_exp_finalizacion(
 
 
 static func _calcular_exp_base_total(juegos: Array, dificultad_fallback: int) -> int:
-	## Delega a NodoProgressionRules para mantener un único punto de definición.
 	return NodoProgressionRulesScript.calculate_base_exp(juegos, dificultad_fallback)
