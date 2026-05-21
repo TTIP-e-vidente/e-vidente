@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://mapas/components/NodeProgressBadge.gd" id="1_badge"]
+[ext_resource type="Script" path="res://mapas/components/CheckBadge.gd" id="2_check"]
+[ext_resource type="Script" uid="uid://y10p322ni15g" path="res://mapas/components/StarProgress.gd" id="3_star"]
+
+[node name="NodeProgressBadge" type="Node2D"]
+visible = false
+script = ExtResource("1_badge")
+
+[node name="CheckBadge" type="Node2D" parent="."]
+position = Vector2(0, -20)
+script = ExtResource("2_check")
+
+[node name="StarProgress" type="Node2D" parent="."]
+position = Vector2(0, 10)
+script = ExtResource("3_star")

@@ -47,6 +47,9 @@ const STATE_LOCKED := "locked"
 	set(value):
 		icon_texture = value
 		update_view()
+# debug_progress / debug_completed: solo para pruebas en editor. Dejar en -1/false para producción.
+@export_range(-1.0, 1.0, 0.05) var debug_progress: float = -1.0
+@export var debug_completed: bool = false
 
 var node_data: MapNodeData = null
 var _base_scale: Vector2 = Vector2.ONE
@@ -58,7 +61,7 @@ var _best_accuracy: float = 0.0
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
 @onready var title_label: Label = get_node_or_null("TitleLabel") as Label
-@onready var star_progress: Node2D = get_node_or_null("StarProgress")
+@onready var node_badge: Node2D = get_node_or_null("NodeProgressBadge")
 
 
 func _ready() -> void:
@@ -95,14 +98,23 @@ func update_view() -> void:
 			else Control.CURSOR_POINTING_HAND
 		)
 	_apply_state_color()
-	_refresh_star_progress()
+	_refresh_badge()
 
 
-func _refresh_star_progress() -> void:
-	if star_progress == null or Engine.is_editor_hint():
+func _refresh_badge() -> void:
+	if node_badge == null or Engine.is_editor_hint():
 		return
-	if star_progress.has_method("set_progress"):
-		star_progress.call("set_progress", _best_accuracy / 100.0)
+	var is_completed: bool = (visual_state == STATE_COMPLETED) or debug_completed
+	node_badge.visible = is_completed
+	if not is_completed:
+		return
+	var effective_progress: float = (
+		debug_progress if debug_progress >= 0.0 else clampf(_best_accuracy / 100.0, 0.0, 1.0)
+	)
+	if node_badge.has_method("set_completed"):
+		node_badge.call("set_completed", true)
+	if node_badge.has_method("set_progress"):
+		node_badge.call("set_progress", effective_progress)
 
 
 func _on_button_pressed() -> void:
@@ -163,6 +175,8 @@ func _apply_state_color() -> void:
 func _apply_progress_state(progress_state: Dictionary) -> void:
 	var is_unlocked: bool = bool(progress_state.get("is_unlocked", false))
 	var is_completed: bool = bool(progress_state.get("is_completed", false))
+	# _best_accuracy primero para que los setters con update_view() ya lo vean correcto
+	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = bool(progress_state.get("can_play", is_unlocked or is_completed))
@@ -171,7 +185,6 @@ func _apply_progress_state(progress_state: Dictionary) -> void:
 		is_completed,
 		str(progress_state.get("visual_state", ""))
 	)
-	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 
 
 func _apply_legacy_progress_state(is_unlocked: bool, is_completed: bool) -> void:

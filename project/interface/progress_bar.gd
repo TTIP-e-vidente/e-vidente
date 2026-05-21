@@ -15,9 +15,14 @@ func configurar(total: int, hechos: int) -> void:
 	_completados = clampi(hechos, 0, _total_objetivos)
 	_actualizar_barra()
 
-## API nueva: recibe el índice del juego actual (1-based) y el total.
+## recibe el índice del juego actual (1-based) y el total.
 func actualizar_progreso(juego_actual: int, total_juegos: int) -> void:
-	configurar(total_juegos, juego_actual)
+	# N+1 estados: la barra nunca llega al 100% mientras se juega la última partida.
+	configurar(total_juegos + 1, juego_actual)
+
+## Llamar al completar el último juego del nodo.
+func completar_progreso() -> void:
+	configurar(1, 1)
 
 func _actualizar_barra() -> void:
 	var progreso: float = float(_completados) / float(_total_objetivos)

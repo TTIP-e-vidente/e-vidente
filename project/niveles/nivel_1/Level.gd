@@ -560,6 +560,8 @@ func _conectar_senales_items_arrastre() -> void:
 
 
 func _limpiar_estado_local_de_partida_en_nivel() -> void:
+	if _progress_bar != null and _progress_bar.has_method("completar_progreso"):
+		_progress_bar.completar_progreso()
 	_pertenece_a_partida_de_nodo = false
 
 
