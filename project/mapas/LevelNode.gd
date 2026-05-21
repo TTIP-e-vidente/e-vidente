@@ -159,17 +159,22 @@ func _is_button_disabled() -> bool:
 func _apply_state_color() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
-	else:
-		match visual_state:
-			STATE_COMPLETED:
-				_cancelar_tween_disponible()
-				modulate = COLOR_COMPLETED
-			STATE_LOCKED:
-				_cancelar_tween_disponible()
-				modulate = COLOR_LOCKED
-			_:
-				modulate = COLOR_AVAILABLE
-				_animar_disponible()
+		state_icon.modulate = Color.WHITE
+		return
+	match visual_state:
+		STATE_COMPLETED:
+			_cancelar_tween_disponible()
+			# Solo teñir el ícono; el badge debe conservar sus colores propios.
+			state_icon.modulate = COLOR_COMPLETED
+			modulate = Color.WHITE
+		STATE_LOCKED:
+			_cancelar_tween_disponible()
+			state_icon.modulate = Color.WHITE
+			modulate = COLOR_LOCKED
+		_:
+			state_icon.modulate = Color.WHITE
+			modulate = COLOR_AVAILABLE
+			_animar_disponible()
 
 
 func _apply_progress_state(progress_state: Dictionary) -> void:

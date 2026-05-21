@@ -23,7 +23,7 @@ scale = Vector2(0.22, 0.22)
 texture = ExtResource("3_icon")
 
 [node name="NodeProgressBadge" parent="." instance=ExtResource("4_badge")]
-position = Vector2(0, 62)
+position = Vector2(0, 36)
 z_index = 2
 
 [connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
