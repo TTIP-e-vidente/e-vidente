@@ -1,7 +1,15 @@
-extends RefCounted
+extends Node
+
+# GameSceneRouter.gd
+# Punto unico para cambiar de escena.
+# Recibe targets simples y decide que escena abrir sin que la UI duplique rutas.
 
 const ModalidadRouter := preload("res://sistemas/ModalidadRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+
+enum TransitionType { FADE, IRIS }
+
+var _is_transitioning := false
 
 const ROUTE_SPLASH := "splash"
 const ROUTE_MAIN_MENU := "main_menu"
@@ -478,3 +486,37 @@ static func _clear_active_playable_session(tree: SceneTree) -> void:
 	var global_state := _get_global_state(tree)
 	if global_state != null and global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
 		global_state.call("limpiar_sesion_nodo_jugable_activo")
+
+# --- Transicion visual ---------------------------------------
+
+func transition_to_scene(scene_path: String, transition_type: int = TransitionType.FADE) -> void:
+	if _is_transitioning:
+		push_warning("[ROUTER] transition_to_scene ignorado: ya hay una transicion en curso.")
+		return
+
+	var normalized_path := scene_path.strip_edges()
+	if not ResourceLoader.exists(normalized_path):
+		push_error("[ROUTER] transition_to_scene: el path no existe: %s" % normalized_path)
+		return
+
+	if not is_instance_valid(TransicionEscenas):
+		_change_scene_to_path(get_tree(), normalized_path)
+		return
+
+	_is_transitioning = true
+	match transition_type:
+		TransitionType.IRIS:
+			await TransicionEscenas.change_scene(normalized_path)
+		_:
+			await TransicionEscenas.change_normal_scene(normalized_path)
+	_is_transitioning = false
+
+
+# --- Wrappers  -------------------------------------------------------
+
+func change_scene(scene_path: String) -> void:
+	await transition_to_scene(scene_path, TransitionType.IRIS)
+
+
+func change_normal_scene(scene_path: String) -> void:
+	await transition_to_scene(scene_path, TransitionType.FADE)

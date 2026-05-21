@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://bqo1erivdcxmk"]
+
+[ext_resource type="Shader" uid="uid://bvy7m7fn80642" path="res://interface/transiciones/transicion_escenas.gdshader" id="1_5sl8e"]
+[ext_resource type="Script" uid="uid://3ekwokfawthu" path="res://interface/transiciones/transicion_escenas.gd" id="1_ajmns"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5sl8e"]
+shader = ExtResource("1_5sl8e")
+shader_parameter/circle_size = 0.0
+shader_parameter/edge_blur = 0.05
+shader_parameter/blur_radius = 0.008
+
+[sub_resource type="Animation" id="Animation_5sl8e"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material:shader_parameter/circle_size")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_npps1"]
+resource_name = "close_normal"
+length = 0.6333333
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.56666666),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_8iej3"]
+resource_name = "open_normal"
+length = 0.53333336
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.46666667),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_37ud2"]
+_data = {
+&"RESET": SubResource("Animation_5sl8e"),
+&"close_normal": SubResource("Animation_npps1"),
+&"open_normal": SubResource("Animation_8iej3")
+}
+
+[node name="TransicionEscenas" type="CanvasLayer" unique_id=1403128878]
+layer = 100
+script = ExtResource("1_ajmns")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=391440731]
+top_level = true
+material = SubResource("ShaderMaterial_5sl8e")
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(28.93059, 20.01214)
+color = Color(0.9367016, 0.9367016, 0.93670154, 1)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ColorRect" unique_id=1650097274]
+libraries/ = SubResource("AnimationLibrary_37ud2")
+
+[node name="ColorRect2" type="ColorRect" parent="." unique_id=1144455920]
+top_level = true
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(28.93059, 20.01214)
+color = Color(0.9367016, 0.9367016, 0.93670154, 1)
+
+[node name="AnimationPlayer2" type="AnimationPlayer" parent="ColorRect2" unique_id=1219047827]
+libraries/ = SubResource("AnimationLibrary_37ud2")

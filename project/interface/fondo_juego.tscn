@@ -11,5 +11,5 @@ color = Color(1, 1, 0.996078, 0.988235)
 
 [node name="ImagenFicha" type="Sprite2D" parent="." unique_id=863227439]
 position = Vector2(577.00006, 405.00003)
-scale = Vector2(0.343195, 0.32091108)
+scale = Vector2(0.34500948, 0.33734095)
 texture = ExtResource("1_8u8ai")
