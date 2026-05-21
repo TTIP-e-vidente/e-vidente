@@ -2,7 +2,6 @@ extends Node2D
 class_name EvidenteSplash
 
 const INTRO_ANIMATION := "intro"
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 @onready var splash_animation: AnimatedSprite2D = $"e-vidente/AnimatedSprite2D"
@@ -27,7 +26,7 @@ func animar_rebote_boton(button: Control):
 	tween.tween_property(button, "position:y", original_pos.y, 0.06)
 
 func _on_ir_presionado() -> void:
-	TransicionEscenas.change_normal_scene(_escena_princ())
+	GameSceneRouter.transition_to_scene(_escena_princ())
 	
 
 func _escena_princ() -> String:

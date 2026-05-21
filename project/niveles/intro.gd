@@ -1,7 +1,6 @@
 extends Node2D
 class_name MainMenu
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 @onready var jugar: Label = $MenuBar/Jugar/Label
@@ -23,11 +22,11 @@ func _ready() -> void:
 
 
 func _on_jugar_pressed() -> void:
-	TransicionEscenas.change_normal_scene(_abrir_modo_selector())
+	GameSceneRouter.transition_to_scene(_abrir_modo_selector())
 
 
 func _on_opciones_pressed() -> void:
-	TransicionEscenas.change_normal_scene(_abrir_opciones_menu())
+	GameSceneRouter.transition_to_scene(_abrir_opciones_menu())
 
 
 func _on_salir_pressed() -> void:
