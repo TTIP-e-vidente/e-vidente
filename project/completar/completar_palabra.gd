@@ -44,27 +44,40 @@ const PresentadorContinuarJuegoScript := preload("res://interface/components/Con
 const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
-# === Timing ===
+# === Timing interno (no ajustable desde el Inspector) ===
 const RETURN_TWEEN_DURATION := 0.35   # segundos para que la palabra vuelva a su lugar
 const FINISH_DELAY          := 1.5    # segundos antes de llamar finalizar_mini_juego
+const TYPEWRITER_CURSOR := "▌"
 
+# === Feature flags ===
 const ENABLE_SCREEN_INTRO := true
 const ENABLE_TYPEWRITER := true
-const ENABLE_OPTION_STAGGER := true
+const ENABLE_OPTION_STAGGER := false
 const ENABLE_BUTTON_HOVER := true
 const ENABLE_SUCCESS_TRANSITION := true
 
-const TYPEWRITER_CHAR_DELAY := 0.018
-const TYPEWRITER_AFTER_FINISH_DELAY := 0.05
-const TYPEWRITER_CURSOR := "▌"
+# === Parámetros ajustables desde el Inspector ===
+@export_group("Type Effect")
+## Delay por carácter. Valores recomendados: 0.025 (rápido) – 0.045 (cinematic).
+@export_range(0.01, 0.08, 0.005) var character_delay: float = 0.035
+## Pausa antes de empezar a escribir. Le da tiempo a la pantalla de asentarse.
+@export_range(0.0, 0.5, 0.05) var initial_delay: float = 0.15
+## Pausa después de terminar el texto, antes de revelar opciones.
+@export_range(0.0, 0.5, 0.05) var typewriter_after_finish_delay: float = 0.10
+## Si el jugador hace click/tap durante el typewriter, salta al final.
+@export var allow_skip: bool = true
 
-const SCREEN_INTRO_DURATION := 0.30
-const OPTION_STAGGER_DELAY := 0.05
-const OPTION_FADE_DURATION := 0.20
-const OPTION_SLIDE_OFFSET := 16.0
+@export_group("Opciones")
+## Delay escalonado entre cada botón de opción.
+@export_range(0.05, 0.4, 0.01) var option_stagger_delay: float = 0.12
+## Duración del fade/slide de entrada de cada botón.
+@export_range(0.1, 0.5, 0.05) var option_fade_duration: float = 0.30
+## Desplazamiento Y del slide de entrada (px).
+@export_range(4.0, 30.0, 2.0) var option_slide_offset: float = 10.0
 
-const OPTION_HOVER_SCALE := Vector2(1.06, 1.06)
-const OPTION_PRESS_SCALE := Vector2(0.94, 0.94)
+@export_group("Hover & Press")
+@export var option_hover_scale: Vector2 = Vector2(1.025, 1.025)
+@export var option_press_scale: Vector2 = Vector2(0.975, 0.975)
 const OPTION_CORRECT_SCALE := Vector2(1.12, 1.12)
 
 const WRONG_SHAKE_DISTANCE := 12.0
@@ -102,6 +115,7 @@ var _already_finished: bool = false       # Evita doble finalización
 var _interaction_locked: bool = false     # Bloquea durante animación de retorno
 var _is_typewriting: bool = false
 var _typewriter_version: int = 0
+var _skip_requested: bool = false
 var _ruta_escena_de_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 var _continue_requested: bool = false
 
@@ -148,6 +162,18 @@ func _debug_log(message: String) -> void:
 		print("[WordOptions] " + message)
 
 
+## Captura tap/click para activar el skip del typewriter si est\u00e1 en curso.
+func _input(event: InputEvent) -> void:
+	if not allow_skip or not _is_typewriting:
+		return
+	if event is InputEventMouseButton and event.pressed:
+		_skip_requested = true
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch and event.pressed:
+		_skip_requested = true
+		get_viewport().set_input_as_handled()
+
+
 func _on_atrás_pressed() -> void:
 	get_tree().change_scene_to_file("res://mapas/MapScene.tscn")
 
@@ -192,29 +218,41 @@ func setup(challenge_data: Dictionary) -> void:
 # ===========================================================================
 
 ## Muestra el desafío completo: prompt, frase y opciones.
+## El typewriter y las opciones se secuencian: texto primero, luego opciones.
 func _render(challenge_data: Dictionary) -> void:
 	if _prompt_label != null:
 		_prompt_label.text = str(challenge_data.get("prompt", _prompt_label.text))
-	_render_sentence_with_typewriter()
-
-	_render_options(challenge_data.get("options", []))
+	_render_async(challenge_data)
 
 
-## Reutiliza y duplica los botones existentes para preservar el estilo visual.
-func _render_options(options: Array) -> void:
+## Secuencia asíncrona: muestra botones sin texto, escribe la frase, luego revela las palabras.
+func _render_async(challenge_data: Dictionary) -> void:
+	var options: Array = challenge_data.get("options", [])
+	var active_buttons := _prepare_option_buttons(options)
+	await _render_sentence_with_typewriter()
+	await _reveal_option_texts(active_buttons)
+
+
+## Fase 1: prepara los botones inmediatamente (visibles pero sin texto).
+## Solo muestra los botones que corresponden a opciones reales.
+## Retorna el array de botones activos para pasarlo a _reveal_option_texts.
+func _prepare_option_buttons(options: Array) -> Array[Button]:
+	var active_buttons: Array[Button] = []
 	if _options_container == null:
-		return
+		return active_buttons
+	# Bloquear interacción hasta que _reveal_option_texts libere al final
+	_interaction_locked = true
 
 	var existing_buttons: Array[Button] = []
 	for child in _options_container.get_children():
 		if child is Button:
 			existing_buttons.append(child)
-			
+
 	var prototype_btn: Button = null
 	if existing_buttons.size() > 0:
 		prototype_btn = existing_buttons[0]
-		
-	# Crear nuevos botones si faltan
+
+	# Crear botones extra si hay más opciones que slots en la escena
 	while existing_buttons.size() < options.size():
 		if prototype_btn != null:
 			var new_btn = prototype_btn.duplicate()
@@ -225,46 +263,110 @@ func _render_options(options: Array) -> void:
 			_options_container.add_child(new_btn)
 			existing_buttons.append(new_btn)
 			prototype_btn = new_btn
-			
-	# Configurar los botones
+
 	for i in range(existing_buttons.size()):
 		var btn: Button = existing_buttons[i]
 		if i < options.size():
-			btn.show()
-			var option_text = str(options[i])
+			var option_text := str(options[i])
 			btn.set_meta("original_text", option_text)
-			
-			_set_button_text(btn, option_text)
-			
-			# Configurar señales y estilos
-			var connections = btn.pressed.get_connections()
-			for conn in connections:
+
+			# Guardar texto en el label pero mantenerlo invisible hasta el reveal
+			var texto_label: Label = btn.get_node_or_null("TextoOpcion")
+			if texto_label != null:
+				texto_label.text = option_text
+				texto_label.modulate.a = 0.0
+			else:
+				btn.text = ""
+				btn.set_meta("pending_text", option_text)
+
+			# Señales
+			for conn in btn.pressed.get_connections():
 				btn.pressed.disconnect(conn.callable)
-				
 			btn.pressed.connect(_on_option_pressed.bind(option_text, btn))
 
 			if ENABLE_BUTTON_HOVER:
-				# Limpiar conexiones previas de hover
 				for conn in btn.button_down.get_connections(): btn.button_down.disconnect(conn.callable)
 				for conn in btn.button_up.get_connections(): btn.button_up.disconnect(conn.callable)
 				for conn in btn.mouse_entered.get_connections(): btn.mouse_entered.disconnect(conn.callable)
 				for conn in btn.mouse_exited.get_connections(): btn.mouse_exited.disconnect(conn.callable)
-				
+
 				btn.pivot_offset = btn.size / 2.0
-				btn.button_down.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_PRESS_SCALE))
-				btn.button_up.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_HOVER_SCALE if btn.is_hovered() else Vector2.ONE))
-				btn.mouse_entered.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, OPTION_HOVER_SCALE))
+				btn.button_down.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, option_press_scale))
+				btn.button_up.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, option_hover_scale if btn.is_hovered() else Vector2.ONE))
+				btn.mouse_entered.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, option_hover_scale))
 				btn.mouse_exited.connect(func(): if not btn.disabled and not _interaction_locked: _animate_button_scale(btn, Vector2.ONE))
 
-			# Entrada animada
-			if ENABLE_OPTION_STAGGER:
-				btn.modulate.a = 0.0
-				btn.position.y += OPTION_SLIDE_OFFSET
-				var t := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-				t.tween_property(btn, "modulate:a", 1.0, OPTION_FADE_DURATION).set_delay(i * OPTION_STAGGER_DELAY)
-				t.tween_property(btn, "position:y", btn.position.y - OPTION_SLIDE_OFFSET, OPTION_FADE_DURATION).set_delay(i * OPTION_STAGGER_DELAY)
+			btn.modulate.a = 1.0
+			btn.scale = Vector2.ONE
+			btn.disabled = false
+			btn.show()
+			active_buttons.append(btn)
 		else:
+			# Ocultar botones sobrantes del .tscn que no tienen opción asignada
 			btn.hide()
+
+	return active_buttons
+
+
+## Fase 2: revela el texto de cada botón con fade-in escalonado.
+## Se llama después de que el typewriter terminó.
+func _reveal_option_texts(active_buttons: Array[Button]) -> void:
+	if active_buttons.is_empty():
+		return
+
+	_interaction_locked = true
+
+	var reveal_tween := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+
+	for i in range(active_buttons.size()):
+		var btn: Button = active_buttons[i]
+		if not is_instance_valid(btn):
+			continue
+		var delay: float = i * option_stagger_delay
+		var texto_label: Label = btn.get_node_or_null("TextoOpcion")
+		if texto_label != null:
+			reveal_tween.tween_property(texto_label, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
+		else:
+			# Fallback para botones sin TextoOpcion: asignar texto y fade en el botón completo
+			btn.text = str(btn.get_meta("pending_text", ""))
+			btn.modulate.a = 0.0
+			reveal_tween.tween_property(btn, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
+
+	await reveal_tween.finished
+
+	for btn in active_buttons:
+		if is_instance_valid(btn) and not _already_finished:
+			btn.disabled = false
+	_interaction_locked = false
+
+
+## Revela los botones de opciones de forma escalonada y libera la interacción al final.
+func _reveal_options_staggered(all_buttons: Array[Button], active_count: int) -> void:
+	_interaction_locked = true
+
+	var active_buttons: Array[Button] = []
+	for i in range(active_count):
+		if i < all_buttons.size():
+			active_buttons.append(all_buttons[i])
+
+	var reveal_tween := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+
+	for i in range(active_buttons.size()):
+		var btn: Button = active_buttons[i]
+		if not is_instance_valid(btn):
+			continue
+		var delay: float = i * option_stagger_delay
+		reveal_tween.tween_property(btn, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
+		reveal_tween.tween_property(btn, "scale", Vector2.ONE, option_fade_duration).set_delay(delay)
+		reveal_tween.tween_property(btn, "position:y", btn.position.y - option_slide_offset, option_fade_duration).set_delay(delay)
+
+	# Habilitar interacción al final de toda la cascada
+	await reveal_tween.finished
+	for btn in active_buttons:
+		if is_instance_valid(btn) and not _already_finished:
+			btn.disabled = false
+	_interaction_locked = false
+
 
 func _animate_button_scale(btn: Button, target_scale: Vector2) -> void:
 	if not is_instance_valid(btn): return
@@ -417,31 +519,48 @@ func _render_sentence_with_typewriter() -> void:
 		_set_sentence_text(rendered)
 		return
 
-	_start_typewriter(_strip_bbcode(rendered))
+	await _start_typewriter(_strip_bbcode(rendered))
 
+## Escribe el texto letra por letra.
+## Respeta allow_skip: si el jugador toca la pantalla, salta directo al final.
 func _start_typewriter(text: String) -> void:
+	_skip_requested = false
 	_typewriter_version += 1
 	var current_version := _typewriter_version
 	_is_typewriting = true
 
 	_set_sentence_text("")
 
+	# Delay inicial para que la pantalla respire antes de empezar
+	if initial_delay > 0.0:
+		await get_tree().create_timer(initial_delay).timeout
+		if current_version != _typewriter_version:
+			return
+
 	for i in range(text.length()):
 		if current_version != _typewriter_version:
 			return
 
-		var cursor_text = text.substr(0, i + 1)
+		# Skip: completar instantáneamente
+		if allow_skip and _skip_requested:
+			_set_sentence_text(text)
+			break
+
+		var cursor_text: String = text.substr(0, i + 1)
 		if i < text.length() - 1:
 			cursor_text += TYPEWRITER_CURSOR
 
 		_set_sentence_text(cursor_text)
-		await get_tree().create_timer(TYPEWRITER_CHAR_DELAY).timeout
+		await get_tree().create_timer(character_delay).timeout
 
 	if current_version != _typewriter_version:
 		return
 
 	_is_typewriting = false
-	await get_tree().create_timer(TYPEWRITER_AFTER_FINISH_DELAY).timeout
+	# Limpiar cursor y pausar brevemente antes de revelar opciones
+	_set_sentence_text(text)
+	if typewriter_after_finish_delay > 0.0:
+		await get_tree().create_timer(typewriter_after_finish_delay).timeout
 
 func _set_sentence_text(value: String) -> void:
 	if _sentence_label == null:
