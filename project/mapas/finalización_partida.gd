@@ -1,7 +1,6 @@
 extends Node2D
 
 const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
-const ResultsFlowScript := preload("res://flow/results/results_flow.gd")
 
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
@@ -21,13 +20,10 @@ const TIEMPO := preload("res://assets-sistema/final-leccion/tiempo.png")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 
-var _results_flow: ResultsFlow = null  # procesa resultado y navega de vuelta al mapa
 
 
 func _ready() -> void:
-	_results_flow = ResultsFlowScript.new()
-
-	# Asignar iconos a los tres bloques de stats
+	# Iconos de los bloques de stats
 	textura.texture = PTOS_EXPERIENCIA
 	textura_2.texture = PRESICION
 	textura_3.texture = TIEMPO
@@ -37,28 +33,26 @@ func _ready() -> void:
 	numero_2.modulate = Color("#DB9D4B")
 	numero_3.modulate = Color("#4B79DB")
 
-	# Asegurar tipografía correcta en los números (redundante con tscn, pero explícito)
+	# Tipografía de los números
 	for lbl in [numero, numero_2, numero_3]:
 		lbl.add_theme_font_override("font", RUBIK_SPRAY)
 
-	# Texto del boton continuar (se actualiza en mostrar_resultados si hay ranking)
 	if continuar_label != null:
 		continuar_label.text = "Continuar"
 
-	# Leer datos reales del Global y mostrar
+	# Leer los datos de resultado guardados en Global y mostrarlos
 	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
 	if stats.is_empty():
-		push_warning(
-			"[FinalizaciónPartida] Sin datos de finalización en Global. "
-			+ "¿El nodo completó correctamente?"
-		)
-	# save_manager=null porque ContinuidadDePartidaDeNodo ya guardó al llamar a add_exp.
-	var resultado: RefCounted = _results_flow.procesar_resultado_de_partida(stats, null)
-	mostrar_resultados(resultado.exp_ganada, resultado.precision, resultado.tiempo)
+		push_warning("[FinalizaciónPartida] Sin datos de finalización en Global.")
+	mostrar_resultados(
+		int(stats.get("exp_ganada", 0)),
+		int(stats.get("precision", 100)),
+		str(stats.get("tiempo", "0:00"))
+	)
 
-	# Conectar boton Continuar (script = null en la instancia, conectamos aqui)
-	if continuar_btn != null and not continuar_btn.pressed.is_connected(_al_continuar):
-		continuar_btn.pressed.connect(_al_continuar)
+	# Conectar botón Continuar
+	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
+		continuar_btn.pressed.connect(continuar_al_mapa)
 
 
 func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void:
@@ -78,10 +72,6 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 			audio_normal.play()
 
 
-## Alias publico para que otros sistemas puedan forzar el retorno al mapa.
+## Vuelve al mapa con transición. También llamada por el test de humo.
 func continuar_al_mapa() -> void:
-	get_tree().change_scene_to_file(MAP_SCENE)
-
-
-func _al_continuar() -> void:
-	_results_flow.volver_al_mapa(get_tree())
+	await TransicionEscenas.change_scene(MAP_SCENE)

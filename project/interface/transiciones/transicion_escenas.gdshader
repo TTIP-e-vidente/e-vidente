@@ -8,7 +8,10 @@ void fragment() {
 
 	vec2 center = vec2(0.5, 0.5);
 
-	float dist = distance(center, UV);
+	// Correccion de aspect ratio para que el iris sea circular, no eliptico
+	float aspect = SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x;
+	vec2 uv_off = (UV - center) * vec2(aspect, 1.0);
+	float dist = length(uv_off);
 
 	// máscara circular suave
 	float mask = smoothstep(

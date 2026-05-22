@@ -26,9 +26,9 @@ static func calcular_exp_ganada(exp_base: int, precision_ratio: float) -> int:
 	return ReglasDeProgreso.calcular_exp_final(exp_base, precision_ratio)
 
 
-func volver_al_mapa(tree: SceneTree) -> void:
+func volver_al_mapa(_tree: SceneTree) -> void:
 	volver_al_mapa_solicitado.emit()
-	GameSceneRouter.go_to_map(tree)
+	await TransicionEscenas.change_scene(GameSceneRouter.MAP_SCENE_PATH)
 
 
 static func _guardar_progreso_local(save_manager: Node) -> void:

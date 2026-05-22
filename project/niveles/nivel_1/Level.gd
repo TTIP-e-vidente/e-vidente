@@ -765,20 +765,14 @@ func _take_post_game_streak_feedback() -> Dictionary:
 
 func _return_to_map_scene() -> void:
 	_ocultar_continuacion()
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_retorno
-	)
+	await TransicionEscenas.change_normal_scene(_ruta_escena_retorno)
 
 
 func _cancelar_partida_de_nodo() -> void:
 	_ocultar_continuacion()
 	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_retorno
-	)
+	await TransicionEscenas.change_normal_scene(_ruta_escena_retorno)
 ## --- Guardado rápido ---
 
 func _on_guardar_progreso_boton_presionado() -> void:

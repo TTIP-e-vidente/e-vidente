@@ -82,16 +82,16 @@ static func go_to_splash(tree: SceneTree) -> void:
 	go_to_route(tree, ROUTE_SPLASH)
 
 
-static func go_to_main_menu(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_MAIN_MENU)
+static func go_to_main_menu(_tree: SceneTree) -> void:
+	await TransicionEscenas.change_normal_scene(MAIN_MENU_SCENE_PATH)
 
 
-static func go_to_mode_selector(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_MODE_SELECTOR)
+static func go_to_mode_selector(_tree: SceneTree) -> void:
+	await TransicionEscenas.change_normal_scene(MODE_SELECTOR_SCENE_PATH)
 
 
-static func go_to_map(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_MAP)
+static func go_to_map(_tree: SceneTree) -> void:
+	await TransicionEscenas.change_scene(MAP_SCENE_PATH)
 
 
 static func go_to_archivero(tree: SceneTree) -> void:
@@ -164,7 +164,7 @@ static func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
 	if scene_path.is_empty():
 		return
 		
-	_change_scene_to_path(tree, scene_path)
+	await TransicionEscenas.change_scene(scene_path)
 
 
 static func _obtener_json_actual_debug(tree: SceneTree) -> String:
@@ -289,11 +289,11 @@ static func request_initial_scene_preload() -> void:
 
 # --- Navegacion de tracks ---------------------------------------------------
 
-static func go_to_track_book(tree: SceneTree, track_key: String) -> void:
+static func go_to_track_book(_tree: SceneTree, track_key: String) -> void:
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
-	_change_scene_to_path(tree, scene_path)
+	await TransicionEscenas.change_scene(scene_path)
 
 
 static func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
@@ -301,7 +301,7 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_nivel(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
-	_change_scene_to_path(tree, scene_path)
+	await TransicionEscenas.change_scene(scene_path)
 
 
 # --- Navegacion por target --------------------------------------------------

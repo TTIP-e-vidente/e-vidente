@@ -44,7 +44,7 @@ func _ready() -> void:
 	_restaurar_scroll_guardado_del_mapa()
 
 	# Si hay resultado de EXP pendiente, abrir pantalla de finalización oficial y salir
-	if _mostrar_finalizacion_de_nodo_si_corresponde():
+	if await _mostrar_finalizacion_de_nodo_si_corresponde():
 		return
 
 	var nodo_actual: String = Global.consumir_nodo_a_continuar()
@@ -169,7 +169,7 @@ func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
 	## Devuelve true cuando se inicia el cambio de escena (para que _ready() pueda retornar).
 	if not Global.hay_ultima_finalizacion():
 		return false
-	get_tree().change_scene_to_file(FINALIZACION_PARTIDA_SCENE)
+	await TransicionEscenas.change_scene(FINALIZACION_PARTIDA_SCENE)
 	return true
 
 

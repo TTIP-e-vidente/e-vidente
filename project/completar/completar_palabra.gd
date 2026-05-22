@@ -175,7 +175,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_atrás_pressed() -> void:
-	get_tree().change_scene_to_file("res://mapas/MapScene.tscn")
+	await TransicionEscenas.change_normal_scene("res://mapas/MapScene.tscn")
 
 
 ## Verifica que los nodos esperados existan. Loga errores claros si faltan.
