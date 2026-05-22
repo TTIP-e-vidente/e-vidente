@@ -170,6 +170,9 @@ func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 	if source_completed is Dictionary:
 		normalized["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
 	normalized["total_exp"] = max(0, int(source.get("total_exp", 0)))
+	var source_node_progress: Variant = source.get("node_progress", {})
+	if source_node_progress is Dictionary:
+		normalized["node_progress"] = (source_node_progress as Dictionary).duplicate(true)
 	return normalized
 
 

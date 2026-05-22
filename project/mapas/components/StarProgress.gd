@@ -7,10 +7,8 @@ const N_POINTS: int = 5
 
 @export var star_radius: float = 13.0
 @export var inner_ratio: float = 0.42
-@export var border_width: float = 1.5
-@export var star_base_color: Color = Color(1.0, 1.0, 1.0, 0.0)
+@export var star_base_color: Color = Color(0.6, 0.6, 0.6, 1.0)
 @export var star_fill_color: Color = Color(1.0, 0.68, 0.05, 1.0)
-@export var border_color: Color = Color(0.42, 0.42, 0.42, 1.0)
 
 @export_range(0.0, 1.0, 0.01) var progress: float = 0.0:
 	set(new_value):
@@ -37,9 +35,6 @@ func _draw() -> void:
 	draw_colored_polygon(star_pts, star_base_color)
 	if progress > 0.0:
 		_draw_fill(star_pts)
-	var border_pts := PackedVector2Array(star_pts)
-	border_pts.append(star_pts[0])
-	draw_polyline(border_pts, border_color, border_width, true)
 
 
 func _draw_fill(star_pts: PackedVector2Array) -> void:
@@ -53,7 +48,8 @@ func _draw_fill(star_pts: PackedVector2Array) -> void:
 		if pt.y < min_y: min_y = pt.y
 		if pt.y > max_y: max_y = pt.y
 
-	var fill_y: float = lerp(max_y, min_y, progress)
+	# fill_y calculado por bisectón para que el área rellenada sea exactamente progress * área_total
+	var fill_y: float = _area_fill_y(star_pts, progress, min_x, max_x, min_y, max_y)
 	var clip_rect := PackedVector2Array([
 		Vector2(min_x - 1.0, fill_y),
 		Vector2(max_x + 1.0, fill_y),
@@ -64,6 +60,52 @@ func _draw_fill(star_pts: PackedVector2Array) -> void:
 	for poly: PackedVector2Array in result:
 		if poly.size() >= 3:
 			draw_colored_polygon(poly, star_fill_color)
+
+
+# Bisectón: encuentra el fill_y tal que el área recortada / área total == target_ratio.
+# Invariante: ratio(lo) >= target >= ratio(hi)  con  lo <= hi en coordenadas Y de pantalla.
+func _area_fill_y(
+	star_pts: PackedVector2Array,
+	target_ratio: float,
+	min_x: float,
+	max_x: float,
+	min_y: float,
+	max_y: float
+) -> float:
+	var total_area := _polygon_area(star_pts)
+	if total_area < 0.001:
+		return lerp(max_y, min_y, target_ratio)
+
+	var lo := min_y  # fill_y en el tope → ratio ≈ 1.0
+	var hi := max_y  # fill_y en el fondo → ratio ≈ 0.0
+	for i_bisect: int in range(16):
+		var mid := (lo + hi) * 0.5
+		var clip := PackedVector2Array([
+			Vector2(min_x - 1.0, mid),
+			Vector2(max_x + 1.0, mid),
+			Vector2(max_x + 1.0, max_y + 1.0),
+			Vector2(min_x - 1.0, max_y + 1.0),
+		])
+		var polys: Array[PackedVector2Array] = Geometry2D.intersect_polygons(star_pts, clip)
+		var clipped_area := 0.0
+		for poly: PackedVector2Array in polys:
+			clipped_area += _polygon_area(poly)
+		if clipped_area / total_area > target_ratio:
+			lo = mid  # demasiado área → subir fill_y (menos relleno)
+		else:
+			hi = mid  # poco área → bajar fill_y (más relleno)
+	return (lo + hi) * 0.5
+
+
+# Fórmula del cordón de zapatero para calcular el área de un polígono.
+func _polygon_area(pts: PackedVector2Array) -> float:
+	var area := 0.0
+	var n := pts.size()
+	for i: int in range(n):
+		var j: int = (i + 1) % n
+		area += pts[i].x * pts[j].y
+		area -= pts[j].x * pts[i].y
+	return absf(area) * 0.5
 
 
 func _build_star_points(outer_r: float, inner_r: float) -> PackedVector2Array:

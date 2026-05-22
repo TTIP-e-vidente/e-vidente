@@ -1,8 +1,8 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://mapas/components/NodeProgressBadge.gd" id="1_badge"]
-[ext_resource type="Script" path="res://mapas/components/CheckBadge.gd" id="2_check"]
-[ext_resource type="Script" uid="uid://ci8t244866m7h" path="res://mapas/components/StarProgress.gd" id="3_star"]
+[ext_resource type="Script" uid="uid://cauu6qhckbsbr" path="res://mapas/components/NodeProgressBadge.gd" id="1_badge"]
+[ext_resource type="Script" uid="uid://c6bvruc0rvqtb" path="res://mapas/components/CheckBadge.gd" id="2_check"]
+[ext_resource type="Script" uid="uid://cgj5ffu43xgdy" path="res://mapas/components/StarProgress.gd" id="3_star"]
 
 [node name="NodeProgressBadge" type="Node2D"]
 visible = false
