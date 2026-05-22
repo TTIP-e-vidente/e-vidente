@@ -92,9 +92,20 @@ func actualizar_estados_de_nodos() -> void:
 	if map_board == null or not map_board.has_method("configurar_nodos"):
 		return
 
+	var save_manager: Node = get_node_or_null("/root/SaveManager")
+	var node_progress: Dictionary = {}
+	if save_manager != null and save_manager.has_method("get_all_node_progress"):
+		node_progress = save_manager.call("get_all_node_progress")
+
 	var node_states: Array[Dictionary] = []
 	for node_data in nodos_mapa:
-		node_states.append(AvanceDeNodoScript.get_node_state(nodos_mapa, node_data))
+		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
+		var key: String = str(node_data.node_key).strip_edges()
+		if not key.is_empty() and node_progress.has(key):
+			var np: Variant = node_progress[key]
+			if np is Dictionary:
+				state["best_accuracy"] = float((np as Dictionary).get("best_accuracy", 0.0))
+		node_states.append(state)
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
 
 

@@ -324,6 +324,48 @@ func _calcular_ranking(total: int) -> int:
 	return 20
 
 
+# --- Precisión de nodos del mapa (estrellas) -------------------------
+## Guarda la precisión de un nodo. Conserva el mejor historial.
+## accuracy esperado en rango 0–100 
+func save_node_accuracy(node_id: String, accuracy: float) -> void:
+	var clean_id: String = node_id.strip_edges()
+	if clean_id.is_empty():
+		return
+	var stored: Variant = save_data.get("node_progress", {})
+	var node_progress: Dictionary = stored if stored is Dictionary else {}
+	var entry: Dictionary = {}
+	if node_progress.has(clean_id):
+		var prev: Variant = node_progress[clean_id]
+		if prev is Dictionary:
+			entry = (prev as Dictionary).duplicate(true)
+	var prev_best: float = float(entry.get("best_accuracy", 0.0))
+	entry["best_accuracy"] = maxf(prev_best, accuracy)
+	entry["last_accuracy"] = accuracy
+	entry["completed"] = true
+	node_progress[clean_id] = entry
+	save_data["node_progress"] = node_progress
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+
+
+## Retorna la mejor precisión histórica del nodo (0–100).
+func get_node_best_accuracy(node_id: String) -> float:
+	var clean_id: String = node_id.strip_edges()
+	var stored: Variant = save_data.get("node_progress", {})
+	if not stored is Dictionary:
+		return 0.0
+	var entry: Variant = (stored as Dictionary).get(clean_id, {})
+	if not entry is Dictionary:
+		return 0.0
+	return float((entry as Dictionary).get("best_accuracy", 0.0))
+
+
+## Retorna el diccionario completo de progreso por nodo.
+func get_all_node_progress() -> Dictionary:
+	var stored: Variant = save_data.get("node_progress", {})
+	return (stored as Dictionary).duplicate(true) if stored is Dictionary else {}
+
+
 func reiniciar_todo_progreso() -> Dictionary:
 	var current_profile: Dictionary = obtener_perfil_usuario_actual()
 	_reiniciar_datos_guardado_actual(current_profile)

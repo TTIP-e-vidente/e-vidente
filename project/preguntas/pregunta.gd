@@ -817,6 +817,8 @@ func _continuar_partida_de_nodo_si_corresponde() -> bool:
 
 
 func _limpiar_estado_local_de_partida_en_pregunta() -> void:
+	if _progress_bar != null and _progress_bar.has_method("completar_progreso"):
+		_progress_bar.completar_progreso()
 	_limpiar_media_de_pregunta()
 	_pertenece_a_partida_de_nodo = false
 
