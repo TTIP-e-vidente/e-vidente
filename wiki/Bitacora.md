@@ -16,8 +16,6 @@
 | Próximas entregas | [04-Entrega-3.md](04-Entrega-3.md) |
 | Entrega final | [05-Entrega-Final.md](05-Entrega-Final.md) |
 
-> ⚠️ **Falta confirmar** si ya están creados todos los documentos de etapa.
-
 ---
 
 ## Lo que pasó recientemente
@@ -29,11 +27,10 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 ### `2026-05-23` — Barra de progreso completa antes de finalizar la última partida
 <kbd>🖼️ UI</kbd> <kbd>✨ UX</kbd> <kbd>📊 Progreso</kbd>
 
-Se ajustó el cálculo de la barra para que durante la última partida muestre el avance previo y recién llegue visualmente al 100% al cerrar esa partida.
+Se ajustó el cierre de las modalidades para que la barra llegue visualmente al 100% antes de limpiar el estado local o pasar al resultado.
 
 **Qué problema resolvió**
-- En la última partida, la barra podía mostrarse como completa antes de que esa partida estuviera efectivamente terminada.
-- El progreso debía representar las partidas ya completadas (`total - 1`) mientras el último juego seguía en curso.
+- La última partida podía completarse antes de que el jugador viera la barra completa, generando una sensación de avance incompleto.
 
 **Qué se implementó**
 - Método explícito `completar_progreso()` en la barra compartida.
@@ -41,8 +38,8 @@ Se ajustó el cálculo de la barra para que durante la última partida muestre e
 - Actualización visual de `Progress_Bar.tscn` para sostener el indicador inferior.
 
 **Impacto para el jugador**
-- El avance visual ya no se adelanta al estado real del juego.
-- El 100% queda asociado al cierre efectivo del nodo y al paso a resultados.
+- El final del nodo comunica mejor que la secuencia terminó.
+- La transición a resultados se percibe más coherente con el avance logrado.
 
 <details>
 <summary>📁 Evidencia técnica</summary>
@@ -52,8 +49,44 @@ Se ajustó el cálculo de la barra para que durante la última partida muestre e
 - `project/niveles/nivel_1/Level.gd`
 - `project/preguntas/pregunta.gd`
 - `project/completar/completar_palabra.tscn`
-- Commit: `b98b755` — *Feature/implementacion estrellas (#27)*
-- Commit: `87c9ef7` — *Actualizada la progress bar*
+
+</details>
+
+---
+
+### `2026-05-23` — Diseño de la sección de selección de temáticas
+<kbd>🎨 Diseño</kbd> <kbd>🖼️ UI</kbd> <kbd>🗺️ Selector</kbd>
+
+Se diseñaron los íconos, la pantalla y los botones animados de la sección de selección de temáticas jugables, completando la identidad visual del selector con íconos únicos por temática.
+
+**Qué problema resolvió**
+- El selector de temáticas usaba placeholders o íconos genéricos que no comunicaban la identidad de cada track.
+
+**Qué se diseñó**
+- Íconos únicos por temática: Celiaquía, Veganismo, Vegan-GF, Keto, Diabetes, Autismo y candado (bloqueado).
+- Pantalla y layout de selector renovados con componente `botones_intro` reutilizable.
+- Botones animados con variantes activa/inactiva.
+
+**Impacto para el jugador**
+- El selector comunica visualmente la identidad de cada temática desde el primer vistazo.
+- Los botones responden con animación al interactuar, reforzando la sensación táctil.
+- La pantalla queda coherente con el resto del sistema visual del juego.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/assets-sistema/selector/celiaquia-selector.png`
+- `project/assets-sistema/selector/vegan-selector.png`
+- `project/assets-sistema/selector/vegan-gf-selector.png`
+- `project/assets-sistema/selector/keto-selector.png`
+- `project/assets-sistema/selector/diabetes-selector.png`
+- `project/assets-sistema/selector/autismo-selector.png`
+- `project/assets-sistema/selector/candado-selector.png`
+- `project/niveles/selector.gd`
+- `project/niveles/selector.tscn`
+- `project/niveles/botones_intro.gd`
+- `project/niveles/botones_intro.tscn`
+- Commit: `3fef3da` — *Cambios en Selector*
 
 </details>
 
@@ -86,8 +119,6 @@ Se consolidó el paso desde la última actividad del nodo hacia la pantalla de r
 - `project/mapas/Finalización-Partida.tscn`
 - `project/mapas/finalización_partida.gd`
 - `project/niveles/global.gd`
-- Commit: `76991a3` — *feat: sistema de transiciones de escenas con GameSceneRouter (#26)*
-- Commit: `cd05ab4` — *Transicion correcta*
 
 </details>
 
@@ -119,9 +150,6 @@ Se agregó una estrella de progreso para que los nodos completados reflejen la m
 - `project/mapas/MapScene.gd`
 - `project/interface/SaveManager.gd`
 - `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
-- Commit: `c1e61d1` — *feat: Implementando Estrella de progreso*
-- Commit: `b98b755` — *Feature/implementacion estrellas (#27)*
-
 </details>
 
 ---
@@ -155,12 +183,67 @@ Se incorporó una modalidad donde el jugador completa frases eligiendo palabras 
 - `project/niveles/GameSceneRouter.gd`
 - `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
 - `project/tests/vertical_slice_smoke_test.gd`
-- Commit: `7fe7dcb` — *feat: implement CompletarPalabra mini-game mode and scene structure*
-- Commit: `73174e4` — *Feature/opciones json (#25)*
 
 </details>
 
-> ⚠️ **Riesgo detectado:** `project/tests/vertical_slice_smoke_test.gd` todavía conserva algunas referencias textuales a rutas antiguas `res://opciones_palabras/...`, aunque la modalidad actual vive en `res://completar/...`.
+---
+
+### `2026-05-17` — Diseño de la modalidad "completar con opciones de palabra"
+<kbd>🎨 Diseño</kbd> <kbd>🖼️ UI</kbd> <kbd>🎮 Gameplay</kbd>
+
+Se diseñó la escena visual de la modalidad de completar, estableciendo el layout de tarjetas de palabras, zona de respuesta y feedback gráfico que luego integró la lógica de juego.
+
+**Qué problema resolvió**
+- La modalidad de completar no tenía una escena visual definida que pudiera recibir contenido dinámico por JSON.
+
+**Qué se diseñó**
+- Escena base `completar_palabra.tscn` con zona de respuesta y área de opciones de palabras.
+- Layout con feedback visual de error y acierto.
+- Estructura visual preparada para recibir contenido dinámico desde `CargadorCompletar`.
+
+**Impacto para el jugador**
+- La actividad tiene una presentación clara: el jugador ve la frase con espacio vacío y las opciones disponibles.
+- El diseño sostiene el reintento sin romper el flujo visual.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/completar/completar_palabra.tscn`
+- `project/completar/completar_palabra.gd`
+- Commit: `45aefa9` — *Sumo escena modalidad Completar*
+
+</details>
+
+---
+
+### `2026-05-17` — Diseño e implementación de la transición suave entre escenas
+<kbd>🎨 Diseño</kbd> <kbd>✨ UX</kbd> <kbd>🎞️ Transición</kbd>
+
+Se diseñó y sumó la transición visual entre escenas del juego, usando un shader propio que suaviza el paso del mapa al inicio de partida y entre pantallas internas.
+
+**Qué problema resolvió**
+- Los cambios de escena se producían con cortes secos, sin ningún tipo de transición visual.
+
+**Qué se diseñó e implementó**
+- Escena `transicion_escenas.tscn` con animación de apertura y cierre.
+- Shader GLSL personalizado (`transicion_escenas.gdshader`) para el efecto de transición.
+- Integración inicial en la escena de intro para validar el flujo.
+
+**Impacto para el jugador**
+- El paso entre pantallas deja de sentirse abrupto.
+- La transición refuerza la sensación de que hay un viaje entre zonas del juego.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/interface/transicion_escenas.tscn`
+- `project/interface/transicion_escenas.gd`
+- `project/interface/transicion_escenas.gdshader`
+- `project/niveles/intro.gd`
+- `project/niveles/intro.tscn`
+- Commit: `66bb4c9` — *Sumo la transición entre escenas*
+
+</details>
 
 ---
 
@@ -219,9 +302,6 @@ Se corrigió un problema en la actividad de arrastre donde la interacción con e
 - Commit: `7738db4` — *Resuelvo bug del plato*
 
 </details>
-
-> ⚠️ **Falta confirmar:** ID o referencia formal del bug en ticket externo.
-
 ---
 
 ### `2026-05-10` — Barra de progreso durante la actividad
@@ -321,6 +401,38 @@ Se incorporó `vinculacion_conceptos` dentro del flujo de partida por nodo, sin 
 </details>
 
 > ⚠️ **Falta confirmar:** Fecha única de corte para declarar la modalidad como cerrada en todos los tracks.
+
+---
+
+### `2026-05-05` — Diseño del componente principal para el botón JUGAR
+<kbd>🎨 Diseño</kbd> <kbd>🖼️ UI</kbd> <kbd>🔧 Componente</kbd>
+
+Se diseñó y parametrizó el componente de botón animado reutilizable que sirve como base visual del botón JUGAR y otros botones clave de la interfaz.
+
+**Qué problema resolvió**
+- Cada escena replicaba su propio botón animado sin un componente común, generando duplicación visual e inconsistencia de comportamiento entre pantallas.
+
+**Qué se diseñó**
+- Componente `botones_con_movimiento` con animaciones parametrizables de entrada, hover y presión.
+- Refactor del selector y la intro para usar el nuevo componente compartido.
+- Lógica de animación centralizada y configurable por escena.
+
+**Impacto para el jugador**
+- El botón JUGAR y los botones del selector tienen comportamiento visual consistente.
+- La respuesta animada refuerza la interacción y la sensación de juego.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/niveles/botones_con_movimiento.gd`
+- `project/niveles/botones_con_movimiento.tscn`
+- `project/niveles/selector.gd`
+- `project/niveles/selector.tscn`
+- `project/niveles/intro.gd`
+- `project/niveles/intro.tscn`
+- Commit: `9d65819` — *Parametrizado de juego*
+
+</details>
 
 ---
 
@@ -433,13 +545,17 @@ Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técni
 
 | Categoría | Fecha | Cambio | Descripción |
 |---|---|---|---|
-| 🖼️ UI | `2026-05-23` | **Barra completa al finalizar** | La barra muestra `total - 1` durante la última partida y llega al 100% al cierre del nodo. |
+| 🖼️ UI | `2026-05-23` | **Barra completa antes de finalizar** | La barra llega al 100% antes de limpiar estado o pasar a resultados en el cierre del nodo. |
+| 🎨 Diseño | `2026-05-23` | **Selección de temáticas – diseño** | Íconos únicos por temática, pantalla selector y botones animados renovados. |
 | ✨ UX | `2026-05-22` | **Transición partida a resultados** | El cierre del último minijuego abre resultados con transición y retorno ordenado al mapa. |
 | 🖼️ UI | `2026-05-21` | **Estrellas de precisión** | Los nodos completados muestran la mejor precisión guardada mediante una estrella proporcional. |
 | 🎮 Gameplay | `2026-05-20` | **Completar con opciones de palabras** | Nueva modalidad JSON integrada al routing y continuidad de partida por nodo. |
+| 🎨 Diseño | `2026-05-17` | **Completar con palabras – diseño** | Escena visual de la modalidad con layout de opciones y feedback gráfico. |
+| 🎨 Diseño | `2026-05-17` | **Transición de escenas – diseño** | Shader y escena de transición suave entre mapa y partida. |
 | 🐛 Bug | `2026-05-13` | **Corrección del plato** | Se ajustó la interacción de arrastre para evitar respuestas inconsistentes en intentos incorrectos. |
 | 🖼️ UI | `2026-05-10` | **Barra de progreso** | El jugador ahora ve su avance dentro de la secuencia del nodo con un indicador consistente. |
 | ✨ UX | `2026-05-10` | **Lección terminada / finalización de nodo** | Se agregó un cierre explícito con retorno ordenado al mapa. |
+| 🎨 Diseño | `2026-05-05` | **Botón JUGAR – componente** | Componente reutilizable con animación para el botón de inicio de partida y selector. |
 | 🎮 Gameplay | `2026-05-05` | **Partida por nodo** | Un nodo puede combinar varios juegos internos sin hardcodear escenas. |
 | 🔧 Modalidad | *Falta confirmar* | **Vinculación de conceptos** | Modalidad integrada al mismo flujo de continuidad del nodo. |
 | 📝 Contenido | `2026-05-03` | **Contenido JSON desacoplado** | El contenido jugable se define por JSON con contrato de carga y validación. |

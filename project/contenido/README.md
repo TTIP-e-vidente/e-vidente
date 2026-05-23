@@ -283,7 +283,16 @@ Ejemplo random:
   "node_key": "celiaquia_05_intro_mixta",
   "shuffle_games": true,
   "games": [
-	{ "type": "drag", "difficulty": 1 },
+	{
+	  "type": "drag",
+	  "difficulty": 1,
+	  "objective": {
+		"action": "Prepara",
+		"meal": "un plato sin TACC",
+		"connector": "para tu amigue",
+		"restriction": "celiace"
+	  }
+	},
 	{ "type": "quiz", "difficulty": 1 }
   ]
 }
@@ -299,6 +308,54 @@ Reglas de `shuffle_games`:
 - si `games.size() <= 1`, no se mezcla nada;
 - si `games` usa objetos random, primero se eligen las actividades y despues se mezcla;
 - el JSON original no se modifica.
+
+## Objetivo visible de arrastre
+
+Para que la UI no muestre solo "Prepara", cada game `type: "drag"` puede
+declarar un objetivo simple:
+
+```json
+{
+  "type": "drag",
+  "difficulty": 1,
+  "objective": {
+	"action": "Prepara",
+	"meal": "un desayuno sin TACC",
+	"connector": "para tu amigue",
+	"restriction": "celiace"
+  }
+}
+```
+
+Tambien siguen funcionando los campos legacy:
+`objective_label`, `objective_message`, `objective_action`,
+`objective_meal`, `objective_connector` y `objective_restriction`.
+El runtime los normaliza antes de llegar a `DragObjectiveText`.
+
+## Completar palabra
+
+`mapa/completar_palabra.json` usa un diccionario por id. Formato recomendado:
+
+```json
+"word_celiaquia_tacc_01": {
+  "id": "word_celiaquia_tacc_01",
+  "mode": "completar_palabra",
+  "difficulty": 1,
+  "prompt": "Los productos sin TACC estan libres de ____.",
+  "correct_answers": ["gluten"],
+  "choices": ["gluten", "azucar", "sal"],
+  "order_matters": false,
+  "teaching_key": "celiaquia_desayuno"
+}
+```
+
+Compatibilidad:
+
+| Viejo | Nuevo |
+|-------|-------|
+| `sentence` | `prompt` |
+| `answers` | `correct_answers` |
+| `options` | `choices` |
 
 ## Flujo trainee del mapa
 

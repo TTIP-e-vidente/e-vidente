@@ -7,15 +7,33 @@
 			"_games_backup": [
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			],
 			"games": [
@@ -31,16 +49,32 @@
 				{
 					"type": "drag",
 					"difficulty": 1,
-					"objective_label": "Prepará",
-					"objective_message": "un desayuno sin TACC\npara tu amigue"
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -53,7 +87,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -66,7 +106,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -74,7 +120,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -84,7 +136,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -92,7 +150,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -102,7 +166,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "match",
@@ -124,7 +194,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -156,7 +232,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -175,7 +257,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -194,7 +282,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "match",
@@ -222,7 +316,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -232,7 +332,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -250,7 +356,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una cena sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -268,7 +380,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -287,7 +405,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -305,7 +429,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -323,7 +453,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -341,7 +477,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -368,7 +510,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -378,7 +526,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -408,7 +562,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una cena sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -423,7 +583,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -451,7 +617,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -461,7 +633,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -489,7 +667,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -499,7 +683,13 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
@@ -527,7 +717,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				}
 			]
 		},
@@ -541,7 +737,13 @@
 				},
 				{
 					"type": "drag",
-					"difficulty": 3
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "celíace"
+					}
 				},
 				{
 					"type": "quiz",
