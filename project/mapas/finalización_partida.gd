@@ -75,3 +75,7 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 ## Vuelve al mapa con transición. También llamada por el test de humo.
 func continuar_al_mapa() -> void:
 	await TransicionEscenas.change_normal_scene(MAP_SCENE)
+
+
+func _on_continuar_pressed() -> void:
+	pass # Replace with function body.
