@@ -165,8 +165,8 @@ func _layout_drag_objective_text() -> void:
 	if _drag_objective_text == null:
 		push_warning("[DragObjectiveText] No existe nodo DragObjectiveText en Level.tscn")
 		return
-	_drag_objective_text.position = Vector2(72, 195)
-	_drag_objective_text.size = Vector2(330, 120)
+	_drag_objective_text.position = Vector2(42, 168)
+	_drag_objective_text.size = Vector2(340, 115)
 	print_debug(
 		"[DragObjectiveText] runtime position=",
 		_drag_objective_text.position,
@@ -423,25 +423,50 @@ func _actualizar_objetivo_de_arrastre_desde_juego_actual() -> void:
 
 
 func _build_drag_objective_data(game: Dictionary) -> Dictionary:
-	var label: String = _get_drag_objective_label(game)
-	var main: String = _get_drag_objective_main(game)
-	var sub: String = _get_drag_objective_sub(game)
+	var action: String = _get_drag_objective_label(game)
+	var meal: String = _get_drag_objective_main(game)
+	var connector: String = _get_drag_objective_sub(game)
+	var restriction: String = _get_drag_objective_restriction(game)
 
-	if main.strip_edges().is_empty():
-		main = _build_drag_objective_main_fallback(game)
+	if meal.strip_edges().is_empty():
+		meal = _build_drag_objective_main_fallback(game)
 
-	if sub.strip_edges().is_empty():
-		sub = "para tu amigue"
+	if connector.strip_edges().is_empty():
+		connector = "para tu amigue"
 
-	return {"label": label, "main": main, "sub": sub}
+	return {
+		"objective_action": action,
+		"objective_meal": meal,
+		"objective_connector": connector,
+		"objective_restriction": restriction,
+		"activity_id": str(game.get("activity_id", "")),
+		"track_key": str(game.get("track_key", "")),
+		"pack_id": str(game.get("pack_id", "")),
+	}
+
+
+func _get_drag_objective_restriction(game: Dictionary) -> String:
+	if game.has("objective_restriction"):
+		return str(game.get("objective_restriction", ""))
+
+	var objective_raw: Variant = game.get("objective", {})
+	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
+	if objective.has("restriction"):
+		return str(objective.get("restriction", ""))
+
+	return ""
 
 
 func _get_drag_objective_label(game: Dictionary) -> String:
+	if game.has("objective_action"):
+		return str(game.get("objective_action", "Prepará"))
 	if game.has("objective_label"):
 		return str(game.get("objective_label", "Prepará"))
 
 	var objective_raw: Variant = game.get("objective", {})
 	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
+	if objective.has("action"):
+		return str(objective.get("action", "Prepará"))
 	if objective.has("label"):
 		return str(objective.get("label", "Prepará"))
 
@@ -449,11 +474,15 @@ func _get_drag_objective_label(game: Dictionary) -> String:
 
 
 func _get_drag_objective_main(game: Dictionary) -> String:
+	if game.has("objective_meal"):
+		return str(game.get("objective_meal", ""))
 	if game.has("objective_main"):
 		return str(game.get("objective_main", ""))
 
 	var objective_raw: Variant = game.get("objective", {})
 	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
+	if objective.has("meal"):
+		return str(objective.get("meal", ""))
 	if objective.has("main"):
 		return str(objective.get("main", ""))
 
@@ -467,11 +496,15 @@ func _get_drag_objective_main(game: Dictionary) -> String:
 
 
 func _get_drag_objective_sub(game: Dictionary) -> String:
+	if game.has("objective_connector"):
+		return str(game.get("objective_connector", ""))
 	if game.has("objective_sub"):
 		return str(game.get("objective_sub", ""))
 
 	var objective_raw: Variant = game.get("objective", {})
 	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
+	if objective.has("connector"):
+		return str(objective.get("connector", ""))
 	if objective.has("sub"):
 		return str(objective.get("sub", ""))
 

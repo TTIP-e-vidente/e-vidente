@@ -28,6 +28,10 @@ const OBJECTIVE_FIELDS := [
 	"objective_message",
 	"objective_main",
 	"objective_sub",
+	"objective_action",
+	"objective_meal",
+	"objective_connector",
+	"objective_restriction",
 	"objective",
 ]
 
