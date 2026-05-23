@@ -33,6 +33,8 @@ const CONTENT_ERROR_TITLE_FONT_SIZE := 42
 const CONTENT_ERROR_BODY_FONT_SIZE := 26
 const SEGUNDOS_CONTINUACION_AUTOMATICA := 5.0
 
+@onready var titulo_nivel: Label = $Contenido/TituloNivel/Label
+
 
 @onready var _layout_preguntas_2: Control = $Contenido/Preguntas
 @onready var _layout_preguntas_3: Control = $Contenido/Preguntasx3
@@ -105,7 +107,7 @@ func _ready() -> void:
 	_configurar_layouts_de_opciones()
 	_reiniciar_cierre_del_quiz()
 	_conectar_continuar_juego()
-
+	titulo_nivel.text = "Celiaquía"
 	_cargar_datos_pregunta()
 	_configurar_indicador_de_progreso_de_juego()
 	if not _puede_iniciar_quiz():

@@ -6,13 +6,14 @@
 [ext_resource type="PackedScene" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
 [ext_resource type="Texture2D" uid="uid://yhtci6khvh2l" path="res://assets-sistema/mapa/camino-mapa.png" id="5_path1"]
 [ext_resource type="Texture2D" uid="uid://mmbv3xon7864" path="res://assets-sistema/mapa/camino-mapa2.png" id="6_path2"]
-[ext_resource type="Texture2D" uid="uid://dlwhkdo0kofgm" path="res://assets-sistema/interfaz/titulo-celiaquia.png" id="7_title"]
 [ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
 [ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
 [ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
 [ext_resource type="Shader" uid="uid://ouiuwpm2wm3h" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
 [ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
 [ext_resource type="Texture2D" uid="uid://cqa27klka6w3" path="res://assets-sistema/mapa/desafio-mapa-1.png" id="12_oop13"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="13_gaknv"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="14_h6wjv"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_scroll"]
 shader = ExtResource("11_fade_shader")
@@ -328,10 +329,22 @@ question_number = 24
 label_text = "Pregunta 24"
 icon_texture = ExtResource("12_oop13")
 
+[node name="Label" type="Label" parent="." unique_id=946760440]
+z_index = 1857
+z_as_relative = false
+offset_left = 521.0
+offset_top = 125.0
+offset_right = 858.0
+offset_bottom = 223.0
+scale = Vector2(0.54572827, 0.5553098)
+theme_override_fonts/font = ExtResource("14_h6wjv")
+theme_override_font_sizes/font_size = 65
+text = "Celiaquía"
+
 [node name="Titulo del Nivel" type="Sprite2D" parent="." unique_id=1218624443]
 position = Vector2(591.99994, 142)
 scale = Vector2(0.52793294, 0.52793294)
-texture = ExtResource("7_title")
+texture = ExtResource("13_gaknv")
 
 [node name="FadeOverlay" type="TextureRect" parent="." unique_id=1614004936]
 z_index = 10

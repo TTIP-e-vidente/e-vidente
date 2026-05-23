@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://bjvys771chohe"]
+
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_r8pak"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="2_u7xbc"]
+[ext_resource type="Script" uid="uid://7wlkhkbqmbkf" path="res://niveles/botones.gd" id="3_5yqoj"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_i65pt"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
+shader = ExtResource("1_r8pak")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
+
+[node name="Jugar" type="TextureButton" unique_id=1307767255]
+editor_description = "Jugar"
+material = SubResource("ShaderMaterial_544v7")
+custom_minimum_size = Vector2(160, 160)
+anchors_preset = -1
+anchor_top = 0.35200003
+anchor_bottom = 0.35200003
+offset_left = 5.0
+offset_top = -104.60004
+offset_right = 540.0
+offset_bottom = 153.39996
+scale = Vector2(0.93417746, 0.94754076)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+size_flags_stretch_ratio = 9.99
+accessibility_live = 2
+texture_normal = ExtResource("2_u7xbc")
+flip_v = true
+script = ExtResource("3_5yqoj")
+metadata/_edit_group_ = true
+
+[node name="Label" type="Label" parent="." unique_id=707747479]
+custom_minimum_size = Vector2(1.825, 1.78)
+layout_mode = 0
+offset_left = 109.186966
+offset_top = 83.37373
+offset_right = 414.70197
+offset_bottom = 175.37372
+scale = Vector2(0.9455764, 0.9810979)
+pivot_offset = Vector2(159.62862, 48.2968)
+theme_override_colors/font_color = Color(0.13174233, 0.13174233, 0.13174233, 1)
+theme_override_fonts/font = ExtResource("5_i65pt")
+theme_override_font_sizes/font_size = 50
+text = "texto"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

@@ -25,9 +25,9 @@ script = ExtResource("1_cxqdc")
 [node name="Progress-game" type="ProgressBar" parent="." unique_id=1467412127]
 layout_mode = 0
 offset_left = 87.0
-offset_top = 778.0
-offset_right = 248.02484
-offset_bottom = 785.4534
+offset_top = 760.0
+offset_right = 248.025
+offset_bottom = 762.828
 scale = Vector2(6.0617776, 6.0617776)
 theme_override_styles/background = SubResource("StyleBoxFlat_cxqdc")
 theme_override_styles/fill = SubResource("StyleBoxFlat_ld5oq")

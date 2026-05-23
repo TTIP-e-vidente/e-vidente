@@ -30,7 +30,9 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 1
+					"difficulty": 1,
+					"objective_label": "Prepará",
+					"objective_message": "un desayuno sin TACC\npara tu amigue"
 				},
 				{
 					"type": "drag",

@@ -1,13 +1,20 @@
-# HELPER_INTERNO
 # Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
 # Solo renderiza — no decide flujo ni calcula EXP.
 extends Node2D
 
 signal node_selected(node_data: MapNodeData)
 
+var _configured_map_nodes: Array = []
+var _configured_node_states: Array[Dictionary] = []
+
 @onready var contenedor_scroll: ScrollContainer = $ScrollContainer
 @onready var contenedor_nodos: Node2D = $ScrollContainer/Contenido/NodesContainer
+@onready var titulo_del_nivel: Sprite2D = $"Titulo del Nivel"
 
+
+func _ready() -> void:
+	call_deferred("refresh_progress_from_save")
+	titulo_del_nivel.modulate = Color("#42785e")
 
 func obtener_contenedor_nodos() -> Node2D:
 	return contenedor_nodos
@@ -27,6 +34,8 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 
 
 func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
+	_configured_map_nodes = map_nodes.duplicate()
+	_configured_node_states = node_states.duplicate()
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
 
@@ -48,6 +57,13 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 		if node_data.has_map_position:
 			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
+			var progress: Variant = node_state.get("best_percent", 0.0)
+			print_debug(
+				"[MapBoard] refrescando progreso node_key=",
+				node_data.node_key,
+				" progress=",
+				progress
+			)
 			visual_node.configurar(node_data, node_state)
 		var callback := Callable(self, "_on_visual_node_selected")
 		var already_connected := visual_node.is_connected("selected", callback)
@@ -56,6 +72,41 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 
 	for index in range(visible_count, visual_nodes.size()):
 		visual_nodes[index].hide()
+
+
+func refresh_progress_from_save() -> void:
+	print_debug("[MapBoard] refresh_progress_from_save()")
+	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
+	var save_manager: Node = get_node_or_null("/root/SaveManager")
+	var node_progress: Dictionary = {}
+	if save_manager != null and save_manager.has_method("get_all_node_progress"):
+		node_progress = save_manager.call("get_all_node_progress")
+	var visible_count: int = mini(visual_nodes.size(), _configured_map_nodes.size())
+	for index in range(visible_count):
+		var map_node: MapNodeData = _configured_map_nodes[index] as MapNodeData
+		var visual_node: Node2D = visual_nodes[index]
+		if map_node == null or visual_node == null:
+			continue
+		var node_key: String = map_node.node_key.strip_edges()
+		var progress: Dictionary = {}
+		if node_progress.has(node_key):
+			var raw_progress: Variant = node_progress[node_key]
+			if raw_progress is Dictionary:
+				progress = raw_progress as Dictionary
+		var completed: bool = bool(progress.get("completed", false))
+		var saved_percent: float = float(progress.get("best_percent", 0.0))
+		if completed and saved_percent <= 0.0:
+			saved_percent = 1.0
+		print_debug(
+			"[MapBoard] node_key=",
+			node_key,
+			" saved_percent=",
+			saved_percent,
+			" completed=",
+			completed
+		)
+		if completed and visual_node.has_method("set_star_progress"):
+			visual_node.call("set_star_progress", saved_percent)
 
 
 func obtener_nodos_runtime_mapa() -> Array[Node2D]:

@@ -26,9 +26,29 @@ static func continuar_o_finalizar_partida(
 		return abrir_juego_actual(tree, estado_global)
 
 	var partida_actual: Dictionary = estado_global.call("obtener_partida_de_nodo_actual")
+	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
+	var game_index: int = int(partida_actual.get("indice_juego_actual", 0))
+	var total_games: int = int(partida_actual.get("total_juegos", 0))
+	var stats: Dictionary = {}
+	if estado_global.has_method("obtener_stats_nodo_actual"):
+		stats = estado_global.call("obtener_stats_nodo_actual")
+	var percent: float = clampf(float(NodoRuntimeScript.calcular_precision(tree)) / 100.0, 0.0, 1.0)
+	var completed: bool = true
 	print(
 		"%s node=%s"
-		% [LOG_PREFIX_NODE_COMPLETE, str(partida_actual.get("clave_nodo", "")).strip_edges()]
+		% [LOG_PREFIX_NODE_COMPLETE, node_key]
+	)
+	print_debug(
+		"[Progress] partida finalizada node_key=",
+		node_key,
+		" game_index=",
+		game_index,
+		" percent=",
+		percent,
+		" completed=",
+		completed,
+		" result=",
+		stats
 	)
 
 	_registrar_exp_finalizacion(tree, estado_global, partida_actual)
@@ -113,11 +133,25 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 
 static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary) -> void:
 	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
+	var track_key: String = str(partida_actual.get("clave_pista", "")).strip_edges()
 	var save_manager: Node = _get_save_manager(tree)
 	if node_key.is_empty() or save_manager == null:
 		return
 	var precision: int = NodoRuntimeScript.calcular_precision(tree)
-	save_manager.call("save_node_accuracy", node_key, float(precision))
+	var total_games: int = int(partida_actual.get("total_juegos", 0))
+	var completed_games: int = total_games
+	var estado_global: Node = _obtener_estado_global(tree)
+	if estado_global != null and estado_global.has_method("marcar_nodo_jugable_completado"):
+		estado_global.call("marcar_nodo_jugable_completado", track_key, node_key)
+	print_debug(
+		"[Progress] guardando progreso node_key=",
+		node_key,
+		" completed_games=",
+		completed_games,
+		" total_games=",
+		total_games
+	)
+	save_manager.call("save_node_accuracy", node_key, float(precision), completed_games, total_games)
 	print("%s accuracy=%d node=%s" % [LOG_PREFIX_NODE_COMPLETE, precision, node_key])
 
 

@@ -1,23 +1,25 @@
 [gd_scene format=3 uid="uid://ce668s10g001j"]
 
-[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ci3qi"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="1_2usb3"]
 [ext_resource type="Script" uid="uid://ckxox5l28kaoc" path="res://niveles/nivel_1/titulo_nivel.gd" id="2_2usb3"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_2usb3"]
 
 [node name="TituloNivel" type="Sprite2D" unique_id=74001118]
 z_index = 1
 position = Vector2(241.00003, 112)
-scale = Vector2(0.756, 0.756)
-texture = ExtResource("1_ci3qi")
+scale = Vector2(0.6085122, 0.6085122)
+texture = ExtResource("1_2usb3")
 script = ExtResource("2_2usb3")
 
 [node name="Label" type="Label" parent="." unique_id=1079872665]
+z_index = 535
 offset_left = -141.53442
 offset_top = -51.587303
 offset_right = 141.78558
 offset_bottom = 41.1877
-scale = Vector2(0.98336244, 0.98336244)
+scale = Vector2(1.6175381, 1.6175381)
 pivot_offset = Vector2(145.1409, 45.16902)
+theme_override_colors/font_color = Color(0.21806103, 0.21806103, 0.21806103, 1)
 theme_override_fonts/font = ExtResource("3_2usb3")
 theme_override_font_sizes/font_size = 41
 text = "prueba"

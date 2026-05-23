@@ -91,7 +91,7 @@ static func go_to_mode_selector(_tree: SceneTree) -> void:
 
 
 static func go_to_map(_tree: SceneTree) -> void:
-	await TransicionEscenas.change_scene(MAP_SCENE_PATH)
+	await TransicionEscenas.change_normal_scene(MAP_SCENE_PATH)
 
 
 static func go_to_archivero(tree: SceneTree) -> void:
@@ -125,7 +125,7 @@ static func go_to_streak(
 			)
 		elif tree_root.has_meta(STREAK_CONTINUE_TARGET_META):
 			tree_root.remove_meta(STREAK_CONTINUE_TARGET_META)
-	_change_scene_to_path(tree, STREAK_SCENE_PATH)
+	await TransicionEscenas.change_scene(STREAK_SCENE_PATH)
 
 
 static func go_to_options(tree: SceneTree) -> void:
@@ -382,11 +382,11 @@ static func go_to_continue_target(
 		fallback_scene_path = MODE_SELECTOR_SCENE_PATH
 	var global_state := _get_global_state(tree)
 	if global_state == null or not global_state.has_method("obtener_destino_de_continuacion"):
-		_change_scene_to_path(tree, fallback_scene_path)
+		await GameSceneRouter.change_scene(fallback_scene_path)
 		return
 	var continue_target: Variant = global_state.call("obtener_destino_de_continuacion")
 	if not continue_target is Dictionary or (continue_target as Dictionary).is_empty():
-		_change_scene_to_path(tree, fallback_scene_path)
+		await TransicionEscenas.change_normal_scene(fallback_scene_path)
 		return
 	go_to_target(tree, continue_target as Dictionary, fallback_scene_path)
 

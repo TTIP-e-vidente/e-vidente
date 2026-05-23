@@ -57,6 +57,7 @@ var _is_hovering: bool = false
 var _click_in_progress: bool = false
 var _disponible_tween: Tween = null
 var _best_accuracy: float = 0.0
+var _best_percent: float = 0.0
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
@@ -106,15 +107,33 @@ func _refresh_badge() -> void:
 		return
 	var is_completed: bool = (visual_state == STATE_COMPLETED) or debug_completed
 	node_badge.visible = is_completed
+	var effective_progress: float = (
+		debug_progress if debug_progress >= 0.0 else clampf(_best_percent, 0.0, 1.0)
+	)
+	if is_completed and effective_progress <= 0.0:
+		effective_progress = 1.0
+	print_debug(
+		"[Star] update node_key=",
+		node_data.node_key if node_data != null else name,
+		" percent=",
+		effective_progress,
+		" completed=",
+		is_completed
+	)
 	if not is_completed:
 		return
-	var effective_progress: float = (
-		debug_progress if debug_progress >= 0.0 else clampf(_best_accuracy / 100.0, 0.0, 1.0)
-	)
 	if node_badge.has_method("set_completed"):
 		node_badge.call("set_completed", true)
 	if node_badge.has_method("set_progress"):
 		node_badge.call("set_progress", effective_progress)
+
+
+func set_star_progress(percent: float) -> void:
+	_best_percent = clampf(percent, 0.0, 1.0)
+	if _best_percent > 0.0:
+		_best_accuracy = maxf(_best_accuracy, _best_percent * 100.0)
+	if node_badge != null and node_badge.has_method("set_progress"):
+		node_badge.call("set_progress", _best_percent)
 
 
 func _on_button_pressed() -> void:
@@ -182,6 +201,10 @@ func _apply_progress_state(progress_state: Dictionary) -> void:
 	var is_completed: bool = bool(progress_state.get("is_completed", false))
 	# _best_accuracy primero para que los setters con update_view() ya lo vean correcto
 	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
+	_best_percent = float(progress_state.get("best_percent", _best_accuracy / 100.0))
+	if is_completed and _best_percent <= 0.0:
+		_best_percent = 1.0
+		_best_accuracy = maxf(_best_accuracy, 100.0)
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = bool(progress_state.get("can_play", is_unlocked or is_completed))

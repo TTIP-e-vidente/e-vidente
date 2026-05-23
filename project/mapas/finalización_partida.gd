@@ -5,6 +5,9 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
 @onready var textura_3: TextureRect = $CenterContainer/VBoxContainer/StatsContainer3/Imagen
+@onready var label : Label = $CenterContainer/VBoxContainer/StatsContainer/Imagen/Label
+@onready var label_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Label
+@onready var label_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Label
 @onready var numero : Label = $CenterContainer/VBoxContainer/StatsContainer/Imagen/Numero
 @onready var numero_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Numero
 @onready var numero_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Numero
@@ -14,19 +17,20 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 
-const PTOS_EXPERIENCIA := preload("res://assets-sistema/final-leccion/ptos-experiencia.png")
-const PRESICION := preload("res://assets-sistema/final-leccion/presicion.png")
-const TIEMPO := preload("res://assets-sistema/final-leccion/tiempo.png")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 
+const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 
 
 func _ready() -> void:
 	# Iconos de los bloques de stats
-	textura.texture = PTOS_EXPERIENCIA
-	textura_2.texture = PRESICION
-	textura_3.texture = TIEMPO
+	#textura.texture = CUADRADO_2X_2
+	#textura_2.texture = CUADRADO_2X_2
+	#textura_3.texture = CUADRADO_2X_2
+	label.text = "EXP"
+	label_2.text = "Precisión"
+	label_3.text = "Tiempo"
 
 	# Colores de los valores (dorado, naranja, azul)
 	numero.modulate = Color("#DBC151")
@@ -74,4 +78,8 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 
 ## Vuelve al mapa con transición. También llamada por el test de humo.
 func continuar_al_mapa() -> void:
-	await TransicionEscenas.change_scene(MAP_SCENE)
+	await TransicionEscenas.change_normal_scene(MAP_SCENE)
+
+
+func _on_continuar_pressed() -> void:
+	pass # Replace with function body.

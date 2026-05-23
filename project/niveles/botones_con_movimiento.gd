@@ -2,6 +2,7 @@ extends TextureButton
 
 @onready var jugar: TextureButton = $"."
 @onready var label: Label = $Label
+@onready var imagen_restriccion: Sprite2D = $"imagen-restriccion"
 
 var tween_rebote: Tween
 
@@ -10,16 +11,17 @@ func ajustar_fuente(label: Label, texto: String) -> void:
 	label.text = texto
 
 	var largo := texto.length()
-	var font_size := 42
+	var font_size := 32
 
 	if largo > 40:
-		font_size = 24
+		font_size = 20
 	elif largo > 32:
-		font_size = 28
+		font_size = 24
 	elif largo > 24:
-		font_size = 34
+		font_size = 28
 
-	label.add_theme_font_size_override("font_size", font_size)
+	label.remove_theme_font_size_override("font_size")
+	label.add_theme_font_size_override("font_size", font_size)	
 
 
 func _ready() -> void:
@@ -108,7 +110,15 @@ func _rebote_boton(button: Control):
 		0.22
 	).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
-
+func establecer_imagen(ruta: String) -> void:
+	var textura: Texture2D = load(ruta)
+	imagen_restriccion.texture = textura
+	
+	
 func _on_pressed() -> void:
+
+	modulate = Color("#42785e")
+	
 	_rebote_boton(jugar)
 	await get_tree().create_timer(0.15).timeout
+	modulate = Color.WHITE

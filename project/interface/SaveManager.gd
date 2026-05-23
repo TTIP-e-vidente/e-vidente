@@ -327,7 +327,12 @@ func _calcular_ranking(total: int) -> int:
 # --- Precisión de nodos del mapa (estrellas) -------------------------
 ## Guarda la precisión de un nodo. Conserva el mejor historial.
 ## accuracy esperado en rango 0–100 
-func save_node_accuracy(node_id: String, accuracy: float) -> void:
+func save_node_accuracy(
+	node_id: String,
+	accuracy: float,
+	completed_games: int = -1,
+	total_games: int = -1
+) -> void:
 	var clean_id: String = node_id.strip_edges()
 	if clean_id.is_empty():
 		return
@@ -339,9 +344,26 @@ func save_node_accuracy(node_id: String, accuracy: float) -> void:
 		if prev is Dictionary:
 			entry = (prev as Dictionary).duplicate(true)
 	var prev_best: float = float(entry.get("best_accuracy", 0.0))
+	var percent: float = clampf(accuracy / 100.0, 0.0, 1.0)
+	var prev_best_percent: float = float(entry.get("best_percent", prev_best / 100.0))
+	var best_percent: float = maxf(prev_best_percent, percent)
 	entry["best_accuracy"] = maxf(prev_best, accuracy)
+	entry["best_percent"] = best_percent
 	entry["last_accuracy"] = accuracy
+	entry["last_percent"] = percent
 	entry["completed"] = true
+	print_debug(
+		"[Progress] guardado node_key=",
+		clean_id,
+		" best_percent=",
+		best_percent,
+		" completed=",
+		entry["completed"],
+		" completed_games=",
+		completed_games,
+		" total_games=",
+		total_games
+	)
 	node_progress[clean_id] = entry
 	save_data["node_progress"] = node_progress
 	_marcar_guardado_sucio()
