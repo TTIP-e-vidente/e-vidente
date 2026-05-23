@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_fsij2"]
 [ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="3_fsij2"]
 [ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="4_6uvpc"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
 [ext_resource type="Texture2D" uid="uid://co7k3gagotuj5" path="res://assets-sistema/selector/selector-diabetes.png" id="8_uk3qb"]
 [ext_resource type="Texture2D" uid="uid://4plop0koq1r6" path="res://assets-sistema/selector/selector-autismo.png" id="9_tiw82"]
