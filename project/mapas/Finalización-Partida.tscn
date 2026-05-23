@@ -58,7 +58,7 @@ tooltip_auto_translate_mode = 2
 [node name="VBoxContainer" type="HBoxContainer" parent="CenterContainer" unique_id=1845042911]
 layout_direction = 4
 layout_mode = 2
-theme_override_constants/separation = 1131
+theme_override_constants/separation = 822
 
 [node name="StatsContainer" parent="CenterContainer/VBoxContainer" unique_id=1924378753 instance=ExtResource("2_k2l4b")]
 layout_mode = 2
