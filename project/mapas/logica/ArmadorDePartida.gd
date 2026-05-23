@@ -6,6 +6,9 @@ const CatalogoDePistas := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const ContentSchemaNormalizerScript := preload(
+	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
+)
 const DatosNodoMapaScript := preload("res://mapas/core/MapNodeData.gd")
 
 const JUEGOS_POR_PARTIDA_DE_NODO := 5
@@ -33,6 +36,7 @@ const OBJECTIVE_FIELDS := [
 	"objective_connector",
 	"objective_restriction",
 	"objective",
+	"meal",
 ]
 
 static var _cache_dificultad_por_ruta: Dictionary = {}
@@ -132,6 +136,7 @@ static func construir_juegos_fijos(node_data: MapNodeData) -> Array[Dictionary]:
 				fixed_game_entry.get("titulo", fixed_game_entry.get("title", node_data.title))
 			).strip_edges(),
 			"clave_nodo_de_origen": node_data.node_key,
+			"track_key": node_data.track_key,
 		}
 		_copiar_campos_objetivo(fixed_game_entry, datos_juego)
 		var dificultad_juego: int = int(
@@ -202,6 +207,7 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 			"pack_id": str(game_entry.get("pack_id", pack_id)).strip_edges(),
 			"titulo": str(game_entry.get("titulo", node_data.title)).strip_edges(),
 			"clave_nodo_de_origen": node_data.node_key,
+			"track_key": node_data.track_key,
 		}
 		_copiar_campos_objetivo(game_entry, datos_juego)
 		var dificultad_juego: int = int(
@@ -559,8 +565,10 @@ static func _crear_juego(
 	node_data: MapNodeData,
 	dificultad_objetivo: int
 ) -> Dictionary:
-	return {
-		"mode": _normalizar_modo(node_data.mode),
+	var modo: String = _normalizar_modo(node_data.mode)
+	var juego: Dictionary = {
+		"mode": modo,
+		"type": "drag" if modo == DatosNodoMapaScript.MODE_DRAG_DROP else "",
 		"json_path": node_data.json_path,
 		"activity_id": node_data.activity_id,
 		"pack_id": node_data.get_effective_pack_id(),
@@ -568,7 +576,10 @@ static func _crear_juego(
 		"dificultad": _limitar_dificultad(dificultad_objetivo),
 		"difficulty": _limitar_dificultad(dificultad_objetivo),
 		"clave_nodo_de_origen": node_data.node_key,
+		"track_key": node_data.track_key,
 	}
+	_normalizar_objetivo_de_arrastre(juego)
+	return juego
 
 
 static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dictionary:
@@ -588,8 +599,10 @@ static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dic
 		"dificultad": _limitar_dificultad(dificultad),
 		"difficulty": _limitar_dificultad(dificultad),
 		"clave_nodo_de_origen": str(datos_juego.get("clave_nodo_de_origen", "")).strip_edges(),
+		"track_key": str(datos_juego.get("track_key", "")).strip_edges(),
 	}
 	_copiar_campos_objetivo(datos_juego, juego)
+	_normalizar_objetivo_de_arrastre(juego)
 	return juego
 
 
@@ -597,6 +610,20 @@ static func _copiar_campos_objetivo(origen: Dictionary, destino: Dictionary) -> 
 	for campo in OBJECTIVE_FIELDS:
 		if origen.has(campo) and origen.get(campo) != null:
 			destino[campo] = origen.get(campo)
+
+
+static func _normalizar_objetivo_de_arrastre(juego: Dictionary) -> void:
+	var game_type: String = str(juego.get("type", "")).strip_edges()
+	var game_mode: String = str(juego.get("mode", "")).strip_edges()
+	if game_type != "drag" and game_mode != DatosNodoMapaScript.MODE_DRAG_DROP:
+		return
+	var track_key: String = str(juego.get("track_key", "")).strip_edges()
+	var node_key: String = str(juego.get("clave_nodo_de_origen", "")).strip_edges()
+	juego["objective"] = ContentSchemaNormalizerScript.normalize_drag_objective(
+		juego,
+		track_key,
+		node_key
+	)
 
 
 

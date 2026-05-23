@@ -33,6 +33,7 @@ static func continuar_o_finalizar_partida(
 	if estado_global.has_method("obtener_stats_nodo_actual"):
 		stats = estado_global.call("obtener_stats_nodo_actual")
 	var percent: float = clampf(float(NodoRuntimeScript.calcular_precision(tree)) / 100.0, 0.0, 1.0)
+	var score: int = int(stats.get("aciertos", 0))
 	var completed: bool = true
 	print(
 		"%s node=%s"
@@ -43,6 +44,8 @@ static func continuar_o_finalizar_partida(
 		node_key,
 		" game_index=",
 		game_index,
+		" score=",
+		score,
 		" percent=",
 		percent,
 		" completed=",
@@ -52,7 +55,8 @@ static func continuar_o_finalizar_partida(
 	)
 
 	_registrar_exp_finalizacion(tree, estado_global, partida_actual)
-	_guardar_precision_nodo(tree, partida_actual) # debe ir antes de finalizar: Global limpia los stats ahí
+	# Debe ir antes de finalizar: Global limpia los stats ahí.
+	_guardar_precision_nodo(tree, partida_actual)
 
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
@@ -188,10 +192,16 @@ static func _registrar_exp_finalizacion(
 			+ "¿Las modalidades llamaron registrar_resultado_mini_juego()?"
 		)
 
-	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(aciertos, intentos)
+	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(
+		aciertos,
+		intentos
+	)
 	var precision_percent: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
 
-	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(exp_base_total, precision_ratio)
+	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(
+		exp_base_total,
+		precision_ratio
+	)
 
 	var total_exp_nuevo: int = 0
 	if save_manager.has_method("add_exp"):

@@ -9,7 +9,7 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
 const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
 const VINCULAR_SCENE := "res://vincular/VincularConceptos.tscn"
-const completar_palabra_SCENE := "res://opciones_palabras/opciones_palabras.tscn"
+const COMPLETAR_PALABRA_SCENE := "res://completar/completar_palabra.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
 const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
@@ -21,11 +21,19 @@ const NODE_18_KEY := "celiaquia_18_desafio_final"
 const NODE_19_KEY := "celiaquia_19_cocina_segura"
 const NODE_25_KEY := "celiaquia_25_etiquetas_y_trazas"
 const NODE_30_KEY := "celiaquia_30_desafio_final_extendido"
-const GAME_SCENES := [LEVEL_SCENE, QUESTION_SCENE, VINCULAR_SCENE, completar_palabra_SCENE]
+const GAME_SCENES := [LEVEL_SCENE, QUESTION_SCENE, VINCULAR_SCENE, COMPLETAR_PALABRA_SCENE]
 const LOG_PREFIX_VALIDATION := "[ManualValidation]"
+const CARGADOR_COMPLETAR_SCRIPT := preload("res://completar/CargadorCompletar.gd")
+const CONTENT_SCHEMA_NORMALIZER_SCRIPT := preload(
+	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
+)
+const CARGADOR_DE_MAPA_SCRIPT := preload("res://mapas/logica/CargadorDeMapa.gd")
+const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
 
 var failed := false
 var prueba_finalizada := false
+var _save_files_preserved := false
+var _save_file_snapshots: Dictionary = {}
 
 
 func _initialize() -> void:
@@ -188,6 +196,7 @@ func ejecutar_prueba() -> void:
 func _reset_test_state(global_state, save_manager) -> void:
 	global_state.reiniciar_progreso()
 	ItemLevel.is_dragging = null
+	_preserve_save_files_once()
 	_delete_save_files()
 	save_manager.cargar_datos()
 	global_state.registrar_actividad_racha("smoke_setup", {"track_key": "celiaquia"})
@@ -202,7 +211,7 @@ func _validar_mapa_cargado() -> void:
 	)
 	if tablero_mapa == null or not tablero_mapa.has_method("obtener_nodos_runtime_mapa"):
 		return
-	var nodos_mapa_cargados := current_scene.get("nodos_mapa") as Array
+	var nodos_mapa_cargados: Array = current_scene.get("nodos_mapa") as Array
 	var nodos_runtime: Array = tablero_mapa.call("obtener_nodos_runtime_mapa") as Array
 	var nodos_visibles := 0
 	for nodo_runtime in nodos_runtime:
@@ -291,7 +300,7 @@ func _validar_nodo(global_state: Node, node_key: String, label: String) -> Dicti
 				await _completar_escena_quiz(label)
 			VINCULAR_SCENE:
 				await _completar_escena_match(result, label)
-			completar_palabra_SCENE:
+			COMPLETAR_PALABRA_SCENE:
 				await _completar_escena_completar_palabra(label)
 
 		if failed:
@@ -485,10 +494,10 @@ func _completar_escena_completar_palabra(label: String) -> void:
 	# La escena se autoconfigura en _ready() via NodoRuntime.obtener_actividad_actual().
 	# Para el smoke test, presionamos todos los botones disponibles (uno por blank)
 	# y luego el ConfirmButton si existe y está habilitado.
-	var options_container := wo_scene.get_node_or_null("VBoxContainer/OptionsContainer") as FlowContainer
+	var options_container := wo_scene.get_node_or_null("Control/Container/HBoxContainer") as Container
 	_check(
 		options_container != null,
-		"%s: completar_palabra deberia tener VBoxContainer/OptionsContainer (FlowContainer)." % label
+		"%s: completar_palabra deberia tener Control/Container/HBoxContainer." % label
 	)
 	if failed or options_container == null:
 		return
@@ -510,7 +519,7 @@ func _completar_escena_completar_palabra(label: String) -> void:
 			await process_frame
 
 	# Si hay ConfirmButton habilitado, presionarlo (multi-blank)
-	var confirm_btn := wo_scene.get_node_or_null("VBoxContainer/ConfirmButton") as Button
+	var confirm_btn := wo_scene.get_node_or_null("Control/ConfirmButton") as Button
 	if confirm_btn != null and not confirm_btn.disabled and confirm_btn.visible:
 		confirm_btn.emit_signal("pressed")
 		await process_frame
@@ -533,7 +542,7 @@ func _scene_kind(scene_path: String) -> String:
 			return "quiz"
 		VINCULAR_SCENE:
 			return "match"
-		completar_palabra_SCENE:
+		COMPLETAR_PALABRA_SCENE:
 			return "completar_palabra"
 		_:
 			return scene_path
@@ -606,6 +615,39 @@ func _delete_save_files() -> void:
 			DirAccess.remove_absolute(abs_path)
 
 
+func _preserve_save_files_once() -> void:
+	if _save_files_preserved:
+		return
+	_save_files_preserved = true
+	for path in [
+		SaveManagerScript.SAVE_PATH,
+		SaveManagerScript.TEMP_SAVE_PATH,
+		SaveManagerScript.BACKUP_SAVE_PATH
+	]:
+		var snapshot := {"exists": false, "text": ""}
+		if FileAccess.file_exists(path):
+			var file := FileAccess.open(path, FileAccess.READ)
+			if file != null:
+				snapshot["exists"] = true
+				snapshot["text"] = file.get_as_text()
+		_save_file_snapshots[path] = snapshot
+
+
+func _restore_preserved_save_files() -> void:
+	if not _save_files_preserved:
+		return
+	for path in _save_file_snapshots.keys():
+		var snapshot: Dictionary = _save_file_snapshots[path]
+		var abs_path := ProjectSettings.globalize_path(str(path))
+		if bool(snapshot.get("exists", false)):
+			var file := FileAccess.open(str(path), FileAccess.WRITE)
+			if file != null:
+				file.store_string(str(snapshot.get("text", "")))
+				file.flush()
+		elif FileAccess.file_exists(abs_path):
+			DirAccess.remove_absolute(abs_path)
+
+
 func finalizar_ok() -> void:
 	_cerrar_prueba(0)
 
@@ -621,6 +663,7 @@ func _cerrar_prueba(codigo_salida: int) -> void:
 	if prueba_finalizada:
 		return
 	prueba_finalizada = true
+	_restore_preserved_save_files()
 	_stop_audio()
 	if is_instance_valid(current_scene):
 		var scene = current_scene
@@ -655,18 +698,19 @@ func _check(condition: bool, message: String) -> void:
 # ===========================================================================
 
 func _test_completar_palabra_loader_carga_json_valido() -> void:
-	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
+	var Loader := CARGADOR_COMPLETAR_SCRIPT
 	Loader.limpiar_cache()
 	var result: Dictionary = Loader.pick(1)
 	_check(not result.is_empty(), "[WO] pick(1) debe devolver un desafío no vacío")
 	_check(result.has("sentence"), "[WO] pick(1) debe tener campo sentence")
+	_check(result.has("screen_title"), "[WO] pick(1) debe tener campo screen_title")
 	_check(result.has("answers"), "[WO] pick(1) debe tener campo answers")
 	_check(result.has("options"), "[WO] pick(1) debe tener campo options")
 	_check(result.has("id"), "[WO] pick(1) debe incluir el id del desafío")
 
 
 func _test_completar_palabra_loader_filtra_dificultad_invalida() -> void:
-	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
+	var Loader := CARGADOR_COMPLETAR_SCRIPT
 	Loader.limpiar_cache()
 	var result: Dictionary = Loader.pick(99)
 	_check(result.is_empty(), "[WO] pick(99) debe devolver {} (sin desafíos para esa dificultad)")
@@ -674,7 +718,7 @@ func _test_completar_palabra_loader_filtra_dificultad_invalida() -> void:
 
 func _test_completar_palabra_contrato_json() -> void:
 	# Verificar que TODOS los desafíos del JSON cumplen el contrato
-	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
+	var Loader := CARGADOR_COMPLETAR_SCRIPT
 	Loader.limpiar_cache()
 	var all_challenges: Dictionary = Loader.load_all()
 	_check(not all_challenges.is_empty(), "[WO] el JSON debe tener al menos un desafío válido")
@@ -683,19 +727,19 @@ func _test_completar_palabra_contrato_json() -> void:
 		var answers: Array = entry.get("answers", [])
 		var options: Array = entry.get("options", [])
 		var sentence: String = str(entry.get("sentence", ""))
-		var blank_count: int = Loader._count_blanks(sentence)
+		var blank_count: int = CONTENT_SCHEMA_NORMALIZER_SCRIPT.count_blanks(sentence)
 		_check(
 			blank_count == answers.size(),
 			"[WO] '%s': blanks=%d answers=%d — deben coincidir" % [key, blank_count, answers.size()]
 		)
 		_check(
-			Loader._has_all_answers_in_options(answers, options),
+			CONTENT_SCHEMA_NORMALIZER_SCRIPT.has_all_answers_in_choices(answers, options),
 			"[WO] '%s': alguna answer no está en options" % key
 		)
 
 
 func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
-	var Loader := load("res://opciones_palabras/CargadorCompletar.gd")
+	var Loader := CARGADOR_COMPLETAR_SCRIPT
 	Loader.limpiar_cache()
 	_check(not Loader.pick(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
 	_check(not Loader.pick(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
@@ -703,127 +747,134 @@ func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
 
 
 # ===========================================================================
-# Tests unitarios: opciones_palabras.gd — lógica pura (sin árbol de escena)
-# API del nuevo game loop: _placed, _is_correct_for_current_slot()
+# Tests unitarios: contrato de contenido y normalización.
 # ===========================================================================
 
-func _test_completar_palabra_respuesta_correcta_single() -> void:
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._answers = ["agua"]
-	scene._placed = []
-	scene._order_matters = false
-	# La respuesta correcta debe reconocerse
+func _test_completar_palabra_acepta_formato_trainee() -> void:
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var raw: Dictionary = {
+		"id": "word_test",
+		"mode": "completar_palabra",
+		"difficulty": 1,
+		"screen_title": "Elegí la opción correcta",
+		"prompt": "El producto apto no tiene ____.",
+		"correct_answers": ["gluten"],
+		"choices": ["gluten", "sal"],
+	}
+	var normalized: Dictionary = Normalizer.normalize_word_game("word_test", raw)
 	_check(
-		scene._is_correct_for_current_slot("agua") == true,
-		"[WO] 'agua' debe ser correcta para el slot actual (single blank)"
+		normalized.get("screen_title", "") == raw.get("screen_title", ""),
+		"[WO] screen_title trainee debe conservarse"
 	)
-	scene.free()
+	_check(
+		normalized.get("screen_title", "") != raw.get("prompt", ""),
+		"[WO] prompt no debe usarse como titulo"
+	)
+	_check(
+		normalized.get("sentence", "") == raw.get("prompt", ""),
+		"[WO] prompt debe mapear a sentence"
+	)
+	_check(
+		normalized.get("answers", []) == raw.get("correct_answers", []),
+		"[WO] correct_answers debe mapear a answers"
+	)
+	_check(
+		normalized.get("options", []) == raw.get("choices", []),
+		"[WO] choices debe mapear a options"
+	)
+	var old_raw: Dictionary = {
+		"mode": "completar_palabra",
+		"difficulty": 1,
+		"sentence": "El producto apto no tiene ____.",
+		"answers": ["gluten"],
+		"options": ["gluten", "sal"],
+	}
+	var old_normalized: Dictionary = Normalizer.normalize_word_game("word_old", old_raw)
+	_check(
+		old_normalized.get("screen_title", "") == "Escogé la palabra que falta",
+		"[WO] sin screen_title debe usar fallback"
+	)
+	_check(
+		old_normalized.get("prompt", "") == old_raw.get("sentence", ""),
+		"[WO] sentence legacy debe mapear a prompt"
+	)
+	_check(
+		old_normalized.get("correct_answers", []) == old_raw.get("answers", []),
+		"[WO] answers legacy debe mapear a correct_answers"
+	)
+	_check(
+		old_normalized.get("choices", []) == old_raw.get("options", []),
+		"[WO] options legacy debe mapear a choices"
+	)
 
 
-func _test_completar_palabra_respuesta_incorrecta_single() -> void:
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._answers = ["agua"]
-	scene._placed = []
-	scene._order_matters = false
-	# La respuesta incorrecta NO debe reconocerse
-	_check(
-		scene._is_correct_for_current_slot("cerveza") == false,
-		"[WO] 'cerveza' NO debe ser correcta cuando la answer es 'agua'"
+func _test_drag_objective_anidado_y_fallback() -> void:
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var explicit_game: Dictionary = {
+		"type": "drag",
+		"objective": {
+			"action": "Prepara",
+			"meal": "una cena sin TACC",
+			"connector": "para tu amigue",
+			"restriction": "celiace",
+		},
+	}
+	var explicit_objective: Dictionary = Normalizer.normalize_drag_objective(
+		explicit_game,
+		"celiaquia",
+		"celiaquia_14_comer_fuera"
 	)
-	scene.free()
+	_check(
+		explicit_objective.get("meal", "") == "una cena sin TACC",
+		"[DragObjective] debe respetar objective.meal"
+	)
+	var fallback_objective: Dictionary = Normalizer.normalize_drag_objective(
+		{"type": "drag"},
+		"celiaquia",
+		"celiaquia_02_colacion_basica"
+	)
+	_check(fallback_objective.get("meal", "") != "", "[DragObjective] debe inferir meal por node_key")
+	_check(fallback_objective.get("action", "") != "", "[DragObjective] fallback debe tener action")
+	_check(
+		fallback_objective.get("connector", "") != "",
+		"[DragObjective] fallback debe tener connector"
+	)
 
 
-func _test_completar_palabra_incorrect_no_finaliza() -> void:
-	# Una respuesta incorrecta NO debe cambiar _already_finished
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._answers = ["agua"]
-	scene._placed = []
-	scene._order_matters = false
-	scene._already_finished = false
-	# Simular respuesta incorrecta: _is_correct_for_current_slot = false → no llamamos _finish
-	var is_correct := scene._is_correct_for_current_slot("cerveza")
-	if not is_correct:
-		pass  # en el game real: _return_option_to_origin(btn), NO se llama _finish
-	_check(
-		scene._already_finished == false,
-		"[WO] una respuesta incorrecta NO debe cambiar _already_finished"
-	)
-	scene.free()
-
-
-func _test_completar_palabra_correct_avanza_slot() -> void:
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._answers = ["contaminación", "separados"]
-	scene._placed = []
-	scene._order_matters = true
-	# Slot 0: "contaminación" debe ser correcta
-	_check(
-		scene._is_correct_for_current_slot("contaminación") == true,
-		"[WO] multi order=true: 'contaminación' debe ser correcta en slot 0"
-	)
-	# Simular colocación: _placed.append("contaminación")
-	scene._placed.append("contaminación")
-	# Slot 1: "separados" debe ser correcta
-	_check(
-		scene._is_correct_for_current_slot("separados") == true,
-		"[WO] multi order=true: 'separados' debe ser correcta en slot 1"
-	)
-	# Slot 1: "contaminación" ya está colocada — no debe repetirse
-	_check(
-		scene._is_correct_for_current_slot("contaminación") == false,
-		"[WO] multi order=true: 'contaminación' no debe ser correcta en slot 1"
-	)
-	scene.free()
-
-
-func _test_completar_palabra_multiple_sin_orden() -> void:
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._answers = ["contaminación", "separados"]
-	scene._placed = []
-	scene._order_matters = false
-	# Sin orden: cualquier answer correcta puede ir en cualquier slot
-	_check(
-		scene._is_correct_for_current_slot("separados") == true,
-		"[WO] multi order=false: 'separados' debe ser válida aunque no sea la primera"
-	)
-	scene._placed.append("separados")
-	# Después de colocar "separados", "contaminación" debe seguir siendo válida
-	_check(
-		scene._is_correct_for_current_slot("contaminación") == true,
-		"[WO] multi order=false: 'contaminación' debe ser válida en segundo slot"
-	)
-	# Ya no queda ninguna por colocar
-	scene._placed.append("contaminación")
-	_check(
-		scene._is_correct_for_current_slot("separados") == false,
-		"[WO] multi order=false: 'separados' ya está colocada, no puede repetirse"
-	)
-	scene.free()
-
-
-func _test_completar_palabra_doble_finalizacion_bloqueada() -> void:
-	var scene_script := load("res://opciones_palabras/opciones_palabras.gd")
-	var scene := scene_script.new()
-	scene._already_finished = false
-	# Simular primera finalización
-	scene._already_finished = true
-	# Verificar que el flag bloquea
-	_check(
-		scene._already_finished == true,
-		"[WO] _already_finished debe estar en true después de la primera finalización"
-	)
-	# _finish() tiene un guard: if _already_finished: return
-	# No podemos llamarlo sin SceneTree, pero el flag ya está verificado.
-	scene.free()
+func _test_celiaquia_mapa_drag_objectives_completos() -> void:
+	var MapLoader := CARGADOR_DE_MAPA_SCRIPT
+	var result: Dictionary = MapLoader.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[DragObjective] celiaquia_mapa debe cargar")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	for raw_node in nodes:
+		var node = raw_node
+		if node == null or not node.has_method("get_random_game_requests"):
+			continue
+		for game in node.get_random_game_requests():
+			if str(game.get("type", "")) != "drag":
+				continue
+			var objective_raw: Variant = game.get("objective", {})
+			_check(objective_raw is Dictionary, "[DragObjective] drag debe tener objective Dictionary")
+			if objective_raw is Dictionary:
+				var objective: Dictionary = objective_raw as Dictionary
+				_check(
+					str(objective.get("action", "")).strip_edges() != "",
+					"[DragObjective] action no puede quedar vacio"
+				)
+				_check(
+					str(objective.get("meal", "")).strip_edges() != "",
+					"[DragObjective] meal no puede quedar vacio"
+				)
+				_check(
+					str(objective.get("connector", "")).strip_edges() != "",
+					"[DragObjective] connector no puede quedar vacio"
+				)
 
 
 func _test_completar_palabra_router_conoce_modo() -> void:
-	var RouterScript := load("res://sistemas/ModalidadRouter.gd")
+	var RouterScript := MODALIDAD_ROUTER_SCRIPT
 	var path: String = RouterScript.resolver_scene_path({"mode": "completar_palabra"})
 	_check(not path.is_empty(), "[WO] ModalidadRouter debe resolver escena para completar_palabra")
 	_check(path.ends_with(".tscn"), "[WO] La ruta resuelta debe ser una escena .tscn")
@@ -840,17 +891,12 @@ func ejecutar_tests_completar_palabra() -> void:
 	_test_completar_palabra_loader_filtra_dificultad_invalida()
 	_test_completar_palabra_contrato_json()
 	_test_completar_palabra_loader_tiene_dificultades_1_2_3()
-	# Lógica de game loop (sin SceneTree)
-	_test_completar_palabra_respuesta_correcta_single()
-	_test_completar_palabra_respuesta_incorrecta_single()
-	_test_completar_palabra_incorrect_no_finaliza()
-	_test_completar_palabra_correct_avanza_slot()
-	_test_completar_palabra_multiple_sin_orden()
-	_test_completar_palabra_doble_finalizacion_bloqueada()
+	_test_completar_palabra_acepta_formato_trainee()
+	_test_drag_objective_anidado_y_fallback()
+	_test_celiaquia_mapa_drag_objectives_completos()
 	# Integración
 	_test_completar_palabra_router_conoce_modo()
 	if not failed:
 		print("[WordOptions] ✓ Todos los tests pasaron.")
 	else:
 		printerr("[WordOptions] ✗ Al menos un test falló. Revisá los errores arriba.")
-

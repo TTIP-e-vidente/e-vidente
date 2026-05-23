@@ -132,8 +132,15 @@ func set_star_progress(percent: float) -> void:
 	_best_percent = clampf(percent, 0.0, 1.0)
 	if _best_percent > 0.0:
 		_best_accuracy = maxf(_best_accuracy, _best_percent * 100.0)
+	print_debug(
+		"[Star] set_progress node_key=",
+		node_data.node_key if node_data != null else node_key,
+		" percent=",
+		_best_percent
+	)
 	if node_badge != null and node_badge.has_method("set_progress"):
 		node_badge.call("set_progress", _best_percent)
+	_refresh_badge()
 
 
 func _on_button_pressed() -> void:

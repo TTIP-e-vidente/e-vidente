@@ -228,4 +228,4 @@ flat = true
 
 [node name="ContinuarJuego" parent="Control" instance=ExtResource("10_yqu7m")]
 
-[connection signal="pressed" from="Control/ProgressBar/Atrás" to="." method="_on_atrás_pressed"]
+[connection signal="pressed" from="Control/ProgressBar/Atrás" to="." method="_al_presionar_atras"]

@@ -60,6 +60,52 @@ function Invoke-GodotStep {
 
 $repoRoot = Resolve-RepoRoot
 $godotExecutable = Resolve-GodotCommand -RequestedCommand $GodotCommand
+$validationSaveDir = Join-Path $repoRoot '.godot-validation-save'
+New-Item -ItemType Directory -Path $validationSaveDir -Force | Out-Null
+$saveFilesToPreserve = @(
+    (Join-Path $env:APPDATA 'Godot\app_userdata\Evidente\save_data.json'),
+    (Join-Path $env:APPDATA 'Godot\app_userdata\Evidente\save_data.tmp.json'),
+    (Join-Path $env:APPDATA 'Godot\app_userdata\Evidente\save_data.backup.json')
+)
+$script:saveSnapshots = @{}
+
+function Preserve-LocalSaveFiles {
+    param([string[]]$Paths)
+
+    foreach ($path in $Paths) {
+        if (Test-Path -LiteralPath $path) {
+            $script:saveSnapshots[$path] = @{
+                Exists = $true
+                Bytes = [System.IO.File]::ReadAllBytes($path)
+                LastWriteTimeUtc = (Get-Item -LiteralPath $path).LastWriteTimeUtc
+            }
+        }
+        else {
+            $script:saveSnapshots[$path] = @{
+                Exists = $false
+                Bytes = @()
+                LastWriteTimeUtc = $null
+            }
+        }
+    }
+}
+
+function Restore-LocalSaveFiles {
+    foreach ($path in $script:saveSnapshots.Keys) {
+        $snapshot = $script:saveSnapshots[$path]
+        if ([bool]$snapshot['Exists']) {
+            $directory = Split-Path -Parent $path
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            [System.IO.File]::WriteAllBytes($path, [byte[]]$snapshot['Bytes'])
+            if ($null -ne $snapshot['LastWriteTimeUtc']) {
+                [System.IO.File]::SetLastWriteTimeUtc($path, $snapshot['LastWriteTimeUtc'])
+            }
+        }
+        elseif (Test-Path -LiteralPath $path) {
+            Remove-Item -LiteralPath $path -Force
+        }
+    }
+}
 
 function Get-ValidationSteps {
     param(
@@ -67,15 +113,16 @@ function Get-ValidationSteps {
         [string]$RepositoryRoot
     )
 
-    $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = @('--headless', '--path', 'project', '--editor', '--quit') }
-    $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/node_content_loader_test.gd') }
-    $planDeCorridaDeNodoStep = @{ Label = 'Plan de corrida de nodo'; Hint = 'Revisar la regla 1,1,2,3,4,5 y la alternancia simple por nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/plan_de_corrida_de_nodo_test.gd') }
-    $indicadorProgresoPreguntaStep = @{ Label = 'Indicador de progreso en pregunta'; Hint = 'Revisar que pregunta.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/indicador_progreso_pregunta_test.gd') }
-    $indicadorProgresoNivelStep = @{ Label = 'Indicador de progreso en nivel'; Hint = 'Revisar que Level.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/indicador_progreso_nivel_test.gd') }
-    $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/post_game_flow_controller_test.gd') }
-    $mapProgressVisualStep = @{ Label = 'Map progress visual test'; Hint = 'Revisar contrato del mapa de celiaquia, estados visuales y desbloqueo del siguiente nodo.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/map_progress_visual_test.gd') }
-    $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
-    $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = @('--headless', '--path', 'project', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
+    $godotBaseArgs = @('--headless', '--path', 'project')
+    $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = $godotBaseArgs + @('--editor', '--quit') }
+    $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/node_content_loader_test.gd') }
+    $planDeCorridaDeNodoStep = @{ Label = 'Plan de corrida de nodo'; Hint = 'Revisar la regla 1,1,2,3,4,5 y la alternancia simple por nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/plan_de_corrida_de_nodo_test.gd') }
+    $indicadorProgresoPreguntaStep = @{ Label = 'Indicador de progreso en pregunta'; Hint = 'Revisar que pregunta.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/indicador_progreso_pregunta_test.gd') }
+    $indicadorProgresoNivelStep = @{ Label = 'Indicador de progreso en nivel'; Hint = 'Revisar que Level.tscn muestre Juego 1/1 y el titulo del nodo en partida normal.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/indicador_progreso_nivel_test.gd') }
+    $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/post_game_flow_controller_test.gd') }
+    $mapProgressVisualStep = @{ Label = 'Map progress visual test'; Hint = 'Revisar contrato del mapa de celiaquia, estados visuales y desbloqueo del siguiente nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/map_progress_visual_test.gd') }
+    $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
+    $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/vertical_slice_smoke_test.gd') }
 
     $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
     $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')
@@ -128,6 +175,9 @@ $steps = Get-ValidationSteps -ValidationMode $Mode -RepositoryRoot $repoRoot
 
 Push-Location $repoRoot
 try {
+    Preserve-LocalSaveFiles -Paths $saveFilesToPreserve
+    $previousValidationSaveDir = $env:EVIDENTE_SAVE_DIR
+    $env:EVIDENTE_SAVE_DIR = $validationSaveDir
     foreach ($step in $steps) {
         Invoke-GodotStep -Executable $godotExecutable -Label $step.Label -Hint $step.Hint -Arguments $step.Arguments
     }
@@ -141,5 +191,12 @@ try {
     Write-Host "`nValidacion Godot completada correctamente."
 }
 finally {
+    if ($null -ne $previousValidationSaveDir) {
+        $env:EVIDENTE_SAVE_DIR = $previousValidationSaveDir
+    }
+    else {
+        Remove-Item Env:EVIDENTE_SAVE_DIR -ErrorAction SilentlyContinue
+    }
+    Restore-LocalSaveFiles
     Pop-Location
 }

@@ -9,6 +9,9 @@ extends Control
 @onready var restriction_line: ColorRect = $RestrictionLine
 
 const _FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
+const ContentSchemaNormalizerScript := preload(
+	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
+)
 
 
 func _ready() -> void:
@@ -92,149 +95,7 @@ func _setup_label(
 # --- Lectura de datos ------------------------------------------------------
 
 func _parse_objective(data: Dictionary) -> Dictionary:
-	var action: String = _read_action(data)
-	var meal: String = _read_meal(data)
-	var connector: String = _read_connector(data)
-	var restriction: String = _read_restriction(data)
-
-	if meal.strip_edges().is_empty():
-		meal = _build_meal_fallback(data)
-	if connector.strip_edges().is_empty():
-		connector = "para tu amigue"
-	if restriction.strip_edges().is_empty():
-		restriction = _build_restriction_fallback(data)
-
-	return {
-		"action": action,
-		"meal": meal,
-		"connector": connector,
-		"restriction": restriction,
-	}
-
-
-func _read_action(data: Dictionary) -> String:
-	# Prioridad: objective_action > label > objective_label > "Prepará".
-	var action: String = _get_string(data, "objective_action")
-	if not action.is_empty():
-		return action
-	action = _get_string(data, "label")
-	if not action.is_empty():
-		return action
-	action = _get_string(data, "objective_label")
-	if not action.is_empty():
-		return action
-	var nested: Dictionary = _get_nested_objective(data)
-	if nested.has("label"):
-		return str(nested.get("label", "Prepará"))
-	return "Prepará"
-
-
-func _read_meal(data: Dictionary) -> String:
-	var meal: String = _get_string(data, "objective_meal")
-	if not meal.is_empty():
-		return meal
-	meal = _get_string(data, "main")
-	if not meal.is_empty():
-		return meal
-	meal = _get_string(data, "objective_main")
-	if not meal.is_empty():
-		return meal
-	var nested: Dictionary = _get_nested_objective(data)
-	if nested.has("main"):
-		return str(nested.get("main", ""))
-	# Compatibilidad con objective_message: primera linea = meal.
-	var message_lines: PackedStringArray = _split_objective_message(data)
-	if message_lines.size() > 0:
-		return str(message_lines[0]).strip_edges()
-	return ""
-
-
-func _read_connector(data: Dictionary) -> String:
-	var connector: String = _get_string(data, "objective_connector")
-	if not connector.is_empty():
-		return connector
-	connector = _get_string(data, "sub")
-	if not connector.is_empty():
-		return connector
-	connector = _get_string(data, "objective_sub")
-	if not connector.is_empty():
-		return connector
-	var nested: Dictionary = _get_nested_objective(data)
-	if nested.has("sub"):
-		return str(nested.get("sub", ""))
-	var message_lines: PackedStringArray = _split_objective_message(data)
-	if message_lines.size() > 1:
-		return str(message_lines[1]).strip_edges()
-	return ""
-
-
-func _read_restriction(data: Dictionary) -> String:
-	var restriction: String = _get_string(data, "objective_restriction")
-	if not restriction.is_empty():
-		return restriction
-	restriction = _get_string(data, "restriction")
-	if not restriction.is_empty():
-		return restriction
-	var nested: Dictionary = _get_nested_objective(data)
-	if nested.has("restriction"):
-		return str(nested.get("restriction", ""))
-	return ""
-
-
-# --- Helpers de lectura ----------------------------------------------------
-
-func _get_string(data: Dictionary, key: String) -> String:
-	if not data.has(key):
-		return ""
-	return str(data.get(key, "")).strip_edges()
-
-
-func _get_nested_objective(data: Dictionary) -> Dictionary:
-	var raw_objective: Variant = data.get("objective", {})
-	if raw_objective is Dictionary:
-		return raw_objective as Dictionary
-	return {}
-
-
-func _split_objective_message(data: Dictionary) -> PackedStringArray:
-	var message: String = _get_string(data, "objective_message")
-	if message.is_empty():
-		message = _get_string(data, "message")
-	if message.is_empty():
-		var nested: Dictionary = _get_nested_objective(data)
-		if nested.has("message"):
-			message = str(nested.get("message", "")).strip_edges()
-	if message.is_empty():
-		return PackedStringArray()
-	return message.split("\n", false)
-
-
-func _build_meal_fallback(data: Dictionary) -> String:
-	var activity_id: String = _get_string(data, "activity_id")
-	var teaching_key: String = _get_string(data, "teaching_key")
-	var source: String = (activity_id + " " + teaching_key).to_lower()
-	if source.contains("desayuno"):
-		return "un desayuno sin TACC"
-	if source.contains("merienda"):
-		return "una merienda sin TACC"
-	if source.contains("colacion"):
-		return "una colación sin TACC"
-	if source.contains("almuerzo"):
-		return "un almuerzo sin TACC"
-	if source.contains("cena"):
-		return "una cena sin TACC"
-	if source.contains("bebida"):
-		return "una bebida sin TACC"
-	return "un plato sin TACC"
-
-
-func _build_restriction_fallback(data: Dictionary) -> String:
-	# Solo se aplica fallback cuando el track o pack pertenece a celiaquia.
-	var track_key: String = _get_string(data, "track_key").to_lower()
-	var pack_id: String = _get_string(data, "pack_id").to_lower()
-	if track_key == "celiaquia" or pack_id == "celiaquia":
-		return "celíace"
-	return ""
+	return ContentSchemaNormalizerScript.normalize_drag_objective(data)
 
 
 # --- Animacion -------------------------------------------------------------

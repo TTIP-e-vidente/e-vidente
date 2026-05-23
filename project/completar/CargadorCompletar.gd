@@ -1,91 +1,64 @@
 extends RefCounted
 class_name CargadorCompletar
-## Carga y selecciona desafíos de la modalidad "Completar con opciones de palabras".
-##
-## Flujo de uso:
-##   CargadorCompletar.pick(1)  →  Dictionary con el desafío listo para setup()
-##   CargadorCompletar.pick(2)  →  {}  si no hay desafíos para esa dificultad
-##
-## El JSON se carga una sola vez y se guarda en caché (_cache).
-## Para forzar recarga (tests), llamar limpiar_cache().
 
-# === Constantes ===
 const JSON_PATH := "res://contenido/mapa/completar_palabra.json"
 const MODE := "completar_palabra"
 const BLANK := "____"
 const VALID_DIFFICULTIES := [1, 2, 3]
+const ContentSchemaNormalizerScript := preload(
+	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
+)
 
-# Caché interna: evita re-leer el archivo en cada pick().
 static var _cache: Dictionary = {}
 
 
-# ===========================================================================
-# API PÚBLICA
-# ===========================================================================
-
-## Devuelve un desafío aleatorio para la dificultad indicada.
-## Retorna {} si no hay desafíos disponibles o el JSON no existe.
-static func pick(difficulty: int) -> Dictionary:
-	var all_challenges := load_all()
-	if all_challenges.is_empty():
+static func elegir(dificultad: int) -> Dictionary:
+	var todos: Dictionary = cargar_todo()
+	if todos.is_empty():
 		return {}
 
-	var candidates := _get_candidates_by_difficulty(all_challenges, difficulty)
-	if candidates.is_empty():
-		push_warning(
-			"CargadorCompletar: sin desafíos para difficulty=%d en %s" % [difficulty, JSON_PATH]
-		)
+	var candidatos: Array[Dictionary] = _candidatos_por_dificultad(todos, dificultad)
+	if candidatos.is_empty():
+		push_warning("CargadorCompletar: sin desafíos para dificultad=%d en %s" % [dificultad, JSON_PATH])
 		return {}
 
-	# Mezclar candidatos para mayor variedad entre sesiones
-	candidates.shuffle()
-	var chosen: Dictionary = candidates[0]
+	candidatos.shuffle()
+	var elegido: Dictionary = candidatos[0]
 
-	# Mezclar las opciones del desafío elegido (ya es deep copy, seguro modificar)
-	chosen["options"] = _shuffle_options(chosen.get("options", []))
-	return chosen
+	var opciones_raw: Array = elegido.get("choices", elegido.get("options", []))
+	var opciones: Array = opciones_raw.duplicate()
+	opciones.shuffle()
+	elegido["choices"] = opciones
+	elegido["options"] = opciones
+	return elegido
 
 
-## Devuelve todos los ids disponibles para una dificultad (útil para tests).
-static func get_ids_for_difficulty(difficulty: int) -> Array[String]:
+static func ids_por_dificultad(dificultad: int) -> Array[String]:
+	var todos: Dictionary = cargar_todo()
+	var candidatos: Array[Dictionary] = _candidatos_por_dificultad(todos, dificultad)
 	var ids: Array[String] = []
-	for entry in _get_candidates_by_difficulty(load_all(), difficulty):
-		ids.append(str(entry.get("id", "")))
+	for entrada in candidatos:
+		ids.append(str(entrada.get("id", "")))
 	return ids
 
 
-## Limpia la caché interna. Usar en tests para forzar recarga del JSON.
 static func limpiar_cache() -> void:
 	_cache = {}
 
 
-## Carga y devuelve todos los desafíos del JSON. Usa caché.
-## Cada entrada incluye su id como campo "id".
-static func load_all() -> Dictionary:
+static func cargar_todo() -> Dictionary:
 	if not _cache.is_empty():
 		return _cache
-	_cache = _load_json_file()
-	return _cache
 
-
-# ===========================================================================
-# HELPERS PRIVADOS — cada uno hace una sola cosa
-# ===========================================================================
-
-## Lee el archivo JSON y devuelve un Dictionary con todas las entradas.
-## Devuelve {} si el archivo no existe o el JSON es inválido.
-static func _load_json_file() -> Dictionary:
 	var file := FileAccess.open(JSON_PATH, FileAccess.READ)
 	if file == null:
 		push_error("CargadorCompletar: no se pudo abrir '%s'." % JSON_PATH)
 		return {}
 
 	var parser := JSON.new()
-	if parser.parse(file.get_as_text()) != OK:
-		push_error(
-			"CargadorCompletar: JSON inválido en línea %d — %s"
-			% [parser.get_error_line(), parser.get_error_message()]
-		)
+	var texto: String = file.get_as_text()
+	if parser.parse(texto) != OK:
+		push_error("CargadorCompletar: JSON inválido en línea %d — %s" % [parser.get_error_line(), parser.get_error_message()])
 		return {}
 
 	var data: Variant = parser.get_data()
@@ -93,88 +66,57 @@ static func _load_json_file() -> Dictionary:
 		push_error("CargadorCompletar: el JSON debe ser un objeto raíz {}.")
 		return {}
 
-	# Inyectar el id de cada entrada como campo "id"
-	var result: Dictionary = {}
-	for key in (data as Dictionary).keys():
-		var entry: Dictionary = ((data as Dictionary).get(key, {}) as Dictionary).duplicate(true)
-		entry["id"] = str(key)
-		# Validar antes de incluir en el resultado
-		if _validate_challenge(str(key), entry):
-			result[str(key)] = entry
-	return result
+	var datos: Dictionary = data as Dictionary
+	for clave in datos.keys():
+		var raw: Variant = datos[clave]
+		if not raw is Dictionary:
+			push_error("CargadorCompletar: '%s' debe ser un objeto." % str(clave))
+			continue
+		var entrada: Dictionary = ContentSchemaNormalizerScript.normalize_word_game(str(clave), raw as Dictionary)
+		if _es_valido(str(clave), entrada):
+			_cache[str(clave)] = entrada
+	return _cache
 
 
-## Filtra las entradas del JSON por dificultad.
-## Devuelve un Array[Dictionary] con deep copies listas para modificar.
-static func _get_candidates_by_difficulty(
-	all_challenges: Dictionary,
-	difficulty: int
-) -> Array[Dictionary]:
-	var candidates: Array[Dictionary] = []
-	for key in all_challenges.keys():
-		var entry: Dictionary = all_challenges[key]
-		if int(entry.get("difficulty", 0)) == difficulty:
-			candidates.append(entry.duplicate(true))
-	return candidates
+static func _candidatos_por_dificultad(todos: Dictionary, dificultad: int) -> Array[Dictionary]:
+	var resultado: Array[Dictionary] = []
+	for clave in todos.keys():
+		var entrada: Dictionary = todos[clave]
+		var diff: int = int(entrada.get("difficulty", 0))
+		if diff == dificultad:
+			resultado.append(entrada.duplicate(true))
+	return resultado
 
 
-## Valida que un desafío cumple el contrato del JSON.
-## Loga un error claro si algo falla. Devuelve true si es válido.
-static func _validate_challenge(id: String, entry: Dictionary) -> bool:
-	if str(entry.get("mode", "")) != MODE:
+static func _es_valido(id: String, entrada: Dictionary) -> bool:
+	var modo: String = str(entrada.get("mode", ""))
+	if modo != MODE:
 		push_error("CargadorCompletar: '%s' tiene mode incorrecto." % id)
 		return false
-	if not VALID_DIFFICULTIES.has(int(entry.get("difficulty", 0))):
+
+	var dificultad: int = int(entrada.get("difficulty", 0))
+	if not VALID_DIFFICULTIES.has(dificultad):
 		push_error("CargadorCompletar: '%s' tiene difficulty inválido (debe ser 1, 2 o 3)." % id)
 		return false
 
-	var answers: Array = entry.get("answers", [])
-	var options: Array = entry.get("options", [])
-	var sentence: String = str(entry.get("sentence", ""))
+	var respuestas: Array = entrada.get("correct_answers", entrada.get("answers", []))
+	var opciones: Array = entrada.get("choices", entrada.get("options", []))
+	var frase: String = str(entrada.get("prompt", entrada.get("sentence", "")))
 
-	if answers.is_empty():
-		push_error("CargadorCompletar: '%s' no tiene answers." % id)
+	if respuestas.is_empty():
+		push_error("CargadorCompletar: '%s' no tiene respuestas." % id)
 		return false
-	if options.is_empty():
-		push_error("CargadorCompletar: '%s' no tiene options." % id)
+	if opciones.is_empty():
+		push_error("CargadorCompletar: '%s' no tiene opciones." % id)
 		return false
-	if not _has_all_answers_in_options(answers, options):
-		push_error(
-			"CargadorCompletar: '%s' tiene answers que no están en options." % id
-		)
-		return false
-	if _count_blanks(sentence) != answers.size():
-		push_error(
-			"CargadorCompletar: '%s' tiene %d blanks (____) pero %d answers."
-			% [id, _count_blanks(sentence), answers.size()]
-		)
-		return false
-	return true
-
-
-## Cuenta cuántos ____ hay en la frase.
-static func _count_blanks(sentence: String) -> int:
-	var count := 0
-	var search_start := 0
-	while true:
-		var idx := sentence.find(BLANK, search_start)
-		if idx == -1:
-			break
-		count += 1
-		search_start = idx + BLANK.length()
-	return count
-
-
-## Verifica que cada answer exista dentro de options (comparación exacta).
-static func _has_all_answers_in_options(answers: Array, options: Array) -> bool:
-	for answer in answers:
-		if not options.has(answer):
+	for respuesta in respuestas:
+		if not opciones.has(respuesta):
+			push_error("CargadorCompletar: '%s' tiene una respuesta que no está en las opciones." % id)
 			return false
+
+	var blanks: int = ContentSchemaNormalizerScript.count_blanks(frase)
+	if blanks != respuestas.size():
+		push_error("CargadorCompletar: '%s' tiene %d blanks pero %d respuestas." % [id, blanks, respuestas.size()])
+		return false
+
 	return true
-
-
-## Devuelve una copia mezclada del array de opciones.
-static func _shuffle_options(options: Array) -> Array:
-	var shuffled := options.duplicate()
-	shuffled.shuffle()
-	return shuffled

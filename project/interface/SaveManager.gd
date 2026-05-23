@@ -1,6 +1,3 @@
-# PUBLICO_TRAINEE
-# Fuente de verdad para persistencia local: total_exp, racha, ranking, perfil.
-# No decide gameplay. No abre escenas.
 extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
@@ -97,6 +94,13 @@ func cargar_datos() -> void:
 		_emitir_estado_guardado("ready", loaded_from)
 
 	var saved_progress: Variant = save_data.get("progress", {})
+	print_debug("[Save] loaded_from=", loaded_from)
+	print_debug("[Save] profile=", obtener_perfil_usuario_actual())
+	var progress_keys: Array = []
+	if saved_progress is Dictionary:
+		progress_keys = (saved_progress as Dictionary).keys()
+	print_debug("[Save] progress_keys=", progress_keys)
+	print_debug("[Save] node_progress_keys=", get_all_node_progress().keys())
 	_global_importar_progreso(saved_progress if saved_progress is Dictionary else {})
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
@@ -152,7 +156,9 @@ func obtener_perfil_usuario_actual() -> Dictionary:
 
 
 func obtener_nombre_usuario_actual() -> String:
-	var username: String = str(obtener_perfil_usuario_actual().get("username", DEFAULT_PROFILE_NAME)).strip_edges()
+	var username: String = str(
+		obtener_perfil_usuario_actual().get("username", DEFAULT_PROFILE_NAME)
+	).strip_edges()
 	return username if not username.is_empty() else DEFAULT_PROFILE_NAME
 
 
@@ -235,7 +241,6 @@ func registrar_sesion_preguntas_completada(question_count: int, score: int) -> v
 	)
 
 
-# --- Anti-repetición persistente de activities ---------------------
 
 func mark_activity_completed(request_key: String, activity_id: String) -> void:
 	var clean_key: String = request_key.strip_edges()
@@ -289,13 +294,10 @@ func debug_clear_completed_activity_history() -> void:
 	print("[PersistentRandom] debug_clear_completed_activity_history done")
 
 
-# --- Experiencia acumulada (EXP) ------------------------------------------
-
 func get_total_exp() -> int:
 	return max(0, int(save_data.get("total_exp", 0)))
 
 
-## Acumula `amount` EXP, persiste en disco y retorna el nuevo total.
 func add_exp(amount: int) -> int:
 	if amount <= 0:
 		return get_total_exp()
@@ -324,9 +326,6 @@ func _calcular_ranking(total: int) -> int:
 	return 20
 
 
-# --- Precisión de nodos del mapa (estrellas) -------------------------
-## Guarda la precisión de un nodo. Conserva el mejor historial.
-## accuracy esperado en rango 0–100 
 func save_node_accuracy(
 	node_id: String,
 	accuracy: float,
@@ -353,7 +352,7 @@ func save_node_accuracy(
 	entry["last_percent"] = percent
 	entry["completed"] = true
 	print_debug(
-		"[Progress] guardado node_key=",
+		"[Progress] update node_key=",
 		clean_id,
 		" best_percent=",
 		best_percent,
@@ -370,7 +369,6 @@ func save_node_accuracy(
 	guardar_progreso_en_disco()
 
 
-## Retorna la mejor precisión histórica del nodo (0–100).
 func get_node_best_accuracy(node_id: String) -> float:
 	var clean_id: String = node_id.strip_edges()
 	var stored: Variant = save_data.get("node_progress", {})
@@ -382,7 +380,6 @@ func get_node_best_accuracy(node_id: String) -> float:
 	return float((entry as Dictionary).get("best_accuracy", 0.0))
 
 
-## Retorna el diccionario completo de progreso por nodo.
 func get_all_node_progress() -> Dictionary:
 	var stored: Variant = save_data.get("node_progress", {})
 	return (stored as Dictionary).duplicate(true) if stored is Dictionary else {}
@@ -404,7 +401,9 @@ func establecer_reanudar_en_libro(track_key: String, allow_level_downgrade: bool
 		and str(obtener_estado_reanudacion().get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL
 	):
 		return
-	_almacenar_estado_reanudacion(_resume_helper.construir_para_libro(track_key, _global_obtener_numero_nivel_actual()))
+	_almacenar_estado_reanudacion(
+		_resume_helper.construir_para_libro(track_key, _global_obtener_numero_nivel_actual())
+	)
 
 
 func establecer_reanudar_en_nivel(track_key: String, level_number: int = -1) -> void:
@@ -577,8 +576,14 @@ func _escribir_guardado_en_disco(force: bool = false, reason: String = "save") -
 	if not force and not has_unsaved_changes:
 		return true
 
+	var progress: Variant = save_data.get("progress", {})
+	print_debug("[Save] saving path=", ProjectSettings.globalize_path(SAVE_PATH))
+	var progress_keys: Array = (progress as Dictionary).keys() if progress is Dictionary else []
+	print_debug("[Save] progress_keys=", progress_keys)
+	print_debug("[Save] node_progress_keys=", get_all_node_progress().keys())
 	var result: Dictionary = _disk_writer.escribir(save_data, _loaded_from, reason)
 	if not bool(result.get("ok", false)):
+		print_debug("[Save] write_ok=", false)
 		_emitir_estado_guardado(
 			"error",
 			_loaded_from,
@@ -587,6 +592,7 @@ func _escribir_guardado_en_disco(force: bool = false, reason: String = "save") -
 		)
 		return false
 
+	print_debug("[Save] write_ok=", true)
 	if bool(result.get("wrote_primary", false)):
 		_loaded_from = "primary"
 		_recovered_from = ""
@@ -640,6 +646,9 @@ func _reiniciar_datos_guardado_actual(profile: Dictionary) -> void:
 		save_data["settings"] = settings
 	save_data["progress"] = _global_exportar_progreso()
 	save_data["history"] = []
+	save_data["node_progress"] = {}
+	save_data["total_exp"] = 0
+	save_data["completed_activity_ids_by_request"] = {}
 	save_data["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
 	save_data["save_meta"] = _meta_guardado_vacia()
 	_marcar_guardado_sucio()
@@ -652,6 +661,7 @@ func _obtener_autoload_global() -> Node:
 
 
 func _global_importar_progreso(progress_snapshot: Dictionary) -> void:
+	print_debug("[GlobalProgress] loaded progress=", progress_snapshot)
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("importar_progreso"):
 		global_autoload.call("importar_progreso", progress_snapshot)
@@ -690,7 +700,10 @@ func _global_obtener_cantidad_niveles_pista(track_key: String) -> int:
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("obtener_pista_nivel_cantidad"):
 		return int(global_autoload.call("obtener_pista_nivel_cantidad", track_key))
-	return GameTrackCatalog.obtener_pista_nivel_cantidad(track_key, GameTrackCatalog.DEFAULT_LEVEL_COUNT)
+	return GameTrackCatalog.obtener_pista_nivel_cantidad(
+		track_key,
+		GameTrackCatalog.DEFAULT_LEVEL_COUNT
+	)
 
 
 func _global_limpiar_estado_parcial_nivel(track_key: String, level_number: int) -> void:
@@ -699,10 +712,17 @@ func _global_limpiar_estado_parcial_nivel(track_key: String, level_number: int) 
 		global_autoload.call("limpiar_parcial_nivel_estado", track_key, level_number)
 
 
-func _global_registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
+func _global_registrar_actividad_racha(
+	activity_type: String,
+	metadata: Dictionary = {}
+) -> Dictionary:
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("registrar_actividad_racha"):
-		var streak_state: Variant = global_autoload.call("registrar_actividad_racha", activity_type, metadata)
+		var streak_state: Variant = global_autoload.call(
+			"registrar_actividad_racha",
+			activity_type,
+			metadata
+		)
 		if streak_state is Dictionary:
 			return (streak_state as Dictionary).duplicate(true)
 	return {}

@@ -40,7 +40,9 @@ func _estampar_meta_guardado(save_data: Dictionary, reason: String) -> void:
 
 
 func _escribir_snapshot_temporal(serialized: String) -> bool:
-	var temp_file := FileAccess.open(TEMP_PATH, FileAccess.WRITE)
+	var temp_path: String = _resolve_save_path(TEMP_PATH)
+	_ensure_parent_dir(temp_path)
+	var temp_file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if temp_file == null:
 		return false
 	temp_file.store_string(serialized)
@@ -50,27 +52,31 @@ func _escribir_snapshot_temporal(serialized: String) -> bool:
 
 
 func _respaldar_principal_si_hace_falta(loaded_from: String) -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
+	var save_path: String = _resolve_save_path(SAVE_PATH)
+	if not FileAccess.file_exists(save_path):
 		return true
 	if loaded_from != "primary":
 		return true
-	return _copiar_archivo(SAVE_PATH, BACKUP_PATH)
+	return _copiar_archivo(save_path, _resolve_save_path(BACKUP_PATH))
 
 
 func _reemplazar_principal_con_temporal(loaded_from: String) -> Dictionary:
-	_eliminar_archivo(SAVE_PATH)
+	var save_path: String = _resolve_save_path(SAVE_PATH)
+	var temp_path: String = _resolve_save_path(TEMP_PATH)
+	var backup_path: String = _resolve_save_path(BACKUP_PATH)
+	_eliminar_archivo(save_path)
 	if DirAccess.rename_absolute(
-		ProjectSettings.globalize_path(TEMP_PATH),
-		ProjectSettings.globalize_path(SAVE_PATH)
+		ProjectSettings.globalize_path(temp_path),
+		ProjectSettings.globalize_path(save_path)
 	) == OK:
 		return {"ok": true, "wrote_primary": true}
 
-	if FileAccess.file_exists(TEMP_PATH):
+	if FileAccess.file_exists(temp_path):
 		if loaded_from != "primary":
 			return {"ok": true, "wrote_primary": false}
 
-	if FileAccess.file_exists(BACKUP_PATH):
-		_copiar_archivo(BACKUP_PATH, SAVE_PATH)
+	if FileAccess.file_exists(backup_path):
+		_copiar_archivo(backup_path, save_path)
 
 	return {"ok": false, "wrote_primary": false}
 
@@ -98,3 +104,17 @@ func _eliminar_archivo(path: String) -> void:
 
 func _falla(error_message: String) -> Dictionary:
 	return {"ok": false, "wrote_primary": false, "error_message": error_message}
+
+
+static func _resolve_save_path(path: String) -> String:
+	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
+	if override_dir.is_empty():
+		return path
+	return override_dir.path_join(path.get_file())
+
+
+static func _ensure_parent_dir(path: String) -> void:
+	var dir_path: String = path.get_base_dir()
+	if dir_path.is_empty() or dir_path == "user://":
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))

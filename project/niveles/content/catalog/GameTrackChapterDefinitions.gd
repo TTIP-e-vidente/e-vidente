@@ -146,7 +146,7 @@ const RAW_CHAPTERS_BY_TRACK := {
 	GameTrackCatalog.TRACK_CETOGENICA: [
 		{
 			"meal_key": "almuerzo",
-			"teaching_key": "keto_1",
+			"teaching_key": "w_1",
 			"category": CATEGORY_MEAL,
 			"negative_count": 1,
 			"positive_count": 1

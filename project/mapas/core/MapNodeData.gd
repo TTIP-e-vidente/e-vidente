@@ -15,36 +15,31 @@ const OBJECTIVE_FIELDS := [
 	"objective_connector",
 	"objective_restriction",
 	"objective",
+	"meal",
 ]
 
-# Identidad del nodo.
-var node_key: String = ""       # ID único del nodo en el mapa.
-var order: int = 0              # Posición 1-based (usada en logs).
-var index: int = 0              # Posición 0-based (usada en código).
-var title: String = ""          # Título visible del nodo.
-var track_key: String = ""      # Pista a la que pertenece (ej: "celiaquia").
+var node_key: String = ""
+var order: int = 0
+var index: int = 0
+var title: String = ""
+var track_key: String = ""
 
-# Configuración de games.
-var shuffle_games := false      # Si true, ArmadorDePartida mezcla el orden de los games.
-var default_unlocked := false   # Si true, el nodo empieza desbloqueado.
+var shuffle_games := false
+var default_unlocked := false
 
-# Todos los games del nodo, fijos y random juntos.
-# Entradas fijas:  activity_id no vacío.
-# Requests random: type no vacío, activity_id vacío.
+# Lista normalizada de juegos del nodo. Puede mezclar games fijos y requests random.
 var games: Array[Dictionary] = []
 
-# Campos de la ruta legacy (nodos V1 con json_path directo).
-# En nodos nuevos, estos quedan vacíos; los games se leen desde el array games.
-var mode: String = ""           # Mode del primer game (legacy/V1).
-var json_path: String = ""      # Ruta al JSON legacy (si no hay activity_id).
-var activity_id: String = ""    # activity_id del primer game (camino feliz).
-var pack_id: String = ""        # Pack al que pertenece el activity_id.
-var difficulty: int = 0         # Dificultad base del nodo (0 = auto).
-var node_file_path: String = "" # Ruta del archivo del nodo V1 (legacy).
+var mode: String = ""
+var json_path: String = ""
+var activity_id: String = ""
+var pack_id: String = ""
+var difficulty: int = 0
+var node_file_path: String = ""
 
-# Posición visual en el mapa (solo nodos V1 con coordenadas explícitas).
 var map_position := Vector2.ZERO
 var has_map_position := false
+
 
 static func from_json(raw_node: Dictionary, map_track_key: String, node_index: int) -> MapNodeData:
 	var node := MapNodeData.new()
@@ -59,10 +54,11 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 	node.order = node_index + 1
 	node.difficulty = int(raw_node.get("difficulty", 0))
 	node.shuffle_games = bool(raw_node.get("shuffle_games", false))
+
 	var raw_games: Variant = raw_node.get("games", [])
 	var raw_legacy_game_slots: Variant = raw_node.get("game_slots", [])
-	var fixed_games := _normalize_fixed_game_entries(raw_games)
-	var random_requests := _normalize_random_game_requests(raw_games)
+	var fixed_games: Array[Dictionary] = _normalize_fixed_game_entries(raw_games)
+	var random_requests: Array[Dictionary] = _normalize_random_game_requests(raw_games)
 	if random_requests.is_empty():
 		random_requests = _normalize_random_game_requests(raw_legacy_game_slots)
 	if fixed_games.is_empty() and not node.activity_id.is_empty():
@@ -72,6 +68,7 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 			"difficulty": node.difficulty,
 			"dificultad": node.difficulty,
 		})
+
 	node.games = fixed_games + random_requests
 	if not fixed_games.is_empty():
 		var first_game: Dictionary = fixed_games[0]
@@ -153,7 +150,7 @@ func uses_random_games() -> bool:
 
 
 func get_fixed_game_count() -> int:
-	var count := 0
+	var count: int = 0
 	for game in games:
 		if not is_random_game_request(game):
 			count += 1
@@ -161,14 +158,13 @@ func get_fixed_game_count() -> int:
 
 
 func get_random_game_request_count() -> int:
-	var count := 0
+	var count: int = 0
 	for game in games:
 		if is_random_game_request(game):
 			count += 1
 	return count
 
 
-# Devuelve solo las entradas fijas del array games (las que tienen activity_id).
 func get_fixed_games() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for game in games:
@@ -177,7 +173,6 @@ func get_fixed_games() -> Array[Dictionary]:
 	return result
 
 
-# Devuelve solo los requests random del array games (los que tienen type pero no activity_id).
 func get_random_game_requests() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for game in games:
@@ -186,7 +181,6 @@ func get_random_game_requests() -> Array[Dictionary]:
 	return result
 
 
-# Devuelve true si la entrada es un request random (tiene type, no tiene activity_id).
 static func is_random_game_request(game: Dictionary) -> bool:
 	var has_type: bool = not str(game.get("type", "")).strip_edges().is_empty()
 	var has_activity_id: bool = not str(game.get("activity_id", "")).strip_edges().is_empty()
@@ -194,7 +188,6 @@ static func is_random_game_request(game: Dictionary) -> bool:
 
 
 func get_effective_pack_id(fallback_pack_id: String = "celiaquia") -> String:
-	# pack_id explicito > track del mapa > fallback seguro de demo.
 	if not pack_id.is_empty():
 		return pack_id
 	if not track_key.is_empty():
@@ -220,7 +213,6 @@ static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionar
 	return normalized_games
 
 
-# Cuando el JSON pasa solo el activity_id como string, construimos el game minimo.
 static func _build_fixed_game_from_string(raw_activity_id: String) -> Dictionary:
 	var activity_id_value: String = raw_activity_id.strip_edges()
 	if activity_id_value.is_empty():
@@ -240,8 +232,6 @@ static func _build_fixed_game_from_string(raw_activity_id: String) -> Dictionary
 	}
 
 
-# Convierte un dict del JSON en el formato normalizado que usa el resto del codigo.
-# Devuelve {} si la entrada no tiene datos suficientes para ser jugable.
 static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 	var game_type: String = _normalize_v1_game_type(
 		str(game.get("tipo", game.get("mode", ""))).strip_edges()
@@ -257,6 +247,7 @@ static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 	)
 	if no_activity_id and incomplete_legacy:
 		return {}
+
 	var normalized_game: Dictionary = {
 		"id": str(game.get("id", "")).strip_edges(),
 		"tipo": game_type,
@@ -287,8 +278,6 @@ static func _normalize_random_game_requests(raw_games: Variant) -> Array[Diction
 	return normalized_requests
 
 
-# Convierte una entrada del JSON en un request random valido.
-# Devuelve {} si la entrada es en realidad un game fijo o si faltan datos.
 static func _build_random_request_from_dictionary(game_request: Dictionary) -> Dictionary:
 	if _has_fixed_game_fields(game_request):
 		return {}

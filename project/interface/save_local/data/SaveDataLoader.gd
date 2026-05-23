@@ -31,6 +31,7 @@ func cargar_datos() -> Dictionary:
 
 	var raw_save: Variant = _leer_primer_archivo_valido()
 	if not raw_save is Dictionary:
+		print_debug("[Save] creating_new_save reason=", "no_valid_save_file")
 		needs_write = true
 		return _schema.datos_guardado_predeterminados()
 
@@ -71,6 +72,10 @@ func reparar_estructura(save_snapshot: Dictionary) -> bool:
 
 	if not save_snapshot.get("progress", {}) is Dictionary:
 		save_snapshot["progress"] = {}
+		changed = true
+
+	if not save_snapshot.get("node_progress", {}) is Dictionary:
+		save_snapshot["node_progress"] = {}
 		changed = true
 
 	if not save_snapshot.get("history", []) is Array:
@@ -119,24 +124,47 @@ func _leer_primer_archivo_valido() -> Variant:
 
 
 func _leer_archivo_json(path: String) -> Variant:
-	if not FileAccess.file_exists(path):
+	var actual_path: String = _resolve_save_path(path)
+	print_debug("[Save] loading path=", ProjectSettings.globalize_path(actual_path))
+	var exists: bool = FileAccess.file_exists(actual_path)
+	print_debug("[Save] file_exists=", exists)
+	if not exists:
 		return null
 
-	var file := FileAccess.open(path, FileAccess.READ)
+	var file := FileAccess.open(actual_path, FileAccess.READ)
 	if file == null:
+		push_warning("[Save] parse failed path=%s error=%s" % [actual_path, "open_failed"])
 		return null
 
 	var text := file.get_as_text()
 	file = null
+	print_debug("[Save] raw_size=", text.length())
 	if text.strip_edges().is_empty():
+		push_warning("[Save] parse failed path=%s error=%s" % [actual_path, "empty_file"])
 		return null
 
 	var json := JSON.new()
 	if json.parse(text) != OK:
+		push_warning(
+			"[Save] parse failed path=%s error=%s"
+			% [actual_path, json.get_error_message()]
+		)
 		return null
 	if json.data is Dictionary:
-		return (json.data as Dictionary).duplicate(true)
+		var parsed: Dictionary = (json.data as Dictionary).duplicate(true)
+		print_debug("[Save] parsed_ok=", true)
+		print_debug("[Save] keys=", parsed.keys())
+		return parsed
+	print_debug("[Save] parsed_ok=", false)
+	push_warning("[Save] parse failed path=%s error=%s" % [actual_path, "root_not_dictionary"])
 	return null
+
+
+static func _resolve_save_path(path: String) -> String:
+	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
+	if override_dir.is_empty():
+		return path
+	return override_dir.path_join(path.get_file())
 
 
 func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
@@ -202,6 +230,9 @@ func _migrar_legacy(raw: Dictionary) -> Dictionary:
 	var legacy_progress: Variant = user.get("progress", {})
 	if legacy_progress is Dictionary:
 		normalized["progress"] = (legacy_progress as Dictionary).duplicate(true)
+	var legacy_node_progress: Variant = user.get("node_progress", {})
+	if legacy_node_progress is Dictionary:
+		normalized["node_progress"] = (legacy_node_progress as Dictionary).duplicate(true)
 
 	normalized["save_meta"] = _schema.normalizar_meta_guardado({
 		"last_saved_at": user.get("updated_at", ""),
@@ -272,6 +303,10 @@ func _aplanar_sesiones_legacy(raw: Dictionary) -> Dictionary:
 	var selected_resume_state: Variant = selected.get("resume_state", {})
 	if selected_resume_state is Dictionary:
 		flat["resume_state"] = (selected_resume_state as Dictionary).duplicate(true)
+
+	var selected_node_progress: Variant = selected.get("node_progress", {})
+	if selected_node_progress is Dictionary:
+		flat["node_progress"] = (selected_node_progress as Dictionary).duplicate(true)
 
 	flat["history"] = _schema.normalizar_historial(selected.get("history", []))
 	return flat

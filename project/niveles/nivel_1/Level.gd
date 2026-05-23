@@ -26,6 +26,9 @@ const ContinuidadDePartidaDeNodoScript := preload(
 )
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const ContentSchemaNormalizerScript := preload(
+	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
+)
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
@@ -74,7 +77,9 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var adelante_3: Sprite2D 					 = $Adelante/adelante3
 @onready var teaching_backdrop: ColorRect = get_node_or_null("TeachingBackdrop") as ColorRect
 @onready var teaching_sprite:    Sprite2D            = $Ensenanza
-@onready var tarjeta_ensenanza_cierre: Control = get_node_or_null("TarjetaEnsenanzaCierre") as Control
+@onready var tarjeta_ensenanza_cierre: Control = (
+	get_node_or_null("TarjetaEnsenanzaCierre") as Control
+)
 @onready var label_ensenanza_cierre: Label = get_node_or_null(
 	"TarjetaEnsenanzaCierre/MargenEnsenanzaCierre/LabelEnsenanzaCierre"
 ) as Label
@@ -82,7 +87,9 @@ const SAVE_FEEDBACK_ERROR_BODY_COLOR    := Color(0.403922, 0.160784, 0.121569, 0
 @onready var lupa_area:          Area2D              = $Lupa
 @onready var manager_level                           = $ManagerLevel
 @onready var _player_cambiante: Node                 = get_node_or_null("PlayerCambiante")
-@onready var _drag_objective_text: DragObjectiveText = get_node_or_null("DragObjectiveText") as DragObjectiveText
+@onready var _drag_objective_text: DragObjectiveText = (
+	get_node_or_null("DragObjectiveText") as DragObjectiveText
+)
 @onready var _consigna_vieja: CanvasItem = get_node_or_null("Globo texto") as CanvasItem
 
 ## Guardado rápido (UI)
@@ -423,134 +430,12 @@ func _actualizar_objetivo_de_arrastre_desde_juego_actual() -> void:
 
 
 func _build_drag_objective_data(game: Dictionary) -> Dictionary:
-	var action: String = _get_drag_objective_label(game)
-	var meal: String = _get_drag_objective_main(game)
-	var connector: String = _get_drag_objective_sub(game)
-	var restriction: String = _get_drag_objective_restriction(game)
-
-	if meal.strip_edges().is_empty():
-		meal = _build_drag_objective_main_fallback(game)
-
-	if connector.strip_edges().is_empty():
-		connector = "para tu amigue"
-
-	return {
-		"objective_action": action,
-		"objective_meal": meal,
-		"objective_connector": connector,
-		"objective_restriction": restriction,
-		"activity_id": str(game.get("activity_id", "")),
-		"track_key": str(game.get("track_key", "")),
-		"pack_id": str(game.get("pack_id", "")),
-	}
-
-
-func _get_drag_objective_restriction(game: Dictionary) -> String:
-	if game.has("objective_restriction"):
-		return str(game.get("objective_restriction", ""))
-
 	var objective_raw: Variant = game.get("objective", {})
-	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
-	if objective.has("restriction"):
-		return str(objective.get("restriction", ""))
-
-	return ""
-
-
-func _get_drag_objective_label(game: Dictionary) -> String:
-	if game.has("objective_action"):
-		return str(game.get("objective_action", "Prepará"))
-	if game.has("objective_label"):
-		return str(game.get("objective_label", "Prepará"))
-
-	var objective_raw: Variant = game.get("objective", {})
-	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
-	if objective.has("action"):
-		return str(objective.get("action", "Prepará"))
-	if objective.has("label"):
-		return str(objective.get("label", "Prepará"))
-
-	return "Prepará"
-
-
-func _get_drag_objective_main(game: Dictionary) -> String:
-	if game.has("objective_meal"):
-		return str(game.get("objective_meal", ""))
-	if game.has("objective_main"):
-		return str(game.get("objective_main", ""))
-
-	var objective_raw: Variant = game.get("objective", {})
-	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
-	if objective.has("meal"):
-		return str(objective.get("meal", ""))
-	if objective.has("main"):
-		return str(objective.get("main", ""))
-
-	var message: String = _get_drag_objective_message(game)
-	if not message.strip_edges().is_empty():
-		var lines: PackedStringArray = message.split("\n", false)
-		if lines.size() > 0:
-			return str(lines[0]).strip_edges()
-
-	return ""
-
-
-func _get_drag_objective_sub(game: Dictionary) -> String:
-	if game.has("objective_connector"):
-		return str(game.get("objective_connector", ""))
-	if game.has("objective_sub"):
-		return str(game.get("objective_sub", ""))
-
-	var objective_raw: Variant = game.get("objective", {})
-	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
-	if objective.has("connector"):
-		return str(objective.get("connector", ""))
-	if objective.has("sub"):
-		return str(objective.get("sub", ""))
-
-	var message: String = _get_drag_objective_message(game)
-	if not message.strip_edges().is_empty():
-		var lines: PackedStringArray = message.split("\n", false)
-		if lines.size() > 1:
-			return str(lines[1]).strip_edges()
-
-	return ""
-
-
-func _get_drag_objective_message(game: Dictionary) -> String:
-	if game.has("objective_message"):
-		return str(game.get("objective_message", ""))
-
-	if game.has("message"):
-		return str(game.get("message", ""))
-
-	var objective_raw: Variant = game.get("objective", {})
-	var objective: Dictionary = objective_raw as Dictionary if objective_raw is Dictionary else {}
-	if objective.has("message"):
-		return str(objective.get("message", ""))
-
-	return ""
-
-
-func _build_drag_objective_main_fallback(game: Dictionary) -> String:
-	var activity_id: String = str(game.get("activity_id", ""))
-	var teaching_key: String = str(game.get("teaching_key", ""))
-	var source: String = activity_id + " " + teaching_key
-
-	if source.contains("desayuno"):
-		return "un desayuno sin TACC"
-	if source.contains("merienda"):
-		return "una merienda sin TACC"
-	if source.contains("colacion"):
-		return "una colación sin TACC"
-	if source.contains("cena"):
-		return "una cena sin TACC"
-	if source.contains("almuerzo"):
-		return "un almuerzo sin TACC"
-	if source.contains("bebida"):
-		return "una bebida sin TACC"
-
-	return "un plato sin TACC"
+	if objective_raw is Dictionary:
+		var objective: Dictionary = objective_raw as Dictionary
+		if ContentSchemaNormalizerScript.drag_objective_is_complete(objective):
+			return objective
+	return ContentSchemaNormalizerScript.normalize_drag_objective(game, active_track_key, _nodo_actual)
 
 
 func _aplicar_dificultad_de_arrastre() -> void:
@@ -756,7 +641,14 @@ func obtener_resultado() -> ResultadoDeMiniJuego:
 
 
 func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> void:
-	print_debug("[Progress] partida finalizada node_key=", _nodo_actual, " usa_flujo_mapa=", _usa_flujo_mapa, " pertenece_a_partida=", _pertenece_a_partida_de_nodo)
+	print_debug(
+		"[Progress] partida finalizada node_key=",
+		_nodo_actual,
+		" usa_flujo_mapa=",
+		_usa_flujo_mapa,
+		" pertenece_a_partida=",
+		_pertenece_a_partida_de_nodo
+	)
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
 		Global.registrar_actividad_racha(
@@ -896,7 +788,12 @@ func _ocultar_boton_adelante_anterior() -> void:
 func _guardar_progreso_de_mapa() -> void:
 	if _nodo_actual.is_empty():
 		return
-	print_debug("[Progress] guardando completado en mapa node_key=", _nodo_actual, " track_key=", active_track_key)
+	print_debug(
+		"[Progress] guardando completado en mapa node_key=",
+		_nodo_actual,
+		" track_key=",
+		active_track_key
+	)
 	Global.marcar_nodo_jugable_completado(active_track_key, _nodo_actual)
 
 
