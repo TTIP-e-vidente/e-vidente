@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c1bp4qhmya5yi"]
+[gd_scene load_steps=48 format=3 uid="uid://c1bp4qhmya5yi"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_g0f04"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_4r6cp"]
@@ -40,6 +40,7 @@
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="39_g1e6r"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="40_continuar"]
 [ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="40_m0gd1"]
+[ext_resource type="PackedScene" path="res://interface/components/DragObjectiveText/DragObjectiveText.tscn" id="41_objective"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_054us"]
 animations = []
@@ -270,6 +271,12 @@ texture = ExtResource("9_ahnvr")
 position = Vector2(6.2636, -3.13165)
 
 [node name="Condition" type="Sprite2D" parent="Globo texto" unique_id=212406597]
+
+[node name="DragObjectiveText" parent="." instance=ExtResource("41_objective")]
+offset_left = 72.0
+offset_top = 190.0
+offset_right = 402.0
+offset_bottom = 310.0
 
 [node name="PlayerCambiante" type="Sprite2D" parent="." unique_id=1580273627]
 position = Vector2(882, 255)

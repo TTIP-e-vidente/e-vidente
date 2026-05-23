@@ -23,6 +23,13 @@ const LOG_PREFIX := "[RunPlan]"
 const DIFICULTAD_FACIL := 1
 const DIFICULTAD_MEDIA := 3
 const DIFICULTAD_DIFICIL := 5
+const OBJECTIVE_FIELDS := [
+	"objective_label",
+	"objective_message",
+	"objective_main",
+	"objective_sub",
+	"objective",
+]
 
 static var _cache_dificultad_por_ruta: Dictionary = {}
 static var _last_random_combo_by_node_key: Dictionary = {}
@@ -105,7 +112,12 @@ static func construir_juegos_fijos(node_data: MapNodeData) -> Array[Dictionary]:
 		var mode: String = str(
 			fixed_game_entry.get("mode", fixed_game_entry.get("tipo", ""))
 		).strip_edges()
-		var datos_juego := {
+		if mode.is_empty():
+			mode = NodeContentLoaderScript.to_runtime_mode(
+				str(fixed_game_entry.get("type", "")).strip_edges()
+			)
+		var datos_juego: Dictionary = {
+			"type": str(fixed_game_entry.get("type", "")).strip_edges(),
 			"mode": mode,
 			"json_path": str(
 				fixed_game_entry.get("archivo", fixed_game_entry.get("json_path", ""))
@@ -117,6 +129,7 @@ static func construir_juegos_fijos(node_data: MapNodeData) -> Array[Dictionary]:
 			).strip_edges(),
 			"clave_nodo_de_origen": node_data.node_key,
 		}
+		_copiar_campos_objetivo(fixed_game_entry, datos_juego)
 		var dificultad_juego: int = int(
 			fixed_game_entry.get(
 				"difficulty",
@@ -177,17 +190,20 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 		selected_game_entries
 	)
 	for game_entry in final_game_entries:
-		var juego: Dictionary = _crear_juego_manual(
-			{
-				"mode": str(game_entry.get("mode", "")).strip_edges(),
-				"json_path": str(game_entry.get("json_path", "")).strip_edges(),
-				"activity_id": str(game_entry.get("activity_id", "")).strip_edges(),
-				"pack_id": str(game_entry.get("pack_id", pack_id)).strip_edges(),
-				"titulo": str(game_entry.get("titulo", node_data.title)).strip_edges(),
-				"clave_nodo_de_origen": node_data.node_key,
-			},
-			int(game_entry.get("difficulty", game_entry.get("dificultad", DIFICULTAD_FACIL)))
+		var datos_juego: Dictionary = {
+			"type": str(game_entry.get("type", "")).strip_edges(),
+			"mode": str(game_entry.get("mode", "")).strip_edges(),
+			"json_path": str(game_entry.get("json_path", "")).strip_edges(),
+			"activity_id": str(game_entry.get("activity_id", "")).strip_edges(),
+			"pack_id": str(game_entry.get("pack_id", pack_id)).strip_edges(),
+			"titulo": str(game_entry.get("titulo", node_data.title)).strip_edges(),
+			"clave_nodo_de_origen": node_data.node_key,
+		}
+		_copiar_campos_objetivo(game_entry, datos_juego)
+		var dificultad_juego: int = int(
+			game_entry.get("difficulty", game_entry.get("dificultad", DIFICULTAD_FACIL))
 		)
+		var juego: Dictionary = _crear_juego_manual(datos_juego, dificultad_juego)
 		if str(juego.get("mode", "")).strip_edges().is_empty():
 			continue
 		juego["request_key"] = str(game_entry.get("request_key", "")).strip_edges()
@@ -318,7 +334,9 @@ static func _select_random_game_entries(
 				requested_difficulty
 			)
 			if not selected_game_entry.is_empty():
+				selected_game_entry["type"] = requested_type
 				selected_game_entry["request_key"] = request_key
+				_copiar_campos_objetivo(game_request, selected_game_entry)
 				print(
 					"[PersistentRandom] selected=%s request=%s"
 					% [selected_activity_id, request_key]
@@ -554,7 +572,8 @@ static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dic
 	if not ruta_json.is_empty() and not FileAccess.file_exists(ruta_json):
 		push_warning("ArmadorDePartida: no existe el contenido de partida: %s" % ruta_json)
 	var modo: String = _normalizar_modo(str(datos_juego.get("mode", "")))
-	return {
+	var juego: Dictionary = {
+		"type": str(datos_juego.get("type", "")).strip_edges(),
 		"mode": modo,
 		"tipo": modo,
 		"json_path": ruta_json,
@@ -566,6 +585,14 @@ static func _crear_juego_manual(datos_juego: Dictionary, dificultad: int) -> Dic
 		"difficulty": _limitar_dificultad(dificultad),
 		"clave_nodo_de_origen": str(datos_juego.get("clave_nodo_de_origen", "")).strip_edges(),
 	}
+	_copiar_campos_objetivo(datos_juego, juego)
+	return juego
+
+
+static func _copiar_campos_objetivo(origen: Dictionary, destino: Dictionary) -> void:
+	for campo in OBJECTIVE_FIELDS:
+		if origen.has(campo) and origen.get(campo) != null:
+			destino[campo] = origen.get(campo)
 
 
 

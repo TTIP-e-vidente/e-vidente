@@ -22,6 +22,13 @@ const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 const MODE_COMPLETAR_PALABRA := "completar_palabra"
+const OBJECTIVE_FIELDS := [
+	"objective_label",
+	"objective_message",
+	"objective_main",
+	"objective_sub",
+	"objective",
+]
 
 # Identidad del nodo.
 var node_key: String = ""       # ID único del nodo en el mapa.
@@ -137,15 +144,15 @@ func has_content_path() -> bool:
 
 
 func has_fixed_games() -> bool:
-	for g in games:
-		if not is_random_game_request(g):
+	for game in games:
+		if not is_random_game_request(game):
 			return true
 	return false
 
 
 func has_random_game_requests() -> bool:
-	for g in games:
-		if is_random_game_request(g):
+	for game in games:
+		if is_random_game_request(game):
 			return true
 	return false
 
@@ -160,16 +167,16 @@ func uses_random_games() -> bool:
 
 func get_fixed_game_count() -> int:
 	var count := 0
-	for g in games:
-		if not is_random_game_request(g):
+	for game in games:
+		if not is_random_game_request(game):
 			count += 1
 	return count
 
 
 func get_random_game_request_count() -> int:
 	var count := 0
-	for g in games:
-		if is_random_game_request(g):
+	for game in games:
+		if is_random_game_request(game):
 			count += 1
 	return count
 
@@ -177,25 +184,25 @@ func get_random_game_request_count() -> int:
 # Devuelve solo las entradas fijas del array games (las que tienen activity_id).
 func get_fixed_games() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for g in games:
-		if not is_random_game_request(g):
-			result.append(g)
+	for game in games:
+		if not is_random_game_request(game):
+			result.append(game)
 	return result
 
 
 # Devuelve solo los requests random del array games (los que tienen type pero no activity_id).
 func get_random_game_requests() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for g in games:
-		if is_random_game_request(g):
-			result.append(g)
+	for game in games:
+		if is_random_game_request(game):
+			result.append(game)
 	return result
 
 
 # Devuelve true si la entrada es un request random (tiene type, no tiene activity_id).
 static func is_random_game_request(game: Dictionary) -> bool:
-	var has_type := not str(game.get("type", "")).strip_edges().is_empty()
-	var has_activity_id := not str(game.get("activity_id", "")).strip_edges().is_empty()
+	var has_type: bool = not str(game.get("type", "")).strip_edges().is_empty()
+	var has_activity_id: bool = not str(game.get("activity_id", "")).strip_edges().is_empty()
 	return has_type and not has_activity_id
 
 
@@ -244,21 +251,21 @@ static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionar
 			game_type.is_empty() or game_mode.is_empty() or file_path.is_empty()
 		):
 			continue
-		normalized_games.append(
-			{
-				"id": str(game.get("id", "")).strip_edges(),
-				"tipo": game_type,
-				"mode": game_mode,
-				"archivo": file_path,
-				"json_path": file_path,
-				"activity_id": entry_activity_id,
-				"pack_id": entry_pack_id,
-				"difficulty": int(game.get("difficulty", game.get("dificultad", 0))),
-				"dificultad": int(game.get("difficulty", game.get("dificultad", 0))),
-				"titulo": str(game.get("titulo", "")).strip_edges(),
-				"title": str(game.get("titulo", game.get("title", ""))).strip_edges(),
-			}
-		)
+		var normalized_game: Dictionary = {
+			"id": str(game.get("id", "")).strip_edges(),
+			"tipo": game_type,
+			"mode": game_mode,
+			"archivo": file_path,
+			"json_path": file_path,
+			"activity_id": entry_activity_id,
+			"pack_id": entry_pack_id,
+			"difficulty": int(game.get("difficulty", game.get("dificultad", 0))),
+			"dificultad": int(game.get("difficulty", game.get("dificultad", 0))),
+			"titulo": str(game.get("titulo", "")).strip_edges(),
+			"title": str(game.get("titulo", game.get("title", ""))).strip_edges(),
+		}
+		_copiar_campos_objetivo(game, normalized_game)
+		normalized_games.append(normalized_game)
 	return normalized_games
 
 
@@ -280,13 +287,19 @@ static func _normalize_random_game_requests(raw_games: Variant) -> Array[Diction
 		)
 		if requested_type.is_empty() or requested_difficulty <= 0:
 			continue
-		normalized_requests.append(
-			{
-				"type": requested_type,
-				"difficulty": requested_difficulty,
-			}
-		)
+		var normalized_request: Dictionary = {
+			"type": requested_type,
+			"difficulty": requested_difficulty,
+		}
+		_copiar_campos_objetivo(game_request, normalized_request)
+		normalized_requests.append(normalized_request)
 	return normalized_requests
+
+
+static func _copiar_campos_objetivo(origen: Dictionary, destino: Dictionary) -> void:
+	for campo in OBJECTIVE_FIELDS:
+		if origen.has(campo):
+			destino[campo] = origen.get(campo)
 
 
 static func _has_fixed_game_fields(game: Dictionary) -> bool:

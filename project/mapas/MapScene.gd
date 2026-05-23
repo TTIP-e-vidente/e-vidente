@@ -55,6 +55,14 @@ func _ready() -> void:
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_VISIBILITY_CHANGED:
+		return
+	if not is_node_ready() or not visible:
+		return
+	actualizar_estados_de_nodos()
+
+
 # Flujo del mapa
 func _conectar_senales() -> void:
 	if map_hud != null and map_hud.has_signal("back_requested"):
@@ -104,9 +112,32 @@ func actualizar_estados_de_nodos() -> void:
 		if not key.is_empty() and node_progress.has(key):
 			var np: Variant = node_progress[key]
 			if np is Dictionary:
-				state["best_accuracy"] = float((np as Dictionary).get("best_accuracy", 0.0))
+				var saved_progress: Dictionary = np as Dictionary
+				var saved_percent: float = float(saved_progress.get("best_percent", 0.0))
+				var saved_accuracy: float = float(saved_progress.get("best_accuracy", saved_percent * 100.0))
+				var saved_completed: bool = bool(saved_progress.get("completed", false))
+				if saved_completed and saved_percent <= 0.0:
+					saved_percent = 1.0
+					saved_accuracy = 100.0
+				state["best_percent"] = saved_percent
+				state["best_accuracy"] = saved_accuracy
+				if saved_completed and not bool(state.get("is_completed", false)):
+					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
+					state["is_completed"] = true
+					state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
+					state["can_play"] = true
+		print_debug(
+			"[MapBoard] node_key=",
+			key,
+			" saved_percent=",
+			state.get("best_percent", 0.0),
+			" completed=",
+			state.get("is_completed", false)
+		)
 		node_states.append(state)
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
+	if map_board.has_method("refresh_progress_from_save"):
+		map_board.call("refresh_progress_from_save")
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:
