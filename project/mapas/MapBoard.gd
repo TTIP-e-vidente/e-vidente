@@ -9,11 +9,12 @@ var _configured_node_states: Array[Dictionary] = []
 
 @onready var contenedor_scroll: ScrollContainer = $ScrollContainer
 @onready var contenedor_nodos: Node2D = $ScrollContainer/Contenido/NodesContainer
+@onready var titulo_del_nivel: Sprite2D = $"Titulo del Nivel"
 
 
 func _ready() -> void:
 	call_deferred("refresh_progress_from_save")
-
+	titulo_del_nivel.modulate = Color("#42785e")
 
 func obtener_contenedor_nodos() -> Node2D:
 	return contenedor_nodos
