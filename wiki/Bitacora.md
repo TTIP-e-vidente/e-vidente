@@ -26,6 +26,144 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 
 ---
 
+### `2026-05-23` — Barra de progreso completa antes de finalizar la última partida
+<kbd>🖼️ UI</kbd> <kbd>✨ UX</kbd> <kbd>📊 Progreso</kbd>
+
+Se ajustó el cálculo de la barra para que durante la última partida muestre el avance previo y recién llegue visualmente al 100% al cerrar esa partida.
+
+**Qué problema resolvió**
+- En la última partida, la barra podía mostrarse como completa antes de que esa partida estuviera efectivamente terminada.
+- El progreso debía representar las partidas ya completadas (`total - 1`) mientras el último juego seguía en curso.
+
+**Qué se implementó**
+- Método explícito `completar_progreso()` en la barra compartida.
+- Llamada de cierre en modalidades que limpian estado al finalizar la partida por nodo.
+- Actualización visual de `Progress_Bar.tscn` para sostener el indicador inferior.
+
+**Impacto para el jugador**
+- El avance visual ya no se adelanta al estado real del juego.
+- El 100% queda asociado al cierre efectivo del nodo y al paso a resultados.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/interface/progress_bar.gd`
+- `project/interface/Progress_Bar.tscn`
+- `project/niveles/nivel_1/Level.gd`
+- `project/preguntas/pregunta.gd`
+- `project/completar/completar_palabra.tscn`
+- Commit: `b98b755` — *Feature/implementacion estrellas (#27)*
+- Commit: `87c9ef7` — *Actualizada la progress bar*
+
+</details>
+
+---
+
+### `2026-05-22` — Transición suave de partida a resultados
+<kbd>✨ UX</kbd> <kbd>🏁 Cierre</kbd> <kbd>🎞️ Transición</kbd>
+
+Se consolidó el paso desde la última actividad del nodo hacia la pantalla de resultados usando el flujo de transición, evitando saltos secos entre juego, cierre y mapa.
+
+**Qué problema resolvió**
+- El cierre de partida podía sentirse abrupto cuando terminaba el último minijuego y se cambiaba de escena.
+
+**Qué se implementó**
+- Uso de `TransicionEscenas` desde `GameSceneRouter` y desde la pantalla de finalización.
+- Apertura de `Finalización-Partida.tscn` cuando `Global` conserva resultados pendientes.
+- Lectura y limpieza de datos de finalización antes de volver al mapa.
+
+**Impacto para el jugador**
+- La salida del juego se siente más ordenada.
+- Los resultados aparecen como parte del flujo de cierre, no como un corte aislado.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/interface/transiciones/transicion_escenas.gd`
+- `project/interface/transiciones/transicion_escenas.tscn`
+- `project/niveles/GameSceneRouter.gd`
+- `project/mapas/MapScene.gd`
+- `project/mapas/Finalización-Partida.tscn`
+- `project/mapas/finalización_partida.gd`
+- `project/niveles/global.gd`
+- Commit: `76991a3` — *feat: sistema de transiciones de escenas con GameSceneRouter (#26)*
+- Commit: `cd05ab4` — *Transicion correcta*
+
+</details>
+
+---
+
+### `2026-05-21` — Estrellas de precisión en el mapa
+<kbd>🖼️ UI</kbd> <kbd>📊 Progreso</kbd> <kbd>💾 Persistencia</kbd>
+
+Se agregó una estrella de progreso para que los nodos completados reflejen la mejor precisión obtenida y no solo el estado binario terminado/no terminado.
+
+**Qué problema resolvió**
+- El mapa mostraba avance, pero no comunicaba la calidad del desempeño en cada nodo.
+
+**Qué se implementó**
+- Componente `StarProgress` con relleno proporcional de 0 a 1.
+- Guardado de `best_accuracy` y `last_accuracy` por nodo en `SaveManager`.
+- Lectura del progreso guardado desde `MapScene` y aplicación visual en `LevelNode`.
+
+**Impacto para el jugador**
+- El mapa devuelve feedback más claro sobre precisión.
+- El jugador puede reconocer dónde completó bien y dónde podría mejorar.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/mapas/components/StarProgress.gd`
+- `project/mapas/components/StarProgress.tscn`
+- `project/mapas/LevelNode.gd`
+- `project/mapas/MapScene.gd`
+- `project/interface/SaveManager.gd`
+- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
+- Commit: `c1e61d1` — *feat: Implementando Estrella de progreso*
+- Commit: `b98b755` — *Feature/implementacion estrellas (#27)*
+
+</details>
+
+---
+
+### `2026-05-20` — Completar con opciones de palabras
+<kbd>🎮 Gameplay</kbd> <kbd>🔧 Modalidad</kbd> <kbd>📝 Contenido</kbd>
+
+Se incorporó una modalidad donde el jugador completa frases eligiendo palabras disponibles, integrada al mismo plan de partida por nodo que el resto de minijuegos.
+
+**Qué problema resolvió**
+- Los nodos necesitaban más variedad de interacción sin duplicar rutas ni hardcodear desafíos en escenas.
+
+**Qué se implementó**
+- Escena y script `completar_palabra` con validación de respuestas, feedback de error y cierre único del minijuego.
+- Carga de desafíos desde JSON por dificultad mediante `CargadorCompletar`.
+- Routing por `ModalidadRouter` y `GameSceneRouter`, más continuidad en `ContinuidadDePartidaDeNodo`.
+
+**Impacto para el jugador**
+- La experiencia suma una actividad de lectura/comprensión con reintento inmediato.
+- El avance del nodo se mantiene consistente con quiz, arrastre y vinculación.
+
+<details>
+<summary>📁 Evidencia técnica</summary>
+
+- `project/completar/completar_palabra.gd`
+- `project/completar/completar_palabra.tscn`
+- `project/completar/CargadorCompletar.gd`
+- `project/contenido/mapa/completar_palabra.json`
+- `project/contenido/mapa/celiaquia_mapa.json`
+- `project/sistemas/ModalidadRouter.gd`
+- `project/niveles/GameSceneRouter.gd`
+- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
+- `project/tests/vertical_slice_smoke_test.gd`
+- Commit: `7fe7dcb` — *feat: implement CompletarPalabra mini-game mode and scene structure*
+- Commit: `73174e4` — *Feature/opciones json (#25)*
+
+</details>
+
+> ⚠️ **Riesgo detectado:** `project/tests/vertical_slice_smoke_test.gd` todavía conserva algunas referencias textuales a rutas antiguas `res://opciones_palabras/...`, aunque la modalidad actual vive en `res://completar/...`.
+
+---
+
 ### `2026-05-16` — Integración de vinculacion-partidaxnodo en dev y apertura de PR a main
 <kbd>🔀 Integración</kbd> <kbd>🧹 Limpieza</kbd> <kbd>🚀 PR</kbd>
 
@@ -295,6 +433,10 @@ Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técni
 
 | Categoría | Fecha | Cambio | Descripción |
 |---|---|---|---|
+| 🖼️ UI | `2026-05-23` | **Barra completa al finalizar** | La barra muestra `total - 1` durante la última partida y llega al 100% al cierre del nodo. |
+| ✨ UX | `2026-05-22` | **Transición partida a resultados** | El cierre del último minijuego abre resultados con transición y retorno ordenado al mapa. |
+| 🖼️ UI | `2026-05-21` | **Estrellas de precisión** | Los nodos completados muestran la mejor precisión guardada mediante una estrella proporcional. |
+| 🎮 Gameplay | `2026-05-20` | **Completar con opciones de palabras** | Nueva modalidad JSON integrada al routing y continuidad de partida por nodo. |
 | 🐛 Bug | `2026-05-13` | **Corrección del plato** | Se ajustó la interacción de arrastre para evitar respuestas inconsistentes en intentos incorrectos. |
 | 🖼️ UI | `2026-05-10` | **Barra de progreso** | El jugador ahora ve su avance dentro de la secuencia del nodo con un indicador consistente. |
 | ✨ UX | `2026-05-10` | **Lección terminada / finalización de nodo** | Se agregó un cierre explícito con retorno ordenado al mapa. |
