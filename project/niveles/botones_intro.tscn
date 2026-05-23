@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://bgatuq1kmpiwl"]
+
+[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_taonf"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="2_taonf"]
+[ext_resource type="Script" uid="uid://dt242bab4eg0k" path="res://niveles/botones_intro.gd" id="3_aao33"]
+[ext_resource type="Texture2D" uid="uid://3dd0s1s85ksr" path="res://assets-sistema/selector/diabetes-selector.png" id="4_rkrw2"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_oyp17"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
+shader = ExtResource("1_taonf")
+shader_parameter/mouse_pos = Vector2(0.5, 0.5)
+shader_parameter/strength = 0.25
+shader_parameter/radius = 0.5
+
+[node name="Jugar" type="TextureButton" unique_id=1307767255]
+editor_description = "Jugar"
+material = SubResource("ShaderMaterial_544v7")
+custom_minimum_size = Vector2(160, 160)
+anchors_preset = -1
+anchor_top = 0.35200003
+anchor_bottom = 0.35200003
+offset_left = 5.0
+offset_top = -104.60004
+offset_right = 540.0
+offset_bottom = 153.39996
+scale = Vector2(0.93417746, 0.94754076)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+size_flags_stretch_ratio = 9.99
+accessibility_live = 2
+texture_normal = ExtResource("2_taonf")
+flip_v = true
+script = ExtResource("3_aao33")
+metadata/_edit_group_ = true
+
+[node name="imagen" type="Sprite2D" parent="." unique_id=1169675825]
+z_index = 12
+position = Vector2(110.25743, 122.42218)
+scale = Vector2(1.4272954, 1.4272954)
+texture = ExtResource("4_rkrw2")
+
+[node name="Label" type="Label" parent="." unique_id=707747479]
+custom_minimum_size = Vector2(1.825, 1.78)
+layout_mode = 0
+offset_left = 172.34412
+offset_top = 79.152275
+offset_right = 477.85913
+offset_bottom = 171.15225
+scale = Vector2(0.9455764, 0.9810979)
+pivot_offset = Vector2(159.62862, 48.2968)
+theme_override_colors/font_color = Color(0.13174233, 0.13174233, 0.13174233, 1)
+theme_override_fonts/font = ExtResource("5_oyp17")
+theme_override_font_sizes/font_size = 50
+text = "texto"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

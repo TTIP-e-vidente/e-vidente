@@ -6,15 +6,36 @@ const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
 
+const AUTISMO_SELECTOR = preload("res://assets-sistema/selector/autismo-selector.png")
+const CANDADO_SELECTOR = preload("res://assets-sistema/selector/candado-selector.png")
+const CELIAQUIA_SELECTOR = preload("res://assets-sistema/selector/celiaquia-selector.png")
+const DIABETES_SELECTOR = preload("res://assets-sistema/selector/diabetes-selector.png")
+const KETO_SELECTOR = preload("res://assets-sistema/selector/keto-selector.png")
+const VEGAN_GF_SELECTOR = preload("res://assets-sistema/selector/vegan-gf-selector.png")
+const VEGAN_SELECTOR = preload("res://assets-sistema/selector/vegan-selector.png")
+
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const MUSICA_FONDO_PREDETERMINADA := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
-@onready var celiaquia: Label = $MenuBar/Celiaquia/Label
-@onready var veganismo: Label = $MenuBar/Veganismo/Label
-@onready var vegan_gf: Label = $"MenuBar/Vegan-GF/Label"
-@onready var cetogenica: Label = $MenuBar/Cetogenica/Label
+
+@onready var celiaquia_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer/Celiaquia/imagen-restriccion"
+@onready var veganismo_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer/Veganismo/imagen-restriccion"
+@onready var vegan_gf_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer/Vegan-GF/imagen-restriccion"
+@onready var cetogenica_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer2/Cetogenica/imagen-restriccion"
+@onready var diabetes_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer2/Diabetes/imagen-restriccion"
+@onready var autismo_i: Sprite2D = $"MenuBar/VBoxContainer/HBoxContainer2/Autismo/imagen-restriccion"
+
+@onready var celiaquia: Label = $MenuBar/VBoxContainer/HBoxContainer/Celiaquia/Label
+@onready var veganismo: Label = $MenuBar/VBoxContainer/HBoxContainer/Veganismo/Label
+@onready var vegan_gf: Label = $"MenuBar/VBoxContainer/HBoxContainer/Vegan-GF/Label"
+@onready var cetogenica: Label = $MenuBar/VBoxContainer/HBoxContainer2/Cetogenica/Label
+@onready var diabetes: Label = $MenuBar/VBoxContainer/HBoxContainer2/Diabetes/Label
+@onready var autismo: Label = $MenuBar/VBoxContainer/HBoxContainer2/Autismo/Label
+
+@onready var diabetesB: TextureButton = $MenuBar/VBoxContainer/HBoxContainer2/Diabetes
+@onready var autismoB: TextureButton = $MenuBar/VBoxContainer/HBoxContainer2/Autismo
 
 const DESTINO_MAPA := "mapa"
 const DESTINO_PISTA := "pista"
@@ -33,14 +54,8 @@ const TRACK_CETOGENICA := "cetogenica"
 @onready var resume_backdrop: ColorRect = $PlayBackdrop
 @onready var resume_panel: PanelContainer = $PlayPanel
 
-@onready var diabetes: TextureButton = $MenuBar/Diabetes
-@onready var autismo: TextureButton = $MenuBar/Autismo
 @onready var btn_atras: Button = $"Atrás"
 
-@onready var mode_buttons: Array[TextureButton] = [
-	diabetes,
-	autismo
-]
 
 var _profile_overlay: ProfileOverlayPanel
 var _profile_toggle_btn: Button
@@ -52,6 +67,15 @@ func _ready() -> void:
 	veganismo.text = "Veganismo"
 	vegan_gf.text = "Vegan-gf"
 	cetogenica.text = "Keto"
+	diabetes.text = "Diabetes"
+	autismo.text = "Autismo"
+	celiaquia_i.texture = CELIAQUIA_SELECTOR
+	veganismo_i.texture = VEGAN_SELECTOR
+	vegan_gf_i.texture = VEGAN_GF_SELECTOR
+	cetogenica_i.texture = KETO_SELECTOR
+	diabetes_i.texture = CANDADO_SELECTOR
+	autismo_i.texture = CANDADO_SELECTOR
+	
 	GameSceneRouter.request_initial_scene_preload()
 	_reproducir_musica_fondo()
 	_establecer_reanudar_superposicion_visible(false)
@@ -60,17 +84,17 @@ func _ready() -> void:
 
 
 func _configurar_botones() -> void:
-	_establecer_boton_habilitado(diabetes, false)
-	_establecer_boton_habilitado(autismo, false)
+	_establecer_boton_habilitado(diabetesB, false)
+	_establecer_boton_habilitado(autismoB, false)
 
 func _establecer_reanudar_superposicion_visible(overlay_visible: bool) -> void:
 	resume_backdrop.visible = overlay_visible
 	resume_panel.visible = overlay_visible
 
 
-func _establecer_boton_habilitado(button: BaseButton, enabled: bool) -> void:
-	button.disabled = not enabled
-	button.modulate = Color(1, 1, 1, 1) if enabled else Color(5, 5, 5, 1)
+func _establecer_boton_habilitado(button: TextureButton, enabled: bool) -> void:
+	button.disabled = enabled
+	button.modulate = Color(1, 1, 1, 1.0) if enabled else Color(1, 1, 1, 0.4)
 
 
 # --- Navegación principal -----------------------------------------------------
