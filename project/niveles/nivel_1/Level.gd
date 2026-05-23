@@ -140,7 +140,6 @@ func _ready() -> void:
 		_teaching_card_base_scale = tarjeta_ensenanza_cierre.scale
 	_conectar_continuar_juego()
 	_conectar_objective_banner()
-	_layout_drag_objective_text()
 	_ocultar_consigna_vieja()
 	iniciar_flujo_del_nivel()
 	_configurar_indicador_de_progreso_de_juego()
@@ -166,22 +165,6 @@ func _conectar_objective_banner() -> void:
 		return
 	objective_updated.connect(_drag_objective_text.set_objective)
 	_drag_objective_text.hide()
-
-
-func _layout_drag_objective_text() -> void:
-	if _drag_objective_text == null:
-		push_warning("[DragObjectiveText] No existe nodo DragObjectiveText en Level.tscn")
-		return
-	_drag_objective_text.position = Vector2(42, 168)
-	_drag_objective_text.size = Vector2(340, 115)
-	print_debug(
-		"[DragObjectiveText] runtime position=",
-		_drag_objective_text.position,
-		" size=",
-		_drag_objective_text.size,
-		" global_position=",
-		_drag_objective_text.global_position
-	)
 
 
 func _ocultar_consigna_vieja() -> void:
@@ -430,11 +413,8 @@ func _actualizar_objetivo_de_arrastre_desde_juego_actual() -> void:
 
 
 func _build_drag_objective_data(game: Dictionary) -> Dictionary:
-	var objective_raw: Variant = game.get("objective", {})
-	if objective_raw is Dictionary:
-		var objective: Dictionary = objective_raw as Dictionary
-		if ContentSchemaNormalizerScript.drag_objective_is_complete(objective):
-			return objective
+	# Siempre normaliza usando el contexto completo (track_key + node_key) para que
+	# los fallbacks de meal y restriction funcionen aunque el JSON no tenga objetivo explícito.
 	return ContentSchemaNormalizerScript.normalize_drag_objective(game, active_track_key, _nodo_actual)
 
 

@@ -56,6 +56,7 @@ static func normalize_drag_objective(
 	var action: String = _first_text([
 		objective.get("action", ""),
 		objective.get("label", ""),
+		game.get("action", ""),
 		game.get("objective_action", ""),
 		game.get("objective_label", ""),
 		game.get("label", ""),
@@ -70,6 +71,7 @@ static func normalize_drag_objective(
 	var connector: String = _first_text([
 		objective.get("connector", ""),
 		objective.get("sub", ""),
+		game.get("connector", ""),
 		game.get("objective_connector", ""),
 		game.get("objective_sub", ""),
 	])

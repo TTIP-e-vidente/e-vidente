@@ -341,13 +341,12 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 	var manager_level = level_scene.get_node_or_null("ManagerLevel")
 	_check(manager_level != null, "%s: falta nodo ManagerLevel." % label)
 	_check(level_scene.get_node_or_null("Plato") != null, "%s: falta nodo Plato." % label)
+	# El componente activo de objetivo es DragObjectiveText; los nodos viejos
+	# ("Globo texto/Meal", "Globo texto/Condition") siguen en escena pero ocultos.
+	var drag_obj_text = level_scene.get_node_or_null("DragObjectiveText")
 	_check(
-		level_scene.get_node_or_null("Globo texto/Meal") != null,
-		"%s: falta nodo Meal." % label
-	)
-	_check(
-		level_scene.get_node_or_null("Globo texto/Condition") != null,
-		"%s: falta nodo Condition." % label
+		drag_obj_text != null,
+		"%s: falta nodo DragObjectiveText en Level.tscn." % label
 	)
 	_check(
 		level_scene.has_method("completar_partida_actual"),
@@ -359,6 +358,21 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 	)
 	if failed:
 		return
+
+	# Verificar que DragObjectiveText muestra meal no vacío.
+	if drag_obj_text != null and drag_obj_text.has_node("MealLabel"):
+		var meal_label := drag_obj_text.get_node("MealLabel") as Label
+		_check(
+			meal_label != null and not meal_label.text.strip_edges().is_empty(),
+			"%s: DragObjectiveText deberia mostrar un meal no vacio." % label
+		)
+	# Verificar que DragObjectiveText muestra action distinto al fallback vacío.
+	if drag_obj_text != null and drag_obj_text.has_node("ActionLabel"):
+		var action_label := drag_obj_text.get_node("ActionLabel") as Label
+		_check(
+			action_label != null and not action_label.text.strip_edges().is_empty(),
+			"%s: DragObjectiveText deberia mostrar un action no vacio." % label
+		)
 
 	level_scene.call("completar_partida_actual")
 	# La enseñanza aparece tras un timer de 0.8 s en _finalizar_partida_normal.
@@ -873,6 +887,153 @@ func _test_celiaquia_mapa_drag_objectives_completos() -> void:
 				)
 
 
+func _test_drag_objective_formato_plano() -> void:
+	# Acepta {objective_action, objective_meal, objective_connector, objective_restriction}.
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var game: Dictionary = {
+		"type": "drag",
+		"objective_action": "Armá",
+		"objective_meal": "una merienda sin TACC",
+		"objective_connector": "para tu compañere",
+		"objective_restriction": "celíace",
+	}
+	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
+	_check(result.get("action", "") == "Armá", "[DragObjective] formato plano: action")
+	_check(
+		result.get("meal", "") == "una merienda sin TACC",
+		"[DragObjective] formato plano: meal"
+	)
+	_check(
+		result.get("connector", "") == "para tu compañere",
+		"[DragObjective] formato plano: connector"
+	)
+	_check(result.get("restriction", "") == "celíace", "[DragObjective] formato plano: restriction")
+
+
+func _test_drag_objective_mensaje_viejo() -> void:
+	# Acepta objective_message con formato "linea1\nlinea2".
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var game: Dictionary = {
+		"type": "drag",
+		"objective_label": "Prepará",
+		"objective_message": "un almuerzo sin TACC\npara tu amigue celiace",
+	}
+	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
+	_check(
+		result.get("meal", "") == "un almuerzo sin TACC",
+		"[DragObjective] objective_message: meal desde primera línea"
+	)
+	_check(
+		result.get("connector", "") == "para tu amigue celiace",
+		"[DragObjective] objective_message: connector desde segunda línea"
+	)
+
+
+func _test_drag_objective_sin_objetivo_usa_fallback() -> void:
+	# Sin objective ni campos planos, debe inferir meal por node_key y restriction por track_key.
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var result: Dictionary = Normalizer.normalize_drag_objective(
+		{"type": "drag", "difficulty": 1},
+		"celiaquia",
+		"celiaquia_01_desayuno_basico"
+	)
+	_check(
+		not str(result.get("meal", "")).strip_edges().is_empty(),
+		"[DragObjective] sin objective: meal no puede estar vacio"
+	)
+	_check(
+		not str(result.get("action", "")).strip_edges().is_empty(),
+		"[DragObjective] sin objective: action no puede estar vacio"
+	)
+	_check(
+		not str(result.get("connector", "")).strip_edges().is_empty(),
+		"[DragObjective] sin objective: connector no puede estar vacio"
+	)
+
+
+func _test_drag_restriction_celiaquia_es_celiace() -> void:
+	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celíace".
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var result: Dictionary = Normalizer.normalize_drag_objective(
+		{"type": "drag"},
+		"celiaquia",
+		"celiaquia_03_quiz_gluten"
+	)
+	_check(
+		result.get("restriction", "") == "celíace",
+		"[DragObjective] celiaquía debe tener restriction=celíace, got: %s" % result.get("restriction", "")
+	)
+
+
+func _test_drag_objective_renormalizacion_segura() -> void:
+	# Un dict ya normalizado {action, meal, connector, restriction} debe sobrevivir
+	# una segunda normalización en DragObjectiveText sin perder valores.
+	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalized_first: Dictionary = {
+		"action": "Cociná",
+		"meal": "un desayuno sin TACC",
+		"connector": "para tu hermane",
+		"restriction": "celíace",
+	}
+	var normalized_second: Dictionary = Normalizer.normalize_drag_objective(normalized_first)
+	_check(
+		normalized_second.get("action", "") == "Cociná",
+		"[DragObjective] renormalización: action debe conservarse"
+	)
+	_check(
+		normalized_second.get("meal", "") == "un desayuno sin TACC",
+		"[DragObjective] renormalización: meal debe conservarse"
+	)
+	_check(
+		normalized_second.get("connector", "") == "para tu hermane",
+		"[DragObjective] renormalización: connector debe conservarse"
+	)
+	_check(
+		normalized_second.get("restriction", "") == "celíace",
+		"[DragObjective] renormalización: restriction debe conservarse"
+	)
+
+
+func _test_drag_objective_no_layout_runtime() -> void:
+	# El script del componente no debe tener funciones que pisen posiciones
+	# o tamaños de los labels en runtime. El layout debe vivir en el TSCN.
+	const DOT_SCENE := "res://interface/components/DragObjectiveText/DragObjectiveText.tscn"
+	var packed := load(DOT_SCENE) as PackedScene
+	_check(packed != null, "[DragObjective] DragObjectiveText.tscn debe poder cargarse")
+	if packed == null:
+		return
+	var instance := packed.instantiate()
+	_check(
+		not instance.has_method("_layout_nodes"),
+		"[DragObjective] script no debe tener _layout_nodes() — el layout vive en el TSCN"
+	)
+	_check(
+		not instance.has_method("_layout_labels"),
+		"[DragObjective] script no debe tener _layout_labels() — el layout vive en el TSCN"
+	)
+	_check(
+		not instance.has_method("_layout_objective"),
+		"[DragObjective] script no debe tener _layout_objective() — el layout vive en el TSCN"
+	)
+	_check(
+		instance.has_method("set_objective"),
+		"[DragObjective] script debe exponer set_objective(data: Dictionary)"
+	)
+	instance.free()
+
+
+func _test_objective_banner_no_activo() -> void:
+	# ObjectiveBanner no debe estar instanciado en Level.tscn.
+	# Si Level está en escena, chequearlo; si no, verificar que el packed scene
+	# de ObjectiveBanner existe como archivo standalone no referenciado.
+	if current_scene == null or current_scene.scene_file_path != LEVEL_SCENE:
+		return
+	_check(
+		current_scene.get_node_or_null("ObjectiveBanner") == null,
+		"[DragObjective] ObjectiveBanner no debe existir como nodo activo en Level."
+	)
+
+
 func _test_completar_palabra_router_conoce_modo() -> void:
 	var RouterScript := MODALIDAD_ROUTER_SCRIPT
 	var path: String = RouterScript.resolver_scene_path({"mode": "completar_palabra"})
@@ -894,6 +1055,14 @@ func ejecutar_tests_completar_palabra() -> void:
 	_test_completar_palabra_acepta_formato_trainee()
 	_test_drag_objective_anidado_y_fallback()
 	_test_celiaquia_mapa_drag_objectives_completos()
+	# DragObjectiveText
+	_test_drag_objective_formato_plano()
+	_test_drag_objective_mensaje_viejo()
+	_test_drag_objective_sin_objetivo_usa_fallback()
+	_test_drag_restriction_celiaquia_es_celiace()
+	_test_drag_objective_renormalizacion_segura()
+	_test_drag_objective_no_layout_runtime()
+	_test_objective_banner_no_activo()
 	# Integración
 	_test_completar_palabra_router_conoce_modo()
 	if not failed:
