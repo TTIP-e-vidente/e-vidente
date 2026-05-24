@@ -9,6 +9,7 @@ const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa.png")
 const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
 const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva.png")
+const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
 var _current_count: int = 0
 var _streak_state: String = "inactive"
@@ -47,7 +48,7 @@ func establecer_interactivo(enabled: bool) -> void:
 func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
 		return streak_view_model
-	var global_node := get_node_or_null("/root/Global")
+	var global_node := ContextoSesionDeJuegoScript.obtener_global()
 	if global_node and global_node.has_method("obtener_modelo_vista_racha"):
 		return global_node.obtener_modelo_vista_racha()
 	return {}

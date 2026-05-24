@@ -8,7 +8,7 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 
 static func obtener_contexto_jugable_actual() -> Dictionary:
-	var global_autoload: Node = _obtener_autoload_global()
+	var global_autoload: Node = obtener_global()
 	if global_autoload == null:
 		return {}
 
@@ -73,7 +73,7 @@ static func normalizar_contexto_jugable(
 
 
 static func obtener_modelo_indicador_actual() -> Dictionary:
-	var global_autoload: Node = _obtener_autoload_global()
+	var global_autoload: Node = obtener_global()
 	if global_autoload == null or not global_autoload.has_method("obtener_contexto_de_progreso_de_juego"):
 		return construir_modelo_indicador({})
 
@@ -91,6 +91,30 @@ static func construir_modelo_indicador(contexto: Dictionary) -> Dictionary:
 	}
 
 
+static func leer_track_key(ctx: Dictionary, predeterminado: String = "") -> String:
+	return ctx.get("track_key", predeterminado)
+
+
+static func leer_nivel_id(ctx: Dictionary, predeterminado: int = 1) -> int:
+	return ctx.get("level_number", predeterminado)
+
+
+static func leer_node_key(ctx: Dictionary) -> String:
+	return ctx.get("node_key", "")
+
+
+static func leer_return_to(ctx: Dictionary, predeterminado: String = "") -> String:
+	return ctx.get("return_to", predeterminado)
+
+
+static func leer_pertenece_a_nodo(ctx: Dictionary) -> bool:
+	return ctx.get("pertenece_a_partida_de_nodo", false)
+
+
+static func leer_came_from_map(ctx: Dictionary) -> bool:
+	return ctx.get("came_from_map", false)
+
+
 static func _leer_escena_retorno(
 	contexto_sesion: Dictionary,
 	escena_retorno_predeterminada: String
@@ -104,7 +128,7 @@ static func _leer_escena_retorno(
 	return escena_retorno
 
 
-static func _obtener_autoload_global() -> Node:
+static func obtener_global() -> Node:
 	var main_loop: MainLoop = Engine.get_main_loop()
 	if not main_loop is SceneTree:
 		return null
@@ -112,3 +136,13 @@ static func _obtener_autoload_global() -> Node:
 	if scene_tree.root == null:
 		return null
 	return scene_tree.root.get_node_or_null("/root/Global")
+
+
+static func obtener_save_manager() -> Node:
+	var main_loop: MainLoop = Engine.get_main_loop()
+	if not main_loop is SceneTree:
+		return null
+	var scene_tree: SceneTree = main_loop as SceneTree
+	if scene_tree.root == null:
+		return null
+	return scene_tree.root.get_node_or_null("/root/SaveManager")

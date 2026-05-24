@@ -12,11 +12,10 @@ const PresentadorContinuarJuegoScript := preload(
 )
 const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
 const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
 const RETURN_TWEEN_DURATION := 0.35
 const FINISH_DELAY          := 1.5
-const TYPEWRITER_CURSOR := "▌"
-
 const ENABLE_SCREEN_INTRO := true
 const ENABLE_TYPEWRITER := true
 const ENABLE_OPTION_STAGGER := false
@@ -46,9 +45,6 @@ const SENTENCE_POP_SCALE := Vector2(1.03, 1.03)
 const SUCCESS_SENTENCE_SCALE := Vector2(1.06, 1.06)
 const SUCCESS_HOLD_SECONDS := 0.65
 
-const COLOR_OK       := Color(0.17, 0.49, 0.28, 1.0)
-const COLOR_ERROR    := Color(0.74, 0.18, 0.16, 1.0)
-const COLOR_NEUTRAL  := Color(0.18, 0.19, 0.21, 1.0)
 const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)
 
 @onready var titulo_nivel: Label = (
@@ -67,13 +63,12 @@ var _order_matters: bool    = false
 var _sentence_template: String = ""
 var _already_finished: bool = false
 var _interaction_locked: bool = false
-var _is_typewriting: bool = false
-var _typewriter_version: int = 0
-var _skip_requested: bool = false
+var _typewriter: TypewriterEffect = TypewriterEffect.new()
 var _ruta_escena_de_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 var _continue_requested: bool = false
 
 func _ready() -> void:
+	_configurar_typewriter()
 	_validar_nodos_escena()
 
 	if _continuar_juego != null:
@@ -92,22 +87,22 @@ func _ready() -> void:
 
 		if not challenge_data.has("sentence") and not challenge_data.has("prompt"):
 			var diff: int = int(challenge_data.get("difficulty", 1))
-			challenge_data = CargadorCompletar.pick(diff)
+			challenge_data = CargadorCompletar.elegir(diff)
 
 		configurar(challenge_data)
 	else:
 		push_warning("CompletarPalabra: Abierto en modo standalone (F6). Usando desafío de fallback.")
 		_ruta_escena_de_retorno = GameSceneRouter.MAP_SCENE_PATH
-		configurar(CargadorCompletar.pick(1))
+		configurar(CargadorCompletar.elegir(1))
 
 func _input(event: InputEvent) -> void:
-	if not allow_skip or not _is_typewriting:
+	if not _typewriter.esta_escribiendo():
 		return
 	if event is InputEventMouseButton and event.pressed:
-		_skip_requested = true
+		_typewriter.solicitar_salto()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch and event.pressed:
-		_skip_requested = true
+		_typewriter.solicitar_salto()
 		get_viewport().set_input_as_handled()
 
 func _al_presionar_atras() -> void:
@@ -438,43 +433,13 @@ func _renderizar_frase_con_typewriter() -> void:
 		_asignar_texto_frase(rendered)
 		return
 
-	await _iniciar_typewriter(_limpiar_bbcode(rendered))
+	await _typewriter.iniciar(self, func(t: String): _asignar_texto_frase(t), _limpiar_bbcode(rendered))
 
-func _iniciar_typewriter(text: String) -> void:
-	_skip_requested = false
-	_typewriter_version += 1
-	var current_version := _typewriter_version
-	_is_typewriting = true
-
-	_asignar_texto_frase("")
-
-	if initial_delay > 0.0:
-		await get_tree().create_timer(initial_delay).timeout
-		if current_version != _typewriter_version:
-			return
-
-	for i in range(text.length()):
-		if current_version != _typewriter_version:
-			return
-
-		if allow_skip and _skip_requested:
-			_asignar_texto_frase(text)
-			break
-
-		var cursor_text: String = text.substr(0, i + 1)
-		if i < text.length() - 1:
-			cursor_text += TYPEWRITER_CURSOR
-
-		_asignar_texto_frase(cursor_text)
-		await get_tree().create_timer(character_delay).timeout
-
-	if current_version != _typewriter_version:
-		return
-
-	_is_typewriting = false
-	_asignar_texto_frase(text)
-	if typewriter_after_finish_delay > 0.0:
-		await get_tree().create_timer(typewriter_after_finish_delay).timeout
+func _configurar_typewriter() -> void:
+	_typewriter.character_delay = character_delay
+	_typewriter.initial_delay = initial_delay
+	_typewriter.after_finish_delay = typewriter_after_finish_delay
+	_typewriter.allow_skip = allow_skip
 
 func _asignar_texto_frase(value: String) -> void:
 	if _sentence_label == null:
@@ -533,7 +498,7 @@ func _finalizar(success: bool) -> void:
 	_mostrar_continuacion()
 
 func _registrar_resultado(success: bool) -> void:
-	var global_state: Node = get_tree().root.get_node_or_null("/root/Global")
+	var global_state: Node = ContextoSesionDeJuegoScript.obtener_global()
 	if global_state != null and global_state.has_method("registrar_resultado_mini_juego"):
 		global_state.call("registrar_resultado_mini_juego", success)
 

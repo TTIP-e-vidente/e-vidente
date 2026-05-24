@@ -7,6 +7,7 @@ const DayCircleScript := preload("res://interface/components/DayCircle.gd")
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
+const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
 const DEFAULT_RETURN_TO := GameSceneRouter.MAP_SCENE_PATH
 const STREAK_FEEDBACK_META := "streak_feedback"
@@ -117,7 +118,7 @@ func _resolver_view_model_racha(streak_view_model: Dictionary) -> Dictionary:
 	if not streak_view_model.is_empty():
 		return streak_view_model
 
-	var global_node: Node = get_node_or_null("/root/Global")
+	var global_node: Node = ContextoSesionDeJuegoScript.obtener_global()
 	if global_node == null or not global_node.has_method("obtener_modelo_vista_racha"):
 		return {}
 

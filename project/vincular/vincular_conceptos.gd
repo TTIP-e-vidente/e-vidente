@@ -37,9 +37,6 @@ const COLOR_TARJETA_ERROR := Color(1.0, 0.94, 0.94, 1.0)
 const COLOR_LINEA_OK := Color(0.2, 0.62, 0.38, 1.0)
 const COLOR_LINEA_ERROR := Color(0.92, 0.22, 0.2, 1.0)
 const COLOR_LINEA_SOMBRA := Color(0.05, 0.04, 0.03, 0.28)
-const COLOR_FEEDBACK_NEUTRAL := Color(0.18, 0.19, 0.21, 1.0)
-const COLOR_FEEDBACK_OK := Color(0.17, 0.49, 0.28, 1.0)
-const COLOR_FEEDBACK_ERROR := Color(0.74, 0.18, 0.16, 1.0)
 const COLOR_GUIA := Color(0.26, 0.47, 0.37, 1.0)
 const TEXTO_GUIA_INICIAL := "Primero elegi un concepto de la izquierda."
 const TEXTO_GUIA_CON_SELECCION := "Ahora elegi su pareja de la derecha."
@@ -77,6 +74,8 @@ var boton_confirmar: Button = null
 var boton_continuar_validacion: Button = null
 var feedback_label: Label = null
 var guide_label: Label = null
+var _feedback_tween: Tween
+var _guia_tween: Tween
 var center_hint: PanelContainer = null
 var click_areas: Control = null
 var teaching_sprite: Sprite2D = null
@@ -325,16 +324,12 @@ func configurar_desde_sesion() -> void:
 
 
 func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
-	clave_pista = str(contexto_sesion.get("track_key", clave_pista)).strip_edges()
-	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
-	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_pertenece_a_partida_de_nodo = bool(contexto_sesion.get("pertenece_a_partida_de_nodo", false))
-	_ruta_escena_de_retorno = str(
-		contexto_sesion.get("return_to", ESCENA_RETORNO_PREDETERMINADA)
-	).strip_edges()
-	if _ruta_escena_de_retorno.is_empty():
-		_ruta_escena_de_retorno = ESCENA_RETORNO_PREDETERMINADA
-	_tiene_sesion_de_mapa = bool(contexto_sesion.get("came_from_map", not _nodo_actual.is_empty()))
+	clave_pista = ContextoSesionDeJuegoScript.leer_track_key(contexto_sesion, clave_pista)
+	nivel_id = ContextoSesionDeJuegoScript.leer_nivel_id(contexto_sesion, nivel_id)
+	_nodo_actual = ContextoSesionDeJuegoScript.leer_node_key(contexto_sesion)
+	_pertenece_a_partida_de_nodo = ContextoSesionDeJuegoScript.leer_pertenece_a_nodo(contexto_sesion)
+	_ruta_escena_de_retorno = ContextoSesionDeJuegoScript.leer_return_to(contexto_sesion, ESCENA_RETORNO_PREDETERMINADA)
+	_tiene_sesion_de_mapa = ContextoSesionDeJuegoScript.leer_came_from_map(contexto_sesion)
 
 
 func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
@@ -457,7 +452,7 @@ func _preparar_feedback_label() -> void:
 	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback_label.add_theme_font_size_override("font_size", 22)
-	feedback_label.add_theme_color_override("font_color", COLOR_FEEDBACK_NEUTRAL)
+	feedback_label.add_theme_color_override("font_color", MiPaleta.FEEDBACK_NEUTRAL)
 	feedback_label.visible = true
 	feedback_label.z_index = 20
 	feedback_label.text = ""
@@ -881,20 +876,20 @@ func _tarjetas_forman_par(izquierda: ConceptoItem, derecha: ConceptoItem) -> boo
 
 func _mostrar_feedback_correcto(izquierda: ConceptoItem) -> void:
 	izquierda.marcar_error(false)
-	_mostrar_feedback(TEXTO_GUIA_CORRECTO)
+	_mostrar_feedback(TEXTO_GUIA_CORRECTO, MiPaleta.FEEDBACK_OK)
 	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
 	print(LOG_PREFIX_MATCH, " correct pair=", izquierda.par_key)
 
 
 func _mostrar_feedback_error(izquierda: ConceptoItem) -> void:
 	izquierda.marcar_error(true)
-	_mostrar_feedback(TEXTO_GUIA_ERROR)
-	_actualizar_texto_guia(TEXTO_GUIA_ERROR)
+	_mostrar_feedback(TEXTO_GUIA_ERROR, MiPaleta.FEEDBACK_ERROR)
+	_actualizar_texto_guia(TEXTO_GUIA_ERROR, MiPaleta.FEEDBACK_ERROR)
 
 
 func _completar_vinculacion() -> void:
-	_mostrar_feedback("Excelente. Completaste las relaciones.")
-	_actualizar_texto_guia("Excelente. Completaste las relaciones.")
+	_mostrar_feedback("Excelente. Completaste las relaciones.", MiPaleta.FEEDBACK_OK)
+	_actualizar_texto_guia("Excelente. Completaste las relaciones.", MiPaleta.FEEDBACK_OK)
 	print(
 		LOG_PREFIX_MATCH,
 		" completed activity=",
@@ -964,30 +959,24 @@ func faltan_vinculos() -> bool:
 	return false
 
 
-func _mostrar_feedback(texto: String) -> void:
-	if feedback_label != null:
-		feedback_label.text = texto
-		feedback_label.modulate = _resolver_color_feedback(texto)
+func _mostrar_feedback(texto: String, color: Color = MiPaleta.FEEDBACK_NEUTRAL) -> void:
+	if feedback_label == null:
+		return
+	if _feedback_tween != null and _feedback_tween.is_valid():
+		_feedback_tween.kill()
+	feedback_label.text = texto
+	feedback_label.modulate = Color(color.r, color.g, color.b, 0.0)
+	_feedback_tween = create_tween()
+	_feedback_tween.tween_property(feedback_label, "modulate", color, 0.25)
 
 
-func _actualizar_texto_guia(texto: String) -> void:
+func _actualizar_texto_guia(texto: String, color: Color = MiPaleta.FEEDBACK_NEUTRAL) -> void:
 	if guide_label == null:
 		return
+	if _guia_tween != null and _guia_tween.is_valid():
+		_guia_tween.kill()
 	guide_label.text = texto
-	guide_label.modulate = _resolver_color_feedback(texto)
-
-
-func _resolver_color_feedback(texto: String) -> Color:
-	var texto_normalizado := texto.to_lower()
-	if texto_normalizado.contains("bien") or texto_normalizado.contains("correct"):
-		return COLOR_FEEDBACK_OK
-	if (
-		texto_normalizado.contains("revis")
-		or texto_normalizado.contains("faltan")
-		or texto_normalizado.contains("proba")
-	):
-		return COLOR_FEEDBACK_ERROR
-	return COLOR_FEEDBACK_NEUTRAL
+	guide_label.modulate = color
 
 
 func _animar_vinculo_creado(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
@@ -1096,7 +1085,7 @@ func confirmar() -> void:
 
 	# Caso 2: ya estan todos los vinculos (por API de test) -> validar todo.
 	if faltan_vinculos():
-		_mostrar_feedback("Faltan relaciones por completar.")
+		_mostrar_feedback("Faltan relaciones por completar.", MiPaleta.FEEDBACK_ERROR)
 		return
 	_finalizar_validacion_completa()
 
@@ -1120,7 +1109,7 @@ func _finalizar_validacion_completa() -> void:
 
 	validado = false
 	_ocultar_continuar()
-	_mostrar_feedback("Revisá las relaciones marcadas.")
+	_mostrar_feedback("Revisá las relaciones marcadas.", MiPaleta.FEEDBACK_ERROR)
 	_actualizar_visual()
 
 

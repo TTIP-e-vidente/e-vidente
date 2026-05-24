@@ -5,6 +5,9 @@ const PRIMARY = Color("#A3D9A5")
 const SECONDARY = Color("#F2C94C")
 const HOVER = Color("#6FCF97")
 const DISABLED = Color("#D3D3D3")
+const FEEDBACK_OK      := Color(0.17, 0.49, 0.28, 1.0)  # verde
+const FEEDBACK_ERROR   := Color(0.74, 0.18, 0.16, 1.0)  # rojo
+const FEEDBACK_NEUTRAL := Color(0.18, 0.19, 0.21, 1.0)  # gris oscuro
 
 # Colores Principales (Fila Superior)
 @export var oro_claro: Color = Color("#dbc151")

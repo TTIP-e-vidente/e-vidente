@@ -83,6 +83,7 @@ var _mensaje_error_bloqueante: String = ""
 var _post_game_streak_feedback: Dictionary = {}
 var _post_game_flow_state: Dictionary = {}
 var _correct_answer_sound: AudioStream = null
+var _typewriter: TypewriterEffect = TypewriterEffect.new()
 
 var pregunta_actual: Preguntas:
 	get : return quiz.theme[indice_pregunta_actual]
@@ -289,38 +290,16 @@ func _reiniciar_sesion_nodo() -> void:
 
 
 func _aplicar_contexto_sesion(contexto_sesion: Dictionary) -> void:
-	track_key = str(contexto_sesion.get("track_key", track_key)).strip_edges()
-	nivel_id = int(contexto_sesion.get("level_number", contexto_sesion.get("nivel_id", nivel_id)))
-	_nodo_actual = str(contexto_sesion.get("node_key", "")).strip_edges()
-	_pertenece_a_partida_de_nodo = bool(
-		contexto_sesion.get("pertenece_a_partida_de_nodo", false)
-	)
-	_ruta_escena_de_retorno = str(
-		contexto_sesion.get("return_to", DEFAULT_RETURN_SCENE)
-	).strip_edges()
-	if _ruta_escena_de_retorno.is_empty():
-		_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
-	_tiene_sesion_de_mapa = bool(
-		contexto_sesion.get("came_from_map", not _nodo_actual.is_empty())
-	)
-
-
-func _obtener_global_autoload() -> Node:
-	var scene_tree := get_tree()
-	if scene_tree == null or scene_tree.root == null:
-		return null
-	return scene_tree.root.get_node_or_null("/root/Global")
-
-
-func _obtener_save_manager_autoload() -> Node:
-	var scene_tree := get_tree()
-	if scene_tree == null or scene_tree.root == null:
-		return null
-	return scene_tree.root.get_node_or_null("/root/SaveManager")
+	track_key = ContextoSesionDeJuegoScript.leer_track_key(contexto_sesion, track_key)
+	nivel_id = ContextoSesionDeJuegoScript.leer_nivel_id(contexto_sesion, nivel_id)
+	_nodo_actual = ContextoSesionDeJuegoScript.leer_node_key(contexto_sesion)
+	_pertenece_a_partida_de_nodo = ContextoSesionDeJuegoScript.leer_pertenece_a_nodo(contexto_sesion)
+	_ruta_escena_de_retorno = ContextoSesionDeJuegoScript.leer_return_to(contexto_sesion, DEFAULT_RETURN_SCENE)
+	_tiene_sesion_de_mapa = ContextoSesionDeJuegoScript.leer_came_from_map(contexto_sesion)
 
 
 func _obtener_estado_racha_global() -> Dictionary:
-	var global_autoload := _obtener_global_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload == null or not global_autoload.has_method("obtener_estado_racha"):
 		return {}
 	var estado_racha: Variant = global_autoload.call("obtener_estado_racha")
@@ -330,7 +309,7 @@ func _obtener_estado_racha_global() -> Dictionary:
 
 
 func _obtener_cantidad_de_niveles_de_pista() -> int:
-	var global_autoload := _obtener_global_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload == null or not global_autoload.has_method("obtener_pista_nivel_cantidad"):
 		return 1
 	return int(global_autoload.call("obtener_pista_nivel_cantidad", track_key))
@@ -400,9 +379,9 @@ func _mostrar_pregunta() -> void:
 		_finalizar_quiz()
 		return
 
-	pregunta_label.text = pregunta_actual.info_pregunta
 	_mostrar_visual_de_pregunta(pregunta_actual)
 	_crear_opciones(pregunta_actual.opciones)
+	_typewriter.iniciar(self, func(t: String): pregunta_label.text = t, pregunta_actual.info_pregunta)
 
 
 func _crear_opciones(opciones_actuales: Array[String]) -> void:
@@ -621,6 +600,7 @@ func _on_opcion_seleccionada(boton: Button) -> void:
 	if bloqueado:
 		return
 
+	_typewriter.solicitar_salto()
 	bloqueado = true
 
 	var respuesta_elegida: String = str(boton.get_meta("respuesta"))
@@ -646,7 +626,7 @@ func _mostrar_feedback_correcto(boton: Button) -> void:
 	_set_opciones_habilitadas(false)
 	_mostrar_feedback_respuesta(boton, true)
 	boton.disabled = false
-	var global_autoload := _obtener_global_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
 		global_autoload.call("registrar_resultado_mini_juego", true)
 	await get_tree().create_timer(1.2).timeout
@@ -654,7 +634,7 @@ func _mostrar_feedback_correcto(boton: Button) -> void:
 
 func _mostrar_feedback_error(boton: Button) -> void:
 	_mostrar_feedback_respuesta(boton, false)
-	var global_autoload := _obtener_global_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
 		global_autoload.call("registrar_resultado_mini_juego", false)
 	await dodge_button(boton)
@@ -724,8 +704,8 @@ func _debe_abrir_siguiente_juego_de_partida() -> bool:
 
 
 func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
-	var global_autoload := _obtener_global_autoload()
-	var save_manager := _obtener_save_manager_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
+	var save_manager := ContextoSesionDeJuegoScript.obtener_save_manager()
 	var previous_streak: Dictionary = _obtener_estado_racha_global()
 
 	if _tiene_sesion_de_mapa:
@@ -835,7 +815,7 @@ func obtener_resultado() -> ResultadoDeMiniJuego:
 
 func _guardar_progreso_de_mapa(_cantidad_preguntas: int) -> void:
 	if not _nodo_actual.is_empty():
-		var global_autoload := _obtener_global_autoload()
+		var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 		if global_autoload != null and global_autoload.has_method("marcar_nodo_jugable_completado"):
 			global_autoload.call("marcar_nodo_jugable_completado", track_key, _nodo_actual)
 
@@ -1021,7 +1001,7 @@ func volver_al_mapa() -> void:
 
 
 func _cancelar_partida_de_nodo_desde_juego() -> void:
-	var global_autoload := _obtener_global_autoload()
+	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload != null:
 		if global_autoload.has_method("finalizar_partida_de_nodo"):
 			global_autoload.call("finalizar_partida_de_nodo")
