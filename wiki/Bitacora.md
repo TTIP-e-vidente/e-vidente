@@ -24,6 +24,38 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 
 ---
 
+### `2026-05-24` — Suite de tests unitarios para el pipeline de preguntas
+<kbd>Testing</kbd> <kbd>Calidad</kbd> <kbd>Documentación</kbd>
+
+Se creó la primera suite de tests GdUnit4 del proyecto, cubriendo el flujo completo de carga y evaluación de preguntas de opción múltiple.
+
+**Qué problema resolvió**
+- No había ningún test automatizado que verificara que el pipeline `JSON → QuestionJsonLoader → Preguntas` funcionara correctamente.
+- Cambios en el loader o en los recursos `Preguntas`/`ThemePreg` podían romper la carga silenciosamente.
+
+**Qué se implementó**
+- `EvaluadorDeOpcionPregunta.gd` (`extends RefCounted`, `class_name EvaluadorDeOpcionPregunta`) en `project/preguntas/` — extrae la lógica de comparación de respuestas para poder testearla sin escenas.
+- `project/tests/preguntas/carga_json_preguntas_test.gd` — 8 tests en tres fases: el JSON existe, el loader construye una pregunta usable, el evaluador clasifica correctamente cada opción.
+- `project/tests/README.md` — instrucciones de instalación de GdUnit4 (AssetLib o GitHub), cómo correr los tests y tabla descriptiva de los 8 tests.
+- `project/addons/gdUnit4/` agregado al `.gitignore` — cada desarrollador instala el plugin localmente.
+- `project/contenido/ejemplos/quiz_choice.json` — fixture mínimo para los tests, en `contenido/` donde corresponde.
+- `project/niveles/nodos/ejemplos/` eliminado — los ejemplos no pertenecen en `nodos/`.
+
+**Impacto para el jugador**
+- Indirecto: los tests hacen visible cualquier regresión en la carga de preguntas antes de que llegue a producción.
+
+<details>
+<summary>Evidencia técnica</summary>
+
+- `project/preguntas/EvaluadorDeOpcionPregunta.gd`
+- `project/tests/preguntas/carga_json_preguntas_test.gd`
+- `project/tests/README.md`
+- `project/contenido/ejemplos/quiz_choice.json`
+
+</details>
+
+---
+
 ### `2026-05-24` — TypewriterEffect para preguntas, completar y arrastre
 <kbd>UX</kbd> <kbd>Sistema</kbd> <kbd>Reutilización</kbd>
 

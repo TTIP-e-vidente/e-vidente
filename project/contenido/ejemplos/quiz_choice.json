@@ -7,7 +7,7 @@
 	"content": {
 		"question": "El maiz contiene gluten?",
 		"correct_answer": "No",
-		"wrong_options": ["Si", "Solo si esta cocido", "Depende del color"],
+		"wrong_options": ["Si", "Solo si esta cocido"],
 		"visual_resource": ""
 	}
 }
