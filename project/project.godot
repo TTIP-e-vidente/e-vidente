@@ -32,6 +32,10 @@ GameSceneRouter="*uid://cmx7rnj15vkd"
 window/size/viewport_height=800
 window/stretch/mode="viewport"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")
+
 [file_customization]
 
 folder_colors={
