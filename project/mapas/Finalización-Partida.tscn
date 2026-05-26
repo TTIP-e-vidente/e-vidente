@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://beyesjpejg0a4" path="res://mapas/StatsContainer.tscn" id="2_k2l4b"]
 [ext_resource type="Texture2D" uid="uid://dd5jbc1fkus1w" path="res://assets-sistema/final-leccion/estrellas-felicitacion.png" id="3_j2nsx"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_uokky"]
+[ext_resource type="Script" uid="uid://bpaq4rpc5y7y4" path="res://mapas/estrellas.gd" id="4_keoei"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_uokky"]
 [ext_resource type="PackedScene" uid="uid://bjvys771chohe" path="res://niveles/botones.tscn" id="6_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://cbukx38vl5g7d" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
@@ -19,10 +20,11 @@ offset_top = -1.0
 offset_right = 1152.0
 offset_bottom = 798.0
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1230778620]
+[node name="estrellas" type="Sprite2D" parent="." unique_id=1230778620]
 position = Vector2(578, 403.99994)
 scale = Vector2(0.757343, 0.5457181)
 texture = ExtResource("3_j2nsx")
+script = ExtResource("4_keoei")
 
 [node name="LeccionCompleta" type="Label" parent="." unique_id=1622954665]
 offset_left = 248.0
