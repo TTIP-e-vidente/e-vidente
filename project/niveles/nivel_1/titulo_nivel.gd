@@ -1,8 +1,8 @@
 extends Sprite2D
 
 @onready var titulo_nivel: Label = $Label
+@onready var titulo_s: Sprite2D = $"."
 
-	
 func ajustar_titulo(texto: String) -> void:
 	titulo_nivel.text = texto
 

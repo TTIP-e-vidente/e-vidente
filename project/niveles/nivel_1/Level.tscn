@@ -249,8 +249,8 @@ texture = ExtResource("8_l1124")
 [node name="ayudin" type="Sprite2D" parent="Lupa" unique_id=437875441]
 z_index = 3
 position = Vector2(989, 442.00006)
-rotation = -0.302794
-scale = Vector2(0.42451856, 0.4479448)
+rotation = -0.014867246
+scale = Vector2(0.40298626, 0.42522427)
 texture = ExtResource("9_ijval")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lupa" unique_id=116017073]
@@ -266,7 +266,7 @@ offset_left = 77.0
 offset_top = 205.99998
 offset_right = 417.0
 offset_bottom = 321.0
-scale = Vector2(0.72, 0.72)
+scale = Vector2(0.73748165, 0.73748165)
 
 [node name="PlayerCambiante" type="Sprite2D" parent="." unique_id=1580273627]
 position = Vector2(882, 255)

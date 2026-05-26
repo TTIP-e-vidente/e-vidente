@@ -16,6 +16,8 @@ script = ExtResource("1_xh4rf")
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_y4o07")]
 
 [node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("3_ayk73")]
+position = Vector2(227.00002, 124)
+scale = Vector2(0.47491303, 0.47491303)
 
 [node name="IndicadorProgresoDeJuego" parent="." unique_id=1577780001 instance=ExtResource("7_hud00")]
 

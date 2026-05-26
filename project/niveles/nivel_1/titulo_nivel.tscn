@@ -13,10 +13,10 @@ script = ExtResource("2_2usb3")
 
 [node name="Label" type="Label" parent="." unique_id=1079872665]
 z_index = 535
-offset_left = -141.53442
-offset_top = -51.587303
-offset_right = 141.78558
-offset_bottom = 41.1877
+offset_left = -141.32835
+offset_top = -50.943928
+offset_right = 141.99165
+offset_bottom = 41.831074
 scale = Vector2(1.6175381, 1.6175381)
 pivot_offset = Vector2(145.1409, 45.16902)
 theme_override_colors/font_color = Color(0.21806103, 0.21806103, 0.21806103, 1)
