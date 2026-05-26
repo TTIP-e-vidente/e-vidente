@@ -895,7 +895,7 @@ func _test_drag_objective_formato_plano() -> void:
 		"objective_action": "Armá",
 		"objective_meal": "una merienda sin TACC",
 		"objective_connector": "para tu compañere",
-		"objective_restriction": "celíace",
+		"objective_restriction": "celiaquía",
 	}
 	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
 	_check(result.get("action", "") == "Armá", "[DragObjective] formato plano: action")
@@ -907,7 +907,7 @@ func _test_drag_objective_formato_plano() -> void:
 		result.get("connector", "") == "para tu compañere",
 		"[DragObjective] formato plano: connector"
 	)
-	_check(result.get("restriction", "") == "celíace", "[DragObjective] formato plano: restriction")
+	_check(result.get("restriction", "") == "celiaquía", "[DragObjective] formato plano: restriction")
 
 
 func _test_drag_objective_mensaje_viejo() -> void:
@@ -952,7 +952,7 @@ func _test_drag_objective_sin_objetivo_usa_fallback() -> void:
 
 
 func _test_drag_restriction_celiaquia_es_celiaquia() -> void:
-	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celíace".
+	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celiaquía".
 	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var result: Dictionary = Normalizer.normalize_drag_objective(
 		{"type": "drag"},
@@ -960,8 +960,8 @@ func _test_drag_restriction_celiaquia_es_celiaquia() -> void:
 		"celiaquia_03_quiz_gluten"
 	)
 	_check(
-		result.get("restriction", "") == "celíace",
-		"[DragObjective] celiaquía debe tener restriction=celíace, got: %s" % result.get("restriction", "")
+		result.get("restriction", "") == "celiaquía",
+		"[DragObjective] celiaquía debe tener restriction=celiaquía, got: %s" % result.get("restriction", "")
 	)
 
 
@@ -973,7 +973,7 @@ func _test_drag_objective_renormalizacion_segura() -> void:
 		"action": "Cociná",
 		"meal": "un desayuno sin TACC",
 		"connector": "para tu hermane",
-		"restriction": "celíace",
+		"restriction": "celiaquía",
 	}
 	var normalized_second: Dictionary = Normalizer.normalize_drag_objective(normalized_first)
 	_check(
@@ -989,7 +989,7 @@ func _test_drag_objective_renormalizacion_segura() -> void:
 		"[DragObjective] renormalización: connector debe conservarse"
 	)
 	_check(
-		normalized_second.get("restriction", "") == "celíace",
+		normalized_second.get("restriction", "") == "celiaquía",
 		"[DragObjective] renormalización: restriction debe conservarse"
 	)
 

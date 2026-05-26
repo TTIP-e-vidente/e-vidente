@@ -3,7 +3,7 @@ class_name ContentSchemaNormalizer
 
 const DEFAULT_DRAG_ACTION := "Prepará"
 const DEFAULT_DRAG_CONNECTOR := "para tu amigue"
-const DEFAULT_CELIAQUIA_RESTRICTION := "celíace"
+const DEFAULT_CELIAQUIA_RESTRICTION := "celiaquía"
 const DEFAULT_DRAG_MEAL := "un plato sin TACC"
 const DEFAULT_WORD_SCREEN_TITLE := "Escogé la palabra que falta"
 const WORD_MODE := "completar_palabra"
