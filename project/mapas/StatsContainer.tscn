@@ -15,6 +15,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_vb1hf")
 
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1360106723]
+modulate = Color(1, 1, 1, 0.5254902)
+self_modulate = Color(1, 1, 1, 0.5294118)
+position = Vector2(373.00003, 363)
+scale = Vector2(2.9439995, 2.9121342)
+texture = ExtResource("2_uxrmc")
+flip_h = true
+flip_v = true
+
 [node name="Panel" type="Panel" parent="." unique_id=1903114861]
 layout_mode = 2
 size_flags_horizontal = 4
