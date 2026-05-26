@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://f7boythb01y" path="res://assets-sistema/interfaz/cap-5.png" id="7_6xkqp"]
 [ext_resource type="Texture2D" uid="uid://dpqg11nmabh5o" path="res://assets-sistema/interfaz/cap-6.png" id="8_vx58k"]
 [ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="9_pdbb6"]
-[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="10_j0ohc"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_b50jp"]
 load_path = "res://.godot/imported/flecha-ir-para-atras-historias.png-83409338da2b5fe798fe8cc0bb323689.ctex"
@@ -75,7 +75,7 @@ flat = true
 
 [node name="TituloNivel" parent="." unique_id=74001118 instance=ExtResource("9_pdbb6")]
 position = Vector2(250, 151)
-scale = Vector2(0.8088742, 0.8088742)
+scale = Vector2(0.51211447, 0.51211447)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=502405199]
 stream = ExtResource("10_j0ohc")

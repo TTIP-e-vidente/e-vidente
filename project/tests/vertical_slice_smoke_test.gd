@@ -830,7 +830,7 @@ func _test_drag_objective_anidado_y_fallback() -> void:
 			"action": "Prepara",
 			"meal": "una cena sin TACC",
 			"connector": "para tu amigue",
-			"restriction": "celiace",
+			"restriction": "celiaquía",
 		},
 	}
 	var explicit_objective: Dictionary = Normalizer.normalize_drag_objective(
@@ -895,7 +895,7 @@ func _test_drag_objective_formato_plano() -> void:
 		"objective_action": "Armá",
 		"objective_meal": "una merienda sin TACC",
 		"objective_connector": "para tu compañere",
-		"objective_restriction": "celíace",
+		"objective_restriction": "celiaquía",
 	}
 	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
 	_check(result.get("action", "") == "Armá", "[DragObjective] formato plano: action")
@@ -907,7 +907,7 @@ func _test_drag_objective_formato_plano() -> void:
 		result.get("connector", "") == "para tu compañere",
 		"[DragObjective] formato plano: connector"
 	)
-	_check(result.get("restriction", "") == "celíace", "[DragObjective] formato plano: restriction")
+	_check(result.get("restriction", "") == "celiaquía", "[DragObjective] formato plano: restriction")
 
 
 func _test_drag_objective_mensaje_viejo() -> void:
@@ -916,7 +916,7 @@ func _test_drag_objective_mensaje_viejo() -> void:
 	var game: Dictionary = {
 		"type": "drag",
 		"objective_label": "Prepará",
-		"objective_message": "un almuerzo sin TACC\npara tu amigue celiace",
+		"objective_message": "un almuerzo sin TACC\npara tu amigue con celiaquía",
 	}
 	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
 	_check(
@@ -924,7 +924,7 @@ func _test_drag_objective_mensaje_viejo() -> void:
 		"[DragObjective] objective_message: meal desde primera línea"
 	)
 	_check(
-		result.get("connector", "") == "para tu amigue celiace",
+		result.get("connector", "") == "para tu amigue con celiaquía",
 		"[DragObjective] objective_message: connector desde segunda línea"
 	)
 
@@ -951,8 +951,8 @@ func _test_drag_objective_sin_objetivo_usa_fallback() -> void:
 	)
 
 
-func _test_drag_restriction_celiaquia_es_celiace() -> void:
-	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celíace".
+func _test_drag_restriction_celiaquia_es_celiaquia() -> void:
+	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celiaquía".
 	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var result: Dictionary = Normalizer.normalize_drag_objective(
 		{"type": "drag"},
@@ -960,8 +960,8 @@ func _test_drag_restriction_celiaquia_es_celiace() -> void:
 		"celiaquia_03_quiz_gluten"
 	)
 	_check(
-		result.get("restriction", "") == "celíace",
-		"[DragObjective] celiaquía debe tener restriction=celíace, got: %s" % result.get("restriction", "")
+		result.get("restriction", "") == "celiaquía",
+		"[DragObjective] celiaquía debe tener restriction=celiaquía, got: %s" % result.get("restriction", "")
 	)
 
 
@@ -973,7 +973,7 @@ func _test_drag_objective_renormalizacion_segura() -> void:
 		"action": "Cociná",
 		"meal": "un desayuno sin TACC",
 		"connector": "para tu hermane",
-		"restriction": "celíace",
+		"restriction": "celiaquía",
 	}
 	var normalized_second: Dictionary = Normalizer.normalize_drag_objective(normalized_first)
 	_check(
@@ -989,7 +989,7 @@ func _test_drag_objective_renormalizacion_segura() -> void:
 		"[DragObjective] renormalización: connector debe conservarse"
 	)
 	_check(
-		normalized_second.get("restriction", "") == "celíace",
+		normalized_second.get("restriction", "") == "celiaquía",
 		"[DragObjective] renormalización: restriction debe conservarse"
 	)
 
@@ -1059,7 +1059,7 @@ func ejecutar_tests_completar_palabra() -> void:
 	_test_drag_objective_formato_plano()
 	_test_drag_objective_mensaje_viejo()
 	_test_drag_objective_sin_objetivo_usa_fallback()
-	_test_drag_restriction_celiaquia_es_celiace()
+	_test_drag_restriction_celiaquia_es_celiaquia()
 	_test_drag_objective_renormalizacion_segura()
 	_test_drag_objective_no_layout_runtime()
 	_test_objective_banner_no_activo()

@@ -18,6 +18,7 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 
 
+
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 
 const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")

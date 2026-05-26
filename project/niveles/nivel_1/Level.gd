@@ -130,9 +130,11 @@ var _teaching_card_base_scale := Vector2.ONE
 @onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
 @onready var _progress_bar = get_node_or_null("ProgressBar")
 @onready var _continuar_juego = $ContinuarJuego
+@onready var titulo_nivel: Label = $TituloNivel/Label
 
 # Entrada del nivel
 func _ready() -> void:
+	titulo_nivel.text = "Celiaquía"
 	_cargar_recursos_runtime()
 	if is_instance_valid(teaching_sprite):
 		_teaching_sprite_base_scale = teaching_sprite.scale

@@ -9,8 +9,9 @@
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_mwqfo"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
-[ext_resource type="Texture2D" uid="uid://c8tvilgr1cn4r" path="res://assets-sistema/preguntas/boton-4.png" id="10_2g6ed"]
-[ext_resource type="Texture2D" uid="uid://b3mugenb3628v" path="res://assets-sistema/preguntas/boton-3.png" id="11_mwqfo"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="8_mwqfo"]
+[ext_resource type="Texture2D" uid="uid://dp7775b6hk210" path="res://assets-sistema/interfaz/cuadrado-6x8_1.png" id="10_iys88"]
+[ext_resource type="Texture2D" uid="uid://b70rrpdtytkgn" path="res://assets-sistema/interfaz/cuadrado-2x2_1.png" id="11_p13gw"]
 [ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="12_2g6ed"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
@@ -57,9 +58,9 @@ scale = Vector2(0.41323358, 0.41323358)
 [node name="Informacion" type="VBoxContainer" parent="Contenido" unique_id=1312854159]
 layout_mode = 0
 offset_left = 282.0
-offset_top = 180.00002
+offset_top = 201.0
 offset_right = 1065.0
-offset_bottom = 311.0
+offset_bottom = 332.0
 scale = Vector2(0.75999546, 0.8016403)
 
 [node name="Pregunta" type="Label" parent="Contenido/Informacion" unique_id=1328656126]
@@ -95,11 +96,14 @@ offset_bottom = 65.0
 [node name="ContinuarJuego" parent="Contenido" unique_id=872199267 instance=ExtResource("8_continuar")]
 
 [node name="Preguntas" type="Control" parent="Contenido" unique_id=65404677]
+layout_direction = 1
+layout_mode = 1
 anchors_preset = 0
 offset_left = 360.0
 offset_top = 311.0
-offset_right = 799.0
-offset_bottom = 616.0
+offset_right = 935.0
+offset_bottom = 739.0
+scale = Vector2(0.8008234, 0.8008234)
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=1288158361]
 custom_minimum_size = Vector2(0, 76)
@@ -107,7 +111,7 @@ layout_mode = 0
 offset_right = 439.0
 offset_bottom = 147.0
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxTexture_btn1")
@@ -115,15 +119,18 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
+icon = ExtResource("8_mwqfo")
+flat = true
 
 [node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
-custom_minimum_size = Vector2(0, 76)
+custom_minimum_size = Vector2(0, 450)
+layout_direction = 1
 layout_mode = 0
 offset_top = 157.0
-offset_right = 439.0
-offset_bottom = 305.0
+offset_right = 599.0
+offset_bottom = 443.0
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxTexture_btn2")
@@ -131,6 +138,8 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
+icon = ExtResource("8_mwqfo")
+flat = true
 
 [node name="Preguntasx3" type="Control" parent="Contenido" unique_id=1755994207]
 visible = false
@@ -157,8 +166,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_2g6ed")
+icon = ExtResource("10_iys88")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton3" unique_id=410306524]
 layout_mode = 1
@@ -171,7 +182,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -193,8 +204,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_2g6ed")
+icon = ExtResource("10_iys88")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton4" unique_id=2082465361]
 layout_mode = 1
@@ -207,7 +220,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -229,8 +242,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_2g6ed")
+icon = ExtResource("10_iys88")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx3/Boton5" unique_id=900251680]
 layout_mode = 1
@@ -243,7 +258,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -273,8 +288,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_mwqfo")
+icon = ExtResource("11_p13gw")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton6" unique_id=307100761]
 layout_mode = 1
@@ -287,7 +304,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -299,7 +316,7 @@ offset_left = 34.0
 offset_top = -2.0
 offset_right = 817.0
 offset_bottom = 738.0
-scale = Vector2(0.27749327, 0.27749327)
+scale = Vector2(0.2765129, 0.27749327)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -309,8 +326,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_mwqfo")
+icon = ExtResource("11_p13gw")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton7" unique_id=880931666]
 layout_mode = 1
@@ -323,7 +342,8 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+scale = Vector2(1, 1.0286905)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -335,7 +355,7 @@ offset_left = 242.0
 offset_top = -2.0
 offset_right = 1025.0
 offset_bottom = 738.0
-scale = Vector2(0.27749327, 0.27749327)
+scale = Vector2(0.27625087, 0.27749327)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -345,8 +365,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_mwqfo")
+icon = ExtResource("11_p13gw")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton8" unique_id=1584580164]
 layout_mode = 1
@@ -359,7 +381,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -371,7 +393,7 @@ offset_left = 449.0
 offset_top = -2.0
 offset_right = 1232.0
 offset_bottom = 738.0
-scale = Vector2(0.27749327, 0.27749327)
+scale = Vector2(0.27806038, 0.27910766)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -381,8 +403,10 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_mwqfo")
+icon = ExtResource("11_p13gw")
 flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntasx4/Boton9" unique_id=357416750]
 layout_mode = 1
@@ -395,7 +419,7 @@ offset_right = -80.0
 offset_bottom = -80.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
