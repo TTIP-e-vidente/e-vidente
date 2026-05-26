@@ -921,8 +921,10 @@ func _configurar_nivel_recurso() -> void:
 	level_resource.ensenanza = GameChapterAssetCatalogScript.resolver_textura(
 		active_run_data.get("teaching_texture_path", "")
 	)
-	meal_sprite.texture = level_resource.comida
-	condition_sprite.texture = level_resource.condicion
+	if is_instance_valid(meal_sprite):
+		meal_sprite.texture = level_resource.comida
+	if is_instance_valid(condition_sprite):
+		condition_sprite.texture = level_resource.condicion
 	teaching_sprite.texture = level_resource.ensenanza
 	_aplicar_ayuda_visual_de_arrastre()
 
@@ -934,17 +936,15 @@ func _conectar_escena_nodos(level_scene: Node) -> bool:
 	condition_sprite = level_scene.get_node_or_null("Globo texto/Condition") as Sprite2D
 	teaching_sprite = level_scene.get_node_or_null("Ensenanza") as Sprite2D
 
-	var all_connected := (
+	var mandatory_connected := (
 		is_instance_valid(plato)
-		and is_instance_valid(meal_sprite)
-		and is_instance_valid(condition_sprite)
 		and is_instance_valid(teaching_sprite)
 	)
-	if not all_connected:
+	if not mandatory_connected:
 		push_error(
-			"ManagerLevel no pudo resolver Plato, Meal, Condition o Ensenanza en la escena actual."
+			"ManagerLevel no pudo resolver Plato o Ensenanza en la escena actual."
 		)
-	return all_connected
+	return mandatory_connected
 
 
 # --- Generación y restauración de items --------------------------------------
