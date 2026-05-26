@@ -16,6 +16,8 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var mensaje: Label = $Mensaje
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
+@onready var titulo_nivel: Label = $TituloNivel/Label
+
 
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
@@ -24,6 +26,7 @@ const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 
 
 func _ready() -> void:
+	titulo_nivel.text = "Celiaquía"
 	# Iconos de los bloques de stats
 	#textura.texture = CUADRADO_2X_2
 	#textura_2.texture = CUADRADO_2X_2
