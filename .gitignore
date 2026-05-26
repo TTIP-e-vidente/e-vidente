@@ -2,6 +2,9 @@
 project/.godot/
 *.import
 
+# GdUnit4 plugin (instalar localmente, no versionar)
+project/addons/gdUnit4/
+
 # Local docs workspace
 docs-local/
 
