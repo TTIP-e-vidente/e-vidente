@@ -52,7 +52,7 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)
 )
 @onready var _prompt_label: Label           = $Control/Escoge
 @onready var _sentence_label: RichTextLabel = $Control/Label
-@onready var _options_container: Container  = $Control/Container/HBoxContainer
+@onready var _options_container: Container  = $Control/HBoxContainer
 @onready var _continuar_juego: Node = (
 	$Control/ContinuarJuego if has_node("Control/ContinuarJuego") else null
 )
@@ -123,7 +123,6 @@ func configurar(challenge_data: Dictionary) -> void:
 	_answers          = _a_array_texto(
 		challenge_data.get("correct_answers", challenge_data.get("answers", []))
 	)
-	var options: Variant = challenge_data.get("choices", challenge_data.get("options", []))
 
 	_order_matters    = bool(challenge_data.get("order_matters", false))
 	_placed           = []

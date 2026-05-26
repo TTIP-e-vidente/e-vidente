@@ -92,7 +92,6 @@ var pregunta_actual: Preguntas:
 @onready var _visual_panel: Panel = $Contenido/Informacion/Visual
 @onready var _imagen_pregunta: TextureRect = $Contenido/Informacion/Visual/Imagen
 @onready var _audio_player: AudioStreamPlayer2D = $Contenido/Audio
-@onready var _contenido: Control = $Contenido
 @onready var _panel_final: ColorRect = $Contenido/GameOver
 @onready var _titulo_panel_final: Label = $Contenido/GameOver/Aciertos
 @onready var _puntaje_panel_final: Label = $Contenido/GameOver/Puntaje

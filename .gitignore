@@ -4,6 +4,8 @@ project/.godot/
 
 # GdUnit4 plugin (instalar localmente, no versionar)
 project/addons/gdUnit4/
+# GdUnit4 reportes generados (outputs de test runs)
+project/reports/
 
 # Local docs workspace
 docs-local/

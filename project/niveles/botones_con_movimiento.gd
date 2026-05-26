@@ -7,8 +7,8 @@ extends TextureButton
 var tween_rebote: Tween
 
 
-func ajustar_fuente(label: Label, texto: String) -> void:
-	label.text = texto
+func ajustar_fuente(_label: Label, texto: String) -> void:
+	_label.text = texto
 
 	var largo := texto.length()
 	var font_size := 32
@@ -20,8 +20,8 @@ func ajustar_fuente(label: Label, texto: String) -> void:
 	elif largo > 24:
 		font_size = 28
 
-	label.remove_theme_font_size_override("font_size")
-	label.add_theme_font_size_override("font_size", font_size)	
+	_label.remove_theme_font_size_override("font_size")
+	_label.add_theme_font_size_override("font_size", font_size)	
 
 
 func _ready() -> void:
