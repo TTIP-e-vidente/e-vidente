@@ -662,14 +662,14 @@ func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:
 	if es_correcta:
 		# Tinte verde suave: Color(0,1,0) puro multiplicaba a cero los canales R/B
 		# del fondo del boton y lo hacia ver "transparenton" en pantalla.
-		boton.modulate = Color(0.4, 1.0, 0.4)
+		boton.modulate = MiPaleta.FEEDBACK_OK
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.08, 0.92), 0.08)
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 0.95, 1.05), 0.08)
 		tween.tween_property(boton, "scale", _escalar_escala_base(boton, 1.03, 0.97), 0.08)
 		tween.tween_property(boton, "scale", base_scale, 0.1)
 		return
 
-	boton.modulate = Color(1.0, 0.4, 0.4)
+	boton.modulate = MiPaleta.FEEDBACK_ERROR
 	for unused_index in 5:
 		tween.tween_property(boton, "rotation_degrees", base_rotation + 8, 0.03)
 		tween.tween_property(boton, "rotation_degrees", base_rotation - 8, 0.03)

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dreulrv8mq1oa"]
 
 [ext_resource type="Script" uid="uid://dlcmeiufgvp20" path="res://vincular/concept_item.gd" id="1_0tgql"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="1_8vmuo"]
+[ext_resource type="Texture2D" uid="uid://btbwctpr4ybmo" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="1_8vmuo"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_8vmuo"]
 
 [node name="ConceptItem" type="TextureButton" unique_id=2012949407]

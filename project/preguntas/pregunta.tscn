@@ -9,9 +9,7 @@
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_mwqfo"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="8_mwqfo"]
-[ext_resource type="Texture2D" uid="uid://dp7775b6hk210" path="res://assets-sistema/interfaz/cuadrado-6x8_1.png" id="10_iys88"]
-[ext_resource type="Texture2D" uid="uid://b70rrpdtytkgn" path="res://assets-sistema/interfaz/cuadrado-2x2_1.png" id="11_p13gw"]
+[ext_resource type="Texture2D" uid="uid://btbwctpr4ybmo" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="8_eder2"]
 [ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="12_2g6ed"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
@@ -32,7 +30,7 @@ content_margin_left = 32.0
 content_margin_top = 14.0
 content_margin_right = 32.0
 content_margin_bottom = 14.0
-texture = ExtResource("5_dlf6l")
+texture = ExtResource("8_eder2")
 
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
@@ -96,18 +94,23 @@ offset_bottom = 65.0
 [node name="ContinuarJuego" parent="Contenido" unique_id=872199267 instance=ExtResource("8_continuar")]
 
 [node name="Preguntas" type="Control" parent="Contenido" unique_id=65404677]
+visible = false
 layout_mode = 1
 anchors_preset = 0
-offset_left = 360.0
-offset_top = 311.0
-offset_right = 799.0
-offset_bottom = 616.0
+offset_left = 332.00003
+offset_top = 343.0
+offset_right = 771.0
+offset_bottom = 648.0
+scale = Vector2(1.2012002, 1.2012002)
 
 [node name="Boton1" type="Button" parent="Contenido/Preguntas" unique_id=1288158361]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_right = 439.0
-offset_bottom = 147.0
+offset_left = 69.93003
+offset_top = -4.9950037
+offset_right = 676.93005
+offset_bottom = 284.005
+scale = Vector2(0.4795549, 0.4795549)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -117,10 +120,9 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn1")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn1")
-icon = ExtResource("8_mwqfo")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
-expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntas/Boton1" unique_id=111111111]
 layout_mode = 1
@@ -141,9 +143,11 @@ autowrap_mode = 3
 [node name="Boton2" type="Button" parent="Contenido/Preguntas" unique_id=1753944457]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_top = 157.0
-offset_right = 439.0
-offset_bottom = 305.0
+offset_left = 74.09253
+offset_top = 126.54011
+offset_right = 681.0925
+offset_bottom = 415.5401
+scale = Vector2(0.48040432, 0.48040432)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -153,10 +157,9 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("8_mwqfo")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
-expand_icon = true
 
 [node name="TextoOpcion" type="Label" parent="Contenido/Preguntas/Boton2" unique_id=222222222]
 layout_mode = 1
@@ -177,19 +180,20 @@ autowrap_mode = 3
 [node name="Preguntasx3" type="Control" parent="Contenido" unique_id=1755994207]
 visible = false
 anchors_preset = 0
-offset_left = 359.0
-offset_top = 334.0
-offset_right = 798.0
-offset_bottom = 639.0
+offset_left = 329.0
+offset_top = 294.0
+offset_right = 768.0
+offset_bottom = 599.0
+scale = Vector2(1.0874631, 1.0874631)
 
 [node name="Boton3" type="Button" parent="Contenido/Preguntasx3" unique_id=38068594]
-custom_minimum_size = Vector2(0, 76)
+custom_minimum_size = Vector2(0, 45.355)
 layout_mode = 0
-offset_left = -191.0
-offset_top = 3.0
-offset_right = 592.0
-offset_bottom = 736.0
-scale = Vector2(0.3617424, 0.3352122)
+offset_left = 90.118004
+offset_top = 7.356575
+offset_right = 879.458
+offset_bottom = 373.88657
+scale = Vector2(0.351, 0.325)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_disabled_color = Color(1, 1, 1, 0.85)
@@ -199,7 +203,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_iys88")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -224,9 +228,9 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
 offset_left = 92.0
-offset_top = -2.0
+offset_top = 125.06169
 offset_right = 875.0
-offset_bottom = 731.0
+offset_bottom = 496.47168
 scale = Vector2(0.3617424, 0.3352122)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -237,7 +241,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_iys88")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -261,10 +265,10 @@ autowrap_mode = 3
 [node name="Boton5" type="Button" parent="Contenido/Preguntasx3" unique_id=473953632]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = 369.0
-offset_top = -1.0
-offset_right = 1152.0
-offset_bottom = 732.0
+offset_left = 94.71586
+offset_top = 252.88214
+offset_right = 877.7159
+offset_bottom = 634.76715
 scale = Vector2(0.3617424, 0.3352122)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -275,7 +279,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("10_iys88")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -297,20 +301,20 @@ vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Preguntasx4" type="Control" parent="Contenido" unique_id=527732730]
-visible = false
 anchors_preset = 0
-offset_left = 359.0
-offset_top = 351.0
-offset_right = 798.0
-offset_bottom = 656.0
+offset_left = 252.0
+offset_top = 355.99997
+offset_right = 691.0
+offset_bottom = 661.0
+scale = Vector2(1.5042332, 1.5042332)
 
 [node name="Boton6" type="Button" parent="Contenido/Preguntasx4" unique_id=1732213079]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = -175.0
-offset_top = -2.0
-offset_right = 608.0
-offset_bottom = 738.0
+offset_left = 5.3183155
+offset_top = 1.5258789e-05
+offset_right = 788.3183
+offset_bottom = 420.0
 scale = Vector2(0.27749327, 0.27749327)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -321,7 +325,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_p13gw")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -345,10 +349,10 @@ autowrap_mode = 3
 [node name="Boton7" type="Button" parent="Contenido/Preguntasx4" unique_id=1170575801]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = 34.0
-offset_top = -2.0
-offset_right = 817.0
-offset_bottom = 738.0
+offset_left = 8.642271
+offset_top = 110.35524
+offset_right = 791.6423
+offset_bottom = 530.3552
 scale = Vector2(0.2765129, 0.27749327)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -359,7 +363,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_p13gw")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -384,10 +388,10 @@ autowrap_mode = 3
 [node name="Boton8" type="Button" parent="Contenido/Preguntasx4" unique_id=508660480]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = 242.0
-offset_top = -2.0
-offset_right = 1025.0
-offset_bottom = 738.0
+offset_left = 237.995
+offset_top = -4.653515
+offset_right = 1020.995
+offset_bottom = 415.3465
 scale = Vector2(0.27625087, 0.27749327)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -398,7 +402,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_p13gw")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -422,10 +426,10 @@ autowrap_mode = 3
 [node name="Boton9" type="Button" parent="Contenido/Preguntasx4" unique_id=38775949]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = 449.0
-offset_top = -2.0
-offset_right = 1232.0
-offset_bottom = 738.0
+offset_left = 239.98936
+offset_top = 107.03131
+offset_right = 1022.98944
+offset_bottom = 527.0313
 scale = Vector2(0.27806038, 0.27910766)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -436,7 +440,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("11_p13gw")
+icon = ExtResource("8_eder2")
 flat = true
 icon_alignment = 1
 expand_icon = true

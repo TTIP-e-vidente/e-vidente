@@ -9,9 +9,9 @@ const COLOR_TEXTO := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TEXTO_BLOQUEADO := Color(1.0, 1.0, 1.0, 0.55)
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TARJETA_HOVER := Color(1.05, 1.05, 1.05, 1.0)
-const COLOR_TARJETA_SELECCIONADA := Color(1.6, 1.4, 0.6, 1.0)
-const COLOR_TARJETA_VINCULADA := Color(0.7, 1.4, 0.85, 1.0)
-const COLOR_TARJETA_ERROR := Color(1.7, 0.55, 0.55, 1.0)
+const COLOR_TARJETA_SELECCIONADA := MiPaleta.ORO_CLARO
+const COLOR_TARJETA_VINCULADA := MiPaleta.FEEDBACK_OK
+const COLOR_TARJETA_ERROR := MiPaleta.FEEDBACK_ERROR
 const COLOR_TARJETA_BLOQUEADA := Color(1.0, 1.0, 1.0, 0.62)
 
 @onready var label: Label = $Label
