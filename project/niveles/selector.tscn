@@ -82,18 +82,17 @@ position = Vector2(4, 0)
 script = ExtResource("1_g0ff0")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_fsij2")]
-offset_left = -16.0
-offset_top = -14.0
-offset_right = 1137.0
-offset_bottom = 785.0
-scale = Vector2(1.0146132, 1.0146132)
+offset_left = 6.0
+offset_top = 3.0
+offset_right = 1159.0
+offset_bottom = 802.0
+scale = Vector2(1.100199, 1.100199)
 
-[node name="Aprender-hoy" type="Label" parent="FondoFicha" unique_id=1307655127]
-layout_mode = 0
-offset_left = 383.0
-offset_top = 138.96922
-offset_right = 787.0
-offset_bottom = 174.96924
+[node name="Aprender-hoy" type="Label" parent="." unique_id=1307655127]
+offset_left = 368.75946
+offset_top = 118.23935
+offset_right = 772.75946
+offset_bottom = 154.23936
 scale = Vector2(1.0023348, 1.0055718)
 theme_override_colors/font_color = Color(0.0039188517, 0.007837703, 0.0039188517, 1)
 theme_override_fonts/font = ExtResource("3_6uvpc")
