@@ -18,7 +18,50 @@ Resultados → [GameSceneRouter] → TransitionLayer → Mapa
 
 ### `TypewriterEffect.gd`
 
-Componente reutilizable que toma un `Label` y un texto y lo escribe de forma progresiva con un delay configurable por carácter. Compartido entre `pregunta.gd` y la modalidad Arrastre. Expone `iniciar()`, `solicitar_salto()` y `esta_escribiendo()`.
+Vive en `sistemas/TypewriterEffect.gd` y extiende `RefCounted` (sin nodo propio). Recibe un `Callable` y un texto, y lo escribe carácter a carácter con un cursor `▌` intermedio. Cualquier escena puede instanciarlo con `TypewriterEffect.new()` sin engancharse a la jerarquía de nodos.
+
+La clase es compartida entre `pregunta.gd`, `completar_palabra.gd` y `DragObjectiveText`; así el delay entre caracteres y el cursor son idénticos en todas las pantallas sin duplicar lógica.
+
+#### Cómo funciona
+
+```
+iniciar(nodo, callable, texto)
+       │
+  _id_llamada_vigente++      ← cancela cualquier animación anterior
+  initial_delay (0.15 s)
+       │
+  bucle carácter a carácter
+    ├─ id cambió → return     ← nueva llamada nos reemplazó
+    ├─ salto solicitado → texto completo, break
+    ├─ callable(fragmento + CURSOR)
+    └─ await character_delay (0.035 s)
+       │
+  callable(texto_completo)   ← limpia cursor
+  after_finish_delay (0.10 s)
+```
+
+Llamar `iniciar()` de nuevo cancela el loop anterior automáticamente, por lo que nunca hay caracteres mezclados entre preguntas. En `pregunta.gd`:
+
+```gdscript
+var _typewriter: TypewriterEffect = TypewriterEffect.new()
+
+# en _cargar_pregunta_actual():
+_typewriter.iniciar(self, func(t: String): pregunta_label.text = t, pregunta_actual.info_pregunta)
+# en _input():
+_typewriter.solicitar_salto()
+```
+
+#### API
+
+| Símbolo | Tipo | Default | Descripción |
+|---|---|---|---|
+| `character_delay` | `float` | `0.035` | Segundos entre caracteres. |
+| `initial_delay` | `float` | `0.15` | Pausa antes del primer carácter. |
+| `after_finish_delay` | `float` | `0.10` | Pausa al terminar. |
+| `allow_skip` | `bool` | `true` | Toque/clic muestra el texto completo de inmediato. |
+| `iniciar(nodo, callable, texto)` | `func` | — | Arranca la animación. Awaitable. |
+| `solicitar_salto()` | `func` | — | Salta la animación en curso. |
+| `esta_escribiendo()` | `func → bool` | — | `true` si hay animación activa. |
 
 ### `DragObjectiveText` (nodo de escena)
 

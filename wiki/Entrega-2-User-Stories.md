@@ -144,3 +144,29 @@ Terminada.
 ### Estado
 
 Terminada.
+
+---
+
+## US-07 — Leer el enunciado de cada pregunta de forma progresiva
+
+**Actor/es:** Jugador
+**Funcionalidad:** Al comenzar una actividad de Preguntas y al pasar de una pregunta a la siguiente, el enunciado aparece carácter a carácter con un efecto de escritura progresiva (typewriter), en lugar de mostrarse de golpe.
+**Valor que aporta:** La lectura progresiva da tiempo al jugador de procesar el texto, aumenta el enganche y mantiene coherencia visual con el mismo efecto ya presente en Completar Palabra y Arrastre.
+
+### Criterios de aceptación
+
+- Dado que el jugador inicia una actividad de Preguntas, cuando se carga la primera pregunta, entonces el enunciado se escribe carácter a carácter con el cursor `▌` parpadeando.
+- Dado que el enunciado se está escribiendo, cuando el jugador toca la pantalla, entonces el texto completo aparece de inmediato sin necesidad de esperar la animación.
+- Dado que el jugador responde y pasa a la siguiente pregunta, cuando aparece el nuevo enunciado, entonces el typewriter arranca desde cero sin caracteres residuales de la pregunta anterior.
+- Dado que el efecto termina, cuando se muestra el último carácter, entonces el cursor `▌` desaparece y queda solo el texto final.
+- Dado que el jugador responde mientras el typewriter está activo, cuando selecciona una opción, entonces la respuesta se registra normalmente y el efecto no bloquea la interacción.
+
+### Tickets relacionados
+
+- UNQ-155 — Animar los textos a Typewriter Effect en Preguntas
+
+**Cómo se valida:** completar una actividad de Preguntas verificando que: (1) el enunciado se escribe progresivamente, (2) el salto por toque funciona, (3) al cambiar de pregunta no hay mezcla de caracteres, y (4) la interacción con botones no queda bloqueada.
+
+### Estado
+
+Terminada.
