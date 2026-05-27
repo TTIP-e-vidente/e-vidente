@@ -20,4 +20,10 @@
 - [🖼️ Evidencia](Entrega-1-Evidencia)
 - [🔜 Próximos Pasos](Entrega-1-Proximos-Pasos)
 
-**Entrega 2** *(en planificación)*
+**[Entrega 2](Entrega-2)**
+- [📋 Resumen](Entrega-2)
+- [📖 User Stories](Entrega-2-User-Stories)
+- [🏗️ Arquitectura](Entrega-2-Arquitectura)
+- [🗂️ Decisiones](Entrega-2-Decisiones)
+- [🖼️ Evidencia](Entrega-2-Evidencia)
+- [🔜 Próximos Pasos](Entrega-2-Proximos-Pasos)
