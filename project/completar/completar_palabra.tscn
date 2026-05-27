@@ -31,7 +31,9 @@ metadata/_edit_use_anchors_ = true
 [node name="FondoFicha" parent="Control" unique_id=1853669144 instance=ExtResource("1_ymp6c")]
 layout_mode = 0
 offset_left = -4.0
+offset_top = 0.0
 offset_right = 1149.0
+offset_bottom = 799.0
 
 [node name="TituloNivel" parent="Control" unique_id=553521577 instance=ExtResource("2_ffl8v")]
 position = Vector2(197.00002, 107.00001)
