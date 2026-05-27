@@ -1,13 +1,13 @@
-{
+﻿{
 	"id": "gluten_maiz",
 	"theme": "celiaquia",
-	"title": "Gluten en el maiz",
+	"title": "Gluten en el maíz",
 	"difficulty": "easy",
 	"mode": "quiz_choice",
 	"content": {
-		"question": "El maiz contiene gluten?",
+		"question": "El maíz contiene gluten?",
 		"correct_answer": "No",
-		"wrong_options": ["Si", "Solo si esta cocido"],
+		"wrong_options": ["Sí", "Solo si está cocido"],
 		"visual_resource": ""
 	}
 }

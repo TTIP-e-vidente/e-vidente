@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 3,
   "id": "items_celiaquia",
   "tipo": "items_catalog",
@@ -147,7 +147,7 @@
 	  "categoria": "sin_tacc",
 	  "meal_type": ["cocina_segura"],
 	  "tags": ["harina", "sin_tacc"],
-	  "feedback": "La maicena es harina de maiz, naturalmente sin gluten."
+	  "feedback": "La maicena es harina de maíz, naturalmente sin gluten."
 	},
 	"mandarina": {
 	  "categoria": "sin_tacc",
@@ -219,7 +219,7 @@
 	  "categoria": "sin_tacc",
 	  "meal_type": ["almuerzo", "cena"],
 	  "tags": ["grano", "natural"],
-	  "feedback": "La polenta es harina de maiz, sin gluten."
+	  "feedback": "La polenta es harina de maíz, sin gluten."
 	},
 	"pollo": {
 	  "categoria": "sin_tacc",
@@ -272,7 +272,7 @@
 	  "categoria": "con_gluten",
 	  "meal_type": ["bebida"],
 	  "tags": ["bebida", "cebada"],
-	  "feedback": "La cerveza comun se elabora con cebada, que contiene gluten."
+	  "feedback": "La cerveza común se elabora con cebada, que contiene gluten."
 	},
 	"churros": {
 	  "categoria": "con_gluten",
@@ -323,14 +323,14 @@
 	  "categoria": "con_gluten",
 	  "meal_type": ["almuerzo", "cena"],
 	  "tags": ["panificado", "trigo"],
-	  "feedback": "El pan de la hamburguesa comun contiene gluten."
+	  "feedback": "El pan de la hamburguesa común contiene gluten."
 	},
 	"helado_cucurucho": {
 	  "resource": "res://items/helado-cucurucho.tres",
 	  "categoria": "con_gluten",
 	  "meal_type": ["merienda", "colacion"],
 	  "tags": ["postre", "trigo"],
-	  "feedback": "El cucurucho del helado esta hecho con harina de trigo."
+	  "feedback": "El cucurucho del helado está hecho con harina de trigo."
 	},
 	"hotdog": {
 	  "categoria": "con_gluten",
@@ -348,7 +348,7 @@
 	  "categoria": "con_gluten",
 	  "meal_type": ["desayuno", "merienda"],
 	  "tags": ["panificado", "trigo"],
-	  "feedback": "El pan comun contiene gluten por la harina de trigo."
+	  "feedback": "El pan común contiene gluten por la harina de trigo."
 	},
 	"panqueque": {
 	  "categoria": "con_gluten",
@@ -372,7 +372,7 @@
 	  "categoria": "con_gluten",
 	  "meal_type": ["cena"],
 	  "tags": ["panificado", "trigo"],
-	  "feedback": "La masa de pizza comun es de harina de trigo."
+	  "feedback": "La masa de pizza común es de harina de trigo."
 	},
 	"raviol": {
 	  "categoria": "con_gluten",
@@ -397,7 +397,7 @@
 	  "categoria": "riesgo",
 	  "meal_type": ["merienda", "colacion"],
 	  "tags": ["procesado", "sin_rotulo"],
-	  "feedback": "Si no tiene sello Sin TACC, no es segura para celiaquía."
+	  "feedback": "Sí no tiene sello Sín TACC, no es segura para celiaquía."
 	},
 	"caramelos": {
 	  "categoria": "riesgo",
@@ -408,7 +408,7 @@
 	  "categoria": "riesgo",
 	  "meal_type": ["merienda", "colacion"],
 	  "tags": ["dulce", "procesado", "revisar"],
-	  "feedback": "El chocolate puede tener trazas de gluten segun la fabrica."
+	  "feedback": "El chocolate puede tener trazas de gluten según la fábrica."
 	},
 	"chupetin": {
 	  "categoria": "riesgo",
@@ -419,7 +419,7 @@
 	  "categoria": "riesgo",
 	  "meal_type": ["almuerzo", "cena"],
 	  "tags": ["legumbre", "revisar"],
-	  "feedback": "El falafel puede tener contaminacion cruzada con gluten."
+	  "feedback": "El falafel puede tener contaminación cruzada con gluten."
 	},
 	"flan": {
 	  "categoria": "riesgo",
@@ -437,7 +437,7 @@
 	  "categoria": "riesgo",
 	  "meal_type": ["desayuno", "almuerzo", "merienda"],
 	  "tags": ["proteina", "procesado", "revisar"],
-	  "feedback": "El jamon procesado puede tener aditivos con gluten."
+	  "feedback": "El jamón procesado puede tener aditivos con gluten."
 	},
 	"nigiri": {
 	  "categoria": "riesgo",
@@ -455,7 +455,7 @@
 	  "categoria": "riesgo",
 	  "meal_type": ["almuerzo", "cena"],
 	  "tags": ["vegetal", "procesado", "revisar"],
-	  "feedback": "Las papas fritas en aceite compartido tienen riesgo de contaminacion cruzada."
+	  "feedback": "Las papas fritas en aceite compartido tienen riesgo de contaminación cruzada."
 	},
 	"sushi": {
 	  "categoria": "riesgo",
