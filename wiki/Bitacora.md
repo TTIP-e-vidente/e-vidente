@@ -24,6 +24,30 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 
 ---
 
+### `2026-05-27` — Corregir reintento parcial en modalidad de vinculación
+<kbd>Bug</kbd> <kbd>UX</kbd> <kbd>Testing</kbd>
+
+Se corrigió el comportamiento visual de reintento en la modalidad de vinculación: al clicar una tarjeta marcada como WRONG ahora se limpia sólo el feedback de esa tarjeta y pasa a SELECTED, sin resetear automáticamente la pareja.
+
+**Qué problema resolvió**
+- Evita que tocar un extremo rojo borre el estado del otro extremo, lo que generaba confusión en el jugador.
+
+**Qué se implementó**
+- Ajustes en la selección: `_seleccionar_tarjeta_izquierda` y `_seleccionar_tarjeta_derecha` ahora limpian solo el feedback local del ítem clickeado (`marcar_error(false)`) y lo marcan como `seleccionada`.
+- Validación: `_validar_par_actual` marca error en ambos extremos cuando la vinculación es incorrecta, manteniendo `tiene_error` por ítem.
+- Visual: `_actualizar_tarjetas` aplica estados por ítem (prioridad `seleccionada > error > vinculada > normal`) y `_dibujar_linea_de_vinculo` pinta la línea en rojo si cualquiera de los extremos está en error.
+- Test: se actualizó `project/tests/vertical_slice_smoke_test.gd` para verificar la regla WRONG + click => SELECTED (solo cambia la tarjeta clickeada).
+
+**Impacto para el jugador**
+- Reintentos más claros: tocar una tarjeta roja la convierte en amarilla, y la otra tarjeta permanece roja hasta que el jugador la toque o se reevalúe.
+- Menos confusión visual durante reintentos; la validación bidireccional se mantiene.
+
+**Evidencia técnica**
+- `project/vincular/vincular_conceptos.gd`
+- `project/vincular/concept_item.gd`
+- `project/tests/vertical_slice_smoke_test.gd`
+
+
 ### `2026-05-24` — Suite de tests unitarios para el pipeline de preguntas
 <kbd>Testing</kbd> <kbd>Calidad</kbd> <kbd>Documentación</kbd>
 
