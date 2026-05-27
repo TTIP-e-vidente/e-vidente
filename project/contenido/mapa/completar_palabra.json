@@ -4,14 +4,14 @@
 		"mode": "completar_palabra",
 		"difficulty": 1,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Tomar ____ ayuda a mantener el cuerpo hidratado.",
+		"prompt": "Comer gluten puede dañar el ____ de una persona celíaca.",
 		"correct_answers": [
-			"agua"
+			"intestino"
 		],
 		"choices": [
-			"agua",
-			"gaseosa",
-			"cerveza"
+			"cabello",
+			"hueso",
+			"intestino"
 		],
 		"order_matters": false,
 		"teaching_key": "celiaquia_bebida"
@@ -72,16 +72,14 @@
 		"mode": "completar_palabra",
 		"difficulty": 2,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Para evitar ____ cruzada conviene usar utensilios ____.",
+		"prompt": "Para evitar ____ cruzada conviene usar utensilios separados.",
 		"correct_answers": [
-			"contaminación",
-			"separados"
+			"contaminación"
 		],
 		"choices": [
 			"contaminación",
-			"separados",
-			"mezcla",
-			"juntos"
+			"cocinar",
+			"comunicación"
 		],
 		"order_matters": true,
 		"teaching_key": "celiaquia_cocina_segura"
@@ -91,9 +89,8 @@
 		"mode": "completar_palabra",
 		"difficulty": 2,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Un producto sin ____ en el envase puede tener ____ de gluten.",
+		"prompt": "Un producto sin sello en el envase puede tener ____ de gluten.",
 		"correct_answers": [
-			"sello",
 			"trazas"
 		],
 		"choices": [
@@ -110,16 +107,14 @@
 		"mode": "completar_palabra",
 		"difficulty": 2,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Al comer fuera conviene ____ y confirmar que no haya ____ cruzada.",
+		"prompt": "Al comer fuera conviene ____ y confirmar que no haya contaminación cruzada.",
 		"correct_answers": [
-			"avisar",
-			"contaminación"
+			"avisar"
 		],
 		"choices": [
 			"avisar",
-			"contaminación",
 			"callar",
-			"sabor"
+			"probar"
 		],
 		"order_matters": true,
 		"teaching_key": "celiaquia_cena"
@@ -129,16 +124,15 @@
 		"mode": "completar_palabra",
 		"difficulty": 2,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Una freidora ____ con aceite de empanadas puede ____ alimentos sin TACC.",
+		"prompt": "Una freidora ____ con aceite de empanadas puede contaminar alimentos sin TACC.",
 		"correct_answers": [
-			"compartida",
-			"contaminar"
+			"compartida"
 		],
 		"choices": [
 			"compartida",
-			"contaminar",
 			"exclusiva",
-			"limpiar"
+			"separada",
+			"mezclada"
 		],
 		"order_matters": true,
 		"teaching_key": "celiaquia_almuerzo"
@@ -148,14 +142,13 @@
 		"mode": "completar_palabra",
 		"difficulty": 3,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "La celiaquía se diagnostica con una ____ y se trata con una dieta ____ de gluten.",
+		"prompt": "La celiaquía se diagnostica con una ____ y se trata con una dieta libre de gluten.",
 		"correct_answers": [
-			"biopsia",
-			"libre"
+			"biopsia"
 		],
 		"choices": [
 			"biopsia",
-			"libre",
+			"análisis",
 			"radiografía",
 			"cargada"
 		],
@@ -167,16 +160,15 @@
 		"mode": "completar_palabra",
 		"difficulty": 3,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "Un producto ____ no siempre es seguro si fue procesado en planta que también maneja ____.",
+		"prompt": "Aunque un alimento no tenga trigo, puede no ser seguro si no está ____ como Sin Gluten.",
 		"correct_answers": [
-			"artesanal",
-			"gluten"
+			"certificado"
 		],
 		"choices": [
-			"artesanal",
-			"gluten",
-			"industrial",
-			"agua"
+			"certificado",
+			"aprobado",
+			"admitido",
+			"homologado"
 		],
 		"order_matters": true,
 		"teaching_key": "celiaquia_almuerzo"
@@ -186,21 +178,158 @@
 		"mode": "completar_palabra",
 		"difficulty": 3,
 		"screen_title": "Escogé la palabra que falta",
-		"prompt": "La avena es ____ para la mayoría de los celíacos porque puede estar ____ con gluten durante su ____.",
+		"prompt": "La avena es riesgosa para la mayoría de los celíacos porque puede estar contaminada con gluten durante su ____.",
 		"correct_answers": [
-			"riesgosa",
-			"contaminada",
 			"procesamiento"
 		],
 		"choices": [
-			"riesgosa",
-			"contaminada",
+			"lavado",
+			"cosecha",
 			"procesamiento",
-			"segura",
-			"limpia",
 			"envasado"
 		],
 		"order_matters": true,
 		"teaching_key": "celiaquia_colacion"
+	},
+	"word_celiaquia_galletitas_01": {
+		"id": "word_celiaquia_galletitas_01",
+		"mode": "completar_palabra",
+		"difficulty": 1,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "Las galletitas comunes suelen tener ____.",
+		"correct_answers": [
+			"gluten"
+		],
+		"choices": [
+			"gluten",
+			"fruta",
+			"agua"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_alimentos"
+	},
+	"word_celiaquia_pizza_01": {
+		"id": "word_celiaquia_pizza_01",
+		"mode": "completar_palabra",
+		"difficulty": 1,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "La masa tradicional de pizza lleva harina de ____.",
+		"correct_answers": [
+			"trigo"
+		],
+		"choices": [
+			"trigo",
+			"maíz",
+			"arroz"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_alimentos"
+	},
+	"word_celiaquia_cocina_01": {
+		"id": "word_celiaquia_cocina_01",
+		"mode": "completar_palabra",
+		"difficulty": 1,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "Las migas pueden causar ____ cruzada.",
+		"correct_answers": [
+			"contaminación"
+		],
+		"choices": [
+			"contaminación",
+			"limpieza",
+			"cocción"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_cocina_segura"
+	},
+	"word_celiaquia_tostadas_02": {
+		"id": "word_celiaquia_tostadas_02",
+		"mode": "completar_palabra",
+		"difficulty": 2,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "Una tostadora compartida puede ____ pan sin gluten.",
+		"correct_answers": [
+			"contaminar"
+		],
+		"choices": [
+			"contaminar",
+			"lavar",
+			"congelar",
+			"cerrar"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_cocina_segura"
+	},
+	"word_celiaquia_envase_02b": {
+		"id": "word_celiaquia_envase_02b",
+		"mode": "completar_palabra",
+		"difficulty": 2,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "Antes de comprar conviene leer la ____ del producto.",
+		"correct_answers": [
+			"etiqueta"
+		],
+		"choices": [
+			"etiqueta",
+			"temperatura",
+			"foto",
+			"receta"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_compras"
+	},
+	"word_celiaquia_restaurante_02c": {
+		"id": "word_celiaquia_restaurante_02c",
+		"mode": "completar_palabra",
+		"difficulty": 2,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "En un restaurante hay que ____ que la comida sea sin TACC.",
+		"correct_answers": [
+			"confirmar"
+		],
+		"choices": [
+			"confirmar",
+			"ocultar",
+			"mezclar",
+			"decorar"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_restaurante"
+	},
+	"word_celiaquia_planta_03": {
+		"id": "word_celiaquia_planta_03",
+		"mode": "completar_palabra",
+		"difficulty": 3,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "Algunos alimentos pueden tener ____ de gluten durante su producción.",
+		"correct_answers": [
+			"trazas"
+		],
+		"choices": [
+			"trazas",
+			"vitaminas",
+			"semillas",
+			"frutas"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_contaminacion"
+	},
+	"word_celiaquia_diagnostico_03b": {
+		"id": "word_celiaquia_diagnostico_03b",
+		"mode": "completar_palabra",
+		"difficulty": 3,
+		"screen_title": "Escogé la palabra que falta",
+		"prompt": "La celiaquía requiere una dieta ____, aún sin síntomas.",
+		"correct_answers": [
+			"estricta"
+		],
+		"choices": [
+			"estricta",
+			"flexible",
+			"permisiva",
+			"amplia"
+		],
+		"order_matters": false,
+		"teaching_key": "celiaquia_salud"
 	}
 }

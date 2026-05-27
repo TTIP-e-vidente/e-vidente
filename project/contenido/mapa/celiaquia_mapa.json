@@ -1,4 +1,4 @@
-﻿{
+{
 	"track": "celiaquia",
 	"version": 3,
 	"nodes": {
@@ -12,7 +12,7 @@
 						"action": "Prepará",
 						"meal": "un desayuno sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -22,7 +22,7 @@
 						"action": "Prepará",
 						"meal": "un desayuno sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -32,7 +32,7 @@
 						"action": "Prepará",
 						"meal": "un desayuno sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			],
@@ -53,7 +53,7 @@
 						"action": "Prepará",
 						"meal": "una colación sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -63,7 +63,7 @@
 						"action": "Prepará",
 						"meal": "una colación sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -73,7 +73,7 @@
 						"action": "Prepará",
 						"meal": "una colación sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -92,7 +92,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -111,7 +111,7 @@
 						"action": "Prepará",
 						"meal": "un desayuno sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -125,7 +125,7 @@
 						"action": "Prepará",
 						"meal": "un desayuno sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -141,7 +141,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -155,7 +155,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -171,7 +171,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -199,7 +199,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -237,7 +237,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -262,7 +262,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -287,7 +287,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -321,7 +321,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -337,7 +337,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -361,7 +361,7 @@
 						"action": "Prepará",
 						"meal": "una cena sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -385,7 +385,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -410,7 +410,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -434,7 +434,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -458,7 +458,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -482,7 +482,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -515,7 +515,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -531,7 +531,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -567,7 +567,7 @@
 						"action": "Prepará",
 						"meal": "una cena sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -588,7 +588,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -622,7 +622,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -638,7 +638,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -672,7 +672,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -688,7 +688,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
@@ -722,7 +722,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				}
 			]
@@ -742,7 +742,7 @@
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
 						"connector": "para tu amigue",
-						"restriction": "celiaquia@"
+						"restriction": "con celiaquía"
 					}
 				},
 				{
