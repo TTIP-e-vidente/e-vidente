@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_4l1i0"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
 [ext_resource type="Texture2D" uid="uid://btbwctpr4ybmo" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="8_eder2"]
+[ext_resource type="Texture2D" uid="uid://bqfihek0aj5qj" path="res://assets-sistema/interfaz/cuadrado-6x1-blanco.png" id="9_2g6ed"]
 [ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="12_2g6ed"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_b7sy5"]
@@ -30,7 +31,7 @@ content_margin_left = 32.0
 content_margin_top = 14.0
 content_margin_right = 32.0
 content_margin_bottom = 14.0
-texture = ExtResource("8_eder2")
+texture = ExtResource("9_2g6ed")
 
 [node name="Preguntas" type="Node2D" unique_id=653993520]
 script = ExtResource("1_dlf6l")
@@ -47,7 +48,9 @@ size_flags_horizontal = 4
 [node name="FondoFicha" parent="Contenido" unique_id=1289609653 instance=ExtResource("4_ecatg")]
 layout_mode = 0
 offset_left = 1.0
+offset_top = 0.0
 offset_right = 1154.0
+offset_bottom = 799.0
 
 [node name="TituloNivel" parent="Contenido" unique_id=74001118 instance=ExtResource("4_mwqfo")]
 position = Vector2(167.99997, 95.99999)
@@ -178,21 +181,20 @@ vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Preguntasx3" type="Control" parent="Contenido" unique_id=1755994207]
-visible = false
 anchors_preset = 0
-offset_left = 329.0
+offset_left = 186.00003
 offset_top = 294.0
-offset_right = 768.0
+offset_right = 625.0
 offset_bottom = 599.0
-scale = Vector2(1.0874631, 1.0874631)
+scale = Vector2(1.762413, 1.762413)
 
 [node name="Boton3" type="Button" parent="Contenido/Preguntasx3" unique_id=38068594]
 custom_minimum_size = Vector2(0, 45.355)
 layout_mode = 0
 offset_left = 90.118004
-offset_top = 7.356575
+offset_top = 3.9718223
 offset_right = 879.458
-offset_bottom = 373.88657
+offset_bottom = 263.97183
 scale = Vector2(0.351, 0.325)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -203,7 +205,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("8_eder2")
+icon = ExtResource("9_2g6ed")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -228,9 +230,9 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
 offset_left = 92.0
-offset_top = 125.06169
+offset_top = 72.62769
 offset_right = 875.0
-offset_bottom = 496.47168
+offset_bottom = 332.6277
 scale = Vector2(0.3617424, 0.3352122)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -241,7 +243,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("8_eder2")
+icon = ExtResource("9_2g6ed")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -265,10 +267,10 @@ autowrap_mode = 3
 [node name="Boton5" type="Button" parent="Contenido/Preguntasx3" unique_id=473953632]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 0
-offset_left = 94.71586
-offset_top = 252.88214
-offset_right = 877.7159
-offset_bottom = 634.76715
+offset_left = 94.189026
+offset_top = 144.68799
+offset_right = 877.189
+offset_bottom = 404.688
 scale = Vector2(0.3617424, 0.3352122)
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -279,7 +281,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/hover = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/disabled = SubResource("StyleBoxTexture_btn2")
 theme_override_styles/focus = SubResource("StyleBoxTexture_btn2")
-icon = ExtResource("8_eder2")
+icon = ExtResource("9_2g6ed")
 flat = true
 icon_alignment = 1
 expand_icon = true
@@ -301,6 +303,7 @@ vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Preguntasx4" type="Control" parent="Contenido" unique_id=527732730]
+visible = false
 anchors_preset = 0
 offset_left = 252.0
 offset_top = 355.99997
