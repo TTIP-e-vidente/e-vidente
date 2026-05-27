@@ -4,11 +4,11 @@ extends Control
 
 signal pressed
 
-const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria.png")
+const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria-1.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
-const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa.png")
+const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa-1.png")
 const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
-const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva.png")
+const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva-1.png")
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
 var _current_count: int = 0
