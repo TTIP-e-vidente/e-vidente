@@ -24,13 +24,14 @@ layout_direction = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 387.99997
-offset_top = 312.0
-offset_right = 387.99997
-offset_bottom = 312.0
+offset_left = 411.99997
+offset_top = 304.0
+offset_right = 411.99997
+offset_bottom = 304.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.7492769, 0.7492769)
+scale = Vector2(0.5504135, 0.5504135)
+theme_override_constants/h_separation = 414
 flat = true
 start_index = 2
 text_direction = 1
@@ -41,24 +42,26 @@ anchors_preset = 0
 anchor_top = 0.0
 anchor_bottom = 0.0
 offset_left = 19.736572
-offset_top = -94.049286
-offset_right = 269.73657
-offset_bottom = 144.95071
+offset_top = -131.08139
+offset_right = 562.7366
+offset_bottom = 129.91861
+scale = Vector2(1.145724, 1.1621135)
 
 [node name="Opciones" parent="MenuBar" unique_id=1594801136 instance=ExtResource("4_uu8qn")]
 layout_mode = 1
 offset_left = 19.736572
-offset_top = 120.151306
-offset_right = 269.73657
-offset_bottom = 359.15128
+offset_top = 174.77524
+offset_right = 562.7366
+offset_bottom = 435.77524
+scale = Vector2(1.145724, 1.1621135)
 
 [node name="Salir" parent="MenuBar" unique_id=600866338 instance=ExtResource("4_uu8qn")]
 layout_mode = 1
 offset_left = 17.712948
-offset_top = 344.04276
-offset_right = 552.71295
-offset_bottom = 602.0427
-scale = Vector2(0.9365182, 0.9424167)
+offset_top = 495.1965
+offset_right = 560.71295
+offset_bottom = 756.19653
+scale = Vector2(1.1485949, 1.1558291)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
 stream = ExtResource("6_eoqxh")
