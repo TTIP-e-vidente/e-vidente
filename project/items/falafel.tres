@@ -7,7 +7,7 @@
 
 [resource]
 script = ExtResource("1_y78o8")
-condiciones = Array[int]([0])
+condiciones = Array[int]([])
 sprite = ExtResource("3_22xwn")
 escena = ExtResource("1_j0mej")
 posicion = Vector2(0, 0)

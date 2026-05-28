@@ -501,29 +501,42 @@ func _resolver_textura_elemento_arrastre(
 	recurso_item: Resource = null
 ) -> Texture2D:
 	var ruta_textura: String = _resolver_ruta_recurso_elemento_arrastre(elemento_crudo)
+	var item_id: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
+	var label: String = str(
+		elemento_crudo.get("label", elemento_crudo.get("nombre", item_id))
+	).strip_edges()
 	var textura_elemento: Texture2D = null
 	if ruta_textura.ends_with(".tres"):
 		if recurso_item != null:
 			textura_elemento = recurso_item.get("sprite") as Texture2D
+			if textura_elemento == null:
+				push_error(
+					"[AssetResolver] ERROR sprite_null item_id=\"%s\" label=\"%s\" path=\"%s\""
+					% [item_id, label, ruta_textura]
+				)
+		else:
+			push_error(
+				"[AssetResolver] ERROR resource_null item_id=\"%s\" label=\"%s\" path=\"%s\""
+				% [item_id, label, ruta_textura]
+			)
 	else:
 		textura_elemento = GameChapterAssetCatalogScript.resolver_textura(ruta_textura)
-	var item_id: String = str(elemento_crudo.get("id", "sin_id")).strip_edges()
 	print(
-		"[DragFoodItem] id=%s resource=%s exists=%s correct=%s"
+		"[AssetResolver] item_id=\"%s\" label=\"%s\" resource=\"%s\" exists=%s sprite=%s"
 		% [
-			item_id, ruta_textura,
-			str(ResourceLoader.exists(ruta_textura) and textura_elemento != null),
-			str(str(elemento_crudo.get("correct_target", "")).strip_edges() != ""),
+			item_id, label, ruta_textura,
+			str(ResourceLoader.exists(ruta_textura)),
+			str(textura_elemento != null),
 		]
 	)
 	if textura_elemento != null:
 		return textura_elemento
 
-	push_warning(
+	push_error(
 		(
-			"ManagerLevel: no se pudo cargar la textura del elemento '%s' (%s)."
-			+ " Se usara una textura por defecto."
-		) % [item_id, ruta_textura]
+			"[AssetResolver] FALLBACK item_id=\"%s\" label=\"%s\""
+			+ " reason=\"sprite_resolve_failed\" path=\"%s\" fallback=\"%s\""
+		) % [item_id, label, ruta_textura, RUTA_TEXTURA_ELEMENTO_POR_DEFECTO]
 	)
 	return load(RUTA_TEXTURA_ELEMENTO_POR_DEFECTO) as Texture2D
 

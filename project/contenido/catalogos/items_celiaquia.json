@@ -416,6 +416,7 @@
 	  "tags": ["dulce", "procesado", "revisar"]
 	},
 	"falafel": {
+	  "resource": "res://items/falafel.tres",
 	  "categoria": "riesgo",
 	  "meal_type": ["almuerzo", "cena"],
 	  "tags": ["legumbre", "revisar"],
