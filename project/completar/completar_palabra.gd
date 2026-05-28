@@ -213,7 +213,7 @@ func _preparar_botones_opciones(options: Array) -> Array[Button]:
 				btn.mouse_entered.connect(_al_entrar_raton_opcion.bind(btn))
 				btn.mouse_exited.connect(_al_salir_raton_opcion.bind(btn))
 
-			btn.modulate.a = 1.0
+			btn.modulate = Color.WHITE
 			btn.scale = Vector2.ONE
 			btn.disabled = false
 			btn.show()
@@ -357,18 +357,13 @@ func _es_correcta_para_slot_actual(option: String) -> bool:
 func _colocar_opcion_en_slot(option: String, btn: Button) -> void:
 	_placed.append(option)
 	btn.disabled = true
-	_asignar_texto_boton(btn, "✓ " + option)
+	_asignar_texto_boton(btn, option)
+	btn.modulate = MiPaleta.FEEDBACK_OK
 
 	if ENABLE_BUTTON_HOVER:
 		_animar_escala_boton(btn, OPTION_CORRECT_SCALE)
 		var t := create_tween()
 		t.tween_property(btn, "scale", Vector2.ONE, 0.2).set_delay(0.15)
-
-	var texto_label = btn.get_node_or_null("TextoOpcion")
-	if texto_label != null:
-		texto_label.add_theme_color_override("font_color", COLOR_PLACED)
-	else:
-		btn.add_theme_color_override("font_color", COLOR_PLACED)
 
 	_renderizar_frase_directa()
 
@@ -384,42 +379,25 @@ func _verificar_si_completado() -> void:
 
 func _devolver_opcion_al_origen(btn: Button) -> void:
 	_interaction_locked = true
+	btn.modulate = MiPaleta.FEEDBACK_ERROR
 
 	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN_OUT)
-
-	var original_x: float = btn.position.x
-	tween.tween_property(btn, "position:x", original_x - WRONG_SHAKE_DISTANCE, WRONG_SHAKE_STEP)
-	tween.tween_property(btn, "position:x", original_x + WRONG_SHAKE_DISTANCE, WRONG_SHAKE_STEP)
-	tween.tween_property(
-		btn,
-		"position:x",
-		original_x - (WRONG_SHAKE_DISTANCE / 2.0),
-		WRONG_SHAKE_STEP
-	)
-	tween.tween_property(
-		btn,
-		"position:x",
-		original_x + (WRONG_SHAKE_DISTANCE / 2.0),
-		WRONG_SHAKE_STEP
-	)
-	tween.tween_property(btn, "position:x", original_x, WRONG_SHAKE_STEP)
+	var base_rotation := btn.rotation_degrees
+	for _i in 5:
+		tween.tween_property(btn, "rotation_degrees", base_rotation + 8, 0.03)
+		tween.tween_property(btn, "rotation_degrees", base_rotation - 8, 0.03)
+	tween.tween_property(btn, "rotation_degrees", base_rotation, 0.05)
 
 	await tween.finished
+	await get_tree().create_timer(0.45).timeout
 	_restablecer_estado_opcion(btn)
 
 func _restablecer_estado_opcion(btn: Button) -> void:
 	btn.disabled = false
+	# modulate se mantiene en FEEDBACK_ERROR para indicar que esta opción fue incorrecta.
+	# Se limpiará al iniciar el siguiente ejercicio en _preparar_botones_opciones.
 	var orig_text = str(btn.get_meta("original_text", btn.text))
 	_asignar_texto_boton(btn, orig_text)
-
-	var texto_label = btn.get_node_or_null("TextoOpcion")
-	if texto_label != null:
-		texto_label.remove_theme_color_override("font_color")
-	else:
-		btn.remove_theme_color_override("font_color")
-
 	_interaction_locked = false
 
 func _renderizar_frase_directa() -> void:
