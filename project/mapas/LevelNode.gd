@@ -1,4 +1,6 @@
 # HELPER_INTERNO
+# DEBUG_BADGES: activar solo para depurar badges visuales. No dejar en true en producción.
+const DEBUG_BADGES := false
 # Nodo visual individual del mapa (estrella/candado/completado).
 # Solo renderiza estado — no decide flujo.
 @tool
@@ -112,14 +114,15 @@ func _refresh_badge() -> void:
 	)
 	if is_completed and effective_progress <= 0.0:
 		effective_progress = 1.0
-	print_debug(
-		"[Star] update node_key=",
-		node_data.node_key if node_data != null else name,
-		" percent=",
-		effective_progress,
-		" completed=",
-		is_completed
-	)
+	if DEBUG_BADGES:
+		print_debug(
+			"[Star] update node_key=",
+			node_data.node_key if node_data != null else name,
+			" percent=",
+			effective_progress,
+			" completed=",
+			is_completed
+		)
 	if not is_completed:
 		return
 	if node_badge.has_method("set_completed"):
@@ -132,12 +135,13 @@ func set_star_progress(percent: float) -> void:
 	_best_percent = clampf(percent, 0.0, 1.0)
 	if _best_percent > 0.0:
 		_best_accuracy = maxf(_best_accuracy, _best_percent * 100.0)
-	print_debug(
-		"[Star] set_progress node_key=",
-		node_data.node_key if node_data != null else node_key,
-		" percent=",
-		_best_percent
-	)
+	if DEBUG_BADGES:
+		print_debug(
+			"[Star] set_progress node_key=",
+			node_data.node_key if node_data != null else node_key,
+			" percent=",
+			_best_percent
+		)
 	if node_badge != null and node_badge.has_method("set_progress"):
 		node_badge.call("set_progress", _best_percent)
 	_refresh_badge()

@@ -13,6 +13,8 @@ const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
 const VINCULAR_SCENE := "res://vincular/VincularConceptos.tscn"
 const COMPLETAR_PALABRA_SCENE := "res://completar/completar_palabra.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
+const GameSceneRouterScript := preload("res://niveles/GameSceneRouter.gd")
+const FINALIZACION_PARTIDA_SCENE := GameSceneRouterScript.FINALIZACION_PARTIDA_SCENE_PATH
 const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
 const NODE_5_KEY := "celiaquia_05_intro_mixta"
@@ -316,12 +318,12 @@ func _validar_nodo(global_state: Node, node_key: String, label: String) -> Dicti
 		if failed:
 			return result
 
-		var next_scenes: Array[String] = [MAP_SCENE, "res://mapas/Finalización-Partida.tscn"]
+		var next_scenes: Array[String] = [MAP_SCENE, FINALIZACION_PARTIDA_SCENE]
 		next_scenes.append_array(GAME_SCENES)
 		await _wait_for_any(next_scenes, "%s continuar" % label)
 		if (
 			current_scene != null
-			and current_scene.scene_file_path == "res://mapas/Finalización-Partida.tscn"
+			and current_scene.scene_file_path == FINALIZACION_PARTIDA_SCENE
 			and current_scene.has_method("continuar_al_mapa")
 		):
 			current_scene.call("continuar_al_mapa")

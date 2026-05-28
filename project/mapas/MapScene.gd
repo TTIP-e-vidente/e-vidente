@@ -9,7 +9,7 @@ const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
-const FINALIZACION_PARTIDA_SCENE := "res://mapas/Finalización-Partida.tscn"
+const FINALIZACION_PARTIDA_SCENE := GameSceneRouter.FINALIZACION_PARTIDA_SCENE_PATH
 
 const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
@@ -60,6 +60,8 @@ func _notification(what: int) -> void:
 		return
 	if not is_node_ready() or not visible:
 		return
+	# Solo refrescar visuales al hacerse visible; la verificación de mapa completo
+	# ocurre explícitamente en _ready() y volver_al_mapa(), no en cada cambio de visibilidad.
 	actualizar_estados_de_nodos()
 
 
@@ -126,14 +128,6 @@ func actualizar_estados_de_nodos() -> void:
 					state["is_completed"] = true
 					state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
 					state["can_play"] = true
-		print_debug(
-			"[MapBoard] node_key=",
-			key,
-			" saved_percent=",
-			state.get("best_percent", 0.0),
-			" completed=",
-			state.get("is_completed", false)
-		)
 		node_states.append(state)
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
 	if map_board.has_method("refresh_progress_from_save"):
@@ -205,17 +199,38 @@ func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
+	## Muestra el popup "Capítulo completado" si todos los nodos del mapa están completos
+	## y la recompensa todavía no fue vista. El flag se guarda DESPUÉS de mostrar el popup.
 	if not AvanceDeNodoScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
 		return
+
+	var save_manager: Node = get_node_or_null("/root/SaveManager")
+
+	# Si la recompensa ya fue vista en una visita anterior, no volver a mostrarla.
+	var reward_seen: bool = false
+	if save_manager != null and save_manager.has_method("ya_se_mostro_recompensa_del_mapa"):
+		reward_seen = bool(save_manager.call("ya_se_mostro_recompensa_del_mapa", map_id))
+	if reward_seen:
+		print("[MapCompletion] reward already seen map_id=\"", map_id, "\"")
+		return
+
+	# Evitar instanciar dos veces si ya hay un popup activo.
 	if _popup_completado_activo():
 		return
 
+	# Instanciar el popup y agregarlo a la escena.
 	var popup_completado: Node = MAP_COMPLETION_SCENE.instantiate()
 	if popup_completado == null:
+		push_error("MapScene: No se pudo instanciar CapituloCompletado.tscn")
 		return
 	if popup_completado.has_method("configure_for_track"):
 		popup_completado.call("configure_for_track", track_key_mapa)
 	add_child(popup_completado)
+
+	# Marcar la recompensa como vista DESPUÉS de agregar el popup al árbol.
+	print("[MapCompletion] showing reward map_id=\"", map_id, "\"")
+	if save_manager != null and save_manager.has_method("marcar_recompensa_del_mapa_como_vista"):
+		save_manager.call("marcar_recompensa_del_mapa_como_vista", map_id)
 
 
 func _popup_completado_activo() -> bool:

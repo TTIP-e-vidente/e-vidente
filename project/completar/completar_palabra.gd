@@ -1,4 +1,4 @@
-﻿extends Node2D
+extends Node2D
 class_name CompletarPalabra
 
 signal completed(success: bool)
@@ -514,7 +514,9 @@ func _continuar_o_cerrar_nodo() -> void:
 		_ir_a_flujo_post_juego()
 
 func _ir_a_flujo_post_juego() -> void:
-	PostGameFlowControllerScript.navigate_to_return_target(get_tree(), _ruta_escena_de_retorno)
+	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
+	var node_key: String = str(actividad.get("node_key", "")).strip_edges()
+	PostGameFlowControllerScript.navigate_to_return_target(get_tree(), _ruta_escena_de_retorno, node_key)
 
 func _deshabilitar_interaccion() -> void:
 	_interaction_locked = true

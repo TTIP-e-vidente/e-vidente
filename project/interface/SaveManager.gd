@@ -369,6 +369,32 @@ func save_node_accuracy(
 	guardar_progreso_en_disco()
 
 
+func marcar_recompensa_del_mapa_como_vista(map_id: String) -> void:
+	## Marca que la recompensa del mapa ya fue mostrada al jugador.
+	## Evita volver a mostrar el cartel CapituloCompletado al recargar el mapa.
+	var clean_id: String = map_id.strip_edges()
+	if clean_id.is_empty():
+		return
+	var seen: Variant = save_data.get("map_reward_seen", {})
+	var seen_map: Dictionary = seen if seen is Dictionary else {}
+	seen_map[clean_id] = true
+	save_data["map_reward_seen"] = seen_map
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+	print("[MapCompletion] marcar_recompensa_del_mapa_como_vista map_id=", clean_id)
+
+
+func ya_se_mostro_recompensa_del_mapa(map_id: String) -> bool:
+	## Devuelve true si ya se mostró la recompensa del mapa al jugador en esta sesión o sesiones anteriores.
+	var clean_id: String = map_id.strip_edges()
+	if clean_id.is_empty():
+		return false
+	var seen: Variant = save_data.get("map_reward_seen", {})
+	if not seen is Dictionary:
+		return false
+	return bool((seen as Dictionary).get(clean_id, false))
+
+
 func get_node_best_accuracy(node_id: String) -> float:
 	var clean_id: String = node_id.strip_edges()
 	var stored: Variant = save_data.get("node_progress", {})
@@ -649,6 +675,7 @@ func _reiniciar_datos_guardado_actual(profile: Dictionary) -> void:
 	save_data["node_progress"] = {}
 	save_data["total_exp"] = 0
 	save_data["completed_activity_ids_by_request"] = {}
+	save_data["map_reward_seen"] = {}
 	save_data["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
 	save_data["save_meta"] = _meta_guardado_vacia()
 	_marcar_guardado_sucio()

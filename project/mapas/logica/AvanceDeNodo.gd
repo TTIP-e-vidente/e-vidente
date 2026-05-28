@@ -100,11 +100,24 @@ static func mapa_esta_completado(nodos_mapa: Array, track_key: String) -> bool:
 	if nodos_mapa.is_empty():
 		return false
 
+	var total: int = nodos_mapa.size()
+	var completed_count: int = 0
 	for nodo_mapa in nodos_mapa:
 		var node_key_actual: String = _obtener_node_key(nodo_mapa)
-		if not Global.es_nodo_jugable_completado(track_key, node_key_actual):
+		if Global.es_nodo_jugable_completado(track_key, node_key_actual):
+			completed_count += 1
+		else:
+			print(
+				"[MapCompletion] checking map_id=\"", track_key,
+				"\" completed=", completed_count, "/", total,
+				" missing=\"", node_key_actual, "\""
+			)
 			return false
 
+	print(
+		"[MapCompletion] checking map_id=\"", track_key,
+		"\" completed=", completed_count, "/", total, " -> COMPLETE"
+	)
 	return true
 
 

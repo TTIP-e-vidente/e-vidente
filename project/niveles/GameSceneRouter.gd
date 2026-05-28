@@ -34,6 +34,7 @@ const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
 const COMPLETAR_PALABRA_SCENE_PATH := "res://completar/completar_palabra.tscn"
+const FINALIZACION_PARTIDA_SCENE_PATH := "res://mapas/Finalización-Partida.tscn"
 
 const ROUTES := {
 	ROUTE_SPLASH: SPLASH_SCENE_PATH,

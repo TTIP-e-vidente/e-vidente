@@ -8,7 +8,7 @@ const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
-const DEBUG_FLOW_LOGS := true
+const DEBUG_FLOW_LOGS := false
 const TARGET_TYPE_STREAK := "streak"
 const STEP_STREAK := "streak"
 const STEP_NEXT := "next"
@@ -480,7 +480,7 @@ static func _build_fallback_target_from_completion_context(
 	completion_context: Dictionary
 ) -> Dictionary:
 	if _completion_came_from_map(completion_context):
-		return {"type": "scene_path", "scene_path": "res://mapas/Finalización-Partida.tscn"}
+		return {"type": "scene_path", "scene_path": GameSceneRouter.FINALIZACION_PARTIDA_SCENE_PATH}
 
 	var track_key: String = _read_completion_track_key(completion_context)
 	if track_key.is_empty() or _completion_uses_default_track(completion_context):

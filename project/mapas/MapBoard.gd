@@ -38,6 +38,7 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 	_configured_node_states = node_states.duplicate()
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
+	print_debug("[MapBoard] configurar_nodos count=", visible_count)
 
 	if visual_nodes.size() != map_nodes.size():
 		push_warning(
@@ -57,13 +58,6 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 		if node_data.has_map_position:
 			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
-			var progress: Variant = node_state.get("best_percent", 0.0)
-			print_debug(
-				"[MapBoard] refrescando progreso node_key=",
-				node_data.node_key,
-				" progress=",
-				progress
-			)
 			visual_node.configurar(node_data, node_state)
 		var callback := Callable(self, "_on_visual_node_selected")
 		var already_connected := visual_node.is_connected("selected", callback)
@@ -97,14 +91,6 @@ func refresh_progress_from_save() -> void:
 		var saved_percent: float = float(progress.get("best_percent", 0.0))
 		if completed and saved_percent <= 0.0:
 			saved_percent = 1.0
-		print_debug(
-			"[MapBoard] node_key=",
-			node_key,
-			" saved_percent=",
-			saved_percent,
-			" completed=",
-			completed
-		)
 		if completed and visual_node.has_method("set_star_progress"):
 			visual_node.call("set_star_progress", saved_percent)
 
