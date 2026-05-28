@@ -2,6 +2,7 @@ extends RefCounted
 class_name NodeContentLoader
 
 const ActivityAdapterScript := preload("res://sistemas/contenido/ActivityAdapter.gd")
+const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdValidator.gd")
 const LegacyNodeLoaderScript := preload("res://sistemas/contenido/CargadorDeContenidoDeNodo.gd")
 
 const MODE_QUIZ_CHOICE := LegacyNodeLoaderScript.MODE_QUIZ_CHOICE
@@ -125,7 +126,7 @@ static func load_pack(pack_id: String) -> Dictionary:
 		return _error("El Content Pack debe ser un objeto: %s" % pack_path)
 
 	var pack: Dictionary = parsed as Dictionary
-	var validation_error: String = _validate_pack_minimal(pack)
+	var validation_error: String = _validate_pack_minimal(pack, pack_path)
 	if not validation_error.is_empty():
 		return _error("Content Pack %s invalido: %s" % [clean_pack_id, validation_error])
 	return {"ok": true, "error": "", "data": pack, "path": pack_path}
@@ -315,31 +316,45 @@ static func _activity_matches_requested_options_count(
 	return (options as Array).size() == requested_options_count
 
 
-static func _validate_pack_minimal(pack: Dictionary) -> String:
+static func _validate_pack_minimal(pack: Dictionary, pack_path: String = "") -> String:
+	var errors: Array[String] = []
 	if str(pack.get("id", "")).strip_edges().is_empty():
-		return "falta id."
+		errors.append("falta id.")
 	if int(pack.get("version", 0)) <= 0:
-		return "falta version valida."
+		errors.append("falta version valida.")
 	if not pack.get("activities", []) is Array:
-		return "activities debe ser array."
+		errors.append("activities debe ser array.")
+		return "\n".join(errors)  # No se puede continuar sin un array válido
+
+	# Validar IDs: presencia y unicidad son errores críticos;
+	# los errores de formato se registran como push_error sin bloquear la carga.
+	var activities: Array = pack.get("activities", [])
+	var id_errors: Array[String] = ContentIdValidatorScript.validate_activity_ids(
+		activities, pack_path
+	)
+	for id_error in id_errors:
+		if "Missing required field" in id_error or "Duplicate content id" in id_error:
+			errors.append(id_error)
+		else:
+			# Violación de formato: visible en el log del editor pero no bloquea la carga
+			push_error(id_error)
 
 	var catalog_result: Dictionary = _load_items_catalog()
 	if not bool(catalog_result.get("ok", false)):
-		return str(catalog_result.get("error", "items_celiaquia invalido."))
+		errors.append(str(catalog_result.get("error", "items_celiaquia invalido.")))
+		return "\n".join(errors)
 	var catalog: Dictionary = catalog_result.get("data", {})
 	var items_catalog: Dictionary = catalog.get("items", {})
-	for raw_activity in pack.get("activities", []):
+	for raw_activity in activities:
 		if not raw_activity is Dictionary:
-			return "cada activity debe ser objeto."
+			errors.append("cada activity debe ser objeto.")
+			continue
 		var activity: Dictionary = raw_activity as Dictionary
-		var activity_id: String = str(activity.get("id", "")).strip_edges()
-		if activity_id.is_empty():
-			return "activity sin id."
 		if str(activity.get("mode", "")).strip_edges() == "drag_food":
-			var error: String = _validate_drag_food(activity, items_catalog)
-			if not error.is_empty():
-				return error
-	return ""
+			var drag_error: String = _validate_drag_food(activity, items_catalog)
+			if not drag_error.is_empty():
+				errors.append(drag_error)
+	return "\n".join(errors)
 
 
 static func _validate_drag_food(
@@ -461,7 +476,7 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 			continue
 		activities.append_array(result.get("data", []))
 	var pack: Dictionary = {"id": track_id, "version": 1, "activities": activities}
-	var validation_error: String = _validate_pack_minimal(pack)
+	var validation_error: String = _validate_pack_minimal(pack, mapa_dir)
 	if not validation_error.is_empty():
 		return _error("Mapa %s invalido: %s" % [track_id, validation_error])
 	return {"ok": true, "error": "", "data": pack, "path": mapa_dir}

@@ -40,11 +40,14 @@ const COLOR_LINEA_SOMBRA := Color(0.05, 0.04, 0.03, 0.28)
 const COLOR_GUIA := Color(0.26, 0.47, 0.37, 1.0)
 const TEXTO_GUIA_INICIAL := "Primero elegi un concepto de la izquierda."
 const TEXTO_GUIA_CON_SELECCION := "Ahora elegi su pareja de la derecha."
+const TEXTO_GUIA_CON_SELECCION_DERECHA := "Ahora elegi su pareja de la izquierda."
 const TEXTO_GUIA_GENERAL := "Elegi una tarjeta de la izquierda y despues su pareja de la derecha."
 const TEXTO_GUIA_CORRECTO := "Bien. Esa relacion es correcta."
 const TEXTO_GUIA_ERROR := "Proba otra combinacion."
 const MARGEN_ANCLAJE_LINEA := 12.0
 const DURACION_ANIMACION_LINEA := 0.16
+const MAX_HISTORIAL_PATRONES := 3
+const MAX_INTENTOS_MEZCLA := 8
 
 @onready var label_pregunta: Label = $Control/LabelPregunta
 @onready var titulo_nivel: Label = $TituloNivel/Label
@@ -90,6 +93,8 @@ var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
 var _continuar_juego_es_continuacion_pendiente := false
 var _continuar_juego_es_validacion_pendiente := false
+
+static var _historial_patrones_de_ronda: Array[String] = []
 
 
 func _ready() -> void:
@@ -327,8 +332,10 @@ func _aplicar_contexto_de_sesion(contexto_sesion: Dictionary) -> void:
 	clave_pista = ContextoSesionDeJuegoScript.leer_track_key(contexto_sesion, clave_pista)
 	nivel_id = ContextoSesionDeJuegoScript.leer_nivel_id(contexto_sesion, nivel_id)
 	_nodo_actual = ContextoSesionDeJuegoScript.leer_node_key(contexto_sesion)
-	_pertenece_a_partida_de_nodo = ContextoSesionDeJuegoScript.leer_pertenece_a_nodo(contexto_sesion)
-	_ruta_escena_de_retorno = ContextoSesionDeJuegoScript.leer_return_to(contexto_sesion, ESCENA_RETORNO_PREDETERMINADA)
+	_pertenece_a_partida_de_nodo = (
+		ContextoSesionDeJuegoScript.leer_pertenece_a_nodo(contexto_sesion))
+	_ruta_escena_de_retorno = ContextoSesionDeJuegoScript.leer_return_to(
+		contexto_sesion, ESCENA_RETORNO_PREDETERMINADA)
 	_tiene_sesion_de_mapa = ContextoSesionDeJuegoScript.leer_came_from_map(contexto_sesion)
 
 
@@ -559,19 +566,9 @@ func _aplicar_runtime_en_escena() -> void:
 	_limpiar_click_areas()
 	_limpiar_vinculos_y_errores()
 
-	var conceptos_izquierda_mezclados: Array = _mezclar_columna(conceptos_izquierda)
-	var conceptos_derecha_mezclados: Array = _mezclar_columna(conceptos_derecha)
-	conceptos_derecha_mezclados = _evitar_alineacion_por_fila(
-		conceptos_izquierda_mezclados,
-		conceptos_derecha_mezclados
-	)
-	print(
-		"[MatchShuffle] left_order=%s right_order=%s"
-		% [
-			_unir_ids_para_log(conceptos_izquierda_mezclados),
-			_unir_ids_para_log(conceptos_derecha_mezclados)
-		]
-	)
+	var ronda := _construir_ronda_mezclada(conceptos_izquierda, conceptos_derecha)
+	var conceptos_izquierda_mezclados: Array = ronda.get("izquierda", [])
+	var conceptos_derecha_mezclados: Array = ronda.get("derecha", [])
 	_crear_tarjetas(conceptos_izquierda_mezclados, conceptos_derecha_mezclados)
 	_mostrar_feedback(TEXTO_GUIA_INICIAL)
 	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
@@ -671,6 +668,52 @@ func _evitar_alineacion_por_fila(
 			resultado[fila] = resultado[swap_idx]
 			resultado[swap_idx] = tmp
 	return resultado
+
+
+func _construir_ronda_mezclada(
+	conceptos_iz: Array,
+	conceptos_der: Array
+) -> Dictionary:
+	# Mezcla ambas columnas de forma independiente y evita repetir el mismo
+	# patrón visual que se usó recientemente. Reintenta hasta MAX_INTENTOS_MEZCLA
+	# veces antes de aceptar cualquier resultado.
+	var izq := _mezclar_columna(conceptos_iz)
+	var der := _evitar_alineacion_por_fila(izq, _mezclar_columna(conceptos_der))
+	var intentos := 0
+	while intentos < MAX_INTENTOS_MEZCLA:
+		var firma := construir_firma_patron(izq, der)
+		if not _historial_patrones_de_ronda.has(firma):
+			_registrar_patron(firma)
+			break
+		izq = _mezclar_columna(conceptos_iz)
+		der = _evitar_alineacion_por_fila(izq, _mezclar_columna(conceptos_der))
+		intentos += 1
+	print(
+		"[MatchShuffle] left_order=%s right_order=%s"
+		% [_unir_ids_para_log(izq), _unir_ids_para_log(der)]
+	)
+	return {"izquierda": izq, "derecha": der}
+
+
+## Construye una firma legible del patrón visual actual a partir del orden de
+## id_par en cada columna. Firmas idénticas indican disposiciones idénticas.
+## Función pública y estática para facilitar tests sin escena.
+static func construir_firma_patron(izquierda: Array, derecha: Array) -> String:
+	var ids_izq: Array[String] = []
+	var ids_der: Array[String] = []
+	for item in izquierda:
+		var d: Dictionary = item as Dictionary
+		ids_izq.append(str(d.get("id_par", d.get("id", ""))))
+	for item in derecha:
+		var d: Dictionary = item as Dictionary
+		ids_der.append(str(d.get("id_par", d.get("id", ""))))
+	return "|L:%s|R:%s" % [",".join(ids_izq), ",".join(ids_der)]
+
+
+func _registrar_patron(firma: String) -> void:
+	_historial_patrones_de_ronda.push_back(firma)
+	while _historial_patrones_de_ronda.size() > MAX_HISTORIAL_PATRONES:
+		_historial_patrones_de_ronda.pop_front()
 
 
 func _unir_ids_para_log(conceptos: Array) -> String:
@@ -801,10 +844,25 @@ func seleccionar_izquierda(item: ConceptoItem) -> void:
 	_seleccionar_tarjeta_izquierda(item)
 
 
+func seleccionar_derecha(item: ConceptoItem) -> void:
+	_seleccionar_tarjeta_derecha(item)
+
+
 func _seleccionar_tarjeta_izquierda(item: ConceptoItem) -> void:
+	print(LOG_PREFIX_MATCH, " selected_left=", item.concept_id)
+	# Si ya había una tarjeta de la derecha pendiente (selección inversa), confirmar el par.
+	if seleccion_derecha_pendiente != null:
+		seleccion_actual = item
+		confirmar()
+		return
+	# WRONG → SELECTED: no limpiar el par completo al reseleccionar.
+	# Solo marcar la tarjeta clickeada como seleccion_actual y limpiar su
+	# feedback local; la otra tarjeta del par debe conservar su estado WRONG.
+	if item.tiene_error:
+		# Limpiar el feedback visual/metadata de error SOLO de esta tarjeta.
+		item.marcar_error(false)
 	seleccion_actual = item
 	seleccion_derecha_pendiente = null
-	print(LOG_PREFIX_MATCH, " selected_left=", item.concept_id)
 	_actualizar_texto_guia(TEXTO_GUIA_CON_SELECCION)
 	_mostrar_feedback("Elegí una tarjeta de la derecha.")
 	_actualizar_visual()
@@ -830,9 +888,17 @@ func vincular_con_derecha(derecha: ConceptoItem) -> void:
 
 func _seleccionar_tarjeta_derecha(derecha: ConceptoItem) -> void:
 	if seleccion_actual == null:
-		_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
-		print(LOG_PREFIX_MATCH, " selected_right_without_left=", derecha.concept_id)
-		_mostrar_feedback("Primero elegí una tarjeta de la izquierda.")
+		# Permitir selección derecha-primero: almacenar y esperar la izquierda.
+		# Si la tarjeta derecha estaba en WRONG, limpiar solo su feedback local
+		# para que el jugador pueda reintentar desde ese extremo sin resetear
+		# todo el par.
+		if derecha.tiene_error:
+			derecha.marcar_error(false)
+		seleccion_derecha_pendiente = derecha
+		print(LOG_PREFIX_MATCH, " selected_right_first=", derecha.concept_id)
+		_actualizar_texto_guia(TEXTO_GUIA_CON_SELECCION_DERECHA)
+		_mostrar_feedback("Ahora elegí su pareja de la izquierda.")
+		_actualizar_visual()
 		return
 	print(LOG_PREFIX_MATCH, " selected_right=", derecha.concept_id)
 	seleccion_derecha_pendiente = derecha
@@ -863,7 +929,7 @@ func _validar_par_actual(izquierda: ConceptoItem, derecha: ConceptoItem) -> void
 	if correcto:
 		_mostrar_feedback_correcto(izquierda)
 		return
-	_mostrar_feedback_error(izquierda)
+	_mostrar_feedback_error(izquierda, derecha)
 
 
 func _tarjetas_forman_par(izquierda: ConceptoItem, derecha: ConceptoItem) -> bool:
@@ -875,14 +941,22 @@ func _tarjetas_forman_par(izquierda: ConceptoItem, derecha: ConceptoItem) -> boo
 
 
 func _mostrar_feedback_correcto(izquierda: ConceptoItem) -> void:
+	# Limpiar estado de error en ambos extremos del par correcto.
 	izquierda.marcar_error(false)
+	if is_instance_valid(izquierda.vinculada_con):
+		izquierda.vinculada_con.marcar_error(false)
 	_mostrar_feedback(TEXTO_GUIA_CORRECTO, MiPaleta.FEEDBACK_OK)
 	_actualizar_texto_guia(TEXTO_GUIA_INICIAL)
 	print(LOG_PREFIX_MATCH, " correct pair=", izquierda.par_key)
 
 
-func _mostrar_feedback_error(izquierda: ConceptoItem) -> void:
+func _mostrar_feedback_error(izquierda: ConceptoItem, derecha: ConceptoItem = null) -> void:
+	# Marcar error en ambos extremos del par para que cada tarjeta tenga
+	# su propio estado interno de WRONG. Esto permite que al reintentar
+	# tocando solo una tarjeta, la otra permanezca marcada en error.
 	izquierda.marcar_error(true)
+	if derecha != null and is_instance_valid(derecha):
+		derecha.marcar_error(true)
 	_mostrar_feedback(TEXTO_GUIA_ERROR, MiPaleta.FEEDBACK_ERROR)
 	_actualizar_texto_guia(TEXTO_GUIA_ERROR, MiPaleta.FEEDBACK_ERROR)
 
@@ -905,14 +979,19 @@ func _actualizar_visual() -> void:
 
 
 func _actualizar_tarjetas() -> void:
+	# Primero, aplicar estado base a las tarjetas derechas según su propio estado.
 	for derecha in items_derecha:
 		if not derecha.visible:
 			continue
 		if derecha == seleccion_derecha_pendiente:
 			_aplicar_estado_tarjeta(derecha, "seleccionada")
+		elif derecha.tiene_error:
+			_aplicar_estado_tarjeta(derecha, "error")
 		else:
 			_aplicar_estado_tarjeta(derecha, "normal")
 
+	# Luego, aplicar estado a las tarjetas izquierdas y ajustar la derecha
+	# vinculada sólo si no está en un estado de mayor prioridad.
 	for izquierda in items_izquierda:
 		if not izquierda.visible:
 			continue
@@ -926,8 +1005,14 @@ func _actualizar_tarjetas() -> void:
 			_aplicar_estado_tarjeta(izquierda, "normal")
 
 		if is_instance_valid(izquierda.vinculada_con) and izquierda.vinculada_con.visible:
-			var estado_derecha := "error" if izquierda.tiene_error else "vinculada"
-			_aplicar_estado_tarjeta(izquierda.vinculada_con, estado_derecha)
+			var d := izquierda.vinculada_con
+			# Prioridad: seleccionada > error > vinculada > normal.
+			if d == seleccion_derecha_pendiente:
+				_aplicar_estado_tarjeta(d, "seleccionada")
+			elif d.tiene_error:
+				_aplicar_estado_tarjeta(d, "error")
+			elif not d.tiene_error:
+				_aplicar_estado_tarjeta(d, "vinculada")
 
 
 func _aplicar_estado_tarjeta(item: Control, tipo: String) -> void:
@@ -1006,7 +1091,12 @@ func _dibujar_linea_de_vinculo(item_izquierda: ConceptoItem) -> void:
 	if not is_instance_valid(item_izquierda) or not is_instance_valid(item_derecha):
 		return
 
-	var color := COLOR_LINEA_ERROR if item_izquierda.tiene_error else COLOR_LINEA_OK
+	# La linea se marca como error si cualquiera de los extremos está marcado como
+	# error, de modo que si el jugador resetea sólo una tarjeta la otra siga
+	# mostrando el estado WRONG y la linea permanezca roja.
+	var color := COLOR_LINEA_ERROR if (
+		item_izquierda.tiene_error or (is_instance_valid(item_derecha) and item_derecha.tiene_error)
+	) else COLOR_LINEA_OK
 	var origen: Vector2 = _get_right_anchor(item_izquierda)
 	var destino: Vector2 = _get_left_anchor(item_derecha)
 	var debe_animar := item_izquierda.animar_vinculo

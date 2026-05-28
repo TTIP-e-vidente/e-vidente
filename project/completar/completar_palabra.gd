@@ -91,7 +91,9 @@ func _ready() -> void:
 
 		configurar(challenge_data)
 	else:
-		push_warning("CompletarPalabra: Abierto en modo standalone (F6). Usando desafío de fallback.")
+		push_warning(
+			"CompletarPalabra: Abierto en modo standalone (F6). Usando desafío de fallback."
+		)
 		_ruta_escena_de_retorno = GameSceneRouter.MAP_SCENE_PATH
 		configurar(CargadorCompletar.elegir(1))
 
@@ -251,7 +253,8 @@ func _revelar_textos_opciones(active_buttons: Array[Button]) -> void:
 		else:
 			btn.text = str(btn.get_meta("pending_text", ""))
 			btn.modulate.a = 0.0
-			reveal_tween.tween_property(btn, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
+			reveal_tween.tween_property(
+					btn, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
 
 	await reveal_tween.finished
 
@@ -281,7 +284,8 @@ func _revelar_opciones_escalonadas(all_buttons: Array[Button], active_count: int
 			continue
 		var delay: float = i * option_stagger_delay
 		reveal_tween.tween_property(btn, "modulate:a", 1.0, option_fade_duration).set_delay(delay)
-		reveal_tween.tween_property(btn, "scale", Vector2.ONE, option_fade_duration).set_delay(delay)
+		reveal_tween.tween_property(
+			btn, "scale", Vector2.ONE, option_fade_duration).set_delay(delay)
 		var position_tween := reveal_tween.tween_property(
 			btn,
 			"position:y",
@@ -432,7 +436,8 @@ func _renderizar_frase_con_typewriter() -> void:
 		_asignar_texto_frase(rendered)
 		return
 
-	await _typewriter.iniciar(self, func(t: String): _asignar_texto_frase(t), _limpiar_bbcode(rendered))
+	await _typewriter.iniciar(
+		self, func(t: String): _asignar_texto_frase(t), _limpiar_bbcode(rendered))
 
 func _configurar_typewriter() -> void:
 	_typewriter.character_delay = character_delay

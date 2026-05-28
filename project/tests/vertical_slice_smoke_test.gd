@@ -4,6 +4,8 @@ const GameChapterAssetCatalog := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
 const SaveManagerScript := preload("res://interface/SaveManager.gd")
+const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdValidator.gd")
+const VincularConceptosScript := preload("res://vincular/vincular_conceptos.gd")
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
@@ -183,6 +185,14 @@ func ejecutar_prueba() -> void:
 	# --- Tests unitarios de completar_palabra (no necesitan escena cargada) ---
 	if not failed:
 		ejecutar_tests_completar_palabra()
+
+	# --- Tests unitarios de validación de IDs de contenido ---
+	if not failed:
+		ejecutar_tests_ids_de_contenido()
+
+	# --- Tests unitarios de variación de patrones visuales de vinculación ---
+	if not failed:
+		ejecutar_tests_vincular_variacion()
 
 	if failed:
 		finalizar_con_error()
@@ -431,6 +441,7 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 	)
 	if failed:
 		return
+	_verificar_reselect_tras_error(match_scene)
 	_resolver_vinculacion_correcta(match_scene)
 	match_scene.call("confirmar")
 	for unused_frame in range(3):
@@ -471,6 +482,8 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 func _resolver_vinculacion_correcta(match_scene: Node) -> void:
 	var items_izquierda: Array = match_scene.get("items_izquierda") as Array
 	var items_derecha: Array = match_scene.get("items_derecha") as Array
+	# El primer par se resuelve derecha→izquierda para cubrir la validación bidireccional.
+	var primer_par_resuelto := false
 	for izquierda in items_izquierda:
 		var item_izquierda := izquierda as ConceptoItem
 		if item_izquierda == null or not is_instance_valid(item_izquierda):
@@ -485,8 +498,14 @@ func _resolver_vinculacion_correcta(match_scene: Node) -> void:
 				continue
 			if item_izquierda.par_key != item_derecha.par_key:
 				continue
-			match_scene.call("seleccionar_izquierda", item_izquierda)
-			match_scene.call("vincular_con_derecha", item_derecha)
+			if not primer_par_resuelto:
+				# Cubrir validación bidireccional: seleccionar derecha primero, luego izquierda.
+				match_scene.call("seleccionar_derecha", item_derecha)
+				match_scene.call("seleccionar_izquierda", item_izquierda)
+				primer_par_resuelto = true
+			else:
+				match_scene.call("seleccionar_izquierda", item_izquierda)
+				match_scene.call("vincular_con_derecha", item_derecha)
 			break
 
 
@@ -496,6 +515,62 @@ func _match_slots_cubren_total(match_scene: Node, total_pares: int) -> bool:
 	if total_pares <= 0:
 		return false
 	return items_izquierda.size() >= total_pares and items_derecha.size() >= total_pares
+
+
+func _verificar_reselect_tras_error(match_scene: Node) -> void:
+	# Verifica la regla WRONG + click = SELECTED: un item en error debe limpiar su estado
+	# y quedar como seleccion_actual cuando el jugador hace click sobre él nuevamente.
+	var items_izquierda: Array = match_scene.get("items_izquierda") as Array
+	var items_derecha: Array = match_scene.get("items_derecha") as Array
+
+	var iz: ConceptoItem = null
+	var der_wrong: ConceptoItem = null
+
+	for raw in items_izquierda:
+		var item := raw as ConceptoItem
+		if item != null and is_instance_valid(item) and item.visible:
+			iz = item
+			break
+	for raw in items_derecha:
+		var item := raw as ConceptoItem
+		if item != null and is_instance_valid(item) and item.visible:
+			if iz != null and item.par_key != iz.par_key:
+				der_wrong = item
+				break
+
+	if iz == null or der_wrong == null:
+		# Todos los pares comparten clave o no hay items: no se puede probar el caso incorrecto.
+		return
+
+	# 1. Crear una vinculación incorrecta.
+	match_scene.call("seleccionar_izquierda", iz)
+	match_scene.call("vincular_con_derecha", der_wrong)
+	_check(iz.tiene_error, "[MatchReselect] item debe tener error tras vincular incorrecto")
+
+	# 2. Re-seleccionar el item en error; la fix debe limpiar el estado.
+	match_scene.call("seleccionar_izquierda", iz)
+	_check(
+		not iz.tiene_error,
+		"[MatchReselect] re-click en item con error debe limpiar tiene_error"
+	)
+	# La vinculacion previa no debe borrarse: el otro extremo se mantiene en WRONG.
+	_check(
+		iz.vinculada_con != null,
+		"[MatchReselect] re-click NO debe limpiar la vinculacion anterior"
+	)
+	_check(
+		der_wrong.tiene_error,
+		"[MatchReselect] la otra opción debe permanecer en error"
+	)
+	_check(
+		match_scene.get("seleccion_actual") == iz,
+		"[MatchReselect] item reseleccionado debe quedar como seleccion_actual"
+	)
+
+	# Restablecer el estado para que _resolver_vinculacion_correcta pueda continuar limpio.
+	iz.limpiar_vinculo()
+	match_scene.set("seleccion_actual", null)
+	match_scene.set("seleccion_derecha_pendiente", null)
 
 func _completar_escena_completar_palabra(label: String) -> void:
 	var wo_scene := current_scene
@@ -508,7 +583,8 @@ func _completar_escena_completar_palabra(label: String) -> void:
 	# La escena se autoconfigura en _ready() via NodoRuntime.obtener_actividad_actual().
 	# Para el smoke test, presionamos todos los botones disponibles (uno por blank)
 	# y luego el ConfirmButton si existe y está habilitado.
-	var options_container := wo_scene.get_node_or_null("Control/Container/HBoxContainer") as Container
+	var options_container := (
+		wo_scene.get_node_or_null("Control/Container/HBoxContainer") as Container)
 	_check(
 		options_container != null,
 		"%s: completar_palabra deberia tener Control/Container/HBoxContainer." % label
@@ -521,7 +597,10 @@ func _completar_escena_completar_palabra(label: String) -> void:
 	for child in options_container.get_children():
 		if child is Button and not (child as Button).disabled:
 			buttons.append(child as Button)
-	_check(not buttons.is_empty(), "%s: completar_palabra deberia tener botones de opciones." % label)
+	_check(
+		not buttons.is_empty(),
+		"%s: completar_palabra deberia tener botones de opciones." % label
+	)
 	if failed:
 		return
 
@@ -712,9 +791,9 @@ func _check(condition: bool, message: String) -> void:
 # ===========================================================================
 
 func _test_completar_palabra_loader_carga_json_valido() -> void:
-	var Loader := CARGADOR_COMPLETAR_SCRIPT
-	Loader.limpiar_cache()
-	var result: Dictionary = Loader.pick(1)
+	var loader := CARGADOR_COMPLETAR_SCRIPT
+	loader.limpiar_cache()
+	var result: Dictionary = loader.pick(1)
 	_check(not result.is_empty(), "[WO] pick(1) debe devolver un desafío no vacío")
 	_check(result.has("sentence"), "[WO] pick(1) debe tener campo sentence")
 	_check(result.has("screen_title"), "[WO] pick(1) debe tener campo screen_title")
@@ -724,17 +803,17 @@ func _test_completar_palabra_loader_carga_json_valido() -> void:
 
 
 func _test_completar_palabra_loader_filtra_dificultad_invalida() -> void:
-	var Loader := CARGADOR_COMPLETAR_SCRIPT
-	Loader.limpiar_cache()
-	var result: Dictionary = Loader.pick(99)
+	var loader := CARGADOR_COMPLETAR_SCRIPT
+	loader.limpiar_cache()
+	var result: Dictionary = loader.pick(99)
 	_check(result.is_empty(), "[WO] pick(99) debe devolver {} (sin desafíos para esa dificultad)")
 
 
 func _test_completar_palabra_contrato_json() -> void:
 	# Verificar que TODOS los desafíos del JSON cumplen el contrato
-	var Loader := CARGADOR_COMPLETAR_SCRIPT
-	Loader.limpiar_cache()
-	var all_challenges: Dictionary = Loader.load_all()
+	var loader := CARGADOR_COMPLETAR_SCRIPT
+	loader.limpiar_cache()
+	var all_challenges: Dictionary = loader.load_all()
 	_check(not all_challenges.is_empty(), "[WO] el JSON debe tener al menos un desafío válido")
 	for key in all_challenges.keys():
 		var entry: Dictionary = all_challenges[key]
@@ -753,11 +832,11 @@ func _test_completar_palabra_contrato_json() -> void:
 
 
 func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
-	var Loader := CARGADOR_COMPLETAR_SCRIPT
-	Loader.limpiar_cache()
-	_check(not Loader.pick(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
-	_check(not Loader.pick(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
-	_check(not Loader.pick(3).is_empty(), "[WO] debe haber desafíos de dificultad 3")
+	var loader := CARGADOR_COMPLETAR_SCRIPT
+	loader.limpiar_cache()
+	_check(not loader.pick(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
+	_check(not loader.pick(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
+	_check(not loader.pick(3).is_empty(), "[WO] debe haber desafíos de dificultad 3")
 
 
 # ===========================================================================
@@ -765,7 +844,7 @@ func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
 # ===========================================================================
 
 func _test_completar_palabra_acepta_formato_trainee() -> void:
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var raw: Dictionary = {
 		"id": "word_test",
 		"mode": "completar_palabra",
@@ -775,7 +854,7 @@ func _test_completar_palabra_acepta_formato_trainee() -> void:
 		"correct_answers": ["gluten"],
 		"choices": ["gluten", "sal"],
 	}
-	var normalized: Dictionary = Normalizer.normalize_word_game("word_test", raw)
+	var normalized: Dictionary = normalizer.normalize_word_game("word_test", raw)
 	_check(
 		normalized.get("screen_title", "") == raw.get("screen_title", ""),
 		"[WO] screen_title trainee debe conservarse"
@@ -803,7 +882,7 @@ func _test_completar_palabra_acepta_formato_trainee() -> void:
 		"answers": ["gluten"],
 		"options": ["gluten", "sal"],
 	}
-	var old_normalized: Dictionary = Normalizer.normalize_word_game("word_old", old_raw)
+	var old_normalized: Dictionary = normalizer.normalize_word_game("word_old", old_raw)
 	_check(
 		old_normalized.get("screen_title", "") == "Escogé la palabra que falta",
 		"[WO] sin screen_title debe usar fallback"
@@ -823,7 +902,7 @@ func _test_completar_palabra_acepta_formato_trainee() -> void:
 
 
 func _test_drag_objective_anidado_y_fallback() -> void:
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var explicit_game: Dictionary = {
 		"type": "drag",
 		"objective": {
@@ -833,7 +912,7 @@ func _test_drag_objective_anidado_y_fallback() -> void:
 			"restriction": "celiaquía",
 		},
 	}
-	var explicit_objective: Dictionary = Normalizer.normalize_drag_objective(
+	var explicit_objective: Dictionary = normalizer.normalize_drag_objective(
 		explicit_game,
 		"celiaquia",
 		"celiaquia_14_comer_fuera"
@@ -842,12 +921,15 @@ func _test_drag_objective_anidado_y_fallback() -> void:
 		explicit_objective.get("meal", "") == "una cena sin TACC",
 		"[DragObjective] debe respetar objective.meal"
 	)
-	var fallback_objective: Dictionary = Normalizer.normalize_drag_objective(
+	var fallback_objective: Dictionary = normalizer.normalize_drag_objective(
 		{"type": "drag"},
 		"celiaquia",
 		"celiaquia_02_colacion_basica"
 	)
-	_check(fallback_objective.get("meal", "") != "", "[DragObjective] debe inferir meal por node_key")
+	_check(
+		fallback_objective.get("meal", "") != "",
+		"[DragObjective] debe inferir meal por node_key"
+	)
 	_check(fallback_objective.get("action", "") != "", "[DragObjective] fallback debe tener action")
 	_check(
 		fallback_objective.get("connector", "") != "",
@@ -856,8 +938,8 @@ func _test_drag_objective_anidado_y_fallback() -> void:
 
 
 func _test_celiaquia_mapa_drag_objectives_completos() -> void:
-	var MapLoader := CARGADOR_DE_MAPA_SCRIPT
-	var result: Dictionary = MapLoader.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	var map_loader := CARGADOR_DE_MAPA_SCRIPT
+	var result: Dictionary = map_loader.load_map("res://contenido/mapa/celiaquia_mapa.json")
 	_check(bool(result.get("ok", false)), "[DragObjective] celiaquia_mapa debe cargar")
 	if not bool(result.get("ok", false)):
 		return
@@ -870,7 +952,10 @@ func _test_celiaquia_mapa_drag_objectives_completos() -> void:
 			if str(game.get("type", "")) != "drag":
 				continue
 			var objective_raw: Variant = game.get("objective", {})
-			_check(objective_raw is Dictionary, "[DragObjective] drag debe tener objective Dictionary")
+			_check(
+				objective_raw is Dictionary,
+				"[DragObjective] drag debe tener objective Dictionary"
+			)
 			if objective_raw is Dictionary:
 				var objective: Dictionary = objective_raw as Dictionary
 				_check(
@@ -889,7 +974,7 @@ func _test_celiaquia_mapa_drag_objectives_completos() -> void:
 
 func _test_drag_objective_formato_plano() -> void:
 	# Acepta {objective_action, objective_meal, objective_connector, objective_restriction}.
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var game: Dictionary = {
 		"type": "drag",
 		"objective_action": "Armá",
@@ -897,7 +982,7 @@ func _test_drag_objective_formato_plano() -> void:
 		"objective_connector": "para tu compañere",
 		"objective_restriction": "celiaquía",
 	}
-	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
+	var result: Dictionary = normalizer.normalize_drag_objective(game, "celiaquia", "")
 	_check(result.get("action", "") == "Armá", "[DragObjective] formato plano: action")
 	_check(
 		result.get("meal", "") == "una merienda sin TACC",
@@ -907,18 +992,21 @@ func _test_drag_objective_formato_plano() -> void:
 		result.get("connector", "") == "para tu compañere",
 		"[DragObjective] formato plano: connector"
 	)
-	_check(result.get("restriction", "") == "celiaquía", "[DragObjective] formato plano: restriction")
+	_check(
+		result.get("restriction", "") == "celiaquía",
+		"[DragObjective] formato plano: restriction"
+	)
 
 
 func _test_drag_objective_mensaje_viejo() -> void:
 	# Acepta objective_message con formato "linea1\nlinea2".
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var game: Dictionary = {
 		"type": "drag",
 		"objective_label": "Prepará",
 		"objective_message": "un almuerzo sin TACC\npara tu amigue con celiaquía",
 	}
-	var result: Dictionary = Normalizer.normalize_drag_objective(game, "celiaquia", "")
+	var result: Dictionary = normalizer.normalize_drag_objective(game, "celiaquia", "")
 	_check(
 		result.get("meal", "") == "un almuerzo sin TACC",
 		"[DragObjective] objective_message: meal desde primera línea"
@@ -931,8 +1019,8 @@ func _test_drag_objective_mensaje_viejo() -> void:
 
 func _test_drag_objective_sin_objetivo_usa_fallback() -> void:
 	# Sin objective ni campos planos, debe inferir meal por node_key y restriction por track_key.
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
-	var result: Dictionary = Normalizer.normalize_drag_objective(
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var result: Dictionary = normalizer.normalize_drag_objective(
 		{"type": "drag", "difficulty": 1},
 		"celiaquia",
 		"celiaquia_01_desayuno_basico"
@@ -953,29 +1041,32 @@ func _test_drag_objective_sin_objetivo_usa_fallback() -> void:
 
 func _test_drag_restriction_celiaquia_es_celiaquia() -> void:
 	# Con track_key="celiaquia" y sin restriction explícita, debe aparecer "celiaquía".
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
-	var result: Dictionary = Normalizer.normalize_drag_objective(
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var result: Dictionary = normalizer.normalize_drag_objective(
 		{"type": "drag"},
 		"celiaquia",
 		"celiaquia_03_quiz_gluten"
 	)
 	_check(
 		result.get("restriction", "") == "celiaquía",
-		"[DragObjective] celiaquía debe tener restriction=celiaquía, got: %s" % result.get("restriction", "")
+		(
+			"[DragObjective] celiaquía debe tener restriction=celiaquía, got: %s"
+			% result.get("restriction", "")
+		)
 	)
 
 
 func _test_drag_objective_renormalizacion_segura() -> void:
 	# Un dict ya normalizado {action, meal, connector, restriction} debe sobrevivir
 	# una segunda normalización en DragObjectiveText sin perder valores.
-	var Normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
+	var normalizer := CONTENT_SCHEMA_NORMALIZER_SCRIPT
 	var normalized_first: Dictionary = {
 		"action": "Cociná",
 		"meal": "un desayuno sin TACC",
 		"connector": "para tu hermane",
 		"restriction": "celiaquía",
 	}
-	var normalized_second: Dictionary = Normalizer.normalize_drag_objective(normalized_first)
+	var normalized_second: Dictionary = normalizer.normalize_drag_objective(normalized_first)
 	_check(
 		normalized_second.get("action", "") == "Cociná",
 		"[DragObjective] renormalización: action debe conservarse"
@@ -1035,8 +1126,8 @@ func _test_objective_banner_no_activo() -> void:
 
 
 func _test_completar_palabra_router_conoce_modo() -> void:
-	var RouterScript := MODALIDAD_ROUTER_SCRIPT
-	var path: String = RouterScript.resolver_scene_path({"mode": "completar_palabra"})
+	var router_script := MODALIDAD_ROUTER_SCRIPT
+	var path: String = router_script.resolver_scene_path({"mode": "completar_palabra"})
 	_check(not path.is_empty(), "[WO] ModalidadRouter debe resolver escena para completar_palabra")
 	_check(path.ends_with(".tscn"), "[WO] La ruta resuelta debe ser una escena .tscn")
 
@@ -1069,3 +1160,228 @@ func ejecutar_tests_completar_palabra() -> void:
 		print("[WordOptions] ✓ Todos los tests pasaron.")
 	else:
 		printerr("[WordOptions] ✗ Al menos un test falló. Revisá los errores arriba.")
+
+
+# ===========================================================================
+# Tests unitarios: validación de IDs de contenido
+# ===========================================================================
+
+func _test_content_id_formato_valido() -> void:
+	var validator := ContentIdValidatorScript
+	_check(validator.is_valid_format("node_bosque_01"),
+		"[ContentId] snake_case válido debe pasar")
+	_check(validator.is_valid_format("quiz_001"),
+		"[ContentId] prefijo con dígitos debe pasar")
+	_check(
+		validator.is_valid_format("match_categorias_alimentos"),
+		"[ContentId] múltiples palabras debe pasar"
+	)
+	_check(validator.is_valid_format("drag_food_01"),
+		"[ContentId] drag_food prefijo debe pasar")
+	_check(validator.is_valid_format("a"),
+		"[ContentId] id de un carácter válido debe pasar")
+
+
+func _test_content_id_formato_invalido() -> void:
+	var validator := ContentIdValidatorScript
+	_check(not validator.is_valid_format(""), "[ContentId] id vacío debe fallar")
+	_check(
+		not validator.is_valid_format("Juego 1"),
+		"[ContentId] id con espacios y mayúscula debe fallar"
+	)
+	_check(not validator.is_valid_format("juego 1"),
+		"[ContentId] id con espacio debe fallar")
+	_check(
+		not validator.is_valid_format("1_quiz"),
+		"[ContentId] id que empieza con dígito debe fallar"
+	)
+	_check(not validator.is_valid_format("Node_01"),
+		"[ContentId] id con mayúscula debe fallar")
+	_check(not validator.is_valid_format("quiz-001"),
+		"[ContentId] id con guión debe fallar")
+
+
+func _test_content_id_no_usa_texto_visible_como_clave() -> void:
+	var validator := ContentIdValidatorScript
+	_check(
+		not validator.is_valid_format("Pregunta difícil"),
+		"[ContentId] texto visible como id debe fallar"
+	)
+	_check(
+		validator.is_valid_format("celiaquia_desayuno_basico"),
+		"[ContentId] versión snake_case del mismo texto debe pasar"
+	)
+
+
+func _test_validate_activity_ids_detecta_id_faltante() -> void:
+	var activities: Array = [
+		{"id": "quiz_001", "mode": "quiz"},
+		{"mode": "drag"},  # Sin id
+	]
+	var errors: Array[String] = ContentIdValidatorScript.validate_activity_ids(
+		activities, "test.json"
+	)
+	_check(not errors.is_empty(), "[ContentId] id faltante debe generar error")
+	var tiene_missing := false
+	for e in errors:
+		if "Missing" in e:
+			tiene_missing = true
+	_check(tiene_missing, "[ContentId] error debe indicar falta de id")
+
+
+func _test_validate_activity_ids_detecta_id_duplicado() -> void:
+	var activities: Array = [
+		{"id": "quiz_001", "mode": "quiz"},
+		{"id": "quiz_001", "mode": "quiz"},  # Duplicado
+	]
+	var errors: Array[String] = ContentIdValidatorScript.validate_activity_ids(
+		activities, "test.json"
+	)
+	_check(not errors.is_empty(), "[ContentId] id duplicado debe generar error")
+	var tiene_duplicate := false
+	for e in errors:
+		if "Duplicate" in e:
+			tiene_duplicate = true
+	_check(tiene_duplicate, "[ContentId] error debe indicar duplicado")
+
+
+func _test_validate_activity_ids_acepta_ids_unicos() -> void:
+	var activities: Array = [
+		{"id": "quiz_001", "mode": "quiz"},
+		{"id": "drag_001", "mode": "drag"},
+		{"id": "match_001", "mode": "match"},
+	]
+	var errors: Array[String] = ContentIdValidatorScript.validate_activity_ids(
+		activities, "test.json"
+	)
+	var tiene_critico := false
+	for e in errors:
+		if "Missing" in e or "Duplicate" in e:
+			tiene_critico = true
+	_check(not tiene_critico, "[ContentId] ids únicos y válidos no deben generar errores críticos")
+
+
+func _test_filter_uncompleted_filtra_completados() -> void:
+	var all_content: Array = [
+		{"id": "quiz_001", "mode": "quiz"},
+		{"id": "drag_001", "mode": "drag"},
+		{"id": "match_001", "mode": "match"},
+	]
+	var completed_ids: Array[String] = ["quiz_001", "match_001"]
+	var available: Array = ContentIdValidatorScript.filter_uncompleted(
+		all_content, completed_ids
+	)
+	_check(available.size() == 1, "[ContentId] filter debe dejar solo los no completados")
+	var id_restante: String = str((available[0] as Dictionary).get("id", ""))
+	_check(id_restante == "drag_001", "[ContentId] filter debe conservar el id no completado")
+
+
+func _test_filter_uncompleted_mantiene_todo_sin_historial() -> void:
+	var all_content: Array = [
+		{"id": "quiz_001"},
+		{"id": "drag_001"},
+	]
+	var available: Array = ContentIdValidatorScript.filter_uncompleted(all_content, [])
+	_check(available.size() == 2, "[ContentId] sin historial, filter no debe quitar nada")
+
+
+func _test_filter_uncompleted_pool_agotado_devuelve_vacio() -> void:
+	var all_content: Array = [
+		{"id": "quiz_001"},
+		{"id": "quiz_002"},
+	]
+	var completed_ids: Array[String] = ["quiz_001", "quiz_002"]
+	var available: Array = ContentIdValidatorScript.filter_uncompleted(
+		all_content, completed_ids
+	)
+	_check(available.is_empty(), "[ContentId] pool agotado debe devolver lista vacía")
+
+
+# ===========================================================================
+# Ejecutor de todos los tests de validación de IDs de contenido
+# ===========================================================================
+
+func ejecutar_tests_ids_de_contenido() -> void:
+	print("[ContentId] ── Iniciando tests de validación de IDs ──")
+	_test_content_id_formato_valido()
+	_test_content_id_formato_invalido()
+	_test_content_id_no_usa_texto_visible_como_clave()
+	_test_validate_activity_ids_detecta_id_faltante()
+	_test_validate_activity_ids_detecta_id_duplicado()
+	_test_validate_activity_ids_acepta_ids_unicos()
+	_test_filter_uncompleted_filtra_completados()
+	_test_filter_uncompleted_mantiene_todo_sin_historial()
+	_test_filter_uncompleted_pool_agotado_devuelve_vacio()
+	if not failed:
+		print("[ContentId] ✓ Todos los tests pasaron.")
+	else:
+		printerr("[ContentId] ✗ Al menos un test falló. Revisá los errores arriba.")
+
+
+# ===========================================================================
+# Tests unitarios: variación del patrón visual de vinculación
+# ===========================================================================
+
+func _test_match_firma_patron_es_determinista() -> void:
+	var pares: Array = [
+		{"id": "a_iz", "id_par": "grupo_1"},
+		{"id": "b_iz", "id_par": "grupo_2"},
+		{"id": "c_iz", "id_par": "grupo_3"},
+	]
+	var firma1 := VincularConceptosScript.construir_firma_patron(pares, pares)
+	var firma2 := VincularConceptosScript.construir_firma_patron(pares, pares)
+	_check(firma1 == firma2, "[MatchShuffle] misma entrada => misma firma")
+	_check(not firma1.is_empty(), "[MatchShuffle] firma no debe estar vacía")
+
+
+func _test_match_firma_patron_cambia_con_orden() -> void:
+	var orden_a: Array = [
+		{"id": "a_iz", "id_par": "grupo_1"},
+		{"id": "b_iz", "id_par": "grupo_2"},
+	]
+	var orden_b: Array = [
+		{"id": "b_iz", "id_par": "grupo_2"},
+		{"id": "a_iz", "id_par": "grupo_1"},
+	]
+	var firma_az := VincularConceptosScript.construir_firma_patron(orden_a, orden_b)
+	var firma_za := VincularConceptosScript.construir_firma_patron(orden_b, orden_a)
+	_check(firma_az != firma_za, "[MatchShuffle] distinto orden => distinta firma")
+
+
+func _test_match_firma_patron_contiene_ids() -> void:
+	var izq: Array = [{"id": "x", "id_par": "par_x"}]
+	var der: Array = [{"id": "y", "id_par": "par_x"}]
+	var firma := VincularConceptosScript.construir_firma_patron(izq, der)
+	_check("par_x" in firma, "[MatchShuffle] firma debe contener el id_par")
+
+
+func _test_match_firma_patron_dos_pares() -> void:
+	# El mínimo viable de pares es 2; la firma debe ser válida y distinguible.
+	var pares_a: Array = [
+		{"id": "a_iz", "id_par": "grupo_1"},
+		{"id": "b_iz", "id_par": "grupo_2"},
+	]
+	var pares_b: Array = [
+		{"id": "b_iz", "id_par": "grupo_2"},
+		{"id": "a_iz", "id_par": "grupo_1"},
+	]
+	var firma_a := VincularConceptosScript.construir_firma_patron(pares_a, pares_b)
+	var firma_b := VincularConceptosScript.construir_firma_patron(pares_b, pares_a)
+	_check(not firma_a.is_empty(), "[MatchShuffle] 2 pares produce firma válida")
+	_check(firma_a != firma_b, "[MatchShuffle] 2 pares: orden distinto => firma distinta")
+
+
+# ===========================================================================
+# Ejecutor de todos los tests de variación de patrones de vinculación
+# ===========================================================================
+
+func ejecutar_tests_vincular_variacion() -> void:
+	print("[MatchShuffle] ── Iniciando tests de variación de patrones ──")
+	_test_match_firma_patron_es_determinista()
+	_test_match_firma_patron_cambia_con_orden()
+	_test_match_firma_patron_contiene_ids()
+	_test_match_firma_patron_dos_pares()
+	if not failed:
+		print("[MatchShuffle] ✓ Todos los tests pasaron.")
+	else:
+		printerr("[MatchShuffle] ✗ Al menos un test falló. Revisá los errores arriba.")
