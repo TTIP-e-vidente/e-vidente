@@ -1,60 +1,58 @@
-﻿{
+{
   "match_alimentos": {
 	"mode": "match",
 	"difficulty": 2,
 	"prompt": "Uní cada alimento con su clasificación.",
 	"pairs": [
-	  ["Banana", "Fruta apta"],
-	  ["Pan", "Contiene gluten"],
-	  ["Arroz", "Grano apto"]
+	  ["Banana", "Fruta"],
+	  ["Pan", "Gluten"],
+	  ["Arroz", "Grano"]
 	]
   },
   "match_categorias_alimentos": {
 	"mode": "match",
-	"difficulty": 2,
-	"prompt": "Uní cada alimento con su categoría.",
+	"difficulty": 1,
+	"prompt": "Relacioná cada producto.",
 	"pairs": [
-	  ["Arroz", "Sin TACC"],
-	  ["Fideos de trigo", "Con gluten"],
-	  ["Manzana", "Sin TACC"],
-	  ["Medialuna", "Con gluten"]
+	  ["Pan", "Trigo"],
+	  ["Banana", "Fruta"],
+	  ["Cerveza", "Malta"]
 	]
   },
   "match_riesgos_cocina": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Uní cada situación con su riesgo.",
+	"prompt": "Relacioná cada concepto.",
 	"pairs": [
-	  ["Misma tabla para pan y frutas", "Contaminación cruzada"],
-	  ["Producto sin sello Sin TACC", "No confirmado como apto"],
-	  ["Aceite compartido con empanadas", "Riesgo de contaminación"]
+	  ["Sin TACC", "Apto"],
+	  ["Migas", "Riesgo"],
+	  ["Etiqueta", "Revisar"]
 	]
   },
   "match_etiquetas_seguridad": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uní cada etiqueta con lo que indica.",
+	"prompt": "Relacioná cada situación.",
 	"pairs": [
-	  ["Sello Sin TACC", "Certificado apto para celíacos"],
-	  ["Sin rótulo Sin TACC", "No confirmado como seguro"],
-	  ["Contiene trigo", "No apto para celíacos"]
+	  ["Tostadora", "Contaminación"],
+	  ["Freidora", "Riesgo"],
+	  ["Utensilios", "Separados"]
 	]
   },
   "match_alimentos_seguridad": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Uní cada alimento con su clasificación.",
+	"prompt": "Relacioná cada término.",
 	"pairs": [
-	  ["Banana", "Fruta apta"],
-	  ["Pan", "Harina de trigo"],
-	  ["Arroz", "Grano apto"]
+	  ["Trazas", "Gluten"],
+	  ["Procesado", "Verificar"],
+	  ["Certificación", "Seguridad"]
 	],
-	"distractors": ["Solo bebida"]
   },
   "match_cerveza_utensilios_diagnostico": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Relaciona cada concepto con su condición de consumo.",
+	"prompt": "Relaciona cada concepto.",
 	"pairs": [
 	  ["Malta", "Cebada"],
 	  ["Utensilios", "Exclusivos"],
@@ -74,57 +72,111 @@
   "match_cocina_segura_avanzada": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uní cada práctica con la decisión más segura.",
+	"prompt": "Relacioná cada término médico.",
 	"pairs": [
-	  ["Tabla usada para pan", "Lavar o separar utensilios"],
-	  ["Tostadora compartida", "Evitar uso sin equipo exclusivo"],
-	  ["Harina suelta en mesada", "Limpiar antes de cocinar"],
-	  ["Cuchillo con migas", "Cambiar utensilio"],
-	  ["Aceite de fritura común", "No usar para Sin TACC"]
+ 	  ["DQ2", "Predisposición"],
+	  ["Biopsia", "Diagnóstico"],
+	  ["Vellosidades", "Intestino"]
 	]
   },
   "match_comer_fuera_seguro": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uní cada situación al paso más seguro.",
+	"prompt": "Relacioná cada estudio.",
 	"pairs": [
-	  ["Carta sin opciones claras", "Preguntar ingredientes y manejo"],
-	  ["Mozo duda sobre contaminación", "No arriesgar sin confirmar"],
-	  ["Cocina con freidora compartida", "Evitar fritos"],
-	  ["Postre sin sello ni info", "Elegir otra opción"]
+	  ["Anticuerpos", "Análisis"],
+	  ["Endoscopia", "Biopsia"],
+	  ["Atrofia", "Daño"]
 	]
   },
   "match_trazas_y_etiquetas": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Uní cada situación con la decisión más segura.",
+	"prompt": "Relacioná cada riesgo.",
 	"pairs": [
-	  ["Puede contener trazas", "No elegir sin confirmar"],
-	  ["Sello Sin TACC", "Producto certificado"],
-	  ["Freidora compartida", "Riesgo de contaminación"],
-	  ["Contiene trigo", "No apto"]
+	  ["Salsa soja", "Trigo"],
+	  ["A granel", "Trazas"],
+	  ["Rebozado", "Harina"]
 	]
   },
   "match_riesgos_ocultos": {
 	"mode": "match",
 	"difficulty": 3,
-	"prompt": "Relaciona cada producto o práctica con su riesgo.",
+	"prompt": "Relacioná cada decisión.",
 	"pairs": [
-	  ["Salsa de soja común", "Puede contener trigo"],
-	  ["Embutido sin certificación", "Ingredientes no confirmados"],
-	  ["Producto artesanal sin rótulo", "Aptitud incierta"],
-	  ["Mesa con harina visible", "Contaminación cruzada"]
+	  ["Sin sello", "Evitar"],
+	  ["Compartido", "Riesgo"],
+	  ["Certificado", "Seguro"]
 	]
   },
   "match_decisiones_seguras": {
 	"mode": "match",
 	"difficulty": 2,
-	"prompt": "Relaciona cada caso con la mejor decisión.",
+	"prompt": "Relaciona con cada práctica.",
 	"pairs": [
-	  ["No ves sello Sin TACC", "No elegir hasta confirmar"],
-	  ["Utensilios separados", "Práctica segura"],
-	  ["Tabla con migas", "Lavar antes de usar"],
-	  ["Comida frita en aceite compartido", "Evitar el producto"]
+	  ["Frascos", "Separados"],
+	  ["Mesada", "Limpia"],
+	  ["Migas", "Peligro"]
+	]
+  },
+	 "match_restaurante_avanzado": {
+	"mode": "match",
+	"difficulty": 2,
+	"prompt": "Relacioná cada acción.",
+	"pairs": [
+	  ["Consultar", "Ingredientes"],
+	  ["Confirmar", "Separación"],
+	  ["Evitar", "Empanados"]
+	]
+  },
+	"match_ingredientes_ocultos": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná cada ingrediente.",
+	"pairs": [
+	  ["Espesante", "Riesgo"],
+	  ["Aditivo", "Verificar"],
+	  ["Saborizante", "Consultar"]
+	]
+  },
+	"match_estudios_medicos": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná cada estudio.",
+	"pairs": [
+	  ["Biopsia", "Confirmación"],
+	  ["Anticuerpos", "Sangre"],
+	  ["Endoscopia", "Intestino"]
+	]
+  },
+	  "match_genetica": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná cada término.",
+	"pairs": [
+	  ["DQ2", "Genética"],
+	  ["DQ8", "Predisposición"],
+	  ["Herencia", "Familia"]
+	]
+  },
+	 "match_complicaciones": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná cada consecuencia.",
+	"pairs": [
+	  ["Malabsorción", "Nutrientes"],
+	  ["Atrofia", "Vellosidades"],
+	  ["Inflamación", "Intestino"]
+	]
+  },
+	"match_productos_riesgosos": {
+	"mode": "match",
+	"difficulty": 3,
+	"prompt": "Relacioná cada producto.",
+	"pairs": [
+	  ["Salsa soja", "Trigo"],
+	  ["Cerveza", "Cebada"],
+	  ["Avena", "Trazas"]
 	]
   }
 }
