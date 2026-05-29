@@ -1,5 +1,5 @@
-# Estrella de precisión — fill vertical de abajo hacia arriba.
 @tool
+# Estrella de precisión — fill vertical de abajo hacia arriba.
 extends Node2D
 class_name StarProgress
 

@@ -30,11 +30,18 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 
 
+func _formatear_tiempo(segundos_totales: float) -> String:
+	var s := int(segundos_totales)
+	if s < 60:
+		return "%ds" % s
+	var m: int = floori(float(s) / 60.0)
+	var rem_s := s % 60
+	if rem_s == 0:
+		return "%dm" % m
+	return "%dm %ds" % [m, rem_s]
+
 func _ready() -> void:
 	# Iconos de los bloques de stats
-	#textura.texture = CUADRADO_2X_2
-	#textura_2.texture = CUADRADO_2X_2
-	#textura_3.texture = CUADRADO_2X_2
 	label.text = "EXP"
 	label_2.text = "Precisión"
 	label_3.text = "Tiempo"
@@ -58,10 +65,20 @@ func _ready() -> void:
 	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
 	if stats.is_empty():
 		push_warning("[FinalizaciónPartida] Sin datos de finalización en Global.")
+	
+	var elapsed_seconds := float(stats.get("elapsed_seconds", -1.0))
+	var tiempo_final = "-"
+	if elapsed_seconds >= 0.0:
+		tiempo_final = _formatear_tiempo(elapsed_seconds)
+		print("[FinalizacionPartida] displaying_time=", tiempo_final)
+	elif stats.has("tiempo") and str(stats.get("tiempo", "")) != "—" and str(stats.get("tiempo", "")) != "":
+		tiempo_final = str(stats.get("tiempo", ""))
+		print("[FinalizacionPartida] displaying_time=", tiempo_final)
+
 	mostrar_resultados(
-		int(stats.get("exp_ganada", 0)),
-		int(stats.get("precision", 100)),
-		str(stats.get("tiempo", "0:00"))
+		int(stats.get("exp_ganada", stats.get("exp", 0))),
+		int(stats.get("precision", stats.get("accuracy", 1.0) * 100)) if stats.get("precision") == null or stats.get("precision") > 1.0 else int(float(stats.get("precision", 1.0)) * 100),
+		tiempo_final
 	)
 
 	# Conectar botón Continuar

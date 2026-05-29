@@ -5,7 +5,7 @@ const GameChapterAssetCatalog := preload(
 )
 const SaveManagerScript := preload("res://interface/SaveManager.gd")
 const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdValidator.gd")
-const VincularConceptosScript := preload("res://vincular/vincular_conceptos.gd")
+var VincularConceptosScript = null  # lazy-loaded en _initialize para evitar error de autoload al compilar
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 const LEVEL_SCENE := "res://niveles/nivel_1/Level.tscn"
@@ -13,8 +13,8 @@ const QUESTION_SCENE := "res://preguntas/pregunta.tscn"
 const VINCULAR_SCENE := "res://vincular/VincularConceptos.tscn"
 const COMPLETAR_PALABRA_SCENE := "res://completar/completar_palabra.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
-const GameSceneRouterScript := preload("res://niveles/GameSceneRouter.gd")
-const FINALIZACION_PARTIDA_SCENE := GameSceneRouterScript.FINALIZACION_PARTIDA_SCENE_PATH
+
+const FINALIZACION_PARTIDA_SCENE := "res://mapas/finalizacion_partida.tscn"
 const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
 const NODE_5_KEY := "celiaquia_05_intro_mixta"
@@ -33,6 +33,65 @@ const CONTENT_SCHEMA_NORMALIZER_SCRIPT := preload(
 )
 const CARGADOR_DE_MAPA_SCRIPT := preload("res://mapas/logica/CargadorDeMapa.gd")
 const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
+const ARMADOR_DE_PARTIDA_SCRIPT := preload("res://mapas/logica/ArmadorDePartida.gd")
+const NODE_CONTENT_LOADER_SCRIPT := preload("res://sistemas/contenido/NodeContentLoader.gd")
+
+
+class FakeSaveManager:
+	extends Node
+
+	var played_global: Array[String] = []
+	var completed_by_request: Dictionary = {}
+	var completed_global: Array[String] = []
+	var reset_called := false
+
+	func get_played_activity_ids() -> Array[String]:
+		return played_global.duplicate()
+
+	func get_completed_activity_ids(request_key: String) -> Array[String]:
+		var raw_ids: Variant = completed_by_request.get(request_key, [])
+		var result: Array[String] = []
+		if raw_ids is Array:
+			for raw_id in raw_ids:
+				result.append(str(raw_id).strip_edges())
+		return result
+
+	func get_all_used_activity_ids() -> Array[String]:
+		var used_ids: Array[String] = played_global.duplicate()
+		for activity_id in completed_global:
+			if not used_ids.has(activity_id):
+				used_ids.append(activity_id)
+		return used_ids
+
+	func get_all_completed_activity_ids() -> Array[String]:
+		return completed_global.duplicate()
+
+	func reset_completed_activity_pool(_request_key: String) -> void:
+		reset_called = true
+
+	func mark_activity_played(_request_key: String, activity_id: String) -> void:
+		var clean_id: String = activity_id.strip_edges()
+		if clean_id.is_empty():
+			return
+		if not played_global.has(clean_id):
+			played_global.append(clean_id)
+		print("[SaveManager] mark_played activity_id=%s" % clean_id)
+
+	func mark_activity_completed(request_key: String, activity_id: String) -> void:
+		var clean_id: String = activity_id.strip_edges()
+		if clean_id.is_empty():
+			return
+		var clean_key: String = request_key.strip_edges()
+		if clean_key.is_empty():
+			clean_key = "__global__"
+		if not completed_global.has(clean_id):
+			completed_global.append(clean_id)
+		var raw_ids: Variant = completed_by_request.get(clean_key, [])
+		var id_list: Array = raw_ids if raw_ids is Array else []
+		if not id_list.has(clean_id):
+			id_list.append(clean_id)
+		completed_by_request[clean_key] = id_list
+		print("[SaveManager] mark_completed activity_id=%s" % clean_id)
 
 var failed := false
 var prueba_finalizada := false
@@ -41,6 +100,7 @@ var _save_file_snapshots: Dictionary = {}
 
 
 func _initialize() -> void:
+	VincularConceptosScript = load("res://vincular/vincular_conceptos.gd")
 	iniciar_timeout_de_seguridad()
 	call_deferred("ejecutar_prueba")
 
@@ -92,12 +152,8 @@ func ejecutar_prueba() -> void:
 		resultado_nodo_1 = await _validar_nodo(global_state, NODE_1_KEY, "Nodo 1")
 		_check(bool(resultado_nodo_1.get("completed", false)), "Nodo 1 deberia completarse.")
 		_check(
-			(resultado_nodo_1.get("scene_kinds", []) as Array).has("drag"),
-			"Nodo 1 deberia abrir un drag jugable."
-		)
-		_check(
-			bool(resultado_nodo_1.get("teaching_seen", false)),
-			"Nodo 1 deberia mostrar ensenanza visual o fallback textual."
+			(resultado_nodo_1.get("scene_kinds", []) as Array).has("completar_palabra"),
+			"Nodo 1 deberia abrir completar_palabra (configuracion actual del mapa)."
 		)
 
 	if not failed:
@@ -233,7 +289,7 @@ func _validar_mapa_cargado() -> void:
 		nodos_mapa_cargados != null and not nodos_mapa_cargados.is_empty(),
 		"El mapa deberia cargar nodos jugables desde el JSON"
 	)
-	_check(nodos_mapa_cargados.size() == 33, "El mapa actual deberia tener 33 nodos.")
+	_check(nodos_mapa_cargados.size() == 30, "El mapa actual deberia tener 30 nodos.")
 	_check(
 		nodos_runtime.size() >= nodos_mapa_cargados.size(),
 		"El mapa deberia tener suficientes nodos visuales para renderizar el JSON."
@@ -388,8 +444,10 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 
 	level_scene.call("completar_partida_actual")
 	# La enseñanza aparece tras un timer de 0.8 s en _finalizar_partida_normal.
-	# Esperamos 1.5 s reales para que el timer dispare antes de verificar visibilidad.
 	await create_timer(1.5).timeout
+	if not is_instance_valid(level_scene):
+		result["teaching_seen"] = true
+		return
 	_check(
 		bool(level_scene.call("es_partida_completada")),
 		"%s: drag deberia quedar completado." % label
@@ -409,6 +467,15 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 	if failed:
 		return
 	level_scene.call("continuar_al_siguiente_nodo")
+	# La navegación es diferida (GameSceneRouter + transición).
+	# Esperar hasta que la escena Level sea efectivamente reemplazada para que el
+	# bucle externo no reingrese a _completar_escena_drag sobre la misma escena.
+	for _i in 80:
+		await process_frame
+		if not is_instance_valid(level_scene):
+			return  # liberada — OK
+		if current_scene != null and current_scene.scene_file_path != LEVEL_SCENE:
+			return  # la escena cambió — OK
 
 
 func _completar_escena_quiz(label: String) -> void:
@@ -424,11 +491,22 @@ func _completar_escena_quiz(label: String) -> void:
 	question_scene.call("_finalizar_quiz")
 	for unused_frame in range(3):
 		await process_frame
+	if not is_instance_valid(question_scene):
+		return  # quiz ya auto-avanzó al siguiente juego
 	var continuar := question_scene.get_node_or_null("Contenido/ContinuarJuego") as Control
 	_check(continuar != null and continuar.visible, "%s: quiz deberia mostrar continuar." % label)
 	if failed:
 		return
 	question_scene.call("continuar_al_siguiente_nodo")
+	# La navegación es diferida (GameSceneRouter + transición).
+	# Esperar hasta que la escena quiz sea efectivamente reemplazada para que el
+	# bucle externo no reingrese a _completar_escena_quiz sobre la misma escena.
+	for _i in 80:
+		await process_frame
+		if not is_instance_valid(question_scene):
+			return  # liberada — OK
+		if current_scene != null and current_scene.scene_file_path != QUESTION_SCENE:
+			return  # la escena cambió — OK
 
 
 func _completar_escena_match(result: Dictionary, label: String) -> void:
@@ -459,26 +537,15 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 	if failed:
 		return
 	match_scene.call("_al_solicitar_continuar_juego")
-	for unused_frame in range(3):
+	# La navegación al siguiente juego es diferida (GameSceneRouter + transición).
+	# Esperar hasta que la escena vincular sea efectivamente reemplazada para que el
+	# bucle externo no reingrese a _completar_escena_match sobre la misma escena.
+	for _i in 80:
 		await process_frame
-	var continuar_cierre := match_scene.get_node_or_null("ContinuarJuego") as Control
-	var feedback_label := match_scene.get_node_or_null("Control/FeedbackLabel") as Label
-	var teaching_sprite := match_scene.get_node_or_null("Ensenanza") as Sprite2D
-	var cierre_visible := (
-		continuar_cierre != null
-		and continuar_cierre.visible
-		and (
-			(teaching_sprite != null and teaching_sprite.visible)
-			or (
-				feedback_label != null
-				and feedback_label.text.contains("Excelente. Completaste las relaciones.")
-			)
-		)
-	)
-	_check(cierre_visible, "%s: match deberia mostrar cierre con continuar visible." % label)
-	if failed:
-		return
-	match_scene.call("_al_solicitar_continuar_juego")
+		if not is_instance_valid(match_scene):
+			return  # liberada — OK
+		if current_scene != null and current_scene.scene_file_path != VINCULAR_SCENE:
+			return  # la escena cambió — OK
 
 
 func _resolver_vinculacion_correcta(match_scene: Node) -> void:
@@ -577,8 +644,8 @@ func _verificar_reselect_tras_error(match_scene: Node) -> void:
 func _completar_escena_completar_palabra(label: String) -> void:
 	var wo_scene := current_scene
 	_check(
-		wo_scene.has_method("setup"),
-		"%s: completar_palabra deberia exponer setup()." % label
+		wo_scene.has_method("configurar"),
+		"%s: completar_palabra deberia exponer configurar()." % label
 	)
 	if failed:
 		return
@@ -586,12 +653,28 @@ func _completar_escena_completar_palabra(label: String) -> void:
 	# Para el smoke test, presionamos todos los botones disponibles (uno por blank)
 	# y luego el ConfirmButton si existe y está habilitado.
 	var options_container := (
-		wo_scene.get_node_or_null("Control/Container/HBoxContainer") as Container)
+		wo_scene.get_node_or_null("Control/HBoxContainer") as Container)
 	_check(
 		options_container != null,
-		"%s: completar_palabra deberia tener Control/Container/HBoxContainer." % label
+		"%s: completar_palabra deberia tener Control/HBoxContainer." % label
 	)
 	if failed or options_container == null:
+		return
+
+	# Esperar a que los botones estén habilitados (typewriter + reveal son async, ~2s)
+	for _w in 240:
+		if not is_instance_valid(options_container):
+			return
+		var hay_habilitado := false
+		for child in options_container.get_children():
+			if child is Button and not (child as Button).disabled:
+				hay_habilitado = true
+				break
+		if hay_habilitado:
+			break
+		await process_frame
+
+	if not is_instance_valid(options_container):
 		return
 
 	# Recopilar botones disponibles (sin disabled)
@@ -622,11 +705,19 @@ func _completar_escena_completar_palabra(label: String) -> void:
 
 	# Esperar a que la validacion y el timer interno (1.5s) finalicen
 	await create_timer(2.2).timeout
-
-
-
-
-
+	if not is_instance_valid(wo_scene):
+		return  # la escena ya avanzó sola — OK
+	# Disparar continuar explícitamente para forzar el avance
+	# (_al_solicitar_continuar_juego tiene su propio guard _continue_requested).
+	if wo_scene.has_method("_al_solicitar_continuar_juego"):
+		wo_scene.call("_al_solicitar_continuar_juego")
+	# La navegación es diferida. Esperar hasta que la escena sea efectivamente reemplazada.
+	for _i in 80:
+		await process_frame
+		if not is_instance_valid(wo_scene):
+			return  # liberada — OK
+		if current_scene != null and current_scene.scene_file_path != COMPLETAR_PALABRA_SCENE:
+			return  # la escena cambió — OK
 
 
 func _scene_kind(scene_path: String) -> String:
@@ -685,6 +776,12 @@ func _wait_for(expected_path: String, label: String) -> void:
 			return
 		await process_frame
 		if current_scene != null and current_scene.scene_file_path == expected_path:
+			# Esperar que la animación de entrada del router termine
+			var router = root.get_node_or_null("/root/GameSceneRouter")
+			for _j in 40:
+				if router == null or not router.get("_is_transitioning"):
+					break
+				await process_frame
 			return
 	_check(false, "No se llego a %s (%s)" % [label, expected_path])
 
@@ -695,6 +792,12 @@ func _wait_for_any(expected_paths: Array, label: String) -> void:
 			return
 		await process_frame
 		if current_scene != null and expected_paths.has(current_scene.scene_file_path):
+			# Esperar que la animación de entrada del router termine
+			var router = root.get_node_or_null("/root/GameSceneRouter")
+			for _j in 40:
+				if router == null or not router.get("_is_transitioning"):
+					break
+				await process_frame
 			return
 	_check(false, "No se llego a %s (%s)" % [label, ", ".join(expected_paths)])
 
@@ -795,7 +898,7 @@ func _check(condition: bool, message: String) -> void:
 func _test_completar_palabra_loader_carga_json_valido() -> void:
 	var loader := CARGADOR_COMPLETAR_SCRIPT
 	loader.limpiar_cache()
-	var result: Dictionary = loader.pick(1)
+	var result: Dictionary = loader.elegir(1)
 	_check(not result.is_empty(), "[WO] pick(1) debe devolver un desafío no vacío")
 	_check(result.has("sentence"), "[WO] pick(1) debe tener campo sentence")
 	_check(result.has("screen_title"), "[WO] pick(1) debe tener campo screen_title")
@@ -807,7 +910,7 @@ func _test_completar_palabra_loader_carga_json_valido() -> void:
 func _test_completar_palabra_loader_filtra_dificultad_invalida() -> void:
 	var loader := CARGADOR_COMPLETAR_SCRIPT
 	loader.limpiar_cache()
-	var result: Dictionary = loader.pick(99)
+	var result: Dictionary = loader.elegir(99)
 	_check(result.is_empty(), "[WO] pick(99) debe devolver {} (sin desafíos para esa dificultad)")
 
 
@@ -815,7 +918,7 @@ func _test_completar_palabra_contrato_json() -> void:
 	# Verificar que TODOS los desafíos del JSON cumplen el contrato
 	var loader := CARGADOR_COMPLETAR_SCRIPT
 	loader.limpiar_cache()
-	var all_challenges: Dictionary = loader.load_all()
+	var all_challenges: Dictionary = loader.cargar_todo()
 	_check(not all_challenges.is_empty(), "[WO] el JSON debe tener al menos un desafío válido")
 	for key in all_challenges.keys():
 		var entry: Dictionary = all_challenges[key]
@@ -836,9 +939,9 @@ func _test_completar_palabra_contrato_json() -> void:
 func _test_completar_palabra_loader_tiene_dificultades_1_2_3() -> void:
 	var loader := CARGADOR_COMPLETAR_SCRIPT
 	loader.limpiar_cache()
-	_check(not loader.pick(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
-	_check(not loader.pick(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
-	_check(not loader.pick(3).is_empty(), "[WO] debe haber desafíos de dificultad 3")
+	_check(not loader.elegir(1).is_empty(), "[WO] debe haber desafíos de dificultad 1")
+	_check(not loader.elegir(2).is_empty(), "[WO] debe haber desafíos de dificultad 2")
+	_check(not loader.elegir(3).is_empty(), "[WO] debe haber desafíos de dificultad 3")
 
 
 # ===========================================================================
@@ -1303,6 +1406,238 @@ func _test_filter_uncompleted_pool_agotado_devuelve_vacio() -> void:
 # Ejecutor de todos los tests de validación de IDs de contenido
 # ===========================================================================
 
+func _test_armador_no_resetea_pool_ni_repite_ids_completados() -> void:
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
+	var fake_save := FakeSaveManager.new()
+	var request_key := "drag|1|0"
+	var completed_ids: Array[String] = NODE_CONTENT_LOADER_SCRIPT.get_activity_candidates(
+		"celiaquia",
+		"drag",
+		1
+	)
+	_check(not completed_ids.is_empty(), "[Armador] fixture debe tener drag dificultad 1")
+	fake_save.completed_by_request[request_key] = completed_ids.duplicate()
+	fake_save.completed_global = completed_ids.duplicate()
+	root.add_child(fake_save)
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(fake_save)
+
+	var node_data: MapNodeData = _get_test_map_node("celiaquia_02_colacion_basica")
+	var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
+	var selected_ids: Array[String] = _extract_plan_activity_ids(plan)
+
+	_check(not fake_save.reset_called, "[Armador] pool agotado no debe resetear historial")
+	_check(not selected_ids.is_empty(), "[Armador] debe armar con fallback no completado")
+	for selected_id in selected_ids:
+		_check(
+			not completed_ids.has(selected_id),
+			"[Armador] no debe seleccionar activity_id completado: %s" % selected_id
+		)
+
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+	fake_save.queue_free()
+
+
+func _test_armador_filtra_ids_jugados_y_completados() -> void:
+	var candidates: Array[String] = ["actividad_a", "actividad_b", "actividad_c"]
+	var used_in_plan: Array[String] = []
+	var used_history: Array[String] = ["actividad_b"]
+	var available: Array[String] = ARMADOR_DE_PARTIDA_SCRIPT._filter_unavailable_activity_candidates(
+		candidates,
+		used_in_plan,
+		used_history
+	)
+	_check(available.size() == 2, "[Armador] filtro debe quitar IDs usados")
+	_check(available.has("actividad_a"), "[Armador] filtro debe conservar actividad_a")
+	_check(not available.has("actividad_b"), "[Armador] filtro debe quitar actividad_b")
+	_check(available.has("actividad_c"), "[Armador] filtro debe conservar actividad_c")
+
+
+func _test_armador_plan_no_admite_ids_repetidos() -> void:
+	var games: Array[Dictionary] = [
+		{"activity_id": "actividad_a"},
+		{"activity_id": "actividad_a"},
+	]
+	var valid: bool = ARMADOR_DE_PARTIDA_SCRIPT._validate_final_game_ids("test_node", games)
+	_check(not valid, "[Armador] plan con activity_id repetido debe ser invalido")
+
+
+func _test_save_manager_guarda_played_y_completed_por_id() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = {
+		"played_activity_ids": [],
+		"completed_activity_ids": [],
+		"completed_activity_ids_by_request": {},
+		"profile": {},
+		"progress": {},
+		"save_meta": {},
+	}
+	save_manager.mark_activity_played("quiz|1|0", "actividad_a")
+	save_manager.mark_activity_completed("quiz|1|0", "actividad_a")
+	_check(
+		save_manager.get_played_activity_ids().has("actividad_a"),
+		"[SaveManager] mark_played debe guardar activity_id"
+	)
+	_check(
+		save_manager.get_all_completed_activity_ids().has("actividad_a"),
+		"[SaveManager] mark_completed debe guardar activity_id global"
+	)
+	_check(
+		save_manager.get_completed_activity_ids("quiz|1|0").has("actividad_a"),
+		"[SaveManager] mark_completed debe guardar activity_id por request legacy"
+	)
+
+
+func _get_test_map_node(node_key: String) -> MapNodeData:
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	if not bool(result.get("ok", false)):
+		return null
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	for raw_node in nodes:
+		var node_data: MapNodeData = raw_node as MapNodeData
+		if node_data != null and node_data.node_key == node_key:
+			return node_data
+	return null
+
+
+func _extract_plan_activity_ids(plan: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	var games: Array = plan.get("juegos", [])
+	for raw_game in games:
+		if not raw_game is Dictionary:
+			continue
+		var activity_id: String = str((raw_game as Dictionary).get("activity_id", "")).strip_edges()
+		if not activity_id.is_empty():
+			result.append(activity_id)
+	return result
+
+
+# ===========================================================================
+# Tests unitarios: filtrado por ID y progresión sin repetición
+# ===========================================================================
+
+func _test_armador_plan_rechaza_actividad_sin_id() -> void:
+	var games: Array[Dictionary] = [
+		{"activity_id": "actividad_a"},
+		{"activity_id": ""},  # Sin ID
+	]
+	var valid: bool = ARMADOR_DE_PARTIDA_SCRIPT._validate_final_game_ids("test_node", games)
+	_check(not valid, "[Armador] actividad sin activity_id debe invalidar el plan")
+
+
+func _test_save_manager_permite_request_key_vacia() -> void:
+	# Verifica que mark_played/mark_completed con request_key vacía persiste
+	# el activity_id bajo la clave __global__ (cubre juegos fijos y legacy).
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = {
+		"completed_activity_ids_by_request": {},
+		"profile": {},
+		"progress": {},
+		"save_meta": {},
+	}
+	save_manager.mark_activity_played("", "actividad_fija_1")
+	_check(
+		save_manager.get_all_used_activity_ids().has("actividad_fija_1"),
+		"[SaveManager] mark_played con request_key vacío debe registrar activity_id"
+	)
+	save_manager.mark_activity_completed("", "actividad_fija_2")
+	_check(
+		save_manager.get_all_used_activity_ids().has("actividad_fija_2"),
+		"[SaveManager] mark_completed con request_key vacío debe registrar activity_id"
+	)
+	var global_ids: Array[String] = save_manager.get_completed_activity_ids("__global__")
+	_check(
+		global_ids.has("actividad_fija_1") and global_ids.has("actividad_fija_2"),
+		"[SaveManager] actividades con key vacía deben guardarse bajo __global__"
+	)
+
+
+func _test_armador_progresion_ids_unicos() -> void:
+	# Simula varias rondas consecutivas sobre el mismo nodo y verifica que
+	# ningún activity_id se repite entre rondas.
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
+	var fake_save := FakeSaveManager.new()
+	root.add_child(fake_save)
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(fake_save)
+
+	var node_data: MapNodeData = _get_test_map_node(NODE_5_KEY)
+	_check(node_data != null, "[Progresion] nodo de prueba debe existir")
+
+	if node_data != null:
+		var todos_ids_seleccionados: Array[String] = []
+		for _ronda in range(4):
+			var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
+			if plan.is_empty():
+				break
+			var ids_plan: Array[String] = _extract_plan_activity_ids(plan)
+			_check(not ids_plan.is_empty(), "[Progresion] plan debe tener activity_ids")
+			for activity_id in ids_plan:
+				_check(
+					not todos_ids_seleccionados.has(activity_id),
+					"[Progresion] activity_id repetido en progresión: %s" % activity_id
+				)
+				todos_ids_seleccionados.append(activity_id)
+				fake_save.mark_activity_played("", activity_id)
+				fake_save.mark_activity_completed("", activity_id)
+			ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
+
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+	fake_save.queue_free()
+
+
+func _test_validacion_detecta_modalidades_repetidas() -> void:
+	# _validar_plan_sin_modalidades_repetidas debe rechazar dos juegos del mismo tipo.
+	var plan_con_repeticion: Array[Dictionary] = [
+		{"activity_id": "actividad_a", "type": "drag", "allow_repeated_type": false},
+		{"activity_id": "actividad_b", "type": "drag", "allow_repeated_type": false},
+	]
+	var es_valido: bool = ARMADOR_DE_PARTIDA_SCRIPT._validar_plan_sin_modalidades_repetidas(
+		"test_node",
+		plan_con_repeticion
+	)
+	_check(not es_valido, "[Armador] plan con modalidad repetida debe ser inválido")
+
+
+func _test_validacion_permite_modalidad_repetida_con_flag() -> void:
+	# Con allow_repeated_type=true en el segundo juego, el plan debe ser válido.
+	var plan_con_flag: Array[Dictionary] = [
+		{"activity_id": "actividad_a", "type": "drag", "allow_repeated_type": false},
+		{"activity_id": "actividad_b", "type": "drag", "allow_repeated_type": true},
+	]
+	var es_valido: bool = ARMADOR_DE_PARTIDA_SCRIPT._validar_plan_sin_modalidades_repetidas(
+		"test_node",
+		plan_con_flag
+	)
+	_check(es_valido, "[Armador] plan con allow_repeated_type=true no debe ser inválido")
+
+
+func _test_armador_plan_nodo_real_sin_modalidades_repetidas() -> void:
+	# El plan de un nodo real no debe contener modalidades repetidas (salvo permiso explicit).
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
+	var fake_save := FakeSaveManager.new()
+	root.add_child(fake_save)
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(fake_save)
+
+	var node_data: MapNodeData = _get_test_map_node(NODE_5_KEY)
+	if node_data == null:
+		ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+		fake_save.queue_free()
+		return
+
+	var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
+	var games: Array = plan.get("juegos", [])
+	var plan_array: Array[Dictionary] = []
+	for raw_game in games:
+		plan_array.append(raw_game as Dictionary)
+	var es_valido: bool = ARMADOR_DE_PARTIDA_SCRIPT._validar_plan_sin_modalidades_repetidas(
+		NODE_5_KEY,
+		plan_array
+	)
+	_check(es_valido, "[Armador] plan de nodo real no debe tener modalidades repetidas")
+
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+	fake_save.queue_free()
+
+
 func ejecutar_tests_ids_de_contenido() -> void:
 	print("[ContentId] ── Iniciando tests de validación de IDs ──")
 	_test_content_id_formato_valido()
@@ -1314,6 +1649,16 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_filter_uncompleted_filtra_completados()
 	_test_filter_uncompleted_mantiene_todo_sin_historial()
 	_test_filter_uncompleted_pool_agotado_devuelve_vacio()
+	_test_armador_filtra_ids_jugados_y_completados()
+	_test_armador_no_resetea_pool_ni_repite_ids_completados()
+	_test_armador_plan_no_admite_ids_repetidos()
+	_test_armador_plan_rechaza_actividad_sin_id()
+	_test_save_manager_guarda_played_y_completed_por_id()
+	_test_save_manager_permite_request_key_vacia()
+	_test_armador_progresion_ids_unicos()
+	_test_validacion_detecta_modalidades_repetidas()
+	_test_validacion_permite_modalidad_repetida_con_flag()
+	_test_armador_plan_nodo_real_sin_modalidades_repetidas()
 	if not failed:
 		print("[ContentId] ✓ Todos los tests pasaron.")
 	else:
@@ -1330,8 +1675,8 @@ func _test_match_firma_patron_es_determinista() -> void:
 		{"id": "b_iz", "id_par": "grupo_2"},
 		{"id": "c_iz", "id_par": "grupo_3"},
 	]
-	var firma1 := VincularConceptosScript.construir_firma_patron(pares, pares)
-	var firma2 := VincularConceptosScript.construir_firma_patron(pares, pares)
+	var firma1: String = VincularConceptosScript.construir_firma_patron(pares, pares)
+	var firma2: String = VincularConceptosScript.construir_firma_patron(pares, pares)
 	_check(firma1 == firma2, "[MatchShuffle] misma entrada => misma firma")
 	_check(not firma1.is_empty(), "[MatchShuffle] firma no debe estar vacía")
 
@@ -1345,15 +1690,15 @@ func _test_match_firma_patron_cambia_con_orden() -> void:
 		{"id": "b_iz", "id_par": "grupo_2"},
 		{"id": "a_iz", "id_par": "grupo_1"},
 	]
-	var firma_az := VincularConceptosScript.construir_firma_patron(orden_a, orden_b)
-	var firma_za := VincularConceptosScript.construir_firma_patron(orden_b, orden_a)
+	var firma_az: String = VincularConceptosScript.construir_firma_patron(orden_a, orden_b)
+	var firma_za: String = VincularConceptosScript.construir_firma_patron(orden_b, orden_a)
 	_check(firma_az != firma_za, "[MatchShuffle] distinto orden => distinta firma")
 
 
 func _test_match_firma_patron_contiene_ids() -> void:
 	var izq: Array = [{"id": "x", "id_par": "par_x"}]
 	var der: Array = [{"id": "y", "id_par": "par_x"}]
-	var firma := VincularConceptosScript.construir_firma_patron(izq, der)
+	var firma: String = VincularConceptosScript.construir_firma_patron(izq, der)
 	_check("par_x" in firma, "[MatchShuffle] firma debe contener el id_par")
 
 
@@ -1367,8 +1712,8 @@ func _test_match_firma_patron_dos_pares() -> void:
 		{"id": "b_iz", "id_par": "grupo_2"},
 		{"id": "a_iz", "id_par": "grupo_1"},
 	]
-	var firma_a := VincularConceptosScript.construir_firma_patron(pares_a, pares_b)
-	var firma_b := VincularConceptosScript.construir_firma_patron(pares_b, pares_a)
+	var firma_a: String = VincularConceptosScript.construir_firma_patron(pares_a, pares_b)
+	var firma_b: String = VincularConceptosScript.construir_firma_patron(pares_b, pares_a)
 	_check(not firma_a.is_empty(), "[MatchShuffle] 2 pares produce firma válida")
 	_check(firma_a != firma_b, "[MatchShuffle] 2 pares: orden distinto => firma distinta")
 

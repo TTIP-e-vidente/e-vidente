@@ -1,7 +1,6 @@
 extends Node2D
 
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
@@ -93,11 +92,15 @@ var _estado_flujo_post_juego: Dictionary = {}
 var _datos_de_ejecucion: Dictionary = {}
 var _continuar_juego_es_continuacion_pendiente := false
 var _continuar_juego_es_validacion_pendiente := false
+var _activity_started_msec: int = 0
+var finalizacion_enviada: bool = false
 
 static var _historial_patrones_de_ronda: Array[String] = []
 
 
 func _ready() -> void:
+	_activity_started_msec = Time.get_ticks_msec()
+	print("[TimeTracker] started activity_id=", str(_datos_de_ejecucion.get("id", "")))
 	_preparar_sprite_ensenanza()
 	_preparar_layout_ui()
 	_recolectar_items()
@@ -407,7 +410,6 @@ func _preparar_controles_de_confirmacion() -> void:
 	if boton_confirmar == null:
 		boton_confirmar = Button.new()
 		boton_confirmar.name = "ConfirmButton"
-		boton_confirmar.layout_mode = 0
 		control_principal.add_child(boton_confirmar)
 	boton_confirmar.offset_left = 456.0
 	boton_confirmar.offset_top = 728.0
@@ -429,7 +431,6 @@ func _preparar_boton_continuar_validacion() -> void:
 	if boton_continuar_validacion == null:
 		boton_continuar_validacion = Button.new()
 		boton_continuar_validacion.name = "ContinueButton"
-		boton_continuar_validacion.layout_mode = 0
 		control_principal.add_child(boton_continuar_validacion)
 	boton_continuar_validacion.offset_left = 456.0
 	boton_continuar_validacion.offset_top = 736.0
@@ -449,7 +450,6 @@ func _preparar_feedback_label() -> void:
 	if feedback_label == null:
 		feedback_label = Label.new()
 		feedback_label.name = "FeedbackLabel"
-		feedback_label.layout_mode = 0
 		control_principal.add_child(feedback_label)
 	feedback_label.offset_left = 180.0
 	feedback_label.offset_top = 668.0
@@ -1243,7 +1243,7 @@ func _ocultar_continuar() -> void:
 func _on_continuar_pressed() -> void:
 	if not validado or bloqueado:
 		return
-	print("[MatchContinue] pressed=true")
+	print("[VincularConceptos] continuar_pressed actividad_completada=true")
 	_finalizar_vinculacion()
 
 
@@ -1289,7 +1289,8 @@ func _finalizar_vinculacion() -> void:
 	_guardar_progreso_de_vinculacion()
 	var racha_actualizada: Dictionary = Global.obtener_estado_racha()
 	_preparar_flujo_post_juego(racha_anterior, racha_actualizada)
-	_mostrar_cierre_de_vinculacion()
+	print("[VincularConceptos] relaciones_completadas=true")
+	_al_solicitar_continuar()
 
 
 func _guardar_progreso_de_vinculacion() -> void:
@@ -1497,12 +1498,34 @@ func _mostrar_error_bloqueante(mensaje: String) -> void:
 
 
 func _on_atras_presionado() -> void:
-	if _pertenece_a_partida_de_nodo:
-		Global.finalizar_partida_de_nodo()
-		Global.limpiar_sesion_nodo_jugable_activo()
-	_volver_a_escena_de_mapa()
-
+	_finalizar_actividad(false)
 
 func _volver_a_escena_de_mapa() -> void:
+	_finalizar_actividad(true)
+
+func _calcular_elapsed_seconds() -> float:
+	if _activity_started_msec <= 0:
+		push_warning("[TimeTracker] activity_started_msec no inicializado.")
+		return -1.0
+	var elapsed := float(Time.get_ticks_msec() - _activity_started_msec) / 1000.0
+	print("[TimeTracker] elapsed_seconds=", elapsed)
+	return elapsed
+
+func _finalizar_actividad(success: bool) -> void:
+	if finalizacion_enviada:
+		print("[VincularConceptos] evitar_doble_finalizacion")
+		return
+	finalizacion_enviada = true
 	_limpiar_elementos_temporales()
-	PostGameFlowControllerScript.navigate_to_return_target(get_tree(), _ruta_escena_de_retorno)
+	var activity_id: String = str(_datos_de_ejecucion.get("id", _datos_de_ejecucion.get("activity_id", "")))
+	print("[VincularConceptos] finalizar_actividad activity_id=", activity_id)
+	var resultado := {
+		"activity_id": activity_id,
+		"node_key": _nodo_actual,
+		"map_id": "celiaquia",
+		"success": success,
+		"accuracy": 1.0 if _pares_vinculados_total > 0 and _pares_vinculados_correctos == _pares_vinculados_total else 0.5,
+		"exp": 10,
+		"elapsed_seconds": _calcular_elapsed_seconds()
+	}
+	PostGameFlowControllerScript.finalizar_actividad(get_tree(), resultado)

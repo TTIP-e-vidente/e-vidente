@@ -1,7 +1,7 @@
 extends Node2D
 class_name Libro
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const MENU_SCENE := "res://niveles/intro.tscn"
 const DEFAULT_TRACK_KEY := "celiaquia"
 const CHAPTER_BUTTON_DUPLICATE_FLAGS := 14
 const CHAPTER_BUTTON_NAME_PREFIX := "Cap"

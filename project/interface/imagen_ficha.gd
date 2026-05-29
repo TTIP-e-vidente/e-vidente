@@ -10,6 +10,6 @@ func _process(delta):
 
 	tiempo += delta
 
-	var offset = sin(tiempo) * 0.01
+	var scale_offset: float = sin(tiempo) * 0.01
 
-	self.scale = escala_base + Vector2(offset, offset)
+	self.scale = escala_base + Vector2(scale_offset, scale_offset)

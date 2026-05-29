@@ -4,9 +4,6 @@ extends RefCounted
 # Normaliza el contexto que consumen las escenas jugables.
 # Compatibilidad: mantiene claves nuevas y legacy hasta limpiar escenas antiguas.
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-
-
 static func obtener_contexto_jugable_actual() -> Dictionary:
 	var global_autoload: Node = obtener_global()
 	if global_autoload == null:
@@ -119,10 +116,13 @@ static func _leer_escena_retorno(
 	contexto_sesion: Dictionary,
 	escena_retorno_predeterminada: String
 ) -> String:
-	var escena_retorno: String = GameSceneRouter.read_return_to(
-		contexto_sesion,
-		escena_retorno_predeterminada
-	)
+	var escena_retorno: String = ""
+	var main_loop: MainLoop = Engine.get_main_loop()
+	if main_loop is SceneTree:
+		var router: Node = (main_loop as SceneTree).root.get_node_or_null("GameSceneRouter")
+		if router != null and router.has_method("read_return_to"):
+			escena_retorno = router.call("read_return_to", contexto_sesion, escena_retorno_predeterminada)
+	
 	if escena_retorno.is_empty():
 		return escena_retorno_predeterminada
 	return escena_retorno

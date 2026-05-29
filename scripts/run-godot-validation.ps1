@@ -122,7 +122,7 @@ function Get-ValidationSteps {
     $postGameFlowStep = @{ Label = 'Post-game flow controller test'; Hint = 'Revisar las decisiones de post-partida para racha, mapa y siguiente nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/post_game_flow_controller_test.gd') }
     $mapProgressVisualStep = @{ Label = 'Map progress visual test'; Hint = 'Revisar contrato del mapa de celiaquia, estados visuales y desbloqueo del siguiente nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/map_progress_visual_test.gd') }
     $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
-    $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/vertical_slice_smoke_test.gd') }
+    $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = $godotBaseArgs + @('--fixed-fps', '60', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
 
     $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
     $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')

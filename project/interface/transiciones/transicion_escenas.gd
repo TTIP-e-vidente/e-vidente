@@ -6,6 +6,9 @@ extends CanvasLayer
 var is_transitioning := false
 
 func _ready():
+	# ALWAYS: las animaciones de transición deben completarse aunque el árbol esté pausado
+	# (por ejemplo, cuando CapituloCompletado llama get_tree().paused = true)
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	$ColorRect.visible = false
 	$ColorRect2.visible = false
 	

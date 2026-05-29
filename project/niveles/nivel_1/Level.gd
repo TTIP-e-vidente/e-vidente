@@ -18,7 +18,6 @@ const DEFAULT_BACKGROUND_MUSIC_PATH := (
 	"res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 )
 
-const GameSceneRouter             := preload("res://niveles/GameSceneRouter.gd")
 const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 # Mantenemos el alias interno por si queda algún consumidor legacy
 const ContinuidadDePartidaDeNodoScript := preload(
@@ -132,8 +131,12 @@ var _teaching_card_base_scale := Vector2.ONE
 @onready var _continuar_juego = $ContinuarJuego
 @onready var titulo_nivel: Label = $TituloNivel/Label
 
+var _activity_started_msec: int = 0
+
 # Entrada del nivel
 func _ready() -> void:
+	_activity_started_msec = Time.get_ticks_msec()
+	print("[TimeTracker] started activity_id=", str(_nodo_actual))
 	titulo_nivel.text = "Celiaquía"
 	_cargar_recursos_runtime()
 	if is_instance_valid(teaching_sprite):
@@ -795,6 +798,9 @@ func construir_flujo_post_game(
 		_ruta_escena_retorno,
 		"Level.construir_flujo_post_game"
 	)
+	var elapsed := _calcular_elapsed_seconds()
+	if elapsed >= 0.0:
+		updated_streak["elapsed_seconds"] = elapsed
 	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
 		previous_streak,
 		updated_streak,
@@ -827,6 +833,14 @@ func _take_post_game_streak_feedback() -> Dictionary:
 func _return_to_map_scene() -> void:
 	_ocultar_continuacion()
 	await TransicionEscenas.change_normal_scene(_ruta_escena_retorno)
+
+func _calcular_elapsed_seconds() -> float:
+	if _activity_started_msec <= 0:
+		push_warning("[TimeTracker] activity_started_msec no inicializado.")
+		return -1.0
+	var elapsed := float(Time.get_ticks_msec() - _activity_started_msec) / 1000.0
+	print("[TimeTracker] elapsed_seconds=", elapsed)
+	return elapsed
 
 
 func _cancelar_partida_de_nodo() -> void:
@@ -1111,9 +1125,9 @@ func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 func _obtener_teaching_key_actual() -> String:
 	var contenido: Variant = _datos_nodo_mapa.get("content", {})
 	if contenido is Dictionary:
-		var teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
-		if not teaching_key.is_empty():
-			return teaching_key
+		var content_teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
+		if not content_teaching_key.is_empty():
+			return content_teaching_key
 	var top_level_teaching_key: String = _leer_teaching_key_de_diccionario(_datos_nodo_mapa)
 	if not top_level_teaching_key.is_empty():
 		return top_level_teaching_key

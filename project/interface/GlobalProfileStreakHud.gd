@@ -2,7 +2,6 @@
 # HUD global (CanvasLayer 75) con botón de perfil y badge de racha.
 extends CanvasLayer
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")

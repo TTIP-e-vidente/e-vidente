@@ -1,10 +1,8 @@
-# HELPER_INTERNO
-# DEBUG_BADGES: activar solo para depurar badges visuales. No dejar en true en producción.
-const DEBUG_BADGES := false
-# Nodo visual individual del mapa (estrella/candado/completado).
-# Solo renderiza estado — no decide flujo.
 @tool
 extends Node2D
+# HELPER_INTERNO
+const DEBUG_BADGES := false
+# Nodo visual individual del mapa (estrella/candado/completado).
 
 signal selected(node_data: MapNodeData)
 
@@ -117,7 +115,7 @@ func _refresh_badge() -> void:
 	if DEBUG_BADGES:
 		print_debug(
 			"[Star] update node_key=",
-			node_data.node_key if node_data != null else name,
+			node_data.node_key if node_data != null else str(name),
 			" percent=",
 			effective_progress,
 			" completed=",

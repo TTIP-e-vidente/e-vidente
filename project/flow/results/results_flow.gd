@@ -5,8 +5,8 @@ class_name ResultsFlow
 # No renderiza. No arma planes de partida. No contiene reglas del minijuego.
 
 const ResultadoDeNodoScript := preload("res://nodo/ResultadoDeNodo.gd")
+const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const ReglasDeProgreso := preload("res://nodo/ReglasDeProgresoDeNodo.gd")
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 signal volver_al_mapa_solicitado()
 

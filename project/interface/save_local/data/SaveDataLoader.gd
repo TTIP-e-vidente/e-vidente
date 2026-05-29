@@ -82,6 +82,18 @@ func reparar_estructura(save_snapshot: Dictionary) -> bool:
 		save_snapshot["history"] = []
 		changed = true
 
+	if not save_snapshot.get("played_activity_ids", []) is Array:
+		save_snapshot["played_activity_ids"] = []
+		changed = true
+
+	if not save_snapshot.get("completed_activity_ids", []) is Array:
+		save_snapshot["completed_activity_ids"] = []
+		changed = true
+
+	if not save_snapshot.get("completed_activity_ids_by_request", {}) is Dictionary:
+		save_snapshot["completed_activity_ids_by_request"] = {}
+		changed = true
+
 	if not save_snapshot.get("save_meta", {}) is Dictionary:
 		save_snapshot["save_meta"] = _meta_guardado_vacia()
 		changed = true
@@ -194,9 +206,20 @@ func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 		normalized["resume_state"] = (source_resume_state as Dictionary).duplicate(true)
 
 	normalized["history"] = _schema.normalizar_historial(source.get("history", []))
+	var source_played: Variant = source.get("played_activity_ids", [])
+	if source_played is Array:
+		normalized["played_activity_ids"] = (source_played as Array).duplicate(true)
+	var source_completed_global: Variant = source.get("completed_activity_ids", [])
+	if source_completed_global is Array:
+		normalized["completed_activity_ids"] = (source_completed_global as Array).duplicate(true)
 	var source_completed: Variant = source.get("completed_activity_ids_by_request", {})
 	if source_completed is Dictionary:
 		normalized["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
+	var normalized_completed_ids: Variant = normalized.get("completed_activity_ids", [])
+	if normalized_completed_ids is Array and (normalized_completed_ids as Array).is_empty():
+		normalized["completed_activity_ids"] = _flatten_completed_activity_ids_by_request(
+			normalized.get("completed_activity_ids_by_request", {})
+		)
 	normalized["total_exp"] = max(0, int(source.get("total_exp", 0)))
 	var source_node_progress: Variant = source.get("node_progress", {})
 	if source_node_progress is Dictionary:
@@ -308,8 +331,40 @@ func _aplanar_sesiones_legacy(raw: Dictionary) -> Dictionary:
 	if selected_node_progress is Dictionary:
 		flat["node_progress"] = (selected_node_progress as Dictionary).duplicate(true)
 
+	var selected_played_ids: Variant = selected.get("played_activity_ids", [])
+	if selected_played_ids is Array:
+		flat["played_activity_ids"] = (selected_played_ids as Array).duplicate(true)
+
+	var selected_completed_ids: Variant = selected.get("completed_activity_ids", [])
+	if selected_completed_ids is Array:
+		flat["completed_activity_ids"] = (selected_completed_ids as Array).duplicate(true)
+
+	var selected_completed_by_request: Variant = selected.get(
+		"completed_activity_ids_by_request",
+		{}
+	)
+	if selected_completed_by_request is Dictionary:
+		flat["completed_activity_ids_by_request"] = (
+			selected_completed_by_request as Dictionary
+		).duplicate(true)
+
 	flat["history"] = _schema.normalizar_historial(selected.get("history", []))
 	return flat
+
+
+func _flatten_completed_activity_ids_by_request(raw_value: Variant) -> Array:
+	var result: Array = []
+	if not raw_value is Dictionary:
+		return result
+	for raw_ids in (raw_value as Dictionary).values():
+		if not raw_ids is Array:
+			continue
+		for raw_id in (raw_ids as Array):
+			var activity_id: String = str(raw_id).strip_edges()
+			if activity_id.is_empty() or result.has(activity_id):
+				continue
+			result.append(activity_id)
+	return result
 
 
 func _meta_guardado_vacia() -> Dictionary:

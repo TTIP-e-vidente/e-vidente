@@ -3,7 +3,7 @@
 # Selecciona un nodo y delega el flujo jugable en NodoRuntime.
 extends Node2D
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
@@ -107,7 +107,22 @@ func actualizar_estados_de_nodos() -> void:
 	if save_manager != null and save_manager.has_method("get_all_node_progress"):
 		node_progress = save_manager.call("get_all_node_progress")
 
+	print("[MapState] save_clean=", node_progress.is_empty())
+
+	# Paso 1: Sincronizar disco con Global para evaluar dependencias correctamente
+	for node_data in nodos_mapa:
+		var key: String = str(node_data.node_key).strip_edges()
+		if not key.is_empty() and node_progress.has(key):
+			var np: Variant = node_progress[key]
+			if np is Dictionary:
+				var saved_progress: Dictionary = np as Dictionary
+				var saved_completed: bool = bool(saved_progress.get("completed", false))
+				if saved_completed:
+					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
+
+	# Paso 2: Calcular estado visual y lógico del mapa (ahora seguro)
 	var node_states: Array[Dictionary] = []
+	var completed_count: int = 0
 	for node_data in nodos_mapa:
 		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
 		var key: String = str(node_data.node_key).strip_edges()
@@ -123,12 +138,23 @@ func actualizar_estados_de_nodos() -> void:
 					saved_accuracy = 100.0
 				state["best_percent"] = saved_percent
 				state["best_accuracy"] = saved_accuracy
-				if saved_completed and not bool(state.get("is_completed", false)):
-					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
+				if saved_completed:
 					state["is_completed"] = true
 					state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
 					state["can_play"] = true
+
+		if bool(state.get("is_completed", false)):
+			completed_count += 1
+
+		print(
+			"[MapState] node_key=", key,
+			" completed=", state.get("is_completed", false),
+			" unlocked=", state.get("is_unlocked", false),
+			" current=", state.get("is_unlocked", false) and not state.get("is_completed", false)
+		)
 		node_states.append(state)
+
+	print("[MapState] completed_count=", completed_count, " required_count=", nodos_mapa.size())
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
 	if map_board.has_method("refresh_progress_from_save"):
 		map_board.call("refresh_progress_from_save")

@@ -219,8 +219,8 @@ func _aplicar_estilo(tipo: String) -> void:
 		scale = _base_scale
 
 
-func _calcular_tamano_fuente(texto: String) -> int:
-	var largo := texto.length()
+func _calcular_tamano_fuente(texto_entrada: String) -> int:
+	var largo := texto_entrada.length()
 	if largo > 30:
 		return 20
 	if largo > 22:

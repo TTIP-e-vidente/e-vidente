@@ -201,7 +201,7 @@ func _animar_feedback_correcto() -> void:
 
 
 func _animar_feedback_incorrecto() -> void:
-	var posicion_actual := global_position
+	var _posicion_actual := global_position
 	var tween := get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)

@@ -11,7 +11,7 @@ const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
 const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
 const RETURN_TWEEN_DURATION := 0.35
@@ -66,8 +66,11 @@ var _interaction_locked: bool = false
 var _typewriter: TypewriterEffect = TypewriterEffect.new()
 var _ruta_escena_de_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 var _continue_requested: bool = false
+var _activity_started_msec: int = 0
 
 func _ready() -> void:
+	_activity_started_msec = Time.get_ticks_msec()
+
 	_configurar_typewriter()
 	_validar_nodos_escena()
 
@@ -504,19 +507,28 @@ func _al_solicitar_continuar_juego() -> void:
 	_continuar_o_cerrar_nodo()
 
 func _continuar_o_cerrar_nodo() -> void:
-	var hay_siguiente_juego: bool = NODO_RUNTIME.finalizar_mini_juego(
-		get_tree(),
-		Callable(),
-		Callable()
-	)
+	_finalizar_actividad(true)
 
-	if not hay_siguiente_juego:
-		_ir_a_flujo_post_juego()
+func _calcular_elapsed_seconds() -> float:
+	if _activity_started_msec <= 0:
+		push_warning("[TimeTracker] activity_started_msec no inicializado.")
+		return -1.0
+	var elapsed := float(Time.get_ticks_msec() - _activity_started_msec) / 1000.0
+	print("[TimeTracker] elapsed_seconds=", elapsed)
+	return elapsed
 
-func _ir_a_flujo_post_juego() -> void:
+func _finalizar_actividad(success: bool) -> void:
 	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
-	var node_key: String = str(actividad.get("node_key", "")).strip_edges()
-	PostGameFlowControllerScript.navigate_to_return_target(get_tree(), _ruta_escena_de_retorno, node_key)
+	var resultado := {
+		"activity_id": str(actividad.get("id", actividad.get("activity_id", ""))),
+		"node_key": str(actividad.get("node_key", "")),
+		"map_id": "celiaquia",
+		"success": success,
+		"accuracy": 1.0 if success else 0.0,
+		"exp": 10,
+		"elapsed_seconds": _calcular_elapsed_seconds()
+	}
+	PostGameFlowControllerScript.finalizar_actividad(get_tree(), resultado)
 
 func _deshabilitar_interaccion() -> void:
 	_interaction_locked = true

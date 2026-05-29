@@ -1,6 +1,6 @@
 extends Node2D
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const GameStreakTrackerScript := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
@@ -101,8 +101,13 @@ var pregunta_actual: Preguntas:
 @onready var _indicador_de_progreso_de_juego = $IndicadorProgresoDeJuego
 @onready var _progress_bar = get_node_or_null("ProgressBar")
 
+var _activity_started_msec: int = 0
+var _conteo_errores: int = 0
+
 # Entrada del quiz
 func _ready() -> void:
+	_activity_started_msec = Time.get_ticks_msec()
+	print("[TimeTracker] started quiz")
 	puntaje = 0
 	_configurar_layouts_de_opciones()
 	_reiniciar_cierre_del_quiz()
@@ -882,22 +887,12 @@ func _on_flecha_derecha_pressed() -> void:
 	_al_presionar_continuar()
 
 
-func _on_teaching_finished(timer_finished: bool) -> void:
-	_continuar_despues_de_ensenanza(timer_finished)
+func _on_teaching_finished(_timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(_timer_finished)
 
 
-func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
-	if not _has_post_game_flow_state():
-		_return_to_map_scene()
-		return
-
-	# La escena solo informa que termino la UI; el controlador decide el destino.
-	PostGameFlowControllerScript.navigate_after_teaching(
-		get_tree(),
-		_take_post_game_flow_state(),
-		_take_post_game_streak_feedback(),
-		timer_finished
-	)
+func _continuar_despues_de_ensenanza(_timer_finished: bool) -> void:
+	_return_to_map_scene()
 
 
 func _has_post_game_flow_state() -> bool:
@@ -1000,26 +995,36 @@ func volver_al_mapa() -> void:
 
 
 func _cancelar_partida_de_nodo_desde_juego() -> void:
-	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
-	if global_autoload != null:
-		if global_autoload.has_method("finalizar_partida_de_nodo"):
-			global_autoload.call("finalizar_partida_de_nodo")
-		if global_autoload.has_method("limpiar_sesion_nodo_jugable_activo"):
-			global_autoload.call("limpiar_sesion_nodo_jugable_activo")
-	_ocultar_continuacion_automatica()
-	_limpiar_media_de_pregunta()
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_de_retorno
-	)
+	_finalizar_actividad(false)
 
 
 func _return_to_map_scene() -> void:
+	_finalizar_actividad(true)
+
+
+func _calcular_elapsed_seconds() -> float:
+	if _activity_started_msec <= 0:
+		push_warning("[TimeTracker] activity_started_msec no inicializado.")
+		return -1.0
+	var elapsed := float(Time.get_ticks_msec() - _activity_started_msec) / 1000.0
+	print("[TimeTracker] elapsed_seconds=", elapsed)
+	return elapsed
+
+func _finalizar_actividad(success: bool) -> void:
 	_ocultar_continuacion_automatica()
 	_limpiar_media_de_pregunta()
-	PostGameFlowControllerScript.navigate_to_return_target(
-		get_tree(),
-		_ruta_escena_de_retorno
-	)
+	var actividad: Dictionary = NodoRuntimeScript.obtener_actividad_actual(get_tree())
+	var activity_id: String = str(actividad.get("id", actividad.get("activity_id", "")))
+	var resultado := {
+		"activity_id": activity_id,
+		"node_key": _nodo_actual,
+		"map_id": "celiaquia",
+		"success": success,
+		"accuracy": 1.0 if _conteo_errores == 0 else 0.5,
+		"exp": 10,
+		"elapsed_seconds": _calcular_elapsed_seconds()
+	}
+	PostGameFlowControllerScript.finalizar_actividad(get_tree(), resultado)
+
 	
 	

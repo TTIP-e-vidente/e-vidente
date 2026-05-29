@@ -1,7 +1,7 @@
+@tool
 # Medalla compacta de completado.
 # Dibuja con _draw(): círculo verde + check blanco + mini estrella de precisión (discreta).
 # No usa texturas externas ni nodos hijos.
-@tool
 extends Node2D
 class_name CompletionMedal
 
@@ -66,8 +66,8 @@ func set_progress(value: float, _animated: bool = false) -> void:
 
 # ── Dibujo ─────────────────────────────────────────────────────────────────────
 func _draw() -> void:
-	var show: bool = completed or (Engine.is_editor_hint() and debug_completed)
-	if not show:
+	var should_show: bool = completed or (Engine.is_editor_hint() and debug_completed)
+	if not should_show:
 		return
 
 	var eff: float = debug_progress if Engine.is_editor_hint() else progress

@@ -1,9 +1,8 @@
 extends RefCounted
 class_name ContinuidadDePartidaDeNodo
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
-const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
 
@@ -28,11 +27,11 @@ static func continuar_o_finalizar_partida(
 	var partida_actual: Dictionary = estado_global.call("obtener_partida_de_nodo_actual")
 	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
 	var game_index: int = int(partida_actual.get("indice_juego_actual", 0))
-	var total_games: int = int(partida_actual.get("total_juegos", 0))
+	var _total_games: int = int(partida_actual.get("total_juegos", 0))
 	var stats: Dictionary = {}
 	if estado_global.has_method("obtener_stats_nodo_actual"):
 		stats = estado_global.call("obtener_stats_nodo_actual")
-	var percent: float = clampf(float(NodoRuntimeScript.calcular_precision(tree)) / 100.0, 0.0, 1.0)
+	var percent: float = clampf(float(NodoRuntime.calcular_precision(tree)) / 100.0, 0.0, 1.0)
 	var score: int = int(stats.get("aciertos", 0))
 	var completed: bool = true
 	print(
@@ -97,7 +96,19 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 			_resolver_identificador_de_juego(juego_actual),
 		]
 	)
-	GameSceneRouter.ir_a_modo_jugable(tree, modo_actual)
+
+	print("[NodeOpen] node_key=", str(partida_actual.get("clave_nodo", "")).strip_edges())
+	print("[NodeOpen] plan_size=", int(partida_actual.get("total_juegos", 0)))
+	print("[NodeOpen] current_activity_id=", _resolver_identificador_de_juego(juego_actual))
+	print("[NodeOpen] opening_activity_type=", modo_actual)
+	print("[NodeOpen] scene_path=", "") # Scene path might be handled by GameSceneRouter
+
+	_marcar_activity_actual_jugada(tree, juego_actual)
+	var router: Node = tree.root.get_node_or_null("GameSceneRouter")
+	if router != null and router.has_method("ir_a_modo_jugable"):
+		router.call("ir_a_modo_jugable", tree, modo_actual)
+	else:
+		push_error("[NodeOpen] No se encontró GameSceneRouter o no tiene ir_a_modo_jugable.")
 	return true
 
 
@@ -130,9 +141,19 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
 	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
 	var save_manager: Node = _get_save_manager(tree)
-	if request_key.is_empty() or activity_id.is_empty() or save_manager == null:
+	if activity_id.is_empty() or save_manager == null:
 		return
 	save_manager.call("mark_activity_completed", request_key, activity_id)
+
+
+static func _marcar_activity_actual_jugada(tree: SceneTree, juego_actual: Dictionary) -> void:
+	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
+	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
+	var save_manager: Node = _get_save_manager(tree)
+	if activity_id.is_empty() or save_manager == null:
+		return
+	if save_manager.has_method("mark_activity_played"):
+		save_manager.call("mark_activity_played", request_key, activity_id)
 
 
 static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary) -> void:
@@ -141,7 +162,7 @@ static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary)
 	var save_manager: Node = _get_save_manager(tree)
 	if node_key.is_empty() or save_manager == null:
 		return
-	var precision: int = NodoRuntimeScript.calcular_precision(tree)
+	var precision: int = NodoRuntime.calcular_precision(tree)
 	var total_games: int = int(partida_actual.get("total_juegos", 0))
 	var completed_games: int = total_games
 	var estado_global: Node = _obtener_estado_global(tree)
@@ -173,6 +194,7 @@ static func _registrar_exp_finalizacion(
 	var save_manager: Node = _get_save_manager(tree)
 	if save_manager == null:
 		return
+	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
 	var titulo_nodo: String = str(partida_actual.get("titulo_nodo", "")).strip_edges()
 	var dificultad_fallback: int = max(1, int(partida_actual.get("dificultad", 1)))
 
@@ -226,6 +248,7 @@ static func _registrar_exp_finalizacion(
 
 	if estado_global.has_method("establecer_ultima_finalizacion"):
 		estado_global.call("establecer_ultima_finalizacion", {
+			"node_key": node_key,
 			"exp_base": exp_base_total,
 			"exp_ganada": exp_ganada,
 			"total_exp": total_exp_nuevo,

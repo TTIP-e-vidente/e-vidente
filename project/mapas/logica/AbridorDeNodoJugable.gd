@@ -2,7 +2,7 @@ extends RefCounted
 class_name AbridorDeNodoJugable
 
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
 const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const ContinuidadDePartidaDeNodoScript := preload(
 	"res://mapas/logica/ContinuidadDePartidaDeNodo.gd"

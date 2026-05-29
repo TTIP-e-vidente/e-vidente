@@ -3,7 +3,6 @@ extends Control
 const ARCHIVERO_SCENE := "res://niveles/selector.tscn"
 const INTRO_SCENE := "res://niveles/intro.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 
 var profile_name_preview_label: Label
 var profile_email_preview_label: Label

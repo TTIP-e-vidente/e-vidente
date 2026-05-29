@@ -1,6 +1,6 @@
+@tool
 # Badge de progreso para nodos del mapa.
 # Composición: CheckBadge (arriba) + StarProgress (abajo).
-@tool
 extends Node2D
 class_name NodeProgressBadge
 

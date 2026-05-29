@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dp64ipg5ra7p8"]
+[gd_scene format=3 uid="uid://cc1vtfk3wb4"]
 
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="1_2gmc3"]
 [ext_resource type="Script" uid="uid://hv4f5op7qb4b" path="res://mapas/finalización_partida.gd" id="1_k2l4b"]
@@ -11,7 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://cbukx38vl5g7d" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://7ej3tir1dmri" path="res://assets-sistema/sonidos/leccion-terminada.mp3" id="8_j2nsx"]
 
-[node name="FinalizaciónPartida" type="Node2D" unique_id=2003681950]
+[node name="FinalizacionPartida" type="Node2D" unique_id=2003681950]
 script = ExtResource("1_k2l4b")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("1_2gmc3")]

@@ -1,5 +1,5 @@
 extends CanvasLayer
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const COMPLETION_LAYER := 70
 
@@ -37,4 +37,5 @@ func _refresh_copy() -> void:
 
 func _on_continuar_pressed() -> void:
 	get_tree().paused = false
-	GameSceneRouter.go_to_mode_selector(get_tree())
+	print("[MapCompletion] close_reward_returning_to_map")
+	queue_free()

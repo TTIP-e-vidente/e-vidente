@@ -1,6 +1,5 @@
 extends Node2D
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 

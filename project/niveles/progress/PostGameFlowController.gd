@@ -4,7 +4,7 @@ extends RefCounted
 # Decide que ocurre despues de mostrar una ensenanza: racha, siguiente juego,
 # vuelta al mapa/libro o fallback. No dibuja UI.
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
@@ -19,6 +19,72 @@ const FLOW_SECTION_DEBUG := "debug"
 const TARGET_KEY_NEXT := "next"
 const TARGET_KEY_FALLBACK := "fallback"
 const TARGET_KEY_RETURN_TO := "return_to"
+
+static func _normalizar_resultado(resultado: Dictionary) -> Dictionary:
+	var elapsed := float(resultado.get("elapsed_seconds", -1.0))
+
+	if elapsed < 0.0:
+		push_warning(
+			"[PostGameFlow] missing elapsed_seconds activity_id=%s type=%s resultado=%s"
+			% [
+				str(resultado.get("activity_id", "")),
+				str(resultado.get("type", resultado.get("activity_type", ""))),
+				str(resultado)
+			]
+		)
+
+	return {
+		"activity_id": str(resultado.get("activity_id", "")),
+		"node_key": str(resultado.get("node_key", "")),
+		"map_id": str(resultado.get("map_id", "")),
+		"success": bool(resultado.get("success", false)),
+		"accuracy": float(resultado.get("accuracy", 0.0)),
+		"exp": int(resultado.get("exp", 0)),
+		"elapsed_seconds": elapsed
+	}
+
+static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) -> void:
+	var resultado := _normalizar_resultado(resultado_bruto)
+	var _activity_id: String = str(resultado.get("activity_id", "")).strip_edges()
+	var node_key: String = str(resultado.get("node_key", "")).strip_edges()
+	var success: bool = bool(resultado.get("success", false))
+
+	if node_key.is_empty():
+		push_error("[PostGameFlowController] finalizar_actividad sin node_key. Fallback al mapa.")
+		GameSceneRouter.ir_a_escena_segura(tree, GameSceneRouter.MAP_SCENE_PATH)
+		return
+
+	if not success:
+		GameSceneRouter.ir_a_escena_segura(tree, GameSceneRouter.MAP_SCENE_PATH)
+		return
+
+	var NodoRuntimeScript = load("res://sistemas/NodoRuntime.gd")
+	var hay_mas_juegos := bool(NodoRuntimeScript.finalizar_mini_juego(tree))
+
+	if hay_mas_juegos:
+		return
+	
+	var elapsed: float = float(resultado.get("elapsed_seconds", -1.0))
+	if elapsed >= 0.0:
+		var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+		if stats.is_empty():
+			stats = {
+				"node_key": node_key,
+				"exp_ganada": resultado.get("exp", 0),
+				"precision": int(resultado.get("accuracy", 0.0) * 100) if resultado.get("accuracy", 0.0) <= 1.0 else int(resultado.get("accuracy", 0.0)),
+				"elapsed_seconds": elapsed
+			}
+		else:
+			stats["elapsed_seconds"] = elapsed
+		Global.establecer_ultima_finalizacion(stats)
+
+	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
+	if save_manager != null and save_manager.has_method("guardar_progreso_en_disco"):
+		save_manager.call("guardar_progreso_en_disco")
+	
+	GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
+
+
 
 static func build_post_game_flow_state(
 	previous_streak: Dictionary,

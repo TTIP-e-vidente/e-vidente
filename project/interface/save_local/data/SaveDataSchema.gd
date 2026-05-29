@@ -31,6 +31,8 @@ func datos_guardado_predeterminados() -> Dictionary:
 		"progress": {},
 		"node_progress": {},
 		"history": [],
+		"played_activity_ids": [],
+		"completed_activity_ids": [],
 		"completed_activity_ids_by_request": {},
 		"total_exp": 0
 	}

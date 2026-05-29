@@ -1,8 +1,6 @@
 extends RefCounted
 class_name ModalidadRouter
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
-
 const MODE_DRAG_DROP := "drag_drop"
 const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
@@ -18,17 +16,21 @@ static func abrir_modalidad(tree: SceneTree, activity: Dictionary) -> void:
 			"ModalidadRouter: mode invalido en activity: %s" % JSON.stringify(activity)
 		)
 		return
-	GameSceneRouter.ir_a_modo_jugable(tree, mode)
+	var router: Node = tree.root.get_node_or_null("GameSceneRouter")
+	if router != null and router.has_method("ir_a_modo_jugable"):
+		router.call("ir_a_modo_jugable", tree, mode)
+	else:
+		push_error("ModalidadRouter: No se encontro GameSceneRouter en el arbol.")
 
 
 static func resolver_scene_path(activity: Dictionary) -> String:
 	match _resolver_modo(activity):
 		MODE_DRAG_DROP:
-			return GameSceneRouter.LEVEL_SCENE_PATH
+			return "res://niveles/nivel_1/Level.tscn"
 		MODE_QUIZ_CHOICE:
-			return GameSceneRouter.QUESTIONS_SCENE_PATH
+			return "res://preguntas/pregunta.tscn"
 		MODE_VINCULACION_CONCEPTOS:
-			return GameSceneRouter.VINCULACION_CONCEPTOS_SCENE_PATH
+			return "res://vincular/VincularConceptos.tscn"
 		MODE_COMPLETAR_PALABRA:
 			return COMPLETAR_PALABRA_SCENE_PATH
 		_:

@@ -240,7 +240,7 @@ static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 	var file_path: String = str(game.get("archivo", game.get("json_path", ""))).strip_edges()
 	var entry_activity_id: String = str(game.get("activity_id", "")).strip_edges()
 	var entry_pack_id: String = str(game.get("pack_id", "")).strip_edges()
-	var difficulty: int = int(game.get("difficulty", game.get("dificultad", 0)))
+	var local_difficulty: int = int(game.get("difficulty", game.get("dificultad", 0)))
 	var no_activity_id: bool = entry_activity_id.is_empty()
 	var incomplete_legacy: bool = (
 		game_type.is_empty() or game_mode.is_empty() or file_path.is_empty()
@@ -256,8 +256,8 @@ static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 		"json_path": file_path,
 		"activity_id": entry_activity_id,
 		"pack_id": entry_pack_id,
-		"difficulty": difficulty,
-		"dificultad": difficulty,
+		"difficulty": local_difficulty,
+		"dificultad": local_difficulty,
 		"titulo": str(game.get("titulo", "")).strip_edges(),
 		"title": str(game.get("titulo", game.get("title", ""))).strip_edges(),
 	}

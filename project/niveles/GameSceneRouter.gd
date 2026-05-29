@@ -34,7 +34,7 @@ const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
 const COMPLETAR_PALABRA_SCENE_PATH := "res://completar/completar_palabra.tscn"
-const FINALIZACION_PARTIDA_SCENE_PATH := "res://mapas/Finalización-Partida.tscn"
+const FINALIZACION_PARTIDA_SCENE_PATH := "res://mapas/finalizacion_partida.tscn"
 
 const ROUTES := {
 	ROUTE_SPLASH: SPLASH_SCENE_PATH,
@@ -402,6 +402,24 @@ static func go_to_resume(
 	).strip_edges()
 	var safe_scene_path: String = scene_path if not scene_path.is_empty() else fallback_scene
 	_change_scene_to_path(tree, safe_scene_path)
+
+
+static func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
+	if tree == null:
+		return
+	go_to_target(tree, {"type": "scene_path", "scene_path": FINALIZACION_PARTIDA_SCENE_PATH}, fallback_return_to)
+
+
+static func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_path: String = MAP_SCENE_PATH) -> void:
+	if tree == null:
+		return
+	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
+		push_error("GameSceneRouter: path de escena invalido o no encontrado: %s. Redirigiendo al fallback: %s" % [scene_path, fallback_path])
+		if fallback_path.is_empty() or not ResourceLoader.exists(fallback_path):
+			return
+		_change_scene_to_path(tree, fallback_path)
+		return
+	_change_scene_to_path(tree, scene_path)
 
 
 # --- Helpers privados -------------------------------------------------------

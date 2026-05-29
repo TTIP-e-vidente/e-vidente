@@ -1,9 +1,8 @@
 extends RefCounted
 class_name NodoRuntime
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
+
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
-const ContinuidadScript := preload("res://mapas/logica/ContinuidadDePartidaDeNodo.gd")
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 const NodoStatsScript := preload("res://sistemas/NodoStats.gd")
 const ResultadoDeNodoScript := preload("res://nodo/ResultadoDeNodo.gd")
@@ -42,7 +41,7 @@ static func iniciar(
 	var sesion_de_partida := _crear_sesion_de_partida(plan, node_data)
 	global_state.call("establecer_sesion_de_juego", sesion_de_partida)
 
-	if not ContinuidadScript.abrir_juego_actual(tree, global_state):
+	if not ContinuidadDePartidaDeNodo.abrir_juego_actual(tree, global_state):
 		_limpiar(global_state)
 		return _error("No se pudo abrir el primer juego del nodo.")
 
@@ -61,7 +60,7 @@ static func avanzar_actividad(
 	antes_de_abrir_siguiente: Callable = Callable(),
 	al_finalizar: Callable = Callable()
 ) -> bool:
-	return ContinuidadScript.continuar_o_finalizar_partida(
+	return ContinuidadDePartidaDeNodo.continuar_o_finalizar_partida(
 		tree,
 		antes_de_abrir_siguiente,
 		al_finalizar
