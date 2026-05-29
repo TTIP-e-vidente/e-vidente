@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bbhg7rn0m123c"]
 
 [ext_resource type="Script" uid="uid://cdmtjey7f7b2v" path="res://interface/components/DragObjectiveText/drag_objective_text.gd" id="1_dot"]
+[ext_resource type="Texture2D" uid="uid://tf60noplu1no" path="res://assets-sistema/interfaz/cuadrado-2x2-blanco.png" id="2_b1cue"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_rubik"]
-[ext_resource type="Texture2D" uid="uid://b70dbthsmpf6y" path="res://assets-sistema/interfaz/cuadrado-6x2.png" id="3_b1cue"]
 
 [node name="DragObjectiveText" type="Control" unique_id=120701528]
 custom_minimum_size = Vector2(280, 105)
@@ -11,6 +11,13 @@ anchors_preset = 0
 offset_right = 340.0
 offset_bottom = 115.0
 script = ExtResource("1_dot")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1063094030]
+modulate = Color(0.85882354, 0.75686276, 0.31764707, 1)
+self_modulate = Color(1, 1, 1, 0.19215687)
+position = Vector2(163.99998, 61.000008)
+scale = Vector2(1.454772, -1.1454264)
+texture = ExtResource("2_b1cue")
 
 [node name="ActionLabel" type="Label" parent="." unique_id=1710017489]
 layout_mode = 0
@@ -76,8 +83,3 @@ offset_top = 102.0
 offset_right = 248.0
 offset_bottom = 105.0
 color = Color(0.1, 0.1, 0.095, 0.58)
-
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1063094030]
-position = Vector2(163.99998, 61.000008)
-scale = Vector2(0.86281663, 0.8143978)
-texture = ExtResource("3_b1cue")
