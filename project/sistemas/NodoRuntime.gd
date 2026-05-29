@@ -5,7 +5,6 @@ class_name NodoRuntime
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 const NodoStatsScript := preload("res://sistemas/NodoStats.gd")
-const ResultadoDeNodoScript := preload("res://nodo/ResultadoDeNodo.gd")
 const GameSessionDataScript := preload("res://flow/session/game_session_data.gd")
 
 
@@ -74,45 +73,9 @@ static func esta_completado(tree: SceneTree) -> bool:
 	return not bool(global_state.call("hay_siguiente_juego_de_partida"))
 
 
-static func obtener_dificultad(tree: SceneTree) -> int:
-	var global_state: Node = _global(tree)
-	if global_state == null:
-		return 1
-	return global_state.call("obtener_dificultad_del_juego_actual")
-
-
-static func obtener_tipo_modalidad_actual(tree: SceneTree) -> String:
-	return str(obtener_actividad_actual(tree).get("mode", "")).strip_edges()
-
-
-static func get_exp_base_por_dificultad(difficulty: int) -> int:
-	# Delega a NodoProgressionRules — sin números mágicos en este archivo.
-	return NodoProgressionRulesScript.get_exp_for_difficulty_value(difficulty)
-
-
-static func calcular_exp(resultado: Dictionary) -> int:
-	# resultado puede incluir: difficulty, correcto (bool), bonus_racha (int)
-	var difficulty: int = int(resultado.get("difficulty", resultado.get("dificultad", 1)))
-	var correcto: bool = bool(resultado.get("correcto", resultado.get("correct", true)))
-	if not correcto:
-		return 0
-	var exp_base: int = get_exp_base_por_dificultad(difficulty)
-	var bonus_racha: int = int(resultado.get("bonus_racha", resultado.get("streak_bonus", 0)))
-	return exp_base + bonus_racha
-
-
 # --- API pública trainee ----------------------------------------------------
 # Estos wrappers tienen nombres simples para facilitar el onboarding.
 # Internamente delegan a las funciones estáticas de arriba.
-
-# Inicia el flujo de un nodo. Llama a esto desde MapScene al hacer clic en un nodo.
-static func iniciar_nodo(
-	tree: SceneTree,
-	node_data: MapNodeData,
-	return_to: String = GameSceneRouter.MAP_SCENE_PATH
-) -> Dictionary:
-	return iniciar(tree, node_data, return_to)
-
 
 # Avanza o finaliza el nodo luego de que un mini juego terminó.
 # Llama a esto desde Level.gd, pregunta.gd o vincular_conceptos.gd.
@@ -129,30 +92,9 @@ static func hay_siguiente_mini_juego(tree: SceneTree) -> bool:
 	return not esta_completado(tree)
 
 
-# Devuelve el estado actual del nodo: índice, total y actividad en curso.
-static func obtener_progreso(tree: SceneTree) -> Dictionary:
-	var actividad: Dictionary = obtener_actividad_actual(tree)
-	return {
-		"indice_actual": int(actividad.get("indice_juego_actual", 0)),
-		"total": int(actividad.get("total_juegos", 1)),
-		"activity_id": str(actividad.get("activity_id", "")),
-		"modo": str(actividad.get("mode", "")),
-	}
-
-
-# Devuelve la actividad en curso tal como la usarían los mini juegos.
-static func obtener_actividad_actual_trainee(tree: SceneTree) -> Dictionary:
-	return obtener_actividad_actual(tree)
-
-
 # Calcula la precisión basada en el acumulador de stats del nodo actual.
 static func calcular_precision(tree: SceneTree) -> int:
 	return NodoStatsScript.get_precision(tree)
-
-
-# Devuelve el tiempo transcurrido del nodo en formato "MM:SS".
-static func calcular_tiempo(tree: SceneTree) -> String:
-	return NodoStatsScript.get_duration_formatted(tree)
 
 
 # Calcula la EXP ganada en este nodo según la precisión y los mini juegos jugados.
@@ -218,12 +160,6 @@ static func crear_resultado_de_nodo(tree: SceneTree) -> Dictionary:
 
 
 # --- Privados ---------------------------------------------------------------
-
-## Devuelve el resultado del nodo actual como objeto tipado ResultadoDeNodo.
-## Conveniente para code que prefiere objetos sobre Dictionaries.
-static func crear_resultado_tipado(tree: SceneTree) -> ResultadoDeNodo:
-	return ResultadoDeNodoScript.desde_diccionario(crear_resultado_de_nodo(tree))
-
 
 static func _crear_sesion_de_partida(plan: Dictionary, node_data: MapNodeData) -> Resource:
 	var juegos: Array = plan.get("juegos", [])

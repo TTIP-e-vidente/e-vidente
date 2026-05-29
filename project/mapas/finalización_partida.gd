@@ -77,13 +77,24 @@ func _ready() -> void:
 
 	mostrar_resultados(
 		int(stats.get("exp_ganada", stats.get("exp", 0))),
-		int(stats.get("precision", stats.get("accuracy", 1.0) * 100)) if stats.get("precision") == null or stats.get("precision") > 1.0 else int(float(stats.get("precision", 1.0)) * 100),
+		_leer_precision_real(stats),
 		tiempo_final
 	)
 
 	# Conectar botón Continuar
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
 		continuar_btn.pressed.connect(continuar_al_mapa)
+
+
+# Lee la precisión real del resultado. NUNCA inventa 100% por falta de datos:
+# si no hay precisión registrada se muestra 0%. "Completado" no implica perfecto.
+func _leer_precision_real(stats: Dictionary) -> int:
+	if stats.has("precision"):
+		return int(stats.get("precision", 0))
+	# Compatibilidad: algunos resultados legacy guardan accuracy como ratio 0.0–1.0.
+	if stats.has("accuracy"):
+		return int(round(float(stats.get("accuracy", 0.0)) * 100.0))
+	return 0
 
 
 func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void:

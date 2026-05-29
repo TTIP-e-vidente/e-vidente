@@ -1,14 +1,12 @@
 extends RefCounted
-class_name MapFlow
+class_name FlujoDeNodoJugable
 
-# Coordina la selección de nodo en el mapa.
-# No renderiza. No calcula EXP. Delega apertura en AbridorDeNodoJugable.
+# Decide si un nodo del mapa está disponible y lo abre si corresponde.
+# No renderiza. No calcula EXP. Delega la apertura en AbridorDeNodoJugable.
 
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 
-signal nodo_seleccionado(node_id: String)
-signal nodo_bloqueado(node_id: String)
 signal apertura_fallida(error: String)
 
 
@@ -21,10 +19,8 @@ func seleccionar_nodo(
 		return
 
 	if not _nodo_esta_desbloqueado(nodos_mapa, node_data):
-		nodo_bloqueado.emit(node_data.node_key)
 		return
 
-	nodo_seleccionado.emit(node_data.node_key)
 	_abrir_nodo_jugable(tree, node_data)
 
 

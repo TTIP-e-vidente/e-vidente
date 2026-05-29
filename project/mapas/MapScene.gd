@@ -15,13 +15,13 @@ const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
-const MapFlowScript := preload("res://flow/map/map_flow.gd")
+const FlujoDeNodoJugableScript := preload("res://flow/map/flujo_de_nodo_jugable.gd")
 
 var map_id: String = ""
 var map_title: String = ""
 var track_key_mapa: String = DEFAULT_TRACK_KEY
 var nodos_mapa: Array[MapNodeData] = []
-var _map_flow: MapFlow = null  # gestiona selección de nodo desde el mapa
+var _flujo_de_nodo: FlujoDeNodoJugable = null  # gestiona selección de nodo desde el mapa
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard
@@ -29,9 +29,9 @@ var _map_flow: MapFlow = null  # gestiona selección de nodo desde el mapa
 
 # Entrada desde el mapa
 func _ready() -> void:
-	# Inicializar MapFlow y conectar señal de error antes de cualquier otra cosa.
-	_map_flow = MapFlowScript.new()
-	_map_flow.apertura_fallida.connect(_mostrar_error)
+	# Inicializar el flujo de nodo jugable y conectar su señal de error antes de todo.
+	_flujo_de_nodo = FlujoDeNodoJugableScript.new()
+	_flujo_de_nodo.apertura_fallida.connect(_mostrar_error)
 	_conectar_senales()
 	cargar_mapa()
 	GameSceneRouter.request_scene_preload(
@@ -133,9 +133,8 @@ func actualizar_estados_de_nodos() -> void:
 				var saved_percent: float = float(saved_progress.get("best_percent", 0.0))
 				var saved_accuracy: float = float(saved_progress.get("best_accuracy", saved_percent * 100.0))
 				var saved_completed: bool = bool(saved_progress.get("completed", false))
-				if saved_completed and saved_percent <= 0.0:
-					saved_percent = 1.0
-					saved_accuracy = 100.0
+				# "Completado" no implica 100%: se usa la precisión real guardada.
+				# Si no hay precisión registrada se deja en 0, sin inventar un valor perfecto.
 				state["best_percent"] = saved_percent
 				state["best_accuracy"] = saved_accuracy
 				if saved_completed:
@@ -166,7 +165,7 @@ func al_seleccionar_nodo(node_data: MapNodeData) -> void:
 		return
 
 	_guardar_scroll_actual_del_mapa()
-	_map_flow.seleccionar_nodo(get_tree(), nodos_mapa, node_data)
+	_flujo_de_nodo.seleccionar_nodo(get_tree(), nodos_mapa, node_data)
 
 
 func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:

@@ -4,7 +4,6 @@ extends Node2D
 
 signal node_selected(node_data: MapNodeData)
 
-var _configured_map_nodes: Array = []
 var _configured_node_states: Array[Dictionary] = []
 
 @onready var contenedor_scroll: ScrollContainer = $ScrollContainer
@@ -34,7 +33,6 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 
 
 func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
-	_configured_map_nodes = map_nodes.duplicate()
 	_configured_node_states = node_states.duplicate()
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
@@ -70,27 +68,18 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 
 func refresh_progress_from_save() -> void:
 	print_debug("[MapBoard] refresh_progress_from_save()")
+	# La estrella usa el estado ya calculado por MapScene (única fuente de progreso).
+	# No vuelve a leer SaveManager para evitar lógica de progreso duplicada,
+	# y nunca fuerza 100%: muestra la precisión real guardada.
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
-	var save_manager: Node = get_node_or_null("/root/SaveManager")
-	var node_progress: Dictionary = {}
-	if save_manager != null and save_manager.has_method("get_all_node_progress"):
-		node_progress = save_manager.call("get_all_node_progress")
-	var visible_count: int = mini(visual_nodes.size(), _configured_map_nodes.size())
+	var visible_count: int = mini(visual_nodes.size(), _configured_node_states.size())
 	for index in range(visible_count):
-		var map_node: MapNodeData = _configured_map_nodes[index] as MapNodeData
 		var visual_node: Node2D = visual_nodes[index]
-		if map_node == null or visual_node == null:
+		if visual_node == null:
 			continue
-		var node_key: String = map_node.node_key.strip_edges()
-		var progress: Dictionary = {}
-		if node_progress.has(node_key):
-			var raw_progress: Variant = node_progress[node_key]
-			if raw_progress is Dictionary:
-				progress = raw_progress as Dictionary
-		var completed: bool = bool(progress.get("completed", false))
-		var saved_percent: float = float(progress.get("best_percent", 0.0))
-		if completed and saved_percent <= 0.0:
-			saved_percent = 1.0
+		var node_state: Dictionary = _get_node_state(_configured_node_states, index)
+		var completed: bool = bool(node_state.get("is_completed", false))
+		var saved_percent: float = float(node_state.get("best_percent", 0.0))
 		if completed and visual_node.has_method("set_star_progress"):
 			visual_node.call("set_star_progress", saved_percent)
 
