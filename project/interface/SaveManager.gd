@@ -1,3 +1,6 @@
+# PUBLICO_TRAINEE
+# Fuente de verdad para persistencia local: total_exp, racha, ranking, perfil.
+# No decide gameplay. No abre escenas.
 extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")

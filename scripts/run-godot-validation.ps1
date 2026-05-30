@@ -159,6 +159,41 @@ function Get-ValidationSteps {
         $smokeSuite += $smokeStep
     }
 
+    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
+    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')
+    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_pregunta_test.gd')
+    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_nivel_test.gd')
+    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/post_game_flow_controller_test.gd')
+    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/map_progress_visual_test.gd')
+    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/flujo_progresivo_de_nodo_test.gd')
+    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/vertical_slice_smoke_test.gd')
+
+    $smokeSuite = @($importStep)
+    if ($hasNodeJsonTest) {
+        $smokeSuite += $nodeJsonStep
+    }
+    if ($hasPlanDeCorridaDeNodoTest) {
+        $smokeSuite += $planDeCorridaDeNodoStep
+    }
+    if ($hasIndicadorProgresoPreguntaTest) {
+        $smokeSuite += $indicadorProgresoPreguntaStep
+    }
+    if ($hasIndicadorProgresoNivelTest) {
+        $smokeSuite += $indicadorProgresoNivelStep
+    }
+    if ($hasPostGameFlowTest) {
+        $smokeSuite += $postGameFlowStep
+    }
+    if ($hasMapProgressVisualTest) {
+        $smokeSuite += $mapProgressVisualStep
+    }
+    if ($hasFlujoProgresivoDeNodoTest) {
+        $smokeSuite += $flujoProgresivoDeNodoStep
+    }
+    if ($hasSmokeTest) {
+        $smokeSuite += $smokeStep
+    }
+
     switch ($ValidationMode) {
         'codebase' { return @($importStep) }
         'guardrails' { return @($importStep) }

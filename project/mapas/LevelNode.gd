@@ -1,3 +1,6 @@
+# HELPER_INTERNO
+# Nodo visual individual del mapa (estrella/candado/completado).
+# Solo renderiza estado — no decide flujo.
 @tool
 extends Node2D
 # HELPER_INTERNO
