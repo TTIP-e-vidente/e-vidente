@@ -4,7 +4,7 @@
 ## Mapa
 
 El mapa activo esta en `project/contenido/mapa/celiaquia_mapa.json`.
-Cada nodo define una lista `games`. Para trainees, usar objetos claros:
+Cada nodo define una lista `games`.
 
 ```json
 {
@@ -35,7 +35,7 @@ Dejarlo explícito evita que la UI muestre solo `"Prepará"` sin contexto.
 
 El runtime acepta tres variantes; se recomienda el formato anidado:
 
-**Formato recomendado (anidado):**
+**Formato recomendado:**
 ```json
 {
   "type": "drag",
@@ -48,7 +48,7 @@ El runtime acepta tres variantes; se recomienda el formato anidado:
 }
 ```
 
-**Formato plano (legacy aceptado):**
+**Formato plano:**
 ```json
 {
   "type": "drag",
@@ -59,7 +59,7 @@ El runtime acepta tres variantes; se recomienda el formato anidado:
 }
 ```
 
-**Formato mensaje (legacy aceptado):**
+**Formato mensaje:**
 ```json
 {
   "type": "drag",
@@ -68,7 +68,7 @@ El runtime acepta tres variantes; se recomienda el formato anidado:
 }
 ```
 
-### Flujo de datos (para mantenimiento)
+### Flujo de datos
 
 ```
 celiaquia_mapa.json (game con objective)
@@ -89,9 +89,6 @@ celiaquia_mapa.json (game con objective)
 | Posición, tamaño, fondo visual del banner | `interface/components/DragObjectiveText/DragObjectiveText.tscn` |
 | Textos hardcodeados o animación del banner | `interface/components/DragObjectiveText/drag_objective_text.gd` |
 | Cuándo mostrar/ocultar el banner | `niveles/nivel_1/Level.gd` |
-
-**El script `drag_objective_text.gd` no lee JSON ni Global.**
-**El TSCN controla el layout; el script solo asigna texto y visibilidad.**
 
 ### Diseño visual del mensaje de plato
 
@@ -116,19 +113,6 @@ DragObjectiveText: Control
 └── RestrictionLine: ColorRect ← separador delgado final (se oculta junto con RestrictionLabel)
 ```
 
-**Prueba de diseño (workflow para la diseñadora):**
-
-1. Abrir `DragObjectiveText.tscn` en el editor de Godot.
-2. Mover `MealLabel` 20 px hacia abajo.
-3. Ejecutar el nivel (`Level.tscn`).
-4. Verificar que `MealLabel` aparece 20 px más abajo en runtime.
-5. Revertir el movimiento.
-
-Si el cambio no se refleja, significa que algún script está pisando posiciones y
-hay que reportarlo como bug.
-
-**El script NO sobreescribe `position` ni `size` de ningún label.**
-Fuentes, colores y pesos tipográficos son los únicos overrides que aplica en runtime.
 
 ## Completar Palabra
 
@@ -149,50 +133,3 @@ Se mantiene el diccionario por id para que el diff sea estable:
   }
 }
 ```
-
-Compatibilidad obligatoria:
-
-| Formato anterior | Formato trainee |
-|---|---|
-| `sentence` | `prompt` |
-| `answers` | `correct_answers` |
-| `options` | `choices` |
-
-El loader acepta ambos formatos y entrega ambos aliases al minijuego para no
-romper escenas o tests viejos.
-
-## Preguntas
-
-`project/contenido/mapa/preguntas.json` ya usa nombres bastante claros:
-`prompt`, `options` y `answer`.
-
-Aliases recomendados para futuro, sin migracion masiva por ahora:
-
-| Actual | Alias trainee posible |
-|---|---|
-| `prompt` | `question_text` |
-| `answer` | `correct_answer` |
-| `options` | `choices` |
-
-## Arrastres
-
-`project/contenido/mapa/arrastres.json` describe actividades `drag_food` por
-`meal`, `difficulty`, `teaching_key` y `pick`. No lista alimentos: el runtime
-los toma desde el catalogo de items.
-
-Convencion de ids recomendada:
-
-```text
-drag_<meal>_<dificultad>
-```
-
-Ejemplos: `drag_desayuno_facil`, `drag_cena_dificil`.
-
-## Flujo normalizado
-
-1. `CargadorDeMapa.gd` lee el mapa.
-2. `MapNodeData.gd` conserva `games`.
-3. `ArmadorDePartida.gd` arma el plan y normaliza `objective`.
-4. `Global` expone el juego actual ya enriquecido.
-5. `Level.gd` envia a `DragObjectiveText` solo `action`, `meal`, `connector` y `restriction`.
-6. `CargadorCompletar.gd` normaliza completar palabra desde formato viejo o trainee.
