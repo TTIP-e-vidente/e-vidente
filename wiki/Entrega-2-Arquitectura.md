@@ -2,9 +2,9 @@
 
 ## Cambios respecto a Entrega 1
 
-En Entrega 2 no se modificó la arquitectura central del juego. Se incorporaron componentes nuevos que se integran al flujo existente sin romper la separación de responsabilidades ya establecida.
+En Entrega 2 el enfoque principal fue mejorar el diseño visual y la experiencia de juego, e implementar algunas modalidades pequeñas (interfaces y actividades nuevas) para que la experiencia sea más llamativa y atrapante. Estos cambios se integran al flujo existente sin romper la separación de responsabilidades.
 
-## Componentes nuevos
+## Componentes nuevos 
 
 ### `GameSceneRouter.gd`
 
