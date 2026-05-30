@@ -1,0 +1,81 @@
+﻿[gd_scene format=3 uid="uid://cdrsaaj1qee4m"]
+
+[ext_resource type="Script" uid="uid://uypkmxcgkvgp" path="res://interface/Archivero.gd" id="1_vbpnf"]
+[ext_resource type="Script" uid="uid://duvddudum4o23" path="res://interface/ArchiveroContainer.gd" id="3_c38ao"]
+[ext_resource type="PackedScene" path="res://interface/container.tscn" id="4_wmw33"]
+[ext_resource type="Texture2D" uid="uid://bvs8hdlfr5uvw" path="res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png" id="5_fxxew"]
+[ext_resource type="Texture2D" uid="uid://uw4y72etiy12" path="res://assets-sistema/interfaz/archivero-veganismo.png" id="6_oto7i"]
+[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="7_rysnj"]
+[ext_resource type="AudioStream" uid="uid://dkbkdga3nuvrb" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="8_8uwu2"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="9_uco2i"]
+[ext_resource type="PackedScene" uid="uid://8mlb875rgn" path="res://interface/components/Racha.tscn" id="11_racha"]
+
+[node name="Archivero" type="Node2D" unique_id=736779474]
+script = ExtResource("1_vbpnf")
+
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("9_uco2i")]
+offset_left = -6.0
+offset_top = -5.0
+offset_right = 1147.0
+offset_bottom = 794.0
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=435569979]
+
+[node name="RachaModoSeleccion" parent="CanvasLayer" unique_id=447470425 instance=ExtResource("11_racha")]
+modulate = Color(0.8, 0.8, 0.8, 1)
+offset_left = 10.0
+offset_top = 6.0
+offset_right = 146.0
+offset_bottom = 142.0
+
+[node name="ArchiveroContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=1097672963]
+offset_left = 191.0
+offset_top = 126.0
+offset_right = 1141.0
+offset_bottom = 1634.0
+scale = Vector2(0.87999773, 0.87999773)
+script = ExtResource("3_c38ao")
+
+[node name="celiaco-vegano2" parent="CanvasLayer/ArchiveroContainer" unique_id=267170020 instance=ExtResource("4_wmw33")]
+layout_mode = 2
+file = "res://interface/Libro-Vegan-GF.tscn"
+
+[node name="Archivero-Celiaco" parent="CanvasLayer/ArchiveroContainer/celiaco-vegano2" index="1"]
+texture = ExtResource("5_fxxew")
+
+[node name="vegano" parent="CanvasLayer/ArchiveroContainer" unique_id=1356777200 instance=ExtResource("4_wmw33")]
+layout_mode = 2
+file = "res://interface/libro-vegan.tscn"
+
+[node name="Archivero-Celiaco" parent="CanvasLayer/ArchiveroContainer/vegano" index="1"]
+texture = ExtResource("6_oto7i")
+
+[node name="celiaco" parent="CanvasLayer/ArchiveroContainer" unique_id=2118974346 instance=ExtResource("4_wmw33")]
+layout_mode = 2
+file = "res://interface/libro.tscn"
+
+[node name="Node" type="Node" parent="CanvasLayer" unique_id=730003003]
+
+[node name="Atr├ís" type="Button" parent="." unique_id=329039216]
+offset_left = 14.0
+offset_top = 623.0
+offset_right = 243.0
+offset_bottom = 891.0
+scale = Vector2(0.64, 0.56)
+text = "
+"
+icon = ExtResource("7_rysnj")
+flat = true
+
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=271637825]
+stream = ExtResource("8_8uwu2")
+volume_db = -4.962
+attenuation = 2.07053
+
+[connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entrado"]
+[connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_salido"]
+[connection signal="pressed" from="Atr├ís" to="." method="_on_atras_presionado"]
+
+[editable path="CanvasLayer/ArchiveroContainer/celiaco-vegano2"]
+[editable path="CanvasLayer/ArchiveroContainer/vegano"]
+[editable path="CanvasLayer/ArchiveroContainer/celiaco"]
