@@ -1,4 +1,4 @@
-﻿[gd_scene format=3 uid="uid://cdrsaaj1qee4m"]
+[gd_scene format=3 uid="uid://cdrsaaj1qee4m"]
 
 [ext_resource type="Script" uid="uid://uypkmxcgkvgp" path="res://interface/Archivero.gd" id="1_vbpnf"]
 [ext_resource type="Script" uid="uid://duvddudum4o23" path="res://interface/ArchiveroContainer.gd" id="3_c38ao"]
@@ -56,7 +56,7 @@ file = "res://interface/libro.tscn"
 
 [node name="Node" type="Node" parent="CanvasLayer" unique_id=730003003]
 
-[node name="Atr├ís" type="Button" parent="." unique_id=329039216]
+[node name="Atr??s" type="Button" parent="." unique_id=329039216]
 offset_left = 14.0
 offset_top = 623.0
 offset_right = 243.0
@@ -74,7 +74,7 @@ attenuation = 2.07053
 
 [connection signal="mouse_entered" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_entrado"]
 [connection signal="mouse_exited" from="CanvasLayer/ArchiveroContainer" to="CanvasLayer/ArchiveroContainer" method="_on_mouse_salido"]
-[connection signal="pressed" from="Atr├ís" to="." method="_on_atras_presionado"]
+[connection signal="pressed" from="Atr??s" to="." method="_on_atras_presionado"]
 
 [editable path="CanvasLayer/ArchiveroContainer/celiaco-vegano2"]
 [editable path="CanvasLayer/ArchiveroContainer/vegano"]
