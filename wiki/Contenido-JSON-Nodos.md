@@ -15,7 +15,7 @@ Cada nodo define una lista `games`. Para trainees, usar objetos claros:
     "action": "Prepará",
     "meal": "un desayuno sin TACC",
     "connector": "para tu amigue",
-    "restriction": "celíace"
+    "restriction": "con celiaquía"
   }
 }
 ```
