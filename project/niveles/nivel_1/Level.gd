@@ -11,13 +11,6 @@ const LOG_PREFIX_TEACHING := "[Teaching]"
 const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
 const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
 
-const LOG_PREFIX_ARRASTRE := "[ARRASTRE]"
-const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
-const LOG_PREFIX_POST_GAME := "[POST_GAME]"
-const LOG_PREFIX_TEACHING := "[Teaching]"
-const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
-const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
-
 ## --- Configuración ---
 
 const DEFAULT_TRACK_KEY            := "celiaquia"
