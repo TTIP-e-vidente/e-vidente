@@ -386,32 +386,4 @@ Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técni
 
 </details>
 
-
----
-
-## Organizado por categoría
-
-| Categoría | Fecha | Cambio | Descripción |
-|---|---|---|---|
-|  UI | `2026-05-23` | **Barra completa antes de finalizar** | La barra llega al 100% antes de limpiar estado o pasar a resultados en el cierre del nodo. |
-|  Diseño | `2026-05-23` | **Selección de temáticas – diseño** | Íconos únicos por temática, pantalla selector y botones animados renovados. |
-|  UX | `2026-05-22` | **Transición partida a resultados** | El cierre del último minijuego abre resultados con transición y retorno ordenado al mapa. |
-|  UI | `2026-05-21` | **Estrellas de precisión** | Los nodos completados muestran la mejor precisión guardada mediante una estrella proporcional. |
-|  Gameplay | `2026-05-20` | **Completar con opciones de palabras** | Nueva modalidad JSON integrada al routing y continuidad de partida por nodo. |
-|  Diseño | `2026-05-17` | **Completar con palabras – diseño** | Escena visual de la modalidad con layout de opciones y feedback gráfico. |
-|  Diseño | `2026-05-17` | **Transición de escenas – diseño** | Shader y escena de transición suave entre mapa y partida. |
-|  Bug | `2026-05-13` | **Corrección del plato** | Se ajustó la interacción de arrastre para evitar respuestas inconsistentes en intentos incorrectos. |
-|  UI | `2026-05-10` | **Barra de progreso** | El jugador ahora ve su avance dentro de la secuencia del nodo con un indicador consistente. |
-|  UX | `2026-05-10` | **Lección terminada / finalización de nodo** | Se agregó un cierre explícito con retorno ordenado al mapa. |
-|  Diseño | `2026-05-05` | **Botón JUGAR – componente** | Componente reutilizable con animación para el botón de inicio de partida y selector. |
-|  Gameplay | `2026-05-05` | **Partida por nodo** | Un nodo puede combinar varios juegos internos sin hardcodear escenas. |
-|  Modalidad | *Falta confirmar* | **Vinculación de conceptos** | Modalidad integrada al mismo flujo de continuidad del nodo. |
-|  Contenido | `2026-05-03` | **Contenido JSON desacoplado** | El contenido jugable se define por JSON con contrato de carga y validación. |
-|  Contenido | `2026-05-13` | **Actualización de catálogo celiaquía** | Se ajustó catálogo de ítems y archivos de contenido para sostener actividades del track. |
-|  Persistencia | `2026-04-02` | **Persistencia local base** | Se consolidó guardado de perfil y progreso local sin backend. |
-|  Persistencia | `2026-04-04` | **Multi-partida interna** | El formato pasó a soportar más de una sesión por perfil. |
-|  Persistencia | `2026-04-06` | **Guardado parcial** | Se guarda progreso parcial para retomar actividades. |
-|  Infra | *Falta confirmar* | **Split de workflows por objetivo** | Se separó documentación, salud técnica y smoke jugable en pipelines distintos. |
-|  Testing | *Falta confirmar* | **Smoke test vertical** | Se validó el flujo mínimo jugable y contratos críticos de escena/runtime. |
-|  Testing | *Falta confirmar* | **Script de validación local** | Se estandarizó ejecución local por modo (`technical`, `smoke`, `ci`, `full`). |
 ---
