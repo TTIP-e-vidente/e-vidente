@@ -1,8 +1,5 @@
 ﻿# Bitácora
 
-> Cambios importantes que anotamos para no perder de vista la evolución del proyecto.
-> Esta página no reemplaza documentos de entrega — su rol es dejar trazabilidad clara de **qué se hizo**, **por qué**, **qué problema resolvió**, **qué impacto tuvo** para el jugador y **qué evidencia técnica** lo respalda.
-
 ---
 
 ## Navegación por etapas
@@ -15,12 +12,6 @@
 | Entrega 2 | [03-Entrega-2.md](03-Entrega-2.md) |
 | Próximas entregas | [04-Entrega-3.md](04-Entrega-3.md) |
 | Entrega final | [05-Entrega-Final.md](05-Entrega-Final.md) |
-
----
-
-## Lo que pasó recientemente
-
-Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y continuidad técnica.
 
 ---
 
