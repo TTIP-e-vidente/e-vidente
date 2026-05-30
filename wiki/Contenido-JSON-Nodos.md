@@ -1,6 +1,5 @@
-# Contenido JSON de nodos
+# Contenido JSON para mensaje en Arrastre
 
-Guia breve para editar contenido sin conocer todo el runtime.
 
 ## Mapa
 
