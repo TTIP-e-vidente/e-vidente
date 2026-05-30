@@ -18,13 +18,15 @@
 ### `2026-05-27` — Corregir reintento parcial en modalidad de vinculación
 <kbd>Bug</kbd> <kbd>UX</kbd> <kbd>Testing</kbd>
 
-Se corrigió el comportamiento visual de reintento en la modalidad de vinculación: al clicar una tarjeta marcada como WRONG ahora se limpia sólo el feedback de esa tarjeta y pasa a SELECTED, sin resetear automáticamente la pareja.
+Se corrigió el comportamiento visual de reintento en la modalidad de vinculación: al cliquear una tarjeta marcada como WRONG ahora se limpia sólo el feedback de esa tarjeta y pasa a SELECTED, sin resetear automáticamente la pareja.
 
 **Qué problema resolvió**
-- Evita que tocar un extremo rojo borre el estado del otro extremo, lo que generaba confusión en el jugador.
+- Evita que quede sea confusa la experiencia al tener un error. 
+- El usuario puede seleccionar independientemente de la columna elegida. 
+- Más intuitivo para el juego, anteriormente que obligabamos a seleccionar primero un concepto de la izq y luego uno de la derecha. 
 
 **Qué se implementó**
-- Ajustes en la selección: `_seleccionar_tarjeta_izquierda` y `_seleccionar_tarjeta_derecha` ahora limpian solo el feedback local del ítem clickeado (`marcar_error(false)`) y lo marcan como `seleccionada`.
+- Ajustes en la selección: el feedback local del ítem clickeado (`marcar_error(false)`) y lo marcan como `seleccionada`.
 - Validación: `_validar_par_actual` marca error en ambos extremos cuando la vinculación es incorrecta, manteniendo `tiene_error` por ítem.
 - Visual: `_actualizar_tarjetas` aplica estados por ítem (prioridad `seleccionada > error > vinculada > normal`) y `_dibujar_linea_de_vinculo` pinta la línea en rojo si cualquiera de los extremos está en error.
 - Test: se actualizó `project/tests/vertical_slice_smoke_test.gd` para verificar la regla WRONG + click => SELECTED (solo cambia la tarjeta clickeada).
@@ -32,6 +34,7 @@ Se corrigió el comportamiento visual de reintento en la modalidad de vinculaci�
 **Impacto para el jugador**
 - Reintentos más claros: tocar una tarjeta roja la convierte en amarilla, y la otra tarjeta permanece roja hasta que el jugador la toque o se reevalúe.
 - Menos confusión visual durante reintentos; la validación bidireccional se mantiene.
+- Juego más intuitivo y rápido. 
 
 **Evidencia técnica**
 - `project/vincular/vincular_conceptos.gd`
@@ -78,20 +81,16 @@ Se implementó `TypewriterEffect` como clase reutilizable (`RefCounted`) que ani
 
 **Qué problema resolvió**
 - El texto de las preguntas y las frases del completar aparecían de golpe, sin transición perceptible para el jugador.
-- No había forma compartida de cancelar una animación en curso cuando el jugador adelantaba la pantalla.
 
 **Qué se implementó**
 - `TypewriterEffect` (`extends RefCounted`, `class_name TypewriterEffect`) en `project/sistemas/`.
 - Recibe un `Callable` (`aplicar_texto`) en lugar de operar directamente sobre un `Label`, lo que lo hace independiente del árbol de nodos.
-- Cancela automáticamente la animación anterior al llamar `iniciar()` de nuevo, usando un contador de versión interno (`_id_llamada_vigente`).
 - Soporte de salto (`solicitar_salto()`) para mostrar el texto completo ante un clic o toque.
 - Integrado en `pregunta.gd`: anima el enunciado de cada pregunta.
 - Integrado en `completar_palabra.gd`: anima la frase con blancos del ejercicio de arrastre; timing configurable vía `@export`.
 
 **Impacto para el jugador**
 - El enunciado aparece progresivamente, dando tiempo de lectura antes de que las opciones sean interactuables.
-- Un toque omite la animación sin romper el flujo.
-- Ambas modalidades se comportan de forma coherente con la misma lógica subyacente.
 
 <details>
 <summary>Evidencia técnica</summary>
@@ -107,7 +106,8 @@ Se implementó `TypewriterEffect` como clase reutilizable (`RefCounted`) que ani
 ### `2026-05-23` — Barra de progreso completa antes de finalizar la última partida
 <kbd>UI</kbd> <kbd>UX</kbd> <kbd>Progreso</kbd>
 
-Se ajustó el cierre de las modalidades para que la barra llegue visualmente al 100% antes de limpiar el estado local o pasar al resultado.
+Se ajustó el cierre de las modalidades para que la barra llegue visualmente al 100% antes de limpiar el estado local o pasar al resultado. 
+Se agregó una animación a cada paso de la barra de progreso para que no sea brusco el salto entre una etapa y la otra. 
 
 **Qué problema resolvió**
 - La última partida podía completarse antes de que el jugador viera la barra completa, generando una sensación de avance incompleto.
@@ -155,13 +155,6 @@ Se diseñaron los íconos, la pantalla y los botones animados de la sección de 
 <details>
 <summary>Evidencia técnica</summary>
 
-- `project/assets-sistema/selector/celiaquia-selector.png`
-- `project/assets-sistema/selector/vegan-selector.png`
-- `project/assets-sistema/selector/vegan-gf-selector.png`
-- `project/assets-sistema/selector/keto-selector.png`
-- `project/assets-sistema/selector/diabetes-selector.png`
-- `project/assets-sistema/selector/autismo-selector.png`
-- `project/assets-sistema/selector/candado-selector.png`
 - `project/niveles/selector.gd`
 - `project/niveles/selector.tscn`
 - `project/niveles/botones_intro.gd`
@@ -172,22 +165,24 @@ Se diseñaron los íconos, la pantalla y los botones animados de la sección de 
 
 ---
 
-### `2026-05-22` — Transición suave de partida a resultados
+### `2026-05-22` — Transiciones suaves del Juego
 <kbd>UX</kbd> <kbd>Cierre</kbd> <kbd>Transición</kbd>
 
-Se consolidó el paso desde la última actividad del nodo hacia la pantalla de resultados usando el flujo de transición, evitando saltos secos entre juego, cierre y mapa.
+Se consolidaron dos tipos de transiciones usando el flujo de transición, evitando saltos secos entre juego en general, partidas, racha, stats y mapa.
+Se diseñó y sumaron la transición visual entre escenas del juego, usando dos shader propios que suavizan el paso del mapa al inicio de partida y entre pantallas internas.
 
 **Qué problema resolvió**
-- El cierre de partida podía sentirse abrupto cuando terminaba el último minijuego y se cambiaba de escena.
+- El juego se sentía abrupto cuando cambiaba entre escena y escena.
+- Los cambios de escena se producían con cortes secos, sin ningún tipo de transición visual.
 
 **Qué se implementó**
-- Uso de `TransicionEscenas` desde `GameSceneRouter` y desde la pantalla de finalización.
-- Apertura de `Finalización-Partida.tscn` cuando `Global` conserva resultados pendientes.
-- Lectura y limpieza de datos de finalización antes de volver al mapa.
+- Shader GLSL personalizado (`transicion_escenas.gdshader`) para los efecto de transición.
+- Uso de `TransicionEscenas` como Autoloaded.
+- Uso de transiciones en  `GameSceneRouter`.
 
 **Impacto para el jugador**
-- La salida del juego se siente más ordenada.
-- Los resultados aparecen como parte del flujo de cierre, no como un corte aislado.
+- El uso en general del juego siente más ordenada y armonioso.
+- La transición refuerza la sensación de que hay un viaje entre zonas del juego.
 
 <details>
 <summary>Evidencia técnica</summary>
@@ -195,9 +190,6 @@ Se consolidó el paso desde la última actividad del nodo hacia la pantalla de r
 - `project/interface/transiciones/transicion_escenas.gd`
 - `project/interface/transiciones/transicion_escenas.tscn`
 - `project/niveles/GameSceneRouter.gd`
-- `project/mapas/MapScene.gd`
-- `project/mapas/Finalización-Partida.tscn`
-- `project/mapas/finalización_partida.gd`
 - `project/niveles/global.gd`
 
 </details>
@@ -219,7 +211,7 @@ Se agregó una estrella de progreso para que los nodos completados reflejen la m
 
 **Impacto para el jugador**
 - El mapa devuelve feedback más claro sobre precisión.
-- El jugador puede reconocer dónde completó bien y dónde podría mejorar.
+- El jugador puede reconocer dónde completó de manera excepcional y dónde podría mejorar.
 
 <details>
 <summary>Evidencia técnica</summary>
@@ -237,10 +229,10 @@ Se agregó una estrella de progreso para que los nodos completados reflejen la m
 ### `2026-05-20` — Completar con opciones de palabras
 <kbd>Gameplay</kbd> <kbd>Modalidad</kbd> <kbd>Contenido</kbd>
 
-Se incorporó una modalidad donde el jugador completa frases eligiendo palabras disponibles, integrada al mismo plan de partida por nodo que el resto de minijuegos.
+Se incorporó una modalidad donde el jugador completa frases eligiendo palabras disponibles.
 
 **Qué problema resolvió**
-- Los nodos necesitaban más variedad de interacción sin duplicar rutas ni hardcodear desafíos en escenas.
+- Se suma una modalidad de juego para hacer más interesante el juego y la forma de interactuar con el mismo.
 
 **Qué se implementó**
 - Escena y script `completar_palabra` con validación de respuestas, feedback de error y cierre único del minijuego.
@@ -262,7 +254,6 @@ Se incorporó una modalidad donde el jugador completa frases eligiendo palabras 
 - `project/sistemas/ModalidadRouter.gd`
 - `project/niveles/GameSceneRouter.gd`
 - `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
-- `project/tests/vertical_slice_smoke_test.gd`
 
 </details>
 
@@ -283,74 +274,12 @@ Se diseñó la escena visual de la modalidad de completar, estableciendo el layo
 
 **Impacto para el jugador**
 - La actividad tiene una presentación clara: el jugador ve la frase con espacio vacío y las opciones disponibles.
-- El diseño sostiene el reintento sin romper el flujo visual.
 
 <details>
 <summary>Evidencia técnica</summary>
 
 - `project/completar/completar_palabra.tscn`
 - `project/completar/completar_palabra.gd`
-- Commit: `45aefa9` — *Sumo escena modalidad Completar*
-
-</details>
-
----
-
-### `2026-05-17` — Diseño e implementación de la transición suave entre escenas
-<kbd>Diseño</kbd> <kbd>UX</kbd> <kbd>Transición</kbd>
-
-Se diseñó y sumó la transición visual entre escenas del juego, usando un shader propio que suaviza el paso del mapa al inicio de partida y entre pantallas internas.
-
-**Qué problema resolvió**
-- Los cambios de escena se producían con cortes secos, sin ningún tipo de transición visual.
-
-**Qué se diseñó e implementó**
-- Escena `transicion_escenas.tscn` con animación de apertura y cierre.
-- Shader GLSL personalizado (`transicion_escenas.gdshader`) para el efecto de transición.
-- Integración inicial en la escena de intro para validar el flujo.
-
-**Impacto para el jugador**
-- El paso entre pantallas deja de sentirse abrupto.
-- La transición refuerza la sensación de que hay un viaje entre zonas del juego.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `project/interface/transicion_escenas.tscn`
-- `project/interface/transicion_escenas.gd`
-- `project/interface/transicion_escenas.gdshader`
-- `project/niveles/intro.gd`
-- `project/niveles/intro.tscn`
-- Commit: `66bb4c9` — *Sumo la transición entre escenas*
-
-</details>
-
----
-
-### `2026-05-16` — Integración de vinculacion-partidaxnodo en dev y apertura de PR a main
-<kbd>Integración</kbd> <kbd>Limpieza</kbd> <kbd>PR</kbd>
-
-Se integró la rama `merge/vinculacion-partidaxnodo` en `dev`, se preparó `dev` para la PR hacia `main` y se limpió el historial de co-authors de Copilot/Autopilot.
-
-**Qué se hizo**
-- Merge de `origin/merge/vinculacion-partidaxnodo` en `dev` priorizando cambios de la rama entrante (`-X theirs`). Archivos clave incorporados: `Finalización-Partida.tscn`, `NodoRuntime.gd`, `ArmadorDePartida.gd` y lógica completa de partida por nodo.
-- Se resolvieron todos los conflictos estructurales (rename/delete) a favor de la versión nueva.
-- Se sincronizó `dev` con `main` para que la PR quede limpia (merge de `main` en `dev` con `-X ours`).
-- Se corrigió parse error en `ItemLevel.gd` (funciones `set_interaction_enabled` e `is_interaction_enabled` duplicadas) que rompía el smoke test.
-- Se abrió PR #24 `dev → main`.
-
-**Impacto**
-- La PR a `main` refleja el estado completo de `dev` incluyendo la lógica de vinculación nodo-partida.
-- El smoke test vuelve a pasar (`Validacion Godot completada correctamente`).
-- El historial de `dev` queda limpio de atribuciones automáticas de Copilot.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `project/items/ItemLevel.gd` — eliminación de funciones duplicadas
-- `.githooks/commit-msg` — hook preventivo co-author
-- PR activa: [Dev #24](https://github.com/TTIP-e-vidente/e-vidente/pull/24)
-- Commits de merge: `b585fd6`, `8419e05`
 
 </details>
 
@@ -379,126 +308,29 @@ Se corrigió un problema en la actividad de arrastre donde la interacción con e
 
 - `project/items/ItemLevel.gd`
 - `project/niveles/manager_level.gd`
-- Commit: `7738db4` — *Resuelvo bug del plato*
-
-</details>
----
-
-### `2026-05-10` — Barra de progreso durante la actividad
-<kbd>UI</kbd> <kbd>Progreso</kbd>
-
-Se incorporó y consolidó una barra de progreso para que el jugador entienda cuánto avanzó dentro de la secuencia del nodo.
-
-**Qué problema resolvió**
-- Antes, el avance podía sentirse opaco en actividades encadenadas.
-
-**Qué se implementó**
-- Indicador visual de avance en escenas de modalidad.
-- Actualización del progreso con contexto `actual/total` del juego activo.
-- Unificación del criterio visual para evitar duplicidad de indicadores.
-
-**Impacto para el jugador**
-- Ahora entiende cuánto le falta para terminar.
-- La experiencia se siente más guiada.
-- Se reduce incertidumbre entre un juego interno y el siguiente.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `project/interface/progress_bar.gd`
-- `project/interface/Progress_Bar.tscn`
-- `project/preguntas/pregunta.gd`
-- `project/vincular/vincular_conceptos.gd`
-- `project/niveles/nivel_1/Level.gd`
-- Commit: `e02c1d8` — *Feature/barra progreso*
 
 </details>
 
 ---
 
-### `2026-05-10` — Estado de lección terminada y finalización de nodo
-<kbd>UX</kbd> <kbd>Cierre</kbd>
-
-Se agregó una instancia clara de finalización para comunicar cierre de lección/nodo y sostener una salida ordenada al mapa.
-
-**Qué problema resolvió**
-- El cierre podía sentirse abrupto cuando terminaba la actividad.
-
-**Qué se implementó**
-- Pantalla de finalización de partida con métricas.
-- Registro de finalización en estado global para mostrarla en el momento correcto.
-- Retorno controlado al mapa después del cierre.
-
-**Impacto para el jugador**
-- La actividad ya no termina de forma abrupta.
-- Se refuerza la sensación de logro.
-- El flujo de demo queda más defendible de punta a punta.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `project/mapas/Finalización-Partida.tscn`
-- `project/mapas/finalización_partida.gd`
-- `project/mapas/completo/finalizacion_de_nodo.gd`
-- `project/mapas/MapScene.gd`
-- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
-- `project/niveles/global.gd`
-- Commit: `893b57a` — *Lección Completa*
-
-</details>
-
----
-
-### `Falta confirmar fecha` — Vinculación de conceptos como nueva modalidad
-<kbd>Gameplay</kbd> <kbd>Modalidad</kbd>
-
-Se incorporó `vinculacion_conceptos` dentro del flujo de partida por nodo, sin abrir un camino paralelo al resto de modalidades.
-
-**Qué problema resolvió**
-- El nodo tenía menos variedad de interacción y menor capacidad de trabajar relaciones conceptuales.
-
-**Qué se implementó**
-- Nuevo modo `vinculacion_conceptos` en routing y continuidad.
-- Integración de escena y runtime dentro del mismo esquema post-juego.
-- Cobertura en smoke del recorrido que incluye la modalidad.
-
-**Impacto para el jugador**
-- El contenido educativo gana variedad.
-- Los nodos pueden mezclar más de una forma de actividad.
-- La arquitectura muestra extensibilidad real, no teórica.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `project/sistemas/ModalidadRouter.gd`
-- `project/niveles/GameSceneRouter.gd`
-- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
-- `project/vincular/vincular_conceptos.gd`
-- `project/vincular/VincularConceptos.tscn`
-- `project/tests/vertical_slice_smoke_test.gd`
-- `project/contenido/mapa/vinculaciones.json`
-
-</details>
-
->  **Falta confirmar:** Fecha única de corte para declarar la modalidad como cerrada en todos los tracks.
-
----
-
-### `2026-05-05` — Diseño del componente principal para el botón JUGAR
+### `2026-20-05` — Jerarquización de componentes del juego
 <kbd>Diseño</kbd> <kbd>UI</kbd> <kbd>Componente</kbd>
 
-Se diseñó y parametrizó el componente de botón animado reutilizable que sirve como base visual del botón JUGAR y otros botones clave de la interfaz.
+Se diseñaron, jerarquizaron e implementaron diferentes componentes clave para la buena lectura de la interfaz.
+
 
 **Qué problema resolvió**
-- Cada escena replicaba su propio botón animado sin un componente común, generando duplicación visual e inconsistencia de comportamiento entre pantallas.
+- Era dificultoso entender qué era cliqueable y qué no.
+- No había una rápida lectura de qué había que hacer en cada pantalla. 
+- Situación estática en la pantalla. 
 
 **Qué se diseñó**
-- Componente `botones_con_movimiento` con animaciones parametrizables de entrada, hover y presión.
-- Refactor del selector y la intro para usar el nuevo componente compartido.
+- Movimientos clave para que el juego parezca VIVO. 
+- Componentes con animaciones parametrizables de entrada, hover y presión.
+- Refactor de la totalidad de escenas del juego. 
 - Lógica de animación centralizada y configurable por escena.
 
 **Impacto para el jugador**
-- El botón JUGAR y los botones del selector tienen comportamiento visual consistente.
 - La respuesta animada refuerza la interacción y la sensación de juego.
 
 <details>
@@ -510,96 +342,33 @@ Se diseñó y parametrizó el componente de botón animado reutilizable que sirv
 - `project/niveles/selector.tscn`
 - `project/niveles/intro.gd`
 - `project/niveles/intro.tscn`
-- Commit: `9d65819` — *Parametrizado de juego*
+
 
 </details>
 
 ---
 
-### `2026-05-05` — Partida por nodo con múltiples juegos internos
-<kbd>Gameplay</kbd> <kbd>Arquitectura</kbd>
 
-Se consolidó el modelo donde un nodo puede ejecutar una secuencia de juegos internos, evitando hardcodeo de escenas y habilitando composición por datos.
 
-**Qué problema resolvió**
-- Un nodo rígido limita variaciones de gameplay y obliga a cambios de código para cada ajuste de contenido.
-
-**Qué se implementó**
-- Armado de `plan_de_partida` con `juegos` internos y continuidad.
-- APIs globales para iniciar, consultar, avanzar y finalizar partida de nodo.
-- Orquestación `mapa → apertura → juego → continuidad → cierre`.
-
-**Impacto para el jugador y para producto**
-- Un nodo puede combinar más de una actividad sin hardcodear escenas.
-- Se escala contenido con menor costo de mantenimiento.
-- El diseño pedagógico gana flexibilidad.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `wiki/Partida-por-nodo.md`
-- `project/mapas/logica/ArmadorDePartida.gd`
-- `project/mapas/logica/AbridorDeNodoJugable.gd`
-- `project/mapas/logica/ContinuidadDePartidaDeNodo.gd`
-- `project/niveles/global.gd`
-- `project/contenido/mapa/celiaquia_mapa.json`
-- Commit: `30760ef` — *multi-game node support*
-
-</details>
 
 ---
 
-### `2026-05-03` — Contenido JSON desacoplado para nodos jugables
-<kbd>Contenido</kbd>
-
-Se reforzó el desacople entre lógica del juego y contenido de actividades, priorizando nodos definidos por JSON.
-
-**Qué problema resolvió**
-- Con contenido embebido en escenas, cada cambio de actividad obligaba a tocar código o assets de gameplay.
-
-**Qué se implementó**
-- Contrato de carga/validación de contenido por nodo.
-- Soporte de modos y normalización de payload para runtime.
-- Mapa con nodos que contienen `games` y rutas JSON.
-
-**Impacto**
-- Se pueden sumar actividades por JSON sin tocar la arquitectura base.
-- Mejora mantenibilidad de contenido.
-- Facilita expansión de recorridos.
-
-<details>
-<summary>Evidencia técnica</summary>
-
-- `wiki/Contenido-JSON-Nodos.md`
-- `project/sistemas/contenido/CargadorDeContenidoDeNodo.gd`
-- `project/sistemas/contenido/ValidadorDeContenidoDeNodo.gd`
-- `project/contenido/mapa/celiaquia_mapa.json`
-- `project/niveles/nodos/celiaquia/*.json`
-- Commit: `6850568` — *JSON content flow*
-
-</details>
-
----
-
-### `Falta confirmar fecha` — Validaciones de smoke y CI por objetivos
+### `Falta confirmar fecha` — Validaciones y Tests
 <kbd>Testing</kbd> <kbd>CI</kbd>
 
-Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técnica sin mezclar objetivos.
+Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técnica.
 
-**Qué valida el smoke**
+**Qué valida**
 - Arranque de flujo principal y paso por mapa/gameplay.
 - Nodos críticos del runtime y contratos mínimos de escena.
 - Cierre y retorno en flujo de finalización.
 
-**Qué cubre CI hoy**
+**Qué cubre hoy**
 - `Docs / Tracking` — trazabilidad documental en PR.
 - `Technical Health` — guardrails de estructura y lint condicional.
 - `Gameplay Smoke` — flujo mínimo jugable con import headless y logs.
 
-**Qué queda fuera**
-- Persistencia profunda, todos los tracks y UI fina por modalidad.
-
-**Por qué reduce riesgo para la demo**
+**Por qué reduce riesgo**
 - Detecta temprano roturas visibles de navegación y gameplay.
 - Evita merges sin documentación mínima.
 - Mantiene un gate liviano para iterar sin perder control.
@@ -617,7 +386,6 @@ Se ordenó la validación en CI para cubrir flujo jugable mínimo y salud técni
 
 </details>
 
->  **Falta confirmar:** Fecha exacta de consolidación final del esquema actual de workflows.
 
 ---
 
