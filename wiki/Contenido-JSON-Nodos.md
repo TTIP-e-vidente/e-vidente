@@ -27,7 +27,7 @@ Cada nodo define una lista `games`. Para trainees, usar objetos claros:
 | `action` | No | `"Prepará"` |
 | `meal` | **Recomendado** | Se infiere del `node_key` / `activity_id` (ej. `"desayuno"` → `"un desayuno sin TACC"`) |
 | `connector` | No | `"para tu amigue"` |
-| `restriction` | No | `"celíace"` si `track_key == "celiaquia"`, vacío en otros tracks |
+| `restriction` | No | `"celiaquía"` si `track_key == "celiaquia"`, vacío en otros tracks |
 
 **Todos los juegos `type: drag` del mapa de celiaquía ya tienen `objective` explícito.**
 Dejarlo explícito evita que la UI muestre solo `"Prepará"` sin contexto.
