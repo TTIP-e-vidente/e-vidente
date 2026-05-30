@@ -44,7 +44,7 @@ El runtime acepta tres variantes; se recomienda el formato anidado:
     "action": "Prepará",
     "meal": "una colación sin TACC",
     "connector": "para tu amigue",
-    "restriction": "celíace"
+    "restriction": "con celiaquía"
   }
 }
 ```
@@ -56,7 +56,7 @@ El runtime acepta tres variantes; se recomienda el formato anidado:
   "objective_action": "Prepará",
   "objective_meal": "una colación sin TACC",
   "objective_connector": "para tu amigue",
-  "objective_restriction": "celíace"
+  "objective_restriction": "con celiaquía"
 }
 ```
 
@@ -113,7 +113,7 @@ DragObjectiveText: Control
 ├── MealLabel: Label           ← "un desayuno sin TACC"  (negrita, foco principal)
 ├── MealLine: ColorRect        ← separador delgado bajo la comida
 ├── ConnectorLabel: Label      ← "para tu amigue"
-├── RestrictionLabel: Label    ← "celíace"  (se oculta si no hay restricción)
+├── RestrictionLabel: Label    ← "con celiaquía"  (se oculta si no hay restricción)
 └── RestrictionLine: ColorRect ← separador delgado final (se oculta junto con RestrictionLabel)
 ```
 
