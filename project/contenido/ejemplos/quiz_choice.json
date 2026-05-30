@@ -2,12 +2,22 @@
 	"id": "gluten_maiz",
 	"theme": "celiaquia",
 	"title": "Gluten en el maíz",
-	"difficulty": "easy",
+	"difficulty": 1,
 	"mode": "quiz_choice",
 	"content": {
-		"question": "El maíz contiene gluten?",
-		"correct_answer": "No",
-		"wrong_options": ["Sí", "Solo si está cocido"],
-		"visual_resource": ""
+		"questions": [
+			{
+				"question": "El maíz contiene gluten?",
+				"correct_answer": "No",
+				"wrong_options": ["Sí", "Solo si está cocido"],
+				"visual_resource": ""
+			},
+			{
+				"question": "¿Qué proteína forma el gluten?",
+				"correct_answer": "Gliadina y glutenina",
+				"wrong_options": ["Caseína y lactosa", "Albumina y globulina"],
+				"visual_resource": ""
+			}
+		]
 	}
 }

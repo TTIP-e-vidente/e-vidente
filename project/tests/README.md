@@ -17,8 +17,6 @@ GdUnit4 no se versiona en el repo, así que cada uno lo instala localmente.
 - Copiá la carpeta `addons/gdUnit4/` dentro de `project/addons/`.
 - Activá el plugin igual que arriba.
 
-> `addons/gdUnit4/` está en `.gitignore` — no lo commitees.
-
 ---
 
 ## Estructura
@@ -59,8 +57,3 @@ Valida el flujo completo: `JSON → QuestionJsonLoader → Preguntas → Evaluad
 Fixture: `res://niveles/nodos/celiaquia/gluten_arroz.json`
 
 ---
-
-## Smoke test (sin GdUnit4)
-
-`vertical_slice_smoke_test.gd` usa `extends SceneTree` y se ejecuta en modo headless
-con `scripts/run-godot-validation.ps1` o `.sh`. No requiere GdUnit4.
