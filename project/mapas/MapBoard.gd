@@ -15,6 +15,7 @@ func _ready() -> void:
 	call_deferred("refresh_progress_from_save")
 	titulo_del_nivel.modulate = Color("#42785e")
 
+	
 func obtener_contenedor_nodos() -> Node2D:
 	return contenedor_nodos
 
