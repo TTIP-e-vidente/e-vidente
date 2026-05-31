@@ -115,19 +115,27 @@ func actualizar_estados_de_nodos() -> void:
 
 	print("[MapState] save_clean=", node_progress.is_empty())
 
-	# Paso 1: Sincronizar disco con Global para evaluar dependencias correctamente
+	_sincronizar_progreso_con_global(node_progress)
+	var node_states: Dictionary = construir_estados_por_node_key(node_progress)
+	map_board.call("configurar_nodos", nodos_mapa, node_states)
+
+
+# Antes de calcular estados, refleja en Global lo que está guardado en el save.
+# Necesario porque AvanceDeNodo consulta Global (no el save) para evaluar dependencias.
+func _sincronizar_progreso_con_global(node_progress: Dictionary) -> void:
 	for node_data in nodos_mapa:
 		var key: String = str(node_data.node_key).strip_edges()
-		if not key.is_empty() and node_progress.has(key):
-			var np: Variant = node_progress[key]
-			if np is Dictionary:
-				var saved_progress: Dictionary = np as Dictionary
-				var saved_completed: bool = bool(saved_progress.get("completed", false))
-				if saved_completed:
-					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
+		if key.is_empty() or not node_progress.has(key):
+			continue
+		var np: Variant = node_progress[key]
+		if np is Dictionary and bool((np as Dictionary).get("completed", false)):
+			Global.marcar_nodo_jugable_completado(track_key_mapa, key)
 
-	# Paso 2: Calcular estado visual y lógico del mapa (ahora seguro)
-	var node_states: Dictionary = {}  # keyed by node_key — robusto frente a reordenamientos
+
+# Calcula el estado visual/lógico de cada nodo a partir del progreso guardado.
+# Devuelve Dictionary keyed by node_key — robusto frente a reordenamientos.
+func construir_estados_por_node_key(node_progress: Dictionary) -> Dictionary:
+	var node_states: Dictionary = {}
 	var completed_count: int = 0
 	for node_data in nodos_mapa:
 		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
@@ -148,10 +156,8 @@ func actualizar_estados_de_nodos() -> void:
 					state["is_completed"] = true
 					state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
 					state["can_play"] = true
-
 		if bool(state.get("is_completed", false)):
 			completed_count += 1
-
 		print(
 			"[MapState] node_key=", key,
 			" completed=", state.get("is_completed", false),
@@ -159,9 +165,8 @@ func actualizar_estados_de_nodos() -> void:
 			" current=", state.get("is_unlocked", false) and not state.get("is_completed", false)
 		)
 		node_states[key] = state
-
 	print("[MapState] completed_count=", completed_count, " required_count=", nodos_mapa.size())
-	map_board.call("configurar_nodos", nodos_mapa, node_states)
+	return node_states
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:

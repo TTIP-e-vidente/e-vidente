@@ -17,7 +17,9 @@
 			"word_celiaquia_envase_02b",
 			"word_celiaquia_restaurante_02",
 			"word_celiaquia_planta_03",
-			"word_celiaquia_freidora_02"
+			"word_celiaquia_freidora_02",
+			"word_celiaquia_diagnostico_03b",
+			"word_celiaquia_etiqueta_02"
 		],
 		"drag|1|0": [
 			"drag_cena_facil",
@@ -483,7 +485,7 @@
 	"played_activity_ids": [],
 	"played_activity_ids_by_request": {
 		"completar_palabra|1|0": [
-			"word_celiaquia_freidora_02"
+			"word_celiaquia_etiqueta_02"
 		]
 	},
 	"profile": {
@@ -530,9 +532,9 @@
 				}
 			},
 			"streak": {
-				"best_count": 3,
-				"current_count": 3,
-				"last_activity_day": "2026-05-30",
+				"best_count": 4,
+				"current_count": 4,
+				"last_activity_day": "2026-05-31",
 				"last_activity_type": "smoke_setup",
 				"last_track_key": "celiaquia"
 			}
@@ -561,10 +563,10 @@
 		"track_key": ""
 	},
 	"save_meta": {
-		"last_saved_at": "2026-05-30 21:34:45",
+		"last_saved_at": "2026-05-31 16:06:50",
 		"last_saved_reason": "progress_sync",
-		"write_count": 503
+		"write_count": 511
 	},
-	"total_exp": 1175,
+	"total_exp": 1189,
 	"version": 4
 }

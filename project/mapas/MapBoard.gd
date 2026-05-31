@@ -52,50 +52,11 @@ func configurar_nodos(map_nodes: Array, node_states: Dictionary) -> void:
 			% [visual_nodes.size(), map_nodes.size()]
 		)
 
-	# Obtener curva activa según config.
 	var curva: Curve2D = _obtener_curva_activa()
-
-	# Calcular posiciones automáticas para todos los nodos.
-	var nodos_slice: Array = map_nodes.slice(0, visible_count)
-	var posiciones_auto: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
-		nodos_slice, curva, layout_config
-	)
-
-	# Si no hay curva, fallback a polyline (retro-compatibilidad).
-	if posiciones_auto.is_empty() and not ruta_puntos_guia.is_empty():
-		posiciones_auto = MapPathLayout.calcular_posiciones(ruta_puntos_guia, visible_count)
+	var posiciones: Array[Vector2] = _calcular_posiciones_de_nodos(map_nodes, visible_count, curva)
 
 	for index in range(visible_count):
-		var visual_node: Node2D = visual_nodes[index]
-		var node_data: MapNodeData = map_nodes[index] as MapNodeData
-		var node_key: String = "" if node_data == null else str(node_data.node_key).strip_edges()
-		var node_state: Dictionary = _get_node_state(node_states, node_key)
-		if node_data == null or not node_data.is_valid():
-			visual_node.hide()
-			continue
-
-		visual_node.show()
-		var tiene_auto: bool = index < posiciones_auto.size()
-		var pos_auto: Vector2 = posiciones_auto[index] if tiene_auto else Vector2.ZERO
-		var nueva_pos: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
-			node_data, pos_auto, tiene_auto, visual_node.position
-		)
-		visual_node.position = nueva_pos
-		if debug_layout:
-			print("[MapBoard] i=%d key=%s pos=%s state=%s completed=%s unlocked=%s" % [
-				index,
-				node_key,
-				str(nueva_pos),
-				str(node_state.get("visual_state", "?")),
-				str(node_state.get("is_completed", false)),
-				str(node_state.get("is_unlocked", false)),
-			])
-		if visual_node.has_method("configurar"):
-			visual_node.configurar(node_data, node_state)
-		var callback := Callable(self, "_on_visual_node_selected")
-		var already_connected := visual_node.is_connected("selected", callback)
-		if visual_node.has_signal("selected") and not already_connected:
-			visual_node.connect("selected", callback)
+		_configurar_nodo_en_indice(visual_nodes[index], map_nodes[index], node_states, posiciones, index)
 
 	for index in range(visible_count, visual_nodes.size()):
 		visual_nodes[index].hide()
@@ -166,6 +127,56 @@ func _ordenar_por_nivel_id(a: Node2D, b: Node2D) -> bool:
 func _on_visual_node_selected(node_data: RefCounted) -> void:
 	if node_data is MapNodeData:
 		node_selected.emit(node_data as MapNodeData)
+
+
+func _calcular_posiciones_de_nodos(
+	map_nodes: Array,
+	visible_count: int,
+	curva: Curve2D
+) -> Array[Vector2]:
+	var nodos_slice: Array = map_nodes.slice(0, visible_count)
+	var posiciones: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
+		nodos_slice, curva, layout_config
+	)
+	if posiciones.is_empty() and not ruta_puntos_guia.is_empty():
+		posiciones = MapPathLayout.calcular_posiciones(ruta_puntos_guia, visible_count)
+	return posiciones
+
+
+func _configurar_nodo_en_indice(
+	visual_node: Node2D,
+	raw_node: Variant,
+	node_states: Dictionary,
+	posiciones: Array[Vector2],
+	index: int
+) -> void:
+	var node_data: MapNodeData = raw_node as MapNodeData
+	var node_key: String = "" if node_data == null else str(node_data.node_key).strip_edges()
+	var node_state: Dictionary = _get_node_state(node_states, node_key)
+	if node_data == null or not node_data.is_valid():
+		visual_node.hide()
+		return
+	visual_node.show()
+	var tiene_auto: bool = index < posiciones.size()
+	var pos_auto: Vector2 = posiciones[index] if tiene_auto else Vector2.ZERO
+	var nueva_pos: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
+		node_data, pos_auto, tiene_auto, visual_node.position
+	)
+	visual_node.position = nueva_pos
+	if debug_layout:
+		print("[MapBoard] i=%d key=%s pos=%s state=%s completed=%s unlocked=%s" % [
+			index,
+			node_key,
+			str(nueva_pos),
+			str(node_state.get("visual_state", "?")),
+			str(node_state.get("is_completed", false)),
+			str(node_state.get("is_unlocked", false)),
+		])
+	if visual_node.has_method("configurar"):
+		visual_node.configurar(node_data, node_state)
+	var callback := Callable(self, "_on_visual_node_selected")
+	if visual_node.has_signal("selected") and not visual_node.is_connected("selected", callback):
+		visual_node.connect("selected", callback)
 
 
 func _get_node_state(node_states: Dictionary, node_key: String) -> Dictionary:
