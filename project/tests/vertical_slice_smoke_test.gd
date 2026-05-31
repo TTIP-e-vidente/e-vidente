@@ -32,6 +32,7 @@ const CONTENT_SCHEMA_NORMALIZER_SCRIPT := preload(
 	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
 )
 const CARGADOR_DE_MAPA_SCRIPT := preload("res://mapas/logica/CargadorDeMapa.gd")
+const AVANCE_DE_NODO_SCRIPT := preload("res://mapas/logica/AvanceDeNodo.gd")
 const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
 const ARMADOR_DE_PARTIDA_SCRIPT := preload("res://mapas/logica/ArmadorDePartida.gd")
 const NODE_CONTENT_LOADER_SCRIPT := preload("res://sistemas/contenido/NodeContentLoader.gd")
@@ -255,6 +256,10 @@ func ejecutar_prueba() -> void:
 	# --- Tests unitarios de MapPathLayout ---
 	if not failed:
 		ejecutar_tests_map_path_layout()
+
+	# --- Tests unitarios de estado y orden de nodos del mapa ---
+	if not failed:
+		ejecutar_tests_estado_nodos()
 
 	# --- Tests unitarios: nodo único con múltiples modalidades ---
 	if not failed:
@@ -2474,8 +2479,200 @@ func _test_mapboard_ruta_celiaquia2_distribuye_30_nodos() -> void:
 	print("[MapBoard/R2] ✓ RutaCeliaquia2 distribuye %d nodos correctamente" % posiciones.size())
 
 
+# ===========================================================================
+# Tests unitarios: estado y orden de nodos del mapa
+# ===========================================================================
+
+## Verifica que CargadorDeMapa ordena las claves JSON numéricamente, no lexicográficamente.
+## Con sort lexicográfico "10" quedaría en posición 1 (antes de "2"); con numérico va en posición 9.
+func _test_cargador_orden_numerico_no_lexicografico() -> void:
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[CargadorOrden] celiaquia_mapa debe cargar exitosamente")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	_check(nodes.size() == 30, "[CargadorOrden] mapa debe tener 30 nodos")
+	if nodes.size() < 10:
+		return
+
+	# nodes[0] debe ser el primer nodo (JSON key "1")
+	var nd0: MapNodeData = nodes[0] as MapNodeData
+	_check(nd0 != null and nd0.node_key == NODE_1_KEY,
+		"[CargadorOrden] nodes[0] debe ser '%s'. Got: '%s'" % [NODE_1_KEY, "" if nd0 == null else nd0.node_key])
+
+	# nodes[4] debe ser el quinto nodo (JSON key "5") — fallaría con sort lexicográfico
+	var nd4: MapNodeData = nodes[4] as MapNodeData
+	_check(nd4 != null and nd4.node_key == NODE_5_KEY,
+		"[CargadorOrden] nodes[4] debe ser '%s'. Got: '%s'" % [NODE_5_KEY, "" if nd4 == null else nd4.node_key])
+
+	# nodes[7] debe ser el octavo nodo (JSON key "8") — con sort lex "8" sería después de "29"
+	var nd7: MapNodeData = nodes[7] as MapNodeData
+	_check(nd7 != null and nd7.node_key == NODE_8_KEY,
+		"[CargadorOrden] nodes[7] debe ser '%s'. Got: '%s'" % [NODE_8_KEY, "" if nd7 == null else nd7.node_key])
+
+	if not failed:
+		print("[CargadorOrden] ✓ Orden numérico correcto: nodes[0]=%s, nodes[4]=%s, nodes[7]=%s" % [
+			nd0.node_key, nd4.node_key, nd7.node_key
+		])
+
+
+## Verifica que node_states construido como Dictionary[node_key] es robusto ante reordenamientos.
+## Con el nuevo sistema, el estado de un nodo se busca por node_key, no por índice posicional.
+func _test_node_states_asignados_por_node_key() -> void:
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[NodeStates] celiaquia_mapa debe cargar")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	_check(nodes.size() == 30, "[NodeStates] mapa debe tener 30 nodos")
+	if nodes.size() < 6:
+		return
+
+	# Simula la construcción de node_states como Dictionary (como hace MapScene ahora)
+	var node_states: Dictionary = {}
+	for raw in nodes:
+		var nd: MapNodeData = raw as MapNodeData
+		if nd == null:
+			continue
+		node_states[nd.node_key] = {"visual_state": "locked", "is_completed": false, "is_unlocked": false}
+
+	# Marca el estado del primer nodo como "available" por clave
+	node_states[NODE_1_KEY] = {"visual_state": "available", "is_completed": false, "is_unlocked": true}
+
+	# Verifica lookup correcto por node_key
+	_check(node_states.has(NODE_1_KEY),
+		"[NodeStates] dict debe contener entrada para '%s'" % NODE_1_KEY)
+	var state_0: Dictionary = node_states.get(NODE_1_KEY, {})
+	_check(str(state_0.get("visual_state", "")) == "available",
+		"[NodeStates] acceso por node_key debe devolver 'available'. Got: '%s'" % state_0.get("visual_state", "?"))
+
+	# El nodo en posición 5 (NODE_6_KEY) no debe quedar afectado por el cambio al nodo 0
+	var state_5: Dictionary = node_states.get(NODE_6_KEY, {})
+	_check(str(state_5.get("visual_state", "")) == "locked",
+		"[NodeStates] nodo '%s' debe seguir 'locked'. Got: '%s'" % [NODE_6_KEY, state_5.get("visual_state", "?")])
+
+	# Si se hubiera usado índice posicional (Array), y los nodos estuvieran en distinto orden,
+	# node_states[0] coincidiría con el nodo visual incorrecto. Con Dictionary no ocurre.
+	_check(node_states.size() == 30,
+		"[NodeStates] dict debe tener exactamente 30 entradas. Got: %d" % node_states.size())
+
+	if not failed:
+		print("[NodeStates] ✓ Lookup por node_key correcto, dict tiene %d entradas" % node_states.size())
+
+
+## Verifica que tras resetear el progreso (save limpio) solo el primer nodo está disponible.
+func _test_avance_reset_deja_solo_primer_nodo_disponible() -> void:
+	var gs = root.get_node_or_null("/root/Global")
+	_check(gs != null, "[EstadoReset] Global autoload debe existir")
+	if gs == null:
+		return
+	gs.reiniciar_progreso()
+
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[EstadoReset] celiaquia_mapa debe cargar")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	_check(nodes.size() == 30, "[EstadoReset] mapa debe tener 30 nodos")
+	if nodes.size() < 2:
+		return
+
+	for raw in nodes:
+		var nd: MapNodeData = raw as MapNodeData
+		if nd != null:
+			nd.track_key = "celiaquia"
+
+	var nodo_0: MapNodeData = nodes[0] as MapNodeData
+	var nodo_1: MapNodeData = nodes[1] as MapNodeData
+	_check(nodo_0 != null and nodo_1 != null, "[EstadoReset] primeros dos nodos deben existir")
+	if nodo_0 == null or nodo_1 == null:
+		return
+
+	var state_0: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_0)
+	var state_1: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_1)
+
+	_check(str(state_0.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_AVAILABLE,
+		"[EstadoReset] nodo 0 debe estar 'available' tras reset. Got: '%s'" % state_0.get("visual_state", "?"))
+	_check(str(state_1.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_LOCKED,
+		"[EstadoReset] nodo 1 debe estar 'locked' tras reset. Got: '%s'" % state_1.get("visual_state", "?"))
+
+	if not failed:
+		print("[EstadoReset] ✓ Tras reset: nodo0=%s nodo1=%s" % [
+			state_0.get("visual_state", "?"), state_1.get("visual_state", "?")
+		])
+
+
+## Verifica que completar el nodo N desbloquea exactamente el nodo N+1, sin afectar otros.
+func _test_avance_completar_nodo_desbloquea_siguiente() -> void:
+	var gs = root.get_node_or_null("/root/Global")
+	_check(gs != null, "[EstadoDesbloqueo] Global autoload debe existir")
+	if gs == null:
+		return
+	gs.reiniciar_progreso()
+
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[EstadoDesbloqueo] celiaquia_mapa debe cargar")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	_check(nodes.size() >= 3, "[EstadoDesbloqueo] mapa debe tener al menos 3 nodos")
+	if nodes.size() < 3:
+		return
+
+	for raw in nodes:
+		var nd: MapNodeData = raw as MapNodeData
+		if nd != null:
+			nd.track_key = "celiaquia"
+
+	var nodo_0: MapNodeData = nodes[0] as MapNodeData
+	var nodo_1: MapNodeData = nodes[1] as MapNodeData
+	var nodo_2: MapNodeData = nodes[2] as MapNodeData
+	if nodo_0 == null or nodo_1 == null or nodo_2 == null:
+		_check(false, "[EstadoDesbloqueo] primeros tres nodos deben existir")
+		return
+
+	# Marcar nodo 0 como completado via Global
+	gs.marcar_nodo_jugable_completado("celiaquia", nodo_0.node_key)
+
+	var state_0: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_0)
+	var state_1: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_1)
+	var state_2: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_2)
+
+	_check(str(state_0.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_COMPLETED,
+		"[EstadoDesbloqueo] nodo 0 debe estar 'completed'. Got: '%s'" % state_0.get("visual_state", "?"))
+	_check(str(state_1.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_AVAILABLE,
+		"[EstadoDesbloqueo] nodo 1 debe estar 'available' tras completar nodo 0. Got: '%s'" % state_1.get("visual_state", "?"))
+	_check(str(state_2.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_LOCKED,
+		"[EstadoDesbloqueo] nodo 2 debe estar 'locked' (nodo 1 aún no completado). Got: '%s'" % state_2.get("visual_state", "?"))
+
+	if not failed:
+		print("[EstadoDesbloqueo] ✓ nodo0=%s nodo1=%s nodo2=%s" % [
+			state_0.get("visual_state", "?"),
+			state_1.get("visual_state", "?"),
+			state_2.get("visual_state", "?"),
+		])
+
+	# Restaurar estado limpio para el resto del suite
+	gs.reiniciar_progreso()
+
+
+# ===========================================================================
+# Ejecutor de tests de estado y orden de nodos
+# ===========================================================================
+
+func ejecutar_tests_estado_nodos() -> void:
+	print("[EstadoNodos] ── Iniciando tests de estado y orden de nodos ──")
+	_test_cargador_orden_numerico_no_lexicografico()
+	_test_node_states_asignados_por_node_key()
+	_test_avance_reset_deja_solo_primer_nodo_disponible()
+	_test_avance_completar_nodo_desbloquea_siguiente()
+	if not failed:
+		print("[EstadoNodos] ✓ Todos los tests pasaron.")
+	else:
+		printerr("[EstadoNodos] ✗ Al menos un test falló. Revisá los errores arriba.")
+
+
 func ejecutar_tests_map_path_layout() -> void:
-	print("[MapPath] ── Iniciando tests de MapPathLayout ──")
 	_test_map_path_layout_distribuye_cantidad_correcta()
 	_test_map_path_layout_extremos_en_primer_y_ultimo_punto()
 	_test_map_path_layout_punto_medio_en_ruta_recta()

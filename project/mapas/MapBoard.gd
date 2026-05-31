@@ -4,7 +4,7 @@ extends Node2D
 signal node_selected(node_data: MapNodeData)
 
 var _configured_map_nodes: Array = []
-var _configured_node_states: Array[Dictionary] = []
+var _configured_node_states: Dictionary = {}  # keyed by node_key
 ## Puntos guía para fallback de posicionamiento (retro-compatibilidad).
 ## Vacío = los nodos conservan la posición del .tscn.
 var ruta_puntos_guia: Array[Vector2] = []
@@ -39,7 +39,7 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 	contenedor_scroll.scroll_vertical = clampi(scroll_value, 0, max_scroll)
 
 
-func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
+func configurar_nodos(map_nodes: Array, node_states: Dictionary) -> void:
 	_configured_map_nodes = map_nodes.duplicate()
 	_configured_node_states = node_states.duplicate()
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
@@ -68,7 +68,8 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
-		var node_state: Dictionary = _get_node_state(node_states, index)
+		var node_key: String = "" if node_data == null else str(node_data.node_key).strip_edges()
+		var node_state: Dictionary = _get_node_state(node_states, node_key)
 		if node_data == null or not node_data.is_valid():
 			visual_node.hide()
 			continue
@@ -80,6 +81,15 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			node_data, pos_auto, tiene_auto, visual_node.position
 		)
 		visual_node.position = nueva_pos
+		if debug_layout:
+			print("[MapBoard] i=%d key=%s pos=%s state=%s completed=%s unlocked=%s" % [
+				index,
+				node_key,
+				str(nueva_pos),
+				str(node_state.get("visual_state", "?")),
+				str(node_state.get("is_completed", false)),
+				str(node_state.get("is_unlocked", false)),
+			])
 		if visual_node.has_method("configurar"):
 			visual_node.configurar(node_data, node_state)
 		var callback := Callable(self, "_on_visual_node_selected")
@@ -158,10 +168,8 @@ func _on_visual_node_selected(node_data: RefCounted) -> void:
 		node_selected.emit(node_data as MapNodeData)
 
 
-func _get_node_state(node_states: Array[Dictionary], index: int) -> Dictionary:
-	if index < 0 or index >= node_states.size():
-		return {}
-	return node_states[index]
+func _get_node_state(node_states: Dictionary, node_key: String) -> Dictionary:
+	return node_states.get(node_key, {})
 
 
 func desplazar_al_primer_nodo_disponible() -> void:

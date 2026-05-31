@@ -16,7 +16,8 @@
 			"word_celiaquia_contaminacion_02",
 			"word_celiaquia_envase_02b",
 			"word_celiaquia_restaurante_02",
-			"word_celiaquia_planta_03"
+			"word_celiaquia_planta_03",
+			"word_celiaquia_freidora_02"
 		],
 		"drag|1|0": [
 			"drag_cena_facil",
@@ -482,7 +483,7 @@
 	"played_activity_ids": [],
 	"played_activity_ids_by_request": {
 		"completar_palabra|1|0": [
-			"word_celiaquia_planta_03"
+			"word_celiaquia_freidora_02"
 		]
 	},
 	"profile": {
@@ -560,10 +561,10 @@
 		"track_key": ""
 	},
 	"save_meta": {
-		"last_saved_at": "2026-05-30 21:12:07",
+		"last_saved_at": "2026-05-30 21:34:45",
 		"last_saved_reason": "progress_sync",
-		"write_count": 498
+		"write_count": 502
 	},
-	"total_exp": 1169,
+	"total_exp": 1175,
 	"version": 4
 }

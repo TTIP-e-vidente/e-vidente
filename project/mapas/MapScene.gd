@@ -127,7 +127,7 @@ func actualizar_estados_de_nodos() -> void:
 					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
 
 	# Paso 2: Calcular estado visual y lógico del mapa (ahora seguro)
-	var node_states: Array[Dictionary] = []
+	var node_states: Dictionary = {}  # keyed by node_key — robusto frente a reordenamientos
 	var completed_count: int = 0
 	for node_data in nodos_mapa:
 		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
@@ -158,7 +158,7 @@ func actualizar_estados_de_nodos() -> void:
 			" unlocked=", state.get("is_unlocked", false),
 			" current=", state.get("is_unlocked", false) and not state.get("is_completed", false)
 		)
-		node_states.append(state)
+		node_states[key] = state
 
 	print("[MapState] completed_count=", completed_count, " required_count=", nodos_mapa.size())
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
