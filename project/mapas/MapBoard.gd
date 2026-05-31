@@ -1,11 +1,17 @@
 # Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
-# Solo renderiza — no decide flujo ni calcula EXP.
 extends Node2D
 
 signal node_selected(node_data: MapNodeData)
 
 var _configured_map_nodes: Array = []
 var _configured_node_states: Array[Dictionary] = []
+## Puntos guía para fallback de posicionamiento (retro-compatibilidad).
+## Vacío = los nodos conservan la posición del .tscn.
+var ruta_puntos_guia: Array[Vector2] = []
+## Config de layout del mapa activo. Nula = defaults (even, sin márgenes, RutaCeliaquia1).
+var layout_config: MapLayoutConfig = null
+## Activar para imprimir diagnóstico de ruta y nodos. No llamar en producción.
+var debug_layout: bool = false
 
 @onready var contenedor_scroll: ScrollContainer = $ScrollContainer
 @onready var contenedor_nodos: Node2D = $ScrollContainer/Contenido/NodesContainer
@@ -46,6 +52,19 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			% [visual_nodes.size(), map_nodes.size()]
 		)
 
+	# Obtener curva activa según config.
+	var curva: Curve2D = _obtener_curva_activa()
+
+	# Calcular posiciones automáticas para todos los nodos.
+	var nodos_slice: Array = map_nodes.slice(0, visible_count)
+	var posiciones_auto: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
+		nodos_slice, curva, layout_config
+	)
+
+	# Si no hay curva, fallback a polyline (retro-compatibilidad).
+	if posiciones_auto.is_empty() and not ruta_puntos_guia.is_empty():
+		posiciones_auto = MapPathLayout.calcular_posiciones(ruta_puntos_guia, visible_count)
+
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
@@ -55,8 +74,12 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			continue
 
 		visual_node.show()
-		if node_data.has_map_position:
-			visual_node.position = node_data.map_position
+		var tiene_auto: bool = index < posiciones_auto.size()
+		var pos_auto: Vector2 = posiciones_auto[index] if tiene_auto else Vector2.ZERO
+		var nueva_pos: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
+			node_data, pos_auto, tiene_auto, visual_node.position
+		)
+		visual_node.position = nueva_pos
 		if visual_node.has_method("configurar"):
 			visual_node.configurar(node_data, node_state)
 		var callback := Callable(self, "_on_visual_node_selected")
@@ -93,6 +116,23 @@ func refresh_progress_from_save() -> void:
 			saved_percent = 1.0
 		if completed and visual_node.has_method("set_star_progress"):
 			visual_node.call("set_star_progress", saved_percent)
+
+
+func obtener_posiciones_de_ruta(cantidad: int) -> Array[Vector2]:
+	var curva: Curve2D = _obtener_curva_activa()
+	if curva != null and curva.get_baked_length() > 0.0:
+		return MapPathLayout.calcular_posiciones_en_curva(curva, cantidad, layout_config)
+	if not ruta_puntos_guia.is_empty():
+		return MapPathLayout.calcular_posiciones(ruta_puntos_guia, cantidad)
+	return []
+
+
+## Devuelve la Curve2D activa según el layout_config (o RutaCeliaquia1 por defecto).
+func _obtener_curva_activa() -> Curve2D:
+	var route_id: String = "RutaCeliaquia1"
+	if layout_config != null:
+		route_id = layout_config.obtener_route_id()
+	return MapRouteRegistry.obtener_curva(contenedor_nodos, route_id)
 
 
 func obtener_nodos_runtime_mapa() -> Array[Node2D]:
@@ -144,3 +184,77 @@ func _desplazar_a_nodo(visual_node: Node2D) -> void:
 		- contenedor_scroll.size.y * 0.4
 	)
 	establecer_scroll_vertical(scroll_target)
+
+
+## Diagnóstico de alineación — llamar manualmente cuando debug_layout = true.
+## No dejar activo en producción.
+func debug_ruta_y_nodos() -> void:
+	if not debug_layout:
+		return
+	var contenedor := $ScrollContainer/Contenido/NodesContainer
+	var ruta: Path2D = contenedor.get_node_or_null("RutaCeliaquia1") as Path2D
+	if ruta == null:
+		printerr("[MapBoard] debug_ruta_y_nodos: RutaCeliaquia1 no encontrada en NodesContainer")
+		return
+	var curva := ruta.curve
+	print("[MapBoard] CONTENEDOR local:", contenedor.position)
+	print("[MapBoard] CONTENEDOR global:", contenedor.global_position)
+	print("[MapBoard] RUTA local:", ruta.position)
+	print("[MapBoard] RUTA global:", ruta.global_position)
+	print("[MapBoard] RUTA scale:", ruta.scale)
+	print("[MapBoard] RUTA rotation:", ruta.rotation)
+	if curva == null:
+		printerr("[MapBoard] debug_ruta_y_nodos: RutaCeliaquia1.curve es null")
+		return
+	print("[MapBoard] LARGO curva:", curva.get_baked_length())
+	print("[MapBoard] PUNTOS curva:", curva.point_count)
+	for i in range(curva.point_count):
+		print("[MapBoard] Punto ", i, ": ", curva.get_point_position(i))
+
+
+## Diagnóstico completo de layout: route_id activo, ruta encontrada, transform,
+## cantidad de puntos, largo total y primeras/últimas 5 posiciones generadas.
+## Solo se llama manualmente. No dejar activo en producción.
+func debug_layout_mapa() -> void:
+	if not debug_layout:
+		return
+	var route_id: String = "RutaCeliaquia1"
+	if layout_config != null:
+		route_id = layout_config.obtener_route_id()
+	print("[MapBoard:debug] route_id activo: ", route_id)
+
+	var ruta: Path2D = MapRouteRegistry.obtener_ruta(contenedor_nodos, route_id)
+	if ruta == null:
+		printerr("[MapBoard:debug] Ruta '%s' NO encontrada en NodesContainer." % route_id)
+		return
+
+	print("[MapBoard:debug] Ruta encontrada: ", ruta.name)
+	print("[MapBoard:debug] Parent: ", ruta.get_parent().name if ruta.get_parent() else "null")
+	print("[MapBoard:debug] position: ", ruta.position)
+	print("[MapBoard:debug] scale: ", ruta.scale)
+	print("[MapBoard:debug] rotation: ", ruta.rotation)
+
+	var curva: Curve2D = ruta.curve
+	if curva == null:
+		printerr("[MapBoard:debug] '%s'.curve es null." % route_id)
+		return
+
+	var n_puntos: int = curva.point_count
+	var largo: float = curva.get_baked_length()
+	print("[MapBoard:debug] Puntos en curva: ", n_puntos)
+	print("[MapBoard:debug] Largo total: ", largo)
+
+	var cantidad: int = _configured_map_nodes.size() if not _configured_map_nodes.is_empty() else 30
+	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, cantidad, layout_config)
+	print("[MapBoard:debug] Posiciones generadas: ", posiciones.size())
+
+	var mostrar: int = mini(5, posiciones.size())
+	print("[MapBoard:debug] Primeras %d posiciones:" % mostrar)
+	for i in range(mostrar):
+		print("  [%d] %s" % [i, posiciones[i]])
+
+	if posiciones.size() > 5:
+		print("[MapBoard:debug] Últimas %d posiciones:" % mini(5, posiciones.size() - mostrar))
+		var desde: int = maxi(mostrar, posiciones.size() - 5)
+		for i in range(desde, posiciones.size()):
+			print("  [%d] %s" % [i, posiciones[i]])

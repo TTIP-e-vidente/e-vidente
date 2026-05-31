@@ -3,6 +3,7 @@ class_name ContinuidadDePartidaDeNodo
 
 
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+const ModalidadRouterScript := preload("res://sistemas/ModalidadRouter.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
 
@@ -113,11 +114,8 @@ static func abrir_juego_actual(tree: SceneTree, estado_global: Node = null) -> b
 
 
 static func _es_modo_jugable_soportado(modo: String) -> bool:
-	match modo.strip_edges():
-		"drag_drop", "quiz_choice", "vinculacion_conceptos", "completar_palabra":
-			return true
-		_:
-			return false
+	# Delega a ModalidadRouter para evitar lista duplicada. Soportado = modo reconocido.
+	return not ModalidadRouterScript.normalizar_modo(modo.strip_edges()).is_empty()
 
 
 static func _obtener_estado_global(tree: SceneTree) -> Node:

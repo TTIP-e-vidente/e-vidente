@@ -36,6 +36,8 @@ const STATE_LOCKED := "locked"
 		update_view()
 
 @export_group("Scene Compatibility")
+## Solo visual/decorativo. No afecta la apertura de partida, la modalidad ni ArmadorDePartida.
+## MapChapterNode.tscn y MapQuestionNode.tscn usan este mismo script con node_kind distinto.
 @export_enum("chapter", "question") var node_kind: String = "chapter"
 @export var level_number: int = 0
 @export var question_number: int = 0
@@ -53,6 +55,16 @@ const STATE_LOCKED := "locked"
 # debug_progress / debug_completed: solo para pruebas en editor. Dejar en -1/false para producción.
 @export_range(-1.0, 1.0, 0.05) var debug_progress: float = -1.0
 @export var debug_completed: bool = false
+
+@export_group("Appearance")
+## Escala del sprite interno ($Icon). Vector2.ZERO = no override (usa valor del .tscn).
+@export var icon_scale: Vector2 = Vector2.ZERO
+## Posición del sprite interno ($Icon). Vector2.ZERO = no override (usa valor del .tscn).
+@export var icon_offset: Vector2 = Vector2.ZERO
+## Material del sprite interno ($Icon). null = no override (usa material del .tscn).
+@export var icon_material: Material = null
+## Posición del badge de progreso ($NodeProgressBadge). Vector2.ZERO = no override (usa valor del .tscn).
+@export var badge_offset: Vector2 = Vector2.ZERO
 
 var node_data: MapNodeData = null
 var _base_scale: Vector2 = Vector2.ONE
@@ -102,7 +114,21 @@ func update_view() -> void:
 			else Control.CURSOR_POINTING_HAND
 		)
 	_apply_state_color()
+	_aplicar_parametros_visuales()
 	_refresh_badge()
+
+
+func _aplicar_parametros_visuales() -> void:
+	if state_icon == null:
+		return
+	if icon_scale != Vector2.ZERO:
+		state_icon.scale = icon_scale
+	if icon_offset != Vector2.ZERO:
+		state_icon.position = icon_offset
+	if icon_material != null:
+		state_icon.material = icon_material
+	if badge_offset != Vector2.ZERO and node_badge != null:
+		node_badge.position = badge_offset
 
 
 func _refresh_badge() -> void:

@@ -342,7 +342,14 @@ static func _build_v2_mapa(raw_map: Dictionary, source_path: String) -> Dictiona
 	if not source_path.is_empty():
 		print("%s path=%s" % [LOG_PREFIX_MAP_LOAD, source_path])
 	print("%s nodes=%d" % [LOG_PREFIX_MAP_LOAD, nodes.size()])
-	return _ok({"id": track_key, "track_key": track_key, "title": track_key, "nodes": nodes})
+	var layout_config: MapLayoutConfig = MapLayoutConfig.desde_json(raw_map.get("layout", null))
+	return _ok({
+		"id": track_key,
+		"track_key": track_key,
+		"title": track_key,
+		"nodes": nodes,
+		"layout_config": layout_config,
+	})
 
 
 static func _build_v2_node(

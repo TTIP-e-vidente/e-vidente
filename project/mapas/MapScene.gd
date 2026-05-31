@@ -97,6 +97,12 @@ func cargar_mapa() -> void:
 				node_data.track_key = track_key_mapa
 				nodos_mapa.append(node_data)
 
+	# Pasar config de layout al MapBoard (si lo tiene).
+	if map_board != null and map_board.has_method("configurar_nodos"):
+		var layout_config: Variant = map_data.get("layout_config", null)
+		if layout_config is MapLayoutConfig:
+			map_board.set("layout_config", layout_config)
+
 
 func actualizar_estados_de_nodos() -> void:
 	if map_board == null or not map_board.has_method("configurar_nodos"):
@@ -156,8 +162,6 @@ func actualizar_estados_de_nodos() -> void:
 
 	print("[MapState] completed_count=", completed_count, " required_count=", nodos_mapa.size())
 	map_board.call("configurar_nodos", nodos_mapa, node_states)
-	if map_board.has_method("refresh_progress_from_save"):
-		map_board.call("refresh_progress_from_save")
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:
