@@ -41,7 +41,7 @@ func _ready() -> void:
 	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	actualizar_estados_de_nodos()
-	_restaurar_scroll_guardado_del_mapa()
+	call_deferred("_restaurar_scroll_guardado_del_mapa")
 
 	# Si hay resultado de EXP pendiente, abrir pantalla de finalización oficial y salir
 	if await _mostrar_finalizacion_de_nodo_si_corresponde():

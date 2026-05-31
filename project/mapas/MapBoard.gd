@@ -14,8 +14,15 @@ var _configured_node_states: Array[Dictionary] = []
 func _ready() -> void:
 	call_deferred("refresh_progress_from_save")
 	titulo_del_nivel.modulate = Color("#42785e")
+	_ajustar_scroll_al_viewport()
 
-	
+func _ajustar_scroll_al_viewport() -> void:
+	if contenedor_scroll == null:
+		return
+	var viewport_height: float = get_viewport().get_visible_rect().size.y
+	contenedor_scroll.size.y = maxf(100.0, viewport_height - contenedor_scroll.position.y)
+
+
 func obtener_contenedor_nodos() -> Node2D:
 	return contenedor_nodos
 
