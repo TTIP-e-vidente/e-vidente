@@ -9,7 +9,8 @@
 			"word_celiaquia_galletitas_01",
 			"word_celiaquia_cereal_01",
 			"word_celiaquia_sello_01",
-			"word_celiaquia_cocina_01"
+			"word_celiaquia_cocina_01",
+			"word_celiaquia_agua_01"
 		],
 		"drag|1|0": [
 			"drag_cena_facil",
@@ -29,13 +30,20 @@
 			"drag_desayuno_dificil",
 			"drag_merienda_dificil",
 			"drag_almuerzo_normal",
-			"drag_merienda_normal"
+			"drag_merienda_normal",
+			"drag_almuerzo_normal_plus",
+			"drag_bebida_normal",
+			"drag_colacion_normal",
+			"drag_desayuno_normal_plus",
+			"drag_merienda_dificil_plus"
 		],
 		"drag|2|0": [
 			"drag_cena_normal",
 			"drag_cena_normal_plus",
 			"drag_merienda_normal_plus",
-			"drag_desayuno_normal"
+			"drag_desayuno_normal",
+			"drag_almuerzo_normal",
+			"drag_merienda_normal"
 		],
 		"drag|3|0": [
 			"drag_almuerzo_dificil_plus",
@@ -43,7 +51,10 @@
 			"drag_merienda_dificil_plus",
 			"drag_almuerzo_dificil",
 			"drag_colacion_dificil_plus",
-			"drag_cena_dificil_plus"
+			"drag_cena_dificil_plus",
+			"drag_cena_dificil",
+			"drag_desayuno_dificil",
+			"drag_desayuno_dificil_plus"
 		],
 		"match|2|0": [
 			"match_alimentos",
@@ -53,7 +64,10 @@
 			"match_restaurante_avanzado",
 			"match_riesgos_cocina",
 			"match_decisiones_seguras",
-			"match_riesgos_ocultos"
+			"match_riesgos_ocultos",
+			"match_genetica",
+			"match_productos_riesgosos",
+			"match_cocina_segura_avanzada"
 		],
 		"match|3|0": [
 			"match_genetica",
@@ -62,7 +76,11 @@
 			"match_riesgos_ocultos",
 			"match_productos_riesgosos",
 			"match_estudios_medicos",
-			"match_comer_fuera_seguro"
+			"match_comer_fuera_seguro",
+			"match_ingredientes_ocultos",
+			"match_trazas_y_etiquetas",
+			"match_cocina_segura_avanzada",
+			"match_categorias_alimentos"
 		],
 		"quiz|1|0": [
 			"quiz_2op_fruta_natural_basica",
@@ -80,13 +98,19 @@
 			"quiz_3op_contaminacion_utensilios",
 			"quiz_contaminacion_cruzada",
 			"quiz_3op_cocina_compartida",
-			"quiz_3op_merienda_segura"
+			"quiz_3op_merienda_segura",
+			"quiz_freidora_compartida",
+			"quiz_comer_fuera",
+			"quiz_etiquetas_sin_tacc",
+			"quiz_3op_restaurante_riesgo"
 		],
 		"quiz|2|0": [
 			"quiz_3op_cocina_compartida",
 			"quiz_2op_cuchillo_contaminacion",
 			"quiz_utensilios_compartidos",
-			"quiz_postre_industrial"
+			"quiz_postre_industrial",
+			"quiz_3op_producto_sin_rotulo",
+			"quiz_bebidas_gluten"
 		],
 		"quiz|3|0": [
 			"quiz_salsa_soja",
@@ -96,7 +120,11 @@
 			"quiz_3op_freidora_compartida",
 			"quiz_2op_artesanal_sin_confirmacion",
 			"quiz_producto_artesanal",
-			"quiz_freidora_compartida"
+			"quiz_freidora_compartida",
+			"quiz_3op_trazas_gluten",
+			"quiz_restaurante_preguntar",
+			"quiz_comer_fuera",
+			"quiz_casos_cotidianos_sin_tacc"
 		]
 	},
 	"history": [
@@ -107,13 +135,67 @@
 				"score": 0,
 				"type": "question_session_completed"
 			},
+			"timestamp": "2026-05-31 19:09:39"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1,
+				"score": 0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 19:09:38"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1,
+				"score": 0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 19:09:38"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1,
+				"score": 0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 19:09:38"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1,
+				"score": 0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 19:09:37"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1,
+				"score": 0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 19:09:37"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
 			"timestamp": "2026-05-29 00:57:07"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-29 00:57:06"
@@ -121,8 +203,8 @@
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-29 00:57:06"
@@ -130,8 +212,8 @@
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-29 00:57:06"
@@ -320,10 +402,10 @@
 			},
 			"streak": {
 				"best_count": 2,
-				"current_count": 2,
-				"last_activity_day": "2026-05-29",
-				"last_activity_type": "question_session_completed",
-				"last_track_key": ""
+				"current_count": 1,
+				"last_activity_day": "2026-05-31",
+				"last_activity_type": "map_node_completed",
+				"last_track_key": "celiaquia"
 			}
 		},
 		"veganismo": [
@@ -350,10 +432,10 @@
 		"track_key": ""
 	},
 	"save_meta": {
-		"last_saved_at": "2026-05-29 00:57:07",
+		"last_saved_at": "2026-05-31 19:09:39",
 		"last_saved_reason": "progress_sync",
-		"write_count": 217
+		"write_count": 299
 	},
-	"total_exp": 511,
+	"total_exp": 721,
 	"version": 4
 }

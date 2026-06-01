@@ -1,4 +1,4 @@
-﻿[gd_scene format=3 uid="uid://p1dw52qkjytt"]
+[gd_scene format=3 uid="uid://p1dw52qkjytt"]
 
 [ext_resource type="Script" uid="uid://x7kmrf51ynq0" path="res://mapas/MapBoard.gd" id="1_mapboard"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_oop13"]
