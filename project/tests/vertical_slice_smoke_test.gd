@@ -1730,8 +1730,8 @@ func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	_check(layout_config != null, "[MapaReal] Debe existir layout_config parseado")
 	if layout_config != null:
 		_check(
-			layout_config.obtener_route_id() == "RutaCeliaquia1",
-			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.obtener_route_id()
+			layout_config.route_id == "RutaCeliaquia1",
+			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.route_id
 		)
 
 	# Ningún nodo debe tener map_position — todos usan la curva
