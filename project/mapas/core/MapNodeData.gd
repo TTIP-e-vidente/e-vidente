@@ -78,6 +78,10 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 			node.pack_id = str(first_game.get("pack_id", "")).strip_edges()
 	if node.pack_id.is_empty():
 		node.pack_id = node.track_key
+	var raw_map_pos: Variant = raw_node.get("map_position", null)
+	if raw_map_pos != null:
+		node.map_position = _normalize_position(raw_map_pos)
+		node.has_map_position = true
 	return node
 
 

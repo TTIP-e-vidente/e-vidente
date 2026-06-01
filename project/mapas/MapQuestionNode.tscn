@@ -8,6 +8,9 @@
 script = ExtResource("1_script")
 node_kind = "question"
 icon_texture = ExtResource("3_icon")
+icon_scale = Vector2(0.22, 0.22)
+icon_offset = Vector2(0, -4)
+badge_offset = Vector2(0, -59.57)
 
 [node name="Button" type="TextureButton" parent="." unique_id=293307127]
 offset_left = -80.0
@@ -19,12 +22,9 @@ mouse_default_cursor_shape = 2
 metadata/_edit_use_anchors_ = true
 
 [node name="Icon" type="Sprite2D" parent="." unique_id=1828318510]
-position = Vector2(0, -4)
-scale = Vector2(0.22, 0.22)
 texture = ExtResource("3_icon")
 
 [node name="NodeProgressBadge" parent="." unique_id=678132724 instance=ExtResource("4_badge")]
-position = Vector2(0, -59.57)
 
 [connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
 [connection signal="mouse_exited" from="Button" to="." method="_on_button_mouse_exited"]

@@ -1,0 +1,17 @@
+{
+  "id": "sintomas_y_diagnostico_celiaquia",
+  "theme": "celiaquia",
+  "title": "Sintomas y diagnostico",
+  "difficulty": "hard",
+  "mode": "quiz_choice",
+  "content": {
+    "question": "Si alguien sospecha celiaquia pero todavia no tiene diagnostico, cual es una decision segura?",
+    "correct_answer": "Consultar al equipo de salud antes de empezar una dieta sin gluten",
+    "wrong_options": [
+      "Sacar el gluten enseguida y hacer estudios despues",
+      "Diagnosticar celiaquia solo por dolor de panza",
+      "Evitar todos los cereales sin consultar"
+    ],
+    "visual_resource": ""
+  }
+}

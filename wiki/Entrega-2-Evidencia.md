@@ -39,39 +39,21 @@ carga_json_preguntas_test > test_evaluar_opcion_incorrecta             PASSED  7
 
 Statistics: 8 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans | PASSED 51ms
 ```
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/0ad2517c-9295-4d8e-84e6-66d3c7ac579b" />
+<img width="458" height="319" alt="image" src="https://github.com/user-attachments/assets/b4fb34cb-135b-4f6b-a502-2ac2acfbff1a" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/d8101282-06f2-4557-bbd6-2d0bf437ddca" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/a6de5d5f-c159-464d-b6f8-dd8fb788d92d" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/912fa5de-df96-486e-b5ec-a48a51b0459e" />
+<img width="458" height="319" alt="image" src="https://github.com/user-attachments/assets/d4348364-7bfc-40d4-9933-ded3705b3010" />
+<img width="461" height="319" alt="image" src="https://github.com/user-attachments/assets/fe3032c9-861c-4751-9524-1f84a720f8f5" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/4711d54b-257c-4234-af99-884a65da42e8" />
+<img width="459" height="317" alt="image" src="https://github.com/user-attachments/assets/57f6f055-fb73-48df-b915-5f2b8bbfe314" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/150d3e72-6fe2-43b8-81ca-92343652e55b" />
+<img width="459" height="319" alt="image" src="https://github.com/user-attachments/assets/af4bbe3b-6b3b-4a85-8789-9ed851e6f02f" />
+<img width="460" height="319" alt="image" src="https://github.com/user-attachments/assets/583d82d7-8c02-413a-9c2f-7024e958054a" />
+<img width="459" height="320" alt="image" src="https://github.com/user-attachments/assets/59dff5b6-8a2e-41fb-a6ec-59a6cba4168b" />
+<img width="461" height="319" alt="image" src="https://github.com/user-attachments/assets/544a29f2-4e0d-4a4a-ae1e-8ae6ee0afd0b" />
 
-## Validación manual del TypewriterEffect en Preguntas
 
-| Caso | Resultado |
-|---|---|
-| Primera carga | Enunciado arranca desde vacío, carácter a carácter con cursor `▌` |
-| Cambio de pregunta | Nuevo texto sin residuos del anterior — `_id_llamada_vigente` invalida el loop |
-| Respuesta mientras escribe | Respuesta registrada; botones no bloqueados por el efecto |
-| Salto por toque | Texto completo al instante, cursor desaparece |
-| Reinicio de actividad | Efecto arranca de cero, sin caracteres residuales |
-| Finalización natural | Cursor `▌` se limpia, queda el texto completo |
 
-## Archivos modificados — TypewriterEffect
 
-| Archivo | Rol | Cambio en Entrega 2 |
-|---|---|---|
-| `sistemas/TypewriterEffect.gd` | Clase reutilizable del efecto de escritura progresiva | **Creado** |
-| `preguntas/pregunta.gd` | Modalidad Preguntas — instancia y dispara el typewriter al cargar cada pregunta | **Modificado** — integración con `TypewriterEffect` |
-| `completar/completar_palabra.gd` | Modalidad Completar Palabra — ya tenía la integración de referencia | Sin cambios estructurales en Entrega 2 |
-| `interface/components/DragObjectiveText/DragObjectiveText.gd` | Componente de mensaje en Arrastre — usa TypewriterEffect para el objetivo | **Creado** |
-
-> Para reutilizar el efecto en futuras pantallas (diálogos, linking, drag-and-drop, mensajes educativos): instanciar `TypewriterEffect.new()`, configurar `character_delay` si se necesita velocidad distinta, y llamar `iniciar(self, callable, texto)` en el momento que el texto deba aparecer. Ver la sección de API en [Arquitectura — Entrega 2](Entrega-2-Arquitectura).
-
-## Evidencia de commits trazables
-
-| Commit | Descripción | Verifica |
-|---|---|---|
-| `76991a3` | Sistema de transiciones con GameSceneRouter (#26) | US-01 |
-| `48995fe` + `cd05ab4` | Transiciones implementadas y corregidas | US-01 |
-| `93afea4`, `3fef3da`, `b470dcd`, `87c9ef7`, `7b54f54`, `e08982d`, `970826f`, `90e1b99`, `98d5f25`, `8292e68` | Renovación gráfica en todas las pantallas | US-02 |
-| `b98b755`, `12bb0e0`, `726bd5f`, `7ecc60c` | Estrellas, felicitación, finalización partida | US-03 |
-| `eacdc56`, `e3c7624`, `d889d66` | DragObjectiveText, TypewriterEffect | US-04 |
-| `d889d66` | TypewriterEffect en preguntas | US-07 |
-| `314088e`, `90e1b99` | Normalización datos Completar Palabra, nueva gráfica | US-05 |
-| `8343778` | Tests GdUnit4 (#29) | US-06 |
-| `f2a8aa8`, `3820cfe` | Bugs de compatibilidad arrastre y dimensiones pregunta | Bugs |

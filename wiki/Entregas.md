@@ -26,4 +26,3 @@ Documentación organizada por entrega del proyecto **e-vidente**.
 | [Arquitectura](Entrega-2-Arquitectura) | Componentes nuevos y flujo actualizado |
 | [Decisiones](Entrega-2-Decisiones) | ADRs y decisiones tomadas |
 | [Evidencia](Entrega-2-Evidencia) | Evidencia de lo entregado |
-| [Próximos Pasos](Entrega-2-Proximos-Pasos) | Opciones y tareas para Entrega 3 |

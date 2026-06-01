@@ -158,8 +158,8 @@
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-31 22:55:44"
@@ -167,8 +167,17 @@
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-31 22:55:43"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-31 22:55:43"
@@ -185,17 +194,8 @@
 		{
 			"message": "Sesion de preguntas completada (0/1)",
 			"metadata": {
-				"question_count": 1,
-				"score": 0,
-				"type": "question_session_completed"
-			},
-			"timestamp": "2026-05-31 22:55:43"
-		},
-		{
-			"message": "Sesion de preguntas completada (0/1)",
-			"metadata": {
-				"question_count": 1,
-				"score": 0,
+				"question_count": 1.0,
+				"score": 0.0,
 				"type": "question_session_completed"
 			},
 			"timestamp": "2026-05-31 22:55:42"
@@ -297,7 +297,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-29 00:38:44"
+			"timestamp": "2026-05-30 14:55:39"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -306,7 +306,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-29 00:38:44"
+			"timestamp": "2026-05-30 14:55:39"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -315,7 +315,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-29 00:38:44"
+			"timestamp": "2026-05-30 14:55:39"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -324,7 +324,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-29 00:38:43"
+			"timestamp": "2026-05-30 14:55:36"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -333,7 +333,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-29 00:34:28"
+			"timestamp": "2026-05-30 14:55:36"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -342,7 +342,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-28 23:44:25"
+			"timestamp": "2026-05-30 14:55:36"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -351,7 +351,7 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-28 23:44:24"
+			"timestamp": "2026-05-30 14:55:35"
 		},
 		{
 			"message": "Sesion de preguntas completada (0/1)",
@@ -360,7 +360,88 @@
 				"score": 0.0,
 				"type": "question_session_completed"
 			},
-			"timestamp": "2026-05-28 23:44:24"
+			"timestamp": "2026-05-30 14:55:35"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-30 14:50:25"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-30 14:50:25"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-30 14:50:24"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-30 14:50:24"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-30 14:50:24"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-29 00:57:07"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-29 00:57:06"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-29 00:57:06"
+		},
+		{
+			"message": "Sesion de preguntas completada (0/1)",
+			"metadata": {
+				"question_count": 1.0,
+				"score": 0.0,
+				"type": "question_session_completed"
+			},
+			"timestamp": "2026-05-29 00:57:06"
 		}
 	],
 	"node_progress": {
@@ -386,11 +467,11 @@
 			"last_percent": 0.75
 		},
 		"celiaquia_08_riesgos_basicos": {
-			"best_accuracy": 75.0,
-			"best_percent": 0.75,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
 			"completed": true,
-			"last_accuracy": 75.0,
-			"last_percent": 0.75
+			"last_accuracy": 100.0,
+			"last_percent": 1.0
 		},
 		"celiaquia_14_comer_fuera": {
 			"best_accuracy": 80.0,
@@ -421,14 +502,19 @@
 			"last_percent": 0.8
 		},
 		"celiaquia_30_desafio_final_extendido": {
-			"best_accuracy": 80.0,
-			"best_percent": 0.8,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
 			"completed": true,
-			"last_accuracy": 80.0,
-			"last_percent": 0.8
+			"last_accuracy": 100.0,
+			"last_percent": 1.0
 		}
 	},
 	"played_activity_ids": [],
+	"played_activity_ids_by_request": {
+		"completar_palabra|1|0": [
+			"word_celiaquia_etiqueta_02"
+		]
+	},
 	"profile": {
 		"age": 0,
 		"avatar_path": "",

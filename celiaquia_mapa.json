@@ -1,0 +1,764 @@
+﻿{
+	"track": "celiaquia",
+	"version": 3,
+	"layout": {
+		"route_id": "RutaDeNodos",
+		"spacing_mode": "even",
+		"spacing_factor": 1.0,
+		"start_margin": 0.0,
+		"end_margin": 0.0,
+		"manual_positions_priority": true
+	},
+	"nodes": {
+		"1": {
+			"node_key": "celiaquia_01_desayuno_basico",
+			"_games_backup": [
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			],
+			"games": [
+				{
+					"type": "completar_palabra",
+					"difficulty": 1
+				}
+			]
+		},
+		"2": {
+			"node_key": "celiaquia_02_colacion_basica",
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una colación sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"3": {
+			"node_key": "celiaquia_03_quiz_gluten",
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 1
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 1
+				}
+			]
+		},
+		"4": {
+			"node_key": "celiaquia_04_desayuno_y_sello",
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 1
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un desayuno sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"5": {
+			"node_key": "celiaquia_05_intro_mixta",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 1
+				},
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"6": {
+			"node_key": "celiaquia_06_practica_simple",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 1,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"7": {
+			"node_key": "celiaquia_07_practica_normal",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 2
+				},
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2
+				}
+			]
+		},
+		"8": {
+			"node_key": "celiaquia_08_riesgos_basicos",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "match",
+					"difficulty": 2
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"9": {
+			"node_key": "celiaquia_09_mixto_normal",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"10": {
+			"node_key": "celiaquia_10_mixto_comidas",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 1,
+					"options_count": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"11": {
+			"node_key": "celiaquia_11_cocina_y_etiquetas",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 4
+				}
+			]
+		},
+		"12": {
+			"node_key": "celiaquia_12_productos_procesados",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				},
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"13": {
+			"node_key": "celiaquia_13_casos_cotidianos",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"14": {
+			"node_key": "celiaquia_14_comer_fuera",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una cena sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				}
+			]
+		},
+		"15": {
+			"node_key": "celiaquia_15_desafio_cocina",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 4
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"16": {
+			"node_key": "celiaquia_16_desafio_etiquetas",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				}
+			]
+		},
+		"17": {
+			"node_key": "celiaquia_17_desafio_riesgo",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"18": {
+			"node_key": "celiaquia_18_desafio_final",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				}
+			]
+		},
+		"19": {
+			"node_key": "celiaquia_19_cocina_segura",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"20": {
+			"node_key": "celiaquia_20_contaminacion_cruzada",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				},
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"21": {
+			"node_key": "celiaquia_21_utensilios_y_cocina",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 2
+				}
+			]
+		},
+		"22": {
+			"node_key": "celiaquia_22_comer_fuera",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 4
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"23": {
+			"node_key": "celiaquia_23_restaurante_seguro",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "una cena sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 3
+				}
+			]
+		},
+		"24": {
+			"node_key": "celiaquia_24_productos_industriales",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 4
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				}
+			]
+		},
+		"25": {
+			"node_key": "celiaquia_25_etiquetas_y_trazas",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				},
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"26": {
+			"node_key": "celiaquia_26_decisiones_confusas",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 2
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"27": {
+			"node_key": "celiaquia_27_riesgos_ocultos",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "match",
+					"difficulty": 3
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 4
+				},
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"28": {
+			"node_key": "celiaquia_28_repaso_general",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "drag",
+					"difficulty": 2,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 2,
+					"options_count": 3
+				},
+				{
+					"type": "match",
+					"difficulty": 2
+				}
+			]
+		},
+		"29": {
+			"node_key": "celiaquia_29_situaciones_reales",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 4
+				},
+				{
+					"type": "match",
+					"difficulty": 3
+				},
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				}
+			]
+		},
+		"30": {
+			"node_key": "celiaquia_30_desafio_final_extendido",
+			"shuffle_games": true,
+			"games": [
+				{
+					"type": "match",
+					"difficulty": 3
+				},
+				{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
+				{
+					"type": "quiz",
+					"difficulty": 3,
+					"options_count": 4
+				}
+			]
+		}
+	}
+}

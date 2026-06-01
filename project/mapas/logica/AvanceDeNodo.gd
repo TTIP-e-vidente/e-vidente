@@ -20,7 +20,10 @@ static func get_node_state(nodos_mapa: Array, node_data: MapNodeData) -> Diction
 static func is_node_completed(node_data: MapNodeData) -> bool:
 	if node_data == null:
 		return false
-	return Global.es_nodo_jugable_completado(node_data.track_key, node_data.node_key)
+	var g := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("/root/Global") if Engine.get_main_loop() is SceneTree else null
+	if g == null:
+		return false
+	return g.call("es_nodo_jugable_completado", node_data.track_key, node_data.node_key)
 
 
 static func is_node_unlocked(
@@ -93,18 +96,24 @@ static func nodo_esta_desbloqueado(
 		return true
 
 	var node_key_anterior: String = _obtener_node_key(nodos_mapa[indice - 1])
-	return Global.es_nodo_jugable_completado(track_key, node_key_anterior)
+	var g := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("/root/Global") if Engine.get_main_loop() is SceneTree else null
+	if g == null:
+		return false
+	return g.call("es_nodo_jugable_completado", track_key, node_key_anterior)
 
 
 static func mapa_esta_completado(nodos_mapa: Array, track_key: String) -> bool:
 	if nodos_mapa.is_empty():
+		return false
+	var g := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("/root/Global") if Engine.get_main_loop() is SceneTree else null
+	if g == null:
 		return false
 
 	var total: int = nodos_mapa.size()
 	var completed_count: int = 0
 	for nodo_mapa in nodos_mapa:
 		var node_key_actual: String = _obtener_node_key(nodo_mapa)
-		if Global.es_nodo_jugable_completado(track_key, node_key_actual):
+		if g.call("es_nodo_jugable_completado", track_key, node_key_actual):
 			completed_count += 1
 		else:
 			print(
