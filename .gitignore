@@ -7,5 +7,8 @@ project/addons/gdUnit4/
 # GdUnit4 reportes generados (outputs de test runs)
 project/reports/
 
+# Local docs workspace
+docs-local/
+
 # Legacy local docs folder
 local-docs/
