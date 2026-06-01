@@ -383,11 +383,11 @@ static func go_to_continue_target(
 		fallback_scene_path = MODE_SELECTOR_SCENE_PATH
 	var global_state := _get_global_state(tree)
 	if global_state == null or not global_state.has_method("obtener_destino_de_continuacion"):
-		await GameSceneRouter.change_scene(fallback_scene_path)
+		_change_scene_to_path(tree, fallback_scene_path)
 		return
 	var continue_target: Variant = global_state.call("obtener_destino_de_continuacion")
 	if not continue_target is Dictionary or (continue_target as Dictionary).is_empty():
-		await TransicionEscenas.change_normal_scene(fallback_scene_path)
+		_change_scene_to_path(tree, fallback_scene_path)
 		return
 	go_to_target(tree, continue_target as Dictionary, fallback_scene_path)
 

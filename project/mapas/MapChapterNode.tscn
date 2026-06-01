@@ -14,6 +14,10 @@ shader_parameter/radius = 0.6
 [node name="MapChapterNode" type="Node2D" unique_id=1895852919]
 script = ExtResource("1_script")
 icon_texture = ExtResource("3_icon")
+icon_scale = Vector2(0.30596542, 0.3059654)
+icon_offset = Vector2(1, -1)
+icon_material = SubResource("ShaderMaterial_a0hgu")
+badge_offset = Vector2(0, -63.295)
 
 [node name="Button" type="TextureButton" parent="." unique_id=1425031385]
 offset_left = -80.0
@@ -25,13 +29,9 @@ mouse_default_cursor_shape = 2
 metadata/_edit_use_anchors_ = true
 
 [node name="Icon" type="Sprite2D" parent="." unique_id=494369290]
-material = SubResource("ShaderMaterial_a0hgu")
-position = Vector2(1, -1)
-scale = Vector2(0.30596542, 0.3059654)
 texture = ExtResource("3_icon")
 
 [node name="NodeProgressBadge" parent="." unique_id=1722637685 instance=ExtResource("4_badge")]
-position = Vector2(0, -63.295)
 
 [connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
 [connection signal="mouse_exited" from="Button" to="." method="_on_button_mouse_exited"]

@@ -1,4 +1,4 @@
-    ![alt text](image.png)# Entrega 2 — E-VIDENTE
+# Entrega 2 — E-VIDENTE
 
 ## Resumen ejecutivo
 
@@ -15,19 +15,9 @@ En esta iteración se consolidó la estética general del juego y se completaron
 - **Tests automatizados con GdUnit4** — primera suite de pruebas unitarias sobre el pipeline de carga de preguntas (8 tests, todos passing).
 - **Correcciones de bugs** — compatibilidad de `manager_level.gd` con la nueva escena de arrastre (sprites opcionales), errores de dimensiones en `pregunta.tscn`.
 
-## Decisiones tomadas
-
-- **Priorizar renovación estética** antes que abrir backend o nuevas restricciones alimentarias; la demo necesitaba polish visible.
-- **Opción A de Entrega 1** — se completaron UNQ-142, UNQ-111/112/113, UNQ-102, UNQ-95 y UNQ-28.
-- **TypewriterEffect como componente reutilizable** — compartido entre pregunta y arrastre sin duplicar código.
-- **GdUnit4 como framework de testing** — instalado localmente, ignorado por git; los tests corren en CI.
-- **No abrir backend todavía** — la demo sigue corriendo completamente en local; se mantiene sin dependencias externas.
-
 ## Desafíos técnicos
 
 - Integrar transiciones de escena sin romper el flujo de carga de actividades ya existente.
-- Mantener compatibilidad hacia atrás de `manager_level.gd` cuando Margo eliminó nodos de la escena de arrastre sin actualizar el script.
-- Implementar `DragObjectiveText` como componente independiente del contenido hardcodeado, leyendo datos del JSON.
 - Incorporar GdUnit4 v6.1.3 correctamente (v6.0.0 de AssetLib era incompatible con Godot 4.6.x).
 - Normalizar el formato de datos de la modalidad Completar Palabra para que sea coherente con el resto de los modos vía JSON.
 
@@ -35,7 +25,6 @@ En esta iteración se consolidó la estética general del juego y se completaron
 
 | Commit | Descripción | Ticket(s) |
 |---|---|---|
-| `01db2dd` | fix(ci): Godot install directo para evitar timeout en pull | CI |
 | `73174e4` | Opciones desde JSON (#25) | UNQ-125 |
 | `76991a3` | Sistema de transiciones con GameSceneRouter (#26) | UNQ-111, UNQ-112, UNQ-113 |
 | `b98b755` | Implementación de estrellas (#27) | UNQ-102, UNQ-101 |
@@ -52,10 +41,10 @@ En esta iteración se consolidó la estética general del juego y se completaron
 | `e3c7624` | Modificación DragObjectiveText | UNQ-142 |
 | `d889d66` | TypewriterEffect en preguntas y arrastre | UNQ-142 |
 | `970826f` | Cambios en arrastre (nueva estética) | UNQ-28 |
-| `12bb0e0` | Felicitación con estrellas | UNQ-102 |
-| `8292e68` | Título de nivel | UNQ-28 |
+| `12bb0e0` | Felicitación fin de partida | UNQ-102 |
+| `8292e68` | Título de nivel normalizado | UNQ-28 |
 | `726bd5f` | Finalización de partida con contenedores | UNQ-102 |
-| `7ecc60c` | Animación en finalización de partida | UNQ-102 |
+| `7ecc60c` | Animación en fondo del juego para que parezca vivo | UNQ-102 |
 | `90e1b99` | Completar palabra con nueva gráfica | UNQ-95 |
 | `98d5f25` | Vincular con nueva estética | UNQ-28 |
 | `8343778` | Tests de carga JSON con GdUnit4 (#29) | Calidad |
@@ -74,14 +63,9 @@ En esta iteración se consolidó la estética general del juego y se completaron
 | Testing automatizado | GdUnit4 con 8 tests de pipeline de preguntas | Listo |
 | Estabilidad y bugs | Compatibilidad arrastre, dimensiones pregunta | Listo |
 
-### Fuera de alcance
-
-Backend, autenticación, leaderboard, base de datos y restricciones alimentarias adicionales (Cetogénica, Veganismo, Vegan-GF) no forman parte de Entrega 2. La demo sigue corriendo completamente en local.
-
 ## Documentación
 
 - [User Stories](Entrega-2-User-Stories)
 - [Arquitectura](Entrega-2-Arquitectura)
 - [Decisiones](Entrega-2-Decisiones)
 - [Evidencia](Entrega-2-Evidencia)
-- [Próximos Pasos](Entrega-2-Proximos-Pasos)

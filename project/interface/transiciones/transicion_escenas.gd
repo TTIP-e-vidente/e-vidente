@@ -13,6 +13,9 @@ func _ready():
 	$ColorRect2.visible = false
 	
 func change_scene(target_scene: String):
+	if DisplayServer.get_name() == "headless":
+		get_tree().change_scene_to_file(target_scene)
+		return
 
 	$ColorRect.visible = true
 
@@ -27,6 +30,10 @@ func change_scene(target_scene: String):
 	$ColorRect.visible = false
 
 func change_normal_scene(target_scene: String):
+	if DisplayServer.get_name() == "headless":
+		get_tree().change_scene_to_file(target_scene)
+		return
+
 	$ColorRect2.visible = true
 	
 	animation_player_2.play("close_normal")

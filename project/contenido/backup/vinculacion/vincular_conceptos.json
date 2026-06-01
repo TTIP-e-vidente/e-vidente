@@ -1,0 +1,45 @@
+{
+  "id": "vincular_conceptos",
+  "theme": "celiaquia",
+  "title": "Vincula Conceptos",
+  "difficulty": "medium",
+  "mode": "vinculacion_conceptos",
+  "content": {
+	"instruccion": "Relacioná cada alimento con su condición de consumo.",
+	"teaching_key": "celiaquia_9",
+	"conceptos_izquierda": [
+	  {
+		"id": "izq_cerveza",
+		"texto": "Malta",
+		"id_par": "cerveza"
+	  },
+	  {
+		"id": "izq_cocina",
+		"texto": "Utensilios",
+		"id_par": "cocina"
+	  },
+	  {
+		"id": "izq_enfermedad",
+		"texto": "Biopsia",
+		"id_par": "enfermedad"
+	  }
+	],
+	"conceptos_derecha": [
+	  {
+		"id": "der_cocina",
+		"texto": "Exclusivos",
+		"id_par": "cocina"
+	  },
+	  {
+		"id": "der_cerveza",
+		"texto": "Cebada",
+		"id_par": "cerveza"
+	  },
+	  {
+		"id": "der_enfermedad",
+		"texto": "Diagnostico",
+		"id_par": "enfermedad"
+	  }
+	]
+  }
+}

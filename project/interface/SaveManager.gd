@@ -1,3 +1,6 @@
+# PUBLICO_TRAINEE
+# Fuente de verdad para persistencia local: total_exp, racha, ranking, perfil.
+# No decide gameplay. No abre escenas.
 extends Node
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
@@ -245,8 +248,10 @@ func registrar_sesion_preguntas_completada(question_count: int, score: int) -> v
 func mark_activity_completed(request_key: String, activity_id: String) -> void:
 	var clean_key: String = request_key.strip_edges()
 	var clean_id: String = activity_id.strip_edges()
-	if clean_key.is_empty() or clean_id.is_empty():
+	if clean_id.is_empty():
 		return
+	if clean_key.is_empty():
+		clean_key = "__global__"
 	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
 	var completed_map: Dictionary = stored if stored is Dictionary else {}
 	var raw_ids: Variant = completed_map.get(clean_key, [])
@@ -273,6 +278,82 @@ func get_completed_activity_ids(request_key: String) -> Array[String]:
 	var result: Array[String] = []
 	for entry in (raw_ids as Array):
 		result.append(str(entry))
+	return result
+
+
+## Marca una actividad como "jugada" en la sesión actual.
+## Para request_key vacío (juegos fijos / legacy) usa "__global__" y también
+## la guarda en completed_activity_ids_by_request para que el filtro de
+## anti-repetición la vea vía get_completed_activity_ids("__global__").
+func mark_activity_played(request_key: String, activity_id: String) -> void:
+	var clean_id: String = activity_id.strip_edges()
+	var clean_key: String = request_key.strip_edges()
+	if clean_id.is_empty():
+		return
+	if clean_key.is_empty():
+		clean_key = "__global__"
+	var played_stored: Variant = save_data.get("played_activity_ids_by_request", {})
+	var played_map: Dictionary = played_stored if played_stored is Dictionary else {}
+	var raw_played: Variant = played_map.get(clean_key, [])
+	var played_list: Array = raw_played if raw_played is Array else []
+	if not played_list.has(clean_id):
+		played_list.append(clean_id)
+		played_map[clean_key] = played_list
+		save_data["played_activity_ids_by_request"] = played_map
+		_marcar_guardado_sucio()
+	# Para clave global también almacenamos en completed para que
+	# get_completed_activity_ids("__global__") las devuelva.
+	if clean_key == "__global__":
+		var cstored: Variant = save_data.get("completed_activity_ids_by_request", {})
+		var cmap: Dictionary = cstored if cstored is Dictionary else {}
+		var raw_c: Variant = cmap.get("__global__", [])
+		var c_list: Array = raw_c if raw_c is Array else []
+		if not c_list.has(clean_id):
+			c_list.append(clean_id)
+			cmap["__global__"] = c_list
+			save_data["completed_activity_ids_by_request"] = cmap
+			_marcar_guardado_sucio()
+
+
+## Devuelve todos los activity_ids jugados (de cualquier request_key).
+func get_played_activity_ids() -> Array[String]:
+	var stored: Variant = save_data.get("played_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return []
+	var result: Array[String] = []
+	for raw_ids: Variant in (stored as Dictionary).values():
+		if not raw_ids is Array:
+			continue
+		for entry: Variant in (raw_ids as Array):
+			var id: String = str(entry).strip_edges()
+			if not id.is_empty() and not result.has(id):
+				result.append(id)
+	return result
+
+
+## Devuelve todos los activity_ids completados, de cualquier request_key.
+func get_all_completed_activity_ids() -> Array[String]:
+	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
+	if not stored is Dictionary:
+		return []
+	var result: Array[String] = []
+	for raw_ids: Variant in (stored as Dictionary).values():
+		if not raw_ids is Array:
+			continue
+		for entry: Variant in (raw_ids as Array):
+			var id: String = str(entry).strip_edges()
+			if not id.is_empty() and not result.has(id):
+				result.append(id)
+	return result
+
+
+## Devuelve la unión de jugados y completados.
+## Usado por ArmadorDePartida._read_used_activity_ids para el filtro anti-repetición.
+func get_all_used_activity_ids() -> Array[String]:
+	var result: Array[String] = get_played_activity_ids()
+	for id: String in get_all_completed_activity_ids():
+		if not result.has(id):
+			result.append(id)
 	return result
 
 

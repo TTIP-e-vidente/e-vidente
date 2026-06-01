@@ -205,6 +205,45 @@ run_map_progress_visual() {
 }
 
 
+run_question_json_contract() {
+	if [ ! -f project/tests/node_content_loader_test.gd ]; then
+		echo "SKIP: Playable node JSON contract test (project/tests/node_content_loader_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02-node-json-contract" \
+		"Playable node JSON contract test" \
+		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
+		--headless --path project -s res://tests/node_content_loader_test.gd
+}
+
+
+run_post_game_flow_controller() {
+	if [ ! -f project/tests/post_game_flow_controller_test.gd ]; then
+		echo "SKIP: Post-game flow controller test (project/tests/post_game_flow_controller_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02b-post-game-flow" \
+		"Post-game flow controller test" \
+		"Se rompieron las decisiones de post-partida, el adapter del router o el retorno desde racha." \
+		--headless --path project -s res://tests/post_game_flow_controller_test.gd
+}
+
+
+run_map_progress_visual() {
+	if [ ! -f project/tests/map_progress_visual_test.gd ]; then
+		echo "SKIP: Map progress visual test (project/tests/map_progress_visual_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02c-map-progress-visual" \
+		"Map progress visual test" \
+		"Se rompio el contrato del mapa de celiaquia, los estados visuales o el desbloqueo del siguiente nodo." \
+		--headless --path project -s res://tests/map_progress_visual_test.gd
+}
+
+
 run_codebase_suite() {
 	run_import_headless
 

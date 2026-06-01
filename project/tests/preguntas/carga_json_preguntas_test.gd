@@ -1,7 +1,6 @@
 extends GdUnitTestSuite
 class_name CargaJsonPreguntasTest
 
-## 8 tests sobre el fixture de ejemplo en contenido/.
 ## Flujo que se valida: JSON → QuestionJsonLoader → Preguntas → EvaluadorDeOpcionPregunta
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const FIXTURE_PATH := "res://contenido/ejemplos/quiz_choice.json"

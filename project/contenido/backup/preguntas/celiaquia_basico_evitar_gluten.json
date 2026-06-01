@@ -1,0 +1,13 @@
+{
+  "id": "celiaquia_basico_evitar_gluten",
+  "theme": "celiaquia",
+  "title": "Celiaquia basica",
+  "difficulty": "easy",
+  "mode": "quiz_choice",
+  "content": {
+	"question": "Una persona con celiaquia debe evitar alimentos que contengan trigo, avena, cebada o centeno, salvo que esten certificados como libres de gluten.",
+	"correct_answer": "Verdadero",
+	"wrong_options": ["Falso"],
+	"visual_resource": ""
+  }
+}

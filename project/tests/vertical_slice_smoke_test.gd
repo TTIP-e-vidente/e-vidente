@@ -32,6 +32,7 @@ const CONTENT_SCHEMA_NORMALIZER_SCRIPT := preload(
 	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
 )
 const CARGADOR_DE_MAPA_SCRIPT := preload("res://mapas/logica/CargadorDeMapa.gd")
+const AVANCE_DE_NODO_SCRIPT := preload("res://mapas/logica/AvanceDeNodo.gd")
 const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
 const ARMADOR_DE_PARTIDA_SCRIPT := preload("res://mapas/logica/ArmadorDePartida.gd")
 const NODE_CONTENT_LOADER_SCRIPT := preload("res://sistemas/contenido/NodeContentLoader.gd")
@@ -1646,6 +1647,110 @@ func _test_armador_plan_nodo_real_sin_modalidades_repetidas() -> void:
 	fake_save.queue_free()
 
 
+func _test_armador_pool_agotado_no_crashea() -> void:
+	# Si todos los activity_ids del pool están usados, el plan devuelve vacío sin crashear.
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
+	var fake_save := FakeSaveManager.new()
+	root.add_child(fake_save)
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(fake_save)
+
+	var node_data: MapNodeData = _get_test_map_node(NODE_6_KEY)
+	if node_data == null:
+		ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+		fake_save.queue_free()
+		return
+
+	# Marcar como jugados todos los candidatos de todos los modos soportados.
+	for mode in ["drag", "quiz", "vinculacion", "completar"]:
+		for dif in [1, 2, 3, 4, 5]:
+			var cands: Array[String] = NODE_CONTENT_LOADER_SCRIPT.get_activity_candidates(
+				"celiaquia", mode, dif
+			)
+			for cid in cands:
+				fake_save.mark_activity_played("", cid)
+				fake_save.mark_activity_completed("", cid)
+
+	var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
+	_check(
+		plan.is_empty(),
+		"[Armador] pool agotado debe devolver plan vacío, no crashear"
+	)
+	_check(not fake_save.reset_called, "[Armador] pool agotado no debe resetear historial")
+
+	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
+	fake_save.queue_free()
+
+
+func _test_save_manager_precision_no_forzada_al_100() -> void:
+	# save_node_accuracy debe conservar la precisión real, no forzar 100%.
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = {
+		"node_progress": {},
+		"profile": {},
+		"progress": {},
+		"save_meta": {},
+	}
+	save_manager.save_node_accuracy("nodo_test", 40.0, 3, 5)
+	var prog: Dictionary = save_manager.get_node_progress_entry("nodo_test") \
+		if save_manager.has_method("get_node_progress_entry") \
+		else save_manager.save_data.get("node_progress", {}).get("nodo_test", {}) as Dictionary
+	var last_accuracy: float = float(prog.get("last_accuracy", -1.0))
+	var best_percent: float = float(prog.get("best_percent", -1.0))
+	_check(
+		absf(last_accuracy - 40.0) < 0.01,
+		"[SaveManager] last_accuracy debe ser 40, no 100. Obtenido: %s" % str(last_accuracy)
+	)
+	_check(
+		best_percent <= 0.41,
+		"[SaveManager] best_percent con precisión 40%% debe ser ≤0.41. Obtenido: %s" % str(best_percent)
+	)
+	_check(
+		bool(prog.get("completed", false)),
+		"[SaveManager] completed debe ser true aunque precisión sea 40%%"
+	)
+
+
+func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[MapaReal] Debe cargar el JSON exitosamente")
+	if not bool(result.get("ok", false)):
+		return
+	var data: Dictionary = result.get("data", {})
+	var nodes: Array = data.get("nodes", [])
+	_check(nodes.size() == 30, "[MapaReal] Debe haber 30 nodos. Obtenido: %d" % nodes.size())
+
+	# Verificar sección layout con route_id = RutaCeliaquia1
+	var layout_config: MapLayoutConfig = data.get("layout_config", null) as MapLayoutConfig
+	_check(layout_config != null, "[MapaReal] Debe existir layout_config parseado")
+	if layout_config != null:
+		_check(
+			layout_config.obtener_route_id() == "RutaCeliaquia1",
+			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.obtener_route_id()
+		)
+
+	# Ningún nodo debe tener map_position — todos usan la curva
+	var nodos_con_pos: int = 0
+	var nodos_sin_pos: int = 0
+	for raw_node in nodes:
+		var nd: MapNodeData = raw_node as MapNodeData
+		if nd == null:
+			continue
+		if nd.has_map_position:
+			nodos_con_pos += 1
+		else:
+			nodos_sin_pos += 1
+	_check(nodos_con_pos == 0, "[MapaReal] Ningún nodo debe tener map_position. Con pos: %d" % nodos_con_pos)
+	_check(nodos_sin_pos == 30, "[MapaReal] Los 30 nodos deben usar curva. Sin pos: %d" % nodos_sin_pos)
+
+	# Verificar que todos los nodos no tienen map_position
+	for raw_node in nodes:
+		var nd: MapNodeData = raw_node as MapNodeData
+		if nd == null:
+			continue
+		_check(not nd.has_map_position, "[MapaReal] %s no debe tener map_position" % nd.node_key)
+
+
+
 func ejecutar_tests_ids_de_contenido() -> void:
 	print("[ContentId] ── Iniciando tests de validación de IDs ──")
 	_test_content_id_formato_valido()
@@ -1667,6 +1772,9 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_validacion_detecta_modalidades_repetidas()
 	_test_validacion_permite_modalidad_repetida_con_flag()
 	_test_armador_plan_nodo_real_sin_modalidades_repetidas()
+	_test_armador_pool_agotado_no_crashea()
+	_test_save_manager_precision_no_forzada_al_100()
+	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:
 		print("[ContentId] ✓ Todos los tests pasaron.")
 	else:
