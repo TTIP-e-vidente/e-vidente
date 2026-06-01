@@ -15,7 +15,6 @@
 
 ---
 
-<<<<<<< HEAD
 ## Lo que pasó recientemente
 
 Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y continuidad técnica.
@@ -23,40 +22,31 @@ Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y conti
 ---
 
 ### `2026-05-31` — Layout automático de nodos del mapa sobre curva
-<kbd>Feature</kbd> <kbd>Arquitectura</kbd> <kbd>Testing</kbd>
+<kbd>Feature</kbd>
 
-Se implementó el sistema de posicionamiento automático de los 30 nodos del mapa sobre una curva `Path2D` (`RutaCeliaquia1`), eliminando las posiciones hardcodeadas en el `.tscn`.
+Los 30 nodos del mapa ahora se posicionan automáticamente siguiendo una curva `Path2D` (`RutaCeliaquia1`), sin posiciones hardcodeadas en el `.tscn`.
 
 **Qué problema resolvió**
-- Mover un nodo del mapa requería abrir el editor y arrastrarlo a mano. Con 30 nodos, cualquier ajuste de diseño era costoso y propenso a errores.
-- El modo `curve` (distribución por `sample_baked`) generaba deriva visual en curvas irregulares: los nodos intermedios no quedaban donde el diseñador los había puesto.
+- Mover un nodo requería abrir el editor y arrastrarlo a mano.
+- El modo `curve` (distribución por `sample_baked`) generaba deriva visual en curvas irregulares: los nodos no quedaban exactamente donde el diseñador los puso.
 
 **Qué se implementó**
-- `placement_mode = "anchors"`: cada nodo `i` recibe exactamente `curve.get_point_position(i)`. El nodo i y el punto i de la curva son la misma cosa. Diseñar el mapa = colocar puntos en la curva.
-- `RutaCeliaquia1` reemplazada por una curva de 30 puntos derivados de las posiciones manuales originales de los nodos (ground truth visual sin drift).
-- Fallback automático a `sample_baked` si la curva tiene menos puntos que nodos, con `push_warning` — la partida no rompe.
-- Pipeline completo: `MapLayoutConfig` → `MapRouteRegistry` → `MapPathLayout` → `MapNodePositionResolver` → `MapBoard`.
-- `CargadorDeMapa` y `MapScene` conectados al pipeline; `celiaquia_mapa.json` define `route_id` y `placement_mode`.
-- `DebugLayoutOverlay`: flag `debug_layout` (default `false`) dibuja círculos rojos en cada posición calculada para validación visual en editor.
-- 13 tests de layout en el smoke test (ExitCode 0).
+- `placement_mode = "anchors"`: el nodo `i` recibe exactamente `curve.get_point_position(i)`. Diseñar el mapa = colocar puntos en la curva.
+- `RutaCeliaquia1` tiene 30 puntos derivados de las posiciones manuales originales (sin drift).
+- Fallback a `sample_baked` si la curva tiene menos puntos que nodos — la partida no rompe.
+- Pipeline: `MapLayoutConfig` → `MapRouteRegistry` → `MapPathLayout` → `MapNodePositionResolver` → `MapBoard`.
+- `DebugLayoutOverlay`: dibuja círculos en cada posición calculada cuando `debug_layout = true`.
 
 **Impacto para el jugador**
 - Ninguno visible — los nodos quedan exactamente donde estaban. El cambio es estructural.
 
 **Evidencia técnica**
-- `project/mapas/layout/MapPathLayout.gd`
-- `project/mapas/layout/MapLayoutConfig.gd`
-- `project/mapas/layout/MapRouteRegistry.gd`
-- `project/mapas/layout/MapNodePositionResolver.gd`
-- `project/mapas/debug/DebugLayoutOverlay.gd`
+- `project/mapas/layout/` (MapPathLayout, MapLayoutConfig, MapRouteRegistry, MapNodePositionResolver)
 - `project/mapas/MapBoard.gd`, `project/mapas/MapBoard.tscn`
 - `project/contenido/mapa/celiaquia_mapa.json`
-- `project/tests/vertical_slice_smoke_test.gd` (13 tests de layout)
 
 ---
 
-=======
->>>>>>> 40daad88329ffde23ee7f353932b8abfdb585823
 ### `2026-05-27` — Corregir reintento parcial en modalidad de vinculación
 <kbd>Bug</kbd> <kbd>UX</kbd> <kbd>Testing</kbd>
 
