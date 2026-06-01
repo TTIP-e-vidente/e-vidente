@@ -6,6 +6,7 @@ const ContentNormalizerScript := preload("res://sistemas/contenido/ContentNormal
 const ContentValidatorScript := preload("res://sistemas/contenido/ContentValidator.gd")
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const MapNodeDataScript := preload("res://mapas/core/MapNodeData.gd")
+const MapLayoutConfigScript := preload("res://mapas/layout/MapLayoutConfig.gd")
 const NODE_JSON_ROOT := "res://contenido/nodos/"
 const LOG_PREFIX := "[MAPA]"
 const LOG_PREFIX_MAP_LOAD := "[MapLoad]"
@@ -342,7 +343,19 @@ static func _build_v2_mapa(raw_map: Dictionary, source_path: String) -> Dictiona
 	if not source_path.is_empty():
 		print("%s path=%s" % [LOG_PREFIX_MAP_LOAD, source_path])
 	print("%s nodes=%d" % [LOG_PREFIX_MAP_LOAD, nodes.size()])
-	return _ok({"id": track_key, "track_key": track_key, "title": track_key, "nodes": nodes})
+
+	var layout_config: MapLayoutConfig = null
+	var raw_layout: Variant = raw_map.get("layout", null)
+	if raw_layout is Dictionary:
+		layout_config = MapLayoutConfigScript.from_json(raw_layout as Dictionary)
+
+	return _ok({
+		"id": track_key,
+		"track_key": track_key,
+		"title": track_key,
+		"nodes": nodes,
+		"layout_config": layout_config,
+	})
 
 
 static func _build_v2_node(

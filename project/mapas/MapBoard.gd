@@ -2,7 +2,15 @@
 # Solo renderiza — no decide flujo ni calcula EXP.
 extends Node2D
 
+const MapNodePositionResolverScript := preload("res://mapas/layout/MapNodePositionResolver.gd")
+const MapRouteRegistryScript := preload("res://mapas/layout/MapRouteRegistry.gd")
+const _DEBUG_OVERLAY_SCRIPT := preload("res://mapas/debug/DebugLayoutOverlay.gd")
+
 signal node_selected(node_data: MapNodeData)
+
+## Activa el overlay de debug: muestra la curva y los puntos calculados sobre el mapa.
+## Mantener en false en produccion.
+@export var debug_layout: bool = false
 
 var _configured_node_states: Array[Dictionary] = []
 
@@ -40,7 +48,10 @@ func establecer_scroll_vertical(scroll_value: int) -> void:
 	contenedor_scroll.scroll_vertical = clampi(scroll_value, 0, max_scroll)
 
 
-func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
+func configurar_nodos(
+		map_nodes: Array,
+		node_states: Array[Dictionary],
+		layout_config: MapLayoutConfig = null) -> void:
 	_configured_node_states = node_states.duplicate()
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), map_nodes.size())
@@ -52,6 +63,16 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			% [visual_nodes.size(), map_nodes.size()]
 		)
 
+	# Posiciones desde la curva, si hay layout_config válido.
+	# Las posiciones están en el espacio del contenedor padre de NodesContainer (Contenido).
+	# Para convertir a espacio local de NodesContainer: pos - contenedor_nodos.position.
+	var layout_positions: Array[Vector2] = []
+	if layout_config != null and layout_config.is_valid() and contenedor_nodos != null:
+		var route_container: Node = contenedor_nodos.get_parent()
+		layout_positions = MapNodePositionResolverScript.resolve(
+			route_container, layout_config, map_nodes.size()
+		)
+
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
@@ -61,7 +82,9 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 			continue
 
 		visual_node.show()
-		if node_data.has_map_position:
+		if index < layout_positions.size():
+			visual_node.position = layout_positions[index] - contenedor_nodos.position
+		elif node_data.has_map_position:
 			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
 			visual_node.configurar(node_data, node_state)
@@ -72,6 +95,30 @@ func configurar_nodos(map_nodes: Array, node_states: Array[Dictionary]) -> void:
 
 	for index in range(visible_count, visual_nodes.size()):
 		visual_nodes[index].hide()
+
+	_actualizar_debug_overlay(layout_positions)
+
+
+func _actualizar_debug_overlay(positions: Array[Vector2]) -> void:
+	const OVERLAY_NAME := "DebugLayoutOverlay"
+	var contenido: Node = contenedor_nodos.get_parent()
+	if contenido == null:
+		return
+	var old: Node = contenido.get_node_or_null(OVERLAY_NAME)
+	if old:
+		old.queue_free()
+	var ruta := contenido.get_node_or_null("RutaCeliaquia1") as Path2D
+	if ruta:
+		ruta.visible = debug_layout
+	if not debug_layout:
+		return
+	var overlay := Node2D.new()
+	overlay.name = OVERLAY_NAME
+	overlay.z_index = 200
+	overlay.set_script(_DEBUG_OVERLAY_SCRIPT)
+	contenido.add_child(overlay)
+	overlay.set("dbg_positions", positions)
+	overlay.queue_redraw()
 
 
 func refresh_progress_from_save() -> void:

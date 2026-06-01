@@ -21,6 +21,7 @@ var map_id: String = ""
 var map_title: String = ""
 var track_key_mapa: String = DEFAULT_TRACK_KEY
 var nodos_mapa: Array[MapNodeData] = []
+var layout_config: MapLayoutConfig = null
 var _flujo_de_nodo: FlujoDeNodoJugable = null  # gestiona selección de nodo desde el mapa
 
 @onready var map_hud: CanvasLayer = $MapHud
@@ -29,7 +30,6 @@ var _flujo_de_nodo: FlujoDeNodoJugable = null  # gestiona selección de nodo des
 
 # Entrada desde el mapa
 func _ready() -> void:
-	# Inicializar el flujo de nodo jugable y conectar su señal de error antes de todo.
 	_flujo_de_nodo = FlujoDeNodoJugableScript.new()
 	_flujo_de_nodo.apertura_fallida.connect(_mostrar_error)
 	_conectar_senales()
@@ -43,7 +43,6 @@ func _ready() -> void:
 	actualizar_estados_de_nodos()
 	call_deferred("_restaurar_scroll_guardado_del_mapa")
 
-	# Si hay resultado de EXP pendiente, abrir pantalla de finalización oficial y salir
 	if await _mostrar_finalizacion_de_nodo_si_corresponde():
 		return
 
@@ -87,6 +86,7 @@ func cargar_mapa() -> void:
 	map_id = str(map_data.get("id", "")).strip_edges()
 	map_title = str(map_data.get("title", "")).strip_edges()
 	track_key_mapa = _obtener_track_key_valida(str(map_data.get("track_key", DEFAULT_TRACK_KEY)))
+	layout_config = map_data.get("layout_config", null) as MapLayoutConfig
 	nodos_mapa = []
 
 	var loaded_nodes: Variant = map_data.get("nodes", [])
@@ -101,60 +101,14 @@ func cargar_mapa() -> void:
 func actualizar_estados_de_nodos() -> void:
 	if map_board == null or not map_board.has_method("configurar_nodos"):
 		return
-
 	var save_manager: Node = get_node_or_null("/root/SaveManager")
 	var node_progress: Dictionary = {}
 	if save_manager != null and save_manager.has_method("get_all_node_progress"):
 		node_progress = save_manager.call("get_all_node_progress")
 
-	print("[MapState] save_clean=", node_progress.is_empty())
-
-	# Paso 1: Sincronizar disco con Global para evaluar dependencias correctamente
-	for node_data in nodos_mapa:
-		var key: String = str(node_data.node_key).strip_edges()
-		if not key.is_empty() and node_progress.has(key):
-			var np: Variant = node_progress[key]
-			if np is Dictionary:
-				var saved_progress: Dictionary = np as Dictionary
-				var saved_completed: bool = bool(saved_progress.get("completed", false))
-				if saved_completed:
-					Global.marcar_nodo_jugable_completado(track_key_mapa, key)
-
-	# Paso 2: Calcular estado visual y lógico del mapa (ahora seguro)
-	var node_states: Array[Dictionary] = []
-	var completed_count: int = 0
-	for node_data in nodos_mapa:
-		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
-		var key: String = str(node_data.node_key).strip_edges()
-		if not key.is_empty() and node_progress.has(key):
-			var np: Variant = node_progress[key]
-			if np is Dictionary:
-				var saved_progress: Dictionary = np as Dictionary
-				var saved_percent: float = float(saved_progress.get("best_percent", 0.0))
-				var saved_accuracy: float = float(saved_progress.get("best_accuracy", saved_percent * 100.0))
-				var saved_completed: bool = bool(saved_progress.get("completed", false))
-				# "Completado" no implica 100%: se usa la precisión real guardada.
-				# Si no hay precisión registrada se deja en 0, sin inventar un valor perfecto.
-				state["best_percent"] = saved_percent
-				state["best_accuracy"] = saved_accuracy
-				if saved_completed:
-					state["is_completed"] = true
-					state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
-					state["can_play"] = true
-
-		if bool(state.get("is_completed", false)):
-			completed_count += 1
-
-		print(
-			"[MapState] node_key=", key,
-			" completed=", state.get("is_completed", false),
-			" unlocked=", state.get("is_unlocked", false),
-			" current=", state.get("is_unlocked", false) and not state.get("is_completed", false)
-		)
-		node_states.append(state)
-
-	print("[MapState] completed_count=", completed_count, " required_count=", nodos_mapa.size())
-	map_board.call("configurar_nodos", nodos_mapa, node_states)
+	_sincronizar_completados_al_global(node_progress)
+	var node_states: Array[Dictionary] = _construir_estados_de_nodos(node_progress)
+	map_board.call("configurar_nodos", nodos_mapa, node_states, layout_config)
 	if map_board.has_method("refresh_progress_from_save"):
 		map_board.call("refresh_progress_from_save")
 
@@ -214,9 +168,44 @@ func _desplazar_a_proximo_disponible() -> void:
 	map_board.call("desplazar_al_primer_nodo_disponible")
 
 
+func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
+	for node_data in nodos_mapa:
+		var key: String = node_data.node_key.strip_edges()
+		var saved: Dictionary = _progreso_guardado(node_progress, key)
+		if bool(saved.get("completed", false)):
+			Global.marcar_nodo_jugable_completado(track_key_mapa, key)
+
+
+func _construir_estados_de_nodos(node_progress: Dictionary) -> Array[Dictionary]:
+	var node_states: Array[Dictionary] = []
+	for node_data in nodos_mapa:
+		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
+		var saved: Dictionary = _progreso_guardado(node_progress, node_data.node_key)
+		if not saved.is_empty():
+			_aplicar_progreso_guardado(state, saved)
+		node_states.append(state)
+	return node_states
+
+
+func _progreso_guardado(node_progress: Dictionary, node_key: String) -> Dictionary:
+	var key: String = node_key.strip_edges()
+	if key.is_empty() or not node_progress.has(key):
+		return {}
+	var np: Variant = node_progress[key]
+	return np as Dictionary if np is Dictionary else {}
+
+
+func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
+	state["best_percent"] = float(saved.get("best_percent", 0.0))
+	var fallback_accuracy: float = float(saved.get("best_percent", 0.0)) * 100.0
+	state["best_accuracy"] = float(saved.get("best_accuracy", fallback_accuracy))
+	if bool(saved.get("completed", false)):
+		state["is_completed"] = true
+		state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
+		state["can_play"] = true
+
+
 func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
-	## Abre Finalización-Partida.tscn si hay EXP pendiente de mostrar.
-	## Devuelve true cuando se inicia el cambio de escena (para que _ready() pueda retornar).
 	if not Global.hay_ultima_finalizacion():
 		return false
 	await TransicionEscenas.change_scene(FINALIZACION_PARTIDA_SCENE)
@@ -224,36 +213,21 @@ func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
 
 
 func _mostrar_completado_del_mapa_si_corresponde() -> void:
-	## Muestra el popup "Capítulo completado" si todos los nodos del mapa están completos
-	## y la recompensa todavía no fue vista. El flag se guarda DESPUÉS de mostrar el popup.
 	if not AvanceDeNodoScript.mapa_esta_completado(nodos_mapa, track_key_mapa):
 		return
-
 	var save_manager: Node = get_node_or_null("/root/SaveManager")
-
-	# Si la recompensa ya fue vista en una visita anterior, no volver a mostrarla.
-	var reward_seen: bool = false
 	if save_manager != null and save_manager.has_method("ya_se_mostro_recompensa_del_mapa"):
-		reward_seen = bool(save_manager.call("ya_se_mostro_recompensa_del_mapa", map_id))
-	if reward_seen:
-		print("[MapCompletion] reward already seen map_id=\"", map_id, "\"")
-		return
-
-	# Evitar instanciar dos veces si ya hay un popup activo.
+		if bool(save_manager.call("ya_se_mostro_recompensa_del_mapa", map_id)):
+			return
 	if _popup_completado_activo():
 		return
-
-	# Instanciar el popup y agregarlo a la escena.
-	var popup_completado: Node = MAP_COMPLETION_SCENE.instantiate()
-	if popup_completado == null:
+	var popup: Node = MAP_COMPLETION_SCENE.instantiate()
+	if popup == null:
 		push_error("MapScene: No se pudo instanciar CapituloCompletado.tscn")
 		return
-	if popup_completado.has_method("configure_for_track"):
-		popup_completado.call("configure_for_track", track_key_mapa)
-	add_child(popup_completado)
-
-	# Marcar la recompensa como vista DESPUÉS de agregar el popup al árbol.
-	print("[MapCompletion] showing reward map_id=\"", map_id, "\"")
+	if popup.has_method("configure_for_track"):
+		popup.call("configure_for_track", track_key_mapa)
+	add_child(popup)
 	if save_manager != null and save_manager.has_method("marcar_recompensa_del_mapa_como_vista"):
 		save_manager.call("marcar_recompensa_del_mapa_como_vista", map_id)
 
