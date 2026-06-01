@@ -1,9 +1,9 @@
 class_name MapNodePositionResolver
 extends RefCounted
 
-# Resuelve las posiciones de N nodos combinando MapRouteRegistry y MapPathLayout.
-# Las posiciones devueltas están en el espacio local del Path2D (= espacio del contenedor
-# padre si el Path2D está en el origen, que es el contrato documentado para este proyecto).
+# Resuelve las posiciones de N nodos: elige entre modo anchors y modo curve,
+# busca la ruta con MapRouteRegistry y delega la matemática a MapPathLayout.
+# Las posiciones devueltas están en espacio Contenido (igual que RutaCeliaquia1.position = ZERO).
 
 
 static func resolve(

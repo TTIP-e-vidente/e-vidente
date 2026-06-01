@@ -1,5 +1,5 @@
 # Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
-# Solo renderiza — no decide flujo ni calcula EXP.
+# No decide flujo ni calcula EXP ni lee JSON.
 extends Node2D
 
 const MapNodePositionResolverScript := preload("res://mapas/layout/MapNodePositionResolver.gd")
@@ -63,9 +63,8 @@ func configurar_nodos(
 			% [visual_nodes.size(), map_nodes.size()]
 		)
 
-	# Posiciones desde la curva, si hay layout_config válido.
-	# Las posiciones están en el espacio del contenedor padre de NodesContainer (Contenido).
-	# Para convertir a espacio local de NodesContainer: pos - contenedor_nodos.position.
+	# Las posiciones están en espacio Contenido.
+	# Para espacio NodesContainer: pos_contenido - contenedor_nodos.position.
 	var layout_positions: Array[Vector2] = []
 	if layout_config != null and layout_config.is_valid() and contenedor_nodos != null:
 		var route_container: Node = contenedor_nodos.get_parent()
@@ -117,7 +116,7 @@ func _actualizar_debug_overlay(positions: Array[Vector2]) -> void:
 	overlay.z_index = 200
 	overlay.set_script(_DEBUG_OVERLAY_SCRIPT)
 	contenido.add_child(overlay)
-	overlay.set("dbg_positions", positions)
+	overlay.set("posiciones", positions)
 	overlay.queue_redraw()
 
 
