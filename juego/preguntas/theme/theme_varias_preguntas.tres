@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ThemePreg" format=3 uid="uid://yt3ganvy1l4o"]
+
+[ext_resource type="Script" uid="uid://bickgle2fn34j" path="res://preguntas/theme/theme.gd" id="1_8g5yt"]
+[ext_resource type="Script" uid="uid://ntt7pkagfeul" path="res://preguntas/recursos/preguntas.gd" id="2_cm4co"]
+
+[resource]
+script = ExtResource("1_8g5yt")
+metadata/_custom_type_script = "uid://bickgle2fn34j"

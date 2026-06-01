@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://dt0r2x2jknmy0"]
+
+[ext_resource type="Script" uid="uid://h6ls8bqg44gf" path="res://interface/evidente.gd" id="1_6okih"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_0xe3y"]
+[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
+[ext_resource type="Texture2D" uid="uid://bkiryhehjomw7" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
+[ext_resource type="Texture2D" uid="uid://28lwsf411ufu" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
+[ext_resource type="Texture2D" uid="uid://ctir3nrtl3n27" path="res://assets-sistema/intro/intro-3-3.png" id="6_2f6ov"]
+[ext_resource type="Texture2D" uid="uid://cx7rnhiwjfl2p" path="res://assets-sistema/intro/intro-3-4.png" id="7_7i8j3"]
+[ext_resource type="Texture2D" uid="uid://birwr0tn8mfdi" path="res://assets-sistema/intro/intro-3-5.png" id="8_1o5dh"]
+[ext_resource type="Texture2D" uid="uid://upl74gyfl2vh" path="res://assets-sistema/intro/intro-3.png" id="9_ythax"]
+[ext_resource type="Texture2D" uid="uid://bm1f7vvww1odb" path="res://assets-sistema/intro/intro-4.png" id="10_qj1gl"]
+[ext_resource type="Texture2D" uid="uid://drkhgxpmo3qhq" path="res://assets-sistema/intro/intro-5.png" id="11_0pita"]
+[ext_resource type="Texture2D" uid="uid://cgt0dov15nmn2" path="res://assets-sistema/intro/intro-6.png" id="12_6vnxt"]
+[ext_resource type="Texture2D" uid="uid://cg034mtep522x" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
+[ext_resource type="Texture2D" uid="uid://2yg71efiqcn4" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
+[ext_resource type="Texture2D" uid="uid://b3kmyivdgjajn" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
+[ext_resource type="Texture2D" uid="uid://dvieosc1mn71b" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
+[ext_resource type="AudioStream" uid="uid://b3066err46pf6" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_8sp5d"]
+animations = [{
+"frames": [{
+"duration": 0.2,
+"texture": ExtResource("3_kejcq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_bq8g4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_ythax")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_8f2pd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_2f6ov")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_7i8j3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_1o5dh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_qj1gl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_0pita")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_6vnxt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_ut5ws")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_5hl4t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_qui1y")
+}],
+"loop": true,
+"name": &"intro",
+"speed": 3.0
+}]
+
+[node name="Evidente" type="Node2D" unique_id=1251278870]
+script = ExtResource("1_6okih")
+
+[node name="FondoFicha2" parent="." unique_id=1289609653 instance=ExtResource("2_0xe3y")]
+offset_left = 6.0
+offset_top = 5.999996
+offset_right = 1159.0
+offset_bottom = 805.0
+scale = Vector2(1.0817637, 1.1093603)
+
+[node name="e-vidente" type="Sprite2D" parent="." unique_id=1551667496]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="e-vidente" unique_id=1301594328]
+position = Vector2(581, 402)
+scale = Vector2(0.877111, 0.877111)
+sprite_frames = SubResource("SpriteFrames_8sp5d")
+animation = &"intro"
+frame_progress = 0.219101
+
+[node name="go" type="Button" parent="." unique_id=767903247]
+offset_left = 447.0
+offset_top = 577.0
+offset_right = 763.0
+offset_bottom = 860.0
+scale = Vector2(0.680001, 0.680001)
+icon = ExtResource("16_1sa43")
+flat = true
+
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1588730922]
+stream = ExtResource("17_0xxjx")
+volume_db = -4.962
+attenuation = 2.07053
+
+[connection signal="pressed" from="go" to="." method="_on_ir_presionado"]

@@ -1,0 +1,13 @@
+{
+  "id": "contaminacion_cruzada_celiaquia",
+  "theme": "celiaquia",
+  "title": "Contaminacion cruzada",
+  "difficulty": "medium",
+  "mode": "quiz_choice",
+  "content": {
+	"question": "Hay contaminación cruzada si se utiliza el mismo cuchillo que fue usado previamente para cortar con Gluten?",
+	"correct_answer": "Verdadero",
+	"wrong_options": ["Falso"],
+	"visual_resource": ""
+  }
+}

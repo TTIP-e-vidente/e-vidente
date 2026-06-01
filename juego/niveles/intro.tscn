@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://r20wgxspx7pc"]
+
+[ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_7djtf"]
+[ext_resource type="Texture2D" uid="uid://b3kmyivdgjajn" path="res://assets-sistema/intro/intro-9.png" id="3_uu8qn"]
+[ext_resource type="PackedScene" uid="uid://bgatuq1kmpiwl" path="res://niveles/botones_intro.tscn" id="4_uu8qn"]
+[ext_resource type="AudioStream" uid="uid://ki54o88nq7vj" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+
+[node name="Intro" type="Node2D" unique_id=1475314294]
+z_index = 4
+position = Vector2(4, 0)
+script = ExtResource("1_1l6ju")
+
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_7djtf")]
+size_flags_vertical = 4
+
+[node name="Sprite2D2" type="Sprite2D" parent="." unique_id=348476412]
+position = Vector2(580.99994, 150)
+scale = Vector2(0.4409817, 0.44281265)
+texture = ExtResource("3_uu8qn")
+
+[node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
+layout_direction = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 411.99997
+offset_top = 304.0
+offset_right = 411.99997
+offset_bottom = 304.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.5504135, 0.5504135)
+theme_override_constants/h_separation = 414
+flat = true
+start_index = 2
+text_direction = 1
+
+[node name="Jugar" parent="MenuBar" unique_id=1307767255 instance=ExtResource("4_uu8qn")]
+layout_mode = 0
+anchors_preset = 0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = 19.736572
+offset_top = -131.08139
+offset_right = 562.7366
+offset_bottom = 129.91861
+scale = Vector2(1.145724, 1.1621135)
+
+[node name="Opciones" parent="MenuBar" unique_id=1594801136 instance=ExtResource("4_uu8qn")]
+layout_mode = 1
+offset_left = 19.736572
+offset_top = 174.77524
+offset_right = 562.7366
+offset_bottom = 435.77524
+scale = Vector2(1.145724, 1.1621135)
+
+[node name="Salir" parent="MenuBar" unique_id=600866338 instance=ExtResource("4_uu8qn")]
+layout_mode = 1
+offset_left = 17.712948
+offset_top = 495.1965
+offset_right = 560.71295
+offset_bottom = 756.19653
+scale = Vector2(1.1485949, 1.1558291)
+
+[node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
+stream = ExtResource("6_eoqxh")
+volume_db = -4.962
+attenuation = 2.07053
+
+[connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_jugar_pressed"]
+[connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
+[connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]

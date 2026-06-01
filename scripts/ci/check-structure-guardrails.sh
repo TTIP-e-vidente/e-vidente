@@ -43,10 +43,10 @@ missing=0
 
 critical_dirs="
 .github/workflows
-project
-project/interface
-project/niveles
-project/tests
+juego
+juego/interface
+juego/niveles
+juego/tests
 scripts
 scripts/ci
 wiki
@@ -55,14 +55,14 @@ wiki
 critical_files="
 .github/workflows/docs-pr.yml
 .github/workflows/ci.yml
-project/project.godot
-project/interface/evidente.tscn
-project/niveles/intro.tscn
-project/niveles/selector.tscn
-project/interface/archivero.tscn
-project/interface/libro.tscn
-project/niveles/nivel_1/Level.tscn
-project/tests/vertical_slice_smoke_test.gd
+juego/project.godot
+juego/interface/evidente.tscn
+juego/niveles/intro.tscn
+juego/niveles/selector.tscn
+juego/interface/archivero.tscn
+juego/interface/libro.tscn
+juego/niveles/nivel_1/Level.tscn
+juego/tests/vertical_slice_smoke_test.gd
 scripts/run-godot-validation.sh
 scripts/run-godot-validation.ps1
 scripts/ci/check-docs-guardrails.sh

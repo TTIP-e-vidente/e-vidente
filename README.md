@@ -64,6 +64,26 @@ Inspirado en una estética “dibujada a mano” tipo cuaderno, con:
 
 Godot 
 
+## Estructura del monorepo
+
+- `juego/`: proyecto Godot.
+- `BACKEND/`: backend futuro e infraestructura local.
+- `docs-local/`: documentacion tecnica local y entregables auxiliares.
+
+### PostgreSQL local
+
+```sh
+cd BACKEND
+cp .env.example .env
+docker compose up -d
+```
+
+Para apagar la base:
+
+```sh
+docker compose down
+```
+
 ## 👨‍💻 Equipo
 <br>Agustin Di Santo
 <br>Margarita Cortizas
@@ -83,16 +103,16 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 ## Flujo principal
 
-1. `project/mapas/MapScene.gd` maneja el mapa.
-2. `project/mapas/core/MapNodeData.gd` describe cada nodo.
-3. `project/mapas/LevelNode.gd` muestra el nodo visual.
-4. `project/sistemas/contenido/CargadorDeContenidoDeNodo.gd` carga JSON.
-5. `project/mapas/logica/AbridorDeNodoJugable.gd` abre el nodo jugable.
-6. `quiz_choice` abre `project/preguntas/pregunta.tscn`.
-7. `drag_drop` abre `project/niveles/nivel_1/Level.tscn`.
+1. `juego/mapas/MapScene.gd` maneja el mapa.
+2. `juego/mapas/core/MapNodeData.gd` describe cada nodo.
+3. `juego/mapas/LevelNode.gd` muestra el nodo visual.
+4. `juego/sistemas/contenido/CargadorDeContenidoDeNodo.gd` carga JSON.
+5. `juego/mapas/logica/AbridorDeNodoJugable.gd` abre el nodo jugable.
+6. `quiz_choice` abre `juego/preguntas/pregunta.tscn`.
+7. `drag_drop` abre `juego/niveles/nivel_1/Level.tscn`.
 8. La modalidad termina y pide continuar.
 9. `MapScene.gd` abre el siguiente nodo.
-10. `project/mapas/drag_drop/DragDropNode.tscn` queda legacy/back-up.
+10. `juego/mapas/drag_drop/DragDropNode.tscn` queda legacy/back-up.
 
 ## Responsabilidades del mapa
 
@@ -115,7 +135,7 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 
 ## Como crear un mapa
 
-1. Crear un archivo en `project/contenido/mapas/`.
+1. Crear un archivo en `juego/contenido/mapas/`.
 2. Definir `id`, `track_key` y `title`.
 3. Agregar `nodes[]` en orden.
 4. Cada nodo tiene `node_key`, `title`, `mode` y `json_path`.
@@ -128,7 +148,7 @@ Y que aprender sobre otras realidades también puede ser parte del juego.
 Para agregar un nodo nuevo:
 
 - autorizarlo visualmente en el mapa con `LevelNode.tscn` o el board del mapa.
-- crear su JSON en `project/contenido/nodos/<track_key>/preguntas/` o `project/contenido/nodos/<track_key>/arrastre/`.
+- crear su JSON en `juego/contenido/nodos/<track_key>/preguntas/` o `juego/contenido/nodos/<track_key>/arrastre/`.
 
 Para agregar una modalidad nueva:
 
@@ -139,10 +159,10 @@ Los nombres `question_*` quedan solo como compatibilidad legacy interna, no como
 
 ## Estructura de contenido jugable
 
-- `project/contenido/nodos/celiaquia/preguntas/`: contenido `quiz_choice` del track.
-- `project/contenido/nodos/celiaquia/arrastre/`: contenido `drag_drop` del track.
-- `project/preguntas/`: modalidad `quiz_choice` y su loader de runtime, no el deposito de JSON.
-- `project/mapas/`: mapa, routing y contexto de apertura.
-- `project/niveles/nivel_1/`: modalidad oficial `drag_drop` basada en `Level.tscn` y `Level.gd`.
-- `project/mapas/drag_drop/`: legacy/back-up; no es el flujo principal de `drag_drop`.
+- `juego/contenido/nodos/celiaquia/preguntas/`: contenido `quiz_choice` del track.
+- `juego/contenido/nodos/celiaquia/arrastre/`: contenido `drag_drop` del track.
+- `juego/preguntas/`: modalidad `quiz_choice` y su loader de runtime, no el deposito de JSON.
+- `juego/mapas/`: mapa, routing y contexto de apertura.
+- `juego/niveles/nivel_1/`: modalidad oficial `drag_drop` basada en `Level.tscn` y `Level.gd`.
+- `juego/mapas/drag_drop/`: legacy/back-up; no es el flujo principal de `drag_drop`.
 - `mode` define la modalidad; `content` contiene solo los datos especificos de esa modalidad.

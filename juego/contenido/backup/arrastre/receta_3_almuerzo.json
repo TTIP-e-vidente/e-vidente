@@ -1,0 +1,67 @@
+{
+  "id": "receta_3_almuerzo",
+  "theme": "celiaquia",
+  "title": "Prepara el almuerzo",
+  "difficulty": "medium",
+  "mode": "drag_drop",
+  "content": {
+	"teaching_key": "celiaquia_3",
+	"instruction": "Arma un almuerzo apto sin TACC arrastrando solo las opciones correctas. Un fideo solo es seguro si esta hecho con ingredientes aptos, y los rebozados comunes no.",
+	"targets": [
+	  {
+		"id": "almuerzo",
+		"label": "Almuerzo apto"
+	  }
+	],
+	"items": [
+	  {
+		"id": "pollo_plancha",
+		"label": "Pollo a la plancha",
+		"image": "res://assets-sistema/iconos/pollo-0.png",
+		"correct_target": "almuerzo"
+	  },
+	  {
+		"id": "fideos_arroz",
+		"label": "Fideos de arroz",
+		"image": "res://assets-sistema/iconos/fideos-arroz-0.png",
+		"correct_target": "almuerzo"
+	  },
+	  {
+		"id": "arroz_blanco",
+		"label": "Arroz blanco",
+		"image": "res://assets-sistema/iconos/arroz-0.png",
+		"correct_target": "almuerzo"
+	  },
+	  {
+		"id": "pescado",
+		"label": "Pescado",
+		"image": "res://assets-sistema/iconos/pescado-0.png",
+		"correct_target": "almuerzo"
+	  },
+	  {
+		"id": "fideos_trigo",
+		"label": "Fideos de trigo",
+		"image": "res://assets-sistema/iconos/fideos-0.png",
+		"correct_target": ""
+	  },
+	  {
+		"id": "milanesa_rebozada",
+		"label": "Milanesa rebozada",
+		"image": "res://assets-sistema/iconos/patita-pollo-0.png",
+		"correct_target": ""
+	  },
+	  {
+		"id": "ravioles_comunes",
+		"label": "Ravioles comunes",
+		"image": "res://assets-sistema/iconos/ravioles-0.png",
+		"correct_target": ""
+	  },
+	  {
+		"id": "empanada_comun",
+		"label": "Empanada comun",
+		"image": "res://assets-sistema/iconos/empanada-0.png",
+		"correct_target": ""
+	  }
+	]
+  }
+}

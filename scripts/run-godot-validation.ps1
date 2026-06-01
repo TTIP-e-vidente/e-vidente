@@ -113,7 +113,7 @@ function Get-ValidationSteps {
         [string]$RepositoryRoot
     )
 
-    $godotBaseArgs = @('--headless', '--path', 'project')
+    $godotBaseArgs = @('--headless', '--path', 'juego')
     $importStep = @{ Label = 'Import headless'; Hint = 'Revisar parseo, autoloads y rutas res:// del proyecto.'; Arguments = $godotBaseArgs + @('--editor', '--quit') }
     $nodeJsonStep = @{ Label = 'Playable node JSON contract test'; Hint = 'Revisar el contrato canonical de nodos jugables por JSON y sus errores controlados.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/node_content_loader_test.gd') }
     $planDeCorridaDeNodoStep = @{ Label = 'Plan de corrida de nodo'; Hint = 'Revisar la regla 1,1,2,3,4,5 y la alternancia simple por nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/plan_de_corrida_de_nodo_test.gd') }
@@ -124,14 +124,14 @@ function Get-ValidationSteps {
     $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
     $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = $godotBaseArgs + @('--fixed-fps', '60', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
 
-    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
-    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')
-    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_pregunta_test.gd')
-    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_nivel_test.gd')
-    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/post_game_flow_controller_test.gd')
-    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/map_progress_visual_test.gd')
-    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/flujo_progresivo_de_nodo_test.gd')
-    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/vertical_slice_smoke_test.gd')
+    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/node_content_loader_test.gd')
+    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/plan_de_corrida_de_nodo_test.gd')
+    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/indicador_progreso_pregunta_test.gd')
+    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/indicador_progreso_nivel_test.gd')
+    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/post_game_flow_controller_test.gd')
+    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/map_progress_visual_test.gd')
+    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/flujo_progresivo_de_nodo_test.gd')
+    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/vertical_slice_smoke_test.gd')
 
     $smokeSuite = @($importStep)
     if ($hasNodeJsonTest) {
@@ -159,14 +159,14 @@ function Get-ValidationSteps {
         $smokeSuite += $smokeStep
     }
 
-    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/node_content_loader_test.gd')
-    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/plan_de_corrida_de_nodo_test.gd')
-    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_pregunta_test.gd')
-    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/indicador_progreso_nivel_test.gd')
-    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/post_game_flow_controller_test.gd')
-    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/map_progress_visual_test.gd')
-    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/flujo_progresivo_de_nodo_test.gd')
-    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'project/tests/vertical_slice_smoke_test.gd')
+    $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/node_content_loader_test.gd')
+    $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/plan_de_corrida_de_nodo_test.gd')
+    $hasIndicadorProgresoPreguntaTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/indicador_progreso_pregunta_test.gd')
+    $hasIndicadorProgresoNivelTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/indicador_progreso_nivel_test.gd')
+    $hasPostGameFlowTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/post_game_flow_controller_test.gd')
+    $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/map_progress_visual_test.gd')
+    $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/flujo_progresivo_de_nodo_test.gd')
+    $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/vertical_slice_smoke_test.gd')
 
     $smokeSuite = @($importStep)
     if ($hasNodeJsonTest) {
@@ -220,7 +220,7 @@ try {
     if ($IncludeExport) {
         $buildDir = Join-Path $repoRoot 'build/web'
         New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
-        Invoke-GodotStep -Executable $godotExecutable -Label 'Web export' -Hint 'Revisar export_presets.cfg, assets del preset y salida build/web.' -Arguments @('--headless', '--verbose', '--path', 'project', '--export-release', 'index', (Join-Path $buildDir 'index.html'))
+        Invoke-GodotStep -Executable $godotExecutable -Label 'Web export' -Hint 'Revisar export_presets.cfg, assets del preset y salida build/web.' -Arguments @('--headless', '--verbose', '--path', 'juego', '--export-release', 'index', (Join-Path $buildDir 'index.html'))
     }
 
     Write-Host "`nValidacion Godot completada correctamente."

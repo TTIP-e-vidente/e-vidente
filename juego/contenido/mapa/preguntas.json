@@ -1,0 +1,469 @@
+{
+  "quiz_gluten_natural": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Cuál de estos alimentos es naturalmente libre de gluten?",
+	"options": ["Banana", "Cerveza", "Pan", "Fideos"],
+	"answer": "Banana"
+  },
+  "quiz_contaminacion_cruzada": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué riesgo indican las migas en una superficie?",
+	"options": ["Contaminación cruzada", "Fermentación", "Oxidación"],
+	"answer": "Contaminación cruzada"
+  },
+  "quiz_casos_cotidianos_sin_tacc": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué problema puede ocurrir al compartir utensilios de cocina con alimentos con y sin TACC?",
+	"options": ["Contaminación", "Fermentación", "Congelamiento", "Calentamiento"],
+	"answer": "Contaminación"
+  },
+  "quiz_gluten_arroz": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "El gluten está en el arroz?",
+	"options": ["No", "Sí"],
+	"answer": "No"
+  },
+  "quiz_etiquetas_sin_tacc": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Si un alimento procesado no tiene el sello oficial Sin TACC, qué decisión es más segura?",
+	"options": [
+	  "No elegirlo",
+	  "Elegirlo",
+      "Comerlo igual"
+	],
+	"answer": "No elegirlo"
+  },
+  "quiz_sello_sin_tacc": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué indica el sello Sin TACC en un producto?",
+	"options": [
+	  "Que fue certificado",
+	  "Que no tiene azúcar",
+	  "Que es casero",
+      "Que es reciclable"
+	],
+	"answer": "Que fue certificado"
+  },
+  "quiz_bebidas_gluten": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Cuál de estas bebidas contiene gluten?",
+	"options": ["Cerveza", "Agua mineral", "Jugo de naranja", "Mate"],
+	"answer": "Cerveza"
+  },
+  "quiz_utensilios_compartidos": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué debe evitarse entre alimentos aptos y comunes?",
+	"options": [
+	  "Contacto",
+	  "Lavado",
+	  "Refrigeración",
+      "Ninguno"
+	],
+	"answer": "Contacto"
+  },
+  "quiz_productos_procesados": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué condimento puede contener trigo?",
+	"options": [
+	  "Salsa de Soja",
+	  "Mostaza",
+	  "Vinagre",
+      "Sal"
+	],
+	"answer": "Salsa de Soja"
+  },
+  "quiz_comer_fuera": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Al comer en un restaurante, qué es lo más seguro para una persona celíaca?",
+	"options": [
+	  "Avisar y pedir opciones SG",
+	  "Evitar solo el pan",
+	  "Pedir la ensalada",
+      "Comer cualquier cosa"
+	],
+	"answer": "Avisar y pedir opciones SG"
+  },
+  "quiz_cereales_gluten": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Cuál de estos cereales contiene gluten?",
+	"options": ["Trigo", "Arroz", "Maíz", "Quinoa"],
+	"answer": "Trigo"
+  },
+  "quiz_natural_vs_industrial": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Por qué las frutas y carnes naturales son más seguras para celíacos que los productos industriales?",
+	"options": [
+	  "No tienen ingredientes agregados",
+	  "Son más baratos",
+	  "Tienen más vitaminas",
+      "Se digieren mejor"
+	],
+	"answer": "No tienen ingredientes agregados"
+  },
+  "quiz_trazas_gluten": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué tipo de producto requiere verificar certificación?",
+	"options": [
+	  "Embutidos",
+	  "Frutas",
+	  "Huevos",
+      "Verduras"
+	],
+	"answer": "Embutidos"
+  },
+  "quiz_restaurante_preguntar": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué conviene preguntar primero en un restaurante si sos celíaco?",
+	"options": [
+	  "Si hay opciones SG",
+	  "Si son rápidos",
+	  "Tienen bebidas frías",
+      "Menú tiene fotos"
+	],
+	"answer": "Si hay opciones SG"
+  },
+  "quiz_aceite_compartido": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Por qué una freidora con aceite compartido puede ser riesgosa?",
+	"options": [
+	  "Puede contaminar",
+	  "Puede enfríar",
+	  "Puede congelar",
+      "Puede mejorar"
+	],
+	"answer": "Puede contaminar"
+  },
+  "quiz_salsa_soja": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Por qué la salsa de soja puede ser riesgosa para una persona celíaca?",
+	"options": [
+	  "Muchas contienen trigo",
+	  "Siempre ontiene avena",
+	  "Sólo se usa en sushi",
+      "No tiene ingredientes"
+	],
+	"answer": "Muchas contienen trigo"
+  },
+  "quiz_rotulo_preventivo": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué decisión es más segura ante un rótulo que dice 'puede contener gluten'?",
+	"options": [
+	  "No elegirlo",
+	  "Comer un 50%",
+	  "Si es barato",
+      "Si no tiene gluten"
+	],
+	"answer": "No elegirlo"
+  },
+  "quiz_producto_artesanal": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué ingrediente suele derivar de cebada?",
+	"options": [
+	  "Malta",
+	  "Pectina",
+	  "Caseína",
+      "Mateína"
+	],
+	"answer": "Malta"
+  },
+  "quiz_freidora_compartida": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué técnica culinaria suele usar harina?",
+	"options": [
+	  "Rebozado",
+	  "Hervido",
+	  "Asado",
+      "Salteado"
+	],
+	"answer": "Rebozado"
+  },
+  "quiz_harina_maiz_segura": {
+	"mode": "quiz",
+	"difficulty": 4,
+	"prompt": "Qué formato aumenta riesgo de contaminación?",
+	"options": [
+	  "A granel",
+	  "Enlatado",
+	  "Sellado",
+      "Empaquetado"
+	],
+	"answer": "A granel"
+  },
+  "quiz_embutidos_riesgo": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué función puede ocultar gluten?",
+	"options": [
+	  "Espesante",
+	  "Colorante",
+	  "Edulcorante",
+      "Endulzante"
+	],
+	"answer": "Espesante"
+  },
+  "quiz_postre_industrial": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué práctica evita contaminación cruzada?",
+	"options": [
+	  "Separación",
+	  "Fermentación",
+	  "Trituración",
+      "Congelamiento"
+	],
+	"answer": "Separación"
+  },
+  "quiz_3op_sello_sin_tacc_basico": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué marca conviene buscar primero en un producto industrial para saber si fue certificado como apto para celíacos?",
+	"options": [
+	  "Sello Sin TACC",
+	  "Tabla nutricional",
+      "Vencimiento"
+	],
+	"answer": "Sello Sin TACC"
+  },
+  "quiz_3op_alimento_natural_apto": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué cereal contiene gluten?",
+	"options": [
+	  "Centeno",
+	  "Mijo",
+      "Sorgo"
+	],
+	"answer": "Centeno"
+  },
+  "quiz_3op_cereal_seguro": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Cuál de estos granos es naturalmente libre de gluten?",
+	"options": [
+	  "Maíz",
+	  "Trigo",
+      "Cebada"
+	],
+	"answer": "Maíz"
+  },
+  "quiz_3op_bebida_simple": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Cuál de estas bebidas suele ser segura para una persona celíaca?",
+	"options": [
+	  "Agua mineral",
+	  "Cerveza",
+      "Bebida malteada"
+	],
+	"answer": "Agua mineral"
+  },
+  "quiz_3op_tabla_limpia_basica": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué objeto suele acumular migas?",
+	"options": [
+	  "Freidora",
+	  "Heladera",
+      "Plato"
+	],
+	"answer": "Freidora"
+  },
+  "quiz_3op_contaminacion_utensilios": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué categoría requiere revisar certificación?",
+	"options": [
+	  "Legumbres envasadas",
+	  "Frutas",
+      "Aditivos"
+	],
+	"answer": "Aditivos"
+  },
+  "quiz_3op_producto_sin_rotulo": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué bebida suele elaborarse con cebada?",
+	"options": [
+	  "Cerveza",
+	  "Limonada",
+      "Té"
+	],
+	"answer": "Cerveza"
+  },
+  "quiz_3op_merienda_segura": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué debe higienizarse antes de cocinar apto?",
+	"options": [
+	  "Superficies",
+	  "Todas correctas",
+      "Utensilios"
+	],
+	"answer": "Todas correctas"
+  },
+  "quiz_3op_cocina_compartida": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué utensilio compartido puede contaminar?",
+	"options": [
+	  "Todos por igual",
+	  "Pinza",
+      "Bandeja"
+	],
+	"answer": "Todos por igual"
+  },
+  "quiz_3op_trazas_gluten": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué tipo de alimento suele contener trigo?",
+	"options": [
+	  "Bollería",
+	  "Fruta",
+      "Yogurt"
+	],
+	"answer": "Bollería"
+  },
+  "quiz_3op_restaurante_riesgo": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué marcador genético suele asociarse a celiaquía?",
+	"options": [
+	  "DQ2",
+	  "B12",
+      "A+"
+	],
+	"answer": "DQ2"
+  },
+  "quiz_3op_freidora_compartida": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué garantiza el sello oficial?",
+	"options": [
+	  "Certificación",
+	  "Pasterutización",
+      "Importación"
+	],
+	"answer": "Certificación"
+  },
+  "quiz_3op_producto_artesanal": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué variante genética puede relacionarse con celiaquía?",
+	"options": [
+	  "DQ8",
+	  "K2",
+      "C3"
+	],
+	"answer": "DQ8"
+  },
+  "quiz_2op_sello_certificado_basico": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Si un producto tiene el sello Sin TACC, fue certificado como apto para personas celíacas?",
+	"options": [
+	  "Sí",
+      "No"
+	],
+	"answer": "Sí"
+  },
+  "quiz_2op_fruta_natural_basica": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué estudio puede confirmar celiaquía?",
+	"options": [
+	  "Biopsia",
+      "Ecografía"
+	],
+	"answer": "Biopsia"
+  },
+  "quiz_2op_tostadora_compartida_basica": {
+	"mode": "quiz",
+	"difficulty": 1,
+	"prompt": "Qué suele buscarse en análisis sanguíneos?",
+	"options": [
+	  "Anticuerpos",
+      "Hormonas"
+	],
+	"answer": "Anticuerpos"
+  },
+  "quiz_2op_cuchillo_contaminacion": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué tipo de enfermedad es la celiaquía?",
+	"options": [
+	  "Autoinmune",
+      "Viral"
+	],
+	"answer": "Autoinmune"
+  },
+  "quiz_2op_salsa_sin_rotulo": {
+	"mode": "quiz",
+	"difficulty": 2,
+	"prompt": "Qué estructura intestinal puede dañarse?",
+	"options": [
+	  "Vellosidades",
+      "Bronquios"
+	],
+	"answer": "Vellosidades"
+  },
+  "quiz_2op_trazas_rotulo_avanzado": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué aumenta el riesgo de celiaquía?",
+	"options": [
+	  "Herencia",
+      "Ejercicio"
+	],
+	"answer": "Herencia"
+  },
+  "quiz_2op_freidora_compartida_avanzado": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué procedimiento puede incluir una biopsia?",
+	"options": [
+	  "Endoscopia",
+      "Tomografía"
+	],
+	"answer": "Endoscopia"
+  },
+  "quiz_2op_artesanal_sin_confirmacion": {
+	"mode": "quiz",
+	"difficulty": 3,
+	"prompt": "Qué problema puede generar daño intestinal?",
+	"options": [
+	  "Malabsorción",
+      "Hipertensión"
+	],
+	"answer": "Malabsorción"
+  },
+  "quiz_3op_celiaquia_predisposicion_01": {
+	"mode": "quiz",
+	"difficulty": 4,
+	"prompt": "Qué indican DQ2 y DQ8?",
+	"options": [
+	  "Predisposición",
+	  "Curación",
+      "Infección"
+	],
+	"answer": "Predisposición"
+  }
+}
