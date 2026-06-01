@@ -129,6 +129,65 @@ Actualmente el archivo importante es:
 
 `logica/ArmadorDePartida.gd`
 
+---
+
+## Layout automatico de nodos sobre la curva
+
+### Como funciona
+
+Los nodos del mapa se posicionan automaticamente sobre `RutaCeliaquia1` (un `Path2D` dentro de `MapBoard.tscn`). El modo activo es `placement_mode = "anchors"`: el nodo i recibe exactamente `curve.get_point_position(i)`. La curva tiene 30 puntos, uno por nodo.
+
+El flujo completo es:
+
+```
+celiaquia_mapa.json          →  layout.route_id = "RutaCeliaquia1"
+                                layout.placement_mode = "anchors"
+  ↓ MapLayoutConfig          parsea route_id, placement_mode, spacing_factor, margenes
+  ↓ MapRouteRegistry         busca el Path2D por nombre dentro de Contenido
+  ↓ MapPathLayout            devuelve curve.get_point_position(i) para cada nodo i
+  ↓ MapNodePositionResolver  combina todo: devuelve Array[Vector2] en espacio Contenido
+  ↓ MapBoard                 mueve cada nodo visual y llama configurar()
+```
+
+### Reglas clave
+
+```
+Indice    = posicion visual. El nodo i usa el punto i de RutaCeliaquia1.
+node_key  = identidad y progreso. No cambia aunque el nodo se mueva de lugar.
+anchors   = posiciones disenadas: cada punto de la curva es exactamente un nodo.
+curve     = distribucion automatica por distancia recorrida (sample_baked).
+```
+
+### placement_mode = "anchors" (activo)
+
+Cada nodo i queda exactamente en `RutaCeliaquia1.get_point_position(i)`.
+Para mover un nodo del mapa: editar el punto correspondiente en `RutaCeliaquia1`.
+
+### placement_mode = "curve" (disponible)
+
+Los nodos se distribuyen por largo de curva con `sample_baked()`.
+Util si la curva tiene mas o menos puntos que nodos.
+
+### Donde estan los archivos
+
+| Archivo | Responsabilidad |
+|---|---|
+| `layout/MapLayoutConfig.gd` | Parsea el bloque `layout` del JSON |
+| `layout/MapRouteRegistry.gd` | Busca el `Path2D` por nombre |
+| `layout/MapPathLayout.gd` | Unico lugar con matematica de posiciones |
+| `layout/MapNodePositionResolver.gd` | Elige modo anchors/curve y delega a MapPathLayout |
+| `debug/DebugLayoutOverlay.gd` | Dibuja circulos de debug por posicion (apagado por default) |
+
+### Si quiero cambiar...
+
+| Quiero cambiar... | Voy a... |
+|---|---|
+| Ruta activa | `celiaquia_mapa.json > layout.route_id` |
+| Modo de posicionamiento | `celiaquia_mapa.json > layout.placement_mode` |
+| Posicion de un nodo (modo anchors) | punto correspondiente en `RutaCeliaquia1` en MapBoard.tscn |
+| Distribucion generica (modo curve) | `spacing_factor`, `start_margin`, `end_margin` en el JSON |
+| Algoritmo de posicionamiento | `layout/MapPathLayout.gd` |
+
 ## Que archivo calcula progreso
 
 `logica/AvanceDeNodo.gd`
