@@ -36,6 +36,10 @@ const AVANCE_DE_NODO_SCRIPT := preload("res://mapas/logica/AvanceDeNodo.gd")
 const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
 const ARMADOR_DE_PARTIDA_SCRIPT := preload("res://mapas/logica/ArmadorDePartida.gd")
 const NODE_CONTENT_LOADER_SCRIPT := preload("res://sistemas/contenido/NodeContentLoader.gd")
+const MAP_LAYOUT_CONFIG_SCRIPT := preload("res://mapas/layout/MapLayoutConfig.gd")
+const MAP_ROUTE_REGISTRY_SCRIPT := preload("res://mapas/layout/MapRouteRegistry.gd")
+const MAP_PATH_LAYOUT_SCRIPT := preload("res://mapas/layout/MapPathLayout.gd")
+const MAP_NODE_POSITION_RESOLVER_SCRIPT := preload("res://mapas/layout/MapNodePositionResolver.gd")
 
 
 class FakeSaveManager:
@@ -253,17 +257,9 @@ func ejecutar_prueba() -> void:
 	if not failed:
 		ejecutar_tests_vincular_variacion()
 
-	# --- Tests unitarios de MapPathLayout ---
+	# --- Tests unitarios del sistema de layout automático del mapa ---
 	if not failed:
-		ejecutar_tests_map_path_layout()
-
-	# --- Tests unitarios de estado y orden de nodos del mapa ---
-	if not failed:
-		ejecutar_tests_estado_nodos()
-
-	# --- Tests unitarios: nodo único con múltiples modalidades ---
-	if not failed:
-		ejecutar_tests_nodo_unico_multimodal()
+		ejecutar_tests_layout_del_mapa()
 
 	if failed:
 		finalizar_con_error()
@@ -277,6 +273,7 @@ func ejecutar_prueba() -> void:
 func _reset_test_state(global_state, save_manager) -> void:
 	global_state.reiniciar_progreso()
 	ItemLevel.is_dragging = null
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
 	_preserve_save_files_once()
 	_delete_save_files()
 	save_manager.cargar_datos()
@@ -816,6 +813,7 @@ func _wait_for_any(expected_paths: Array, label: String) -> void:
 
 
 func _delete_save_files() -> void:
+	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
 	for path in [
 		SaveManagerScript.SAVE_PATH,
 		SaveManagerScript.TEMP_SAVE_PATH,
@@ -824,6 +822,10 @@ func _delete_save_files() -> void:
 		var abs_path := ProjectSettings.globalize_path(path)
 		if FileAccess.file_exists(abs_path):
 			DirAccess.remove_absolute(abs_path)
+		if not override_dir.is_empty():
+			var override_abs: String = override_dir.path_join(path.get_file())
+			if FileAccess.file_exists(override_abs):
+				DirAccess.remove_absolute(override_abs)
 
 
 func _preserve_save_files_once() -> void:
@@ -1728,8 +1730,8 @@ func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	_check(layout_config != null, "[MapaReal] Debe existir layout_config parseado")
 	if layout_config != null:
 		_check(
-			layout_config.obtener_route_id() == "RutaCeliaquia1",
-			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.obtener_route_id()
+			layout_config.route_id == "RutaCeliaquia1",
+			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.route_id
 		)
 
 	# Ningún nodo debe tener map_position — todos usan la curva
@@ -1855,959 +1857,308 @@ func ejecutar_tests_vincular_variacion() -> void:
 
 
 # ===========================================================================
-# Tests unitarios: MapPathLayout
+# Tests unitarios: layout automático del mapa
 # ===========================================================================
 
-func _test_map_path_layout_distribuye_cantidad_correcta() -> void:
-	var pts: Array = [Vector2(0, 0), Vector2(100, 0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 5)
-	_check(pos.size() == 5, "[MapPath] calcular_posiciones con 5 nodos debe retornar 5 posiciones")
+func ejecutar_tests_layout_del_mapa() -> void:
+	print("[Layout] ── Iniciando tests de layout automático del mapa ──")
+	_test_layout_json_tiene_route_id()
+	_test_layout_json_nodos_sin_map_position()
+	_test_layout_cargador_parsea_layout_config()
+	_test_layout_route_registry_encuentra_ruta()
+	_test_layout_path_layout_calcula_30_posiciones()
+	_test_layout_resolver_calcula_posiciones()
+	_test_layout_route_id_invalido_devuelve_vacio()
+	_test_layout_cambiar_route_id_cambia_curva()
+	_test_layout_ruta_real_tiene_suficientes_puntos()
+	_test_layout_ruta2_existe_y_tiene_curva()
+	_test_layout_placement_mode_anchors_en_json()
+	_test_layout_anchors_posiciones_exactas_por_indice()
+	_test_layout_anchors_fallback_curva_pequena()
+	if not failed:
+		print("[Layout] ✓ Todos los tests de layout pasaron.")
+	else:
+		printerr("[Layout] ✗ Al menos un test de layout falló.")
 
 
-func _test_map_path_layout_extremos_en_primer_y_ultimo_punto() -> void:
-	var pts: Array = [Vector2(0.0, 0.0), Vector2(200.0, 0.0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 3)
-	_check(pos.size() == 3, "[MapPath] 3 posiciones esperadas")
-	_check(pos[0].is_equal_approx(Vector2(0, 0)), "[MapPath] primer nodo debe estar en el inicio de la ruta")
-	_check(pos[2].is_equal_approx(Vector2(200, 0)), "[MapPath] último nodo debe estar al final de la ruta")
-
-
-func _test_map_path_layout_punto_medio_en_ruta_recta() -> void:
-	var pts: Array = [Vector2(0.0, 0.0), Vector2(100.0, 0.0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 3)
-	_check(pos[1].is_equal_approx(Vector2(50, 0)), "[MapPath] punto medio debe estar en (50,0) en ruta horizontal recta")
-
-
-func _test_map_path_layout_retorna_vacio_sin_puntos() -> void:
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones([], 5)
-	_check(pos.is_empty(), "[MapPath] sin puntos guía debe retornar array vacío")
-
-
-func _test_map_path_layout_retorna_vacio_con_un_solo_punto() -> void:
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones([Vector2(10, 10)], 5)
-	_check(pos.is_empty(), "[MapPath] con solo un punto guía debe retornar array vacío")
-
-
-func _test_map_path_layout_retorna_vacio_con_cero_nodos() -> void:
-	var pts: Array = [Vector2(0, 0), Vector2(100, 0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 0)
-	_check(pos.is_empty(), "[MapPath] con 0 nodos debe retornar array vacío")
-
-
-func _test_map_path_layout_un_nodo_va_al_inicio() -> void:
-	var pts: Array = [Vector2(10.0, 20.0), Vector2(50.0, 80.0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 1)
-	_check(pos.size() == 1, "[MapPath] 1 nodo esperado")
-	_check(pos[0].is_equal_approx(Vector2(10, 20)), "[MapPath] un único nodo debe ir en el punto inicial")
-
-
-func _test_map_path_layout_ruta_multiple_segmentos() -> void:
-	var pts: Array = [Vector2(0, 0), Vector2(50, 0), Vector2(100, 0)]
-	var pos: Array[Vector2] = MapPathLayout.calcular_posiciones(pts, 5)
-	_check(pos.size() == 5, "[MapPath] 5 posiciones esperadas en ruta multi-segmento")
-	_check(pos[0].is_equal_approx(Vector2(0, 0)), "[MapPath] primer punto debe ser el inicio")
-	_check(pos[4].is_equal_approx(Vector2(100, 0)), "[MapPath] último punto debe ser el final")
-
-
-func _test_map_path_layout_posicion_manual_tiene_prioridad() -> void:
-	var posicion_manual := Vector2(999.0, 888.0)
-	var ruta_pts: Array = [Vector2(0, 0), Vector2(500, 0)]
-	var ruta: Array[Vector2] = MapPathLayout.calcular_posiciones(ruta_pts, 3)
-	var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-		0, true, posicion_manual, ruta, Vector2.ZERO
+func _test_layout_json_tiene_route_id() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	_check(bool(result.get("ok", false)), "[Layout] CargadorDeMapa carga el mapa")
+	var map_data: Dictionary = result.get("data", {})
+	var layout_config = map_data.get("layout_config", null)
+	_check(layout_config != null, "[Layout] CargadorDeMapa parsea layout_config")
+	if layout_config == null:
+		return
+	_check(not layout_config.route_id.is_empty(), "[Layout] layout_config.route_id no esta vacio")
+	_check(
+		layout_config.route_id == "RutaCeliaquia1",
+		"[Layout] route_id debe ser RutaCeliaquia1"
 	)
-	_check(resultado == posicion_manual, "[MapPath] map_position manual debe tener prioridad sobre ruta")
 
 
-func _test_map_path_layout_nodo_sin_posicion_usa_ruta() -> void:
-	var ruta_pts: Array = [Vector2(0.0, 0.0), Vector2(100.0, 0.0)]
-	var ruta: Array[Vector2] = MapPathLayout.calcular_posiciones(ruta_pts, 3)
-	# Índice 1 = punto medio (50, 0)
-	var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-		1, false, Vector2.ZERO, ruta, Vector2(123.0, 456.0)
+func _test_layout_json_nodos_sin_map_position() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	if not bool(result.get("ok", false)):
+		return
+	var nodes_array: Array = result.get("data", {}).get("nodes", []) as Array
+	for nd in nodes_array:
+		if nd is MapNodeData and (nd as MapNodeData).has_map_position:
+			var nkey: String = (nd as MapNodeData).node_key
+			_check(false, "[Layout] Nodo v3 no debe tener map_position: %s" % nkey)
+			return
+	_check(true, "[Layout] Ningun nodo v3 tiene map_position")
+
+
+func _test_layout_cargador_parsea_layout_config() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	var layout_config = result.get("data", {}).get("layout_config", null)
+	_check(layout_config != null, "[Layout] layout_config no es null")
+	if layout_config == null:
+		return
+	_check(layout_config is MapLayoutConfig, "[Layout] layout_config es MapLayoutConfig")
+	_check(layout_config.is_valid(), "[Layout] layout_config.is_valid() == true")
+	_check(layout_config.start_margin >= 0.0, "[Layout] start_margin >= 0")
+	_check(layout_config.end_margin >= 0.0, "[Layout] end_margin >= 0")
+	_check(layout_config.spacing_factor > 0.0, "[Layout] spacing_factor > 0")
+
+
+func _test_layout_route_registry_encuentra_ruta() -> void:
+	var contenido_test := Node2D.new()
+	var ruta_test := Path2D.new()
+	ruta_test.name = "RutaCeliaquia1"
+	var curva_test := Curve2D.new()
+	curva_test.add_point(Vector2(0, 0))
+	curva_test.add_point(Vector2(500, 500))
+	curva_test.add_point(Vector2(0, 1000))
+	ruta_test.curve = curva_test
+	contenido_test.add_child(ruta_test)
+	var encontrada: Path2D = MAP_ROUTE_REGISTRY_SCRIPT.find_route(contenido_test, "RutaCeliaquia1")
+	_check(encontrada != null, "[Layout] MapRouteRegistry encuentra RutaCeliaquia1")
+	_check(encontrada is Path2D, "[Layout] La ruta encontrada es Path2D")
+	_check(
+		encontrada != null
+			and encontrada.curve != null
+			and encontrada.curve.get_baked_length() > 0.0,
+		"[Layout] RutaCeliaquia1 tiene curva con baked_length > 0"
 	)
-	_check(resultado.is_equal_approx(Vector2(50.0, 0.0)), "[MapPath] sin map_position debe usar posición de ruta")
+	contenido_test.free()
 
 
-func _test_map_path_layout_conserva_posicion_base_sin_ruta() -> void:
-	var posicion_base := Vector2(123.0, 456.0)
-	var ruta_vacia: Array[Vector2] = []
-	var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-		0, false, Vector2.ZERO, ruta_vacia, posicion_base
+func _test_layout_path_layout_calcula_30_posiciones() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	var layout_config = result.get("data", {}).get("layout_config", null)
+	if layout_config == null:
+		return
+	var nodes_array: Array = result.get("data", {}).get("nodes", []) as Array
+	var curva_test := Curve2D.new()
+	curva_test.add_point(Vector2(0, 0))
+	curva_test.add_point(Vector2(0, 3000))
+	var posiciones: Array[Vector2] = MAP_PATH_LAYOUT_SCRIPT.calculate_positions(
+		curva_test, 30, layout_config
 	)
-	_check(resultado == posicion_base, "[MapPath] sin ruta configurada debe conservar posición base del tscn")
+	_check(posiciones.size() == 30, "[Layout] MapPathLayout calcula 30 posiciones para 30 nodos")
+	_check(
+		posiciones.size() == nodes_array.size(),
+		"[Layout] posiciones.size() == nodos.size() (%d)" % nodes_array.size()
+	)
 
 
-# ---------------------------------------------------------------------------
-# Tests de integración: simulación del pipeline de MapBoard con RutaDeNodos
-# 5 nodos: Receta1 y Receta2 tienen map_position manual; Pregunta1-3 no.
-# La curva simula 3 segmentos del mapa con forma de S simple.
-# ---------------------------------------------------------------------------
-
-# Curva auxiliar compartida por los tests de integración (forma S con 4 puntos).
-func _curva_simulada_mapa() -> Curve2D:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(960, 297))   # zona Receta 1
-	curva.add_point(Vector2(804, 415))   # zona Pregunta 1
-	curva.add_point(Vector2(571, 400))   # zona Receta 2
-	curva.add_point(Vector2(329, 443))   # zona Pregunta 2-3
-	return curva
-
-
-func _test_integracion_pipeline_mapboard_mezcla_manual_y_curva() -> void:
-	var curva: Curve2D = _curva_simulada_mapa()
-	var posiciones_curva: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 5)
-	_check(posiciones_curva.size() == 5, "[LayoutCurva] pipeline: debe calcular 5 posiciones de ruta")
-
-	# Posiciones base del .tscn (simula lo que tendría visual_node.position)
-	var bases: Array[Vector2] = [
-		Vector2(960, 297), Vector2(804, 415), Vector2(571, 400),
-		Vector2(329, 443), Vector2(459, 745)
-	]
-	# Nodo 0 (Receta1): map_position manual
-	var pos_manual_receta1 := Vector2(960, 297)
-	# Nodo 2 (Receta2): map_position manual distinta a la curva
-	var pos_manual_receta2 := Vector2(571, 400)
-
-	var has_manual := [true, false, true, false, false]
-	var manuales: Array[Vector2] = [
-		pos_manual_receta1, Vector2.ZERO, pos_manual_receta2, Vector2.ZERO, Vector2.ZERO
-	]
-
-	var resultados: Array[Vector2] = []
-	for i in range(5):
-		resultados.append(MapPathLayout.resolver_posicion_nodo(
-			i, has_manual[i], manuales[i], posiciones_curva, bases[i]
-		))
-
-	# Los 2 nodos con map_position deben conservar exactamente su posición manual
-	_check(resultados[0] == pos_manual_receta1,
-		"[LayoutCurva] nodo 0 (Receta1) con map_position debe conservar posición manual")
-	_check(resultados[2] == pos_manual_receta2,
-		"[LayoutCurva] nodo 2 (Receta2) con map_position debe conservar posición manual")
-
-	# Los 3 nodos sin map_position deben ir sobre la curva (≠ a sus bases del tscn)
-	_check(not resultados[1].is_equal_approx(bases[1]),
-		"[LayoutCurva] nodo 1 (Pregunta1) sin map_position debe alejarse de la base del tscn")
-	_check(not resultados[3].is_equal_approx(bases[3]),
-		"[LayoutCurva] nodo 3 (Pregunta2) sin map_position debe alejarse de la base del tscn")
-	_check(not resultados[4].is_equal_approx(bases[4]),
-		"[LayoutCurva] nodo 4 (Pregunta3) sin map_position debe alejarse de la base del tscn")
-
-	# Los 3 nodos automáticos deben estar dentro del bounding box de la curva
-	for i in [1, 3, 4]:
-		_check(resultados[i].x >= 300.0 and resultados[i].x <= 1000.0,
-			"[LayoutCurva] nodo %d debe tener X dentro del rango de la curva [300..1000]" % i)
-		_check(resultados[i].y >= 250.0 and resultados[i].y <= 800.0,
-			"[LayoutCurva] nodo %d debe tener Y dentro del rango de la curva [250..800]" % i)
-
-	# Imprimir posiciones para validación visual
-	print("[LayoutCurva] --- Posiciones resueltas (5 nodos mixtos) ---")
-	var nombres := ["Receta1(manual)", "Pregunta1(auto)", "Receta2(manual)", "Pregunta2(auto)", "Pregunta3(auto)"]
-	for i in range(5):
-		print("[LayoutCurva]   nodo%d %s → %s" % [i, nombres[i], str(resultados[i])])
+func _test_layout_resolver_calcula_posiciones() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	var layout_config = result.get("data", {}).get("layout_config", null)
+	if layout_config == null:
+		return
+	var contenido_test := Node2D.new()
+	var ruta_test := Path2D.new()
+	ruta_test.name = "RutaCeliaquia1"
+	var curva_test := Curve2D.new()
+	curva_test.add_point(Vector2(0, 0))
+	curva_test.add_point(Vector2(0, 3000))
+	ruta_test.curve = curva_test
+	contenido_test.add_child(ruta_test)
+	var posiciones: Array[Vector2] = MAP_NODE_POSITION_RESOLVER_SCRIPT.resolve(
+		contenido_test, layout_config, 30
+	)
+	_check(posiciones.size() == 30, "[Layout] MapNodePositionResolver resuelve 30 posiciones")
+	contenido_test.free()
 
 
-func _test_integracion_sin_curva_todos_conservan_base() -> void:
-	# Sin curva (RutaDeNodos vacía) → resolver_posicion_nodo debe devolver base para nodos sin manual
-	var ruta_vacia: Array[Vector2] = []
-	var bases: Array[Vector2] = [
-		Vector2(960, 297), Vector2(804, 415), Vector2(329, 443)
-	]
-	var has_manual := [false, false, false]
-	for i in range(3):
-		var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-			i, has_manual[i], Vector2.ZERO, ruta_vacia, bases[i]
+func _test_layout_route_id_invalido_devuelve_vacio() -> void:
+	var config_invalida := MapLayoutConfig.new()
+	config_invalida.route_id = "RutaQueNoExiste"
+	var contenido_test := Node2D.new()
+	var posiciones: Array[Vector2] = MAP_NODE_POSITION_RESOLVER_SCRIPT.resolve(
+		contenido_test, config_invalida, 30
+	)
+	_check(posiciones.is_empty(), "[Layout] route_id invalido devuelve posiciones vacias")
+	contenido_test.free()
+
+
+func _test_layout_cambiar_route_id_cambia_curva() -> void:
+	var contenido_test := Node2D.new()
+
+	var ruta_1 := Path2D.new()
+	ruta_1.name = "RutaCeliaquia1"
+	var curva_1 := Curve2D.new()
+	curva_1.add_point(Vector2(0, 0))
+	curva_1.add_point(Vector2(0, 1000))
+	ruta_1.curve = curva_1
+
+	var ruta_2 := Path2D.new()
+	ruta_2.name = "RutaCeliaquia2"
+	var curva_2 := Curve2D.new()
+	curva_2.add_point(Vector2(500, 0))
+	curva_2.add_point(Vector2(500, 1000))
+	ruta_2.curve = curva_2
+
+	contenido_test.add_child(ruta_1)
+	contenido_test.add_child(ruta_2)
+
+	var config_1 := MapLayoutConfig.new()
+	config_1.route_id = "RutaCeliaquia1"
+	config_1.start_margin = 0.0
+	config_1.end_margin = 0.0
+	config_1.spacing_factor = 1.0
+
+	var config_2 := MapLayoutConfig.new()
+	config_2.route_id = "RutaCeliaquia2"
+	config_2.start_margin = 0.0
+	config_2.end_margin = 0.0
+	config_2.spacing_factor = 1.0
+
+	var pos_ruta_1: Array[Vector2] = MAP_NODE_POSITION_RESOLVER_SCRIPT.resolve(
+		contenido_test, config_1, 2
+	)
+	var pos_ruta_2: Array[Vector2] = MAP_NODE_POSITION_RESOLVER_SCRIPT.resolve(
+		contenido_test, config_2, 2
+	)
+	_check(pos_ruta_1.size() == 2, "[Layout] RutaCeliaquia1 resuelve 2 posiciones")
+	_check(pos_ruta_2.size() == 2, "[Layout] RutaCeliaquia2 resuelve 2 posiciones")
+	_check(
+		pos_ruta_1[0] != pos_ruta_2[0],
+		"[Layout] Cambiar route_id cambia las posiciones calculadas"
+	)
+	contenido_test.free()
+
+
+const MAP_BOARD_SCENE_PATH := "res://mapas/MapBoard.tscn"
+
+func _test_layout_ruta_real_tiene_suficientes_puntos() -> void:
+	var map_board_scene: PackedScene = load(MAP_BOARD_SCENE_PATH)
+	if map_board_scene == null:
+		_check(false, "[Layout] MapBoard.tscn no se pudo cargar")
+		return
+	var board_instance: Node = map_board_scene.instantiate()
+	if board_instance == null:
+		_check(false, "[Layout] MapBoard.tscn no se pudo instanciar")
+		return
+	var contenido: Node = board_instance.get_node_or_null(
+		"ScrollContainer/Contenido"
+	)
+	if contenido == null:
+		board_instance.free()
+		_check(false, "[Layout] ScrollContainer/Contenido no encontrado en MapBoard")
+		return
+	var ruta: Path2D = contenido.get_node_or_null("RutaCeliaquia1") as Path2D
+	_check(ruta != null, "[Layout] RutaCeliaquia1 existe en MapBoard.tscn")
+	if ruta == null:
+		board_instance.free()
+		return
+	_check(ruta is Path2D, "[Layout] RutaCeliaquia1 es Path2D")
+	_check(
+		ruta.position.is_equal_approx(Vector2.ZERO),
+		"[Layout] RutaCeliaquia1.position == Vector2.ZERO"
+	)
+	_check(
+		ruta.scale.is_equal_approx(Vector2.ONE),
+		"[Layout] RutaCeliaquia1.scale == Vector2.ONE"
+	)
+	_check(
+		is_equal_approx(ruta.rotation, 0.0),
+		"[Layout] RutaCeliaquia1.rotation == 0"
+	)
+	_check(ruta.curve != null, "[Layout] RutaCeliaquia1 tiene curva")
+	if ruta.curve == null:
+		board_instance.free()
+		return
+	_check(
+		ruta.curve.point_count >= 30,
+		"[Layout] RutaCeliaquia1.curve.point_count >= 30 (actual: %d)" % ruta.curve.point_count
+	)
+	_check(
+		ruta.curve.get_baked_length() > 0.0,
+		"[Layout] RutaCeliaquia1.curve.get_baked_length() > 0"
+	)
+	board_instance.free()
+
+
+func _test_layout_ruta2_existe_y_tiene_curva() -> void:
+	var map_board_scene: PackedScene = load(MAP_BOARD_SCENE_PATH)
+	if map_board_scene == null:
+		return
+	var board_instance: Node = map_board_scene.instantiate()
+	var contenido: Node = board_instance.get_node_or_null("ScrollContainer/Contenido")
+	if contenido == null:
+		board_instance.free()
+		return
+	var ruta2: Path2D = contenido.get_node_or_null("RutaCeliaquia2") as Path2D
+	_check(ruta2 != null, "[Layout] RutaCeliaquia2 existe en MapBoard.tscn")
+	if ruta2 != null:
+		_check(ruta2.curve != null, "[Layout] RutaCeliaquia2 tiene curva")
+		_check(
+			ruta2.curve != null and ruta2.curve.get_baked_length() > 0.0,
+			"[Layout] RutaCeliaquia2.curve.get_baked_length() > 0"
 		)
-		_check(resultado == bases[i],
-			"[LayoutCurva] sin curva, nodo %d debe conservar su posición base del tscn" % i)
-	print("[LayoutCurva] ✓ Sin curva: los 3 nodos de prueba conservan posición base del tscn")
+	board_instance.free()
 
 
-func _test_integracion_curva_vacia_actua_como_fallback() -> void:
-	# Curve2D sin puntos tiene longitud 0 → obtener_posiciones_de_ruta devuelve []
-	var curva_sin_puntos := Curve2D.new()
-	var largo: float = curva_sin_puntos.get_baked_length()
-	_check(largo == 0.0, "[LayoutCurva] Curve2D vacía debe tener baked_length = 0")
-	# calcular_posiciones_en_curva debe devolver vacío
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva_sin_puntos, 5)
-	_check(resultado.is_empty(),
-		"[LayoutCurva] curva sin puntos debe devolver array vacío (fallback al tscn)")
-	print("[LayoutCurva] ✓ Curve2D vacía = RutaDeNodos sin dibujar → fallback seguro")
-
-
-# ---------------------------------------------------------------------------
-# Ejecutor de todos los tests de MapPathLayout
-# ---------------------------------------------------------------------------
-
-func _test_curve_curva_null_devuelve_vacio() -> void:
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(null, 5)
-	_check(resultado.is_empty(), "[MapPath/Curva] curva null debe devolver array vacío")
-
-
-func _test_curve_cantidad_cero_devuelve_vacio() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(100, 0))
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 0)
-	_check(resultado.is_empty(), "[MapPath/Curva] cantidad 0 debe devolver array vacío")
-
-
-func _test_curve_un_nodo_devuelve_un_punto() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(100, 0))
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 1)
-	_check(resultado.size() == 1, "[MapPath/Curva] 1 nodo debe devolver exactamente 1 posición")
-	_check(resultado[0].is_equal_approx(Vector2(0, 0)), "[MapPath/Curva] 1 nodo debe ir al inicio de la curva")
-
-
-func _test_curve_cinco_nodos_devuelve_cinco_posiciones() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(400, 0))
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 5)
-	_check(resultado.size() == 5, "[MapPath/Curva] 5 nodos deben devolver exactamente 5 posiciones")
-
-
-func _test_curve_extremos_correctos() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(200, 0))
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3)
-	_check(resultado.size() == 3, "[MapPath/Curva] extremos: debe devolver 3 puntos")
-	_check(resultado[0].is_equal_approx(Vector2(0, 0)), "[MapPath/Curva] primer punto debe ser el inicio de la curva")
-	_check(resultado[2].is_equal_approx(Vector2(200, 0)), "[MapPath/Curva] último punto debe ser el final de la curva")
-
-
-func _test_curve_margenes_reducen_rango() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(400, 0))
-	# margen_inicio=50, margen_final=50 → rango efectivo [50, 350]
-	var config := MapLayoutConfig.new()
-	config.start_margin = 50.0
-	config.end_margin = 50.0
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 2, config)
-	_check(resultado.size() == 2, "[MapPath/Curva] márgenes: debe devolver 2 puntos")
-	_check(resultado[0].x > 0.0, "[MapPath/Curva] margen_inicio debe desplazar el primer punto del inicio")
-	_check(resultado[1].x < 400.0, "[MapPath/Curva] margen_final debe desplazar el último punto del final")
-
-
-func _test_curve_map_position_manual_tiene_prioridad_sobre_curva() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(500, 0))
-	var posiciones_curva: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3)
-	var posicion_manual := Vector2(999.0, 888.0)
-	var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-		0, true, posicion_manual, posiciones_curva, Vector2.ZERO
+func _test_layout_placement_mode_anchors_en_json() -> void:
+	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
+	var layout_config: MapLayoutConfig = result.get("data", {}).get("layout_config", null)
+	_check(
+		layout_config != null,
+		"[Layout] layout_config parseado desde JSON"
 	)
-	_check(resultado == posicion_manual, "[MapPath/Curva] map_position manual debe tener prioridad sobre posición de curva")
-
-
-func _test_curve_nodo_sin_posicion_usa_posicion_de_curva() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0.0, 0.0))
-	curva.add_point(Vector2(200.0, 0.0))
-	var posiciones_curva: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3)
-	# Índice 1 = punto medio (100, 0)
-	var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-		1, false, Vector2.ZERO, posiciones_curva, Vector2(9999.0, 9999.0)
+	if layout_config == null:
+		return
+	_check(
+		layout_config.usa_modo_anchors(),
+		"[Layout] placement_mode == 'anchors' en celiaquia_mapa.json"
 	)
-	_check(resultado.is_equal_approx(Vector2(100.0, 0.0)), "[MapPath/Curva] nodo sin map_position debe usar posición calculada por la curva")
+	_check(
+		layout_config.obtener_modo_posicionamiento() == "anchors",
+		"[Layout] obtener_modo_posicionamiento() devuelve 'anchors'"
+	)
 
 
-func _test_curve_nodo_con_map_position_no_cambia() -> void:
+func _test_layout_anchors_posiciones_exactas_por_indice() -> void:
 	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(300, 0))
-	var posiciones_curva: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3)
-	var posiciones_manuales: Array[Vector2] = [Vector2(10, 20), Vector2(30, 40), Vector2(50, 60)]
-	for i in range(3):
-		var resultado: Vector2 = MapPathLayout.resolver_posicion_nodo(
-			i, true, posiciones_manuales[i], posiciones_curva, Vector2.ZERO
+	var puntos_esperados: Array[Vector2] = [
+		Vector2(100, 200),
+		Vector2(300, 400),
+		Vector2(500, 100),
+	]
+	for p in puntos_esperados:
+		curva.add_point(p)
+	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_por_anchors(curva, 3)
+	_check(
+		posiciones.size() == 3,
+		"[Layout] anchors devuelve 3 posiciones para curva de 3 puntos"
+	)
+	for i in range(posiciones.size()):
+		_check(
+			posiciones[i].is_equal_approx(puntos_esperados[i]),
+			"[Layout] anchors: nodo %d en punto exacto %s" % [i + 1, puntos_esperados[i]]
 		)
-		_check(resultado == posiciones_manuales[i],
-			"[MapPath/Curva] nodo %d con map_position no debe cambiar por la curva" % i)
 
 
-# ===========================================================================
-# Ejecutor de todos los tests de MapPathLayout
-# ===========================================================================
-
-# ===========================================================================
-# Ejecutor de todos los tests de MapPathLayout
-# ===========================================================================
-
-# --- Tests de MapLayoutConfig ---
-
-func _test_layout_config_defaults_desde_json_nulo() -> void:
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json(null)
-	_check(config.route_id == "RutaCeliaquia1", "[LayoutConfig] default route_id debe ser RutaCeliaquia1")
-	_check(config.spacing_mode == "even", "[LayoutConfig] default spacing_mode debe ser even")
-	_check(absf(config.spacing_factor - 1.0) < 0.001, "[LayoutConfig] default spacing_factor debe ser 1.0")
-	_check(config.start_margin == 0.0, "[LayoutConfig] default start_margin debe ser 0.0")
-	_check(config.end_margin == 0.0, "[LayoutConfig] default end_margin debe ser 0.0")
-
-
-func _test_layout_config_parsea_campos_validos() -> void:
-	var raw := {
-		"route_id": "OtraRuta",
-		"spacing_mode": "space_around",
-		"spacing_factor": 0.8,
-		"start_margin": 50.0,
-		"end_margin": 30.0
-	}
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json(raw)
-	_check(config.route_id == "OtraRuta", "[LayoutConfig] route_id debe ser OtraRuta")
-	_check(config.spacing_mode == "space_around", "[LayoutConfig] spacing_mode debe ser space_around")
-	_check(absf(config.spacing_factor - 0.8) < 0.001, "[LayoutConfig] spacing_factor debe ser 0.8")
-	_check(config.start_margin == 50.0, "[LayoutConfig] start_margin debe ser 50.0")
-	_check(config.end_margin == 30.0, "[LayoutConfig] end_margin debe ser 30.0")
-
-
-func _test_layout_config_spacing_mode_invalido_usa_even() -> void:
-	var raw := {"spacing_mode": "modo_inexistente"}
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json(raw)
-	_check(config.spacing_mode == "even", "[LayoutConfig] spacing_mode inválido debe defaultear a even")
-
-
-func _test_layout_config_spacing_factor_no_puede_ser_negativo() -> void:
-	var raw := {"spacing_factor": -5.0}
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json(raw)
-	_check(config.spacing_factor >= 0.1, "[LayoutConfig] spacing_factor negativo debe clampear a minimo 0.1")
-
-
-func _test_layout_config_margenes_no_pueden_ser_negativos() -> void:
-	var raw := {"start_margin": -100.0, "end_margin": -200.0}
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json(raw)
-	_check(config.start_margin == 0.0, "[LayoutConfig] start_margin negativo debe clampear a 0.0")
-	_check(config.end_margin == 0.0, "[LayoutConfig] end_margin negativo debe clampear a 0.0")
-
-
-# --- Tests de spacing_mode ---
-
-func _test_spacing_even_extremos_estables() -> void:
-	var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(5, "even", 1.0)
-	_check(ts.size() == 5, "[SpacingMode] even 5 nodos debe devolver 5 valores")
-	_check(absf(ts[0] - 0.0) < 0.001, "[SpacingMode] even: primer t debe ser 0.0")
-	_check(absf(ts[4] - 1.0) < 0.001, "[SpacingMode] even: último t debe ser 1.0")
-
-
-func _test_spacing_even_equidistante() -> void:
-	var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(3, "even", 1.0)
-	_check(absf(ts[1] - 0.5) < 0.001, "[SpacingMode] even: t del medio debe ser 0.5")
-
-
-func _test_spacing_space_between_extremos_en_bordes() -> void:
-	var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(4, "space_between", 1.0)
-	_check(ts.size() == 4, "[SpacingMode] space_between: debe devolver 4 valores")
-	_check(absf(ts[0] - 0.0) < 0.001, "[SpacingMode] space_between: primer t debe ser 0.0")
-	_check(absf(ts[3] - 1.0) < 0.001, "[SpacingMode] space_between: último t debe ser 1.0")
-
-
-func _test_spacing_space_around_margenes_en_extremos() -> void:
-	var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(4, "space_around", 1.0)
-	_check(ts.size() == 4, "[SpacingMode] space_around: debe devolver 4 valores")
-	_check(ts[0] > 0.0, "[SpacingMode] space_around: primer t debe ser mayor a 0.0")
-	_check(ts[3] < 1.0, "[SpacingMode] space_around: último t debe ser menor a 1.0")
-
-
-func _test_spacing_factor_menor_a_uno_comprime_rango() -> void:
-	var ts_normal: Array[float] = MapPathLayout.calcular_distancias_normalizadas(3, "even", 1.0)
-	var ts_comprimido: Array[float] = MapPathLayout.calcular_distancias_normalizadas(3, "even", 0.5)
-	_check(ts_comprimido[0] > ts_normal[0], "[SpacingMode] factor < 1.0 debe alejar primer punto del inicio")
-	_check(ts_comprimido[2] < ts_normal[2], "[SpacingMode] factor < 1.0 debe alejar último punto del final")
-
-
-func _test_spacing_factor_mayor_a_uno_expande_extremos() -> void:
-	var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(3, "even", 2.0)
-	_check(ts.size() == 3, "[SpacingMode] factor > 1.0 debe devolver 3 valores")
-	# Los valores extremos se clampean a [0, 1]
-	_check(ts[0] >= 0.0 and ts[0] <= 1.0, "[SpacingMode] factor > 1.0: primer t debe estar en [0,1]")
-	_check(ts[2] >= 0.0 and ts[2] <= 1.0, "[SpacingMode] factor > 1.0: último t debe estar en [0,1]")
-
-
-func _test_spacing_un_nodo_siempre_en_inicio() -> void:
-	for modo in ["even", "space_between", "space_around"]:
-		var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(1, modo, 1.0)
-		_check(ts.size() == 1, "[SpacingMode] 1 nodo con '%s': debe devolver 1 valor" % modo)
-		_check(ts[0] == 0.0, "[SpacingMode] 1 nodo con '%s': t debe ser 0.0" % modo)
-
-
-func _test_spacing_cero_nodos_devuelve_vacio() -> void:
-	for modo in ["even", "space_between", "space_around"]:
-		var ts: Array[float] = MapPathLayout.calcular_distancias_normalizadas(0, modo, 1.0)
-		_check(ts.is_empty(), "[SpacingMode] 0 nodos con '%s': debe devolver vacío" % modo)
-
-
-func _test_calcular_posiciones_en_curva_con_config_even() -> void:
+func _test_layout_anchors_fallback_curva_pequena() -> void:
 	var curva := Curve2D.new()
 	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(200, 0))
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json({"spacing_mode": "even"})
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3, config)
-	_check(resultado.size() == 3, "[LayoutCurvaConfig] even con config: debe devolver 3 posiciones")
-	_check(resultado[0].is_equal_approx(Vector2(0, 0)), "[LayoutCurvaConfig] even: primer punto en inicio")
-	_check(resultado[2].is_equal_approx(Vector2(200, 0)), "[LayoutCurvaConfig] even: último punto al final")
-
-
-func _test_calcular_posiciones_en_curva_con_config_space_around() -> void:
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(400, 0))
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json({"spacing_mode": "space_around"})
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 4, config)
-	_check(resultado.size() == 4, "[LayoutCurvaConfig] space_around: debe devolver 4 posiciones")
-	_check(resultado[0].x > 0.0, "[LayoutCurvaConfig] space_around: primer punto NO en el inicio")
-	_check(resultado[3].x < 400.0, "[LayoutCurvaConfig] space_around: último punto NO al final")
-
-
-func _test_calcular_posiciones_en_curva_config_none_compatible() -> void:
-	# Sin config (null) debe comportarse igual que antes (retro-compatible)
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(100, 0))
-	var resultado: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 3)
-	_check(resultado.size() == 3, "[LayoutCurvaConfig] sin config: debe devolver 3 posiciones")
-	_check(resultado[0].is_equal_approx(Vector2(0, 0)), "[LayoutCurvaConfig] sin config: primer punto en inicio")
-	_check(resultado[2].is_equal_approx(Vector2(100, 0)), "[LayoutCurvaConfig] sin config: último punto al final")
-
-
-# --- Tests de MapNodePositionResolver ---
-
-func _test_resolver_nodo_con_posicion_manual() -> void:
-	# Con el nuevo sistema todos los nodos usan posición automática.
-	# has_map_position ya no influye: si tiene_auto=true, se usa posicion_auto.
-	var nodo := MapNodeData.new()
-	nodo.has_map_position = false
-	var auto_pos := Vector2(50.0, 75.0)
-	var resultado: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
-		nodo, auto_pos, true, Vector2(0, 0)
-	)
-	_check(resultado == auto_pos, "[Resolver] con tiene_auto=true siempre usa posicion_auto")
-
-
-func _test_resolver_nodo_sin_posicion_usa_auto() -> void:
-	var nodo := MapNodeData.new()
-	nodo.has_map_position = false
-	var auto_pos := Vector2(50.0, 75.0)
-	var resultado: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
-		nodo, auto_pos, true, Vector2(999.0, 999.0)
-	)
-	_check(resultado == auto_pos, "[Resolver] nodo sin map_position con auto disponible debe usar auto")
-
-
-func _test_resolver_nodo_sin_posicion_ni_auto_usa_base() -> void:
-	var nodo := MapNodeData.new()
-	nodo.has_map_position = false
-	var base_pos := Vector2(77.0, 88.0)
-	var resultado: Vector2 = MapNodePositionResolver.obtener_posicion_para_nodo(
-		nodo, Vector2.ZERO, false, base_pos
-	)
-	_check(resultado == base_pos, "[Resolver] nodo sin posición y sin auto debe usar base del tscn")
-
-
-func _test_resolver_usar_posicion_automatica_siempre_true() -> void:
-	# usar_posicion_automatica siempre retorna true: el JSON ya no define coordenadas por nodo.
-	var nodo := MapNodeData.new()
-	nodo.has_map_position = false
-	_check(MapNodePositionResolver.usar_posicion_automatica(nodo) == true,
-		"[Resolver] usar_posicion_automatica debe ser siempre true")
-
-
-func _test_resolver_calcular_posiciones_para_nodos_mixtos() -> void:
-	# Todos los nodos usan la curva ahora — sin distinción manual/auto.
-	var nodo1 := MapNodeData.new()
-	nodo1.has_map_position = false
-	var nodo2 := MapNodeData.new()
-	nodo2.has_map_position = false
-	var nodos: Array = [nodo1, nodo2]
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(300, 0))
-	var posiciones_auto: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
-		nodos, curva, null
-	)
-	_check(posiciones_auto.size() == 2, "[Resolver] 2 nodos → 2 posiciones en curva")
-
-
-func _test_resolver_todos_los_nodos_usan_curva() -> void:
-	# Todos los nodos usan la curva — has_map_position ya no es relevante.
-	var nodo1 := MapNodeData.new(); nodo1.has_map_position = false
-	var nodo2 := MapNodeData.new(); nodo2.has_map_position = false
-	var nodos: Array = [nodo1, nodo2]
-	var curva := Curve2D.new()
-	curva.add_point(Vector2(0, 0))
-	curva.add_point(Vector2(100, 0))
-	var posiciones_auto: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
-		nodos, curva, null
-	)
-	_check(posiciones_auto.size() == 2, "[Resolver] 2 nodos → 2 posiciones automáticas en curva")
-
-
-func _test_resolver_sin_curva_devuelve_vacio() -> void:
-	var nodo := MapNodeData.new(); nodo.has_map_position = false
-	var nodos: Array = [nodo]
-	var posiciones: Array[Vector2] = MapNodePositionResolver.calcular_posiciones_para_nodos(
-		nodos, null, null
-	)
-	_check(posiciones.is_empty(), "[Resolver] curva null → array vacío")
-
-
-# Valida que RutaCeliaquia1 con 30 waypoints distribuye 30 nodos cubriendo
-# todo el mapa y con extremos en las posiciones correctas.
-func _test_ruta_celiaquia1_curva_30_puntos_abarca_mapa() -> void:
-	var curva := Curve2D.new()
-	var waypoints: Array = [
-		Vector2(960, 297), Vector2(804, 415), Vector2(571, 400),
-		Vector2(329, 443), Vector2(282, 636), Vector2(459, 745),
-		Vector2(700, 708), Vector2(942, 745), Vector2(942, 946),
-		Vector2(804, 1071), Vector2(612, 1020), Vector2(394, 994),
-		Vector2(213, 1088), Vector2(252, 1385), Vector2(562, 1432),
-		Vector2(759, 1280), Vector2(942, 1355), Vector2(942, 1549),
-		Vector2(750, 1651), Vector2(552, 1651), Vector2(329, 1598),
-		Vector2(174, 1701), Vector2(331, 1962), Vector2(593, 1928),
-		Vector2(840, 1962), Vector2(824, 2222), Vector2(638, 2397),
-		Vector2(301, 2276), Vector2(270, 2589), Vector2(638, 2695),
-	]
-	for pt in waypoints:
-		curva.add_point(pt)
-	_check(curva.point_count == 30,
-		"[RutaCeliaquia1] Curva debe tener 30 puntos. Tiene: %d" % curva.point_count)
-	_check(curva.get_baked_length() > 0.0,
-		"[RutaCeliaquia1] Curva debe tener largo > 0")
-	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 30)
-	_check(posiciones.size() == 30,
-		"[RutaCeliaquia1] 30 nodos deben generar 30 posiciones. Got: %d" % posiciones.size())
-	if posiciones.size() < 30:
-		return
-	_check(posiciones[0].is_equal_approx(Vector2(960, 297)),
-		"[RutaCeliaquia1] Primer nodo debe estar en (960,297). Obtenido: %s" % str(posiciones[0]))
-	_check(posiciones[29].is_equal_approx(Vector2(638, 2695)),
-		"[RutaCeliaquia1] Último nodo debe estar en (638,2695). Obtenido: %s" % str(posiciones[29]))
-	var min_y: float = posiciones[0].y
-	var max_y: float = posiciones[0].y
-	for pos in posiciones:
-		min_y = minf(min_y, pos.y)
-		max_y = maxf(max_y, pos.y)
-	_check(max_y - min_y > 2000.0,
-		"[RutaCeliaquia1] Posiciones deben cubrir ≥2000px en Y. Rango: %.0f" % (max_y - min_y))
-	print("[RutaCeliaquia1] ✓ largo=%.0f, rango_Y=%.0f, inicio=%s, fin=%s" % [
-		curva.get_baked_length(), max_y - min_y, str(posiciones[0]), str(posiciones[29])
-	])
-
-
-# Valida que RutaCeliaquia2 (zigzag alternativo, 14 waypoints) tiene curva válida,
-# largo > 0, se puede distribuir 30 nodos, y es distinta a RutaCeliaquia1.
-func _test_ruta_celiaquia2_existe_y_es_valida() -> void:
-	var curva := Curve2D.new()
-	var waypoints: Array = [
-		Vector2(960, 297), Vector2(750, 500), Vector2(500, 650),
-		Vector2(200, 800), Vector2(350, 1050), Vector2(600, 1200),
-		Vector2(900, 1350), Vector2(650, 1500), Vector2(350, 1700),
-		Vector2(200, 1900), Vector2(400, 2100), Vector2(650, 2300),
-		Vector2(900, 2450), Vector2(638, 2695),
-	]
-	for pt in waypoints:
-		curva.add_point(pt)
-	_check(curva.point_count == 14,
-		"[RutaCeliaquia2] Curva debe tener 14 puntos. Tiene: %d" % curva.point_count)
-	_check(curva.get_baked_length() > 0.0,
-		"[RutaCeliaquia2] Curva debe tener largo > 0")
-	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 30)
-	_check(posiciones.size() == 30,
-		"[RutaCeliaquia2] 30 nodos deben generar 30 posiciones. Got: %d" % posiciones.size())
-	if posiciones.size() < 30:
-		return
-	_check(posiciones[0].is_equal_approx(Vector2(960, 297)),
-		"[RutaCeliaquia2] Primer nodo debe estar en (960,297). Obtenido: %s" % str(posiciones[0]))
-	_check(posiciones[29].is_equal_approx(Vector2(638, 2695)),
-		"[RutaCeliaquia2] Último nodo debe estar en (638,2695). Obtenido: %s" % str(posiciones[29]))
-	var min_y: float = posiciones[0].y
-	var max_y: float = posiciones[0].y
-	for pos in posiciones:
-		min_y = minf(min_y, pos.y)
-		max_y = maxf(max_y, pos.y)
-	_check(max_y - min_y > 2000.0,
-		"[RutaCeliaquia2] Posiciones deben cubrir ≥2000px en Y. Rango: %.0f" % (max_y - min_y))
-	# Verificar que RutaCeliaquia2 es distinta a RutaCeliaquia1 (diferentes puntos intermedios)
-	var r1_pt1 := Vector2(804, 415)   # punto 1 de R1
-	var r2_pt1 := Vector2(750, 500)   # punto 1 de R2
-	_check(r1_pt1 != r2_pt1, "[RutaCeliaquia2] Debe ser distinta a RutaCeliaquia1")
-	print("[RutaCeliaquia2] ✓ largo=%.0f, rango_Y=%.0f, inicio=%s, fin=%s" % [
-		curva.get_baked_length(), max_y - min_y, str(posiciones[0]), str(posiciones[29])
-	])
-
-
-# Valida que MapRouteRegistry devuelve null para route_id inexistente (fallback seguro).
-func _test_route_registry_route_id_inexistente_devuelve_null() -> void:
-	var contenedor := Node.new()
-	root.add_child(contenedor)
-	var curva: Curve2D = MapRouteRegistry.obtener_curva(contenedor, "RutaQueNoExiste")
-	_check(curva == null,
-		"[RouteRegistry] route_id inexistente debe devolver null (fallback seguro)")
-	contenedor.queue_free()
-
-
-# Valida que MapRouteRegistry devuelve null si contenedor es null.
-func _test_route_registry_contenedor_nulo_devuelve_null() -> void:
-	var curva: Curve2D = MapRouteRegistry.obtener_curva(null, "RutaCeliaquia1")
-	_check(curva == null,
-		"[RouteRegistry] contenedor null debe devolver null")
-
-
-# Valida que route_id = "RutaCeliaquia2" genera 30 posiciones con la curva alternativa.
-func _test_mapboard_ruta_celiaquia2_distribuye_30_nodos() -> void:
-	var curva := Curve2D.new()
-	var waypoints: Array = [
-		Vector2(960, 297), Vector2(750, 500), Vector2(500, 650),
-		Vector2(200, 800), Vector2(350, 1050), Vector2(600, 1200),
-		Vector2(900, 1350), Vector2(650, 1500), Vector2(350, 1700),
-		Vector2(200, 1900), Vector2(400, 2100), Vector2(650, 2300),
-		Vector2(900, 2450), Vector2(638, 2695),
-	]
-	for pt in waypoints:
-		curva.add_point(pt)
-	var config: MapLayoutConfig = MapLayoutConfig.desde_json({"route_id": "RutaCeliaquia2", "spacing_mode": "even"})
-	_check(config.obtener_route_id() == "RutaCeliaquia2",
-		"[MapBoard/R2] config route_id debe ser RutaCeliaquia2")
-	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_en_curva(curva, 30, config)
-	_check(posiciones.size() == 30,
-		"[MapBoard/R2] 30 nodos con RutaCeliaquia2 deben generar 30 posiciones. Got: %d" % posiciones.size())
-	print("[MapBoard/R2] ✓ RutaCeliaquia2 distribuye %d nodos correctamente" % posiciones.size())
-
-
-# ===========================================================================
-# Tests unitarios: estado y orden de nodos del mapa
-# ===========================================================================
-
-## Verifica que CargadorDeMapa ordena las claves JSON numéricamente, no lexicográficamente.
-## Con sort lexicográfico "10" quedaría en posición 1 (antes de "2"); con numérico va en posición 9.
-func _test_cargador_orden_numerico_no_lexicografico() -> void:
-	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	_check(bool(result.get("ok", false)), "[CargadorOrden] celiaquia_mapa debe cargar exitosamente")
-	if not bool(result.get("ok", false)):
-		return
-	var nodes: Array = result.get("data", {}).get("nodes", [])
-	_check(nodes.size() == 30, "[CargadorOrden] mapa debe tener 30 nodos")
-	if nodes.size() < 10:
-		return
-
-	# nodes[0] debe ser el primer nodo (JSON key "1")
-	var nd0: MapNodeData = nodes[0] as MapNodeData
-	_check(nd0 != null and nd0.node_key == NODE_1_KEY,
-		"[CargadorOrden] nodes[0] debe ser '%s'. Got: '%s'" % [NODE_1_KEY, "" if nd0 == null else nd0.node_key])
-
-	# nodes[4] debe ser el quinto nodo (JSON key "5") — fallaría con sort lexicográfico
-	var nd4: MapNodeData = nodes[4] as MapNodeData
-	_check(nd4 != null and nd4.node_key == NODE_5_KEY,
-		"[CargadorOrden] nodes[4] debe ser '%s'. Got: '%s'" % [NODE_5_KEY, "" if nd4 == null else nd4.node_key])
-
-	# nodes[7] debe ser el octavo nodo (JSON key "8") — con sort lex "8" sería después de "29"
-	var nd7: MapNodeData = nodes[7] as MapNodeData
-	_check(nd7 != null and nd7.node_key == NODE_8_KEY,
-		"[CargadorOrden] nodes[7] debe ser '%s'. Got: '%s'" % [NODE_8_KEY, "" if nd7 == null else nd7.node_key])
-
-	if not failed:
-		print("[CargadorOrden] ✓ Orden numérico correcto: nodes[0]=%s, nodes[4]=%s, nodes[7]=%s" % [
-			nd0.node_key, nd4.node_key, nd7.node_key
-		])
-
-
-## Verifica que node_states construido como Dictionary[node_key] es robusto ante reordenamientos.
-## Con el nuevo sistema, el estado de un nodo se busca por node_key, no por índice posicional.
-func _test_node_states_asignados_por_node_key() -> void:
-	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	_check(bool(result.get("ok", false)), "[NodeStates] celiaquia_mapa debe cargar")
-	if not bool(result.get("ok", false)):
-		return
-	var nodes: Array = result.get("data", {}).get("nodes", [])
-	_check(nodes.size() == 30, "[NodeStates] mapa debe tener 30 nodos")
-	if nodes.size() < 6:
-		return
-
-	# Simula la construcción de node_states como Dictionary (como hace MapScene ahora)
-	var node_states: Dictionary = {}
-	for raw in nodes:
-		var nd: MapNodeData = raw as MapNodeData
-		if nd == null:
-			continue
-		node_states[nd.node_key] = {"visual_state": "locked", "is_completed": false, "is_unlocked": false}
-
-	# Marca el estado del primer nodo como "available" por clave
-	node_states[NODE_1_KEY] = {"visual_state": "available", "is_completed": false, "is_unlocked": true}
-
-	# Verifica lookup correcto por node_key
-	_check(node_states.has(NODE_1_KEY),
-		"[NodeStates] dict debe contener entrada para '%s'" % NODE_1_KEY)
-	var state_0: Dictionary = node_states.get(NODE_1_KEY, {})
-	_check(str(state_0.get("visual_state", "")) == "available",
-		"[NodeStates] acceso por node_key debe devolver 'available'. Got: '%s'" % state_0.get("visual_state", "?"))
-
-	# El nodo en posición 5 (NODE_6_KEY) no debe quedar afectado por el cambio al nodo 0
-	var state_5: Dictionary = node_states.get(NODE_6_KEY, {})
-	_check(str(state_5.get("visual_state", "")) == "locked",
-		"[NodeStates] nodo '%s' debe seguir 'locked'. Got: '%s'" % [NODE_6_KEY, state_5.get("visual_state", "?")])
-
-	# Si se hubiera usado índice posicional (Array), y los nodos estuvieran en distinto orden,
-	# node_states[0] coincidiría con el nodo visual incorrecto. Con Dictionary no ocurre.
-	_check(node_states.size() == 30,
-		"[NodeStates] dict debe tener exactamente 30 entradas. Got: %d" % node_states.size())
-
-	if not failed:
-		print("[NodeStates] ✓ Lookup por node_key correcto, dict tiene %d entradas" % node_states.size())
-
-
-## Verifica que tras resetear el progreso (save limpio) solo el primer nodo está disponible.
-func _test_avance_reset_deja_solo_primer_nodo_disponible() -> void:
-	var gs = root.get_node_or_null("/root/Global")
-	_check(gs != null, "[EstadoReset] Global autoload debe existir")
-	if gs == null:
-		return
-	gs.reiniciar_progreso()
-
-	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	_check(bool(result.get("ok", false)), "[EstadoReset] celiaquia_mapa debe cargar")
-	if not bool(result.get("ok", false)):
-		return
-	var nodes: Array = result.get("data", {}).get("nodes", [])
-	_check(nodes.size() == 30, "[EstadoReset] mapa debe tener 30 nodos")
-	if nodes.size() < 2:
-		return
-
-	for raw in nodes:
-		var nd: MapNodeData = raw as MapNodeData
-		if nd != null:
-			nd.track_key = "celiaquia"
-
-	var nodo_0: MapNodeData = nodes[0] as MapNodeData
-	var nodo_1: MapNodeData = nodes[1] as MapNodeData
-	_check(nodo_0 != null and nodo_1 != null, "[EstadoReset] primeros dos nodos deben existir")
-	if nodo_0 == null or nodo_1 == null:
-		return
-
-	var state_0: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_0)
-	var state_1: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_1)
-
-	_check(str(state_0.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_AVAILABLE,
-		"[EstadoReset] nodo 0 debe estar 'available' tras reset. Got: '%s'" % state_0.get("visual_state", "?"))
-	_check(str(state_1.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_LOCKED,
-		"[EstadoReset] nodo 1 debe estar 'locked' tras reset. Got: '%s'" % state_1.get("visual_state", "?"))
-
-	if not failed:
-		print("[EstadoReset] ✓ Tras reset: nodo0=%s nodo1=%s" % [
-			state_0.get("visual_state", "?"), state_1.get("visual_state", "?")
-		])
-
-
-## Verifica que completar el nodo N desbloquea exactamente el nodo N+1, sin afectar otros.
-func _test_avance_completar_nodo_desbloquea_siguiente() -> void:
-	var gs = root.get_node_or_null("/root/Global")
-	_check(gs != null, "[EstadoDesbloqueo] Global autoload debe existir")
-	if gs == null:
-		return
-	gs.reiniciar_progreso()
-
-	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	_check(bool(result.get("ok", false)), "[EstadoDesbloqueo] celiaquia_mapa debe cargar")
-	if not bool(result.get("ok", false)):
-		return
-	var nodes: Array = result.get("data", {}).get("nodes", [])
-	_check(nodes.size() >= 3, "[EstadoDesbloqueo] mapa debe tener al menos 3 nodos")
-	if nodes.size() < 3:
-		return
-
-	for raw in nodes:
-		var nd: MapNodeData = raw as MapNodeData
-		if nd != null:
-			nd.track_key = "celiaquia"
-
-	var nodo_0: MapNodeData = nodes[0] as MapNodeData
-	var nodo_1: MapNodeData = nodes[1] as MapNodeData
-	var nodo_2: MapNodeData = nodes[2] as MapNodeData
-	if nodo_0 == null or nodo_1 == null or nodo_2 == null:
-		_check(false, "[EstadoDesbloqueo] primeros tres nodos deben existir")
-		return
-
-	# Marcar nodo 0 como completado via Global
-	gs.marcar_nodo_jugable_completado("celiaquia", nodo_0.node_key)
-
-	var state_0: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_0)
-	var state_1: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_1)
-	var state_2: Dictionary = AVANCE_DE_NODO_SCRIPT.get_node_state(nodes, nodo_2)
-
-	_check(str(state_0.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_COMPLETED,
-		"[EstadoDesbloqueo] nodo 0 debe estar 'completed'. Got: '%s'" % state_0.get("visual_state", "?"))
-	_check(str(state_1.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_AVAILABLE,
-		"[EstadoDesbloqueo] nodo 1 debe estar 'available' tras completar nodo 0. Got: '%s'" % state_1.get("visual_state", "?"))
-	_check(str(state_2.get("visual_state", "")) == AVANCE_DE_NODO_SCRIPT.STATE_LOCKED,
-		"[EstadoDesbloqueo] nodo 2 debe estar 'locked' (nodo 1 aún no completado). Got: '%s'" % state_2.get("visual_state", "?"))
-
-	if not failed:
-		print("[EstadoDesbloqueo] ✓ nodo0=%s nodo1=%s nodo2=%s" % [
-			state_0.get("visual_state", "?"),
-			state_1.get("visual_state", "?"),
-			state_2.get("visual_state", "?"),
-		])
-
-	# Restaurar estado limpio para el resto del suite
-	gs.reiniciar_progreso()
-
-
-# ===========================================================================
-# Ejecutor de tests de estado y orden de nodos
-# ===========================================================================
-
-func ejecutar_tests_estado_nodos() -> void:
-	print("[EstadoNodos] ── Iniciando tests de estado y orden de nodos ──")
-	_test_cargador_orden_numerico_no_lexicografico()
-	_test_node_states_asignados_por_node_key()
-	_test_avance_reset_deja_solo_primer_nodo_disponible()
-	_test_avance_completar_nodo_desbloquea_siguiente()
-	if not failed:
-		print("[EstadoNodos] ✓ Todos los tests pasaron.")
-	else:
-		printerr("[EstadoNodos] ✗ Al menos un test falló. Revisá los errores arriba.")
-
-
-func ejecutar_tests_map_path_layout() -> void:
-	_test_map_path_layout_distribuye_cantidad_correcta()
-	_test_map_path_layout_extremos_en_primer_y_ultimo_punto()
-	_test_map_path_layout_punto_medio_en_ruta_recta()
-	_test_map_path_layout_retorna_vacio_sin_puntos()
-	_test_map_path_layout_retorna_vacio_con_un_solo_punto()
-	_test_map_path_layout_retorna_vacio_con_cero_nodos()
-	_test_map_path_layout_un_nodo_va_al_inicio()
-	_test_map_path_layout_ruta_multiple_segmentos()
-	_test_map_path_layout_posicion_manual_tiene_prioridad()
-	_test_map_path_layout_nodo_sin_posicion_usa_ruta()
-	_test_map_path_layout_conserva_posicion_base_sin_ruta()
-	_test_curve_curva_null_devuelve_vacio()
-	_test_curve_cantidad_cero_devuelve_vacio()
-	_test_curve_un_nodo_devuelve_un_punto()
-	_test_curve_cinco_nodos_devuelve_cinco_posiciones()
-	_test_curve_extremos_correctos()
-	_test_curve_margenes_reducen_rango()
-	_test_curve_map_position_manual_tiene_prioridad_sobre_curva()
-	_test_curve_nodo_sin_posicion_usa_posicion_de_curva()
-	_test_curve_nodo_con_map_position_no_cambia()
-	_test_integracion_pipeline_mapboard_mezcla_manual_y_curva()
-	_test_integracion_sin_curva_todos_conservan_base()
-	_test_integracion_curva_vacia_actua_como_fallback()
-	# Tests de MapLayoutConfig
-	_test_layout_config_defaults_desde_json_nulo()
-	_test_layout_config_parsea_campos_validos()
-	_test_layout_config_spacing_mode_invalido_usa_even()
-	_test_layout_config_spacing_factor_no_puede_ser_negativo()
-	_test_layout_config_margenes_no_pueden_ser_negativos()
-	# Tests de spacing_mode y spacing_factor
-	_test_spacing_even_extremos_estables()
-	_test_spacing_even_equidistante()
-	_test_spacing_space_between_extremos_en_bordes()
-	_test_spacing_space_around_margenes_en_extremos()
-	_test_spacing_factor_menor_a_uno_comprime_rango()
-	_test_spacing_factor_mayor_a_uno_expande_extremos()
-	_test_spacing_un_nodo_siempre_en_inicio()
-	_test_spacing_cero_nodos_devuelve_vacio()
-	_test_calcular_posiciones_en_curva_con_config_even()
-	_test_calcular_posiciones_en_curva_con_config_space_around()
-	_test_calcular_posiciones_en_curva_config_none_compatible()
-	# Tests de MapNodePositionResolver
-	_test_resolver_nodo_con_posicion_manual()
-	_test_resolver_nodo_sin_posicion_usa_auto()
-	_test_resolver_nodo_sin_posicion_ni_auto_usa_base()
-	_test_resolver_usar_posicion_automatica_siempre_true()
-	_test_resolver_calcular_posiciones_para_nodos_mixtos()
-	_test_resolver_todos_los_nodos_usan_curva()
-	_test_resolver_sin_curva_devuelve_vacio()
-	# Test de alineación: RutaCeliaquia1 con 30 waypoints
-	_test_ruta_celiaquia1_curva_30_puntos_abarca_mapa()
-	# Tests de RutaCeliaquia2
-	_test_ruta_celiaquia2_existe_y_es_valida()
-	_test_route_registry_route_id_inexistente_devuelve_null()
-	_test_route_registry_contenedor_nulo_devuelve_null()
-	_test_mapboard_ruta_celiaquia2_distribuye_30_nodos()
-	if not failed:
-		print("[MapPath] ✓ Todos los tests pasaron.")
-	else:
-		printerr("[MapPath] ✗ Al menos un test falló. Revisá los errores arriba.")
-
-
-# ===========================================================================
-# Tests unitarios: nodo único con múltiples modalidades
-# ===========================================================================
-
-func _test_armador_plan_mixto_desde_json() -> void:
-	# Verifica que un nodo configurado con 3 tipos distintos en games[]
-	# produce un plan con 3 juegos de modos distintos.
-	# No depende de node_kind ni de ningún tipo de nodo visual (MapChapterNode / MapQuestionNode).
-	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
-	var fake_save := FakeSaveManager.new()
-	root.add_child(fake_save)
-	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(fake_save)
-
-	var node_data: MapNodeData = _get_test_map_node(NODE_18_KEY)
-	_check(node_data != null, "[PlanMixto] nodo %s debe existir en el JSON del mapa" % NODE_18_KEY)
-	if node_data == null:
-		ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
-		fake_save.queue_free()
-		return
-
-	# El nodo tiene 3 game requests con tipos distintos: drag, quiz, match
+	curva.add_point(Vector2(0, 1000))
+	# Curva con 2 puntos, pedimos 5 nodos: debe usar fallback sample_baked.
+	var posiciones: Array[Vector2] = MapPathLayout.calcular_posiciones_por_anchors(curva, 5)
 	_check(
-		node_data.get_random_game_request_count() == 3,
-		"[PlanMixto] node_18 debe tener exactamente 3 game requests (drag+quiz+match)"
+		posiciones.size() == 5,
+		"[Layout] anchors fallback: devuelve 5 posiciones con curva de 2 puntos"
 	)
-
-	var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
-	_check(not plan.is_empty(), "[PlanMixto] construir_plan_de_partida no debe devolver plan vacío")
-	if plan.is_empty():
-		ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
-		fake_save.queue_free()
-		return
-
-	var total_juegos: int = int(plan.get("total_juegos", 0))
-	_check(total_juegos == 3, "[PlanMixto] total_juegos debe ser 3, got: %d" % total_juegos)
-
-	var juegos: Array = plan.get("juegos", []) as Array
-	var modes_en_plan: Array[String] = []
-	for raw_juego in juegos:
-		var juego: Dictionary = raw_juego as Dictionary
-		var mode: String = str(juego.get("mode", "")).strip_edges()
-		if not mode.is_empty() and not modes_en_plan.has(mode):
-			modes_en_plan.append(mode)
-
-	_check(
-		modes_en_plan.has(MapNodeData.MODE_DRAG_DROP),
-		"[PlanMixto] el plan debe incluir drag_drop"
-	)
-	_check(
-		modes_en_plan.has(MapNodeData.MODE_QUIZ_CHOICE),
-		"[PlanMixto] el plan debe incluir quiz_choice"
-	)
-	_check(
-		modes_en_plan.has(MapNodeData.MODE_VINCULACION_CONCEPTOS),
-		"[PlanMixto] el plan debe incluir vinculacion_conceptos"
-	)
-	_check(
-		modes_en_plan.size() == 3,
-		"[PlanMixto] el plan debe tener exactamente 3 modos distintos, got: %d" % modes_en_plan.size()
-	)
-
-	ARMADOR_DE_PARTIDA_SCRIPT.init_with_save_manager(root.get_node_or_null("/root/SaveManager"))
-	fake_save.queue_free()
-
-
-# ===========================================================================
-# Ejecutor de todos los tests de nodo único multimodal
-# ===========================================================================
-
-func ejecutar_tests_nodo_unico_multimodal() -> void:
-	print("[PlanMixto] ── Iniciando tests de nodo único multimodal ──")
-	_test_armador_plan_mixto_desde_json()
-	if not failed:
-		print("[PlanMixto] ✓ Todos los tests pasaron.")
-	else:
-		printerr("[PlanMixto] ✗ Al menos un test falló. Revisá los errores arriba.")

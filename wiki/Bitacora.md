@@ -15,6 +15,38 @@
 
 ---
 
+## Lo que pasó recientemente
+
+Acá están los cambios más nuevos y relevantes para demo, defensa TTIP y continuidad técnica.
+
+---
+
+### `2026-05-31` — Layout automático de nodos del mapa sobre curva
+<kbd>Feature</kbd>
+
+Los 30 nodos del mapa ahora se posicionan automáticamente siguiendo una curva `Path2D` (`RutaCeliaquia1`), sin posiciones hardcodeadas en el `.tscn`.
+
+**Qué problema resolvió**
+- Mover un nodo requería abrir el editor y arrastrarlo a mano.
+- El modo `curve` (distribución por `sample_baked`) generaba deriva visual en curvas irregulares: los nodos no quedaban exactamente donde el diseñador los puso.
+
+**Qué se implementó**
+- `placement_mode = "anchors"`: el nodo `i` recibe exactamente `curve.get_point_position(i)`. Diseñar el mapa = colocar puntos en la curva.
+- `RutaCeliaquia1` tiene 30 puntos derivados de las posiciones manuales originales (sin drift).
+- Fallback a `sample_baked` si la curva tiene menos puntos que nodos — la partida no rompe.
+- Pipeline: `MapLayoutConfig` → `MapRouteRegistry` → `MapPathLayout` → `MapNodePositionResolver` → `MapBoard`.
+- `DebugLayoutOverlay`: dibuja círculos en cada posición calculada cuando `debug_layout = true`.
+
+**Impacto para el jugador**
+- Ninguno visible — los nodos quedan exactamente donde estaban. El cambio es estructural.
+
+**Evidencia técnica**
+- `project/mapas/layout/` (MapPathLayout, MapLayoutConfig, MapRouteRegistry, MapNodePositionResolver)
+- `project/mapas/MapBoard.gd`, `project/mapas/MapBoard.tscn`
+- `project/contenido/mapa/celiaquia_mapa.json`
+
+---
+
 ### `2026-05-27` — Corregir reintento parcial en modalidad de vinculación
 <kbd>Bug</kbd> <kbd>UX</kbd> <kbd>Testing</kbd>
 

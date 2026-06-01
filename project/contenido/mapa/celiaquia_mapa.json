@@ -3,7 +3,8 @@
 	"version": 3,
 	"layout": {
 		"route_id": "RutaCeliaquia1",
-		"spacing_mode": "even",
+		"placement_mode": "anchors",
+		"spacing_mode": "space_around",
 		"spacing_factor": 1.0,
 		"start_margin": 0.0,
 		"end_margin": 0.0

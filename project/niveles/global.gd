@@ -37,7 +37,7 @@ var _nodo_a_continuar: String = ""
 var _ultima_finalizacion: Dictionary = {}
 var _inicio_nodo_msec: int = 0  # Timestamp para calcular tiempo transcurrido de partida
 var _stats_nodo_actual: Dictionary = {}  # Acumulador de aciertos/errores/intentos del nodo
-# GameSessionData activo; leido por ResultsFlow al finalizar.
+# GameSessionData de la partida activa; se lee al finalizar el nodo para mostrar resultados.
 var _game_session_data: Resource = null
 
 
@@ -88,7 +88,7 @@ func reiniciar_progreso() -> void:
 
 
 # --- Sesión de juego activa (GameSessionData) --------------------------------
-# Guardada al abrir un nodo; leída por ResultsFlow al mostrar resultados.
+# Guardada al abrir un nodo; leída al mostrar la pantalla de resultados.
 
 func establecer_sesion_de_juego(session_data: Resource) -> void:
 	_game_session_data = session_data

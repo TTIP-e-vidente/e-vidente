@@ -1,42 +1,27 @@
-extends RefCounted
 class_name MapNodePositionResolver
+extends RefCounted
+
+# Resuelve las posiciones de N nodos: elige entre modo anchors y modo curve,
+# busca la ruta con MapRouteRegistry y delega la matemática a MapPathLayout.
+# Las posiciones devueltas están en espacio Contenido (igual que RutaCeliaquia1.position = ZERO).
 
 
-# Calcula posiciones para todos los nodos del mapa usando la curva activa.
-static func calcular_posiciones_para_nodos(
-	nodos: Array,
-	curva: Curve2D,
-	config: MapLayoutConfig = null
+static func resolve(
+	route_container: Node, config: MapLayoutConfig, count: int
 ) -> Array[Vector2]:
-	if curva == null or curva.get_baked_length() <= 0.0:
+	if config == null or not config.is_valid():
 		return []
-	var cantidad: int = 0
-	for raw_nodo in nodos:
-		if raw_nodo as MapNodeData != null:
-			cantidad += 1
-	if cantidad == 0:
+	var route: Path2D = MapRouteRegistry.find_route(route_container, config.route_id)
+	if route == null:
+		push_warning(
+			"MapNodePositionResolver: ruta no encontrada '%s'" % config.route_id
+		)
 		return []
-	return MapPathLayout.calcular_posiciones_en_curva(curva, cantidad, config)
-
-
-# Devuelve la posición del nodo: usa posicion_auto si está disponible, sino fallback.
-static func obtener_posicion_para_nodo(
-	_nodo: MapNodeData,
-	posicion_auto: Vector2,
-	tiene_auto: bool,
-	posicion_fallback: Vector2
-) -> Vector2:
-	if tiene_auto:
-		return posicion_auto
-	return obtener_posicion_fallback(posicion_fallback)
-
-
-# Posición base del .tscn cuando la curva no tiene datos suficientes.
-static func obtener_posicion_fallback(posicion_base: Vector2) -> Vector2:
-	return posicion_base
-
-
-# Siempre true: el JSON ya no define coordenadas por nodo.
-static func usar_posicion_automatica(_nodo: MapNodeData) -> bool:
-	return true
-
+	if route.curve == null:
+		push_warning(
+			"MapNodePositionResolver: la ruta '%s' no tiene curva" % config.route_id
+		)
+		return []
+	if config.usa_modo_anchors():
+		return MapPathLayout.calcular_posiciones_por_anchors(route.curve, count)
+	return MapPathLayout.calculate_positions(route.curve, count, config)
