@@ -273,6 +273,7 @@ func ejecutar_prueba() -> void:
 func _reset_test_state(global_state, save_manager) -> void:
 	global_state.reiniciar_progreso()
 	ItemLevel.is_dragging = null
+	ARMADOR_DE_PARTIDA_SCRIPT.reset_session_history()
 	_preserve_save_files_once()
 	_delete_save_files()
 	save_manager.cargar_datos()
@@ -812,6 +813,7 @@ func _wait_for_any(expected_paths: Array, label: String) -> void:
 
 
 func _delete_save_files() -> void:
+	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
 	for path in [
 		SaveManagerScript.SAVE_PATH,
 		SaveManagerScript.TEMP_SAVE_PATH,
@@ -820,6 +822,10 @@ func _delete_save_files() -> void:
 		var abs_path := ProjectSettings.globalize_path(path)
 		if FileAccess.file_exists(abs_path):
 			DirAccess.remove_absolute(abs_path)
+		if not override_dir.is_empty():
+			var override_abs: String = override_dir.path_join(path.get_file())
+			if FileAccess.file_exists(override_abs):
+				DirAccess.remove_absolute(override_abs)
 
 
 func _preserve_save_files_once() -> void:

@@ -2,6 +2,9 @@
 project/.godot/
 *.import
 
+# Validation save directory (local dev artifact, never commit save state)
+.godot-validation-save/
+
 # GdUnit4 reportes generados (outputs de test runs)
 project/reports/
 
