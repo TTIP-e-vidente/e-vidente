@@ -40,7 +40,7 @@ func register(
 
 ## GET /auth/me  — requiere token válido
 func get_me(token: String) -> Dictionary:
-	return await _get("/auth/me", token)
+	return await _get_json("/auth/me", token)
 
 
 ## POST /player/me/progress  — requiere token válido
@@ -52,7 +52,7 @@ func save_progress(token: String, run_summary: Dictionary) -> Dictionary:
 
 ## GET /player/me/progress  — requiere token válido
 func get_progress(token: String) -> Dictionary:
-	return await _get("/player/me/progress", token)
+	return await _get_json("/player/me/progress", token)
 
 
 # ── Helpers HTTP internos ───────────────────────────────────────────────────
@@ -62,7 +62,7 @@ func _post(endpoint: String, token: String, body: String) -> Dictionary:
 	return await _send_request(HTTPClient.METHOD_POST, endpoint, headers, body)
 
 
-func _get(endpoint: String, token: String) -> Dictionary:
+func _get_json(endpoint: String, token: String) -> Dictionary:
 	var headers := _build_headers(token)
 	return await _send_request(HTTPClient.METHOD_GET, endpoint, headers, "")
 

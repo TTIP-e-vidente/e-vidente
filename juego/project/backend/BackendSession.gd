@@ -13,6 +13,8 @@ signal session_expired()
 signal login_succeeded(user: Dictionary)
 signal login_failed(reason: String)
 signal logout_completed()
+signal session_restored(user: Dictionary)
+signal session_restore_failed(reason: String)
 
 
 # ── Dependencias internas ───────────────────────────────────────────────────
@@ -39,6 +41,9 @@ func _ready() -> void:
 	_sync.sync_succeeded.connect(func(p: Dictionary): sync_succeeded.emit(p))
 	_sync.sync_failed.connect(func(r: String): sync_failed.emit(r))
 	_sync.session_expired.connect(_on_session_expired)
+
+	# Intentar restaurar sesión previa desde disco (deferred: árbol listo)
+	call_deferred("_restore_session_async")
 
 
 # ── Consultas de sesión ─────────────────────────────────────────────────────
@@ -101,9 +106,11 @@ func save_progress(run_summary: Dictionary) -> Dictionary:
 	return await _sync.sync(run_summary)
 
 
-## Cierra la sesión en memoria. No llama al backend (logout es stateless).
+## Cierra la sesión en memoria y borra la sesión persistida en disco.
+## No llama al backend (logout es stateless).
 func logout() -> void:
 	_auth.clear_session()
+	BackendSessionStorage.clear_session()
 	logout_completed.emit()
 
 
@@ -131,9 +138,44 @@ func _handle_auth_result(result: Dictionary) -> void:
 	var user: Dictionary = data.get("user", {})
 	var username: String = user.get("username", "")
 	_auth.set_session(access_token, username)
+	BackendSessionStorage.save_session(access_token, username, user)
 	login_succeeded.emit(user)
 
 
 func _on_session_expired() -> void:
-	# _auth ya fue limpiado por ProgressSyncService
+	_auth.clear_session()
+	BackendSessionStorage.clear_session()
 	session_expired.emit()
+
+
+## Intenta restaurar una sesión previa guardada en disco.
+## Se ejecuta con call_deferred para no bloquear el arranque del juego.
+## Si el token guardado es inválido, lo limpia silenciosamente.
+func _restore_session_async() -> void:
+	var stored := BackendSessionStorage.load_session()
+	if stored.is_empty():
+		return
+
+	var token := str(stored.get("token", ""))
+	var username := str(stored.get("username", ""))
+	if token.is_empty():
+		BackendSessionStorage.clear_session()
+		return
+
+	# Cargar en memoria antes de validar para que get_me() no falle por 401 local
+	_auth.set_session(token, username)
+
+	var result := await get_me()
+	if result.get("ok", false):
+		var data: Dictionary = result.get("data", {})
+		var user: Dictionary = data.get("user", data)
+		# Actualizar username si el servidor devuelve uno más fresco
+		var fresh_username: String = user.get("username", username)
+		_auth.set_session(token, fresh_username)
+		print("[BackendSession] Sesión restaurada: ", fresh_username)
+		session_restored.emit(user)
+	else:
+		print("[BackendSession] Token inválido o expirado — limpiando sesión local.")
+		_auth.clear_session()
+		BackendSessionStorage.clear_session()
+		session_restore_failed.emit(str(result.get("error", "Sesión inválida")))
