@@ -10,6 +10,7 @@ const LOG_PREFIX_POST_GAME := "[POST_GAME]"
 const LOG_PREFIX_TEACHING := "[Teaching]"
 const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
 const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
+const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 
 ## --- Configuración ---
 
@@ -195,7 +196,7 @@ func cargar_contenido_del_nivel() -> void:
 		ContextoSesionDeJuegoScript.obtener_contexto_jugable_actual(),
 		track_key_override.strip_edges(),
 		1,
-		GameSceneRouter.MAP_SCENE_PATH
+		MAP_SCENE_PATH
 	)
 	if _contexto_nodo_mapa.is_empty():
 		return
@@ -218,7 +219,7 @@ func _reiniciar_contexto_jugable_del_nivel() -> void:
 	_nodo_actual = ""
 	_json_path_nodo_actual = ""
 	_track_key_contexto = ""
-	_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+	_ruta_escena_retorno = MAP_SCENE_PATH
 
 
 func _aplicar_contexto_jugable_del_nivel(contexto_jugable: Dictionary) -> void:
@@ -229,10 +230,10 @@ func _aplicar_contexto_jugable_del_nivel(contexto_jugable: Dictionary) -> void:
 	_track_key_contexto = str(contexto_jugable.get("track_key", "")).strip_edges()
 	_json_path_nodo_actual = str(contexto_jugable.get("json_path", "")).strip_edges()
 	_ruta_escena_retorno = str(
-		contexto_jugable.get("return_to", GameSceneRouter.MAP_SCENE_PATH)
+		contexto_jugable.get("return_to", MAP_SCENE_PATH)
 	).strip_edges()
 	if _ruta_escena_retorno.is_empty():
-		_ruta_escena_retorno = GameSceneRouter.MAP_SCENE_PATH
+		_ruta_escena_retorno = MAP_SCENE_PATH
 
 	var titulo_nodo: String = str(
 		contexto_jugable.get("node_title", contexto_jugable.get("titulo_nodo", ""))

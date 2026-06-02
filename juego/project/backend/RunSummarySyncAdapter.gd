@@ -92,7 +92,8 @@ static func _leer_game_type(tree: SceneTree, resultado: Dictionary) -> String:
 	if global_node != null and global_node.has_method("obtener_sesion_de_juego"):
 		var session_data: Resource = global_node.call("obtener_sesion_de_juego") as Resource
 		if session_data != null:
-			var mode_id: String = str(session_data.get("mode_id", "")).strip_edges()
+			var raw_mode_id: Variant = session_data.get("mode_id")
+			var mode_id: String = str(raw_mode_id).strip_edges() if raw_mode_id != null else ""
 			if not mode_id.is_empty():
 				return mode_id
 

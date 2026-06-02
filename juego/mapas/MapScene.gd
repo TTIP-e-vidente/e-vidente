@@ -8,8 +8,9 @@ const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
-const MAP_COMPLETION_SCENE := preload("res://mapas/completo/CapituloCompletado.tscn")
-const FINALIZACION_PARTIDA_SCENE := GameSceneRouter.FINALIZACION_PARTIDA_SCENE_PATH
+const MAP_COMPLETION_SCENE_PATH := "res://mapas/completo/CapituloCompletado.tscn"
+const FINALIZACION_PARTIDA_SCENE := "res://mapas/finalizacion_partida.tscn"
+const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 
 const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
@@ -99,9 +100,9 @@ func cargar_mapa() -> void:
 
 	# Pasar config de layout al MapBoard (si lo tiene).
 	if map_board != null and map_board.has_method("configurar_nodos"):
-		var layout_config: Variant = map_data.get("layout_config", null)
-		if layout_config is MapLayoutConfig:
-			map_board.set("layout_config", layout_config)
+		var parsed_layout_config: Variant = map_data.get("layout_config", null)
+		if parsed_layout_config is MapLayoutConfig:
+			map_board.set("layout_config", parsed_layout_config)
 
 
 func actualizar_estados_de_nodos() -> void:
@@ -132,7 +133,7 @@ func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
 	var result: Dictionary = AbridorDeNodoJugableScript.abrir_nodo(
 		get_tree(),
 		node_data,
-		GameSceneRouter.MAP_SCENE_PATH
+		MAP_SCENE_PATH
 	)
 	if not bool(result.get("ok", false)):
 		_mostrar_error(str(result.get("error", "No se pudo abrir el nodo.")))
@@ -227,7 +228,11 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 			return
 	if _popup_completado_activo():
 		return
-	var popup: Node = MAP_COMPLETION_SCENE.instantiate()
+	var completion_scene: PackedScene = load(MAP_COMPLETION_SCENE_PATH) as PackedScene
+	if completion_scene == null:
+		push_error("MapScene: No se pudo cargar CapituloCompletado.tscn")
+		return
+	var popup: Node = completion_scene.instantiate()
 	if popup == null:
 		push_error("MapScene: No se pudo instanciar CapituloCompletado.tscn")
 		return

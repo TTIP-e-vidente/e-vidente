@@ -1,8 +1,7 @@
 extends Control
 class_name ProfileOverlayPanel
 
-const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
-const RUBIK_MAPS_FONT := preload("res://fonts/RubikMaps-Regular.ttf")
+const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 
 signal resume_pressed
 signal save_pressed
@@ -39,12 +38,13 @@ func _ready() -> void:
 
 
 func _aplicar_fuentes() -> void:
+	var rubik_font: Font = load(RUBIK_FONT_PATH) as Font
 	for lbl: Label in [
 		_username_label, _email_label, _age_label, _progress_label,
 		_save_status_label, _resume_hint_label, _avatar_label,
 	]:
-		if is_instance_valid(lbl):
-			lbl.add_theme_font_override("font", RUBIK_FONT)
+		if is_instance_valid(lbl) and rubik_font != null:
+			lbl.add_theme_font_override("font", rubik_font)
 
 
 func mostrar_superposicion() -> void:
