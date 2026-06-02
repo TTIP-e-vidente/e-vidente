@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://din6p4bh3wne"]
+
+[ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="3_icon"]
+[ext_resource type="PackedScene" uid="uid://o5sbuikyhiv5" path="res://mapas/components/NodeProgressBadge.tscn" id="4_badge"]
+
+[node name="MapQuestionNode" type="Node2D" unique_id=374474876]
+script = ExtResource("1_script")
+node_kind = "question"
+icon_texture = ExtResource("3_icon")
+icon_scale = Vector2(0.22, 0.22)
+icon_offset = Vector2(0, -4)
+badge_offset = Vector2(0, -59.57)
+
+[node name="Button" type="TextureButton" parent="." unique_id=293307127]
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = 80.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Icon" type="Sprite2D" parent="." unique_id=1828318510]
+texture = ExtResource("3_icon")
+
+[node name="NodeProgressBadge" parent="." unique_id=678132724 instance=ExtResource("4_badge")]
+
+[connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="Button" to="." method="_on_button_mouse_exited"]
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

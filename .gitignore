@@ -1,9 +1,31 @@
 # Godot 4+ specific ignores
-project/.godot/
+juego/.godot/
 *.import
 
-# Local docs workspace
-docs-local/
+# Validation save directory (local dev artifact, never commit save state)
+.godot-validation-save/
+
+# GdUnit4 reportes generados (outputs de test runs)
+juego/reports/
+
+# Local environment and database artifacts
+.env
+*.env
+!*.env.example
+BACKEND/.env
+BACKEND/postgres-data/
+BACKEND/pgdata/
+backend/.env
+backend/postgres-data/
+backend/pgdata/
 
 # Legacy local docs folder
 local-docs/
+
+# OS and temporary files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+*.temp

@@ -19,4 +19,10 @@ Documentación organizada por entrega del proyecto **e-vidente**.
 
 ## Entrega 2
 
-*(En planificación — ver [Próximos Pasos](entrega-1/Proximos-Pasos) para las opciones disponibles)*
+| Página | Descripción |
+|--------|-------------|
+| [Resumen ejecutivo](Entrega-2) | Qué se hizo, decisiones, desafíos |
+| [User Stories](Entrega-2-User-Stories) | Historias de usuario de la entrega |
+| [Arquitectura](Entrega-2-Arquitectura) | Componentes nuevos y flujo actualizado |
+| [Decisiones](Entrega-2-Decisiones) | ADRs y decisiones tomadas |
+| [Evidencia](Entrega-2-Evidencia) | Evidencia de lo entregado |

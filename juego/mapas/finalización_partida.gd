@@ -1,0 +1,123 @@
+extends Node2D
+
+const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
+
+@onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
+@onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
+@onready var textura_3: TextureRect = $CenterContainer/VBoxContainer/StatsContainer3/Imagen
+@onready var label : Label = $CenterContainer/VBoxContainer/StatsContainer/Imagen/Label
+@onready var label_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Label
+@onready var label_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Label
+@onready var numero : Label = $CenterContainer/VBoxContainer/StatsContainer/Imagen/Numero
+@onready var numero_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Numero
+@onready var numero_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Numero
+@onready var continuar_label: Label = $Continuar/Label
+@onready var continuar_btn: TextureButton = $Continuar
+@onready var mensaje: Label = $Mensaje
+@onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
+@onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
+
+@onready var stats_1: Container = $CenterContainer/VBoxContainer/StatsContainer
+@onready var stats_2: Container = $CenterContainer/VBoxContainer/StatsContainer2
+@onready var stats_3: Container = $CenterContainer/VBoxContainer/StatsContainer3
+const EXP_ICON = preload("res://assets-sistema/final-leccion/exp-icon.png")
+const PRECISION_ICON = preload("res://assets-sistema/final-leccion/precision-icon.png")
+const TIEMPO_ICON = preload("res://assets-sistema/final-leccion/tiempo-icon.png")
+
+
+const MAP_SCENE := "res://mapas/MapScene.tscn"
+
+const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
+
+
+func _formatear_tiempo(segundos_totales: float) -> String:
+	var s := int(segundos_totales)
+	if s < 60:
+		return "%ds" % s
+	var m: int = floori(float(s) / 60.0)
+	var rem_s := s % 60
+	if rem_s == 0:
+		return "%dm" % m
+	return "%dm %ds" % [m, rem_s]
+
+func _ready() -> void:
+	# Iconos de los bloques de stats
+	label.text = "EXP"
+	label_2.text = "Precisión"
+	label_3.text = "Tiempo"
+	stats_1._setear_icono(EXP_ICON)
+	stats_2._setear_icono(PRECISION_ICON)
+	stats_3._setear_icono(TIEMPO_ICON)
+	
+	# Colores de los valores (dorado, naranja, azul)
+	numero.modulate = Color("#DBC151")
+	numero_2.modulate = Color("#DB9D4B")
+	numero_3.modulate = Color("#4B79DB")
+
+	# Tipografía de los números
+	for lbl in [numero, numero_2, numero_3]:
+		lbl.add_theme_font_override("font", RUBIK_SPRAY)
+
+	if continuar_label != null:
+		continuar_label.text = "Continuar"
+
+	# Leer los datos de resultado guardados en Global y mostrarlos
+	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+	if stats.is_empty():
+		push_warning("[FinalizaciónPartida] Sin datos de finalización en Global.")
+	
+	var elapsed_seconds := float(stats.get("elapsed_seconds", -1.0))
+	var tiempo_final = "-"
+	if elapsed_seconds >= 0.0:
+		tiempo_final = _formatear_tiempo(elapsed_seconds)
+		print("[FinalizacionPartida] displaying_time=", tiempo_final)
+	elif stats.has("tiempo") and str(stats.get("tiempo", "")) != "—" and str(stats.get("tiempo", "")) != "":
+		tiempo_final = str(stats.get("tiempo", ""))
+		print("[FinalizacionPartida] displaying_time=", tiempo_final)
+
+	mostrar_resultados(
+		int(stats.get("exp_ganada", stats.get("exp", 0))),
+		_leer_precision_real(stats),
+		tiempo_final
+	)
+
+	# Conectar botón Continuar
+	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
+		continuar_btn.pressed.connect(continuar_al_mapa)
+
+
+# Lee la precisión real del resultado. NUNCA inventa 100% por falta de datos:
+# si no hay precisión registrada se muestra 0%. "Completado" no implica perfecto.
+func _leer_precision_real(stats: Dictionary) -> int:
+	if stats.has("precision"):
+		return int(stats.get("precision", 0))
+	# Compatibilidad: algunos resultados legacy guardan accuracy como ratio 0.0–1.0.
+	if stats.has("accuracy"):
+		return int(round(float(stats.get("accuracy", 0.0)) * 100.0))
+	return 0
+
+
+func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void:
+	numero.text = str(exp_ganada)
+	numero_2.text = str(clamp(precision, 0, 100)) + "%"
+	numero_3.text = tiempo if not tiempo.is_empty() else "--"
+
+	if continuar_label != null:
+		continuar_label.text = "Continuar"
+
+
+	if precision >= 100:
+		if not audio_perfecto.playing:
+			audio_perfecto.play()
+	else:
+		if not audio_normal.playing:
+			audio_normal.play()
+
+
+## Vuelve al mapa con transición. También llamada por el test de humo.
+func continuar_al_mapa() -> void:
+	await TransicionEscenas.change_normal_scene(MAP_SCENE)
+
+
+func _on_continuar_pressed() -> void:
+	pass # Replace with function body.

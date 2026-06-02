@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://dreulrv8mq1oa"]
+
+[ext_resource type="Script" uid="uid://dlcmeiufgvp20" path="res://vincular/concept_item.gd" id="1_0tgql"]
+[ext_resource type="Texture2D" uid="uid://btbwctpr4ybmo" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="1_8vmuo"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_8vmuo"]
+
+[node name="ConceptItem" type="TextureButton" unique_id=2012949407]
+texture_normal = ExtResource("1_8vmuo")
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("1_0tgql")
+
+[node name="Label" type="Label" parent="." unique_id=1130945756]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 4.0
+offset_right = -12.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_8vmuo")
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3

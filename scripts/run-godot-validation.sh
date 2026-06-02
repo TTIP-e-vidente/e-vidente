@@ -100,6 +100,37 @@ run_step() {
 	echo "OK: $label"
 }
 
+godot_project_args() {
+	printf '%s\n' --headless --path juego
+}
+
+preserve_local_save_files() {
+	SAVE_DIR="${APPDATA:-$HOME/.local/share}/Godot/app_userdata/Evidente"
+	SAVE_SNAPSHOT_DIR="$(mktemp -d)"
+	for save_name in save_data.json save_data.tmp.json save_data.backup.json; do
+		if [ -f "$SAVE_DIR/$save_name" ]; then
+			cp "$SAVE_DIR/$save_name" "$SAVE_SNAPSHOT_DIR/$save_name"
+			touch -r "$SAVE_DIR/$save_name" "$SAVE_SNAPSHOT_DIR/$save_name"
+		fi
+	done
+}
+
+restore_local_save_files() {
+	if [ -z "${SAVE_SNAPSHOT_DIR:-}" ]; then
+		return
+	fi
+	mkdir -p "$SAVE_DIR"
+	for save_name in save_data.json save_data.tmp.json save_data.backup.json; do
+		if [ -f "$SAVE_SNAPSHOT_DIR/$save_name" ]; then
+			cp "$SAVE_SNAPSHOT_DIR/$save_name" "$SAVE_DIR/$save_name"
+			touch -r "$SAVE_SNAPSHOT_DIR/$save_name" "$SAVE_DIR/$save_name"
+		else
+			rm -f "$SAVE_DIR/$save_name"
+		fi
+	done
+	rm -rf "$SAVE_SNAPSHOT_DIR"
+}
+
 write_success_summary() {
 	mode="$1"
 	executed_steps="$2"
@@ -118,59 +149,98 @@ run_import_headless() {
 		"01-import-headless" \
 		"Import headless" \
 		"Godot no pudo abrir el proyecto en limpio. Revisar parseo, autoloads y rutas res://." \
-		--headless --path project --editor --quit
+		$(godot_project_args) --editor --quit
 }
 
 
 run_gameplay_smoke() {
-	if [ ! -f project/tests/vertical_slice_smoke_test.gd ]; then
-		echo "SKIP: Gameplay smoke test (project/tests/vertical_slice_smoke_test.gd no existe)"
+	if [ ! -f juego/tests/vertical_slice_smoke_test.gd ]; then
+		echo "SKIP: Gameplay smoke test (juego/tests/vertical_slice_smoke_test.gd no existe)"
 		return 0
 	fi
 	run_step \
 		"03-vertical-slice-smoke" \
 		"Gameplay smoke test" \
 		"Se rompio el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay." \
-		--headless --path project -s res://tests/vertical_slice_smoke_test.gd
+		$(godot_project_args) -s res://tests/vertical_slice_smoke_test.gd
 }
 
 
 run_question_json_contract() {
-	if [ ! -f project/tests/node_content_loader_test.gd ]; then
-		echo "SKIP: Playable node JSON contract test (project/tests/node_content_loader_test.gd no existe)"
+	if [ ! -f juego/tests/node_content_loader_test.gd ]; then
+		echo "SKIP: Playable node JSON contract test (juego/tests/node_content_loader_test.gd no existe)"
 		return 0
 	fi
 	run_step \
 		"02-node-json-contract" \
 		"Playable node JSON contract test" \
 		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
-		--headless --path project -s res://tests/node_content_loader_test.gd
+		$(godot_project_args) -s res://tests/node_content_loader_test.gd
 }
 
 
 run_post_game_flow_controller() {
-	if [ ! -f project/tests/post_game_flow_controller_test.gd ]; then
-		echo "SKIP: Post-game flow controller test (project/tests/post_game_flow_controller_test.gd no existe)"
+	if [ ! -f juego/tests/post_game_flow_controller_test.gd ]; then
+		echo "SKIP: Post-game flow controller test (juego/tests/post_game_flow_controller_test.gd no existe)"
 		return 0
 	fi
 	run_step \
 		"02b-post-game-flow" \
 		"Post-game flow controller test" \
 		"Se rompieron las decisiones de post-partida, el adapter del router o el retorno desde racha." \
-		--headless --path project -s res://tests/post_game_flow_controller_test.gd
+		$(godot_project_args) -s res://tests/post_game_flow_controller_test.gd
 }
 
 
 run_map_progress_visual() {
-	if [ ! -f project/tests/map_progress_visual_test.gd ]; then
-		echo "SKIP: Map progress visual test (project/tests/map_progress_visual_test.gd no existe)"
+	if [ ! -f juego/tests/map_progress_visual_test.gd ]; then
+		echo "SKIP: Map progress visual test (juego/tests/map_progress_visual_test.gd no existe)"
 		return 0
 	fi
 	run_step \
 		"02c-map-progress-visual" \
 		"Map progress visual test" \
 		"Se rompio el contrato del mapa de celiaquia, los estados visuales o el desbloqueo del siguiente nodo." \
-		--headless --path project -s res://tests/map_progress_visual_test.gd
+		$(godot_project_args) -s res://tests/map_progress_visual_test.gd
+}
+
+
+run_question_json_contract() {
+	if [ ! -f juego/tests/node_content_loader_test.gd ]; then
+		echo "SKIP: Playable node JSON contract test (juego/tests/node_content_loader_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02-node-json-contract" \
+		"Playable node JSON contract test" \
+		"Se rompio el contrato canonical de nodos jugables por JSON o su manejo de errores." \
+		--headless --path juego -s res://tests/node_content_loader_test.gd
+}
+
+
+run_post_game_flow_controller() {
+	if [ ! -f juego/tests/post_game_flow_controller_test.gd ]; then
+		echo "SKIP: Post-game flow controller test (juego/tests/post_game_flow_controller_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02b-post-game-flow" \
+		"Post-game flow controller test" \
+		"Se rompieron las decisiones de post-partida, el adapter del router o el retorno desde racha." \
+		--headless --path juego -s res://tests/post_game_flow_controller_test.gd
+}
+
+
+run_map_progress_visual() {
+	if [ ! -f juego/tests/map_progress_visual_test.gd ]; then
+		echo "SKIP: Map progress visual test (juego/tests/map_progress_visual_test.gd no existe)"
+		return 0
+	fi
+	run_step \
+		"02c-map-progress-visual" \
+		"Map progress visual test" \
+		"Se rompio el contrato del mapa de celiaquia, los estados visuales o el desbloqueo del siguiente nodo." \
+		--headless --path juego -s res://tests/map_progress_visual_test.gd
 }
 
 
@@ -224,8 +294,13 @@ run_full_suite() {
 run_godot_validation() {
 	mode="${1:-ci}"
 	GODOT_CMD="${2:-godot}"
+	REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 	LOG_DIR="${EVIDENTE_VALIDATION_LOG_DIR:-}"
 	COMBINED_LOG=""
+	preserve_local_save_files
+	mkdir -p "$REPO_ROOT/.godot-validation-save"
+	export EVIDENTE_SAVE_DIR="$REPO_ROOT/.godot-validation-save"
+	trap restore_local_save_files EXIT
 
 	if [ -n "$LOG_DIR" ]; then
 		mkdir -p "$LOG_DIR"
