@@ -1,16 +1,5 @@
 import { getDevProgressByUsername, saveDevProgress } from './player.service';
-
-export type SavePlayerProgressInput = {
-  username: string;
-  name?: string;
-  restriction: string;
-  expToAdd: number;
-  nodeId?: string;
-  gameType?: string;
-  accuracy?: number;
-  completed?: boolean;
-  score?: number;
-};
+import { SavePlayerProgressInput } from './player.types';
 
 export async function savePlayerProgress(input: SavePlayerProgressInput): Promise<unknown> {
   return saveDevProgress(input);

@@ -1,27 +1,17 @@
-import { pool } from '../config/database';
-import * as playerRepository from '../repositories/player.repository';
-import { AppError } from '../shared/errors/app_error';
+import { pool } from '../../config/database';
+import { AppError } from '../../shared/errors/app_error';
 import {
   isAllowedRestriction,
   isNonEmptyString,
   parseNumberOrDefault
-} from '../shared/validation/validators';
+} from '../../shared/validation/validators';
+import * as playerRepository from './player.repository';
+import { SaveAuthenticatedProgressInput, SaveDevProgressInput } from './player.types';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
     super(statusCode, code, message);
   }
-}
-
-export interface SaveAuthenticatedProgressInput {
-  userId: string;
-  restriction?: unknown;
-  expToAdd?: unknown;
-  nodeId?: unknown;
-  gameType?: unknown;
-  accuracy?: unknown;
-  completed?: unknown;
-  score?: unknown;
 }
 
 function requiredText(value: unknown, fieldName: string): string {
@@ -64,7 +54,7 @@ export async function getPlayerMe(userId: string): Promise<unknown> {
     }
 
     const profile = await playerRepository.ensureProfile(client, userId);
-    const streak = await playerRepository.ensureStreak(client, userId);
+    const streak = await playerRepository.ensureStreak(client, userId, profile.id);
     await client.query('COMMIT');
 
     return { user, profile, streak };
@@ -86,7 +76,7 @@ export async function getPlayerProgress(userId: string): Promise<unknown> {
     }
 
     const profile = await playerRepository.ensureProfile(client, userId);
-    const streak = await playerRepository.ensureStreak(client, userId);
+    const streak = await playerRepository.ensureStreak(client, userId, profile.id);
     const progress = await playerRepository.listProgressByUserId(client, userId);
     const completedNodes = await playerRepository.listCompletedNodesByUserId(client, userId);
     const unlockedContent = await playerRepository.listUnlockedContentByUserId(client, userId);
@@ -136,10 +126,11 @@ export async function saveAuthenticatedProgress(
     }
 
     const profile = await playerRepository.addProfileExp(client, input.userId, expToAdd, restriction);
-    const streak = await playerRepository.ensureStreak(client, input.userId);
+    const streak = await playerRepository.ensureStreak(client, input.userId, profile.id);
     const progress = await playerRepository.upsertProgress(
       client,
       input.userId,
+      profile.id,
       restriction,
       expToAdd,
       completed ? 1 : 0
@@ -205,17 +196,7 @@ export async function saveAuthenticatedProgress(
   }
 }
 
-export async function saveDevProgress(input: {
-  username: string;
-  name?: string;
-  restriction: string;
-  expToAdd: number;
-  nodeId?: string;
-  gameType?: string;
-  accuracy?: number;
-  completed?: boolean;
-  score?: number;
-}): Promise<unknown> {
+export async function saveDevProgress(input: SaveDevProgressInput): Promise<unknown> {
   const client = await pool.connect();
   let userId: string;
   try {

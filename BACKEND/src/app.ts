@@ -1,9 +1,9 @@
 import cors from 'cors';
 import express from 'express';
-import { authRouter } from './routes/auth.routes';
-import { healthRouter } from './routes/health.routes';
-import { playerRouter } from './routes/player.routes';
-import { playerProgressRouter } from './routes/player_progress.routes';
+import { authRouter } from './modules/auth/auth.routes';
+import { healthRouter } from './modules/health/health.routes';
+import { playerRouter } from './modules/player/player.routes';
+import { playerProgressRouter } from './modules/player/player_progress.routes';
 
 export const app = express();
 

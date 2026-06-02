@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { login, register } from '../services/auth.service';
-import { sendError } from '../shared/http/send_error';
+import { sendError } from '../../shared/http/send_error';
+import { forgotPassword, login, register, resetPassword } from './auth.service';
 
 export async function registerController(request: Request, response: Response): Promise<void> {
   try {
@@ -29,4 +29,28 @@ export function logoutController(_request: Request, response: Response): void {
     status: 'ok',
     message: 'Logout handled client-side'
   });
+}
+
+export async function forgotPasswordController(
+  request: Request,
+  response: Response
+): Promise<void> {
+  try {
+    const result = await forgotPassword(request.body ?? {});
+    response.status(200).json(result);
+  } catch (error) {
+    sendError(response, error);
+  }
+}
+
+export async function resetPasswordController(
+  request: Request,
+  response: Response
+): Promise<void> {
+  try {
+    const result = await resetPassword(request.body ?? {});
+    response.status(200).json(result);
+  } catch (error) {
+    sendError(response, error);
+  }
 }

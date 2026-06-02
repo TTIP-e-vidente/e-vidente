@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import {
   getPlayerProgressByUsername,
   savePlayerProgress
-} from '../services/player_progress.service';
+} from './player_progress.service';
 
 export async function postPlayerProgress(request: Request, response: Response): Promise<void> {
   const {

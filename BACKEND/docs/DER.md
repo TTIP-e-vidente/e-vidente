@@ -1,57 +1,53 @@
-# DER inicial - Persistencia de jugador E-VIDENTE
+# DER inicial · Persistencia de jugador E-VIDENTE
 
-## Relacion con el Excalidraw
+## Modelo conceptual Excalidraw
 
-El modelo canonico del backend usa las tablas creadas en la primera PoC de persistencia. Las tablas duplicadas creadas luego quedan como deuda tecnica documentada y no deben usarse para codigo nuevo.
+El Excalidraw describe el dominio de jugador con estas entidades conceptuales y relaciones:
 
-| Excalidraw | Tabla canonica PostgreSQL | Decision |
-|---|---|---|
-| USER | `users` | `username` queda como identificador funcional unico; `id` UUID es la PK fisica. |
-| IMAGE | `user_images` | Imagen/avatar asociada a `users` por `user_id`. |
-| PROFILE | `player_profiles` | Perfil 1 a 1 con `users`; acumula experiencia global. |
-| STREAK | `player_streaks` | Racha 1 a 1 con `users`. |
-| PROGRESO_RESTRICTION | `player_progress` | Progreso acumulado por restriccion alimentaria. |
-| HISTORY_GAME / GAME | `game_sessions` | Cada fila representa una partida/sesion jugada. |
-| Nodo completado | `completed_nodes` | Nodos terminados por usuario. |
-| Desbloqueo | `unlocked_content` | Contenido desbloqueado por usuario. |
+```
+USER
+├── IMAGE
+└── PROFILE
+    ├── STREAK
+    └── PROGRESO_RESTRICTION
+        └── HISTORY_GAME
+            └── GAME
+```
 
-## Tablas no canonicas
+Aclaraciones del modelo conceptual:
 
-No usar para features nuevas:
+- `username` es la PK conceptual en el dibujo (identificador visible del jugador).
+- En PostgreSQL se usa `id UUID` como PK física para estabilidad ante cambios de username.
+- `username` queda como identificador funcional único (`UNIQUE`).
+- `PROFILE.id_game` no se implementa como referencia literal porque un perfil puede tener muchas partidas.
+- `HISTORY_GAME` y `GAME` se fusionan en `game_sessions` para evitar sobrediseño.
 
-- `images`
-- `profiles`
-- `streaks`
-- `progress_restrictions`
-- `history_games`
-- `games`
+Entidades del Excalidraw:
 
-Estas tablas no se borran todavia. Una migracion futura debe verificar datos, migrar si corresponde y eliminarlas solo con autorizacion explicita.
+| Entidad | Atributos conceptuales |
+|---|---|
+| USER | username (PK), name, age, mail, password, created_at, updated_at |
+| IMAGE | id_image (PK), username (FK), updated_at |
+| PROFILE | username (FK), id_streak (FK), id_game, exp_count, created_at, updated_at |
+| STREAK | id_streak (PK), current_count, best_count, last_activity_day, updated_at |
+| PROGRESO_RESTRICTION | id_progreso (PK), username (FK), restriction (CELIAQUIA\|VEG\|VYG\|KETO), created_at, updated_at |
+| HISTORY_GAME | id_history (PK), id_progreso (FK), completed |
+| GAME | id_game (PK), id_history (FK), accuracy, completed |
 
-## Decisiones de modelado
+En el backend no se crean tablas paralelas para cada nombre conceptual cuando una tabla canónica ya representa esa responsabilidad.
 
-- Se usa `UUID` como PK fisica para estabilidad.
-- `username` queda como identificador funcional unico.
-- Las FK usan UUID en vez de username.
-- `users` es la unica tabla para auth.
-- `player_profiles` resume experiencia global del jugador.
-- `player_streaks` guarda racha actual, mejor racha y ultimo dia de actividad.
-- `player_progress` guarda progreso por restriccion (`CELIAQUIA`, `VEG`, `VYG`, `KETO`).
-- `game_sessions` registra partidas con tipo, nodo, precision, score y finalizacion.
-- `completed_nodes` evita duplicar nodos completados por usuario.
-- `unlocked_content` guarda desbloqueos futuros sin conectar Godot todavia.
+## Modelo fisico PostgreSQL
 
 ```mermaid
 erDiagram
-  USERS ||--o| PLAYER_PROFILES : owns
-  USERS ||--o| PLAYER_STREAKS : tracks
-  USERS ||--o{ PLAYER_PROGRESS : has
-  USERS ||--o{ GAME_SESSIONS : plays
-  USERS ||--o{ COMPLETED_NODES : completes
-  USERS ||--o{ UNLOCKED_CONTENT : unlocks
   USERS ||--o{ USER_IMAGES : has
+  USERS ||--|| PLAYER_PROFILES : owns
+  PLAYER_PROFILES ||--|| PLAYER_STREAKS : tracks
+  PLAYER_PROFILES ||--o{ PLAYER_PROGRESS : has
   PLAYER_PROGRESS ||--o{ GAME_SESSIONS : records
-  PLAYER_PROGRESS ||--o{ COMPLETED_NODES : includes
+  PLAYER_PROGRESS ||--o{ COMPLETED_NODES : completes
+  PLAYER_PROGRESS ||--o{ UNLOCKED_CONTENT : unlocks
+  USERS ||--o{ PASSWORD_RESET_TOKENS : requests
 
   USERS {
     uuid id PK
@@ -62,6 +58,13 @@ erDiagram
     varchar email UK
     varchar password_hash
     timestamptz created_at
+    timestamptz updated_at
+  }
+
+  USER_IMAGES {
+    uuid id PK
+    uuid user_id FK
+    varchar image_key
     timestamptz updated_at
   }
 
@@ -77,6 +80,7 @@ erDiagram
   PLAYER_STREAKS {
     uuid id PK
     uuid user_id FK
+    uuid profile_id FK
     integer current_count
     integer best_count
     date last_activity_day
@@ -86,6 +90,7 @@ erDiagram
   PLAYER_PROGRESS {
     uuid id PK
     uuid user_id FK
+    uuid profile_id FK
     varchar restriction_type
     integer total_exp
     integer completed_nodes_count
@@ -122,23 +127,61 @@ erDiagram
   UNLOCKED_CONTENT {
     uuid id PK
     uuid user_id FK
+    uuid progress_id FK
     varchar content_id
     varchar content_type
     varchar source
     timestamptz unlocked_at
   }
 
-  USER_IMAGES {
+  PASSWORD_RESET_TOKENS {
     uuid id PK
     uuid user_id FK
-    varchar image_key
-    timestamptz updated_at
+    varchar token_hash
+    timestamptz expires_at
+    timestamptz used_at
+    timestamptz created_at
   }
 ```
 
-## Como consultar progreso de jugador
+## Tabla de equivalencias
 
-Flujo relacional recomendado:
+| Excalidraw | PostgreSQL canónico | Decisión |
+|---|---|---|
+| USER | `users` | `id` UUID como PK física; `username` unique funcional |
+| IMAGE | `user_images` | FK por `user_id` estable |
+| PROFILE | `player_profiles` | 1 a 1 con `users` vía `user_id UNIQUE` |
+| STREAK | `player_streaks` | 1 a 1 con `player_profiles` vía `profile_id UNIQUE` |
+| PROGRESO_RESTRICTION | `player_progress` | Progreso por `profile_id + restriction_type`; UNIQUE(profile_id, restriction_type) |
+| HISTORY_GAME | `game_sessions` | Historial de partidas del progreso via `progress_id` |
+| GAME | `game_sessions` | Resultado concreto de una sesión (misma tabla) |
+| Nodo completado | `completed_nodes` | Nodos terminados por `progress_id`; UNIQUE(progress_id, node_id) |
+| Desbloqueo | `unlocked_content` | Desbloqueos por `progress_id`; UNIQUE(progress_id, content_id) |
+| Recuperación de contraseña | `password_reset_tokens` | Tokens hasheados, expirables y de un solo uso |
+
+## Tablas no canónicas (PoC)
+
+No usar para features nuevas. No se borran hasta una migración controlada futura.
+
+| Tabla PoC | Tabla canónica equivalente |
+|---|---|
+| `images` | `user_images` |
+| `profiles` | `player_profiles` |
+| `streaks` | `player_streaks` |
+| `progress_restrictions` | `player_progress` |
+| `history_games` | `game_sessions` |
+| `games` | `game_sessions` |
+
+## Decisiones de modelado
+
+- Se usa `UUID` como PK física para estabilidad. `username` no se usa como FK física para evitar problemas ante futuros cambios.
+- `PROFILE.id_game` literal no se implementa porque un perfil puede tener muchas partidas; `game_sessions` cuelga de `player_progress`.
+- `HISTORY_GAME` y `GAME` se representan con `game_sessions` para evitar sobrediseño. Una sesión registra historial y resultado en la misma fila.
+- `completed_nodes` y `unlocked_content` usan UNIQUE(progress_id, node_id) y UNIQUE(progress_id, content_id) para permitir que el mismo nodo/contenido exista bajo restricciones distintas del mismo jugador.
+- `player_streaks` mantiene `user_id` por compatibilidad, pero la relación canónica es `profile_id`.
+- `password_reset_tokens` guarda hashes de tokens. No almacena tokens planos.
+
+## Como consultar progreso de jugador
 
 ```sql
 SELECT
@@ -154,15 +197,16 @@ SELECT
   gs.completed
 FROM users u
 JOIN player_profiles pp ON pp.user_id = u.id
-LEFT JOIN player_streaks ps ON ps.user_id = u.id
-LEFT JOIN player_progress pg ON pg.user_id = u.id
+LEFT JOIN player_streaks ps ON ps.profile_id = pp.id
+LEFT JOIN player_progress pg ON pg.profile_id = pp.id
 LEFT JOIN game_sessions gs ON gs.progress_id = pg.id
 WHERE u.username = 'demo_player';
 ```
 
 ## Futuro
 
-- Conectar Godot solo cuando el contrato backend este estabilizado.
-- Evaluar migracion/limpieza de tablas no canonicas con autorizacion explicita.
+- Conectar Godot solo cuando el contrato backend esté estabilizado.
+- Evaluar migración/limpieza de tablas no canónicas con autorización explícita.
+- Verificar si tablas duplicadas están vacías; migrar datos si existieran; eliminarlas solo con autorización.
 - Agregar seeds de demo solo cuando sean necesarios.
 - Agregar CI para build, migraciones y test backend.

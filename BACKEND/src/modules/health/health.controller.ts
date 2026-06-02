@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { query } from '../config/database';
+import { query } from '../../config/database';
 
 export function getHealth(_request: Request, response: Response): void {
   response.json({ status: 'ok' });

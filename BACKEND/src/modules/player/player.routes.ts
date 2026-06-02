@@ -3,8 +3,8 @@ import {
   getPlayerMeController,
   getPlayerProgressController,
   postPlayerProgressController
-} from '../controllers/player.controller';
-import { authenticateToken } from '../middlewares/authenticate_token';
+} from './player.controller';
+import { authenticateToken } from '../auth/authenticate_token';
 
 export const playerRouter = Router();
 

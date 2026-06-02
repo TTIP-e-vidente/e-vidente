@@ -27,11 +27,11 @@ async function run(): Promise<void> {
 
     const streakResult = await pool.query<{ id: string; current_count: number }>(
       `
-        INSERT INTO player_streaks (user_id, current_count, best_count, last_activity_day)
-        VALUES ($1, 1, 1, CURRENT_DATE)
+        INSERT INTO player_streaks (user_id, profile_id, current_count, best_count, last_activity_day)
+        VALUES ($1, $2, 1, 1, CURRENT_DATE)
         RETURNING id, current_count;
       `,
-      [user.id]
+      [user.id, profile.id]
     );
     const streak = streakResult.rows[0];
 
@@ -43,15 +43,16 @@ async function run(): Promise<void> {
       `
         INSERT INTO player_progress (
           user_id,
+          profile_id,
           restriction_type,
           total_exp,
           completed_nodes_count,
           completed_games_count
         )
-        VALUES ($1, 'CELIAQUIA', 20, 1, 1)
+        VALUES ($1, $2, 'CELIAQUIA', 20, 1, 1)
         RETURNING id, restriction_type, total_exp;
       `,
-      [user.id]
+      [user.id, profile.id]
     );
     const progress = progressResult.rows[0];
 
@@ -117,8 +118,8 @@ async function run(): Promise<void> {
           gs.completed
         FROM users u
         JOIN player_profiles pp ON pp.user_id = u.id
-        JOIN player_streaks ps ON ps.user_id = u.id
-        JOIN player_progress pg ON pg.user_id = u.id
+        JOIN player_streaks ps ON ps.profile_id = pp.id
+        JOIN player_progress pg ON pg.profile_id = pp.id
         JOIN game_sessions gs ON gs.progress_id = pg.id
         JOIN completed_nodes cn ON cn.progress_id = pg.id
         WHERE u.username = $1;

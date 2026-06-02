@@ -1,76 +1,16 @@
 import { PoolClient } from 'pg';
-import { query } from '../config/database';
-
-export interface UserPublicRow {
-  id: string;
-  username: string;
-  name: string;
-  mail: string | null;
-  age: number | null;
-}
-
-export interface PlayerProfileRow {
-  id: string;
-  user_id: string;
-  exp_count: number;
-  current_restriction: string | null;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface PlayerStreakRow {
-  id: string;
-  user_id: string;
-  current_count: number;
-  best_count: number;
-  last_activity_day: Date | null;
-  updated_at: Date;
-}
-
-export interface PlayerProgressRow {
-  id: string;
-  user_id: string;
-  restriction_type: string;
-  total_exp: number;
-  completed_nodes_count: number;
-  completed_games_count: number;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface GameSessionRow {
-  id: string;
-  user_id: string;
-  progress_id: string | null;
-  game_type: string;
-  node_id: string | null;
-  accuracy: string | null;
-  score: number;
-  completed: boolean;
-  started_at: Date;
-  completed_at: Date | null;
-  created_at: Date;
-}
-
-export interface CompletedNodeRow {
-  id: string;
-  user_id: string;
-  progress_id: string | null;
-  node_id: string;
-  node_type: string | null;
-  completed_at: Date;
-  best_score: number | null;
-  best_accuracy: string | null;
-}
-
-export interface UnlockedContentRow {
-  id: string;
-  user_id: string;
-  content_id: string;
-  content_type: string;
-  unlocked_at: Date;
-  source: string | null;
-}
+import { query } from '../../config/database';
+import {
+  CompletedNodeRow,
+  GameSessionRow,
+  InsertCompletedNodeInput,
+  InsertGameSessionInput,
+  PlayerProfileRow,
+  PlayerProgressRow,
+  PlayerStreakRow,
+  UnlockedContentRow,
+  UserPublicRow
+} from './player.types';
 
 export async function findPublicUserById(userId: string): Promise<UserPublicRow | null> {
   const result = await query<UserPublicRow>(
@@ -167,20 +107,24 @@ export async function addProfileExp(
   return result.rows[0];
 }
 
-export async function ensureStreak(client: PoolClient, userId: string): Promise<PlayerStreakRow> {
+export async function ensureStreak(
+  client: PoolClient,
+  userId: string,
+  profileId: string
+): Promise<PlayerStreakRow> {
   const result = await client.query<PlayerStreakRow>(
     `
-      INSERT INTO player_streaks (user_id, current_count, best_count, last_activity_day)
-      VALUES ($1, 1, 1, CURRENT_DATE)
-      ON CONFLICT (user_id)
+      INSERT INTO player_streaks (user_id, profile_id, current_count, best_count, last_activity_day)
+      VALUES ($1, $2, 1, 1, CURRENT_DATE)
+      ON CONFLICT (profile_id)
       DO UPDATE SET
         current_count = GREATEST(player_streaks.current_count, 1),
         best_count = GREATEST(player_streaks.best_count, player_streaks.current_count, 1),
         last_activity_day = COALESCE(player_streaks.last_activity_day, CURRENT_DATE),
         updated_at = now()
-      RETURNING id, user_id, current_count, best_count, last_activity_day, updated_at;
+      RETURNING id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at;
     `,
-    [userId]
+    [userId, profileId]
   );
 
   return result.rows[0];
@@ -189,6 +133,7 @@ export async function ensureStreak(client: PoolClient, userId: string): Promise<
 export async function upsertProgress(
   client: PoolClient,
   userId: string,
+  profileId: string,
   restriction: string,
   expToAdd: number,
   completedGameIncrement: number
@@ -197,12 +142,13 @@ export async function upsertProgress(
     `
       INSERT INTO player_progress (
         user_id,
+        profile_id,
         restriction_type,
         total_exp,
         completed_games_count
       )
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (user_id, restriction_type)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (profile_id, restriction_type)
       DO UPDATE SET
         total_exp = player_progress.total_exp + EXCLUDED.total_exp,
         completed_games_count = player_progress.completed_games_count + EXCLUDED.completed_games_count,
@@ -210,6 +156,7 @@ export async function upsertProgress(
       RETURNING
         id,
         user_id,
+        profile_id,
         restriction_type,
         total_exp,
         completed_nodes_count,
@@ -217,7 +164,7 @@ export async function upsertProgress(
         created_at,
         updated_at;
     `,
-    [userId, restriction, expToAdd, completedGameIncrement]
+    [userId, profileId, restriction, expToAdd, completedGameIncrement]
   );
 
   return result.rows[0];
@@ -240,15 +187,7 @@ export async function incrementProgressCompletedNodes(
 
 export async function insertGameSession(
   client: PoolClient,
-  input: {
-    userId: string;
-    progressId: string;
-    gameType: string;
-    nodeId: string | null;
-    accuracy: number | null;
-    completed: boolean;
-    score: number;
-  }
+  input: InsertGameSessionInput
 ): Promise<GameSessionRow> {
   const result = await client.query<GameSessionRow>(
     `
@@ -292,14 +231,7 @@ export async function insertGameSession(
 
 export async function insertCompletedNodeIfMissing(
   client: PoolClient,
-  input: {
-    userId: string;
-    progressId: string;
-    nodeId: string;
-    nodeType: string | null;
-    score: number;
-    accuracy: number | null;
-  }
+  input: InsertCompletedNodeInput
 ): Promise<CompletedNodeRow | null> {
   const result = await client.query<CompletedNodeRow>(
     `
@@ -312,7 +244,7 @@ export async function insertCompletedNodeIfMissing(
         best_accuracy
       )
       VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (user_id, node_id)
+      ON CONFLICT (progress_id, node_id)
       DO NOTHING
       RETURNING
         id,
@@ -352,7 +284,7 @@ export async function getStreakByUserId(
 ): Promise<PlayerStreakRow | null> {
   const result = await client.query<PlayerStreakRow>(
     `
-      SELECT id, user_id, current_count, best_count, last_activity_day, updated_at
+      SELECT id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at
       FROM player_streaks
       WHERE user_id = $1;
     `,
@@ -371,6 +303,7 @@ export async function listProgressByUserId(
       SELECT
         id,
         user_id,
+        profile_id,
         restriction_type,
         total_exp,
         completed_nodes_count,
@@ -418,7 +351,7 @@ export async function listUnlockedContentByUserId(
 ): Promise<UnlockedContentRow[]> {
   const result = await client.query<UnlockedContentRow>(
     `
-      SELECT id, user_id, content_id, content_type, unlocked_at, source
+      SELECT id, user_id, progress_id, content_id, content_type, unlocked_at, source
       FROM unlocked_content
       WHERE user_id = $1
       ORDER BY unlocked_at DESC;

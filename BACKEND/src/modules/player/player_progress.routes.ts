@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getPlayerProgress,
   postPlayerProgress
-} from '../controllers/player_progress.controller';
+} from './player_progress.controller';
 
 export const playerProgressRouter = Router();
 

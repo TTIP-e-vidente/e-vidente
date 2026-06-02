@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { getUserFromToken, PublicUser } from '../services/auth.service';
+import { getUserFromToken } from './auth.service';
+import { PublicUser } from './auth.types';
 
 declare global {
   namespace Express {

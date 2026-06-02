@@ -144,13 +144,14 @@ npm test
 
 ## Autenticacion PoC
 
-Esta autenticacion es una PoC minima de backend. Godot todavia no consume estos endpoints. No hay refresh tokens, roles, recuperacion de contrasena, verificacion por mail, admin ni sesiones persistidas en DB.
+Esta autenticacion es una PoC minima de backend. Godot todavia no consume estos endpoints. No hay refresh tokens, roles, verificacion por mail, admin ni sesiones persistidas en DB. La recuperacion de contrasena genera tokens locales, pero no envia emails reales.
 
 Variables de entorno:
 
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `BCRYPT_SALT_ROUNDS`
+- `PASSWORD_RESET_TOKEN_EXPIRES_MINUTES`
 
 Flujo local:
 
@@ -194,6 +195,22 @@ curl -X POST http://localhost:3000/auth/logout \
 
 El logout es manejado del lado del cliente: el backend no invalida tokens en servidor para esta PoC.
 
+Recuperacion de contrasena:
+
+```sh
+curl -X POST http://localhost:3000/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d "{\"mail\":\"agus@test.com\"}"
+```
+
+En development la respuesta puede incluir `devResetToken` para pruebas manuales. En production no se devuelve el token y no hay envio real de email todavia.
+
+```sh
+curl -X POST http://localhost:3000/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d "{\"token\":\"TOKEN\",\"newPassword\":\"NewPassword123\"}"
+```
+
 ## Conexion local PostgreSQL
 
 ```sh
@@ -234,6 +251,7 @@ docker compose down -v
 ## Notas de alcance
 
 - La autenticacion actual es una PoC backend con JWT stateless.
+- La recuperacion de contrasena no envia emails reales; usa `devResetToken` solo fuera de production.
 - No hay leaderboard online.
 - No hay admin ni telemetria.
 - No hay conexion con Godot.

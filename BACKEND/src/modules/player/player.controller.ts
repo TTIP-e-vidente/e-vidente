@@ -4,8 +4,8 @@ import {
   getPlayerProgress,
   PlayerError,
   saveAuthenticatedProgress
-} from '../services/player.service';
-import { sendError } from '../shared/http/send_error';
+} from './player.service';
+import { sendError } from '../../shared/http/send_error';
 
 function getAuthenticatedUserId(request: Request): string {
   const userId = request.user?.id;

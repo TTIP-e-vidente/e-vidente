@@ -15,6 +15,7 @@ Backend PoC para TTIP. Godot todavia no consume estos endpoints y su persistenci
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `BCRYPT_SALT_ROUNDS`
+- `PASSWORD_RESET_TOKEN_EXPIRES_MINUTES`
 
 ## Auth
 
@@ -107,6 +108,71 @@ curl http://localhost:3000/auth/me \
 ```sh
 curl -X POST http://localhost:3000/auth/logout \
   -H "Authorization: Bearer TOKEN"
+```
+
+### POST /auth/forgot-password
+
+- Auth requerida: no.
+- Body:
+
+```json
+{
+  "mail": "agus@test.com"
+}
+```
+
+- Respuesta exitosa: `200`.
+- Siempre devuelve un mensaje generico para no revelar si la cuenta existe.
+- Si el mail existe en `users.mail` o `users.email`, se genera un token seguro y se guarda su hash en `password_reset_tokens`.
+- En `NODE_ENV !== "production"` puede devolver `devResetToken` para pruebas locales.
+- En production no devuelve el token.
+- No hay envio real de email en esta PoC.
+
+```json
+{
+  "status": "ok",
+  "message": "If an account exists for that mail, password reset instructions were generated.",
+  "devResetToken": "..."
+}
+```
+
+- Errores posibles: `400` mail faltante/invalido, `500` error inesperado.
+
+```sh
+curl -X POST http://localhost:3000/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d "{\"mail\":\"agus@test.com\"}"
+```
+
+### POST /auth/reset-password
+
+- Auth requerida: no.
+- Body:
+
+```json
+{
+  "token": "token_recibido",
+  "newPassword": "NewPassword123"
+}
+```
+
+- Respuesta exitosa: `200`.
+- El token debe existir, no estar usado y no estar expirado.
+- Al actualizar la password, el backend marca el token como usado e invalida otros tokens activos del usuario.
+
+```json
+{
+  "status": "ok",
+  "message": "Password updated"
+}
+```
+
+- Errores posibles: `400` body invalido o token invalido/expirado, `500` error inesperado.
+
+```sh
+curl -X POST http://localhost:3000/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d "{\"token\":\"TOKEN\",\"newPassword\":\"NewPassword123\"}"
 ```
 
 ## Player
