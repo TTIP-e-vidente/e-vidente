@@ -1,18 +1,20 @@
 import { Request, Response } from 'express';
-import { query } from '../../config/database';
+import { sendError } from '../../shared/http/send_error';
+import { getDbInfo } from './health.repository';
 
 export function getHealth(_request: Request, response: Response): void {
   response.json({ status: 'ok' });
 }
 
 export async function getDatabaseHealth(_request: Request, response: Response): Promise<void> {
-  const result = await query<{ current_database: string; current_user: string }>(
-    'SELECT current_database(), current_user;'
-  );
-
-  response.json({
-    status: 'ok',
-    database: result.rows[0].current_database,
-    user: result.rows[0].current_user
-  });
+  try {
+    const info = await getDbInfo();
+    response.json({
+      status: 'ok',
+      database: info.current_database,
+      user: info.current_user
+    });
+  } catch (error) {
+    sendError(response, error);
+  }
 }

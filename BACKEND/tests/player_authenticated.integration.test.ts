@@ -158,6 +158,247 @@ async function run(): Promise<void> {
     assert.equal(storedResult.rows[0].game_sessions_count, '1');
     assert.equal(storedResult.rows[0].completed_nodes_count, '1');
 
+    // ── RunSummary full contract tests ────────────────────────────────────────
+
+    // 1. POST accepts correctAnswers, wrongAnswers, durationSeconds, finishedAt
+    const fullContractNodeId = `full_contract_node_${suffix}`;
+    const finishedAtTimestamp = '2026-06-02T15:00:00.000Z';
+    const fullRunSummaryPayload = {
+      restriction: 'CELIAQUIA',
+      expToAdd: 20,
+      nodeId: fullContractNodeId,
+      gameType: 'completar',
+      accuracy: 80,
+      completed: true,
+      score: 200,
+      correctAnswers: 16,
+      wrongAnswers: 4,
+      durationSeconds: 120,
+      finishedAt: finishedAtTimestamp
+    };
+    const fullRunSummaryResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(fullRunSummaryPayload)
+    });
+    assert.equal(fullRunSummaryResponse.status, 201);
+
+    // 2. game_sessions stored the new fields
+    const storedSessionResult = await pool.query<{
+      correct_answers: number | null;
+      wrong_answers: number | null;
+      duration_seconds: number | null;
+      finished_at: Date | null;
+    }>(
+      `SELECT correct_answers, wrong_answers, duration_seconds, finished_at
+       FROM game_sessions
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2
+       ORDER BY created_at DESC LIMIT 1;`,
+      [username, fullContractNodeId]
+    );
+    assert.equal(storedSessionResult.rows[0].correct_answers, 16);
+    assert.equal(storedSessionResult.rows[0].wrong_answers, 4);
+    assert.equal(storedSessionResult.rows[0].duration_seconds, 120);
+    assert.ok(storedSessionResult.rows[0].finished_at !== null);
+
+    // 3. GET /player/me/progress returns new fields in recentGameSessions
+    const progressWithNewFieldsResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'GET',
+      headers
+    });
+    const recentSessionsWithNewFields = progressWithNewFieldsResponse.body.recentGameSessions as JsonObject[];
+    const storedSessionInResponse = recentSessionsWithNewFields.find(
+      (s) => s.node_id === fullContractNodeId
+    );
+    assert.ok(storedSessionInResponse, 'session with fullContractNodeId not found in recentGameSessions');
+    assert.equal(storedSessionInResponse.correct_answers, 16);
+    assert.equal(storedSessionInResponse.wrong_answers, 4);
+    assert.equal(storedSessionInResponse.duration_seconds, 120);
+    assert.ok(storedSessionInResponse.finished_at !== null);
+
+    // 4. completed_games_count increments when completed=true
+    const progressAfterCompleted = progressWithNewFieldsResponse.body.progress as JsonObject[];
+    const celiaquiaAfterCompleted = progressAfterCompleted.find(
+      (p) => p.restriction_type === 'CELIAQUIA'
+    ) as JsonObject;
+    const completedGamesCountAfterFullRun = Number(celiaquiaAfterCompleted.completed_games_count);
+    assert.ok(
+      completedGamesCountAfterFullRun >= 2,
+      `expected >= 2 completed_games_count, got ${completedGamesCountAfterFullRun}`
+    );
+
+    // 5. completed_games_count does NOT increment when completed=false
+    const incompletePayload = {
+      restriction: 'CELIAQUIA',
+      expToAdd: 5,
+      nodeId: `incomplete_node_${suffix}`,
+      gameType: 'quiz',
+      accuracy: 30,
+      completed: false,
+      score: 40
+    };
+    const incompleteResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(incompletePayload)
+    });
+    assert.equal(incompleteResponse.status, 201);
+    const progressAfterIncompleteResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'GET',
+      headers
+    });
+    const celiaquiaAfterIncomplete = (
+      progressAfterIncompleteResponse.body.progress as JsonObject[]
+    ).find((p) => p.restriction_type === 'CELIAQUIA') as JsonObject;
+    assert.equal(
+      Number(celiaquiaAfterIncomplete.completed_games_count),
+      completedGamesCountAfterFullRun,
+      'completed_games_count should not increment for completed=false'
+    );
+
+    // 6. completedNode is set on first completion
+    assert.ok(
+      fullRunSummaryResponse.body.completedNode !== null,
+      'completedNode should be non-null on first completion'
+    );
+
+    // 7+8. Replay with better score updates best_score; worse score does not drop it
+    const replayNodeId = `replay_node_${suffix}`;
+    const firstReplayResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: replayNodeId,
+        gameType: 'quiz',
+        score: 100,
+        accuracy: 70,
+        completed: true
+      })
+    });
+    assert.equal(firstReplayResponse.status, 201);
+    assert.ok(
+      firstReplayResponse.body.completedNode !== null,
+      'first completion: completedNode should be non-null'
+    );
+
+    const betterScoreResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: replayNodeId,
+        gameType: 'quiz',
+        score: 150,
+        accuracy: 85,
+        completed: true
+      })
+    });
+    assert.equal(betterScoreResponse.status, 201);
+    assert.equal(
+      betterScoreResponse.body.completedNode,
+      null,
+      'replay: completedNode should be null (not a new completion)'
+    );
+    const bestScoreAfterBetter = await pool.query<{ best_score: number }>(
+      `SELECT best_score FROM completed_nodes
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
+      [username, replayNodeId]
+    );
+    assert.equal(bestScoreAfterBetter.rows[0].best_score, 150, 'best_score should update to 150');
+
+    const worseScoreResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 5,
+        nodeId: replayNodeId,
+        gameType: 'quiz',
+        score: 50,
+        accuracy: 40,
+        completed: true
+      })
+    });
+    assert.equal(worseScoreResponse.status, 201);
+    const bestScoreAfterWorse = await pool.query<{ best_score: number }>(
+      `SELECT best_score FROM completed_nodes
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
+      [username, replayNodeId]
+    );
+    assert.equal(
+      bestScoreAfterWorse.rows[0].best_score,
+      150,
+      'best_score should not drop after worse replay'
+    );
+
+    // 9. Replay with better accuracy updates best_accuracy
+    const accuracyNodeId = `accuracy_node_${suffix}`;
+    await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: accuracyNodeId,
+        gameType: 'quiz',
+        score: 80,
+        accuracy: 60,
+        completed: true
+      })
+    });
+    await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: accuracyNodeId,
+        gameType: 'quiz',
+        score: 80,
+        accuracy: 95,
+        completed: true
+      })
+    });
+    const bestAccuracyResult = await pool.query<{ best_accuracy: string }>(
+      `SELECT best_accuracy FROM completed_nodes
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
+      [username, accuracyNodeId]
+    );
+    assert.ok(
+      parseFloat(bestAccuracyResult.rows[0].best_accuracy) >= 95,
+      `best_accuracy should be >= 95, got ${bestAccuracyResult.rows[0].best_accuracy}`
+    );
+
+    // 10. correctAnswers negative → 400 VALIDATION_ERROR
+    const negativeCorrectAnswers = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ restriction: 'CELIAQUIA', expToAdd: 5, correctAnswers: -1 })
+    });
+    assert.equal(negativeCorrectAnswers.status, 400);
+    assert.equal(negativeCorrectAnswers.body.code, 'VALIDATION_ERROR');
+
+    // 11. wrongAnswers negative → 400 VALIDATION_ERROR
+    const negativeWrongAnswers = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ restriction: 'CELIAQUIA', expToAdd: 5, wrongAnswers: -1 })
+    });
+    assert.equal(negativeWrongAnswers.status, 400);
+    assert.equal(negativeWrongAnswers.body.code, 'VALIDATION_ERROR');
+
+    // 12. durationSeconds negative → 400 VALIDATION_ERROR
+    const negativeDuration = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ restriction: 'CELIAQUIA', expToAdd: 5, durationSeconds: -1 })
+    });
+    assert.equal(negativeDuration.status, 400);
+    assert.equal(negativeDuration.body.code, 'VALIDATION_ERROR');
+
     console.log('player authenticated integration test passed');
   } finally {
     await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [

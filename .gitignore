@@ -22,7 +22,7 @@ backend/postgres-data/
 backend/pgdata/
 
 # Legacy local docs folder
-local-docs/
+docs-local/
 
 # OS and temporary files
 .DS_Store

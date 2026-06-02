@@ -215,10 +215,19 @@ curl http://localhost:3000/player/me/progress \
   "gameType": "quiz",
   "accuracy": 90,
   "completed": true,
-  "score": 100
+  "score": 100,
+  "correctAnswers": 17,
+  "wrongAnswers": 3,
+  "durationSeconds": 90,
+  "finishedAt": "2026-06-02T15:00:00.000Z"
 }
 ```
 
+- Campos opcionales: `correctAnswers`, `wrongAnswers`, `durationSeconds`, `finishedAt`.
+- `correctAnswers`, `wrongAnswers`, `durationSeconds`: deben ser `>= 0` si se envían.
+- `finishedAt`: fecha ISO 8601. El backend mantiene además `completed_at` como timestamp de servidor.
+- `completed_games_count` solo incrementa si `completed: true`.
+- Si el nodo ya fue completado antes (`nodeId` repetido), `best_score` y `best_accuracy` se actualizan si el nuevo valor es mayor (no se bajan).
 - Respuesta exitosa: `201`, progreso actualizado y resumen.
 - Errores posibles: `400` body invalido, `401` token faltante/invalido, `500` error inesperado.
 

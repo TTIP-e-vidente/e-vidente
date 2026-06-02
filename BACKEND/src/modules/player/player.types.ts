@@ -49,6 +49,10 @@ export interface GameSessionRow {
   started_at: Date;
   completed_at: Date | null;
   created_at: Date;
+  correct_answers: number | null;
+  wrong_answers: number | null;
+  duration_seconds: number | null;
+  finished_at: Date | null;
 }
 
 export interface CompletedNodeRow {
@@ -80,6 +84,10 @@ export interface InsertGameSessionInput {
   accuracy: number | null;
   completed: boolean;
   score: number;
+  correctAnswers?: number | null;
+  wrongAnswers?: number | null;
+  durationSeconds?: number | null;
+  finishedAt?: string | null;
 }
 
 export interface InsertCompletedNodeInput {
@@ -100,6 +108,10 @@ export interface SaveAuthenticatedProgressInput {
   accuracy?: unknown;
   completed?: unknown;
   score?: unknown;
+  correctAnswers?: unknown;
+  wrongAnswers?: unknown;
+  durationSeconds?: unknown;
+  finishedAt?: unknown;
 }
 
 export interface SaveDevProgressInput {
@@ -112,6 +124,10 @@ export interface SaveDevProgressInput {
   accuracy?: number;
   completed?: boolean;
   score?: number;
+  correctAnswers?: number;
+  wrongAnswers?: number;
+  durationSeconds?: number;
+  finishedAt?: string;
 }
 
 export type SavePlayerProgressInput = SaveDevProgressInput;

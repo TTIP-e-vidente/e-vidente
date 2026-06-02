@@ -26,6 +26,7 @@ SaveManager="*res://interface/SaveManager.gd"
 MusicManager="*res://managers/MusicManager.gd"
 TransicionEscenas="*uid://bqo1erivdcxmk"
 GameSceneRouter="*uid://cmx7rnj15vkd"
+BackendSession="*res://project/backend/BackendSession.gd"
 
 [display]
 

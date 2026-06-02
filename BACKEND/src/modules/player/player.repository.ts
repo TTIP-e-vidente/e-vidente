@@ -199,9 +199,14 @@ export async function insertGameSession(
         accuracy,
         completed,
         score,
-        completed_at
+        completed_at,
+        correct_answers,
+        wrong_answers,
+        duration_seconds,
+        finished_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $6 THEN now() ELSE NULL END)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $6 THEN now() ELSE NULL END,
+              $8, $9, $10, $11)
       RETURNING
         id,
         user_id,
@@ -213,7 +218,11 @@ export async function insertGameSession(
         completed,
         started_at,
         completed_at,
-        created_at;
+        created_at,
+        correct_answers,
+        wrong_answers,
+        duration_seconds,
+        finished_at;
     `,
     [
       input.userId,
@@ -222,17 +231,27 @@ export async function insertGameSession(
       input.nodeId,
       input.accuracy,
       input.completed,
-      input.score
+      input.score,
+      input.correctAnswers ?? null,
+      input.wrongAnswers ?? null,
+      input.durationSeconds ?? null,
+      input.finishedAt ?? null
     ]
   );
 
   return result.rows[0];
 }
 
-export async function insertCompletedNodeIfMissing(
+export async function upsertCompletedNode(
   client: PoolClient,
   input: InsertCompletedNodeInput
-): Promise<CompletedNodeRow | null> {
+): Promise<{ node: CompletedNodeRow; wasNew: boolean }> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM completed_nodes WHERE progress_id = $1 AND node_id = $2;`,
+    [input.progressId, input.nodeId]
+  );
+  const wasNew = existing.rows.length === 0;
+
   const result = await client.query<CompletedNodeRow>(
     `
       INSERT INTO completed_nodes (
@@ -245,7 +264,9 @@ export async function insertCompletedNodeIfMissing(
       )
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (progress_id, node_id)
-      DO NOTHING
+      DO UPDATE SET
+        best_score    = GREATEST(completed_nodes.best_score, EXCLUDED.best_score),
+        best_accuracy = GREATEST(completed_nodes.best_accuracy, EXCLUDED.best_accuracy)
       RETURNING
         id,
         user_id,
@@ -259,7 +280,7 @@ export async function insertCompletedNodeIfMissing(
     [input.userId, input.progressId, input.nodeId, input.nodeType, input.score, input.accuracy]
   );
 
-  return result.rows[0] ?? null;
+  return { node: result.rows[0], wasNew };
 }
 
 export async function getProfileByUserId(
@@ -380,7 +401,11 @@ export async function listRecentGameSessionsByUserId(
         completed,
         started_at,
         completed_at,
-        created_at
+        created_at,
+        correct_answers,
+        wrong_answers,
+        duration_seconds,
+        finished_at
       FROM game_sessions
       WHERE user_id = $1
       ORDER BY created_at DESC

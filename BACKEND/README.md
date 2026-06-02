@@ -27,6 +27,53 @@ npm install
 
 `COMPOSE_PROJECT_NAME=e-vidente` define el nombre del stack/proyecto que muestra Docker Desktop. La carpeta puede seguir llamandose `BACKEND/`; el servicio de Docker Compose se llama `postgres` y el contenedor se llama `e-vidente-postgres`.
 
+## Setup dev automático
+
+Un solo comando para levantar todo el entorno de desarrollo local desde cero:
+
+```sh
+cd BACKEND
+npm install
+npm run setup:dev
+```
+
+El script hace:
+1. `docker compose up -d` — levanta PostgreSQL.
+2. Espera a que la base esté disponible.
+3. `npm run migrate` — corre todas las migraciones pendientes.
+4. `npm run seed:dev` — crea o actualiza los usuarios demo.
+5. Valida la conexión con la base.
+6. Imprime instrucciones finales para login desde Godot.
+
+Usuarios demo disponibles luego del setup:
+
+| Usuario | Password |
+|---------|----------|
+| margo   | 123      |
+| agus    | 123      |
+
+Aclaraciones:
+
+- Solo para desarrollo local. No usar en producción.
+- Las passwords se guardan hasheadas con bcrypt (`BCRYPT_SALT_ROUNDS`). Nunca en texto plano.
+- El script es idempotente: se puede correr múltiples veces sin efectos secundarios.
+- No borra datos ni relaciones (player_profiles, player_progress, game_sessions).
+- No ejecuta `docker compose down -v`. No destruye volúmenes.
+- No toca Godot ni escenas.
+
+Luego del setup:
+
+```sh
+npm run dev
+# Abrir Godot → res://project/auth/Login.tscn → ingresar con margo / 123
+```
+
+También se puede correr solo el seed sin el setup completo:
+
+```sh
+npm run seed:dev
+```
+
 ## Levantar PostgreSQL
 
 ```sh
@@ -106,6 +153,8 @@ GET http://localhost:3000/dev/player-progress/demo_player
 ```
 
 Estos endpoints `/dev/...` son solamente para validar persistencia local. No son la API final y no estan conectados con Godot.
+
+> **Nota:** `POST /dev/player-progress` crea el usuario si no existe usando `INSERT ... ON CONFLICT`. El usuario se crea sin `password_hash`, por lo que **no puede iniciar sesion**. Para el flujo real de autenticacion usar `POST /auth/register`. Los usuarios creados por este endpoint son solo para validacion de PoC/dev.
 
 ## Endpoints autenticados de jugador
 

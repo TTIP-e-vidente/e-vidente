@@ -1,38 +1,37 @@
 import { Request, Response } from 'express';
+import { sendError } from '../../shared/http/send_error';
 import {
   getPlayerProgressByUsername,
   savePlayerProgress
 } from './player_progress.service';
+import { PlayerError } from './player.service';
 
 export async function postPlayerProgress(request: Request, response: Response): Promise<void> {
-  const {
-    username,
-    name,
-    restriction,
-    restrictionType,
-    expToAdd,
-    nodeId,
-    gameType,
-    accuracy,
-    completed,
-    score
-  } = request.body ?? {};
-  const requestedRestriction = restriction ?? restrictionType;
-
-  if (typeof username !== 'string' || username.trim().length === 0) {
-    response.status(400).json({ error: 'username es requerido' });
-    return;
-  }
-  if (typeof requestedRestriction !== 'string' || requestedRestriction.trim().length === 0) {
-    response.status(400).json({ error: 'restriction es requerido' });
-    return;
-  }
-  if (typeof expToAdd !== 'number' || !Number.isFinite(expToAdd)) {
-    response.status(400).json({ error: 'expToAdd debe ser numerico' });
-    return;
-  }
-
   try {
+    const {
+      username,
+      name,
+      restriction,
+      restrictionType,
+      expToAdd,
+      nodeId,
+      gameType,
+      accuracy,
+      completed,
+      score
+    } = request.body ?? {};
+    const requestedRestriction = restriction ?? restrictionType;
+
+    if (typeof username !== 'string' || username.trim().length === 0) {
+      throw new PlayerError(400, 'VALIDATION_ERROR', 'username es requerido');
+    }
+    if (typeof requestedRestriction !== 'string' || requestedRestriction.trim().length === 0) {
+      throw new PlayerError(400, 'VALIDATION_ERROR', 'restriction es requerido');
+    }
+    if (typeof expToAdd !== 'number' || !Number.isFinite(expToAdd)) {
+      throw new PlayerError(400, 'VALIDATION_ERROR', 'expToAdd debe ser numerico');
+    }
+
     const result = await savePlayerProgress({
       username: username.trim(),
       name: typeof name === 'string' && name.trim().length > 0 ? name.trim() : undefined,
@@ -47,25 +46,25 @@ export async function postPlayerProgress(request: Request, response: Response): 
 
     response.status(201).json(result);
   } catch (error) {
-    response.status(400).json({
-      error: error instanceof Error ? error.message : 'No se pudo guardar progreso'
-    });
+    sendError(response, error);
   }
 }
 
 export async function getPlayerProgress(request: Request, response: Response): Promise<void> {
-  const rawUsername = request.params.username;
-  const username = typeof rawUsername === 'string' ? rawUsername.trim() : '';
-  if (!username) {
-    response.status(400).json({ error: 'username es requerido' });
-    return;
-  }
+  try {
+    const rawUsername = request.params.username;
+    const username = typeof rawUsername === 'string' ? rawUsername.trim() : '';
+    if (!username) {
+      throw new PlayerError(400, 'VALIDATION_ERROR', 'username es requerido');
+    }
 
-  const result = await getPlayerProgressByUsername(username);
-  if (!result) {
-    response.status(404).json({ error: 'jugador no encontrado' });
-    return;
-  }
+    const result = await getPlayerProgressByUsername(username);
+    if (!result) {
+      throw new PlayerError(404, 'PLAYER_NOT_FOUND', 'jugador no encontrado');
+    }
 
-  response.json(result);
+    response.json(result);
+  } catch (error) {
+    sendError(response, error);
+  }
 }

@@ -108,8 +108,12 @@ erDiagram
     numeric accuracy
     integer score
     boolean completed
+    integer correct_answers
+    integer wrong_answers
+    integer duration_seconds
     timestamptz started_at
     timestamptz completed_at
+    timestamptz finished_at
     timestamptz created_at
   }
 

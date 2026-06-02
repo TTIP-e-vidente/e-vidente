@@ -5,6 +5,17 @@ import {
   isNonEmptyString,
   parseNumberOrDefault
 } from '../../shared/validation/validators';
+import {
+  PlayerMeResponse,
+  PlayerProgressResponse,
+  SavePlayerProgressResponse,
+  toPublicCompletedNode,
+  toPublicGameSession,
+  toPublicPlayerProfile,
+  toPublicPlayerProgress,
+  toPublicPlayerStreak,
+  toPublicUnlockedContent
+} from './player.mapper';
 import * as playerRepository from './player.repository';
 import { SaveAuthenticatedProgressInput, SaveDevProgressInput } from './player.types';
 
@@ -44,7 +55,25 @@ function normalizeRestriction(value: unknown): string {
   return restriction;
 }
 
-export async function getPlayerMe(userId: string): Promise<unknown> {
+function optionalNonNegativeInt(value: unknown, fieldName: string): number | null {
+  if (value === undefined || value === null) return null;
+  const parsed = parseNumberOrDefault(value, NaN);
+  if (isNaN(parsed) || parsed < 0) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', `${fieldName} debe ser numero >= 0`);
+  }
+  return Math.trunc(parsed);
+}
+
+function optionalIsoDate(value: unknown, fieldName: string): string | null {
+  if (value === undefined || value === null) return null;
+  const s = optionalText(value);
+  if (s !== null && isNaN(Date.parse(s))) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', `${fieldName} debe ser fecha ISO valida`);
+  }
+  return s;
+}
+
+export async function getPlayerMe(userId: string): Promise<PlayerMeResponse> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -57,7 +86,11 @@ export async function getPlayerMe(userId: string): Promise<unknown> {
     const streak = await playerRepository.ensureStreak(client, userId, profile.id);
     await client.query('COMMIT');
 
-    return { user, profile, streak };
+    return {
+      user,
+      profile: toPublicPlayerProfile(profile),
+      streak: toPublicPlayerStreak(streak)
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -66,7 +99,7 @@ export async function getPlayerMe(userId: string): Promise<unknown> {
   }
 }
 
-export async function getPlayerProgress(userId: string): Promise<unknown> {
+export async function getPlayerProgress(userId: string): Promise<PlayerProgressResponse> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -85,12 +118,12 @@ export async function getPlayerProgress(userId: string): Promise<unknown> {
 
     return {
       user,
-      profile,
-      streak,
-      progress,
-      completedNodes,
-      unlockedContent,
-      recentGameSessions
+      profile: toPublicPlayerProfile(profile),
+      streak: toPublicPlayerStreak(streak),
+      progress: progress.map(toPublicPlayerProgress),
+      completedNodes: completedNodes.map(toPublicCompletedNode),
+      unlockedContent: unlockedContent.map(toPublicUnlockedContent),
+      recentGameSessions: recentGameSessions.map(toPublicGameSession)
     };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -102,7 +135,7 @@ export async function getPlayerProgress(userId: string): Promise<unknown> {
 
 export async function saveAuthenticatedProgress(
   input: SaveAuthenticatedProgressInput
-): Promise<unknown> {
+): Promise<SavePlayerProgressResponse> {
   const restriction = normalizeRestriction(input.restriction);
   const expToAdd = Math.max(0, Math.trunc(numberOrDefault(input.expToAdd, 0)));
   const nodeId = optionalText(input.nodeId);
@@ -116,6 +149,10 @@ export async function saveAuthenticatedProgress(
     throw new PlayerError(400, 'VALIDATION_ERROR', 'completed debe ser boolean');
   }
   const score = Math.trunc(numberOrDefault(input.score, 0));
+  const correctAnswers = optionalNonNegativeInt(input.correctAnswers, 'correctAnswers');
+  const wrongAnswers = optionalNonNegativeInt(input.wrongAnswers, 'wrongAnswers');
+  const durationSeconds = optionalNonNegativeInt(input.durationSeconds, 'durationSeconds');
+  const finishedAt = optionalIsoDate(input.finishedAt, 'finishedAt');
 
   const client = await pool.connect();
   try {
@@ -142,12 +179,16 @@ export async function saveAuthenticatedProgress(
       nodeId,
       accuracy: accuracyValue,
       completed,
-      score
+      score,
+      correctAnswers,
+      wrongAnswers,
+      durationSeconds,
+      finishedAt
     });
 
     let completedNode = null;
     if (completed && nodeId) {
-      completedNode = await playerRepository.insertCompletedNodeIfMissing(client, {
+      const upsertResult = await playerRepository.upsertCompletedNode(client, {
         userId: input.userId,
         progressId: progress.id,
         nodeId,
@@ -156,7 +197,8 @@ export async function saveAuthenticatedProgress(
         accuracy: accuracyValue
       });
 
-      if (completedNode) {
+      if (upsertResult.wasNew) {
+        completedNode = upsertResult.node;
         await playerRepository.incrementProgressCompletedNodes(client, progress.id);
       }
     }
@@ -173,19 +215,19 @@ export async function saveAuthenticatedProgress(
 
     return {
       user,
-      profile,
-      streak,
-      progress,
-      gameSession,
-      completedNode,
+      profile: toPublicPlayerProfile(profile),
+      streak: toPublicPlayerStreak(streak),
+      progress: toPublicPlayerProgress(progress),
+      gameSession: toPublicGameSession(gameSession),
+      completedNode: completedNode ? toPublicCompletedNode(completedNode) : null,
       summary: {
         user,
-        profile,
-        streak,
-        progress: updatedProgress,
-        completedNodes,
-        unlockedContent,
-        recentGameSessions
+        profile: toPublicPlayerProfile(profile),
+        streak: toPublicPlayerStreak(streak),
+        progress: updatedProgress.map(toPublicPlayerProgress),
+        completedNodes: completedNodes.map(toPublicCompletedNode),
+        unlockedContent: unlockedContent.map(toPublicUnlockedContent),
+        recentGameSessions: recentGameSessions.map(toPublicGameSession)
       }
     };
   } catch (error) {
@@ -196,7 +238,7 @@ export async function saveAuthenticatedProgress(
   }
 }
 
-export async function saveDevProgress(input: SaveDevProgressInput): Promise<unknown> {
+export async function saveDevProgress(input: SaveDevProgressInput): Promise<SavePlayerProgressResponse> {
   const client = await pool.connect();
   let userId: string;
   try {
@@ -223,11 +265,15 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<unkn
     gameType: input.gameType,
     accuracy: input.accuracy,
     completed: input.completed,
-    score: input.score
+    score: input.score,
+    correctAnswers: input.correctAnswers,
+    wrongAnswers: input.wrongAnswers,
+    durationSeconds: input.durationSeconds,
+    finishedAt: input.finishedAt
   });
 }
 
-export async function getDevProgressByUsername(username: string): Promise<unknown | null> {
+export async function getDevProgressByUsername(username: string): Promise<PlayerProgressResponse | null> {
   const client = await pool.connect();
   let userId: string | null = null;
   try {

@@ -8,6 +8,8 @@
     "start": "node dist/server.js",
     "migrate": "ts-node scripts/run-migrations.ts",
     "smoke:api": "ts-node scripts/smoke-auth-player.ts",
+    "seed:dev": "ts-node scripts/seed-dev-users.ts",
+    "setup:dev": "ts-node scripts/setup-dev.ts",
     "test": "npm run migrate && ts-node tests/postgres.integration.test.ts && ts-node tests/auth.integration.test.ts && ts-node tests/auth_password_reset.integration.test.ts && ts-node tests/player_authenticated.integration.test.ts"
   },
   "dependencies": {
