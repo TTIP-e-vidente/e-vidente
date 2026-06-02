@@ -1,5 +1,8 @@
 extends Control
 
+signal login_completed()
+signal play_offline_requested()
+
 const DEMO_BASE_USERNAME := "demo_evidente"
 const DEMO_PASSWORD      := "demo_evidente_2026"
 const DEMO_NAME          := "Usuario Demo"
@@ -8,14 +11,21 @@ const DEMO_AGE           := 18
 @onready var _input_username: LineEdit = $CenterContainer/PanelContainer/VBoxContainer/LineEditUsernameOrMail
 @onready var _input_password: LineEdit = $CenterContainer/PanelContainer/VBoxContainer/LineEditPassword
 @onready var _label_status:   Label    = $CenterContainer/PanelContainer/VBoxContainer/LabelStatus
+@onready var _button_login_agus: Button = $CenterContainer/PanelContainer/VBoxContainer/ButtonLoginAgus
 
 
 func _ready() -> void:
+	$CenterContainer/PanelContainer/VBoxContainer/ButtonLoginAgus.pressed.connect(
+		_on_button_login_agus_pressed
+	)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonLogin.pressed.connect(
 		_on_button_login_pressed
 	)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonRegisterDemo.pressed.connect(
 		_on_button_register_demo_pressed
+	)
+	$CenterContainer/PanelContainer/VBoxContainer/ButtonPlayOffline.pressed.connect(
+		_on_button_play_offline_pressed
 	)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonMe.pressed.connect(
 		_on_button_me_pressed
@@ -30,6 +40,10 @@ func _ready() -> void:
 		BackendSession.logout_completed.connect(_on_logout_completed)
 	if not BackendSession.session_expired.is_connected(_on_session_expired):
 		BackendSession.session_expired.connect(_on_session_expired)
+	if not BackendSession.session_restored.is_connected(_on_session_restored):
+		BackendSession.session_restored.connect(_on_session_restored)
+	if not BackendSession.session_restore_failed.is_connected(_on_session_restore_failed):
+		BackendSession.session_restore_failed.connect(_on_session_restore_failed)
 
 	_actualizar_estado_inicial()
 
@@ -41,7 +55,15 @@ func _actualizar_estado_inicial() -> void:
 		_set_status("Sin sesión")
 
 
-# ── Botones ───────────────────────────────────────────────────────────────────
+# ── Botón demo hardcodeado ──────────────────────────────────────────────────
+
+func _on_button_login_agus_pressed() -> void:
+	_set_status("Iniciando sesión como agus...")
+	await BackendSession.login("agus", "123")
+	# La respuesta llega por señales: _on_login_succeeded o _on_login_failed
+
+
+# ── Botón login manual (oculto — disponible si se reactiva) ──────────────────
 
 func _on_button_login_pressed() -> void:
 	var usuario := _input_username.text.strip_edges()
@@ -94,14 +116,20 @@ func _on_button_me_pressed() -> void:
 		_set_status("Error /auth/me — status: " + str(result.get("status", 0)))
 
 
+func _on_button_play_offline_pressed() -> void:
+	_set_status("Continuando sin iniciar sesión")
+	play_offline_requested.emit()
+
+
 # ── Señales BackendSession ────────────────────────────────────────────────────
 
-func _on_login_succeeded(user: String) -> void:
-	_set_status("Login OK — " + user)
+func _on_login_succeeded(user: Dictionary) -> void:
+	_set_status("Login OK — " + str(user.get("username", "")))
+	login_completed.emit()
 
 
-func _on_login_failed(reason: String) -> void:
-	_set_status("Login falló: " + reason)
+func _on_login_failed(_reason: String) -> void:
+	_set_status("No se pudo iniciar sesión. Verificá backend.")
 
 
 func _on_logout_completed() -> void:
@@ -110,6 +138,15 @@ func _on_logout_completed() -> void:
 
 func _on_session_expired() -> void:
 	_set_status("Sesión expirada — volvé a iniciar sesión")
+
+
+func _on_session_restored(user: Dictionary) -> void:
+	var uname := str(user.get("username", BackendSession.get_username()))
+	_set_status("Sesión activa: " + uname)
+
+
+func _on_session_restore_failed(_reason: String) -> void:
+	_set_status("Sesión anterior expirada — ingresar nuevamente")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

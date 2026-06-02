@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://r20wgxspx7pc"]
 
-[ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
+[ext_resource type="Script" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_7djtf"]
 [ext_resource type="Texture2D" uid="uid://b3kmyivdgjajn" path="res://assets-sistema/intro/intro-9.png" id="3_uu8qn"]
 [ext_resource type="PackedScene" uid="uid://bgatuq1kmpiwl" path="res://niveles/botones_intro.tscn" id="4_uu8qn"]
@@ -55,12 +55,21 @@ offset_right = 562.7366
 offset_bottom = 435.77524
 scale = Vector2(1.145724, 1.1621135)
 
+[node name="MiProgreso" parent="MenuBar" instance=ExtResource("4_uu8qn")]
+visible = false
+layout_mode = 1
+offset_left = 19.736572
+offset_top = 443.0
+offset_right = 562.7366
+offset_bottom = 704.0
+scale = Vector2(1.145724, 1.1621135)
+
 [node name="Salir" parent="MenuBar" unique_id=600866338 instance=ExtResource("4_uu8qn")]
 layout_mode = 1
 offset_left = 17.712948
-offset_top = 495.1965
+offset_top = 443.0
 offset_right = 560.71295
-offset_bottom = 756.19653
+offset_bottom = 704.0
 scale = Vector2(1.1485949, 1.1558291)
 
 [node name="Background" type="AudioStreamPlayer2D" parent="." unique_id=1778151466]
@@ -70,4 +79,5 @@ attenuation = 2.07053
 
 [connection signal="pressed" from="MenuBar/Jugar" to="." method="_on_jugar_pressed"]
 [connection signal="pressed" from="MenuBar/Opciones" to="." method="_on_opciones_pressed"]
+[connection signal="pressed" from="MenuBar/MiProgreso" to="." method="_on_mi_progreso_pressed"]
 [connection signal="pressed" from="MenuBar/Salir" to="." method="_on_salir_pressed"]
