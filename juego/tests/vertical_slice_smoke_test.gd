@@ -1726,12 +1726,12 @@ func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	_check(nodes.size() == 30, "[MapaReal] Debe haber 30 nodos. Obtenido: %d" % nodes.size())
 
 	# Verificar sección layout con route_id = RutaCeliaquia1
-	var layout_config: MapLayoutConfig = data.get("layout_config", null) as MapLayoutConfig
-	_check(layout_config != null, "[MapaReal] Debe existir layout_config parseado")
-	if layout_config != null:
+	var parsed_layout_config: MapLayoutConfig = data.get("layout_config", null) as MapLayoutConfig
+	_check(parsed_layout_config != null, "[MapaReal] Debe existir layout_config parseado")
+	if parsed_layout_config != null:
 		_check(
-			layout_config.route_id == "RutaCeliaquia1",
-			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % layout_config.route_id
+			parsed_layout_config.route_id == "RutaCeliaquia1",
+			"[MapaReal] route_id debe ser 'RutaCeliaquia1'. Obtenido: '%s'" % parsed_layout_config.route_id
 		)
 
 	# Ningún nodo debe tener map_position — todos usan la curva
@@ -1885,13 +1885,13 @@ func _test_layout_json_tiene_route_id() -> void:
 	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
 	_check(bool(result.get("ok", false)), "[Layout] CargadorDeMapa carga el mapa")
 	var map_data: Dictionary = result.get("data", {})
-	var layout_config = map_data.get("layout_config", null)
-	_check(layout_config != null, "[Layout] CargadorDeMapa parsea layout_config")
-	if layout_config == null:
+	var parsed_layout_config = map_data.get("layout_config", null)
+	_check(parsed_layout_config != null, "[Layout] CargadorDeMapa parsea layout_config")
+	if parsed_layout_config == null:
 		return
-	_check(not layout_config.route_id.is_empty(), "[Layout] layout_config.route_id no esta vacio")
+	_check(not parsed_layout_config.route_id.is_empty(), "[Layout] layout_config.route_id no esta vacio")
 	_check(
-		layout_config.route_id == "RutaCeliaquia1",
+		parsed_layout_config.route_id == "RutaCeliaquia1",
 		"[Layout] route_id debe ser RutaCeliaquia1"
 	)
 
@@ -1911,15 +1911,15 @@ func _test_layout_json_nodos_sin_map_position() -> void:
 
 func _test_layout_cargador_parsea_layout_config() -> void:
 	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	var layout_config = result.get("data", {}).get("layout_config", null)
-	_check(layout_config != null, "[Layout] layout_config no es null")
-	if layout_config == null:
+	var parsed_layout_config = result.get("data", {}).get("layout_config", null)
+	_check(parsed_layout_config != null, "[Layout] layout_config no es null")
+	if parsed_layout_config == null:
 		return
-	_check(layout_config is MapLayoutConfig, "[Layout] layout_config es MapLayoutConfig")
-	_check(layout_config.is_valid(), "[Layout] layout_config.is_valid() == true")
-	_check(layout_config.start_margin >= 0.0, "[Layout] start_margin >= 0")
-	_check(layout_config.end_margin >= 0.0, "[Layout] end_margin >= 0")
-	_check(layout_config.spacing_factor > 0.0, "[Layout] spacing_factor > 0")
+	_check(parsed_layout_config is MapLayoutConfig, "[Layout] layout_config es MapLayoutConfig")
+	_check(parsed_layout_config.is_valid(), "[Layout] layout_config.is_valid() == true")
+	_check(parsed_layout_config.start_margin >= 0.0, "[Layout] start_margin >= 0")
+	_check(parsed_layout_config.end_margin >= 0.0, "[Layout] end_margin >= 0")
+	_check(parsed_layout_config.spacing_factor > 0.0, "[Layout] spacing_factor > 0")
 
 
 func _test_layout_route_registry_encuentra_ruta() -> void:
@@ -1946,15 +1946,15 @@ func _test_layout_route_registry_encuentra_ruta() -> void:
 
 func _test_layout_path_layout_calcula_30_posiciones() -> void:
 	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	var layout_config = result.get("data", {}).get("layout_config", null)
-	if layout_config == null:
+	var parsed_layout_config = result.get("data", {}).get("layout_config", null)
+	if parsed_layout_config == null:
 		return
 	var nodes_array: Array = result.get("data", {}).get("nodes", []) as Array
 	var curva_test := Curve2D.new()
 	curva_test.add_point(Vector2(0, 0))
 	curva_test.add_point(Vector2(0, 3000))
 	var posiciones: Array[Vector2] = MAP_PATH_LAYOUT_SCRIPT.calculate_positions(
-		curva_test, 30, layout_config
+		curva_test, 30, parsed_layout_config
 	)
 	_check(posiciones.size() == 30, "[Layout] MapPathLayout calcula 30 posiciones para 30 nodos")
 	_check(
@@ -1965,8 +1965,8 @@ func _test_layout_path_layout_calcula_30_posiciones() -> void:
 
 func _test_layout_resolver_calcula_posiciones() -> void:
 	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	var layout_config = result.get("data", {}).get("layout_config", null)
-	if layout_config == null:
+	var parsed_layout_config = result.get("data", {}).get("layout_config", null)
+	if parsed_layout_config == null:
 		return
 	var contenido_test := Node2D.new()
 	var ruta_test := Path2D.new()
@@ -1977,7 +1977,7 @@ func _test_layout_resolver_calcula_posiciones() -> void:
 	ruta_test.curve = curva_test
 	contenido_test.add_child(ruta_test)
 	var posiciones: Array[Vector2] = MAP_NODE_POSITION_RESOLVER_SCRIPT.resolve(
-		contenido_test, layout_config, 30
+		contenido_test, parsed_layout_config, 30
 	)
 	_check(posiciones.size() == 30, "[Layout] MapNodePositionResolver resuelve 30 posiciones")
 	contenido_test.free()
@@ -2114,19 +2114,19 @@ func _test_layout_ruta2_existe_y_tiene_curva() -> void:
 
 func _test_layout_placement_mode_anchors_en_json() -> void:
 	var result := CARGADOR_DE_MAPA_SCRIPT.load_map("res://contenido/mapa/celiaquia_mapa.json")
-	var layout_config: MapLayoutConfig = result.get("data", {}).get("layout_config", null)
+	var parsed_layout_config: MapLayoutConfig = result.get("data", {}).get("layout_config", null)
 	_check(
-		layout_config != null,
+		parsed_layout_config != null,
 		"[Layout] layout_config parseado desde JSON"
 	)
-	if layout_config == null:
+	if parsed_layout_config == null:
 		return
 	_check(
-		layout_config.usa_modo_anchors(),
+		parsed_layout_config.usa_modo_anchors(),
 		"[Layout] placement_mode == 'anchors' en celiaquia_mapa.json"
 	)
 	_check(
-		layout_config.obtener_modo_posicionamiento() == "anchors",
+		parsed_layout_config.obtener_modo_posicionamiento() == "anchors",
 		"[Layout] obtener_modo_posicionamiento() devuelve 'anchors'"
 	)
 
