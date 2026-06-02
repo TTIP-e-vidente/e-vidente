@@ -15,6 +15,8 @@ juego/reports/
 BACKEND/.env
 BACKEND/postgres-data/
 BACKEND/pgdata/
+BACKEND/node_modules/
+BACKEND/dist/
 backend/.env
 backend/postgres-data/
 backend/pgdata/
