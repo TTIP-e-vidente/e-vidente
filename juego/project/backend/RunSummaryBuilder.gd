@@ -14,6 +14,7 @@ static func build(
 	duration_seconds: int,
 ) -> Dictionary:
 	return {
+		"clientRunId": _generate_client_run_id(),
 		"restriction": restriction,
 		"nodeId": node_id,
 		"gameType": game_type,
@@ -26,3 +27,9 @@ static func build(
 		"durationSeconds": duration_seconds,
 		"finishedAt": Time.get_datetime_string_from_system(true),
 	}
+
+
+static func _generate_client_run_id() -> String:
+	var timestamp := Time.get_datetime_string_from_system(true).replace(":", "").replace("-", "")
+	var millis := int(Time.get_unix_time_from_system() * 1000.0)
+	return "run_%s_%d_%d" % [timestamp, millis, randi()]
