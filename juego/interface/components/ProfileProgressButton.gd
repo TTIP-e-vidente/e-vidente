@@ -1,7 +1,7 @@
 @tool
 extends Button
 
-const BACKGROUND_TEXTURE := preload("res://assets-sistema/perfil/perfil-menu.png")
+const BACKGROUND_TEXTURE_PATH := "res://assets-sistema/perfil/perfil-menu.png"
 const BUTTON_MIN_SIZE := Vector2(220.0, 68.0)
 const BACKGROUND_MARGIN := 6.0
 const AVATAR_SCALE_IN_LEFT_TILE := 0.64
@@ -56,7 +56,7 @@ func _asegurar_nodos_visuales() -> void:
 	if _background_sprite != null:
 		_background_sprite.centered = true
 		_background_sprite.z_index = 0
-		_background_sprite.texture = BACKGROUND_TEXTURE
+		_background_sprite.texture = load(BACKGROUND_TEXTURE_PATH) as Texture2D
 
 	if _avatar_sprite == null or not is_instance_valid(_avatar_sprite):
 		_avatar_sprite = get_node_or_null("AvatarPreview") as Sprite2D

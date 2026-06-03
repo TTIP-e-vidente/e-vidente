@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://di3fv2eh00pko"]
 
-[ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
+[ext_resource type="Script" path="res://niveles/selector.gd" id="1_g0ff0"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_fsij2"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_6uvpc"]
 [ext_resource type="PackedScene" uid="uid://d28gt7lkl6ff4" path="res://niveles/botones_con_movimiento.tscn" id="3_fsij2"]

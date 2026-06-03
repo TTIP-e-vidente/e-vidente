@@ -1,17 +1,17 @@
 extends Node2D
 class_name ModeSelector
 
-const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
+const RACHA_SCENE_PATH := "res://interface/components/Racha.tscn"
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
-const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
+const PROFILE_OVERLAY_SCENE_PATH := "res://interface/components/ProfileOverlayPanel.tscn"
 
-const AUTISMO_SELECTOR = preload("res://assets-sistema/selector/autismo-selector.png")
-const CANDADO_SELECTOR = preload("res://assets-sistema/selector/candado-selector.png")
-const CELIAQUIA_SELECTOR = preload("res://assets-sistema/selector/celiaquia-selector.png")
-const DIABETES_SELECTOR = preload("res://assets-sistema/selector/diabetes-selector.png")
-const KETO_SELECTOR = preload("res://assets-sistema/selector/keto-selector.png")
-const VEGAN_GF_SELECTOR = preload("res://assets-sistema/selector/vegan-gf-selector.png")
-const VEGAN_SELECTOR = preload("res://assets-sistema/selector/vegan-selector.png")
+const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
+const CANDADO_SELECTOR_PATH := "res://assets-sistema/selector/candado-selector.png"
+const CELIAQUIA_SELECTOR_PATH := "res://assets-sistema/selector/celiaquia-selector.png"
+const DIABETES_SELECTOR_PATH := "res://assets-sistema/selector/diabetes-selector.png"
+const KETO_SELECTOR_PATH := "res://assets-sistema/selector/keto-selector.png"
+const VEGAN_GF_SELECTOR_PATH := "res://assets-sistema/selector/vegan-gf-selector.png"
+const VEGAN_SELECTOR_PATH := "res://assets-sistema/selector/vegan-selector.png"
 
 const RESUME_FALLBACK_SCENE := "res://niveles/selector.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
@@ -68,12 +68,12 @@ func _ready() -> void:
 	cetogenica.text = "Keto"
 	diabetes.text = "Diabetes"
 	autismo.text = "Autismo"
-	celiaquia_i.texture = CELIAQUIA_SELECTOR
-	veganismo_i.texture = VEGAN_SELECTOR
-	vegan_gf_i.texture = VEGAN_GF_SELECTOR
-	cetogenica_i.texture = KETO_SELECTOR
-	diabetes_i.texture = CANDADO_SELECTOR
-	autismo_i.texture = CANDADO_SELECTOR
+	celiaquia_i.texture = load(CELIAQUIA_SELECTOR_PATH) as Texture2D
+	veganismo_i.texture = load(VEGAN_SELECTOR_PATH) as Texture2D
+	vegan_gf_i.texture = load(VEGAN_GF_SELECTOR_PATH) as Texture2D
+	cetogenica_i.texture = load(KETO_SELECTOR_PATH) as Texture2D
+	diabetes_i.texture = load(CANDADO_SELECTOR_PATH) as Texture2D
+	autismo_i.texture = load(CANDADO_SELECTOR_PATH) as Texture2D
 	
 	GameSceneRouter.request_initial_scene_preload()
 	_reproducir_musica_fondo()
@@ -201,7 +201,10 @@ func _crear_hud_root(hud_layer: CanvasLayer) -> Control:
 
 
 func _agregar_insignia_racha(hud_root: Control) -> void:
-	var racha_badge: Control = RACHA_SCENE.instantiate() as Control
+	var racha_scene: PackedScene = load(RACHA_SCENE_PATH) as PackedScene
+	if racha_scene == null:
+		return
+	var racha_badge: Control = racha_scene.instantiate() as Control
 	if racha_badge == null:
 		return
 
@@ -236,7 +239,10 @@ func _agregar_boton_perfil(hud_root: Control) -> void:
 
 
 func _agregar_superposicion_perfil(hud_root: Control) -> void:
-	_profile_overlay = PROFILE_OVERLAY_SCENE.instantiate() as ProfileOverlayPanel
+	var profile_overlay_scene: PackedScene = load(PROFILE_OVERLAY_SCENE_PATH) as PackedScene
+	if profile_overlay_scene == null:
+		return
+	_profile_overlay = profile_overlay_scene.instantiate() as ProfileOverlayPanel
 	if _profile_overlay == null:
 		return
 	hud_root.add_child(_profile_overlay)
@@ -244,6 +250,7 @@ func _agregar_superposicion_perfil(hud_root: Control) -> void:
 	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_edit_perfil_presionado)
 	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cerrar_solicitado)
 
 
@@ -295,6 +302,13 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_mode_selector(get_tree())
+
+
+func _on_superposicion_logout_presionado() -> void:
+	BackendSession.logout()
+	_profile_overlay.visible = false
+	_profile_toggle_btn.visible = true
+	GameSceneRouter.go_to_main_menu(get_tree())
 
 
 func _abrir_archivero() -> void:

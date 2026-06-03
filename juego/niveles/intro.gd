@@ -5,27 +5,44 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 
 @onready var jugarb: TextureButton = $MenuBar/Jugar
 @onready var opcionesb: TextureButton = $MenuBar/Opciones
+@onready var mi_progresob: TextureButton = $MenuBar/MiProgreso
 @onready var salirb: TextureButton = $MenuBar/Salir
 
 @onready var jugar: Label = $MenuBar/Jugar/Label
 @onready var opciones: Label = $MenuBar/Opciones/Label
+@onready var mi_progreso: Label = $MenuBar/MiProgreso/Label
 @onready var salir: Label = $MenuBar/Salir/Label
 
 @onready var jugari: Sprite2D = $MenuBar/Jugar/imagen
 @onready var opcionesi:Sprite2D = $MenuBar/Opciones/imagen
+@onready var mi_progresoi: Sprite2D = $MenuBar/MiProgreso/imagen
 @onready var saliri: Sprite2D = $MenuBar/Salir/imagen
 
-const COMO_JUGAR := preload ("res://assets-sistema/intro/como-jugar-intro-1.png")
-const JUGAR := preload("res://assets-sistema/intro/play-intro-1.png")
-const SALIR :=preload("res://assets-sistema/intro/salir-intro-1.png")
+const COMO_JUGAR_PATH := "res://assets-sistema/intro/como-jugar-intro-1.png"
+const JUGAR_PATH := "res://assets-sistema/intro/play-intro-1.png"
+const MI_PROGRESO_PATH := "res://assets-sistema/perfil/perfil-menu.png"
+const SALIR_PATH := "res://assets-sistema/intro/salir-intro-1.png"
+const LOGIN_SCENE_PATH := "res://project/auth/Login.tscn"
+const PROFILE_SCENE_PATH := "res://project/player/Profile.tscn"
+const MODE_SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
+const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
+const LOGIN_FLOW_GAME := "game"
+const LOGIN_FLOW_PROFILE := "profile"
 
 
 
 @onready var buttons: Array[TextureButton] = [
 	$MenuBar/Jugar,
 	$MenuBar/Opciones,
+	$MenuBar/MiProgreso,
 	$MenuBar/Salir,
 ]
+
+var _login_overlay: Control = null
+var _login_canvas_layer: CanvasLayer = null
+var _login_flow: String = LOGIN_FLOW_GAME
+var _profile_overlay: Control = null
+var _profile_canvas_layer: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -33,15 +50,120 @@ func _ready() -> void:
 	GameSceneRouter.request_initial_scene_preload()
 	_reproducir_musica_fondo()
 	jugar.text = "Jugar"
+	mi_progreso.text = "Mi progreso"
 	opciones.text = "Cómo jugar?"
 	salir.text = "Salir"
-	jugari.texture = JUGAR
-	opcionesi.texture = COMO_JUGAR
-	saliri.texture = SALIR
+	jugari.texture = load(JUGAR_PATH) as Texture2D
+	opcionesi.texture = load(COMO_JUGAR_PATH) as Texture2D
+	mi_progresoi.texture = load(MI_PROGRESO_PATH) as Texture2D
+	saliri.texture = load(SALIR_PATH) as Texture2D
 
 
 func _on_jugar_pressed() -> void:
+	if BackendSession.is_logged_in():
+		if not BackendSession.has_loaded_account_data():
+			BackendSession.load_account_data() # Carga en background
+		_continuar_a_juego()
+		return
+	_mostrar_login()
+
+
+func _continuar_a_juego() -> void:
 	GameSceneRouter.transition_to_scene(_abrir_modo_selector())
+
+
+func _mostrar_login() -> void:
+	_login_flow = LOGIN_FLOW_GAME
+	_instanciar_login_overlay()
+
+
+func _mostrar_login_para_profile() -> void:
+	_login_flow = LOGIN_FLOW_PROFILE
+	_instanciar_login_overlay()
+
+
+func _instanciar_login_overlay() -> void:
+	if is_instance_valid(_login_overlay):
+		_login_overlay.show()
+		return
+	var login_scene: PackedScene = load(LOGIN_SCENE_PATH) as PackedScene
+	if login_scene == null:
+		push_error("MainMenu: no se pudo cargar Login.tscn")
+		if _login_flow == LOGIN_FLOW_GAME:
+			_continuar_a_juego()
+		return
+	_login_overlay = login_scene.instantiate() as Control
+	if _login_overlay == null:
+		push_error("MainMenu: Login.tscn no tiene root Control")
+		if _login_flow == LOGIN_FLOW_GAME:
+			_continuar_a_juego()
+		return
+	# CanvasLayer garantiza que el overlay ocupe la pantalla completa
+	# independientemente del viewport transform del Node2D padre.
+	_login_canvas_layer = CanvasLayer.new()
+	_login_canvas_layer.layer = 10
+	add_child(_login_canvas_layer)
+	_login_canvas_layer.add_child(_login_overlay)
+	_login_overlay.connect("login_completed", Callable(self, "_on_login_completed"))
+	_login_overlay.connect("play_offline_requested", Callable(self, "_on_play_offline_requested"))
+
+
+func _on_login_completed() -> void:
+	var current_flow := _login_flow
+	_cerrar_login()
+	if current_flow == LOGIN_FLOW_PROFILE:
+		_mostrar_profile()
+		return
+	_continuar_a_juego()
+
+
+func _on_play_offline_requested() -> void:
+	var current_flow := _login_flow
+	_cerrar_login()
+	if current_flow == LOGIN_FLOW_PROFILE:
+		return
+	_continuar_a_juego()
+
+
+func _cerrar_login() -> void:
+	if is_instance_valid(_login_canvas_layer):
+		_login_canvas_layer.queue_free()
+	_login_canvas_layer = null
+	_login_overlay = null
+	_login_flow = LOGIN_FLOW_GAME
+
+
+func _on_mi_progreso_pressed() -> void:
+	if BackendSession.is_logged_in():
+		_mostrar_profile()
+		return
+	_mostrar_login_para_profile()
+
+
+func _mostrar_profile() -> void:
+	if is_instance_valid(_profile_overlay):
+		_profile_overlay.show()
+		return
+	var profile_scene: PackedScene = load(PROFILE_SCENE_PATH) as PackedScene
+	if profile_scene == null:
+		push_error("MainMenu: no se pudo cargar Profile.tscn")
+		return
+	_profile_overlay = profile_scene.instantiate() as Control
+	if _profile_overlay == null:
+		push_error("MainMenu: Profile.tscn no tiene root Control")
+		return
+	_profile_canvas_layer = CanvasLayer.new()
+	_profile_canvas_layer.layer = 10
+	add_child(_profile_canvas_layer)
+	_profile_canvas_layer.add_child(_profile_overlay)
+	_profile_overlay.connect("close_requested", Callable(self, "_cerrar_profile"))
+
+
+func _cerrar_profile() -> void:
+	if is_instance_valid(_profile_canvas_layer):
+		_profile_canvas_layer.queue_free()
+	_profile_canvas_layer = null
+	_profile_overlay = null
 
 
 func _on_opciones_pressed() -> void:
@@ -57,8 +179,8 @@ func _reproducir_musica_fondo() -> void:
 
 
 func _abrir_modo_selector() -> String:
-	return GameSceneRouter.MODE_SELECTOR_SCENE_PATH
+	return MODE_SELECTOR_SCENE_PATH
 
 
 func _abrir_opciones_menu() -> String:
-	return GameSceneRouter.OPTIONS_SCENE_PATH
+	return OPTIONS_SCENE_PATH

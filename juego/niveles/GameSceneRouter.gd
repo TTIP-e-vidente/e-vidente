@@ -263,20 +263,11 @@ static func request_scene_preload(scene_path: String) -> void:
 		return
 	if _preloaded_scenes.has(normalized_scene_path):
 		return
-	if _pending_preload_paths.has(normalized_scene_path):
-		_finalize_scene_preload(normalized_scene_path)
+	var loaded_scene: PackedScene = load(normalized_scene_path) as PackedScene
+	if loaded_scene != null:
+		_preloaded_scenes[normalized_scene_path] = loaded_scene
 		return
-	if ResourceLoader.has_cached(normalized_scene_path):
-		var cached_resource: Resource = load(normalized_scene_path)
-		if cached_resource is PackedScene:
-			_preloaded_scenes[normalized_scene_path] = cached_resource
-		return
-	var request_error: Error = ResourceLoader.load_threaded_request(
-		normalized_scene_path,
-		"PackedScene"
-	)
-	if request_error == OK:
-		_pending_preload_paths[normalized_scene_path] = true
+	push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalized_scene_path)
 
 
 static func request_initial_scene_preload() -> void:

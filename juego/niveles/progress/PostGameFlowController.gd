@@ -64,9 +64,10 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	if hay_mas_juegos:
 		return
 	
+	var stats: Dictionary = {}
 	var elapsed: float = float(resultado.get("elapsed_seconds", -1.0))
 	if elapsed >= 0.0:
-		var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+		stats = Global.obtener_y_limpiar_ultima_finalizacion()
 		if stats.is_empty():
 			stats = {
 				"node_key": node_key,
@@ -81,7 +82,11 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
 	if save_manager != null and save_manager.has_method("guardar_progreso_en_disco"):
 		save_manager.call("guardar_progreso_en_disco")
-	
+
+	# Sincronización backend opcional. Fire-and-forget: local ya guardado,
+	# navegación continuará sin esperar respuesta del servidor.
+	RunSummarySyncAdapter.sync_from_post_game(tree, resultado, stats)
+
 	GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
 
 

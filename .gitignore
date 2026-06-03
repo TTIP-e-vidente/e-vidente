@@ -15,12 +15,17 @@ juego/reports/
 BACKEND/.env
 BACKEND/postgres-data/
 BACKEND/pgdata/
+BACKEND/node_modules/
+BACKEND/dist/
 backend/.env
 backend/postgres-data/
 backend/pgdata/
 
 # Legacy local docs folder
-local-docs/
+docs-local/
+!docs-local/
+docs-local/*
+!docs-local/.gitkeep
 
 # OS and temporary files
 .DS_Store

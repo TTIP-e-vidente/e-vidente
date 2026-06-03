@@ -16,6 +16,7 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var mensaje: Label = $Mensaje
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
+@onready var label_sync_status: Label = $LabelSyncStatus
 
 @onready var stats_1: Container = $CenterContainer/VBoxContainer/StatsContainer
 @onready var stats_2: Container = $CenterContainer/VBoxContainer/StatsContainer2
@@ -28,6 +29,8 @@ const TIEMPO_ICON = preload("res://assets-sistema/final-leccion/tiempo-icon.png"
 const MAP_SCENE := "res://mapas/MapScene.tscn"
 
 const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
+
+var _sync_tween: Tween = null
 
 
 func _formatear_tiempo(segundos_totales: float) -> String:
@@ -81,9 +84,27 @@ func _ready() -> void:
 		tiempo_final
 	)
 
+	# Inicializar feedback de sync
+	if label_sync_status != null:
+		label_sync_status.text = "Guardado localmente"
+		var backend_session = _get_backend_session()
+		if backend_session != null and backend_session.is_logged_in():
+			label_sync_status.text = "Sincronizando..."
+			if not backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
+				backend_session.sync_succeeded.connect(_on_sync_succeeded)
+			if not backend_session.sync_failed.is_connected(_on_sync_failed):
+				backend_session.sync_failed.connect(_on_sync_failed)
+			_sync_tween = create_tween().set_loops()
+			_sync_tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
+			_sync_tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
+
 	# Conectar botón Continuar
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
 		continuar_btn.pressed.connect(continuar_al_mapa)
+
+
+func _exit_tree() -> void:
+	_cleanup_sync_feedback()
 
 
 # Lee la precisión real del resultado. NUNCA inventa 100% por falta de datos:
@@ -114,10 +135,47 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 			audio_normal.play()
 
 
-## Vuelve al mapa con transición. También llamada por el test de humo.
 func continuar_al_mapa() -> void:
 	await TransicionEscenas.change_normal_scene(MAP_SCENE)
 
 
 func _on_continuar_pressed() -> void:
 	pass # Replace with function body.
+
+
+func _on_sync_succeeded(_progress: Dictionary) -> void:
+	if label_sync_status != null:
+		_detener_tween_sync()
+		label_sync_status.text = "Sincronizado con tu cuenta"
+		label_sync_status.modulate.a = 1.0
+
+
+func _on_sync_failed(_reason: String) -> void:
+	if label_sync_status != null:
+		_detener_tween_sync()
+		label_sync_status.text = "Sin conexión: se sincronizará más tarde"
+		label_sync_status.modulate.a = 1.0
+
+
+func _detener_tween_sync() -> void:
+	if _sync_tween != null and is_instance_valid(_sync_tween):
+		_sync_tween.kill()
+	_sync_tween = null
+
+
+func _cleanup_sync_feedback() -> void:
+	_detener_tween_sync()
+
+	var backend_session = _get_backend_session()
+	if backend_session == null:
+		return
+
+	if backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
+		backend_session.sync_succeeded.disconnect(_on_sync_succeeded)
+
+	if backend_session.sync_failed.is_connected(_on_sync_failed):
+		backend_session.sync_failed.disconnect(_on_sync_failed)
+
+
+func _get_backend_session() -> Variant:
+	return get_node_or_null("/root/BackendSession")

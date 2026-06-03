@@ -1,13 +1,13 @@
 extends Control
 class_name ProfileOverlayPanel
 
-const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
-const RUBIK_MAPS_FONT := preload("res://fonts/RubikMaps-Regular.ttf")
+const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 
 signal resume_pressed
 signal save_pressed
 signal edit_profile_pressed
 signal reset_progress_pressed
+signal logout_pressed
 signal close_requested
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
@@ -25,6 +25,7 @@ signal close_requested
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
+@onready var _logout_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/LogoutButton
 @onready var _reset_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/ResetButton
 
 
@@ -34,17 +35,20 @@ func _ready() -> void:
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
 	_guardar_btn.pressed.connect(func(): save_pressed.emit())
 	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
+	if _logout_btn:
+		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reset_progress_pressed.emit())
 	_aplicar_fuentes()
 
 
 func _aplicar_fuentes() -> void:
+	var rubik_font: Font = load(RUBIK_FONT_PATH) as Font
 	for lbl: Label in [
 		_username_label, _email_label, _age_label, _progress_label,
 		_save_status_label, _resume_hint_label, _avatar_label,
 	]:
-		if is_instance_valid(lbl):
-			lbl.add_theme_font_override("font", RUBIK_FONT)
+		if is_instance_valid(lbl) and rubik_font != null:
+			lbl.add_theme_font_override("font", rubik_font)
 
 
 func mostrar_superposicion() -> void:
@@ -94,6 +98,9 @@ func refrescar() -> void:
 	# Refrescar resumen semanal
 	if is_instance_valid(_weekly_summary) and _weekly_summary.has_method("refrescar"):
 		_weekly_summary.call("refrescar")
+		
+	if _logout_btn:
+		_logout_btn.visible = BackendSession.is_logged_in()
 
 
 # --- Helpers ---
