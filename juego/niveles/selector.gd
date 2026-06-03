@@ -250,6 +250,7 @@ func _agregar_superposicion_perfil(hud_root: Control) -> void:
 	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_edit_perfil_presionado)
 	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cerrar_solicitado)
 
 
@@ -301,6 +302,13 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_mode_selector(get_tree())
+
+
+func _on_superposicion_logout_presionado() -> void:
+	BackendSession.logout()
+	_profile_overlay.visible = false
+	_profile_toggle_btn.visible = true
+	GameSceneRouter.go_to_main_menu(get_tree())
 
 
 func _abrir_archivero() -> void:

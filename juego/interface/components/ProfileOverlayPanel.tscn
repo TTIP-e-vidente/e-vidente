@@ -453,6 +453,18 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_edit_btn_pressed")
 layout_mode = 2
 alignment = 2
 
+[node name="LogoutButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow"]
+layout_mode = 2
+flat = true
+theme_override_colors/font_color = Color(0.72, 0.45, 0.15, 0.7)
+theme_override_colors/font_hover_color = Color(0.72, 0.45, 0.15, 1)
+theme_override_font_sizes/font_size = 12
+text = "Cerrar sesión"
+
+[node name="Spacer" type="Control" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="ResetButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow"]
 layout_mode = 2
 flat = true

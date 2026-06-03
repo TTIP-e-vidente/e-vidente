@@ -33,6 +33,7 @@ func _ready() -> void:
 	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_editar_perfil_presionado)
 	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cierre_solicitado)
 	_conectar_senales_save_manager()
 	get_tree().node_added.connect(_on_nodo_arbol_agregado)
@@ -207,6 +208,13 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	GameSceneRouter.go_to_mode_selector(get_tree())
+
+
+func _on_superposicion_logout_presionado() -> void:
+	BackendSession.logout()
+	_profile_overlay.visible = false
+	_profile_button.visible = true
+	GameSceneRouter.go_to_main_menu(get_tree())
 
 
 func _obtener_ruta_escena_actual() -> String:

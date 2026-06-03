@@ -27,6 +27,9 @@ signal close_requested()
 func _ready() -> void:
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonRefresh.pressed.connect(_on_button_refresh_pressed)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonClose.pressed.connect(_on_button_close_pressed)
+	var btn_logout = $CenterContainer/PanelContainer/VBoxContainer/ButtonLogout
+	if btn_logout:
+		btn_logout.pressed.connect(_on_button_logout_pressed)
 
 	_limpiar_labels()
 	
@@ -164,6 +167,11 @@ func _on_button_refresh_pressed() -> void:
 func _on_button_close_pressed() -> void:
 	close_requested.emit()
 	queue_free()
+
+func _on_button_logout_pressed() -> void:
+	BackendSession.logout()
+	_mostrar_sin_sesion()
+	_set_status("Sesión cerrada correctamente. Tocá Cerrar para volver al menú y luego Jugar para loguearte con otra.")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
