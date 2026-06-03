@@ -87,7 +87,7 @@ func _ready() -> void:
 	# Inicializar feedback de sync
 	if label_sync_status != null:
 		label_sync_status.text = "Guardado localmente"
-		var backend_session := _get_backend_session()
+		var backend_session = _get_backend_session()
 		if backend_session != null and backend_session.is_logged_in():
 			label_sync_status.text = "Sincronizando..."
 			if not backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
@@ -166,7 +166,7 @@ func _detener_tween_sync() -> void:
 func _cleanup_sync_feedback() -> void:
 	_detener_tween_sync()
 
-	var backend_session := _get_backend_session()
+	var backend_session = _get_backend_session()
 	if backend_session == null:
 		return
 
