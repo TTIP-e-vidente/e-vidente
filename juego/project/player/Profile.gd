@@ -28,50 +28,81 @@ func _ready() -> void:
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonRefresh.pressed.connect(_on_button_refresh_pressed)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonClose.pressed.connect(_on_button_close_pressed)
 
+	_limpiar_labels()
+	
 	if not BackendSession.is_logged_in():
-		_set_status("No hay sesión activa")
+		_mostrar_sin_sesion()
 		return
 
-	load_profile()
+	if BackendSession.has_loaded_account_data():
+		_pintar_desde_cache()
+	else:
+		_mostrar_cargando()
+		cargar_perfil()
 
 
 # ── Carga de datos ────────────────────────────────────────────────────────────
 
-func load_profile() -> void:
-	_set_status("Cargando...")
-
-	# Llamadas paralelas no son posibles con await secuencial, pero /progress
-	# incluye todo lo que necesitamos, así que solo necesitamos una llamada.
-	var progress_result := await BackendSession.get_progress()
-
-	if not progress_result.get("ok", false):
-		_set_status(
-			"No se pudo cargar el perfil. Podés seguir jugando offline.\n" +
-			"(status %d)" % progress_result.get("status", 0)
-		)
+func cargar_perfil() -> void:
+	if not BackendSession.is_logged_in():
+		_mostrar_sin_sesion()
 		return
 
-	var data: Dictionary = progress_result.get("data", {})
-	_populate(data)
-	_set_status("Perfil actualizado")
+	if BackendSession.has_loaded_account_data():
+		_pintar_desde_cache()
+		return
+
+	_mostrar_cargando()
+
+	var result := await BackendSession.load_account_data()
+
+	if result.get("ok", false):
+		_pintar_desde_cache()
+		return
+
+	_mostrar_offline_o_error(result)
 
 
-func _populate(data: Dictionary) -> void:
+# ── Estados visuales ──────────────────────────────────────────────────────────
+
+func _mostrar_sin_sesion() -> void:
+	_limpiar_labels()
+	_set_status("No hay sesión activa. Iniciá sesión para ver tu progreso online.")
+
+
+func _mostrar_cargando() -> void:
+	_limpiar_labels()
+	_set_status("Cargando progreso...")
+
+
+func _mostrar_offline_o_error(result: Dictionary) -> void:
+	_limpiar_labels()
+	var error_msg := str(result.get("error", "Error desconocido"))
+	_set_status(
+		"Estás offline. El progreso remoto no está disponible.\n" +
+		"Tu progreso local sigue guardado en este dispositivo.\n" +
+		"(Detalle: " + error_msg + ")"
+	)
+
+
+func _pintar_desde_cache() -> void:
+	var user: Dictionary = BackendSession.get_cached_user()
+	var progress: Dictionary = BackendSession.get_cached_progress()
+	
 	# ── user ──
-	var user: Dictionary = data.get("user", {})
 	_label_username.text = "Usuario: " + str(user.get("username", "-"))
 
 	# ── profile (exp_count global) ──
-	var profile: Dictionary = data.get("profile", {})
+	var profile: Dictionary = progress.get("profile", {})
 	var exp_count: int = int(profile.get("exp_count", 0))
 
 	# ── streak ──
-	var streak: Dictionary = data.get("streak", {})
+	var streak: Dictionary = progress.get("streak", {})
 	var current_streak: int = int(streak.get("current_count", 0))
 	var best_streak: int    = int(streak.get("best_count", 0))
 
 	# ── progress (array por restriction) — sumar totales ──
-	var progress_list: Array = data.get("progress", [])
+	var progress_list: Array = progress.get("progress", [])
 	var total_exp: int            = 0
 	var total_games: int          = 0
 	var total_nodes: int          = 0
@@ -85,12 +116,12 @@ func _populate(data: Dictionary) -> void:
 		total_exp = exp_count
 
 	# ── completedNodes (list) ──
-	var completed_nodes: Array = data.get("completedNodes", [])
+	var completed_nodes: Array = progress.get("completedNodes", [])
 	if total_nodes == 0:
 		total_nodes = completed_nodes.size()
 
 	# ── recentGameSessions ──
-	var recent_sessions: Array = data.get("recentGameSessions", [])
+	var recent_sessions: Array = progress.get("recentGameSessions", [])
 
 	# ── Actualizar labels ──
 	_label_exp.text             = "EXP: %d" % total_exp
@@ -99,15 +130,35 @@ func _populate(data: Dictionary) -> void:
 	_label_completed_games.text = "Partidas completadas: %d" % total_games
 	_label_completed_nodes.text = "Nodos completados: %d" % total_nodes
 	_label_recent_sessions.text = "Últimas sesiones: %d" % recent_sessions.size()
+	
+	_set_status("Perfil actualizado.")
+
+
+func _limpiar_labels() -> void:
+	_label_username.text = "Usuario: -"
+	_label_exp.text = "EXP: -"
+	_label_streak.text = "Racha actual: -"
+	_label_best_streak.text = "Mejor racha: -"
+	_label_completed_games.text = "Partidas completadas: -"
+	_label_completed_nodes.text = "Nodos completados: -"
+	_label_recent_sessions.text = "Últimas sesiones: -"
 
 
 # ── Botones ───────────────────────────────────────────────────────────────────
 
 func _on_button_refresh_pressed() -> void:
+	# Forzar la carga ignorando el caché
 	if not BackendSession.is_logged_in():
-		_set_status("No hay sesión activa")
+		_mostrar_sin_sesion()
 		return
-	load_profile()
+		
+	_mostrar_cargando()
+	var result := await BackendSession.load_account_data()
+	
+	if result.get("ok", false):
+		_pintar_desde_cache()
+	else:
+		_mostrar_offline_o_error(result)
 
 
 func _on_button_close_pressed() -> void:

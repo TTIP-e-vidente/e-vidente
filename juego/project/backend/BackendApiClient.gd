@@ -14,7 +14,7 @@ var base_url: String = DEFAULT_BASE_URL
 ## Devuelve { ok, status, data: { token, user: { id, username, ... } } }
 func login(username_or_mail: String, password: String) -> Dictionary:
 	var body := JSON.stringify({
-		"username": username_or_mail,
+		"usernameOrMail": username_or_mail,
 		"password": password,
 	})
 	return await _post("/auth/login", "", body)
@@ -83,6 +83,7 @@ func _send_request(
 	body: String
 ) -> Dictionary:
 	var http := HTTPRequest.new()
+	http.timeout = 3.0
 	add_child(http)
 
 	var start_error := http.request(base_url + endpoint, headers, method, body)

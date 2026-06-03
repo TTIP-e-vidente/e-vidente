@@ -1,6 +1,37 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://project/auth/Login.gd" id="1_login"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.09, 0.105, 0.105, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.55, 0.45, 0.75)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+bg_color = Color(0.18, 0.42, 0.34, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_secondary"]
+bg_color = Color(0.16, 0.17, 0.17, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.38, 0.34, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="Login" type="Control"]
 layout_mode = 3
@@ -20,7 +51,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
-color = Color(0, 0, 0, 0.5)
+color = Color(0, 0, 0, 0.62)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -31,57 +62,60 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(420, 330)
 layout_mode = 2
-custom_minimum_size = Vector2(420, 360)
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
 layout_mode = 2
-theme_override_constants/separation = 14
 theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
+theme_override_constants/margin_top = 22
 theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_bottom = 22
 
-[node name="LabelTitle" type="Label" parent="CenterContainer/PanelContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
 layout_mode = 2
-text = "Iniciar sesión"
-theme_override_font_sizes/font_size = 22
+theme_override_constants/separation = 12
 
-[node name="ButtonLoginAgus" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
+[node name="LabelTitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
+text = "Iniciar sesion"
+theme_override_colors/font_color = Color(0.96, 0.96, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="LabelDescription" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Usaremos la cuenta demo: Agus / 123"
+theme_override_colors/font_color = Color(0.78, 0.78, 0.72, 1)
+autowrap_mode = 3
+
+[node name="LineEditUsernameOrMail" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+visible = false
+placeholder_text = "Usuario o mail"
+
+[node name="LineEditPassword" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+visible = false
+placeholder_text = "Contrasena"
+secret = true
+
+[node name="ButtonLogin" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 text = "Entrar como Agus"
 
-[node name="LineEditUsernameOrMail" type="LineEdit" parent="CenterContainer/PanelContainer/VBoxContainer"]
+[node name="ButtonPlayOffline" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-placeholder_text = "usuario o mail"
-visible = false
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_secondary")
+text = "Jugar sin iniciar sesion"
 
-[node name="LineEditPassword" type="LineEdit" parent="CenterContainer/PanelContainer/VBoxContainer"]
+[node name="LabelStatus" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
-placeholder_text = "contraseña"
-secret = true
-visible = false
-
-[node name="ButtonLogin" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Ingresar"
-visible = false
-
-[node name="ButtonRegisterDemo" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Crear cuenta demo"
-visible = false
-
-[node name="ButtonPlayOffline" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Jugar sin iniciar sesión"
-
-[node name="ButtonMe" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Probar sesión"
-visible = false
-
-[node name="LabelStatus" type="Label" parent="CenterContainer/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Sin sesión"
+text = "Ingresa usuario y contrasena"
+theme_override_colors/font_color = Color(0.95, 0.85, 0.58, 1)
 autowrap_mode = 3

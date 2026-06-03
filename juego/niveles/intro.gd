@@ -61,6 +61,8 @@ func _ready() -> void:
 
 func _on_jugar_pressed() -> void:
 	if BackendSession.is_logged_in():
+		if not BackendSession.has_loaded_account_data():
+			BackendSession.load_account_data() # Carga en background
 		_continuar_a_juego()
 		return
 	_mostrar_login()
