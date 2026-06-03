@@ -315,6 +315,15 @@ Debe probar:
 5. Confirmar que el guardado local ocurre siempre.
 6. Si hay sesión y backend activo, confirmar que se sincroniza.
 
+### Validación manual si no hay Godot CLI
+
+Si `godot`, `godot4` o `godot4.6` no están disponibles en PATH, el smoke automatizado no se puede ejecutar desde terminal. En ese caso, validar desde el editor de Godot:
+
+1. Sin sesión: finalizar una partida y confirmar que la pantalla muestra "Guardado localmente".
+2. Con sesión y backend activo: finalizar una partida y confirmar "Sincronizando..." seguido de "Sincronizado con tu cuenta".
+3. Con sesión y backend apagado: finalizar una partida y confirmar "Sincronizando..." seguido de "Sin conexión: se sincronizará más tarde".
+4. Continuar rápido: presionar "Continuar" antes de que responda el backend y confirmar que no crashea ni bloquea la navegación.
+
 ---
 
 ## Deudas conocidas

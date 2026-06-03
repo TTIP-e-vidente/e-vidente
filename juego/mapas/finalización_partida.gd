@@ -30,6 +30,8 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 
 const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 
+var _sync_tween: Tween = null
+
 
 func _formatear_tiempo(segundos_totales: float) -> String:
 	var s := int(segundos_totales)
@@ -85,20 +87,24 @@ func _ready() -> void:
 	# Inicializar feedback de sync
 	if label_sync_status != null:
 		label_sync_status.text = "Guardado localmente"
-		if BackendSession.is_logged_in():
+		var backend_session := _get_backend_session()
+		if backend_session != null and backend_session.is_logged_in():
 			label_sync_status.text = "Sincronizando..."
-			if not BackendSession.sync_succeeded.is_connected(_on_sync_succeeded):
-				BackendSession.sync_succeeded.connect(_on_sync_succeeded)
-			if not BackendSession.sync_failed.is_connected(_on_sync_failed):
-				BackendSession.sync_failed.connect(_on_sync_failed)
-			var tween = create_tween().set_loops()
-			tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
-			tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
-			label_sync_status.set_meta("sync_tween", tween)
+			if not backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
+				backend_session.sync_succeeded.connect(_on_sync_succeeded)
+			if not backend_session.sync_failed.is_connected(_on_sync_failed):
+				backend_session.sync_failed.connect(_on_sync_failed)
+			_sync_tween = create_tween().set_loops()
+			_sync_tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
+			_sync_tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
 
 	# Conectar botón Continuar
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
 		continuar_btn.pressed.connect(continuar_al_mapa)
+
+
+func _exit_tree() -> void:
+	_cleanup_sync_feedback()
 
 
 # Lee la precisión real del resultado. NUNCA inventa 100% por falta de datos:
@@ -152,7 +158,24 @@ func _on_sync_failed(_reason: String) -> void:
 
 
 func _detener_tween_sync() -> void:
-	if label_sync_status != null and label_sync_status.has_meta("sync_tween"):
-		var t = label_sync_status.get_meta("sync_tween")
-		if t != null and is_instance_valid(t):
-			t.kill()
+	if _sync_tween != null and is_instance_valid(_sync_tween):
+		_sync_tween.kill()
+	_sync_tween = null
+
+
+func _cleanup_sync_feedback() -> void:
+	_detener_tween_sync()
+
+	var backend_session := _get_backend_session()
+	if backend_session == null:
+		return
+
+	if backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
+		backend_session.sync_succeeded.disconnect(_on_sync_succeeded)
+
+	if backend_session.sync_failed.is_connected(_on_sync_failed):
+		backend_session.sync_failed.disconnect(_on_sync_failed)
+
+
+func _get_backend_session() -> Variant:
+	return get_node_or_null("/root/BackendSession")
