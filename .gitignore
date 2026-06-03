@@ -21,11 +21,9 @@ backend/.env
 backend/postgres-data/
 backend/pgdata/
 
-# Legacy local docs folder
+# Ignore docs-local anywhere in the project
 docs-local/
-!docs-local/
-docs-local/*
-!docs-local/.gitkeep
+**/docs-local/
 
 # OS and temporary files
 .DS_Store
