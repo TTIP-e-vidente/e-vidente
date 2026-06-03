@@ -1,3 +1,11 @@
+/**
+ * PROGRESO_RESTRICCION del MER.
+ *
+ * Responsabilidad:
+ * - Guardar y consultar progreso por restricción alimentaria.
+ * - Orquestar HISTORY_GAME y GAME al finalizar una partida.
+ * - Mantener idempotencia mediante clientRunId.
+ */
 import { pool } from '../../config/database';
 import { AppError } from '../../shared/errors/app_error';
 import {
@@ -6,18 +14,22 @@ import {
   parseNumberOrDefault
 } from '../../shared/validation/validators';
 import {
-  PlayerMeResponse,
-  PlayerProgressResponse,
-  SavePlayerProgressResponse,
+  ProgresoRestriccionResponse,
+  SaveProgresoRestriccionResponse,
   toPublicCompletedNode,
-  toPublicGameSession,
-  toPublicPlayerProfile,
-  toPublicPlayerProgress,
-  toPublicPlayerStreak,
+  toPublicProgresoRestriccion,
   toPublicUnlockedContent
-} from './player.mapper';
-import * as playerRepository from './player.repository';
-import { SaveAuthenticatedProgressInput, SaveDevProgressInput } from './player.types';
+} from './progreso-restriccion.mapper';
+import { SaveAuthenticatedProgressInput, SaveDevProgressInput } from './progreso-restriccion.types';
+
+import * as userRepository from '../user/user.repository';
+import * as profileRepository from '../profile/profile.repository';
+import * as streakRepository from '../streak/streak.repository';
+import * as gameRepository from '../game/game.repository';
+import * as progresoRestriccionRepository from './progreso-restriccion.repository';
+import { toPublicProfile } from '../profile/profile.mapper';
+import { toPublicStreak } from '../streak/streak.mapper';
+import { toPublicGame } from '../game/game.mapper';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
@@ -29,7 +41,6 @@ function requiredText(value: unknown, fieldName: string): string {
   if (!isNonEmptyString(value)) {
     throw new PlayerError(400, 'VALIDATION_ERROR', `${fieldName} es requerido`);
   }
-
   return value.trim();
 }
 
@@ -51,7 +62,6 @@ function numberOrDefault(value: unknown, defaultValue: number): number {
   if (Number.isNaN(parsed)) {
     throw new PlayerError(400, 'VALIDATION_ERROR', 'valor numerico invalido');
   }
-
   return parsed;
 }
 
@@ -60,7 +70,6 @@ function normalizeRestriction(value: unknown): string {
   if (!isAllowedRestriction(restriction)) {
     throw new PlayerError(400, 'VALIDATION_ERROR', `restriction invalida: ${restriction}`);
   }
-
   return restriction;
 }
 
@@ -82,57 +91,31 @@ function optionalIsoDate(value: unknown, fieldName: string): string | null {
   return s;
 }
 
-export async function getPlayerMe(userId: string): Promise<PlayerMeResponse> {
+export async function getProgresoRestriccion(userId: string): Promise<ProgresoRestriccionResponse> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const user = await playerRepository.findPublicUserById(userId);
+    const user = await userRepository.findPublicUserById(userId);
     if (!user) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
     }
 
-    const profile = await playerRepository.ensureProfile(client, userId);
-    const streak = await playerRepository.ensureStreak(client, userId, profile.id);
+    const profile = await profileRepository.ensureProfile(client, userId);
+    const streak = await streakRepository.ensureStreak(client, userId, profile.id);
+    const progress = await progresoRestriccionRepository.listProgressByUserId(client, userId);
+    const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, userId);
+    const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, userId);
+    const recentGames = await gameRepository.listRecentGamesByUserId(client, userId);
     await client.query('COMMIT');
 
     return {
       user,
-      profile: toPublicPlayerProfile(profile),
-      streak: toPublicPlayerStreak(streak)
-    };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-export async function getPlayerProgress(userId: string): Promise<PlayerProgressResponse> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const user = await playerRepository.findPublicUserById(userId);
-    if (!user) {
-      throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
-    }
-
-    const profile = await playerRepository.ensureProfile(client, userId);
-    const streak = await playerRepository.ensureStreak(client, userId, profile.id);
-    const progress = await playerRepository.listProgressByUserId(client, userId);
-    const completedNodes = await playerRepository.listCompletedNodesByUserId(client, userId);
-    const unlockedContent = await playerRepository.listUnlockedContentByUserId(client, userId);
-    const recentGameSessions = await playerRepository.listRecentGameSessionsByUserId(client, userId);
-    await client.query('COMMIT');
-
-    return {
-      user,
-      profile: toPublicPlayerProfile(profile),
-      streak: toPublicPlayerStreak(streak),
-      progress: progress.map(toPublicPlayerProgress),
+      profile: toPublicProfile(profile),
+      streak: toPublicStreak(streak),
+      progress: progress.map(toPublicProgresoRestriccion),
       completedNodes: completedNodes.map(toPublicCompletedNode),
       unlockedContent: unlockedContent.map(toPublicUnlockedContent),
-      recentGameSessions: recentGameSessions.map(toPublicGameSession)
+      recentGames: recentGames.map(toPublicGame)
     };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -144,7 +127,7 @@ export async function getPlayerProgress(userId: string): Promise<PlayerProgressR
 
 export async function saveAuthenticatedProgress(
   input: SaveAuthenticatedProgressInput
-): Promise<SavePlayerProgressResponse> {
+): Promise<SaveProgresoRestriccionResponse> {
   const restriction = normalizeRestriction(input.restriction);
   const expToAdd = Math.max(0, Math.trunc(numberOrDefault(input.expToAdd, 0)));
   const nodeId = optionalText(input.nodeId);
@@ -167,14 +150,14 @@ export async function saveAuthenticatedProgress(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const user = await playerRepository.findPublicUserById(input.userId);
+    const user = await userRepository.findPublicUserById(input.userId);
     if (!user) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
     }
 
-    const baseProfile = await playerRepository.ensureProfile(client, input.userId, restriction);
-    const streak = await playerRepository.ensureStreak(client, input.userId, baseProfile.id);
-    const baseProgress = await playerRepository.upsertProgress(
+    const baseProfile = await profileRepository.ensureProfile(client, input.userId, restriction);
+    const streak = await streakRepository.ensureStreak(client, input.userId, baseProfile.id);
+    const baseProgress = await progresoRestriccionRepository.upsertProgress(
       client,
       input.userId,
       baseProfile.id,
@@ -184,16 +167,16 @@ export async function saveAuthenticatedProgress(
     );
 
     if (clientRunId) {
-      const existingSession = await playerRepository.findGameSessionByClientRunId(
+      const existingSession = await gameRepository.findGameByClientRunId(
         client,
         baseProgress.id,
         clientRunId
       );
       if (existingSession) {
-        const updatedProgress = await playerRepository.listProgressByUserId(client, input.userId);
-        const completedNodes = await playerRepository.listCompletedNodesByUserId(client, input.userId);
-        const unlockedContent = await playerRepository.listUnlockedContentByUserId(client, input.userId);
-        const recentGameSessions = await playerRepository.listRecentGameSessionsByUserId(
+        const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
+        const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
+        const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, input.userId);
+        const recentGames = await gameRepository.listRecentGamesByUserId(
           client,
           input.userId
         );
@@ -202,26 +185,26 @@ export async function saveAuthenticatedProgress(
 
         return {
           user,
-          profile: toPublicPlayerProfile(baseProfile),
-          streak: toPublicPlayerStreak(streak),
-          progress: toPublicPlayerProgress(baseProgress),
-          gameSession: toPublicGameSession(existingSession),
+          profile: toPublicProfile(baseProfile),
+          streak: toPublicStreak(streak),
+          progress: toPublicProgresoRestriccion(baseProgress),
+          game: toPublicGame(existingSession),
           completedNode: null,
           summary: {
             user,
-            profile: toPublicPlayerProfile(baseProfile),
-            streak: toPublicPlayerStreak(streak),
-            progress: updatedProgress.map(toPublicPlayerProgress),
+            profile: toPublicProfile(baseProfile),
+            streak: toPublicStreak(streak),
+            progress: updatedProgress.map(toPublicProgresoRestriccion),
             completedNodes: completedNodes.map(toPublicCompletedNode),
             unlockedContent: unlockedContent.map(toPublicUnlockedContent),
-            recentGameSessions: recentGameSessions.map(toPublicGameSession)
+            recentGames: recentGames.map(toPublicGame)
           }
         };
       }
     }
 
-    const profile = await playerRepository.addProfileExp(client, input.userId, expToAdd, restriction);
-    const progress = await playerRepository.upsertProgress(
+    const profile = await profileRepository.addProfileExp(client, input.userId, expToAdd, restriction);
+    const progress = await progresoRestriccionRepository.upsertProgress(
       client,
       input.userId,
       profile.id,
@@ -229,7 +212,7 @@ export async function saveAuthenticatedProgress(
       expToAdd,
       completed ? 1 : 0
     );
-    const gameSession = await playerRepository.insertGameSession(client, {
+    const game = await gameRepository.insertGame(client, {
       userId: input.userId,
       progressId: progress.id,
       gameType,
@@ -246,7 +229,7 @@ export async function saveAuthenticatedProgress(
 
     let completedNode = null;
     if (completed && nodeId) {
-      const upsertResult = await playerRepository.upsertCompletedNode(client, {
+      const upsertResult = await progresoRestriccionRepository.upsertCompletedNode(client, {
         userId: input.userId,
         progressId: progress.id,
         nodeId,
@@ -257,14 +240,14 @@ export async function saveAuthenticatedProgress(
 
       if (upsertResult.wasNew) {
         completedNode = upsertResult.node;
-        await playerRepository.incrementProgressCompletedNodes(client, progress.id);
+        await progresoRestriccionRepository.incrementProgressCompletedNodes(client, progress.id);
       }
     }
 
-    const updatedProgress = await playerRepository.listProgressByUserId(client, input.userId);
-    const completedNodes = await playerRepository.listCompletedNodesByUserId(client, input.userId);
-    const unlockedContent = await playerRepository.listUnlockedContentByUserId(client, input.userId);
-    const recentGameSessions = await playerRepository.listRecentGameSessionsByUserId(
+    const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
+    const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
+    const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, input.userId);
+    const recentGames = await gameRepository.listRecentGamesByUserId(
       client,
       input.userId
     );
@@ -273,19 +256,19 @@ export async function saveAuthenticatedProgress(
 
     return {
       user,
-      profile: toPublicPlayerProfile(profile),
-      streak: toPublicPlayerStreak(streak),
-      progress: toPublicPlayerProgress(progress),
-      gameSession: toPublicGameSession(gameSession),
+      profile: toPublicProfile(profile),
+      streak: toPublicStreak(streak),
+      progress: toPublicProgresoRestriccion(progress),
+      game: toPublicGame(game),
       completedNode: completedNode ? toPublicCompletedNode(completedNode) : null,
       summary: {
         user,
-        profile: toPublicPlayerProfile(profile),
-        streak: toPublicPlayerStreak(streak),
-        progress: updatedProgress.map(toPublicPlayerProgress),
+        profile: toPublicProfile(profile),
+        streak: toPublicStreak(streak),
+        progress: updatedProgress.map(toPublicProgresoRestriccion),
         completedNodes: completedNodes.map(toPublicCompletedNode),
         unlockedContent: unlockedContent.map(toPublicUnlockedContent),
-        recentGameSessions: recentGameSessions.map(toPublicGameSession)
+        recentGames: recentGames.map(toPublicGame)
       }
     };
   } catch (error) {
@@ -296,12 +279,12 @@ export async function saveAuthenticatedProgress(
   }
 }
 
-export async function saveDevProgress(input: SaveDevProgressInput): Promise<SavePlayerProgressResponse> {
+export async function saveDevProgress(input: SaveDevProgressInput): Promise<SaveProgresoRestriccionResponse> {
   const client = await pool.connect();
   let userId: string;
   try {
     await client.query('BEGIN');
-    const user = await playerRepository.upsertDevUser(
+    const user = await userRepository.upsertDevUser(
       client,
       input.username,
       input.name ?? input.username
@@ -332,11 +315,11 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<Save
   });
 }
 
-export async function getDevProgressByUsername(username: string): Promise<PlayerProgressResponse | null> {
+export async function getDevProgressByUsername(username: string): Promise<ProgresoRestriccionResponse | null> {
   const client = await pool.connect();
   let userId: string | null = null;
   try {
-    const user = await playerRepository.findPublicUserByUsername(client, username);
+    const user = await userRepository.findPublicUserByUsername(client, username);
     if (!user) {
       return null;
     }
@@ -345,5 +328,5 @@ export async function getDevProgressByUsername(username: string): Promise<Player
     client.release();
   }
 
-  return userId ? getPlayerProgress(userId) : null;
+  return userId ? getProgresoRestriccion(userId) : null;
 }

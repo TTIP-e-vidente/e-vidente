@@ -7,7 +7,7 @@ import {
   registerController,
   resetPasswordController
 } from './auth.controller';
-import { authenticateToken } from './authenticate_token';
+import { authenticateToken } from '../../shared/middlewares/authenticate-token';
 
 export const authRouter = Router();
 

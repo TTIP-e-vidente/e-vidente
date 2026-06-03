@@ -1,14 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { getUserFromToken } from './auth.service';
-import { PublicUser } from './auth.types';
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: PublicUser;
-    }
-  }
-}
+import { getUserFromToken } from '../../modules/auth/auth.service';
+import '../types/express-auth-user';
 
 export async function authenticateToken(
   request: Request,

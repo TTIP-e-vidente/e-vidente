@@ -1,0 +1,961 @@
+{
+  "tables": [
+    {
+      "table_name": "completed_nodes"
+    },
+    {
+      "table_name": "game_sessions"
+    },
+    {
+      "table_name": "games"
+    },
+    {
+      "table_name": "history_games"
+    },
+    {
+      "table_name": "images"
+    },
+    {
+      "table_name": "password_reset_tokens"
+    },
+    {
+      "table_name": "player_profiles"
+    },
+    {
+      "table_name": "player_progress"
+    },
+    {
+      "table_name": "player_streaks"
+    },
+    {
+      "table_name": "profiles"
+    },
+    {
+      "table_name": "progress_restrictions"
+    },
+    {
+      "table_name": "schema_migrations"
+    },
+    {
+      "table_name": "streaks"
+    },
+    {
+      "table_name": "unlocked_content"
+    },
+    {
+      "table_name": "user_images"
+    },
+    {
+      "table_name": "users"
+    }
+  ],
+  "columns": [
+    {
+      "table_name": "completed_nodes",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "progress_id",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "node_id",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "node_type",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "best_score",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "best_accuracy",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "progress_id",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "game_type",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "node_id",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "accuracy",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "score",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "completed",
+      "data_type": "boolean",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "started_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "correct_answers",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "wrong_answers",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "duration_seconds",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "finished_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "client_run_id",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "games",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "games",
+      "column_name": "history_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "games",
+      "column_name": "game_type",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "games",
+      "column_name": "node_id",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "games",
+      "column_name": "accuracy",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "games",
+      "column_name": "completed",
+      "data_type": "boolean",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "games",
+      "column_name": "score",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "games",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "games",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "progress_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "completed",
+      "data_type": "boolean",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "images",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "images",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "images",
+      "column_name": "image_key",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "images",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "token_hash",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "expires_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "used_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "exp_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "current_restriction",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "restriction_type",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "total_exp",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "completed_nodes_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "completed_games_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "current_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "best_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "last_activity_day",
+      "data_type": "date",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "exp_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "restriction",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "exp_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "id",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "filename",
+      "data_type": "text",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "applied_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "current_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "best_count",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "last_activity_day",
+      "data_type": "date",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "content_id",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "content_type",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "unlocked_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "source",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "progress_id",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "image_key",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "username",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "email",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "users",
+      "column_name": "password_hash",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "users",
+      "column_name": "display_name",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "users",
+      "column_name": "age",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "table_name": "users",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "name",
+      "data_type": "character varying",
+      "is_nullable": "NO"
+    },
+    {
+      "table_name": "users",
+      "column_name": "mail",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "schema_migrations",
+      "column_name": "id",
+      "foreign_table_name": "schema_migrations",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "users",
+      "column_name": "id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "id",
+      "foreign_table_name": "player_profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "player_profiles",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "id",
+      "foreign_table_name": "player_streaks",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "id",
+      "foreign_table_name": "player_progress",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "id",
+      "foreign_table_name": "game_sessions",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "images",
+      "column_name": "id",
+      "foreign_table_name": "images",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "game_sessions",
+      "column_name": "progress_id",
+      "foreign_table_name": "player_progress",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "id",
+      "foreign_table_name": "completed_nodes",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "completed_nodes",
+      "column_name": "progress_id",
+      "foreign_table_name": "player_progress",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "id",
+      "foreign_table_name": "unlocked_content",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "id",
+      "foreign_table_name": "user_images",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "user_images",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "images",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "id",
+      "foreign_table_name": "profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "id",
+      "foreign_table_name": "streaks",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "streaks",
+      "column_name": "profile_id",
+      "foreign_table_name": "profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "id",
+      "foreign_table_name": "progress_restrictions",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "progress_restrictions",
+      "column_name": "profile_id",
+      "foreign_table_name": "profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "id",
+      "foreign_table_name": "history_games",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "history_games",
+      "column_name": "progress_id",
+      "foreign_table_name": "progress_restrictions",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "games",
+      "column_name": "id",
+      "foreign_table_name": "games",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "games",
+      "column_name": "history_id",
+      "foreign_table_name": "history_games",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "id",
+      "foreign_table_name": "password_reset_tokens",
+      "foreign_column_name": "id",
+      "constraint_type": "PRIMARY KEY"
+    },
+    {
+      "table_name": "password_reset_tokens",
+      "column_name": "user_id",
+      "foreign_table_name": "users",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "player_streaks",
+      "column_name": "profile_id",
+      "foreign_table_name": "player_profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "player_progress",
+      "column_name": "profile_id",
+      "foreign_table_name": "player_profiles",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    },
+    {
+      "table_name": "unlocked_content",
+      "column_name": "progress_id",
+      "foreign_table_name": "player_progress",
+      "foreign_column_name": "id",
+      "constraint_type": "FOREIGN KEY"
+    }
+  ]
+}

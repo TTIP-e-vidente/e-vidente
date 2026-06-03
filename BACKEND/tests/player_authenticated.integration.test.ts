@@ -137,7 +137,7 @@ async function run(): Promise<void> {
       true
     );
 
-    const sessions = progressResponse.body.recentGameSessions as JsonObject[];
+    const sessions = progressResponse.body.recentGames as JsonObject[];
     assert.equal(sessions.some((row) => row.node_id === progressPayload.nodeId), true);
 
     const storedResult = await pool.query<{
@@ -255,20 +255,20 @@ async function run(): Promise<void> {
       beforeDuplicateResult.rows[0].completed_games_count
     );
     assert.equal(
-      (duplicateRunSummaryResponse.body.gameSession as JsonObject).clientRunId,
+      (duplicateRunSummaryResponse.body.game as JsonObject).clientRunId,
       fullRunSummaryPayload.clientRunId
     );
 
-    // 3. GET /player/me/progress returns new fields in recentGameSessions
+    // 3. GET /player/me/progress returns new fields in recentGames
     const progressWithNewFieldsResponse = await requestJson(baseUrl, '/player/me/progress', {
       method: 'GET',
       headers
     });
-    const recentSessionsWithNewFields = progressWithNewFieldsResponse.body.recentGameSessions as JsonObject[];
+    const recentSessionsWithNewFields = progressWithNewFieldsResponse.body.recentGames as JsonObject[];
     const storedSessionInResponse = recentSessionsWithNewFields.find(
       (s) => s.node_id === fullContractNodeId
     );
-    assert.ok(storedSessionInResponse, 'session with fullContractNodeId not found in recentGameSessions');
+    assert.ok(storedSessionInResponse, 'session with fullContractNodeId not found in recentGames');
     assert.equal(storedSessionInResponse.correct_answers, 16);
     assert.equal(storedSessionInResponse.wrong_answers, 4);
     assert.equal(storedSessionInResponse.duration_seconds, 120);
