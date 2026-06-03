@@ -1,7 +1,7 @@
-## BackendSessionStorage.gd
-##
-## Persiste y recupera los datos mínimos de sesión backend en disco local.
-## Ruta: user://backend_session.json
+## BackendSessionStorage: sesión en user://
+## Persistencia local de sesión.
+## Guarda token/usuario en user://backend_session.json.
+## No guarda password.
 ##
 ## Qué guarda:   token JWT, username, datos públicos del usuario, timestamp.
 ## Qué NO guarda: password ni ningún dato sensible adicional.

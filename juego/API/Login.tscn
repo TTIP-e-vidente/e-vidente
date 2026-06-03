@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://project/auth/Login.gd" id="1_login"]
+[ext_resource type="Script" path="res://API/Login.gd" id="1_login"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.09, 0.105, 0.105, 0.96)

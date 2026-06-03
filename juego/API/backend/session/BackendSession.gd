@@ -1,5 +1,15 @@
+## BackendSession: fachada sesión/backend
+## Fachada principal entre Godot y el backend.
+## Responsabilidad:
+## - Login / registro / logout.
+## - Guardar token.
+## - Recuperar perfil/progreso.
+## - Exponer save_progress().
+## - Emitir señales de sync.
+## No debe:
+## - Usar HTTPRequest directo.
+## - Tocar reglas de gameplay.
 extends Node
-
 
 # ── Señales públicas ────────────────────────────────────────────────────────
 

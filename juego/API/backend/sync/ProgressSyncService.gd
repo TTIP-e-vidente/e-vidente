@@ -1,3 +1,8 @@
+## ProgressSyncService: sync y retry
+## Servicio de sincronización de progreso.
+## Envía summaries al backend usando BackendSession.
+## Marca pending/synced/failed.
+## Reintenta pendientes al restaurar sesión.
 class_name ProgressSyncService
 extends Node
 

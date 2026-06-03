@@ -1,3 +1,13 @@
+## BackendApiClient: único HTTP
+## Único cliente HTTP del juego.
+## Responsabilidad:
+## - Crear HTTPRequest.
+## - Enviar requests al backend.
+## - Devolver respuestas normalizadas.
+## No debe:
+## - Guardar sesión.
+## - Tocar SaveManager.
+## - Conocer reglas de progreso.
 class_name BackendApiClient
 extends Node
 

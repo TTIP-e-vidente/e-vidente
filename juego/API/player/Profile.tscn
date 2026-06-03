@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://project/player/Profile.gd" id="1_profile"]
+[ext_resource type="Script" path="res://API/player/Profile.gd" id="1_profile"]
 
 [node name="Profile" type="Control"]
 layout_mode = 3

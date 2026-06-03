@@ -1,3 +1,7 @@
+## RunSummarySyncAdapter: conecta post-game con sync
+## Adaptador entre cierre de partida y sincronización backend.
+## Convierte resultado local en RunSummary.
+## Encola el resumen y dispara sync si hay sesión.
 class_name RunSummarySyncAdapter
 extends RefCounted
 

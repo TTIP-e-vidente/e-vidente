@@ -1,3 +1,8 @@
+## RunSummaryBuilder: payload de partida
+## Constructor de resumen de partida.
+## Arma el payload que el backend espera.
+## Agrega clientRunId para evitar duplicados.
+## No hace HTTP y no guarda local.
 class_name RunSummaryBuilder
 extends RefCounted
 

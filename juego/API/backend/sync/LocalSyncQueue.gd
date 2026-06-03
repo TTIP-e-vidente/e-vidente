@@ -1,3 +1,7 @@
+## LocalSyncQueue: pending/synced local
+## Cola local de sincronización.
+## Guarda summaries pending/synced/failed en user://backend_sync_queue.json.
+## Permite reintentos si falla conexión.
 class_name LocalSyncQueue
 extends RefCounted
 

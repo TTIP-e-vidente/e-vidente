@@ -1,3 +1,7 @@
+## AuthSession: token en memoria
+## Sesión autenticada en memoria.
+## Guarda token y username durante la ejecución.
+## No hace HTTP y no escribe en disco.
 class_name AuthSession
 extends RefCounted
 
