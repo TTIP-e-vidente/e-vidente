@@ -63,6 +63,7 @@ async function run(): Promise<void> {
       method: 'POST',
       headers,
       body: JSON.stringify({
+        clientRunId: `smoke_run_${suffix}`,
         restriction: 'CELIAQUIA',
         expToAdd: 10,
         nodeId: `smoke_node_${suffix}`,

@@ -37,6 +37,15 @@ function optionalText(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+function optionalClientRunId(value: unknown): string | null {
+  const clientRunId = optionalText(value);
+  if (clientRunId === null) return null;
+  if (clientRunId.length > 120) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', 'clientRunId debe tener hasta 120 caracteres');
+  }
+  return clientRunId;
+}
+
 function numberOrDefault(value: unknown, defaultValue: number): number {
   const parsed = parseNumberOrDefault(value, defaultValue);
   if (Number.isNaN(parsed)) {
@@ -153,6 +162,7 @@ export async function saveAuthenticatedProgress(
   const wrongAnswers = optionalNonNegativeInt(input.wrongAnswers, 'wrongAnswers');
   const durationSeconds = optionalNonNegativeInt(input.durationSeconds, 'durationSeconds');
   const finishedAt = optionalIsoDate(input.finishedAt, 'finishedAt');
+  const clientRunId = optionalClientRunId(input.clientRunId);
 
   const client = await pool.connect();
   try {
@@ -162,8 +172,55 @@ export async function saveAuthenticatedProgress(
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
     }
 
+    const baseProfile = await playerRepository.ensureProfile(client, input.userId, restriction);
+    const streak = await playerRepository.ensureStreak(client, input.userId, baseProfile.id);
+    const baseProgress = await playerRepository.upsertProgress(
+      client,
+      input.userId,
+      baseProfile.id,
+      restriction,
+      0,
+      0
+    );
+
+    if (clientRunId) {
+      const existingSession = await playerRepository.findGameSessionByClientRunId(
+        client,
+        baseProgress.id,
+        clientRunId
+      );
+      if (existingSession) {
+        const updatedProgress = await playerRepository.listProgressByUserId(client, input.userId);
+        const completedNodes = await playerRepository.listCompletedNodesByUserId(client, input.userId);
+        const unlockedContent = await playerRepository.listUnlockedContentByUserId(client, input.userId);
+        const recentGameSessions = await playerRepository.listRecentGameSessionsByUserId(
+          client,
+          input.userId
+        );
+
+        await client.query('COMMIT');
+
+        return {
+          user,
+          profile: toPublicPlayerProfile(baseProfile),
+          streak: toPublicPlayerStreak(streak),
+          progress: toPublicPlayerProgress(baseProgress),
+          gameSession: toPublicGameSession(existingSession),
+          completedNode: null,
+          summary: {
+            user,
+            profile: toPublicPlayerProfile(baseProfile),
+            streak: toPublicPlayerStreak(streak),
+            progress: updatedProgress.map(toPublicPlayerProgress),
+            completedNodes: completedNodes.map(toPublicCompletedNode),
+            unlockedContent: unlockedContent.map(toPublicUnlockedContent),
+            recentGameSessions: recentGameSessions.map(toPublicGameSession)
+          }
+        };
+      }
+    }
+
     const profile = await playerRepository.addProfileExp(client, input.userId, expToAdd, restriction);
-    const streak = await playerRepository.ensureStreak(client, input.userId, profile.id);
     const progress = await playerRepository.upsertProgress(
       client,
       input.userId,
@@ -183,7 +240,8 @@ export async function saveAuthenticatedProgress(
       correctAnswers,
       wrongAnswers,
       durationSeconds,
-      finishedAt
+      finishedAt,
+      clientRunId
     });
 
     let completedNode = null;
@@ -269,7 +327,8 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<Save
     correctAnswers: input.correctAnswers,
     wrongAnswers: input.wrongAnswers,
     durationSeconds: input.durationSeconds,
-    finishedAt: input.finishedAt
+    finishedAt: input.finishedAt,
+    clientRunId: input.clientRunId
   });
 }
 

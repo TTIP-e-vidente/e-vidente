@@ -48,6 +48,7 @@ export interface PublicGameSession {
   wrong_answers: number | null;
   duration_seconds: number | null;
   finished_at: Date | null;
+  clientRunId: string | null;
 }
 
 export interface PublicCompletedNode {
@@ -113,7 +114,8 @@ export function toPublicGameSession(row: GameSessionRow): PublicGameSession {
     correct_answers: row.correct_answers,
     wrong_answers: row.wrong_answers,
     duration_seconds: row.duration_seconds,
-    finished_at: row.finished_at
+    finished_at: row.finished_at,
+    clientRunId: row.client_run_id
   };
 }
 

@@ -209,6 +209,7 @@ curl http://localhost:3000/player/me/progress \
 
 ```json
 {
+  "clientRunId": "run_20260602T150000_12345",
   "restriction": "CELIAQUIA",
   "expToAdd": 10,
   "nodeId": "demo_node_1",
@@ -223,7 +224,8 @@ curl http://localhost:3000/player/me/progress \
 }
 ```
 
-- Campos opcionales: `correctAnswers`, `wrongAnswers`, `durationSeconds`, `finishedAt`.
+- Campos opcionales: `clientRunId`, `correctAnswers`, `wrongAnswers`, `durationSeconds`, `finishedAt`.
+- `clientRunId`: id unico generado por Godot para una partida local. Si se repite bajo el mismo progreso, el backend responde con el progreso actual sin duplicar `game_sessions`, EXP, `completed_games_count` ni nodos completados.
 - `correctAnswers`, `wrongAnswers`, `durationSeconds`: deben ser `>= 0` si se envían.
 - `finishedAt`: fecha ISO 8601. El backend mantiene además `completed_at` como timestamp de servidor.
 - `completed_games_count` solo incrementa si `completed: true`.
@@ -235,7 +237,7 @@ curl http://localhost:3000/player/me/progress \
 curl -X POST http://localhost:3000/player/me/progress \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer TOKEN" \
-  -d "{\"restriction\":\"CELIAQUIA\",\"expToAdd\":10,\"nodeId\":\"demo_node_1\",\"gameType\":\"quiz\",\"accuracy\":90,\"completed\":true,\"score\":100}"
+  -d "{\"clientRunId\":\"run_demo_1\",\"restriction\":\"CELIAQUIA\",\"expToAdd\":10,\"nodeId\":\"demo_node_1\",\"gameType\":\"quiz\",\"accuracy\":90,\"completed\":true,\"score\":100}"
 ```
 
 ## Endpoints dev

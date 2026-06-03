@@ -90,4 +90,16 @@ stream = ExtResource("7_4j0lp")
 [node name="AudioNormal" type="AudioStreamPlayer2D" parent="." unique_id=1587941963]
 stream = ExtResource("8_j2nsx")
 
+[node name="LabelSyncStatus" type="Label" parent="."]
+offset_left = 376.0
+offset_top = 485.0
+offset_right = 776.0
+offset_bottom = 515.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.7)
+theme_override_fonts/font = ExtResource("4_uokky")
+theme_override_font_sizes/font_size = 18
+text = "Guardado localmente"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [connection signal="pressed" from="Continuar" to="." method="_on_continuar_pressed"]

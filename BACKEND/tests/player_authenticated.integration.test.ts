@@ -164,6 +164,7 @@ async function run(): Promise<void> {
     const fullContractNodeId = `full_contract_node_${suffix}`;
     const finishedAtTimestamp = '2026-06-02T15:00:00.000Z';
     const fullRunSummaryPayload = {
+      clientRunId: `client_run_${suffix}`,
       restriction: 'CELIAQUIA',
       expToAdd: 20,
       nodeId: fullContractNodeId,
@@ -200,6 +201,63 @@ async function run(): Promise<void> {
     assert.equal(storedSessionResult.rows[0].wrong_answers, 4);
     assert.equal(storedSessionResult.rows[0].duration_seconds, 120);
     assert.ok(storedSessionResult.rows[0].finished_at !== null);
+
+    const beforeDuplicateResult = await pool.query<{
+      session_count: string;
+      total_exp: number;
+      completed_games_count: number;
+    }>(
+      `
+        SELECT
+          COUNT(gs.id)::text AS session_count,
+          pp.total_exp,
+          pp.completed_games_count
+        FROM player_progress pp
+        LEFT JOIN game_sessions gs
+          ON gs.progress_id = pp.id AND gs.client_run_id = $3
+        WHERE pp.user_id = (SELECT id FROM users WHERE username = $1)
+          AND pp.restriction_type = $2
+        GROUP BY pp.id, pp.total_exp, pp.completed_games_count;
+      `,
+      [username, 'CELIAQUIA', fullRunSummaryPayload.clientRunId]
+    );
+
+    const duplicateRunSummaryResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(fullRunSummaryPayload)
+    });
+    assert.equal(duplicateRunSummaryResponse.status, 201);
+
+    const afterDuplicateResult = await pool.query<{
+      session_count: string;
+      total_exp: number;
+      completed_games_count: number;
+    }>(
+      `
+        SELECT
+          COUNT(gs.id)::text AS session_count,
+          pp.total_exp,
+          pp.completed_games_count
+        FROM player_progress pp
+        LEFT JOIN game_sessions gs
+          ON gs.progress_id = pp.id AND gs.client_run_id = $3
+        WHERE pp.user_id = (SELECT id FROM users WHERE username = $1)
+          AND pp.restriction_type = $2
+        GROUP BY pp.id, pp.total_exp, pp.completed_games_count;
+      `,
+      [username, 'CELIAQUIA', fullRunSummaryPayload.clientRunId]
+    );
+    assert.equal(afterDuplicateResult.rows[0].session_count, '1');
+    assert.equal(afterDuplicateResult.rows[0].total_exp, beforeDuplicateResult.rows[0].total_exp);
+    assert.equal(
+      afterDuplicateResult.rows[0].completed_games_count,
+      beforeDuplicateResult.rows[0].completed_games_count
+    );
+    assert.equal(
+      (duplicateRunSummaryResponse.body.gameSession as JsonObject).clientRunId,
+      fullRunSummaryPayload.clientRunId
+    );
 
     // 3. GET /player/me/progress returns new fields in recentGameSessions
     const progressWithNewFieldsResponse = await requestJson(baseUrl, '/player/me/progress', {

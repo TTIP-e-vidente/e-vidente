@@ -103,6 +103,7 @@ erDiagram
     uuid id PK
     uuid user_id FK
     uuid progress_id FK
+    varchar client_run_id UK
     varchar game_type
     varchar node_id
     numeric accuracy
@@ -182,6 +183,7 @@ No usar para features nuevas. No se borran hasta una migración controlada futur
 - `PROFILE.id_game` literal no se implementa porque un perfil puede tener muchas partidas; `game_sessions` cuelga de `player_progress`.
 - `HISTORY_GAME` y `GAME` se representan con `game_sessions` para evitar sobrediseño. Una sesión registra historial y resultado en la misma fila.
 - `completed_nodes` y `unlocked_content` usan UNIQUE(progress_id, node_id) y UNIQUE(progress_id, content_id) para permitir que el mismo nodo/contenido exista bajo restricciones distintas del mismo jugador.
+- `game_sessions.client_run_id` permite idempotencia de sincronizacion desde Godot. El indice unico parcial UNIQUE(progress_id, client_run_id) evita duplicar partidas cuando se reintenta una cola local.
 - `player_streaks` mantiene `user_id` por compatibilidad, pero la relación canónica es `profile_id`.
 - `password_reset_tokens` guarda hashes de tokens. No almacena tokens planos.
 

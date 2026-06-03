@@ -16,6 +16,7 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var mensaje: Label = $Mensaje
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
+@onready var label_sync_status: Label = $LabelSyncStatus
 
 @onready var stats_1: Container = $CenterContainer/VBoxContainer/StatsContainer
 @onready var stats_2: Container = $CenterContainer/VBoxContainer/StatsContainer2
@@ -81,6 +82,20 @@ func _ready() -> void:
 		tiempo_final
 	)
 
+	# Inicializar feedback de sync
+	if label_sync_status != null:
+		label_sync_status.text = "Guardado localmente"
+		if BackendSession.is_logged_in():
+			label_sync_status.text = "Sincronizando..."
+			if not BackendSession.sync_succeeded.is_connected(_on_sync_succeeded):
+				BackendSession.sync_succeeded.connect(_on_sync_succeeded)
+			if not BackendSession.sync_failed.is_connected(_on_sync_failed):
+				BackendSession.sync_failed.connect(_on_sync_failed)
+			var tween = create_tween().set_loops()
+			tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
+			tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
+			label_sync_status.set_meta("sync_tween", tween)
+
 	# Conectar botón Continuar
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
 		continuar_btn.pressed.connect(continuar_al_mapa)
@@ -114,10 +129,30 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 			audio_normal.play()
 
 
-## Vuelve al mapa con transición. También llamada por el test de humo.
 func continuar_al_mapa() -> void:
 	await TransicionEscenas.change_normal_scene(MAP_SCENE)
 
 
 func _on_continuar_pressed() -> void:
 	pass # Replace with function body.
+
+
+func _on_sync_succeeded(_progress: Dictionary) -> void:
+	if label_sync_status != null:
+		_detener_tween_sync()
+		label_sync_status.text = "Sincronizado con tu cuenta"
+		label_sync_status.modulate.a = 1.0
+
+
+func _on_sync_failed(_reason: String) -> void:
+	if label_sync_status != null:
+		_detener_tween_sync()
+		label_sync_status.text = "Sin conexión: se sincronizará más tarde"
+		label_sync_status.modulate.a = 1.0
+
+
+func _detener_tween_sync() -> void:
+	if label_sync_status != null and label_sync_status.has_meta("sync_tween"):
+		var t = label_sync_status.get_meta("sync_tween")
+		if t != null and is_instance_valid(t):
+			t.kill()
