@@ -138,7 +138,7 @@ func ejecutar_prueba() -> void:
 
 	await _go_to("res://interface/evidente.tscn", "Splash")
 	await _call_and_expect("_on_ir_presionado", "res://niveles/intro.tscn", "Intro")
-	await _call_and_expect("_on_jugar_pressed", "res://niveles/selector.tscn", "Selector")
+	await _call_login_offline_and_expect_selector()
 	await _call_and_expect("_on_celiaquia_pressed", MAP_SCENE, "Mapa")
 	if not failed:
 		_validar_mapa_cargado()
@@ -778,6 +778,48 @@ func _call_and_expect(
 		return
 	current_scene.callv(method, args)
 	await _wait_for(expected_scene, label)
+
+
+func _call_login_offline_and_expect_selector() -> void:
+	if failed or prueba_finalizada:
+		return
+	_check(current_scene != null, "No hay escena antes de Selector")
+	_check(
+		current_scene != null and current_scene.has_method("_on_jugar_pressed"),
+		"Intro no tiene metodo _on_jugar_pressed"
+	)
+	if failed:
+		return
+	current_scene.call("_on_jugar_pressed")
+	var login_overlay := await _wait_for_login_overlay()
+	_check(login_overlay != null, "Intro deberia mostrar Login antes de jugar sin sesion")
+	if failed:
+		return
+	login_overlay.call("_on_button_play_offline_pressed")
+	await _wait_for("res://niveles/selector.tscn", "Selector")
+
+
+func _wait_for_login_overlay() -> Node:
+	for i in 60:
+		if failed or prueba_finalizada:
+			return null
+		await process_frame
+		var login_overlay := _find_node_with_method(current_scene, "_on_button_play_offline_pressed")
+		if login_overlay != null:
+			return login_overlay
+	return null
+
+
+func _find_node_with_method(node: Node, method: String) -> Node:
+	if node == null:
+		return null
+	if node.has_method(method):
+		return node
+	for child in node.get_children():
+		var found := _find_node_with_method(child, method)
+		if found != null:
+			return found
+	return null
 
 
 func _wait_for(expected_path: String, label: String) -> void:

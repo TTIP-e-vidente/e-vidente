@@ -23,6 +23,9 @@ backend/pgdata/
 
 # Legacy local docs folder
 docs-local/
+!docs-local/
+docs-local/*
+!docs-local/.gitkeep
 
 # OS and temporary files
 .DS_Store
