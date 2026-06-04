@@ -1,9 +1,10 @@
 # Contenido JSON para mensaje en Arrastre
 
+Rutas: carpeta `juego/` (no `project/`). Guía general: [juego/contenido/README](../juego/contenido/README.md).
 
 ## Mapa
 
-El mapa activo esta en `project/contenido/mapa/celiaquia_mapa.json`.
+El mapa activo esta en `juego/contenido/mapa/celiaquia_mapa.json`.
 Cada nodo define una lista `games`.
 
 ```json
@@ -95,7 +96,7 @@ celiaquia_mapa.json (game con objective)
 El mensaje se muestra a través del componente **`DragObjectiveText`**:
 
 ```
-project/interface/components/DragObjectiveText/DragObjectiveText.tscn
+juego/interface/components/DragObjectiveText/DragObjectiveText.tscn
 ```
 
 Es la **única escena que tu compañera de diseño necesita abrir** para cambiar
@@ -116,7 +117,7 @@ DragObjectiveText: Control
 
 ## Completar Palabra
 
-El contenido activo esta en `project/contenido/mapa/completar_palabra.json`.
+El contenido activo esta en `juego/contenido/mapa/completar_palabra.json`.
 Se mantiene el diccionario por id para que el diff sea estable:
 
 ```json

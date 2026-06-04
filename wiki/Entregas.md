@@ -1,6 +1,8 @@
-# 📦 Entregas TTIP
+# Entregas TTIP
 
 Documentación organizada por entrega del proyecto **e-vidente**.
+
+Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 ---
 
@@ -26,3 +28,15 @@ Documentación organizada por entrega del proyecto **e-vidente**.
 | [Arquitectura](Entrega-2-Arquitectura) | Componentes nuevos y flujo actualizado |
 | [Decisiones](Entrega-2-Decisiones) | ADRs y decisiones tomadas |
 | [Evidencia](Entrega-2-Evidencia) | Evidencia de lo entregado |
+| [Contenido JSON](Entrega-2-Contenido-JSON) | Mapa, drag objective, completar palabra |
+
+---
+
+## Entrega 3 (en curso)
+
+| Página | Descripción |
+|--------|-------------|
+| [Resumen](Entrega-3) | Foco y pendientes |
+| [Bitácora E3](Bitacora-Entrega-3) | Cambios cronológicos |
+
+Bitácora completa: [índice](Bitacora) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).

@@ -1,5 +1,7 @@
 # Entrega 2 — E-VIDENTE
 
+> Histórico Entrega 2. Estado hoy: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+
 ## Resumen ejecutivo
 
 En esta iteración se consolidó la estética general del juego y se completaron las funcionalidades de polish y nuevas modalidades planificadas en Entrega 1. Se tomó la Opción A de los próximos pasos: profundizar la experiencia dentro del mapa de Celiaquía antes de abrir infraestructura externa. El foco estuvo en transiciones de escena, renovación gráfica completa, felicitaciones por partida perfecta, mensaje de objetivo en la modalidad Arrastre, incorporación de la modalidad Completar Palabra, un efecto typewriter, y la primera infraestructura de testing automatizado con GdUnit4.

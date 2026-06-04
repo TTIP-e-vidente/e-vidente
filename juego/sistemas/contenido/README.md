@@ -130,7 +130,4 @@ Y deberia usar estos contratos chicos:
 
 ## Tests recomendados
 
-Despues de tocar contenido, correr:
-
-- `vincular_conceptos_scene_test.gd`
-- `vertical_slice_smoke_test.gd`
+Después de tocar contenido, correr `res://tests/vertical_slice_smoke_test.gd` (mapa, vincular, quiz, drag). Ver [tests/README](../../tests/README.md).

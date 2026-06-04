@@ -1,66 +1,42 @@
-# Vincular Conceptos
+# Vincular conceptos
 
-## Que hace
+Modalidad **match**: tarjetas izquierda/derecha, el jugador arma pares y confirma.
 
-Esta mecanica muestra tarjetas de conceptos a la izquierda y a la derecha. El jugador elige una izquierda, luego una derecha, crea vinculos y confirma si las relaciones son correctas.
+**Contenido:** activities en `res://contenido/mapa/vinculaciones.json` (ids referenciados desde `celiaquia_mapa.json`). Guía: [contenido/README](../contenido/README.md).
 
-## Archivo principal
+## Carga de datos (flujo actual)
 
-`vincular_conceptos.gd` orquesta la escena:
+1. El mapa pasa contexto con `activity_id` (o `json_path` legacy).
+2. `NodeContentLoader.gd` carga la activity del pack.
+3. `NodeContentLoader.convertir_vinculacion_a_runtime()` adapta `pairs` al runtime de la escena.
+4. Si falla el pack, puede usar fallback vía `CargadorDeContenidoDeNodo.gd` (no agregar contenido nuevo ahí).
 
-- carga la sesion jugable;
-- carga el JSON con `CargadorDeContenidoDeNodo.gd`;
-- configura tarjetas;
-- maneja seleccion y vinculos;
-- valida respuestas;
-- guarda progreso;
-- continua el flujo posterior del juego.
+`vincular_conceptos.gd` orquesta la escena: sesión, tarjetas, selección, validación, progreso y cierre.
 
-## Tarjeta ConceptoItem
+## Tarjeta (`concept_item.gd`)
 
-`concept_item.gd` guarda el estado minimo de cada tarjeta:
-
-- `concept_id`
-- `texto`
-- `lado`
-- `par_key`
-- `vinculada_con`
-- `tiene_error`
-- `animar_vinculo`
-
-La regla importante es:
+Estado por tarjeta: `concept_id`, `texto`, `lado`, `par_key`, `vinculada_con`, `tiene_error`, `animar_vinculo`.
 
 `es_correcta()` compara `par_key` con la tarjeta vinculada.
 
-## Flujo de lectura
+## Flujo en escena
 
-1. `_ready()` prepara nodos, botones y sesion.
-2. `_cargar_datos_de_vinculacion()` lee el JSON.
-3. `_aplicar_runtime_en_escena()` toma los conceptos y configura la escena.
-4. `_configurar_lado()` carga datos en cada `ConceptoItem`.
-5. `seleccionar_izquierda()` guarda la tarjeta izquierda actual.
-6. `vincular_con_derecha()` crea o reemplaza el vinculo.
-7. `confirmar()` marca aciertos/errores.
-8. `_actualizar_visual()` refresca tarjetas, lineas, botones y areas de click.
-9. `_finalizar_vinculacion()` guarda progreso y pasa al flujo posterior.
+1. `_ready()` — nodos, botones, sesión.
+2. `_cargar_datos_de_vinculacion()` — `NodeContentLoader.load_from_context`.
+3. `_aplicar_runtime_en_escena()` — conceptos en UI.
+4. Selección izquierda → `vincular_con_derecha()` → `confirmar()`.
+5. Reintento: tarjeta WRONG al clic pasa a SELECTED sin resetear la pareja entera (ver bitácora E2).
+6. `_finalizar_vinculacion()` — save y flujo post-juego.
 
-## Como se evita usar dos veces una derecha
+`quitar_vinculo_anterior_de(derecha)` evita usar la misma derecha en dos izquierdas.
 
-Antes de vincular, `quitar_vinculo_anterior_de(derecha)` busca si esa derecha ya estaba usada por otra izquierda y limpia ese vinculo.
+## Qué no tocar sin motivo (demo)
 
-## Que NO tocar antes de demo
+- Guardado, `Global`, `SaveManager`, `PostGameFlowController`.
+- Navegación post-juego y nodos de la escena.
+- Formato de `vinculaciones.json` (alinear con [contenido/README](../contenido/README.md)).
 
-- No tocar guardado.
-- No tocar navegacion post-juego.
-- No tocar `Global`.
-- No tocar `SaveManager`.
-- No tocar `PostGameFlowController`.
-- No cambiar nodos de la escena.
-- No cambiar formato JSON.
-- No crear managers ni Resources nuevos.
+## Validar
 
-## Tests recomendados
-
-- `contenido_vinculacion_json_test.gd`
-- `vincular_conceptos_scene_test.gd`
-- `vertical_slice_smoke_test.gd`
+- Smoke: `res://tests/vertical_slice_smoke_test.gd` (incluye reglas de reintento en vincular).
+- Probar un nodo del mapa cuyo `games` apunte a un id en `vinculaciones.json`.

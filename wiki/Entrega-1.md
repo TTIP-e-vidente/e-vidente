@@ -1,5 +1,7 @@
 # Entrega 1 — E-VIDENTE
 
+> Histórico Entrega 1. Estado hoy: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+
 ## Resumen ejecutivo
 
 En esta iteración se consolidó una demo local más completa y clara de E-VIDENTE. Se trabajó sobre el recorrido del jugador, el mapa, modalidades educativas, feedback de progreso, cierre de lección, dificultad progresiva, audio y estabilidad general. La entrega priorizó que el jugador entienda qué hacer, vea su avance y reciba una experiencia más consistente antes de abrir funcionalidades de infraestructura como backend, autenticación.

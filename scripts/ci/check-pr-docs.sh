@@ -38,7 +38,7 @@ doc_changes="$(
 
 tracking_changes="$(
 	printf '%s\n' "$changed_files" |
-		grep -Ei '^(wiki/bitacora\.md|changelog\.md|docs/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
+		grep -Ei '^(wiki/bitacora(-.*)?\.md|changelog\.md|docs/.*(bitacora|changelog).*\.md|wiki/.*changelog.*\.md)$' || true
 )"
 
 if [ -z "$doc_changes" ]; then
@@ -46,7 +46,7 @@ if [ -z "$doc_changes" ]; then
 fi
 
 if [ -z "$tracking_changes" ]; then
-	report_failure "Este PR no actualiza bitacora ni changelog. Deja trazabilidad en wiki/Bitacora.md, CHANGELOG.md o un archivo equivalente dentro de docs/."
+	report_failure "Este PR no actualiza bitacora ni changelog. Deja trazabilidad en wiki/Bitacora*.md (p. ej. Bitacora-Entrega-3.md), CHANGELOG.md o docs/ equivalente."
 fi
 
 append_summary "### Docs / Tracking"

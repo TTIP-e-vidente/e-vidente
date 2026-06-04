@@ -1,5 +1,7 @@
 # Mapas
 
+Orquestación del tablero y apertura de nodos. **Contenido JSON** (activities, `games`, catálogo): [contenido/README](../contenido/README.md). Estado del repo: [ESTADO-ACTUAL](../../ESTADO-ACTUAL.md).
+
 ## Empeza por aca
 
 La ruta principal para entender el mapa es:

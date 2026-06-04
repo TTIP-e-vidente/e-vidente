@@ -1,6 +1,8 @@
 ﻿# Próximos Pasos
 ## Para Entrega 2
 
+> Planificación original. Backend ya avanzó — [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+
 Ir mejorando de a poco los diseños, movimientos, experiencia a nivel gráfico del juego, pequeños pasos en cada Entrega. 
 
 

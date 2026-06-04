@@ -5,6 +5,8 @@ y porque podés ver el futuro, como un vidente.
 
 si lo tengo que explicar pierde la gracia verdad...?
 
+Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) · JSON: [contenido/README.md](contenido/README.md) · Mapa: [mapas/README.md](mapas/README.md) · Vincular: [vincular/README.md](vincular/README.md)
+
 ## Flujo congelado para demo
 
 El flujo de contenido y mapa queda congelado para demo.
@@ -20,7 +22,7 @@ El flujo de contenido y mapa queda congelado para demo.
 7. El minijuego se ejecuta.
 8. `ContinuidadDePartidaDeNodo` decide si sigue otro game o termino.
 
-- `res://contenido/mapa/celiaquia_mapa.json` define los nodos.
+- `res://contenido/mapa/celiaquia_mapa.json` define los nodos (ver [contenido/README.md](contenido/README.md)).
 - `games` con strings representan activities fijas.
 - `games` con objetos representan requests random por `type` y `difficulty`.
 - `shuffle_games` solo mezcla el orden final de los games resueltos.

@@ -1,0 +1,67 @@
+﻿# --- Secretos y datos locales ---
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Datos locales de DB ---
+BACKEND/postgres-data/
+BACKEND/pgdata/
+backend/postgres-data/
+backend/pgdata/
+postgres-data/
+pgdata/
+
+# --- Godot: caché, imports y metadatos generados ---
+juego/.godot/
+.godot/
+.godot-validation-save/
+*.import
+**/*.uid
+
+# --- Tests / reportes generados ---
+juego/reports/
+coverage/
+reports/
+
+# --- Addons de terceros pesados ---
+juego/addons/gdUnit4/
+
+# --- Backend Node ---
+BACKEND/node_modules/
+BACKEND/dist/
+backend/node_modules/
+backend/dist/
+node_modules/
+dist/
+build/
+
+# --- Frontend / builds ---
+.next/
+out/
+.cache/
+.vite/
+
+# --- Backups de contenido ---
+juego/contenido/backup/
+**/backup/
+**/backups/
+
+# --- OS e IDEs ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+*.temp
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# --- Artefactos de tooling ---
+skills-lock.json

@@ -1,5 +1,7 @@
 # Arquitectura — Entrega 1
 
+> Histórico Entrega 1. Ver [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+
 ## Modelo de Entidades y Relaciones
 
 [Abrir diagrama interactivo MER](mer.html) — *Usa zoom (+/-), rueda del mouse o arrastra para navegar*

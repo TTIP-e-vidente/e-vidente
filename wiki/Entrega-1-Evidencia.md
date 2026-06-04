@@ -15,9 +15,9 @@
 | Bloque | Archivos o módulos relacionados | Estado |
 |---|---|---|
 | Flujo principal | `manager_level.gd`, `MapScene.gd`, `GameSceneRouter.gd`, `libro.gd` | Confirmado por código |
-| Modalidades | `Level.gd`, `pregunta.gd`, `vincular_conceptos.gd`, `modalidades/plato` | Confirmado por código |
-| Progreso y feedback | `sistemas/racha.gd`, barra de progreso, `exp_manager` | Falta confirmar archivo |
-| Cierre de lección | `final-leccion/`, `sonidos/nodo-perfecto` | Falta confirmar archivo |
+| Modalidades | `niveles/nivel_1/Level.gd`, `preguntas/pregunta.gd`, `vincular/vincular_conceptos.gd` | Confirmado por código |
+| Progreso y feedback | `niveles/progress/GameStreakTracker.gd`, `interface/progress_bar.gd`, `SaveManager` | Confirmado por código |
+| Cierre de lección | `mapas/finalizacion_partida.tscn`, `mapas/completo/finalizacion_de_nodo.gd` | Confirmado por código |
 | Estabilidad y contenido | `contenido/catalogos/`, archivos JSON por nodo | Confirmado por código |
 
 

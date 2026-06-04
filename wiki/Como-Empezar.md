@@ -1,76 +1,43 @@
-﻿# 🚀 Getting Started
+﻿# Cómo empezar
 
-Guia corta para iniciar desarrollo sobre e-vidente sin friccion.
+Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
----
+## Requisitos
 
-## 📋 Requisitos previos
+Godot 4.6 · Git · (opcional) Node 20 + Docker para `BACKEND/`
 
-- **Godot:** 4.6 o compatible  
-- **Git:** instalado y configurado  
-- **Acceso:** permisos en el repositorio (push/PR)  
-
-## ⬇️ Clonar y abrir
+## Juego
 
 ```bash
-# 1. Clonar
 git clone https://github.com/TTIP-e-vidente/e-vidente.git
 cd e-vidente
-
-# 2. Abrir en Godot
-# - Abrir Godot Hub o Godot Editor
-# - Project > Import  
-# - Navegar a: project/project.godot
-# - Select Version > Godot 4.2 → Import & Edit
-
-# 3. Godot completara importacion inicial (~1-2 min)
 ```
 
-## 🗂️ Directorio clave
+Importar `juego/project.godot` → F5. No hace falta backend.
 
-| Directorio | Proposito |
-|---|---|
-| `project/` | Juego Godot: escenas, scripts, recursos |
-| `project/interface/` | Escenas y logica de UI |
-| `project/items/` | Datos de alimentos (.tres) |
-| `project/niveles/` | Configuraciones de niveles/escenarios |
-| `project/resources/` | Configuracion general |
-| `wiki/` | Esta documentacion (Markdown) |
-| `.github/workflows/` | Pipeline de CI (GitHub Actions) |
+## Backend
 
-## 🔄 Flujo de trabajo recomendado
-
-```
-1. git checkout -b feature/nombre
-   └─ Crear rama de trabajo
-
-2. [Editar en Godot]
-   └─ Cambios pequenos y testados
-
-3. git add . && git commit -m "Descripcion clara"
-   └─ Si tocaste project/, actualizar wiki/Bitacora.md
-
-4. [Verificar en Godot]
-   └─ Abrir proyecto, revisar que no haya errores criticos
-
-5. git push origin feature/nombre
-   └─ Subir cambios
-
-6. [Abrir PR en GitHub]
-   └─ Describir cambio en la PR
+```bash
+cd BACKEND
+cp .env.example .env
+docker compose up -d
+npm install && npm run setup:dev && npm run dev
 ```
 
-### "Proyecto no importa"
-- Verifica que `project/project.godot` exista
-- Intenta borrar `.godot/` y re-importar
+URL en Godot: `BACKEND/README.md`. Probar: `npm run build && npm test` y con server up `npm run smoke:api`.
 
-### "Error: Missing resources"
-- Ejecutar import forzado: Godot → Project → Tools → Reimport
+## Carpetas útiles
 
-### "Export falla con index.html missing"
-- Revisar `export_presets.cfg` tiene ruta correcta
-- Ver resultado en `build/web` y en `project/export/`
+`juego/interface` · `juego/contenido` · `juego/mapas` · `juego/sistemas/contenido` · `BACKEND` · `wiki`
 
-### "Warning de wiki en CI"
-- Tocaste archivos en `project/` sin cambios en wiki
-- Agregar breve entrada en `wiki/Bitacora.md`
+## Smoke local
+
+```bash
+godot --headless --path juego -s res://tests/vertical_slice_smoke_test.gd
+```
+
+## PR
+
+Rama → commit → push → PR. Trazabilidad: [Bitacora-Entrega-3](Bitacora-Entrega-3). Índice: [Bitacora](Bitacora). Checks: [CI](CI).
+
+**Problemas:** no importa → existe `juego/project.godot`; borrar `juego/.godot/` y reimportar. Recursos rotos → Reimport All. Docs en CI → `wiki/Bitacora*.md` o ESTADO-ACTUAL.
