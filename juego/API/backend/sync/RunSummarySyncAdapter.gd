@@ -1,14 +1,10 @@
-## RunSummarySyncAdapter: conecta post-game con sync
-## Adaptador entre cierre de partida y sincronización backend.
-## Convierte resultado local en RunSummary.
-## Encola el resumen y dispara sync si hay sesión.
 class_name RunSummarySyncAdapter
 extends RefCounted
 
 const LOG_PREFIX := "[BackendSync]"
 
 
-static func sync_from_post_game(
+static func sincronizar_post_partida(
 	tree: SceneTree,
 	resultado: Dictionary,
 	stats: Dictionary
@@ -21,9 +17,9 @@ static func sync_from_post_game(
 	if restriction.is_empty():
 		restriction = "celiaquia"
 
-	var game_type := _leer_game_type(tree, resultado)
+	var game_type := _leer_tipo_juego(tree, resultado)
 	var score := int(stats.get("aciertos", 0))
-	var accuracy := _resolver_accuracy(resultado, stats)
+	var accuracy := _resolver_precision(resultado, stats)
 	var correct_answers := int(stats.get("aciertos", 0))
 	var wrong_answers := int(stats.get("errores", 0))
 	var exp_to_add := int(stats.get("exp_ganada", resultado.get("exp", 0)))
@@ -31,7 +27,7 @@ static func sync_from_post_game(
 	var elapsed := float(stats.get("elapsed_seconds", resultado.get("elapsed_seconds", -1.0)))
 	var duration_seconds := maxi(0, int(elapsed)) if elapsed >= 0.0 else 0
 
-	var summary := RunSummaryBuilder.build(
+	var summary := RunSummaryBuilder.construir(
 		restriction,
 		node_id,
 		game_type,
@@ -43,7 +39,7 @@ static func sync_from_post_game(
 		completed,
 		duration_seconds,
 	)
-	LocalSyncQueue.enqueue_run_summary(summary)
+	LocalSyncQueue.encolar_resumen_partida(summary)
 
 	print(
 		LOG_PREFIX,
@@ -57,27 +53,23 @@ static func sync_from_post_game(
 		" duration_s=", duration_seconds,
 	)
 
-	var backend := tree.root.get_node_or_null("/root/BackendSession")
-	if backend == null:
-		print_debug(LOG_PREFIX, " BackendSession no disponible en el arbol")
-		return
-	if not backend.is_logged_in():
+	if not AuthApi.esta_logueado():
 		print(LOG_PREFIX, " Sin sesion activa, RunSummary queda pending")
 		return
 
-	_sync_queued_summary(backend, summary)
+	_sincronizar_resumen_encolado(summary)
 
 
-static func _sync_queued_summary(backend: Node, summary: Dictionary) -> void:
-	var client_run_id := str(summary.get("clientRunId", "")).strip_edges()
-	var result: Dictionary = await backend.save_progress(summary)
+static func _sincronizar_resumen_encolado(resumen: Dictionary) -> void:
+	var client_run_id := str(resumen.get("clientRunId", "")).strip_edges()
+	var result: Dictionary = await SyncApi.guardar_partida_en_servidor(resumen)
 	if result.get("ok", false):
-		LocalSyncQueue.mark_synced(client_run_id)
+		LocalSyncQueue.marcar_sincronizado(client_run_id)
 		return
-	LocalSyncQueue.mark_failed(client_run_id, str(result.get("error", "Sync fallida")))
+	LocalSyncQueue.marcar_fallido(client_run_id, str(result.get("error", "Sync fallida")))
 
 
-static func _leer_game_type(tree: SceneTree, resultado: Dictionary) -> String:
+static func _leer_tipo_juego(tree: SceneTree, resultado: Dictionary) -> String:
 	var global_node := tree.root.get_node_or_null("/root/Global")
 	if global_node != null and global_node.has_method("obtener_sesion_de_juego"):
 		var session_data := global_node.call("obtener_sesion_de_juego") as Resource
@@ -94,7 +86,7 @@ static func _leer_game_type(tree: SceneTree, resultado: Dictionary) -> String:
 	return "unknown_game"
 
 
-static func _resolver_accuracy(resultado: Dictionary, stats: Dictionary) -> float:
+static func _resolver_precision(resultado: Dictionary, stats: Dictionary) -> float:
 	if stats.has("precision"):
 		return float(stats.get("precision", 0))
 

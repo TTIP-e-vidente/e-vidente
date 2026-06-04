@@ -1,50 +1,40 @@
-## ProgressSyncService: sync y retry
-## Servicio de sincronización de progreso.
-## Envía summaries al backend usando BackendSession.
-## Marca pending/synced/failed.
-## Reintenta pendientes al restaurar sesión.
 class_name ProgressSyncService
 extends Node
 
 signal sync_started()
-
 signal sync_succeeded(progress: Dictionary)
 signal sync_failed(reason: String)
 signal pending_sync_started(count: int)
 signal pending_sync_finished(synced_count: int, failed_count: int)
-
-## Emitida cuando el backend devuelve 401 (token vencido o inválido).
-## La sesión queda borrada automáticamente.
 signal session_expired()
 
 var _api_client: BackendApiClient = null
 var _auth_session: AuthSession = null
-var _is_retrying_pending := false
+var _reintentando_pendientes := false
 
 
-## Inyecta las dependencias. Llamar una sola vez antes de usar sync().
-func setup(api_client: BackendApiClient, auth_session: AuthSession) -> void:
+func configurar(api_client: BackendApiClient, auth_session: AuthSession) -> void:
 	_api_client = api_client
 	_auth_session = auth_session
 
-func sync(run_summary: Dictionary) -> Dictionary:
+
+func sincronizar(resumen_partida: Dictionary) -> Dictionary:
 	if _api_client == null or _auth_session == null:
-		push_error("[ProgressSyncService] setup() no fue llamado antes de sync()")
+		push_error("[ProgressSyncService] configurar() no fue llamado antes de sincronizar()")
 		return {}
 
-	if not _auth_session.is_logged_in():
-		# Modo offline: salir silenciosamente sin romper el flujo
+	if not _auth_session.esta_logueado():
 		return {}
 
 	sync_started.emit()
 
-	var response: Dictionary = await _api_client.save_progress(
-		_auth_session.get_token(),
-		run_summary
+	var response: Dictionary = await _api_client.guardar_progreso(
+		_auth_session.obtener_token(),
+		resumen_partida
 	)
 
 	if response.get("status", 0) == 401:
-		_auth_session.clear_session()
+		_auth_session.limpiar_sesion()
 		session_expired.emit()
 		return response
 
@@ -60,17 +50,17 @@ func sync(run_summary: Dictionary) -> Dictionary:
 	return response
 
 
-func retry_pending(max_items: int = 10) -> void:
+func reintentar_pendientes(max_items: int = 10) -> void:
 	if _api_client == null or _auth_session == null:
 		return
-	if _is_retrying_pending or not _auth_session.is_logged_in():
+	if _reintentando_pendientes or not _auth_session.esta_logueado():
 		return
 
-	_is_retrying_pending = true
-	var pending := LocalSyncQueue.list_pending()
+	_reintentando_pendientes = true
+	var pending := LocalSyncQueue.listar_pendientes()
 	var limit := mini(max_items, pending.size())
 	if limit <= 0:
-		_is_retrying_pending = false
+		_reintentando_pendientes = false
 		return
 
 	pending_sync_started.emit(limit)
@@ -84,25 +74,25 @@ func retry_pending(max_items: int = 10) -> void:
 		if client_run_id.is_empty() or payload.is_empty():
 			continue
 
-		var response: Dictionary = await _api_client.save_progress(
-			_auth_session.get_token(),
+		var response: Dictionary = await _api_client.guardar_progreso(
+			_auth_session.obtener_token(),
 			payload
 		)
 
 		if response.get("status", 0) == 401:
-			_auth_session.clear_session()
+			_auth_session.limpiar_sesion()
 			session_expired.emit()
 			failed_count += 1
-			LocalSyncQueue.mark_failed(client_run_id, "Sesion expirada")
+			LocalSyncQueue.marcar_fallido(client_run_id, "Sesion expirada")
 			break
 
 		if response.get("ok", false):
-			LocalSyncQueue.mark_synced(client_run_id)
+			LocalSyncQueue.marcar_sincronizado(client_run_id)
 			synced_count += 1
 		else:
 			var reason := str(response.get("error", "Sync pendiente fallida"))
-			LocalSyncQueue.mark_failed(client_run_id, reason)
+			LocalSyncQueue.marcar_fallido(client_run_id, reason)
 			failed_count += 1
 
-	_is_retrying_pending = false
+	_reintentando_pendientes = false
 	pending_sync_finished.emit(synced_count, failed_count)

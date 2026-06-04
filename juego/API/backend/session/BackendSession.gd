@@ -1,200 +1,195 @@
-## BackendSession: fachada sesión/backend
-## Fachada principal entre Godot y el backend.
-## Responsabilidad:
-## - Login / registro / logout.
-## - Guardar token.
-## - Recuperar perfil/progreso.
-## - Exponer save_progress().
-## - Emitir señales de sync.
-## No debe:
-## - Usar HTTPRequest directo.
-## - Tocar reglas de gameplay.
+# Autoload interno. Desde el juego usar AuthApi y SyncApi.
 extends Node
 
-# ── Señales públicas ────────────────────────────────────────────────────────
-
-## Reenviadas desde ProgressSyncService
 signal sync_started()
 signal sync_succeeded(progress: Dictionary)
 signal sync_failed(reason: String)
 signal pending_sync_started(count: int)
 signal pending_sync_finished(synced_count: int, failed_count: int)
 signal session_expired()
-
-## Propias de BackendSession
 signal login_succeeded(user: Dictionary)
 signal login_failed(reason: String)
 signal logout_completed()
 signal session_restored(user: Dictionary)
 signal session_restore_failed(reason: String)
 
-
-# ── Dependencias internas ───────────────────────────────────────────────────
-
 var _api: BackendApiClient
 var _auth: AuthSession
 var _sync: ProgressSyncService
-var _current_user: Dictionary = {}
-var _current_progress: Dictionary = {}
+var _usuario_en_cache: Dictionary = {}
+var _progreso_online_en_cache: Dictionary = {}
 
 
 func _ready() -> void:
-	# BackendApiClient y ProgressSyncService deben estar en el árbol porque
-	# BackendApiClient crea HTTPRequest nodes y ProgressSyncService emite señales.
 	_api = BackendApiClient.new()
 	add_child(_api)
 
-	_auth = AuthSession.new()  # RefCounted, no necesita árbol
+	_auth = AuthSession.new()
 
 	_sync = ProgressSyncService.new()
 	add_child(_sync)
-	_sync.setup(_api, _auth)
+	_sync.configurar(_api, _auth)
 
-	# Reenviar señales de ProgressSyncService hacia el exterior
 	_sync.sync_started.connect(func(): sync_started.emit())
 	_sync.sync_succeeded.connect(func(p: Dictionary): sync_succeeded.emit(p))
 	_sync.sync_failed.connect(func(r: String): sync_failed.emit(r))
 	_sync.pending_sync_started.connect(func(c: int): pending_sync_started.emit(c))
 	_sync.pending_sync_finished.connect(func(s: int, f: int): pending_sync_finished.emit(s, f))
-	_sync.session_expired.connect(_on_session_expired)
+	_sync.session_expired.connect(_al_expirar_sesion)
 
-	# Intentar restaurar sesión previa desde disco (deferred: árbol listo)
-	call_deferred("_restore_session_async")
-
-
-# ── Consultas de sesión ─────────────────────────────────────────────────────
-
-func is_logged_in() -> bool:
-	return _auth.is_logged_in()
+	call_deferred("_restaurar_sesion_guardada")
 
 
-func get_token() -> String:
-	return _auth.get_token()
+func esta_logueado() -> bool:
+	return _auth.esta_logueado()
 
 
-func get_username() -> String:
-	return _auth.get_username()
+func obtener_token() -> String:
+	return _auth.obtener_token()
 
 
-func get_cached_user() -> Dictionary:
-	return _current_user
+func obtener_usuario() -> String:
+	return _auth.obtener_usuario()
 
 
-func get_cached_progress() -> Dictionary:
-	return _current_progress
+func obtener_usuario_en_cache() -> Dictionary:
+	return _usuario_en_cache
 
 
-func has_loaded_account_data() -> bool:
-	return not _current_user.is_empty()
+func obtener_progreso_online_en_cache() -> Dictionary:
+	return _progreso_online_en_cache
 
 
-func clear_cached_account_data() -> void:
-	_current_user.clear()
-	_current_progress.clear()
+func tiene_datos_online_en_memoria() -> bool:
+	return not _usuario_en_cache.is_empty()
 
 
-func load_account_data() -> Dictionary:
-	if not is_logged_in():
+func limpiar_cache_online() -> void:
+	_usuario_en_cache.clear()
+	_progreso_online_en_cache.clear()
+
+
+func cargar_datos_online() -> Dictionary:
+	if not esta_logueado():
 		return {
 			"ok": false,
 			"status": 401,
 			"error": "No active session"
 		}
 
-	var me_result := await get_me()
-	if not me_result.get("ok", false):
-		return me_result
+	var resultado_usuario := await obtener_usuario_del_servidor()
+	if not resultado_usuario.get("ok", false):
+		return resultado_usuario
 
-	var progress_result := await get_progress()
-	if not progress_result.get("ok", false):
-		return progress_result
+	var resultado_progreso := await obtener_progreso_del_servidor()
+	if not resultado_progreso.get("ok", false):
+		return resultado_progreso
 
-	var me_data: Dictionary = me_result.get("data", {})
-	var progress_data: Dictionary = progress_result.get("data", {})
+	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
+	var datos_progreso: Dictionary = resultado_progreso.get("data", {})
 
-	_current_user = me_data.get("user", me_data)
-	_current_progress = progress_data
+	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
+	_progreso_online_en_cache = datos_progreso
+	_aplicar_progreso_online_al_save_local()
 
 	return {
 		"ok": true,
 		"status": 200,
-		"user": _current_user,
-		"progress": _current_progress
+		"user": _usuario_en_cache,
+		"progress": _progreso_online_en_cache
 	}
 
 
-# ── Autenticación ───────────────────────────────────────────────────────────
+func verificar_estado_del_servidor() -> Dictionary:
+	var salud_api := await _api.verificar_salud_api()
+	if not salud_api.get("ok", false):
+		return {"ok": false, "phase": "api", "result": salud_api}
+	var salud_db := await _api.verificar_salud_db()
+	if not salud_db.get("ok", false):
+		return {"ok": false, "phase": "db", "result": salud_db}
+	return {"ok": true}
 
-func login(username_or_mail: String, password: String) -> Dictionary:
-	var result := await _api.login(username_or_mail, password)
-	_handle_auth_result(result)
-	return result
+
+func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
+	var listo := await _asegurar_servidor_listo()
+	if not listo.get("ok", false):
+		return listo
+	var resultado := await _api.iniciar_sesion(usuario_o_mail, clave)
+	_procesar_resultado_de_auth(resultado)
+	return resultado
 
 
-## Registro de cuenta nueva.
-## Si el backend devuelve accessToken, establece sesión y emite login_succeeded.
-func register(
-	username: String,
-	name: String,
+func registrar_cuenta(
+	usuario: String,
+	nombre: String,
 	mail: String,
-	password: String,
-	age: int = 0
+	clave: String,
+	edad: Variant = null
 ) -> Dictionary:
-	var result := await _api.register(username, name, mail, password, age)
-	_handle_auth_result(result)
-	return result
+	var listo := await _asegurar_servidor_listo()
+	if not listo.get("ok", false):
+		return listo
+	var resultado := await _api.registrar_cuenta(usuario, nombre, mail, clave, edad)
+	_procesar_resultado_de_auth(resultado)
+	return resultado
 
 
-## GET /auth/me — perfil del usuario autenticado.
-## Si no hay sesión activa, devuelve error 401 sin hacer HTTP.
-func get_me() -> Dictionary:
-	if not _auth.is_logged_in():
+func obtener_usuario_del_servidor() -> Dictionary:
+	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
-	return await _api.get_me(_auth.get_token())
+	return await _api.obtener_mi_usuario(_auth.obtener_token())
 
 
-## GET /player/me/progress — progreso del jugador.
-## Si no hay sesión activa, devuelve error 401 sin hacer HTTP.
-func get_progress() -> Dictionary:
-	if not _auth.is_logged_in():
+func obtener_progreso_del_servidor() -> Dictionary:
+	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
-	return await _api.get_progress(_auth.get_token())
+	return await _api.obtener_progreso(_auth.obtener_token())
 
 
-## POST /player/me/progress — sincroniza un RunSummary al finalizar una partida.
-## Si no hay sesión activa, devuelve error sin lanzar excepción (modo offline).
-## Emite sync_started / sync_succeeded / sync_failed / session_expired.
-func save_progress(run_summary: Dictionary) -> Dictionary:
-	if not _auth.is_logged_in():
+func guardar_progreso_online(resumen_partida: Dictionary) -> Dictionary:
+	if not _auth.esta_logueado():
 		return {"ok": false, "status": 0, "error": "No active session"}
-	return await _sync.sync(run_summary)
+	return await _sync.sincronizar(resumen_partida)
 
 
-## Cierra la sesión en memoria y borra la sesión persistida en disco.
-## No llama al backend (logout es stateless).
-func logout() -> void:
-	_auth.clear_session()
-	BackendSessionStorage.clear_session()
-	_current_user.clear()
-	_current_progress.clear()
+func reintentar_sync_pendiente() -> void:
+	if not _auth.esta_logueado():
+		return
+	_sync.reintentar_pendientes()
+
+
+func cerrar_sesion() -> void:
+	_auth.limpiar_sesion()
+	BackendSessionStorage.borrar_sesion()
+	_usuario_en_cache.clear()
+	_progreso_online_en_cache.clear()
 	logout_completed.emit()
 
 
-# ── Handlers internos ───────────────────────────────────────────────────────
+func _asegurar_servidor_listo() -> Dictionary:
+	var salud_api := await _api.verificar_salud_api()
+	if not salud_api.get("ok", false):
+		var resultado: Dictionary = salud_api.duplicate()
+		resultado["phase"] = "api"
+		return resultado
+	var salud_db := await _api.verificar_salud_db()
+	if not salud_db.get("ok", false):
+		var resultado: Dictionary = salud_db.duplicate()
+		resultado["phase"] = "db"
+		return resultado
+	return {"ok": true}
 
-## Procesa la respuesta de login o register:
-## si contiene accessToken, guarda sesión y emite login_succeeded;
-## de lo contrario emite login_failed.
-func _handle_auth_result(result: Dictionary) -> void:
-	if not result.get("ok", false):
-		var reason: String = result.get(
+
+func _procesar_resultado_de_auth(resultado: Dictionary) -> void:
+	if not resultado.get("ok", false):
+		var motivo: String = resultado.get(
 			"error",
-			"Error del servidor (status %d)" % result.get("status", 0)
+			"Error del servidor (status %d)" % resultado.get("status", 0)
 		)
-		login_failed.emit(reason)
+		login_failed.emit(motivo)
 		return
 
-	var data: Dictionary = result.get("data", {})
+	var data: Dictionary = resultado.get("data", {})
 	var access_token: String = data.get("accessToken", "")
 
 	if access_token.is_empty():
@@ -203,49 +198,55 @@ func _handle_auth_result(result: Dictionary) -> void:
 
 	var user: Dictionary = data.get("user", {})
 	var username: String = user.get("username", "")
-	_auth.set_session(access_token, username)
-	BackendSessionStorage.save_session(access_token, username, user)
+	_usuario_en_cache.clear()
+	_progreso_online_en_cache.clear()
+	_auth.establecer_sesion(access_token, username)
+	BackendSessionStorage.guardar_sesion(access_token, username, user)
 	login_succeeded.emit(user)
-	_sync.retry_pending()
+	_sync.reintentar_pendientes()
 
 
-func _on_session_expired() -> void:
-	_auth.clear_session()
-	BackendSessionStorage.clear_session()
-	_current_user.clear()
-	_current_progress.clear()
+func _al_expirar_sesion() -> void:
+	_auth.limpiar_sesion()
+	BackendSessionStorage.borrar_sesion()
+	_usuario_en_cache.clear()
+	_progreso_online_en_cache.clear()
 	session_expired.emit()
 
 
-## Intenta restaurar una sesión previa guardada en disco.
-## Se ejecuta con call_deferred para no bloquear el arranque del juego.
-## Si el token guardado es inválido, lo limpia silenciosamente.
-func _restore_session_async() -> void:
-	var stored := BackendSessionStorage.load_session()
-	if stored.is_empty():
+func _restaurar_sesion_guardada() -> void:
+	var guardado := BackendSessionStorage.cargar_sesion()
+	if guardado.is_empty():
 		return
 
-	var token := str(stored.get("token", ""))
-	var username := str(stored.get("username", ""))
+	var token := str(guardado.get("token", ""))
+	var username := str(guardado.get("username", ""))
 	if token.is_empty():
-		BackendSessionStorage.clear_session()
+		BackendSessionStorage.borrar_sesion()
 		return
 
-	# Cargar en memoria antes de validar para que get_me() no falle por 401 local
-	_auth.set_session(token, username)
+	_auth.establecer_sesion(token, username)
 
-	var result := await get_me()
-	if result.get("ok", false):
-		var data: Dictionary = result.get("data", {})
+	var resultado := await obtener_usuario_del_servidor()
+	if resultado.get("ok", false):
+		var data: Dictionary = resultado.get("data", {})
 		var user: Dictionary = data.get("user", data)
-		# Actualizar username si el servidor devuelve uno más fresco
-		var fresh_username: String = user.get("username", username)
-		_auth.set_session(token, fresh_username)
-		print("[BackendSession] Sesión restaurada: ", fresh_username)
+		var username_fresco: String = user.get("username", username)
+		_auth.establecer_sesion(token, username_fresco)
+		print("[BackendSession] Sesión restaurada: ", username_fresco)
 		session_restored.emit(user)
-		_sync.retry_pending()
+		await cargar_datos_online()
+		_sync.reintentar_pendientes()
 	else:
 		print("[BackendSession] Token inválido o expirado — limpiando sesión local.")
-		_auth.clear_session()
-		BackendSessionStorage.clear_session()
-		session_restore_failed.emit(str(result.get("error", "Sesión inválida")))
+		_auth.limpiar_sesion()
+		BackendSessionStorage.borrar_sesion()
+		session_restore_failed.emit(str(resultado.get("error", "Sesión inválida")))
+
+
+func _aplicar_progreso_online_al_save_local() -> void:
+	if _usuario_en_cache.is_empty() or _progreso_online_en_cache.is_empty():
+		return
+	if SaveManager == null:
+		return
+	SaveManager.sincronizar_con_cuenta_online(_usuario_en_cache, _progreso_online_en_cache)

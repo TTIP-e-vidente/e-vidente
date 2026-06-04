@@ -1,92 +1,76 @@
-## BackendApiClient: único HTTP
-## Único cliente HTTP del juego.
-## Responsabilidad:
-## - Crear HTTPRequest.
-## - Enviar requests al backend.
-## - Devolver respuestas normalizadas.
-## No debe:
-## - Guardar sesión.
-## - Tocar SaveManager.
-## - Conocer reglas de progreso.
 class_name BackendApiClient
 extends Node
 
 const DEFAULT_BASE_URL := "http://localhost:3000"
 
-## URL base del backend. Modificar antes de hacer llamadas si el servidor
-## corre en otro host o puerto.
 var base_url: String = DEFAULT_BASE_URL
 
 
-# ── Endpoints públicos ──────────────────────────────────────────────────────
+func verificar_salud_api() -> Dictionary:
+	return await _obtener_json("/health", "")
 
-## POST /auth/login
-## Devuelve { ok, status, data: { token, user: { id, username, ... } } }
-func login(username_or_mail: String, password: String) -> Dictionary:
+
+func verificar_salud_db() -> Dictionary:
+	return await _obtener_json("/health/db", "")
+
+
+func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 	var body := JSON.stringify({
-		"usernameOrMail": username_or_mail,
-		"password": password,
+		"usernameOrMail": usuario_o_mail,
+		"password": clave,
 	})
-	return await _post("/auth/login", "", body)
+	return await _enviar_post("/auth/login", "", body)
 
 
-## POST /auth/register
-func register(
-	username: String,
-	name: String,
+func registrar_cuenta(
+	usuario: String,
+	nombre: String,
 	mail: String,
-	password: String,
-	age: int = 0
+	clave: String,
+	edad: Variant = null
 ) -> Dictionary:
-	var body := JSON.stringify({
-		"username": username,
-		"name": name,
+	var payload := {
+		"username": usuario,
+		"name": nombre,
 		"mail": mail,
-		"password": password,
-		"age": age,
-	})
-	return await _post("/auth/register", "", body)
+		"password": clave,
+	}
+	if edad != null:
+		payload["age"] = edad
+	return await _enviar_post("/auth/register", "", JSON.stringify(payload))
 
 
-## GET /auth/me  — requiere token válido
-func get_me(token: String) -> Dictionary:
-	return await _get_json("/auth/me", token)
+func obtener_mi_usuario(token: String) -> Dictionary:
+	return await _obtener_json("/auth/me", token)
 
 
-## POST /player/me/progress  — requiere token válido
-## run_summary debe ser un Dictionary construido con RunSummaryBuilder.build()
-func save_progress(token: String, run_summary: Dictionary) -> Dictionary:
-	var body := JSON.stringify(run_summary)
-	return await _post("/player/me/progress", token, body)
+func guardar_progreso(token: String, resumen_partida: Dictionary) -> Dictionary:
+	var body := JSON.stringify(resumen_partida)
+	return await _enviar_post("/player/me/progress", token, body)
 
 
-## GET /player/me/progress  — requiere token válido
-func get_progress(token: String) -> Dictionary:
-	return await _get_json("/player/me/progress", token)
+func obtener_progreso(token: String) -> Dictionary:
+	return await _obtener_json("/player/me/progress", token)
 
 
-# ── Helpers HTTP internos ───────────────────────────────────────────────────
-
-func _post(endpoint: String, token: String, body: String) -> Dictionary:
-	var headers := _build_headers(token)
-	return await _send_request(HTTPClient.METHOD_POST, endpoint, headers, body)
+func _enviar_post(endpoint: String, token: String, body: String) -> Dictionary:
+	var headers := _armar_headers(token)
+	return await _enviar_peticion(HTTPClient.METHOD_POST, endpoint, headers, body)
 
 
-func _get_json(endpoint: String, token: String) -> Dictionary:
-	var headers := _build_headers(token)
-	return await _send_request(HTTPClient.METHOD_GET, endpoint, headers, "")
+func _obtener_json(endpoint: String, token: String) -> Dictionary:
+	var headers := _armar_headers(token)
+	return await _enviar_peticion(HTTPClient.METHOD_GET, endpoint, headers, "")
 
 
-func _build_headers(token: String) -> PackedStringArray:
+func _armar_headers(token: String) -> PackedStringArray:
 	var headers := PackedStringArray(["Content-Type: application/json"])
 	if not token.is_empty():
 		headers.append("Authorization: Bearer " + token)
 	return headers
 
 
-## Crea un HTTPRequest temporal, dispara la petición y devuelve el resultado
-## parseado. El nodo HTTPRequest se libera al terminar.
-func _send_request(
+func _enviar_peticion(
 	method: HTTPClient.Method,
 	endpoint: String,
 	headers: PackedStringArray,
@@ -105,20 +89,20 @@ func _send_request(
 			"error": "HTTPRequest no pudo iniciarse (error %d)" % start_error,
 		}
 
-	# Espera la señal request_completed (no bloquea el hilo principal)
 	var result: Array = await http.request_completed
 	http.queue_free()
 
-	# result = [result_code, response_code, headers, body_bytes]
 	var result_code: int = result[0]
 	var response_code: int = result[1]
 	var body_bytes: PackedByteArray = result[3]
 
 	if result_code != HTTPRequest.RESULT_SUCCESS:
+		var connection_error := _mensaje_error_conexion(result_code)
 		return {
 			"ok": false,
-			"status": response_code,
-			"error": "Petición fallida (HTTPRequest result_code %d)" % result_code,
+			"status": 0,
+			"result_code": result_code,
+			"error": connection_error,
 		}
 
 	var body_text := body_bytes.get_string_from_utf8()
@@ -134,8 +118,43 @@ func _send_request(
 		}
 
 	var is_ok := response_code >= 200 and response_code < 300
+	var payload: Variant = json.data
+	var error_message := ""
+	var error_code := ""
+	if payload is Dictionary:
+		if not is_ok:
+			error_message = str(payload.get("error", "")).strip_edges()
+			error_code = str(payload.get("code", "")).strip_edges()
+	if not is_ok:
+		print(
+			"[BackendApiClient] %s %s -> HTTP %d: %s"
+			% [_nombre_metodo_http(method), endpoint, response_code, body_text]
+		)
 	return {
 		"ok": is_ok,
 		"status": response_code,
-		"data": json.data,
+		"data": payload,
+		"error": error_message,
+		"code": error_code,
+		"result_code": result_code,
 	}
+
+
+func _mensaje_error_conexion(result_code: int) -> String:
+	match result_code:
+		HTTPRequest.RESULT_CANT_CONNECT:
+			return "No se pudo conectar al servidor"
+		HTTPRequest.RESULT_TIMEOUT:
+			return "Tiempo de espera agotado"
+		_:
+			return "Petición fallida (HTTPRequest result_code %d)" % result_code
+
+
+func _nombre_metodo_http(method: HTTPClient.Method) -> String:
+	match method:
+		HTTPClient.METHOD_GET:
+			return "GET"
+		HTTPClient.METHOD_POST:
+			return "POST"
+		_:
+			return "HTTP"

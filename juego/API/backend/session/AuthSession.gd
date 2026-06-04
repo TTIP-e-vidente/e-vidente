@@ -1,7 +1,3 @@
-## AuthSession: token en memoria
-## Sesión autenticada en memoria.
-## Guarda token y username durante la ejecución.
-## No hace HTTP y no escribe en disco.
 class_name AuthSession
 extends RefCounted
 
@@ -9,29 +5,23 @@ var _token: String = ""
 var _username: String = ""
 
 
-## Devuelve true si hay un token cargado en memoria.
-func is_logged_in() -> bool:
+func esta_logueado() -> bool:
 	return not _token.is_empty()
 
 
-## Devuelve el token JWT actual. Vacío si no hay sesión.
-func get_token() -> String:
+func obtener_token() -> String:
 	return _token
 
 
-## Establece la sesión en memoria.
-## username es opcional; se usa solo para mostrar al jugador.
-func set_session(token: String, username: String = "") -> void:
+func establecer_sesion(token: String, username: String = "") -> void:
 	_token = token
 	_username = username
 
 
-## Borra la sesión de memoria (logout o token expirado).
-func clear_session() -> void:
+func limpiar_sesion() -> void:
 	_token = ""
 	_username = ""
 
 
-## Devuelve el nombre de usuario de la sesión activa. Vacío si no hay sesión.
-func get_username() -> String:
+func obtener_usuario() -> String:
 	return _username

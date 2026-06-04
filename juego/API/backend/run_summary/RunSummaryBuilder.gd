@@ -1,40 +1,35 @@
-## RunSummaryBuilder: payload de partida
-## Constructor de resumen de partida.
-## Arma el payload que el backend espera.
-## Agrega clientRunId para evitar duplicados.
-## No hace HTTP y no guarda local.
 class_name RunSummaryBuilder
 extends RefCounted
 
-static func build(
-	restriction: String,
-	node_id: String,
-	game_type: String,
-	score: int,
-	accuracy: float,
-	correct_answers: int,
-	wrong_answers: int,
-	exp_to_add: int,
-	completed: bool,
-	duration_seconds: int,
+static func construir(
+	restriccion: String,
+	id_nodo: String,
+	tipo_juego: String,
+	puntaje: int,
+	precision: float,
+	respuestas_correctas: int,
+	respuestas_incorrectas: int,
+	exp_a_sumar: int,
+	completado: bool,
+	duracion_segundos: int,
 ) -> Dictionary:
 	return {
-		"clientRunId": _generate_client_run_id(),
-		"restriction": restriction,
-		"nodeId": node_id,
-		"gameType": game_type,
-		"score": score,
-		"accuracy": accuracy,
-		"correctAnswers": correct_answers,
-		"wrongAnswers": wrong_answers,
-		"expToAdd": exp_to_add,
-		"completed": completed,
-		"durationSeconds": duration_seconds,
+		"clientRunId": _generar_id_ejecucion_cliente(),
+		"restriction": restriccion,
+		"nodeId": id_nodo,
+		"gameType": tipo_juego,
+		"score": puntaje,
+		"accuracy": precision,
+		"correctAnswers": respuestas_correctas,
+		"wrongAnswers": respuestas_incorrectas,
+		"expToAdd": exp_a_sumar,
+		"completed": completado,
+		"durationSeconds": duracion_segundos,
 		"finishedAt": Time.get_datetime_string_from_system(true),
 	}
 
 
-static func _generate_client_run_id() -> String:
+static func _generar_id_ejecucion_cliente() -> String:
 	var timestamp := Time.get_datetime_string_from_system(true).replace(":", "").replace("-", "")
 	var millis := int(Time.get_unix_time_from_system() * 1000.0)
 	return "run_%s_%d_%d" % [timestamp, millis, randi()]
