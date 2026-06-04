@@ -18,9 +18,9 @@ const N_POINTS: int = 5
 var _tween: Tween = null
 
 
-func set_progress(new_value: float, animated: bool = false) -> void:
+func establecer_progreso(new_value: float, animated: bool = false) -> void:
 	var clamped_value: float = clampf(new_value, 0.0, 1.0)
-	print_debug("[Star] set_progress percent=", clamped_value)
+	print_debug("[Star] establecer_progreso percent=", clamped_value)
 	if animated:
 		if _tween != null and _tween.is_valid():
 			_tween.kill()

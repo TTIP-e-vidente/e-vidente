@@ -138,26 +138,26 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 	var juego_actual: Dictionary = estado_global.call("obtener_juego_actual_de_partida")
 	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
 	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
-	var save_manager: Node = _get_save_manager(tree)
+	var save_manager: Node = _obtener_save_manager(tree)
 	if activity_id.is_empty() or save_manager == null:
 		return
-	save_manager.call("mark_activity_completed", request_key, activity_id)
+	save_manager.call("marcar_actividad_completada", request_key, activity_id)
 
 
 static func _marcar_activity_actual_jugada(tree: SceneTree, juego_actual: Dictionary) -> void:
 	var request_key: String = str(juego_actual.get("request_key", "")).strip_edges()
 	var activity_id: String = str(juego_actual.get("activity_id", "")).strip_edges()
-	var save_manager: Node = _get_save_manager(tree)
+	var save_manager: Node = _obtener_save_manager(tree)
 	if activity_id.is_empty() or save_manager == null:
 		return
-	if save_manager.has_method("mark_activity_played"):
-		save_manager.call("mark_activity_played", request_key, activity_id)
+	if save_manager.has_method("marcar_actividad_jugada"):
+		save_manager.call("marcar_actividad_jugada", request_key, activity_id)
 
 
 static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary) -> void:
 	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
 	var track_key: String = str(partida_actual.get("clave_pista", "")).strip_edges()
-	var save_manager: Node = _get_save_manager(tree)
+	var save_manager: Node = _obtener_save_manager(tree)
 	if node_key.is_empty() or save_manager == null:
 		return
 	var precision: int = NodoRuntime.calcular_precision(tree)
@@ -174,11 +174,11 @@ static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary)
 		" total_games=",
 		total_games
 	)
-	save_manager.call("save_node_accuracy", node_key, float(precision), completed_games, total_games)
+	save_manager.call("guardar_precision_nodo", node_key, float(precision), completed_games, total_games)
 	print("%s accuracy=%d node=%s" % [LOG_PREFIX_NODE_COMPLETE, precision, node_key])
 
 
-static func _get_save_manager(tree: SceneTree) -> Node:
+static func _obtener_save_manager(tree: SceneTree) -> Node:
 	if tree == null or tree.root == null:
 		return null
 	return tree.root.get_node_or_null("/root/SaveManager")
@@ -189,7 +189,7 @@ static func _registrar_exp_finalizacion(
 	estado_global: Node,
 	partida_actual: Dictionary
 ) -> void:
-	var save_manager: Node = _get_save_manager(tree)
+	var save_manager: Node = _obtener_save_manager(tree)
 	if save_manager == null:
 		return
 	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
@@ -212,20 +212,20 @@ static func _registrar_exp_finalizacion(
 			+ "¿Las modalidades llamaron registrar_resultado_mini_juego()?"
 		)
 
-	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(
+	var precision_ratio: float = NodoProgressionRulesScript.calcular_precision_ratio(
 		aciertos,
 		intentos
 	)
-	var precision_percent: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
+	var precision_percent: int = NodoProgressionRulesScript.calcular_precision(aciertos, intentos)
 
-	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(
+	var exp_ganada: int = NodoProgressionRulesScript.calcular_exp_final(
 		exp_base_total,
 		precision_ratio
 	)
 
 	var total_exp_nuevo: int = 0
-	if save_manager.has_method("add_exp"):
-		total_exp_nuevo = save_manager.call("add_exp", exp_ganada)
+	if save_manager.has_method("sumar_exp"):
+		total_exp_nuevo = save_manager.call("sumar_exp", exp_ganada)
 	print(
 		"%s exp_base=%d precision=%d%% exp_ganada=%d total_exp=%d aciertos=%d errores=%d intentos=%d"
 		% [

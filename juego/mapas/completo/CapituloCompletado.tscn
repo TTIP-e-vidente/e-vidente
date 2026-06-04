@@ -189,4 +189,4 @@ mouse_filter = 2
 texture = ExtResource("5_blob")
 expand_mode = 1
 
-[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" to="." method="_on_continuar_pressed"]
+[connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" to="." method="_on_continuar_presionado"]

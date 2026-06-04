@@ -47,37 +47,37 @@ const SESSION_HISTORY_MAX_PER_REQUEST: int = 6
 static var _save_manager_ref: Node = null
 
 
-static func init_with_save_manager(sm: Node) -> void:
+static func inicializar_con_save_manager(sm: Node) -> void:
 	_save_manager_ref = sm
 
 
-static func reset_session_history() -> void:
+static func reiniciar_historial_sesion() -> void:
 	_session_used_activity_ids_by_request.clear()
 	_last_random_combo_by_node_key.clear()
 
 
 static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
-	if node_data == null or not node_data.is_valid():
+	if node_data == null or not node_data.es_valido():
 		print(LOG_PREFIX, " nodo invalido o sin contenido")
 		return {}
 
 	var dificultad_base: int = obtener_dificultad_base_del_nodo(node_data)
 	var final_games: Array[Dictionary] = []
-	if node_data.has_fixed_games():
+	if node_data.tiene_juegos_fijos():
 		final_games = construir_juegos_fijos(node_data)
 		if final_games.is_empty():
 			push_warning(
 				"ArmadorDePartida: juegos explicitos invalidos en %s. Se usa legacy."
 				% node_data.node_key
 			)
-	elif node_data.uses_random_games():
+	elif node_data.usa_juegos_random():
 		final_games = construir_juegos_random(node_data)
 		if final_games.is_empty():
 			push_warning(
 				"ArmadorDePartida: games random sin candidatos validos en %s."
 				% node_data.node_key
 			)
-	if final_games.is_empty() and not node_data.uses_random_games():
+	if final_games.is_empty() and not node_data.usa_juegos_random():
 		var total_juegos: int = obtener_cantidad_de_juegos_para_nodo(node_data.index)
 		final_games = construir_juegos_para_nodo(node_data, total_juegos)
 	if final_games.is_empty():
@@ -91,7 +91,7 @@ static func construir_plan_de_partida(node_data: MapNodeData) -> Dictionary:
 	if final_games.is_empty():
 		print("[ArmadorDePartida] pool_exhausted node_key=%s reason=all_used" % node_data.node_key)
 		return {}
-	if not _validate_final_game_ids(node_data.node_key, final_games):
+	if not _validar_final_game_ids(node_data.node_key, final_games):
 		print("[ArmadorDePartida] pool_exhausted node_key=%s reason=invalid_plan_ids" % node_data.node_key)
 		return {}
 	print(
@@ -170,19 +170,19 @@ static func construir_juegos_fijos(node_data: MapNodeData) -> Array[Dictionary]:
 
 static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]:
 	var final_games: Array[Dictionary] = []
-	if node_data == null or not node_data.has_random_game_requests():
+	if node_data == null or not node_data.tiene_solicitudes_juegos_random():
 		return final_games
-	var pack_id: String = node_data.get_effective_pack_id()
+	var pack_id: String = node_data.obtener_pack_id_efectivo()
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var previous_combo: Array[String] = _read_last_random_combo(node_data.node_key)
+	var previous_combo: Array[String] = _leer_last_random_combo(node_data.node_key)
 	var selected_game_entries: Array[Dictionary] = []
 	var selected_combo: Array[String] = []
 	for attempt in range(2):
 		selected_game_entries = _select_random_game_entries(node_data, pack_id, rng)
 		if selected_game_entries.is_empty():
 			break
-		selected_combo = _normalize_activity_combo(
+		selected_combo = _normalizar_activity_combo(
 			_extract_activity_ids_from_game_entries(selected_game_entries)
 		)
 		if attempt == 0 and _activity_combos_match(selected_combo, previous_combo):
@@ -235,15 +235,15 @@ static func _select_random_game_entries(
 ) -> Array[Dictionary]:
 	var selected_game_entries: Array[Dictionary] = []
 	var used_types_in_node: Array[String] = []
-	for raw_request in node_data.get_random_game_requests():
+	for raw_request in node_data.obtener_solicitudes_juegos_random():
 		if not raw_request is Dictionary:
 			continue
 		var game_request: Dictionary = raw_request as Dictionary
-		var requested_type: String = NodeContentLoaderScript.normalize_random_game_type(
+		var requested_type: String = NodeContentLoaderScript.normalizar_random_game_type(
 			str(game_request.get("type", "")).strip_edges()
 		)
 		var requested_difficulty: int = int(game_request.get("difficulty", 0))
-		var requested_options_count: int = _read_requested_options_count(
+		var requested_options_count: int = _leer_requested_options_count(
 			game_request,
 			requested_type
 		)
@@ -268,7 +268,7 @@ static func _select_random_game_entries(
 			requested_difficulty,
 			requested_options_count,
 		]
-		var used_history_ids: Array[String] = _read_used_activity_ids(request_key)
+		var used_history_ids: Array[String] = _leer_used_activity_ids(request_key)
 		var candidates_result: Dictionary = _resolve_candidates_with_fallback(
 			pack_id,
 			requested_type,
@@ -288,7 +288,7 @@ static func _select_random_game_entries(
 				available_activity_candidates.size(),
 			]
 		)
-		var session_used_ids: Array[String] = _read_session_used_ids(request_key)
+		var session_used_ids: Array[String] = _leer_session_used_ids(request_key)
 		var candidates_avoiding_session: Array[String] = _filter_out_session_used(
 			available_activity_candidates,
 			session_used_ids
@@ -471,7 +471,7 @@ static func _cargar_nodos_jugables_de_pista(track_key: String) -> Array[MapNodeD
 	if ruta_mapa.is_empty():
 		return []
 
-	var resultado: Dictionary = CargadorMapaScript.load_map(ruta_mapa)
+	var resultado: Dictionary = CargadorMapaScript.cargar_mapa(ruta_mapa)
 	if not bool(resultado.get("ok", false)):
 		return []
 
@@ -556,7 +556,7 @@ static func _elegir_nodo_aleatorio_para_modo(
 static func obtener_dificultad_base_del_nodo(node_data: MapNodeData) -> int:
 	if node_data == null:
 		return DIFICULTAD_FACIL
-	if node_data.has_fixed_games():
+	if node_data.tiene_juegos_fijos():
 		var dificultad_definida: int = int(node_data.difficulty)
 		if dificultad_definida > 0:
 			return _limitar_dificultad(dificultad_definida)
@@ -577,7 +577,7 @@ static func _crear_juego(
 		"type": "drag" if modo == DatosNodoMapaScript.MODE_DRAG_DROP else "",
 		"json_path": node_data.json_path,
 		"activity_id": node_data.activity_id,
-		"pack_id": node_data.get_effective_pack_id(),
+		"pack_id": node_data.obtener_pack_id_efectivo(),
 		"titulo": node_data.title,
 		"dificultad": _limitar_dificultad(dificultad_objetivo),
 		"difficulty": _limitar_dificultad(dificultad_objetivo),
@@ -625,7 +625,7 @@ static func _normalizar_objetivo_de_arrastre(juego: Dictionary) -> void:
 		return
 	var track_key: String = str(juego.get("track_key", "")).strip_edges()
 	var node_key: String = str(juego.get("clave_nodo_de_origen", "")).strip_edges()
-	juego["objective"] = ContentSchemaNormalizerScript.normalize_drag_objective(
+	juego["objective"] = ContentSchemaNormalizerScript.normalizar_drag_objective(
 		juego,
 		track_key,
 		node_key
@@ -707,7 +707,7 @@ static func _prepare_fixed_game_entries(node_data: MapNodeData) -> Array[Diction
 	return _build_final_game_entries(
 		node_data.node_key,
 		node_data.shuffle_games,
-		node_data.get_fixed_games()
+		node_data.obtener_juegos_fijos()
 	)
 
 
@@ -786,7 +786,7 @@ static func _resolve_candidates_with_fallback(
 	used_history_ids: Array[String]
 ) -> Dictionary:
 	var total_candidates: int = 0
-	var raw_candidates: Array[String] = NodeContentLoaderScript.get_activity_candidates(
+	var raw_candidates: Array[String] = NodeContentLoaderScript.obtener_candidatos_actividad(
 		pack_id, requested_type, requested_difficulty, requested_options_count
 	)
 	total_candidates += raw_candidates.size()
@@ -798,7 +798,7 @@ static func _resolve_candidates_with_fallback(
 	if not candidates.is_empty():
 		return {"candidates": candidates, "fallback_reason": "", "total_candidates": total_candidates}
 	if requested_options_count > 0:
-		raw_candidates = NodeContentLoaderScript.get_activity_candidates(
+		raw_candidates = NodeContentLoaderScript.obtener_candidatos_actividad(
 			pack_id, requested_type, requested_difficulty
 		)
 		total_candidates += raw_candidates.size()
@@ -813,7 +813,7 @@ static func _resolve_candidates_with_fallback(
 				"fallback_reason": "without_options_count",
 				"total_candidates": total_candidates,
 			}
-		raw_candidates = NodeContentLoaderScript.get_activity_candidates_near(
+		raw_candidates = NodeContentLoaderScript.obtener_candidatos_actividad_near(
 			pack_id, requested_type, requested_difficulty, requested_options_count
 		)
 		total_candidates += raw_candidates.size()
@@ -828,7 +828,7 @@ static func _resolve_candidates_with_fallback(
 				"fallback_reason": "near_difficulty_with_options_count",
 				"total_candidates": total_candidates,
 			}
-	raw_candidates = NodeContentLoaderScript.get_activity_candidates_near(
+	raw_candidates = NodeContentLoaderScript.obtener_candidatos_actividad_near(
 		pack_id, requested_type, requested_difficulty
 	)
 	total_candidates += raw_candidates.size()
@@ -860,29 +860,29 @@ static func _filter_out_session_used(
 	return filtered
 
 
-static func _read_used_activity_ids(request_key: String) -> Array[String]:
+static func _leer_used_activity_ids(request_key: String) -> Array[String]:
 	var used_ids: Array[String] = []
 	if _save_manager_ref == null:
 		return used_ids
-	if _save_manager_ref.has_method("get_all_used_activity_ids"):
+	if _save_manager_ref.has_method("obtener_todos_ids_actividades_usadas"):
 		return _merge_activity_ids(
 			used_ids,
-			_save_manager_ref.call("get_all_used_activity_ids")
+			_save_manager_ref.call("obtener_todos_ids_actividades_usadas")
 		)
-	if _save_manager_ref.has_method("get_played_activity_ids"):
+	if _save_manager_ref.has_method("obtener_ids_actividades_jugadas"):
 		used_ids = _merge_activity_ids(
 			used_ids,
-			_save_manager_ref.call("get_played_activity_ids")
+			_save_manager_ref.call("obtener_ids_actividades_jugadas")
 		)
-	if _save_manager_ref.has_method("get_all_completed_activity_ids"):
+	if _save_manager_ref.has_method("obtener_todos_ids_actividades_completadas"):
 		used_ids = _merge_activity_ids(
 			used_ids,
-			_save_manager_ref.call("get_all_completed_activity_ids")
+			_save_manager_ref.call("obtener_todos_ids_actividades_completadas")
 		)
-	if _save_manager_ref.has_method("get_completed_activity_ids"):
+	if _save_manager_ref.has_method("obtener_ids_actividades_completadas"):
 		used_ids = _merge_activity_ids(
 			used_ids,
-			_save_manager_ref.call("get_completed_activity_ids", request_key)
+			_save_manager_ref.call("obtener_ids_actividades_completadas", request_key)
 		)
 	return used_ids
 
@@ -899,7 +899,7 @@ static func _merge_activity_ids(current_ids: Array[String], raw_ids: Variant) ->
 	return result
 
 
-static func _read_session_used_ids(request_key: String) -> Array[String]:
+static func _leer_session_used_ids(request_key: String) -> Array[String]:
 	var stored: Variant = _session_used_activity_ids_by_request.get(request_key, [])
 	if not stored is Array:
 		return []
@@ -912,7 +912,7 @@ static func _read_session_used_ids(request_key: String) -> Array[String]:
 static func _register_session_used_id(request_key: String, activity_id: String) -> void:
 	if activity_id.is_empty():
 		return
-	var history: Array[String] = _read_session_used_ids(request_key)
+	var history: Array[String] = _leer_session_used_ids(request_key)
 	history.erase(activity_id)
 	history.append(activity_id)
 	while history.size() > SESSION_HISTORY_MAX_PER_REQUEST:
@@ -942,7 +942,7 @@ static func _filter_out_persistent_completed(
 	return filtered
 
 
-static func _read_requested_options_count(
+static func _leer_requested_options_count(
 	game_request: Dictionary,
 	requested_type: String
 ) -> int:
@@ -951,28 +951,28 @@ static func _read_requested_options_count(
 	return maxi(0, int(game_request.get("options_count", 0)))
 
 
-static func _read_last_random_combo(node_key: String) -> Array[String]:
+static func _leer_last_random_combo(node_key: String) -> Array[String]:
 	var stored_combo: Variant = _last_random_combo_by_node_key.get(node_key, [])
 	if not stored_combo is Array:
 		return []
-	return _normalize_activity_combo(stored_combo as Array)
+	return _normalizar_activity_combo(stored_combo as Array)
 
 
 static func _store_last_random_combo(node_key: String, activity_ids: Array[String]) -> void:
 	if node_key.strip_edges().is_empty() or activity_ids.is_empty():
 		return
-	_last_random_combo_by_node_key[node_key] = _normalize_activity_combo(activity_ids)
+	_last_random_combo_by_node_key[node_key] = _normalizar_activity_combo(activity_ids)
 
 
-static func _normalize_activity_combo(raw_activity_ids: Array) -> Array[String]:
-	var normalized_ids: Array[String] = []
+static func _normalizar_activity_combo(raw_activity_ids: Array) -> Array[String]:
+	var normalizado_ids: Array[String] = []
 	for raw_activity_id in raw_activity_ids:
 		var activity_id: String = str(raw_activity_id).strip_edges()
 		if activity_id.is_empty():
 			continue
-		normalized_ids.append(activity_id)
-	normalized_ids.sort()
-	return normalized_ids
+		normalizado_ids.append(activity_id)
+	normalizado_ids.sort()
+	return normalizado_ids
 
 
 static func _activity_combos_match(
@@ -993,7 +993,7 @@ static func _build_random_game_entry(
 	selected_activity_id: String,
 	requested_difficulty: int
 ) -> Dictionary:
-	var activity_result: Dictionary = NodeContentLoaderScript.load_activity(
+	var activity_result: Dictionary = NodeContentLoaderScript.cargar_actividad(
 		pack_id,
 		selected_activity_id
 	)
@@ -1053,7 +1053,7 @@ static func _extract_final_game_ids(final_games: Array[Dictionary]) -> Array[Str
 	return final_game_ids
 
 
-static func _validate_final_game_ids(node_key: String, final_games: Array[Dictionary]) -> bool:
+static func _validar_final_game_ids(node_key: String, final_games: Array[Dictionary]) -> bool:
 	var seen_ids: Dictionary = {}
 	var is_valid := true
 	for game_index in range(final_games.size()):
@@ -1104,7 +1104,7 @@ static func _filter_final_games_by_history(
 	node_key: String,
 	final_games: Array[Dictionary]
 ) -> Array[Dictionary]:
-	var used_history_ids: Array[String] = _read_used_activity_ids("")
+	var used_history_ids: Array[String] = _leer_used_activity_ids("")
 	if used_history_ids.is_empty():
 		return final_games
 	var available_games: Array[Dictionary] = []
@@ -1139,7 +1139,7 @@ static func _resolve_pack_id_for_fixed_game(
 	if not pack_id.is_empty():
 		return pack_id
 	if node_data != null:
-		return node_data.get_effective_pack_id()
+		return node_data.obtener_pack_id_efectivo()
 	return "celiaquia"
 
 
@@ -1213,7 +1213,7 @@ static func _inferir_dificultad_desde_json_path(json_path: String) -> int:
 	if _cache_dificultad_por_ruta.has(ruta_limpia):
 		return int(_cache_dificultad_por_ruta.get(ruta_limpia, 0))
 
-	var resultado_json: Dictionary = ContentJsonLoaderScript.load_json(ruta_limpia)
+	var resultado_json: Dictionary = ContentJsonLoaderScript.cargar_json(ruta_limpia)
 	if not bool(resultado_json.get("ok", false)):
 		_cache_dificultad_por_ruta[ruta_limpia] = 0
 		return 0

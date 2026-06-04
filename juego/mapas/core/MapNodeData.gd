@@ -41,7 +41,7 @@ var map_position := Vector2.ZERO
 var has_map_position := false
 
 
-static func from_json(raw_node: Dictionary, map_track_key: String, node_index: int) -> MapNodeData:
+static func desde_json(raw_node: Dictionary, map_track_key: String, node_index: int) -> MapNodeData:
 	var node := MapNodeData.new()
 	node.node_key = str(raw_node.get("node_key", "")).strip_edges()
 	node.title = str(raw_node.get("title", "")).strip_edges()
@@ -57,10 +57,10 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 
 	var raw_games: Variant = raw_node.get("games", [])
 	var raw_legacy_game_slots: Variant = raw_node.get("game_slots", [])
-	var fixed_games: Array[Dictionary] = _normalize_fixed_game_entries(raw_games)
-	var random_requests: Array[Dictionary] = _normalize_random_game_requests(raw_games)
+	var fixed_games: Array[Dictionary] = _normalizar_fixed_game_entries(raw_games)
+	var random_requests: Array[Dictionary] = _normalizar_random_game_requests(raw_games)
 	if random_requests.is_empty():
-		random_requests = _normalize_random_game_requests(raw_legacy_game_slots)
+		random_requests = _normalizar_random_game_requests(raw_legacy_game_slots)
 	if fixed_games.is_empty() and not node.activity_id.is_empty():
 		fixed_games.push_back({
 			"activity_id": node.activity_id,
@@ -80,12 +80,12 @@ static func from_json(raw_node: Dictionary, map_track_key: String, node_index: i
 		node.pack_id = node.track_key
 	var raw_map_pos: Variant = raw_node.get("map_position", null)
 	if raw_map_pos != null:
-		node.map_position = _normalize_position(raw_map_pos)
+		node.map_position = _normalizar_position(raw_map_pos)
 		node.has_map_position = true
 	return node
 
 
-static func from_v1_node(
+static func desde_nodo_v1(
 	raw_node: Dictionary,
 	map_track_key: String,
 	node_index: int,
@@ -102,96 +102,96 @@ static func from_v1_node(
 	node.node_file_path = node_path.strip_edges()
 	node.default_unlocked = bool(map_entry.get("desbloqueado_por_defecto", false))
 	node.shuffle_games = false
-	node.games = _normalize_fixed_game_entries(raw_node.get("juegos", []))
+	node.games = _normalizar_fixed_game_entries(raw_node.get("juegos", []))
 	if not node.games.is_empty():
 		var first_game: Dictionary = node.games[0]
 		node.mode = str(first_game.get("mode", "")).strip_edges()
 		node.json_path = str(first_game.get("archivo", "")).strip_edges()
 	else:
-		var playable_type: String = _normalize_v1_game_type(
+		var playable_type: String = _normalizar_v1_game_type(
 			str(raw_node.get("tipo", raw_node.get("mode", ""))).strip_edges()
 		)
 		node.mode = _map_v1_game_type_to_mode(playable_type)
 		node.json_path = node_path.strip_edges()
 	if map_entry.has("posicion"):
-		node.map_position = _normalize_position(map_entry.get("posicion", {}))
+		node.map_position = _normalizar_position(map_entry.get("posicion", {}))
 		node.has_map_position = true
 	return node
 
 
-func is_valid() -> bool:
-	return not node_key.is_empty() and has_playable_definition()
+func es_valido() -> bool:
+	return not node_key.is_empty() and tiene_definicion_jugable()
 
 
-func has_playable_definition() -> bool:
-	return has_content_path() or has_fixed_games() or has_random_game_requests()
+func tiene_definicion_jugable() -> bool:
+	return tiene_ruta_contenido() or tiene_juegos_fijos() or tiene_solicitudes_juegos_random()
 
 
-func has_content_path() -> bool:
+func tiene_ruta_contenido() -> bool:
 	return not json_path.is_empty() or not activity_id.is_empty()
 
 
-func has_fixed_games() -> bool:
+func tiene_juegos_fijos() -> bool:
 	for game in games:
-		if not is_random_game_request(game):
+		if not es_solicitud_juego_random(game):
 			return true
 	return false
 
 
-func has_random_game_requests() -> bool:
+func tiene_solicitudes_juegos_random() -> bool:
 	for game in games:
-		if is_random_game_request(game):
+		if es_solicitud_juego_random(game):
 			return true
 	return false
 
 
-func uses_fixed_games() -> bool:
-	return has_fixed_games()
+func usa_juegos_fijos() -> bool:
+	return tiene_juegos_fijos()
 
 
-func uses_random_games() -> bool:
-	return not has_fixed_games() and has_random_game_requests()
+func usa_juegos_random() -> bool:
+	return not tiene_juegos_fijos() and tiene_solicitudes_juegos_random()
 
 
-func get_fixed_game_count() -> int:
+func obtener_cantidad_juegos_fijos() -> int:
 	var count: int = 0
 	for game in games:
-		if not is_random_game_request(game):
+		if not es_solicitud_juego_random(game):
 			count += 1
 	return count
 
 
-func get_random_game_request_count() -> int:
+func obtener_cantidad_solicitudes_random() -> int:
 	var count: int = 0
 	for game in games:
-		if is_random_game_request(game):
+		if es_solicitud_juego_random(game):
 			count += 1
 	return count
 
 
-func get_fixed_games() -> Array[Dictionary]:
+func obtener_juegos_fijos() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for game in games:
-		if not is_random_game_request(game):
+		if not es_solicitud_juego_random(game):
 			result.append(game)
 	return result
 
 
-func get_random_game_requests() -> Array[Dictionary]:
+func obtener_solicitudes_juegos_random() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for game in games:
-		if is_random_game_request(game):
+		if es_solicitud_juego_random(game):
 			result.append(game)
 	return result
 
 
-static func is_random_game_request(game: Dictionary) -> bool:
+static func es_solicitud_juego_random(game: Dictionary) -> bool:
 	var has_type: bool = not str(game.get("type", "")).strip_edges().is_empty()
 	var has_activity_id: bool = not str(game.get("activity_id", "")).strip_edges().is_empty()
 	return has_type and not has_activity_id
 
 
-func get_effective_pack_id(fallback_pack_id: String = "celiaquia") -> String:
+func obtener_pack_id_efectivo(fallback_pack_id: String = "celiaquia") -> String:
 	if not pack_id.is_empty():
 		return pack_id
 	if not track_key.is_empty():
@@ -199,22 +199,22 @@ func get_effective_pack_id(fallback_pack_id: String = "celiaquia") -> String:
 	return fallback_pack_id.strip_edges()
 
 
-static func _normalize_fixed_game_entries(raw_games: Variant) -> Array[Dictionary]:
-	var normalized_games: Array[Dictionary] = []
+static func _normalizar_fixed_game_entries(raw_games: Variant) -> Array[Dictionary]:
+	var normalizado_games: Array[Dictionary] = []
 	if not raw_games is Array:
-		return normalized_games
+		return normalizado_games
 	for raw_game in raw_games:
 		if raw_game is String:
 			var from_string: Dictionary = _build_fixed_game_from_string(str(raw_game))
 			if not from_string.is_empty():
-				normalized_games.append(from_string)
+				normalizado_games.append(from_string)
 			continue
 		if not raw_game is Dictionary:
 			continue
 		var from_dict: Dictionary = _build_fixed_game_from_dictionary(raw_game as Dictionary)
 		if not from_dict.is_empty():
-			normalized_games.append(from_dict)
-	return normalized_games
+			normalizado_games.append(from_dict)
+	return normalizado_games
 
 
 static func _build_fixed_game_from_string(raw_activity_id: String) -> Dictionary:
@@ -237,7 +237,7 @@ static func _build_fixed_game_from_string(raw_activity_id: String) -> Dictionary
 
 
 static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
-	var game_type: String = _normalize_v1_game_type(
+	var game_type: String = _normalizar_v1_game_type(
 		str(game.get("tipo", game.get("mode", ""))).strip_edges()
 	)
 	var game_mode: String = _map_v1_game_type_to_mode(game_type)
@@ -252,7 +252,7 @@ static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 	if no_activity_id and incomplete_legacy:
 		return {}
 
-	var normalized_game: Dictionary = {
+	var normalizado_game: Dictionary = {
 		"id": str(game.get("id", "")).strip_edges(),
 		"tipo": game_type,
 		"mode": game_mode,
@@ -265,27 +265,27 @@ static func _build_fixed_game_from_dictionary(game: Dictionary) -> Dictionary:
 		"titulo": str(game.get("titulo", "")).strip_edges(),
 		"title": str(game.get("titulo", game.get("title", ""))).strip_edges(),
 	}
-	_copiar_campos_objetivo(game, normalized_game)
-	return normalized_game
+	_copiar_campos_objetivo(game, normalizado_game)
+	return normalizado_game
 
 
-static func _normalize_random_game_requests(raw_games: Variant) -> Array[Dictionary]:
-	var normalized_requests: Array[Dictionary] = []
+static func _normalizar_random_game_requests(raw_games: Variant) -> Array[Dictionary]:
+	var normalizado_requests: Array[Dictionary] = []
 	if not raw_games is Array:
-		return normalized_requests
+		return normalizado_requests
 	for raw_game in raw_games:
 		if not raw_game is Dictionary:
 			continue
 		var request: Dictionary = _build_random_request_from_dictionary(raw_game as Dictionary)
 		if not request.is_empty():
-			normalized_requests.append(request)
-	return normalized_requests
+			normalizado_requests.append(request)
+	return normalizado_requests
 
 
 static func _build_random_request_from_dictionary(game_request: Dictionary) -> Dictionary:
 	if _has_fixed_game_fields(game_request):
 		return {}
-	var requested_type: String = _normalize_random_game_type(
+	var requested_type: String = _normalizar_random_game_type(
 		str(game_request.get("type", game_request.get("mode", ""))).strip_edges()
 	)
 	var requested_difficulty: int = int(
@@ -293,12 +293,12 @@ static func _build_random_request_from_dictionary(game_request: Dictionary) -> D
 	)
 	if requested_type.is_empty() or requested_difficulty <= 0:
 		return {}
-	var normalized_request: Dictionary = {
+	var normalizado_request: Dictionary = {
 		"type": requested_type,
 		"difficulty": requested_difficulty,
 	}
-	_copiar_campos_objetivo(game_request, normalized_request)
-	return normalized_request
+	_copiar_campos_objetivo(game_request, normalizado_request)
+	return normalizado_request
 
 
 static func _copiar_campos_objetivo(origen: Dictionary, destino: Dictionary) -> void:
@@ -313,7 +313,7 @@ static func _has_fixed_game_fields(game: Dictionary) -> bool:
 	return not entry_activity_id.is_empty() or not file_path.is_empty()
 
 
-static func _normalize_random_game_type(raw_type: String) -> String:
+static func _normalizar_random_game_type(raw_type: String) -> String:
 	match raw_type.strip_edges().to_lower():
 		"drag", "drag_food":
 			return "drag"
@@ -327,7 +327,7 @@ static func _normalize_random_game_type(raw_type: String) -> String:
 			return ""
 
 
-static func _normalize_v1_game_type(raw_type: String) -> String:
+static func _normalizar_v1_game_type(raw_type: String) -> String:
 	match raw_type.strip_edges().to_lower():
 		"receta_arrastre", "arrastre", MODE_DRAG_DROP:
 			return "receta_arrastre"
@@ -351,7 +351,7 @@ static func _map_v1_game_type_to_mode(raw_type: String) -> String:
 			return ""
 
 
-static func _normalize_position(raw_position: Variant) -> Vector2:
+static func _normalizar_position(raw_position: Variant) -> Vector2:
 	if not raw_position is Dictionary:
 		return Vector2.ZERO
 	var position: Dictionary = raw_position as Dictionary

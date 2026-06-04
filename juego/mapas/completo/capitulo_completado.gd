@@ -22,7 +22,7 @@ func _ready() -> void:
 		continue_button.grab_focus()
 
 
-func configure_for_track(track_key: String) -> void:
+func configurar_para_pista(track_key: String) -> void:
 	_track_key = track_key.strip_edges()
 	if is_node_ready():
 		_refresh_copy()
@@ -35,7 +35,7 @@ func _refresh_copy() -> void:
 	subtitle_label.text = "Terminaste el mapa de %s" % track_label
 
 
-func _on_continuar_pressed() -> void:
+func _on_continuar_presionado() -> void:
 	get_tree().paused = false
 	print("[MapCompletion] close_reward_returning_to_map")
 	queue_free()

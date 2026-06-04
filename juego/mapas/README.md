@@ -135,97 +135,77 @@ Actualmente el archivo importante es:
 
 ## Layout automatico de nodos sobre la curva
 
-### El problema que resuelve
+### Convencion de escena (una sola fuente de verdad)
 
-Posicionar 30 nodos a mano en el editor es fragil: si el diseno del mapa cambia, hay que mover cada nodo individualmente. En cambio, si los nodos siguen una curva, alcanza con editar la curva y los nodos se reposicionan solos.
+Todas las rutas viven en:
 
-### La curva: RutaCeliaquia1
+`MapBoard.tscn > ScrollContainer > Contenido > NodesContainer > Rutas > <route_id>`
 
-`RutaCeliaquia1` es un `Path2D` dentro de `MapBoard.tscn`, invisible en runtime (`visible = false`). Es una herramienta de layout puro, no un elemento visual del juego.
+Ejemplo: `Rutas/RutaCeliaquia1` es un `Path2D` invisible en runtime. Los puntos de la curva usan **las mismas coordenadas** que los nodos visuales (`Receta1`, `Pregunta1`, etc.): no hay conversion ni rutas duplicadas bajo `Contenido`.
 
-Tiene **30 puntos**, uno por nodo del mapa. Los puntos estan trazados sobre el camino gris de `mapa.png` (1118x1920 px), siguiendo el recorrido que hace el jugador de abajo hacia arriba.
-
-Para editar la curva en el editor de Godot:
+Para editar posiciones en modo `anchors`:
 1. Abrir `MapBoard.tscn`.
-2. Seleccionar `ScrollContainer > Contenido > RutaCeliaquia1`.
-3. Activar `visible = true` temporalmente.
-4. Usar la herramienta "Edit Curve" para mover puntos.
-5. Volver a `visible = false` antes de guardar.
+2. Ir a `NodesContainer > Rutas > RutaCeliaquia1` (o la ruta activa del JSON).
+3. `visible = true` en la ruta mientras editas.
+4. Herramienta "Edit Curve": punto `i` = nodo con `nivel_id = i + 1`.
+5. `visible = false` antes de guardar.
+6. Opcional: `debug_layout = true` en `MapBoard` para ver circulos rojos con indices.
 
-### Algoritmo: placement_mode = "anchors" (el que usamos)
+### JSON del mapa (`layout`)
 
-Cada nodo `i` recibe exactamente `curve.get_point_position(i)`.
-
-```
-nodo 0  →  get_point_position(0)   posicion exacta del punto 0 de la curva
-nodo 1  →  get_point_position(1)   posicion exacta del punto 1 de la curva
-...
-nodo 29 →  get_point_position(29)  posicion exacta del punto 29 de la curva
-```
-
-El nodo i y el punto i son la misma cosa. Disenar el mapa = colocar los puntos de la curva.
-
-**Por que elegimos este modo:**
-La alternativa (`curve`) distribuye los nodos por distancia recorrida usando `sample_baked()`. Eso funciona si la curva es uniforme, pero genera deriva en curvas irregulares: nodos intermedios quedan desplazados respecto a donde el diseniador los coloco. Con `anchors` cada punto es exactamente donde el diseniador dijo.
-
-### Algoritmo: placement_mode = "curve" (disponible como fallback)
-
-Los nodos se distribuyen uniformemente por largo de curva.
-
-```gdscript
-var normalized = float(i) / float(count - 1)
-var t = lerp(t_start, t_end, normalized)
-positions.append(curve.sample_baked(t))
+```json
+"layout": {
+  "route_id": "RutaCeliaquia1",
+  "placement_mode": "anchors",
+  "start_margin": 0.0,
+  "end_margin": 0.0
+}
 ```
 
-`t_start` y `t_end` se calculan con `start_margin` y `end_margin` del JSON.
-Util si la curva tiene mas o menos puntos que nodos, o si se quiere distribucion automatica sin preocuparse por la cantidad de puntos.
+| Campo | Uso |
+|---|---|
+| `route_id` | Nombre del `Path2D` dentro de `NodesContainer/Rutas/` |
+| `placement_mode` | `"anchors"` (1 punto = 1 nodo) o `"curve"` (reparto por largo) |
+| `start_margin` / `end_margin` | Solo en modo `curve` |
 
-### Fallback automatico
+### Escalar a otro mapa o capitulo
 
-Si se pide modo `anchors` pero la curva tiene menos puntos que nodos, `MapPathLayout` emite un `push_warning` y cae automaticamente a `sample_baked`. La partida no rompe.
+1. Duplicar un `Path2D` en `NodesContainer/Rutas/` (ej. `RutaVegana1`).
+2. Trazar la curva con un punto por nodo del JSON.
+3. En el JSON del mapa, apuntar `layout.route_id` a ese nombre.
+4. Instanciar nodos en `NodesContainer` con `nivel_id` 1..N en orden.
 
-### Flujo completo de codigo
+### Flujo de codigo
 
 ```
-celiaquia_mapa.json
-  layout.route_id = "RutaCeliaquia1"
-  layout.placement_mode = "anchors"
+celiaquia_mapa.json → layout.route_id + placement_mode
         ↓
-MapLayoutConfig          parsea route_id, placement_mode, spacing_factor, margenes
+MapLayoutConfig
         ↓
-MapRouteRegistry         busca el Path2D por nombre dentro del nodo Contenido
+MapRouteRegistry → NodesContainer/Rutas/<route_id>
         ↓
-MapPathLayout            si anchors → get_point_position(i) para cada i
-                         si curve  → sample_baked(lerp(t_start, t_end, normalized))
+MapPathLayout.resolve → anchors | curve
         ↓
-MapNodePositionResolver  combina los tres pasos → devuelve Array[Vector2] en espacio Contenido
-        ↓
-MapBoard                 mueve cada nodo: visual.position = layout_pos[i] − contenedor.position
+MapBoard → visual.position = posiciones[i]
 ```
-
-El offset del contenedor es `Vector2(-52, -198)` (posicion de `NodesContainer` relativa a `Contenido`).
 
 ### Archivos del modulo
 
 | Archivo | Responsabilidad |
 |---|---|
-| `layout/MapLayoutConfig.gd` | Parsea el bloque `layout` del JSON |
-| `layout/MapRouteRegistry.gd` | Busca el `Path2D` por nombre en el arbol de escena |
-| `layout/MapPathLayout.gd` | Unico lugar con matematica de posiciones |
-| `layout/MapNodePositionResolver.gd` | Elige modo anchors/curve, llama a MapPathLayout |
-| `debug/DebugLayoutOverlay.gd` | Dibuja circulos rojos por posicion calculada (apagado por default) |
+| `layout/MapLayoutConfig.gd` | Parsea `layout` del JSON |
+| `layout/MapRouteRegistry.gd` | Busca `Rutas/<route_id>` |
+| `layout/MapPathLayout.gd` | `resolve()`, `calcular_por_anchors()`, `calcular_por_curva()` |
+| `debug/DebugLayoutOverlay.gd` | Debug visual (solo con `debug_layout`) |
 
-### Si quiero cambiar...
+### Referencia rapida
 
-| Quiero cambiar... | Voy a... |
+| Quiero... | Donde |
 |---|---|
-| Ruta activa | `celiaquia_mapa.json > layout.route_id` |
-| Modo de posicionamiento | `celiaquia_mapa.json > layout.placement_mode` |
-| Posicion de un nodo (modo anchors) | punto correspondiente en `RutaCeliaquia1` en `MapBoard.tscn` |
-| Distribucion generica (modo curve) | `spacing_factor`, `start_margin`, `end_margin` en el JSON |
-| Algoritmo matematico | `layout/MapPathLayout.gd` |
-| Debug visual de posiciones | `@export var debug_layout = true` en `MapBoard.gd` |
+| Cambiar ruta activa | JSON `layout.route_id` |
+| Mover un nodo (anchors) | Punto `i` en `Rutas/<route_id>` |
+| Reparto automatico sin 1:1 | JSON `placement_mode: "curve"` + margenes |
+| Ver alineacion | `MapBoard.debug_layout = true` |
 
 ## Que archivo calcula progreso
 

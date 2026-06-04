@@ -53,13 +53,13 @@ const C_STAR_GLOW: Color = Color(1.0,  0.96, 0.55, 0.85) # Brillo central en 100
 		queue_redraw()
 
 # ── API pública ────────────────────────────────────────────────────────────────
-func set_completed(value: bool) -> void:
+func establecer_completado(value: bool) -> void:
 	completed = value
 	visible   = value
 	queue_redraw()
 
 
-func set_progress(value: float, _animated: bool = false) -> void:
+func establecer_progreso(value: float, _animated: bool = false) -> void:
 	progress = clampf(value, 0.0, 1.0)
 	queue_redraw()
 
@@ -78,7 +78,7 @@ func _draw() -> void:
 	draw_arc(Vector2.ZERO, CIRCLE_R, 0.0, TAU, 32, C_GREEN_BDR, BORDER_W)
 
 	# 2. Check blanco centrado
-	_draw_check()
+	_draw_verificar()
 
 	# 3. Anillo blanco separador para la estrella (la aísla del verde)
 	draw_circle(STAR_POS, STAR_RING_R, C_STAR_RING)
@@ -87,7 +87,7 @@ func _draw() -> void:
 	_draw_star(STAR_POS, tier)
 
 
-func _draw_check() -> void:
+func _draw_verificar() -> void:
 	var pts := PackedVector2Array([
 		Vector2(-5.0,  0.0),
 		Vector2(-1.5,  4.0),

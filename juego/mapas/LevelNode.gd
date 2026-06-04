@@ -1,6 +1,6 @@
 # HELPER_INTERNO
 # Nodo visual individual del mapa (estrella/candado/completado).
-# Solo renderiza estado — no decide flujo.
+# Solo renderizariza estado — no decide flujo.
 @tool
 extends Node2D
 # HELPER_INTERNO
@@ -21,19 +21,19 @@ const STATE_LOCKED := "locked"
 @export var unlocked: bool = false:
 	set(value):
 		unlocked = value
-		update_view()
+		actualizar_vista()
 @export var completed: bool = false:
 	set(value):
 		completed = value
-		update_view()
+		actualizar_vista()
 @export var can_play: bool = false:
 	set(value):
 		can_play = value
-		update_view()
+		actualizar_vista()
 @export_enum("completed", "available", "locked") var visual_state: String = STATE_LOCKED:
 	set(value):
-		visual_state = _sanitize_visual_state(value)
-		update_view()
+		visual_state = _sanitizar_estado_visual(value)
+		actualizar_vista()
 
 @export_group("Scene Compatibility")
 ## Solo visual/decorativo. No afecta la apertura de partida, la modalidad ni ArmadorDePartida.
@@ -45,13 +45,13 @@ const STATE_LOCKED := "locked"
 @export var label_text: String = "Nodo":
 	set(value):
 		label_text = value.strip_edges()
-		update_view()
+		actualizar_vista()
 
 @export_group("View")
 @export var icon_texture: Texture2D:
 	set(value):
 		icon_texture = value
-		update_view()
+		actualizar_vista()
 # debug_progress / debug_completed: solo para pruebas en editor. Dejar en -1/false para producción.
 @export_range(-1.0, 1.0, 0.05) var debug_progress: float = -1.0
 @export var debug_completed: bool = false
@@ -82,7 +82,7 @@ var _best_percent: float = 0.0
 
 func _ready() -> void:
 	_base_scale = scale
-	update_view()
+	actualizar_vista()
 
 
 func configurar(
@@ -92,30 +92,30 @@ func configurar(
 ) -> void:
 	node_data = data
 	if progress_state is Dictionary:
-		_apply_progress_state(progress_state as Dictionary)
+		_aplicar_estado_progreso(progress_state as Dictionary)
 	else:
-		_apply_legacy_progress_state(bool(progress_state), is_completed)
-	update_view()
+		_aplicar_estado_progreso_legado(bool(progress_state), is_completed)
+	actualizar_vista()
 
 
-func update_view() -> void:
+func actualizar_vista() -> void:
 	if not is_node_ready():
 		return
 
 	state_icon.texture = icon_texture
 	if title_label != null:
-		title_label.text = _get_title()
+		title_label.text = _obtener_titulo()
 	if button != null:
 		button.tooltip_text = ""
-		button.disabled = _is_button_disabled()
+		button.disabled = _boton_esta_deshabilitado()
 		button.mouse_default_cursor_shape = (
 			Control.CURSOR_ARROW
 			if button.disabled
 			else Control.CURSOR_POINTING_HAND
 		)
-	_apply_state_color()
+	_aplicar_color_estado()
 	_aplicar_parametros_visuales()
-	_refresh_badge()
+	_actualizar_insignia()
 
 
 func _aplicar_parametros_visuales() -> void:
@@ -131,7 +131,7 @@ func _aplicar_parametros_visuales() -> void:
 		node_badge.position = badge_offset
 
 
-func _refresh_badge() -> void:
+func _actualizar_insignia() -> void:
 	if node_badge == null or Engine.is_editor_hint():
 		return
 	var is_completed: bool = (visual_state == STATE_COMPLETED) or debug_completed
@@ -152,56 +152,56 @@ func _refresh_badge() -> void:
 		)
 	if not is_completed:
 		return
-	if node_badge.has_method("set_completed"):
-		node_badge.call("set_completed", true)
-	if node_badge.has_method("set_progress"):
-		node_badge.call("set_progress", effective_progress)
+	if node_badge.has_method("establecer_completado"):
+		node_badge.call("establecer_completado", true)
+	if node_badge.has_method("establecer_progreso"):
+		node_badge.call("establecer_progreso", effective_progress)
 
 
-func set_star_progress(percent: float) -> void:
-	_best_percent = clampf(percent, 0.0, 1.0)
+func establecer_progreso_estrella(porcentaje: float) -> void:
+	_best_percent = clampf(porcentaje, 0.0, 1.0)
 	if _best_percent > 0.0:
 		_best_accuracy = maxf(_best_accuracy, _best_percent * 100.0)
 	if DEBUG_BADGES:
 		print_debug(
-			"[Star] set_progress node_key=",
+			"[Star] establecer_progreso node_key=",
 			node_data.node_key if node_data != null else node_key,
 			" percent=",
 			_best_percent
 		)
-	if node_badge != null and node_badge.has_method("set_progress"):
-		node_badge.call("set_progress", _best_percent)
-	_refresh_badge()
+	if node_badge != null and node_badge.has_method("establecer_progreso"):
+		node_badge.call("establecer_progreso", _best_percent)
+	_actualizar_insignia()
 
 
-func _on_button_pressed() -> void:
-	if _click_in_progress or Engine.is_editor_hint() or _is_button_disabled():
+func _on_boton_presionado() -> void:
+	if _click_in_progress or Engine.is_editor_hint() or _boton_esta_deshabilitado():
 		return
 	if node_data == null:
 		return
 
 	_click_in_progress = true
-	_animate_click()
+	_animar_click()
 	await get_tree().create_timer(0.25).timeout
 	selected.emit(node_data)
 	_click_in_progress = false
 
 
-func _on_button_mouse_entered() -> void:
-	if Engine.is_editor_hint() or _is_hovering or _is_button_disabled():
+func _on_boton_mouse_entrado() -> void:
+	if Engine.is_editor_hint() or _is_hovering or _boton_esta_deshabilitado():
 		return
 	_is_hovering = true
 	_animar_escala_hasta(_base_scale * 1.08)
 
 
-func _on_button_mouse_exited() -> void:
+func _on_boton_mouse_salido() -> void:
 	if Engine.is_editor_hint() or not _is_hovering:
 		return
 	_is_hovering = false
 	_animar_escala_hasta(_base_scale)
 
 
-func _get_title() -> String:
+func _obtener_titulo() -> String:
 	if node_data != null and not node_data.title.is_empty():
 		return node_data.title
 	if not label_text.is_empty():
@@ -209,11 +209,11 @@ func _get_title() -> String:
 	return name
 
 
-func _is_button_disabled() -> bool:
+func _boton_esta_deshabilitado() -> bool:
 	return not Engine.is_editor_hint() and not can_play
 
 
-func _apply_state_color() -> void:
+func _aplicar_color_estado() -> void:
 	if Engine.is_editor_hint():
 		modulate = Color.WHITE
 		state_icon.modulate = Color.WHITE
@@ -234,10 +234,10 @@ func _apply_state_color() -> void:
 			_animar_disponible()
 
 
-func _apply_progress_state(progress_state: Dictionary) -> void:
+func _aplicar_estado_progreso(progress_state: Dictionary) -> void:
 	var is_unlocked: bool = bool(progress_state.get("is_unlocked", false))
 	var is_completed: bool = bool(progress_state.get("is_completed", false))
-	# _best_accuracy primero para que los setters con update_view() ya lo vean correcto
+	# _best_accuracy primero para que los setters con actualizar_vista() ya lo vean correcto
 	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 	_best_percent = float(progress_state.get("best_percent", _best_accuracy / 100.0))
 	if is_completed and _best_percent <= 0.0:
@@ -246,28 +246,28 @@ func _apply_progress_state(progress_state: Dictionary) -> void:
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = bool(progress_state.get("can_play", is_unlocked or is_completed))
-	visual_state = _resolve_visual_state_name(
+	visual_state = _resolver_nombre_estado_visual(
 		is_unlocked,
 		is_completed,
 		str(progress_state.get("visual_state", ""))
 	)
 
 
-func _apply_legacy_progress_state(is_unlocked: bool, is_completed: bool) -> void:
+func _aplicar_estado_progreso_legado(is_unlocked: bool, is_completed: bool) -> void:
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = is_unlocked or is_completed
-	visual_state = _resolve_visual_state_name(is_unlocked, is_completed)
+	visual_state = _resolver_nombre_estado_visual(is_unlocked, is_completed)
 
 
-func _resolve_visual_state_name(
+func _resolver_nombre_estado_visual(
 	is_unlocked: bool,
 	is_completed: bool,
 	state_name: String = ""
 ) -> String:
 	var clean_state_name: String = state_name.strip_edges()
 	if not clean_state_name.is_empty():
-		return _sanitize_visual_state(clean_state_name)
+		return _sanitizar_estado_visual(clean_state_name)
 	if is_completed:
 		return STATE_COMPLETED
 	if is_unlocked:
@@ -275,7 +275,7 @@ func _resolve_visual_state_name(
 	return STATE_LOCKED
 
 
-func _sanitize_visual_state(state_name: String) -> String:
+func _sanitizar_estado_visual(state_name: String) -> String:
 	match state_name.strip_edges():
 		STATE_COMPLETED:
 			return STATE_COMPLETED
@@ -305,7 +305,7 @@ func _animar_escala_hasta(escala_destino: Vector2) -> void:
 	tween.tween_property(self, "scale", escala_destino, 0.12)
 
 
-func _animate_click() -> void:
+func _animar_click() -> void:
 	var tween := create_tween()
 	tween.tween_property(self, "scale", _base_scale * Vector2(1.15, 0.90), 0.06)
 	tween.tween_property(self, "scale", _base_scale * Vector2(0.95, 1.05), 0.06)

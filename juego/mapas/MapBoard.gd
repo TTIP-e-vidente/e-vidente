@@ -1,15 +1,11 @@
-# Tablero visual del mapa: instancia y posiciona los LevelNode. Solo renderiza.
-# No decide flujo ni calcula EXP ni lee JSON.
 extends Node2D
 
-const MapNodePositionResolverScript := preload("res://mapas/layout/MapNodePositionResolver.gd")
+const MapPathLayoutScript := preload("res://mapas/layout/MapPathLayout.gd")
 const MapRouteRegistryScript := preload("res://mapas/layout/MapRouteRegistry.gd")
-const _DEBUG_OVERLAY_SCRIPT := preload("res://mapas/debug/DebugLayoutOverlay.gd")
+const DebugLayoutOverlayScript := preload("res://mapas/debug/DebugLayoutOverlay.gd")
 
 signal node_selected(node_data: MapNodeData)
 
-## Activa el overlay de debug: muestra la curva y los puntos calculados sobre el mapa.
-## Mantener en false en produccion.
 @export var debug_layout: bool = false
 
 var _configured_node_states: Array[Dictionary] = []
@@ -20,7 +16,7 @@ var _configured_node_states: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	call_deferred("refresh_progress_from_save")
+	call_deferred("actualizar_progreso_desde_guardado")
 	titulo_del_nivel.modulate = Color("#42785e")
 	_ajustar_scroll_al_viewport()
 
@@ -63,26 +59,23 @@ func configurar_nodos(
 			% [visual_nodes.size(), map_nodes.size()]
 		)
 
-	# Las posiciones están en espacio Contenido.
-	# Para espacio NodesContainer: pos_contenido - contenedor_nodos.position.
 	var layout_positions: Array[Vector2] = []
-	if layout_config != null and layout_config.is_valid() and contenedor_nodos != null:
-		var route_container: Node = contenedor_nodos.get_parent()
-		layout_positions = MapNodePositionResolverScript.resolve(
-			route_container, layout_config, map_nodes.size()
+	if layout_config != null and layout_config.es_valido() and contenedor_nodos != null:
+		layout_positions = MapPathLayoutScript.resolver(
+			contenedor_nodos, layout_config, map_nodes.size()
 		)
 
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
-		var node_state: Dictionary = _get_node_state(node_states, index)
-		if node_data == null or not node_data.is_valid():
+		var node_state: Dictionary = _obtener_estado_nodo(node_states, index)
+		if node_data == null or not node_data.es_valido():
 			visual_node.hide()
 			continue
 
 		visual_node.show()
 		if index < layout_positions.size():
-			visual_node.position = layout_positions[index] - contenedor_nodos.position
+			visual_node.position = layout_positions[index]
 		elif node_data.has_map_position:
 			visual_node.position = node_data.map_position
 		if visual_node.has_method("configurar"):
@@ -95,47 +88,45 @@ func configurar_nodos(
 	for index in range(visible_count, visual_nodes.size()):
 		visual_nodes[index].hide()
 
-	_actualizar_debug_overlay(layout_positions)
+	_actualizar_debug_overlay(layout_positions, layout_config)
 
 
-func _actualizar_debug_overlay(positions: Array[Vector2]) -> void:
+func _actualizar_debug_overlay(
+		positions: Array[Vector2], layout_config: MapLayoutConfig = null) -> void:
 	const OVERLAY_NAME := "DebugLayoutOverlay"
-	var contenido: Node = contenedor_nodos.get_parent()
-	if contenido == null:
+	if contenedor_nodos == null:
 		return
-	var old: Node = contenido.get_node_or_null(OVERLAY_NAME)
+	var old: Node = contenedor_nodos.get_node_or_null(OVERLAY_NAME)
 	if old:
 		old.queue_free()
-	var ruta := contenido.get_node_or_null("RutaCeliaquia1") as Path2D
+	var route_id := layout_config.route_id if layout_config != null and layout_config.es_valido() else ""
+	var ruta: Path2D = null
+	if not route_id.is_empty():
+		ruta = MapRouteRegistryScript.buscar_ruta(contenedor_nodos, route_id)
 	if ruta:
 		ruta.visible = debug_layout
 	if not debug_layout:
 		return
-	var overlay := Node2D.new()
+	var overlay: DebugLayoutOverlay = DebugLayoutOverlayScript.new()
 	overlay.name = OVERLAY_NAME
 	overlay.z_index = 200
-	overlay.set_script(_DEBUG_OVERLAY_SCRIPT)
-	contenido.add_child(overlay)
-	overlay.set("posiciones", positions)
-	overlay.queue_redraw()
+	contenedor_nodos.add_child(overlay)
+	overlay.establecer_posiciones(positions)
 
 
-func refresh_progress_from_save() -> void:
-	print_debug("[MapBoard] refresh_progress_from_save()")
-	# La estrella usa el estado ya calculado por MapScene (única fuente de progreso).
-	# No vuelve a leer SaveManager para evitar lógica de progreso duplicada,
-	# y nunca fuerza 100%: muestra la precisión real guardada.
+func actualizar_progreso_desde_guardado() -> void:
+	print_debug("[MapBoard] actualizar_progreso_desde_guardado()")
 	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
 	var visible_count: int = mini(visual_nodes.size(), _configured_node_states.size())
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		if visual_node == null:
 			continue
-		var node_state: Dictionary = _get_node_state(_configured_node_states, index)
+		var node_state: Dictionary = _obtener_estado_nodo(_configured_node_states, index)
 		var completed: bool = bool(node_state.get("is_completed", false))
 		var saved_percent: float = float(node_state.get("best_percent", 0.0))
-		if completed and visual_node.has_method("set_star_progress"):
-			visual_node.call("set_star_progress", saved_percent)
+		if completed and visual_node.has_method("establecer_progreso_estrella"):
+			visual_node.call("establecer_progreso_estrella", saved_percent)
 
 
 
@@ -162,7 +153,7 @@ func _on_visual_node_selected(node_data: RefCounted) -> void:
 		node_selected.emit(node_data as MapNodeData)
 
 
-func _get_node_state(node_states: Array[Dictionary], index: int) -> Dictionary:
+func _obtener_estado_nodo(node_states: Array[Dictionary], index: int) -> Dictionary:
 	if index < 0 or index >= node_states.size():
 		return {}
 	return node_states[index]
@@ -190,25 +181,28 @@ func _desplazar_a_nodo(visual_node: Node2D) -> void:
 	establecer_scroll_vertical(scroll_target)
 
 
-## Diagnóstico de alineación — llamar manualmente cuando debug_layout = true.
-## No dejar activo en producción.
-func debug_ruta_y_nodos() -> void:
-	if not debug_layout:
+func debug_ruta_y_nodos(layout_config: MapLayoutConfig = null) -> void:
+	if not debug_layout or contenedor_nodos == null:
 		return
-	var contenedor := $ScrollContainer/Contenido/NodesContainer
-	var ruta: Path2D = contenedor.get_node_or_null("RutaCeliaquia1") as Path2D
+	var route_id := "RutaCeliaquia1"
+	if layout_config != null and layout_config.es_valido():
+		route_id = layout_config.route_id
+	var ruta: Path2D = MapRouteRegistryScript.buscar_ruta(contenedor_nodos, route_id)
 	if ruta == null:
-		printerr("[MapBoard] debug_ruta_y_nodos: RutaCeliaquia1 no encontrada en NodesContainer")
+		printerr(
+			"[MapBoard] debug_ruta_y_nodos: ruta '%s' no encontrada en %s/%s"
+			% [route_id, contenedor_nodos.name, MapRouteRegistryScript.ROUTES_FOLDER]
+		)
 		return
 	var curva := ruta.curve
-	print("[MapBoard] CONTENEDOR local:", contenedor.position)
-	print("[MapBoard] CONTENEDOR global:", contenedor.global_position)
+	print("[MapBoard] NODES_CONTAINER local:", contenedor_nodos.position)
+	print("[MapBoard] NODES_CONTAINER global:", contenedor_nodos.global_position)
 	print("[MapBoard] RUTA local:", ruta.position)
 	print("[MapBoard] RUTA global:", ruta.global_position)
 	print("[MapBoard] RUTA scale:", ruta.scale)
 	print("[MapBoard] RUTA rotation:", ruta.rotation)
 	if curva == null:
-		printerr("[MapBoard] debug_ruta_y_nodos: RutaCeliaquia1.curve es null")
+		printerr("[MapBoard] debug_ruta_y_nodos: ruta '%s' sin curva" % route_id)
 		return
 	print("[MapBoard] LARGO curva:", curva.get_baked_length())
 	print("[MapBoard] PUNTOS curva:", curva.point_count)

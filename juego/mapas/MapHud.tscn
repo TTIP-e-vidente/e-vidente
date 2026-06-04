@@ -154,10 +154,10 @@ layout_mode = 3
 grow_horizontal = 2
 grow_vertical = 2
 
-[connection signal="pressed" from="HudRoot/TopRightAnchor/ProfileButton" to="." method="_on_profile_button_pressed"]
-[connection signal="pressed" from="HudRoot/BackAnchor/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="HudRoot/TopRightAnchor/ProfileButton" to="." method="_on_boton_perfil_presionado"]
+[connection signal="pressed" from="HudRoot/BackAnchor/BackButton" to="." method="_on_boton_atras_presionado"]
 [connection signal="close_requested" from="ProfileOverlayPanel" to="." method="_on_superposicion_cerrar_solicitado"]
 [connection signal="edit_profile_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_edit_perfil_presionado"]
 [connection signal="reset_progress_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reiniciar_presionado"]
 [connection signal="resume_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reanudar_presionado"]
-[connection signal="save_pressed" from="ProfileOverlayPanel" to="." method="_on_overlay_save_pressed"]
+[connection signal="save_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_guardar_presionado"]

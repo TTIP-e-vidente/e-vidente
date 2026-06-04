@@ -1,11 +1,7 @@
-# PUBLICO_TRAINEE
-# Dueño visual del mapa. Muestra nodos, racha y perfil.
-# Selecciona un nodo y delega el flujo jugable en NodoRuntime.
 extends Node2D
 
-
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
-const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
+const MapApiScript := preload("res://mapas/MapApi.gd")
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
 const MAP_COMPLETION_SCENE_PATH := "res://mapas/completo/CapituloCompletado.tscn"
@@ -23,13 +19,12 @@ var map_title: String = ""
 var track_key_mapa: String = DEFAULT_TRACK_KEY
 var nodos_mapa: Array[MapNodeData] = []
 var layout_config: MapLayoutConfig = null
-var _flujo_de_nodo: FlujoDeNodoJugable = null  # gestiona selección de nodo desde el mapa
+var _flujo_de_nodo: FlujoDeNodoJugable = null
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard
 
 
-# Entrada desde el mapa
 func _ready() -> void:
 	_flujo_de_nodo = FlujoDeNodoJugableScript.new()
 	_flujo_de_nodo.apertura_fallida.connect(_mostrar_error)
@@ -60,12 +55,9 @@ func _notification(what: int) -> void:
 		return
 	if not is_node_ready() or not visible:
 		return
-	# Solo refrescar visuales al hacerse visible; la verificación de mapa completo
-	# ocurre explícitamente en _ready() y volver_al_mapa(), no en cada cambio de visibilidad.
 	actualizar_estados_de_nodos()
 
 
-# Flujo del mapa
 func _conectar_senales() -> void:
 	if map_hud != null and map_hud.has_signal("back_requested"):
 		map_hud.connect("back_requested", _al_pedir_volver)
@@ -74,12 +66,13 @@ func _conectar_senales() -> void:
 
 
 func cargar_mapa() -> void:
-	var result: Dictionary = CargadorDeMapaScript.load_map(MAP_JSON_PATH)
+	var result: Dictionary = MapApiScript.cargar(MAP_JSON_PATH)
 	if not bool(result.get("ok", false)):
 		map_id = ""
 		map_title = ""
 		nodos_mapa = []
 		track_key_mapa = DEFAULT_TRACK_KEY
+		layout_config = null
 		_mostrar_error(str(result.get("error", "No se pudo cargar el mapa.")))
 		return
 
@@ -98,30 +91,22 @@ func cargar_mapa() -> void:
 				node_data.track_key = track_key_mapa
 				nodos_mapa.append(node_data)
 
-	# Pasar config de layout al MapBoard (si lo tiene).
-	if map_board != null and map_board.has_method("configurar_nodos"):
-		var parsed_layout_config: Variant = map_data.get("layout_config", null)
-		if parsed_layout_config is MapLayoutConfig:
-			map_board.set("layout_config", parsed_layout_config)
-
 
 func actualizar_estados_de_nodos() -> void:
-	if map_board == null or not map_board.has_method("configurar_nodos"):
+	if map_board == null:
 		return
 	var save_manager: Node = get_node_or_null("/root/SaveManager")
 	var node_progress: Dictionary = {}
-	if save_manager != null and save_manager.has_method("get_all_node_progress"):
-		node_progress = save_manager.call("get_all_node_progress")
+	if save_manager != null and save_manager.has_method("obtener_todo_progreso_nodos"):
+		node_progress = save_manager.call("obtener_todo_progreso_nodos")
 
 	_sincronizar_completados_al_global(node_progress)
 	var node_states: Array[Dictionary] = _construir_estados_de_nodos(node_progress)
-	map_board.call("configurar_nodos", nodos_mapa, node_states, layout_config)
-	if map_board.has_method("refresh_progress_from_save"):
-		map_board.call("refresh_progress_from_save")
+	MapApiScript.aplicar_tablero(map_board, nodos_mapa, node_states, layout_config)
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:
-	if node_data == null or not node_data.is_valid():
+	if node_data == null or not node_data.es_valido():
 		_mostrar_error("No se pudo leer el nodo seleccionado.")
 		return
 
@@ -146,7 +131,7 @@ func continuar_desde_nodo(node_key: String) -> void:
 	if next_node == null:
 		volver_al_mapa()
 		return
-	var next_state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, next_node)
+	var next_state: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, next_node)
 	if bool(next_state.get("is_completed", false)):
 		actualizar_estados_de_nodos()
 		_desplazar_a_proximo_disponible()
@@ -168,7 +153,7 @@ func volver_al_mapa() -> void:
 	_mostrar_completado_del_mapa_si_corresponde()
 
 
-# Helpers privados
+
 func _desplazar_a_proximo_disponible() -> void:
 	if map_board == null or not map_board.has_method("desplazar_al_primer_nodo_disponible"):
 		return
@@ -186,7 +171,7 @@ func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
 func _construir_estados_de_nodos(node_progress: Dictionary) -> Array[Dictionary]:
 	var node_states: Array[Dictionary] = []
 	for node_data in nodos_mapa:
-		var state: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
+		var state: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, node_data)
 		var saved: Dictionary = _progreso_guardado(node_progress, node_data.node_key)
 		if not saved.is_empty():
 			_aplicar_progreso_guardado(state, saved)
@@ -215,7 +200,7 @@ func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
 func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:
 	if not Global.hay_ultima_finalizacion():
 		return false
-	await TransicionEscenas.change_scene(FINALIZACION_PARTIDA_SCENE)
+	await TransicionEscenas.cambiar_escena(FINALIZACION_PARTIDA_SCENE)
 	return true
 
 
@@ -236,8 +221,8 @@ func _mostrar_completado_del_mapa_si_corresponde() -> void:
 	if popup == null:
 		push_error("MapScene: No se pudo instanciar CapituloCompletado.tscn")
 		return
-	if popup.has_method("configure_for_track"):
-		popup.call("configure_for_track", track_key_mapa)
+	if popup.has_method("configurar_para_pista"):
+		popup.call("configurar_para_pista", track_key_mapa)
 	add_child(popup)
 	if save_manager != null and save_manager.has_method("marcar_recompensa_del_mapa_como_vista"):
 		save_manager.call("marcar_recompensa_del_mapa_como_vista", map_id)

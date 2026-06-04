@@ -65,10 +65,10 @@ func _desconectar_senales_guardado() -> void:
 
 
 func _actualizar_hud() -> void:
-	if racha != null and racha.has_method("render"):
-		racha.call("render")
-	if profile_button != null and profile_button.has_method("refresh_profile_icon"):
-		profile_button.call("refresh_profile_icon")
+	if racha != null and racha.has_method("renderizar"):
+		racha.call("renderizar")
+	if profile_button != null and profile_button.has_method("refrescar_icono_perfil"):
+		profile_button.call("refrescar_icono_perfil")
 	if profile_overlay != null and profile_overlay.visible:
 		profile_overlay.refrescar()
 	_actualizar_bloque_exp_mapa()
@@ -82,7 +82,7 @@ func _conectar_insignia_racha() -> void:
 		racha.connect("pressed", callback)
 
 
-func _on_profile_button_pressed() -> void:
+func _on_boton_perfil_presionado() -> void:
 	_mostrar_superposicion_perfil()
 
 
@@ -91,10 +91,10 @@ func _on_racha_presionado() -> void:
 	if ruta_escena_actual == GameSceneRouter.STREAK_SCENE_PATH:
 		return
 	_ocultar_superposicion_perfil()
-	GameSceneRouter.go_to_streak(get_tree(), ruta_escena_actual)
+	GameSceneRouter.ir_a_racha(get_tree(), ruta_escena_actual)
 
 
-func _on_back_button_pressed() -> void:
+func _on_boton_atras_presionado() -> void:
 	back_requested.emit()
 
 
@@ -107,7 +107,7 @@ func _on_superposicion_reanudar_presionado() -> void:
 	if not SaveManager.puede_reanudar_guardado_actual():
 		return
 	var estado_reanudacion: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
-	GameSceneRouter.go_to_resume(get_tree(), estado_reanudacion, _obtener_ruta_escena_retorno())
+	GameSceneRouter.ir_a_reanudar(get_tree(), estado_reanudacion, _obtener_ruta_escena_retorno())
 
 
 func _on_superposicion_edit_perfil_presionado() -> void:
@@ -116,7 +116,7 @@ func _on_superposicion_edit_perfil_presionado() -> void:
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
-func _on_overlay_save_pressed() -> void:
+func _on_superposicion_guardar_presionado() -> void:
 	SaveManager.guardar_progreso_en_disco()
 	_actualizar_hud()
 
@@ -140,7 +140,7 @@ func _actualizar_bloque_exp_mapa() -> void:
 		return
 	var total_exp: int = 0
 	if SaveManager != null:
-		total_exp = SaveManager.get_total_exp()
+		total_exp = SaveManager.obtener_exp_total()
 	_map_exp_numero.text = str(total_exp)
 
 

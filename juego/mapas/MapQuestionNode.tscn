@@ -26,6 +26,6 @@ texture = ExtResource("3_icon")
 
 [node name="NodeProgressBadge" parent="." unique_id=678132724 instance=ExtResource("4_badge")]
 
-[connection signal="mouse_entered" from="Button" to="." method="_on_button_mouse_entered"]
-[connection signal="mouse_exited" from="Button" to="." method="_on_button_mouse_exited"]
-[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="mouse_entered" from="Button" to="." method="_on_boton_mouse_entrado"]
+[connection signal="mouse_exited" from="Button" to="." method="_on_boton_mouse_salido"]
+[connection signal="pressed" from="Button" to="." method="_on_boton_presionado"]

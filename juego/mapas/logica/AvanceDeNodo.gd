@@ -8,16 +8,16 @@ const STATE_LOCKED := "locked"
 
 
 # Solo consulta el progreso ya guardado; no abre escenas ni arma partidas.
-static func get_node_state(nodos_mapa: Array, node_data: MapNodeData) -> Dictionary:
+static func obtener_estado_nodo(nodos_mapa: Array, node_data: MapNodeData) -> Dictionary:
 	if node_data == null:
-		return _state(false, false, STATE_LOCKED)
+		return _estado(false, false, STATE_LOCKED)
 
-	var completed: bool = is_node_completed(node_data)
-	var unlocked: bool = is_node_unlocked(nodos_mapa, node_data, completed)
-	return _state(unlocked, completed, get_visual_state(unlocked, completed))
+	var completed: bool = nodo_esta_completado(node_data)
+	var unlocked: bool = nodo_esta_desbloqueado_por_progreso(nodos_mapa, node_data, completed)
+	return _estado(unlocked, completed, obtener_estado_visual(unlocked, completed))
 
 
-static func is_node_completed(node_data: MapNodeData) -> bool:
+static func nodo_esta_completado(node_data: MapNodeData) -> bool:
 	if node_data == null:
 		return false
 	var g := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("/root/Global") if Engine.get_main_loop() is SceneTree else null
@@ -26,7 +26,7 @@ static func is_node_completed(node_data: MapNodeData) -> bool:
 	return g.call("es_nodo_jugable_completado", node_data.track_key, node_data.node_key)
 
 
-static func is_node_unlocked(
+static func nodo_esta_desbloqueado_por_progreso(
 	nodos_mapa: Array,
 	node_data: MapNodeData,
 	esta_completado: bool = false
@@ -41,10 +41,10 @@ static func is_node_unlocked(
 	return nodo_esta_desbloqueado(nodos_mapa, index, node_data.track_key, esta_completado)
 
 
-static func get_visual_state(is_unlocked: bool, is_completed: bool) -> String:
-	if is_completed:
+static func obtener_estado_visual(desbloqueado: bool, completado: bool) -> String:
+	if completado:
 		return STATE_COMPLETED
-	if is_unlocked:
+	if desbloqueado:
 		return STATE_AVAILABLE
 	return STATE_LOCKED
 
@@ -130,13 +130,13 @@ static func mapa_esta_completado(nodos_mapa: Array, track_key: String) -> bool:
 	return true
 
 
-static func _state(is_unlocked: bool, is_completed: bool, state_name: String) -> Dictionary:
+static func _estado(desbloqueado: bool, completado: bool, nombre_estado: String) -> Dictionary:
 	return {
-		"is_unlocked": is_unlocked,
-		"is_completed": is_completed,
-		"can_play": is_unlocked or is_completed,
-		"state": state_name,
-		"visual_state": state_name,
+		"is_unlocked": desbloqueado,
+		"is_completed": completado,
+		"can_play": desbloqueado or completado,
+		"state": nombre_estado,
+		"visual_state": nombre_estado,
 	}
 
 
