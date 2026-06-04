@@ -18,9 +18,9 @@ const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 @onready var label_sync_status: Label = $LabelSyncStatus
 
-@onready var stats_1: Container = $CenterContainer/VBoxContainer/StatsContainer
-@onready var stats_2: Container = $CenterContainer/VBoxContainer/StatsContainer2
-@onready var stats_3: Container = $CenterContainer/VBoxContainer/StatsContainer3
+@onready var stats_1: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer
+@onready var stats_2: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer2
+@onready var stats_3: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer3
 const EXP_ICON = preload("res://assets-sistema/final-leccion/exp-icon.png")
 const PRECISION_ICON = preload("res://assets-sistema/final-leccion/precision-icon.png")
 const TIEMPO_ICON = preload("res://assets-sistema/final-leccion/tiempo-icon.png")
@@ -48,9 +48,9 @@ func _ready() -> void:
 	label.text = "EXP"
 	label_2.text = "Precisión"
 	label_3.text = "Tiempo"
-	stats_1._setear_icono(EXP_ICON)
-	stats_2._setear_icono(PRECISION_ICON)
-	stats_3._setear_icono(TIEMPO_ICON)
+	stats_1.setear_icono(EXP_ICON)
+	stats_2.setear_icono(PRECISION_ICON)
+	stats_3.setear_icono(TIEMPO_ICON)
 	
 	# Colores de los valores (dorado, naranja, azul)
 	numero.modulate = Color("#DBC151")

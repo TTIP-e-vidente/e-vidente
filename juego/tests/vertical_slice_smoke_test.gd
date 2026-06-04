@@ -41,6 +41,7 @@ const MAP_NODE_DATA_SCRIPT := preload("res://mapas/core/MapNodeData.gd")
 const MAP_LAYOUT_CONFIG_SCRIPT := preload("res://mapas/layout/MapLayoutConfig.gd")
 const MAP_ROUTE_REGISTRY_SCRIPT := preload("res://mapas/layout/MapRouteRegistry.gd")
 const MAP_PATH_LAYOUT_SCRIPT := preload("res://mapas/layout/MapPathLayout.gd")
+const CONCEPTO_ITEM_SCRIPT := preload("res://vincular/concept_item.gd")
 const MAP_BOARD_SCENE_PATH := "res://mapas/MapBoard.tscn"
 const MAP_NODES_CONTAINER_PATH := "ScrollContainer/Contenido/NodesContainer"
 # Debe coincidir con MapRouteRegistry.ROUTES_FOLDER
@@ -53,6 +54,14 @@ func _es_map_node_data(value: Variant) -> bool:
 
 func _es_layout_config(value: Variant) -> bool:
 	return value != null and value.get_script() == MAP_LAYOUT_CONFIG_SCRIPT
+
+
+func _como_concepto_item(raw: Variant):
+	if raw == null or not is_instance_valid(raw):
+		return null
+	if raw.get_script() != CONCEPTO_ITEM_SCRIPT:
+		return null
+	return raw
 
 
 func _como_map_node_data(raw_node: Variant) -> Variant:
@@ -583,14 +592,14 @@ func _resolver_vinculacion_correcta(match_scene: Node) -> void:
 	# El primer par se resuelve derecha→izquierda para cubrir la validación bidireccional.
 	var primer_par_resuelto := false
 	for izquierda in items_izquierda:
-		var item_izquierda := izquierda as ConceptoItem
-		if item_izquierda == null or not is_instance_valid(item_izquierda):
+		var item_izquierda = _como_concepto_item(izquierda)
+		if item_izquierda == null:
 			continue
 		if not item_izquierda.visible:
 			continue
 		for derecha in items_derecha:
-			var item_derecha := derecha as ConceptoItem
-			if item_derecha == null or not is_instance_valid(item_derecha):
+			var item_derecha = _como_concepto_item(derecha)
+			if item_derecha == null:
 				continue
 			if not item_derecha.visible:
 				continue
@@ -621,17 +630,17 @@ func _verificar_reselect_tras_error(match_scene: Node) -> void:
 	var items_izquierda: Array = match_scene.get("items_izquierda") as Array
 	var items_derecha: Array = match_scene.get("items_derecha") as Array
 
-	var iz: ConceptoItem = null
-	var der_wrong: ConceptoItem = null
+	var iz = null
+	var der_wrong = null
 
 	for raw in items_izquierda:
-		var item := raw as ConceptoItem
-		if item != null and is_instance_valid(item) and item.visible:
+		var item = _como_concepto_item(raw)
+		if item != null and item.visible:
 			iz = item
 			break
 	for raw in items_derecha:
-		var item := raw as ConceptoItem
-		if item != null and is_instance_valid(item) and item.visible:
+		var item = _como_concepto_item(raw)
+		if item != null and item.visible:
 			if iz != null and item.par_key != iz.par_key:
 				der_wrong = item
 				break

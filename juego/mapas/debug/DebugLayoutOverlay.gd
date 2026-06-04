@@ -13,11 +13,17 @@ func establecer_posiciones(posiciones: Array[Vector2]) -> void:
 
 
 func _draw() -> void:
-	for i in _posiciones.size():
-		draw_circle(_posiciones[i], 12.0, Color(1.0, 0.15, 0.15, 0.85))
+	if _posiciones.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	for i in range(_posiciones.size()):
+		var pos := _posiciones[i]
+		draw_circle(pos, 12.0, Color(1.0, 0.15, 0.15, 0.85))
+		if font == null:
+			continue
 		draw_string(
-			ThemeDB.fallback_font,
-			_posiciones[i] + Vector2(-8.0, -18.0),
+			font,
+			pos + Vector2(-8.0, -18.0),
 			str(i + 1),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
