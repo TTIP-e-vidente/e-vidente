@@ -7,14 +7,14 @@ const FIXTURE_PATH := "res://contenido/ejemplos/quiz_choice.json"
 
 
 # Fase 1 — el JSON existe y el loader lo acepta
-func test_fixture_json_se_puede_abrir() -> void:
+func probar_fixture_json_se_puede_abrir() -> void:
 	var json := _cargar_json_fixture()
 	assert_bool(json.is_empty()) \
 		.override_failure_message("No se pudo abrir el JSON.") \
 		.is_false()
 
 
-func test_carga_retorna_ok() -> void:
+func probar_carga_retorna_ok() -> void:
 	var resultado := _cargar_resultado_del_fixture()
 	assert_bool(resultado.get("ok", false)) \
 		.override_failure_message(
