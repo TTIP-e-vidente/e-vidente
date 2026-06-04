@@ -49,11 +49,17 @@ func estado_reanudacion_predeterminado() -> Dictionary:
 
 func normalizar_meta_guardado(raw: Variant) -> Dictionary:
 	if not raw is Dictionary:
-		return {"last_saved_at": "", "last_saved_reason": "", "write_count": 0}
+		return {
+			"last_saved_at": "",
+			"last_saved_reason": "",
+			"write_count": 0,
+			"linked_online_username": "",
+		}
 	return {
 		"last_saved_at": str(raw.get("last_saved_at", "")),
 		"last_saved_reason": str(raw.get("last_saved_reason", "")),
-		"write_count": max(0, int(raw.get("write_count", 0)))
+		"write_count": max(0, int(raw.get("write_count", 0))),
+		"linked_online_username": str(raw.get("linked_online_username", "")).strip_edges(),
 	}
 
 

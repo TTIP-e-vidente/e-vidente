@@ -102,4 +102,4 @@ text = "Guardado localmente"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[connection signal="pressed" from="Continuar" to="." method="_on_continuar_pressed"]
+[connection signal="pressed" from="Continuar" to="." method="_on_continuar_presionado"]

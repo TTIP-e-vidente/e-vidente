@@ -19,6 +19,9 @@ const SaveDataLoaderScript := preload(
 const SaveResumeStateScript := preload(
 	"res://interface/save_local/data/SaveResumeState.gd"
 )
+const ImportadorProgresoOnlineScript := preload(
+	"res://API/backend/sync/ImportadorProgresoOnline.gd"
+)
 
 @warning_ignore("unused_signal")
 signal user_registered(profile: Dictionary)
@@ -68,7 +71,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	cargar_datos()
-	ArmadorDePartida.init_with_save_manager(self)
+	ArmadorDePartida.inicializar_con_save_manager(self)
 
 
 func _notification(what: int) -> void:
@@ -94,7 +97,7 @@ func cargar_datos() -> void:
 		)
 	else:
 		has_unsaved_changes = false
-		_emitir_estado_guardado("ready", loaded_from)
+		_emitir_estado_guardado("leery", loaded_from)
 
 	var saved_progress: Variant = save_data.get("progress", {})
 	print_debug("[Save] loaded_from=", loaded_from)
@@ -103,7 +106,7 @@ func cargar_datos() -> void:
 	if saved_progress is Dictionary:
 		progress_keys = (saved_progress as Dictionary).keys()
 	print_debug("[Save] progress_keys=", progress_keys)
-	print_debug("[Save] node_progress_keys=", get_all_node_progress().keys())
+	print_debug("[Save] node_progress_keys=", obtener_todo_progreso_nodos().keys())
 	_global_importar_progreso(saved_progress if saved_progress is Dictionary else {})
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
@@ -245,7 +248,7 @@ func registrar_sesion_preguntas_completada(question_count: int, score: int) -> v
 
 
 
-func mark_activity_completed(request_key: String, activity_id: String) -> void:
+func marcar_actividad_completada(request_key: String, activity_id: String) -> void:
 	var clean_key: String = request_key.strip_edges()
 	var clean_id: String = activity_id.strip_edges()
 	if clean_id.is_empty():
@@ -267,7 +270,7 @@ func mark_activity_completed(request_key: String, activity_id: String) -> void:
 	print("[PersistentRandom] save_updated=true")
 
 
-func get_completed_activity_ids(request_key: String) -> Array[String]:
+func obtener_ids_actividades_completadas(request_key: String) -> Array[String]:
 	var clean_key: String = request_key.strip_edges()
 	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
 	if not stored is Dictionary:
@@ -284,8 +287,8 @@ func get_completed_activity_ids(request_key: String) -> Array[String]:
 ## Marca una actividad como "jugada" en la sesión actual.
 ## Para request_key vacío (juegos fijos / legacy) usa "__global__" y también
 ## la guarda en completed_activity_ids_by_request para que el filtro de
-## anti-repetición la vea vía get_completed_activity_ids("__global__").
-func mark_activity_played(request_key: String, activity_id: String) -> void:
+## anti-repetición la vea vía obtener_ids_actividades_completadas("__global__").
+func marcar_actividad_jugada(request_key: String, activity_id: String) -> void:
 	var clean_id: String = activity_id.strip_edges()
 	var clean_key: String = request_key.strip_edges()
 	if clean_id.is_empty():
@@ -302,7 +305,7 @@ func mark_activity_played(request_key: String, activity_id: String) -> void:
 		save_data["played_activity_ids_by_request"] = played_map
 		_marcar_guardado_sucio()
 	# Para clave global también almacenamos en completed para que
-	# get_completed_activity_ids("__global__") las devuelva.
+	# obtener_ids_actividades_completadas("__global__") las devuelva.
 	if clean_key == "__global__":
 		var cstored: Variant = save_data.get("completed_activity_ids_by_request", {})
 		var cmap: Dictionary = cstored if cstored is Dictionary else {}
@@ -316,7 +319,7 @@ func mark_activity_played(request_key: String, activity_id: String) -> void:
 
 
 ## Devuelve todos los activity_ids jugados (de cualquier request_key).
-func get_played_activity_ids() -> Array[String]:
+func obtener_ids_actividades_jugadas() -> Array[String]:
 	var stored: Variant = save_data.get("played_activity_ids_by_request", {})
 	if not stored is Dictionary:
 		return []
@@ -332,7 +335,7 @@ func get_played_activity_ids() -> Array[String]:
 
 
 ## Devuelve todos los activity_ids completados, de cualquier request_key.
-func get_all_completed_activity_ids() -> Array[String]:
+func obtener_todos_ids_actividades_completadas() -> Array[String]:
 	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
 	if not stored is Dictionary:
 		return []
@@ -348,16 +351,16 @@ func get_all_completed_activity_ids() -> Array[String]:
 
 
 ## Devuelve la unión de jugados y completados.
-## Usado por ArmadorDePartida._read_used_activity_ids para el filtro anti-repetición.
-func get_all_used_activity_ids() -> Array[String]:
-	var result: Array[String] = get_played_activity_ids()
-	for id: String in get_all_completed_activity_ids():
+## Usado por ArmadorDePartida._leer_used_activity_ids para el filtro anti-repetición.
+func obtener_todos_ids_actividades_usadas() -> Array[String]:
+	var result: Array[String] = obtener_ids_actividades_jugadas()
+	for id: String in obtener_todos_ids_actividades_completadas():
 		if not result.has(id):
 			result.append(id)
 	return result
 
 
-func reset_completed_activity_pool(request_key: String) -> void:
+func reiniciar_pool_actividades_completadas(request_key: String) -> void:
 	var clean_key: String = request_key.strip_edges()
 	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
 	if not stored is Dictionary:
@@ -369,28 +372,28 @@ func reset_completed_activity_pool(request_key: String) -> void:
 		_marcar_guardado_sucio()
 
 
-func debug_clear_completed_activity_history() -> void:
+func depurar_limpiar_historial_actividades() -> void:
 	save_data["completed_activity_ids_by_request"] = {}
 	_marcar_guardado_sucio()
-	print("[PersistentRandom] debug_clear_completed_activity_history done")
+	print("[PersistentRandom] depurar_limpiar_historial_actividades done")
 
 
-func get_total_exp() -> int:
+func obtener_exp_total() -> int:
 	return max(0, int(save_data.get("total_exp", 0)))
 
 
-func add_exp(amount: int) -> int:
+func sumar_exp(amount: int) -> int:
 	if amount <= 0:
-		return get_total_exp()
-	var nuevo_total: int = get_total_exp() + amount
+		return obtener_exp_total()
+	var nuevo_total: int = obtener_exp_total() + amount
 	save_data["total_exp"] = nuevo_total
 	_marcar_guardado_sucio()
 	guardar_progreso_en_disco()
 	return nuevo_total
 
 
-func get_ranking_position() -> int:
-	return _calcular_ranking(get_total_exp())
+func obtener_posicion_ranking() -> int:
+	return _calcular_ranking(obtener_exp_total())
 
 
 func _calcular_ranking(total: int) -> int:
@@ -407,7 +410,7 @@ func _calcular_ranking(total: int) -> int:
 	return 20
 
 
-func save_node_accuracy(
+func guardar_precision_nodo(
 	node_id: String,
 	accuracy: float,
 	completed_games: int = -1,
@@ -476,7 +479,7 @@ func ya_se_mostro_recompensa_del_mapa(map_id: String) -> bool:
 	return bool((seen as Dictionary).get(clean_id, false))
 
 
-func get_node_best_accuracy(node_id: String) -> float:
+func obtener_mejor_precision_nodo(node_id: String) -> float:
 	var clean_id: String = node_id.strip_edges()
 	var stored: Variant = save_data.get("node_progress", {})
 	if not stored is Dictionary:
@@ -487,9 +490,41 @@ func get_node_best_accuracy(node_id: String) -> float:
 	return float((entry as Dictionary).get("best_accuracy", 0.0))
 
 
-func get_all_node_progress() -> Dictionary:
+func obtener_todo_progreso_nodos() -> Dictionary:
 	var stored: Variant = save_data.get("node_progress", {})
 	return (stored as Dictionary).duplicate(true) if stored is Dictionary else {}
+
+
+func obtener_cuenta_online_vinculada() -> String:
+	return str(_obtener_meta_guardado().get("linked_online_username", "")).strip_edges()
+
+
+## Alinea el save local con la cuenta online activa.
+## Si cambió el usuario, reinicia progreso local e importa el del servidor.
+func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Dictionary) -> void:
+	var username := str(usuario.get("username", "")).strip_edges()
+	if username.is_empty():
+		return
+
+	var linked := obtener_cuenta_online_vinculada()
+	if linked != username:
+		_reiniciar_progreso_juego_preservando_perfil()
+
+	_importar_progreso_online(progreso_online)
+	_aplicar_parche_perfil_online(usuario)
+	_establecer_cuenta_online_vinculada(username)
+
+	if not _escribir_guardado_en_disco(false, "online_sync"):
+		push_warning("[Save] No se pudo persistir la sync con la cuenta online.")
+		return
+
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func al_cerrar_sesion_online() -> void:
+	_establecer_cuenta_online_vinculada("")
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
 
 
 func reiniciar_todo_progreso() -> Dictionary:
@@ -687,7 +722,7 @@ func _escribir_guardado_en_disco(force: bool = false, reason: String = "save") -
 	print_debug("[Save] saving path=", ProjectSettings.globalize_path(SAVE_PATH))
 	var progress_keys: Array = (progress as Dictionary).keys() if progress is Dictionary else []
 	print_debug("[Save] progress_keys=", progress_keys)
-	print_debug("[Save] node_progress_keys=", get_all_node_progress().keys())
+	print_debug("[Save] node_progress_keys=", obtener_todo_progreso_nodos().keys())
 	var result: Dictionary = _disk_writer.escribir(save_data, _loaded_from, reason)
 	if not bool(result.get("ok", false)):
 		print_debug("[Save] write_ok=", false)
@@ -875,7 +910,71 @@ func _obtener_settings_guardado_actual() -> Dictionary:
 
 
 func _meta_guardado_vacia() -> Dictionary:
-	return {"last_saved_at": "", "last_saved_reason": "", "write_count": 0}
+	return {
+		"last_saved_at": "",
+		"last_saved_reason": "",
+		"write_count": 0,
+		"linked_online_username": "",
+	}
+
+
+func _establecer_cuenta_online_vinculada(username: String) -> void:
+	var meta: Dictionary = _obtener_meta_guardado()
+	meta["linked_online_username"] = username.strip_edges()
+	save_data["save_meta"] = meta
+
+
+func _reiniciar_progreso_juego_preservando_perfil() -> void:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	_reiniciar_datos_guardado_actual(profile)
+
+
+func _importar_progreso_online(progreso_online: Dictionary) -> void:
+	var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
+		progreso_online
+	)
+	save_data["node_progress"] = snapshot.get("node_progress", {})
+	save_data["total_exp"] = int(snapshot.get("total_exp", 0))
+	save_data["progress"] = snapshot.get("progress_snapshot", {})
+
+	var streak_state: Dictionary = snapshot.get("streak_state", {})
+	_global_establecer_racha(streak_state)
+	_global_importar_progreso(save_data.get("progress", {}))
+
+	var question_progress: Dictionary = snapshot.get("question_progress_by_track", {})
+	var global_autoload: Node = _obtener_autoload_global()
+	for track_key in question_progress.keys():
+		var nodes_for_track: Variant = question_progress.get(track_key, {})
+		if not nodes_for_track is Dictionary:
+			continue
+		for node_id in (nodes_for_track as Dictionary).keys():
+			if global_autoload != null and global_autoload.has_method("marcar_nodo_jugable_completado"):
+				global_autoload.call(
+					"marcar_nodo_jugable_completado",
+					str(track_key),
+					str(node_id)
+				)
+
+	save_data["progress"] = _global_exportar_progreso()
+	if not streak_state.is_empty():
+		var progress_snapshot: Dictionary = save_data.get("progress", {}) as Dictionary
+		var systems: Dictionary = (
+			progress_snapshot.get("progress_system_states", {}) as Dictionary
+			if progress_snapshot.get("progress_system_states") is Dictionary
+			else {}
+		)
+		systems["streak"] = streak_state.duplicate(true)
+		systems["question_progress"] = question_progress.duplicate(true)
+		progress_snapshot["progress_system_states"] = systems
+		save_data["progress"] = progress_snapshot
+
+
+func _aplicar_parche_perfil_online(usuario: Dictionary) -> void:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	var parche: Dictionary = ImportadorProgresoOnlineScript.construir_parche_perfil(usuario)
+	for key in parche.keys():
+		profile[key] = parche[key]
+	save_data["profile"] = profile
 
 
 func _persistir_perfil_actualizado() -> Dictionary:
@@ -935,6 +1034,6 @@ func _escribir_despues_reparacion_carga(
 			)
 		return
 	if recovered_from.is_empty():
-		_emitir_estado_guardado("ready", _loaded_from)
+		_emitir_estado_guardado("leery", _loaded_from)
 	else:
 		_emitir_estado_guardado("recovered", _loaded_from, recovered_from)

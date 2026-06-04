@@ -6,7 +6,7 @@ const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 signal resume_pressed
 signal save_pressed
 signal edit_profile_pressed
-signal reset_progress_pressed
+signal reestablecer_progreso_pressed
 signal logout_pressed
 signal close_requested
 
@@ -37,7 +37,7 @@ func _ready() -> void:
 	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
-	_reset_btn.pressed.connect(func(): reset_progress_pressed.emit())
+	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
 	_aplicar_fuentes()
 
 
@@ -62,7 +62,7 @@ func ocultar_superposicion() -> void:
 
 
 func refrescar() -> void:
-	var username: String = SaveManager.obtener_nombre_usuario_actual()
+	var username := _resolver_nombre_usuario_visible()
 	_username_label.text = username
 	_avatar_label.text = _iniciales_desde(username)
 	var avatar_texture: Texture2D = SaveManager.obtener_textura_avatar_usuario_actual()
@@ -79,7 +79,7 @@ func refrescar() -> void:
 	var summary_text := Global.formatear_progreso_resumen_texto(
 		Global.obtener_progreso_resumen()
 	).strip_edges()
-	var exp_text := "EXP total: %d" % SaveManager.get_total_exp()
+	var exp_text := "EXP total: %d" % SaveManager.obtener_exp_total()
 	_progress_label.text = (
 		(summary_text + "\n" + exp_text)
 		if not summary_text.is_empty()
@@ -100,10 +100,21 @@ func refrescar() -> void:
 		_weekly_summary.call("refrescar")
 		
 	if _logout_btn:
-		_logout_btn.visible = BackendSession.is_logged_in()
+		_logout_btn.visible = AuthApi.esta_logueado()
 
 
 # --- Helpers ---
+
+func _resolver_nombre_usuario_visible() -> String:
+	if AuthApi.esta_logueado():
+		var online_user := AuthApi.obtener_usuario_online()
+		var online_name := str(online_user.get("name", "")).strip_edges()
+		if online_name.is_empty():
+			online_name = str(online_user.get("username", AuthApi.obtener_usuario())).strip_edges()
+		if not online_name.is_empty():
+			return online_name
+	return SaveManager.obtener_nombre_usuario_actual()
+
 
 func _iniciales_desde(full_name: String) -> String:
 	var parts := full_name.split(" ", false)

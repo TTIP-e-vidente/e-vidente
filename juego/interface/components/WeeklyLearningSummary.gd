@@ -2,6 +2,10 @@ extends PanelContainer
 class_name WeeklyLearningSummary
 
 const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
+const ImportadorProgresoOnlineScript := preload(
+	"res://API/backend/sync/ImportadorProgresoOnline.gd"
+)
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 @onready var _title_label: Label = $VBoxContainer/TitleLabel
 @onready var _subtitle_label: Label = $VBoxContainer/SubtitleLabel
@@ -19,7 +23,7 @@ func _ready() -> void:
 	refrescar()
 
 
-func set_weekly_data(data: Dictionary) -> void:
+func establecer_datos_semanales(data: Dictionary) -> void:
 	_weekly_data = data.duplicate(true)
 	refrescar()
 
@@ -47,13 +51,28 @@ func _aplicar_fuentes() -> void:
 func _obtener_datos_semanales() -> Dictionary:
 	if not _weekly_data.is_empty():
 		return _weekly_data
-	return {
-		"topic": "Celiaquia",
-		"completed": 5,
-		"total": 20,
-		"key_learning": "El sello sin TACC ayuda a identificar alimentos seguros.",
-		"suggestion": "Practica contaminacion cruzada para reforzar decisiones."
-	}
+	return _construir_desde_progreso_local()
+
+
+func _construir_desde_progreso_local() -> Dictionary:
+	var track_key := _resolver_pista_activa()
+	var node_progress: Dictionary = {}
+	if SaveManager != null:
+		node_progress = SaveManager.obtener_todo_progreso_nodos()
+	return ImportadorProgresoOnlineScript.construir_resumen_semanal_desde_save(
+		track_key,
+		node_progress
+	)
+
+
+func _resolver_pista_activa() -> String:
+	if SaveManager == null:
+		return GameTrackCatalog.TRACK_CELIAQUIA
+	var resume_state: Dictionary = SaveManager.obtener_estado_reanudacion()
+	var track_key := str(resume_state.get("track_key", "")).strip_edges()
+	if not track_key.is_empty() and GameTrackCatalog.tiene_pista(track_key):
+		return track_key
+	return GameTrackCatalog.TRACK_CELIAQUIA
 
 
 func _actualizar_vista(data: Dictionary) -> void:
@@ -67,7 +86,11 @@ func _actualizar_vista(data: Dictionary) -> void:
 		data.get("suggestion", "Continua practicando para consolidar lo aprendido.")
 	)
 
-	_subtitle_label.text = "Esta semana reforzaste"
+	_subtitle_label.text = (
+		"Progreso del mapa"
+		if completed <= 0
+		else "Esta semana reforzaste"
+	)
 	_topic_label.text = topic
 	_progress_value_label.text = "%d de %d desafios completados" % [completed, total]
 	_progress_bar.max_value = float(total)

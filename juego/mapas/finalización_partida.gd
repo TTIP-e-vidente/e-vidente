@@ -86,14 +86,10 @@ func _ready() -> void:
 
 	# Inicializar feedback de sync
 	if label_sync_status != null:
-		label_sync_status.text = "Guardado localmente"
-		var backend_session = _get_backend_session()
-		if backend_session != null and backend_session.is_logged_in():
-			label_sync_status.text = "Sincronizando..."
-			if not backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
-				backend_session.sync_succeeded.connect(_on_sync_succeeded)
-			if not backend_session.sync_failed.is_connected(_on_sync_failed):
-				backend_session.sync_failed.connect(_on_sync_failed)
+		label_sync_status.text = SyncApi.mensaje_guardado_local()
+		if SyncApi.puede_sincronizar():
+			label_sync_status.text = SyncApi.mensaje_sincronizando()
+			SyncApi.conectar_senales_sincronizacion(_al_sync_exitosa, _al_sync_fallida)
 			_sync_tween = create_tween().set_loops()
 			_sync_tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
 			_sync_tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
@@ -104,11 +100,10 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	_cleanup_sync_feedback()
+	_limpiar_feedback_sync()
 
 
-# Lee la precisión real del resultado. NUNCA inventa 100% por falta de datos:
-# si no hay precisión registrada se muestra 0%. "Completado" no implica perfecto.
+# Completado no implica 100% de precisión.
 func _leer_precision_real(stats: Dictionary) -> int:
 	if stats.has("precision"):
 		return int(stats.get("precision", 0))
@@ -136,24 +131,24 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 
 
 func continuar_al_mapa() -> void:
-	await TransicionEscenas.change_normal_scene(MAP_SCENE)
+	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE)
 
 
-func _on_continuar_pressed() -> void:
+func _on_continuar_presionado() -> void:
 	pass # Replace with function body.
 
 
-func _on_sync_succeeded(_progress: Dictionary) -> void:
+func _al_sync_exitosa(_progress: Dictionary) -> void:
 	if label_sync_status != null:
 		_detener_tween_sync()
-		label_sync_status.text = "Sincronizado con tu cuenta"
+		label_sync_status.text = SyncApi.mensaje_sync_exitosa()
 		label_sync_status.modulate.a = 1.0
 
 
-func _on_sync_failed(_reason: String) -> void:
+func _al_sync_fallida(_motivo: String) -> void:
 	if label_sync_status != null:
 		_detener_tween_sync()
-		label_sync_status.text = "Sin conexión: se sincronizará más tarde"
+		label_sync_status.text = SyncApi.mensaje_sync_pendiente()
 		label_sync_status.modulate.a = 1.0
 
 
@@ -163,19 +158,6 @@ func _detener_tween_sync() -> void:
 	_sync_tween = null
 
 
-func _cleanup_sync_feedback() -> void:
+func _limpiar_feedback_sync() -> void:
 	_detener_tween_sync()
-
-	var backend_session = _get_backend_session()
-	if backend_session == null:
-		return
-
-	if backend_session.sync_succeeded.is_connected(_on_sync_succeeded):
-		backend_session.sync_succeeded.disconnect(_on_sync_succeeded)
-
-	if backend_session.sync_failed.is_connected(_on_sync_failed):
-		backend_session.sync_failed.disconnect(_on_sync_failed)
-
-
-func _get_backend_session() -> Variant:
-	return get_node_or_null("/root/BackendSession")
+	SyncApi.desconectar_senales_sincronizacion(_al_sync_exitosa, _al_sync_fallida)
