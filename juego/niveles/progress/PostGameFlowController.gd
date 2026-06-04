@@ -1,11 +1,5 @@
 extends RefCounted
 
-# PostGameFlowController.gd
-# Decide que ocurre despues de mostrar una ensenanza: racha, siguiente juego,
-# vuelta al mapa/libro o fallback. No dibuja UI.
-
-
-
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
 const DEBUG_FLOW_LOGS := false
@@ -83,15 +77,13 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	if save_manager != null and save_manager.has_method("guardar_progreso_en_disco"):
 		save_manager.call("guardar_progreso_en_disco")
 
-	# Sincronización backend opcional. Fire-and-forget: local ya guardado,
-	# navegación continuará sin esperar respuesta del servidor.
-	RunSummarySyncAdapter.sync_from_post_game(tree, resultado, stats)
+	SyncApi.sincronizar_partida_terminada(tree, resultado, stats)
 
 	GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
 
 
 
-static func build_post_game_flow_state(
+static func construir_estado_flujo_post_juego(
 	previous_streak: Dictionary,
 	updated_streak: Dictionary,
 	completion_context: Dictionary,
@@ -114,14 +106,14 @@ static func build_post_game_flow_state(
 		FLOW_SECTION_TARGETS: {
 			TARGET_KEY_NEXT: next_target,
 			TARGET_KEY_FALLBACK: fallback_target,
-			TARGET_KEY_RETURN_TO: _read_completion_return_to(completion_context),
+			TARGET_KEY_RETURN_TO: _leer_completion_return_to(completion_context),
 		},
 		FLOW_SECTION_DEBUG: {
-			"source": _read_completion_source(completion_context),
-			"level_number": _read_completion_level_number(completion_context),
-			"node_key": _read_completion_node_key(completion_context),
-			"track_key": _read_completion_track_key(completion_context),
-			"created_by": _read_completion_created_by(completion_context),
+			"source": _leer_completion_source(completion_context),
+			"level_number": _leer_completion_level_number(completion_context),
+			"node_key": _leer_completion_node_key(completion_context),
+			"track_key": _leer_completion_track_key(completion_context),
+			"created_by": _leer_completion_created_by(completion_context),
 			"streak_is_active_now": _esta_activa_hoy(updated_streak),
 		},
 	}
@@ -133,7 +125,7 @@ static func build_post_game_flow_state(
 		" hay_siguiente=",
 		(next_target is Dictionary and not (next_target as Dictionary).is_empty()),
 		" return_to=",
-		_read_completion_return_to(completion_context)
+		_leer_completion_return_to(completion_context)
 	)
 	_log_flow("Game finished")
 	_log_flow("Source: %s" % _get_flow_source(flow_state))
@@ -155,25 +147,25 @@ static func decide_next_step_after_teaching(
 	flow_state: Dictionary,
 	timer_finished: Variant = null
 ) -> String:
-	var ready_flow_state: Dictionary = flow_state
+	var leery_flow_state: Dictionary = flow_state
 	if timer_finished != null:
-		ready_flow_state = _with_timer_finished(flow_state, bool(timer_finished))
+		leery_flow_state = _with_timer_finished(flow_state, bool(timer_finished))
 
-	if ready_flow_state.is_empty():
+	if leery_flow_state.is_empty():
 		_log_flow("Teaching finished")
 		_log_flow("Decision: go_to_fallback")
 		return STEP_FALLBACK
 
 	_log_flow("Teaching finished")
-	_log_flow("Source: %s" % _get_flow_source(ready_flow_state))
-	_log_flow("Streak was active: %s" % _was_streak_active_before_game(ready_flow_state))
-	_log_flow("Timer finished: %s" % _did_timer_finish(ready_flow_state))
+	_log_flow("Source: %s" % _get_flow_source(leery_flow_state))
+	_log_flow("Streak was active: %s" % _was_streak_active_before_game(leery_flow_state))
+	_log_flow("Timer finished: %s" % _did_timer_finish(leery_flow_state))
 
-	if _debe_mostrar_racha(ready_flow_state):
+	if _debe_mostrar_racha(leery_flow_state):
 		_log_flow("Decision: show_streak")
 		return STEP_STREAK
 
-	if _debe_continuar_siguiente_juego(ready_flow_state):
+	if _debe_continuar_siguiente_juego(leery_flow_state):
 		_log_flow("Decision: go_to_next_target")
 		return STEP_NEXT
 
@@ -181,15 +173,15 @@ static func decide_next_step_after_teaching(
 	return STEP_FALLBACK
 
 
-static func resolve_post_teaching_flow(
+static func resolver_flujo_post_ensenanza(
 	flow_state: Dictionary,
 	timer_finished: bool
 ) -> Dictionary:
-	var ready_flow_state: Dictionary = _with_timer_finished(flow_state, timer_finished)
-	var next_step: String = decide_next_step_after_teaching(ready_flow_state)
+	var leery_flow_state: Dictionary = _with_timer_finished(flow_state, timer_finished)
+	var next_step: String = decide_next_step_after_teaching(leery_flow_state)
 	if next_step == STEP_STREAK:
 		return {"type": TARGET_TYPE_STREAK}
-	return _get_target_for_step(ready_flow_state, next_step)
+	return _get_target_for_step(leery_flow_state, next_step)
 
 
 static func resolve_post_teaching_step(
@@ -212,7 +204,7 @@ static func should_show_streak(flow_state: Dictionary) -> bool:
 	return _was_streak_inactive_before_game(flow_state)
 
 
-static func should_go_to_next_target(flow_state: Dictionary) -> bool:
+static func should_ir_a_next_target(flow_state: Dictionary) -> bool:
 	if flow_state.is_empty():
 		return false
 	return _did_timer_finish(flow_state) and _has_next_target(flow_state)
@@ -223,7 +215,7 @@ static func _debe_mostrar_racha(flow_state: Dictionary) -> bool:
 
 
 static func _debe_continuar_siguiente_juego(flow_state: Dictionary) -> bool:
-	return should_go_to_next_target(flow_state)
+	return should_ir_a_next_target(flow_state)
 
 
 static func resolve_after_streak_flow(flow_state: Dictionary) -> Dictionary:
@@ -235,7 +227,7 @@ static func resolve_after_streak_flow(flow_state: Dictionary) -> Dictionary:
 	return _scene_path_target(_get_return_to(flow_state))
 
 
-static func navigate_after_teaching(
+static func navegar_despues_ensenanza(
 	tree: SceneTree,
 	flow_state: Dictionary,
 	streak_feedback: Dictionary = {},
@@ -244,33 +236,33 @@ static func navigate_after_teaching(
 	if tree == null:
 		return
 
-	var ready_flow_state: Dictionary = _with_timer_finished(flow_state, timer_finished)
-	var next_step: String = decide_next_step_after_teaching(ready_flow_state)
+	var leery_flow_state: Dictionary = _with_timer_finished(flow_state, timer_finished)
+	var next_step: String = decide_next_step_after_teaching(leery_flow_state)
 	if next_step == STEP_STREAK:
-		_show_streak(tree, ready_flow_state, streak_feedback)
+		_show_streak(tree, leery_flow_state, streak_feedback)
 		return
 
 	if next_step == STEP_NEXT:
-		_abrir_siguiente_juego(tree, ready_flow_state)
+		_abrir_siguiente_juego(tree, leery_flow_state)
 		return
-	_volver_a_fallback(tree, ready_flow_state)
+	_volver_a_fallback(tree, leery_flow_state)
 
 
-static func navigate_after_streak(
+static func navegar_despues_racha(
 	tree: SceneTree,
 	fallback_scene_path: String = GameSceneRouter.MAP_SCENE_PATH
 ) -> void:
 	if tree == null:
 		return
 
-	var flow_state: Dictionary = consume_flow_state(tree)
+	var flow_state: Dictionary = consumir_estado_flujo(tree)
 	var resolved_target: Dictionary = resolve_after_streak_flow(flow_state)
 	if resolved_target.is_empty():
 		resolved_target = _scene_path_target(fallback_scene_path)
 
 	_log_flow("Streak finished")
 	_log_flow("Decision: go_to_fallback")
-	_go_to_target(
+	_ir_a_target(
 		tree,
 		flow_state,
 		resolved_target,
@@ -289,7 +281,7 @@ static func navigate_to_return_target(
 		return
 
 	var return_target: Dictionary = _build_return_target(return_to, node_key)
-	var safe_return_to: String = GameSceneRouter.read_return_to(
+	var safe_return_to: String = GameSceneRouter.leer_retorno_a(
 		return_target,
 		return_to
 	)
@@ -311,7 +303,7 @@ static func navigate_to_return_target(
 	)
 
 
-static func consume_flow_state(tree: SceneTree) -> Dictionary:
+static func consumir_estado_flujo(tree: SceneTree) -> Dictionary:
 	if tree == null or tree.root == null:
 		return {}
 	var root: Window = tree.root
@@ -355,11 +347,11 @@ static func _with_timer_finished(
 	flow_state: Dictionary,
 	timer_finished: bool
 ) -> Dictionary:
-	var ready_flow_state: Dictionary = flow_state.duplicate(true)
-	var state_section: Dictionary = _get_state_section(ready_flow_state)
+	var leery_flow_state: Dictionary = flow_state.duplicate(true)
+	var state_section: Dictionary = _get_state_section(leery_flow_state)
 	state_section["timer_finished"] = timer_finished
-	ready_flow_state[FLOW_SECTION_STATE] = state_section
-	return ready_flow_state
+	leery_flow_state[FLOW_SECTION_STATE] = state_section
+	return leery_flow_state
 
 
 static func _show_streak(
@@ -376,7 +368,7 @@ static func _show_streak(
 			"decision": STEP_STREAK,
 		}
 	)
-	GameSceneRouter.go_to_streak(
+	GameSceneRouter.ir_a_racha(
 		tree,
 		_get_return_to(flow_state),
 		streak_feedback,
@@ -385,23 +377,23 @@ static func _show_streak(
 
 
 static func _abrir_siguiente_juego(tree: SceneTree, flow_state: Dictionary) -> void:
-	_go_to_step_target(tree, flow_state, STEP_NEXT)
+	_ir_a_step_target(tree, flow_state, STEP_NEXT)
 
 
 static func _volver_a_fallback(tree: SceneTree, flow_state: Dictionary) -> void:
-	_go_to_step_target(tree, flow_state, STEP_FALLBACK)
+	_ir_a_step_target(tree, flow_state, STEP_FALLBACK)
 
 
-static func _go_to_step_target(
+static func _ir_a_step_target(
 	tree: SceneTree,
 	flow_state: Dictionary,
 	next_step: String
 ) -> void:
 	var resolved_target: Dictionary = _get_target_for_step(flow_state, next_step)
-	_go_to_target(tree, flow_state, resolved_target, next_step)
+	_ir_a_target(tree, flow_state, resolved_target, next_step)
 
 
-static func _go_to_target(
+static func _ir_a_target(
 	tree: SceneTree,
 	flow_state: Dictionary,
 	resolved_target: Dictionary,
@@ -462,23 +454,23 @@ static func _get_flow_source(flow_state: Dictionary) -> String:
 
 
 static func _get_state_section(flow_state: Dictionary) -> Dictionary:
-	return _read_flow_section(flow_state, FLOW_SECTION_STATE)
+	return _leer_flow_section(flow_state, FLOW_SECTION_STATE)
 
 
 static func _get_targets_section(flow_state: Dictionary) -> Dictionary:
-	return _read_flow_section(flow_state, FLOW_SECTION_TARGETS)
+	return _leer_flow_section(flow_state, FLOW_SECTION_TARGETS)
 
 
 static func _get_debug_section(flow_state: Dictionary) -> Dictionary:
-	return _read_flow_section(flow_state, FLOW_SECTION_DEBUG)
+	return _leer_flow_section(flow_state, FLOW_SECTION_DEBUG)
 
 
 static func _get_next_target(flow_state: Dictionary) -> Dictionary:
-	return _read_flow_target(_get_targets_section(flow_state), TARGET_KEY_NEXT)
+	return _leer_flow_target(_get_targets_section(flow_state), TARGET_KEY_NEXT)
 
 
 static func _get_fallback_target(flow_state: Dictionary) -> Dictionary:
-	return _read_flow_target(_get_targets_section(flow_state), TARGET_KEY_FALLBACK)
+	return _leer_flow_target(_get_targets_section(flow_state), TARGET_KEY_FALLBACK)
 
 
 static func _get_return_to(flow_state: Dictionary) -> String:
@@ -507,14 +499,14 @@ static func _build_return_target(return_to: String, node_key: String) -> Diction
 	}
 
 
-static func _read_flow_section(flow_state: Dictionary, section_name: String) -> Dictionary:
+static func _leer_flow_section(flow_state: Dictionary, section_name: String) -> Dictionary:
 	var raw_section: Variant = flow_state.get(section_name, {})
 	if raw_section is Dictionary:
 		return raw_section as Dictionary
 	return {}
 
 
-static func _read_flow_target(targets_section: Dictionary, target_name: String) -> Dictionary:
+static func _leer_flow_target(targets_section: Dictionary, target_name: String) -> Dictionary:
 	var raw_target: Variant = targets_section.get(target_name, null)
 	if raw_target is Dictionary:
 		return (raw_target as Dictionary).duplicate(true)
@@ -524,15 +516,15 @@ static func _read_flow_target(targets_section: Dictionary, target_name: String) 
 static func _build_next_target_from_completion_context(
 	completion_context: Dictionary
 ) -> Dictionary:
-	var node_key: String = _read_completion_node_key(completion_context)
+	var node_key: String = _leer_completion_node_key(completion_context)
 	if _completion_came_from_map(completion_context) and not node_key.is_empty():
 		# Una partida de nodo avanza sus juegos con ContinuidadDePartidaDeNodo.
 		# Cuando ya llega aca, el nodo termino y debe volver al mapa.
 		return {}
 
-	var track_key: String = _read_completion_track_key(completion_context)
-	var current_level_number: int = _read_completion_level_number(completion_context)
-	var level_count: int = _read_completion_level_count(completion_context)
+	var track_key: String = _leer_completion_track_key(completion_context)
+	var current_level_number: int = _leer_completion_level_number(completion_context)
+	var level_count: int = _leer_completion_level_count(completion_context)
 	if track_key.is_empty() or current_level_number <= 0 or level_count <= 0:
 		return {}
 
@@ -553,7 +545,7 @@ static func _build_fallback_target_from_completion_context(
 	if _completion_came_from_map(completion_context):
 		return {"type": "scene_path", "scene_path": GameSceneRouter.FINALIZACION_PARTIDA_SCENE_PATH}
 
-	var track_key: String = _read_completion_track_key(completion_context)
+	var track_key: String = _leer_completion_track_key(completion_context)
 	if track_key.is_empty() or _completion_uses_default_track(completion_context):
 		return {"type": "map"}
 	return {
@@ -562,67 +554,67 @@ static func _build_fallback_target_from_completion_context(
 	}
 
 
-static func _read_completion_source(completion_context: Dictionary) -> String:
+static func _leer_completion_source(completion_context: Dictionary) -> String:
 	return str(completion_context.get("source", "post_game")).strip_edges()
 
 
-static func _read_completion_level_section(completion_context: Dictionary) -> Dictionary:
+static func _leer_completion_level_section(completion_context: Dictionary) -> Dictionary:
 	var raw_level: Variant = completion_context.get("level", {})
 	if raw_level is Dictionary:
 		return raw_level as Dictionary
 	return {}
 
 
-static func _read_completion_map_section(completion_context: Dictionary) -> Dictionary:
+static func _leer_completion_map_section(completion_context: Dictionary) -> Dictionary:
 	var raw_map: Variant = completion_context.get("map", {})
 	if raw_map is Dictionary:
 		return raw_map as Dictionary
 	return {}
 
 
-static func _read_completion_navigation_section(completion_context: Dictionary) -> Dictionary:
+static func _leer_completion_navigation_section(completion_context: Dictionary) -> Dictionary:
 	var raw_navigation: Variant = completion_context.get("navigation", {})
 	if raw_navigation is Dictionary:
 		return raw_navigation as Dictionary
 	return {}
 
 
-static func _read_completion_debug_section(completion_context: Dictionary) -> Dictionary:
+static func _leer_completion_debug_section(completion_context: Dictionary) -> Dictionary:
 	var raw_debug: Variant = completion_context.get("debug", {})
 	if raw_debug is Dictionary:
 		return raw_debug as Dictionary
 	return {}
 
 
-static func _read_completion_track_key(completion_context: Dictionary) -> String:
+static func _leer_completion_track_key(completion_context: Dictionary) -> String:
 	return str(
-		_read_completion_level_section(completion_context).get("track_key", "")
+		_leer_completion_level_section(completion_context).get("track_key", "")
 	).strip_edges()
 
 
-static func _read_completion_level_number(completion_context: Dictionary) -> int:
-	return int(_read_completion_level_section(completion_context).get("number", 0))
+static func _leer_completion_level_number(completion_context: Dictionary) -> int:
+	return int(_leer_completion_level_section(completion_context).get("number", 0))
 
 
-static func _read_completion_level_count(completion_context: Dictionary) -> int:
-	return int(_read_completion_level_section(completion_context).get("track_level_count", 0))
+static func _leer_completion_level_count(completion_context: Dictionary) -> int:
+	return int(_leer_completion_level_section(completion_context).get("track_level_count", 0))
 
 
 static func _completion_uses_default_track(completion_context: Dictionary) -> bool:
-	return bool(_read_completion_level_section(completion_context).get("is_default_track", false))
+	return bool(_leer_completion_level_section(completion_context).get("is_default_track", false))
 
 
 static func _completion_came_from_map(completion_context: Dictionary) -> bool:
-	return bool(_read_completion_map_section(completion_context).get("came_from_map", false))
+	return bool(_leer_completion_map_section(completion_context).get("came_from_map", false))
 
 
-static func _read_completion_node_key(completion_context: Dictionary) -> String:
-	return str(_read_completion_map_section(completion_context).get("node_key", "")).strip_edges()
+static func _leer_completion_node_key(completion_context: Dictionary) -> String:
+	return str(_leer_completion_map_section(completion_context).get("node_key", "")).strip_edges()
 
 
-static func _read_completion_return_to(completion_context: Dictionary) -> String:
+static func _leer_completion_return_to(completion_context: Dictionary) -> String:
 	var return_to: String = str(
-		_read_completion_navigation_section(completion_context).get(
+		_leer_completion_navigation_section(completion_context).get(
 			"return_to",
 			GameSceneRouter.MAP_SCENE_PATH
 		)
@@ -632,9 +624,9 @@ static func _read_completion_return_to(completion_context: Dictionary) -> String
 	return return_to
 
 
-static func _read_completion_created_by(completion_context: Dictionary) -> String:
+static func _leer_completion_created_by(completion_context: Dictionary) -> String:
 	return str(
-		_read_completion_debug_section(completion_context).get("created_by", "unknown")
+		_leer_completion_debug_section(completion_context).get("created_by", "unknown")
 	).strip_edges()
 
 
@@ -669,7 +661,7 @@ static func _describir_escena(target: Dictionary) -> String:
 		"map":
 			return GameSceneRouter.MAP_SCENE_PATH
 		"map_continue":
-			return GameSceneRouter.read_return_to(target, GameSceneRouter.MAP_SCENE_PATH)
+			return GameSceneRouter.leer_retorno_a(target, GameSceneRouter.MAP_SCENE_PATH)
 		"track_level":
 			return "track_level:%s" % str(target.get("track_key", "")).strip_edges()
 		"track_book":

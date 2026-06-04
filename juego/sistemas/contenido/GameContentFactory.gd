@@ -12,22 +12,22 @@ const MODE_QUIZ_CHOICE := "quiz_choice"
 const MODE_VINCULACION_CONCEPTOS := "vinculacion_conceptos"
 
 
-static func create_runtime_game(raw_data: Dictionary, source_path: String = "") -> Dictionary:
-	var normalized_result: Dictionary = ContentNormalizerScript.normalize(raw_data, source_path)
-	var normalized_data: Dictionary = normalized_result.get("data", {})
-	if not ContentNormalizerScript.is_v1_content(normalized_data):
+static func crear_juego_runtime(raw_data: Dictionary, source_path: String = "") -> Dictionary:
+	var normalizado_result: Dictionary = ContentNormalizerScript.normalizar(raw_data, source_path)
+	var normalizado_data: Dictionary = normalizado_result.get("data", {})
+	if not ContentNormalizerScript.es_contenido_v1(normalizado_data):
 		return _error("GameContentFactory solo soporta contenido V1.")
 
-	match str(normalized_data.get("tipo", "")):
+	match str(normalizado_data.get("tipo", "")):
 		"receta_arrastre", "arrastre":
-			return _create_drag_drop_runtime(normalized_data)
+			return _create_drag_drop_runtime(normalizado_data)
 		"preguntas":
-			return _create_questions_runtime(normalized_data)
+			return _create_questions_runtime(normalizado_data)
 		"vinculacion":
-			return _create_linking_runtime(normalized_data)
+			return _create_linking_runtime(normalizado_data)
 		_:
 			return _error(
-				"El archivo no es jugable directo: %s" % str(normalized_data.get("tipo", ""))
+				"El archivo no es jugable directo: %s" % str(normalizado_data.get("tipo", ""))
 			)
 
 
@@ -45,7 +45,7 @@ static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
 	var target_label: String = str(data.get("label_objetivo", "")).strip_edges()
 	if target_label.is_empty():
 		target_label = "Plato"
-	var correct_sample_result: Dictionary = sample_drag_pool_ids(
+	var correct_sample_result: Dictionary = muestrear_ids_pool_arrastre(
 		data.get("correctos", data.get("items_correctos", [])),
 		int(data.get("cantidad_correctos", 0)),
 		"cantidad_correctos",
@@ -53,7 +53,7 @@ static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
 	)
 	if not bool(correct_sample_result.get("ok", false)):
 		return correct_sample_result
-	var wrong_sample_result: Dictionary = sample_drag_pool_ids(
+	var wrong_sample_result: Dictionary = muestrear_ids_pool_arrastre(
 		data.get("incorrectos", data.get("items_incorrectos", [])),
 		int(data.get("cantidad_incorrectos", 0)),
 		"cantidad_incorrectos",
@@ -102,7 +102,7 @@ static func _create_drag_drop_runtime(data: Dictionary) -> Dictionary:
 	return _ok(runtime_data)
 
 
-static func sample_drag_pool_ids(
+static func muestrear_ids_pool_arrastre(
 	item_ids: Array[String],
 	requested_count: int,
 	field_name: String,

@@ -26,7 +26,7 @@ var interaction_enabled := true
 var base_scale := Vector2.ONE
 static var is_dragging: Object = null
 
-func setup(level_item, superficie, is_positive: bool, instance_id: String = ""):
+func configurar(level_item, superficie, is_positive: bool, instance_id: String = ""):
 	base_scale = scale
 	text_sprite = level_item.sprite
 	$Sprite2D.texture = text_sprite

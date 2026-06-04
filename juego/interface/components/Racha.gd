@@ -27,12 +27,8 @@ func _ready() -> void:
 	renderizar()
 
 
-func renderizar(streak_view_model: Dictionary = {}) -> void:
-	_aplicar_view_model(_resolver_view_model(streak_view_model))
-
-
-func render(streak_view_model: Dictionary = {}) -> void:
-	renderizar(streak_view_model)
+func renderizar(streak_modelo_vista: Dictionary = {}) -> void:
+	_aplicar_modelo_vista(_resolver_modelo_vista(streak_modelo_vista))
 
 
 func establecer_insignia(number_value: int, _next_status_key: String = "") -> void:
@@ -45,23 +41,23 @@ func establecer_interactivo(enabled: bool) -> void:
 	_refrescar_interactividad()
 
 
-func _resolver_view_model(streak_view_model: Dictionary) -> Dictionary:
-	if not streak_view_model.is_empty():
-		return streak_view_model
+func _resolver_modelo_vista(streak_modelo_vista: Dictionary) -> Dictionary:
+	if not streak_modelo_vista.is_empty():
+		return streak_modelo_vista
 	var global_node := ContextoSesionDeJuegoScript.obtener_global()
 	if global_node and global_node.has_method("obtener_modelo_vista_racha"):
 		return global_node.obtener_modelo_vista_racha()
 	return {}
 
 
-func _aplicar_view_model(streak_view_model: Dictionary) -> void:
+func _aplicar_modelo_vista(streak_modelo_vista: Dictionary) -> void:
 	_current_count = max(
 		0,
-		int(streak_view_model.get("current_count", 0))
+		int(streak_modelo_vista.get("current_count", 0))
 	)
 
 	_streak_state = str(
-		streak_view_model.get("streak_state", "inactive")
+		streak_modelo_vista.get("streak_state", "inactive")
 	)
 
 	_refrescar_ui()

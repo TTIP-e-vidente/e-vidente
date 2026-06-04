@@ -9,7 +9,7 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
 
 # Root scene nodes
-var reset_progress_dialog: ConfirmationDialog
+var reestablecer_progreso_dialog: ConfirmationDialog
 var mode_selection_streak_badge: Node
 
 # Profile overlay panel and its controls
@@ -19,4 +19,4 @@ var close_profile_button: Button
 var profile_summary_panel: PanelContainer
 var profile_history_panel: PanelContainer
 var history_toggle_button: Button
-var reset_progress_button: Button
+var reestablecer_progreso_button: Button

@@ -28,10 +28,10 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	if not datos_nodo.is_empty():
 		return cargar_resultado_desde_datos_nodo(
 			datos_nodo,
-			_read_playable_json_path(contexto_sesion)
+			_leer_ruta_json_jugable(contexto_sesion)
 		)
 	if not str(contexto_sesion.get("activity_id", "")).strip_edges().is_empty():
-		var resultado_activity: Dictionary = NodeContentLoaderScript.load_from_context(contexto_sesion)
+		var resultado_activity: Dictionary = NodeContentLoaderScript.cargar_desde_contexto(contexto_sesion)
 		if not bool(resultado_activity.get("ok", false)):
 			return _resultado_error(
 				str(resultado_activity.get("error", ERROR_CONTENIDO_NO_DISPONIBLE))
@@ -40,9 +40,9 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 			resultado_activity.get("data", {}),
 			str(contexto_sesion.get("activity_id", ""))
 		)
-	var ruta_json: String = _read_playable_json_path(contexto_sesion)
+	var ruta_json: String = _leer_ruta_json_jugable(contexto_sesion)
 	if not ruta_json.is_empty():
-		var resultado_nodo: Dictionary = NodeContentLoaderScript.load_from_context(
+		var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_desde_contexto(
 			{"json_path": ruta_json}
 		)
 		if not bool(resultado_nodo.get("ok", false)):
@@ -53,7 +53,7 @@ static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
 	return _cargar_fallback_legacy(contexto_sesion)
 
 
-static func _read_playable_json_path(contexto_sesion: Dictionary) -> String:
+static func _leer_ruta_json_jugable(contexto_sesion: Dictionary) -> String:
 	var ruta_json: String = str(contexto_sesion.get("json_path", "")).strip_edges()
 	if not ruta_json.is_empty():
 		return ruta_json

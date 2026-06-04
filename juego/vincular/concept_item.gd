@@ -71,7 +71,7 @@ func configurar(id: String, texto_item: String, lado_item: String, clave_par: St
 	_actualizar_texto()
 
 
-func setup(datos: Dictionary, lado_item: String) -> void:
+func configurar_desde_diccionario(datos: Dictionary, lado_item: String) -> void:
 	configurar(
 		str(datos.get("id", "")).strip_edges(),
 		str(datos.get("texto", datos.get("text", ""))).strip_edges(),
@@ -98,7 +98,7 @@ func limpiar_vinculo() -> void:
 		aplicar_estado_visual("normal")
 
 
-func reset_state() -> void:
+func reiniciar_estado() -> void:
 	limpiar_vinculo()
 
 
@@ -117,15 +117,15 @@ func marcar_error(hay_error: bool) -> void:
 		aplicar_estado_visual("vinculada")
 
 
-func set_selected() -> void:
+func marcar_seleccionado() -> void:
 	aplicar_estado_visual("seleccionada")
 
 
-func set_correct() -> void:
+func marcar_correcto() -> void:
 	marcar_error(false)
 
 
-func set_wrong() -> void:
+func marcar_incorrecto() -> void:
 	marcar_error(true)
 
 

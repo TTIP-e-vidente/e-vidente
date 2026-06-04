@@ -26,41 +26,41 @@ static func difficulty_from_value(value: Variant) -> Difficulty:
 
 
 ## Devuelve los EXP base de un nivel de dificultad.
-static func get_exp_for_difficulty(difficulty: Difficulty) -> int:
+static func obtener_exp_por_dificultad(difficulty: Difficulty) -> int:
 	return EXP_BY_DIFFICULTY.get(difficulty, EXP_BY_DIFFICULTY[Difficulty.EASY])
 
 
 ## Devuelve los EXP base de un valor entero de dificultad (1–5).
-static func get_exp_for_difficulty_value(value: Variant) -> int:
-	return get_exp_for_difficulty(difficulty_from_value(value))
+static func obtener_exp_por_dificultad_value(value: Variant) -> int:
+	return obtener_exp_por_dificultad(difficulty_from_value(value))
 
 
 static func calculate_base_exp(games: Array, dificultad_fallback: int = 1) -> int:
 	if games.is_empty():
-		return get_exp_for_difficulty_value(dificultad_fallback)
+		return obtener_exp_por_dificultad_value(dificultad_fallback)
 	var total: int = 0
 	for raw in games:
 		var game: Dictionary = raw as Dictionary
 		if game == null:
 			continue
 		var d: int = max(1, int(game.get("dificultad", dificultad_fallback)))
-		total += get_exp_for_difficulty_value(d)
-	return total if total > 0 else get_exp_for_difficulty_value(dificultad_fallback)
+		total += obtener_exp_por_dificultad_value(d)
+	return total if total > 0 else obtener_exp_por_dificultad_value(dificultad_fallback)
 
 
 # ─── Precisión y error ───────────────────────────────────────────────────────
 
 ## Precisión como ratio 0.0–1.0.
 ## Si no hay intentos, devuelve 1.0 (perfecto).
-static func calculate_precision_ratio(correct: int, attempts: int) -> float:
+static func calcular_precision_ratio(correct: int, attempts: int) -> float:
 	if attempts <= 0:
 		return 1.0
 	return clampf(float(correct) / float(attempts), 0.0, 1.0)
 
 
 ## Precisión como porcentaje entero 0–100.
-static func calculate_precision(correct: int, attempts: int) -> int:
-	return int(round(calculate_precision_ratio(correct, attempts) * 100.0))
+static func calcular_precision(correct: int, attempts: int) -> int:
+	return int(round(calcular_precision_ratio(correct, attempts) * 100.0))
 
 
 ## Porcentaje de error como entero 0–100.
@@ -74,14 +74,14 @@ static func calculate_error_percent(errors: int, attempts: int) -> int:
 
 ## EXP final = round(exp_base * precision_ratio).
 ## Nunca puede ser menor que 0 ni mayor que exp_base.
-static func calculate_final_exp(base_exp: int, precision_ratio: float) -> int:
+static func calcular_exp_final(base_exp: int, precision_ratio: float) -> int:
 	return clampi(int(round(float(base_exp) * precision_ratio)), 0, base_exp)
 
 
 # ─── Tiempo ──────────────────────────────────────────────────────────────────
 
 ## Formatea duración en milisegundos a "M:SS".
-static func format_duration(ms: int) -> String:
+static func formatear_duracion(ms: int) -> String:
 	if ms <= 0:
 		return "0:00"
 	var total_seconds: int = int(ms / 1000.0)

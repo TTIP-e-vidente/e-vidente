@@ -130,7 +130,7 @@ func _abrir_destino_boton(
 
 	match destination_type:
 		DESTINO_MAPA:
-			GameSceneRouter.go_to_map(get_tree())
+			GameSceneRouter.ir_al_mapa(get_tree())
 		DESTINO_PISTA:
 			if track_key.is_empty():
 				return
@@ -163,7 +163,7 @@ func _reanudar_actual_guardar() -> void:
 		_establecer_reanudar_superposicion_visible(false)
 		return
 	var resume_state: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
+	GameSceneRouter.ir_a_reanudar(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
 # --- Sonido y animaciones -----------------------------------------------------
@@ -249,7 +249,7 @@ func _agregar_superposicion_perfil(hud_root: Control) -> void:
 	_profile_overlay.resume_pressed.connect(_on_superposicion_reanudar_presionado)
 	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_edit_perfil_presionado)
-	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.reestablecer_progreso_pressed.connect(_on_superposicion_reiniciar_presionado)
 	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cerrar_solicitado)
 
@@ -272,7 +272,7 @@ func _on_racha_presionado() -> void:
 		_profile_overlay.ocultar_superposicion()
 	if _profile_toggle_btn != null:
 		_profile_toggle_btn.visible = true
-	GameSceneRouter.go_to_streak(get_tree(), RESUME_FALLBACK_SCENE)
+	GameSceneRouter.ir_a_racha(get_tree(), RESUME_FALLBACK_SCENE)
 
 
 func _on_superposicion_cerrar_solicitado() -> void:
@@ -305,7 +305,7 @@ func _on_superposicion_reiniciar_presionado() -> void:
 
 
 func _on_superposicion_logout_presionado() -> void:
-	BackendSession.logout()
+	AuthApi.cerrar_sesion()
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_main_menu(get_tree())

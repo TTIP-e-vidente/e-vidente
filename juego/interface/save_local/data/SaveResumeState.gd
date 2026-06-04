@@ -87,22 +87,22 @@ func construir_para_nivel(track_key: String, level_number: int) -> Dictionary:
 
 func resolver_desde_guardado(save_snapshot: Dictionary, archivero_scene: String) -> Dictionary:
 	var stored_resume_state: Variant = save_snapshot.get("resume_state", {})
-	var normalized_resume: Dictionary = normalizar(stored_resume_state, archivero_scene)
-	if str(normalized_resume.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
-		return normalized_resume
+	var normalizado_resume: Dictionary = normalizar(stored_resume_state, archivero_scene)
+	if str(normalizado_resume.get("context", RESUME_CONTEXT_HUB)) == RESUME_CONTEXT_LEVEL:
+		return normalizado_resume
 
 	var resume_from_history: Dictionary = _buscar_reanudacion_en_historial(
 		save_snapshot,
 		archivero_scene
 	)
-	return resume_from_history if not resume_from_history.is_empty() else normalized_resume
+	return resume_from_history if not resume_from_history.is_empty() else normalizado_resume
 
 
 func reparar(save_snapshot: Dictionary, archivero_scene: String) -> bool:
 	var current_resume: Dictionary = resolver_desde_guardado(save_snapshot, archivero_scene)
 	var saved_resume: Variant = save_snapshot.get("resume_state", {})
-	var normalized_saved_resume: Dictionary = normalizar(saved_resume, archivero_scene)
-	if current_resume == normalized_saved_resume:
+	var normalizado_saved_resume: Dictionary = normalizar(saved_resume, archivero_scene)
+	if current_resume == normalizado_saved_resume:
 		return false
 	save_snapshot["resume_state"] = current_resume
 	return true

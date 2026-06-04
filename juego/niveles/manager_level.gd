@@ -793,7 +793,7 @@ func generar_nivel_elemento(level_item: Resource, instance_id: String, is_positi
 	if level_item_instance == null:
 		push_warning("ManagerLevel: falló la instanciación del elemento '%s'." % instance_id)
 		return null
-	level_item_instance.setup(level_item, plato, is_positive, instance_id)
+	level_item_instance.configurar(level_item, plato, is_positive, instance_id)
 	add_child(level_item_instance)
 	level_items.append(level_item_instance)
 	var item_id: String = str(level_item.runtime_id).strip_edges()

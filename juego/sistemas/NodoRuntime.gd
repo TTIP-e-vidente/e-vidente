@@ -15,7 +15,7 @@ static func iniciar(
 ) -> Dictionary:
 	if tree == null:
 		return _error("Falta SceneTree.")
-	if node_data == null or not node_data.is_valid():
+	if node_data == null or not node_data.es_valido():
 		return _error("Nodo invalido o sin contenido.")
 	var global_state: Node = _global(tree)
 	if global_state == null:
@@ -94,7 +94,7 @@ static func hay_siguiente_mini_juego(tree: SceneTree) -> bool:
 
 # Calcula la precisión basada en el acumulador de stats del nodo actual.
 static func calcular_precision(tree: SceneTree) -> int:
-	return NodoStatsScript.get_precision(tree)
+	return NodoStatsScript.obtener_precision(tree)
 
 
 # Calcula la EXP ganada en este nodo según la precisión y los mini juegos jugados.
@@ -110,7 +110,7 @@ static func calcular_exp_final(tree: SceneTree) -> int:
 	var dificultad_fallback: int = max(1, int(partida.get("dificultad", 1)))
 	var exp_base: int = NodoProgressionRulesScript.calculate_base_exp(juegos, dificultad_fallback)
 	var precision_ratio: float = clampf(float(calcular_precision(tree)) / 100.0, 0.0, 1.0)
-	return NodoProgressionRulesScript.calculate_final_exp(exp_base, precision_ratio)
+	return NodoProgressionRulesScript.calcular_exp_final(exp_base, precision_ratio)
 
 
 ## Genera el resultado completo del nodo actual para mostrar en Finalización-Partida.
@@ -125,25 +125,25 @@ static func crear_resultado_de_nodo(tree: SceneTree) -> Dictionary:
 	var juegos: Array = partida.get("juegos", [])
 	var dificultad_fallback: int = max(1, int(partida.get("dificultad", 1)))
 	var exp_base: int = NodoProgressionRulesScript.calculate_base_exp(juegos, dificultad_fallback)
-	var stats: Dictionary = NodoStatsScript.get_stats(tree)
+	var stats: Dictionary = NodoStatsScript.obtener_estadisticas(tree)
 	var aciertos: int = int(stats.get("aciertos", 0))
 	var errores: int = int(stats.get("errores", 0))
 	var intentos: int = int(stats.get("intentos", 0))
-	var precision_ratio: float = NodoProgressionRulesScript.calculate_precision_ratio(
+	var precision_ratio: float = NodoProgressionRulesScript.calcular_precision_ratio(
 		aciertos, intentos
 	)
-	var precision: int = NodoProgressionRulesScript.calculate_precision(aciertos, intentos)
+	var precision: int = NodoProgressionRulesScript.calcular_precision(aciertos, intentos)
 	var error_pct: int = NodoProgressionRulesScript.calculate_error_percent(errores, intentos)
-	var exp_ganada: int = NodoProgressionRulesScript.calculate_final_exp(exp_base, precision_ratio)
+	var exp_ganada: int = NodoProgressionRulesScript.calcular_exp_final(exp_base, precision_ratio)
 	var duration_ms: int = NodoStatsScript.get_duration_ms(tree)
-	var tiempo: String = NodoStatsScript.get_duration_formatted(tree)
+	var tiempo: String = NodoStatsScript.obtener_duracion_formateada(tree)
 	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
 	var total_exp_after: int = 0
-	if save_manager != null and save_manager.has_method("get_total_exp"):
-		total_exp_after = int(save_manager.call("get_total_exp"))
+	if save_manager != null and save_manager.has_method("obtener_exp_total"):
+		total_exp_after = int(save_manager.call("obtener_exp_total"))
 	var ranking: int = 0
-	if save_manager != null and save_manager.has_method("get_ranking_position"):
-		ranking = int(save_manager.call("get_ranking_position"))
+	if save_manager != null and save_manager.has_method("obtener_posicion_ranking"):
+		ranking = int(save_manager.call("obtener_posicion_ranking"))
 	return {
 		"exp_base": exp_base,
 		"exp_ganada": exp_ganada,
@@ -184,7 +184,7 @@ static func _construir_sesion(node_data: MapNodeData, return_to: String) -> Dict
 		"node_title": node_data.title,
 		"json_path": node_data.json_path,
 		"activity_id": node_data.activity_id,
-		"pack_id": node_data.get_effective_pack_id(),
+		"pack_id": node_data.obtener_pack_id_efectivo(),
 		"track_key": node_data.track_key,
 		"mode": node_data.mode.strip_edges(),
 		"level_number": node_data.index + 1,

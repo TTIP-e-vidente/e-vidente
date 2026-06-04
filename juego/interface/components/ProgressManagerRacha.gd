@@ -62,28 +62,28 @@ func _cargar_estado_entrada() -> void:
 	_mostrar_feedback(feedback)
 
 
-func renderizar(streak_view_model: Dictionary = {}) -> void:
+func renderizar(streak_modelo_vista: Dictionary = {}) -> void:
 	_establecer_modo_regular()
-	var resolved_view_model: Dictionary = _resolver_view_model_racha(streak_view_model)
-	_current_count = max(0, int(resolved_view_model.get("current_count", 0)))
-	_best_count = max(_current_count, int(resolved_view_model.get("best_count", 0)))
-	_status_detail = _resolver_detalle_estado_regular(resolved_view_model)
+	var resolved_modelo_vista: Dictionary = _resolver_modelo_vista_racha(streak_modelo_vista)
+	_current_count = max(0, int(resolved_modelo_vista.get("current_count", 0)))
+	_best_count = max(_current_count, int(resolved_modelo_vista.get("best_count", 0)))
+	_status_detail = _resolver_detalle_estado_regular(resolved_modelo_vista)
 	_streak_state = str(
-	resolved_view_model.get("streak_state", "inactive"))
+	resolved_modelo_vista.get("streak_state", "inactive"))
 	_refrescar_ui()
 
 
 func _mostrar_feedback(feedback: Dictionary) -> void:
 	_establecer_modo_feedback()
-	var base_view_model: Dictionary = _resolver_view_model_racha({})
+	var base_modelo_vista: Dictionary = _resolver_modelo_vista_racha({})
 
 	var base_current_count: int = max(
 		0,
-		int(base_view_model.get("current_count", 0))
+		int(base_modelo_vista.get("current_count", 0))
 	)
 	var base_best_count: int = max(
 		base_current_count,
-		int(base_view_model.get("best_count", 0))
+		int(base_modelo_vista.get("best_count", 0))
 	)
 
 	_current_count = max(0, int(feedback.get("current_count", base_current_count)))
@@ -114,24 +114,24 @@ func _establecer_modo_feedback() -> void:
 		back_button.visible = false
 
 
-func _resolver_view_model_racha(streak_view_model: Dictionary) -> Dictionary:
-	if not streak_view_model.is_empty():
-		return streak_view_model
+func _resolver_modelo_vista_racha(streak_modelo_vista: Dictionary) -> Dictionary:
+	if not streak_modelo_vista.is_empty():
+		return streak_modelo_vista
 
 	var global_node: Node = ContextoSesionDeJuegoScript.obtener_global()
 	if global_node == null or not global_node.has_method("obtener_modelo_vista_racha"):
 		return {}
 
-	var raw_view_model: Variant = global_node.call("obtener_modelo_vista_racha")
-	if raw_view_model is Dictionary:
-		return raw_view_model
+	var raw_modelo_vista: Variant = global_node.call("obtener_modelo_vista_racha")
+	if raw_modelo_vista is Dictionary:
+		return raw_modelo_vista
 	return {}
 
 
-func _resolver_detalle_estado_regular(streak_view_model: Dictionary) -> String:
+func _resolver_detalle_estado_regular(streak_modelo_vista: Dictionary) -> String:
 	if _current_count > 0:
 		return _construir_mensaje_racha(_current_count)
-	return str(streak_view_model.get("status_detail", "")).strip_edges()
+	return str(streak_modelo_vista.get("status_detail", "")).strip_edges()
 
 
 func _refrescar_ui() -> void:
@@ -278,11 +278,11 @@ func _leer_y_limpiar_meta_raiz(meta_key: String) -> Dictionary:
 
 func _on_boton_continuar_presionado() -> void:
 	flow_completed.emit()
-	_finish_streak_flow()
+	_finalizar_flujo_racha()
 
 
-func _finish_streak_flow() -> void:
-	PostGameFlowControllerScript.navigate_after_streak(
+func _finalizar_flujo_racha() -> void:
+	PostGameFlowControllerScript.navegar_despues_racha(
 		get_tree(),
 		_consumir_return_to_de_racha()
 		
@@ -290,10 +290,10 @@ func _finish_streak_flow() -> void:
 
 
 func _on_volver_solicitado() -> void:
-	_return_from_streak()
+	_volver_desde_racha()
 
 
-func _return_from_streak() -> void:
+func _volver_desde_racha() -> void:
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
 		_consumir_return_to_de_racha()
@@ -301,7 +301,7 @@ func _return_from_streak() -> void:
 
 
 func _consumir_return_to_de_racha() -> String:
-	return GameSceneRouter.consume_streak_return_to(
+	return GameSceneRouter.consumir_retorno_racha(
 		get_tree(),
 		DEFAULT_RETURN_TO
 	)

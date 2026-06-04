@@ -72,14 +72,14 @@ func formatear_numero_opcional(value: int) -> String:
 	return str(value)
 
 
-func formatear_resumen_racha(streak_state: Dictionary, recorded_today: bool) -> String:
+func formatear_resumen_racha(streak_state: Dictionary, registrared_today: bool) -> String:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return "Racha diaria: sin actividad valida todavia"
 
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var today_status := "Hoy: pendiente"
-	if recorded_today:
+	if registrared_today:
 		today_status = "Hoy: completada"
 
 	return "\n".join([

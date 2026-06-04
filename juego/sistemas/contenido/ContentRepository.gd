@@ -7,11 +7,11 @@ const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdVal
 
 
 static func cargar_contenido(context: Dictionary) -> Dictionary:
-	return NodeContentLoaderScript.load_from_context(context)
+	return NodeContentLoaderScript.cargar_desde_contexto(context)
 
 
-static func get_activity(pack_id: String, activity_id: String) -> Dictionary:
-	return NodeContentLoaderScript.get_activity(pack_id, activity_id)
+static func obtener_actividad(pack_id: String, activity_id: String) -> Dictionary:
+	return NodeContentLoaderScript.obtener_actividad(pack_id, activity_id)
 
 
 static func get_candidates(
@@ -20,7 +20,7 @@ static func get_candidates(
 	difficulty: int,
 	options_count: int = 0
 ) -> Array[String]:
-	return NodeContentLoaderScript.get_activity_candidates(
+	return NodeContentLoaderScript.obtener_candidatos_actividad(
 		track_key,
 		activity_type,
 		difficulty,
@@ -34,7 +34,7 @@ static func get_candidates_near(
 	difficulty: int,
 	options_count: int = 0
 ) -> Array[String]:
-	return NodeContentLoaderScript.get_activity_candidates_near(
+	return NodeContentLoaderScript.obtener_candidatos_actividad_near(
 		track_key,
 		activity_type,
 		difficulty,
@@ -47,13 +47,13 @@ static func adapt_activity(
 	pack_id: String = "",
 	options: Dictionary = {}
 ) -> Dictionary:
-	return ActivityAdapterScript.to_legacy_node(activity, pack_id, {}, options)
+	return ActivityAdapterScript.a_nodo_legado(activity, pack_id, {}, options)
 
 
 ## Devuelve solo los ítems de all_content cuyo "id" no está en completed_ids.
 ## Útil para filtrar el pool de actividades antes de seleccionar la siguiente.
-static func filter_uncompleted_content(
+static func filtrar_contenido_incompleto(
 	all_content: Array,
 	completed_ids: Array[String]
 ) -> Array:
-	return ContentIdValidatorScript.filter_uncompleted(all_content, completed_ids)
+	return ContentIdValidatorScript.filtrar_incompletos(all_content, completed_ids)

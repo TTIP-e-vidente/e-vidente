@@ -32,7 +32,7 @@ func _ready() -> void:
 	_profile_overlay.resume_pressed.connect(_on_superposicion_reanudar_presionado)
 	_profile_overlay.save_pressed.connect(_on_superposicion_guardar_presionado)
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_editar_perfil_presionado)
-	_profile_overlay.reset_progress_pressed.connect(_on_superposicion_reiniciar_presionado)
+	_profile_overlay.reestablecer_progreso_pressed.connect(_on_superposicion_reiniciar_presionado)
 	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cierre_solicitado)
 	_conectar_senales_save_manager()
@@ -172,7 +172,7 @@ func _on_racha_presionada() -> void:
 		_profile_overlay.ocultar_superposicion()
 	if _profile_button != null:
 		_profile_button.visible = true
-	GameSceneRouter.go_to_streak(get_tree(), current_scene_path)
+	GameSceneRouter.ir_a_racha(get_tree(), current_scene_path)
 
 
 func _on_superposicion_cierre_solicitado() -> void:
@@ -186,7 +186,7 @@ func _on_superposicion_reanudar_presionado() -> void:
 	if not SaveManager.puede_reanudar_guardado_actual():
 		return
 	var resume_state := SaveManager.recargar_desde_disco_y_obtener_reanudacion()
-	GameSceneRouter.go_to_resume(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
+	GameSceneRouter.ir_a_reanudar(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
 func _on_superposicion_editar_perfil_presionado() -> void:
@@ -211,7 +211,7 @@ func _on_superposicion_reiniciar_presionado() -> void:
 
 
 func _on_superposicion_logout_presionado() -> void:
-	BackendSession.logout()
+	AuthApi.cerrar_sesion()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	GameSceneRouter.go_to_main_menu(get_tree())

@@ -36,7 +36,7 @@ func _ready() -> void:
 	ajustar_fuente(label, label.text)
 
 
-func _actualizar_sombreado_boton(button: Button, mat: ShaderMaterial):
+func _actualizar_sombleero_boton(button: Button, mat: ShaderMaterial):
 	var mouse_global = get_viewport().get_mouse_position()
 	var local_mouse = button.to_local(mouse_global)
 

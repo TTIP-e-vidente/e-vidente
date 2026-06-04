@@ -16,7 +16,7 @@ static var _catalog_cache: Dictionary = {}
 static var _catalog_loaded := false
 
 
-static func load_catalog() -> Dictionary:
+static func cargar_catalogo() -> Dictionary:
 	if _catalog_loaded:
 		return _ok(_catalog_cache.duplicate(true))
 
@@ -25,7 +25,7 @@ static func load_catalog() -> Dictionary:
 		var resolved_path: String = ContentJsonLoaderScript.resolve_path(catalog_path)
 		if resolved_path.is_empty() or not FileAccess.file_exists(resolved_path):
 			continue
-		raw_result = ContentJsonLoaderScript.load_json(catalog_path)
+		raw_result = ContentJsonLoaderScript.cargar_json(catalog_path)
 		if bool(raw_result.get("ok", false)):
 			break
 	if not bool(raw_result.get("ok", false)):
@@ -41,8 +41,8 @@ static func load_catalog() -> Dictionary:
 	return _ok(_catalog_cache.duplicate(true))
 
 
-static func resolve_item_definition(item_id: String) -> Dictionary:
-	var catalog_result: Dictionary = load_catalog()
+static func resolver_definicion_item(item_id: String) -> Dictionary:
+	var catalog_result: Dictionary = cargar_catalogo()
 	if not bool(catalog_result.get("ok", false)):
 		return catalog_result
 
@@ -58,7 +58,7 @@ static func resolve_item_definition(item_id: String) -> Dictionary:
 
 
 static func resolve_item_runtime_data(item_id: String) -> Dictionary:
-	var definition_result: Dictionary = resolve_item_definition(item_id)
+	var definition_result: Dictionary = resolver_definicion_item(item_id)
 	if not bool(definition_result.get("ok", false)):
 		return definition_result
 

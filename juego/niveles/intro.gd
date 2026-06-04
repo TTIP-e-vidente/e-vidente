@@ -59,17 +59,16 @@ func _ready() -> void:
 	saliri.texture = load(SALIR_PATH) as Texture2D
 
 
-func _on_jugar_pressed() -> void:
-	if BackendSession.is_logged_in():
-		if not BackendSession.has_loaded_account_data():
-			BackendSession.load_account_data() # Carga en background
+func _on_jugar_presionado() -> void:
+	if AuthApi.esta_logueado():
+		AuthApi.precargar_datos_online()
 		_continuar_a_juego()
 		return
 	_mostrar_login()
 
 
 func _continuar_a_juego() -> void:
-	GameSceneRouter.transition_to_scene(_abrir_modo_selector())
+	GameSceneRouter.transicionar_a_escena(_abrir_modo_selector())
 
 
 func _mostrar_login() -> void:
@@ -104,20 +103,20 @@ func _instanciar_login_overlay() -> void:
 	_login_canvas_layer.layer = 10
 	add_child(_login_canvas_layer)
 	_login_canvas_layer.add_child(_login_overlay)
-	_login_overlay.connect("login_completed", Callable(self, "_on_login_completed"))
-	_login_overlay.connect("play_offline_requested", Callable(self, "_on_play_offline_requested"))
+	_login_overlay.connect("login_completed", Callable(self, "_on_login_completado"))
+	_login_overlay.connect("play_offline_requested", Callable(self, "_on_jugar_offline_solicitado"))
 
 
-func _on_login_completed() -> void:
+func _on_login_completado() -> void:
 	var current_flow := _login_flow
 	_cerrar_login()
 	if current_flow == LOGIN_FLOW_PROFILE:
-		_mostrar_profile()
+		_mostrar_perfil()
 		return
 	_continuar_a_juego()
 
 
-func _on_play_offline_requested() -> void:
+func _on_jugar_offline_solicitado() -> void:
 	var current_flow := _login_flow
 	_cerrar_login()
 	if current_flow == LOGIN_FLOW_PROFILE:
@@ -134,13 +133,13 @@ func _cerrar_login() -> void:
 
 
 func _on_mi_progreso_pressed() -> void:
-	if BackendSession.is_logged_in():
-		_mostrar_profile()
+	if AuthApi.esta_logueado():
+		_mostrar_perfil()
 		return
 	_mostrar_login_para_profile()
 
 
-func _mostrar_profile() -> void:
+func _mostrar_perfil() -> void:
 	if is_instance_valid(_profile_overlay):
 		_profile_overlay.show()
 		return
@@ -167,7 +166,7 @@ func _cerrar_profile() -> void:
 
 
 func _on_opciones_pressed() -> void:
-	GameSceneRouter.transition_to_scene(_abrir_opciones_menu())
+	GameSceneRouter.transicionar_a_escena(_abrir_opciones_menu())
 
 
 func _on_salir_pressed() -> void:

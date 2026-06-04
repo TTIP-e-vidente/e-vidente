@@ -2,7 +2,7 @@ extends RefCounted
 class_name FlujoDeNodoJugable
 
 # Decide si un nodo del mapa está disponible y lo abre si corresponde.
-# No renderiza. No calcula EXP. Delega la apertura en AbridorDeNodoJugable.
+# No renderizariza. No calcula EXP. Delega la apertura en AbridorDeNodoJugable.
 
 const AvanceDeNodoScript := preload("res://mapas/logica/AvanceDeNodo.gd")
 const AbridorDeNodoJugableScript := preload("res://mapas/logica/AbridorDeNodoJugable.gd")
@@ -15,7 +15,7 @@ func seleccionar_nodo(
 	nodos_mapa: Array,
 	node_data: MapNodeData
 ) -> void:
-	if node_data == null or not node_data.is_valid():
+	if node_data == null or not node_data.es_valido():
 		return
 
 	if not _nodo_esta_desbloqueado(nodos_mapa, node_data):
@@ -25,7 +25,7 @@ func seleccionar_nodo(
 
 
 func _nodo_esta_desbloqueado(nodos_mapa: Array, node_data: MapNodeData) -> bool:
-	var estado: Dictionary = AvanceDeNodoScript.get_node_state(nodos_mapa, node_data)
+	var estado: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, node_data)
 	return bool(estado.get("is_unlocked", false))
 
 

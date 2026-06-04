@@ -120,8 +120,8 @@ static func _leer_escena_retorno(
 	var main_loop: MainLoop = Engine.get_main_loop()
 	if main_loop is SceneTree:
 		var router: Node = (main_loop as SceneTree).root.get_node_or_null("GameSceneRouter")
-		if router != null and router.has_method("read_return_to"):
-			escena_retorno = router.call("read_return_to", contexto_sesion, escena_retorno_predeterminada)
+		if router != null and router.has_method("leer_retorno_a"):
+			escena_retorno = router.call("leer_retorno_a", contexto_sesion, escena_retorno_predeterminada)
 	
 	if escena_retorno.is_empty():
 		return escena_retorno_predeterminada

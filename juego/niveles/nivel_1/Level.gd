@@ -169,7 +169,7 @@ func _conectar_objective_banner() -> void:
 	if not is_instance_valid(_drag_objective_text):
 		push_warning("[DragObjectiveText] Nodo DragObjectiveText no encontrado en Level.tscn")
 		return
-	objective_updated.connect(_drag_objective_text.set_objective)
+	objective_updated.connect(_drag_objective_text.establecer_objetivo)
 	_drag_objective_text.hide()
 
 
@@ -286,7 +286,7 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 		push_error("Level: falta json_path para cargar el nivel.")
 		return
 
-	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": clean_path})
+	var result: Dictionary = NodeContentLoaderScript.cargar_desde_contexto({"json_path": clean_path})
 	if not bool(result.get("ok", false)):
 		push_error("Level: %s" % str(result.get("error", "No se pudo cargar el JSON del nivel.")))
 		return
@@ -296,7 +296,7 @@ func cargar_contenido_del_nivel_desde_json(json_path: String) -> void:
 
 
 func cargar_contenido_del_nivel_desde_contexto(contexto_jugable: Dictionary) -> void:
-	var result: Dictionary = NodeContentLoaderScript.load_from_context(contexto_jugable)
+	var result: Dictionary = NodeContentLoaderScript.cargar_desde_contexto(contexto_jugable)
 	if not bool(result.get("ok", false)):
 		push_error(
 			"Level: %s"
@@ -381,7 +381,7 @@ func _obtener_datos_de_arrastre_del_nodo() -> Dictionary:
 	if ruta_json.is_empty():
 		return {}
 
-	var result: Dictionary = NodeContentLoaderScript.load_from_context({"json_path": ruta_json})
+	var result: Dictionary = NodeContentLoaderScript.cargar_desde_contexto({"json_path": ruta_json})
 	if not bool(result.get("ok", false)):
 		push_warning(
 			"Level: no se pudo leer JSON de arrastre: %s" % str(result.get("error", ""))
@@ -421,7 +421,7 @@ func _actualizar_objetivo_de_arrastre_desde_juego_actual() -> void:
 func _build_drag_objective_data(game: Dictionary) -> Dictionary:
 	# Siempre normaliza usando el contexto completo (track_key + node_key) para que
 	# los fallbacks de meal y restriction funcionen aunque el JSON no tenga objetivo explícito.
-	return ContentSchemaNormalizerScript.normalize_drag_objective(game, active_track_key, _nodo_actual)
+	return ContentSchemaNormalizerScript.normalizar_drag_objective(game, active_track_key, _nodo_actual)
 
 
 func _aplicar_dificultad_de_arrastre() -> void:
@@ -499,10 +499,10 @@ func _on_atras_presionado() -> void:
 		_cancelar_partida_de_nodo()
 		return
 	if _usa_flujo_mapa:
-		_return_to_map_scene()
+		_volver_a_escena_mapa()
 		return
 	if active_track_key == DEFAULT_TRACK_KEY:
-		GameSceneRouter.go_to_map(get_tree())
+		GameSceneRouter.ir_al_mapa(get_tree())
 	else:
 		GameSceneRouter.go_to_track_book(get_tree(), active_track_key)
 
@@ -734,16 +734,16 @@ func _continuar_despues_de_ensenanza(timer_finished: bool) -> void:
 	)
 	if _continuar_partida_de_nodo_si_corresponde():
 		return
-	if not _has_post_game_flow_state():
+	if not _tiene_estado_flujo_post_juego():
 		if _usa_flujo_mapa:
 			_continuar_flujo_mapa_legacy()
 			return
 		GameSceneRouter.go_to_mode_selector(get_tree())
 		return
 
-	PostGameFlowControllerScript.navigate_after_teaching(
+	PostGameFlowControllerScript.navegar_despues_ensenanza(
 		get_tree(),
-		_take_post_game_flow_state(),
+		_tomar_estado_flujo_post_juego(),
 		_take_post_game_streak_feedback(),
 		timer_finished
 	)
@@ -802,12 +802,12 @@ func construir_flujo_post_game(
 	var elapsed := _calcular_elapsed_seconds()
 	if elapsed >= 0.0:
 		updated_streak["elapsed_seconds"] = elapsed
-	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
+	_post_game_streak_feedback = GameStreakTrackerScript.construir_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
-	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
+	_post_game_flow_state = PostGameFlowControllerScript.construir_estado_flujo_post_juego(
 		previous_streak,
 		updated_streak,
 		completion_context,
@@ -815,11 +815,11 @@ func construir_flujo_post_game(
 	)
 
 
-func _has_post_game_flow_state() -> bool:
+func _tiene_estado_flujo_post_juego() -> bool:
 	return not _post_game_flow_state.is_empty()
 
 
-func _take_post_game_flow_state() -> Dictionary:
+func _tomar_estado_flujo_post_juego() -> Dictionary:
 	var post_game_flow_state: Dictionary = _post_game_flow_state.duplicate(true)
 	_post_game_flow_state = {}
 	return post_game_flow_state
@@ -831,9 +831,9 @@ func _take_post_game_streak_feedback() -> Dictionary:
 	return post_game_streak_feedback
 
 
-func _return_to_map_scene() -> void:
+func _volver_a_escena_mapa() -> void:
 	_ocultar_continuacion()
-	await TransicionEscenas.change_normal_scene(_ruta_escena_retorno)
+	await TransicionEscenas.cambiar_escena_normal(_ruta_escena_retorno)
 
 func _calcular_elapsed_seconds() -> float:
 	if _activity_started_msec <= 0:
@@ -848,7 +848,7 @@ func _cancelar_partida_de_nodo() -> void:
 	_ocultar_continuacion()
 	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
-	await TransicionEscenas.change_normal_scene(_ruta_escena_retorno)
+	await TransicionEscenas.cambiar_escena_normal(_ruta_escena_retorno)
 ## --- Guardado rápido ---
 
 func _on_guardar_progreso_boton_presionado() -> void:

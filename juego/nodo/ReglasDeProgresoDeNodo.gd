@@ -35,17 +35,17 @@ static func calcular_exp_base(juegos: Array, dificultad_fallback: int = 1) -> in
 
 ## EXP final = round(exp_base * precision_ratio). Nunca supera exp_base.
 static func calcular_exp_final(exp_base: int, precision: float) -> int:
-	return _Reglas.calculate_final_exp(exp_base, precision)
+	return _Reglas.calcular_exp_final(exp_base, precision)
 
 
 ## Precisión como porcentaje entero 0–100.
 static func calcular_precision(aciertos: int, intentos: int) -> int:
-	return _Reglas.calculate_precision(aciertos, intentos)
+	return _Reglas.calcular_precision(aciertos, intentos)
 
 
 ## Precisión como ratio 0.0–1.0. Si no hay intentos, devuelve 1.0.
 static func calcular_ratio_precision(aciertos: int, intentos: int) -> float:
-	return _Reglas.calculate_precision_ratio(aciertos, intentos)
+	return _Reglas.calcular_precision_ratio(aciertos, intentos)
 
 
 ## Porcentaje de error como entero 0–100.
@@ -55,4 +55,4 @@ static func calcular_porcentaje_error(errores: int, intentos: int) -> int:
 
 ## Formatea milisegundos a "M:SS".
 static func formatear_tiempo(ms: int) -> String:
-	return _Reglas.format_duration(ms)
+	return _Reglas.formatear_duracion(ms)

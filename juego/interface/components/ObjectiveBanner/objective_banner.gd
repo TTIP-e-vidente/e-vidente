@@ -5,7 +5,7 @@ extends Control
 @onready var objective_sub: Label = $ObjectiveSub
 
 
-func set_objective(data: Dictionary) -> void:
+func establecer_objetivo(data: Dictionary) -> void:
 	var lines: Dictionary = _extract_lines(data)
 	objective_label.text = str(lines.get("label", "Prepará"))
 	objective_main.text = str(lines.get("main", ""))

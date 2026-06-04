@@ -35,7 +35,7 @@ const VALID_MEALS := [
 static var _default_pack_warning_shown := false
 
 
-static func load_from_context(context: Dictionary) -> Dictionary:
+static func cargar_desde_contexto(context: Dictionary) -> Dictionary:
 	var _node_key: String = str(
 		context.get("node_key", context.get("clave_nodo_de_origen", ""))
 	).strip_edges()
@@ -68,7 +68,7 @@ static func load_from_pack(
 	activity_id: String,
 	options: Dictionary = {}
 ) -> Dictionary:
-	var activity_result: Dictionary = load_activity(pack_id, activity_id)
+	var activity_result: Dictionary = cargar_actividad(pack_id, activity_id)
 	if not bool(activity_result.get("ok", false)):
 		return _error(str(activity_result.get("error", "No se pudo cargar la activity.")))
 
@@ -81,7 +81,7 @@ static func load_from_pack(
 	}
 	if options.has("seed"):
 		adapter_options["seed"] = int(options.get("seed", 0))
-	var adapted: Dictionary = ActivityAdapterScript.to_legacy_node(
+	var adapted: Dictionary = ActivityAdapterScript.a_nodo_legado(
 		activity,
 		pack_id,
 		pack,
@@ -126,20 +126,20 @@ static func load_pack(pack_id: String) -> Dictionary:
 		return _error("El Content Pack debe ser un objeto: %s" % pack_path)
 
 	var pack: Dictionary = parsed as Dictionary
-	var validation_error: String = _validate_pack_minimal(pack, pack_path)
+	var validation_error: String = _validar_pack_minimal(pack, pack_path)
 	if not validation_error.is_empty():
 		return _error("Content Pack %s invalido: %s" % [clean_pack_id, validation_error])
 	return {"ok": true, "error": "", "data": pack, "path": pack_path}
 
 
-static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
+static func cargar_actividad(pack_id: String, activity_id: String) -> Dictionary:
 	var resolved_pack_id: String = _resolve_pack_id(pack_id)
 	var pack_result: Dictionary = load_pack(resolved_pack_id)
 	if not bool(pack_result.get("ok", false)):
 		return pack_result
 
 	var pack: Dictionary = pack_result.get("data", {})
-	var activity: Dictionary = _get_activity_from_pack(pack, activity_id)
+	var activity: Dictionary = _obtener_actividad_from_pack(pack, activity_id)
 	if activity.is_empty():
 		print(
 			"%s missing activity=%s source=%s"
@@ -172,15 +172,15 @@ static func load_activity(pack_id: String, activity_id: String) -> Dictionary:
 	}
 
 
-static func get_activity(pack_id: String, activity_id: String) -> Dictionary:
-	var result: Dictionary = load_activity(pack_id, activity_id)
+static func obtener_actividad(pack_id: String, activity_id: String) -> Dictionary:
+	var result: Dictionary = cargar_actividad(pack_id, activity_id)
 	if not bool(result.get("ok", false)):
 		return {}
 	return (result.get("data", {}) as Dictionary).duplicate(true)
 
 
 static func has_activity(pack_id: String, activity_id: String) -> Dictionary:
-	var result: Dictionary = load_activity(_resolve_pack_id(pack_id), activity_id)
+	var result: Dictionary = cargar_actividad(_resolve_pack_id(pack_id), activity_id)
 	if bool(result.get("ok", false)):
 		return {"ok": true, "error": ""}
 	return {"ok": false, "error": str(result.get("error", ""))}
@@ -200,7 +200,7 @@ static func to_runtime_mode(raw_mode: String) -> String:
 			return ""
 
 
-static func _get_activity_from_pack(pack: Dictionary, activity_id: String) -> Dictionary:
+static func _obtener_actividad_from_pack(pack: Dictionary, activity_id: String) -> Dictionary:
 	var clean_activity_id: String = activity_id.strip_edges()
 	for raw_activity in pack.get("activities", []):
 		if raw_activity is Dictionary:
@@ -210,7 +210,7 @@ static func _get_activity_from_pack(pack: Dictionary, activity_id: String) -> Di
 	return {}
 
 
-static func normalize_random_game_type(raw_type: String) -> String:
+static func normalizar_random_game_type(raw_type: String) -> String:
 	match raw_type.strip_edges().to_lower():
 		"drag", "drag_food":
 			return "drag"
@@ -224,14 +224,14 @@ static func normalize_random_game_type(raw_type: String) -> String:
 			return ""
 
 
-static func get_activity_candidates(
+static func obtener_candidatos_actividad(
 	track_key: String,
 	requested_type: String,
 	requested_difficulty: int,
 	requested_options_count: int = 0
 ) -> Array[String]:
-	var normalized_type: String = normalize_random_game_type(requested_type)
-	if normalized_type.is_empty() or requested_difficulty <= 0:
+	var normalizado_type: String = normalizar_random_game_type(requested_type)
+	if normalizado_type.is_empty() or requested_difficulty <= 0:
 		return []
 	var pack_result: Dictionary = load_pack(track_key)
 	if not bool(pack_result.get("ok", false)):
@@ -242,13 +242,13 @@ static func get_activity_candidates(
 		if not raw_activity is Dictionary:
 			continue
 		var activity: Dictionary = raw_activity as Dictionary
-		if not _activity_matches_requested_type(activity, normalized_type):
+		if not _activity_matches_requested_type(activity, normalizado_type):
 			continue
 		if int(activity.get("difficulty", 0)) != requested_difficulty:
 			continue
 		if not _activity_matches_requested_options_count(
 			activity,
-			normalized_type,
+			normalizado_type,
 			requested_options_count
 		):
 			continue
@@ -258,7 +258,7 @@ static func get_activity_candidates(
 	return activity_candidates
 
 
-static func get_activity_candidates_near(
+static func obtener_candidatos_actividad_near(
 	track_key: String,
 	requested_type: String,
 	requested_difficulty: int,
@@ -267,7 +267,7 @@ static func get_activity_candidates_near(
 	var ordered_difficulties: Array[int] = _ordered_requested_difficulties(requested_difficulty)
 	var activity_candidates: Array[String] = []
 	for candidate_difficulty in ordered_difficulties:
-		for activity_id in get_activity_candidates(
+		for activity_id in obtener_candidatos_actividad(
 			track_key,
 			requested_type,
 			candidate_difficulty,
@@ -290,7 +290,7 @@ static func _ordered_requested_difficulties(requested_difficulty: int) -> Array[
 
 
 static func _activity_matches_requested_type(activity: Dictionary, requested_type: String) -> bool:
-	match normalize_random_game_type(requested_type):
+	match normalizar_random_game_type(requested_type):
 		"drag":
 			return ["drag", "drag_food"].has(str(activity.get("mode", "")).strip_edges())
 		"quiz":
@@ -305,10 +305,10 @@ static func _activity_matches_requested_type(activity: Dictionary, requested_typ
 
 static func _activity_matches_requested_options_count(
 	activity: Dictionary,
-	normalized_type: String,
+	normalizado_type: String,
 	requested_options_count: int
 ) -> bool:
-	if requested_options_count <= 0 or normalized_type != "quiz":
+	if requested_options_count <= 0 or normalizado_type != "quiz":
 		return true
 	var options: Variant = activity.get("options", [])
 	if not options is Array:
@@ -316,7 +316,7 @@ static func _activity_matches_requested_options_count(
 	return (options as Array).size() == requested_options_count
 
 
-static func _validate_pack_minimal(pack: Dictionary, pack_path: String = "") -> String:
+static func _validar_pack_minimal(pack: Dictionary, pack_path: String = "") -> String:
 	var errors: Array[String] = []
 	if str(pack.get("id", "")).strip_edges().is_empty():
 		errors.append("falta id.")
@@ -329,7 +329,7 @@ static func _validate_pack_minimal(pack: Dictionary, pack_path: String = "") -> 
 	# Validar IDs: presencia y unicidad son errores críticos;
 	# los errores de formato se registran como push_error sin bloquear la carga.
 	var activities: Array = pack.get("activities", [])
-	var id_errors: Array[String] = ContentIdValidatorScript.validate_activity_ids(
+	var id_errors: Array[String] = ContentIdValidatorScript.validar_ids_actividad(
 		activities, pack_path
 	)
 	for id_error in id_errors:
@@ -351,13 +351,13 @@ static func _validate_pack_minimal(pack: Dictionary, pack_path: String = "") -> 
 			continue
 		var activity: Dictionary = raw_activity as Dictionary
 		if str(activity.get("mode", "")).strip_edges() == "drag_food":
-			var drag_error: String = _validate_drag_food(activity, items_catalog)
+			var drag_error: String = _validar_drag_food(activity, items_catalog)
 			if not drag_error.is_empty():
 				errors.append(drag_error)
 	return "\n".join(errors)
 
 
-static func _validate_drag_food(
+static func _validar_drag_food(
 	activity: Dictionary,
 	items_catalog: Dictionary
 ) -> String:
@@ -408,13 +408,13 @@ static func _load_items_catalog() -> Dictionary:
 	if not parsed is Dictionary:
 		return _error("items_celiaquia debe ser un objeto.")
 	var catalog: Dictionary = parsed as Dictionary
-	var validation_error: String = _validate_items_catalog(catalog)
+	var validation_error: String = _validar_items_catalog(catalog)
 	if not validation_error.is_empty():
 		return _error(validation_error)
 	return {"ok": true, "error": "", "data": catalog}
 
 
-static func _validate_items_catalog(catalog: Dictionary) -> String:
+static func _validar_items_catalog(catalog: Dictionary) -> String:
 	if str(catalog.get("base_path", "")).strip_edges().is_empty():
 		return "items_celiaquia necesita base_path."
 	if not catalog.get("items", {}) is Dictionary:
@@ -455,7 +455,7 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 	var activities: Array = []
 	# Archivos obligatorios: si falta uno, el pack entero falla.
 	for filename in ["preguntas.json", "arrastres.json", "vinculaciones.json"]:
-		var result: Dictionary = _load_activity_dict_file(mapa_dir + filename)
+		var result: Dictionary = _cargar_actividad_dict_file(mapa_dir + filename)
 		if not bool(result.get("ok", false)):
 			return result
 		activities.append_array(result.get("data", []))
@@ -467,7 +467,7 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 				"NodeContentLoader: archivo opcional no encontrado, se omite: %s" % path
 			)
 			continue
-		var result: Dictionary = _load_activity_dict_file(path)
+		var result: Dictionary = _cargar_actividad_dict_file(path)
 		if not bool(result.get("ok", false)):
 			push_warning(
 				"NodeContentLoader: error cargando archivo opcional %s — %s"
@@ -476,13 +476,13 @@ static func _load_mapa_pack(track_id: String, mapa_dir: String) -> Dictionary:
 			continue
 		activities.append_array(result.get("data", []))
 	var pack: Dictionary = {"id": track_id, "version": 1, "activities": activities}
-	var validation_error: String = _validate_pack_minimal(pack, mapa_dir)
+	var validation_error: String = _validar_pack_minimal(pack, mapa_dir)
 	if not validation_error.is_empty():
 		return _error("Mapa %s invalido: %s" % [track_id, validation_error])
 	return {"ok": true, "error": "", "data": pack, "path": mapa_dir}
 
 
-static func _load_activity_dict_file(path: String) -> Dictionary:
+static func _cargar_actividad_dict_file(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return _error("No se pudo abrir: %s" % path)

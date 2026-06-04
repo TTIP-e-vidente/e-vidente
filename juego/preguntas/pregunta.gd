@@ -184,7 +184,7 @@ func _escalar_escala_base(boton_respuesta: Button, factor_x: float, factor_y: fl
 	return Vector2(escala_base.x * factor_x, escala_base.y * factor_y)
 
 
-func dodge_button(button: Button) -> void:
+func esquivar_boton(button: Button) -> void:
 	if button == null:
 		return
 
@@ -641,7 +641,7 @@ func _mostrar_feedback_error(boton: Button) -> void:
 	var global_autoload := ContextoSesionDeJuegoScript.obtener_global()
 	if global_autoload != null and global_autoload.has_method("registrar_resultado_mini_juego"):
 		global_autoload.call("registrar_resultado_mini_juego", false)
-	await dodge_button(boton)
+	await esquivar_boton(boton)
 	await get_tree().create_timer(0.4).timeout
 
 
@@ -839,12 +839,12 @@ func _on_questions_finished(
 		_ruta_escena_de_retorno,
 		"pregunta._on_questions_finished"
 	)
-	_post_game_streak_feedback = GameStreakTrackerScript.build_feedback(
+	_post_game_streak_feedback = GameStreakTrackerScript.construir_feedback(
 		previous_streak,
 		updated_streak,
 		true
 	)
-	_post_game_flow_state = PostGameFlowControllerScript.build_post_game_flow_state(
+	_post_game_flow_state = PostGameFlowControllerScript.construir_estado_flujo_post_juego(
 		previous_streak,
 		updated_streak,
 		completion_context,
@@ -892,14 +892,14 @@ func _on_teaching_finished(_timer_finished: bool) -> void:
 
 
 func _continuar_despues_de_ensenanza(_timer_finished: bool) -> void:
-	_return_to_map_scene()
+	_volver_a_escena_mapa()
 
 
-func _has_post_game_flow_state() -> bool:
+func _tiene_estado_flujo_post_juego() -> bool:
 	return not _post_game_flow_state.is_empty()
 
 
-func _take_post_game_flow_state() -> Dictionary:
+func _tomar_estado_flujo_post_juego() -> Dictionary:
 	var post_game_flow_state: Dictionary = _post_game_flow_state.duplicate(true)
 	_post_game_flow_state = {}
 	return post_game_flow_state
@@ -969,11 +969,11 @@ func _establecer_mensaje_de_error(mensaje: String) -> void:
 
 
 # Navegación y continuidad
-func _on_jugar_nuevamente_pressed() -> void:
+func _on_jugar_nuevamente_presionado() -> void:
 	volver_al_mapa()
 
 
-func _on_atras_pressed() -> void:
+func _on_atras_presionado() -> void:
 	if _es_juego_de_partida_de_nodo():
 		_cancelar_partida_de_nodo_desde_juego()
 		return
@@ -988,17 +988,17 @@ func volver_al_mapa() -> void:
 	if _es_juego_de_partida_de_nodo():
 		_cancelar_partida_de_nodo_desde_juego()
 		return
-	if _has_post_game_flow_state():
+	if _tiene_estado_flujo_post_juego():
 		_on_teaching_finished(false)
 		return
-	_return_to_map_scene()
+	_volver_a_escena_mapa()
 
 
 func _cancelar_partida_de_nodo_desde_juego() -> void:
 	_finalizar_actividad(false)
 
 
-func _return_to_map_scene() -> void:
+func _volver_a_escena_mapa() -> void:
 	_finalizar_actividad(true)
 
 

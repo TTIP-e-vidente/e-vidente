@@ -159,11 +159,11 @@ static func _resolver_ruta_ensenanza(teaching_ref: String) -> String:
 		return ""
 	if clean_ref.begins_with("res://assets-sistema/ensenanza/"):
 		return clean_ref if _teaching_asset_exists(clean_ref) else ""
-	var normalized_ref: String = clean_ref.to_lower()
-	var mapped_path: String = str(TEACHING_KEY_TO_ASSET.get(normalized_ref, "")).strip_edges()
+	var normalizado_ref: String = clean_ref.to_lower()
+	var mapped_path: String = str(TEACHING_KEY_TO_ASSET.get(normalizado_ref, "")).strip_edges()
 	if not mapped_path.is_empty():
 		return mapped_path if _teaching_asset_exists(mapped_path) else ""
-	var legacy_path: String = _buscar_ruta(TEACHING_TEXTURE_PATHS, normalized_ref)
+	var legacy_path: String = _buscar_ruta(TEACHING_TEXTURE_PATHS, normalizado_ref)
 	if legacy_path.is_empty():
 		return ""
 	return legacy_path if _teaching_asset_exists(legacy_path) else ""

@@ -553,5 +553,5 @@ icon_alignment = 1
 
 [node name="ProgressBar" parent="." unique_id=478823511 instance=ExtResource("12_2g6ed")]
 
-[connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atras_pressed"]
-[connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_pressed"]
+[connection signal="pressed" from="Contenido/Atrás" to="." method="_on_atras_presionado"]
+[connection signal="pressed" from="Contenido/GameOver/JugarNuevamente" to="." method="_on_jugar_nuevamente_presionado"]

@@ -4,7 +4,7 @@ class_name ContentJsonLoader
 # LEGACY_COMPAT: Usado por CargadorDeMapa, CargadorDeContenidoDeNodo,
 # ContentCatalog, ContentValidator. No agregar lógica nueva aquí.
 
-static func load_json(json_path: String) -> Dictionary:
+static func cargar_json(json_path: String) -> Dictionary:
 	var clean_path: String = resolve_path(json_path)
 	if clean_path.is_empty():
 		return _error("Path de archivo invalido.")
@@ -46,9 +46,9 @@ static func resolve_path(json_path: String) -> String:
 		if FileAccess.file_exists(project_path):
 			return project_path
 	if clean_path.begins_with("res://project/"):
-		var normalized_path := "res://%s" % clean_path.trim_prefix("res://project/")
-		if FileAccess.file_exists(normalized_path):
-			return normalized_path
+		var ruta_normalizada := "res://%s" % clean_path.trim_prefix("res://project/")
+		if FileAccess.file_exists(ruta_normalizada):
+			return ruta_normalizada
 	return clean_path
 
 

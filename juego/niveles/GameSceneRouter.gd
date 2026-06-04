@@ -70,36 +70,36 @@ static var _pending_preload_paths: Dictionary = {}
 
 # --- Rutas publicas ---------------------------------------------------------
 
-static func go_to_route(
+static func ir_a_ruta(
 	tree: SceneTree,
 	route_name: String,
 	fallback_route: String = ROUTE_MODE_SELECTOR
 ) -> void:
 	var scene_path: String = _resolve_route_scene_path(route_name, fallback_route)
-	_change_scene_to_path(tree, scene_path)
+	_cambiar_escena_to_path(tree, scene_path)
 
 
 static func go_to_splash(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_SPLASH)
+	ir_a_ruta(tree, ROUTE_SPLASH)
 
 
 static func go_to_main_menu(_tree: SceneTree) -> void:
-	await TransicionEscenas.change_normal_scene(MAIN_MENU_SCENE_PATH)
+	await TransicionEscenas.cambiar_escena_normal(MAIN_MENU_SCENE_PATH)
 
 
 static func go_to_mode_selector(_tree: SceneTree) -> void:
-	await TransicionEscenas.change_normal_scene(MODE_SELECTOR_SCENE_PATH)
+	await TransicionEscenas.cambiar_escena_normal(MODE_SELECTOR_SCENE_PATH)
 
 
-static func go_to_map(_tree: SceneTree) -> void:
-	await TransicionEscenas.change_normal_scene(MAP_SCENE_PATH)
+static func ir_al_mapa(_tree: SceneTree) -> void:
+	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE_PATH)
 
 
 static func go_to_archivero(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_ARCHIVERO)
+	ir_a_ruta(tree, ROUTE_ARCHIVERO)
 
 
-static func go_to_streak(
+static func ir_a_racha(
 	tree: SceneTree,
 	return_to: String = "",
 	feedback: Dictionary = {},
@@ -112,7 +112,7 @@ static func go_to_streak(
 		continue_target
 	)
 	if tree_root != null:
-		set_streak_return_to(tree, return_to)
+		establecer_retorno_racha(tree, return_to)
 
 		if not feedback.is_empty():
 			tree_root.set_meta(STREAK_FEEDBACK_META, feedback.duplicate(true))
@@ -126,46 +126,46 @@ static func go_to_streak(
 			)
 		elif tree_root.has_meta(STREAK_CONTINUE_TARGET_META):
 			tree_root.remove_meta(STREAK_CONTINUE_TARGET_META)
-	await TransicionEscenas.change_scene(STREAK_SCENE_PATH)
+	await TransicionEscenas.cambiar_escena(STREAK_SCENE_PATH)
 
 
 static func go_to_options(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_OPTIONS)
+	ir_a_ruta(tree, ROUTE_OPTIONS)
 
 
 static func go_to_profile_editor(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_PROFILE)
+	ir_a_ruta(tree, ROUTE_PROFILE)
 
 
 static func go_to_questions(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_QUESTIONS)
+	ir_a_ruta(tree, ROUTE_QUESTIONS)
 
 
 static func go_to_vinculacion(tree: SceneTree) -> void:
-	go_to_route(tree, ROUTE_VINCULACION)
+	ir_a_ruta(tree, ROUTE_VINCULACION)
 
 
 static func go_to_level(tree: SceneTree) -> void:
-	_change_scene_to_path(tree, LEVEL_SCENE_PATH)
+	_cambiar_escena_to_path(tree, LEVEL_SCENE_PATH)
 
 
-static func get_scene_path_for_mode(mode: String) -> String:
-	var normalized_mode := ModalidadRouter.normalizar_modo(mode)
-	if not MODE_TO_SCENE_PATH.has(normalized_mode):
+static func obtener_ruta_escena_por_modo(mode: String) -> String:
+	var normalizado_mode := ModalidadRouter.normalizar_modo(mode)
+	if not MODE_TO_SCENE_PATH.has(normalizado_mode):
 		push_error(LOG_PREFIX + " Modalidad sin escena asignada: " + str(mode))
 		return ""
-	return MODE_TO_SCENE_PATH[normalized_mode]
+	return MODE_TO_SCENE_PATH[normalizado_mode]
 
 
 static func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
 	var archivo_actual := _obtener_json_actual_debug(tree)
 	print(LOG_PREFIX, " abriendo_siguiente tipo=", content_mode.strip_edges(), " archivo=", archivo_actual)
 	
-	var scene_path := get_scene_path_for_mode(content_mode)
+	var scene_path := obtener_ruta_escena_por_modo(content_mode)
 	if scene_path.is_empty():
 		return
 		
-	await TransicionEscenas.change_scene(scene_path)
+	await TransicionEscenas.cambiar_escena(scene_path)
 
 
 static func _obtener_json_actual_debug(tree: SceneTree) -> String:
@@ -179,7 +179,7 @@ static func _obtener_json_actual_debug(tree: SceneTree) -> String:
 
 # --- Racha ------------------------------------------------------------------
 
-static func set_streak_return_to(tree: SceneTree, return_to: String) -> void:
+static func establecer_retorno_racha(tree: SceneTree, return_to: String) -> void:
 	if tree == null:
 		return
 	var tree_root: Window = tree.get_root()
@@ -193,7 +193,7 @@ static func set_streak_return_to(tree: SceneTree, return_to: String) -> void:
 	tree_root.set_meta(STREAK_RETURN_TO_META, safe_return_to)
 
 
-static func read_streak_return_to(
+static func leer_retorno_racha(
 	tree: SceneTree,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
@@ -210,11 +210,11 @@ static func read_streak_return_to(
 	return return_to
 
 
-static func consume_streak_return_to(
+static func consumir_retorno_racha(
 	tree: SceneTree,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
-	var safe_return_to: String = read_streak_return_to(tree, fallback_scene_path)
+	var safe_return_to: String = leer_retorno_racha(tree, fallback_scene_path)
 	if tree == null:
 		return safe_return_to
 	var tree_root: Window = tree.get_root()
@@ -233,12 +233,12 @@ static func build_router_target_from_flow_target(target: Dictionary) -> Dictiona
 		return {}
 	var router_target: Dictionary = target.duplicate(true)
 	if router_target.has(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY):
-		router_target[CONTINUE_TARGET_RETURN_TO_KEY] = read_return_to(router_target, MAP_SCENE_PATH)
+		router_target[CONTINUE_TARGET_RETURN_TO_KEY] = leer_retorno_a(router_target, MAP_SCENE_PATH)
 		router_target.erase(CONTINUE_TARGET_RETURN_SCENE_PATH_KEY)
 	return router_target
 
 
-static func read_return_to(
+static func leer_retorno_a(
 	source: Dictionary,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
@@ -258,16 +258,16 @@ static func read_return_to(
 # --- Precarga ---------------------------------------------------------------
 
 static func request_scene_preload(scene_path: String) -> void:
-	var normalized_scene_path: String = scene_path.strip_edges()
-	if normalized_scene_path.is_empty():
+	var normalizado_scene_path: String = scene_path.strip_edges()
+	if normalizado_scene_path.is_empty():
 		return
-	if _preloaded_scenes.has(normalized_scene_path):
+	if _preloaded_scenes.has(normalizado_scene_path):
 		return
-	var loaded_scene: PackedScene = load(normalized_scene_path) as PackedScene
+	var loaded_scene: PackedScene = load(normalizado_scene_path) as PackedScene
 	if loaded_scene != null:
-		_preloaded_scenes[normalized_scene_path] = loaded_scene
+		_preloaded_scenes[normalizado_scene_path] = loaded_scene
 		return
-	push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalized_scene_path)
+	push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalizado_scene_path)
 
 
 static func request_initial_scene_preload() -> void:
@@ -285,7 +285,7 @@ static func go_to_track_book(_tree: SceneTree, track_key: String) -> void:
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
-	await TransicionEscenas.change_scene(scene_path)
+	await TransicionEscenas.cambiar_escena(scene_path)
 
 
 static func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
@@ -293,7 +293,7 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_nivel(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
-	await TransicionEscenas.change_scene(scene_path)
+	await TransicionEscenas.cambiar_escena(scene_path)
 
 
 # --- Navegacion por target --------------------------------------------------
@@ -315,7 +315,7 @@ static func go_to_target(
 	match target_type:
 		"map":
 			_clear_active_playable_session(tree)
-			go_to_map(tree)
+			ir_al_mapa(tree)
 		"map_continue":
 			var global_state := _get_global_state(tree)
 			var node_key: String = str(router_target.get("node_key", "")).strip_edges()
@@ -326,7 +326,7 @@ static func go_to_target(
 			):
 				global_state.call("solicitar_continuar", node_key)
 			_clear_active_playable_session(tree)
-			_change_scene_to_path(tree, read_return_to(router_target, MAP_SCENE_PATH))
+			_cambiar_escena_to_path(tree, leer_retorno_a(router_target, MAP_SCENE_PATH))
 		"track_level":
 			_clear_active_playable_session(tree)
 			go_to_track_level(
@@ -345,7 +345,7 @@ static func go_to_target(
 			var scene_path: String = str(
 				router_target.get("scene_path", fallback_scene_path)
 			).strip_edges()
-			_change_scene_to_path(
+			_cambiar_escena_to_path(
 				tree,
 				scene_path if not scene_path.is_empty() else fallback_scene_path
 			)
@@ -355,9 +355,9 @@ static func go_to_target(
 				str(router_target.get("mode", "")).strip_edges()
 			)
 		"resume":
-			go_to_resume(
+			ir_a_reanudar(
 				tree,
-				_read_resume_state(router_target),
+				_leer_resume_state(router_target),
 				fallback_scene_path
 			)
 		_:
@@ -374,16 +374,16 @@ static func go_to_continue_target(
 		fallback_scene_path = MODE_SELECTOR_SCENE_PATH
 	var global_state := _get_global_state(tree)
 	if global_state == null or not global_state.has_method("obtener_destino_de_continuacion"):
-		_change_scene_to_path(tree, fallback_scene_path)
+		_cambiar_escena_to_path(tree, fallback_scene_path)
 		return
 	var continue_target: Variant = global_state.call("obtener_destino_de_continuacion")
 	if not continue_target is Dictionary or (continue_target as Dictionary).is_empty():
-		_change_scene_to_path(tree, fallback_scene_path)
+		_cambiar_escena_to_path(tree, fallback_scene_path)
 		return
 	go_to_target(tree, continue_target as Dictionary, fallback_scene_path)
 
 
-static func go_to_resume(
+static func ir_a_reanudar(
 	tree: SceneTree,
 	resume_state: Dictionary,
 	fallback_scene: String = MODE_SELECTOR_SCENE_PATH
@@ -392,7 +392,7 @@ static func go_to_resume(
 		resume_state.get(RESUME_SCENE_PATH_KEY, fallback_scene)
 	).strip_edges()
 	var safe_scene_path: String = scene_path if not scene_path.is_empty() else fallback_scene
-	_change_scene_to_path(tree, safe_scene_path)
+	_cambiar_escena_to_path(tree, safe_scene_path)
 
 
 static func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
@@ -408,9 +408,9 @@ static func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_pat
 		push_error("GameSceneRouter: path de escena invalido o no encontrado: %s. Redirigiendo al fallback: %s" % [scene_path, fallback_path])
 		if fallback_path.is_empty() or not ResourceLoader.exists(fallback_path):
 			return
-		_change_scene_to_path(tree, fallback_path)
+		_cambiar_escena_to_path(tree, fallback_path)
 		return
-	_change_scene_to_path(tree, scene_path)
+	_cambiar_escena_to_path(tree, scene_path)
 
 
 # --- Helpers privados -------------------------------------------------------
@@ -428,7 +428,7 @@ static func _get_scene_path_for_route(route_name: String) -> String:
 	return str(ROUTES.get(route_name, "")).strip_edges()
 
 
-static func _read_resume_state(target: Dictionary) -> Dictionary:
+static func _leer_resume_state(target: Dictionary) -> Dictionary:
 	var raw_resume_state: Variant = target.get("resume_state", {})
 	if raw_resume_state is Dictionary:
 		return (raw_resume_state as Dictionary).duplicate(true)
@@ -447,25 +447,25 @@ static func _store_requested_level(
 		global_state.establecer_actual_nivel_numero(level_number, track_key)
 
 
-static func _change_scene_to_path(tree: SceneTree, scene_path: String) -> void:
+static func _cambiar_escena_to_path(tree: SceneTree, scene_path: String) -> void:
 	if tree == null:
 		return
 	var preloaded_scene: PackedScene = _take_preloaded_scene(scene_path)
 	if preloaded_scene != null:
-		tree.change_scene_to_packed(preloaded_scene)
+		tree.cambiar_escena_to_packed(preloaded_scene)
 		return
 	tree.change_scene_to_file(scene_path)
 
 
 static func _take_preloaded_scene(scene_path: String) -> PackedScene:
-	var normalized_scene_path: String = scene_path.strip_edges()
-	if normalized_scene_path.is_empty():
+	var normalizado_scene_path: String = scene_path.strip_edges()
+	if normalizado_scene_path.is_empty():
 		return null
-	if _preloaded_scenes.has(normalized_scene_path):
-		return _preloaded_scenes[normalized_scene_path] as PackedScene
-	_finalize_scene_preload(normalized_scene_path)
-	if _preloaded_scenes.has(normalized_scene_path):
-		return _preloaded_scenes[normalized_scene_path] as PackedScene
+	if _preloaded_scenes.has(normalizado_scene_path):
+		return _preloaded_scenes[normalizado_scene_path] as PackedScene
+	_finalize_scene_preload(normalizado_scene_path)
+	if _preloaded_scenes.has(normalizado_scene_path):
+		return _preloaded_scenes[normalizado_scene_path] as PackedScene
 	return null
 
 
@@ -499,34 +499,34 @@ static func _clear_active_playable_session(tree: SceneTree) -> void:
 
 # --- Transicion visual ---------------------------------------
 
-func transition_to_scene(scene_path: String, transition_type: int = TransitionType.FADE) -> void:
+func transicionar_a_escena(scene_path: String, transition_type: int = TransitionType.FADE) -> void:
 	if _is_transitioning:
-		push_warning("[ROUTER] transition_to_scene ignorado: ya hay una transicion en curso.")
+		push_warning("[ROUTER] transicionar_a_escena ignorado: ya hay una transicion en curso.")
 		return
 
-	var normalized_path := scene_path.strip_edges()
-	if not ResourceLoader.exists(normalized_path):
-		push_error("[ROUTER] transition_to_scene: el path no existe: %s" % normalized_path)
+	var ruta_normalizada := scene_path.strip_edges()
+	if not ResourceLoader.exists(ruta_normalizada):
+		push_error("[ROUTER] transicionar_a_escena: el path no existe: %s" % ruta_normalizada)
 		return
 
 	if not is_instance_valid(TransicionEscenas):
-		_change_scene_to_path(get_tree(), normalized_path)
+		_cambiar_escena_to_path(get_tree(), ruta_normalizada)
 		return
 
 	_is_transitioning = true
 	match transition_type:
 		TransitionType.IRIS:
-			await TransicionEscenas.change_scene(normalized_path)
+			await TransicionEscenas.cambiar_escena(ruta_normalizada)
 		_:
-			await TransicionEscenas.change_normal_scene(normalized_path)
+			await TransicionEscenas.cambiar_escena_normal(ruta_normalizada)
 	_is_transitioning = false
 
 
 # --- Wrappers  -------------------------------------------------------
 
-func change_scene(scene_path: String) -> void:
-	await transition_to_scene(scene_path, TransitionType.IRIS)
+func cambiar_escena(scene_path: String) -> void:
+	await transicionar_a_escena(scene_path, TransitionType.IRIS)
 
 
-func change_normal_scene(scene_path: String) -> void:
-	await transition_to_scene(scene_path, TransitionType.FADE)
+func cambiar_escena_normal(scene_path: String) -> void:
+	await transicionar_a_escena(scene_path, TransitionType.FADE)

@@ -72,7 +72,7 @@ static func cargar_todo() -> Dictionary:
 		if not raw is Dictionary:
 			push_error("CargadorCompletar: '%s' debe ser un objeto." % str(clave))
 			continue
-		var entrada: Dictionary = ContentSchemaNormalizerScript.normalize_word_game(str(clave), raw as Dictionary)
+		var entrada: Dictionary = ContentSchemaNormalizerScript.normalizar_word_game(str(clave), raw as Dictionary)
 		if _es_valido(str(clave), entrada):
 			_cache[str(clave)] = entrada
 	return _cache

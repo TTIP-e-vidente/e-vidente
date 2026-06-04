@@ -206,27 +206,27 @@ func limpiar_parcial_nivel_estado(track_key: String, level_number: int) -> void:
 # --- Progreso de nodos del mapa --------------------------------------------
 
 func marcar_nodo_jugable_completado(track_key: String, node_key: String) -> void:
-	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
-	var normalized_node_key: String = node_key.strip_edges()
-	if normalized_track_key.is_empty() or normalized_node_key.is_empty():
+	var normalizado_track_key: String = _obtener_clave_pista_valida(track_key)
+	var normalizado_node_key: String = node_key.strip_edges()
+	if normalizado_track_key.is_empty() or normalizado_node_key.is_empty():
 		return
 	var progress_for_track: Dictionary = _playable_node_progress_by_track.get(
-		normalized_track_key,
+		normalizado_track_key,
 		{}
 	)
-	progress_for_track[normalized_node_key] = true
-	_playable_node_progress_by_track[normalized_track_key] = progress_for_track
+	progress_for_track[normalizado_node_key] = true
+	_playable_node_progress_by_track[normalizado_track_key] = progress_for_track
 
 
 func es_nodo_jugable_completado(track_key: String, node_key: String) -> bool:
-	var normalized_track_key: String = _obtener_clave_pista_valida(track_key)
-	var normalized_node_key: String = node_key.strip_edges()
-	if normalized_track_key.is_empty() or normalized_node_key.is_empty():
+	var normalizado_track_key: String = _obtener_clave_pista_valida(track_key)
+	var normalizado_node_key: String = node_key.strip_edges()
+	if normalizado_track_key.is_empty() or normalizado_node_key.is_empty():
 		return false
-	var raw_track_progress: Variant = _playable_node_progress_by_track.get(normalized_track_key, {})
+	var raw_track_progress: Variant = _playable_node_progress_by_track.get(normalizado_track_key, {})
 	if not raw_track_progress is Dictionary:
 		return false
-	return bool(raw_track_progress.get(normalized_node_key, false))
+	return bool(raw_track_progress.get(normalizado_node_key, false))
 
 
 # --- Sesion activa de nodo jugable -----------------------------------------
@@ -535,20 +535,20 @@ func limpiar_continuacion_si_corresponde() -> void:
 # --- Estados extra de progreso ---------------------------------------------
 
 func establecer_progreso_sistema_estado(system_key: String, state: Dictionary) -> void:
-	var normalized_system_key: String = system_key.strip_edges()
-	if normalized_system_key.is_empty():
+	var normalizado_system_key: String = system_key.strip_edges()
+	if normalizado_system_key.is_empty():
 		return
 	if state.is_empty():
-		_extra_progress_system_states.erase(normalized_system_key)
+		_extra_progress_system_states.erase(normalizado_system_key)
 		return
-	_extra_progress_system_states[normalized_system_key] = state.duplicate(true)
+	_extra_progress_system_states[normalizado_system_key] = state.duplicate(true)
 
 
 func obtener_progreso_sistema_estado(system_key: String) -> Dictionary:
-	var normalized_system_key: String = system_key.strip_edges()
-	if normalized_system_key.is_empty():
+	var normalizado_system_key: String = system_key.strip_edges()
+	if normalizado_system_key.is_empty():
 		return {}
-	var raw_state: Variant = _extra_progress_system_states.get(normalized_system_key, {})
+	var raw_state: Variant = _extra_progress_system_states.get(normalizado_system_key, {})
 	if raw_state is Dictionary:
 		return (raw_state as Dictionary).duplicate(true)
 	return {}
@@ -557,20 +557,20 @@ func obtener_progreso_sistema_estado(system_key: String) -> Dictionary:
 # --- Racha ------------------------------------------------------------------
 
 func obtener_estado_racha() -> Dictionary:
-	return GameStreakTracker.read(_streak_state)
+	return GameStreakTracker.leer(_streak_state)
 
 
 func obtener_modelo_vista_racha() -> Dictionary:
-	return GameStreakTracker.view_model(obtener_estado_racha())
+	return GameStreakTracker.modelo_vista(obtener_estado_racha())
 
 
 func establecer_estado_racha(streak_state: Dictionary) -> void:
-	_streak_state = GameStreakTracker.read(streak_state)
+	_streak_state = GameStreakTracker.leer(streak_state)
 
 
 func registrar_actividad_racha(activity_type: String, metadata: Dictionary = {}) -> Dictionary:
 	var racha_anterior: Dictionary = obtener_estado_racha()
-	_streak_state = GameStreakTracker.record(racha_anterior, activity_type, metadata)
+	_streak_state = GameStreakTracker.registrar(racha_anterior, activity_type, metadata)
 	return _streak_state
 
 
@@ -698,14 +698,14 @@ func _importar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void
 
 func _importar_estados_sistema_progreso_personalizados(systems_state: Dictionary) -> void:
 	for system_key in systems_state.keys():
-		var normalized_system_key: String = str(system_key).strip_edges()
-		if normalized_system_key == STREAK_SYSTEM_KEY:
+		var normalizado_system_key: String = str(system_key).strip_edges()
+		if normalizado_system_key == STREAK_SYSTEM_KEY:
 			continue
-		if normalized_system_key == QUESTION_PROGRESS_SYSTEM_KEY:
+		if normalizado_system_key == QUESTION_PROGRESS_SYSTEM_KEY:
 			continue
 		var raw_state: Variant = systems_state.get(system_key, {})
 		if raw_state is Dictionary:
-			_extra_progress_system_states[normalized_system_key] = (
+			_extra_progress_system_states[normalizado_system_key] = (
 				(raw_state as Dictionary).duplicate(true)
 			)
 

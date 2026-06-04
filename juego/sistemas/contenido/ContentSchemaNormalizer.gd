@@ -10,11 +10,11 @@ const WORD_MODE := "completar_palabra"
 const BLANK := "____"
 
 
-static func normalize_word_game(id: String, raw: Dictionary) -> Dictionary:
-	return normalize_complete_word_game(id, raw)
+static func normalizar_word_game(id: String, raw: Dictionary) -> Dictionary:
+	return normalizar_complete_word_game(id, raw)
 
 
-static func normalize_complete_word_game(id: String, raw: Dictionary) -> Dictionary:
+static func normalizar_complete_word_game(id: String, raw: Dictionary) -> Dictionary:
 	var clean_id: String = id.strip_edges()
 	if clean_id.is_empty():
 		clean_id = str(raw.get("id", "")).strip_edges()
@@ -44,7 +44,7 @@ static func normalize_complete_word_game(id: String, raw: Dictionary) -> Diction
 	}
 
 
-static func normalize_drag_objective(
+static func normalizar_drag_objective(
 	game: Dictionary,
 	track_key: String = "",
 	node_key: String = ""
@@ -82,7 +82,7 @@ static func normalize_drag_objective(
 	])
 
 	if meal.is_empty() or connector.is_empty():
-		var message_lines: PackedStringArray = _read_objective_message_lines(game, objective)
+		var message_lines: PackedStringArray = _leer_objective_message_lines(game, objective)
 		if meal.is_empty() and message_lines.size() > 0:
 			meal = str(message_lines[0]).strip_edges()
 		if connector.is_empty() and message_lines.size() > 1:
@@ -152,7 +152,7 @@ static func _first_text(values: Array) -> String:
 	return ""
 
 
-static func _read_objective_message_lines(
+static func _leer_objective_message_lines(
 	game: Dictionary,
 	objective: Dictionary
 ) -> PackedStringArray:

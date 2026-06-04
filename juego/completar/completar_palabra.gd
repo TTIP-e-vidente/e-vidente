@@ -111,7 +111,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _al_presionar_atras() -> void:
-	await TransicionEscenas.change_normal_scene("res://mapas/MapScene.tscn")
+	await TransicionEscenas.cambiar_escena_normal("res://mapas/MapScene.tscn")
 
 func _validar_nodos_escena() -> void:
 	if _prompt_label == null:
@@ -345,15 +345,15 @@ func _al_seleccionar_opcion(option: String, btn: Button) -> void:
 		_devolver_opcion_al_origen(btn)
 
 func _es_correcta_para_slot_actual(option: String) -> bool:
-	var normalized := _normalizar(option)
+	var normalizado := _normalizar(option)
 	if _order_matters:
 		var current_index := _placed.size()
 		if current_index >= _answers.size():
 			return false
-		return normalized == _normalizar(_answers[current_index])
+		return normalizado == _normalizar(_answers[current_index])
 
 	for answer in _answers:
-		if _normalizar(answer) == normalized and not _placed.has(answer):
+		if _normalizar(answer) == normalizado and not _placed.has(answer):
 			return true
 	return false
 
@@ -407,18 +407,18 @@ func _renderizar_frase_directa() -> void:
 	_asignar_texto_frase(_construir_frase_con_respuestas())
 
 func _renderizar_frase_con_typewriter() -> void:
-	var rendered := _construir_frase_con_respuestas()
+	var renderizared := _construir_frase_con_respuestas()
 
 	if not ENABLE_TYPEWRITER:
-		_asignar_texto_frase(rendered)
+		_asignar_texto_frase(renderizared)
 		return
 
 	if _placed.size() > 0:
-		_asignar_texto_frase(rendered)
+		_asignar_texto_frase(renderizared)
 		return
 
 	await _typewriter.iniciar(
-		self, func(t: String): _asignar_texto_frase(t), _limpiar_bbcode(rendered))
+		self, func(t: String): _asignar_texto_frase(t), _limpiar_bbcode(renderizared))
 
 func _configurar_typewriter() -> void:
 	_typewriter.character_delay = character_delay

@@ -185,46 +185,46 @@ func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:
 		migrated = _migrar_legacy(raw)
 
 	var source: Dictionary = _aplanar_sesiones_legacy(migrated)
-	var normalized: Dictionary = _schema.datos_guardado_predeterminados()
-	normalized["version"] = int(source.get("version", SAVE_VERSION))
+	var normalizado: Dictionary = _schema.datos_guardado_predeterminados()
+	normalizado["version"] = int(source.get("version", SAVE_VERSION))
 
 	var source_profile: Variant = source.get("profile", {})
 	if source_profile is Dictionary:
-		normalized["profile"] = _profile_helper.normalizar_datos_perfil(
+		normalizado["profile"] = _profile_helper.normalizar_datos_perfil(
 			source_profile,
 			DEFAULT_PROFILE_NAME
 		)
 
 	var source_progress: Variant = source.get("progress", {})
 	if source_progress is Dictionary:
-		normalized["progress"] = (source_progress as Dictionary).duplicate(true)
+		normalizado["progress"] = (source_progress as Dictionary).duplicate(true)
 
-	normalized["save_meta"] = _schema.normalizar_meta_guardado(source.get("save_meta", {}))
+	normalizado["save_meta"] = _schema.normalizar_meta_guardado(source.get("save_meta", {}))
 
 	var source_resume_state: Variant = source.get("resume_state", {})
 	if source_resume_state is Dictionary:
-		normalized["resume_state"] = (source_resume_state as Dictionary).duplicate(true)
+		normalizado["resume_state"] = (source_resume_state as Dictionary).duplicate(true)
 
-	normalized["history"] = _schema.normalizar_historial(source.get("history", []))
+	normalizado["history"] = _schema.normalizar_historial(source.get("history", []))
 	var source_played: Variant = source.get("played_activity_ids", [])
 	if source_played is Array:
-		normalized["played_activity_ids"] = (source_played as Array).duplicate(true)
+		normalizado["played_activity_ids"] = (source_played as Array).duplicate(true)
 	var source_completed_global: Variant = source.get("completed_activity_ids", [])
 	if source_completed_global is Array:
-		normalized["completed_activity_ids"] = (source_completed_global as Array).duplicate(true)
+		normalizado["completed_activity_ids"] = (source_completed_global as Array).duplicate(true)
 	var source_completed: Variant = source.get("completed_activity_ids_by_request", {})
 	if source_completed is Dictionary:
-		normalized["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
-	var normalized_completed_ids: Variant = normalized.get("completed_activity_ids", [])
-	if normalized_completed_ids is Array and (normalized_completed_ids as Array).is_empty():
-		normalized["completed_activity_ids"] = _flatten_completed_activity_ids_by_request(
-			normalized.get("completed_activity_ids_by_request", {})
+		normalizado["completed_activity_ids_by_request"] = (source_completed as Dictionary).duplicate(true)
+	var normalizado_completed_ids: Variant = normalizado.get("completed_activity_ids", [])
+	if normalizado_completed_ids is Array and (normalizado_completed_ids as Array).is_empty():
+		normalizado["completed_activity_ids"] = _flatten_completed_activity_ids_by_request(
+			normalizado.get("completed_activity_ids_by_request", {})
 		)
-	normalized["total_exp"] = max(0, int(source.get("total_exp", 0)))
+	normalizado["total_exp"] = max(0, int(source.get("total_exp", 0)))
 	var source_node_progress: Variant = source.get("node_progress", {})
 	if source_node_progress is Dictionary:
-		normalized["node_progress"] = (source_node_progress as Dictionary).duplicate(true)
-	return normalized
+		normalizado["node_progress"] = (source_node_progress as Dictionary).duplicate(true)
+	return normalizado
 
 
 func _reescribir_motivo(raw: Dictionary) -> String:
@@ -236,12 +236,12 @@ func _reescribir_motivo(raw: Dictionary) -> String:
 
 
 func _migrar_legacy(raw: Dictionary) -> Dictionary:
-	var normalized: Dictionary = _schema.datos_guardado_predeterminados()
+	var normalizado: Dictionary = _schema.datos_guardado_predeterminados()
 	var user: Dictionary = _resolver_usuario_legacy(raw)
 	if user.is_empty():
-		return normalized
+		return normalizado
 
-	normalized["profile"] = _profile_helper.normalizar_datos_perfil({
+	normalizado["profile"] = _profile_helper.normalizar_datos_perfil({
 		"username": user.get("username", DEFAULT_PROFILE_NAME),
 		"age": user.get("age", 0),
 		"email": user.get("email", ""),
@@ -252,18 +252,18 @@ func _migrar_legacy(raw: Dictionary) -> Dictionary:
 
 	var legacy_progress: Variant = user.get("progress", {})
 	if legacy_progress is Dictionary:
-		normalized["progress"] = (legacy_progress as Dictionary).duplicate(true)
+		normalizado["progress"] = (legacy_progress as Dictionary).duplicate(true)
 	var legacy_node_progress: Variant = user.get("node_progress", {})
 	if legacy_node_progress is Dictionary:
-		normalized["node_progress"] = (legacy_node_progress as Dictionary).duplicate(true)
+		normalizado["node_progress"] = (legacy_node_progress as Dictionary).duplicate(true)
 
-	normalized["save_meta"] = _schema.normalizar_meta_guardado({
+	normalizado["save_meta"] = _schema.normalizar_meta_guardado({
 		"last_saved_at": user.get("updated_at", ""),
 		"last_saved_reason": "legacy_migration",
 		"write_count": 0
 	})
-	normalized["history"] = _schema.normalizar_historial(user.get("history", []))
-	return normalized
+	normalizado["history"] = _schema.normalizar_historial(user.get("history", []))
+	return normalizado
 
 
 func _resolver_usuario_legacy(raw: Dictionary) -> Dictionary:

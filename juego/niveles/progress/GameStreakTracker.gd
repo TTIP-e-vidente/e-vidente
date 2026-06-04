@@ -10,7 +10,7 @@ const WARNING_START_HOUR_LOCAL := 20
 
 # --- Estado estable ---------------------------------------------------------
 
-static func read(raw_state: Variant) -> Dictionary:
+static func leer(raw_state: Variant) -> Dictionary:
 	if not raw_state is Dictionary:
 		return _empty_streak_state()
 
@@ -35,7 +35,7 @@ static func read(raw_state: Variant) -> Dictionary:
 
 # --- Actividad --------------------------------------------------------------
 
-static func record(
+static func registrar(
 	streak_state: Dictionary,
 	activity_type: String,
 	metadata: Dictionary
@@ -80,7 +80,7 @@ static func _resolver_estado_visual(
 	return "inactive"
 
 
-static func view_model(
+static func modelo_vista(
 	streak_state: Dictionary,
 	current_date: String = "",
 	current_hour: int = -1
@@ -123,7 +123,7 @@ static func view_model(
 
 # --- Feedback post-partida --------------------------------------------------
 
-static func build_feedback(
+static func construir_feedback(
 	previous_state: Dictionary,
 	updated_state: Dictionary,
 	only_first_today: bool = false

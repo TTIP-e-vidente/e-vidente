@@ -19,8 +19,8 @@ func _ready() -> void:
 	_apply_style()
 
 
-func set_objective(data: Dictionary) -> void:
-	print_debug("[DragObjectiveText] set_objective data=", data)
+func establecer_objetivo(data: Dictionary) -> void:
+	print_debug("[DragObjectiveText] establecer_objetivo data=", data)
 	var parsed: Dictionary = _parse_objective(data)
 	action_label.text = parsed["action"]
 	meal_label.text = parsed["meal"]
@@ -67,7 +67,7 @@ func _apply_style() -> void:
 # --- Lectura de datos ------------------------------------------------------
 
 func _parse_objective(data: Dictionary) -> Dictionary:
-	return ContentSchemaNormalizerScript.normalize_drag_objective(data)
+	return ContentSchemaNormalizerScript.normalizar_drag_objective(data)
 
 
 # --- Animacion -------------------------------------------------------------

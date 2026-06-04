@@ -54,7 +54,7 @@ static var _last_selection_by_activity: Dictionary = {}
 static var _items_catalog_cache: Dictionary = {}
 
 
-static func to_legacy_node(
+static func a_nodo_legado(
 	activity: Dictionary,
 	pack_id: String = "",
 	_pack: Dictionary = {},
@@ -303,17 +303,17 @@ static func _resolve_runtime_teaching_key(
 	activity: Dictionary,
 	content: Dictionary
 ) -> String:
-	var teaching_key: String = _read_teaching_key_from_dictionary(content)
+	var teaching_key: String = _leer_teaching_key_from_dictionary(content)
 	if not teaching_key.is_empty():
 		return teaching_key
 	return _resolve_activity_teaching_key(activity)
 
 
 static func _resolve_activity_teaching_key(activity: Dictionary) -> String:
-	return _read_teaching_key_from_dictionary(activity)
+	return _leer_teaching_key_from_dictionary(activity)
 
 
-static func _read_teaching_key_from_dictionary(data: Dictionary) -> String:
+static func _leer_teaching_key_from_dictionary(data: Dictionary) -> String:
 	for field in ["teaching_key", "ensenanza", "ensenanza_key", "clave_ensenanza"]:
 		var teaching_key: String = str(data.get(field, "")).strip_edges()
 		if not teaching_key.is_empty():
@@ -439,7 +439,7 @@ static func _load_items_catalog() -> Dictionary:
 	if not parsed is Dictionary:
 		return {"ok": false, "error": "El catalogo debe ser un objeto.", "data": {}}
 	var catalog: Dictionary = parsed as Dictionary
-	var validation_error: String = _validate_items_catalog(catalog)
+	var validation_error: String = _validar_items_catalog(catalog)
 	if not validation_error.is_empty():
 		return {"ok": false, "error": validation_error, "data": {}}
 	_items_catalog_cache = catalog
@@ -448,7 +448,7 @@ static func _load_items_catalog() -> Dictionary:
 	return {"ok": true, "error": "", "data": _items_catalog_cache}
 
 
-static func _validate_items_catalog(catalog: Dictionary) -> String:
+static func _validar_items_catalog(catalog: Dictionary) -> String:
 	if str(catalog.get("base_path", "")).strip_edges().is_empty():
 		return "items_celiaquia necesita base_path."
 	if not catalog.get("items", {}) is Dictionary:
@@ -526,7 +526,7 @@ static func _shuffle_items(items: Array[Dictionary], rng: RandomNumberGenerator)
 		items[swap_index] = temp
 
 
-static func _read_id_list(raw_value: Variant) -> Array[String]:
+static func _leer_id_list(raw_value: Variant) -> Array[String]:
 	var ids: Array[String] = []
 	if not raw_value is Array:
 		return ids

@@ -21,28 +21,28 @@ const SUPPORTED_TYPES := [
 const DEMO_PLAYABLE_TYPES := ["receta_arrastre", "preguntas", "vinculacion"]
 
 
-static func validate(raw_data: Dictionary, source_path: String = "") -> Dictionary:
-	var normalized_result: Dictionary = ContentNormalizerScript.normalize(raw_data, source_path)
-	var normalized_data: Dictionary = normalized_result.get("data", {})
-	if not ContentNormalizerScript.is_v1_content(normalized_data):
+static func validar(raw_data: Dictionary, source_path: String = "") -> Dictionary:
+	var normalizado_result: Dictionary = ContentNormalizerScript.normalizar(raw_data, source_path)
+	var normalizado_data: Dictionary = normalizado_result.get("data", {})
+	if not ContentNormalizerScript.es_contenido_v1(normalizado_data):
 		return _ok([])
 
-	var errors: Array[String] = _validate_common_fields(normalized_data)
-	match str(normalized_data.get("tipo", "")):
+	var errors: Array[String] = _validar_common_fields(normalizado_data)
+	match str(normalizado_data.get("tipo", "")):
 		"assets_catalog":
-			errors.append_array(_validate_assets_catalog(normalized_data))
+			errors.append_array(_validar_assets_catalog(normalizado_data))
 		"mapa":
-			errors.append_array(_validate_map(normalized_data))
+			errors.append_array(_validar_map(normalizado_data))
 		"nodo":
-			errors.append_array(_validate_node(normalized_data))
+			errors.append_array(_validar_node(normalizado_data))
 		"receta_arrastre":
-			errors.append_array(_validate_drag_drop_game(normalized_data))
+			errors.append_array(_validar_drag_drop_game(normalizado_data))
 		"preguntas":
-			errors.append_array(_validate_questions_game(normalized_data))
+			errors.append_array(_validar_questions_game(normalizado_data))
 		"vinculacion":
-			errors.append_array(_validate_linking_game(normalized_data))
+			errors.append_array(_validar_linking_game(normalizado_data))
 		"receta":
-			errors.append_array(_validate_recipe(normalized_data))
+			errors.append_array(_validar_recipe(normalizado_data))
 
 	if errors.is_empty():
 		return _ok([])
@@ -61,7 +61,7 @@ static func format_errors(source_path: String, errors: Array[String]) -> String:
 	return "\n".join(lines)
 
 
-static func _validate_common_fields(data: Dictionary) -> Array[String]:
+static func _validar_common_fields(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	if str(data.get("id", "")).strip_edges().is_empty():
 		errors.append("Falta campo obligatorio: id")
@@ -80,7 +80,7 @@ static func _validate_common_fields(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_assets_catalog(data: Dictionary) -> Array[String]:
+static func _validar_assets_catalog(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	var items: Variant = data.get("items", {})
 	if not items is Dictionary:
@@ -104,7 +104,7 @@ static func _validate_assets_catalog(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_map(data: Dictionary) -> Array[String]:
+static func _validar_map(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	if str(data.get("categoria", "")).strip_edges().is_empty():
 		errors.append("Falta campo obligatorio: categoria")
@@ -137,7 +137,7 @@ static func _validate_map(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_node(data: Dictionary) -> Array[String]:
+static func _validar_node(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	if str(data.get("categoria", "")).strip_edges().is_empty():
 		errors.append("Falta campo obligatorio: categoria")
@@ -164,7 +164,7 @@ static func _validate_node(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_drag_drop_game(data: Dictionary) -> Array[String]:
+static func _validar_drag_drop_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	if str(data.get("objetivo", "")).strip_edges().is_empty():
 		errors.append("Falta campo obligatorio: consigna")
@@ -190,13 +190,13 @@ static func _validate_drag_drop_game(data: Dictionary) -> Array[String]:
 			"Item repetido entre correctos e incorrectos: %s" % ", ".join(duplicated_items)
 		)
 	for item_id in correct_items + wrong_items:
-		var definition_result: Dictionary = ContentCatalogScript.resolve_item_definition(item_id)
+		var definition_result: Dictionary = ContentCatalogScript.resolver_definicion_item(item_id)
 		if not bool(definition_result.get("ok", false)):
 			errors.append("Item no existe en items.json: %s" % item_id)
 	return errors
 
 
-static func _validate_linking_game(data: Dictionary) -> Array[String]:
+static func _validar_linking_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	var uses_simple_format: bool = bool(data.get("usa_formato_simple_vinculacion", false))
 	if uses_simple_format and not bool(data.get("tiene_dificultad_explicita", false)):
@@ -232,7 +232,7 @@ static func _validate_linking_game(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_questions_game(data: Dictionary) -> Array[String]:
+static func _validar_questions_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	var uses_simple_format: bool = bool(data.get("usa_formato_simple_preguntas", false))
 	if uses_simple_format and not bool(data.get("tiene_dificultad_explicita", false)):
@@ -289,7 +289,7 @@ static func _validate_questions_game(data: Dictionary) -> Array[String]:
 	return errors
 
 
-static func _validate_recipe(data: Dictionary) -> Array[String]:
+static func _validar_recipe(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	if str(data.get("categoria", "")).strip_edges().is_empty():
 		errors.append("Falta campo obligatorio: categoria")
@@ -300,7 +300,7 @@ static func _validate_recipe(data: Dictionary) -> Array[String]:
 	if steps.is_empty():
 		errors.append("Falta campo obligatorio: pasos")
 	for item_id in ingredients:
-		var definition_result: Dictionary = ContentCatalogScript.resolve_item_definition(item_id)
+		var definition_result: Dictionary = ContentCatalogScript.resolver_definicion_item(item_id)
 		if not bool(definition_result.get("ok", false)):
 			errors.append(str(definition_result.get("error", "Asset invalido.")))
 	return errors

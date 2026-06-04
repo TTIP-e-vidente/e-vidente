@@ -25,7 +25,7 @@ static func registrar(tree: SceneTree, resultado: Dictionary) -> void:
 
 
 ## Devuelve todos los stats acumulados del nodo activo.
-static func get_stats(tree: SceneTree) -> Dictionary:
+static func obtener_estadisticas(tree: SceneTree) -> Dictionary:
 	var global_state: Node = _global(tree)
 	if global_state == null or not global_state.has_method("obtener_stats_nodo_actual"):
 		return {"aciertos": 0, "errores": 0, "intentos": 0}
@@ -33,9 +33,9 @@ static func get_stats(tree: SceneTree) -> Dictionary:
 
 
 ## Precisión como porcentaje entero 0–100.
-static func get_precision(tree: SceneTree) -> int:
-	var s: Dictionary = get_stats(tree)
-	return NodoProgressionRules.calculate_precision(
+static func obtener_precision(tree: SceneTree) -> int:
+	var s: Dictionary = obtener_estadisticas(tree)
+	return NodoProgressionRules.calcular_precision(
 		int(s.get("aciertos", 0)),
 		int(s.get("intentos", 0))
 	)
@@ -43,7 +43,7 @@ static func get_precision(tree: SceneTree) -> int:
 
 ## Porcentaje de error como entero 0–100.
 static func get_error_percent(tree: SceneTree) -> int:
-	var s: Dictionary = get_stats(tree)
+	var s: Dictionary = obtener_estadisticas(tree)
 	return NodoProgressionRules.calculate_error_percent(
 		int(s.get("errores", 0)),
 		int(s.get("intentos", 0))
@@ -65,11 +65,11 @@ static func get_duration_ms(tree: SceneTree) -> int:
 
 
 ## Duración formateada como "M:SS".
-static func get_duration_formatted(tree: SceneTree) -> String:
+static func obtener_duracion_formateada(tree: SceneTree) -> String:
 	var global_state: Node = _global(tree)
 	if global_state != null and global_state.has_method("obtener_tiempo_nodo_formato"):
 		return str(global_state.call("obtener_tiempo_nodo_formato")).strip_edges()
-	return NodoProgressionRules.format_duration(get_duration_ms(tree))
+	return NodoProgressionRules.formatear_duracion(get_duration_ms(tree))
 
 
 ## Bridge: registra un ResultadoDeMiniJuego en el acumulador global.

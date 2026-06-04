@@ -34,7 +34,7 @@ static func is_valid_format(id: String) -> bool:
 ## Valida que todas las activities del array tengan IDs presentes, con formato
 ## válido y únicos entre sí. Devuelve un array de strings de error; vacío = válido.
 ## source_path se incluye en los mensajes de error para facilitar el diagnóstico.
-static func validate_activity_ids(activities: Array, source_path: String = "") -> Array[String]:
+static func validar_ids_actividad(activities: Array, source_path: String = "") -> Array[String]:
 	var errors: Array[String] = []
 	var seen_ids: Dictionary = {}  # id -> primer índice donde apareció
 	for i in range(activities.size()):
@@ -63,8 +63,8 @@ static func validate_activity_ids(activities: Array, source_path: String = "") -
 ## Los ítems sin campo "id" se conservan (no se los considera completados).
 ##
 ## Uso esperado:
-##   var disponible = ContentIdValidator.filter_uncompleted(todas_las_activities, ids_completados)
-static func filter_uncompleted(all_content: Array, completed_ids: Array[String]) -> Array:
+##   var disponible = ContentIdValidator.filtrar_incompletos(todas_las_activities, ids_completados)
+static func filtrar_incompletos(all_content: Array, completed_ids: Array[String]) -> Array:
 	if completed_ids.is_empty():
 		return all_content.duplicate()
 	var result: Array = []

@@ -349,7 +349,7 @@ func _cargar_datos_de_vinculacion(contexto_sesion: Dictionary) -> void:
 		_mensaje_error_bloqueante = "Falta activity_id o json_path para la vinculacion."
 		return
 
-	var resultado_nodo: Dictionary = NodeContentLoaderScript.load_from_context(contexto_sesion)
+	var resultado_nodo: Dictionary = NodeContentLoaderScript.cargar_desde_contexto(contexto_sesion)
 	if not bool(resultado_nodo.get("ok", false)):
 		_mensaje_error_bloqueante = str(
 			resultado_nodo.get("error", "No se pudo cargar el contenido de vinculación.")
@@ -441,8 +441,8 @@ func _preparar_boton_continuar_validacion() -> void:
 	boton_continuar_validacion.disabled = true
 	boton_continuar_validacion.z_index = 111
 	_aplicar_estilo_boton_badge(boton_continuar_validacion, 24)
-	if not boton_continuar_validacion.pressed.is_connected(_on_continuar_pressed):
-		boton_continuar_validacion.pressed.connect(_on_continuar_pressed)
+	if not boton_continuar_validacion.pressed.is_connected(_on_continuar_presionado):
+		boton_continuar_validacion.pressed.connect(_on_continuar_presionado)
 
 
 func _preparar_feedback_label() -> void:
@@ -763,7 +763,7 @@ func _configurar_lado(items_escena: Array[ConceptoItem], conceptos: Array, lado:
 			continue
 
 		var concepto: Dictionary = conceptos[indice] as Dictionary
-		item.setup(concepto, lado)
+		item.configurar_desde_diccionario(concepto, lado)
 		_aplicar_estado_tarjeta(item, "normal")
 		_hacer_tarjeta_clickeable(item)
 
@@ -881,7 +881,7 @@ func vincular_con_derecha(derecha: ConceptoItem) -> void:
 	seleccion_derecha_pendiente = null
 	validado = false
 	_ocultar_continuar()
-	_animar_vinculo_creado(izquierda, derecha)
+	_animar_vinculo_correcto(izquierda, derecha)
 	_validar_par_actual(izquierda, derecha)
 	_actualizar_visual()
 
@@ -1064,7 +1064,7 @@ func _actualizar_texto_guia(texto: String, color: Color = MiPaleta.FEEDBACK_NEUT
 	guide_label.modulate = color
 
 
-func _animar_vinculo_creado(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
+func _animar_vinculo_correcto(izquierda: ConceptoItem, derecha: ConceptoItem) -> void:
 	for tarjeta in [izquierda, derecha]:
 		if tarjeta == null or not is_instance_valid(tarjeta):
 			continue
@@ -1097,15 +1097,15 @@ func _dibujar_linea_de_vinculo(item_izquierda: ConceptoItem) -> void:
 	var color := COLOR_LINEA_ERROR if (
 		item_izquierda.tiene_error or (is_instance_valid(item_derecha) and item_derecha.tiene_error)
 	) else COLOR_LINEA_OK
-	var origen: Vector2 = _get_right_anchor(item_izquierda)
-	var destino: Vector2 = _get_left_anchor(item_derecha)
+	var origen: Vector2 = _obtener_ancla_derecha(item_izquierda)
+	var destino: Vector2 = _obtener_ancla_izquierda(item_derecha)
 	var debe_animar := item_izquierda.animar_vinculo
 	_crear_linea(origen, destino, COLOR_LINEA_SOMBRA, 7.0, debe_animar)
 	_crear_linea(origen, destino, color, 4.0, debe_animar)
 	item_izquierda.animar_vinculo = false
 
 
-func _get_right_anchor(card: Control) -> Vector2:
+func _obtener_ancla_derecha(card: Control) -> Vector2:
 	var rect := _obtener_rect_visual_tarjeta(card)
 	var punto_global := Vector2(
 		rect.position.x + rect.size.x - MARGEN_ANCLAJE_LINEA,
@@ -1114,7 +1114,7 @@ func _get_right_anchor(card: Control) -> Vector2:
 	return line_drawer.to_local(punto_global)
 
 
-func _get_left_anchor(card: Control) -> Vector2:
+func _obtener_ancla_izquierda(card: Control) -> Vector2:
 	var rect := _obtener_rect_visual_tarjeta(card)
 	var punto_global := Vector2(
 		rect.position.x + MARGEN_ANCLAJE_LINEA,
@@ -1166,7 +1166,7 @@ func confirmar() -> void:
 		izquierda.vincular_con(derecha)
 		seleccion_actual = null
 		seleccion_derecha_pendiente = null
-		_animar_vinculo_creado(izquierda, derecha)
+		_animar_vinculo_correcto(izquierda, derecha)
 		_validar_par_actual(izquierda, derecha)
 		_actualizar_visual()
 		if not faltan_vinculos():
@@ -1240,7 +1240,7 @@ func _ocultar_continuar() -> void:
 		_set_click_areas_habilitadas(true)
 
 
-func _on_continuar_pressed() -> void:
+func _on_continuar_presionado() -> void:
 	if not validado or bloqueado:
 		return
 	print("[VincularConceptos] continuar_pressed actividad_completada=true")
@@ -1317,7 +1317,7 @@ func _guardar_progreso_de_vinculacion() -> void:
 
 
 func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: Dictionary) -> void:
-	_retroalimentacion_racha_post_juego = GameStreakTrackerScript.build_feedback(
+	_retroalimentacion_racha_post_juego = GameStreakTrackerScript.construir_feedback(
 		racha_anterior,
 		racha_actualizada,
 		true
@@ -1333,7 +1333,7 @@ func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: D
 		_ruta_escena_de_retorno,
 		"vincular_conceptos._preparar_flujo_post_juego"
 	)
-	_estado_flujo_post_juego = PostGameFlowControllerScript.build_post_game_flow_state(
+	_estado_flujo_post_juego = PostGameFlowControllerScript.construir_estado_flujo_post_juego(
 		racha_anterior,
 		racha_actualizada,
 		contexto_de_finalizacion,
@@ -1406,14 +1406,14 @@ func _resolver_textura_de_ensenanza() -> Texture2D:
 
 func continuar_al_siguiente_juego() -> void:
 	if validado and not bloqueado:
-		_on_continuar_pressed()
+		_on_continuar_presionado()
 		return
 	_al_solicitar_continuar()
 
 
 func _al_solicitar_continuar_juego() -> void:
 	if _continuar_juego_es_validacion_pendiente:
-		_on_continuar_pressed()
+		_on_continuar_presionado()
 		return
 	if _continuar_juego_es_continuacion_pendiente:
 		GameSceneRouter.go_to_continue_target(get_tree(), _ruta_escena_de_retorno)
@@ -1458,7 +1458,7 @@ func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
 		_volver_a_escena_de_mapa()
 		return
 
-	PostGameFlowControllerScript.navigate_after_teaching(
+	PostGameFlowControllerScript.navegar_despues_ensenanza(
 		get_tree(),
 		_tomar_estado_flujo_post_juego(),
 		_tomar_retroalimentacion_racha_post_juego(),

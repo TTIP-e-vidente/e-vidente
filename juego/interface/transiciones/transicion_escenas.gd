@@ -12,7 +12,7 @@ func _ready():
 	$ColorRect.visible = false
 	$ColorRect2.visible = false
 	
-func change_scene(target_scene: String):
+func cambiar_escena(target_scene: String):
 	if DisplayServer.get_name() == "headless":
 		get_tree().change_scene_to_file(target_scene)
 		return
@@ -29,7 +29,7 @@ func change_scene(target_scene: String):
 
 	$ColorRect.visible = false
 
-func change_normal_scene(target_scene: String):
+func cambiar_escena_normal(target_scene: String):
 	if DisplayServer.get_name() == "headless":
 		get_tree().change_scene_to_file(target_scene)
 		return

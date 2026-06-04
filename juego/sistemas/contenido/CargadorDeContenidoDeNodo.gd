@@ -37,24 +37,24 @@ static func cargar_desde_nodo(datos_nodo: Variant) -> Dictionary:
 
 
 static func cargar_desde_ruta(ruta_json: String) -> Dictionary:
-	var raw_result: Dictionary = ContentJsonLoaderScript.load_json(ruta_json)
+	var raw_result: Dictionary = ContentJsonLoaderScript.cargar_json(ruta_json)
 	if not bool(raw_result.get("ok", false)):
 		return _error(str(raw_result.get("error", "No se pudo cargar el contenido.")))
 
 	var clean_path: String = str(raw_result.get("path", ruta_json)).strip_edges()
 	var datos_crudos: Dictionary = raw_result.get("data", {})
-	var normalized_result: Dictionary = ContentNormalizerScript.normalize(datos_crudos, clean_path)
-	var datos_adaptados: Dictionary = normalized_result.get("data", {})
+	var normalizado_result: Dictionary = ContentNormalizerScript.normalizar(datos_crudos, clean_path)
+	var datos_adaptados: Dictionary = normalizado_result.get("data", {})
 
-	if ContentNormalizerScript.is_v1_content(datos_adaptados):
-		var validation_result: Dictionary = ContentValidatorScript.validate(
+	if ContentNormalizerScript.es_contenido_v1(datos_adaptados):
+		var validation_result: Dictionary = ContentValidatorScript.validar(
 			datos_adaptados,
 			clean_path
 		)
 		if not bool(validation_result.get("ok", false)):
 			return _error(str(validation_result.get("error", "Contenido invalido.")))
 
-		var runtime_result: Dictionary = GameContentFactoryScript.create_runtime_game(
+		var runtime_result: Dictionary = GameContentFactoryScript.crear_juego_runtime(
 			datos_adaptados,
 			clean_path
 		)
