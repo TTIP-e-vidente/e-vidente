@@ -1,7 +1,7 @@
 # HELPER_INTERNO
 # Nodo visual individual del mapa (estrella/candado/completado).
 # Solo renderizariza estado — no decide flujo.
-@tool
+# Visibilidad en runtime: MapBoard.configurar_nodos muestra todos los nodos del mapa.
 extends Node2D
 # HELPER_INTERNO
 const DEBUG_BADGES := false
@@ -9,7 +9,7 @@ const DEBUG_BADGES := false
 
 signal selected(node_data: MapNodeData)
 
-const COLOR_AVAILABLE := Color(1.0, 0.96, 0.84, 1.0)
+const COLOR_AVAILABLE := MiPaleta.GRIS_AZULADO
 const COLOR_COMPLETED := MiPaleta.VERDE_BOSQUE
 const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
@@ -214,10 +214,6 @@ func _boton_esta_deshabilitado() -> bool:
 
 
 func _aplicar_color_estado() -> void:
-	if Engine.is_editor_hint():
-		modulate = Color.WHITE
-		state_icon.modulate = Color.WHITE
-		return
 	match visual_state:
 		STATE_COMPLETED:
 			_cancelar_tween_disponible()
@@ -229,9 +225,9 @@ func _aplicar_color_estado() -> void:
 			state_icon.modulate = Color.WHITE
 			modulate = COLOR_LOCKED
 		_:
-			state_icon.modulate = Color.WHITE
-			modulate = COLOR_AVAILABLE
-			_animar_disponible()
+			_cancelar_tween_disponible()
+			state_icon.modulate = COLOR_AVAILABLE
+			modulate = Color.WHITE
 
 
 func _aplicar_estado_progreso(progress_state: Dictionary) -> void:

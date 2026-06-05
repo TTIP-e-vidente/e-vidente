@@ -205,6 +205,12 @@ func limpiar_parcial_nivel_estado(track_key: String, level_number: int) -> void:
 
 # --- Progreso de nodos del mapa --------------------------------------------
 
+func reiniciar_progreso_nodos_pista(track_key: String) -> void:
+	var normalizado_track_key: String = _obtener_clave_pista_valida(track_key)
+	if not normalizado_track_key.is_empty():
+		_playable_node_progress_by_track.erase(normalizado_track_key)
+
+
 func marcar_nodo_jugable_completado(track_key: String, node_key: String) -> void:
 	var normalizado_track_key: String = _obtener_clave_pista_valida(track_key)
 	var normalizado_node_key: String = node_key.strip_edges()
@@ -687,7 +693,10 @@ func _importar_estados_sistema_progreso(raw_systems_state: Variant) -> void:
 
 
 func _importar_racha_estado_progreso(systems_state: Dictionary) -> void:
-	_streak_state = _streak_save_helper.importar_racha({"progress_system_states": systems_state})
+	var raw_streak: Dictionary = _streak_save_helper.importar_racha(
+		{"progress_system_states": systems_state}
+	)
+	_streak_state = GameStreakTracker.leer(raw_streak)
 
 
 func _importar_estado_progreso_nodos_jugables(systems_state: Dictionary) -> void:

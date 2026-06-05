@@ -15,7 +15,7 @@ static func leer(raw_state: Variant) -> Dictionary:
 		return _empty_streak_state()
 
 	var stored: Dictionary = raw_state
-	var last_day: String = str(stored.get("last_activity_day", "")).strip_edges()
+	var last_day: String = _normalizar_dia_actividad(stored.get("last_activity_day", ""))
 	var current_count: int = max(0, int(stored.get("current_count", 0)))
 	var best_count: int = max(0, int(stored.get("best_count", 0)))
 
@@ -41,7 +41,7 @@ static func registrar(
 	metadata: Dictionary
 ) -> Dictionary:
 	var today: String = Time.get_date_string_from_system(false)
-	var last_day: String = str(streak_state.get("last_activity_day", ""))
+	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
 	var old_count: int = int(streak_state.get("current_count", 0))
 
 	var new_count: int = 1
@@ -72,7 +72,9 @@ static func _resolver_estado_visual(
 		return "inactive"
 
 	var today: String = _resolver_fecha_actual(current_date)
-	var last_day: String = str(streak_state.get("last_activity_day", ""))
+	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	if last_day.is_empty() and current_count > 0:
+		return "inactive"
 	if last_day == today:
 		return "active"
 	if _days_between(last_day, today) == 1:
@@ -87,7 +89,7 @@ static func modelo_vista(
 ) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
-	var last_day: String = str(streak_state.get("last_activity_day", ""))
+	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
 	var today: String = _resolver_fecha_actual(current_date)
 	var visual_state: String = _resolver_estado_visual(streak_state, today, current_hour)
 
@@ -181,6 +183,25 @@ static func _days_between(date_a: String, date_b: String) -> int:
 	var unix_a: int = int(Time.get_unix_time_from_datetime_string(date_a))
 	var unix_b: int = int(Time.get_unix_time_from_datetime_string(date_b))
 	return int(float(absi(unix_b - unix_a)) / SECONDS_PER_DAY)
+
+
+static func _normalizar_dia_actividad(raw_value: Variant) -> String:
+	var raw_text := str(raw_value).strip_edges()
+	if raw_text.is_empty():
+		return ""
+
+	if "T" in raw_text:
+		raw_text = raw_text.split("T", false, 1)[0].strip_edges()
+
+	if _is_valid_date(raw_text):
+		return raw_text
+
+	var unix: int = int(Time.get_unix_time_from_datetime_string(str(raw_value).strip_edges()))
+	if unix <= 0:
+		return ""
+
+	var normalized := Time.get_date_string_from_unix_time(unix)
+	return normalized if _is_valid_date(normalized) else ""
 
 
 static func _is_valid_date(date_string: String) -> bool:

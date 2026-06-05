@@ -101,7 +101,10 @@ export async function getProgresoRestriccion(userId: string): Promise<ProgresoRe
     }
 
     const profile = await profileRepository.ensureProfile(client, userId);
-    const streak = await streakRepository.ensureStreak(client, userId, profile.id);
+    let streak = await streakRepository.getStreakByUserId(client, userId);
+    if (!streak) {
+      streak = await streakRepository.ensureStreak(client, userId, profile.id);
+    }
     const progress = await progresoRestriccionRepository.listProgressByUserId(client, userId);
     const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, userId);
     const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, userId);
@@ -156,7 +159,10 @@ export async function saveAuthenticatedProgress(
     }
 
     const baseProfile = await profileRepository.ensureProfile(client, input.userId, restriction);
-    const streak = await streakRepository.ensureStreak(client, input.userId, baseProfile.id);
+    let streak = await streakRepository.getStreakByUserId(client, input.userId);
+    if (!streak) {
+      streak = await streakRepository.ensureStreak(client, input.userId, baseProfile.id);
+    }
     const baseProgress = await progresoRestriccionRepository.upsertProgress(
       client,
       input.userId,
@@ -242,6 +248,15 @@ export async function saveAuthenticatedProgress(
         completedNode = upsertResult.node;
         await progresoRestriccionRepository.incrementProgressCompletedNodes(client, progress.id);
       }
+    }
+
+    if (completed) {
+      streak = await streakRepository.registerStreakActivity(
+        client,
+        input.userId,
+        profile.id,
+        finishedAt
+      );
     }
 
     const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);

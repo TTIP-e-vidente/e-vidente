@@ -18,6 +18,8 @@ var _auth: AuthSession
 var _sync: ProgressSyncService
 var _usuario_en_cache: Dictionary = {}
 var _progreso_online_en_cache: Dictionary = {}
+var _carga_online_en_curso: bool = false
+var _ultimo_resultado_carga_online: Dictionary = {}
 
 
 func _ready() -> void:
@@ -70,6 +72,18 @@ func limpiar_cache_online() -> void:
 
 
 func cargar_datos_online() -> Dictionary:
+	if _carga_online_en_curso:
+		while _carga_online_en_curso:
+			await get_tree().process_frame
+		return _ultimo_resultado_carga_online.duplicate(true)
+
+	_carga_online_en_curso = true
+	_ultimo_resultado_carga_online = await _cargar_datos_online_interno()
+	_carga_online_en_curso = false
+	return _ultimo_resultado_carga_online.duplicate(true)
+
+
+func _cargar_datos_online_interno() -> Dictionary:
 	if not esta_logueado():
 		return {
 			"ok": false,
@@ -149,7 +163,27 @@ func obtener_progreso_del_servidor() -> Dictionary:
 func guardar_progreso_online(resumen_partida: Dictionary) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 0, "error": "No active session"}
-	return await _sync.sincronizar(resumen_partida)
+	var resultado := await _sync.sincronizar(resumen_partida)
+	if bool(resultado.get("ok", false)):
+		_aplicar_racha_de_respuesta_sync(resultado.get("data", {}))
+	return resultado
+
+
+func _aplicar_racha_de_respuesta_sync(data: Variant) -> void:
+	if not data is Dictionary:
+		return
+	var payload: Dictionary = data as Dictionary
+	var summary: Variant = payload.get("summary", {})
+	var streak: Dictionary = {}
+	if summary is Dictionary and not (summary as Dictionary).get("streak", {}).is_empty():
+		streak = (summary as Dictionary).get("streak", {})
+	elif payload.has("streak"):
+		streak = payload.get("streak", {})
+	if streak.is_empty() or SaveManager == null:
+		return
+	SaveManager.aplicar_racha_sincronizada(streak)
+	if not _progreso_online_en_cache.is_empty():
+		_progreso_online_en_cache["streak"] = streak
 
 
 func reintentar_sync_pendiente() -> void:

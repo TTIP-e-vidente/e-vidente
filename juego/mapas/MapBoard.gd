@@ -16,7 +16,7 @@ var _configured_node_states: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	call_deferred("actualizar_progreso_desde_guardado")
+	_ocultar_nodos_runtime_hasta_configurar()
 	titulo_del_nivel.modulate = Color("#42785e")
 	_ajustar_scroll_al_viewport()
 
@@ -65,12 +65,14 @@ func configurar_nodos(
 			contenedor_nodos, layout_config, map_nodes.size()
 		)
 
+	for visual_node in visual_nodes:
+		visual_node.hide()
+
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
 		var node_state: Dictionary = _obtener_estado_nodo(node_states, index)
 		if node_data == null or not node_data.es_valido():
-			visual_node.hide()
 			continue
 
 		visual_node.show()
@@ -128,6 +130,13 @@ func actualizar_progreso_desde_guardado() -> void:
 		if completed and visual_node.has_method("establecer_progreso_estrella"):
 			visual_node.call("establecer_progreso_estrella", saved_percent)
 
+
+
+func _ocultar_nodos_runtime_hasta_configurar() -> void:
+	if contenedor_nodos == null:
+		return
+	for visual_node in obtener_nodos_runtime_mapa():
+		visual_node.hide()
 
 
 func obtener_nodos_runtime_mapa() -> Array[Node2D]:

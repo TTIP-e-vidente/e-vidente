@@ -40,7 +40,10 @@ export async function getPlayerMe(userId: string): Promise<PlayerMeResponse> {
     }
 
     const profile = await profileRepository.ensureProfile(client, userId);
-    const streak = await streakRepository.ensureStreak(client, userId, profile.id);
+    let streak = await streakRepository.getStreakByUserId(client, userId);
+    if (!streak) {
+      streak = await streakRepository.ensureStreak(client, userId, profile.id);
+    }
     await client.query('COMMIT');
 
     return {

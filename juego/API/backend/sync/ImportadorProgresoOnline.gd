@@ -2,6 +2,7 @@ class_name ImportadorProgresoOnline
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 const QUESTION_PROGRESS_KEY := "question_progress"
@@ -182,11 +183,40 @@ static func _construir_estado_racha(racha_online: Variant) -> Dictionary:
 	if not racha_online is Dictionary:
 		return {}
 	var racha: Dictionary = racha_online as Dictionary
-	return {
+	var streak_state := {
 		"current_count": max(0, int(racha.get("current_count", 0))),
 		"best_count": max(0, int(racha.get("best_count", 0))),
 		"last_activity_day": str(racha.get("last_activity_day", "")),
 	}
+	return GameStreakTrackerScript.leer(streak_state)
+
+
+## Normaliza la racha del servidor al formato local validado.
+static func construir_estado_racha_online(racha_online: Variant) -> Dictionary:
+	return _construir_estado_racha(racha_online)
+
+
+## Conserva la racha mas avanzada entre save local y servidor.
+static func fusionar_estado_racha(local: Dictionary, online: Dictionary) -> Dictionary:
+	var local_read := GameStreakTrackerScript.leer(local)
+	var online_read := GameStreakTrackerScript.leer(online)
+	if local_read.is_empty():
+		return online_read
+	if online_read.is_empty():
+		return local_read
+
+	var local_count := int(local_read.get("current_count", 0))
+	var online_count := int(online_read.get("current_count", 0))
+	if local_count > online_count:
+		return local_read
+	if online_count > local_count:
+		return online_read
+
+	var local_day := str(local_read.get("last_activity_day", ""))
+	var online_day := str(online_read.get("last_activity_day", ""))
+	if local_day > online_day:
+		return local_read
+	return online_read
 
 
 static func _calcular_exp_total(progreso_online: Dictionary) -> int:

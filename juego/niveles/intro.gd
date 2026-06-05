@@ -61,7 +61,7 @@ func _ready() -> void:
 
 func _on_jugar_presionado() -> void:
 	if AuthApi.esta_logueado():
-		AuthApi.precargar_datos_online()
+		await AuthApi.cargar_datos_online()
 		_continuar_a_juego()
 		return
 	_mostrar_login()

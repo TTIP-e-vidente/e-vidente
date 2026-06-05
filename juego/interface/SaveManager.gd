@@ -929,6 +929,48 @@ func _reiniciar_progreso_juego_preservando_perfil() -> void:
 	_reiniciar_datos_guardado_actual(profile)
 
 
+func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
+	if streak_online.is_empty():
+		return
+	var merged: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
+		_obtener_racha_local_desde_save(),
+		ImportadorProgresoOnlineScript.construir_estado_racha_online(streak_online)
+	)
+	if merged.is_empty():
+		return
+	_global_establecer_racha(merged)
+	_persistir_racha_en_save(merged)
+	if not _escribir_guardado_en_disco(false, "streak_sync"):
+		push_warning("[Save] No se pudo persistir la racha sincronizada.")
+		return
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func _obtener_racha_local_desde_save() -> Dictionary:
+	var progress: Variant = save_data.get("progress", {})
+	if not progress is Dictionary:
+		return {}
+	var systems: Variant = (progress as Dictionary).get("progress_system_states", {})
+	if not systems is Dictionary:
+		return {}
+	var streak: Variant = (systems as Dictionary).get("streak", {})
+	return (streak as Dictionary).duplicate(true) if streak is Dictionary else {}
+
+
+func _persistir_racha_en_save(streak_state: Dictionary) -> void:
+	if streak_state.is_empty():
+		return
+	var progress_snapshot: Dictionary = save_data.get("progress", {}) as Dictionary
+	var systems: Dictionary = (
+		progress_snapshot.get("progress_system_states", {}) as Dictionary
+		if progress_snapshot.get("progress_system_states") is Dictionary
+		else {}
+	)
+	systems["streak"] = streak_state.duplicate(true)
+	progress_snapshot["progress_system_states"] = systems
+	save_data["progress"] = progress_snapshot
+
+
 func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
 		progreso_online
@@ -937,7 +979,10 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	save_data["total_exp"] = int(snapshot.get("total_exp", 0))
 	save_data["progress"] = snapshot.get("progress_snapshot", {})
 
-	var streak_state: Dictionary = snapshot.get("streak_state", {})
+	var streak_state: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
+		_obtener_racha_local_desde_save(),
+		snapshot.get("streak_state", {})
+	)
 	_global_establecer_racha(streak_state)
 	_global_importar_progreso(save_data.get("progress", {}))
 

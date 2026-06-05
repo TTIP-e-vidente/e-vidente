@@ -183,6 +183,7 @@ func _construir_hud() -> void:
 	_agregar_insignia_racha(hud_root)
 	_agregar_boton_perfil(hud_root)
 	_agregar_superposicion_perfil(hud_root)
+	_conectar_senales_guardado()
 
 
 func _crear_hud_layer() -> CanvasLayer:
@@ -198,6 +199,29 @@ func _crear_hud_root(hud_layer: CanvasLayer) -> Control:
 	hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud_layer.add_child(hud_root)
 	return hud_root
+
+
+func _exit_tree() -> void:
+	_desconectar_senales_guardado()
+
+
+func _conectar_senales_guardado() -> void:
+	if SaveManager == null:
+		return
+	if not SaveManager.progress_loaded.is_connected(_al_actualizar_racha):
+		SaveManager.progress_loaded.connect(_al_actualizar_racha)
+
+
+func _desconectar_senales_guardado() -> void:
+	if SaveManager == null:
+		return
+	if SaveManager.progress_loaded.is_connected(_al_actualizar_racha):
+		SaveManager.progress_loaded.disconnect(_al_actualizar_racha)
+
+
+func _al_actualizar_racha(_profile: Dictionary) -> void:
+	if _racha_badge != null and _racha_badge.has_method("renderizar"):
+		_racha_badge.call("renderizar")
 
 
 func _agregar_insignia_racha(hud_root: Control) -> void:

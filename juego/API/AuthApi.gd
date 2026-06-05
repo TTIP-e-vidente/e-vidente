@@ -58,9 +58,9 @@ static func crear_cuenta_completa(
 
 
 static func precargar_datos_online() -> void:
-	if not esta_logueado() or tiene_datos_online_en_memoria():
+	if not esta_logueado():
 		return
-	BackendSession.cargar_datos_online()
+	await cargar_datos_online()
 
 
 static func cargar_datos_online() -> Dictionary:

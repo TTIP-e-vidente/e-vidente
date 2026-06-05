@@ -63,6 +63,23 @@ func _conectar_senales() -> void:
 		map_hud.connect("back_requested", _al_pedir_volver)
 	if map_board != null and map_board.has_signal("node_selected"):
 		map_board.connect("node_selected", al_seleccionar_nodo)
+	if SaveManager != null:
+		var callback := Callable(self, "_al_cambiar_progreso_guardado")
+		if not SaveManager.progress_loaded.is_connected(callback):
+			SaveManager.progress_loaded.connect(callback)
+
+
+func _exit_tree() -> void:
+	if SaveManager != null:
+		var callback := Callable(self, "_al_cambiar_progreso_guardado")
+		if SaveManager.progress_loaded.is_connected(callback):
+			SaveManager.progress_loaded.disconnect(callback)
+
+
+func _al_cambiar_progreso_guardado(_profile: Dictionary) -> void:
+	if not is_node_ready():
+		return
+	actualizar_estados_de_nodos()
 
 
 func cargar_mapa() -> void:
@@ -161,10 +178,26 @@ func _desplazar_a_proximo_disponible() -> void:
 
 
 func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
-	for node_data in nodos_mapa:
+	# Limpia el estado previo de la pista para que no queden datos sucios
+	# (ej: nodos marcados por importar_progreso_online sin respetar secuencia).
+	Global.reiniciar_progreso_nodos_pista(track_key_mapa)
+
+	# Re-marca en orden secuencial: un nodo solo se marca si su predecesor también lo está.
+	for i in range(nodos_mapa.size()):
+		var node_data: MapNodeData = nodos_mapa[i] as MapNodeData
 		var key: String = node_data.node_key.strip_edges()
 		var saved: Dictionary = _progreso_guardado(node_progress, key)
-		if bool(saved.get("completed", false)):
+		if not bool(saved.get("completed", false)):
+			continue
+		var es_primero: bool = (i == 0)
+		var prev_completado: bool = (
+			es_primero
+			or Global.es_nodo_jugable_completado(
+				track_key_mapa,
+				(nodos_mapa[i - 1] as MapNodeData).node_key
+			)
+		)
+		if prev_completado:
 			Global.marcar_nodo_jugable_completado(track_key_mapa, key)
 
 
@@ -191,7 +224,9 @@ func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
 	state["best_percent"] = float(saved.get("best_percent", 0.0))
 	var fallback_accuracy: float = float(saved.get("best_percent", 0.0)) * 100.0
 	state["best_accuracy"] = float(saved.get("best_accuracy", fallback_accuracy))
-	if bool(saved.get("completed", false)):
+	# Solo marcar completado si AvanceDeNodo ya lo habilitó vía progresión secuencial.
+	# Esto evita que nodos con datos de guardado inconsistentes ignoren prerequisitos.
+	if bool(saved.get("completed", false)) and bool(state.get("can_play", false)):
 		state["is_completed"] = true
 		state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
 		state["can_play"] = true
