@@ -108,6 +108,7 @@ func cargar_datos() -> void:
 	print_debug("[Save] progress_keys=", progress_keys)
 	print_debug("[Save] node_progress_keys=", obtener_todo_progreso_nodos().keys())
 	_global_importar_progreso(saved_progress if saved_progress is Dictionary else {})
+	_sincronizar_node_progress_a_global(obtener_todo_progreso_nodos())
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
@@ -522,8 +523,11 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 
 
 func al_cerrar_sesion_online() -> void:
-	_establecer_cuenta_online_vinculada("")
-	_marcar_guardado_sucio()
+	# NO limpiar node_progress ni cambiar linked_online_username.
+	# Conservar linked con el nombre del usuario actual para que:
+	#   - el mismo usuario al re-loguear detecte linked == username → no resetea → merge ✓
+	#   - un usuario diferente detecte linked != username → reset antes de importar ✓
+	# Limpiar habría causado que el mismo usuario perdiera su progreso local al volver.
 	guardar_progreso_en_disco()
 
 
@@ -992,20 +996,7 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	)
 	_global_establecer_racha(streak_state)
 	_global_importar_progreso(save_data.get("progress", {}))
-
-	var global_autoload: Node = _obtener_autoload_global()
-	# Re-sincronizar Global con el merge final (local + online).
-	for node_id in save_data.get("node_progress", {}).keys():
-		var entry: Variant = save_data["node_progress"][node_id]
-		if not entry is Dictionary or not bool((entry as Dictionary).get("completed", false)):
-			continue
-		var track_key := ImportadorProgresoOnlineScript.inferir_track_key_desde_node_id(
-			str(node_id)
-		)
-		if track_key.is_empty() or global_autoload == null:
-			continue
-		if global_autoload.has_method("marcar_nodo_jugable_completado"):
-			global_autoload.call("marcar_nodo_jugable_completado", track_key, str(node_id))
+	_sincronizar_node_progress_a_global(save_data.get("node_progress", {}))
 
 	save_data["progress"] = _global_exportar_progreso()
 	if not streak_state.is_empty():
@@ -1021,6 +1012,47 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 		)
 		progress_snapshot["progress_system_states"] = systems
 		save_data["progress"] = progress_snapshot
+
+
+## Merge post-sync: aplica los completedNodes que devolvió el servidor
+## después de guardar una partida, sin sobreescribir progreso local más nuevo.
+func fusionar_completados_desde_sync(completed_nodes: Array) -> void:
+	if completed_nodes.is_empty():
+		return
+	var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
+		{"completedNodes": completed_nodes}
+	)
+	var online_np: Dictionary = snapshot.get("node_progress", {})
+	if online_np.is_empty():
+		return
+	var merged: Dictionary = ImportadorProgresoOnlineScript.fusionar_node_progress(
+		obtener_todo_progreso_nodos(), online_np
+	)
+	save_data["node_progress"] = merged
+	_sincronizar_node_progress_a_global(merged)
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func _sincronizar_node_progress_a_global(node_progress: Variant) -> void:
+	if not node_progress is Dictionary:
+		return
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload == null:
+		return
+	for raw_node_id in (node_progress as Dictionary).keys():
+		var node_id := str(raw_node_id).strip_edges()
+		if node_id.is_empty():
+			continue
+		var entry: Variant = node_progress[raw_node_id]
+		if not entry is Dictionary or not bool((entry as Dictionary).get("completed", false)):
+			continue
+		var track_key := ImportadorProgresoOnlineScript.inferir_track_key_desde_node_id(node_id)
+		if track_key.is_empty():
+			continue
+		if global_autoload.has_method("marcar_nodo_jugable_completado"):
+			global_autoload.call("marcar_nodo_jugable_completado", track_key, node_id)
 
 
 func _construir_question_progress_desde_node_progress(node_progress: Dictionary) -> Dictionary:

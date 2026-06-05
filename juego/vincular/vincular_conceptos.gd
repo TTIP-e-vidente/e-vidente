@@ -1519,12 +1519,13 @@ func _finalizar_actividad(success: bool) -> void:
 	_limpiar_elementos_temporales()
 	var activity_id: String = str(_datos_de_ejecucion.get("id", _datos_de_ejecucion.get("activity_id", "")))
 	print("[VincularConceptos] finalizar_actividad activity_id=", activity_id)
+	var _precision_real: int = NodoRuntimeScript.calcular_precision(get_tree())
 	var resultado := {
 		"activity_id": activity_id,
 		"node_key": _nodo_actual,
 		"map_id": "celiaquia",
 		"success": success,
-		"accuracy": 1.0 if _pares_vinculados_total > 0 and _pares_vinculados_correctos == _pares_vinculados_total else 0.5,
+		"accuracy": clampf(float(_precision_real) / 100.0, 0.0, 1.0),
 		"exp": 10,
 		"elapsed_seconds": _calcular_elapsed_seconds()
 	}

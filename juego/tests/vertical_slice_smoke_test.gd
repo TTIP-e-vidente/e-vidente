@@ -1822,6 +1822,34 @@ func _test_fusion_node_progress_no_pierde_completados_locales() -> void:
 	)
 
 
+func _test_progreso_con_huecos_se_muestra_en_global() -> void:
+	var global_state: Node = get_node_or_null("/root/Global")
+	if global_state == null:
+		_verificar(false, "[MapProgress] Global autoload no disponible en test")
+		return
+	global_state.reiniciar_progreso()
+	var node_progress := {
+		"celiaquia_01_desayuno_basico": {"completed": true, "best_accuracy": 100.0},
+		"celiaquia_04_desayuno_y_sello": {"completed": true, "best_accuracy": 100.0},
+		"celiaquia_05_intro_mixta": {"completed": true, "best_accuracy": 100.0},
+	}
+	for node_id in node_progress.keys():
+		global_state.marcar_nodo_jugable_completado("celiaquia", str(node_id))
+	_verificar(
+		global_state.es_nodo_jugable_completado("celiaquia", "celiaquia_01_desayuno_basico"),
+		"[MapProgress] nodo 01 debe quedar completado"
+	)
+	_verificar(
+		global_state.es_nodo_jugable_completado("celiaquia", "celiaquia_04_desayuno_y_sello"),
+		"[MapProgress] nodo 04 con hueco intermedio debe quedar completado"
+	)
+	_verificar(
+		global_state.es_nodo_jugable_completado("celiaquia", "celiaquia_05_intro_mixta"),
+		"[MapProgress] nodo 05 con hueco intermedio debe quedar completado"
+	)
+	global_state.reiniciar_progreso()
+
+
 func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.cargar_mapa(
 		"res://contenido/mapa/celiaquia_mapa.json"
@@ -1896,6 +1924,7 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_armador_pool_agotado_no_crashea()
 	_test_save_manager_precision_no_forzada_al_100()
 	_test_fusion_node_progress_no_pierde_completados_locales()
+	_test_progreso_con_huecos_se_muestra_en_global()
 	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:
 		print("[ContentId] ✓ Todos los tests pasaron.")

@@ -136,11 +136,16 @@ func _actualizar_insignia() -> void:
 		return
 	var is_completed: bool = (visual_state == STATE_COMPLETED) or debug_completed
 	node_badge.visible = is_completed
-	var effective_progress: float = (
-		debug_progress if debug_progress >= 0.0 else clampf(_best_percent, 0.0, 1.0)
-	)
-	if is_completed and effective_progress <= 0.0:
+	# Si el nodo está completado, la estrella siempre se muestra llena (dorada).
+	# La precisión exacta se puede consultar en la pantalla de estadísticas; aquí
+	# solo importa indicar "hecho" vs "no hecho" de forma inequívoca.
+	var effective_progress: float
+	if is_completed:
 		effective_progress = 1.0
+	elif debug_progress >= 0.0:
+		effective_progress = debug_progress
+	else:
+		effective_progress = clampf(_best_percent, 0.0, 1.0)
 	if DEBUG_BADGES:
 		print_debug(
 			"[Star] update node_key=",

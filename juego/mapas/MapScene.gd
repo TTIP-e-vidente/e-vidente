@@ -178,26 +178,13 @@ func _desplazar_a_proximo_disponible() -> void:
 
 
 func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
-	# Limpia el estado previo de la pista para que no queden datos sucios
-	# (ej: nodos marcados por importar_progreso_online sin respetar secuencia).
+	# Sincroniza Global desde el guardado (local + online). No filtra por secuencia:
+	# el servidor puede tener nodos completados con huecos y deben mostrarse igual.
 	Global.reiniciar_progreso_nodos_pista(track_key_mapa)
-
-	# Re-marca en orden secuencial: un nodo solo se marca si su predecesor también lo está.
-	for i in range(nodos_mapa.size()):
-		var node_data: MapNodeData = nodos_mapa[i] as MapNodeData
+	for node_data in nodos_mapa:
 		var key: String = node_data.node_key.strip_edges()
 		var saved: Dictionary = _progreso_guardado(node_progress, key)
-		if not bool(saved.get("completed", false)):
-			continue
-		var es_primero: bool = (i == 0)
-		var prev_completado: bool = (
-			es_primero
-			or Global.es_nodo_jugable_completado(
-				track_key_mapa,
-				(nodos_mapa[i - 1] as MapNodeData).node_key
-			)
-		)
-		if prev_completado:
+		if bool(saved.get("completed", false)):
 			Global.marcar_nodo_jugable_completado(track_key_mapa, key)
 
 
@@ -224,12 +211,13 @@ func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
 	state["best_percent"] = float(saved.get("best_percent", 0.0))
 	var fallback_accuracy: float = float(saved.get("best_percent", 0.0)) * 100.0
 	state["best_accuracy"] = float(saved.get("best_accuracy", fallback_accuracy))
-	# Solo marcar completado si AvanceDeNodo ya lo habilitó vía progresión secuencial.
-	# Esto evita que nodos con datos de guardado inconsistentes ignoren prerequisitos.
-	if bool(saved.get("completed", false)) and bool(state.get("can_play", false)):
-		state["is_completed"] = true
-		state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
-		state["can_play"] = true
+	if not bool(saved.get("completed", false)):
+		return
+	state["is_completed"] = true
+	state["is_unlocked"] = true
+	state["can_play"] = true
+	state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
+	state["state"] = AvanceDeNodoScript.STATE_COMPLETED
 
 
 func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:

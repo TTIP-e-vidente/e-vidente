@@ -102,7 +102,6 @@ var pregunta_actual: Preguntas:
 @onready var _progress_bar = get_node_or_null("ProgressBar")
 
 var _activity_started_msec: int = 0
-var _conteo_errores: int = 0
 
 # Entrada del quiz
 func _ready() -> void:
@@ -1016,12 +1015,13 @@ func _finalizar_actividad(success: bool) -> void:
 	_limpiar_media_de_pregunta()
 	var actividad: Dictionary = NodoRuntimeScript.obtener_actividad_actual(get_tree())
 	var activity_id: String = str(actividad.get("id", actividad.get("activity_id", "")))
+	var _precision_real: int = NodoRuntimeScript.calcular_precision(get_tree())
 	var resultado := {
 		"activity_id": activity_id,
 		"node_key": _nodo_actual,
 		"map_id": "celiaquia",
 		"success": success,
-		"accuracy": 1.0 if _conteo_errores == 0 else 0.5,
+		"accuracy": clampf(float(_precision_real) / 100.0, 0.0, 1.0),
 		"exp": 10,
 		"elapsed_seconds": _calcular_elapsed_seconds()
 	}

@@ -174,6 +174,18 @@ func _aplicar_racha_de_respuesta_sync(data: Variant) -> void:
 		return
 	var payload: Dictionary = data as Dictionary
 	var summary: Variant = payload.get("summary", {})
+
+	# Aplicar completedNodes del resumen de sync al save local (auto-guardado post-partida).
+	if summary is Dictionary and SaveManager != null:
+		var cn_raw: Variant = (summary as Dictionary).get("completedNodes", [])
+		if cn_raw is Array and not (cn_raw as Array).is_empty():
+			if SaveManager.has_method("fusionar_completados_desde_sync"):
+				SaveManager.call("fusionar_completados_desde_sync", cn_raw as Array)
+		# Mantener cache online actualizado con los nodos del servidor.
+		var cn_for_cache: Variant = (summary as Dictionary).get("completedNodes", [])
+		if cn_for_cache is Array and not _progreso_online_en_cache.is_empty():
+			_progreso_online_en_cache["completedNodes"] = cn_for_cache
+
 	var streak: Dictionary = {}
 	if summary is Dictionary and not (summary as Dictionary).get("streak", {}).is_empty():
 		streak = (summary as Dictionary).get("streak", {})
