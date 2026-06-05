@@ -1,6 +1,7 @@
 extends Node2D
 
 const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
+const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 
 @onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
 @onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
@@ -105,11 +106,20 @@ func _exit_tree() -> void:
 
 # Completado no implica 100% de precisión.
 func _leer_precision_real(stats: Dictionary) -> int:
+	var intentos := int(stats.get("intentos", 0))
+	if intentos > 0:
+		return NodoProgressionRulesScript.calcular_precision(
+			int(stats.get("aciertos", 0)),
+			intentos
+		)
 	if stats.has("precision"):
 		return int(stats.get("precision", 0))
 	# Compatibilidad: algunos resultados legacy guardan accuracy como ratio 0.0–1.0.
 	if stats.has("accuracy"):
-		return int(round(float(stats.get("accuracy", 0.0)) * 100.0))
+		var accuracy := float(stats.get("accuracy", 0.0))
+		if accuracy <= 1.0:
+			return int(round(accuracy * 100.0))
+		return int(round(accuracy))
 	return 0
 
 

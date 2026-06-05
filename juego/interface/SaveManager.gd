@@ -975,8 +975,15 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
 		progreso_online
 	)
-	save_data["node_progress"] = snapshot.get("node_progress", {})
-	save_data["total_exp"] = int(snapshot.get("total_exp", 0))
+	var local_node_progress: Dictionary = obtener_todo_progreso_nodos()
+	var online_node_progress: Dictionary = snapshot.get("node_progress", {})
+	save_data["node_progress"] = ImportadorProgresoOnlineScript.fusionar_node_progress(
+		local_node_progress,
+		online_node_progress if online_node_progress is Dictionary else {}
+	)
+	var local_exp: int = int(save_data.get("total_exp", 0))
+	var online_exp: int = int(snapshot.get("total_exp", 0))
+	save_data["total_exp"] = maxi(local_exp, online_exp)
 	save_data["progress"] = snapshot.get("progress_snapshot", {})
 
 	var streak_state: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
@@ -986,19 +993,19 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	_global_establecer_racha(streak_state)
 	_global_importar_progreso(save_data.get("progress", {}))
 
-	var question_progress: Dictionary = snapshot.get("question_progress_by_track", {})
 	var global_autoload: Node = _obtener_autoload_global()
-	for track_key in question_progress.keys():
-		var nodes_for_track: Variant = question_progress.get(track_key, {})
-		if not nodes_for_track is Dictionary:
+	# Re-sincronizar Global con el merge final (local + online).
+	for node_id in save_data.get("node_progress", {}).keys():
+		var entry: Variant = save_data["node_progress"][node_id]
+		if not entry is Dictionary or not bool((entry as Dictionary).get("completed", false)):
 			continue
-		for node_id in (nodes_for_track as Dictionary).keys():
-			if global_autoload != null and global_autoload.has_method("marcar_nodo_jugable_completado"):
-				global_autoload.call(
-					"marcar_nodo_jugable_completado",
-					str(track_key),
-					str(node_id)
-				)
+		var track_key := ImportadorProgresoOnlineScript.inferir_track_key_desde_node_id(
+			str(node_id)
+		)
+		if track_key.is_empty() or global_autoload == null:
+			continue
+		if global_autoload.has_method("marcar_nodo_jugable_completado"):
+			global_autoload.call("marcar_nodo_jugable_completado", track_key, str(node_id))
 
 	save_data["progress"] = _global_exportar_progreso()
 	if not streak_state.is_empty():
@@ -1009,9 +1016,31 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 			else {}
 		)
 		systems["streak"] = streak_state.duplicate(true)
-		systems["question_progress"] = question_progress.duplicate(true)
+		systems["question_progress"] = _construir_question_progress_desde_node_progress(
+			save_data.get("node_progress", {})
+		)
 		progress_snapshot["progress_system_states"] = systems
 		save_data["progress"] = progress_snapshot
+
+
+func _construir_question_progress_desde_node_progress(node_progress: Dictionary) -> Dictionary:
+	var by_track: Dictionary = {}
+	if not node_progress is Dictionary:
+		return by_track
+	for raw_node_id in node_progress.keys():
+		var node_id := str(raw_node_id).strip_edges()
+		if node_id.is_empty():
+			continue
+		var entry: Variant = node_progress[raw_node_id]
+		if not entry is Dictionary or not bool((entry as Dictionary).get("completed", false)):
+			continue
+		var track_key := ImportadorProgresoOnlineScript.inferir_track_key_desde_node_id(node_id)
+		if track_key.is_empty():
+			continue
+		if not by_track.has(track_key):
+			by_track[track_key] = {}
+		(by_track[track_key] as Dictionary)[node_id] = true
+	return by_track
 
 
 func _aplicar_parche_perfil_online(usuario: Dictionary) -> void:

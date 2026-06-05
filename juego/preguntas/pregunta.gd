@@ -23,7 +23,7 @@ const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
 const DEFAULT_TRACK_KEY := "celiaquia"
-const DEFAULT_RETURN_SCENE := GameSceneRouter.MAP_SCENE_PATH
+const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
 const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
 const LOG_PREFIX_QUIZ := "[Quiz]"
 const LOG_PREFIX_QUIZ_LAYOUT := "[QuizLayout]"
@@ -877,6 +877,7 @@ func _al_presionar_continuar() -> void:
 
 
 func _finalizar_ultima_pregunta_de_partida() -> void:
+	# Cierra el nodo acá; PostGameFlowController evita un segundo cierre si ya no hay partida.
 	NodoRuntimeScript.finalizar_mini_juego(get_tree())
 	_finalizar_pregunta_normal(_cantidad_de_preguntas())
 	_limpiar_estado_local_de_partida_en_pregunta()

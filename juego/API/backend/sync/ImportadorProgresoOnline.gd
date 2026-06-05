@@ -159,6 +159,56 @@ static func _construir_node_progress(completed_nodes: Variant) -> Dictionary:
 	return node_progress
 
 
+## Une progreso de nodos local y servidor sin perder completados ni mejores marcas.
+static func fusionar_node_progress(local: Dictionary, online: Dictionary) -> Dictionary:
+	var merged: Dictionary = local.duplicate(true) if local is Dictionary else {}
+	if not online is Dictionary:
+		return merged
+	for raw_node_id in online.keys():
+		var node_id := str(raw_node_id).strip_edges()
+		if node_id.is_empty():
+			continue
+		var online_entry: Variant = online[raw_node_id]
+		if not online_entry is Dictionary:
+			continue
+		if not merged.has(node_id):
+			merged[node_id] = (online_entry as Dictionary).duplicate(true)
+			continue
+		var local_entry: Variant = merged[node_id]
+		if local_entry is Dictionary:
+			merged[node_id] = _fusionar_entrada_node_progress(
+				local_entry as Dictionary,
+				online_entry as Dictionary
+			)
+	return merged
+
+
+static func _fusionar_entrada_node_progress(local: Dictionary, online: Dictionary) -> Dictionary:
+	var merged_entry: Dictionary = local.duplicate(true)
+	merged_entry["completed"] = bool(local.get("completed", false)) or bool(
+		online.get("completed", false)
+	)
+	merged_entry["best_accuracy"] = maxf(
+		float(local.get("best_accuracy", 0.0)),
+		float(online.get("best_accuracy", 0.0))
+	)
+	merged_entry["last_accuracy"] = maxf(
+		float(local.get("last_accuracy", merged_entry["best_accuracy"])),
+		float(online.get("last_accuracy", online.get("best_accuracy", 0.0)))
+	)
+	merged_entry["best_percent"] = clampf(
+		maxf(float(local.get("best_percent", 0.0)), float(online.get("best_percent", 0.0))),
+		0.0,
+		1.0
+	)
+	merged_entry["last_percent"] = clampf(
+		maxf(float(local.get("last_percent", 0.0)), float(online.get("last_percent", 0.0))),
+		0.0,
+		1.0
+	)
+	return merged_entry
+
+
 static func _construir_question_progress_por_track(completed_nodes: Variant) -> Dictionary:
 	var by_track: Dictionary = {}
 	if not completed_nodes is Array:

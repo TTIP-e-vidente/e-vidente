@@ -53,7 +53,11 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 		return
 
 	var NodoRuntimeScript = load("res://sistemas/NodoRuntime.gd")
-	var hay_mas_juegos := bool(NodoRuntimeScript.finalizar_mini_juego(tree))
+	var hay_mas_juegos := false
+	if _tiene_partida_de_nodo_activa(tree):
+		# Evita doble finalización: si la modalidad ya cerró el nodo, los stats
+		# fueron limpiados y un segundo cierre forzaría precisión al 100%.
+		hay_mas_juegos = bool(NodoRuntimeScript.finalizar_mini_juego(tree))
 
 	if hay_mas_juegos:
 		return
@@ -80,6 +84,16 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	SyncApi.sincronizar_partida_terminada(tree, resultado, stats)
 
 	GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
+
+
+static func _tiene_partida_de_nodo_activa(tree: SceneTree) -> bool:
+	if tree == null or tree.root == null:
+		return false
+	var global_state: Node = tree.root.get_node_or_null("/root/Global")
+	if global_state == null or not global_state.has_method("obtener_partida_de_nodo_actual"):
+		return false
+	var partida: Variant = global_state.call("obtener_partida_de_nodo_actual")
+	return partida is Dictionary and not (partida as Dictionary).is_empty()
 
 
 

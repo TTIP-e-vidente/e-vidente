@@ -27,7 +27,7 @@ const ConceptItemScene := preload("res://vincular/concept_item.tscn")
 const LOG_PREFIX_MATCH := "[Match]"
 
 const CLAVE_PISTA_PREDETERMINADA := "celiaquia"
-const ESCENA_RETORNO_PREDETERMINADA := GameSceneRouter.MAP_SCENE_PATH
+const ESCENA_RETORNO_PREDETERMINADA := "res://mapas/MapScene.tscn"
 const BADGE_TEXTURE := preload("res://assets-sistema/interfaz/pregunta-1.png")
 const COLOR_TARJETA_NORMAL := Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_TARJETA_SELECCIONADA := Color(0.93, 1.0, 0.95, 1.0)

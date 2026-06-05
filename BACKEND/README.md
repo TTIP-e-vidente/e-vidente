@@ -42,7 +42,7 @@ npm run dev
 
 **Demo:** `agus` / `123`, `margo` / `123`
 
-**Postgres (DataGrip):** host `localhost`, port `5432`, db `evidente_dev`, user `evidente_user`, pass en `.env`.
+**Postgres (DataGrip):** host `localhost`, port según `POSTGRES_PORT` en `.env` (default `5433`), db `evidente_dev`, user `evidente_user`, pass en `.env`.
 
 ```sh
 docker exec -it e-vidente-postgres psql -U evidente_user -d evidente_dev -c "SELECT current_database();"
@@ -86,6 +86,29 @@ npm run smoke:api   # con server up
 ## Fuera de alcance
 
 Refresh tokens, admin, mails reales, leaderboard online, rename destructivo de tablas.
+
+## Problemas frecuentes
+
+### `setup:dev` se queda en "Esperando PostgreSQL..."
+
+En Windows suele pasar si ya tenés **Postgres instalado localmente** en el puerto `5432`. El script conecta a ese servicio en lugar del contenedor Docker y falla la autenticación de `evidente_user`.
+
+**Solución:** en `.env` usá `POSTGRES_PORT=5433` (valor por defecto en `.env.example`), reiniciá el contenedor y volvé a correr el setup:
+
+```sh
+docker compose down
+docker compose up -d
+npm run setup:dev
+```
+
+**Alternativa:** parar el servicio Postgres local (`Get-Service *postgres*`) y dejar `POSTGRES_PORT=5432`.
+
+Verificar qué ocupa el puerto:
+
+```powershell
+netstat -ano | findstr ":5432"
+Get-Process -Id <PID>
+```
 
 ## Cuidado
 

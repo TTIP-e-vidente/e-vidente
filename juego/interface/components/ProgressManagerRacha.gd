@@ -9,7 +9,7 @@ const PostGameFlowControllerScript := preload(
 )
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
-const DEFAULT_RETURN_TO := GameSceneRouter.MAP_SCENE_PATH
+const DEFAULT_RETURN_TO := "res://mapas/MapScene.tscn"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 

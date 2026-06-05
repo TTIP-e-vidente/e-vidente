@@ -36,6 +36,9 @@ const CARGADOR_DE_MAPA_SCRIPT := preload("res://mapas/logica/CargadorDeMapa.gd")
 const AVANCE_DE_NODO_SCRIPT := preload("res://mapas/logica/AvanceDeNodo.gd")
 const MODALIDAD_ROUTER_SCRIPT := preload("res://sistemas/ModalidadRouter.gd")
 const ARMADOR_DE_PARTIDA_SCRIPT := preload("res://mapas/logica/ArmadorDePartida.gd")
+const ImportadorProgresoOnlineScript := preload(
+	"res://API/backend/sync/ImportadorProgresoOnline.gd"
+)
 const NODE_CONTENT_LOADER_SCRIPT := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const MAP_NODE_DATA_SCRIPT := preload("res://mapas/core/MapNodeData.gd")
 const MAP_LAYOUT_CONFIG_SCRIPT := preload("res://mapas/layout/MapLayoutConfig.gd")
@@ -1788,6 +1791,37 @@ func _test_save_manager_precision_no_forzada_al_100() -> void:
 	)
 
 
+func _test_fusion_node_progress_no_pierde_completados_locales() -> void:
+	var local := {
+		"celiaquia_inicio": {
+			"completed": true,
+			"best_accuracy": 80.0,
+			"best_percent": 0.8,
+		},
+		"celiaquia_desayuno": {
+			"completed": true,
+			"best_accuracy": 60.0,
+			"best_percent": 0.6,
+		},
+	}
+	var online := {
+		"celiaquia_inicio": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	var merged := ImportadorProgresoOnlineScript.fusionar_node_progress(local, online)
+	_verificar(
+		bool((merged.get("celiaquia_desayuno", {}) as Dictionary).get("completed", false)),
+		"[Sync] merge debe conservar nodo completado solo en local"
+	)
+	_verificar(
+		float((merged.get("celiaquia_inicio", {}) as Dictionary).get("best_accuracy", 0.0)) >= 99.9,
+		"[Sync] merge debe tomar la mejor precision entre local y online"
+	)
+
+
 func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.cargar_mapa(
 		"res://contenido/mapa/celiaquia_mapa.json"
@@ -1861,6 +1895,7 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_armador_plan_nodo_real_sin_modalidades_repetidas()
 	_test_armador_pool_agotado_no_crashea()
 	_test_save_manager_precision_no_forzada_al_100()
+	_test_fusion_node_progress_no_pierde_completados_locales()
 	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:
 		print("[ContentId] ✓ Todos los tests pasaron.")
