@@ -1,9 +1,14 @@
 class_name SyncApi
 extends RefCounted
 
-const AdaptadorSyncPartidaScript := preload(
-	"res://API/backend/sync/RunSummarySyncAdapter.gd"
-)
+## Cómo encaja en la arquitectura
+## ─────────────────────────────────────────────────────────────────────────
+## El juego llama a SyncApi (esta clase) para todo lo relacionado con
+## sincronización de partidas al servidor. SyncApi delega internamente a:
+##   • SincronizadorPartida  → arma el payload y gestiona la cola local
+##   • BackendSession        → envía el HTTP POST y maneja el token
+##   • LocalSyncQueue        → persiste partidas pendientes offline
+## ─────────────────────────────────────────────────────────────────────────
 
 
 static func puede_sincronizar() -> bool:
@@ -14,9 +19,11 @@ static func guardar_partida_en_servidor(resumen_partida: Dictionary) -> Dictiona
 	return await BackendSession.guardar_progreso_online(resumen_partida)
 
 
+## Llama a esto al terminar cualquier juego/minijuego.
+## Se encarga de armar el resumen, guardarlo offline y enviarlo al servidor.
 static func sincronizar_partida_terminada(
 		tree: SceneTree, resultado: Dictionary, stats: Dictionary) -> void:
-	AdaptadorSyncPartidaScript.sincronizar_post_partida(tree, resultado, stats)
+	SincronizadorPartida.sincronizar_post_partida(tree, resultado, stats)
 
 
 static func reintentar_pendientes() -> void:

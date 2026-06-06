@@ -8,13 +8,13 @@ export async function ensureProfile(
 ): Promise<ProfileRow> {
   const result = await client.query<ProfileRow>(
     `
-      INSERT INTO player_profiles (user_id, current_restriction)
+      INSERT INTO profiles (user_id, current_restriction)
       VALUES ($1, $2)
       ON CONFLICT (user_id)
       DO UPDATE SET
-        current_restriction = COALESCE(EXCLUDED.current_restriction, player_profiles.current_restriction),
+        current_restriction = COALESCE(EXCLUDED.current_restriction, profiles.current_restriction),
         updated_at = now()
-      RETURNING id, user_id, exp_count, current_restriction, created_at, updated_at;
+      RETURNING id, user_id, streak_id, exp_count, current_restriction, created_at, updated_at;
     `,
     [userId, restriction]
   );
@@ -30,14 +30,14 @@ export async function addProfileExp(
 ): Promise<ProfileRow> {
   const result = await client.query<ProfileRow>(
     `
-      INSERT INTO player_profiles (user_id, exp_count, current_restriction)
+      INSERT INTO profiles (user_id, exp_count, current_restriction)
       VALUES ($1, $2, $3)
       ON CONFLICT (user_id)
       DO UPDATE SET
-        exp_count = player_profiles.exp_count + EXCLUDED.exp_count,
+        exp_count = profiles.exp_count + EXCLUDED.exp_count,
         current_restriction = EXCLUDED.current_restriction,
         updated_at = now()
-      RETURNING id, user_id, exp_count, current_restriction, created_at, updated_at;
+      RETURNING id, user_id, streak_id, exp_count, current_restriction, created_at, updated_at;
     `,
     [userId, expToAdd, restriction]
   );
@@ -51,12 +51,27 @@ export async function getProfileByUserId(
 ): Promise<ProfileRow | null> {
   const result = await client.query<ProfileRow>(
     `
-      SELECT id, user_id, exp_count, current_restriction, created_at, updated_at
-      FROM player_profiles
+      SELECT id, user_id, streak_id, exp_count, current_restriction, created_at, updated_at
+      FROM profiles
       WHERE user_id = $1;
     `,
     [userId]
   );
 
   return result.rows[0] ?? null;
+}
+
+export async function linkProfileToStreak(
+  client: PoolClient,
+  profileId: string,
+  streakId: string
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE profiles
+      SET streak_id = $2, updated_at = now()
+      WHERE id = $1;
+    `,
+    [profileId, streakId]
+  );
 }

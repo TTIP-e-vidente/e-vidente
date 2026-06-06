@@ -17,8 +17,7 @@ import {
   ProgresoRestriccionResponse,
   SaveProgresoRestriccionResponse,
   toPublicCompletedNode,
-  toPublicProgresoRestriccion,
-  toPublicUnlockedContent
+  toPublicProgresoRestriccion
 } from './progreso-restriccion.mapper';
 import { SaveAuthenticatedProgressInput, SaveDevProgressInput } from './progreso-restriccion.types';
 
@@ -107,7 +106,6 @@ export async function getProgresoRestriccion(userId: string): Promise<ProgresoRe
     }
     const progress = await progresoRestriccionRepository.listProgressByUserId(client, userId);
     const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, userId);
-    const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, userId);
     const recentGames = await gameRepository.listRecentGamesByUserId(client, userId);
     await client.query('COMMIT');
 
@@ -117,7 +115,6 @@ export async function getProgresoRestriccion(userId: string): Promise<ProgresoRe
       streak: toPublicStreak(streak),
       progress: progress.map(toPublicProgresoRestriccion),
       completedNodes: completedNodes.map(toPublicCompletedNode),
-      unlockedContent: unlockedContent.map(toPublicUnlockedContent),
       recentGames: recentGames.map(toPublicGame)
     };
   } catch (error) {
@@ -181,7 +178,6 @@ export async function saveAuthenticatedProgress(
       if (existingSession) {
         const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
         const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
-        const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, input.userId);
         const recentGames = await gameRepository.listRecentGamesByUserId(
           client,
           input.userId
@@ -196,13 +192,13 @@ export async function saveAuthenticatedProgress(
           progress: toPublicProgresoRestriccion(baseProgress),
           game: toPublicGame(existingSession),
           completedNode: null,
+          mapCompleted: false,
           summary: {
             user,
             profile: toPublicProfile(baseProfile),
             streak: toPublicStreak(streak),
             progress: updatedProgress.map(toPublicProgresoRestriccion),
             completedNodes: completedNodes.map(toPublicCompletedNode),
-            unlockedContent: unlockedContent.map(toPublicUnlockedContent),
             recentGames: recentGames.map(toPublicGame)
           }
         };
@@ -218,7 +214,7 @@ export async function saveAuthenticatedProgress(
       expToAdd,
       completed ? 1 : 0
     );
-    const game = await gameRepository.insertGame(client, {
+    const insertResult = await gameRepository.insertGame(client, {
       userId: input.userId,
       progressId: progress.id,
       gameType,
@@ -232,22 +228,21 @@ export async function saveAuthenticatedProgress(
       finishedAt,
       clientRunId
     });
+    const game = insertResult.game;
 
     let completedNode = null;
-    if (completed && nodeId) {
-      const upsertResult = await progresoRestriccionRepository.upsertCompletedNode(client, {
-        userId: input.userId,
-        progressId: progress.id,
-        nodeId,
-        nodeType: gameType,
-        score,
-        accuracy: accuracyValue
-      });
-
-      if (upsertResult.wasNew) {
-        completedNode = upsertResult.node;
-        await progresoRestriccionRepository.incrementProgressCompletedNodes(client, progress.id);
-      }
+    let mapCompleted = false;
+    if (insertResult.wasNewlyCompleted && nodeId) {
+      completedNode = await progresoRestriccionRepository.getCompletedNodeByProgressAndNode(
+        client,
+        progress.id,
+        nodeId
+      );
+      const incrementResult = await progresoRestriccionRepository.incrementProgressCompletedNodes(
+        client,
+        progress.id
+      );
+      mapCompleted = incrementResult.map_completed;
     }
 
     if (completed) {
@@ -261,7 +256,6 @@ export async function saveAuthenticatedProgress(
 
     const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
     const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
-    const unlockedContent = await progresoRestriccionRepository.listUnlockedContentByUserId(client, input.userId);
     const recentGames = await gameRepository.listRecentGamesByUserId(
       client,
       input.userId
@@ -276,13 +270,13 @@ export async function saveAuthenticatedProgress(
       progress: toPublicProgresoRestriccion(progress),
       game: toPublicGame(game),
       completedNode: completedNode ? toPublicCompletedNode(completedNode) : null,
+      mapCompleted,
       summary: {
         user,
         profile: toPublicProfile(profile),
         streak: toPublicStreak(streak),
         progress: updatedProgress.map(toPublicProgresoRestriccion),
         completedNodes: completedNodes.map(toPublicCompletedNode),
-        unlockedContent: unlockedContent.map(toPublicUnlockedContent),
         recentGames: recentGames.map(toPublicGame)
       }
     };

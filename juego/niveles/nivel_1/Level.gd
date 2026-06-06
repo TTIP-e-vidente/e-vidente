@@ -154,8 +154,20 @@ func _ready() -> void:
 
 func _cargar_recursos_runtime() -> void:
 	_completion_black_and_white_shader = load(COMPLETION_BLACK_AND_WHITE_SHADER_PATH) as Shader
-	_save_icon_idle = load(SAVE_ICON_IDLE_PATH) as Texture2D
-	_save_icon_ok = load(SAVE_ICON_OK_PATH) as Texture2D
+	if ResourceLoader.exists(SAVE_ICON_IDLE_PATH):
+		_save_icon_idle = load(SAVE_ICON_IDLE_PATH) as Texture2D
+	else:
+		push_warning(
+			"[Level] Ícono guardar no encontrado: %s — reimportá assets en el editor Godot."
+			% SAVE_ICON_IDLE_PATH
+		)
+	if ResourceLoader.exists(SAVE_ICON_OK_PATH):
+		_save_icon_ok = load(SAVE_ICON_OK_PATH) as Texture2D
+	else:
+		push_warning(
+			"[Level] Ícono guardar-ok no encontrado: %s — reimportá assets en el editor Godot."
+			% SAVE_ICON_OK_PATH
+		)
 
 
 func _conectar_continuar_juego() -> void:

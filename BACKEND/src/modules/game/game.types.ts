@@ -17,6 +17,11 @@ export interface GameRow {
   client_run_id: string | null;
 }
 
+export interface InsertGameResult {
+  game: GameRow;
+  wasNewlyCompleted: boolean;
+}
+
 export interface InsertGameInput {
   userId: string;
   progressId: string;

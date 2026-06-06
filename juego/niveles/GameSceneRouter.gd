@@ -70,7 +70,7 @@ static var _pending_preload_paths: Dictionary = {}
 
 # --- Rutas publicas ---------------------------------------------------------
 
-static func ir_a_ruta(
+func ir_a_ruta(
 	tree: SceneTree,
 	route_name: String,
 	fallback_route: String = ROUTE_MODE_SELECTOR
@@ -79,27 +79,27 @@ static func ir_a_ruta(
 	_cambiar_escena_to_path(tree, scene_path)
 
 
-static func go_to_splash(tree: SceneTree) -> void:
+func go_to_splash(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_SPLASH)
 
 
-static func go_to_main_menu(_tree: SceneTree) -> void:
+func go_to_main_menu(_tree: SceneTree) -> void:
 	await TransicionEscenas.cambiar_escena_normal(MAIN_MENU_SCENE_PATH)
 
 
-static func go_to_mode_selector(_tree: SceneTree) -> void:
+func go_to_mode_selector(_tree: SceneTree) -> void:
 	await TransicionEscenas.cambiar_escena_normal(MODE_SELECTOR_SCENE_PATH)
 
 
-static func ir_al_mapa(_tree: SceneTree) -> void:
+func ir_al_mapa(_tree: SceneTree) -> void:
 	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE_PATH)
 
 
-static func go_to_archivero(tree: SceneTree) -> void:
+func go_to_archivero(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_ARCHIVERO)
 
 
-static func ir_a_racha(
+func ir_a_racha(
 	tree: SceneTree,
 	return_to: String = "",
 	feedback: Dictionary = {},
@@ -129,27 +129,27 @@ static func ir_a_racha(
 	await TransicionEscenas.cambiar_escena(STREAK_SCENE_PATH)
 
 
-static func go_to_options(tree: SceneTree) -> void:
+func go_to_options(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_OPTIONS)
 
 
-static func go_to_profile_editor(tree: SceneTree) -> void:
+func go_to_profile_editor(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_PROFILE)
 
 
-static func go_to_questions(tree: SceneTree) -> void:
+func go_to_questions(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_QUESTIONS)
 
 
-static func go_to_vinculacion(tree: SceneTree) -> void:
+func go_to_vinculacion(tree: SceneTree) -> void:
 	ir_a_ruta(tree, ROUTE_VINCULACION)
 
 
-static func go_to_level(tree: SceneTree) -> void:
+func go_to_level(tree: SceneTree) -> void:
 	_cambiar_escena_to_path(tree, LEVEL_SCENE_PATH)
 
 
-static func obtener_ruta_escena_por_modo(mode: String) -> String:
+func obtener_ruta_escena_por_modo(mode: String) -> String:
 	var normalizado_mode := ModalidadRouter.normalizar_modo(mode)
 	if not MODE_TO_SCENE_PATH.has(normalizado_mode):
 		push_error(LOG_PREFIX + " Modalidad sin escena asignada: " + str(mode))
@@ -157,7 +157,7 @@ static func obtener_ruta_escena_por_modo(mode: String) -> String:
 	return MODE_TO_SCENE_PATH[normalizado_mode]
 
 
-static func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
+func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
 	var archivo_actual := _obtener_json_actual_debug(tree)
 	print(LOG_PREFIX, " abriendo_siguiente tipo=", content_mode.strip_edges(), " archivo=", archivo_actual)
 	
@@ -168,7 +168,7 @@ static func ir_a_modo_jugable(tree: SceneTree, content_mode: String) -> void:
 	await TransicionEscenas.cambiar_escena(scene_path)
 
 
-static func _obtener_json_actual_debug(tree: SceneTree) -> String:
+func _obtener_json_actual_debug(tree: SceneTree) -> String:
 	var global_state := _get_global_state(tree)
 	if global_state != null and global_state.has_method("obtener_juego_actual_de_partida"):
 		var juego_actual: Variant = global_state.call("obtener_juego_actual_de_partida")
@@ -179,7 +179,7 @@ static func _obtener_json_actual_debug(tree: SceneTree) -> String:
 
 # --- Racha ------------------------------------------------------------------
 
-static func establecer_retorno_racha(tree: SceneTree, return_to: String) -> void:
+func establecer_retorno_racha(tree: SceneTree, return_to: String) -> void:
 	if tree == null:
 		return
 	var tree_root: Window = tree.get_root()
@@ -193,7 +193,7 @@ static func establecer_retorno_racha(tree: SceneTree, return_to: String) -> void
 	tree_root.set_meta(STREAK_RETURN_TO_META, safe_return_to)
 
 
-static func leer_retorno_racha(
+func leer_retorno_racha(
 	tree: SceneTree,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
@@ -210,7 +210,7 @@ static func leer_retorno_racha(
 	return return_to
 
 
-static func consumir_retorno_racha(
+func consumir_retorno_racha(
 	tree: SceneTree,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
@@ -228,7 +228,7 @@ static func consumir_retorno_racha(
 # target interno:
 # - return_to es el nombre principal.
 # - return_scene_path queda aceptado solo como compatibilidad legacy.
-static func build_router_target_from_flow_target(target: Dictionary) -> Dictionary:
+func build_router_target_from_flow_target(target: Dictionary) -> Dictionary:
 	if target.is_empty():
 		return {}
 	var router_target: Dictionary = target.duplicate(true)
@@ -238,7 +238,7 @@ static func build_router_target_from_flow_target(target: Dictionary) -> Dictiona
 	return router_target
 
 
-static func leer_retorno_a(
+func leer_retorno_a(
 	source: Dictionary,
 	fallback_scene_path: String = MAP_SCENE_PATH
 ) -> String:
@@ -257,7 +257,7 @@ static func leer_retorno_a(
 
 # --- Precarga ---------------------------------------------------------------
 
-static func request_scene_preload(scene_path: String) -> void:
+func request_scene_preload(scene_path: String) -> void:
 	var normalizado_scene_path: String = scene_path.strip_edges()
 	if normalizado_scene_path.is_empty():
 		return
@@ -270,7 +270,7 @@ static func request_scene_preload(scene_path: String) -> void:
 	push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalizado_scene_path)
 
 
-static func request_initial_scene_preload() -> void:
+func request_initial_scene_preload() -> void:
 	request_scene_preload(MAIN_MENU_SCENE_PATH)
 	request_scene_preload(MODE_SELECTOR_SCENE_PATH)
 	request_scene_preload(MAP_SCENE_PATH)
@@ -281,14 +281,14 @@ static func request_initial_scene_preload() -> void:
 
 # --- Navegacion de tracks ---------------------------------------------------
 
-static func go_to_track_book(_tree: SceneTree, track_key: String) -> void:
+func go_to_track_book(_tree: SceneTree, track_key: String) -> void:
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_libro(track_key)
 	if scene_path.is_empty():
 		scene_path = MODE_SELECTOR_SCENE_PATH
 	await TransicionEscenas.cambiar_escena(scene_path)
 
 
-static func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
+func go_to_track_level(tree: SceneTree, track_key: String, level_number: int = -1) -> void:
 	_store_requested_level(tree, track_key, level_number)
 	var scene_path: String = GameTrackCatalog.obtener_ruta_escena_nivel(track_key)
 	if scene_path.is_empty():
@@ -298,7 +298,7 @@ static func go_to_track_level(tree: SceneTree, track_key: String, level_number: 
 
 # --- Navegacion por target --------------------------------------------------
 
-static func go_to_target(
+func go_to_target(
 	tree: SceneTree,
 	target: Dictionary,
 	fallback_scene_path: String = MODE_SELECTOR_SCENE_PATH
@@ -365,7 +365,7 @@ static func go_to_target(
 			print(LOG_PREFIX, " target_desconocido=", router_target)
 
 
-static func go_to_continue_target(
+func go_to_continue_target(
 	tree: SceneTree,
 	fallback_return_to: String = ""
 ) -> void:
@@ -383,7 +383,7 @@ static func go_to_continue_target(
 	go_to_target(tree, continue_target as Dictionary, fallback_scene_path)
 
 
-static func ir_a_reanudar(
+func ir_a_reanudar(
 	tree: SceneTree,
 	resume_state: Dictionary,
 	fallback_scene: String = MODE_SELECTOR_SCENE_PATH
@@ -395,13 +395,13 @@ static func ir_a_reanudar(
 	_cambiar_escena_to_path(tree, safe_scene_path)
 
 
-static func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
+func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
 	if tree == null:
 		return
 	go_to_target(tree, {"type": "scene_path", "scene_path": FINALIZACION_PARTIDA_SCENE_PATH}, fallback_return_to)
 
 
-static func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_path: String = MAP_SCENE_PATH) -> void:
+func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_path: String = MAP_SCENE_PATH) -> void:
 	if tree == null:
 		return
 	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
@@ -415,7 +415,7 @@ static func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_pat
 
 # --- Helpers privados -------------------------------------------------------
 
-static func _resolve_route_scene_path(route_name: String, fallback_route: String) -> String:
+func _resolve_route_scene_path(route_name: String, fallback_route: String) -> String:
 	var scene_path: String = _get_scene_path_for_route(route_name)
 	if scene_path.is_empty():
 		scene_path = _get_scene_path_for_route(fallback_route)
@@ -424,18 +424,18 @@ static func _resolve_route_scene_path(route_name: String, fallback_route: String
 	return scene_path
 
 
-static func _get_scene_path_for_route(route_name: String) -> String:
+func _get_scene_path_for_route(route_name: String) -> String:
 	return str(ROUTES.get(route_name, "")).strip_edges()
 
 
-static func _leer_resume_state(target: Dictionary) -> Dictionary:
+func _leer_resume_state(target: Dictionary) -> Dictionary:
 	var raw_resume_state: Variant = target.get("resume_state", {})
 	if raw_resume_state is Dictionary:
 		return (raw_resume_state as Dictionary).duplicate(true)
 	return {}
 
 
-static func _store_requested_level(
+func _store_requested_level(
 	tree: SceneTree,
 	track_key: String,
 	level_number: int
@@ -447,7 +447,7 @@ static func _store_requested_level(
 		global_state.establecer_actual_nivel_numero(level_number, track_key)
 
 
-static func _cambiar_escena_to_path(tree: SceneTree, scene_path: String) -> void:
+func _cambiar_escena_to_path(tree: SceneTree, scene_path: String) -> void:
 	if tree == null:
 		return
 	var preloaded_scene: PackedScene = _take_preloaded_scene(scene_path)
@@ -457,7 +457,7 @@ static func _cambiar_escena_to_path(tree: SceneTree, scene_path: String) -> void
 	tree.change_scene_to_file(scene_path)
 
 
-static func _take_preloaded_scene(scene_path: String) -> PackedScene:
+func _take_preloaded_scene(scene_path: String) -> PackedScene:
 	var normalizado_scene_path: String = scene_path.strip_edges()
 	if normalizado_scene_path.is_empty():
 		return null
@@ -469,7 +469,7 @@ static func _take_preloaded_scene(scene_path: String) -> PackedScene:
 	return null
 
 
-static func _finalize_scene_preload(scene_path: String) -> void:
+func _finalize_scene_preload(scene_path: String) -> void:
 	if not _pending_preload_paths.has(scene_path):
 		return
 	var status: int = ResourceLoader.load_threaded_get_status(scene_path)
@@ -486,13 +486,13 @@ static func _finalize_scene_preload(scene_path: String) -> void:
 		_pending_preload_paths.erase(scene_path)
 
 
-static func _get_global_state(tree: SceneTree) -> Node:
+func _get_global_state(tree: SceneTree) -> Node:
 	if tree == null:
 		return null
 	return tree.get_root().get_node_or_null("Global")
 
 
-static func _clear_active_playable_session(tree: SceneTree) -> void:
+func _clear_active_playable_session(tree: SceneTree) -> void:
 	var global_state := _get_global_state(tree)
 	if global_state != null and global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
 		global_state.call("limpiar_sesion_nodo_jugable_activo")

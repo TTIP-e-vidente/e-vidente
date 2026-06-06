@@ -81,11 +81,14 @@ func _enviar_formulario() -> void:
 
 	var result: Dictionary
 	if _mode == AuthMode.REGISTER:
+		var edad_local := SaveManager.obtener_edad_usuario_actual()
+		var edad_para_registro: Variant = edad_local if edad_local > 0 else null
 		result = await AuthApi.crear_cuenta_completa(
 			_input_username.text.strip_edges(),
 			_input_password.text,
 			_input_register_mail.text.strip_edges(),
-			_input_register_name.text.strip_edges()
+			_input_register_name.text.strip_edges(),
+			edad_para_registro
 		)
 	else:
 		result = await AuthApi.iniciar_sesion_completa(

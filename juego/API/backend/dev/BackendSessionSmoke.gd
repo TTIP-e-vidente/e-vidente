@@ -45,7 +45,7 @@ func _ejecutar_smoke() -> void:
 	print("[BSSM] obtener_usuario -> ok:", me_result.get("ok"), " status:", me_result.get("status"))
 
 	print("[BSSM] Paso 3 — RunSummary fake")
-	var summary := RunSummaryBuilder.construir(
+	var summary := SincronizadorPartida.construir_resumen(
 		"sin_restriccion",
 		"nodo_bssm_01",
 		"completar",

@@ -12,13 +12,14 @@ API local (Node, Express, TypeScript, PostgreSQL) para registro, login JWT, perf
 | MER | Módulo | Tabla |
 |-----|--------|-------|
 | USER | auth + user | `users` |
-| IMAGE | image | `user_images` |
-| PROFILE | profile | `player_profiles` |
-| STREAK | streak | `player_streaks` |
-| PROGRESO_RESTRICCION | progreso-restriccion | `player_progress` |
-| HISTORY_GAME + GAME | history-game, game | `game_sessions` |
+| IMAGE | image | `images` |
+| PROFILE | profile | `profiles` (`streak_id` → `streaks`) |
+| STREAK | streak | `streaks` |
+| PROGRESO_RESTRICCION | progreso-restriccion | `progress_restrictions` |
+| HISTORY_GAME | history-game | `history_games` (nodo del mapa: completado, precision) |
+| GAME | game | `games` (cada partida jugada) |
 
-Notas: `password_hash` (bcrypt), nunca password en claro. `client_run_id` idempotente en sync. No renombrar tablas sin migración nueva.
+Notas: `password_hash` (bcrypt), nunca password en claro. `client_run_id` idempotente en `games`. Migración `008_align_excalidraw_canonical.sql` unificó el esquema.
 
 ## Código
 

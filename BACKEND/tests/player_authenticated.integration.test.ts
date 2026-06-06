@@ -141,21 +141,21 @@ async function run(): Promise<void> {
     assert.equal(sessions.some((row) => row.node_id === progressPayload.nodeId), true);
 
     const storedResult = await pool.query<{
-      game_sessions_count: string;
+      games_count: string;
       completed_nodes_count: string;
     }>(
       `
         SELECT
-          COUNT(DISTINCT gs.id)::text AS game_sessions_count,
-          COUNT(DISTINCT cn.id)::text AS completed_nodes_count
+          COUNT(DISTINCT g.id)::text AS games_count,
+          COUNT(DISTINCT hg.id)::text AS completed_nodes_count
         FROM users u
-        LEFT JOIN game_sessions gs ON gs.user_id = u.id AND gs.node_id = $2
-        LEFT JOIN completed_nodes cn ON cn.user_id = u.id AND cn.node_id = $2
+        LEFT JOIN games g ON g.user_id = u.id AND g.node_id = $2
+        LEFT JOIN history_games hg ON hg.user_id = u.id AND hg.node_id = $2 AND hg.completed = true
         WHERE u.username = $1;
       `,
       [username, progressPayload.nodeId]
     );
-    assert.equal(storedResult.rows[0].game_sessions_count, '1');
+    assert.equal(storedResult.rows[0].games_count, '1');
     assert.equal(storedResult.rows[0].completed_nodes_count, '1');
 
     // ── RunSummary full contract tests ────────────────────────────────────────
@@ -184,7 +184,7 @@ async function run(): Promise<void> {
     });
     assert.equal(fullRunSummaryResponse.status, 201);
 
-    // 2. game_sessions stored the new fields
+    // 2. games stored the new fields
     const storedSessionResult = await pool.query<{
       correct_answers: number | null;
       wrong_answers: number | null;
@@ -192,7 +192,7 @@ async function run(): Promise<void> {
       finished_at: Date | null;
     }>(
       `SELECT correct_answers, wrong_answers, duration_seconds, finished_at
-       FROM game_sessions
+       FROM games
        WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2
        ORDER BY created_at DESC LIMIT 1;`,
       [username, fullContractNodeId]
@@ -209,15 +209,15 @@ async function run(): Promise<void> {
     }>(
       `
         SELECT
-          COUNT(gs.id)::text AS session_count,
-          pp.total_exp,
-          pp.completed_games_count
-        FROM player_progress pp
-        LEFT JOIN game_sessions gs
-          ON gs.progress_id = pp.id AND gs.client_run_id = $3
-        WHERE pp.user_id = (SELECT id FROM users WHERE username = $1)
-          AND pp.restriction_type = $2
-        GROUP BY pp.id, pp.total_exp, pp.completed_games_count;
+          COUNT(g.id)::text AS session_count,
+          pr.total_exp,
+          pr.completed_games_count
+        FROM progress_restrictions pr
+        LEFT JOIN games g
+          ON g.progress_id = pr.id AND g.client_run_id = $3
+        WHERE pr.user_id = (SELECT id FROM users WHERE username = $1)
+          AND pr.restriction = $2
+        GROUP BY pr.id, pr.total_exp, pr.completed_games_count;
       `,
       [username, 'CELIAQUIA', fullRunSummaryPayload.clientRunId]
     );
@@ -236,15 +236,15 @@ async function run(): Promise<void> {
     }>(
       `
         SELECT
-          COUNT(gs.id)::text AS session_count,
-          pp.total_exp,
-          pp.completed_games_count
-        FROM player_progress pp
-        LEFT JOIN game_sessions gs
-          ON gs.progress_id = pp.id AND gs.client_run_id = $3
-        WHERE pp.user_id = (SELECT id FROM users WHERE username = $1)
-          AND pp.restriction_type = $2
-        GROUP BY pp.id, pp.total_exp, pp.completed_games_count;
+          COUNT(g.id)::text AS session_count,
+          pr.total_exp,
+          pr.completed_games_count
+        FROM progress_restrictions pr
+        LEFT JOIN games g
+          ON g.progress_id = pr.id AND g.client_run_id = $3
+        WHERE pr.user_id = (SELECT id FROM users WHERE username = $1)
+          AND pr.restriction = $2
+        GROUP BY pr.id, pr.total_exp, pr.completed_games_count;
       `,
       [username, 'CELIAQUIA', fullRunSummaryPayload.clientRunId]
     );
@@ -361,7 +361,7 @@ async function run(): Promise<void> {
       'replay: completedNode should be null (not a new completion)'
     );
     const bestScoreAfterBetter = await pool.query<{ best_score: number }>(
-      `SELECT best_score FROM completed_nodes
+      `SELECT best_score FROM history_games
        WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
       [username, replayNodeId]
     );
@@ -382,7 +382,7 @@ async function run(): Promise<void> {
     });
     assert.equal(worseScoreResponse.status, 201);
     const bestScoreAfterWorse = await pool.query<{ best_score: number }>(
-      `SELECT best_score FROM completed_nodes
+      `SELECT best_score FROM history_games
        WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
       [username, replayNodeId]
     );
@@ -421,7 +421,7 @@ async function run(): Promise<void> {
       })
     });
     const bestAccuracyResult = await pool.query<{ best_accuracy: string }>(
-      `SELECT best_accuracy FROM completed_nodes
+      `SELECT best_accuracy FROM history_games
        WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
       [username, accuracyNodeId]
     );

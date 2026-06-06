@@ -1,8 +1,5 @@
 extends Node2D
 
-const SAVE_ICON_IDLE := preload("res://assets-sistema/interfaz/icono-base-datos.svg")
-const SAVE_ICON_OK := preload("res://assets-sistema/interfaz/icono-base-datos-ok.svg")
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"

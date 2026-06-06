@@ -52,7 +52,7 @@ func _ejecutar_smoke() -> void:
 	print("[SMOKE] obtener_mi_usuario -> ", me_res)
 
 	print("[SMOKE] Paso 3 — armar RunSummary fake")
-	var run_summary := RunSummaryBuilder.construir(
+	var run_summary := SincronizadorPartida.construir_resumen(
 		"sin_restriccion",
 		"nodo_smoke_01",
 		"completar",

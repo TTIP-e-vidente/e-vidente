@@ -3,7 +3,6 @@ extends CanvasLayer
 
 signal back_requested
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
@@ -122,6 +121,7 @@ func _on_superposicion_guardar_presionado() -> void:
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
+	SyncApi.reintentar_pendientes()
 	SaveManager.reiniciar_todo_progreso()
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_mode_selector(get_tree())

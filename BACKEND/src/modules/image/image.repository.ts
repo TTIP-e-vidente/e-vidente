@@ -12,8 +12,8 @@ export async function getImageByUserId(
 ): Promise<ImageRow | null> {
   const result = await client.query<ImageRow>(
     `
-      SELECT id_image, user_id, updated_at
-      FROM user_images
+      SELECT id AS id_image, user_id, updated_at
+      FROM images
       WHERE user_id = $1
       LIMIT 1;
     `,

@@ -1,7 +1,6 @@
 import {
   CompletedNodeRow,
-  ProgresoRestriccionRow,
-  UnlockedContentRow
+  ProgresoRestriccionRow
 } from './progreso-restriccion.types';
 import { UserPublicRow } from '../user/user.types';
 import { PublicProfile } from '../profile/profile.mapper';
@@ -14,6 +13,7 @@ export interface PublicProgresoRestriccion {
   total_exp: number;
   completed_nodes_count: number;
   completed_games_count: number;
+  map_completed: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -27,14 +27,6 @@ export interface PublicCompletedNode {
   best_accuracy: string | null;
 }
 
-export interface PublicUnlockedContent {
-  id: string;
-  content_id: string;
-  content_type: string;
-  unlocked_at: Date;
-  source: string | null;
-}
-
 export function toPublicProgresoRestriccion(row: ProgresoRestriccionRow): PublicProgresoRestriccion {
   return {
     id: row.id,
@@ -42,6 +34,7 @@ export function toPublicProgresoRestriccion(row: ProgresoRestriccionRow): Public
     total_exp: row.total_exp,
     completed_nodes_count: row.completed_nodes_count,
     completed_games_count: row.completed_games_count,
+    map_completed: row.map_completed,
     created_at: row.created_at,
     updated_at: row.updated_at
   };
@@ -58,23 +51,12 @@ export function toPublicCompletedNode(row: CompletedNodeRow): PublicCompletedNod
   };
 }
 
-export function toPublicUnlockedContent(row: UnlockedContentRow): PublicUnlockedContent {
-  return {
-    id: row.id,
-    content_id: row.content_id,
-    content_type: row.content_type,
-    unlocked_at: row.unlocked_at,
-    source: row.source
-  };
-}
-
 export interface ProgresoRestriccionResponse {
   user: UserPublicRow;
   profile: PublicProfile;
   streak: PublicStreak;
   progress: PublicProgresoRestriccion[];
   completedNodes: PublicCompletedNode[];
-  unlockedContent: PublicUnlockedContent[];
   recentGames: PublicGame[];
 }
 
@@ -85,5 +67,7 @@ export interface SaveProgresoRestriccionResponse {
   progress: PublicProgresoRestriccion;
   game: PublicGame;
   completedNode: PublicCompletedNode | null;
+  /** true solo cuando este POST completó el último nodo del mapa (primera vez) */
+  mapCompleted: boolean;
   summary: ProgresoRestriccionResponse;
 }

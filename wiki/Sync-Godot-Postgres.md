@@ -1,144 +1,327 @@
 # Sync Godot ↔ PostgreSQL
 
-> Junio 2026 · Ver también: [Arquitectura](Arquitectura-General.md)
+Documentación del equipo · Junio 2026
 
-El progreso se guarda en **dos lugares independientes**: disco local (`save_data.json`) y PostgreSQL (`completed_nodes`). El puente es una **cola offline** que reintenta la subida cuando el servidor vuelve a estar disponible. El local nunca se pisa con el remoto; siempre se hace un *merge* tomando el mejor resultado de cada lado.
+El juego guarda progreso en dos lugares: el disco del cliente (`save_data.json`) y PostgreSQL en el servidor. Cuando no hay conexión o falla el POST, las partidas quedan en una cola local (`backend_sync_queue.json`) y se reintentan al volver a loguearse.
+
+El cliente no reemplaza el save local con lo que viene del servidor: hace merge campo por campo (completado, precisión, EXP, racha).
 
 ---
 
-## Capas
+## Modelo de datos (Excalidraw)
+
+Jerarquía pensada para ser eficiente y alineada al diagrama:
+
+```
+users
+  └── profiles          ← hub: FK user, FK streak, EXP global
+        └── progress_restrictions   ← progreso por restricción (ej. celiaquía)
+              └── history_games     ← estado de cada nodo del mapa de esa restricción
+                    └── games       ← cada partida jugada en ese nodo
+```
+
+| Entidad | Rol |
+|---|---|
+| `profiles` | Agrupa la info del jugador: usuario, racha actual (`streak_id`), EXP total |
+| `progress_restrictions` | Progreso agregado de una restricción alimenticia (`total_exp`, `completed_nodes_count`, `map_completed`) |
+| `history_games` | Un registro por nodo del mapa: si está completado, mejor score/precisión, cuándo |
+| `games` | Cada intento/partida en un nodo (con `client_run_id` para idempotencia) |
+
+La API sigue devolviendo `completedNodes[]` en JSON; internamente se lee desde `history_games` (nodos con `completed = true`).
+
+---
+
+## Dónde están los archivos locales
+
+En Godot, `user://` es una carpeta del sistema operativo. No está dentro del repo del proyecto.
+
+En Windows, con el juego compilado o corrido desde el editor con nombre **Evidente**:
+
+```
+%APPDATA%\Godot\app_userdata\Evidente\
+```
+
+Ahí aparecen, entre otros:
+
+| Archivo en código | Archivo en disco |
+|---|---|
+| `user://save_data.json` | `save_data.json` |
+| `user://backend_sync_queue.json` | `backend_sync_queue.json` |
+| `user://backend_session.json` | `backend_session.json` (token JWT) |
+
+Para verlos en PowerShell:
+
+```powershell
+cd "$env:APPDATA\Godot\app_userdata\Evidente"
+dir
+type backend_sync_queue.json
+type save_data.json
+```
+
+Si el archivo de cola no existe todavía, es normal: se crea la primera vez que termina un minijuego y se encola algo para subir.
+
+Desde la consola de Godot también se puede resolver la ruta:
+
+```gdscript
+print(ProjectSettings.globalize_path("user://backend_sync_queue.json"))
+```
+
+---
+
+## Cómo funciona la sync (visión general)
+
+1. El jugador termina un nodo → `SaveManager` escribe en `save_data.json` al momento.
+2. `SincronizadorPartida` arma un resumen de partida (`RunSummary`) con un `clientRunId` único.
+3. Ese resumen se guarda en `backend_sync_queue.json` con estado `pending`.
+4. Si hay sesión activa, se hace `POST /player/me/progress`.
+5. Si el POST responde bien → el ítem pasa a `synced` y se actualiza el save local con lo que devolvió el servidor.
+6. Si falla o no hay login → queda `pending` y se reintenta en login, restore de sesión o logout.
+
+Al loguearse, además del paso 4–6, el cliente descarga `GET /player/me/progress` y mergea con el save local.
+
+---
+
+## Componentes
 
 ```
 Godot
-  ├─ Global (autoload)          ← estado en memoria
-  ├─ SaveManager (autoload)     ← save_data.json + merge con servidor
-  └─ BackendSession (autoload)  ← token JWT, HTTP, retry
-       └─ ProgressSyncService   ← envía RunSummary al backend
-            └─ LocalSyncQueue   ← backend_sync_queue.json (cola offline)
+  SaveManager          → save_data.json, merge, perfil
+  Global               → estado en memoria de la partida actual
+  BackendSession       → JWT, HTTP, caché de progreso online
+  SyncApi / AuthApi    → entrada desde el juego
+  SincronizadorPartida → arma payload y encola
+  LocalSyncQueue       → backend_sync_queue.json
+  ProgressSyncService  → POST y retry
+  ImportadorProgresoOnline → traduce GET del servidor al formato local
 
-Node.js BACKEND
-  ├─ POST /player/me/progress   ← recibe partida, persiste en Postgres
-  └─ GET  /player/me/progress   ← devuelve progreso completo del usuario
+Backend (Node.js)
+  POST /player/me/progress
+  GET  /player/me/progress
 ```
+
+Desde el juego, lo habitual es llamar solo a `AuthApi` y `SyncApi`.
 
 ---
 
-## Flujos
+## Completar un nodo
 
-### Login / restauración de sesión
+**1. Guardado local** (`SaveManager.guardar_precision_nodo`):
 
-1. `POST /auth/login` → recibe JWT → guarda token en disco → `reintentar_pendientes()`
-2. `GET /user/me` + `GET /player/me/progress` → obtiene datos del servidor
-3. `SaveManager.sincronizar_con_cuenta_online()`:
-   - `linked_username == nuevo_usuario` → **merge** local + servidor (mismo usuario, conserva offline)
-   - `linked_username != nuevo_usuario` → **reset** local, importa datos del nuevo usuario
+- `completed = true`
+- `best_accuracy = max(anterior, nuevo)`
+- escribe `save_data.json`
 
-Al reabrir el juego (sin login explícito), `_restaurar_sesion_guardada()` valida el token guardado en disco y repite el paso 2–3 automáticamente.
+**2. Resumen para el servidor** (`SincronizadorPartida.sincronizar_post_partida`):
 
-### Completar un nodo
+Campos principales del payload:
 
-1. `SaveManager.guardar_precision_nodo()` → escribe en `save_data.json` **inmediatamente** (`completed=true`, `best_accuracy=max(prev, nuevo)`)
-2. `RunSummarySyncAdapter` construye un `RunSummary` y lo encola en `backend_sync_queue.json`
-3. Si hay sesión activa → `POST /player/me/progress`:
-   - ✓ marca ítem como `synced`, aplica `completedNodes` devueltos al save local
-   - ✗ ítem queda `pending` para retry
-
-**En Postgres (POST):** transacción atómica que hace upsert en `PROGRESO_RESTRICCION`, insert en `HISTORY_GAME`, upsert en `COMPLETED_NODES` (si `completed=true`), y actualiza racha. Idempotente por `clientRunId`.
-
-### Cierre de sesión
-
-1. `SyncApi.reintentar_pendientes()` → intenta vaciar la cola mientras el token sigue válido
-2. `SaveManager.al_cerrar_sesion_online()` → guarda a disco **sin tocar** `node_progress` ni `linked_online_username`
-3. `BackendSession.cerrar_sesion()` → borra token de memoria y disco
-
-> `linked_online_username` se conserva al logout para que el mismo usuario recupere su progreso local en el próximo login y otro usuario dispare el reset.
-
-### Retry de pendientes
-
-Se ejecuta en: login exitoso · restauración de sesión · logout explícito.
-
-```
-ProgressSyncService.reintentar_pendientes()
-  → lee status=pending de la cola (hasta 10 ítems)
-  → POST /player/me/progress por cada uno
-      ✓ → marcar_sincronizado()
-      ✗ 401 → abort (sesión expirada)
-      ✗ otro → marcar_fallido() (attempts++)
-```
-
----
-
-## Merge de nodos
-
-`fusionar_node_progress(local, online)` — regla por campo:
-
-| Campo | Resultado |
+| Campo | De dónde sale |
 |---|---|
-| `completed` | `local OR online` |
-| `best_accuracy` / `best_percent` | `max(local, online)` |
-| Nodo solo en local | se conserva (offline no se pierde) |
-| Nodo solo en online | se agrega al local |
-| `total_exp` | `max(local, online)` |
-| racha | gana la de mayor `current_count` (empate: más reciente) |
+| `clientRunId` | generado en el cliente (`run_<fecha>_<ms>_<rand>`) |
+| `restriction` | mapa / pista (ej. `celiaquia`) |
+| `nodeId` | id del nodo en el mapa |
+| `gameType` | modalidad del minijuego |
+| `accuracy`, `score`, `expToAdd` | resultado de la partida |
+| `completed` | si terminó bien |
+
+**3. Cola** (`LocalSyncQueue.encolar_resumen_partida`):
+
+Cada ítem tiene `clientRunId`, `status` (`pending` / `synced`), `attempts`, `payload`.
+
+**4. POST** (si hay sesión):
+
+`POST /player/me/progress` con JWT.
+
+**5. Respuesta:**
+
+`BackendSession` toma `summary.completedNodes` y `summary.streak` del response y los mergea al save local sin pisar valores mejores que ya tenía el cliente.
 
 ---
 
-## Archivos clave
+## Login y cambio de usuario
 
-| Archivo | Qué hace |
+1. `POST /auth/login` → guarda token.
+2. `reintentar_pendientes()` → intenta vaciar la cola.
+3. `GET /user/me` y `GET /player/me/progress`.
+4. `SaveManager.sincronizar_con_cuenta_online()`:
+
+- Mismo usuario que `linked_online_username` → merge local + servidor.
+- Usuario distinto → backup del progreso anterior, reset local, importar progreso del usuario nuevo.
+
+El campo `save_meta.linked_online_username` indica con qué cuenta quedó vinculado el save local. Se conserva al cerrar sesión para que al volver el mismo usuario recupere su progreso offline.
+
+### Importar progreso online (`_importar_progreso_online`)
+
+Orden simplificado:
+
+1. Traducir `completedNodes[]` del servidor a `node_progress{}`.
+2. Si hay backup del usuario, mergearlo con el local.
+3. Mergear `node_progress` local vs online.
+4. `total_exp = max(local, online)`.
+5. Leer racha local **antes** de sobreescribir `save_data.progress`.
+6. Mergear racha y escribir a disco.
+
+---
+
+## Cierre de sesión
+
+1. `reintentar_pendientes()` (último intento de subir la cola).
+2. `SaveManager.al_cerrar_sesion_online()` → guarda disco, no borra `node_progress`.
+3. `BackendSession.cerrar_sesion()` → borra el token.
+
+---
+
+## Retry de la cola
+
+`ProgressSyncService.reintentar_pendientes()` lee hasta 10 ítems `pending` y hace POST por cada uno.
+
+- OK → `marcar_sincronizado`
+- 401 → corta, sesión inválida
+- otro error → `marcar_fallido`, `attempts++`, sigue `pending`
+
+---
+
+## Qué hace el backend en Postgres
+
+`saveAuthenticatedProgress()` corre en transacción:
+
+1. Valida JWT.
+2. Si `clientRunId` ya existe en `games` → devuelve estado actual (no duplica).
+3. Suma EXP en `profiles`.
+4. Upsert en `progress_restrictions` (por restricción).
+5. Upsert en `history_games` por `(progress_id, node_id)` — mejor score/precisión, `completed`.
+6. Insert en `games` apuntando al `history_id` del nodo.
+7. Si completó → actualiza `streaks` y enlaza desde `profiles.streak_id`.
+8. Devuelve snapshot: profile, streak, progress, completedNodes, recentGames.
+
+### Tablas en Postgres (MER)
+
+| Diagrama | Tabla |
 |---|---|
-| `juego/API/AuthApi.gd` | Fachada: login, logout, cargar online |
-| `juego/API/SyncApi.gd` | Fachada: sincronizar partida, retry |
-| `juego/API/backend/session/BackendSession.gd` | Token, HTTP, restore, caché |
-| `juego/API/backend/sync/ProgressSyncService.gd` | Envío HTTP + manejo 401 |
-| `juego/API/backend/sync/RunSummarySyncAdapter.gd` | Construye RunSummary desde resultado |
-| `juego/API/backend/sync/LocalSyncQueue.gd` | Cola offline en disco |
-| `juego/API/backend/sync/ImportadorProgresoOnline.gd` | Traduce GET + merge |
-| `juego/interface/SaveManager.gd` | Save local, merge, disco |
-| `BACKEND/.../progreso-restriccion.service.ts` | Upsert nodo/EXP/racha en Postgres |
+| USER | `users` |
+| IMAGE | `images` |
+| PROFILE | `profiles` |
+| STREAK | `streaks` |
+| PROGRESO_RESTRICCION | `progress_restrictions` |
+| HISTORY_GAME | `history_games` (progreso por nodo del mapa) |
+| GAME | `games` (partidas individuales) |
 
 ---
 
-## Diagnóstico rápido
+## Reglas de merge
 
-**Ver archivos locales (PowerShell):**
+### Nodos (`fusionar_node_progress`)
+
+Por cada `node_id`:
+
+- `completed` = local OR online
+- `best_accuracy` / `best_percent` = máximo de ambos
+- Si el nodo solo está en un lado, se conserva ese lado
+
+### EXP
+
+`total_exp = max(local, online)`
+
+### Racha (`fusionar_estado_racha`)
+
+- Gana la de mayor `current_count`
+- Empate → gana la de `last_activity_day` más reciente
+
+---
+
+## Idempotencia (`clientRunId`)
+
+Cada partida tiene un ID único. Si se reenvía el mismo resumen:
+
+- En el cliente, la cola no duplica el mismo `clientRunId`.
+- En el servidor, `findGameByClientRunId` detecta la partida ya guardada y no inserta de nuevo.
+
+---
+
+## Ejemplo: cola offline
+
+`backend_sync_queue.json` en disco:
+
+```json
+{
+  "items": [
+    {
+      "clientRunId": "run_20260606110000_1234567890_42",
+      "status": "pending",
+      "attempts": 1,
+      "lastError": "Sin conexión",
+      "createdAt": "2026-06-06T11:00:00",
+      "syncedAt": "",
+      "payload": {
+        "restriction": "celiaquia",
+        "nodeId": "celiaquia_nodo_3",
+        "accuracy": 85,
+        "completed": true
+      }
+    }
+  ]
+}
+```
+
+Cuando el POST sale bien, ese ítem pasa a `"status": "synced"` y `syncedAt` se completa.
+
+---
+
+## Archivos de código relevantes
+
+| Archivo | Rol |
+|---|---|
+| `juego/interface/SaveManager.gd` | Save local, merge, login/logout |
+| `juego/API/SyncApi.gd` | Fachada de sync |
+| `juego/API/AuthApi.gd` | Login / logout |
+| `juego/API/backend/sync/SincronizadorPartida.gd` | Arma resumen y encola |
+| `juego/API/backend/sync/LocalSyncQueue.gd` | Cola en disco |
+| `juego/API/backend/sync/ProgressSyncService.gd` | HTTP POST y retry |
+| `juego/API/backend/sync/ImportadorProgresoOnline.gd` | GET → formato local |
+| `juego/API/backend/session/BackendSession.gd` | Sesión y token |
+| `BACKEND/src/modules/progreso-restriccion/progreso-restriccion.service.ts` | Persistencia en Postgres |
+
+---
+
+## Diagnóstico
+
+**Ver cola y save (PowerShell):**
+
 ```powershell
-cat "$env:APPDATA\Godot\app_userdata\Evidente\save_data.json" | python -m json.tool
-cat "$env:APPDATA\Godot\app_userdata\Evidente\backend_sync_queue.json" | python -m json.tool
+type "$env:APPDATA\Godot\app_userdata\Evidente\backend_sync_queue.json"
+type "$env:APPDATA\Godot\app_userdata\Evidente\save_data.json"
 ```
 
-**Ver progreso en DB:**
+**Ver nodos en Postgres:**
+
 ```sql
-SELECT u.username, cn.node_id, cn.best_accuracy
-FROM completed_nodes cn
-JOIN player_progress pp ON pp.id = cn.progress_id
-JOIN users u ON u.id = pp.user_id
-WHERE u.username = 'margo';
+SELECT u.username, pr.restriction, hg.node_id, hg.best_accuracy, hg.completed
+FROM history_games hg
+JOIN progress_restrictions pr ON pr.id = hg.progress_id
+JOIN profiles p ON p.id = pr.profile_id
+JOIN users u ON u.id = p.user_id
+WHERE u.username = 'margo'
+  AND hg.completed = true;
 ```
 
-**Tabla de síntomas:**
+**Consola Godot (debug):**
 
-| Síntoma | Causa probable |
-|---|---|
-| Nodo completado no aparece al re-entrar | Cola con `pending` o sync falló |
-| Todos los nodos en gris al login | `_reiniciar_progreso` se disparó (ver `linked_online_username`) |
-| EXP no sube | POST falló o `expToAdd=0` |
-| Datos de otro usuario visibles | `linked_online_username` ≠ usuario logueado |
-| Estrella gris en nodo completado | `best_percent` bajo (ver `LevelNode._actualizar_insignia`) |
-
-**Forzar retry / reset debug (consola Godot):**
 ```gdscript
-SyncApi.reintentar_pendientes()   # sube pendientes al servidor
-SaveManager.reiniciar_todo_progreso()  # limpia local (no toca DB)
+SyncApi.reintentar_pendientes()
 ```
+
+| Síntoma | Qué revisar |
+|---|---|
+| Nodo completado no aparece al re-entrar | `backend_sync_queue.json` con ítems `pending`; logs del POST |
+| Progreso de otro usuario | `linked_online_username` en `save_data.json` |
+| EXP no sube | payload con `expToAdd`; respuesta del POST |
+| Racha incorrecta al login | merge de racha; orden en `_importar_progreso_online` |
 
 ---
 
-## Bugs resueltos
+## Notas de implementación
 
-| Bug | Causa | Solución |
-|---|---|---|
-| Progreso perdido al logout | `al_cerrar_sesion_online` borraba `node_progress` y ponía `linked=""` | Ahora solo guarda a disco, sin limpiar nada |
-| Precisión fija al 50%/100% | `pregunta.gd` y `vincular_conceptos.gd` hardcodeaban el valor | Usan `NodoRuntimeScript.calcular_precision()` |
-| Estrella gris en nodo completado | `effective_progress = best_percent` (podía ser bajo) | Si `is_completed`, `effective_progress = 1.0` siempre |
-| `completedNodes` del POST no aplicados | `_aplicar_racha_de_respuesta_sync` no los procesaba | Ahora llama `fusionar_completados_desde_sync()` |
+- Al cambiar de usuario se hace backup de `node_progress` por username antes del reset.
+- `clientRunId` evita duplicar partidas si hay retry o pérdida de red.
+- La racha local se lee antes de pisar `save_data.progress` en el import online; si no, el merge pierde el valor local.
+- En logout no se borra `node_progress` ni `linked_online_username`.

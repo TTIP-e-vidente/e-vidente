@@ -6,6 +6,7 @@ export interface ProgresoRestriccionRow {
   total_exp: number;
   completed_nodes_count: number;
   completed_games_count: number;
+  map_completed: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -19,16 +20,6 @@ export interface CompletedNodeRow {
   completed_at: Date;
   best_score: number | null;
   best_accuracy: string | null;
-}
-
-export interface UnlockedContentRow {
-  id: string;
-  user_id: string;
-  progress_id: string | null;
-  content_id: string;
-  content_type: string;
-  unlocked_at: Date;
-  source: string | null;
 }
 
 export interface InsertCompletedNodeInput {

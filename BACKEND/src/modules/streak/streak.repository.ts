@@ -1,11 +1,9 @@
 /**
  * STREAK del MER.
- *
- * Responsabilidad:
- * - Consultar y crear la racha diaria de un usuario.
- * - Registrar actividad completada (misma logica que GameStreakTracker en Godot).
+ * profiles.streak_id → streaks.id
  */
 import { PoolClient } from 'pg';
+import * as profileRepository from '../profile/profile.repository';
 import { StreakRow } from './streak.types';
 
 const MS_PER_DAY = 86_400_000;
@@ -30,40 +28,72 @@ function daysBetween(dateA: string, dateB: string): number {
   return Math.abs(Math.round((unixB - unixA) / MS_PER_DAY));
 }
 
+async function findStreakForUser(
+  client: PoolClient,
+  userId: string
+): Promise<StreakRow | null> {
+  const result = await client.query<StreakRow>(
+    `
+      SELECT
+        s.id,
+        p.user_id,
+        p.id AS profile_id,
+        s.current_count,
+        s.best_count,
+        s.last_activity_day,
+        s.updated_at
+      FROM profiles p
+      JOIN streaks s ON s.id = p.streak_id
+      WHERE p.user_id = $1;
+    `,
+    [userId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
 export async function ensureStreak(
   client: PoolClient,
   userId: string,
   profileId: string
 ): Promise<StreakRow> {
-  const result = await client.query<StreakRow>(
+  const existing = await findStreakForUser(client, userId);
+  if (existing) {
+    return existing;
+  }
+
+  const created = await client.query<{
+    id: string;
+    current_count: number;
+    best_count: number;
+    last_activity_day: Date | null;
+    updated_at: Date;
+  }>(
     `
-      INSERT INTO player_streaks (user_id, profile_id, current_count, best_count, last_activity_day)
-      VALUES ($1, $2, 0, 0, NULL)
-      ON CONFLICT (profile_id)
-      DO UPDATE SET
-        updated_at = now()
-      RETURNING id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at;
-    `,
-    [userId, profileId]
+      INSERT INTO streaks (current_count, best_count, last_activity_day)
+      VALUES (0, 0, NULL)
+      RETURNING id, current_count, best_count, last_activity_day, updated_at;
+    `
   );
 
-  return result.rows[0];
+  const row = created.rows[0];
+  await profileRepository.linkProfileToStreak(client, profileId, row.id);
+  return {
+    id: row.id,
+    user_id: userId,
+    profile_id: profileId,
+    current_count: row.current_count,
+    best_count: row.best_count,
+    last_activity_day: row.last_activity_day,
+    updated_at: row.updated_at
+  };
 }
 
 export async function getStreakByUserId(
   client: PoolClient,
   userId: string
 ): Promise<StreakRow | null> {
-  const result = await client.query<StreakRow>(
-    `
-      SELECT id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at
-      FROM player_streaks
-      WHERE user_id = $1;
-    `,
-    [userId]
-  );
-
-  return result.rows[0] ?? null;
+  return findStreakForUser(client, userId);
 }
 
 export async function registerStreakActivity(
@@ -77,19 +107,7 @@ export async function registerStreakActivity(
     return ensureStreak(client, userId, profileId);
   }
 
-  const existing = await getStreakByUserId(client, userId);
-  if (!existing) {
-    const created = await client.query<StreakRow>(
-      `
-        INSERT INTO player_streaks (user_id, profile_id, current_count, best_count, last_activity_day)
-        VALUES ($1, $2, 1, 1, $3::date)
-        RETURNING id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at;
-      `,
-      [userId, profileId, today]
-    );
-    return created.rows[0];
-  }
-
+  const existing = await ensureStreak(client, userId, profileId);
   const lastDay = toDateOnly(existing.last_activity_day);
   let newCount = 1;
   if (lastDay === today) {
@@ -99,19 +117,34 @@ export async function registerStreakActivity(
   }
 
   const newBest = Math.max(existing.best_count, newCount);
-  const updated = await client.query<StreakRow>(
+  const updated = await client.query<{
+    id: string;
+    current_count: number;
+    best_count: number;
+    last_activity_day: Date | null;
+    updated_at: Date;
+  }>(
     `
-      UPDATE player_streaks
+      UPDATE streaks
       SET
         current_count = $2,
         best_count = $3,
         last_activity_day = $4::date,
         updated_at = now()
-      WHERE user_id = $1
-      RETURNING id, user_id, profile_id, current_count, best_count, last_activity_day, updated_at;
+      WHERE id = $1
+      RETURNING id, current_count, best_count, last_activity_day, updated_at;
     `,
-    [userId, newCount, newBest, today]
+    [existing.id, newCount, newBest, today]
   );
 
-  return updated.rows[0];
+  const row = updated.rows[0];
+  return {
+    id: row.id,
+    user_id: userId,
+    profile_id: profileId,
+    current_count: row.current_count,
+    best_count: row.best_count,
+    last_activity_day: row.last_activity_day,
+    updated_at: row.updated_at
+  };
 }

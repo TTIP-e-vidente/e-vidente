@@ -322,6 +322,7 @@ func _on_superposicion_guardar_presionado() -> void:
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
+	SyncApi.reintentar_pendientes()
 	SaveManager.reiniciar_todo_progreso()
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true

@@ -2,8 +2,7 @@ export type AuthErrorCode =
   | 'INVALID_BODY'
   | 'INVALID_CREDENTIALS'
   | 'DUPLICATE_USERNAME'
-  | 'DUPLICATE_MAIL'
-  | 'INVALID_RESET_TOKEN';
+  | 'DUPLICATE_MAIL';
 
 export interface PublicUser {
   id: string;
@@ -31,26 +30,6 @@ export interface LoginInput {
   password?: unknown;
 }
 
-export interface ForgotPasswordInput {
-  mail?: unknown;
-}
-
-export interface ForgotPasswordResponse {
-  status: 'ok';
-  message: string;
-  devResetToken?: string;
-}
-
-export interface ResetPasswordInput {
-  token?: unknown;
-  newPassword?: unknown;
-}
-
-export interface ResetPasswordResponse {
-  status: 'ok';
-  message: 'Password updated';
-}
-
 export interface UserRow {
   id: string;
   username: string;
@@ -70,13 +49,4 @@ export interface CreateUserInput {
   mail: string | null;
   passwordHash: string;
   age: number | null;
-}
-
-export interface PasswordResetTokenRow {
-  id: string;
-  user_id: string;
-  token_hash: string;
-  expires_at: Date;
-  used_at: Date | null;
-  created_at: Date;
 }

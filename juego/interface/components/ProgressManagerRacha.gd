@@ -2,7 +2,6 @@ extends Control
 
 signal flow_completed
 
-const GameSceneRouter := preload("res://niveles/GameSceneRouter.gd")
 const DayCircleScript := preload("res://interface/components/DayCircle.gd")
 const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
