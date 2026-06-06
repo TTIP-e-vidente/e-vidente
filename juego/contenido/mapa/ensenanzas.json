@@ -1,0 +1,8 @@
+{
+	"ensenanza1" : {
+	  "id": "celiaquia_001",
+	  "titulo": "¿Qué es la celiaquía?",
+	  "texto": "La celiaquía es una enfermedad autoinmune porque, al consumir gluten, el sistema inmunológico ataca por error el propio intestino delgado, provocando daño e inflamación.",
+	  "imagen": "res://assets/ensenanzas/celiaquia.png"
+	}
+}
