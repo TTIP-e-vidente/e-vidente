@@ -235,6 +235,18 @@ static func _select_random_game_entries(
 ) -> Array[Dictionary]:
 	var selected_game_entries: Array[Dictionary] = []
 	var used_types_in_node: Array[String] = []
+	# Pre-calcular cuántas veces aparece cada tipo en el nodo.
+	# Si un tipo se solicita más de una vez, es intencional (ej: 3 drags seguidos)
+	# y se debe respetar sin filtrar por variedad.
+	var type_request_counts: Dictionary = {}
+	for raw_req in node_data.obtener_solicitudes_juegos_random():
+		if not raw_req is Dictionary:
+			continue
+		var req_type: String = NodeContentLoaderScript.normalizar_random_game_type(
+			str((raw_req as Dictionary).get("type", "")).strip_edges()
+		)
+		if not req_type.is_empty():
+			type_request_counts[req_type] = int(type_request_counts.get(req_type, 0)) + 1
 	for raw_request in node_data.obtener_solicitudes_juegos_random():
 		if not raw_request is Dictionary:
 			continue
@@ -253,10 +265,15 @@ static func _select_random_game_entries(
 				% [node_data.node_key, str(game_request)]
 			)
 			continue
-		var allow_repeated_type: bool = bool(game_request.get("allow_repeated_type", false))
+		# Permitir tipo repetido si: el JSON lo indica explícitamente, o si el nodo
+		# solicita ese tipo más de una vez (repetición intencional del diseñador).
+		var allow_repeated_type: bool = (
+			bool(game_request.get("allow_repeated_type", false))
+			or int(type_request_counts.get(requested_type, 1)) > 1
+		)
 		if not allow_repeated_type and used_types_in_node.has(requested_type):
-			push_warning(
-				"ArmadorDePartida: modalidad '%s' ya usada en nodo %s — se omite para garantizar variedad."
+			print(
+				"[ArmadorDePartida] tipo '%s' ya usado en nodo %s, omitido para variedad."
 				% [requested_type, node_data.node_key]
 			)
 			continue

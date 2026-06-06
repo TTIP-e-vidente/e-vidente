@@ -1823,7 +1823,7 @@ func _test_fusion_node_progress_no_pierde_completados_locales() -> void:
 
 
 func _test_progreso_con_huecos_se_muestra_en_global() -> void:
-	var global_state: Node = get_node_or_null("/root/Global")
+	var global_state: Node = root.get_node_or_null("/root/Global")
 	if global_state == null:
 		_verificar(false, "[MapProgress] Global autoload no disponible en test")
 		return

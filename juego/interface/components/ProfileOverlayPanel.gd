@@ -61,6 +61,20 @@ func ocultar_superposicion() -> void:
 	_animar_salida_deslizada()
 
 
+func mostrar_feedback_guardado() -> void:
+	if not is_instance_valid(_save_status_label) or not is_instance_valid(_guardar_btn):
+		return
+	_guardar_btn.disabled = true
+	_guardar_btn.text = "Guardado ✓"
+	_save_status_label.text = "¡Guardado correctamente!"
+	await get_tree().create_timer(2.0).timeout
+	if is_instance_valid(_guardar_btn):
+		_guardar_btn.disabled = false
+		_guardar_btn.text = "Guardar ahora"
+	if is_instance_valid(_save_status_label):
+		_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
+
+
 func refrescar() -> void:
 	var username := _resolver_nombre_usuario_visible()
 	_username_label.text = username

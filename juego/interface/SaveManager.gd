@@ -45,6 +45,7 @@ const LOCAL_SAVE_ID := "local_save"
 const LOCAL_SAVE_TITLE := "Partida actual"
 const LOCAL_PROFILE_KEY := "local_profile"
 const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
+const NODE_PROGRESS_BACKUP_PREFIX := "node_progress_backup_"
 
 var save_data: Dictionary = {}
 var has_unsaved_changes: bool = false
@@ -107,6 +108,8 @@ func cargar_datos() -> void:
 		progress_keys = (saved_progress as Dictionary).keys()
 	print_debug("[Save] progress_keys=", progress_keys)
 	print_debug("[Save] node_progress_keys=", obtener_todo_progreso_nodos().keys())
+	var racha_en_disco: Dictionary = _obtener_racha_local_desde_save()
+	print("[Racha] cargar_datos: racha_leida_del_disco count=", racha_en_disco.get("current_count", "N/A"), " day=", racha_en_disco.get("last_activity_day", "N/A"))
 	_global_importar_progreso(saved_progress if saved_progress is Dictionary else {})
 	_sincronizar_node_progress_a_global(obtener_todo_progreso_nodos())
 	progress_loaded.emit(obtener_perfil_usuario_actual())
@@ -202,6 +205,10 @@ func obtener_error_ultimo_guardado() -> String:
 
 
 func guardar_progreso_en_disco() -> void:
+	var racha_global: Dictionary = {}
+	if _global_autoload != null and _global_autoload.has_method("obtener_estado_racha"):
+		racha_global = _global_autoload.call("obtener_estado_racha")
+	print("[Racha] guardar_progreso_en_disco: racha_global_count=", racha_global.get("current_count", "N/A"), " day=", racha_global.get("last_activity_day", "N/A"))
 	_guardar_estado_actual("progress_sync")
 
 
@@ -509,16 +516,30 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 
 	var linked := obtener_cuenta_online_vinculada()
 	if linked != username:
+		# Antes de resetear, respaldar el progreso del usuario anterior.
+		# Así, si el usuario anterior vuelve a loguearse, su progreso local
+		# (no sincronizado aún) se restaura y se fusiona con el del servidor.
+		_respaldar_node_progress_por_usuario(linked)
 		_reiniciar_progreso_juego_preservando_perfil()
+		# El historial de sesión del Armador es estático (alcance de proceso).
+		# Si no se limpia al cambiar usuario, las actividades jugadas por el
+		# usuario anterior bloquean el pool del usuario entrante en la misma
+		# sesión de juego.
+		ArmadorDePartida.reiniciar_historial_sesion()
 
-	_importar_progreso_online(progreso_online)
+	_importar_progreso_online(progreso_online, username)
 	_aplicar_parche_perfil_online(usuario)
 	_establecer_cuenta_online_vinculada(username)
+	# Marcar explícitamente como sucio para que _escribir_guardado_en_disco no omita
+	# la escritura cuando has_unsaved_changes era false antes del sync online.
+	_marcar_guardado_sucio()
 
 	if not _escribir_guardado_en_disco(false, "online_sync"):
 		push_warning("[Save] No se pudo persistir la sync con la cuenta online.")
 		return
 
+	var racha_post_sync: Dictionary = _obtener_racha_local_desde_save()
+	print("[Racha] sincronizar_con_cuenta_online: racha_guardada_final count=", racha_post_sync.get("current_count", "N/A"))
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
@@ -528,7 +549,14 @@ func al_cerrar_sesion_online() -> void:
 	#   - el mismo usuario al re-loguear detecte linked == username → no resetea → merge ✓
 	#   - un usuario diferente detecte linked != username → reset antes de importar ✓
 	# Limpiar habría causado que el mismo usuario perdiera su progreso local al volver.
+	var racha_al_salir: Dictionary = _obtener_racha_local_desde_save()
+	print("[Racha] al_cerrar_sesion_online: racha_local_antes_save=", racha_al_salir)
 	guardar_progreso_en_disco()
+	var racha_guardada: Dictionary = _obtener_racha_local_desde_save()
+	print("[Racha] al_cerrar_sesion_online: racha_guardada_en_disco=", racha_guardada)
+	# Al cerrar sesión, limpiar el historial de sesión del Armador para que el
+	# próximo usuario que inicie sesión no herede actividades ya jugadas.
+	ArmadorDePartida.reiniciar_historial_sesion()
 
 
 func reiniciar_todo_progreso() -> Dictionary:
@@ -720,6 +748,7 @@ func _almacenar_estado_reanudacion(raw: Dictionary) -> void:
 
 func _escribir_guardado_en_disco(force: bool = false, reason: String = "save") -> bool:
 	if not force and not has_unsaved_changes:
+		print("[Save] _escribir_guardado_en_disco OMITIDO (sin cambios) reason=", reason)
 		return true
 
 	var progress: Variant = save_data.get("progress", {})
@@ -782,11 +811,17 @@ func _resumir_progreso(progress: Variant) -> Dictionary:
 	return summary
 
 
-func _reiniciar_datos_guardado_actual(profile: Dictionary) -> void:
+func _reiniciar_datos_guardado_actual(profile: Dictionary, preserve_streak: bool = true) -> void:
 	var settings: Dictionary = _obtener_settings_guardado_actual()
-	var streak_state: Dictionary = _obtener_racha_actual_para_preservar()
+	# Leer la racha ANTES de limpiar Global, ya que _global_reiniciar_progreso()
+	# vacía _streak_state y _obtener_racha_actual_para_preservar() leería un estado
+	# vacío (count=0) si lo leyera después.
+	var streak_a_preservar: Dictionary = {}
+	if preserve_streak:
+		streak_a_preservar = _obtener_racha_actual_para_preservar()
 	_global_reiniciar_progreso()
-	_global_establecer_racha(streak_state)
+	if preserve_streak and not streak_a_preservar.is_empty():
+		_global_establecer_racha(streak_a_preservar)
 	save_data["profile"] = profile
 	if not settings.is_empty():
 		save_data["settings"] = settings
@@ -930,18 +965,27 @@ func _establecer_cuenta_online_vinculada(username: String) -> void:
 
 func _reiniciar_progreso_juego_preservando_perfil() -> void:
 	var profile: Dictionary = obtener_perfil_usuario_actual()
-	_reiniciar_datos_guardado_actual(profile)
+	# preserve_streak=false: la racha del usuario anterior no debe heredarse al nuevo.
+	# El backend provee la racha correcta al importar el progreso online.
+	_reiniciar_datos_guardado_actual(profile, false)
 
 
 func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	if streak_online.is_empty():
 		return
+	var local_streak_now: Dictionary = _obtener_racha_local_desde_save()
+	var server_streak_norm: Dictionary = ImportadorProgresoOnlineScript.construir_estado_racha_online(streak_online)
+	print(
+		"[Racha] aplicar_racha_sincronizada: local_count=", local_streak_now.get("current_count", "N/A"),
+		" server_count=", server_streak_norm.get("current_count", "N/A")
+	)
 	var merged: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
-		_obtener_racha_local_desde_save(),
-		ImportadorProgresoOnlineScript.construir_estado_racha_online(streak_online)
+		local_streak_now,
+		server_streak_norm
 	)
 	if merged.is_empty():
 		return
+	print("[Racha] aplicar_racha_sincronizada: merged_count=", merged.get("current_count", "N/A"))
 	_global_establecer_racha(merged)
 	_persistir_racha_en_save(merged)
 	if not _escribir_guardado_en_disco(false, "streak_sync"):
@@ -975,11 +1019,21 @@ func _persistir_racha_en_save(streak_state: Dictionary) -> void:
 	save_data["progress"] = progress_snapshot
 
 
-func _importar_progreso_online(progreso_online: Dictionary) -> void:
+func _importar_progreso_online(progreso_online: Dictionary, username: String = "") -> void:
 	var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
 		progreso_online
 	)
 	var local_node_progress: Dictionary = obtener_todo_progreso_nodos()
+	# Si hay un backup por usuario, fusionarlo con el local antes de comparar con el online.
+	# Esto recupera nodos completados localmente que no llegaron al backend antes de un
+	# switch de usuario (el backup se guardó justo antes de resetear el save).
+	if not username.is_empty():
+		var backup: Dictionary = _restaurar_node_progress_backup(username)
+		if not backup.is_empty():
+			print("[Save] backup restaurado para username=", username, " nodos=", backup.keys())
+			local_node_progress = ImportadorProgresoOnlineScript.fusionar_node_progress(
+				backup, local_node_progress
+			)
 	var online_node_progress: Dictionary = snapshot.get("node_progress", {})
 	save_data["node_progress"] = ImportadorProgresoOnlineScript.fusionar_node_progress(
 		local_node_progress,
@@ -988,14 +1042,30 @@ func _importar_progreso_online(progreso_online: Dictionary) -> void:
 	var local_exp: int = int(save_data.get("total_exp", 0))
 	var online_exp: int = int(snapshot.get("total_exp", 0))
 	save_data["total_exp"] = maxi(local_exp, online_exp)
+	# Leer la racha local ANTES de sobreescribir save_data["progress"] con el snapshot online.
+	# Si se lee después, _obtener_racha_local_desde_save() devuelve la racha del servidor
+	# (ya sobreescrita) y el merge ignora el valor local más alto.
+	var local_streak: Dictionary = _obtener_racha_local_desde_save()
+	var server_streak: Dictionary = snapshot.get("streak_state", {})
+	print(
+		"[Racha] _importar_progreso_online: username=", username,
+		" local_count=", local_streak.get("current_count", "N/A"),
+		" local_day=", local_streak.get("last_activity_day", "N/A"),
+		" server_count=", server_streak.get("current_count", "N/A"),
+		" server_day=", server_streak.get("last_activity_day", "N/A")
+	)
 	save_data["progress"] = snapshot.get("progress_snapshot", {})
 
 	var streak_state: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
-		_obtener_racha_local_desde_save(),
-		snapshot.get("streak_state", {})
+		local_streak,
+		server_streak
 	)
-	_global_establecer_racha(streak_state)
+	print("[Racha] _importar_progreso_online: streak_merged_count=", streak_state.get("current_count", "vacío"))
+	# Importar primero el snapshot del servidor (reiniciar_progreso + reimportar).
+	# Después sobrescribir la racha con el valor merged local+server, así el valor
+	# más alto gana y no queda pisado por el reiniciar_progreso interno del importador.
 	_global_importar_progreso(save_data.get("progress", {}))
+	_global_establecer_racha(streak_state)
 	_sincronizar_node_progress_a_global(save_data.get("node_progress", {}))
 
 	save_data["progress"] = _global_exportar_progreso()
@@ -1096,6 +1166,46 @@ func _persistir_perfil_actualizado() -> Dictionary:
 	user_registered.emit(updated_profile)
 	progress_loaded.emit(updated_profile)
 	return {"ok": true, "message": "Perfil local actualizado.", "profile": updated_profile}
+
+
+## Guarda el node_progress del usuario en un archivo temporal por usuario.
+## Se llama antes de resetear el save cuando entra un usuario diferente,
+## para que el usuario original pueda recuperar su progreso no sincronizado.
+func _respaldar_node_progress_por_usuario(username: String) -> void:
+	if username.is_empty():
+		return
+	var np: Dictionary = obtener_todo_progreso_nodos()
+	if np.is_empty():
+		return
+	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_warning("[Save] No se pudo guardar backup de nodos para ", username)
+		return
+	file.store_string(JSON.stringify(np))
+	file.flush()
+	file = null
+	print("[Save] backup node_progress guardado para username=", username, " nodos=", np.keys())
+
+
+## Restaura y elimina el backup por usuario si existe.
+## Retorna el node_progress guardado o {} si no hay backup.
+func _restaurar_node_progress_backup(username: String) -> Dictionary:
+	if username.is_empty():
+		return {}
+	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	if not FileAccess.file_exists(path):
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text: String = file.get_as_text()
+	file = null
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var parsed: Variant = JSON.parse_string(text)
+	return parsed as Dictionary if parsed is Dictionary else {}
 
 
 func _marcar_guardado_sucio() -> void:

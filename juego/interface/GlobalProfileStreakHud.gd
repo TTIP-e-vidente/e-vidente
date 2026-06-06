@@ -172,6 +172,7 @@ func _on_racha_presionada() -> void:
 		_profile_overlay.ocultar_superposicion()
 	if _profile_button != null:
 		_profile_button.visible = true
+	@warning_ignore("static_called_on_instance")
 	GameSceneRouter.ir_a_racha(get_tree(), current_scene_path)
 
 
@@ -186,6 +187,7 @@ func _on_superposicion_reanudar_presionado() -> void:
 	if not SaveManager.puede_reanudar_guardado_actual():
 		return
 	var resume_state := SaveManager.recargar_desde_disco_y_obtener_reanudacion()
+	@warning_ignore("static_called_on_instance")
 	GameSceneRouter.ir_a_reanudar(get_tree(), resume_state, RESUME_FALLBACK_SCENE)
 
 
@@ -195,25 +197,32 @@ func _on_superposicion_editar_perfil_presionado() -> void:
 	if current_scene_path.is_empty():
 		current_scene_path = RESUME_FALLBACK_SCENE
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, current_scene_path)
+	@warning_ignore("static_called_on_instance")
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
 func _on_superposicion_guardar_presionado() -> void:
 	SaveManager.guardar_progreso_en_disco()
-	_profile_overlay.refrescar()
+	_profile_overlay.mostrar_feedback_guardado()
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
 	SaveManager.reiniciar_todo_progreso()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
+	@warning_ignore("static_called_on_instance")
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
 
 func _on_superposicion_logout_presionado() -> void:
+	_ejecutar_logout()
+
+
+func _ejecutar_logout() -> void:
 	AuthApi.cerrar_sesion()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
+	@warning_ignore("static_called_on_instance")
 	GameSceneRouter.go_to_main_menu(get_tree())
 
 

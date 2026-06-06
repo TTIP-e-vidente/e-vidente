@@ -140,12 +140,15 @@ func _actualizar_insignia() -> void:
 	# La precisión exacta se puede consultar en la pantalla de estadísticas; aquí
 	# solo importa indicar "hecho" vs "no hecho" de forma inequívoca.
 	var effective_progress: float
-	if is_completed:
-		effective_progress = 1.0
-	elif debug_progress >= 0.0:
+	if debug_progress >= 0.0:
 		effective_progress = debug_progress
-	else:
+	elif is_completed:
+		# Relleno proporcional a la precisión real del jugador.
+		# La estrella solo es visible cuando is_completed=true, así que
+		# "hay estrella" = completado; "qué tan llena" = qué tan bien lo hizo.
 		effective_progress = clampf(_best_percent, 0.0, 1.0)
+	else:
+		effective_progress = 0.0
 	if DEBUG_BADGES:
 		print_debug(
 			"[Star] update node_key=",
