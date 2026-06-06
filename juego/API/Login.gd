@@ -5,16 +5,15 @@ enum AuthMode { LOGIN, REGISTER }
 signal login_completed()
 signal play_offline_requested()
 
-@onready var label_title: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LabelTitle
-@onready var label_description: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LabelDescription
-@onready var _input_username: LineEdit = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LineEditUsernameOrMail
-@onready var _input_password: LineEdit = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LineEditPassword
-@onready var _input_register_name: LineEdit = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LineEditRegisterName
-@onready var _input_register_mail: LineEdit = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LineEditRegisterMail
-@onready var _button_submit: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ButtonSubmit
-@onready var _button_switch_mode: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ButtonSwitchMode
-@onready var _button_play_offline: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ButtonPlayOffline
-@onready var _label_status: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/LabelStatus
+@onready var label_title: Label = $VBoxContainer/LabelTitle
+@onready var _input_username: LineEdit = $VBoxContainer/LineEditUsernameOrMail
+@onready var _input_password: LineEdit = $VBoxContainer/LineEditPassword
+@onready var _input_register_name: LineEdit = $VBoxContainer/LineEditRegisterName
+@onready var _input_register_mail: LineEdit = $VBoxContainer/LineEditRegisterMail
+@onready var _button_submit: Button = $VBoxContainer/ButtonSubmit
+@onready var _button_switch_mode: Button = $VBoxContainer/ButtonSwitchMode
+@onready var _button_play_offline: Button = $VBoxContainer/ButtonPlayOffline
+@onready var _label_status: Label = $VBoxContainer/LabelStatus
 
 var _is_loading := false
 var _mode := AuthMode.LOGIN
@@ -39,10 +38,6 @@ func _establecer_modo(mode: int) -> void:
 	_mode = mode
 	var is_register := _mode == AuthMode.REGISTER
 	label_title.text = "Crear cuenta" if is_register else "Iniciar sesión"
-	label_description.text = (
-		"Tu progreso se sincronizará con esta cuenta."
-		if is_register else "Ingresá para sincronizar tu progreso."
-	)
 	_input_register_name.visible = is_register
 	_input_register_mail.visible = is_register
 	_input_username.placeholder_text = "Usuario" if is_register else "Usuario o mail"
