@@ -119,6 +119,7 @@ func _cargar_estado_perfil_actual() -> void:
 
 
 func _on_boton_elegir_avatar_presionado() -> void:
+	avatar_dialog.current_dir = OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
 	avatar_dialog.popup_centered_ratio(0.75)
 
 
@@ -149,6 +150,10 @@ func _intentar_autosave() -> void:
 	var is_ok: bool = bool(save_result.get("ok", false))
 	if is_ok:
 		_establecer_feedback("Guardado ✓", true)
+		var persisted_avatar := SaveManager.obtener_ruta_avatar_usuario_actual()
+		if not persisted_avatar.is_empty() and persisted_avatar != avatar_path_input.text:
+			avatar_path_input.text = persisted_avatar
+			_refrescar_controles_avatar()
 	else:
 		_establecer_feedback(str(save_result.get("message", "Error al guardar")), false)
 
