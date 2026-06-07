@@ -243,7 +243,7 @@ func _migrar_legacy(raw: Dictionary) -> Dictionary:
 
 	normalizado["profile"] = _profile_helper.normalizar_datos_perfil({
 		"username": user.get("username", DEFAULT_PROFILE_NAME),
-		"age": user.get("age", 0),
+		"birth_date": user.get("birth_date", user.get("fecha_nacimiento", "")),
 		"email": user.get("email", ""),
 		"avatar_path": user.get("avatar_path", ""),
 		"created_at": user.get("created_at", ""),

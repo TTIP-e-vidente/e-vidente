@@ -117,13 +117,13 @@ func cargar_datos() -> void:
 
 func actualizar_perfil_local(
 	username: String,
-	age: int,
+	birth_date: String,
 	email: String,
 	avatar_source_path: String
 ) -> Dictionary:
 	var validation: Dictionary = _profile_helper.validar_perfil(
 		username,
-		age,
+		birth_date,
 		email,
 		avatar_source_path
 	)
@@ -135,7 +135,7 @@ func actualizar_perfil_local(
 	if not bool(avatar_result.get("ok", false)):
 		return avatar_result
 
-	_aplicar_actualizaciones_identidad_perfil(profile, username, age, email)
+	_aplicar_actualizaciones_identidad_perfil(profile, username, birth_date, email)
 	save_data["profile"] = profile
 	return _persistir_perfil_actualizado()
 
@@ -176,8 +176,16 @@ func obtener_email_usuario_actual() -> String:
 	return str(obtener_perfil_usuario_actual().get("email", "")).strip_edges()
 
 
+func obtener_fecha_nacimiento_usuario_actual() -> String:
+	return SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
+		obtener_perfil_usuario_actual().get("birth_date", "")
+	)
+
+
 func obtener_edad_usuario_actual() -> int:
-	return max(0, int(obtener_perfil_usuario_actual().get("age", 0)))
+	return SaveLocalProfileHelperScript.calcular_edad_desde_fecha_nacimiento(
+		obtener_fecha_nacimiento_usuario_actual()
+	)
 
 
 func obtener_ruta_avatar_usuario_actual() -> String:
@@ -698,10 +706,10 @@ func _actualizar_avatar_perfil(profile: Dictionary, avatar_source_path: String) 
 func _aplicar_actualizaciones_identidad_perfil(
 	profile: Dictionary,
 	username: String,
-	age: int,
+	birth_date: String,
 	email: String
 ) -> void:
-	_profile_helper.aplicar_cambios_identidad(profile, username, age, email, DEFAULT_PROFILE_NAME)
+	_profile_helper.aplicar_cambios_identidad(profile, username, birth_date, email, DEFAULT_PROFILE_NAME)
 	_profile_helper.estampar_timestamps(profile)
 
 

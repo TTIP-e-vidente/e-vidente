@@ -5,6 +5,9 @@ const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 const CargadorDeMapaScript := preload("res://mapas/logica/CargadorDeMapa.gd")
 const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
+const SaveLocalProfileHelperScript := preload(
+	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
+)
 const QUESTION_PROGRESS_KEY := "question_progress"
 const STREAK_KEY := "streak"
 
@@ -59,8 +62,15 @@ static func construir_parche_perfil(usuario: Dictionary) -> Dictionary:
 	if not email.is_empty():
 		parche["email"] = email
 
-	if usuario.has("age"):
-		parche["age"] = max(0, int(usuario.get("age", 0)))
+	for key in ["birth_date", "fecha_nacimiento", "birthDate"]:
+		if not usuario.has(key):
+			continue
+		var birth_date := SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
+			usuario.get(key)
+		)
+		if not birth_date.is_empty():
+			parche["birth_date"] = birth_date
+			break
 
 	return parche
 

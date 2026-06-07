@@ -23,7 +23,7 @@ func datos_guardado_predeterminados() -> Dictionary:
 	return {
 		"version": SAVE_VERSION,
 		"profile": {
-			"username": DEFAULT_PROFILE_NAME, "age": 0, "email": "",
+			"username": DEFAULT_PROFILE_NAME, "birth_date": "", "email": "",
 			"avatar_path": "", "created_at": "", "updated_at": ""
 		},
 		"save_meta": {"last_saved_at": "", "last_saved_reason": "", "write_count": 0},

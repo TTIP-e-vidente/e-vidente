@@ -10,7 +10,7 @@ var profile_age_preview_label: Label
 var summary_save_label: Label
 var avatar_placeholder_label: Label
 var username_input: LineEdit
-var age_input: LineEdit
+var birth_date_input: LineEdit
 var email_input: LineEdit
 var avatar_path_input: LineEdit
 var choose_avatar_button: Button
@@ -25,10 +25,13 @@ func _ready() -> void:
 	_cachear_nodos_ui()
 	_configurar_ui_estatica()
 	username_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
-	age_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
+	birth_date_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
 	email_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
+	username_input.focus_exited.connect(_intentar_autosave)
+	birth_date_input.focus_exited.connect(_intentar_autosave)
+	email_input.focus_exited.connect(_intentar_autosave)
 	_cargar_estado_perfil_actual()
-	_establecer_feedback("Revisa la vista previa y guarda cuando este lista.", true)
+	_establecer_feedback("Los cambios se guardan automáticamente.", true)
 
 
 func _cachear_nodos_ui() -> void:
@@ -64,7 +67,7 @@ func _cachear_nodos_ui() -> void:
 	username_input = form_content.get_node(
 		"PrimaryFieldsRow/UsernameColumn/UsernameEdit"
 	) as LineEdit
-	age_input = form_content.get_node(
+	birth_date_input = form_content.get_node(
 		"PrimaryFieldsRow/AgeColumn/AgeEdit"
 	) as LineEdit
 	email_input = form_content.get_node("EmailEdit") as LineEdit
@@ -81,7 +84,7 @@ func _cachear_nodos_ui() -> void:
 
 func _configurar_ui_estatica() -> void:
 	username_input.placeholder_text = "Nombre visible (opcional)"
-	age_input.placeholder_text = "Edad (opcional)"
+	birth_date_input.placeholder_text = "Fecha de nacimiento AAAA-MM-DD (opcional)"
 	email_input.placeholder_text = "Mail (opcional)"
 	save_profile_button.text = "Guardar perfil"
 	back_button.text = ""
@@ -91,14 +94,14 @@ func _configurar_ui_estatica() -> void:
 func _cargar_estado_perfil_actual() -> void:
 	var username := SaveManager.obtener_nombre_usuario_actual()
 	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
-	var age := SaveManager.obtener_edad_usuario_actual()
-	age_input.text = "" if age <= 0 else str(age)
+	var birth_date := SaveManager.obtener_fecha_nacimiento_usuario_actual()
+	birth_date_input.text = birth_date
 	email_input.text = SaveManager.obtener_email_usuario_actual()
 	avatar_path_input.text = SaveManager.obtener_ruta_avatar_usuario_actual()
 
 	# Actualizar controles de avatar y vista previa
 	_refrescar_controles_avatar()
-	_actualizar_etiquetas_vista_previa(username, email_input.text, age_input.text, avatar_path_input.text)
+	_actualizar_etiquetas_vista_previa(username, email_input.text, birth_date_input.text, avatar_path_input.text)
 
 	# Mostrar ultimo guardado
 	var last_reason := SaveManager.obtener_motivo_ultimo_guardado()
@@ -120,42 +123,57 @@ func _on_boton_limpiar_avatar_presionado() -> void:
 	_aplicar_ruta_avatar("")
 
 
-func _on_boton_registrar_presionado() -> void:
-	_establecer_feedback("", true)
-	var age_text := age_input.text.strip_edges()
-	var parsed_age := 0
-	if not age_text.is_empty():
-		if not age_text.is_valid_int() or int(age_text) < 0:
-			_establecer_feedback("La edad debe ser un numero entero o quedar vacia.", false)
+func _intentar_autosave() -> void:
+	var birth_date_text := birth_date_input.text.strip_edges()
+	if not birth_date_text.is_empty():
+		if not SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(birth_date_text):
+			_establecer_feedback(
+				"La fecha de nacimiento debe tener formato AAAA-MM-DD o quedar vacía.",
+				false
+			)
 			return
-		parsed_age = int(age_text)
 
 	var save_result: Dictionary = SaveManager.actualizar_perfil_local(
-		username_input.text,
-		parsed_age,
-		email_input.text,
+		username_input.text.strip_edges(),
+		birth_date_text,
+		email_input.text.strip_edges(),
 		avatar_path_input.text
 	)
 	var is_ok: bool = bool(save_result.get("ok", false))
-	_establecer_feedback(str(save_result.get("message", "")), is_ok)
 	if is_ok:
-		_cargar_estado_perfil_actual()
+		_establecer_feedback("Guardado ✓", true)
+	else:
+		_establecer_feedback(str(save_result.get("message", "Error al guardar")), false)
+
+
+func _on_boton_registrar_presionado() -> void:
+	_intentar_autosave()
+	if SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(
+		birth_date_input.text.strip_edges()
+	) or birth_date_input.text.strip_edges().is_empty():
 		_ir_a_escena_retorno()
 
 
 func _on_boton_login_presionado() -> void:
+	_intentar_autosave()
 	_ir_a_escena_retorno()
 
 
 func _on_boton_volver_presionado() -> void:
+	_intentar_autosave()
 	_ir_a_escena_retorno()
+
+
+const SaveLocalProfileHelperScript := preload(
+	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
+)
 
 
 func _refrescar_vista_previa_desde_formulario(_text: String = "") -> void:
 	_actualizar_etiquetas_vista_previa(
 		username_input.text.strip_edges(),
 		email_input.text.strip_edges(),
-		age_input.text.strip_edges(),
+		birth_date_input.text.strip_edges(),
 		avatar_path_input.text
 	)
 
@@ -163,7 +181,7 @@ func _refrescar_vista_previa_desde_formulario(_text: String = "") -> void:
 func _actualizar_etiquetas_vista_previa(
 	username: String,
 	email: String,
-	age_text: String,
+	birth_date_text: String,
 	avatar_path: String
 ) -> void:
 	profile_name_preview_label.text = (
@@ -172,8 +190,11 @@ func _actualizar_etiquetas_vista_previa(
 		else SaveManager.DEFAULT_PROFILE_NAME
 	)
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
-	profile_age_preview_label.text = "Edad: %s" % (
-		age_text if not age_text.is_empty() else "sin dato"
+	var age_preview := SaveLocalProfileHelperScript.calcular_edad_desde_fecha_nacimiento(
+		birth_date_text
+	)
+	profile_age_preview_label.text = (
+		"Edad: %d" % age_preview if age_preview > 0 else "Edad: sin dato"
 	)
 	avatar_preview.texture = SaveManager.cargar_textura_avatar(avatar_path)
 	avatar_placeholder_label.visible = avatar_preview.texture == null
