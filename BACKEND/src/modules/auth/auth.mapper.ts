@@ -6,7 +6,7 @@ export function toPublicUser(user: UserRow): PublicUser {
     id: user.id,
     username: user.username,
     name: user.name,
-    mail: user.mail ?? user.email,
+    mail: user.mail,
     birth_date: formatBirthDate(user.birth_date)
   };
 }

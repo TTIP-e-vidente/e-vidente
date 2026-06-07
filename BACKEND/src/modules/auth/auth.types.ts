@@ -33,7 +33,6 @@ export interface LoginInput {
 export interface UserRow {
   id: string;
   username: string;
-  email: string | null;
   password_hash: string | null;
   display_name: string | null;
   birth_date: Date | string | null;
