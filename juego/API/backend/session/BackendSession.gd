@@ -115,6 +115,8 @@ func _cargar_datos_online_interno() -> Dictionary:
 	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
 	_progreso_online_en_cache = datos_progreso
 	_aplicar_progreso_online_al_save_local()
+	# Fire-and-forget: descarga el avatar del backend si no hay uno local.
+	_descargar_avatar_si_falta()
 
 	return {
 		"ok": true,
@@ -156,6 +158,12 @@ func registrar_cuenta(
 	var resultado := await _api.registrar_cuenta(usuario, nombre, mail, clave, fecha_nacimiento)
 	_procesar_resultado_de_auth(resultado)
 	return resultado
+
+
+func subir_avatar(base64_data: String, mime_type: String) -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+	return await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
 
 
 func obtener_usuario_del_servidor() -> Dictionary:
@@ -333,3 +341,51 @@ func _aplicar_progreso_online_al_save_local() -> void:
 	if SaveManager == null:
 		return
 	SaveManager.sincronizar_con_cuenta_online(_usuario_en_cache, _progreso_online_en_cache)
+
+
+func _descargar_avatar_si_falta() -> void:
+	if SaveManager == null or not _auth.esta_logueado():
+		return
+
+	var local_path := SaveManager.obtener_ruta_avatar_usuario_actual()
+	if not local_path.is_empty() and not SaveManager.es_ruta_avatar_vinculada(local_path):
+		if SaveManager.migrar_avatar_gestionado_si_posible(local_path):
+			return
+		SaveManager.limpiar_avatar_perfil()
+		local_path = ""
+
+	if local_path.is_empty() and SaveManager.vincular_avatar_local_existente_si_hay():
+		return
+
+	local_path = SaveManager.obtener_ruta_avatar_usuario_actual()
+	if not local_path.is_empty() and FileAccess.file_exists(local_path):
+		return
+
+	var resultado := await _api.descargar_avatar(_auth.obtener_token())
+	if not bool(resultado.get("ok", false)):
+		return
+	var data: Variant = resultado.get("data", {})
+	if not data is Dictionary:
+		return
+	var b64 := str((data as Dictionary).get("data", ""))
+	var mime := str((data as Dictionary).get("mimeType", "image/png"))
+	if b64.is_empty():
+		return
+	_guardar_avatar_descargado(b64, mime)
+
+
+func _guardar_avatar_descargado(base64_data: String, mime_type: String) -> void:
+	if SaveManager == null:
+		return
+	var bytes := Marshalls.base64_to_raw(base64_data)
+	if bytes.is_empty():
+		return
+	var ext := "png"
+	if "jpeg" in mime_type or "jpg" in mime_type:
+		ext = "jpg"
+	elif "webp" in mime_type:
+		ext = "webp"
+	var path := SaveManager.guardar_avatar_bytes_vinculado(bytes, ext)
+	if path.is_empty():
+		return
+	print("[BackendSession] Avatar descargado y guardado: ", path)

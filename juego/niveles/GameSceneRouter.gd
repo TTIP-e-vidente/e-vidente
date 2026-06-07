@@ -452,7 +452,7 @@ func _cambiar_escena_to_path(tree: SceneTree, scene_path: String) -> void:
 		return
 	var preloaded_scene: PackedScene = _take_preloaded_scene(scene_path)
 	if preloaded_scene != null:
-		tree.cambiar_escena_to_packed(preloaded_scene)
+		tree.change_scene_to_packed(preloaded_scene)
 		return
 	tree.change_scene_to_file(scene_path)
 

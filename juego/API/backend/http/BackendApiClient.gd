@@ -3,6 +3,7 @@ extends Node
 
 const DEFAULT_BASE_URL := "http://localhost:3000"
 const HTTP_TIMEOUT := 3.0
+const AVATAR_UPLOAD_TIMEOUT := 30.0
 
 var base_url: String = DEFAULT_BASE_URL
 var _pool: Array[HTTPRequest] = []
@@ -66,8 +67,26 @@ func guardar_progreso(token: String, resumen_partida: Dictionary) -> Dictionary:
 	return await _enviar_post("/player/me/progress", token, body)
 
 
+func guardar_progreso_batch(token: String, items: Array) -> Dictionary:
+	var body := JSON.stringify({"items": items})
+	return await _enviar_post("/player/me/progress/batch", token, body)
+
+
 func obtener_progreso(token: String) -> Dictionary:
 	return await _obtener_json("/player/me/progress", token)
+
+
+func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:
+	# Avatar usa timeout largo por el tamaño del payload base64.
+	var body := JSON.stringify({"data": data, "mimeType": mime_type})
+	var headers := _armar_headers(token)
+	return await _enviar_peticion_con_timeout(
+		HTTPClient.METHOD_POST, "/player/me/avatar", headers, body, AVATAR_UPLOAD_TIMEOUT
+	)
+
+
+func descargar_avatar(token: String) -> Dictionary:
+	return await _obtener_json("/player/me/avatar", token)
 
 
 func _enviar_post(endpoint: String, token: String, body: String) -> Dictionary:
@@ -106,18 +125,50 @@ func _enviar_peticion(
 
 	var result: Array = await http.request_completed
 	_liberar_http(http)
+	return _parsear_respuesta(method, endpoint, result)
 
+
+# Para requests con payload grande (ej: avatar). Usa un nodo dedicado, no el pool.
+func _enviar_peticion_con_timeout(
+	method: HTTPClient.Method,
+	endpoint: String,
+	headers: PackedStringArray,
+	body: String,
+	timeout: float
+) -> Dictionary:
+	var http := HTTPRequest.new()
+	http.timeout = timeout
+	add_child(http)
+
+	var start_error := http.request(base_url + endpoint, headers, method, body)
+	if start_error != OK:
+		http.queue_free()
+		return {
+			"ok": false,
+			"status": 0,
+			"error": "HTTPRequest no pudo iniciarse (error %d)" % start_error,
+		}
+
+	var result: Array = await http.request_completed
+	http.queue_free()
+	return _parsear_respuesta(method, endpoint, result)
+
+
+func _parsear_respuesta(
+	method: HTTPClient.Method,
+	endpoint: String,
+	result: Array
+) -> Dictionary:
 	var result_code: int = result[0]
 	var response_code: int = result[1]
 	var body_bytes: PackedByteArray = result[3]
 
 	if result_code != HTTPRequest.RESULT_SUCCESS:
-		var connection_error := _mensaje_error_conexion(result_code)
 		return {
 			"ok": false,
 			"status": 0,
 			"result_code": result_code,
-			"error": connection_error,
+			"error": _mensaje_error_conexion(result_code),
 		}
 
 	var body_text := body_bytes.get_string_from_utf8()

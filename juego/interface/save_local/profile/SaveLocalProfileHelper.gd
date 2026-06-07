@@ -192,6 +192,34 @@ func clave_archivo_segura(raw_key: String) -> String:
 	return safe_key
 
 
+func construir_ruta_avatar_gestionada(
+	avatars_dir: String,
+	user_key: String,
+	extension: String = "png"
+) -> String:
+	var ext := extension.strip_edges().to_lower()
+	if ext.is_empty():
+		ext = "png"
+	return "%s/%s.%s" % [avatars_dir, clave_archivo_segura(user_key), ext]
+
+
+func es_ruta_avatar_gestionada(path: String, avatars_dir: String, user_key: String) -> bool:
+	var clean_path := path.strip_edges()
+	if clean_path.is_empty() or not clean_path.begins_with("%s/" % avatars_dir):
+		return false
+	var safe_key := clave_archivo_segura(user_key)
+	var base_name := clean_path.get_file().get_basename()
+	return base_name == safe_key or base_name.begins_with("%s_" % safe_key)
+
+
+func buscar_avatar_gestionado_existente(avatars_dir: String, user_key: String) -> String:
+	for ext in ["png", "jpg", "jpeg", "webp"]:
+		var candidate: String = construir_ruta_avatar_gestionada(avatars_dir, user_key, ext)
+		if FileAccess.file_exists(candidate):
+			return candidate
+	return ""
+
+
 func es_email_valido(email: String) -> bool:
 	var regex := RegEx.new()
 	regex.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")

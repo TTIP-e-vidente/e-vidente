@@ -107,18 +107,21 @@ func _cargar_estado_perfil_actual() -> void:
 	email_input.text = SaveManager.obtener_email_usuario_actual()
 	avatar_path_input.text = SaveManager.obtener_ruta_avatar_usuario_actual()
 
-	# Actualizar controles de avatar y vista previa
 	_refrescar_controles_avatar()
 	_actualizar_etiquetas_vista_previa(
 		username, email_input.text, birth_date_input.text, avatar_path_input.text
 	)
 
-	# Mostrar ultimo guardado
 	var last_reason := SaveManager.obtener_motivo_ultimo_guardado()
 	if last_reason.is_empty():
 		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
 	else:
 		summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ")
+
+	# Sincroniza el avatar local con el backend al abrir la pantalla de perfil.
+	# Cubre el caso de usuarios que ya tenían avatar antes de que existiera este feature.
+	if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
+		_subir_avatar_al_backend()
 
 
 func _on_boton_elegir_avatar_presionado() -> void:
@@ -163,6 +166,8 @@ func _intentar_autosave() -> void:
 
 func _on_boton_registrar_presionado() -> void:
 	_intentar_autosave()
+	if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
+		_subir_avatar_al_backend()
 	if SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(
 		birth_date_input.text.strip_edges()
 	) or birth_date_input.text.strip_edges().is_empty():
@@ -222,6 +227,30 @@ func _aplicar_ruta_avatar(path: String) -> void:
 	_refrescar_controles_avatar()
 	_refrescar_vista_previa_desde_formulario()
 	_intentar_autosave()
+	if BackendSession.esta_logueado():
+		_subir_avatar_al_backend()
+
+
+func _subir_avatar_al_backend() -> void:
+	var persisted_path := SaveManager.obtener_ruta_avatar_usuario_actual()
+	if persisted_path.is_empty():
+		return
+	var bytes := FileAccess.get_file_as_bytes(persisted_path)
+	if bytes.is_empty():
+		return
+	var base64_data := Marshalls.raw_to_base64(bytes)
+	var ext := persisted_path.get_extension().to_lower()
+	var mime_type := "image/png"
+	if ext == "jpg" or ext == "jpeg":
+		mime_type = "image/jpeg"
+	elif ext == "webp":
+		mime_type = "image/webp"
+	_establecer_feedback("Subiendo foto...", true)
+	var result := await BackendSession.subir_avatar(base64_data, mime_type)
+	if bool(result.get("ok", false)):
+		_establecer_feedback("Foto guardada ✓", true)
+	else:
+		print("[Auth] Avatar upload failed: ", result.get("error", ""))
 
 
 func _refrescar_controles_avatar() -> void:

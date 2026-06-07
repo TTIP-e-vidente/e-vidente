@@ -54,7 +54,7 @@ var _loaded_from: String = "default"
 var _recovered_from: String = ""
 var _last_error: String = ""
 
-var _profile_helper: RefCounted
+var _profile_helper: SaveLocalProfileHelperScript
 var _disk_writer: RefCounted
 var _schema: RefCounted
 var _data_loader: RefCounted
@@ -151,6 +151,21 @@ func obtener_textura_avatar_usuario_actual() -> Texture2D:
 	return cargar_textura_avatar(avatar_path)
 
 
+# Aplica una ruta de avatar ya persistida (descargada del backend) sin re-copiar el archivo.
+func aplicar_ruta_avatar_descargada(path: String) -> void:
+	var clean_path := path.strip_edges()
+	if clean_path.is_empty():
+		return
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	if str(profile.get("avatar_path", "")) == clean_path:
+		return
+	profile["avatar_path"] = clean_path
+	save_data["profile"] = profile
+	_marcar_guardado_sucio()
+	_guardar_estado_actual("avatar_online_sync", "", {}, false)
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
 func obtener_perfil_usuario_actual() -> Dictionary:
 	var stored_profile: Variant = save_data.get("profile", {})
 	if not stored_profile is Dictionary:
@@ -190,6 +205,86 @@ func obtener_edad_usuario_actual() -> int:
 
 func obtener_ruta_avatar_usuario_actual() -> String:
 	return str(obtener_perfil_usuario_actual().get("avatar_path", "")).strip_edges()
+
+
+func obtener_clave_avatar_perfil() -> String:
+	return _resolver_clave_avatar(obtener_perfil_usuario_actual())
+
+
+func es_ruta_avatar_vinculada(path: String) -> bool:
+	var user_key := obtener_clave_avatar_perfil()
+	if user_key.is_empty():
+		return false
+	return _profile_helper.es_ruta_avatar_gestionada(path, AVATARS_DIR, user_key)
+
+
+func limpiar_avatar_perfil() -> void:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	if str(profile.get("avatar_path", "")).is_empty():
+		return
+	profile["avatar_path"] = ""
+	save_data["profile"] = profile
+	_marcar_guardado_sucio()
+
+
+func vincular_avatar_local_existente_si_hay() -> bool:
+	var user_key := obtener_clave_avatar_perfil()
+	if user_key.is_empty():
+		return false
+	var existing_path: String = _profile_helper.buscar_avatar_gestionado_existente(
+		AVATARS_DIR, user_key
+	)
+	if existing_path.is_empty():
+		return false
+	aplicar_ruta_avatar_descargada(existing_path)
+	return true
+
+
+func migrar_avatar_gestionado_si_posible(source_path: String) -> bool:
+	var clean_source := source_path.strip_edges()
+	if clean_source.is_empty() or not FileAccess.file_exists(clean_source):
+		return false
+	var user_key := obtener_clave_avatar_perfil()
+	if user_key.is_empty():
+		return false
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	var migrated: Dictionary = _profile_helper.aplicar_cambio_avatar(
+		profile,
+		clean_source,
+		str(profile.get("avatar_path", "")).strip_edges(),
+		AVATARS_DIR,
+		user_key
+	)
+	if not bool(migrated.get("ok", false)):
+		return false
+	save_data["profile"] = profile
+	_marcar_guardado_sucio()
+	_guardar_estado_actual("avatar_migrated", "", {}, false)
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+	return true
+
+
+func guardar_avatar_bytes_vinculado(bytes: PackedByteArray, extension: String) -> String:
+	if bytes.is_empty():
+		return ""
+	var user_key := obtener_clave_avatar_perfil()
+	if user_key.is_empty():
+		return ""
+	var ext := extension.strip_edges().to_lower()
+	if ext.is_empty():
+		ext = "png"
+	var path: String = _profile_helper.construir_ruta_avatar_gestionada(
+		AVATARS_DIR, user_key, ext
+	)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(AVATARS_DIR))
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return ""
+	file.store_buffer(bytes)
+	file.flush()
+	file = null
+	aplicar_ruta_avatar_descargada(path)
+	return path
 
 
 func obtener_estado_guardado_actual() -> String:
@@ -529,6 +624,7 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 		# (no sincronizado aún) se restaura y se fusiona con el del servidor.
 		_respaldar_node_progress_por_usuario(linked)
 		_reiniciar_progreso_juego_preservando_perfil()
+		limpiar_avatar_perfil()
 		# El historial de sesión del Armador es estático (alcance de proceso).
 		# Si no se limpia al cambiar usuario, las actividades jugadas por el
 		# usuario anterior bloquean el pool del usuario entrante en la misma
@@ -699,8 +795,22 @@ func _actualizar_avatar_perfil(profile: Dictionary, avatar_source_path: String) 
 		avatar_source_path.strip_edges(),
 		previous_avatar_path,
 		AVATARS_DIR,
-		LOCAL_PROFILE_KEY
+		_resolver_clave_avatar(profile)
 	)
+
+
+func _resolver_clave_avatar(profile: Dictionary) -> String:
+	if BackendSession != null and BackendSession.esta_logueado():
+		var online_username := BackendSession.obtener_usuario().strip_edges()
+		if not online_username.is_empty():
+			return online_username
+	var linked := obtener_cuenta_online_vinculada()
+	if not linked.is_empty():
+		return linked
+	var username := str(profile.get("username", "")).strip_edges()
+	if not username.is_empty() and username != DEFAULT_PROFILE_NAME:
+		return username
+	return LOCAL_PROFILE_KEY
 
 
 func _aplicar_actualizaciones_identidad_perfil(

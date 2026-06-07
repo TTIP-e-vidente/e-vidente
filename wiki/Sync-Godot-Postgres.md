@@ -40,6 +40,7 @@ En Godot, `user://` mapea a:
 | `user://save_data.json` | progreso del jugador |
 | `user://backend_sync_queue.json` | cola de partidas pendientes de subir |
 | `user://backend_session.json` | JWT guardado entre sesiones |
+| `user://avatars/{usuario}.{ext}` | fotos de perfil, una por cuenta |
 
 Para inspeccionar en PowerShell:
 
@@ -64,10 +65,11 @@ print(ProjectSettings.globalize_path("user://backend_sync_queue.json"))
 2. `SincronizadorPartida.sincronizar_post_partida` → construye un `RunSummary` con `clientRunId` único y lo encola con `LocalSyncQueue.encolar_resumen_partida`.
 3. Si no hay sesión → queda `pending`, se reintenta cuando vuelva a loguearse.
 4. Si hay sesión → `SyncApi.reintentar_pendientes()` → `BackendSession.reintentar_sync_pendiente()`.
-5. `ProgressSyncService.reintentar_pendientes` hace un POST por ítem de manera secuencial.
-6. Al terminar, escribe todos los resultados a disco en un solo paso (`LocalSyncQueue.aplicar_resultados`).
-7. Si alguno sincronizó exitosamente → `limpiar_cola` elimina los viejos del historial.
-8. `BackendSession._aplicar_racha_de_respuesta_sync` mergea racha y `completedNodes` de la respuesta al save local.
+5. `ProgressSyncService.reintentar_pendientes` arma un array con todos los `payload` pendientes y hace **un solo POST** a `/player/me/progress/batch`.
+6. El backend procesa cada ítem en su propia transacción y devuelve `results[]` indexado por `clientRunId`.
+7. Al terminar, escribe todos los resultados a disco en un solo paso (`LocalSyncQueue.aplicar_resultados`).
+8. Si alguno sincronizó exitosamente → `limpiar_cola` elimina los viejos del historial.
+9. `BackendSession._aplicar_racha_de_respuesta_sync` mergea racha y `completedNodes` de la respuesta al save local.
 
 ---
 
@@ -81,13 +83,16 @@ Godot
   SyncApi / AuthApi        → punto de entrada desde el juego
   SincronizadorPartida     → arma payload y encola
   LocalSyncQueue           → backend_sync_queue.json + cache en memoria
-  ProgressSyncService      → POST y retry secuencial
+  ProgressSyncService      → batch POST y retry
   BackendApiClient         → HTTP con pool de nodos reutilizados
   ImportadorProgresoOnline → traduce GET del servidor al formato local
 
 Backend (Node.js)
-  POST /player/me/progress
+  POST /player/me/progress          ← un solo RunSummary (legacy, sigue existiendo)
+  POST /player/me/progress/batch    ← array de RunSummary (sync de cola)
   GET  /player/me/progress
+  POST /player/me/avatar            ← sube foto en base64
+  GET  /player/me/avatar
   GET  /auth/me
 ```
 
@@ -159,7 +164,40 @@ La cola tiene un cache en memoria para evitar leer el JSON a cada llamada. Se in
 }
 ```
 
-Cuando el POST responde 200, ese ítem pasa a `"status": "synced"` y se completa `syncedAt`.
+Cuando el batch responde 200, cada ítem exitoso pasa a `"status": "synced"` y se completa `syncedAt`. Si el batch entero falla (red caída, 401, etc.), todos los ítems quedan `pending` para el próximo retry.
+
+---
+
+## Sync batch (`POST /player/me/progress/batch`)
+
+Desde junio 2026 la cola ya no hace un POST por partida. Envía todos los pendientes en un request:
+
+```json
+{
+  "items": [
+    { "clientRunId": "run_...", "restriction": "celiaquia", "nodeId": "...", "accuracy": 85, "completed": true },
+    { "clientRunId": "run_...", "restriction": "celiaquia", "nodeId": "...", "accuracy": 90, "completed": true }
+  ]
+}
+```
+
+Respuesta:
+
+```json
+{
+  "results": [
+    { "clientRunId": "run_...", "ok": true, "data": { "...": "..." } },
+    { "clientRunId": "run_...", "ok": false, "error": "..." }
+  ],
+  "summary": { "total": 2, "synced": 1, "failed": 1 }
+}
+```
+
+Detalles:
+- Máximo **50 ítems** por batch.
+- Cada ítem corre `saveAuthenticatedProgress()` en su propia transacción (mismo advisory lock por usuario).
+- Un ítem fallido no cancela los demás.
+- Si la respuesta HTTP falla por completo, la cola no marca nada como sincronizado.
 
 ---
 
@@ -183,7 +221,30 @@ El advisory lock garantiza que si dos dispositivos suben progreso del mismo usua
 
 ## HTTP (`BackendApiClient`)
 
-Los nodos `HTTPRequest` se guardan en un pool (`_pool: Array[HTTPRequest]`) en vez de crearlos y destruirlos por cada request. Al hacer una petición, se saca uno del pool (o se crea si está vacío) y se devuelve cuando termina. El timeout es de 3 segundos.
+Los nodos `HTTPRequest` se guardan en un pool (`_pool: Array[HTTPRequest]`) en vez de crearlos y destruirlos por cada request. El timeout por defecto es de 3 segundos; la subida de avatar usa 30 segundos.
+
+---
+
+## Avatar de perfil
+
+Además del progreso, la foto de perfil se sincroniza por separado.
+
+**Postgres:**
+
+```
+users.avatar_image_id  →  images (data base64, mime_type, user_id UNIQUE)
+```
+
+**Local:** cada cuenta tiene su archivo en `user://avatars/{username}.{png|jpg|webp}`. La clave sale de la sesión online activa, no de un nombre genérico compartido.
+
+**Flujo:**
+
+1. El jugador elige foto → `SaveManager` copia a `user://avatars/{usuario}.ext`.
+2. Si hay sesión → `POST /player/me/avatar` con `{ data, mimeType }`.
+3. Al login / cargar datos online → `GET /player/me/avatar` si el archivo local no existe o la ruta no corresponde al usuario logueado.
+4. Al cambiar de cuenta (`linked_online_username` ≠ username nuevo) → se limpia `avatar_path` del perfil y se descarga la foto del usuario entrante.
+
+Subida desde: pantalla de perfil (`auth.gd`), botón "Guardar ahora" del overlay, y al abrir perfil si ya hay foto local pendiente de sync.
 
 ---
 
@@ -194,7 +255,7 @@ Los nodos `HTTPRequest` se guardan en un pool (`_pool: Array[HTTPRequest]`) en v
 3. `GET /auth/me` y `GET /player/me/progress` en secuencia.
 4. `SaveManager.sincronizar_con_cuenta_online()`:
    - Mismo usuario que `linked_online_username` → merge local + servidor.
-   - Usuario distinto → backup del progreso anterior, reset local, importar progreso del nuevo.
+   - Usuario distinto → backup del progreso anterior, reset local, **limpiar avatar**, importar progreso del nuevo.
 
 `linked_online_username` en `save_data.json` indica con qué cuenta quedó vinculado el save local. Se conserva al cerrar sesión para que al volver el mismo usuario recupere su progreso offline.
 
@@ -234,9 +295,10 @@ Cada partida tiene un ID único (`run_<timestamp>_<ms>_<rand>`). Si se reenvía 
 | `juego/API/backend/session/BackendSession.gd` | JWT, cache online, background sync, dirty-flag |
 | `juego/API/backend/sync/SincronizadorPartida.gd` | Arma RunSummary y encola |
 | `juego/API/backend/sync/LocalSyncQueue.gd` | Cola en disco + cache en memoria |
-| `juego/API/backend/sync/ProgressSyncService.gd` | POST secuencial y retry |
+| `juego/API/backend/sync/ProgressSyncService.gd` | Batch POST y retry |
 | `juego/API/backend/sync/ImportadorProgresoOnline.gd` | GET → formato local |
 | `BACKEND/src/modules/progreso-restriccion/progreso-restriccion.service.ts` | Persistencia en Postgres |
+| `BACKEND/src/modules/image/image.controller.ts` | Avatar POST/GET |
 
 ---
 
@@ -247,6 +309,22 @@ Cada partida tiene un ID único (`run_<timestamp>_<ms>_<rand>`). Si se reenvía 
 ```powershell
 type "$env:APPDATA\Godot\app_userdata\Evidente\backend_sync_queue.json"
 type "$env:APPDATA\Godot\app_userdata\Evidente\save_data.json"
+```
+
+**Avatar en Postgres:**
+
+```sql
+SELECT u.username, u.avatar_image_id, i.mime_type, length(i.data) AS data_len, i.updated_at
+FROM users u
+LEFT JOIN images i ON i.id = u.avatar_image_id
+WHERE u.username IN ('agus', 'margo');
+```
+
+**Script de diagnóstico (backend):**
+
+```powershell
+cd BACKEND
+node scripts/check-sync-status.js
 ```
 
 **Nodos completados en Postgres:**
@@ -276,6 +354,8 @@ SyncApi.reintentar_pendientes()
 | EXP no sube | `expToAdd` en el payload; respuesta del POST |
 | Racha incorrecta al login | orden del merge en `_importar_progreso_online` |
 | Ítem con `status: failed` | llegó a 5 intentos; revisar `lastError` |
+| Avatar de otro usuario | `avatar_path` en save; archivo en `user://avatars/`; re-login fuerza descarga |
+| Batch no drena cola | consola Godot: respuesta de `/player/me/progress/batch`; backend levantado |
 
 ---
 

@@ -101,6 +101,9 @@ func _on_guardar_presionado() -> void:
 		mostrar_feedback_guardado("Guardado localmente")
 		return
 
+	# Sube el avatar al backend si hay uno local (fire-and-forget).
+	_subir_avatar_si_tiene()
+
 	var pending := LocalSyncQueue.listar_pendientes()
 	if pending.is_empty():
 		mostrar_feedback_guardado("Todo al día ✓")
@@ -116,6 +119,25 @@ func _on_guardar_presionado() -> void:
 		_al_sync_pendientes_terminado, CONNECT_ONE_SHOT
 	)
 	SyncApi.reintentar_todos_pendientes()
+
+
+func _subir_avatar_si_tiene() -> void:
+	var path := SaveManager.obtener_ruta_avatar_usuario_actual()
+	if path.is_empty():
+		return
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty():
+		return
+	var base64_data := Marshalls.raw_to_base64(bytes)
+	var ext := path.get_extension().to_lower()
+	var mime_type := "image/png"
+	if ext == "jpg" or ext == "jpeg":
+		mime_type = "image/jpeg"
+	elif ext == "webp":
+		mime_type = "image/webp"
+	var result := await BackendSession.subir_avatar(base64_data, mime_type)
+	if not bool(result.get("ok", false)):
+		print("[ProfileOverlay] Avatar upload failed: ", result.get("error", ""))
 
 
 func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:

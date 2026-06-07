@@ -7,6 +7,7 @@ import {
   saveAuthenticatedProgress,
   saveDevProgress
 } from './progreso-restriccion.service';
+import { AppError } from '../../shared/errors/app_error';
 
 export async function getProgresoRestriccionController(req: Request, res: Response): Promise<void> {
   try {
@@ -33,6 +34,50 @@ export async function postProgresoRestriccionController(req: Request, res: Respo
     const input = { ...req.body, userId };
     const response = await saveAuthenticatedProgress(input);
     sendResponse(res, 201, response);
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+
+export async function postBatchProgresoRestriccionController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError(401, 'UNAUTHORIZED', 'No active session');
+
+    const { items } = req.body as { items?: unknown };
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new AppError(400, 'INVALID_BODY', 'items debe ser un array no vacío');
+    }
+    if (items.length > 50) {
+      throw new AppError(400, 'INVALID_BODY', 'máximo 50 ítems por batch');
+    }
+
+    const results: Array<{ clientRunId: string; ok: boolean; data?: unknown; error?: string }> = [];
+    let synced = 0;
+    let failed = 0;
+
+    for (const item of items) {
+      const clientRunId = typeof (item as any)?.clientRunId === 'string'
+        ? (item as any).clientRunId
+        : '';
+      try {
+        const data = await saveAuthenticatedProgress({ ...(item as object), userId });
+        results.push({ clientRunId, ok: true, data });
+        synced++;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'error desconocido';
+        results.push({ clientRunId, ok: false, error: message });
+        failed++;
+      }
+    }
+
+    sendResponse(res, 200, {
+      results,
+      summary: { total: items.length, synced, failed }
+    });
   } catch (error) {
     sendError(res, error);
   }

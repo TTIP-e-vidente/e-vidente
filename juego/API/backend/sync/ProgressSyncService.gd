@@ -91,20 +91,48 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 	var sesion_expirada := false
 	var resultados: Array[Dictionary] = []
 
+	# Batch: un solo HTTP request para todos los ítems.
+	var payloads: Array = []
 	for tarea: Dictionary in tareas:
-		var cid: String = tarea.cid
-		var response: Dictionary = await _api_client.guardar_progreso(token, tarea.payload)
-		if response.get("status", 0) == 401:
-			resultados.append({"id": cid, "ok": false, "error": "Sesion expirada"})
+		payloads.append(tarea.payload)
+
+	var batch_response: Dictionary = await _api_client.guardar_progreso_batch(token, payloads)
+
+	if batch_response.get("status", 0) == 401:
+		sesion_expirada = true
+		for tarea: Dictionary in tareas:
+			resultados.append({"id": tarea.cid, "ok": false, "error": "Sesion expirada"})
 			failed_count += 1
-			sesion_expirada = true
-			break
-		elif response.get("ok", false):
-			resultados.append({"id": cid, "ok": true})
-			synced_count += 1
-		else:
-			var reason := str(response.get("error", "Sync pendiente fallida"))
-			resultados.append({"id": cid, "ok": false, "error": reason})
+	elif batch_response.get("ok", false):
+		var data: Variant = batch_response.get("data", {})
+		var batch_results: Variant = (
+			(data as Dictionary).get("results", []) if data is Dictionary else []
+		)
+		# Indexar por clientRunId para aplicar resultados en orden de la cola.
+		var by_cid: Dictionary = {}
+		if batch_results is Array:
+			for item: Variant in (batch_results as Array):
+				if not item is Dictionary:
+					continue
+				var cid_key := str((item as Dictionary).get("clientRunId", ""))
+				by_cid[cid_key] = item
+		for tarea: Dictionary in tareas:
+			var cid: String = tarea.cid
+			var item_result: Variant = by_cid.get(cid, null)
+			if item_result is Dictionary and bool((item_result as Dictionary).get("ok", false)):
+				resultados.append({"id": cid, "ok": true})
+				synced_count += 1
+			else:
+				var err := ""
+				if item_result is Dictionary:
+					err = str((item_result as Dictionary).get("error", ""))
+				resultados.append({"id": cid, "ok": false, "error": err})
+				failed_count += 1
+	else:
+		# Batch entero falló (ej: red caída, servidor no disponible).
+		var reason := str(batch_response.get("error", "Batch sync fallido"))
+		for tarea: Dictionary in tareas:
+			resultados.append({"id": tarea.cid, "ok": false, "error": reason})
 			failed_count += 1
 
 	LocalSyncQueue.aplicar_resultados(resultados)

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getDevProgresoRestriccionController,
   getProgresoRestriccionController,
+  postBatchProgresoRestriccionController,
   postDevProgresoRestriccionController,
   postProgresoRestriccionController
 } from './progreso-restriccion.controller';
@@ -12,6 +13,7 @@ export const progresoRestriccionRouter = Router();
 // Endpoints montados en /player por app.ts
 progresoRestriccionRouter.get('/me/progress', authenticateToken, getProgresoRestriccionController);
 progresoRestriccionRouter.post('/me/progress', authenticateToken, postProgresoRestriccionController);
+progresoRestriccionRouter.post('/me/progress/batch', authenticateToken, postBatchProgresoRestriccionController);
 
 // Dev endpoints montados en /dev/progreso-restriccion por app.ts
 export const devProgresoRestriccionRouter = Router();
