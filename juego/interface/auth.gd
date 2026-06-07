@@ -62,9 +62,10 @@ func _cachear_nodos_ui() -> void:
 	avatar_placeholder_label = summary_content.get_node(
 		"AvatarPreviewFrame/AvatarPlaceholder"
 	) as Label
-	avatar_preview = summary_content.get_node(
-		"AvatarPreviewFrame/AvatarPreview"
-	) as TextureRect
+	var avatar_frame := summary_content.get_node("AvatarPreviewFrame") as Control
+	avatar_preview = avatar_frame.get_node("AvatarPreview") as TextureRect
+	avatar_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	avatar_frame.clip_contents = true
 	username_input = form_content.get_node(
 		"PrimaryFieldsRow/UsernameColumn/UsernameEdit"
 	) as LineEdit
@@ -108,7 +109,9 @@ func _cargar_estado_perfil_actual() -> void:
 
 	# Actualizar controles de avatar y vista previa
 	_refrescar_controles_avatar()
-	_actualizar_etiquetas_vista_previa(username, email_input.text, birth_date_input.text, avatar_path_input.text)
+	_actualizar_etiquetas_vista_previa(
+		username, email_input.text, birth_date_input.text, avatar_path_input.text
+	)
 
 	# Mostrar ultimo guardado
 	var last_reason := SaveManager.obtener_motivo_ultimo_guardado()

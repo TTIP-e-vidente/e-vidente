@@ -13,6 +13,7 @@ signal close_requested
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
 @onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
+@onready var _avatar_bg: Control = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg
 @onready var _avatar_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarLabel
 @onready var _username_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/UsernameLabel
 @onready var _email_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow/EmailLabel
@@ -41,6 +42,15 @@ func _ready() -> void:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
 	_aplicar_fuentes()
+	_configurar_avatar_display()
+
+
+func _configurar_avatar_display() -> void:
+	if is_instance_valid(_avatar_preview):
+		_avatar_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_avatar_preview.custom_minimum_size = Vector2(56, 56)
+	if is_instance_valid(_avatar_bg):
+		_avatar_bg.clip_contents = true
 
 
 func _aplicar_fuentes() -> void:
