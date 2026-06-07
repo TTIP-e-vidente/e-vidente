@@ -1,3 +1,4 @@
+import { formatBirthDate } from '../../shared/validation/birth_date';
 import { PublicUser, UserRow } from './auth.types';
 
 export function toPublicUser(user: UserRow): PublicUser {
@@ -6,6 +7,6 @@ export function toPublicUser(user: UserRow): PublicUser {
     username: user.username,
     name: user.name,
     mail: user.mail ?? user.email,
-    age: user.age
+    birth_date: formatBirthDate(user.birth_date)
   };
 }

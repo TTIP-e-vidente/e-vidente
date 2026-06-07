@@ -10,7 +10,7 @@ interface DemoUser {
   name: string;
   mail: string;
   password: string;
-  age: number;
+  birthDate: string | null;
 }
 
 const DEMO_USERS: DemoUser[] = [
@@ -19,14 +19,14 @@ const DEMO_USERS: DemoUser[] = [
     name: 'Margo',
     mail: 'margo@test.com',
     password: '123',
-    age: 0,
+    birthDate: null,
   },
   {
     username: 'agus',
     name: 'Agus',
     mail: 'agus@test.com',
     password: '123',
-    age: 0,
+    birthDate: null,
   },
 ];
 
@@ -35,7 +35,7 @@ async function seedUser(user: DemoUser): Promise<void> {
 
   await pool.query(
     `
-    INSERT INTO users (username, name, mail, password_hash, age)
+    INSERT INTO users (username, name, mail, password_hash, birth_date)
     VALUES ($1, $2, $3, $4, $5)
     ON CONFLICT (username)
     DO UPDATE SET
@@ -44,7 +44,7 @@ async function seedUser(user: DemoUser): Promise<void> {
       password_hash = EXCLUDED.password_hash,
       updated_at    = now()
     `,
-    [user.username, user.name, user.mail, passwordHash, user.age]
+    [user.username, user.name, user.mail, passwordHash, user.birthDate]
   );
 
   console.log(`Seeded user: ${user.username}`);

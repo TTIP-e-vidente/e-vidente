@@ -14,7 +14,7 @@ import { UserPublicRow } from './user.types';
 export async function findPublicUserById(userId: string): Promise<UserPublicRow | null> {
   const result = await query<UserPublicRow>(
     `
-      SELECT id, username, name, COALESCE(mail, email) AS mail, age
+      SELECT id, username, name, COALESCE(mail, email) AS mail, birth_date
       FROM users
       WHERE id = $1;
     `,
@@ -30,7 +30,7 @@ export async function findPublicUserByUsername(
 ): Promise<UserPublicRow | null> {
   const result = await client.query<UserPublicRow>(
     `
-      SELECT id, username, name, COALESCE(mail, email) AS mail, age
+      SELECT id, username, name, COALESCE(mail, email) AS mail, birth_date
       FROM users
       WHERE username = $1;
     `,
@@ -54,7 +54,7 @@ export async function upsertDevUser(
         name = COALESCE(EXCLUDED.name, users.name),
         display_name = COALESCE(EXCLUDED.name, users.display_name),
         updated_at = now()
-      RETURNING id, username, name, COALESCE(mail, email) AS mail, age;
+      RETURNING id, username, name, COALESCE(mail, email) AS mail, birth_date;
     `,
     [username, name]
   );

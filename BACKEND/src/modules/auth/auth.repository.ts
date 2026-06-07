@@ -7,7 +7,7 @@ const userColumns = `
   email,
   password_hash,
   display_name,
-  age,
+  birth_date,
   created_at,
   updated_at,
   name,
@@ -69,11 +69,11 @@ export async function findByUsernameOrMail(value: string): Promise<UserRow | nul
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
   const result = await query<UserRow>(
     `
-      INSERT INTO users (username, name, mail, password_hash, age)
+      INSERT INTO users (username, name, mail, password_hash, birth_date)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING ${userColumns};
     `,
-    [input.username, input.name, input.mail, input.passwordHash, input.age]
+    [input.username, input.name, input.mail, input.passwordHash, input.birthDate]
   );
 
   return result.rows[0];

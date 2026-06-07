@@ -56,7 +56,7 @@ async function run(): Promise<void> {
         name: 'Player Auth',
         mail,
         password,
-        age: 24
+        birth_date: '2000-06-15'
       })
     });
     assert.equal(registerResponse.status, 201);

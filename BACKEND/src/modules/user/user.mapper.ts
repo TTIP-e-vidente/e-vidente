@@ -1,3 +1,4 @@
+import { formatBirthDate } from '../../shared/validation/birth_date';
 import { UserPublicRow } from './user.types';
 
 export interface PublicUser {
@@ -5,7 +6,7 @@ export interface PublicUser {
   username: string;
   name: string;
   mail: string | null;
-  age: number | null;
+  birth_date: string | null;
 }
 
 export function toPublicUser(row: UserPublicRow): PublicUser {
@@ -14,6 +15,6 @@ export function toPublicUser(row: UserPublicRow): PublicUser {
     username: row.username,
     name: row.name,
     mail: row.mail,
-    age: row.age
+    birth_date: formatBirthDate(row.birth_date)
   };
 }

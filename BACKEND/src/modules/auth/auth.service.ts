@@ -3,6 +3,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { authConfig, assertAuthConfig } from '../../config/auth';
 import { AppError } from '../../shared/errors/app_error';
 import { isNonEmptyString, isValidEmail } from '../../shared/validation/validators';
+import { parseBirthDateInput } from '../../shared/validation/birth_date';
 import { toPublicUser } from './auth.mapper';
 import * as authRepository from './auth.repository';
 import {
@@ -77,15 +78,10 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     throw new AuthError(400, 'INVALID_BODY', 'mail must be a valid email');
   }
 
-  const age =
-    input.age === undefined || input.age === null
-      ? null
-      : typeof input.age === 'number' && Number.isInteger(input.age) && input.age >= 0
-        ? input.age
-        : undefined;
+  const birthDate = parseBirthDateInput(input.birth_date);
 
-  if (age === undefined) {
-    throw new AuthError(400, 'INVALID_BODY', 'age must be a positive integer');
+  if (birthDate === undefined) {
+    throw new AuthError(400, 'INVALID_BODY', 'birth_date must be a valid ISO date (YYYY-MM-DD)');
   }
 
   const existingUsername = await authRepository.findByUsername(validUsername);
@@ -106,7 +102,7 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     name: validName,
     mail,
     passwordHash,
-    age
+    birthDate
   });
 
   return {

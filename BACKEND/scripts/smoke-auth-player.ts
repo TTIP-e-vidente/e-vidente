@@ -41,7 +41,7 @@ async function run(): Promise<void> {
         name: 'Smoke User',
         mail,
         password: 'Password123',
-        age: 24
+        birth_date: '2000-06-15'
       })
     });
     assert.equal(register.status, 201);

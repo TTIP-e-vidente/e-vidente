@@ -3,5 +3,5 @@ export interface UserPublicRow {
   username: string;
   name: string;
   mail: string | null;
-  age: number | null;
+  birth_date: Date | string | null;
 }

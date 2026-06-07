@@ -9,7 +9,7 @@ export interface PublicUser {
   username: string;
   name: string;
   mail: string | null;
-  age: number | null;
+  birth_date: string | null;
 }
 
 export interface AuthResponse {
@@ -22,7 +22,7 @@ export interface RegisterInput {
   name?: unknown;
   mail?: unknown;
   password?: unknown;
-  age?: unknown;
+  birth_date?: unknown;
 }
 
 export interface LoginInput {
@@ -36,7 +36,7 @@ export interface UserRow {
   email: string | null;
   password_hash: string | null;
   display_name: string | null;
-  age: number | null;
+  birth_date: Date | string | null;
   created_at: Date;
   updated_at: Date;
   name: string;
@@ -48,5 +48,5 @@ export interface CreateUserInput {
   name: string;
   mail: string | null;
   passwordHash: string;
-  age: number | null;
+  birthDate: string | null;
 }

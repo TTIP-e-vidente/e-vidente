@@ -77,7 +77,7 @@ async function run(): Promise<void> {
         name: 'Auth User',
         mail,
         password,
-        age: 24
+        birth_date: '2000-06-15'
       })
     });
 
@@ -89,7 +89,7 @@ async function run(): Promise<void> {
     assert.equal(registeredUser.username, username);
     assert.equal(registeredUser.name, 'Auth User');
     assert.equal(registeredUser.mail, mail);
-    assert.equal(registeredUser.age, 24);
+    assert.equal(registeredUser.birth_date, '2000-06-15');
     assert.equal('password_hash' in registeredUser, false);
     assert.equal('password' in registeredUser, false);
 
