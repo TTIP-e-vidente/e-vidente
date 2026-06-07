@@ -57,6 +57,12 @@ export async function ensureStreak(
   userId: string,
   profileId: string
 ): Promise<StreakRow> {
+  // Bloquea la fila del profile para serializar creaciones concurrentes del mismo usuario.
+  await client.query(
+    `SELECT id FROM profiles WHERE user_id = $1 FOR UPDATE`,
+    [userId]
+  );
+
   const existing = await findStreakForUser(client, userId);
   if (existing) {
     return existing;

@@ -5,7 +5,7 @@ extends RefCounted
 # Leer o abrir pantallas no debe incrementar ni recalcular dias.
 
 const SECONDS_PER_DAY := 86400
-const WARNING_START_HOUR_LOCAL := 20
+const WARNING_START_HOUR_LOCAL := 18
 
 
 # --- Estado estable ---------------------------------------------------------
@@ -78,7 +78,7 @@ static func _resolver_estado_visual(
 	if last_day == today:
 		return "active"
 	if _days_between(last_day, today) == 1:
-		return "warning" if _esta_en_ventana_de_warning(current_hour) else "active"
+		return "warning" if _esta_en_ventana_de_warning(current_hour) else "inactive"
 	return "inactive"
 
 
