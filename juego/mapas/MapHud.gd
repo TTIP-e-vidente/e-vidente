@@ -116,8 +116,13 @@ func _on_superposicion_edit_perfil_presionado() -> void:
 
 
 func _on_superposicion_guardar_presionado() -> void:
-	SaveManager.guardar_progreso_en_disco()
 	_actualizar_hud()
+
+
+func _on_superposicion_logout_presionado() -> void:
+	AuthApi.cerrar_sesion()
+	_ocultar_superposicion_perfil()
+	GameSceneRouter.go_to_main_menu(get_tree())
 
 
 func _on_superposicion_reiniciar_presionado() -> void:

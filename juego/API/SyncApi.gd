@@ -19,8 +19,6 @@ static func guardar_partida_en_servidor(resumen_partida: Dictionary) -> Dictiona
 	return await BackendSession.guardar_progreso_online(resumen_partida)
 
 
-## Llama a esto al terminar cualquier juego/minijuego.
-## Se encarga de armar el resumen, guardarlo offline y enviarlo al servidor.
 static func sincronizar_partida_terminada(
 		tree: SceneTree, resultado: Dictionary, stats: Dictionary) -> void:
 	SincronizadorPartida.sincronizar_post_partida(tree, resultado, stats)
@@ -28,6 +26,10 @@ static func sincronizar_partida_terminada(
 
 static func reintentar_pendientes() -> void:
 	BackendSession.reintentar_sync_pendiente()
+
+
+static func reintentar_todos_pendientes() -> void:
+	BackendSession.reintentar_todos_sync_pendiente()
 
 
 static func conectar_senales_sincronizacion(al_ok: Callable, al_fallo: Callable) -> void:

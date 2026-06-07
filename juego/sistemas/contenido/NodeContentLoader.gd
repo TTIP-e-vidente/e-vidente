@@ -33,6 +33,8 @@ const VALID_MEALS := [
 ]
 
 static var _default_pack_warning_shown := false
+static var _pack_cache: Dictionary = {}
+static var _items_catalog_cache: Dictionary = {}
 
 
 static func cargar_desde_contexto(context: Dictionary) -> Dictionary:
@@ -101,9 +103,15 @@ static func load_from_pack(
 
 static func load_pack(pack_id: String) -> Dictionary:
 	var clean_pack_id: String = _resolve_pack_id(pack_id)
+	if _pack_cache.has(clean_pack_id):
+		return {"ok": true, "error": "", "data": _pack_cache[clean_pack_id], "path": "cache"}
+
 	var mapa_dir: String = str(MAPA_DIR_BY_TRACK.get(clean_pack_id, "")).strip_edges()
 	if not mapa_dir.is_empty():
-		return _load_mapa_pack(clean_pack_id, mapa_dir)
+		var result: Dictionary = _load_mapa_pack(clean_pack_id, mapa_dir)
+		if result.get("ok", false):
+			_pack_cache[clean_pack_id] = result.get("data", {})
+		return result
 
 	var pack_path: String = str(PACK_PATH_BY_ID.get(clean_pack_id, "")).strip_edges()
 	if pack_path.is_empty():
@@ -129,6 +137,7 @@ static func load_pack(pack_id: String) -> Dictionary:
 	var validation_error: String = _validar_pack_minimal(pack, pack_path)
 	if not validation_error.is_empty():
 		return _error("Content Pack %s invalido: %s" % [clean_pack_id, validation_error])
+	_pack_cache[clean_pack_id] = pack
 	return {"ok": true, "error": "", "data": pack, "path": pack_path}
 
 
@@ -392,6 +401,9 @@ static func _validar_drag_food(
 
 
 static func _load_items_catalog() -> Dictionary:
+	if not _items_catalog_cache.is_empty():
+		return {"ok": true, "error": "", "data": _items_catalog_cache}
+
 	var file := FileAccess.open(ITEMS_CELIAQUIA_PATH, FileAccess.READ)
 	if file == null:
 		return _error("No se pudo abrir %s" % ITEMS_CELIAQUIA_PATH)
@@ -411,7 +423,8 @@ static func _load_items_catalog() -> Dictionary:
 	var validation_error: String = _validar_items_catalog(catalog)
 	if not validation_error.is_empty():
 		return _error(validation_error)
-	return {"ok": true, "error": "", "data": catalog}
+	_items_catalog_cache = catalog
+	return {"ok": true, "error": "", "data": _items_catalog_cache}
 
 
 static func _validar_items_catalog(catalog: Dictionary) -> String:

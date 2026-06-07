@@ -1,22 +1,9 @@
 class_name SincronizadorPartida
 extends RefCounted
 
-## Cómo encaja en la arquitectura
-## ─────────────────────────────────────────────────────────────────────────
-## PostGameFlowController / Level.gd
-##        └─ SyncApi.sincronizar_partida_terminada(tree, resultado, stats)
-##               └─ SincronizadorPartida.sincronizar_post_partida(...)  ← AQUÍ
-##                      ├─ _construir_resumen()  (antes era RunSummaryBuilder)
-##                      ├─ LocalSyncQueue.encolar_resumen_partida()
-##                      └─ SyncApi.guardar_partida_en_servidor()
-##                             └─ BackendSession → BackendApiClient → HTTP POST
-## ─────────────────────────────────────────────────────────────────────────
-
 const LOG_PREFIX := "[Sync]"
 
 
-## Punto de entrada principal. Se llama automáticamente al terminar un juego.
-## El juego no necesita conocer los detalles de cómo se envía al servidor.
 static func sincronizar_post_partida(
 	tree: SceneTree,
 	resultado: Dictionary,
@@ -63,11 +50,9 @@ static func sincronizar_post_partida(
 		print(LOG_PREFIX, " Sin sesión activa — RunSummary queda pendiente para el próximo sync")
 		return
 
-	_enviar_al_servidor(summary)
+	SyncApi.reintentar_pendientes()
 
 
-## Construye el payload que se envía al servidor.
-## También útil para armar resúmenes de prueba en tests y smoke tests.
 static func construir_resumen(
 	restriccion: String,
 	id_nodo: String,
@@ -94,15 +79,6 @@ static func construir_resumen(
 		"durationSeconds": duracion_segundos,
 		"finishedAt": Time.get_datetime_string_from_system(true),
 	}
-
-
-static func _enviar_al_servidor(resumen: Dictionary) -> void:
-	var client_run_id := str(resumen.get("clientRunId", "")).strip_edges()
-	var result: Dictionary = await SyncApi.guardar_partida_en_servidor(resumen)
-	if result.get("ok", false):
-		LocalSyncQueue.marcar_sincronizado(client_run_id)
-		return
-	LocalSyncQueue.marcar_fallido(client_run_id, str(result.get("error", "Sync fallida")))
 
 
 static func _leer_tipo_juego(tree: SceneTree, resultado: Dictionary) -> String:

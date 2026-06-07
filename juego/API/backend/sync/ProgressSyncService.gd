@@ -18,6 +18,10 @@ func configurar(api_client: BackendApiClient, auth_session: AuthSession) -> void
 	_auth_session = auth_session
 
 
+func esta_sincronizando() -> bool:
+	return _reintentando_pendientes
+
+
 func sincronizar(resumen_partida: Dictionary) -> Dictionary:
 	if _api_client == null or _auth_session == null:
 		push_error("[ProgressSyncService] configurar() no fue llamado antes de sincronizar()")
@@ -63,36 +67,54 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 		_reintentando_pendientes = false
 		return
 
-	pending_sync_started.emit(limit)
-	var synced_count := 0
+	# Filtrar items inválidos antes de disparar requests
+	var tareas: Array[Dictionary] = []
 	var failed_count := 0
-
-	for index in range(limit):
-		var item: Dictionary = pending[index]
-		var client_run_id := str(item.get("clientRunId", "")).strip_edges()
+	for i in range(limit):
+		var item: Dictionary = pending[i]
+		var cid := str(item.get("clientRunId", "")).strip_edges()
 		var payload: Dictionary = item.get("payload", {})
-		if client_run_id.is_empty() or payload.is_empty():
-			continue
-
-		var response: Dictionary = await _api_client.guardar_progreso(
-			_auth_session.obtener_token(),
-			payload
-		)
-
-		if response.get("status", 0) == 401:
-			_auth_session.limpiar_sesion()
-			session_expired.emit()
+		if cid.is_empty() or payload.is_empty():
 			failed_count += 1
-			LocalSyncQueue.marcar_fallido(client_run_id, "Sesion expirada")
-			break
+			continue
+		tareas.append({"cid": cid, "payload": payload})
 
-		if response.get("ok", false):
-			LocalSyncQueue.marcar_sincronizado(client_run_id)
+	if tareas.is_empty():
+		_reintentando_pendientes = false
+		pending_sync_finished.emit(0, failed_count)
+		return
+
+	pending_sync_started.emit(tareas.size())
+
+	var token := _auth_session.obtener_token()
+	var synced_count := 0
+	var sesion_expirada := false
+	var resultados: Array[Dictionary] = []
+
+	for tarea: Dictionary in tareas:
+		var cid: String = tarea.cid
+		var response: Dictionary = await _api_client.guardar_progreso(token, tarea.payload)
+		if response.get("status", 0) == 401:
+			resultados.append({"id": cid, "ok": false, "error": "Sesion expirada"})
+			failed_count += 1
+			sesion_expirada = true
+			break
+		elif response.get("ok", false):
+			resultados.append({"id": cid, "ok": true})
 			synced_count += 1
 		else:
 			var reason := str(response.get("error", "Sync pendiente fallida"))
-			LocalSyncQueue.marcar_fallido(client_run_id, reason)
+			resultados.append({"id": cid, "ok": false, "error": reason})
 			failed_count += 1
+
+	LocalSyncQueue.aplicar_resultados(resultados)
+
+	if synced_count > 0:
+		LocalSyncQueue.limpiar_cola()
+
+	if sesion_expirada:
+		_auth_session.limpiar_sesion()
+		session_expired.emit()
 
 	_reintentando_pendientes = false
 	pending_sync_finished.emit(synced_count, failed_count)

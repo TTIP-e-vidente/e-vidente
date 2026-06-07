@@ -202,8 +202,7 @@ func _on_superposicion_editar_perfil_presionado() -> void:
 
 
 func _on_superposicion_guardar_presionado() -> void:
-	SaveManager.guardar_progreso_en_disco()
-	_profile_overlay.mostrar_feedback_guardado()
+	pass
 
 
 func _on_superposicion_reiniciar_presionado() -> void:

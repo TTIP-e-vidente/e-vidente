@@ -2,8 +2,23 @@ class_name BackendApiClient
 extends Node
 
 const DEFAULT_BASE_URL := "http://localhost:3000"
+const HTTP_TIMEOUT := 3.0
 
 var base_url: String = DEFAULT_BASE_URL
+var _pool: Array[HTTPRequest] = []
+
+
+func _adquirir_http() -> HTTPRequest:
+	if not _pool.is_empty():
+		return _pool.pop_back()
+	var http := HTTPRequest.new()
+	http.timeout = HTTP_TIMEOUT
+	add_child(http)
+	return http
+
+
+func _liberar_http(http: HTTPRequest) -> void:
+	_pool.push_back(http)
 
 
 func verificar_salud_api() -> Dictionary:
@@ -27,7 +42,7 @@ func registrar_cuenta(
 	nombre: String,
 	mail: String,
 	clave: String,
-	edad: Variant = null
+	fecha_nacimiento: Variant = null
 ) -> Dictionary:
 	var payload := {
 		"username": usuario,
@@ -35,8 +50,10 @@ func registrar_cuenta(
 		"mail": mail,
 		"password": clave,
 	}
-	if edad != null:
-		payload["age"] = edad
+	if fecha_nacimiento != null:
+		var birth_date := str(fecha_nacimiento).strip_edges()
+		if not birth_date.is_empty():
+			payload["birth_date"] = birth_date
 	return await _enviar_post("/auth/register", "", JSON.stringify(payload))
 
 
@@ -76,13 +93,11 @@ func _enviar_peticion(
 	headers: PackedStringArray,
 	body: String
 ) -> Dictionary:
-	var http := HTTPRequest.new()
-	http.timeout = 3.0
-	add_child(http)
+	var http := _adquirir_http()
 
 	var start_error := http.request(base_url + endpoint, headers, method, body)
 	if start_error != OK:
-		http.queue_free()
+		_liberar_http(http)
 		return {
 			"ok": false,
 			"status": 0,
@@ -90,7 +105,7 @@ func _enviar_peticion(
 		}
 
 	var result: Array = await http.request_completed
-	http.queue_free()
+	_liberar_http(http)
 
 	var result_code: int = result[0]
 	var response_code: int = result[1]

@@ -4,7 +4,12 @@ extends RefCounted
 const QUEUE_PATH := "user://backend_sync_queue.json"
 const STATUS_PENDING := "pending"
 const STATUS_SYNCED := "synced"
+const STATUS_FAILED := "failed"
 const MAX_ERROR_LENGTH := 500
+const MAX_ATTEMPTS := 5
+
+static var _cache: Dictionary = {}
+static var _cache_valid: bool = false
 
 
 static func encolar_resumen_partida(resumen: Dictionary) -> void:
@@ -15,8 +20,8 @@ static func encolar_resumen_partida(resumen: Dictionary) -> void:
 
 	var queue := _cargar_cola()
 	var items: Array = queue.get("items", [])
-	for item in items:
-		if item is Dictionary and str(item.get("clientRunId", "")) == client_run_id:
+	for item: Variant in items:
+		if item is Dictionary and str((item as Dictionary).get("clientRunId", "")) == client_run_id:
 			return
 
 	items.append({
@@ -33,16 +38,22 @@ static func encolar_resumen_partida(resumen: Dictionary) -> void:
 
 
 static func listar_pendientes() -> Array[Dictionary]:
-	var queue := _cargar_cola()
+	var items: Array = _cargar_cola().get("items", [])
 	var result: Array[Dictionary] = []
-	var items: Array = queue.get("items", [])
-	for item in items:
+	for item: Variant in items:
 		if not item is Dictionary:
 			continue
-		var status := str(item.get("status", STATUS_PENDING))
-		if status == STATUS_PENDING:
-			result.append((item as Dictionary).duplicate(true))
+		if str((item as Dictionary).get("status", STATUS_PENDING)) == STATUS_PENDING:
+			result.append(item as Dictionary)
 	return result
+
+
+static func contar_pendientes() -> int:
+	var count: int = 0
+	for item: Variant in _cargar_cola().get("items", []):
+		if item is Dictionary and str((item as Dictionary).get("status", STATUS_PENDING)) == STATUS_PENDING:
+			count += 1
+	return count
 
 
 static func marcar_sincronizado(client_run_id: String) -> void:
@@ -55,28 +66,63 @@ static func marcar_sincronizado(client_run_id: String) -> void:
 
 static func marcar_fallido(client_run_id: String, error: String) -> void:
 	_actualizar_item(client_run_id, func(item: Dictionary) -> void:
-		item["status"] = STATUS_PENDING
-		item["attempts"] = int(item.get("attempts", 0)) + 1
+		var new_attempts: int = int(item.get("attempts", 0)) + 1
+		item["attempts"] = new_attempts
 		item["lastError"] = error.substr(0, MAX_ERROR_LENGTH)
+		item["status"] = STATUS_FAILED if new_attempts >= MAX_ATTEMPTS else STATUS_PENDING
 	)
 
 
-static func eliminar_sincronizados_mas_viejos_que(dias: int) -> void:
-	if dias < 1:
+static func aplicar_resultados(resultados: Array[Dictionary]) -> void:
+	if resultados.is_empty():
 		return
-	var cutoff_unix := Time.get_unix_time_from_system() - float(dias * 24 * 60 * 60)
+	var queue: Dictionary = _cargar_cola()
+	var items: Array = queue.get("items", [])
+	for resultado: Dictionary in resultados:
+		var id: String = str(resultado.get("id", "")).strip_edges()
+		if id.is_empty():
+			continue
+		for raw_item: Variant in items:
+			if not raw_item is Dictionary:
+				continue
+			var item: Dictionary = raw_item as Dictionary
+			if str(item.get("clientRunId", "")) != id:
+				continue
+			if resultado.get("ok", false):
+				item["status"] = STATUS_SYNCED
+				item["syncedAt"] = Time.get_datetime_string_from_system(true)
+				item["lastError"] = ""
+			else:
+				var new_attempts: int = int(item.get("attempts", 0)) + 1
+				item["attempts"] = new_attempts
+				item["lastError"] = str(resultado.get("error", "")).substr(0, MAX_ERROR_LENGTH)
+				item["status"] = STATUS_FAILED if new_attempts >= MAX_ATTEMPTS else STATUS_PENDING
+			break
+	_guardar_cola(queue)
+
+
+static func limpiar_cola(dias_sync: int = 7, dias_fallido: int = 30) -> void:
+	var now := Time.get_unix_time_from_system()
+	var cutoff_sync := now - float(dias_sync * 24 * 60 * 60)
+	var cutoff_fallido := now - float(dias_fallido * 24 * 60 * 60)
 	var queue := _cargar_cola()
 	var kept: Array = []
-	for item in queue.get("items", []):
-		if not item is Dictionary:
+	for raw: Variant in queue.get("items", []):
+		if not raw is Dictionary:
 			continue
-		var synced_at := str(item.get("syncedAt", "")).strip_edges()
-		if str(item.get("status", "")) != STATUS_SYNCED or synced_at.is_empty():
-			kept.append(item)
-			continue
-		var synced_unix := Time.get_unix_time_from_datetime_string(synced_at)
-		if synced_unix >= cutoff_unix:
-			kept.append(item)
+		var item := raw as Dictionary
+		var status := str(item.get("status", ""))
+		if status == STATUS_SYNCED:
+			var synced_at := str(item.get("syncedAt", "")).strip_edges()
+			if not synced_at.is_empty():
+				if Time.get_unix_time_from_datetime_string(synced_at) < cutoff_sync:
+					continue
+		elif status == STATUS_FAILED:
+			var created_at := str(item.get("createdAt", "")).strip_edges()
+			if not created_at.is_empty():
+				if Time.get_unix_time_from_datetime_string(created_at) < cutoff_fallido:
+					continue
+		kept.append(item)
 	queue["items"] = kept
 	_guardar_cola(queue)
 
@@ -88,40 +134,55 @@ static func _actualizar_item(client_run_id: String, aplicar_cambio: Callable) ->
 	var queue := _cargar_cola()
 	var items: Array = queue.get("items", [])
 	var changed := false
-	for item in items:
-		if item is Dictionary and str(item.get("clientRunId", "")) == clean_id:
-			aplicar_cambio.call(item)
+	for item: Variant in items:
+		if item is Dictionary and str((item as Dictionary).get("clientRunId", "")) == clean_id:
+			aplicar_cambio.call(item as Dictionary)
 			changed = true
 			break
 	if changed:
-		queue["items"] = items
 		_guardar_cola(queue)
 
 
 static func _cargar_cola() -> Dictionary:
+	if _cache_valid:
+		return _cache
+
 	if not FileAccess.file_exists(QUEUE_PATH):
-		return {"items": []}
+		_cache = {"items": []}
+		_cache_valid = true
+		return _cache
 
 	var file := FileAccess.open(QUEUE_PATH, FileAccess.READ)
 	if file == null:
-		return {"items": []}
+		_cache = {"items": []}
+		_cache_valid = true
+		return _cache
+
 	var raw := file.get_as_text()
 	file.close()
-	if raw.strip_edges().is_empty():
-		return {"items": []}
 
-	var parsed = JSON.parse_string(raw)
+	if raw.strip_edges().is_empty():
+		_cache = {"items": []}
+		_cache_valid = true
+		return _cache
+
+	var parsed: Variant = JSON.parse_string(raw)
 	if parsed is Dictionary:
-		var queue: Dictionary = parsed
-		if not queue.get("items", []) is Array:
-			queue["items"] = []
-		return queue
+		_cache = parsed as Dictionary
+		if not _cache.get("items", []) is Array:
+			_cache["items"] = []
+		_cache_valid = true
+		return _cache
 
 	_respaldar_cola_corrupta(raw)
-	return {"items": []}
+	_cache = {"items": []}
+	_cache_valid = true
+	return _cache
 
 
 static func _guardar_cola(queue: Dictionary) -> void:
+	_cache = queue
+	_cache_valid = true
 	var file := FileAccess.open(QUEUE_PATH, FileAccess.WRITE)
 	if file == null:
 		push_warning("[LocalSyncQueue] No se pudo escribir %s" % QUEUE_PATH)

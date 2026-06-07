@@ -28,12 +28,14 @@ signal close_requested
 @onready var _logout_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/LogoutButton
 @onready var _reset_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/ResetButton
 
+var _syncing: bool = false
+
 
 func _ready() -> void:
 	_overlay_backdrop.gui_input.connect(_on_entrada_fondo)
 	_close_btn.pressed.connect(func(): close_requested.emit())
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
-	_guardar_btn.pressed.connect(func(): save_pressed.emit())
+	_guardar_btn.pressed.connect(_on_guardar_presionado)
 	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
@@ -61,18 +63,63 @@ func ocultar_superposicion() -> void:
 	_animar_salida_deslizada()
 
 
-func mostrar_feedback_guardado() -> void:
+func mostrar_feedback_guardado(message: String = "¡Guardado correctamente!") -> void:
 	if not is_instance_valid(_save_status_label) or not is_instance_valid(_guardar_btn):
+		_syncing = false
 		return
+	_syncing = true
 	_guardar_btn.disabled = true
-	_guardar_btn.text = "Guardado ✓"
-	_save_status_label.text = "¡Guardado correctamente!"
-	await get_tree().create_timer(2.0).timeout
+	_guardar_btn.text = "✓"
+	_save_status_label.text = message
+	await get_tree().create_timer(2.5).timeout
+	_syncing = false
 	if is_instance_valid(_guardar_btn):
 		_guardar_btn.disabled = false
 		_guardar_btn.text = "Guardar ahora"
-	if is_instance_valid(_save_status_label):
-		_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
+	if is_instance_valid(self):
+		refrescar()
+
+
+func _on_guardar_presionado() -> void:
+	if not is_instance_valid(_guardar_btn) or _guardar_btn.disabled:
+		return
+
+	SaveManager.guardar_progreso_en_disco()
+	save_pressed.emit()
+
+	if not AuthApi.esta_logueado():
+		mostrar_feedback_guardado("Guardado localmente")
+		return
+
+	var pending := LocalSyncQueue.listar_pendientes()
+	if pending.is_empty():
+		mostrar_feedback_guardado("Todo al día ✓")
+		return
+
+	var n := pending.size()
+	var plural := "s" if n != 1 else ""
+	_syncing = true
+	_guardar_btn.disabled = true
+	_guardar_btn.text = "Sincronizando..."
+	_save_status_label.text = "Enviando %d partida%s al servidor..." % [n, plural]
+	BackendSession.pending_sync_finished.connect(
+		_al_sync_pendientes_terminado, CONNECT_ONE_SHOT
+	)
+	SyncApi.reintentar_todos_pendientes()
+
+
+func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
+	if synced > 0 and AuthApi.esta_logueado():
+		await BackendSession.cargar_datos_online()
+
+	var msg: String
+	if failed == 0:
+		msg = "Todo tu progreso fue actualizado ✓"
+	elif synced > 0:
+		msg = "%d partidas sincronizadas, %d no pudieron" % [synced, failed]
+	else:
+		msg = "No se pudo sincronizar. Reintentá más tarde."
+	mostrar_feedback_guardado(msg)
 
 
 func refrescar() -> void:
@@ -100,7 +147,8 @@ func refrescar() -> void:
 		else exp_text
 	)
 
-	_save_status_label.text = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
+	if not _syncing:
+		_save_status_label.text = _formatear_estado_con_pendientes()
 
 	var can_resume: bool = SaveManager.puede_reanudar_guardado_actual()
 	_resume_hint_label.text = (
@@ -145,6 +193,17 @@ func _formatear_estado(state: String) -> String:
 		"dirty": return "Cambios sin guardar"
 		"saved": return "Guardado recientemente"
 		_: return "Sin datos"
+
+
+func _formatear_estado_con_pendientes() -> String:
+	var base: String = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
+	if not AuthApi.esta_logueado():
+		return base
+	var pending_count: int = LocalSyncQueue.contar_pendientes()
+	if pending_count <= 0:
+		return base
+	var plural: String = "s" if pending_count != 1 else ""
+	return base + "\n%d partida%s sin sincronizar" % [pending_count, plural]
 
 
 func _on_entrada_fondo(event: InputEvent) -> void:

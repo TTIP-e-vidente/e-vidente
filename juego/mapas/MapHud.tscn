@@ -160,4 +160,5 @@ grow_vertical = 2
 [connection signal="edit_profile_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_edit_perfil_presionado"]
 [connection signal="reestablecer_progreso_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reiniciar_presionado"]
 [connection signal="resume_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reanudar_presionado"]
+[connection signal="logout_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_logout_presionado"]
 [connection signal="save_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_guardar_presionado"]

@@ -1,6 +1,8 @@
 # Autoload interno. Desde el juego usar AuthApi y SyncApi.
 extends Node
 
+const BACKGROUND_SYNC_INTERVAL_SECS := 300.0  # 5 minutos
+
 signal sync_started()
 signal sync_succeeded(progress: Dictionary)
 signal sync_failed(reason: String)
@@ -20,6 +22,8 @@ var _usuario_en_cache: Dictionary = {}
 var _progreso_online_en_cache: Dictionary = {}
 var _carga_online_en_curso: bool = false
 var _ultimo_resultado_carga_online: Dictionary = {}
+# Dirty-flag: si llega un trigger mientras el sync corre, lo re-ejecuta al terminar.
+var _reintento_encolado: bool = false
 
 
 func _ready() -> void:
@@ -36,8 +40,14 @@ func _ready() -> void:
 	_sync.sync_succeeded.connect(func(p: Dictionary): sync_succeeded.emit(p))
 	_sync.sync_failed.connect(func(r: String): sync_failed.emit(r))
 	_sync.pending_sync_started.connect(func(c: int): pending_sync_started.emit(c))
-	_sync.pending_sync_finished.connect(func(s: int, f: int): pending_sync_finished.emit(s, f))
+	_sync.pending_sync_finished.connect(_al_sync_pendientes_terminado)
 	_sync.session_expired.connect(_al_expirar_sesion)
+
+	var bg_timer := Timer.new()
+	bg_timer.wait_time = BACKGROUND_SYNC_INTERVAL_SECS
+	bg_timer.autostart = true
+	bg_timer.timeout.connect(_on_background_sync_timer)
+	add_child(bg_timer)
 
 	call_deferred("_restaurar_sesion_guardada")
 
@@ -91,11 +101,11 @@ func _cargar_datos_online_interno() -> Dictionary:
 			"error": "No active session"
 		}
 
-	var resultado_usuario := await obtener_usuario_del_servidor()
+	var resultado_usuario: Dictionary = await obtener_usuario_del_servidor()
 	if not resultado_usuario.get("ok", false):
 		return resultado_usuario
 
-	var resultado_progreso := await obtener_progreso_del_servidor()
+	var resultado_progreso: Dictionary = await obtener_progreso_del_servidor()
 	if not resultado_progreso.get("ok", false):
 		return resultado_progreso
 
@@ -138,12 +148,12 @@ func registrar_cuenta(
 	nombre: String,
 	mail: String,
 	clave: String,
-	edad: Variant = null
+	fecha_nacimiento: Variant = null
 ) -> Dictionary:
 	var listo := await _asegurar_servidor_listo()
 	if not listo.get("ok", false):
 		return listo
-	var resultado := await _api.registrar_cuenta(usuario, nombre, mail, clave, edad)
+	var resultado := await _api.registrar_cuenta(usuario, nombre, mail, clave, fecha_nacimiento)
 	_procesar_resultado_de_auth(resultado)
 	return resultado
 
@@ -200,6 +210,33 @@ func _aplicar_racha_de_respuesta_sync(data: Variant) -> void:
 
 func reintentar_sync_pendiente() -> void:
 	if not _auth.esta_logueado():
+		return
+	if _sync.esta_sincronizando():
+		_reintento_encolado = true
+		return
+	_sync.reintentar_pendientes()
+
+
+func reintentar_todos_sync_pendiente() -> void:
+	if not _auth.esta_logueado():
+		return
+	_sync.reintentar_pendientes(100)
+
+
+func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
+	pending_sync_finished.emit(synced, failed)
+	if _reintento_encolado:
+		_reintento_encolado = false
+		if _auth.esta_logueado() and LocalSyncQueue.contar_pendientes() > 0:
+			_sync.reintentar_pendientes()
+
+
+func _on_background_sync_timer() -> void:
+	if not _auth.esta_logueado():
+		return
+	if _sync.esta_sincronizando():
+		return
+	if LocalSyncQueue.contar_pendientes() <= 0:
 		return
 	_sync.reintentar_pendientes()
 
