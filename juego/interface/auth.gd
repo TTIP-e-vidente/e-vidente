@@ -20,6 +20,7 @@ var avatar_preview: TextureRect
 var save_profile_button: Button
 var back_button: Button
 var avatar_dialog: FileDialog
+var _age_display_label: Label
 
 func _ready() -> void:
 	_cachear_nodos_ui()
@@ -67,9 +68,15 @@ func _cachear_nodos_ui() -> void:
 	username_input = form_content.get_node(
 		"PrimaryFieldsRow/UsernameColumn/UsernameEdit"
 	) as LineEdit
-	birth_date_input = form_content.get_node(
-		"PrimaryFieldsRow/AgeColumn/AgeEdit"
-	) as LineEdit
+
+	var age_column := form_content.get_node("PrimaryFieldsRow/AgeColumn") as Control
+	var age_column_label := age_column.get_node("AgeLabel") as Label
+	age_column_label.text = "Fecha de nacimiento"
+	birth_date_input = age_column.get_node("AgeEdit") as LineEdit
+	_age_display_label = Label.new()
+	_age_display_label.add_theme_font_size_override("font_size", 11)
+	_age_display_label.modulate = Color(0.4, 0.4, 0.4, 1.0)
+	age_column.add_child(_age_display_label)
 	email_input = form_content.get_node("EmailEdit") as LineEdit
 	avatar_path_input = form_content.get_node("AvatarRow/AvatarPathEdit") as LineEdit
 	choose_avatar_button = form_content.get_node(
@@ -84,7 +91,7 @@ func _cachear_nodos_ui() -> void:
 
 func _configurar_ui_estatica() -> void:
 	username_input.placeholder_text = "Nombre visible (opcional)"
-	birth_date_input.placeholder_text = "Fecha de nacimiento AAAA-MM-DD (opcional)"
+	birth_date_input.placeholder_text = "AAAA-MM-DD (opcional)"
 	email_input.placeholder_text = "Mail (opcional)"
 	save_profile_button.text = "Guardar perfil"
 	back_button.text = ""
@@ -196,6 +203,8 @@ func _actualizar_etiquetas_vista_previa(
 	profile_age_preview_label.text = (
 		"Edad: %d" % age_preview if age_preview > 0 else "Edad: sin dato"
 	)
+	if is_instance_valid(_age_display_label):
+		_age_display_label.text = "%d años" % age_preview if age_preview > 0 else ""
 	avatar_preview.texture = SaveManager.cargar_textura_avatar(avatar_path)
 	avatar_placeholder_label.visible = avatar_preview.texture == null
 
@@ -204,6 +213,7 @@ func _aplicar_ruta_avatar(path: String) -> void:
 	avatar_path_input.text = path
 	_refrescar_controles_avatar()
 	_refrescar_vista_previa_desde_formulario()
+	_intentar_autosave()
 
 
 func _refrescar_controles_avatar() -> void:
