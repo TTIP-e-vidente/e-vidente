@@ -57,9 +57,8 @@ export async function incrementProgressCompletedNodes(
       SET
         completed_nodes_count = pr.completed_nodes_count + 1,
         map_completed = CASE
-          WHEN (pr.completed_nodes_count + 1) >= COALESCE(
-            (SELECT total_nodes FROM restriction_node_config WHERE restriction = pr.restriction),
-            2147483647
+          WHEN (pr.completed_nodes_count + 1) >= (
+            SELECT total_nodes FROM restriction_node_config WHERE restriction = pr.restriction
           ) THEN true
           ELSE pr.map_completed
         END,

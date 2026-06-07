@@ -21,41 +21,44 @@ export async function ensureNodeHistory(
   client: PoolClient,
   input: EnsureNodeHistoryInput
 ): Promise<EnsureNodeHistoryResult> {
-  const existing = await client.query<{ id: string; completed: boolean }>(
+  // CTE con FOR UPDATE: serializa accesos concurrentes al mismo nodo y derivar
+  // wasNewlyCompleted de forma atómica sin race condition.
+  const result = await client.query<{
+    id: string;
+    was_inserted: boolean;
+    was_already_completed: boolean;
+  }>(
     `
-      SELECT id, completed
-      FROM history_games
-      WHERE progress_id = $1 AND node_id = $2;
-    `,
-    [input.progressId, input.nodeId]
-  );
-  const wasNew = existing.rows.length === 0;
-  const wasAlreadyCompleted = !wasNew && existing.rows[0].completed;
-
-  const result = await client.query<{ id: string }>(
-    `
-      INSERT INTO history_games (
-        user_id,
-        progress_id,
-        node_id,
-        node_type,
-        completed,
-        best_score,
-        best_accuracy,
-        completed_at
+      WITH locked AS (
+        SELECT id, completed AS was_completed
+        FROM history_games
+        WHERE progress_id = $2 AND node_id = $3
+        FOR UPDATE
+      ),
+      upserted AS (
+        INSERT INTO history_games (
+          user_id, progress_id, node_id, node_type,
+          completed, best_score, best_accuracy, completed_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $5 THEN now() ELSE NULL END)
+        ON CONFLICT (progress_id, node_id)
+        DO UPDATE SET
+          node_type     = COALESCE(EXCLUDED.node_type, history_games.node_type),
+          completed     = history_games.completed OR EXCLUDED.completed,
+          best_score    = GREATEST(COALESCE(history_games.best_score, 0), COALESCE(EXCLUDED.best_score, 0)),
+          best_accuracy = GREATEST(
+            COALESCE(history_games.best_accuracy, 0),
+            COALESCE(EXCLUDED.best_accuracy, 0)
+          ),
+          completed_at  = COALESCE(history_games.completed_at, EXCLUDED.completed_at)
+        RETURNING id, (xmax::text::bigint = 0) AS was_inserted
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $5 THEN now() ELSE NULL END)
-      ON CONFLICT (progress_id, node_id)
-      DO UPDATE SET
-        node_type = COALESCE(EXCLUDED.node_type, history_games.node_type),
-        completed = history_games.completed OR EXCLUDED.completed,
-        best_score = GREATEST(COALESCE(history_games.best_score, 0), COALESCE(EXCLUDED.best_score, 0)),
-        best_accuracy = GREATEST(
-          COALESCE(history_games.best_accuracy, 0),
-          COALESCE(EXCLUDED.best_accuracy, 0)
-        ),
-        completed_at = COALESCE(history_games.completed_at, EXCLUDED.completed_at)
-      RETURNING id;
+      SELECT
+        u.id,
+        u.was_inserted,
+        COALESCE(l.was_completed, false) AS was_already_completed
+      FROM upserted u
+      LEFT JOIN locked l ON true;
     `,
     [
       input.userId,
@@ -68,9 +71,12 @@ export async function ensureNodeHistory(
     ]
   );
 
+  const row = result.rows[0];
+  const wasNew = row.was_inserted;
+  const wasAlreadyCompleted = row.was_already_completed;
   const wasNewlyCompleted = input.completed && !wasAlreadyCompleted;
 
-  return { historyId: result.rows[0].id, wasNew, wasNewlyCompleted };
+  return { historyId: row.id, wasNew, wasNewlyCompleted };
 }
 
 export async function listHistoryGamesByUserId(

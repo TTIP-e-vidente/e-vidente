@@ -150,6 +150,8 @@ export async function saveAuthenticatedProgress(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Lock por usuario: serializa saves concurrentes del mismo user (ej: dos sesiones abiertas).
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`, [input.userId]);
     const user = await userRepository.findPublicUserById(input.userId);
     if (!user) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
