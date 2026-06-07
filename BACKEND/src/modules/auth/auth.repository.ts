@@ -4,7 +4,6 @@ import { CreateUserInput, UserRow } from './auth.types';
 const userColumns = `
   id,
   username,
-  email,
   password_hash,
   display_name,
   birth_date,
@@ -45,7 +44,7 @@ export async function findByMailOrEmail(mail: string): Promise<UserRow | null> {
     `
       SELECT ${userColumns}
       FROM users
-      WHERE mail = $1 OR email = $1;
+      WHERE mail = $1;
     `,
     [mail]
   );
@@ -58,7 +57,7 @@ export async function findByUsernameOrMail(value: string): Promise<UserRow | nul
     `
       SELECT ${userColumns}
       FROM users
-      WHERE username = $1 OR mail = $1 OR email = $1;
+      WHERE username = $1 OR mail = $1;
     `,
     [value]
   );
