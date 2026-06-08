@@ -4,7 +4,10 @@
 
 ## Modelo de Entidades y Relaciones
 
-[Abrir diagrama interactivo MER](mer.html) — *Usa zoom (+/-), rueda del mouse o arrastra para navegar*
+- [MER Dominio (E1)](mer-dominio.html) — conceptual, sin base de datos remota
+- [Índice MER](mer.html) · [Documentación MER](MER.md)
+
+*Usa zoom (+/-), rueda del mouse o arrastra para navegar los diagramas interactivos.*
 
 <img width="5038" height="2178" alt="image" src="https://github.com/user-attachments/assets/dbfaec38-674b-4f3a-a068-0f339783ed3f" />
 

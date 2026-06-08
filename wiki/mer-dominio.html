@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MER Dominio — E-VIDENTE</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0b0f1a;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ── nav ── */
+.nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 300; height: 38px;
+  display: flex; align-items: center; gap: 2px; padding: 0 16px;
+  background: rgba(11,15,26,0.97);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.nav-brand { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 6px; letter-spacing: .04em; }
+.nav a {
+  color: rgba(255,255,255,0.38); text-decoration: none; font-size: 11px; font-weight: 500;
+  padding: 4px 9px; border-radius: 5px;
+  transition: color .15s, background .15s;
+}
+.nav a:hover { color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
+.nav a.on  { color: #fff; background: rgba(99,120,255,0.22); }
+.badge {
+  font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
+  background: rgba(45,185,120,0.18); color: rgba(45,185,120,0.85);
+  vertical-align: middle; margin-left: 2px; letter-spacing: .04em;
+}
+
+/* ── canvas ── */
+#cv {
+  position: fixed; inset: 38px 0 0 0;
+  overflow: hidden; cursor: grab; touch-action: none;
+}
+#cv.drag { cursor: grabbing; }
+#wrap { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+text { font-family: 'Inter', system-ui, sans-serif; user-select: none; }
+
+/* ── bottom controls ── */
+.foot {
+  position: fixed; bottom: 18px; right: 18px; z-index: 200;
+  display: flex; align-items: center; gap: 3px;
+  background: rgba(11,15,26,0.9); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 4px 7px;
+}
+.fc {
+  border: none; background: none; color: rgba(255,255,255,0.45); cursor: pointer;
+  width: 24px; height: 24px; border-radius: 4px; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s, background .15s;
+}
+.fc:hover { color: #fff; background: rgba(255,255,255,0.08); }
+#zl { font-size: 10px; color: rgba(255,255,255,0.3); min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+
+.tip { position: fixed; bottom: 18px; left: 18px; z-index: 200; color: rgba(255,255,255,0.14); font-size: 10px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-brand">e-vidente</span>
+  <a href="mer.html">Hub MER</a>
+  <a href="mer-dominio.html" class="on">Dominio <span class="badge">E1 · E2</span></a>
+  <a href="mer-persistencia-e3.html">Persistencia <span class="badge" style="background:rgba(99,120,255,.18);color:rgba(130,150,255,.85)">E3</span></a>
+</nav>
+
+<div id="cv">
+<div id="wrap">
+<svg id="diagram" width="1760" height="660" viewBox="0 0 1760 660" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="dot" width="22" height="22" patternUnits="userSpaceOnUse">
+    <circle cx=".5" cy=".5" r=".5" fill="rgba(255,255,255,0.038)"/>
+  </pattern>
+
+  <!-- Arrow markers -->
+  <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M0 0 L9 4 L0 8" fill="none" stroke="rgba(140,165,215,0.4)" stroke-width="1.3"/>
+  </marker>
+  <marker id="arr-dim" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M0 0 L9 4 L0 8" fill="none" stroke="rgba(140,165,215,0.2)" stroke-width="1.3"/>
+  </marker>
+</defs>
+
+<!-- BG -->
+<rect width="1760" height="660" fill="#0b0f1a"/>
+<rect width="1760" height="660" fill="url(#dot)"/>
+
+<!-- ─── ZONE BORDERS (very subtle) ─── -->
+<rect x="48" y="70" width="410" height="540" rx="12"
+      fill="none" stroke="rgba(99,120,255,0.07)" stroke-width="1" stroke-dasharray="5 6"/>
+<rect x="480" y="70" width="456" height="540" rx="12"
+      fill="none" stroke="rgba(45,185,120,0.07)" stroke-width="1" stroke-dasharray="5 6"/>
+<rect x="958" y="170" width="208" height="440" rx="12"
+      fill="none" stroke="rgba(255,160,70,0.07)" stroke-width="1" stroke-dasharray="5 6"/>
+<rect x="1180" y="70" width="540" height="540" rx="12"
+      fill="none" stroke="rgba(210,170,255,0.07)" stroke-width="1" stroke-dasharray="5 6"/>
+
+<!-- zone labels -->
+<text x="64" y="90" font-size="9" font-weight="600" fill="rgba(99,120,255,0.38)" letter-spacing="1.8">JUGADOR</text>
+<text x="496" y="90" font-size="9" font-weight="600" fill="rgba(45,185,120,0.38)" letter-spacing="1.8">RECORRIDO</text>
+<text x="974" y="190" font-size="9" font-weight="600" fill="rgba(255,160,70,0.38)" letter-spacing="1.8">MODALIDADES</text>
+<text x="1196" y="90" font-size="9" font-weight="600" fill="rgba(210,170,255,0.38)" letter-spacing="1.8">CONTENIDO JSON</text>
+
+<!-- ─── CONNECTIONS (drawn before entities so they're under) ─── -->
+
+<!-- Jugador → Perfil -->
+<line x1="195" y1="325" x2="256" y2="302" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="210" y="309" font-size="8" fill="rgba(200,215,245,0.38)">posee</text>
+<text x="228" y="320" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:1</text>
+
+<!-- Perfil top → Racha -->
+<line x1="338" y1="262" x2="338" y2="178" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="350" y="224" font-size="8" fill="rgba(200,215,245,0.38)">registra</text>
+<text x="350" y="234" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:1</text>
+
+<!-- Perfil bottom → PtosExp -->
+<line x1="338" y1="342" x2="338" y2="432" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="350" y="391" font-size="8" fill="rgba(200,215,245,0.38)">tiene</text>
+<text x="350" y="401" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:1</text>
+
+<!-- Perfil right → Progreso -->
+<line x1="414" y1="302" x2="494" y2="322" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="440" y="306" font-size="8" fill="rgba(200,215,245,0.38)">conserva</text>
+<text x="448" y="317" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:1</text>
+
+<!-- Restriccion → Mapa (curved over) -->
+<path d="M 680 152 C 730 152 768 308 800 314"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+<text x="702" y="218" font-size="8" fill="rgba(200,215,245,0.38)">organiza</text>
+<text x="710" y="230" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Progreso → Mapa -->
+<line x1="645" y1="328" x2="726" y2="318" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="672" y="318" font-size="8" fill="rgba(200,215,245,0.38)">avanza en</text>
+<text x="680" y="329" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Mapa → Partida -->
+<line x1="878" y1="318" x2="960" y2="318" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="905" y="309" font-size="8" fill="rgba(200,215,245,0.38)">contiene</text>
+<text x="912" y="320" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Partida → Ensenanza (down) -->
+<line x1="1038" y1="354" x2="1038" y2="438" stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="1050" y="399" font-size="8" fill="rgba(200,215,245,0.38)">muestra</text>
+<text x="1050" y="411" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Partida → Arrastre -->
+<path d="M 1108 310 C 1138 310 1140 228 1168 228"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+<!-- Partida → Vinculacion -->
+<line x1="1108" y1="322" x2="1168" y2="328"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<!-- Partida → Pregunta -->
+<path d="M 1108 334 C 1138 334 1140 428 1168 428"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+<!-- Partida → Completar Palabra (E2) -->
+<path d="M 1108 340 C 1140 340 1140 528 1168 528"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+
+<!-- "modo 1:N" labels -->
+<text x="1124" y="248" font-size="7.5" fill="rgba(200,215,245,0.4)" font-weight="600">1:N</text>
+<text x="1124" y="325" font-size="7.5" fill="rgba(200,215,245,0.4)" font-weight="600">1:N</text>
+<text x="1124" y="408" font-size="7.5" fill="rgba(200,215,245,0.4)" font-weight="600">1:N</text>
+<text x="1124" y="492" font-size="7.5" fill="rgba(200,215,245,0.4)" font-weight="600">1:N</text>
+
+<!-- Arrastre → Item -->
+<line x1="1330" y1="228" x2="1392" y2="228"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="1350" y="218" font-size="8" fill="rgba(200,215,245,0.38)">utiliza</text>
+<text x="1354" y="230" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Item → CondAlimentaria -->
+<line x1="1470" y1="268" x2="1476" y2="180"
+      stroke="rgba(140,165,215,0.28)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="1490" y="228" font-size="8" fill="rgba(200,215,245,0.38)">valida</text>
+<text x="1490" y="240" font-size="7.5" fill="rgba(200,215,245,0.55)" font-weight="600">1:N</text>
+
+<!-- Mapa --carga desde--> JSONContenido (dashed) -->
+<path d="M 802 352 C 920 490 1280 530 1395 520"
+      stroke="rgba(140,165,215,0.16)" stroke-width="1.3" fill="none"
+      stroke-dasharray="5 5" marker-end="url(#arr-dim)"/>
+<text x="1080" y="503" font-size="8" fill="rgba(200,215,245,0.25)">carga desde</text>
+
+<!-- ─── ENTITIES ─── -->
+<!-- Accent bar: 3px, rx=1.5, full height of card, flush left -->
+
+<!-- Jugador -->
+<rect x="62" y="295" width="133" height="60" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="62" y="295" width="3" height="60" rx="1.5" fill="#6378ff"/>
+<text x="130" y="321" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Jugador</text>
+<text x="80" y="340" font-size="8" fill="rgba(255,255,255,0.36)">nombre · sesión activa</text>
+
+<!-- Racha -->
+<rect x="260" y="112" width="156" height="66" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="260" y="112" width="3" height="66" rx="1.5" fill="#6378ff"/>
+<text x="340" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Racha</text>
+<line x1="263" y1="148" x2="416" y2="148" stroke="rgba(255,255,255,0.05)"/>
+<text x="278" y="162" font-size="8" fill="rgba(255,255,255,0.36)">current_count · best_count</text>
+
+<!-- Perfil -->
+<rect x="256" y="260" width="158" height="82" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="256" y="260" width="3" height="82" rx="1.5" fill="#6378ff"/>
+<text x="337" y="286" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Perfil</text>
+<line x1="259" y1="296" x2="414" y2="296" stroke="rgba(255,255,255,0.05)"/>
+<text x="274" y="311" font-size="8" fill="rgba(255,255,255,0.36)">username · birth_date</text>
+<text x="274" y="325" font-size="8" fill="rgba(255,255,255,0.36)">avatar_path</text>
+
+<!-- PtosExp -->
+<rect x="260" y="432" width="156" height="56" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="260" y="432" width="3" height="56" rx="1.5" fill="#6378ff"/>
+<text x="340" y="457" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Ptos Exp</text>
+<text x="278" y="476" font-size="8" fill="rgba(255,255,255,0.36)">total_exp acumulado</text>
+
+<!-- Progreso -->
+<rect x="494" y="293" width="151" height="70" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="494" y="293" width="3" height="70" rx="1.5" fill="#6378ff"/>
+<text x="567" y="320" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Progreso</text>
+<line x1="497" y1="332" x2="645" y2="332" stroke="rgba(255,255,255,0.05)"/>
+<text x="512" y="348" font-size="8" fill="rgba(255,255,255,0.36)">node_progress · flags</text>
+
+<!-- Restriccion Alimentaria -->
+<rect x="512" y="112" width="168" height="72" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="512" y="112" width="3" height="72" rx="1.5" fill="#2db978"/>
+<text x="597" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Restricción</text>
+<text x="597" y="154" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Alimentaria</text>
+<text x="530" y="173" font-size="8" fill="rgba(255,255,255,0.36)">CELIAQUIA · VEG · VYG · KETO</text>
+
+<!-- Mapa -->
+<rect x="726" y="292" width="152" height="60" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="726" y="292" width="3" height="60" rx="1.5" fill="#2db978"/>
+<text x="800" y="318" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Mapa</text>
+<text x="744" y="338" font-size="8" fill="rgba(255,255,255,0.36)">celiaquia_mapa.json</text>
+
+<!-- Partida -->
+<rect x="960" y="291" width="148" height="63" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="960" y="291" width="3" height="63" rx="1.5" fill="#2db978"/>
+<text x="1036" y="318" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Partida</text>
+<text x="978" y="338" font-size="8" fill="rgba(255,255,255,0.36)">node_id · games[]</text>
+
+<!-- Ensenanza -->
+<rect x="960" y="438" width="148" height="58" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="960" y="438" width="3" height="58" rx="1.5" fill="#2db978"/>
+<text x="1036" y="463" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Enseñanza</text>
+<text x="978" y="481" font-size="8" fill="rgba(255,255,255,0.36)">título · texto · imagen</text>
+
+<!-- Arrastre -->
+<rect x="1168" y="200" width="162" height="56" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1168" y="200" width="3" height="56" rx="1.5" fill="#ff9f42"/>
+<text x="1247" y="225" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Arrastre</text>
+<text x="1186" y="244" font-size="8" fill="rgba(255,255,255,0.36)">drag_food · foods[] · goal</text>
+
+<!-- Vinculacion -->
+<rect x="1168" y="300" width="162" height="56" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1168" y="300" width="3" height="56" rx="1.5" fill="#ff9f42"/>
+<text x="1247" y="325" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Vinculación</text>
+<text x="1186" y="344" font-size="8" fill="rgba(255,255,255,0.36)">match · pairs[]</text>
+
+<!-- Pregunta -->
+<rect x="1168" y="400" width="162" height="56" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1168" y="400" width="3" height="56" rx="1.5" fill="#ff9f42"/>
+<text x="1247" y="425" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Pregunta</text>
+<text x="1186" y="444" font-size="8" fill="rgba(255,255,255,0.36)">enunciado · opciones[]</text>
+
+<!-- Completar Palabra (E2 badge) -->
+<rect x="1168" y="500" width="162" height="58" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1168" y="500" width="3" height="58" rx="1.5" fill="#ff9f42"/>
+<!-- E2 badge -->
+<rect x="1294" y="504" width="32" height="14" rx="3" fill="rgba(255,159,66,0.18)"/>
+<text x="1310" y="515" text-anchor="middle" font-size="7.5" fill="rgba(255,159,66,0.75)" font-weight="700">E2</text>
+<text x="1247" y="524" text-anchor="middle" font-size="12.5" font-weight="600" fill="#fff">Completar Palabra</text>
+<text x="1186" y="544" font-size="8" fill="rgba(255,255,255,0.36)">prompt · choices[]</text>
+
+<!-- Item -->
+<rect x="1392" y="268" width="152" height="68" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1392" y="268" width="3" height="68" rx="1.5" fill="#c4a3ff"/>
+<text x="1466" y="297" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Ítem</text>
+<line x1="1395" y1="308" x2="1544" y2="308" stroke="rgba(255,255,255,0.05)"/>
+<text x="1410" y="323" font-size="8" fill="rgba(255,255,255,0.36)">nombre · sprite .tres</text>
+
+<!-- Condicion Alimentaria -->
+<rect x="1392" y="112" width="158" height="68" rx="8" fill="#0f1625" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="1392" y="112" width="3" height="68" rx="1.5" fill="#c4a3ff"/>
+<text x="1469" y="136" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Condición</text>
+<text x="1469" y="152" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Alimentaria</text>
+<text x="1410" y="169" font-size="8" fill="rgba(255,255,255,0.36)">sin_tacc · con_gluten · riesgo</text>
+
+<!-- JSON contenido (dashed outline = no es DB) -->
+<rect x="1392" y="490" width="182" height="72" rx="8" fill="rgba(196,163,255,0.04)" stroke="rgba(196,163,255,0.2)" stroke-width="1" stroke-dasharray="4 4"/>
+<rect x="1392" y="490" width="3" height="72" rx="1.5" fill="rgba(196,163,255,0.45)"/>
+<text x="1481" y="515" text-anchor="middle" font-size="12" font-weight="600" fill="rgba(196,163,255,0.8)">JSON contenido</text>
+<text x="1410" y="533" font-size="7.5" fill="rgba(196,163,255,0.45)">celiaquia_mapa.json</text>
+<text x="1410" y="547" font-size="7.5" fill="rgba(196,163,255,0.45)">preguntas · arrastres · items</text>
+
+<!-- ─── LEGEND (inline in SVG so it pans with the diagram) ─── -->
+</svg>
+</div>
+</div>
+
+<!-- Controls overlay (fixed) -->
+<div class="foot">
+  <button class="fc" id="btn-out" title="Alejar (-)">−</button>
+  <span id="zl">75%</span>
+  <button class="fc" id="btn-in" title="Acercar (+)">+</button>
+  <button class="fc" id="btn-fit" title="Ajustar al contenido">⊡</button>
+</div>
+
+<div class="tip">scroll → zoom &nbsp;·&nbsp; drag → mover</div>
+
+<script>
+const SVG_W = 1760, SVG_H = 660;
+let scale = 0.75, ox = 0, oy = 0, panning = false, lx = 0, ly = 0;
+
+const cv    = document.getElementById('cv');
+const wrap  = document.getElementById('wrap');
+const zl    = document.getElementById('zl');
+
+function render() {
+  wrap.style.transform = `translate(${ox|0}px,${oy|0}px) scale(${scale})`;
+  zl.textContent = Math.round(scale * 100) + '%';
+}
+
+function zoomAt(cx, cy, factor) {
+  const ns = Math.max(0.15, Math.min(6, scale * factor));
+  const r  = ns / scale;
+  ox = cx - r * (cx - ox);
+  oy = cy - r * (cy - oy);
+  scale = ns;
+  render();
+}
+
+function fitView() {
+  const cw = cv.clientWidth, ch = cv.clientHeight;
+  scale = Math.min((cw - 40) / SVG_W, (ch - 40) / SVG_H, 1);
+  ox = (cw - SVG_W * scale) / 2;
+  oy = Math.max(8, (ch - SVG_H * scale) / 2);
+  render();
+}
+
+// ── Zoom via wheel ──
+// Fix: normalize deltaY across devices (mouse, trackpad, Magic Mouse).
+// Strategy: convert everything to "pixel units", clamp, then apply a
+// smooth multiplicative factor instead of additive steps.
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = cv.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Normalize to ~pixel units
+  let dy = e.deltaY;
+  if (e.deltaMode === 1) dy *= 16;   // lines  → px
+  if (e.deltaMode === 2) dy *= 320;  // pages  → px
+
+  // Clamp to ±150 to prevent single-event jumps
+  const clamped = Math.max(-150, Math.min(150, dy));
+
+  // 10% zoom per 100px of scroll, applied multiplicatively
+  const pct    = Math.abs(clamped) / 100 * 0.10;
+  const factor = clamped < 0 ? (1 + pct) : 1 / (1 + pct);
+
+  zoomAt(mx, my, factor);
+}, { passive: false });
+
+// ── Pan ──
+cv.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  panning = true; lx = e.clientX; ly = e.clientY;
+  cv.classList.add('drag');
+});
+window.addEventListener('mousemove', e => {
+  if (!panning) return;
+  ox += e.clientX - lx; oy += e.clientY - ly;
+  lx = e.clientX; ly = e.clientY;
+  render();
+});
+window.addEventListener('mouseup', () => { panning = false; cv.classList.remove('drag'); });
+
+// ── Buttons ──
+document.getElementById('btn-in') .onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1.18);
+document.getElementById('btn-out').onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1/1.18);
+document.getElementById('btn-fit').onclick = fitView;
+
+// ── Initial view ──
+fitView();
+</script>
+</body>
+</html>

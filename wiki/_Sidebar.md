@@ -12,6 +12,9 @@
   - [E2](Bitacora-Entrega-2)
   - [E3](Bitacora-Entrega-3)
 - [CI](CI)
+- [MER](MER)
+  - [Dominio E1/E2](mer-dominio.html)
+  - [Persistencia E3](mer-persistencia-e3.html)
 
 ---
 
@@ -39,4 +42,8 @@
 
 **[Entrega 3](Entrega-3)** (actual)
 - [Resumen](Entrega-3)
+- [User Stories](Entrega-3-User-Stories)
+- [Arquitectura](Entrega-3-Arquitectura)
+- [Decisiones](Entrega-3-Decisiones)
+- [Evidencia](Entrega-3-Evidencia)
 - [Bitácora E3](Bitacora-Entrega-3)
