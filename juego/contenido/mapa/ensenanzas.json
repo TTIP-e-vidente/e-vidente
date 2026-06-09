@@ -1,8 +1,166 @@
 {
-	"ensenanza1" : {
+	"ensenanza_autoinmune" : {
 	  "id": "celiaquia_001",
 	  "titulo": "¿Qué es la celiaquía?",
 	  "texto": "La celiaquía es una enfermedad autoinmune porque, al consumir gluten, el sistema inmunológico ataca por error el propio intestino delgado, provocando daño e inflamación.",
-	  "imagen": "res://assets/ensenanzas/celiaquia.png"
-	}
+	  "imagen": "res://assets-sistema/ensenanza/rta-logo-2_borde_blanco_grueso.png"
+	},
+		"ensenanza_alimentos" : {
+	  "id": "celiaquia_002",
+	  "titulo": "¿Cuántos Alimentos hay?",
+	  "texto": "De los 484 alimentos permitidos para la humanidad, una persona celíaca sólo debe evitar comer 4.",
+	  "imagen": "res://assets-sistema/ensenanza/484.png"
+	},
+		"ensenanza_contaminacion" : {
+	  "id": "celiaquia_003",
+	  "titulo": "Zona sin Gluten",
+	  "texto": "La contaminación cruzada se puede dar por uso del mismo aceite al freir, por los mismos utensilios de cocina y más! A tener mucho cuidado!.",
+	  "imagen": "res://assets-sistema/ensenanza/rta-logo-3_borde_blanco_grueso.png"
+	},
+	"ensenanza_estudio" : {
+	  "id": "celiaquia_004",
+	  "titulo": "¿Cómo se detecta?",
+	  "texto": "Para realizar un estudio de celiaquía, se recomienda no dejar de comer con tacc porque sino el estudio no será representativo.",
+	  "imagen": "res://assets-sistema/ensenanza/medico.png"
+	},
+		"ensenanza_dudas" : {
+	  "id": "celiaquia_005",
+	  "titulo": "¿Hay dudas?",
+	  "texto": "Si tenés dudas sobre el contenido de un Alimento, NO lo comas!.",
+	  "imagen": "res://assets-sistema/ensenanza/pregunta.png"
+	},
+		"ensenanza_salir" : {
+	  "id": "celiaquia_006",
+	  "titulo": "Comer Afuera",
+	  "texto": "Si sales a comer afuera, recuerda siempre avisar al mozo para evitar conflictos luego!.",
+	  "imagen": "res://assets-sistema/ensenanza/mozo.png"
+	},
+	"ensenanza_etiquetas" : {
+	  "id": "celiaquia_007",
+	  "titulo": "Alimentos certificados",
+	  "texto": "Buscá siempre alimentos y productos etiquetados, a granel (sueltos) puede existir contaminación cruzada.",
+	  "imagen": "res://assets-sistema/ensenanza/rta-logo-1_borde_blanco_grueso.png"
+	},
+		"ensenanza_bebida" : {
+	  "id": "celiaquia_008",
+	  "titulo": "¿Hay gluten en las bebidas?",
+	  "texto": "La bebida también puede llevar gluten! Asegúrate siempre chequear el sello de sin Gluten.",
+	  "imagen": "res://assets-sistema/ensenanza/bebidas.png"
+	},
+		"ensenanza_ley" : {
+	  "id": "celiaquia_009",
+	  "titulo": "Ley 27.196",
+	  "texto": "Por ley, es obligación de los restaurantes ofrecer al menos 1 opción celíaca en sus locales.",
+	  "imagen": "res://assets-sistema/ensenanza/ley.png"
+	},
+	"ensenanza_opciones" : {
+	  "id": "celiaquia_010",
+	  "titulo": "Opciones sin gluten",
+	  "texto": "Hay muchas más opciones sin tacc, más allá de la fruta y la verdura.",
+	  "imagen": "res://assets-sistema/ensenanza/frutas-verduras.png"
+	},
+	"ensenanza_sintomas": {
+	"id": "celiaquia_011",
+	"titulo": "Síntomas diferentes",
+	"texto": "No todas las personas celíacas tienen los mismos síntomas. Algunas presentan molestias digestivas y otras casi no tienen síntomas.",
+	"imagen": "res://assets-sistema/ensenanza/medico.png"
+  },
+
+  "ensenanza_herencia": {
+	"id": "celiaquia_012",
+	"titulo": "Puede ser hereditaria",
+	"texto": "Los familiares directos de una persona celíaca tienen más probabilidades de desarrollar la enfermedad.",
+	"imagen": "res://assets-sistema/ensenanza/rta-logo-3_borde_blanco_grueso.png"
+  },
+
+  "ensenanza_dieta": {
+	"id": "celiaquia_013",
+	"titulo": "El único tratamiento",
+	"texto": "Actualmente, el único tratamiento para la celiaquía es mantener una alimentación estrictamente libre de gluten.",
+	"imagen": "res://assets-sistema/ensenanza/sintacc.png"
+  },
+
+  "ensenanza_avena": {
+	"id": "celiaquia_014",
+	"titulo": "Sin Gluten por producción",
+	"texto": "La avena y cebada suelen contaminarse con trigo y centeno durante su producción. Consumí sólo avena y cebada certificadas sin gluten.",
+	"imagen": "res://assets-sistema/ensenanza/rta-logo-1_borde_blanco_grueso.png"
+  },
+
+  "ensenanza_medicamentos": {
+	"id": "celiaquia_015",
+	"titulo": "No sólo alimentos",
+	"texto": "Algunos medicamentos, cremas y suplementos pueden contener gluten. Siempre revisá la información del producto.",
+	"imagen": "res://assets-sistema/ensenanza/medicamentos.png"
+  },
+
+  "ensenanza_mejora": {
+	"id": "celiaquia_016",
+	"titulo": "La recuperación lleva tiempo",
+	"texto": "Al comenzar una dieta sin gluten, el intestino necesita tiempo para recuperarse y sanar completamente. Alrededor de una semana es lo que demora el intestino en volver a la normalidad, siempre y cuando no esté muy dañado.",
+	"imagen": "res://assets-sistema/ensenanza/sintacc.png"
+  },
+
+  "ensenanza_restaurante": {
+	"id": "celiaquia_017",
+	"titulo": "Preguntar es importante",
+	"texto": "Cuando comas fuera de casa, consultá cómo preparan los alimentos para evitar contaminación cruzada.",
+	"imagen": "res://assets-sistema/ensenanza/pregunta.png"
+  },
+
+  "ensenanza_tacc": {
+	"id": "celiaquia_018",
+	"titulo": "¿Qué significa TACC?",
+	"texto": "TACC significa Trigo, Avena, Cebada y Centeno, los cereales que contienen o pueden contener gluten.",
+	"imagen": "res://assets-sistema/ensenanza/sintacc.png"
+  },
+
+  "ensenanza_migas": {
+	"id": "celiaquia_019",
+	"titulo": "Pequeñas cantidades",
+	"texto": "Incluso pequeñas migas con gluten pueden dañar el intestino de una persona celíaca.",
+	"imagen": "res://assets-sistema/ensenanza/rta-logo-3_borde_blanco_grueso.png"
+  },
+
+  "ensenanza_etiqueta": {
+	"id": "celiaquia_020",
+	"titulo": "Leer las etiquetas",
+	"texto": "Antes de consumir un producto, verificá siempre que indique 'Libre de Gluten' o 'Sin TACC'.",
+	"imagen": "res://assets-sistema/ensenanza/singluten.png"
+  },
+
+  "ensenanza_natural": {
+	"id": "celiaquia_021",
+	"titulo": "Alimentos naturalmente aptos",
+	"texto": "Frutas, verduras, carnes, huevos y legumbres son naturalmente libres de gluten.",
+	"imagen": "res://assets-sistema/ensenanza/verduras.png"
+  },
+
+  "ensenanza_diagnostico": {
+	"id": "celiaquia_022",
+	"titulo": "Diagnóstico médico",
+	"texto": "La celiaquía debe ser diagnosticada por profesionales de la salud mediante estudios específicos. Los genes HLA-DQ2 y HLA-DQ8 están presentes en la mayoría de las personas con celiaquía. Su estudio ayuda a descartar la enfermedad cuando ninguno de los dos está presente.",
+	"imagen": "res://assets-sistema/ensenanza/medico.png"
+  },
+
+  "ensenanza_escuela": {
+	"id": "celiaquia_023",
+	"titulo": "Compartir alimentos",
+	"texto": "Compartir utensilios o alimentos con gluten puede generar contaminación cruzada.",
+	"imagen": "res://assets-sistema/ensenanza/mozo.png"
+  },
+
+  "ensenanza_mito": {
+	"id": "celiaquia_024",
+	"titulo": "No es una alergia",
+	"texto": "La celiaquía no es una alergia ni una intolerancia común. Es una enfermedad autoinmune.",
+	"imagen": "res://assets-sistema/ensenanza/medico.png"
+  },
+
+  "ensenanza_viajes": {
+	"id": "celiaquia_025",
+	"titulo": "Planificar ayuda",
+	"texto": "Si viajás, llevar algunos alimentos seguros puede ayudarte a evitar inconvenientes.",
+	"imagen": "res://assets-sistema/ensenanza/singluten.png"
+  }
 }
