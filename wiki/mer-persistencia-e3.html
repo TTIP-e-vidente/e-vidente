@@ -6,38 +6,26 @@
 <title>MER Persistencia E3 — E-VIDENTE</title>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
   background: #0b0f1a;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  overflow: hidden;
-  height: 100vh;
+  overflow: hidden; height: 100vh;
 }
-
 .nav {
   position: fixed; inset: 0 0 auto 0; z-index: 300; height: 38px;
   display: flex; align-items: center; gap: 2px; padding: 0 16px;
-  background: rgba(11,15,26,0.97);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(11,15,26,0.97); border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .nav-brand { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 6px; letter-spacing: .04em; }
 .nav a {
   color: rgba(255,255,255,0.38); text-decoration: none; font-size: 11px; font-weight: 500;
-  padding: 4px 9px; border-radius: 5px;
-  transition: color .15s, background .15s;
+  padding: 4px 9px; border-radius: 5px; transition: color .15s, background .15s;
 }
 .nav a:hover { color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
-.nav a.on   { color: #fff; background: rgba(45,185,120,0.2); }
-.badge {
-  font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
-  background: rgba(45,185,120,0.18); color: rgba(45,185,120,0.85);
-  vertical-align: middle; margin-left: 2px;
-}
+.nav a.on  { color: #fff; background: rgba(45,185,120,0.2); }
+.badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 2px; }
 
-#cv {
-  position: fixed; inset: 38px 0 0 0;
-  overflow: hidden; cursor: grab; touch-action: none;
-}
+#cv { position: fixed; inset: 38px 0 0 0; overflow: hidden; cursor: grab; touch-action: none; }
 #cv.drag { cursor: grabbing; }
 #wrap { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 text { font-family: 'Inter', system-ui, sans-serif; user-select: none; }
@@ -48,352 +36,373 @@ text { font-family: 'Inter', system-ui, sans-serif; user-select: none; }
   background: rgba(11,15,26,0.9); border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px; padding: 4px 7px;
 }
-.fc {
-  border: none; background: none; color: rgba(255,255,255,0.45); cursor: pointer;
-  width: 24px; height: 24px; border-radius: 4px; font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  transition: color .15s, background .15s;
-}
+.fc { border: none; background: none; color: rgba(255,255,255,0.45); cursor: pointer; width: 24px; height: 24px; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: color .15s, background .15s; }
 .fc:hover { color: #fff; background: rgba(255,255,255,0.08); }
 #zl { font-size: 10px; color: rgba(255,255,255,0.3); min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
 .tip { position: fixed; bottom: 18px; left: 18px; z-index: 200; color: rgba(255,255,255,0.14); font-size: 10px; }
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <span class="nav-brand">e-vidente</span>
   <a href="mer.html">Hub MER</a>
-  <a href="mer-dominio.html">Dominio <span class="badge" style="background:rgba(99,120,255,.18);color:rgba(130,150,255,.85)">E1 · E2</span></a>
+  <a href="mer-dominio.html">Dominio <span class="badge" style="background:rgba(99,120,255,.18);color:rgba(130,150,255,.85)">E1·E2</span></a>
   <a href="mer-persistencia-e3.html" class="on">Persistencia <span class="badge">E3</span></a>
+  <a href="mer-flujo.html">Flujo de datos <span class="badge" style="background:rgba(255,200,70,.18);color:rgba(255,210,100,.85)">nuevo</span></a>
 </nav>
 
 <div id="cv">
 <div id="wrap">
-<svg width="1980" height="840" viewBox="0 0 1980 840" xmlns="http://www.w3.org/2000/svg">
+<svg width="1580" height="960" viewBox="0 0 1580 960" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <pattern id="dot" width="22" height="22" patternUnits="userSpaceOnUse">
-    <circle cx=".5" cy=".5" r=".5" fill="rgba(255,255,255,0.035)"/>
+    <circle cx=".5" cy=".5" r=".5" fill="rgba(255,255,255,0.033)"/>
   </pattern>
-  <!-- FK arrow (solid, green) -->
-  <marker id="fk" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(45,185,120,0.55)" stroke-width="1.2"/>
+  <marker id="fk"  markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(45,185,120,0.6)" stroke-width="1.3"/>
   </marker>
-  <!-- Sync arrow (amber) -->
   <marker id="syn" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(255,200,70,0.55)" stroke-width="1.2"/>
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(255,200,70,0.6)" stroke-width="1.3"/>
   </marker>
-  <!-- Generic arrow -->
   <marker id="gen" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(140,165,215,0.4)" stroke-width="1.2"/>
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(140,165,215,0.4)" stroke-width="1.3"/>
   </marker>
-  <!-- Dashed/logical ref arrow -->
   <marker id="ref" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(140,165,215,0.22)" stroke-width="1.2"/>
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(140,165,215,0.22)" stroke-width="1.3"/>
   </marker>
 </defs>
 
-<rect width="1980" height="840" fill="#0b0f1a"/>
-<rect width="1980" height="840" fill="url(#dot)"/>
+<rect width="1580" height="960" fill="#0b0f1a"/>
+<rect width="1580" height="960" fill="url(#dot)"/>
 
-<!-- ─── ZONE BACKGROUNDS + BORDERS ─── -->
-<!-- Local -->
-<rect x="44" y="100" width="474" height="682" rx="12"
+<!-- ═══ ZONE BORDERS ═══ -->
+<rect x="40" y="88" width="488" height="806" rx="12"
       fill="rgba(99,120,255,0.02)" stroke="rgba(99,120,255,0.1)" stroke-width="1" stroke-dasharray="5 6"/>
-<text x="60" y="122" font-size="9" font-weight="600" fill="rgba(99,120,255,0.45)" letter-spacing="1.8">PERSISTENCIA LOCAL — Godot user://</text>
+<text x="56" y="108" font-size="8.5" font-weight="700" fill="rgba(99,120,255,0.5)" letter-spacing="1.8">PERSISTENCIA LOCAL — Godot user://</text>
 
-<!-- Sync -->
-<rect x="538" y="100" width="280" height="682" rx="12"
+<rect x="540" y="88" width="268" height="806" rx="12"
       fill="rgba(255,200,70,0.02)" stroke="rgba(255,200,70,0.1)" stroke-width="1" stroke-dasharray="5 6"/>
-<text x="554" y="122" font-size="9" font-weight="600" fill="rgba(255,200,70,0.45)" letter-spacing="1.8">SINCRONIZACIÓN</text>
+<text x="556" y="108" font-size="8.5" font-weight="700" fill="rgba(255,200,70,0.5)" letter-spacing="1.8">SINCRONIZACIÓN</text>
 
-<!-- PostgreSQL -->
-<rect x="840" y="100" width="1094" height="682" rx="12"
+<rect x="820" y="88" width="716" height="806" rx="12"
       fill="rgba(45,185,120,0.02)" stroke="rgba(45,185,120,0.1)" stroke-width="1" stroke-dasharray="5 6"/>
-<text x="856" y="122" font-size="9" font-weight="600" fill="rgba(45,185,120,0.45)" letter-spacing="1.8">POSTGRESQL — BACKEND/migrations/</text>
+<text x="836" y="108" font-size="8.5" font-weight="700" fill="rgba(45,185,120,0.5)" letter-spacing="1.8">POSTGRESQL — BACKEND/migrations/</text>
 
 <!-- Content strip -->
-<rect x="44" y="796" width="1890" height="36" rx="8"
-      fill="rgba(196,163,255,0.04)" stroke="rgba(196,163,255,0.12)" stroke-width="1"/>
-<text x="60" y="812" font-size="8.5" font-weight="600" fill="rgba(196,163,255,0.45)" letter-spacing="1.4">CONTENIDO (no se persiste)</text>
-<text x="228" y="812" font-size="8" fill="rgba(196,163,255,0.32)">· juego/contenido/mapa/*.json &nbsp; · catalogos/items_celiaquia.json &nbsp; · CargadorDeMapa → ArmadorDePartida → NodeContentLoader</text>
+<rect x="40" y="908" width="1496" height="40" rx="8"
+      fill="rgba(196,163,255,0.03)" stroke="rgba(196,163,255,0.1)" stroke-width="1"/>
+<text x="58" y="925" font-size="8" font-weight="700" fill="rgba(196,163,255,0.45)" letter-spacing="1.4">CONTENIDO (no persiste)</text>
+<text x="56" y="938" font-size="7.5" fill="rgba(196,163,255,0.3)">juego/contenido/mapa/*.json · catalogos/items_celiaquia.json — CargadorDeMapa → ArmadorDePartida → NodeContentLoader → minijuego</text>
 
-<!-- ─── LOCAL PERSISTENCE ─── -->
+<!-- ═══ LOCAL FILES ═══ -->
 
-<!-- Helper macro: local file card
-     Background #0f1625, left accent #6378ff, border rgba(99,120,255,.2) -->
+<!-- Macro: all local cards use fill=#0f1625, left-accent=#6378ff, border rgba(99,120,255,.2) -->
+<!-- Header: rgba(99,120,255,.1) band, divider, then fields -->
 
 <!-- save_data.json -->
-<rect x="68" y="152" width="344" height="138" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
-<rect x="68" y="152" width="3" height="138" rx="1.5" fill="#6378ff"/>
-<!-- header -->
-<rect x="68" y="152" width="344" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
-<rect x="68" y="168" width="344" height="18" fill="rgba(99,120,255,0.1)"/>
-<text x="86" y="174" font-size="11" font-weight="700" fill="rgba(130,150,255,0.9)">save_data.json</text>
-<text x="360" y="174" text-anchor="end" font-size="8" fill="rgba(99,120,255,0.5)">v4</text>
-<!-- divider -->
-<line x1="71" y1="186" x2="412" y2="186" stroke="rgba(99,120,255,0.1)"/>
-<!-- fields -->
-<text x="86" y="202" font-size="8.5" fill="rgba(255,255,255,0.55)">profile · username · birth_date · avatar_path</text>
-<text x="86" y="216" font-size="8.5" fill="rgba(255,255,255,0.45)">node_progress[node_id] · completed · best_accuracy</text>
-<text x="86" y="230" font-size="8.5" fill="rgba(255,255,255,0.45)">progress · total_exp · resume_state</text>
-<text x="86" y="244" font-size="8.5" fill="rgba(255,255,255,0.45)">save_meta.linked_online_username</text>
-<text x="86" y="260" font-size="7.5" fill="rgba(99,120,255,0.55)">SaveDataSchema.gd · SaveManager.gd</text>
+<rect x="62" y="138" width="362" height="148" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
+<rect x="62" y="138" width="362" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="154" width="362" height="18" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="138" width="3" height="148" rx="1.5" fill="#6378ff"/>
+<circle cx="79" cy="155" r="4" fill="rgba(99,120,255,0.75)"/>
+<text x="89" y="160" font-size="11" font-weight="700" fill="rgba(130,150,255,0.9)">save_data.json</text>
+<text x="412" y="160" text-anchor="end" font-size="7.5" fill="rgba(99,120,255,0.55)" font-style="italic">Estado completo · fuente primaria</text>
+<text x="398" y="161" text-anchor="end" font-size="7" fill="rgba(99,120,255,0.4)">v4</text>
+<line x1="65" y1="172" x2="424" y2="172" stroke="rgba(99,120,255,0.1)"/>
+<text x="80" y="188" font-size="8.5" fill="rgba(255,255,255,0.55)">profile · username · birth_date · avatar_path</text>
+<text x="80" y="202" font-size="8.5" fill="rgba(255,255,255,0.45)">node_progress[node_id] · completed · best_accuracy</text>
+<text x="80" y="216" font-size="8.5" fill="rgba(255,255,255,0.45)">progress · total_exp · resume_state</text>
+<text x="80" y="230" font-size="8.5" fill="rgba(255,255,255,0.45)">save_meta.linked_online_username</text>
+<text x="80" y="244" font-size="8.5" fill="rgba(255,255,255,0.4)">played_activity_ids · completed_activity_ids</text>
+<text x="80" y="277" font-size="7.5" fill="rgba(99,120,255,0.5)">SaveDataSchema.gd · SaveManager.gd</text>
 
 <!-- backend_sync_queue.json -->
-<rect x="68" y="310" width="324" height="102" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
-<rect x="68" y="310" width="3" height="102" rx="1.5" fill="#6378ff"/>
-<rect x="68" y="310" width="324" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
-<rect x="68" y="326" width="324" height="18" fill="rgba(99,120,255,0.1)"/>
-<text x="86" y="332" font-size="11" font-weight="700" fill="rgba(130,150,255,0.9)">backend_sync_queue.json</text>
-<line x1="71" y1="344" x2="392" y2="344" stroke="rgba(99,120,255,0.1)"/>
-<text x="86" y="360" font-size="8.5" fill="rgba(255,255,255,0.55)">items[]: clientRunId · status · payload</text>
-<text x="86" y="374" font-size="8.5" fill="rgba(255,255,255,0.45)">Cola de RunSummary pendientes de sync</text>
-<text x="86" y="392" font-size="7.5" fill="rgba(99,120,255,0.55)">LocalSyncQueue.gd</text>
+<rect x="62" y="308" width="318" height="94" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
+<rect x="62" y="308" width="318" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="324" width="318" height="18" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="308" width="3" height="94" rx="1.5" fill="#6378ff"/>
+<circle cx="79" cy="325" r="4" fill="rgba(99,120,255,0.75)"/>
+<text x="89" y="330" font-size="10" font-weight="700" fill="rgba(130,150,255,0.9)">backend_sync_queue.json</text>
+<text x="368" y="330" text-anchor="end" font-size="7.5" fill="rgba(99,120,255,0.5)" font-style="italic">Cola de sync offline</text>
+<line x1="65" y1="342" x2="380" y2="342" stroke="rgba(99,120,255,0.1)"/>
+<text x="80" y="358" font-size="8.5" fill="rgba(255,255,255,0.55)">items[]: clientRunId · status · payload</text>
+<text x="80" y="372" font-size="8.5" fill="rgba(255,255,255,0.4)">RunSummary pendientes de enviar</text>
+<text x="80" y="392" font-size="7.5" fill="rgba(99,120,255,0.5)">LocalSyncQueue.gd</text>
 
 <!-- backend_session.json -->
-<rect x="68" y="432" width="270" height="68" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
-<rect x="68" y="432" width="3" height="68" rx="1.5" fill="#6378ff"/>
-<rect x="68" y="432" width="270" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
-<rect x="68" y="448" width="270" height="18" fill="rgba(99,120,255,0.1)"/>
-<text x="86" y="454" font-size="11" font-weight="700" fill="rgba(130,150,255,0.9)">backend_session.json</text>
-<line x1="71" y1="466" x2="338" y2="466" stroke="rgba(99,120,255,0.1)"/>
-<text x="86" y="482" font-size="8.5" fill="rgba(255,255,255,0.55)">JWT token entre sesiones</text>
-<text x="86" y="492" font-size="7.5" fill="rgba(99,120,255,0.55)">BackendSession.gd</text>
+<rect x="62" y="424" width="244" height="65" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
+<rect x="62" y="424" width="244" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="440" width="244" height="18" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="424" width="3" height="65" rx="1.5" fill="#6378ff"/>
+<circle cx="79" cy="441" r="4" fill="rgba(99,120,255,0.75)"/>
+<text x="89" y="446" font-size="10" font-weight="700" fill="rgba(130,150,255,0.9)">backend_session.json</text>
+<line x1="65" y1="458" x2="306" y2="458" stroke="rgba(99,120,255,0.1)"/>
+<text x="80" y="474" font-size="8.5" fill="rgba(255,255,255,0.5)">JWT entre sesiones · BackendSession.gd</text>
 
 <!-- avatars/{username}.ext -->
-<rect x="68" y="520" width="270" height="58" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
-<rect x="68" y="520" width="3" height="58" rx="1.5" fill="#6378ff"/>
-<rect x="68" y="520" width="270" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
-<rect x="68" y="536" width="270" height="18" fill="rgba(99,120,255,0.1)"/>
-<text x="86" y="542" font-size="11" font-weight="700" fill="rgba(130,150,255,0.9)">avatars/{username}.ext</text>
-<line x1="71" y1="554" x2="338" y2="554" stroke="rgba(99,120,255,0.1)"/>
-<text x="86" y="569" font-size="8.5" fill="rgba(255,255,255,0.45)">avatar por cuenta online · PNG/JPEG</text>
+<rect x="62" y="508" width="244" height="56" rx="8" fill="#0f1625" stroke="rgba(99,120,255,0.2)" stroke-width="1"/>
+<rect x="62" y="508" width="244" height="34" rx="8" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="524" width="244" height="18" fill="rgba(99,120,255,0.1)"/>
+<rect x="62" y="508" width="3" height="56" rx="1.5" fill="#6378ff"/>
+<circle cx="79" cy="525" r="4" fill="rgba(99,120,255,0.75)"/>
+<text x="89" y="530" font-size="10" font-weight="700" fill="rgba(130,150,255,0.9)">avatars/{username}.ext</text>
+<line x1="65" y1="542" x2="306" y2="542" stroke="rgba(99,120,255,0.1)"/>
+<text x="80" y="557" font-size="8.5" fill="rgba(255,255,255,0.45)">avatar por cuenta online · PNG / JPEG</text>
 
 <!-- Local-first note -->
-<rect x="68" y="600" width="450" height="46" rx="7" fill="rgba(99,120,255,0.06)" stroke="rgba(99,120,255,0.12)" stroke-width="1"/>
-<text x="86" y="620" font-size="8.5" font-weight="600" fill="rgba(130,150,255,0.7)">Local-first</text>
-<text x="86" y="634" font-size="8" fill="rgba(130,150,255,0.45)">El juego siempre guarda local primero. El sync a PostgreSQL es best-effort y asíncrono.</text>
+<rect x="62" y="586" width="460" height="42" rx="7"
+      fill="rgba(99,120,255,0.06)" stroke="rgba(99,120,255,0.14)" stroke-width="1"/>
+<text x="80" y="604" font-size="8.5" font-weight="700" fill="rgba(130,150,255,0.7)">Principio local-first</text>
+<text x="80" y="618" font-size="7.5" fill="rgba(130,150,255,0.4)">El juego siempre escribe local primero. PostgreSQL es best-effort y asíncrono.</text>
 
-<!-- ─── SYNC LAYER ─── -->
+<!-- ═══ SYNC LAYER ═══ -->
 
 <!-- SincronizadorPartida -->
-<rect x="554" y="218" width="248" height="54" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.22)" stroke-width="1"/>
-<rect x="554" y="218" width="3" height="54" rx="1.5" fill="#ffc846"/>
-<text x="676" y="243" text-anchor="middle" font-size="11" font-weight="700" fill="rgba(255,210,100,0.9)">SincronizadorPartida</text>
-<text x="572" y="260" font-size="8" fill="rgba(255,255,255,0.38)">arma RunSummary → encola</text>
+<rect x="554" y="198" width="218" height="56" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.25)" stroke-width="1"/>
+<rect x="554" y="198" width="218" height="34" rx="8" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="214" width="218" height="18" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="198" width="3" height="56" rx="1.5" fill="#ffc846"/>
+<circle cx="570" cy="215" r="4" fill="rgba(255,200,70,0.7)"/>
+<text x="580" y="220" font-size="9.5" font-weight="700" fill="rgba(255,210,100,0.9)">SincronizadorPartida</text>
+<line x1="557" y1="232" x2="772" y2="232" stroke="rgba(255,200,70,0.1)"/>
+<text x="568" y="245" font-size="8" fill="rgba(255,255,255,0.38)">arma RunSummary al cerrar partida</text>
 
 <!-- ProgressSyncService -->
-<rect x="554" y="302" width="248" height="62" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.22)" stroke-width="1"/>
-<rect x="554" y="302" width="3" height="62" rx="1.5" fill="#ffc846"/>
-<text x="676" y="326" text-anchor="middle" font-size="11" font-weight="700" fill="rgba(255,210,100,0.9)">ProgressSyncService</text>
-<text x="572" y="344" font-size="8" fill="rgba(255,255,255,0.38)">POST /player/me/progress/batch</text>
-<text x="572" y="355" font-size="7.5" fill="rgba(255,200,70,0.45)">retry · clientRunId (idempotencia)</text>
+<rect x="554" y="298" width="218" height="66" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.25)" stroke-width="1"/>
+<rect x="554" y="298" width="218" height="34" rx="8" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="314" width="218" height="18" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="298" width="3" height="66" rx="1.5" fill="#ffc846"/>
+<circle cx="570" cy="315" r="4" fill="rgba(255,200,70,0.7)"/>
+<text x="580" y="320" font-size="9.5" font-weight="700" fill="rgba(255,210,100,0.9)">ProgressSyncService</text>
+<line x1="557" y1="332" x2="772" y2="332" stroke="rgba(255,200,70,0.1)"/>
+<text x="568" y="347" font-size="8" fill="rgba(255,255,255,0.38)">POST /player/me/progress/batch</text>
+<text x="568" y="357" font-size="7.5" fill="rgba(255,200,70,0.4)">retry · idempotente por clientRunId</text>
 
 <!-- ImportadorProgresoOnline -->
-<rect x="554" y="394" width="248" height="62" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.22)" stroke-width="1"/>
-<rect x="554" y="394" width="3" height="62" rx="1.5" fill="#ffc846"/>
-<text x="676" y="418" text-anchor="middle" font-size="10.5" font-weight="700" fill="rgba(255,210,100,0.9)">ImportadorProgresoOnline</text>
-<text x="572" y="438" font-size="8" fill="rgba(255,255,255,0.38)">GET /player/me/progress</text>
-<text x="572" y="449" font-size="7.5" fill="rgba(255,200,70,0.45)">merge online → snapshot local</text>
+<rect x="554" y="418" width="218" height="66" rx="8" fill="#0f1625" stroke="rgba(255,200,70,0.25)" stroke-width="1"/>
+<rect x="554" y="418" width="218" height="34" rx="8" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="434" width="218" height="18" fill="rgba(255,200,70,0.1)"/>
+<rect x="554" y="418" width="3" height="66" rx="1.5" fill="#ffc846"/>
+<circle cx="570" cy="435" r="4" fill="rgba(255,200,70,0.7)"/>
+<text x="580" y="440" font-size="9.5" font-weight="700" fill="rgba(255,210,100,0.9)">ImportadorProgresoOnline</text>
+<line x1="557" y1="452" x2="772" y2="452" stroke="rgba(255,200,70,0.1)"/>
+<text x="568" y="467" font-size="8" fill="rgba(255,255,255,0.38)">GET /player/me/progress</text>
+<text x="568" y="477" font-size="7.5" fill="rgba(255,200,70,0.4)">merge online → snapshot local al login</text>
 
-<!-- ─── CONNECTIONS (Local ↔ Sync) ─── -->
+<!-- ═══ CONNECTIONS Local ↔ Sync ═══ -->
 <!-- save_data → SincronizadorPartida -->
-<line x1="412" y1="240" x2="554" y2="243" stroke="rgba(255,200,70,0.3)" stroke-width="1.3" marker-end="url(#syn)"/>
-<text x="474" y="232" text-anchor="middle" font-size="7.5" fill="rgba(255,200,70,0.45)">guarda local</text>
+<line x1="424" y1="210" x2="554" y2="224"
+      stroke="rgba(255,200,70,0.3)" stroke-width="1.3" marker-end="url(#syn)"/>
+<text x="478" y="206" text-anchor="middle" font-size="7.5" fill="rgba(255,200,70,0.5)">guardar y encolar</text>
 
 <!-- sync_queue → ProgressSyncService -->
-<path d="M 392 361 C 460 361 480 333 554 333"
-      stroke="rgba(255,200,70,0.3)" stroke-width="1.3" fill="none" marker-end="url(#syn)"/>
-<text x="462" y="350" text-anchor="middle" font-size="7.5" fill="rgba(255,200,70,0.45)">encola →</text>
+<line x1="380" y1="355" x2="554" y2="331"
+      stroke="rgba(255,200,70,0.3)" stroke-width="1.3" marker-end="url(#syn)"/>
+<text x="460" y="347" text-anchor="middle" font-size="7.5" fill="rgba(255,200,70,0.5)">envía cola →</text>
 
-<!-- session → SincronizadorPartida (JWT) -->
-<path d="M 338 456 C 460 456 560 272 554 258"
-      stroke="rgba(99,120,255,0.2)" stroke-width="1" fill="none" stroke-dasharray="4 4"/>
-<text x="415" y="395" font-size="7" fill="rgba(99,120,255,0.38)">JWT</text>
+<!-- session provides JWT (dashed to ProgressSyncService) -->
+<path d="M 306 456 C 400 456 460 360 554 331"
+      stroke="rgba(99,120,255,0.22)" stroke-width="1" fill="none" stroke-dasharray="4 4"/>
+<text x="388" y="412" font-size="7" fill="rgba(99,120,255,0.4)">JWT</text>
 
-<!-- ImportadorProgresoOnline → save_data (merge) -->
-<path d="M 554 425 C 480 425 460 220 412 220"
-      stroke="rgba(255,200,70,0.25)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#syn)"/>
-<text x="455" y="300" text-anchor="middle" font-size="7.5" fill="rgba(255,200,70,0.35)">merge</text>
+<!-- ImportadorProgresoOnline → save_data (merge, reverse) -->
+<path d="M 554 449 C 490 449 460 220 424 198"
+      stroke="rgba(255,200,70,0.22)" stroke-width="1.2" fill="none" stroke-dasharray="5 4"
+      marker-end="url(#syn)"/>
+<text x="450" y="316" font-size="7.5" fill="rgba(255,200,70,0.38)">merge →</text>
 
-<!-- ─── CONNECTIONS (Sync ↔ PostgreSQL) ─── -->
+<!-- ═══ CONNECTIONS Sync ↔ PostgreSQL ═══ -->
 <!-- ProgressSyncService → progress_restrictions -->
-<path d="M 802 333 C 840 333 840 494 857 494"
+<path d="M 772 329 C 800 329 808 488 820 488"
       stroke="rgba(255,200,70,0.35)" stroke-width="1.3" fill="none" marker-end="url(#syn)"/>
 
 <!-- ImportadorProgresoOnline → profiles -->
-<path d="M 802 425 C 835 425 840 362 857 362"
+<path d="M 772 451 C 800 451 808 352 820 352"
       stroke="rgba(255,200,70,0.35)" stroke-width="1.3" fill="none" marker-end="url(#syn)"/>
 
-<!-- node_progress ↔ history_games (conceptual dashed) -->
-<path d="M 412 280 C 620 600 780 625 857 625"
-      stroke="rgba(140,165,215,0.18)" stroke-width="1.2" fill="none" stroke-dasharray="5 5" marker-end="url(#ref)"/>
-<text x="590" y="588" font-size="7.5" fill="rgba(140,165,215,0.3)">node_progress ↔ history_games</text>
+<!-- node_progress ↔ history_games (conceptual equivalence, dashed) -->
+<path d="M 424 228 C 600 620 750 624 820 624"
+      stroke="rgba(140,165,215,0.16)" stroke-width="1.2" fill="none" stroke-dasharray="5 5"
+      marker-end="url(#ref)"/>
+<text x="600" y="595" font-size="7.5" fill="rgba(140,165,215,0.28)" text-anchor="middle">node_progress ↔ history_games</text>
 
-<!-- ─── POSTGRESQL TABLES ─── -->
-<!-- All tables use:
-     fill="#0d1621", border rgba(45,185,120,.2), header rgba(45,185,120,.1)
-     accent dot: circle r=4, fill rgba(45,185,120,.7)
-     PK label = rgba(255,200,60,.8) font-weight 700 font-size 7.5
-     FK label = rgba(99,150,255,.7) font-weight 700 font-size 7.5
--->
+<!-- ═══ POSTGRESQL TABLES ═══ -->
+<!-- Macro: fill=#0d1621, border rgba(45,185,120,.2), header rgba(45,185,120,.1) -->
+
+<!-- Helper: table header macro -->
+<!-- circle at cx=836+13=849, cy=Y+17 -->
 
 <!-- ── users ── -->
-<rect x="857" y="148" width="232" height="148" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="857" y="148" width="232" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="857" y="164" width="232" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="874" cy="165" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="884" y="170" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">users</text>
-<line x1="860" y1="182" x2="1089" y2="182" stroke="rgba(45,185,120,0.1)"/>
-<text x="874" y="198" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="896" y="198" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="874" y="212" font-size="8" fill="rgba(255,255,255,0.45)">   username · VARCHAR(80) UNIQUE</text>
-<text x="874" y="225" font-size="8" fill="rgba(255,255,255,0.45)">   mail · VARCHAR(255)</text>
-<text x="874" y="238" font-size="8" fill="rgba(255,255,255,0.45)">   password_hash · TEXT</text>
-<text x="874" y="251" font-size="8" fill="rgba(255,255,255,0.45)">   birth_date · DATE</text>
-<text x="874" y="265" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="896" y="265" font-size="8" fill="rgba(255,255,255,0.45)">avatar_image_id → images</text>
-<text x="874" y="284" font-size="7" fill="rgba(45,185,120,0.4)">001 · 011 · 013 · 016</text>
+<rect x="820" y="138" width="248" height="132" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="820" y="138" width="248" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="154" width="248" height="18" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="138" width="3" height="132" rx="1.5" fill="rgba(45,185,120,0.6)"/>
+<circle cx="837" cy="155" r="4" fill="rgba(45,185,120,0.7)"/>
+<text x="847" y="160" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">users</text>
+<text x="1056" y="160" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)" font-style="italic">auth · acceso JWT</text>
+<line x1="823" y1="172" x2="1068" y2="172" stroke="rgba(45,185,120,0.08)"/>
+<text x="836" y="188" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.7)">PK</text>
+<text x="855" y="188" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
+<text x="836" y="202" font-size="8" fill="rgba(255,255,255,0.42)">   username · VARCHAR(80) UNIQUE</text>
+<text x="836" y="215" font-size="8" fill="rgba(255,255,255,0.42)">   mail · VARCHAR(255)</text>
+<text x="836" y="228" font-size="8" fill="rgba(255,255,255,0.42)">   password_hash · TEXT</text>
+<text x="836" y="241" font-size="8" fill="rgba(255,255,255,0.42)">   birth_date · DATE</text>
+<text x="836" y="254" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="254" font-size="8" fill="rgba(255,255,255,0.42)">avatar_image_id → images</text>
 
-<!-- ── images ── -->
-<rect x="1136" y="148" width="222" height="102" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="1136" y="148" width="222" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="1136" y="164" width="222" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="1153" cy="165" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="1163" y="170" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">images</text>
-<line x1="1139" y1="182" x2="1358" y2="182" stroke="rgba(45,185,120,0.1)"/>
-<text x="1153" y="198" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="1175" y="198" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="1153" y="211" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="1175" y="211" font-size="8" fill="rgba(255,255,255,0.45)">user_id · UNIQUE</text>
-<text x="1153" y="224" font-size="8" fill="rgba(255,255,255,0.45)">   data · TEXT (base64)</text>
-<text x="1153" y="237" font-size="8" fill="rgba(255,255,255,0.45)">   mime_type · VARCHAR</text>
-<text x="1153" y="240" font-size="7" fill="rgba(45,185,120,0.4)"> </text>
+<!-- FK connector: users → profiles -->
+<line x1="944" y1="270" x2="944" y2="298"
+      stroke="rgba(45,185,120,0.45)" stroke-width="1.5" marker-end="url(#fk)"/>
+<text x="958" y="286" font-size="7.5" fill="rgba(45,185,120,0.55)" font-weight="600">1:1</text>
 
 <!-- ── profiles ── -->
-<rect x="857" y="326" width="232" height="118" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="857" y="326" width="232" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="857" y="342" width="232" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="874" cy="343" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="884" y="348" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">profiles</text>
-<line x1="860" y1="360" x2="1089" y2="360" stroke="rgba(45,185,120,0.1)"/>
-<text x="874" y="376" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="896" y="376" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="874" y="389" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="896" y="389" font-size="8" fill="rgba(255,255,255,0.45)">user_id · UNIQUE</text>
-<text x="874" y="402" font-size="8" fill="rgba(255,255,255,0.45)">   exp_count · INTEGER</text>
-<text x="874" y="415" font-size="8" fill="rgba(255,255,255,0.45)">   current_restriction · VARCHAR</text>
-<text x="874" y="428" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="896" y="428" font-size="8" fill="rgba(255,255,255,0.45)">streak_id → streaks</text>
+<rect x="820" y="298" width="248" height="108" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="820" y="298" width="248" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="314" width="248" height="18" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="298" width="3" height="108" rx="1.5" fill="rgba(45,185,120,0.6)"/>
+<circle cx="837" cy="315" r="4" fill="rgba(45,185,120,0.7)"/>
+<text x="847" y="320" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">profiles</text>
+<text x="1056" y="320" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)" font-style="italic">hub del jugador</text>
+<line x1="823" y1="332" x2="1068" y2="332" stroke="rgba(45,185,120,0.08)"/>
+<text x="836" y="348" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.7)">PK</text>
+<text x="855" y="348" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
+<text x="836" y="361" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="361" font-size="8" fill="rgba(255,255,255,0.42)">user_id · UNIQUE</text>
+<text x="836" y="374" font-size="8" fill="rgba(255,255,255,0.42)">   exp_count · INTEGER</text>
+<text x="836" y="387" font-size="8" fill="rgba(255,255,255,0.42)">   current_restriction · VARCHAR(30)</text>
+<text x="836" y="397" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="397" font-size="8" fill="rgba(255,255,255,0.42)">streak_id → streaks</text>
 
-<!-- ── streaks ── -->
-<rect x="1136" y="282" width="222" height="116" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="1136" y="282" width="222" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="1136" y="298" width="222" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="1153" cy="299" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="1163" y="304" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">streaks</text>
-<line x1="1139" y1="316" x2="1358" y2="316" stroke="rgba(45,185,120,0.1)"/>
-<text x="1153" y="332" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="1175" y="332" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="1153" y="345" font-size="8" fill="rgba(255,255,255,0.45)">   current_count · INTEGER</text>
-<text x="1153" y="358" font-size="8" fill="rgba(255,255,255,0.45)">   best_count · INTEGER</text>
-<text x="1153" y="371" font-size="8" fill="rgba(255,255,255,0.45)">   last_activity_day · DATE</text>
-
-<!-- ── restriction_node_config ── -->
-<rect x="1136" y="436" width="222" height="80" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="1136" y="436" width="222" height="34" rx="8" fill="rgba(45,185,120,0.07)"/>
-<rect x="1136" y="452" width="222" height="18" fill="rgba(45,185,120,0.07)"/>
-<circle cx="1153" cy="453" r="4" fill="rgba(45,185,120,0.45)"/>
-<text x="1163" y="458" font-size="9.5" font-weight="700" fill="rgba(45,185,120,0.7)">restriction_node_config</text>
-<line x1="1139" y1="470" x2="1358" y2="470" stroke="rgba(45,185,120,0.08)"/>
-<text x="1153" y="486" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.6)">PK</text>
-<text x="1175" y="486" font-size="8" fill="rgba(255,255,255,0.4)">restriction · VARCHAR(30)</text>
-<text x="1153" y="499" font-size="8" fill="rgba(255,255,255,0.35)">   total_nodes · INT  — 30 celiaquia</text>
+<!-- FK connector: profiles → progress_restrictions -->
+<line x1="944" y1="406" x2="944" y2="434"
+      stroke="rgba(45,185,120,0.45)" stroke-width="1.5" marker-end="url(#fk)"/>
+<text x="958" y="422" font-size="7.5" fill="rgba(45,185,120,0.55)" font-weight="600">1:N</text>
 
 <!-- ── progress_restrictions ── -->
-<rect x="857" y="478" width="232" height="118" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="857" y="478" width="232" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="857" y="494" width="232" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="874" cy="495" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="884" y="500" font-size="9.5" font-weight="700" fill="rgba(45,185,120,0.9)">progress_restrictions</text>
-<line x1="860" y1="512" x2="1089" y2="512" stroke="rgba(45,185,120,0.1)"/>
-<text x="874" y="528" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="896" y="528" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="874" y="541" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="896" y="541" font-size="8" fill="rgba(255,255,255,0.45)">profile_id</text>
-<text x="874" y="554" font-size="8" fill="rgba(255,255,255,0.45)">   restriction · VARCHAR(30) UNIQUE</text>
-<text x="874" y="567" font-size="8" fill="rgba(255,255,255,0.45)">   total_exp · completed_nodes_count</text>
-<text x="874" y="580" font-size="8" fill="rgba(255,255,255,0.45)">   map_completed · BOOLEAN</text>
+<rect x="820" y="434" width="248" height="108" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="820" y="434" width="248" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="450" width="248" height="18" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="434" width="3" height="108" rx="1.5" fill="rgba(45,185,120,0.6)"/>
+<circle cx="837" cy="451" r="4" fill="rgba(45,185,120,0.7)"/>
+<text x="847" y="456" font-size="9.5" font-weight="700" fill="rgba(45,185,120,0.9)">progress_restrictions</text>
+<text x="1056" y="456" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)" font-style="italic">progreso por pista</text>
+<line x1="823" y1="468" x2="1068" y2="468" stroke="rgba(45,185,120,0.08)"/>
+<text x="836" y="484" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.7)">PK</text>
+<text x="855" y="484" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
+<text x="836" y="497" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="497" font-size="8" fill="rgba(255,255,255,0.42)">profile_id</text>
+<text x="836" y="510" font-size="8" fill="rgba(255,255,255,0.42)">   restriction · VARCHAR(30) UNIQUE</text>
+<text x="836" y="523" font-size="8" fill="rgba(255,255,255,0.42)">   total_exp · completed_nodes_count</text>
+<text x="836" y="532" font-size="8" fill="rgba(255,255,255,0.42)">   map_completed · BOOLEAN</text>
+
+<!-- FK connector: progress_restrictions → history_games -->
+<line x1="944" y1="542" x2="944" y2="570"
+      stroke="rgba(45,185,120,0.45)" stroke-width="1.5" marker-end="url(#fk)"/>
+<text x="958" y="558" font-size="7.5" fill="rgba(45,185,120,0.55)" font-weight="600">1:N</text>
 
 <!-- ── history_games ── -->
-<rect x="857" y="628" width="232" height="120" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="857" y="628" width="232" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="857" y="644" width="232" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="874" cy="645" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="884" y="650" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">history_games</text>
-<line x1="860" y1="662" x2="1089" y2="662" stroke="rgba(45,185,120,0.1)"/>
-<text x="874" y="678" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="896" y="678" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="874" y="691" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="896" y="691" font-size="8" fill="rgba(255,255,255,0.45)">progress_id  · UNIQUE(progress_id, node_id)</text>
-<text x="874" y="704" font-size="8" fill="rgba(255,255,255,0.45)">   node_id · VARCHAR(120)</text>
-<text x="874" y="717" font-size="8" fill="rgba(255,255,255,0.45)">   best_score · best_accuracy · completed</text>
-<text x="874" y="730" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.55)">→</text>
-<text x="888" y="730" font-size="8" fill="rgba(255,255,255,0.35)">games (1:N)</text>
+<rect x="820" y="570" width="248" height="108" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="820" y="570" width="248" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="586" width="248" height="18" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="570" width="3" height="108" rx="1.5" fill="rgba(45,185,120,0.6)"/>
+<circle cx="837" cy="587" r="4" fill="rgba(45,185,120,0.7)"/>
+<text x="847" y="592" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">history_games</text>
+<text x="1056" y="592" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)" font-style="italic">estado por nodo del mapa</text>
+<line x1="823" y1="604" x2="1068" y2="604" stroke="rgba(45,185,120,0.08)"/>
+<text x="836" y="620" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.7)">PK</text>
+<text x="855" y="620" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
+<text x="836" y="633" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="633" font-size="8" fill="rgba(255,255,255,0.42)">progress_id · UNIQUE(progress_id, node_id)</text>
+<text x="836" y="646" font-size="8" fill="rgba(255,255,255,0.42)">   node_id · VARCHAR(120)</text>
+<text x="836" y="659" font-size="8" fill="rgba(255,255,255,0.42)">   best_score · best_accuracy · completed</text>
 
-<!-- ── games ── (shown as inline note off history_games) -->
-<rect x="1136" y="572" width="222" height="138" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.2)" stroke-width="1"/>
-<rect x="1136" y="572" width="222" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
-<rect x="1136" y="588" width="222" height="18" fill="rgba(45,185,120,0.1)"/>
-<circle cx="1153" cy="589" r="4" fill="rgba(45,185,120,0.7)"/>
-<text x="1163" y="594" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">games</text>
-<line x1="1139" y1="606" x2="1358" y2="606" stroke="rgba(45,185,120,0.1)"/>
-<text x="1153" y="622" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
-<text x="1175" y="622" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
-<text x="1153" y="635" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
-<text x="1175" y="635" font-size="8" fill="rgba(255,255,255,0.45)">history_id</text>
-<text x="1153" y="648" font-size="8" fill="rgba(255,255,255,0.45)">   client_run_id · idempotencia</text>
-<text x="1153" y="661" font-size="8" fill="rgba(255,255,255,0.45)">   score · accuracy · NUMERIC</text>
-<text x="1153" y="674" font-size="8" fill="rgba(255,255,255,0.45)">   correct_answers · wrong_answers</text>
-<text x="1153" y="687" font-size="8" fill="rgba(255,255,255,0.45)">   played_at · TIMESTAMPTZ</text>
-<text x="1153" y="700" font-size="7" fill="rgba(45,185,120,0.4)">saveAuthenticatedProgress()</text>
+<!-- FK connector: history_games → games -->
+<line x1="944" y1="678" x2="944" y2="706"
+      stroke="rgba(45,185,120,0.45)" stroke-width="1.5" marker-end="url(#fk)"/>
+<text x="958" y="694" font-size="7.5" fill="rgba(45,185,120,0.55)" font-weight="600">1:N</text>
 
-<!-- ─── FK CONNECTIONS (PostgreSQL internal) ─── -->
+<!-- ── games ── -->
+<rect x="820" y="706" width="248" height="122" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="820" y="706" width="248" height="34" rx="8" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="722" width="248" height="18" fill="rgba(45,185,120,0.1)"/>
+<rect x="820" y="706" width="3" height="122" rx="1.5" fill="rgba(45,185,120,0.6)"/>
+<circle cx="837" cy="723" r="4" fill="rgba(45,185,120,0.7)"/>
+<text x="847" y="728" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.9)">games</text>
+<text x="1056" y="728" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)" font-style="italic">cada partida individual</text>
+<line x1="823" y1="740" x2="1068" y2="740" stroke="rgba(45,185,120,0.08)"/>
+<text x="836" y="756" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.7)">PK</text>
+<text x="855" y="756" font-size="8" fill="rgba(255,255,255,0.55)">id · UUID</text>
+<text x="836" y="769" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.65)">FK</text>
+<text x="855" y="769" font-size="8" fill="rgba(255,255,255,0.42)">history_id</text>
+<text x="836" y="782" font-size="8" fill="rgba(255,255,255,0.42)">   client_run_id · TEXT (idempotencia)</text>
+<text x="836" y="795" font-size="8" fill="rgba(255,255,255,0.42)">   score · accuracy · NUMERIC</text>
+<text x="836" y="808" font-size="8" fill="rgba(255,255,255,0.42)">   correct_answers · wrong_answers</text>
+<text x="836" y="820" font-size="7.5" fill="rgba(45,185,120,0.4)">saveAuthenticatedProgress()</text>
 
-<!-- users → profiles (1:1) -->
-<line x1="973" y1="296" x2="973" y2="326" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="988" y="313" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">1:1</text>
+<!-- ═══ BRANCH TABLES ═══ -->
 
-<!-- users → images (1:1) -->
-<line x1="1089" y1="192" x2="1136" y2="192" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="1100" y="183" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">avatar</text>
+<!-- FK: users → images (horizontal) -->
+<line x1="1068" y1="196" x2="1090" y2="196"
+      stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
+<text x="1072" y="188" font-size="7.5" fill="rgba(45,185,120,0.45)">avatar_image_id</text>
 
-<!-- profiles → streaks -->
-<line x1="1089" y1="360" x2="1136" y2="340" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="1100" y="345" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">streak_id</text>
+<!-- ── images ── -->
+<rect x="1090" y="174" width="222" height="86" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.18)" stroke-width="1"/>
+<rect x="1090" y="174" width="222" height="34" rx="8" fill="rgba(45,185,120,0.08)"/>
+<rect x="1090" y="190" width="222" height="18" fill="rgba(45,185,120,0.08)"/>
+<rect x="1090" y="174" width="3" height="86" rx="1.5" fill="rgba(45,185,120,0.45)"/>
+<circle cx="1107" cy="191" r="4" fill="rgba(45,185,120,0.55)"/>
+<text x="1117" y="196" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.8)">images</text>
+<text x="1298" y="196" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.4)" font-style="italic">avatar base64</text>
+<line x1="1093" y1="208" x2="1312" y2="208" stroke="rgba(45,185,120,0.07)"/>
+<text x="1106" y="224" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.65)">PK</text>
+<text x="1122" y="224" font-size="8" fill="rgba(255,255,255,0.5)">id · UUID</text>
+<text x="1106" y="237" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.6)">FK</text>
+<text x="1122" y="237" font-size="8" fill="rgba(255,255,255,0.4)">user_id · UNIQUE</text>
+<text x="1106" y="250" font-size="8" fill="rgba(255,255,255,0.38)">   data TEXT (base64) · mime_type</text>
 
-<!-- profiles → progress_restrictions (1:N) -->
-<line x1="973" y1="444" x2="973" y2="478" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="988" y="463" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">1:N</text>
+<!-- FK: profiles → streaks (horizontal) -->
+<line x1="1068" y1="360" x2="1090" y2="348"
+      stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
+<text x="1072" y="348" font-size="7.5" fill="rgba(45,185,120,0.45)">streak_id</text>
 
-<!-- progress_restrictions → history_games (1:N) -->
-<line x1="973" y1="596" x2="973" y2="628" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="988" y="614" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">1:N</text>
+<!-- ── streaks ── -->
+<rect x="1090" y="318" width="222" height="90" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.18)" stroke-width="1"/>
+<rect x="1090" y="318" width="222" height="34" rx="8" fill="rgba(45,185,120,0.08)"/>
+<rect x="1090" y="334" width="222" height="18" fill="rgba(45,185,120,0.08)"/>
+<rect x="1090" y="318" width="3" height="90" rx="1.5" fill="rgba(45,185,120,0.45)"/>
+<circle cx="1107" cy="335" r="4" fill="rgba(45,185,120,0.55)"/>
+<text x="1117" y="340" font-size="10.5" font-weight="700" fill="rgba(45,185,120,0.8)">streaks</text>
+<text x="1298" y="340" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.4)" font-style="italic">racha diaria</text>
+<line x1="1093" y1="352" x2="1312" y2="352" stroke="rgba(45,185,120,0.07)"/>
+<text x="1106" y="368" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.65)">PK</text>
+<text x="1122" y="368" font-size="8" fill="rgba(255,255,255,0.5)">id · UUID</text>
+<text x="1106" y="381" font-size="8" fill="rgba(255,255,255,0.38)">   current_count · best_count · INT</text>
+<text x="1106" y="394" font-size="8" fill="rgba(255,255,255,0.38)">   last_activity_day · DATE</text>
 
-<!-- history_games → games (1:N, to right) -->
-<line x1="1089" y1="686" x2="1136" y2="648" stroke="rgba(45,185,120,0.4)" stroke-width="1.4" marker-end="url(#fk)"/>
-<text x="1098" y="665" font-size="7.5" fill="rgba(45,185,120,0.5)" font-weight="600">1:N</text>
+<!-- FK: progress_restrictions → restriction_node_config (logical, dashed) -->
+<line x1="1068" y1="492" x2="1090" y2="492"
+      stroke="rgba(45,185,120,0.28)" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ref)"/>
+<text x="1072" y="484" font-size="7" fill="rgba(45,185,120,0.38)">consulta</text>
 
-<!-- progress_restrictions → restriction_node_config (logical, dashed) -->
-<line x1="1089" y1="518" x2="1136" y2="490" stroke="rgba(45,185,120,0.25)" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ref)"/>
-<text x="1095" y="500" font-size="7" fill="rgba(45,185,120,0.4)">consulta</text>
+<!-- ── restriction_node_config ── (dashed, no FK) -->
+<rect x="1090" y="462" width="222" height="70" rx="8" fill="#0d1621" stroke="rgba(45,185,120,0.12)" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="1090" y="462" width="222" height="34" rx="8" fill="rgba(45,185,120,0.06)"/>
+<rect x="1090" y="478" width="222" height="18" fill="rgba(45,185,120,0.06)"/>
+<rect x="1090" y="462" width="3" height="70" rx="1.5" fill="rgba(45,185,120,0.3)"/>
+<circle cx="1107" cy="479" r="4" fill="rgba(45,185,120,0.4)"/>
+<text x="1117" y="484" font-size="9" font-weight="700" fill="rgba(45,185,120,0.65)">restriction_node_config</text>
+<text x="1298" y="484" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.35)" font-style="italic">config total_nodes</text>
+<line x1="1093" y1="496" x2="1312" y2="496" stroke="rgba(45,185,120,0.06)"/>
+<text x="1106" y="512" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.55)">PK</text>
+<text x="1122" y="512" font-size="8" fill="rgba(255,255,255,0.4)">restriction · VARCHAR(30)</text>
+<text x="1106" y="524" font-size="8" fill="rgba(255,255,255,0.35)">   total_nodes · INT (30 celiaquia)</text>
 
-<!-- ─── Legacy note ─── -->
-<rect x="1400" y="628" width="540" height="52" rx="7" fill="rgba(255,80,80,0.04)" stroke="rgba(255,80,80,0.1)" stroke-width="1"/>
-<text x="1416" y="648" font-size="8.5" font-weight="600" fill="rgba(255,120,120,0.55)">Legacy eliminado en migración 008</text>
-<text x="1416" y="661" font-size="8" fill="rgba(255,120,120,0.35)">player_* · game_sessions · completed_nodes · unlocked_content</text>
-<text x="1416" y="672" font-size="7.5" fill="rgba(255,120,120,0.28)">008_align_excalidraw_canonical.sql</text>
+<!-- Legacy note -->
+<rect x="1090" y="576" width="416" height="46" rx="7"
+      fill="rgba(220,60,60,0.04)" stroke="rgba(220,60,60,0.1)" stroke-width="1"/>
+<text x="1106" y="596" font-size="8.5" font-weight="600" fill="rgba(255,100,100,0.5)">Tablas eliminadas en migración 008</text>
+<text x="1106" y="609" font-size="7.5" fill="rgba(255,100,100,0.32)">player_* · game_sessions · completed_nodes · unlocked_content → reemplazadas por el esquema actual</text>
 
 </svg>
 </div>
@@ -401,79 +410,60 @@ text { font-family: 'Inter', system-ui, sans-serif; user-select: none; }
 
 <div class="foot">
   <button class="fc" id="btn-out">−</button>
-  <span id="zl">60%</span>
+  <span id="zl">—</span>
   <button class="fc" id="btn-in">+</button>
   <button class="fc" id="btn-fit">⊡</button>
 </div>
-
 <div class="tip">scroll → zoom &nbsp;·&nbsp; drag → mover</div>
 
 <script>
-const SVG_W = 1980, SVG_H = 840;
-let scale = 0.6, ox = 0, oy = 0, panning = false, lx = 0, ly = 0;
-
-const cv   = document.getElementById('cv');
+const SVG_W = 1580, SVG_H = 960;
+let scale = 0.72, ox = 0, oy = 0, panning = false, lx = 0, ly = 0;
+const cv = document.getElementById('cv');
 const wrap = document.getElementById('wrap');
-const zl   = document.getElementById('zl');
+const zl = document.getElementById('zl');
 
 function render() {
   wrap.style.transform = `translate(${ox|0}px,${oy|0}px) scale(${scale})`;
   zl.textContent = Math.round(scale * 100) + '%';
 }
-
 function zoomAt(cx, cy, factor) {
   const ns = Math.max(0.15, Math.min(6, scale * factor));
-  const r  = ns / scale;
-  ox = cx - r * (cx - ox);
-  oy = cy - r * (cy - oy);
-  scale = ns;
-  render();
+  const r = ns / scale;
+  ox = cx - r * (cx - ox); oy = cy - r * (cy - oy);
+  scale = ns; render();
 }
-
 function fitView() {
   const cw = cv.clientWidth, ch = cv.clientHeight;
   scale = Math.min((cw - 40) / SVG_W, (ch - 40) / SVG_H, 1);
   ox = (cw - SVG_W * scale) / 2;
-  oy = Math.max(6, (ch - SVG_H * scale) / 2);
+  oy = Math.max(8, (ch - SVG_H * scale) / 2);
   render();
 }
-
 cv.addEventListener('wheel', e => {
   e.preventDefault();
   const rect = cv.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  // Normalize across deltaMode (pixel / line / page)
   let dy = e.deltaY;
   if (e.deltaMode === 1) dy *= 16;
   if (e.deltaMode === 2) dy *= 320;
-
-  // Clamp to ±150px, then apply 10% per 100px (multiplicative)
   const clamped = Math.max(-150, Math.min(150, dy));
-  const pct    = Math.abs(clamped) / 100 * 0.10;
-  const factor = clamped < 0 ? (1 + pct) : 1 / (1 + pct);
-
-  zoomAt(mx, my, factor);
+  const pct = Math.abs(clamped) / 100 * 0.10;
+  zoomAt(e.clientX - rect.left, e.clientY - rect.top,
+         clamped < 0 ? (1 + pct) : 1 / (1 + pct));
 }, { passive: false });
-
 cv.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
-  panning = true; lx = e.clientX; ly = e.clientY;
-  cv.classList.add('drag');
+  panning = true; lx = e.clientX; ly = e.clientY; cv.classList.add('drag');
 });
 window.addEventListener('mousemove', e => {
   if (!panning) return;
   ox += e.clientX - lx; oy += e.clientY - ly;
-  lx = e.clientX; ly = e.clientY;
-  render();
+  lx = e.clientX; ly = e.clientY; render();
 });
 window.addEventListener('mouseup', () => { panning = false; cv.classList.remove('drag'); });
-
 document.getElementById('btn-in') .onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1.18);
 document.getElementById('btn-out').onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1/1.18);
 document.getElementById('btn-fit').onclick = fitView;
-
 fitView();
 </script>
 </body>

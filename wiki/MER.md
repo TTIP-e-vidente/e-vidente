@@ -18,7 +18,12 @@ Hub interactivo: [mer.html](mer.html) · Detalle operativo sync: [Sync-Godot-Pos
 
 Se documentó el **MER de dominio**: recorrido educativo desde el jugador hasta las modalidades y el catálogo de ítems. La persistencia era solo local (`user://save_data.json` vía `SaveManager`); no había PostgreSQL.
 
-- Diagrama: [mer-dominio.html](mer-dominio.html)
+El diagrama fue diseñado en **Excalidraw** y refleja las entidades conceptuales del juego:
+
+![MER Dominio E1/E2](Mer.png)
+
+- Diagrama interactivo: [mer-dominio.html](mer-dominio.html)
+- Fuente visual: `wiki/Mer.png` (Excalidraw original)
 - Evidencia: [Entrega-1-Arquitectura](Entrega-1-Arquitectura)
 
 ### Entrega 2
