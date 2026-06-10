@@ -1,6 +1,8 @@
 # User Stories — Entrega 3
 
-Historias agrupadas a partir del sprint activo en Jira (17 tickets UNQ, jun 2026). Trazabilidad ticket ↔ historia en [Entrega-3](Entrega-3).
+Estas son las **8 historias** con las que contamos la Entrega 3 en TTIP. Detrás hay 17 tickets UNQ en Jira (jun 2026).
+
+**Estado vivo:** [Evidencia](Entrega-3-Evidencia#tickets-jira-del-sprint) · **Para mostrar:** [Presentación](Entrega-3-Presentacion) · **Guión defensa:** [Cierre](Entrega-3-Cierre).
 
 ---
 
@@ -56,7 +58,7 @@ En revisión (UNQ-161 terminado).
 
 ### Estado
 
-En revisión.
+**Lista para cierre** — UNQ-65, UNQ-171, UNQ-90 y UNQ-91 terminados en Jira (10 jun 2026).
 
 ---
 
@@ -108,7 +110,7 @@ En revisión.
 
 ### Estado
 
-Pendiente.
+En curso — UNQ-107 (diseño) terminado; UNQ-27 (implementación) en progreso.
 
 ---
 
@@ -157,7 +159,7 @@ En revisión.
 
 ### Estado
 
-En curso.
+En curso — UNQ-167 (diseño) terminado; UNQ-168 en progreso.
 
 ---
 
@@ -208,55 +210,33 @@ Terminada.
 
 ---
 
-## Resumen de trabajo del sprint (Entrega 3)
+## Resumen de lo que hicimos en el sprint
 
 ### Infraestructura y persistencia
 
-Se configuró PostgreSQL local con Docker, se validó la conexión inicial y se modelaron las entidades principales del jugador. Se relevó qué datos locales son críticos para la primera migración (perfil, puntaje, EXP, partidas, nodos, racha, desbloqueos).
+Levantamos PostgreSQL con Docker, validamos la conexión y modelamos las entidades del jugador. Relevamos qué datos locales migrar primero: perfil, puntaje, EXP, partidas, nodos, racha, desbloqueos.
 
 ### Cuenta y sesión
 
-Se diseñaron e implementaron los flujos de registro y login, con pantallas alineadas al estilo del juego y opción de continuar offline si el backend no está disponible.
+Registro y login quedaron integrados al flujo del juego. Los cuatro tickets de US-02 están **terminados** en Jira. Si el backend no responde, el jugador sigue offline.
 
-### Sincronización de progreso
+### Sincronización
 
-Se implementó migración del save local hacia PostgreSQL al iniciar sesión, guardado de resumen de partida al finalizar y cola local con reintento ante fallos de red, desacoplado del gameplay.
+Al loguearse migra el save local. Al terminar una partida guarda el resumen remoto. Si falla la red, encola y reintenta — sin acoplar el gameplay a HTTP.
 
-### Mapa y contenido (trabajo complementario fuera del sprint)
+### Mapa y contenido
 
-Se unificó el posicionamiento de nodos del mapa sobre curva (`MapPathLayout`) y se avanzó la refactorización hacia un nodo único de partida con modalidades parametrizadas (UNQ-170).
+Avanzamos el nodo único de partida con modalidades por JSON (UNQ-170).
 
 ### Calidad y educación
 
-Se avanzó el desacople de enseñanzas por JSON, el diseño de feedback educativo y tests automatizados de UX/UI para la modalidad Preguntas. Se mejoró la percepción visual de comidas con borde blanco (UNQ-166 cerrado).
+Enseñanzas hacia JSON, feedback visual diseñado, tests UX/UI para Preguntas en marcha. Comidas con borde blanco cerrado (UNQ-166).
 
-### Pendiente del sprint
+### Qué falta cerrar
 
-Pantalla de perfil dedicada (diseño + implementación) y cierre formal de tickets en revisión.
+Tickets en **Revisión** (infra, sync, nodo único), escena de perfil (UNQ-27), enseñanzas JSON (UNQ-168) y test UX Preguntas (UNQ-172).
 
----
-
-## Trazabilidad ticket → historia
-
-| Ticket | Título | Historia | Estado Jira |
-|---|---|---|---|
-| UNQ-85 | Configurar PostgreSQL local con Docker | US-01 | Revisión |
-| UNQ-87 | Validar conexión inicial con PostgreSQL | US-01 | Revisión |
-| UNQ-162 | Modelar entidades principales del jugador | US-01 | Revisión |
-| UNQ-161 | Identificar datos locales críticos a migrar | US-01 | Terminado |
-| UNQ-65 | Diseñar registro de usuario | US-02 | Revisión |
-| UNQ-171 | Diseñar pantalla de login de usuario | US-02 | Revisión |
-| UNQ-90 | Implementar registro de usuario | US-02 | Revisión |
-| UNQ-91 | Implementar login de usuario | US-02 | Revisión |
-| UNQ-160 | Migrar y sincronizar progreso local | US-03 | Revisión |
-| UNQ-163 | Guardar resumen de partida en PostgreSQL | US-03 | Revisión |
-| UNQ-107 | Diseñar pantalla de perfil de usuario | US-04 | Por Hacer |
-| UNQ-27 | Implementar escena de perfil de usuario | US-04 | Por Hacer |
-| UNQ-170 | Partidas como nodo único multi-modalidad | US-05 | Revisión |
-| UNQ-167 | Diseñar feedback enseñanzas | US-06 | Revisión |
-| UNQ-168 | Implementar feedback enseñanzas mediante JSON | US-06 | En progreso |
-| UNQ-172 | Test automatizado UX/UI Preguntas | US-07 | En progreso |
-| UNQ-166 | Borde blanco en comidas | US-08 | Terminado |
+Tabla ticket ↔ Jira: **[Evidencia](Entrega-3-Evidencia#tickets-jira-del-sprint)**.
 
 ---
 

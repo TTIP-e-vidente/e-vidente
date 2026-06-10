@@ -93,7 +93,8 @@ function optionalIsoDate(value: unknown, fieldName: string): string | null {
 export async function getProgresoRestriccion(userId: string): Promise<ProgresoRestriccionResponse> {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    // READ ONLY: optimiza el manejo de locks y log en Postgres para queries de solo lectura.
+    await client.query('BEGIN READ ONLY');
     const user = await userRepository.findPublicUserById(userId);
     if (!user) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');

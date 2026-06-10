@@ -4,361 +4,379 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flujo de datos — E-VIDENTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/mer-shared.css">
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #0b0f1a; color: #fff;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
-}
-
-.nav {
-  position: sticky; top: 0; z-index: 100; height: 38px;
-  display: flex; align-items: center; gap: 2px; padding: 0 16px;
-  background: rgba(11,15,26,0.97); border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.nav-brand { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 6px; letter-spacing: .04em; }
-.nav a {
-  color: rgba(255,255,255,0.38); text-decoration: none; font-size: 11px; font-weight: 500;
-  padding: 4px 9px; border-radius: 5px; transition: color .15s, background .15s;
-}
-.nav a:hover { color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
-.nav a.on  { color: #fff; background: rgba(255,200,70,0.2); }
-.badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 2px; }
-
-/* ── Page layout ── */
-.page { max-width: 980px; margin: 0 auto; padding: 44px 24px 72px; }
-.eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 10px; }
-h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px; }
-.lead { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.7; max-width: 580px; margin-bottom: 40px; }
-
-/* ── Flow legend ── */
-.legend {
-  display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 36px;
-  padding: 12px 16px; background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
-  font-size: 10.5px;
-}
-.leg { display: flex; align-items: center; gap: 6px; }
-.leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.leg-lbl { color: rgba(255,255,255,0.45); }
-
-/* ── Two-column flow layout ── */
-.flows { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media (max-width: 720px) { .flows { grid-template-columns: 1fr; } }
-
-/* ── Flow column ── */
-.flow-col { display: flex; flex-direction: column; }
-.flow-title {
-  font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase;
-  color: rgba(255,255,255,0.28); margin-bottom: 16px;
-  padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-/* ── Step card ── */
-.step {
-  display: grid; grid-template-columns: 28px 1fr; gap: 12px;
-  padding: 14px 0; position: relative;
-}
-/* Connector line between steps */
-.step:not(:last-child)::after {
-  content: ''; position: absolute;
-  left: 13px; top: 42px; bottom: 0;
-  width: 1px; background: rgba(255,255,255,0.07);
-}
-.step-num {
-  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; z-index: 1; margin-top: 2px;
-}
-.step-num-local  { background: rgba(99,120,255,0.2); color: rgba(130,150,255,0.9); border: 1px solid rgba(99,120,255,0.3); }
-.step-num-sync   { background: rgba(255,200,70,0.2); color: rgba(255,210,100,0.9); border: 1px solid rgba(255,200,70,0.3); }
-.step-num-pg     { background: rgba(45,185,120,0.2); color: rgba(80,210,150,0.9); border: 1px solid rgba(45,185,120,0.3); }
-.step-num-auth   { background: rgba(196,163,255,0.2); color: rgba(200,170,255,0.9); border: 1px solid rgba(196,163,255,0.3); }
-.step-num-branch { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
-
-.step-body { padding-top: 3px; }
-.step-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-bottom: 4px; }
-.step-desc { font-size: 11.5px; color: rgba(255,255,255,0.38); line-height: 1.6; margin-bottom: 6px; }
-code { font-family: 'Menlo', 'Consolas', monospace; font-size: 10.5px; background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px; }
-.step-code { margin-top: 4px; }
-.step-code code { font-size: 10px; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
-
-/* ── Decision branch ── */
-.decision {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px; border-radius: 6px; margin: 2px 0;
-  font-size: 11px;
-}
-.dec-if { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-.dec-yes { background: rgba(45,185,120,0.07); border: 1px solid rgba(45,185,120,0.15); color: rgba(80,210,150,0.8); }
-.dec-no  { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.38); }
-.dec-icon { font-size: 14px; flex-shrink: 0; }
-
-/* ── Guarantee badge ── */
-.guarantee {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
-  background: rgba(99,120,255,0.15); color: rgba(130,150,255,0.85);
-  letter-spacing: .05em; margin-top: 4px;
-}
-
-/* ── Note box ── */
-.note {
-  margin-top: 28px; padding: 16px 18px;
-  background: rgba(255,200,70,0.04); border: 1px solid rgba(255,200,70,0.12);
-  border-radius: 8px; border-left: 3px solid rgba(255,200,70,0.45);
-}
-.note-title { font-size: 11px; font-weight: 700; color: rgba(255,210,100,0.8); margin-bottom: 6px; }
-.note-body  { font-size: 11.5px; color: rgba(255,255,255,0.42); line-height: 1.65; }
-
-/* ── Source refs ── */
-.sources {
-  margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;
-}
-.src {
-  padding: 10px 12px; border-radius: 7px;
-  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
-  font-size: 11px;
-}
-.src-label { font-size: 8.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 5px; }
-.src a { color: rgba(130,150,255,0.7); text-decoration: none; display: block; margin-bottom: 2px; }
-.src a:hover { color: rgba(130,150,255,1); text-decoration: underline; }
+.tag-e1 { background: var(--local-bg); color: var(--local-text); }
+.tag-e2 { background: rgba(99,120,255,0.1); color: rgba(140,160,255,0.65); }
+.tag-e3 { background: var(--sync-bg); color: var(--sync-text); }
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <span class="nav-brand">e-vidente</span>
+  <a class="nav-brand" href="mer.html">E-VIDENTE</a>
   <a href="mer.html">Hub MER</a>
-  <a href="mer-dominio.html">Dominio <span class="badge" style="background:rgba(99,120,255,.18);color:rgba(130,150,255,.85)">E1·E2</span></a>
-  <a href="mer-persistencia-e3.html">Persistencia <span class="badge" style="background:rgba(45,185,120,.18);color:rgba(80,210,150,.85)">E3</span></a>
-  <a href="mer-flujo.html" class="on">Flujo de datos <span class="badge" style="background:rgba(255,200,70,.18);color:rgba(255,210,100,.85)">E3</span></a>
+  <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
+  <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
+  <a href="mer-flujo.html" class="on on-flow">Flujo <span class="badge badge-flow">E3</span></a>
+  <span class="nav-spacer"></span>
+  <a href="Entrega-3-Presentacion.html" class="nav-cta">Defensa E3</a>
 </nav>
+
+<div class="hub-strip">
+  <span class="hub-strip-label">Recorrido E3</span>
+  <a class="hub-pill" data-page="entrega-3-presentacion.html" href="Entrega-3-Presentacion.html"><span class="dot defensa"></span> Defensa</a>
+  <a class="hub-pill" data-page="mer.html" href="mer.html"><span class="dot hub"></span> Hub MER</a>
+  <a class="hub-pill on" data-page="mer-flujo.html" href="mer-flujo.html"><span class="dot flujo"></span> Flujo</a>
+  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> Persistencia</a>
+</div>
 
 <div class="page">
   <p class="eyebrow">Arquitectura de datos · Entrega 3</p>
   <h1>Flujo de datos</h1>
   <p class="lead">
-    Cómo viaja el estado del jugador desde que termina un nodo hasta quedar guardado
-    en PostgreSQL, y cómo se recupera al hacer login desde otro dispositivo.
+    Una pregunta simple: <strong style="color:rgba(255,255,255,0.72)">¿qué pasa con los datos del jugador en cada entrega?</strong>
+    Primero la evolución E1→E3; después dos historias concretas — terminar una partida e iniciar sesión.
   </p>
 
-  <!-- Color legend -->
-  <div class="legend">
-    <div class="leg"><div class="leg-dot" style="background:rgba(99,120,255,0.7)"></div><span class="leg-lbl">Godot / save local</span></div>
-    <div class="leg"><div class="leg-dot" style="background:rgba(255,200,70,0.7)"></div><span class="leg-lbl">Capa de sync</span></div>
-    <div class="leg"><div class="leg-dot" style="background:rgba(45,185,120,0.7)"></div><span class="leg-lbl">PostgreSQL / backend</span></div>
-    <div class="leg"><div class="leg-dot" style="background:rgba(196,163,255,0.7)"></div><span class="leg-lbl">Auth / sesión</span></div>
+  <div class="glance mb-48">
+    <div class="glance-item"><div class="glance-icon local">1</div><div><h4>Partida</h4><p>Save local al instante. Sync solo si hay cuenta.</p></div></div>
+    <div class="glance-item"><div class="glance-icon sync">2</div><div><h4>Login</h4><p>Merge local + remoto. Cola offline se vacía.</p></div></div>
+    <div class="glance-item"><div class="glance-icon pg">3</div><div><h4>Regla</h4><p>Sin backend → se juega igual. Postgres nunca bloquea.</p></div></div>
   </div>
 
-  <div class="flows">
+  <nav class="subnav" data-spy>
+    <a href="#evolucion" class="on">Evolución E1→E3</a>
+    <a href="#flujo-partida">Flujo partida</a>
+    <a href="#flujo-login">Flujo login</a>
+    <a href="#fuentes">Código fuente</a>
+  </nav>
 
-    <!-- ── LEFT: FLUJO DE PARTIDA ── -->
-    <div class="flow-col">
-      <div class="flow-title">Flujo de partida (nodo completado)</div>
-
-      <div class="step">
-        <div class="step-num step-num-local">1</div>
-        <div class="step-body">
-          <div class="step-title">Jugador termina un nodo</div>
-          <div class="step-desc">El minijuego llega a la pantalla de resultados con score, accuracy y respuestas.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-local">2</div>
-        <div class="step-body">
-          <div class="step-title">Se arma el RunSummary</div>
-          <div class="step-desc"><code>SincronizadorPartida.armar_run_summary()</code> genera un dict con todos los datos de la partida incluyendo un <code>clientRunId</code> único (UUID).</div>
-          <div class="step-code">
-            <code>node_id</code><code>score</code><code>accuracy</code>
-            <code>correct_answers</code><code>clientRunId</code>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-local">3</div>
-        <div class="step-body">
-          <div class="step-title">Guardar local — garantizado</div>
-          <div class="step-desc"><code>SaveManager.guardar()</code> escribe <code>save_data.json</code> antes de cualquier operación de red. El juego funciona aunque no haya internet.</div>
-          <div class="guarantee">⟳ LOCAL-FIRST SIEMPRE</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-branch">4</div>
-        <div class="step-body">
-          <div class="step-title">¿Cuenta vinculada online?</div>
-          <div class="decision dec-if">
-            <span class="dec-icon">◇</span>
-            <span><code>save_meta.linked_online_username</code> presente</span>
-          </div>
-          <div class="decision dec-no" style="margin-top:5px">
-            <span class="dec-icon">✗</span>
-            <span>No vinculado → sólo save local. Fin del flujo.</span>
-          </div>
-          <div class="decision dec-yes">
-            <span class="dec-icon">✓</span>
-            <span>Vinculado → continúa el flujo de sync</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-sync">5</div>
-        <div class="step-body">
-          <div class="step-title">Encolar en sync queue</div>
-          <div class="step-desc"><code>LocalSyncQueue.encolar(run_summary)</code> escribe el RunSummary en <code>backend_sync_queue.json</code> con status <code>pending</code>.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-sync">6</div>
-        <div class="step-body">
-          <div class="step-title">ProgressSyncService procesa la cola</div>
-          <div class="step-desc">Lee todos los items con status <code>pending</code>, los agrupa y llama:</div>
-          <div class="decision dec-yes" style="margin-top:6px; font-family:monospace; font-size:11px">
-            POST /player/me/progress/batch
-          </div>
-          <div class="step-desc" style="margin-top:8px">Si falla → reintenta con backoff. El <code>clientRunId</code> garantiza que los reintentos no creen duplicados.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-pg">7</div>
-        <div class="step-body">
-          <div class="step-title">Backend persiste en PostgreSQL</div>
-          <div class="step-desc"><code>saveAuthenticatedProgress()</code> ejecuta para cada RunSummary:</div>
-          <div class="step-code">
-            <code>UPSERT history_games</code><br>
-            <code>INSERT games ON CONFLICT (client_run_id) DO NOTHING</code>
-          </div>
-          <div class="step-desc" style="margin-top:6px">Si el nodo ya existe → actualiza <code>best_accuracy</code> si mejoró. Si <code>client_run_id</code> ya existe → ignora (idempotente).</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-sync">8</div>
-        <div class="step-body">
-          <div class="step-title">Marcar como sincronizado</div>
-          <div class="step-desc"><code>LocalSyncQueue</code> actualiza status a <code>synced</code>. El item desaparece de la cola pendiente.</div>
-        </div>
-      </div>
-
-    </div><!-- /left flow -->
-
-    <!-- ── RIGHT: FLUJO DE LOGIN / MERGE ── -->
-    <div class="flow-col">
-      <div class="flow-title">Flujo de login y recuperación de progreso</div>
-
-      <div class="step">
-        <div class="step-num step-num-auth">A</div>
-        <div class="step-body">
-          <div class="step-title">Jugador inicia sesión</div>
-          <div class="step-desc">Desde la pantalla de Intro selecciona Login. Ingresa username y contraseña.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-auth">B</div>
-        <div class="step-body">
-          <div class="step-title">Auth JWT</div>
-          <div class="step-desc"><code>AuthApi.login()</code> llama:</div>
-          <div class="decision dec-yes" style="margin-top:6px; font-family:monospace; font-size:11px">
-            POST /auth/login
-          </div>
-          <div class="step-desc" style="margin-top:8px">El backend responde con JWT. <code>BackendSession.guardar_sesion()</code> persiste el token en <code>backend_session.json</code>.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-pg">C</div>
-        <div class="step-body">
-          <div class="step-title">Fetch del progreso remoto</div>
-          <div class="step-desc"><code>ImportadorProgresoOnline</code> llama:</div>
-          <div class="decision dec-yes" style="margin-top:6px; font-family:monospace; font-size:11px">
-            GET /player/me/progress
-          </div>
-          <div class="step-desc" style="margin-top:8px">Recibe el estado completo del jugador desde <code>profiles → progress_restrictions → history_games</code>.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-local">D</div>
-        <div class="step-body">
-          <div class="step-title">Merge local ← remoto</div>
-          <div class="step-desc"><code>construir_snapshot_local()</code> combina el progreso remoto con el save local. Regla: gana el mejor resultado (<code>max(best_accuracy)</code>).</div>
-          <div class="step-code" style="margin-top:6px">
-            <code>node_progress</code> ← <code>history_games</code><br>
-            <code>total_exp</code> ← <code>profiles.exp_count</code><br>
-            <code>streak</code> ← <code>streaks.current_count</code>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-local">E</div>
-        <div class="step-body">
-          <div class="step-title">Actualizar save_data.json</div>
-          <div class="step-desc"><code>SaveManager.guardar()</code> escribe el snapshot mergeado. A partir de aquí el jugador ve su progreso actualizado.</div>
-          <div class="guarantee" style="background:rgba(45,185,120,0.12);color:rgba(80,210,150,0.85)">✓ PROGRESO RECUPERADO</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num step-num-sync">F</div>
-        <div class="step-body">
-          <div class="step-title">Sincronizar cola pendiente</div>
-          <div class="step-desc">Si había items en <code>backend_sync_queue.json</code> (jugadas offline previas), <code>ProgressSyncService</code> los envía ahora que hay sesión activa.</div>
-        </div>
-      </div>
-
-      <!-- Note about offline -->
-      <div class="note">
-        <div class="note-title">¿Qué pasa si el jugador juega offline entre sesiones?</div>
-        <div class="note-body">
-          El progreso se acumula en <code>save_data.json</code> y la cola en <code>backend_sync_queue.json</code>.
-          Al conectarse de nuevo, el flujo de login (<b>A→F</b>) combina el progreso local con el remoto
-          y luego envía la cola. No se pierden datos.
-        </div>
-      </div>
-
-    </div><!-- /right flow -->
-
-  </div><!-- /flows -->
-
-  <!-- Sources -->
-  <div class="sources">
-    <div class="src">
-      <div class="src-label">Godot — Sincronización</div>
-      <a href="#">SincronizadorPartida.gd</a>
-      <a href="#">ProgressSyncService.gd</a>
-      <a href="#">LocalSyncQueue.gd</a>
-      <a href="#">ImportadorProgresoOnline.gd</a>
+  <!-- ═══ SECCIÓN 1: EVOLUCIÓN ═══ -->
+  <section class="section" id="evolucion">
+    <div class="section-head">
+      <h2>Cómo evolucionó el flujo por entrega</h2>
+      <p>
+        En E1 y E2 el camino era corto: partida → save local → listo.
+        En E3 sumamos cuenta y PostgreSQL, pero el juego sigue pudiendo correr sin red —
+        esa es la idea que conviene repetir en la defensa.
+      </p>
     </div>
-    <div class="src">
-      <div class="src-label">Godot — Persistencia local</div>
-      <a href="#">SaveManager.gd</a>
-      <a href="#">SaveDataSchema.gd (v4)</a>
-      <a href="#">BackendSession.gd</a>
-    </div>
-    <div class="src">
-      <div class="src-label">Backend — API</div>
-      <a href="#">progreso-restriccion.service.ts</a>
-      <a href="#">BACKEND/migrations/ (001–016)</a>
-      <a href="Sync-Godot-Postgres.md">Sync-Godot-Postgres.md</a>
-    </div>
-    <div class="src">
-      <div class="src-label">Más documentación</div>
-      <a href="mer-persistencia-e3.html">MER Persistencia E3</a>
-      <a href="MER.md">MER.md — esquema canónico</a>
-      <a href="mer.html">Hub MER</a>
-    </div>
-  </div>
 
+    <div class="evo-grid">
+      <!-- E1 -->
+      <article class="evo-card">
+        <div class="evo-top">
+          <h3>Entrega 1</h3>
+          <span class="evo-tag tag-e1">Solo local</span>
+        </div>
+        <div class="evo-flow">
+          <div class="evo-step">
+            <span class="evo-dot blue">1</span>
+            <span>Jugador completa nodo / partida</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot blue">2</span>
+            <span><code>SaveManager</code> escribe <code>save_data.json</code></span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot muted">✓</span>
+            <span>Fin — progreso en disco del dispositivo</span>
+          </div>
+        </div>
+        <div class="evo-foot">
+          <strong>MER:</strong> dominio conceptual (Excalidraw). Sin backend, sin cola, sin login.
+        </div>
+      </article>
+
+      <!-- E2 -->
+      <article class="evo-card">
+        <div class="evo-top">
+          <h3>Entrega 2</h3>
+          <span class="evo-tag tag-e2">Igual que E1</span>
+        </div>
+        <div class="evo-flow">
+          <div class="evo-step">
+            <span class="evo-dot blue">1</span>
+            <span>Mismas modalidades + Completar Palabra</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot blue">2</span>
+            <span>Mismo save local (<code>save_data.json</code>)</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot muted">✓</span>
+            <span>Fin — polish visual, cero infraestructura nueva</span>
+          </div>
+        </div>
+        <div class="evo-foot">
+          <strong>Cambio de dominio:</strong> +Completar Palabra. <strong>Persistencia:</strong> sin cambios.
+        </div>
+      </article>
+
+      <!-- E3 -->
+      <article class="evo-card active-e3">
+        <div class="evo-top">
+          <h3>Entrega 3</h3>
+          <span class="evo-tag tag-e3">Local + nube</span>
+        </div>
+        <div class="evo-flow">
+          <div class="evo-step">
+            <span class="evo-dot blue">1</span>
+            <span>Partida → save local <strong style="color:rgba(130,150,255,0.9)">(siempre primero)</strong></span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot gold">2</span>
+            <span>Si hay cuenta → cola offline → batch sync</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot green">3</span>
+            <span>PostgreSQL guarda nodo + partida</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot gold">4</span>
+            <span>Login en otro dispositivo → merge → recuperás todo</span>
+          </div>
+        </div>
+        <div class="evo-foot">
+          <strong>Nuevo:</strong> JWT, cola, merge, 8 tablas PG. <strong>Contenido JSON</strong> sigue fuera de la DB.
+        </div>
+      </article>
+    </div>
+
+    <div class="evo-connector">El resto de esta página detalla solo Entrega 3</div>
+  </section>
+
+  <!-- ═══ SECCIÓN 2: FLUJO PARTIDA ═══ -->
+  <section class="section" id="flujo-partida">
+    <div class="section-head">
+      <h2>Flujo E3 — Terminar una partida</h2>
+      <p>Una sola lectura de izquierda a derecha por carril. Lo importante: el paso 3 ocurre <em>siempre</em>, aunque no haya internet.</p>
+    </div>
+
+    <div class="lane-wrap">
+      <div class="lane-header">
+        <h3>Swimlane — partida completada</h3>
+        <div class="lane-legend">
+          <span><i class="ll" style="background:rgba(99,120,255,0.7)"></i> Local</span>
+          <span><i class="ll" style="background:rgba(255,200,70,0.7)"></i> Sync</span>
+          <span><i class="ll" style="background:rgba(45,185,120,0.7)"></i> PostgreSQL</span>
+        </div>
+      </div>
+
+      <div class="swimlane">
+        <div class="lane-label player">Jugador</div>
+        <div class="lane-track">
+          <div class="node player">Termina nodo<small>score · accuracy · respuestas</small></div>
+        </div>
+      </div>
+
+      <div class="swimlane">
+        <div class="lane-label local">Godot<br>local</div>
+        <div class="lane-track">
+          <div class="node local">RunSummary<small>SincronizadorPartida + clientRunId</small></div>
+          <span class="flow-arrow">→</span>
+          <div class="node local">save_data.json<small>SaveManager — inmediato</small></div>
+          <span class="flow-arrow">→</span>
+          <div class="node guarantee">LOCAL-FIRST ✓</div>
+        </div>
+      </div>
+
+      <div class="swimlane">
+        <div class="lane-label sync">Sync<br>(opcional)</div>
+        <div class="lane-track">
+          <div class="decision-row">
+            <div class="decision dec-if">¿Cuenta vinculada?</div>
+            <div class="decision dec-no">No → fin (solo local)</div>
+            <div class="decision dec-yes">Sí → continúa ↓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="swimlane">
+        <div class="lane-label sync">Sync</div>
+        <div class="lane-track">
+          <div class="node sync">backend_sync_queue.json<small>status: pending</small></div>
+          <span class="flow-arrow gold">→</span>
+          <div class="node sync">ProgressSyncService<small>POST /player/me/progress/batch</small></div>
+          <span class="flow-arrow gold">→</span>
+          <div class="node sync">Cola synced<small>reintento si falla red</small></div>
+        </div>
+      </div>
+
+      <div class="swimlane">
+        <div class="lane-label pg">PostgreSQL</div>
+        <div class="lane-track">
+          <div class="node pg">history_games<small>estado del nodo (UPSERT)</small></div>
+          <span class="flow-arrow green">→</span>
+          <div class="node pg">games<small>partida · idempotente por client_run_id</small></div>
+          <span class="flow-arrow green">→</span>
+          <div class="node pg">streaks<small>si completed=true</small></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="steps-compact" style="margin-top:20px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);padding:8px 0">
+        Ver detalle paso a paso (técnico)
+      </summary>
+      <div class="step-row"><div class="step-n local">1</div><div class="step-body"><h4>RunSummary</h4><p><code>SincronizadorPartida</code> arma el payload con <code>clientRunId</code>, <code>node_id</code>, score y accuracy.</p></div></div>
+      <div class="step-row"><div class="step-n local">2</div><div class="step-body"><h4>Guardado local garantizado</h4><p><code>SaveManager</code> persiste antes de cualquier HTTP. Sin red = juego usable igual.</p></div></div>
+      <div class="step-row"><div class="step-n sync">3</div><div class="step-body"><h4>Encolado</h4><p><code>LocalSyncQueue</code> agrega el item a <code>backend_sync_queue.json</code>.</p></div></div>
+      <div class="step-row"><div class="step-n sync">4</div><div class="step-body"><h4>Batch sync</h4><p><code>ProgressSyncService</code> drena la cola. Mismo <code>clientRunId</code> = sin duplicados al reintentar.</p></div></div>
+      <div class="step-row"><div class="step-n pg">5</div><div class="step-body"><h4>Persistencia remota</h4><p><code>saveAuthenticatedProgress()</code> actualiza nodos y registra la partida en PostgreSQL.</p></div></div>
+    </details>
+  </section>
+
+  <!-- ═══ SECCIÓN 3: FLUJO LOGIN ═══ -->
+  <section class="section" id="flujo-login">
+    <div class="section-head">
+      <h2>Flujo E3 — Iniciar sesión y recuperar progreso</h2>
+      <p>Cuando el jugador abre el juego en otro dispositivo (o reconecta después de jugar offline), este es el camino.</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab-btn on" data-tab="login-diagram">Diagrama</button>
+      <button type="button" class="tab-btn" data-tab="login-offline">Caso offline</button>
+    </div>
+
+    <div class="tab-panel on" id="login-diagram">
+      <div class="lane-wrap">
+        <div class="lane-header">
+          <h3>Swimlane — login + merge</h3>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-label player">Jugador</div>
+          <div class="lane-track">
+            <div class="node player">Login en Intro<small>username + password</small></div>
+            <span class="flow-arrow">→</span>
+            <div class="node player">Ve mapa actualizado</div>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-label auth">Auth</div>
+          <div class="lane-track">
+            <div class="node auth">POST /auth/login</div>
+            <span class="flow-arrow">→</span>
+            <div class="node auth">backend_session.json<small>JWT persistido</small></div>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-label pg">PostgreSQL</div>
+          <div class="lane-track">
+            <div class="node pg">GET /player/me/progress</div>
+            <span class="flow-arrow green">→</span>
+            <div class="node pg">profiles · history_games · streaks</div>
+          </div>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-label local">Godot<br>local</div>
+          <div class="lane-track">
+            <div class="node local">ImportadorProgresoOnline<small>merge remoto + save local</small></div>
+            <span class="flow-arrow">→</span>
+            <div class="node local">save_data.json actualizado</div>
+            <span class="flow-arrow gold">→</span>
+            <div class="node sync">Drenar cola pendiente<small>partidas offline previas</small></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="steps-compact" style="margin-top:20px">
+        <summary style="cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);padding:8px 0">
+          Ver detalle paso a paso (técnico)
+        </summary>
+        <div class="step-row"><div class="step-n auth">A</div><div class="step-body"><h4>Autenticación</h4><p><code>AuthApi.login()</code> obtiene JWT y lo guarda vía <code>BackendSession</code>.</p></div></div>
+        <div class="step-row"><div class="step-n pg">B</div><div class="step-body"><h4>Pull remoto</h4><p>Se trae el snapshot completo del jugador desde PostgreSQL.</p></div></div>
+        <div class="step-row"><div class="step-n local">C</div><div class="step-body"><h4>Merge inteligente</h4><p><code>construir_snapshot_local()</code>: gana el mejor <code>best_accuracy</code>, fusiona racha y nodos.</p></div></div>
+        <div class="step-row"><div class="step-n sync">D</div><div class="step-body"><h4>Sync de cola</h4><p>Si había partidas offline en la cola, se envían ahora con sesión activa.</p></div></div>
+      </details>
+    </div>
+
+    <div class="tab-panel" id="login-offline">
+      <div class="callout">
+        <h4>Jugó offline entre sesiones — ¿se pierde algo?</h4>
+        <p>
+          <strong>No.</strong> El progreso quedó en <code>save_data.json</code> y las partidas pendientes en
+          <code>backend_sync_queue.json</code>. Al loguearse, el merge combina local + remoto (mejor de ambos)
+          y después la cola se sincroniza. Es la continuación natural del flujo de partida.
+        </p>
+      </div>
+      <div class="lane-wrap" style="margin-top:20px">
+        <div class="lane-header"><h3>Secuencia resumida offline → online</h3></div>
+        <div class="swimlane">
+          <div class="lane-label local">Offline</div>
+          <div class="lane-track">
+            <div class="node local">Jugó sin red</div>
+            <span class="flow-arrow">→</span>
+            <div class="node local">save + cola pending</div>
+          </div>
+        </div>
+        <div class="swimlane">
+          <div class="lane-label auth">Online</div>
+          <div class="lane-track">
+            <div class="node auth">Login</div>
+            <span class="flow-arrow">→</span>
+            <div class="node local">Merge</div>
+            <span class="flow-arrow gold">→</span>
+            <div class="node sync">Batch envía cola</div>
+            <span class="flow-arrow green">→</span>
+            <div class="node pg">PG al día</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FUENTES ═══ -->
+  <section class="section" id="fuentes">
+    <div class="section-head">
+      <h2>Relacionado</h2>
+      <p>Diagrama de tablas, hub MER y documentación operativa.</p>
+    </div>
+    <div class="sources">
+      <div class="src">
+        <div class="src-label">Diagramas MER</div>
+        <a href="mer.html">Hub MER — evolución completa</a>
+        <a href="mer-persistencia-e3.html">Persistencia dual (tablas + archivos)</a>
+        <a href="mer-dominio.html">Dominio E1/E2 (Excalidraw)</a>
+      </div>
+      <div class="src">
+        <div class="src-label">Godot — sync</div>
+        <a href="../juego/API/backend/sync/SincronizadorPartida.gd">SincronizadorPartida.gd</a>
+        <a href="../juego/API/backend/sync/ProgressSyncService.gd">ProgressSyncService.gd</a>
+        <a href="../juego/API/backend/sync/LocalSyncQueue.gd">LocalSyncQueue.gd</a>
+        <a href="../juego/API/backend/sync/ImportadorProgresoOnline.gd">ImportadorProgresoOnline.gd</a>
+      </div>
+      <div class="src">
+        <div class="src-label">Godot — local</div>
+        <a href="../juego/interface/SaveManager.gd">SaveManager.gd</a>
+        <a href="../juego/API/SyncApi.gd">SyncApi.gd</a>
+        <a href="../juego/API/AuthApi.gd">AuthApi.gd</a>
+      </div>
+      <div class="src">
+        <div class="src-label">Docs</div>
+        <a href="Sync-Godot-Postgres">Sync-Godot-Postgres</a>
+        <a href="MER">MER — esquema canónico</a>
+        <a href="Entrega-3-Arquitectura">Entrega-3-Arquitectura</a>
+      </div>
+    </div>
+  </section>
 </div>
+
+<script src="assets/mer-shared.js"></script>
+<script src="assets/mer-wiki-links.js"></script>
 </body>
 </html>

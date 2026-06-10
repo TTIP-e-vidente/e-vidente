@@ -13,8 +13,11 @@
   - [E3](Bitacora-Entrega-3)
 - [CI](CI)
 - [MER](MER)
-  - [Dominio E1/E2](mer-dominio.html)
-  - [Persistencia E3](mer-persistencia-e3.html)
+  - [Vistas interactivas](Vistas-Interactivas)
+  - [Hub visual](Mer-Hub)
+  - [Dominio E1/E2](Mer-Dominio)
+  - [Persistencia E3](Mer-Persistencia-E3)
+  - [Flujo E1→E3](Mer-Flujo)
 
 ---
 
@@ -41,9 +44,11 @@
 - [Bitácora E2](Bitacora-Entrega-2)
 
 **[Entrega 3](Entrega-3)** (actual)
+- [Presentación](Entrega-3-Presentacion)
 - [Resumen](Entrega-3)
 - [User Stories](Entrega-3-User-Stories)
 - [Arquitectura](Entrega-3-Arquitectura)
 - [Decisiones](Entrega-3-Decisiones)
 - [Evidencia](Entrega-3-Evidencia)
+- [Cierre / defensa](Entrega-3-Cierre)
 - [Bitácora E3](Bitacora-Entrega-3)

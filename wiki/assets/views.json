@@ -1,0 +1,41 @@
+{
+  "wikiBase": "https://github.com/TTIP-e-vidente/e-vidente/wiki",
+  "githackBase": "https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master",
+  "views": [
+    {
+      "wikiPage": "Entrega-3-Presentacion",
+      "htmlFile": "Entrega-3-Presentacion.html",
+      "title": "Presentación · Entrega 3",
+      "lead": "Vista para la defensa TTIP: sprint, user stories, guión de 10 minutos.",
+      "cta": "Abrir presentación"
+    },
+    {
+      "wikiPage": "Mer-Hub",
+      "htmlFile": "mer.html",
+      "title": "Hub MER",
+      "lead": "Índice visual de diagramas y evolución E1 → E3.",
+      "cta": "Abrir hub MER"
+    },
+    {
+      "wikiPage": "Mer-Flujo",
+      "htmlFile": "mer-flujo.html",
+      "title": "Flujo E1 → E3",
+      "lead": "Swimlanes: cómo evolucionó dónde guardamos el progreso.",
+      "cta": "Abrir flujo"
+    },
+    {
+      "wikiPage": "Mer-Persistencia-E3",
+      "htmlFile": "mer-persistencia-e3.html",
+      "title": "Persistencia dual · E3",
+      "lead": "Diagrama interactivo local (Godot) + PostgreSQL.",
+      "cta": "Abrir persistencia"
+    },
+    {
+      "wikiPage": "Mer-Dominio",
+      "htmlFile": "mer-dominio.html",
+      "title": "MER Dominio · E1/E2",
+      "lead": "Diagrama Excalidraw original del dominio del juego.",
+      "cta": "Abrir dominio"
+    }
+  ]
+}

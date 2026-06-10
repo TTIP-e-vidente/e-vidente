@@ -4,75 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MER Dominio E1/E2 — E-VIDENTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/mer-shared.css">
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  background: #0b0f1a;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  overflow: hidden; height: 100vh; color: #fff;
-}
-
-/* ── nav ── */
-.nav {
-  position: fixed; inset: 0 0 auto 0; z-index: 300; height: 38px;
-  display: flex; align-items: center; gap: 2px; padding: 0 16px;
-  background: rgba(11,15,26,0.97);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.nav-brand { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 6px; letter-spacing: .04em; }
-.nav a {
-  color: rgba(255,255,255,0.38); text-decoration: none; font-size: 11px; font-weight: 500;
-  padding: 4px 9px; border-radius: 5px; transition: color .15s, background .15s;
-}
-.nav a:hover { color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
-.nav a.on  { color: #fff; background: rgba(99,120,255,0.22); }
-.badge {
-  font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
-  vertical-align: middle; margin-left: 2px;
-}
-
-/* ── canvas ── */
-#cv {
-  position: fixed; inset: 38px 0 0 0;
-  overflow: hidden; cursor: grab; touch-action: none;
-}
-#cv.drag { cursor: grabbing; }
 #wrap { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 #wrap img { display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
 
-/* ── title overlay (top-left) ── */
 .title-ov {
-  position: fixed; top: 52px; left: 22px; z-index: 200;
-  pointer-events: none;
+  position: fixed; left: 22px; z-index: 200; pointer-events: none;
 }
-.title-ov h1 { font-size: 18px; font-weight: 700; letter-spacing: -.02em; color: #fff; }
-.title-ov p  { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; letter-spacing: .05em; }
+.title-ov h1 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+.title-ov p { font-size: 10px; color: var(--muted-soft); margin-top: 4px; letter-spacing: .06em; text-transform: uppercase; }
 
-/* ── side panel ── */
 .panel {
-  position: fixed; top: 52px; right: 18px; z-index: 200; width: 252px;
-  background: rgba(11,15,26,0.88); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px; overflow: hidden;
-  backdrop-filter: blur(12px);
+  position: fixed; right: 18px; z-index: 200; width: 260px;
+  max-height: calc(100vh - 120px); overflow-y: auto;
+  background: rgba(8,12,20,0.94); border: 1px solid var(--border);
+  border-radius: var(--radius); backdrop-filter: blur(16px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
 }
-.panel-section {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
+.panel-section { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .panel-section:last-child { border-bottom: none; }
 .ps-label {
   font-size: 8.5px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-  color: rgba(255,255,255,0.28); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  color: var(--muted-soft); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
 }
-.ps-label::before {
-  content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-}
-.ps-e1 .ps-label::before  { background: rgba(99,120,255,0.8); }
-.ps-e3 .ps-label::before  { background: rgba(45,185,120,0.8); }
-.ps-info .ps-label::before { background: rgba(255,200,70,0.7); }
+.ps-label::before { content: ''; width: 8px; height: 8px; border-radius: 50%; }
+.ps-e1 .ps-label::before { background: var(--local); }
+.ps-e3 .ps-label::before { background: var(--pg); }
+.ps-info .ps-label::before { background: var(--sync); }
 
-.item { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 4px; display: flex; gap: 6px; }
+.item { font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 4px; display: flex; gap: 6px; }
 .item::before { content: '—'; color: rgba(255,255,255,0.2); flex-shrink: 0; }
 
 .delta {
@@ -84,61 +47,58 @@ body {
 
 .panel-link {
   display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-  text-decoration: none; color: rgba(99,120,255,0.8); font-size: 11px; font-weight: 600;
-  background: rgba(99,120,255,0.06); border-top: 1px solid rgba(99,120,255,0.12);
-  transition: background .15s;
+  text-decoration: none; font-size: 11px; font-weight: 600; transition: background .15s;
 }
-.panel-link:hover { background: rgba(99,120,255,0.12); color: rgba(140,160,255,0.95); }
-.panel-link-green {
-  color: rgba(45,185,120,0.8); background: rgba(45,185,120,0.05);
-  border-top: 1px solid rgba(45,185,120,0.1);
-}
-.panel-link-green:hover { background: rgba(45,185,120,0.1); color: rgba(80,210,150,0.95); }
+.panel-link-green { color: rgba(80,210,150,0.9); background: rgba(45,185,120,0.06); border-top: 1px solid rgba(45,185,120,0.1); }
+.panel-link-green:hover { background: rgba(45,185,120,0.12); }
+.panel-link-blue { color: rgba(140,160,255,0.9); background: rgba(99,120,255,0.05); border-top: 1px solid rgba(99,120,255,0.1); }
+.panel-link-blue:hover { background: rgba(99,120,255,0.1); }
 
-/* ── controls ── */
 .foot {
   position: fixed; bottom: 18px; right: 18px; z-index: 200;
   display: flex; align-items: center; gap: 3px;
-  background: rgba(11,15,26,0.9); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 8px; padding: 4px 7px;
+  background: rgba(8,12,20,0.94); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 8px;
+  backdrop-filter: blur(10px);
 }
 .fc {
   border: none; background: none; color: rgba(255,255,255,0.45); cursor: pointer;
-  width: 24px; height: 24px; border-radius: 4px; font-size: 14px;
+  width: 28px; height: 28px; border-radius: 6px; font-size: 15px;
   display: flex; align-items: center; justify-content: center;
   transition: color .15s, background .15s;
 }
 .fc:hover { color: #fff; background: rgba(255,255,255,0.08); }
-#zl { font-size: 10px; color: rgba(255,255,255,0.3); min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+#zl { font-size: 10px; color: var(--muted-soft); min-width: 36px; text-align: center; font-variant-numeric: tabular-nums; }
 .tip { position: fixed; bottom: 18px; left: 18px; z-index: 200; color: rgba(255,255,255,0.14); font-size: 10px; }
+
+body.canvas-page.canvas-dominio .nav { position: fixed; left: 0; right: 0; top: var(--wiki-bar-h); bottom: auto; z-index: 300; }
+@media (max-width: 640px) { .panel { display: none; } .title-ov h1 { font-size: 16px; } }
 </style>
 </head>
-<body>
+<body class="canvas-page canvas-dominio">
 
 <nav class="nav">
-  <span class="nav-brand">e-vidente</span>
+  <a class="nav-brand" href="mer.html">E-VIDENTE</a>
   <a href="mer.html">Hub MER</a>
-  <a href="mer-dominio.html" class="on">Dominio <span class="badge" style="background:rgba(99,120,255,.18);color:rgba(130,150,255,.85)">E1 · E2</span></a>
-  <a href="mer-persistencia-e3.html">Persistencia <span class="badge" style="background:rgba(45,185,120,.18);color:rgba(80,210,150,.85)">E3</span></a>
-  <a href="mer-flujo.html">Flujo de datos <span class="badge" style="background:rgba(255,200,70,.18);color:rgba(255,210,100,.85)">E3</span></a>
+  <a href="mer-dominio.html" class="on">Dominio <span class="badge badge-e1">E1·E2</span></a>
+  <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
+  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3</span></a>
+  <span class="nav-spacer"></span>
+  <a href="Entrega-3-Presentacion.html" class="nav-cta">Defensa E3</a>
 </nav>
 
-<!-- Canvas: original Excalidraw diagram -->
 <div id="cv">
   <div id="wrap">
     <img id="diagram-img" src="Mer.png" alt="MER Dominio E1/E2 — Excalidraw original">
   </div>
 </div>
 
-<!-- Title overlay -->
 <div class="title-ov">
   <h1>MER Dominio</h1>
-  <p>ENTREGA 1 &amp; 2 · DIAGRAMA ORIGINAL · EXCALIDRAW</p>
+  <p>Entrega 1 &amp; 2 · diagrama Excalidraw</p>
 </div>
 
-<!-- Info panel -->
 <div class="panel">
-
   <div class="panel-section ps-e1">
     <div class="ps-label">Entrega 1 &amp; 2 — Dominio</div>
     <div class="item">Jugador · Perfil · Racha · Ptos Exp</div>
@@ -146,20 +106,14 @@ body {
     <div class="item">Partida · Enseñanza</div>
     <div class="item">Arrastre · Vinculación · Pregunta</div>
     <div class="item">Ítem · Condición Alimentaria</div>
-    <div class="item" style="margin-top:2px">
-      <span style="color:rgba(99,120,255,0.6)">E2</span> Completar Palabra
-    </div>
+    <div class="item" style="margin-top:2px"><span style="color:var(--local-text)">E2</span> Completar Palabra</div>
   </div>
 
   <div class="panel-section ps-e3">
     <div class="ps-label">Qué agregó Entrega 3</div>
     <div class="delta">
       <div class="delta-title">Persistencia dual</div>
-      El dominio conceptual de arriba no cambió, pero su estado ahora puede guardarse en dos lugares a la vez:
-      <br><br>
-      <strong style="color:rgba(99,120,255,0.7)">Local</strong> — <code style="font-size:9.5px;background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px">user://save_data.json</code> (siempre, sin red)
-      <br>
-      <strong style="color:rgba(45,185,120,0.7)">Remoto</strong> — PostgreSQL vía <code style="font-size:9.5px;background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px">AuthApi / SyncApi</code>
+      El dominio conceptual no cambió; el estado puede guardarse en local y PostgreSQL.
     </div>
   </div>
 
@@ -170,12 +124,8 @@ body {
     <div class="item">Cola de sync si hay conexión</div>
   </div>
 
-  <a class="panel-link panel-link-green" href="mer-persistencia-e3.html">
-    Ver esquema completo E3 →
-  </a>
-  <a class="panel-link" href="MER.md" style="border-top:1px solid rgba(255,255,255,0.05)">
-    Documentación técnica →
-  </a>
+  <a class="panel-link panel-link-green" href="mer-persistencia-e3.html">Ver esquema completo E3 →</a>
+  <a class="panel-link panel-link-blue" href="MER">Documentación técnica →</a>
 </div>
 
 <div class="foot">
@@ -185,7 +135,7 @@ body {
   <button class="fc" id="btn-fit" title="Ajustar al contenido">⊡</button>
 </div>
 
-<div class="tip">scroll → zoom &nbsp;·&nbsp; drag → mover</div>
+<div class="tip">scroll → zoom · drag → mover</div>
 
 <script>
 let imgW = 0, imgH = 0;
@@ -219,38 +169,31 @@ function fitView() {
   render();
 }
 
-// Wait for image to load, then fit
 img.addEventListener('load', () => {
   imgW = img.naturalWidth;
   imgH = img.naturalHeight;
   fitView();
 });
-// If already cached
 if (img.complete && img.naturalWidth > 0) {
   imgW = img.naturalWidth;
   imgH = img.naturalHeight;
   fitView();
 }
 
-// ── Smooth zoom (normalized across devices) ──
 cv.addEventListener('wheel', e => {
   e.preventDefault();
   const rect = cv.getBoundingClientRect();
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
-
   let dy = e.deltaY;
   if (e.deltaMode === 1) dy *= 16;
   if (e.deltaMode === 2) dy *= 320;
-
   const clamped = Math.max(-150, Math.min(150, dy));
   const pct    = Math.abs(clamped) / 100 * 0.10;
   const factor = clamped < 0 ? (1 + pct) : 1 / (1 + pct);
-
   zoomAt(mx, my, factor);
 }, { passive: false });
 
-// ── Pan ──
 cv.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
   panning = true; lx = e.clientX; ly = e.clientY;
@@ -267,6 +210,9 @@ window.addEventListener('mouseup', () => { panning = false; cv.classList.remove(
 document.getElementById('btn-in') .onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1.18);
 document.getElementById('btn-out').onclick = () => zoomAt(cv.clientWidth/2, cv.clientHeight/2, 1/1.18);
 document.getElementById('btn-fit').onclick = fitView;
+window.addEventListener('resize', fitView);
 </script>
+<script src="assets/mer-shared.js"></script>
+<script src="assets/mer-wiki-links.js"></script>
 </body>
 </html>

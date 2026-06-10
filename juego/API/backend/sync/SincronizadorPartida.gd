@@ -150,4 +150,7 @@ static func _resolver_precision(resultado: Dictionary, stats: Dictionary) -> flo
 static func _generar_id_cliente() -> String:
 	var timestamp := Time.get_datetime_string_from_system(true).replace(":", "").replace("-", "")
 	var millis := int(Time.get_unix_time_from_system() * 1000.0)
-	return "run_%s_%d_%d" % [timestamp, millis, randi()]
+	# Combinar microsegundos del proceso + doble randi() para entropía adicional.
+	# Previene colisiones cuando dos partidas terminan en el mismo milisegundo.
+	var usec := Time.get_ticks_usec() & 0xFFFFFF
+	return "run_%s_%d_%d%06d" % [timestamp, millis, randi(), usec]

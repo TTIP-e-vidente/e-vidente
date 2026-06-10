@@ -61,32 +61,6 @@ Se ordenó la validación automática del proyecto para que cada PR revise dos c
 
 ---
 
-### `2026-05-31` — Layout automático de nodos del mapa sobre curva
-<kbd>Feature</kbd> <kbd>Mapa</kbd>
-
-Los 30 nodos del mapa ahora se posicionan automáticamente siguiendo una curva `Path2D` (`RutaCeliaquia1`), sin posiciones hardcodeadas en el `.tscn`.
-
-**Qué problema resolvió**
-- Mover un nodo requería abrir el editor y arrastrarlo a mano.
-- El modo `curve` (distribución por `sample_baked`) generaba deriva visual en curvas irregulares: los nodos no quedaban exactamente donde el diseñador los puso.
-
-**Qué se implementó**
-- `placement_mode = "anchors"`: el nodo `i` recibe exactamente `curve.get_point_position(i)`. Diseñar el mapa = colocar puntos en la curva.
-- `RutaCeliaquia1` tiene 30 puntos derivados de las posiciones manuales originales (sin drift).
-- Fallback a `sample_baked` si la curva tiene menos puntos que nodos — la partida no rompe.
-- Pipeline: `MapLayoutConfig` → `MapRouteRegistry` → `MapPathLayout` → `MapNodePositionResolver` → `MapBoard`.
-- `DebugLayoutOverlay`: dibuja círculos en cada posición calculada cuando `debug_layout = true`.
-
-**Impacto para el jugador**
-- Ninguno visible — los nodos quedan donde estaban. El cambio es estructural para escalar contenido.
-
-**Evidencia técnica**
-- `juego/mapas/layout/` (MapPathLayout, MapLayoutConfig, MapRouteRegistry, MapNodePositionResolver)
-- `juego/mapas/MapBoard.gd`, `juego/mapas/MapBoard.tscn`
-- `juego/contenido/mapa/celiaquia_mapa.json`
-
----
-
 ### Pendiente / en curso
 
 - Validación JSON de contenido en CI.

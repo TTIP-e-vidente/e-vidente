@@ -12,7 +12,7 @@
 | [BACKEND/README](../BACKEND/README.md) | API y Docker |
 | [CI](CI) | Checks en PR |
 | [Bitacora](Bitacora) | Índice · [E3](Bitacora-Entrega-3) [E2](Bitacora-Entrega-2) [E1](Bitacora-Entrega-1) [POC](Bitacora-POC) |
-| [Entrega-3](Entrega-3) | Iteración actual |
+| [Entrega-3](Entrega-3) | Iteración actual · [Presentación](Entrega-3-Presentacion) · [Evidencia](Entrega-3-Evidencia) |
 | [juego/tests/README](../juego/tests/README.md) | Smoke y GdUnit4 |
 | [completar/README](../juego/completar/README.md) | Modalidad completar palabra |
 | [Entregas](Entregas) | Entregas TTIP (histórico) |

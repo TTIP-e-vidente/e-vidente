@@ -15,7 +15,7 @@ No está en el repo. Instalar **v6.1.x** (AssetLib o [release](https://github.co
 Correr desde el panel GdUnit:
 
 - `tests/preguntas/carga_json_preguntas_test.gd` (8 tests: JSON, loader, evaluador)
-- `tests/preguntas/test_jugabilidad_vertical_slice.gd` (7 tests: escenas, UI crítica, mapa, jugables, resultado)
+- `tests/preguntas/test_jugabilidad_vertical_slice.gd` (3 tests: escenas, UI crítica, mapa)
 - `tests/preguntas/test_modalidad_preguntas_ux_ui.gd` (8 tests: UX/UI de la modalidad de preguntas)
 
 Headless (suite UNQ-172):

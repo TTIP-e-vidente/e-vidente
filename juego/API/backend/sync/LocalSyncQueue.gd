@@ -181,14 +181,17 @@ static func _cargar_cola() -> Dictionary:
 
 
 static func _guardar_cola(queue: Dictionary) -> void:
-	_cache = queue
-	_cache_valid = true
 	var file := FileAccess.open(QUEUE_PATH, FileAccess.WRITE)
 	if file == null:
-		push_warning("[LocalSyncQueue] No se pudo escribir %s" % QUEUE_PATH)
+		push_warning("[LocalSyncQueue] No se pudo escribir %s — cache NO actualizado" % QUEUE_PATH)
 		return
 	file.store_string(JSON.stringify(queue, "\t"))
 	file.close()
+	# Actualizar cache SOLO después de confirmar que el disco tuvo éxito.
+	# Si se actualiza antes y el open falla, el cache queda desincronizado del disco
+	# y los ítems encolados se pierden silenciosamente al reiniciar el juego.
+	_cache = queue
+	_cache_valid = true
 
 
 static func _respaldar_cola_corrupta(raw: String) -> void:

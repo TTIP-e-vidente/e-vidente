@@ -2,13 +2,15 @@
 
 Índice de diagramas por entrega. El proyecto usa **tres capas** que no deben mezclarse en un solo dibujo:
 
-| Capa | Qué modela | Diagrama |
-|------|------------|----------|
-| **Dominio** | Conceptos del juego (jugador, mapa, partida, modalidades, ítems) | [mer-dominio.html](mer-dominio.html) |
-| **Persistencia** | Dónde se guarda el estado del jugador (local + PostgreSQL) | [mer-persistencia-e3.html](mer-persistencia-e3.html) |
+> **Vistas interactivas:** [Índice completo](Vistas-Interactivas) — se abren desde la wiki con un clic, sin descargar HTML.
+
+| Capa | Qué modela | Vista interactiva |
+|------|------------|-------------------|
+| **Dominio** | Conceptos del juego (jugador, mapa, partida, modalidades, ítems) | [Mer-Dominio](Mer-Dominio) |
+| **Persistencia** | Dónde se guarda el estado del jugador (local + PostgreSQL) | [Mer-Persistencia-E3](Mer-Persistencia-E3) |
 | **Contenido** | Preguntas, mapas, ítems — archivos JSON en `juego/contenido/` | No es base de datos; ver [contenido/README](../juego/contenido/README.md) |
 
-Hub interactivo: [mer.html](mer.html) · Detalle operativo sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)
+Hub visual: [Mer-Hub](Mer-Hub) · Evolución y flujos: [Mer-Flujo](Mer-Flujo) · Detalle sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)
 
 ---
 
@@ -22,7 +24,7 @@ El diagrama fue diseñado en **Excalidraw** y refleja las entidades conceptuales
 
 ![MER Dominio E1/E2](Mer.png)
 
-- Diagrama interactivo: [mer-dominio.html](mer-dominio.html)
+- Diagrama interactivo: [Mer-Dominio](Mer-Dominio)
 - Fuente visual: `wiki/Mer.png` (Excalidraw original)
 - Evidencia: [Entrega-1-Arquitectura](Entrega-1-Arquitectura)
 
@@ -40,7 +42,7 @@ Se agregó **persistencia remota** en PostgreSQL (`BACKEND/migrations/`) alinead
 1. **Local** — `save_data.json`, cola `backend_sync_queue.json`, sesión `backend_session.json`, avatares en disco.
 2. **PostgreSQL** — `users` → `profiles` → `progress_restrictions` → `history_games` → `games`, más `streaks`, `images`, `restriction_node_config`.
 
-- Diagrama dual: [mer-persistencia-e3.html](mer-persistencia-e3.html)
+- Diagrama dual: [Mer-Persistencia-E3](Mer-Persistencia-E3)
 - Arquitectura: [Entrega-3-Arquitectura](Entrega-3-Arquitectura)
 
 ---

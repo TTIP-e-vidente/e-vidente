@@ -8,7 +8,7 @@ En Entrega 2 el enfoque principal fue mejorar el diseño visual y la experiencia
 
 **Sin cambios en infraestructura ni esquema de datos.** La entrega fue 100 % presentación y gameplay (transiciones, estética, Completar Palabra, tests de carga JSON). El MER de dominio es el de Entrega 1 con la modalidad Completar Palabra agregada; la persistencia sigue siendo solo `save_data.json` local.
 
-- Diagrama: [mer-dominio.html](mer-dominio.html) (nota E2 en leyenda)
+- Diagrama: [Mer-Dominio](Mer-Dominio) (nota E2 en leyenda)
 - Índice: [MER.md](MER.md)
 
 ## Componentes  

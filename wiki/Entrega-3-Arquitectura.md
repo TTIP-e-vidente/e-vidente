@@ -1,14 +1,16 @@
 # Arquitectura — Entrega 3
 
-## Cambios respecto a Entrega 2
+## Qué cambió respecto a Entrega 2
 
-Entrega 2 cerró el polish visual y las modalidades dentro de una demo 100 % local. Entrega 3 suma una capa opcional de backend (Node + PostgreSQL) y sincronización, mantiene el save local como fuente de verdad inmediata y refactoriza el mapa para escalar contenido sin posiciones hardcodeadas.
+Entrega 2 cerró con un juego pulido que vivía 100 % en local. Entrega 3 suma una capa **opcional** de backend — Node, PostgreSQL, auth, sync y perfil — sin tocar la regla de oro: **el save local manda**.
 
-## Componentes nuevos
+---
+
+## Piezas nuevas
 
 ### Backend (`BACKEND/`)
 
-API REST con módulos de autenticación y jugador. PostgreSQL vía Docker Compose. Migraciones versionadas para usuarios, perfil, progreso y partidas.
+API REST con auth y jugador. PostgreSQL con Docker Compose. Migraciones versionadas para usuarios, perfil, progreso y partidas.
 
 ```
 Godot (SaveManager local)
@@ -20,49 +22,43 @@ PostgreSQL
 
 ### Cliente Godot — capa API
 
-`juego/API/backend/` con clientes HTTP desacoplados del gameplay. `interface/auth.gd` integra login/registro en el flujo Intro → Selector sin bloquear modo offline.
+En `juego/API/backend/` están los clientes HTTP, separados del gameplay. `interface/auth.gd` mete login y registro en Intro → Selector sin bloquear el modo offline.
 
 ### `ProgressSyncService`
 
-Servicio de sincronización que:
+El corazón del sync:
 
-1. Guarda siempre local primero.
+1. Siempre guarda local primero.
 2. Encola resúmenes si no hay red o sesión.
 3. Migra progreso local al iniciar sesión.
-4. Reintenta en background sin acoplar escenas de partida a HTTP.
+4. Reintenta en background — las escenas de partida no hablan HTTP directo.
 
-### Mapa — layout en curva
+### CI — smoke del vertical slice
 
-Pipeline de posicionamiento:
+`vertical_slice_smoke_test.gd` recorre Intro → Login → offline → Selector → mapa → partida → cierre. Es la red de seguridad en cada PR.
 
-```
-MapLayoutConfig → MapRouteRegistry → MapPathLayout → MapNodePositionResolver → MapBoard
-```
+---
 
-Modo `anchors`: cada nodo `i` toma `curve.get_point_position(i)`. Diseñar el mapa = editar puntos en `Path2D`, no arrastrar nodos en el `.tscn`.
+## Recorrido del jugador hoy
 
-### CI — smoke vertical slice
-
-`vertical_slice_smoke_test.gd` valida contratos mínimos de escenas y el recorrido Intro → Login → offline → Selector → mapa → partida → cierre.
-
-## Flujo actualizado del jugador
-
-1. Intro → opción Jugar → Login (o continuar offline).
-2. Selector de restricción → mapa celiaquía (nodos posicionados por curva).
+1. Intro → Jugar → Login (o continuar offline).
+2. Selector de restricción → mapa celiaquía.
 3. Partida armada desde JSON (`ArmadorDePartida` / nodo unificado UNQ-170).
-4. Al terminar: `SaveManager` local + sync opcional si hay JWT activo.
-5. Retorno al mapa con estado actualizado (local; remoto si sync OK).
+4. Al terminar: `SaveManager` local + sync opcional si hay JWT.
+5. Vuelta al mapa — estado local al instante; remoto si el sync llegó.
 
-## MER y persistencia (Entrega 3)
+---
 
-Conviven **dos stores** sin reemplazarse:
+## Dos lugares donde vive el progreso
 
-| Store | Ubicación | Rol |
-|-------|-----------|-----|
+Conviven **sin reemplazarse**:
+
+| Store | Dónde | Rol |
+|-------|-------|-----|
 | Local | `user://save_data.json` (+ cola, sesión, avatares) | Fuente inmediata; juego offline |
-| PostgreSQL | `BACKEND/migrations/` | Cuenta y progreso remoto si hay sesión |
+| PostgreSQL | `BACKEND/migrations/` | Cuenta y backup remoto con sesión |
 
-Esquema Postgres canónico (post-migración `008`):
+Esquema Postgres (post-migración `008`):
 
 ```
 users → profiles → progress_restrictions → history_games → games
@@ -71,12 +67,15 @@ users.avatar_image_id → images
 restriction_node_config (config, sin FK al jugador)
 ```
 
-El **contenido del juego** (mapa, preguntas, ítems) sigue en `juego/contenido/*.json` — no se modela en tablas.
+El **contenido del juego** — mapa, preguntas, ítems — sigue en `juego/contenido/*.json`. No va a tablas.
 
-- Diagrama dual: [mer-persistencia-e3.html](mer-persistencia-e3.html)
-- Mapeo y tablas: [MER.md](MER.md)
-- Flujo sync: [Sync-Godot-Postgres.md](Sync-Godot-Postgres.md)
+- Diagrama dual: [Mer-Persistencia-E3](Mer-Persistencia-E3)
+- Mapeo: [MER](MER)
+- Flujo sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)
+- Presentación E3: [Entrega-3-Presentacion](Entrega-3-Presentacion)
 
-## Fuera de esta capa arquitectónica
+---
 
-Leaderboard, refresh token, admin, validador JSON en CI y despliegue cloud — planificados pero no cerrados en Entrega 3.
+## Lo que dejamos para después
+
+Leaderboard, refresh token, admin, validador JSON en CI y deploy cloud — planificados, no cerrados en Entrega 3.

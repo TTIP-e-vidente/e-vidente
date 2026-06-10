@@ -4,8 +4,8 @@
 
 ## Modelo de Entidades y Relaciones
 
-- [MER Dominio (E1)](mer-dominio.html) — conceptual, sin base de datos remota
-- [Índice MER](mer.html) · [Documentación MER](MER.md)
+- [MER Dominio (E1)](Mer-Dominio) — conceptual, sin base de datos remota
+- [Índice MER](Mer-Hub) · [Documentación MER](MER)
 
 *Usa zoom (+/-), rueda del mouse o arrastra para navegar los diagramas interactivos.*
 

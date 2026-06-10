@@ -1,37 +1,41 @@
 # Decisiones — Entrega 3
 
-## Criterio general del sprint
+## Por dónde arrancamos
 
-Se tomó la Opción B de los próximos pasos de Entrega 1: abrir infraestructura (backend, PostgreSQL, cuenta) sin sacrificar la demo local jugable. El sprint activo en Jira concentra 17 tickets en persistencia, autenticación, sync, mapa escalable, enseñanzas JSON y calidad automatizada.
+En Entrega 1 dejamos escrito que había dos caminos: seguir puliendo en local (Opción A) o abrir infraestructura (Opción B). **Elegimos la B, pero a medias:** backend, PostgreSQL y cuenta, sin sacrificar la demo que ya funcionaba offline.
+
+El sprint de Jira concentra 17 tickets en persistencia, auth, sync, perfil, enseñanzas JSON y calidad automatizada.
 
 ---
 
-## Decisiones tomadas
+## Decisiones que tomamos
 
-| Decisión | Motivo | Impacto | Pendiente |
+| Decisión | Por qué | Qué implica | ¿Queda algo? |
 |---|---|---|---|
-| Save local primero, sync después | El jugador no debe depender del servidor para jugar | Resiliencia ante caídas de red o backend | Mejorar señal UI de estado sync |
-| PostgreSQL solo en Docker local | Entorno reproducible para TTIP sin costo de cloud | Cualquier dev levanta la stack con un comando | Despliegue productivo |
-| Agrupar tickets en 8 user stories | Misma trazabilidad que Entrega 1 y 2 | Documentación defendible en TTIP | No |
-| Mapa con `placement_mode = anchors` | Evitar drift de `sample_baked` y posiciones manuales en `.tscn` | Escalar a 30+ nodos editando la curva | No |
+| Save local primero, sync después | El jugador no puede depender del servidor para jugar | Resiliencia ante caídas de red o backend | Mejorar señal UI de estado sync |
+| PostgreSQL solo en Docker local | Entorno reproducible para TTIP sin costo de cloud | Cualquier dev levanta la stack con un comando | Deploy productivo |
+| 8 user stories para 17 tickets | Misma lógica defendible que E1 y E2 | Documentación clara en TTIP | — |
 | Smoke test en cada PR | Detectar roturas de navegación temprano | CI liviano pero útil | Validación JSON contenido |
-| Tests UX/UI acotados a interfaz (UNQ-172) | Evitar falsos negativos en reglas pedagógicas | Evidencia objetiva de modalidad Preguntas | Extender a otras modalidades |
-| Perfil dedicado postergado al cierre | Login/sync priorizados en el sprint | UNQ-107 y UNQ-27 siguen Por Hacer | Sí — cierre E3 |
+| Tests UX/UI solo interfaz (UNQ-172) | No falsos negativos en reglas pedagógicas | Evidencia objetiva en Preguntas | Extender a otras modalidades |
+| Perfil como escena dedicada | Login/sync eran prioridad en el sprint | Diseño UNQ-107 cerrado; UNQ-27 en progreso | Escena completa |
 
 ---
 
-## Cambios de prioridad durante el sprint
+## Cómo movimos las prioridades en el camino
 
-Se priorizó:
+**Subió al tope de la lista:**
 
-- backend + sync funcionando end-to-end;
-- login/registro integrados al flujo real del juego;
-- mapa mantenible y smoke test estable;
-- desacople de enseñanzas y primer test UX/UI.
+- Backend + sync funcionando de punta a punta.
+- Login y registro dentro del flujo real del juego.
+- Perfil dedicado (diseño cerrado, escena en marcha).
+- Smoke test estable.
+- Enseñanzas desacopladas y primer test UX/UI.
 
-Quedó para el cierre:
+**Quedó para el cierre del sprint:**
 
-- pantalla de perfil completa (diseño + implementación);
-- UX explícita de estado de sincronización;
-- validación JSON de contenido en CI;
-- leaderboard y admin.
+- Escena de perfil completa (implementación UNQ-27).
+- UX explícita del estado de sincronización.
+- Validación JSON de contenido en CI.
+- Leaderboard y admin.
+
+Presentación visual de estas decisiones: [Entrega-3-Presentacion](Entrega-3-Presentacion).

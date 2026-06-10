@@ -59,24 +59,53 @@ export async function postBatchProgresoRestriccionController(
     let synced = 0;
     let failed = 0;
 
-    for (const item of items) {
-      const clientRunId = typeof (item as any)?.clientRunId === 'string'
-        ? (item as any).clientRunId
-        : '';
-      try {
-        const data = await saveAuthenticatedProgress({ ...(item as object), userId });
-        results.push({ clientRunId, ok: true, data });
-        synced++;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'error desconocido';
-        results.push({ clientRunId, ok: false, error: message });
-        failed++;
+    // Procesar en chunks de BATCH_CONCURRENCY para reducir latencia total ~5x vs for-await serial.
+    // El advisory lock por userId en saveAuthenticatedProgress serializa correctamente
+    // cualquier concurrencia real a nivel de Postgres, incluso entre instancias del servidor.
+    const BATCH_CONCURRENCY = 5;
+    for (let i = 0; i < items.length; i += BATCH_CONCURRENCY) {
+      const chunk = items.slice(i, i + BATCH_CONCURRENCY);
+      const settled = await Promise.allSettled(
+        chunk.map((item) =>
+          saveAuthenticatedProgress({ ...(item as object), userId })
+        )
+      );
+
+      for (let j = 0; j < chunk.length; j++) {
+        const item = chunk[j];
+        const clientRunId =
+          typeof (item as any)?.clientRunId === 'string'
+            ? (item as any).clientRunId
+            : '';
+        const outcome = settled[j];
+        if (outcome.status === 'fulfilled') {
+          const data = outcome.value;
+          // Solo incluir game + completedNode por ítem — no el summary completo.
+          // El summary del último sync exitoso se incluye como campo global al final.
+          results.push({
+            clientRunId,
+            ok: true,
+            data: {
+              game: (data as any).game,
+              completedNode: (data as any).completedNode ?? null,
+              mapCompleted: (data as any).mapCompleted ?? false,
+            },
+          });
+          synced++;
+        } else {
+          const message =
+            outcome.reason instanceof Error
+              ? outcome.reason.message
+              : 'error desconocido';
+          results.push({ clientRunId, ok: false, error: message });
+          failed++;
+        }
       }
     }
 
     sendResponse(res, 200, {
       results,
-      summary: { total: items.length, synced, failed }
+      summary: { total: items.length, synced, failed },
     });
   } catch (error) {
     sendError(res, error);

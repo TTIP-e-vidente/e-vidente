@@ -46,6 +46,10 @@ try {
         throw "Error al hacer push a la wiki ($LASTEXITCODE). Verificá permisos en $wikiUrl"
     }
     Write-Host "Wiki publicada correctamente en $wikiUrl"
+    Write-Host ""
+    Write-Host "Vistas interactivas (raw.githack, ~1 min de cache):"
+    Write-Host "  https://raw.githack.com/$Owner/$Repo.wiki/master/Entrega-3-Presentacion.html"
+    Write-Host "Indice wiki: https://github.com/$Owner/$Repo/wiki/Vistas-Interactivas"
 }
 finally {
     Pop-Location

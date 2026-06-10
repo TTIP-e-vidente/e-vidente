@@ -50,6 +50,8 @@ func _ready() -> void:
 	add_child(bg_timer)
 
 	call_deferred("_restaurar_sesion_guardada")
+	# Limpiar ítems FAILED/SYNCED antiguos al inicio para evitar acumulación indefinida.
+	call_deferred("_limpiar_cola_inicial")
 
 
 func esta_logueado() -> bool:
@@ -296,10 +298,10 @@ func esperar_drenaje_sync_pendiente(max_items: int = 100, max_rounds: int = 5) -
 		if pending <= 0 and not _sync.esta_sincronizando():
 			return
 		if _sync.esta_sincronizando():
-			await pending_sync_finished
+			await _esperar_sync_con_timeout(10.0)
 		else:
 			_sync.reintentar_pendientes(max_items)
-			await pending_sync_finished
+			await _esperar_sync_con_timeout(10.0)
 		rounds += 1
 		if LocalSyncQueue.contar_pendientes() <= 0:
 			return
@@ -311,6 +313,23 @@ func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
 		_reintento_encolado = false
 		if _auth.esta_logueado() and LocalSyncQueue.contar_pendientes() > 0:
 			_sync.reintentar_pendientes()
+
+
+## Espera [signal pending_sync_finished] con timeout de seguridad.
+## Evita que [method esperar_drenaje_sync_pendiente] quede bloqueado indefinidamente
+## si la señal nunca se emite por un bug en [ProgressSyncService].
+func _esperar_sync_con_timeout(timeout_s: float) -> void:
+	var timer := get_tree().create_timer(timeout_s)
+	var timed_out := false
+	timer.timeout.connect(func(): timed_out = true, CONNECT_ONE_SHOT)
+	while not timed_out and _sync.esta_sincronizando():
+		await get_tree().process_frame
+	if timed_out:
+		push_warning("[BackendSession] esperar_drenaje_sync_pendiente: timeout tras %.0fs" % timeout_s)
+
+
+func _limpiar_cola_inicial() -> void:
+	LocalSyncQueue.limpiar_cola()
 
 
 func _on_background_sync_timer() -> void:

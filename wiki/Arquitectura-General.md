@@ -31,4 +31,4 @@ días = (hoy - última_fecha) / 86400
 
 ## Otros docs
 
-[Como-Empezar](Como-Empezar) · [contenido/README](../juego/contenido/README.md) · [BACKEND/README](../BACKEND/README.md) · [CI](CI) · [MER](MER) · [mer.html](mer.html)
+[Como-Empezar](Como-Empezar) · [contenido/README](../juego/contenido/README.md) · [BACKEND/README](../BACKEND/README.md) · [CI](CI) · [MER](MER) · [Mer-Hub](Mer-Hub)
