@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://csi4t0q828okm"]
 
 [ext_resource type="Script" uid="uid://ckcb6asdec3cm" path="res://interface/auth.gd" id="1_auth"]
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="2_l8ewg"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
 [ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
-[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="4_defg6"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="4_defg6"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
+[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_0vpd6"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_chip"]
 bg_color = Color(0.780392, 0.839216, 0.658824, 0.62)
@@ -22,7 +25,7 @@ content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
-bg_color = Color(0.8425069, 0.8542316, 0.8775097, 1)
+bg_color = Color(0.25882354, 0.47058824, 0.36862746, 0.42745098)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -36,7 +39,7 @@ shadow_color = Color(0.28, 0.28, 0.32, 0.1)
 shadow_size = 16
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_frame"]
-bg_color = Color(0.867, 0.906, 0.8, 0.55)
+bg_color = Color(0.25882354, 0.47058824, 0.36862746, 0.7019608)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -47,28 +50,18 @@ corner_radius_top_right = 48
 corner_radius_bottom_right = 48
 corner_radius_bottom_left = 48
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview_chip"]
-content_margin_left = 8.0
-content_margin_top = 5.0
-content_margin_right = 8.0
-content_margin_bottom = 5.0
-bg_color = Color(1, 1, 1, 0.82)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.203922, 0.247059, 0.172549, 0.1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gk68o"]
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0vpd6"]
+draw_center = false
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_form_panel"]
 content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(1, 1, 1, 0.35686275)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -129,20 +122,6 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_footer_panel"]
-bg_color = Color(0.84313726, 0.85490197, 0.8784314, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.9142871, 0.9144129, 0.9291205, 0.14901961)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
-shadow_color = Color(0.28, 0.28, 0.32, 0.08)
-shadow_size = 10
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button"]
 content_margin_left = 16.0
 content_margin_top = 8.0
@@ -173,50 +152,35 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_auth")
+metadata/_edit_horizontal_guides_ = [-93.0]
 
-[node name="Backdrop" type="ColorRect" parent="." unique_id=233376717]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(1, 1, 0.996078, 0.988235)
-
-[node name="BackgroundTexture" type="TextureRect" parent="Backdrop" unique_id=1000170950]
-modulate = Color(1, 1, 1, 0.52)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("2_l8ewg")
-expand_mode = 1
-stretch_mode = 6
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_l8ewg")]
+layout_mode = 0
 
 [node name="BackButton" type="Button" parent="." unique_id=1957216421]
 layout_mode = 0
-offset_left = 22.0
-offset_top = 22.0
-offset_right = 114.0
-offset_bottom = 114.0
-scale = Vector2(0.9955206, 0.9952646)
+offset_left = 105.99999
+offset_top = 601.0
+offset_right = 198.0
+offset_bottom = 693.0
+scale = Vector2(1.1777242, 1.1774213)
 icon = ExtResource("3_back")
 flat = true
 expand_icon = true
 
 [node name="Card" type="ScrollContainer" parent="." unique_id=1122413704]
+custom_minimum_size = Vector2(0, -2.02)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 106.0
-offset_right = -16.0
-offset_bottom = -12.0
+offset_left = 71.0
+offset_top = 98.99999
+offset_right = 18.95996
+offset_bottom = -161.0
 grow_horizontal = 2
 grow_vertical = 2
+scale = Vector2(0.9348943, 0.9319561)
 follow_focus = true
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 0
@@ -233,7 +197,6 @@ theme_override_constants/margin_bottom = 18
 [node name="Content" type="VBoxContainer" parent="Card/MarginContainer" unique_id=296619268]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 14
 
 [node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content" unique_id=1906079587]
 layout_mode = 2
@@ -283,18 +246,18 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_summary_panel")
 
 [node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel" unique_id=975601705]
 layout_mode = 2
-theme_override_constants/margin_left = 22
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 22
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 28
 
 [node name="SummaryContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer" unique_id=828767498]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 28
 
 [node name="AvatarPreviewFrame" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=1217419159]
-custom_minimum_size = Vector2(96, 96)
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_preview_frame")
@@ -306,7 +269,8 @@ stretch_mode = 5
 
 [node name="AvatarPlaceholder" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/AvatarPreviewFrame" unique_id=1749525584]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.7)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_font_sizes/font_size = 13
 text = "Sin foto"
 horizontal_alignment = 1
@@ -314,7 +278,8 @@ vertical_alignment = 1
 
 [node name="CurrentProfileValue" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=1592793286]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_fonts/font = ExtResource("4_nuujq")
 theme_override_font_sizes/font_size = 30
 text = "Perfil local"
 horizontal_alignment = 1
@@ -322,11 +287,11 @@ autowrap_mode = 3
 
 [node name="PreviewMetaRow" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=2012533773]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 23
 
 [node name="PreviewEmailBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow" unique_id=1101026811]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_preview_chip")
+theme_override_styles/panel = SubResource("StyleBoxFlat_gk68o")
 
 [node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge" unique_id=341664239]
 layout_mode = 2
@@ -337,41 +302,48 @@ theme_override_constants/margin_bottom = 5
 
 [node name="PreviewEmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewEmailBadge/MarginContainer" unique_id=671521729]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.9)
+theme_override_colors/font_color = Color(1, 1, 1, 0.9019608)
+theme_override_fonts/font = ExtResource("4_nuujq")
 theme_override_font_sizes/font_size = 13
 text = "Mail: sin dato"
+horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="PreviewAgeBadge" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow" unique_id=1024844464]
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_preview_chip")
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_0vpd6")
 
 [node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge" unique_id=1640269383]
+layout_direction = 1
 layout_mode = 2
-theme_override_constants/margin_left = 8
+theme_override_constants/margin_left = 50
 theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 8
+theme_override_constants/margin_right = 50
 theme_override_constants/margin_bottom = 5
 
 [node name="PreviewAgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent/PreviewMetaRow/PreviewAgeBadge/MarginContainer" unique_id=1658104096]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 0.9)
+theme_override_colors/font_color = Color(1, 1, 1, 0.9019608)
+theme_override_fonts/font = ExtResource("4_nuujq")
 theme_override_font_sizes/font_size = 13
 text = "Edad: sin dato"
+vertical_alignment = 1
 
 [node name="SummarySaveLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=162990050]
+visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.65)
+theme_override_colors/font_color = Color(1, 1, 1, 0.92156863)
 theme_override_font_sizes/font_size = 13
 text = "Ultimo guardado: sin datos"
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="SummaryNote" type="Label" parent="Card/MarginContainer/Content/MainRow/SummaryPanel/MarginContainer/SummaryContent" unique_id=2135905121]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.52)
+theme_override_colors/font_color = Color(1, 1, 1, 0.92156863)
 theme_override_font_sizes/font_size = 12
 text = "Vista previa en tiempo real."
 horizontal_alignment = 1
@@ -386,10 +358,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_form_panel")
 
 [node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel" unique_id=1360389439]
 layout_mode = 2
-theme_override_constants/margin_left = 22
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 22
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 45
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 45
+theme_override_constants/margin_bottom = 45
 
 [node name="FormContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer" unique_id=1866968136]
 layout_mode = 2
@@ -399,12 +371,15 @@ theme_override_constants/separation = 14
 [node name="FormTitle" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1331612482]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_fonts/font = ExtResource("4_nuujq")
 theme_override_font_sizes/font_size = 28
-text = "Editar perfil"
+text = "Edita tu info personal"
 
 [node name="FormHint" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=33393744]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.72)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_font_sizes/font_size = 14
 text = "Los cambios se ven en tiempo real. Guarda cuando estes listo."
 autowrap_mode = 3
@@ -427,6 +402,7 @@ text = "Nombre visible"
 [node name="UsernameEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/UsernameColumn" unique_id=1433020975]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
@@ -446,6 +422,7 @@ text = "Edad"
 [node name="AgeEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/PrimaryFieldsRow/AgeColumn" unique_id=661241277]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
@@ -460,6 +437,7 @@ text = "Mail"
 [node name="EmailEdit" type="LineEdit" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1398302359]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
@@ -479,6 +457,7 @@ theme_override_constants/separation = 8
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_styles/normal = SubResource("StyleBoxFlat_field")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
@@ -511,39 +490,34 @@ text = "PNG, JPG o WEBP. Opcional."
 autowrap_mode = 3
 
 [node name="RegisterMessage" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1930273834]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.219608, 0.380392, 0.235294, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_fonts/font = ExtResource("6_0vpd6")
+theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
-[node name="FooterPanel" type="PanelContainer" parent="Card/MarginContainer/Content" unique_id=1589894920]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_footer_panel")
-
-[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/FooterPanel" unique_id=1605697821]
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content" unique_id=1605697821]
+custom_minimum_size = Vector2(-71.05, 0)
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 16
 
-[node name="Footer" type="HBoxContainer" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer" unique_id=497589626]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="FooterNote" type="Label" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer" unique_id=1931028451]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.9)
-theme_override_font_sizes/font_size = 15
-text = "Se guarda en este dispositivo y se actualiza al volver a Mi progreso."
-autowrap_mode = 3
-
-[node name="RegisterButton" type="Button" parent="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer" unique_id=820342557]
-custom_minimum_size = Vector2(249.55, 58)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+[node name="RegisterButton" type="Button" parent="." unique_id=820342557]
+custom_minimum_size = Vector2(34.245, 31.535)
+layout_mode = 0
+offset_left = 779.00006
+offset_top = 573.0
+offset_right = 1346.0
+offset_bottom = 847.0
+scale = Vector2(0.5534265, 0.55059147)
+theme_override_colors/font_color = Color(0.37111905, 0.37111905, 0.37111905, 1)
+theme_override_colors/font_focus_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_colors/font_hover_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_fonts/font = ExtResource("4_nuujq")
+theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxFlat_primary_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_button_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_primary_button_hover")
@@ -554,7 +528,7 @@ flat = true
 icon_alignment = 1
 
 [node name="AvatarDialog" type="FileDialog" parent="." unique_id=1349551692]
-title = "Seleccionar foto de perfil"
+title = "Open a File"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.webp ; WEBP")
@@ -562,5 +536,5 @@ filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.we
 [connection signal="pressed" from="BackButton" to="." method="_on_boton_volver_presionado"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton" to="." method="_on_boton_elegir_avatar_presionado"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton" to="." method="_on_boton_limpiar_avatar_presionado"]
-[connection signal="pressed" from="Card/MarginContainer/Content/FooterPanel/MarginContainer/Footer/RegisterButton" to="." method="_on_boton_registrar_presionado"]
+[connection signal="pressed" from="RegisterButton" to="." method="_on_boton_registrar_presionado"]
 [connection signal="file_selected" from="AvatarDialog" to="." method="_on_archivo_avatar_seleccionado"]

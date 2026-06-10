@@ -17,7 +17,6 @@ var choose_avatar_button: Button
 var clear_avatar_button: Button
 var feedback_label: Label
 var avatar_preview: TextureRect
-var save_profile_button: Button
 var back_button: Button
 var avatar_dialog: FileDialog
 var _age_display_label: Label
@@ -47,7 +46,6 @@ func _cachear_nodos_ui() -> void:
 	var form_content := main_row.get_node(
 		"FormPanel/MarginContainer/FormContent"
 	) as Control
-	var footer := content.get_node("FooterPanel/MarginContainer/Footer") as Control
 
 	profile_name_preview_label = summary_content.get_node(
 		"CurrentProfileValue"
@@ -87,14 +85,12 @@ func _cachear_nodos_ui() -> void:
 		"AvatarRow/ClearAvatarButton"
 	) as Button
 	feedback_label = form_content.get_node("RegisterMessage") as Label
-	save_profile_button = footer.get_node("RegisterButton") as Button
 
 
 func _configurar_ui_estatica() -> void:
 	username_input.placeholder_text = "Nombre visible (opcional)"
 	birth_date_input.placeholder_text = "AAAA-MM-DD (opcional)"
 	email_input.placeholder_text = "Mail (opcional)"
-	save_profile_button.text = "Guardar perfil"
 	back_button.text = ""
 	back_button.tooltip_text = ""
 
