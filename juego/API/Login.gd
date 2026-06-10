@@ -34,7 +34,7 @@ func _ready() -> void:
 	call_deferred("_verificar_servidor_al_inicio")
 
 
-func _establecer_modo(mode: int) -> void:
+func _establecer_modo(mode: AuthMode) -> void:
 	_mode = mode
 	var is_register := _mode == AuthMode.REGISTER
 	label_title.text = "Crear cuenta" if is_register else "Iniciar sesión"
@@ -82,9 +82,9 @@ func _enviar_formulario() -> void:
 	var result: Dictionary
 	if _mode == AuthMode.REGISTER:
 		var fecha_nacimiento_local := SaveManager.obtener_fecha_nacimiento_usuario_actual()
-		var fecha_nacimiento_registro: Variant = (
-			fecha_nacimiento_local if not fecha_nacimiento_local.is_empty() else null
-		)
+		var fecha_nacimiento_registro: Variant = null
+		if not fecha_nacimiento_local.is_empty():
+			fecha_nacimiento_registro = fecha_nacimiento_local
 		result = await AuthApi.crear_cuenta_completa(
 			_input_username.text.strip_edges(),
 			_input_password.text,

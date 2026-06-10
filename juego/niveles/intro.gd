@@ -57,11 +57,15 @@ func _ready() -> void:
 	opcionesi.texture = load(COMO_JUGAR_PATH) as Texture2D
 	mi_progresoi.texture = load(MI_PROGRESO_PATH) as Texture2D
 	saliri.texture = load(SALIR_PATH) as Texture2D
+	BackendSession.session_expired.connect(_on_sesion_expirada)
 
 
 func _on_jugar_presionado() -> void:
 	if AuthApi.esta_logueado():
-		await AuthApi.cargar_datos_online()
+		var resultado := await AuthApi.cargar_datos_online()
+		if resultado.get("status", 0) == 401:
+			_mostrar_login()
+			return
 		_continuar_a_juego()
 		return
 	_mostrar_login()
@@ -179,6 +183,11 @@ func _reproducir_musica_fondo() -> void:
 
 func _abrir_modo_selector() -> String:
 	return MODE_SELECTOR_SCENE_PATH
+
+
+func _on_sesion_expirada() -> void:
+	print("[MainMenu] Sesión expirada — redirigiendo a login")
+	_mostrar_login()
 
 
 func _abrir_opciones_menu() -> String:

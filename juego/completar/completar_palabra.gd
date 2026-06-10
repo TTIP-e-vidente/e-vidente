@@ -518,6 +518,8 @@ func _calcular_elapsed_seconds() -> float:
 	return elapsed
 
 func _finalizar_actividad(success: bool) -> void:
+	if success:
+		Global.registrar_actividad_racha("completar_palabra_completed", {})
 	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
 	var resultado := {
 		"activity_id": str(actividad.get("id", actividad.get("activity_id", ""))),

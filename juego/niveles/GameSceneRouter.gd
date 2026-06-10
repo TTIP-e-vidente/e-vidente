@@ -4,7 +4,7 @@ extends Node
 # Punto unico para cambiar de escena.
 # Recibe targets simples y decide que escena abrir sin que la UI duplique rutas.
 
-const ModalidadRouter := preload("res://sistemas/ModalidadRouter.gd")
+const ModalidadRouterScript := preload("res://sistemas/ModalidadRouter.gd")
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 
 enum TransitionType { FADE, IRIS }
@@ -150,7 +150,7 @@ func go_to_level(tree: SceneTree) -> void:
 
 
 func obtener_ruta_escena_por_modo(mode: String) -> String:
-	var normalizado_mode := ModalidadRouter.normalizar_modo(mode)
+	var normalizado_mode := ModalidadRouterScript.normalizar_modo(mode)
 	if not MODE_TO_SCENE_PATH.has(normalizado_mode):
 		push_error(LOG_PREFIX + " Modalidad sin escena asignada: " + str(mode))
 		return ""
@@ -499,7 +499,7 @@ func _clear_active_playable_session(tree: SceneTree) -> void:
 
 # --- Transicion visual ---------------------------------------
 
-func transicionar_a_escena(scene_path: String, transition_type: int = TransitionType.FADE) -> void:
+func transicionar_a_escena(scene_path: String, transition_type: TransitionType = TransitionType.FADE) -> void:
 	if _is_transitioning:
 		push_warning("[ROUTER] transicionar_a_escena ignorado: ya hay una transicion en curso.")
 		return

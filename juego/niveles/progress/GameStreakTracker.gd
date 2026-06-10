@@ -40,7 +40,7 @@ static func registrar(
 	activity_type: String,
 	metadata: Dictionary
 ) -> Dictionary:
-	var today: String = Time.get_date_string_from_system(false)
+	var today: String = Time.get_date_string_from_system(true)
 	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
 	var old_count: int = int(streak_state.get("current_count", 0))
 
@@ -134,16 +134,28 @@ static func construir_feedback(
 		return {"should_show": false}
 
 	if only_first_today:
-		var today: String = Time.get_date_string_from_system(false)
+		var today: String = Time.get_date_string_from_system(true)
 		var already_played_today: bool = str(previous_state.get("last_activity_day", "")) == today
 		var streak_updated_today: bool = str(updated_state.get("last_activity_day", "")) == today
 		if already_played_today or not streak_updated_today:
 			return {"should_show": false}
 
 	var count: int = max(0, int(updated_state.get("current_count", 0)))
+	var previous_count: int = max(0, int(previous_state.get("current_count", 0)))
 	if count <= 0:
 		return {"should_show": false}
 	var best: int = max(count, int(updated_state.get("best_count", 0)))
+
+	if count == 1 and previous_count > 1:
+		return {
+			"should_show": true,
+			"feedback_key": "restarted",
+			"title": "Tu racha se reinició",
+			"message": "Tenías %d días seguidos. ¡Arrancá de nuevo!" % previous_count,
+			"current_count": 1,
+			"best_count": best,
+			"previous_count": previous_count
+		}
 
 	if count == 1:
 		return {
@@ -215,7 +227,7 @@ static func _resolver_fecha_actual(current_date: String) -> String:
 	var clean_date: String = current_date.strip_edges()
 	if not clean_date.is_empty():
 		return clean_date
-	return Time.get_date_string_from_system(false)
+	return Time.get_date_string_from_system(true)
 
 
 static func _esta_en_ventana_de_warning(current_hour: int) -> bool:

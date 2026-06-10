@@ -28,7 +28,7 @@ func sincronizar(resumen_partida: Dictionary) -> Dictionary:
 		return {}
 
 	if not _auth_session.esta_logueado():
-		return {}
+		return {"ok": false, "status": 0, "error": "No active session"}
 
 	sync_started.emit()
 
@@ -54,6 +54,8 @@ func sincronizar(resumen_partida: Dictionary) -> Dictionary:
 	return response
 
 
+const BATCH_CHUNK_SIZE := 50
+
 func reintentar_pendientes(max_items: int = 10) -> void:
 	if _api_client == null or _auth_session == null:
 		return
@@ -65,9 +67,9 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 	var limit := mini(max_items, pending.size())
 	if limit <= 0:
 		_reintentando_pendientes = false
+		pending_sync_finished.emit(0, 0)
 		return
 
-	# Filtrar items inválidos antes de disparar requests
 	var tareas: Array[Dictionary] = []
 	var failed_count := 0
 	for i in range(limit):
@@ -75,6 +77,7 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 		var cid := str(item.get("clientRunId", "")).strip_edges()
 		var payload: Dictionary = item.get("payload", {})
 		if cid.is_empty() or payload.is_empty():
+			LocalSyncQueue.marcar_fallido(cid, "payload o clientRunId vacío")
 			failed_count += 1
 			continue
 		tareas.append({"cid": cid, "payload": payload})
@@ -89,56 +92,68 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 	var token := _auth_session.obtener_token()
 	var synced_count := 0
 	var sesion_expirada := false
-	var resultados: Array[Dictionary] = []
+	var ultimo_summary: Dictionary = {}
 
-	# Batch: un solo HTTP request para todos los ítems.
-	var payloads: Array = []
-	for tarea: Dictionary in tareas:
-		payloads.append(tarea.payload)
+	var chunk_start := 0
+	while chunk_start < tareas.size():
+		var chunk_end := mini(chunk_start + BATCH_CHUNK_SIZE, tareas.size())
+		var chunk := tareas.slice(chunk_start, chunk_end)
 
-	var batch_response: Dictionary = await _api_client.guardar_progreso_batch(token, payloads)
+		var payloads: Array = []
+		for tarea: Dictionary in chunk:
+			payloads.append(tarea.payload)
 
-	if batch_response.get("status", 0) == 401:
-		sesion_expirada = true
-		for tarea: Dictionary in tareas:
-			resultados.append({"id": tarea.cid, "ok": false, "error": "Sesion expirada"})
-			failed_count += 1
-	elif batch_response.get("ok", false):
-		var data: Variant = batch_response.get("data", {})
-		var batch_results: Variant = (
-			(data as Dictionary).get("results", []) if data is Dictionary else []
-		)
-		# Indexar por clientRunId para aplicar resultados en orden de la cola.
-		var by_cid: Dictionary = {}
-		if batch_results is Array:
-			for item: Variant in (batch_results as Array):
-				if not item is Dictionary:
-					continue
-				var cid_key := str((item as Dictionary).get("clientRunId", ""))
-				by_cid[cid_key] = item
-		for tarea: Dictionary in tareas:
-			var cid: String = tarea.cid
-			var item_result: Variant = by_cid.get(cid, null)
-			if item_result is Dictionary and bool((item_result as Dictionary).get("ok", false)):
-				resultados.append({"id": cid, "ok": true})
-				synced_count += 1
-			else:
-				var err := ""
-				if item_result is Dictionary:
-					err = str((item_result as Dictionary).get("error", ""))
-				resultados.append({"id": cid, "ok": false, "error": err})
+		var batch_response: Dictionary = await _api_client.guardar_progreso_batch(token, payloads)
+		var resultados: Array[Dictionary] = []
+
+		if batch_response.get("status", 0) == 401:
+			sesion_expirada = true
+			# No incrementar attempts: la sesión expirada es transitoria
+			break
+		elif batch_response.get("ok", false):
+			var data: Variant = batch_response.get("data", {})
+			var batch_results: Variant = (
+				(data as Dictionary).get("results", []) if data is Dictionary else []
+			)
+			var by_cid: Dictionary = {}
+			if batch_results is Array:
+				for item: Variant in (batch_results as Array):
+					if not item is Dictionary:
+						continue
+					var cid_key := str((item as Dictionary).get("clientRunId", ""))
+					by_cid[cid_key] = item
+			for tarea: Dictionary in chunk:
+				var cid: String = tarea.cid
+				var item_result: Variant = by_cid.get(cid, null)
+				if item_result is Dictionary and bool((item_result as Dictionary).get("ok", false)):
+					resultados.append({"id": cid, "ok": true})
+					synced_count += 1
+					var item_data: Variant = (item_result as Dictionary).get("data", {})
+					if item_data is Dictionary:
+						var s: Variant = (item_data as Dictionary).get("summary", {})
+						if s is Dictionary and not (s as Dictionary).is_empty():
+							ultimo_summary = s as Dictionary
+				else:
+					var err := ""
+					if item_result is Dictionary:
+						err = str((item_result as Dictionary).get("error", ""))
+					resultados.append({"id": cid, "ok": false, "error": err})
+					failed_count += 1
+		else:
+			var reason := str(batch_response.get("error", "Batch sync fallido"))
+			for tarea: Dictionary in chunk:
+				resultados.append({"id": tarea.cid, "ok": false, "error": reason})
 				failed_count += 1
-	else:
-		# Batch entero falló (ej: red caída, servidor no disponible).
-		var reason := str(batch_response.get("error", "Batch sync fallido"))
-		for tarea: Dictionary in tareas:
-			resultados.append({"id": tarea.cid, "ok": false, "error": reason})
-			failed_count += 1
 
-	LocalSyncQueue.aplicar_resultados(resultados)
+		LocalSyncQueue.aplicar_resultados(resultados)
+
+		if sesion_expirada:
+			break
+		chunk_start = chunk_end
 
 	if synced_count > 0:
 		LocalSyncQueue.limpiar_cola()
+		_aplicar_summary_batch(ultimo_summary)
 
 	if sesion_expirada:
 		_auth_session.limpiar_sesion()
@@ -146,3 +161,21 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 
 	_reintentando_pendientes = false
 	pending_sync_finished.emit(synced_count, failed_count)
+
+
+func _aplicar_summary_batch(summary: Dictionary) -> void:
+	if summary.is_empty() or SaveManager == null:
+		return
+	var cn_raw: Variant = summary.get("completedNodes", [])
+	if cn_raw is Array and not (cn_raw as Array).is_empty():
+		if SaveManager.has_method("fusionar_completados_desde_sync"):
+			SaveManager.call("fusionar_completados_desde_sync", cn_raw as Array)
+	var streak: Variant = summary.get("streak", {})
+	if streak is Dictionary and not (streak as Dictionary).is_empty():
+		SaveManager.aplicar_racha_sincronizada(streak as Dictionary)
+	var profile: Variant = summary.get("profile", {})
+	if profile is Dictionary:
+		var server_exp := int((profile as Dictionary).get("exp_count", 0))
+		if server_exp > SaveManager.obtener_exp_total():
+			SaveManager.save_data["total_exp"] = server_exp
+			SaveManager.guardar_progreso_en_disco()

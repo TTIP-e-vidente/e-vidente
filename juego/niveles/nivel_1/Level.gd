@@ -658,6 +658,7 @@ func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> v
 			}
 		)
 		SaveManager.guardar_progreso_en_disco()
+		_encolar_sync_partida_mapa()
 		return
 
 	Global.marcar_nivel_completado(track_key, level_number)
@@ -781,6 +782,22 @@ func _ocultar_boton_adelante_anterior() -> void:
 		adelante_2.hide()
 	if is_instance_valid(adelante_3):
 		adelante_3.hide()
+
+
+func _encolar_sync_partida_mapa() -> void:
+	if _nodo_actual.is_empty():
+		return
+	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+	var resultado := {
+		"node_key": _nodo_actual,
+		"map_id": "celiaquia",
+		"success": true,
+		"accuracy": float(stats.get("precision", 0)) / 100.0,
+		"exp": int(stats.get("exp_ganada", 0)),
+		"elapsed_seconds": _calcular_elapsed_seconds(),
+	}
+	Global.establecer_ultima_finalizacion(stats)
+	SyncApi.sincronizar_partida_terminada(get_tree(), resultado, stats)
 
 
 func _guardar_progreso_de_mapa() -> void:

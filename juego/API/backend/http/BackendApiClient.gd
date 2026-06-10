@@ -62,6 +62,12 @@ func obtener_mi_usuario(token: String) -> Dictionary:
 	return await _obtener_json("/auth/me", token)
 
 
+func actualizar_perfil(token: String, payload: Dictionary) -> Dictionary:
+	var body := JSON.stringify(payload)
+	var headers := _armar_headers(token)
+	return await _enviar_peticion(HTTPClient.METHOD_PATCH, "/player/me", headers, body)
+
+
 func guardar_progreso(token: String, resumen_partida: Dictionary) -> Dictionary:
 	var body := JSON.stringify(resumen_partida)
 	return await _enviar_post("/player/me/progress", token, body)
@@ -87,6 +93,11 @@ func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:
 
 func descargar_avatar(token: String) -> Dictionary:
 	return await _obtener_json("/player/me/avatar", token)
+
+
+func eliminar_avatar(token: String) -> Dictionary:
+	var headers := _armar_headers(token)
+	return await _enviar_peticion(HTTPClient.METHOD_DELETE, "/player/me/avatar", headers, "")
 
 
 func _enviar_post(endpoint: String, token: String, body: String) -> Dictionary:
@@ -222,5 +233,9 @@ func _nombre_metodo_http(method: HTTPClient.Method) -> String:
 			return "GET"
 		HTTPClient.METHOD_POST:
 			return "POST"
+		HTTPClient.METHOD_PATCH:
+			return "PATCH"
+		HTTPClient.METHOD_DELETE:
+			return "DELETE"
 		_:
 			return "HTTP"

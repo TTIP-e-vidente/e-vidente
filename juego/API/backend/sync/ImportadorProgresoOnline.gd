@@ -16,37 +16,21 @@ const MENSAJES_APRENDIZAJE_POR_PISTA := {
 }
 
 
-## Traduce GET /player/me/progress (Postgres) a la forma que usa SaveManager + Global.
-##
-## | Servidor                         | Save local / runtime                          |
-## |----------------------------------|-----------------------------------------------|
-## | completedNodes[].node_id         | save_data.node_progress[node_id]              |
-## | completedNodes[].best_accuracy   | node_progress[node_id].best_accuracy           |
-## | profile.exp_count                | save_data.total_exp                           |
-## | progress[].restriction_type      | track_key (CELIAQUIA → celiaquia)             |
-## | streak                           | progress.progress_system_states.streak        |
-## | completedNodes (por node_id)     | progress_system_states.question_progress      |
 static func construir_snapshot_local(progreso_online: Dictionary) -> Dictionary:
-	var node_progress := _construir_node_progress(
-		progreso_online.get("completedNodes", [])
-	)
-	var question_progress_by_track := _construir_question_progress_por_track(
-		progreso_online.get("completedNodes", [])
-	)
+	var parsed := _parsear_completed_nodes(progreso_online.get("completedNodes", []))
 	var streak_state := _construir_estado_racha(progreso_online.get("streak", {}))
-	var progress_snapshot := {
-		"progress_system_states": {
-			QUESTION_PROGRESS_KEY: question_progress_by_track.duplicate(true),
-			STREAK_KEY: streak_state.duplicate(true),
-		}
-	}
 
 	return {
-		"node_progress": node_progress,
+		"node_progress": parsed.node_progress,
 		"total_exp": _calcular_exp_total(progreso_online),
 		"streak_state": streak_state,
-		"question_progress_by_track": question_progress_by_track,
-		"progress_snapshot": progress_snapshot,
+		"question_progress_by_track": parsed.question_progress,
+		"progress_snapshot": {
+			"progress_system_states": {
+				QUESTION_PROGRESS_KEY: parsed.question_progress.duplicate(true),
+				STREAK_KEY: streak_state.duplicate(true),
+			}
+		},
 	}
 
 
@@ -75,7 +59,6 @@ static func construir_parche_perfil(usuario: Dictionary) -> Dictionary:
 	return parche
 
 
-## Resumen del panel semanal del perfil, derivado del save local sincronizado.
 static func construir_resumen_semanal_desde_save(
 	track_key: String = GameTrackCatalog.TRACK_CELIAQUIA,
 	node_progress: Dictionary = {}
@@ -146,10 +129,11 @@ static func restriction_a_track_key(restriction: String) -> String:
 	return restriction.strip_edges().to_lower()
 
 
-static func _construir_node_progress(completed_nodes: Variant) -> Dictionary:
+static func _parsear_completed_nodes(completed_nodes: Variant) -> Dictionary:
 	var node_progress: Dictionary = {}
+	var question_progress: Dictionary = {}
 	if not completed_nodes is Array:
-		return node_progress
+		return {"node_progress": node_progress, "question_progress": question_progress}
 
 	for raw_entry in completed_nodes:
 		if not raw_entry is Dictionary:
@@ -166,10 +150,14 @@ static func _construir_node_progress(completed_nodes: Variant) -> Dictionary:
 			"last_accuracy": accuracy,
 			"last_percent": percent,
 		}
-	return node_progress
+		var track_key := inferir_track_key_desde_node_id(node_id)
+		if not track_key.is_empty():
+			if not question_progress.has(track_key):
+				question_progress[track_key] = {}
+			(question_progress[track_key] as Dictionary)[node_id] = true
+	return {"node_progress": node_progress, "question_progress": question_progress}
 
 
-## Une progreso de nodos local y servidor sin perder completados ni mejores marcas.
 static func fusionar_node_progress(local: Dictionary, online: Dictionary) -> Dictionary:
 	var merged: Dictionary = local.duplicate(true) if local is Dictionary else {}
 	if not online is Dictionary:
@@ -219,26 +207,6 @@ static func _fusionar_entrada_node_progress(local: Dictionary, online: Dictionar
 	return merged_entry
 
 
-static func _construir_question_progress_por_track(completed_nodes: Variant) -> Dictionary:
-	var by_track: Dictionary = {}
-	if not completed_nodes is Array:
-		return by_track
-
-	for raw_entry in completed_nodes:
-		if not raw_entry is Dictionary:
-			continue
-		var node_id := str(raw_entry.get("node_id", "")).strip_edges()
-		if node_id.is_empty():
-			continue
-		var track_key := inferir_track_key_desde_node_id(node_id)
-		if track_key.is_empty():
-			continue
-		if not by_track.has(track_key):
-			by_track[track_key] = {}
-		(by_track[track_key] as Dictionary)[node_id] = true
-	return by_track
-
-
 static func _construir_estado_racha(racha_online: Variant) -> Dictionary:
 	if not racha_online is Dictionary:
 		return {}
@@ -251,12 +219,10 @@ static func _construir_estado_racha(racha_online: Variant) -> Dictionary:
 	return GameStreakTrackerScript.leer(streak_state)
 
 
-## Normaliza la racha del servidor al formato local validado.
 static func construir_estado_racha_online(racha_online: Variant) -> Dictionary:
 	return _construir_estado_racha(racha_online)
 
 
-## Conserva la racha mas avanzada entre save local y servidor.
 static func fusionar_estado_racha(local: Dictionary, online: Dictionary) -> Dictionary:
 	var local_read := GameStreakTrackerScript.leer(local)
 	var online_read := GameStreakTrackerScript.leer(online)
@@ -267,16 +233,49 @@ static func fusionar_estado_racha(local: Dictionary, online: Dictionary) -> Dict
 
 	var local_count := int(local_read.get("current_count", 0))
 	var online_count := int(online_read.get("current_count", 0))
-	if local_count > online_count:
-		return local_read
-	if online_count > local_count:
-		return online_read
-
 	var local_day := str(local_read.get("last_activity_day", ""))
 	var online_day := str(online_read.get("last_activity_day", ""))
-	if local_day > online_day:
-		return local_read
-	return online_read
+
+	var today := Time.get_date_string_from_system(true)
+	var local_alive := _es_racha_vigente(local_day, today)
+	var online_alive := _es_racha_vigente(online_day, today)
+
+	if not local_alive:
+		local_count = 0
+	if not online_alive:
+		online_count = 0
+
+	var ganador: Dictionary
+	if local_count > online_count:
+		ganador = local_read.duplicate(true)
+	elif online_count > local_count:
+		ganador = online_read.duplicate(true)
+	elif local_day > online_day:
+		ganador = local_read.duplicate(true)
+	else:
+		ganador = online_read.duplicate(true)
+
+	if not local_alive and not online_alive:
+		ganador["current_count"] = 0
+
+	ganador["best_count"] = maxi(
+		int(local_read.get("best_count", 0)),
+		int(online_read.get("best_count", 0))
+	)
+	return ganador
+
+
+static func _es_racha_vigente(last_day: String, today: String) -> bool:
+	if last_day.is_empty() or today.is_empty():
+		return false
+	if last_day == today:
+		return true
+	var unix_last := int(Time.get_unix_time_from_datetime_string(last_day))
+	var unix_today := int(Time.get_unix_time_from_datetime_string(today))
+	if unix_last <= 0 or unix_today <= 0:
+		return false
+	var diff_days := int(float(absi(unix_today - unix_last)) / 86400.0)
+	return diff_days <= 1
 
 
 static func _calcular_exp_total(progreso_online: Dictionary) -> int:

@@ -17,4 +17,7 @@ app.use('/health', healthRouter);
 app.use('/player', imageRouter);
 app.use('/player', profileRouter);
 app.use('/player', progresoRestriccionRouter);
-app.use('/dev/player-progress', devProgresoRestriccionRouter);
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/dev/player-progress', devProgresoRestriccionRouter);
+}

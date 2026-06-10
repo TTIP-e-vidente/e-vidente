@@ -163,19 +163,71 @@ func registrar_cuenta(
 func subir_avatar(base64_data: String, mime_type: String) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
-	return await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
+	var resultado := await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
+	_verificar_sesion_expirada(resultado)
+	return resultado
+
+
+func eliminar_avatar_online() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+	var resultado := await _api.eliminar_avatar(_auth.obtener_token())
+	_verificar_sesion_expirada(resultado)
+	return resultado
+
+
+func actualizar_perfil_online(nombre: String, mail: String, fecha_nacimiento: String) -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+
+	var clean_name := nombre.strip_edges()
+	if clean_name.is_empty():
+		clean_name = obtener_usuario()
+
+	var payload := {
+		"name": clean_name,
+	}
+
+	var clean_mail := mail.strip_edges()
+	if not clean_mail.is_empty():
+		payload["mail"] = clean_mail
+
+	var clean_birth := fecha_nacimiento.strip_edges()
+	if not clean_birth.is_empty():
+		payload["birth_date"] = clean_birth
+
+	var resultado := await _api.actualizar_perfil(_auth.obtener_token(), payload)
+	_verificar_sesion_expirada(resultado)
+	if not bool(resultado.get("ok", false)):
+		return resultado
+
+	var data: Variant = resultado.get("data", {})
+	if data is Dictionary:
+		var user_data: Variant = (data as Dictionary).get("user", {})
+		if user_data is Dictionary and not (user_data as Dictionary).is_empty():
+			_usuario_en_cache = user_data as Dictionary
+	return resultado
 
 
 func obtener_usuario_del_servidor() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
-	return await _api.obtener_mi_usuario(_auth.obtener_token())
+	var resultado := await _api.obtener_mi_usuario(_auth.obtener_token())
+	_verificar_sesion_expirada(resultado)
+	return resultado
 
 
 func obtener_progreso_del_servidor() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
-	return await _api.obtener_progreso(_auth.obtener_token())
+	var resultado := await _api.obtener_progreso(_auth.obtener_token())
+	_verificar_sesion_expirada(resultado)
+	return resultado
+
+
+func _verificar_sesion_expirada(resultado: Dictionary) -> void:
+	if resultado.get("status", 0) == 401 and _auth.esta_logueado():
+		_al_expirar_sesion()
 
 
 func guardar_progreso_online(resumen_partida: Dictionary) -> Dictionary:
@@ -298,6 +350,9 @@ func _procesar_resultado_de_auth(resultado: Dictionary) -> void:
 
 
 func _al_expirar_sesion() -> void:
+	if not _auth.esta_logueado():
+		return
+	print("[BackendSession] Sesión expirada — limpiando datos de sesión")
 	_auth.limpiar_sesion()
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()
@@ -367,8 +422,12 @@ func _descargar_avatar_si_falta() -> void:
 	var data: Variant = resultado.get("data", {})
 	if not data is Dictionary:
 		return
-	var b64 := str((data as Dictionary).get("data", ""))
-	var mime := str((data as Dictionary).get("mimeType", "image/png"))
+	var raw_b64: Variant = (data as Dictionary).get("data", null)
+	if raw_b64 == null:
+		return
+	var b64 := str(raw_b64)
+	var raw_mime: Variant = (data as Dictionary).get("mimeType", null)
+	var mime := str(raw_mime) if raw_mime != null else "image/png"
 	if b64.is_empty():
 		return
 	_guardar_avatar_descargado(b64, mime)
@@ -377,8 +436,16 @@ func _descargar_avatar_si_falta() -> void:
 func _guardar_avatar_descargado(base64_data: String, mime_type: String) -> void:
 	if SaveManager == null:
 		return
-	var bytes := Marshalls.base64_to_raw(base64_data)
+	var clean_b64 := base64_data.strip_edges()
+	var comma_pos := clean_b64.find(",")
+	if comma_pos >= 0:
+		clean_b64 = clean_b64.substr(comma_pos + 1)
+	clean_b64 = clean_b64.replace("\n", "").replace("\r", "").replace(" ", "")
+	if clean_b64.is_empty():
+		return
+	var bytes := Marshalls.base64_to_raw(clean_b64)
 	if bytes.is_empty():
+		push_warning("[BackendSession] No se pudo decodificar avatar base64 (len=%d)" % clean_b64.length())
 		return
 	var ext := "png"
 	if "jpeg" in mime_type or "jpg" in mime_type:

@@ -178,8 +178,6 @@ func _desplazar_a_proximo_disponible() -> void:
 
 
 func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
-	# Sincroniza Global desde el guardado (local + online). No filtra por secuencia:
-	# el servidor puede tener nodos completados con huecos y deben mostrarse igual.
 	Global.reiniciar_progreso_nodos_pista(track_key_mapa)
 	for node_data in nodos_mapa:
 		var key: String = node_data.node_key.strip_edges()
@@ -196,6 +194,7 @@ func _construir_estados_de_nodos(node_progress: Dictionary) -> Array[Dictionary]
 		if not saved.is_empty():
 			_aplicar_progreso_guardado(state, saved)
 		node_states.append(state)
+	_aplicar_secuencia_de_desbloqueo(node_states)
 	return node_states
 
 
@@ -214,10 +213,23 @@ func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
 	if not bool(saved.get("completed", false)):
 		return
 	state["is_completed"] = true
-	state["is_unlocked"] = true
-	state["can_play"] = true
 	state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
 	state["state"] = AvanceDeNodoScript.STATE_COMPLETED
+
+
+func _aplicar_secuencia_de_desbloqueo(node_states: Array[Dictionary]) -> void:
+	var anterior_completado := true
+	for state in node_states:
+		var completado := bool(state.get("is_completed", false))
+		var desbloqueado := anterior_completado or completado
+		state["is_unlocked"] = desbloqueado
+		state["can_play"] = desbloqueado
+		if not completado:
+			if anterior_completado:
+				state["visual_state"] = AvanceDeNodoScript.STATE_AVAILABLE
+			else:
+				state["visual_state"] = AvanceDeNodoScript.STATE_LOCKED
+		anterior_completado = completado
 
 
 func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:

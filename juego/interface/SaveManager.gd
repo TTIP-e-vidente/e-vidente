@@ -151,7 +151,6 @@ func obtener_textura_avatar_usuario_actual() -> Texture2D:
 	return cargar_textura_avatar(avatar_path)
 
 
-# Aplica una ruta de avatar ya persistida (descargada del backend) sin re-copiar el archivo.
 func aplicar_ruta_avatar_descargada(path: String) -> void:
 	var clean_path := path.strip_edges()
 	if clean_path.is_empty():
@@ -395,10 +394,6 @@ func obtener_ids_actividades_completadas(request_key: String) -> Array[String]:
 	return result
 
 
-## Marca una actividad como "jugada" en la sesión actual.
-## Para request_key vacío (juegos fijos / legacy) usa "__global__" y también
-## la guarda en completed_activity_ids_by_request para que el filtro de
-## anti-repetición la vea vía obtener_ids_actividades_completadas("__global__").
 func marcar_actividad_jugada(request_key: String, activity_id: String) -> void:
 	var clean_id: String = activity_id.strip_edges()
 	var clean_key: String = request_key.strip_edges()
@@ -415,8 +410,6 @@ func marcar_actividad_jugada(request_key: String, activity_id: String) -> void:
 		played_map[clean_key] = played_list
 		save_data["played_activity_ids_by_request"] = played_map
 		_marcar_guardado_sucio()
-	# Para clave global también almacenamos en completed para que
-	# obtener_ids_actividades_completadas("__global__") las devuelva.
 	if clean_key == "__global__":
 		var cstored: Variant = save_data.get("completed_activity_ids_by_request", {})
 		var cmap: Dictionary = cstored if cstored is Dictionary else {}
@@ -429,7 +422,6 @@ func marcar_actividad_jugada(request_key: String, activity_id: String) -> void:
 			_marcar_guardado_sucio()
 
 
-## Devuelve todos los activity_ids jugados (de cualquier request_key).
 func obtener_ids_actividades_jugadas() -> Array[String]:
 	var stored: Variant = save_data.get("played_activity_ids_by_request", {})
 	if not stored is Dictionary:
@@ -445,7 +437,6 @@ func obtener_ids_actividades_jugadas() -> Array[String]:
 	return result
 
 
-## Devuelve todos los activity_ids completados, de cualquier request_key.
 func obtener_todos_ids_actividades_completadas() -> Array[String]:
 	var stored: Variant = save_data.get("completed_activity_ids_by_request", {})
 	if not stored is Dictionary:
@@ -461,8 +452,6 @@ func obtener_todos_ids_actividades_completadas() -> Array[String]:
 	return result
 
 
-## Devuelve la unión de jugados y completados.
-## Usado por ArmadorDePartida._leer_used_activity_ids para el filtro anti-repetición.
 func obtener_todos_ids_actividades_usadas() -> Array[String]:
 	var result: Array[String] = obtener_ids_actividades_jugadas()
 	for id: String in obtener_todos_ids_actividades_completadas():
@@ -562,11 +551,10 @@ func guardar_precision_nodo(
 	save_data["node_progress"] = node_progress
 	_marcar_guardado_sucio()
 	guardar_progreso_en_disco()
+	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
 func marcar_recompensa_del_mapa_como_vista(map_id: String) -> void:
-	## Marca que la recompensa del mapa ya fue mostrada al jugador.
-	## Evita volver a mostrar el cartel CapituloCompletado al recargar el mapa.
 	var clean_id: String = map_id.strip_edges()
 	if clean_id.is_empty():
 		return
@@ -580,7 +568,6 @@ func marcar_recompensa_del_mapa_como_vista(map_id: String) -> void:
 
 
 func ya_se_mostro_recompensa_del_mapa(map_id: String) -> bool:
-	## Devuelve true si ya se mostró la recompensa del mapa al jugador en esta sesión o sesiones anteriores.
 	var clean_id: String = map_id.strip_edges()
 	if clean_id.is_empty():
 		return false
@@ -610,8 +597,6 @@ func obtener_cuenta_online_vinculada() -> String:
 	return str(_obtener_meta_guardado().get("linked_online_username", "")).strip_edges()
 
 
-## Alinea el save local con la cuenta online activa.
-## Si cambió el usuario, reinicia progreso local e importa el del servidor.
 func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Dictionary) -> void:
 	var username := str(usuario.get("username", "")).strip_edges()
 	if username.is_empty():
@@ -619,47 +604,36 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 
 	var linked := obtener_cuenta_online_vinculada()
 	if linked != username:
-		# Antes de resetear, respaldar el progreso del usuario anterior.
-		# Así, si el usuario anterior vuelve a loguearse, su progreso local
-		# (no sincronizado aún) se restaura y se fusiona con el del servidor.
-		_respaldar_node_progress_por_usuario(linked)
-		_reiniciar_progreso_juego_preservando_perfil()
-		limpiar_avatar_perfil()
-		# El historial de sesión del Armador es estático (alcance de proceso).
-		# Si no se limpia al cambiar usuario, las actividades jugadas por el
-		# usuario anterior bloquean el pool del usuario entrante en la misma
-		# sesión de juego.
+		if linked.is_empty():
+			# Primer login: respaldar progreso guest para fusionarlo con el del servidor.
+			_respaldar_node_progress_por_usuario(username)
+		else:
+			_respaldar_node_progress_por_usuario(linked)
+			_reiniciar_progreso_juego_preservando_perfil()
+			limpiar_avatar_perfil()
 		ArmadorDePartida.reiniciar_historial_sesion()
 
 	_importar_progreso_online(progreso_online, username)
 	_aplicar_parche_perfil_online(usuario)
 	_establecer_cuenta_online_vinculada(username)
-	# Marcar explícitamente como sucio para que _escribir_guardado_en_disco no omita
-	# la escritura cuando has_unsaved_changes era false antes del sync online.
 	_marcar_guardado_sucio()
 
 	if not _escribir_guardado_en_disco(false, "online_sync"):
 		push_warning("[Save] No se pudo persistir la sync con la cuenta online.")
 		return
 
+	_confirmar_eliminacion_backup(username)
 	var racha_post_sync: Dictionary = _obtener_racha_local_desde_save()
 	print("[Racha] sincronizar_con_cuenta_online: racha_guardada_final count=", racha_post_sync.get("current_count", "N/A"))
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
 func al_cerrar_sesion_online() -> void:
-	# NO limpiar node_progress ni cambiar linked_online_username.
-	# Conservar linked con el nombre del usuario actual para que:
-	#   - el mismo usuario al re-loguear detecte linked == username → no resetea → merge ✓
-	#   - un usuario diferente detecte linked != username → reset antes de importar ✓
-	# Limpiar habría causado que el mismo usuario perdiera su progreso local al volver.
 	var racha_al_salir: Dictionary = _obtener_racha_local_desde_save()
 	print("[Racha] al_cerrar_sesion_online: racha_local_antes_save=", racha_al_salir)
 	guardar_progreso_en_disco()
 	var racha_guardada: Dictionary = _obtener_racha_local_desde_save()
 	print("[Racha] al_cerrar_sesion_online: racha_guardada_en_disco=", racha_guardada)
-	# Al cerrar sesión, limpiar el historial de sesión del Armador para que el
-	# próximo usuario que inicie sesión no herede actividades ya jugadas.
 	ArmadorDePartida.reiniciar_historial_sesion()
 
 
@@ -931,9 +905,6 @@ func _resumir_progreso(progress: Variant) -> Dictionary:
 
 func _reiniciar_datos_guardado_actual(profile: Dictionary, preserve_streak: bool = true) -> void:
 	var settings: Dictionary = _obtener_settings_guardado_actual()
-	# Leer la racha ANTES de limpiar Global, ya que _global_reiniciar_progreso()
-	# vacía _streak_state y _obtener_racha_actual_para_preservar() leería un estado
-	# vacío (count=0) si lo leyera después.
 	var streak_a_preservar: Dictionary = {}
 	if preserve_streak:
 		streak_a_preservar = _obtener_racha_actual_para_preservar()
@@ -1083,8 +1054,6 @@ func _establecer_cuenta_online_vinculada(username: String) -> void:
 
 func _reiniciar_progreso_juego_preservando_perfil() -> void:
 	var profile: Dictionary = obtener_perfil_usuario_actual()
-	# preserve_streak=false: la racha del usuario anterior no debe heredarse al nuevo.
-	# El backend provee la racha correcta al importar el progreso online.
 	_reiniciar_datos_guardado_actual(profile, false)
 
 
@@ -1142,9 +1111,6 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 		progreso_online
 	)
 	var local_node_progress: Dictionary = obtener_todo_progreso_nodos()
-	# Si hay un backup por usuario, fusionarlo con el local antes de comparar con el online.
-	# Esto recupera nodos completados localmente que no llegaron al backend antes de un
-	# switch de usuario (el backup se guardó justo antes de resetear el save).
 	if not username.is_empty():
 		var backup: Dictionary = _restaurar_node_progress_backup(username)
 		if not backup.is_empty():
@@ -1160,9 +1126,7 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 	var local_exp: int = int(save_data.get("total_exp", 0))
 	var online_exp: int = int(snapshot.get("total_exp", 0))
 	save_data["total_exp"] = maxi(local_exp, online_exp)
-	# Leer la racha local ANTES de sobreescribir save_data["progress"] con el snapshot online.
-	# Si se lee después, _obtener_racha_local_desde_save() devuelve la racha del servidor
-	# (ya sobreescrita) y el merge ignora el valor local más alto.
+	# Leer antes de sobreescribir progress con el snapshot del servidor.
 	var local_streak: Dictionary = _obtener_racha_local_desde_save()
 	var server_streak: Dictionary = snapshot.get("streak_state", {})
 	print(
@@ -1179,9 +1143,6 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 		server_streak
 	)
 	print("[Racha] _importar_progreso_online: streak_merged_count=", streak_state.get("current_count", "vacío"))
-	# Importar primero el snapshot del servidor (reiniciar_progreso + reimportar).
-	# Después sobrescribir la racha con el valor merged local+server, así el valor
-	# más alto gana y no queda pisado por el reiniciar_progreso interno del importador.
 	_global_importar_progreso(save_data.get("progress", {}))
 	_global_establecer_racha(streak_state)
 	_sincronizar_node_progress_a_global(save_data.get("node_progress", {}))
@@ -1202,8 +1163,6 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 		save_data["progress"] = progress_snapshot
 
 
-## Merge post-sync: aplica los completedNodes que devolvió el servidor
-## después de guardar una partida, sin sobreescribir progreso local más nuevo.
 func fusionar_completados_desde_sync(completed_nodes: Array) -> void:
 	if completed_nodes.is_empty():
 		return
@@ -1286,9 +1245,6 @@ func _persistir_perfil_actualizado() -> Dictionary:
 	return {"ok": true, "message": "Perfil local actualizado.", "profile": updated_profile}
 
 
-## Guarda el node_progress del usuario en un archivo temporal por usuario.
-## Se llama antes de resetear el save cuando entra un usuario diferente,
-## para que el usuario original pueda recuperar su progreso no sincronizado.
 func _respaldar_node_progress_por_usuario(username: String) -> void:
 	if username.is_empty():
 		return
@@ -1307,8 +1263,6 @@ func _respaldar_node_progress_por_usuario(username: String) -> void:
 	print("[Save] backup node_progress guardado para username=", username, " nodos=", np.keys())
 
 
-## Restaura y elimina el backup por usuario si existe.
-## Retorna el node_progress guardado o {} si no hay backup.
 func _restaurar_node_progress_backup(username: String) -> Dictionary:
 	if username.is_empty():
 		return {}
@@ -1321,9 +1275,17 @@ func _restaurar_node_progress_backup(username: String) -> Dictionary:
 		return {}
 	var text: String = file.get_as_text()
 	file = null
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	var parsed: Variant = JSON.parse_string(text)
 	return parsed as Dictionary if parsed is Dictionary else {}
+
+
+func _confirmar_eliminacion_backup(username: String) -> void:
+	if username.is_empty():
+		return
+	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _marcar_guardado_sucio() -> void:

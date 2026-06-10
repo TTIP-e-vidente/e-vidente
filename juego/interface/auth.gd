@@ -32,6 +32,11 @@ func _ready() -> void:
 	email_input.focus_exited.connect(_intentar_autosave)
 	_cargar_estado_perfil_actual()
 	_establecer_feedback("Los cambios se guardan automáticamente.", true)
+	BackendSession.session_expired.connect(_on_sesion_expirada)
+
+
+func _on_sesion_expirada() -> void:
+	_establecer_feedback("Sesión expirada. Los cambios se guardan localmente.", false)
 
 
 func _cachear_nodos_ui() -> void:
@@ -113,11 +118,12 @@ func _cargar_estado_perfil_actual() -> void:
 		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
 	else:
 		summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ")
+	summary_save_label.visible = true
 
 	# Sincroniza el avatar local con el backend al abrir la pantalla de perfil.
 	# Cubre el caso de usuarios que ya tenían avatar antes de que existiera este feature.
 	if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
-		_subir_avatar_al_backend()
+		_subir_avatar_al_backend_silencioso()
 
 
 func _on_boton_elegir_avatar_presionado() -> void:
@@ -130,7 +136,24 @@ func _on_archivo_avatar_seleccionado(path: String) -> void:
 
 
 func _on_boton_limpiar_avatar_presionado() -> void:
-	_aplicar_ruta_avatar("")
+	avatar_path_input.text = ""
+	_refrescar_controles_avatar()
+	_refrescar_vista_previa_desde_formulario()
+	SaveManager.actualizar_perfil_local(
+		username_input.text.strip_edges(),
+		birth_date_input.text.strip_edges(),
+		email_input.text.strip_edges(),
+		""
+	)
+	if BackendSession.esta_logueado():
+		_establecer_feedback("Eliminando foto...", true)
+		var del_result := await BackendSession.eliminar_avatar_online()
+		if bool(del_result.get("ok", false)):
+			_establecer_feedback("Foto eliminada.", true)
+		else:
+			_establecer_feedback("Foto eliminada localmente. Se sincronizará luego.", true)
+	else:
+		_establecer_feedback("Foto eliminada.", true)
 
 
 func _intentar_autosave() -> void:
@@ -151,11 +174,15 @@ func _intentar_autosave() -> void:
 	)
 	var is_ok: bool = bool(save_result.get("ok", false))
 	if is_ok:
-		_establecer_feedback("Guardado ✓", true)
 		var persisted_avatar := SaveManager.obtener_ruta_avatar_usuario_actual()
 		if not persisted_avatar.is_empty() and persisted_avatar != avatar_path_input.text:
 			avatar_path_input.text = persisted_avatar
 			_refrescar_controles_avatar()
+		if BackendSession.esta_logueado():
+			_establecer_feedback("Guardando datos...", true)
+			_sincronizar_perfil_al_backend()
+		else:
+			_establecer_feedback("Datos guardados correctamente.", true)
 	else:
 		_establecer_feedback(str(save_result.get("message", "Error al guardar")), false)
 
@@ -227,7 +254,31 @@ func _aplicar_ruta_avatar(path: String) -> void:
 		_subir_avatar_al_backend()
 
 
-func _subir_avatar_al_backend() -> void:
+func _sincronizar_perfil_al_backend() -> void:
+	var result := await BackendSession.actualizar_perfil_online(
+		username_input.text.strip_edges(),
+		email_input.text.strip_edges(),
+		birth_date_input.text.strip_edges()
+	)
+	if bool(result.get("ok", false)):
+		_establecer_feedback("Datos guardados correctamente.", true)
+		return
+	var status_code := int(result.get("status", 0))
+	var server_error := str(result.get("error", ""))
+	print("[Auth] Profile sync failed (status=%d): %s" % [status_code, server_error])
+	match status_code:
+		409:
+			_establecer_feedback("Ese mail ya está en uso por otra cuenta.", false)
+		400:
+			var msg := server_error if not server_error.is_empty() else "Datos inválidos."
+			_establecer_feedback(msg, false)
+		0:
+			_establecer_feedback("Guardado localmente. Se sincronizará cuando haya conexión.", true)
+		_:
+			_establecer_feedback("No se pudo sincronizar. Revisá los datos.", false)
+
+
+func _subir_avatar_al_backend(silencioso: bool = false) -> void:
 	var persisted_path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if persisted_path.is_empty():
 		return
@@ -241,12 +292,23 @@ func _subir_avatar_al_backend() -> void:
 		mime_type = "image/jpeg"
 	elif ext == "webp":
 		mime_type = "image/webp"
-	_establecer_feedback("Subiendo foto...", true)
+	if not silencioso:
+		_establecer_feedback("Subiendo foto...", true)
 	var result := await BackendSession.subir_avatar(base64_data, mime_type)
 	if bool(result.get("ok", false)):
-		_establecer_feedback("Foto guardada ✓", true)
+		if not silencioso:
+			_establecer_feedback("Foto guardada ✓", true)
 	else:
 		print("[Auth] Avatar upload failed: ", result.get("error", ""))
+		if not silencioso:
+			if int(result.get("status", 0)) == 0:
+				_establecer_feedback("Foto guardada localmente. Se subirá cuando haya conexión.", true)
+			else:
+				_establecer_feedback("No se pudo subir la foto al servidor.", false)
+
+
+func _subir_avatar_al_backend_silencioso() -> void:
+	_subir_avatar_al_backend(true)
 
 
 func _refrescar_controles_avatar() -> void:
@@ -256,6 +318,7 @@ func _refrescar_controles_avatar() -> void:
 
 
 func _establecer_feedback(message: String, success: bool) -> void:
+	feedback_label.visible = true
 	feedback_label.text = message
 	feedback_label.modulate = (
 		Color(0.219608, 0.380392, 0.235294, 1)

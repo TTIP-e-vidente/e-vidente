@@ -10,13 +10,13 @@ export async function authenticateToken(
   const authorization = request.header('Authorization');
 
   if (!authorization?.startsWith('Bearer ')) {
-    response.status(401).json({ error: 'Invalid token' });
+    response.status(401).json({ error: 'Invalid token', code: 'INVALID_CREDENTIALS' });
     return;
   }
 
   const token = authorization.slice('Bearer '.length).trim();
   if (!token) {
-    response.status(401).json({ error: 'Invalid token' });
+    response.status(401).json({ error: 'Invalid token', code: 'INVALID_CREDENTIALS' });
     return;
   }
 
@@ -24,6 +24,6 @@ export async function authenticateToken(
     request.user = await getUserFromToken(token);
     next();
   } catch {
-    response.status(401).json({ error: 'Invalid token' });
+    response.status(401).json({ error: 'Invalid token', code: 'INVALID_CREDENTIALS' });
   }
 }

@@ -41,13 +41,16 @@ async function run(): Promise<void> {
   const suffix = Date.now();
   const username = `player_auth_${suffix}`;
   const mail = `player_auth_${suffix}@test.com`;
+  const otherUsername = `player_auth_other_${suffix}`;
+  const otherMail = `player_auth_other_${suffix}@test.com`;
+  const updatedMail = `updated_${suffix}@test.com`;
   const password = 'Password123';
 
   try {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [
-      username,
-      mail
-    ]);
+    await pool.query(
+      'DELETE FROM users WHERE username = ANY($1::text[]) OR mail = ANY($2::text[]);',
+      [[username, otherUsername], [mail, updatedMail, otherMail]]
+    );
 
     const registerResponse = await requestJson(baseUrl, '/auth/register', {
       method: 'POST',
@@ -457,12 +460,67 @@ async function run(): Promise<void> {
     assert.equal(negativeDuration.status, 400);
     assert.equal(negativeDuration.body.code, 'VALIDATION_ERROR');
 
+    const patchProfileResponse = await requestJson(baseUrl, '/player/me', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        name: 'Player Auth Updated',
+        mail: updatedMail,
+        birth_date: '1999-01-01'
+      })
+    });
+    assert.equal(patchProfileResponse.status, 200);
+    assert.equal((patchProfileResponse.body.user as JsonObject).name, 'Player Auth Updated');
+    assert.equal((patchProfileResponse.body.user as JsonObject).mail, updatedMail);
+    assert.equal((patchProfileResponse.body.user as JsonObject).birth_date, '1999-01-01');
+    assert.ok(patchProfileResponse.body.profile);
+    assert.ok(patchProfileResponse.body.streak);
+
+    const storedUser = await pool.query<{ name: string; mail: string; birth_date: string }>(
+      `
+        SELECT name, mail, birth_date::text
+        FROM users
+        WHERE username = $1;
+      `,
+      [username]
+    );
+    assert.equal(storedUser.rows[0].name, 'Player Auth Updated');
+    assert.equal(storedUser.rows[0].mail, updatedMail);
+    assert.equal(storedUser.rows[0].birth_date, '1999-01-01');
+
+    const otherRegisterResponse = await requestJson(baseUrl, '/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: otherUsername,
+        name: 'Other Player',
+        mail: otherMail,
+        password
+      })
+    });
+    assert.equal(otherRegisterResponse.status, 201);
+
+    const duplicateMailResponse = await requestJson(baseUrl, '/player/me', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ mail: otherMail })
+    });
+    assert.equal(duplicateMailResponse.status, 409);
+    assert.equal(duplicateMailResponse.body.code, 'DUPLICATE_MAIL');
+
+    const emptyPatchResponse = await requestJson(baseUrl, '/player/me', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({})
+    });
+    assert.equal(emptyPatchResponse.status, 400);
+    assert.equal(emptyPatchResponse.body.code, 'INVALID_BODY');
+
     console.log('player authenticated integration test passed');
   } finally {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [
-      username,
-      mail
-    ]);
+    await pool.query(
+      'DELETE FROM users WHERE username = ANY($1::text[]) OR mail = ANY($2::text[]);',
+      [[username, otherUsername], [mail, updatedMail, otherMail]]
+    );
     await new Promise<void>((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
     });

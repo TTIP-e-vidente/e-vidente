@@ -24,6 +24,21 @@ export async function getImageByUserId(
   return result.rows[0] ?? null;
 }
 
+export async function deleteUserAvatar(
+  client: PoolClient,
+  userId: string
+): Promise<boolean> {
+  await client.query(
+    `UPDATE users SET avatar_image_id = NULL WHERE id = $1;`,
+    [userId]
+  );
+  const result = await client.query(
+    `DELETE FROM images WHERE user_id = $1;`,
+    [userId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
 export async function upsertUserAvatar(
   client: PoolClient,
   userId: string,

@@ -3,7 +3,7 @@ import { pool } from '../../config/database';
 import { AppError } from '../../shared/errors/app_error';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
-import { getImageByUserId, upsertUserAvatar } from './image.repository';
+import { deleteUserAvatar, getImageByUserId, upsertUserAvatar } from './image.repository';
 
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_BASE64_LENGTH = 4 * 1024 * 1024; // ~3 MB imagen original
@@ -35,6 +35,28 @@ export async function uploadAvatarController(req: Request, res: Response): Promi
       const row = await upsertUserAvatar(client, userId, data.trim(), mimeType);
       await client.query('COMMIT');
       sendResponse(res, 200, { updatedAt: row.updated_at });
+    } catch (dbError) {
+      await client.query('ROLLBACK');
+      throw dbError;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+
+export async function deleteAvatarController(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError(401, 'UNAUTHORIZED', 'No active session');
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await deleteUserAvatar(client, userId);
+      await client.query('COMMIT');
+      sendResponse(res, 200, { deleted: true });
     } catch (dbError) {
       await client.query('ROLLBACK');
       throw dbError;

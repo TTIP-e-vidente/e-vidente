@@ -56,7 +56,7 @@ Migraciones: `BACKEND/migrations/`, `npm run migrate`. No editar migraciones vie
 | Grupo | Rutas |
 |-------|--------|
 | Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/logout` |
-| Jugador | `GET /player/me`, `GET /player/me/progress`, `POST /player/me/progress` |
+| Jugador | `GET /player/me`, `PATCH /player/me`, `GET /player/me/progress`, `POST /player/me/progress` |
 | Health | `GET /health`, `GET /health/db` |
 | Dev (PoC) | `POST /dev/player-progress`, `GET /dev/player-progress/:username` |
 

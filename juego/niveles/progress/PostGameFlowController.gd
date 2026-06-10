@@ -662,7 +662,7 @@ static func _esta_activa_hoy(streak_state: Dictionary) -> bool:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return false
-	return str(streak_state.get("last_activity_day", "")) == Time.get_date_string_from_system(false)
+	return str(streak_state.get("last_activity_day", "")) == Time.get_date_string_from_system(true)
 
 
 static func _scene_path_target(scene_path: String) -> Dictionary:

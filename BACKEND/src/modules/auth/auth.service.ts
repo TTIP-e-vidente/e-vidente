@@ -61,7 +61,8 @@ export function verifyAccessToken(token: string): { sub: string; username: strin
 export async function register(input: RegisterInput): Promise<AuthResponse> {
   const username = asTrimmedString(input.username);
   const name = asTrimmedString(input.name);
-  const mail = input.mail === undefined || input.mail === null ? null : asTrimmedString(input.mail);
+  const mailRaw = input.mail === undefined || input.mail === null ? null : asTrimmedString(input.mail);
+  const mail = mailRaw && mailRaw.length > 0 ? mailRaw : null;
   const password = asTrimmedString(input.password);
 
   if (!isNonEmptyString(input.username) || !isNonEmptyString(input.name) || !password) {
