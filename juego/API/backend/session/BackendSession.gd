@@ -283,6 +283,28 @@ func reintentar_todos_sync_pendiente() -> void:
 	_sync.reintentar_pendientes(100)
 
 
+func esta_sincronizando_sync() -> bool:
+	return _sync.esta_sincronizando()
+
+
+func esperar_drenaje_sync_pendiente(max_items: int = 100, max_rounds: int = 5) -> void:
+	if not _auth.esta_logueado():
+		return
+	var rounds := 0
+	while _auth.esta_logueado() and rounds < max_rounds:
+		var pending := LocalSyncQueue.contar_pendientes()
+		if pending <= 0 and not _sync.esta_sincronizando():
+			return
+		if _sync.esta_sincronizando():
+			await pending_sync_finished
+		else:
+			_sync.reintentar_pendientes(max_items)
+			await pending_sync_finished
+		rounds += 1
+		if LocalSyncQueue.contar_pendientes() <= 0:
+			return
+
+
 func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
 	pending_sync_finished.emit(synced, failed)
 	if _reintento_encolado:

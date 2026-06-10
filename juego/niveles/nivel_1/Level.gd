@@ -788,16 +788,17 @@ func _encolar_sync_partida_mapa() -> void:
 	if _nodo_actual.is_empty():
 		return
 	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+	var track := active_track_key if not active_track_key.is_empty() else DEFAULT_TRACK_KEY
 	var resultado := {
 		"node_key": _nodo_actual,
-		"map_id": "celiaquia",
+		"map_id": SyncApi.resolver_restriccion_para_partida(get_tree(), {}, track),
 		"success": true,
 		"accuracy": float(stats.get("precision", 0)) / 100.0,
 		"exp": int(stats.get("exp_ganada", 0)),
 		"elapsed_seconds": _calcular_elapsed_seconds(),
 	}
 	Global.establecer_ultima_finalizacion(stats)
-	SyncApi.sincronizar_partida_terminada(get_tree(), resultado, stats)
+	SyncApi.sincronizar_partida_terminada(get_tree(), resultado, stats, track)
 
 
 func _guardar_progreso_de_mapa() -> void:

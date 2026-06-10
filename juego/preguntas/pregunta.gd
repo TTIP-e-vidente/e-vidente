@@ -1019,7 +1019,7 @@ func _finalizar_actividad(success: bool) -> void:
 	var resultado := {
 		"activity_id": activity_id,
 		"node_key": _nodo_actual,
-		"map_id": "celiaquia",
+		"map_id": SyncApi.resolver_restriccion_para_partida(get_tree(), {}, track_key),
 		"success": success,
 		"accuracy": clampf(float(_precision_real) / 100.0, 0.0, 1.0),
 		"exp": 10,

@@ -22,6 +22,7 @@ const SaveResumeStateScript := preload(
 const ImportadorProgresoOnlineScript := preload(
 	"res://API/backend/sync/ImportadorProgresoOnline.gd"
 )
+const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 
 @warning_ignore("unused_signal")
 signal user_registered(profile: Dictionary)
@@ -1087,7 +1088,7 @@ func _limpiar_identidad_perfil_para_cambio_cuenta() -> void:
 func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	if streak_online.is_empty():
 		return
-	var local_streak_now: Dictionary = _obtener_racha_local_desde_save()
+	var local_streak_now: Dictionary = _obtener_racha_local_para_merge()
 	var server_streak_norm: Dictionary = ImportadorProgresoOnlineScript.construir_estado_racha_online(streak_online)
 	print(
 		"[Racha] aplicar_racha_sincronizada: local_count=", local_streak_now.get("current_count", "N/A"),
@@ -1099,7 +1100,19 @@ func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	)
 	if merged.is_empty():
 		return
-	print("[Racha] aplicar_racha_sincronizada: merged_count=", merged.get("current_count", "N/A"))
+	var today := Time.get_date_string_from_system(true)
+	var local_day := str(local_streak_now.get("last_activity_day", ""))
+	if local_day == today and str(merged.get("last_activity_day", "")) != today:
+		merged["last_activity_day"] = today
+		merged["current_count"] = maxi(
+			int(merged.get("current_count", 0)),
+			int(local_streak_now.get("current_count", 0))
+		)
+		merged = GameStreakTrackerScript.leer(merged)
+	print(
+		"[Racha] aplicar_racha_sincronizada: merged_count=", merged.get("current_count", "N/A"),
+		" merged_day=", merged.get("last_activity_day", "N/A")
+	)
 	_global_establecer_racha(merged)
 	_persistir_racha_en_save(merged)
 	if not _escribir_guardado_en_disco(false, "streak_sync"):
@@ -1117,6 +1130,15 @@ func _obtener_racha_local_desde_save() -> Dictionary:
 		return {}
 	var streak: Variant = (systems as Dictionary).get("streak", {})
 	return (streak as Dictionary).duplicate(true) if streak is Dictionary else {}
+
+
+func _obtener_racha_local_para_merge() -> Dictionary:
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("obtener_estado_racha"):
+		var global_streak: Variant = global_autoload.call("obtener_estado_racha")
+		if global_streak is Dictionary and not (global_streak as Dictionary).is_empty():
+			return (global_streak as Dictionary).duplicate(true)
+	return _obtener_racha_local_desde_save()
 
 
 func _persistir_racha_en_save(streak_state: Dictionary) -> void:

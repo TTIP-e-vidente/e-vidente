@@ -90,10 +90,11 @@ func _ready() -> void:
 		label_sync_status.text = SyncApi.mensaje_guardado_local()
 		if SyncApi.puede_sincronizar():
 			label_sync_status.text = SyncApi.mensaje_sincronizando()
-			SyncApi.conectar_senales_sincronizacion(_al_sync_exitosa, _al_sync_fallida)
-			_sync_tween = create_tween().set_loops()
-			_sync_tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
-			_sync_tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
+			SyncApi.conectar_feedback_sincronizacion(
+				_al_sync_exitosa, _al_sync_fallida, _al_sync_pendientes_terminado
+			)
+			_iniciar_animacion_sync()
+			call_deferred("_evaluar_estado_sync_inicial")
 
 	# Conectar botón Continuar
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
@@ -162,6 +163,25 @@ func _al_sync_fallida(_motivo: String) -> void:
 		label_sync_status.modulate.a = 1.0
 
 
+func _al_sync_pendientes_terminado(synced_count: int, failed_count: int) -> void:
+	if label_sync_status == null:
+		return
+	_detener_tween_sync()
+	label_sync_status.text = SyncApi.mensaje_resultado_batch(synced_count, failed_count)
+	label_sync_status.modulate.a = 1.0
+
+
+func _evaluar_estado_sync_inicial() -> void:
+	SyncApi.evaluar_sync_inicial_tras_encolado(_al_sync_pendientes_terminado)
+
+
+func _iniciar_animacion_sync() -> void:
+	_detener_tween_sync()
+	_sync_tween = create_tween().set_loops()
+	_sync_tween.tween_property(label_sync_status, "modulate:a", 0.4, 0.6)
+	_sync_tween.tween_property(label_sync_status, "modulate:a", 1.0, 0.6)
+
+
 func _detener_tween_sync() -> void:
 	if _sync_tween != null and is_instance_valid(_sync_tween):
 		_sync_tween.kill()
@@ -170,4 +190,6 @@ func _detener_tween_sync() -> void:
 
 func _limpiar_feedback_sync() -> void:
 	_detener_tween_sync()
-	SyncApi.desconectar_senales_sincronizacion(_al_sync_exitosa, _al_sync_fallida)
+	SyncApi.desconectar_feedback_sincronizacion(
+		_al_sync_exitosa, _al_sync_fallida, _al_sync_pendientes_terminado
+	)

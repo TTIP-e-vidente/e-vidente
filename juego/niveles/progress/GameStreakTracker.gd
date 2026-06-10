@@ -5,7 +5,6 @@ extends RefCounted
 # Leer o abrir pantallas no debe incrementar ni recalcular dias.
 
 const SECONDS_PER_DAY := 86400
-const WARNING_START_HOUR_LOCAL := 18
 
 
 # --- Estado estable ---------------------------------------------------------
@@ -77,8 +76,12 @@ static func _resolver_estado_visual(
 		return "inactive"
 	if last_day == today:
 		return "active"
+	if not last_day.is_empty() and last_day > today:
+		# El servidor puede guardar la fecha en UTC un día adelantada respecto al cliente.
+		if _days_between(today, last_day) == 1:
+			return "active"
 	if _days_between(last_day, today) == 1:
-		return "warning" if _esta_en_ventana_de_warning(current_hour) else "inactive"
+		return "warning"
 	return "inactive"
 
 
@@ -177,6 +180,84 @@ static func construir_feedback(
 	}
 
 
+# --- Merge local / servidor -----------------------------------------------
+
+static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictionary:
+	var local_read := leer(local)
+	var online_read := leer(online)
+	var best_count := maxi(
+		int(local_read.get("best_count", 0)),
+		int(online_read.get("best_count", 0))
+	)
+
+	if local_read.is_empty():
+		if online_read.is_empty():
+			return _empty_streak_state()
+		var solo_online := online_read.duplicate(true)
+		solo_online["best_count"] = best_count
+		return leer(solo_online)
+
+	if online_read.is_empty():
+		var solo_local := local_read.duplicate(true)
+		solo_local["best_count"] = best_count
+		return leer(solo_local)
+
+	var today := Time.get_date_string_from_system(true)
+	var local_day := str(local_read.get("last_activity_day", ""))
+	var online_day := str(online_read.get("last_activity_day", ""))
+
+	# La sesión local de hoy manda: evita que un count remoto viejo pise last_activity_day.
+	if local_day == today:
+		var merged_hoy := local_read.duplicate(true)
+		if online_day == today:
+			merged_hoy["current_count"] = maxi(
+				int(local_read.get("current_count", 0)),
+				int(online_read.get("current_count", 0))
+			)
+		merged_hoy["best_count"] = best_count
+		return leer(merged_hoy)
+
+	if online_day == today:
+		var merged_remoto_hoy := online_read.duplicate(true)
+		merged_remoto_hoy["best_count"] = best_count
+		return leer(merged_remoto_hoy)
+
+	var local_count := int(local_read.get("current_count", 0))
+	var online_count := int(online_read.get("current_count", 0))
+	var local_alive := _racha_vigente_en_fecha(local_day, today)
+	var online_alive := _racha_vigente_en_fecha(online_day, today)
+
+	if not local_alive:
+		local_count = 0
+	if not online_alive:
+		online_count = 0
+
+	var ganador: Dictionary
+	if local_count > online_count:
+		ganador = local_read.duplicate(true)
+	elif online_count > local_count:
+		ganador = online_read.duplicate(true)
+	elif local_day >= online_day:
+		ganador = local_read.duplicate(true)
+	else:
+		ganador = online_read.duplicate(true)
+
+	ganador["last_activity_day"] = _dia_mas_reciente(local_day, online_day)
+	if not local_alive and not online_alive:
+		ganador["current_count"] = 0
+
+	ganador["best_count"] = best_count
+	var merged := leer(ganador)
+	# Salvaguarda: si la sesión local jugó hoy, no retroceder last_activity_day.
+	if local_day == today and str(merged.get("last_activity_day", "")) != today:
+		merged["last_activity_day"] = today
+		merged["current_count"] = maxi(
+			int(merged.get("current_count", 0)),
+			int(local_read.get("current_count", 0))
+		)
+	return merged
+
+
 # --- Helpers internos -------------------------------------------------------
 
 static func _empty_streak_state() -> Dictionary:
@@ -189,11 +270,29 @@ static func _empty_streak_state() -> Dictionary:
 	}
 
 
+static func _racha_vigente_en_fecha(last_day: String, today: String) -> bool:
+	if last_day.is_empty() or today.is_empty():
+		return false
+	if last_day == today:
+		return true
+	return _days_between(last_day, today) == 1
+
+
+static func _dia_mas_reciente(day_a: String, day_b: String) -> String:
+	if day_a.is_empty():
+		return day_b
+	if day_b.is_empty():
+		return day_a
+	return day_a if day_a > day_b else day_b
+
+
 static func _days_between(date_a: String, date_b: String) -> int:
-	if date_a.is_empty() or date_b.is_empty():
+	var norm_a := _normalizar_dia_actividad(date_a)
+	var norm_b := _normalizar_dia_actividad(date_b)
+	if norm_a.is_empty() or norm_b.is_empty():
 		return -1
-	var unix_a: int = int(Time.get_unix_time_from_datetime_string(date_a))
-	var unix_b: int = int(Time.get_unix_time_from_datetime_string(date_b))
+	var unix_a: int = int(Time.get_unix_time_from_datetime_string(norm_a))
+	var unix_b: int = int(Time.get_unix_time_from_datetime_string(norm_b))
 	return int(float(absi(unix_b - unix_a)) / SECONDS_PER_DAY)
 
 
@@ -228,14 +327,3 @@ static func _resolver_fecha_actual(current_date: String) -> String:
 	if not clean_date.is_empty():
 		return clean_date
 	return Time.get_date_string_from_system(true)
-
-
-static func _esta_en_ventana_de_warning(current_hour: int) -> bool:
-	return _resolver_hora_actual(current_hour) >= WARNING_START_HOUR_LOCAL
-
-
-static func _resolver_hora_actual(current_hour: int) -> int:
-	if current_hour >= 0:
-		return clampi(current_hour, 0, 23)
-	var now: Dictionary = Time.get_datetime_dict_from_system(false)
-	return clampi(int(now.get("hour", 0)), 0, 23)

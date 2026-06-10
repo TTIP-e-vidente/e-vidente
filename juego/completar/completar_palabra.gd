@@ -524,7 +524,7 @@ func _finalizar_actividad(success: bool) -> void:
 	var resultado := {
 		"activity_id": str(actividad.get("id", actividad.get("activity_id", ""))),
 		"node_key": str(actividad.get("node_key", "")),
-		"map_id": "celiaquia",
+		"map_id": SyncApi.resolver_restriccion_para_partida(get_tree(), {}),
 		"success": success,
 		"accuracy": 1.0 if success else 0.0,
 		"exp": 10,

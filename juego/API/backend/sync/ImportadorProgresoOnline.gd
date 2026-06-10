@@ -277,58 +277,8 @@ static func construir_estado_racha_online(racha_online: Variant) -> Dictionary:
 
 
 static func fusionar_estado_racha(local: Dictionary, online: Dictionary) -> Dictionary:
-	var local_read := GameStreakTrackerScript.leer(local)
-	var online_read := GameStreakTrackerScript.leer(online)
-	if local_read.is_empty():
-		return online_read
-	if online_read.is_empty():
-		return local_read
+	return GameStreakTrackerScript.fusionar_con_remoto(local, online)
 
-	var local_count := int(local_read.get("current_count", 0))
-	var online_count := int(online_read.get("current_count", 0))
-	var local_day := str(local_read.get("last_activity_day", ""))
-	var online_day := str(online_read.get("last_activity_day", ""))
-
-	var today := Time.get_date_string_from_system(true)
-	var local_alive := _es_racha_vigente(local_day, today)
-	var online_alive := _es_racha_vigente(online_day, today)
-
-	if not local_alive:
-		local_count = 0
-	if not online_alive:
-		online_count = 0
-
-	var ganador: Dictionary
-	if local_count > online_count:
-		ganador = local_read.duplicate(true)
-	elif online_count > local_count:
-		ganador = online_read.duplicate(true)
-	elif local_day > online_day:
-		ganador = local_read.duplicate(true)
-	else:
-		ganador = online_read.duplicate(true)
-
-	if not local_alive and not online_alive:
-		ganador["current_count"] = 0
-
-	ganador["best_count"] = maxi(
-		int(local_read.get("best_count", 0)),
-		int(online_read.get("best_count", 0))
-	)
-	return ganador
-
-
-static func _es_racha_vigente(last_day: String, today: String) -> bool:
-	if last_day.is_empty() or today.is_empty():
-		return false
-	if last_day == today:
-		return true
-	var unix_last := int(Time.get_unix_time_from_datetime_string(last_day))
-	var unix_today := int(Time.get_unix_time_from_datetime_string(today))
-	if unix_last <= 0 or unix_today <= 0:
-		return false
-	var diff_days := int(float(absi(unix_today - unix_last)) / 86400.0)
-	return diff_days <= 1
 
 
 static func _calcular_exp_total(progreso_online: Dictionary) -> int:

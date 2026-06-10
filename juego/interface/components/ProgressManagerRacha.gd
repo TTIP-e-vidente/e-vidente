@@ -95,7 +95,10 @@ func _mostrar_feedback(feedback: Dictionary) -> void:
 	if _status_detail.is_empty():
 		_status_detail = str(feedback.get("message", feedback_default_message)).strip_edges()
 
+	# Feedback post-partida implica actividad registrada hoy: no mostrar badge en warning.
+	_streak_state = "active"
 	_refrescar_ui()
+	_refrescar_insignia_racha_mapa()
 
 
 func _establecer_modo_regular() -> void:
@@ -131,6 +134,22 @@ func _resolver_detalle_estado_regular(streak_modelo_vista: Dictionary) -> String
 	if _current_count > 0:
 		return _construir_mensaje_racha(_current_count)
 	return str(streak_modelo_vista.get("status_detail", "")).strip_edges()
+
+
+func _refrescar_insignia_racha_mapa() -> void:
+	if map_hud == null:
+		return
+	var racha_control: Control = map_hud.get_node_or_null("HudRoot/RachaAnchor/Racha") as Control
+	if racha_control == null or not racha_control.has_method("renderizar"):
+		return
+	racha_control.call(
+		"renderizar",
+		{
+			"current_count": _current_count,
+			"best_count": _best_count,
+			"streak_state": _streak_state,
+		}
+	)
 
 
 func _refrescar_ui() -> void:

@@ -79,9 +79,9 @@ static func aplicar_progreso_online_a_guardado_local() -> void:
 
 
 static func cerrar_sesion() -> void:
-	# Intentar subir al servidor cualquier partida pendiente mientras el token sigue activo.
+	# Vaciar la cola mientras el token sigue activo, antes de limpiar la sesión.
 	if esta_logueado():
-		SyncApi.reintentar_pendientes()
+		await SyncApi.esperar_drenaje_pendientes()
 	SaveManager.al_cerrar_sesion_online()
 	BackendSession.cerrar_sesion()
 

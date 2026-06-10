@@ -115,9 +115,7 @@ func _on_guardar_presionado() -> void:
 	_guardar_btn.disabled = true
 	_guardar_btn.text = "Sincronizando..."
 	_save_status_label.text = "Enviando %d partida%s al servidor..." % [n, plural]
-	BackendSession.pending_sync_finished.connect(
-		_al_sync_pendientes_terminado, CONNECT_ONE_SHOT
-	)
+	SyncApi.conectar_feedback_sincronizacion_one_shot(_al_sync_pendientes_terminado)
 	SyncApi.reintentar_todos_pendientes()
 
 
@@ -143,15 +141,7 @@ func _subir_avatar_si_tiene() -> void:
 func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
 	if synced > 0 and AuthApi.esta_logueado():
 		await BackendSession.cargar_datos_online()
-
-	var msg: String
-	if failed == 0:
-		msg = "Todo tu progreso fue actualizado ✓"
-	elif synced > 0:
-		msg = "%d partidas sincronizadas, %d no pudieron" % [synced, failed]
-	else:
-		msg = "No se pudo sincronizar. Reintentá más tarde."
-	mostrar_feedback_guardado(msg)
+	mostrar_feedback_guardado(SyncApi.mensaje_resultado_batch_perfil(synced, failed))
 
 
 func refrescar() -> void:

@@ -9,8 +9,9 @@ const DEMO_MAIL     := "bssm@evidente.local"
 func _ready() -> void:
 	BackendSession.login_succeeded.connect(_on_login_exitoso)
 	BackendSession.login_failed.connect(_on_login_fallido)
-	BackendSession.sync_succeeded.connect(_on_sync_exitosa)
-	BackendSession.sync_failed.connect(_on_sync_fallida)
+	SyncApi.conectar_feedback_sincronizacion(
+		_on_sync_exitosa, _on_sync_fallida, _on_sync_pendientes_terminado
+	)
 	BackendSession.session_expired.connect(_on_sesion_expirada)
 	BackendSession.logout_completed.connect(_on_cierre_sesion_completado)
 
@@ -91,6 +92,10 @@ func _on_sync_exitosa(progress: Dictionary) -> void:
 
 func _on_sync_fallida(reason: String) -> void:
 	push_error("[BSSM] >> sync_failed: " + reason)
+
+
+func _on_sync_pendientes_terminado(synced: int, failed: int) -> void:
+	print("[BSSM] >> pending_sync_finished — synced=", synced, " failed=", failed)
 
 
 func _on_sesion_expirada() -> void:

@@ -1,21 +1,63 @@
 class_name SincronizadorPartida
 extends RefCounted
 
+const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
 const LOG_PREFIX := "[Sync]"
+
+
+static func resolver_restriccion(
+	tree: SceneTree,
+	resultado: Dictionary = {},
+	pista_fallback: String = ""
+) -> String:
+	var explicit := str(resultado.get("map_id", resultado.get("restriction", ""))).strip_edges()
+	if not explicit.is_empty():
+		return explicit
+
+	if tree != null and tree.root != null:
+		var global_node := tree.root.get_node_or_null("/root/Global")
+		if global_node != null:
+			if global_node.has_method("obtener_partida_de_nodo_actual"):
+				var partida: Variant = global_node.call("obtener_partida_de_nodo_actual")
+				if partida is Dictionary:
+					var partida_dict: Dictionary = partida as Dictionary
+					var clave_pista := str(partida_dict.get("clave_pista", "")).strip_edges()
+					if not clave_pista.is_empty():
+						return clave_pista
+			if global_node.has_method("obtener_sesion_nodo_jugable_activo"):
+				var sesion: Variant = global_node.call("obtener_sesion_nodo_jugable_activo")
+				if sesion is Dictionary:
+					var track_key := str((sesion as Dictionary).get("track_key", "")).strip_edges()
+					if not track_key.is_empty():
+						return track_key
+			if global_node.has_method("obtener_sesion_de_juego"):
+				var session_data := global_node.call("obtener_sesion_de_juego") as Resource
+				if session_data != null:
+					var raw_track: Variant = session_data.get("track_key")
+					var track_from_session := (
+						str(raw_track).strip_edges() if raw_track != null else ""
+					)
+					if not track_from_session.is_empty():
+						return track_from_session
+
+	var fallback := pista_fallback.strip_edges()
+	if not fallback.is_empty():
+		return fallback
+
+	return GameTrackCatalog.TRACK_CELIAQUIA
 
 
 static func sincronizar_post_partida(
 	tree: SceneTree,
 	resultado: Dictionary,
-	stats: Dictionary
+	stats: Dictionary,
+	pista_fallback: String = ""
 ) -> void:
 	var node_id := str(resultado.get("node_key", "")).strip_edges()
 	if node_id.is_empty():
 		node_id = "unknown_node"
 
-	var restriction := str(resultado.get("map_id", "")).strip_edges()
-	if restriction.is_empty():
-		restriction = "celiaquia"
+	var restriction := resolver_restriccion(tree, resultado, pista_fallback)
 
 	var game_type := _leer_tipo_juego(tree, resultado)
 	var score := int(stats.get("aciertos", 0))
