@@ -49,12 +49,10 @@ static func construir_parche_perfil(usuario: Dictionary) -> Dictionary:
 	for key in ["birth_date", "fecha_nacimiento", "birthDate"]:
 		if not usuario.has(key):
 			continue
-		var birth_date := SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
+		parche["birth_date"] = SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
 			usuario.get(key)
 		)
-		if not birth_date.is_empty():
-			parche["birth_date"] = birth_date
-			break
+		break
 
 	return parche
 
@@ -161,7 +159,7 @@ static func _parsear_completed_nodes(completed_nodes: Variant) -> Dictionary:
 static func fusionar_node_progress(local: Dictionary, online: Dictionary) -> Dictionary:
 	var merged: Dictionary = local.duplicate(true) if local is Dictionary else {}
 	if not online is Dictionary:
-		return merged
+		return sanitizar_progreso_secuencial(merged)
 	for raw_node_id in online.keys():
 		var node_id := str(raw_node_id).strip_edges()
 		if node_id.is_empty():
@@ -178,7 +176,62 @@ static func fusionar_node_progress(local: Dictionary, online: Dictionary) -> Dic
 				local_entry as Dictionary,
 				online_entry as Dictionary
 			)
-	return merged
+	return sanitizar_progreso_secuencial(merged)
+
+
+static func sanitizar_progreso_secuencial(node_progress: Dictionary) -> Dictionary:
+	if not node_progress is Dictionary or node_progress.is_empty():
+		return {}
+	var sanitized: Dictionary = node_progress.duplicate(true)
+	for raw_track_key in ArmadorDePartidaScript.RUTA_MAPA_POR_PISTA.keys():
+		var map_path := str(ArmadorDePartidaScript.RUTA_MAPA_POR_PISTA[raw_track_key]).strip_edges()
+		if map_path.is_empty():
+			continue
+		var ordered_keys := _obtener_claves_nodos_ordenadas(map_path)
+		if ordered_keys.is_empty():
+			continue
+		sanitized = _sanitizar_progreso_por_orden(sanitized, ordered_keys)
+	return sanitized
+
+
+static func _obtener_claves_nodos_ordenadas(map_json_path: String) -> Array[String]:
+	var resultado: Dictionary = CargadorDeMapaScript.cargar_mapa(map_json_path)
+	if not bool(resultado.get("ok", false)):
+		return []
+	var nodos: Variant = resultado.get("nodes", [])
+	if not nodos is Array:
+		return []
+	var keys: Array[String] = []
+	for raw_node in nodos:
+		if not raw_node is Dictionary:
+			continue
+		var key := str((raw_node as Dictionary).get("node_key", "")).strip_edges()
+		if not key.is_empty():
+			keys.append(key)
+	return keys
+
+
+static func _sanitizar_progreso_por_orden(
+	node_progress: Dictionary,
+	ordered_keys: Array
+) -> Dictionary:
+	var result: Dictionary = node_progress.duplicate(true)
+	var anterior_completado := true
+	for raw_key in ordered_keys:
+		var key := str(raw_key).strip_edges()
+		if key.is_empty():
+			continue
+		var entry: Variant = result.get(key)
+		var completed := entry is Dictionary and bool((entry as Dictionary).get("completed", false))
+		if completed and anterior_completado:
+			anterior_completado = true
+			continue
+		if completed and not anterior_completado:
+			var fixed_entry: Dictionary = (entry as Dictionary).duplicate(true)
+			fixed_entry["completed"] = false
+			result[key] = fixed_entry
+		anterior_completado = false
+	return result
 
 
 static func _fusionar_entrada_node_progress(local: Dictionary, online: Dictionary) -> Dictionary:

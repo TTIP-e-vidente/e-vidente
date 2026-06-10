@@ -590,7 +590,25 @@ func obtener_mejor_precision_nodo(node_id: String) -> float:
 
 func obtener_todo_progreso_nodos() -> Dictionary:
 	var stored: Variant = save_data.get("node_progress", {})
-	return (stored as Dictionary).duplicate(true) if stored is Dictionary else {}
+	if not stored is Dictionary:
+		return {}
+	return ImportadorProgresoOnlineScript.sanitizar_progreso_secuencial(
+		(stored as Dictionary).duplicate(true)
+	)
+
+
+func corregir_progreso_nodos_secuencial_en_disco() -> void:
+	var stored: Variant = save_data.get("node_progress", {})
+	if not stored is Dictionary:
+		return
+	var original: Dictionary = (stored as Dictionary).duplicate(true)
+	var sanitized: Dictionary = ImportadorProgresoOnlineScript.sanitizar_progreso_secuencial(original)
+	if sanitized == original:
+		return
+	save_data["node_progress"] = sanitized
+	_sincronizar_node_progress_a_global(sanitized)
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
 
 
 func obtener_cuenta_online_vinculada() -> String:
@@ -610,6 +628,7 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 		else:
 			_respaldar_node_progress_por_usuario(linked)
 			_reiniciar_progreso_juego_preservando_perfil()
+			_limpiar_identidad_perfil_para_cambio_cuenta()
 			limpiar_avatar_perfil()
 		ArmadorDePartida.reiniciar_historial_sesion()
 
@@ -1055,6 +1074,14 @@ func _establecer_cuenta_online_vinculada(username: String) -> void:
 func _reiniciar_progreso_juego_preservando_perfil() -> void:
 	var profile: Dictionary = obtener_perfil_usuario_actual()
 	_reiniciar_datos_guardado_actual(profile, false)
+
+
+func _limpiar_identidad_perfil_para_cambio_cuenta() -> void:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	profile["birth_date"] = ""
+	profile["email"] = ""
+	profile["username"] = DEFAULT_PROFILE_NAME
+	save_data["profile"] = profile
 
 
 func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:

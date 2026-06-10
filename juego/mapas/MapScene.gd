@@ -113,6 +113,8 @@ func actualizar_estados_de_nodos() -> void:
 	if map_board == null:
 		return
 	var save_manager: Node = get_node_or_null("/root/SaveManager")
+	if save_manager != null and save_manager.has_method("corregir_progreso_nodos_secuencial_en_disco"):
+		save_manager.call("corregir_progreso_nodos_secuencial_en_disco")
 	var node_progress: Dictionary = {}
 	if save_manager != null and save_manager.has_method("obtener_todo_progreso_nodos"):
 		node_progress = save_manager.call("obtener_todo_progreso_nodos")
@@ -220,15 +222,22 @@ func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
 func _aplicar_secuencia_de_desbloqueo(node_states: Array[Dictionary]) -> void:
 	var anterior_completado := true
 	for state in node_states:
-		var completado := bool(state.get("is_completed", false))
-		var desbloqueado := anterior_completado or completado
+		var raw_completado := bool(state.get("is_completed", false))
+		var completado := raw_completado and anterior_completado
+		if raw_completado and not completado:
+			state["is_completed"] = false
+			state["state"] = AvanceDeNodoScript.STATE_LOCKED
+			state["visual_state"] = AvanceDeNodoScript.STATE_LOCKED
+		var desbloqueado := anterior_completado
 		state["is_unlocked"] = desbloqueado
 		state["can_play"] = desbloqueado
 		if not completado:
 			if anterior_completado:
 				state["visual_state"] = AvanceDeNodoScript.STATE_AVAILABLE
+				state["state"] = AvanceDeNodoScript.STATE_AVAILABLE
 			else:
 				state["visual_state"] = AvanceDeNodoScript.STATE_LOCKED
+				state["state"] = AvanceDeNodoScript.STATE_LOCKED
 		anterior_completado = completado
 
 
