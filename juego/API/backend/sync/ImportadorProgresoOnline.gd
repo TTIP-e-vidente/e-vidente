@@ -268,6 +268,8 @@ static func _construir_estado_racha(racha_online: Variant) -> Dictionary:
 		"current_count": max(0, int(racha.get("current_count", 0))),
 		"best_count": max(0, int(racha.get("best_count", 0))),
 		"last_activity_day": str(racha.get("last_activity_day", "")),
+		# El server expone updated_at como última interacción registrada.
+		"last_activity_at": str(racha.get("last_activity_at", racha.get("updated_at", ""))),
 	}
 	return GameStreakTrackerScript.leer(streak_state)
 

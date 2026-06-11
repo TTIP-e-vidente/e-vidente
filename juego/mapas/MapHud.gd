@@ -120,7 +120,7 @@ func _on_superposicion_guardar_presionado() -> void:
 
 
 func _on_superposicion_logout_presionado() -> void:
-	AuthApi.cerrar_sesion()
+	await AuthApi.cerrar_sesion()
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_main_menu(get_tree())
 

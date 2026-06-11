@@ -22,6 +22,11 @@ var _usuario_en_cache: Dictionary = {}
 var _progreso_online_en_cache: Dictionary = {}
 var _carga_online_en_curso: bool = false
 var _ultimo_resultado_carga_online: Dictionary = {}
+# Epoch de la sesión al que pertenecen la carga en curso y el último resultado.
+# Evita que una carga de la cuenta anterior (en vuelo durante logout/login)
+# pise el cache o el save local de la cuenta nueva.
+var _epoch_carga_en_curso: int = -1
+var _epoch_ultimo_resultado: int = -1
 # Dirty-flag: si llega un trigger mientras el sync corre, lo re-ejecuta al terminar.
 var _reintento_encolado: bool = false
 
@@ -84,18 +89,36 @@ func limpiar_cache_online() -> void:
 
 
 func cargar_datos_online() -> Dictionary:
-	if _carga_online_en_curso:
+	var epoch := _auth.obtener_epoch()
+
+	if _carga_online_en_curso and _epoch_carga_en_curso == epoch:
+		# Carga de la misma sesión ya en curso: esperar y compartir su resultado.
 		while _carga_online_en_curso:
 			await get_tree().process_frame
-		return _ultimo_resultado_carga_online.duplicate(true)
+		if _auth.obtener_epoch() == epoch and _epoch_ultimo_resultado == epoch:
+			return _ultimo_resultado_carga_online.duplicate(true)
+		return _resultado_sesion_cambiada()
+
+	# Si quedó una carga de una sesión anterior, esperar a que termine sin reusarla.
+	while _carga_online_en_curso:
+		await get_tree().process_frame
+	if _auth.obtener_epoch() != epoch:
+		return _resultado_sesion_cambiada()
 
 	_carga_online_en_curso = true
-	_ultimo_resultado_carga_online = await _cargar_datos_online_interno()
+	_epoch_carga_en_curso = epoch
+	var resultado := await _cargar_datos_online_interno(epoch)
+	_ultimo_resultado_carga_online = resultado
+	_epoch_ultimo_resultado = epoch
 	_carga_online_en_curso = false
-	return _ultimo_resultado_carga_online.duplicate(true)
+	return resultado.duplicate(true)
 
 
-func _cargar_datos_online_interno() -> Dictionary:
+func _resultado_sesion_cambiada() -> Dictionary:
+	return {"ok": false, "status": 0, "error": "La sesión cambió durante la operación"}
+
+
+func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 	if not esta_logueado():
 		return {
 			"ok": false,
@@ -106,10 +129,14 @@ func _cargar_datos_online_interno() -> Dictionary:
 	var resultado_usuario: Dictionary = await obtener_usuario_del_servidor()
 	if not resultado_usuario.get("ok", false):
 		return resultado_usuario
+	if _auth.obtener_epoch() != epoch:
+		return _resultado_sesion_cambiada()
 
 	var resultado_progreso: Dictionary = await obtener_progreso_del_servidor()
 	if not resultado_progreso.get("ok", false):
 		return resultado_progreso
+	if _auth.obtener_epoch() != epoch:
+		return _resultado_sesion_cambiada()
 
 	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
 	var datos_progreso: Dictionary = resultado_progreso.get("data", {})
@@ -118,7 +145,9 @@ func _cargar_datos_online_interno() -> Dictionary:
 	_progreso_online_en_cache = datos_progreso
 	_aplicar_progreso_online_al_save_local()
 	# Fire-and-forget: descarga el avatar del backend si no hay uno local.
-	_descargar_avatar_si_falta()
+	_descargar_avatar_si_falta(epoch)
+	if LocalSyncQueue.contar_pendientes() > 0 and not _sync.esta_sincronizando():
+		_sync.reintentar_pendientes()
 
 	return {
 		"ok": true,
@@ -165,16 +194,18 @@ func registrar_cuenta(
 func subir_avatar(base64_data: String, mime_type: String) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
-	_verificar_sesion_expirada(resultado)
+	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
 func eliminar_avatar_online() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.eliminar_avatar(_auth.obtener_token())
-	_verificar_sesion_expirada(resultado)
+	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
@@ -198,9 +229,13 @@ func actualizar_perfil_online(nombre: String, mail: String, fecha_nacimiento: St
 	if not clean_birth.is_empty():
 		payload["birth_date"] = clean_birth
 
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.actualizar_perfil(_auth.obtener_token(), payload)
-	_verificar_sesion_expirada(resultado)
+	_verificar_sesion_expirada(resultado, epoch)
 	if not bool(resultado.get("ok", false)):
+		return resultado
+	if _auth.obtener_epoch() != epoch:
+		# La sesión cambió mientras se actualizaba: no pisar el cache de la nueva.
 		return resultado
 
 	var data: Variant = resultado.get("data", {})
@@ -214,20 +249,27 @@ func actualizar_perfil_online(nombre: String, mail: String, fecha_nacimiento: St
 func obtener_usuario_del_servidor() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.obtener_mi_usuario(_auth.obtener_token())
-	_verificar_sesion_expirada(resultado)
+	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
 func obtener_progreso_del_servidor() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.obtener_progreso(_auth.obtener_token())
-	_verificar_sesion_expirada(resultado)
+	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
-func _verificar_sesion_expirada(resultado: Dictionary) -> void:
+## Marca la sesión como expirada solo si el 401 corresponde a la sesión actual:
+## un 401 de una request vieja (emitida antes de un logout/login) no debe
+## limpiar la sesión nueva.
+func _verificar_sesion_expirada(resultado: Dictionary, epoch: int) -> void:
+	if _auth.obtener_epoch() != epoch:
+		return
 	if resultado.get("status", 0) == 401 and _auth.esta_logueado():
 		_al_expirar_sesion()
 
@@ -235,7 +277,11 @@ func _verificar_sesion_expirada(resultado: Dictionary) -> void:
 func guardar_progreso_online(resumen_partida: Dictionary) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 0, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
 	var resultado := await _sync.sincronizar(resumen_partida)
+	if _auth.obtener_epoch() != epoch:
+		# La sesión cambió durante el POST: no aplicar el resultado al save actual.
+		return resultado
 	if bool(resultado.get("ok", false)):
 		_aplicar_racha_de_respuesta_sync(resultado.get("data", {}))
 	return resultado
@@ -347,7 +393,13 @@ func cerrar_sesion() -> void:
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
+	_descartar_resultado_carga_online()
 	logout_completed.emit()
+
+
+func _descartar_resultado_carga_online() -> void:
+	_ultimo_resultado_carga_online = {}
+	_epoch_ultimo_resultado = -1
 
 
 func _asegurar_servidor_listo() -> Dictionary:
@@ -384,10 +436,12 @@ func _procesar_resultado_de_auth(resultado: Dictionary) -> void:
 	var username: String = user.get("username", "")
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
+	_descartar_resultado_carga_online()
 	_auth.establecer_sesion(access_token, username)
+	if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
+		SaveManager.call("preparar_cuenta_online", user)
 	BackendSessionStorage.guardar_sesion(access_token, username, user)
 	login_succeeded.emit(user)
-	_sync.reintentar_pendientes()
 
 
 func _al_expirar_sesion() -> void:
@@ -398,6 +452,7 @@ func _al_expirar_sesion() -> void:
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
+	_descartar_resultado_carga_online()
 	session_expired.emit()
 
 
@@ -413,13 +468,20 @@ func _restaurar_sesion_guardada() -> void:
 		return
 
 	_auth.establecer_sesion(token, username)
+	var epoch := _auth.obtener_epoch()
 
 	var resultado := await obtener_usuario_del_servidor()
+	if _auth.obtener_epoch() != epoch:
+		# Hubo logout o login durante la verificación: no resucitar la sesión vieja.
+		print("[BackendSession] Restauración cancelada: la sesión cambió durante la verificación.")
+		return
 	if resultado.get("ok", false):
 		var data: Dictionary = resultado.get("data", {})
 		var user: Dictionary = data.get("user", data)
 		var username_fresco: String = user.get("username", username)
 		_auth.establecer_sesion(token, username_fresco)
+		if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
+			SaveManager.call("preparar_cuenta_online", user)
 		print("[BackendSession] Sesión restaurada: ", username_fresco)
 		session_restored.emit(user)
 		await cargar_datos_online()
@@ -432,32 +494,39 @@ func _restaurar_sesion_guardada() -> void:
 
 
 func _aplicar_progreso_online_al_save_local() -> void:
-	if _usuario_en_cache.is_empty() or _progreso_online_en_cache.is_empty():
+	if _usuario_en_cache.is_empty():
 		return
 	if SaveManager == null:
 		return
+	var completed_count := 0
+	var completed_nodes: Variant = _progreso_online_en_cache.get("completedNodes", [])
+	if completed_nodes is Array:
+		completed_count = (completed_nodes as Array).size()
+	print(
+		"[BackendSession] Aplicando cuenta online user=",
+		_usuario_en_cache.get("username", ""),
+		" completedNodes=",
+		completed_count,
+		" streak=",
+		_progreso_online_en_cache.get("streak", {})
+	)
 	SaveManager.sincronizar_con_cuenta_online(_usuario_en_cache, _progreso_online_en_cache)
 
 
-func _descargar_avatar_si_falta() -> void:
+func _descargar_avatar_si_falta(epoch: int) -> void:
 	if SaveManager == null or not _auth.esta_logueado():
 		return
 
 	var local_path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if not local_path.is_empty() and not SaveManager.es_ruta_avatar_vinculada(local_path):
-		if SaveManager.migrar_avatar_gestionado_si_posible(local_path):
-			return
 		SaveManager.limpiar_avatar_perfil()
 		local_path = ""
 
-	if local_path.is_empty() and SaveManager.vincular_avatar_local_existente_si_hay():
-		return
-
-	local_path = SaveManager.obtener_ruta_avatar_usuario_actual()
-	if not local_path.is_empty() and FileAccess.file_exists(local_path):
-		return
-
 	var resultado := await _api.descargar_avatar(_auth.obtener_token())
+	if _auth.obtener_epoch() != epoch:
+		# Cambió la cuenta mientras se descargaba: no guardar el avatar
+		# de la cuenta anterior bajo la clave de la nueva.
+		return
 	if not bool(resultado.get("ok", false)):
 		return
 	var data: Variant = resultado.get("data", {})

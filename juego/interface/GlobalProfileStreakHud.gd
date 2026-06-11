@@ -219,7 +219,7 @@ func _on_superposicion_logout_presionado() -> void:
 
 
 func _ejecutar_logout() -> void:
-	AuthApi.cerrar_sesion()
+	await AuthApi.cerrar_sesion()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	@warning_ignore("static_called_on_instance")

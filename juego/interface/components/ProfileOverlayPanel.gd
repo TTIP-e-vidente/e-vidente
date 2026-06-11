@@ -123,6 +123,9 @@ func _subir_avatar_si_tiene() -> void:
 	var path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if path.is_empty():
 		return
+	if not SaveManager.es_ruta_avatar_vinculada(path):
+		print("[ProfileOverlay] Avatar upload skipped: local avatar is not linked to active account.")
+		return
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
 		return

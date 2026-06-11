@@ -27,6 +27,7 @@ static func leer(raw_state: Variant) -> Dictionary:
 		"current_count": current_count,
 		"best_count": best_count,
 		"last_activity_day": last_day,
+		"last_activity_at": str(stored.get("last_activity_at", "")).strip_edges(),
 		"last_activity_type": str(stored.get("last_activity_type", "")).strip_edges(),
 		"last_track_key": str(stored.get("last_track_key", "")).strip_edges()
 	}
@@ -54,6 +55,8 @@ static func registrar(
 		"current_count": new_count,
 		"best_count": max(int(streak_state.get("best_count", 0)), new_count),
 		"last_activity_day": today,
+		# Momento exacto (UTC) de la última actividad que sostuvo la racha.
+		"last_activity_at": Time.get_datetime_string_from_system(true) + "Z",
 		"last_activity_type": "activity" if clean_type.is_empty() else clean_type,
 		"last_track_key": str(metadata.get("track_key", "")).strip_edges()
 	}
@@ -106,7 +109,10 @@ static func modelo_vista(
 			"streak_state": visual_state
 		}
 
-	if last_day == today:
+	# Día UTC un paso adelante del reloj local = la actividad fue hace minutos
+	# (server en UTC vs cliente local): cuenta como actividad de hoy.
+	var dia_utc_adelantado := last_day > today and _days_between(today, last_day) == 1
+	if last_day == today or dia_utc_adelantado:
 		return {
 			"current_count": current_count,
 			"best_count": best_count,
@@ -116,13 +122,30 @@ static func modelo_vista(
 			"streak_state": visual_state
 		}
 
+	if _racha_vigente_en_fecha(last_day, today):
+		# Jugó ayer: la racha sigue viva pero vence hoy → advertencia (roja).
+		return {
+			"current_count": current_count,
+			"best_count": best_count,
+			"status_key": "pending_today",
+			"status_title": "Racha pendiente hoy",
+			"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy.",
+			"streak_state": visual_state
+		}
+
+	# La racha venció: más de un día sin actividad. Mostrarla en gris con
+	# count 0; el valor anterior queda disponible para mensajes de UI.
 	return {
-		"current_count": current_count,
+		"current_count": 0,
+		"previous_count": current_count,
 		"best_count": best_count,
-		"status_key": "pending_today",
-		"status_title": "Racha pendiente hoy",
-		"status_detail": "Tu racha sigue viva, pero todavia falta sostenerla hoy.",
-		"streak_state": visual_state
+		"status_key": "expired",
+		"status_title": "Racha cortada",
+		"status_detail": (
+			"Tu racha de %d %s se corto. Completa una actividad para empezar de nuevo."
+			% [current_count, "dia" if current_count == 1 else "dias"]
+		),
+		"streak_state": "inactive"
 	}
 
 
@@ -190,14 +213,18 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 		int(online_read.get("best_count", 0))
 	)
 
-	if local_read.is_empty():
-		if online_read.is_empty():
-			return _empty_streak_state()
+	# leer() siempre devuelve un dict con claves: la ausencia de racha se
+	# detecta por su contenido, no con is_empty().
+	if _es_estado_sin_racha(local_read):
+		if _es_estado_sin_racha(online_read):
+			var vacio := _empty_streak_state()
+			vacio["best_count"] = best_count
+			return vacio
 		var solo_online := online_read.duplicate(true)
 		solo_online["best_count"] = best_count
 		return leer(solo_online)
 
-	if online_read.is_empty():
+	if _es_estado_sin_racha(online_read):
 		var solo_local := local_read.duplicate(true)
 		solo_local["best_count"] = best_count
 		return leer(solo_local)
@@ -214,12 +241,34 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 				int(local_read.get("current_count", 0)),
 				int(online_read.get("current_count", 0))
 			)
+		elif _days_between(online_day, today) == 1:
+			merged_hoy["current_count"] = maxi(
+				int(local_read.get("current_count", 0)),
+				int(online_read.get("current_count", 0)) + 1
+			)
 		merged_hoy["best_count"] = best_count
+		merged_hoy["best_count"] = maxi(
+			int(merged_hoy.get("best_count", 0)),
+			int(merged_hoy.get("current_count", 0))
+		)
+		merged_hoy["last_activity_at"] = _interaccion_mas_reciente(local_read, online_read)
 		return leer(merged_hoy)
 
 	if online_day == today:
 		var merged_remoto_hoy := online_read.duplicate(true)
-		merged_remoto_hoy["best_count"] = best_count
+		# Espejo del caso local-hoy: si lo local venía vivo de ayer con un count
+		# mayor, el server pudo haber reiniciado mal su racha (sync tardío,
+		# datos viejos); la actividad de hoy continúa la racha local.
+		if _days_between(local_day, today) == 1:
+			merged_remoto_hoy["current_count"] = maxi(
+				int(online_read.get("current_count", 0)),
+				int(local_read.get("current_count", 0)) + 1
+			)
+		merged_remoto_hoy["best_count"] = maxi(
+			best_count,
+			int(merged_remoto_hoy.get("current_count", 0))
+		)
+		merged_remoto_hoy["last_activity_at"] = _interaccion_mas_reciente(local_read, online_read)
 		return leer(merged_remoto_hoy)
 
 	var local_count := int(local_read.get("current_count", 0))
@@ -247,6 +296,7 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 		ganador["current_count"] = 0
 
 	ganador["best_count"] = best_count
+	ganador["last_activity_at"] = _interaccion_mas_reciente(local_read, online_read)
 	var merged := leer(ganador)
 	# Salvaguarda: si la sesión local jugó hoy, no retroceder last_activity_day.
 	if local_day == today and str(merged.get("last_activity_day", "")) != today:
@@ -258,6 +308,17 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 	return merged
 
 
+## Devuelve el timestamp de última actividad más reciente entre ambos estados.
+static func _interaccion_mas_reciente(local_read: Dictionary, online_read: Dictionary) -> String:
+	var local_at := str(local_read.get("last_activity_at", "")).strip_edges()
+	var online_at := str(online_read.get("last_activity_at", "")).strip_edges()
+	if local_at.is_empty():
+		return online_at
+	if online_at.is_empty():
+		return local_at
+	return local_at if local_at >= online_at else online_at
+
+
 # --- Helpers internos -------------------------------------------------------
 
 static func _empty_streak_state() -> Dictionary:
@@ -265,9 +326,17 @@ static func _empty_streak_state() -> Dictionary:
 		"current_count": 0,
 		"best_count": 0,
 		"last_activity_day": "",
+		"last_activity_at": "",
 		"last_activity_type": "",
 		"last_track_key": ""
 	}
+
+
+static func _es_estado_sin_racha(state: Dictionary) -> bool:
+	return (
+		int(state.get("current_count", 0)) <= 0
+		and str(state.get("last_activity_day", "")).is_empty()
+	)
 
 
 static func _racha_vigente_en_fecha(last_day: String, today: String) -> bool:

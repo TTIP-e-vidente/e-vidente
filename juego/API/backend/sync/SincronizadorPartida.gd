@@ -74,7 +74,7 @@ static func sincronizar_post_partida(
 		score, accuracy, correct_answers, wrong_answers,
 		exp_to_add, completed, duration_seconds
 	)
-	LocalSyncQueue.encolar_resumen_partida(summary)
+	LocalSyncQueue.encolar_resumen_partida(summary, AuthApi.obtener_usuario())
 
 	print(
 		LOG_PREFIX,
@@ -119,7 +119,9 @@ static func construir_resumen(
 		"expToAdd": exp_a_sumar,
 		"completed": completado,
 		"durationSeconds": duracion_segundos,
-		"finishedAt": Time.get_datetime_string_from_system(true),
+		# Sufijo Z: sin él, Date.parse() en el server interpreta el timestamp
+		# en el timezone local del servidor y el día de la racha puede correrse.
+		"finishedAt": Time.get_datetime_string_from_system(true) + "Z",
 	}
 
 

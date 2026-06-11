@@ -30,12 +30,18 @@ func sincronizar(resumen_partida: Dictionary) -> Dictionary:
 	if not _auth_session.esta_logueado():
 		return {"ok": false, "status": 0, "error": "No active session"}
 
+	var epoch := _auth_session.obtener_epoch()
 	sync_started.emit()
 
 	var response: Dictionary = await _api_client.guardar_progreso(
 		_auth_session.obtener_token(),
 		resumen_partida
 	)
+
+	if _auth_session.obtener_epoch() != epoch:
+		# Logout o cambio de cuenta durante el POST: la respuesta es de la
+		# sesión anterior; no tocar la sesión actual ni emitir señales.
+		return {"ok": false, "status": 0, "error": "La sesión cambió durante la sincronización"}
 
 	if response.get("status", 0) == 401:
 		_auth_session.limpiar_sesion()
@@ -72,8 +78,13 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 
 	var tareas: Array[Dictionary] = []
 	var failed_count := 0
+	var usuario_actual := _auth_session.obtener_usuario().strip_edges()
 	for i in range(limit):
 		var item: Dictionary = pending[i]
+		var owner := str(item.get("owner", "")).strip_edges()
+		if not owner.is_empty() and owner != usuario_actual:
+			# Partida de otra cuenta: queda en cola hasta que su dueño vuelva.
+			continue
 		var cid := str(item.get("clientRunId", "")).strip_edges()
 		var payload: Dictionary = item.get("payload", {})
 		if cid.is_empty() or payload.is_empty():
@@ -89,6 +100,7 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 
 	pending_sync_started.emit(tareas.size())
 
+	var epoch := _auth_session.obtener_epoch()
 	var token := _auth_session.obtener_token()
 	var synced_count := 0
 	var sesion_expirada := false
@@ -104,6 +116,14 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 			payloads.append(tarea.payload)
 
 		var batch_response: Dictionary = await _api_client.guardar_progreso_batch(token, payloads)
+
+		if _auth_session.obtener_epoch() != epoch:
+			# Logout o cambio de cuenta durante el batch: no marcar la cola
+			# ni aplicar el summary de la cuenta anterior al save actual.
+			_reintentando_pendientes = false
+			pending_sync_finished.emit(synced_count, failed_count)
+			return
+
 		var resultados: Array[Dictionary] = []
 
 		if batch_response.get("status", 0) == 401:
@@ -112,6 +132,12 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 			break
 		elif batch_response.get("ok", false):
 			var data: Variant = batch_response.get("data", {})
+			if data is Dictionary:
+				# Estado consolidado (racha, nodos, exp) que el server calcula
+				# una sola vez al final del batch.
+				var ps: Variant = (data as Dictionary).get("progressSummary", {})
+				if ps is Dictionary and not (ps as Dictionary).is_empty():
+					ultimo_summary = ps as Dictionary
 			var batch_results: Variant = (
 				(data as Dictionary).get("results", []) if data is Dictionary else []
 			)
@@ -128,11 +154,6 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 				if item_result is Dictionary and bool((item_result as Dictionary).get("ok", false)):
 					resultados.append({"id": cid, "ok": true})
 					synced_count += 1
-					var item_data: Variant = (item_result as Dictionary).get("data", {})
-					if item_data is Dictionary:
-						var s: Variant = (item_data as Dictionary).get("summary", {})
-						if s is Dictionary and not (s as Dictionary).is_empty():
-							ultimo_summary = s as Dictionary
 				else:
 					var err := ""
 					if item_result is Dictionary:

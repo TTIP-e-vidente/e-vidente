@@ -113,16 +113,14 @@ func _cargar_estado_perfil_actual() -> void:
 		username, email_input.text, birth_date_input.text, avatar_path_input.text
 	)
 
-	var last_reason := SaveManager.obtener_motivo_ultimo_guardado()
-	if last_reason.is_empty():
-		summary_save_label.text = "Ultimo guardado: sin escrituras registradas."
-	else:
-		summary_save_label.text = "Ultimo guardado: %s" % last_reason.replace("_", " ")
-	summary_save_label.visible = true
+	summary_save_label.visible = false
 
-	# Sincroniza el avatar local con el backend al abrir la pantalla de perfil.
-	# Cubre el caso de usuarios que ya tenían avatar antes de que existiera este feature.
-	if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
+	# Sincroniza solo avatares ya vinculados a la cuenta activa.
+	if (
+		BackendSession.esta_logueado()
+		and not avatar_path_input.text.strip_edges().is_empty()
+		and SaveManager.es_ruta_avatar_vinculada(avatar_path_input.text)
+	):
 		_subir_avatar_al_backend_silencioso()
 
 
@@ -281,6 +279,9 @@ func _sincronizar_perfil_al_backend() -> void:
 func _subir_avatar_al_backend(silencioso: bool = false) -> void:
 	var persisted_path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if persisted_path.is_empty():
+		return
+	if not SaveManager.es_ruta_avatar_vinculada(persisted_path):
+		print("[Auth] Avatar upload skipped: local avatar is not linked to active account.")
 		return
 	var bytes := FileAccess.get_file_as_bytes(persisted_path)
 	if bytes.is_empty():
