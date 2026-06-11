@@ -73,16 +73,12 @@ static func _resolver_estado_visual(
 	if current_count <= 0:
 		return "inactive"
 
-	var today: String = _resolver_fecha_actual(current_date)
-	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	var today: String = _resolver_fecha_local(current_date)
+	var last_day: String = _dia_local_de_actividad(streak_state)
 	if last_day.is_empty() and current_count > 0:
 		return "inactive"
 	if last_day == today:
 		return "active"
-	if not last_day.is_empty() and last_day > today:
-		# El servidor puede guardar la fecha en UTC un día adelantada respecto al cliente.
-		if _days_between(today, last_day) == 1:
-			return "active"
 	if _days_between(last_day, today) == 1:
 		return "warning"
 	return "inactive"
@@ -95,8 +91,8 @@ static func modelo_vista(
 ) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
-	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
-	var today: String = _resolver_fecha_actual(current_date)
+	var last_day: String = _dia_local_de_actividad(streak_state)
+	var today: String = _resolver_fecha_local(current_date)
 	var visual_state: String = _resolver_estado_visual(streak_state, today, current_hour)
 
 	if current_count <= 0:
@@ -109,10 +105,7 @@ static func modelo_vista(
 			"streak_state": visual_state
 		}
 
-	# Día UTC un paso adelante del reloj local = la actividad fue hace minutos
-	# (server en UTC vs cliente local): cuenta como actividad de hoy.
-	var dia_utc_adelantado := last_day > today and _days_between(today, last_day) == 1
-	if last_day == today or dia_utc_adelantado:
+	if last_day == today:
 		return {
 			"current_count": current_count,
 			"best_count": best_count,
@@ -396,3 +389,37 @@ static func _resolver_fecha_actual(current_date: String) -> String:
 	if not clean_date.is_empty():
 		return clean_date
 	return Time.get_date_string_from_system(true)
+
+
+static func _resolver_fecha_local(current_date: String = "") -> String:
+	var clean_date: String = current_date.strip_edges()
+	if not clean_date.is_empty():
+		return clean_date
+	return Time.get_date_string_from_system(false)
+
+
+static func _dia_local_de_actividad(streak_state: Dictionary) -> String:
+	var last_at := str(streak_state.get("last_activity_at", "")).strip_edges()
+	if not last_at.is_empty():
+		var unix_at := int(Time.get_unix_time_from_datetime_string(last_at))
+		if unix_at > 0:
+			var local_day := _fecha_local_desde_unix(unix_at)
+			if _is_valid_date(local_day):
+				return local_day
+
+	var stored_day := _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	if stored_day.is_empty():
+		return ""
+
+	# last_activity_day del servidor es día UTC; convertir a calendario local.
+	var unix_mid := int(Time.get_unix_time_from_datetime_string(stored_day + "T12:00:00Z"))
+	if unix_mid > 0:
+		var local_from_stored := _fecha_local_desde_unix(unix_mid)
+		if _is_valid_date(local_from_stored):
+			return local_from_stored
+	return stored_day
+
+
+static func _fecha_local_desde_unix(unix_time: int) -> String:
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(unix_time)
+	return "%04d-%02d-%02d" % [int(dt.get("year", 0)), int(dt.get("month", 0)), int(dt.get("day", 0))]
