@@ -7,7 +7,6 @@ const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgre
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
-const ARCHIVERO_SCENE_PATH := "res://interface/archivero.tscn"
 const PROFILE_EDITOR_SCENE_PATH := "res://interface/auth.tscn"
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
@@ -138,7 +137,6 @@ func _refrescar_hud() -> void:
 
 func _aplicar_visibilidad_escena(scene_path: String) -> void:
 	var hidden_scenes := [
-		ARCHIVERO_SCENE_PATH,
 		PROFILE_EDITOR_SCENE_PATH,
 		SPLASH_SCENE_PATH,
 		INTRO_SCENE_PATH,
