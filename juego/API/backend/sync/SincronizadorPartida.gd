@@ -119,9 +119,8 @@ static func construir_resumen(
 		"expToAdd": exp_a_sumar,
 		"completed": completado,
 		"durationSeconds": duracion_segundos,
-		# Sufijo Z: sin él, Date.parse() en el server interpreta el timestamp
-		# en el timezone local del servidor y el día de la racha puede correrse.
 		"finishedAt": Time.get_datetime_string_from_system(true) + "Z",
+		"localDay": Time.get_date_string_from_system(false),
 	}
 
 

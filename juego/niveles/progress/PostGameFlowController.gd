@@ -1,5 +1,7 @@
 extends RefCounted
 
+const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
+
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
 const DEBUG_FLOW_LOGS := false
@@ -662,7 +664,10 @@ static func _esta_activa_hoy(streak_state: Dictionary) -> bool:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
 		return false
-	return str(streak_state.get("last_activity_day", "")) == Time.get_date_string_from_system(true)
+	# "Hoy" es el día calendario local del jugador, igual que en el resto del
+	# dominio racha (ver GameStreakTracker).
+	var modelo_vista: Dictionary = GameStreakTrackerScript.modelo_vista(streak_state)
+	return str(modelo_vista.get("status_key", "")) == "active_today"
 
 
 static func _scene_path_target(scene_path: String) -> Dictionary:

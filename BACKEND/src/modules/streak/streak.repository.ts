@@ -59,6 +59,7 @@ async function findStreakForUser(
         s.current_count,
         s.best_count,
         s.last_activity_day,
+        s.last_activity_at,
         s.updated_at
       FROM profiles p
       JOIN streaks s ON s.id = p.streak_id
@@ -91,12 +92,13 @@ export async function ensureStreak(
     current_count: number;
     best_count: number;
     last_activity_day: Date | null;
+    last_activity_at: Date | null;
     updated_at: Date;
   }>(
     `
       INSERT INTO streaks (current_count, best_count, last_activity_day)
       VALUES (0, 0, NULL)
-      RETURNING id, current_count, best_count, last_activity_day, updated_at;
+      RETURNING id, current_count, best_count, last_activity_day, last_activity_at, updated_at;
     `
   );
 
@@ -109,6 +111,7 @@ export async function ensureStreak(
     current_count: row.current_count,
     best_count: row.best_count,
     last_activity_day: row.last_activity_day,
+    last_activity_at: row.last_activity_at,
     updated_at: row.updated_at
   };
 }
@@ -129,17 +132,24 @@ export async function registerStreakActivity(
   const existing = await ensureStreak(client, userId, profileId);
 
   // Racha auto-curativa: en vez de incrementar un contador (sensible al orden
-  // de llegada de los syncs), se recalcula desde los días UTC reales con
-  // partidas completadas. Un run viejo que llega tarde REPARA la racha en
-  // lugar de romperla, sin importar en qué batch o en qué orden se sincronice.
-  const daysResult = await client.query<{ day: string }>(
+  // de llegada de los syncs), se recalcula desde los días reales con partidas
+  // completadas. Un run viejo que llega tarde REPARA la racha en lugar de
+  // romperla, sin importar en qué batch o en qué orden se sincronice.
+  // El día relevante es el calendario LOCAL del jugador (games.local_day,
+  // que manda el cliente); para partidas viejas sin local_day se cae al día UTC.
+  const daysResult = await client.query<{ day: string; last_at: Date }>(
     `
-      SELECT DISTINCT
-        to_char((COALESCE(finished_at, created_at) AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS day
+      SELECT
+        to_char(
+          COALESCE(local_day, (COALESCE(finished_at, created_at) AT TIME ZONE 'UTC')::date),
+          'YYYY-MM-DD'
+        ) AS day,
+        MAX(COALESCE(finished_at, created_at)) AS last_at
       FROM games
       WHERE user_id = $1
         AND completed = true
         AND COALESCE(finished_at, created_at) > now() - interval '400 days'
+      GROUP BY 1
       ORDER BY day DESC;
     `,
     [userId]
@@ -151,6 +161,12 @@ export async function registerStreakActivity(
   }
 
   const lastActivityDay = days[0];
+  let lastActivityAt: Date | null = null;
+  for (const row of daysResult.rows) {
+    if (lastActivityAt === null || row.last_at > lastActivityAt) {
+      lastActivityAt = row.last_at;
+    }
+  }
   let newCount = 1;
   for (let i = 1; i < days.length; i++) {
     if (daysBetween(days[i - 1], days[i]) === 1) {
@@ -166,6 +182,7 @@ export async function registerStreakActivity(
     current_count: number;
     best_count: number;
     last_activity_day: Date | null;
+    last_activity_at: Date | null;
     updated_at: Date;
   }>(
     `
@@ -174,11 +191,12 @@ export async function registerStreakActivity(
         current_count = $2,
         best_count = $3,
         last_activity_day = $4::date,
+        last_activity_at = $5,
         updated_at = now()
       WHERE id = $1
-      RETURNING id, current_count, best_count, last_activity_day, updated_at;
+      RETURNING id, current_count, best_count, last_activity_day, last_activity_at, updated_at;
     `,
-    [existing.id, newCount, newBest, lastActivityDay]
+    [existing.id, newCount, newBest, lastActivityDay, lastActivityAt]
   );
 
   const row = updated.rows[0];
@@ -189,6 +207,7 @@ export async function registerStreakActivity(
     current_count: row.current_count,
     best_count: row.best_count,
     last_activity_day: row.last_activity_day,
+    last_activity_at: row.last_activity_at,
     updated_at: row.updated_at
   };
 }

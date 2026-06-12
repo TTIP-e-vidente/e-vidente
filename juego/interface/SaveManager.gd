@@ -1149,7 +1149,8 @@ func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	)
 	if merged.is_empty():
 		return
-	var today := Time.get_date_string_from_system(true)
+	# Día calendario LOCAL: la racha se registra y se compara en el huso del jugador.
+	var today := Time.get_date_string_from_system(false)
 	var local_day := str(local_streak_now.get("last_activity_day", ""))
 	if local_day == today and str(merged.get("last_activity_day", "")) != today:
 		merged["last_activity_day"] = today

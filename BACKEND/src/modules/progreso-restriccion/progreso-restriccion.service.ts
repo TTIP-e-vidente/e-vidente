@@ -90,6 +90,16 @@ function optionalIsoDate(value: unknown, fieldName: string): string | null {
   return s;
 }
 
+function optionalCalendarDay(value: unknown, fieldName: string): string | null {
+  if (value === undefined || value === null) return null;
+  const s = optionalText(value);
+  if (s === null) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(Date.parse(`${s}T00:00:00.000Z`))) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', `${fieldName} debe ser YYYY-MM-DD`);
+  }
+  return s;
+}
+
 export async function getProgresoRestriccion(userId: string): Promise<ProgresoRestriccionResponse> {
   const client = await pool.connect();
   try {
@@ -149,6 +159,7 @@ export async function saveAuthenticatedProgress(
   const wrongAnswers = optionalNonNegativeInt(input.wrongAnswers, 'wrongAnswers');
   const durationSeconds = optionalNonNegativeInt(input.durationSeconds, 'durationSeconds');
   const finishedAt = optionalIsoDate(input.finishedAt, 'finishedAt');
+  const localDay = optionalCalendarDay(input.localDay, 'localDay');
   const clientRunId = optionalClientRunId(input.clientRunId);
 
   const client = await pool.connect();
@@ -235,6 +246,7 @@ export async function saveAuthenticatedProgress(
       wrongAnswers,
       durationSeconds,
       finishedAt,
+      localDay,
       clientRunId
     });
     const game = insertResult.game;
@@ -332,6 +344,7 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<Save
     wrongAnswers: input.wrongAnswers,
     durationSeconds: input.durationSeconds,
     finishedAt: input.finishedAt,
+    localDay: input.localDay,
     clientRunId: input.clientRunId
   });
 }

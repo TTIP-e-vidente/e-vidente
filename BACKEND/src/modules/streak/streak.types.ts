@@ -5,5 +5,6 @@ export interface StreakRow {
   current_count: number;
   best_count: number;
   last_activity_day: Date | null;
+  last_activity_at: Date | null;
   updated_at: Date;
 }

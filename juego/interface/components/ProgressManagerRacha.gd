@@ -194,12 +194,13 @@ func _refrescar_ui() -> void:
 func _resolver_texto_detalle() -> String:
 	if _streak_state == "warning":
 		return "Jugá hoy para mantener la racha"
-
-	if _streak_state == "inactive":
-		return "Tu racha se reinicio"
 		
 	if not _status_detail.is_empty():
 		return _status_detail
+
+	if _streak_state == "inactive":
+		return "Tu racha se reinicio"
+
 	if _best_count > 0:
 		return "Mejor racha: %d dias" % _best_count
 	return empty_message

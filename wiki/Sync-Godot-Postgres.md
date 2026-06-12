@@ -211,8 +211,8 @@ Detalles:
 4. Suma EXP en `profiles`.
 5. Upsert en `progress_restrictions` por restricción.
 6. Upsert en `history_games` por `(progress_id, node_id)` con CTE + `FOR UPDATE` para derivar `wasNewlyCompleted` de manera atómica. Actualiza mejor score/precisión.
-7. Insert en `games` con el `history_id` del nodo.
-8. Si completó → actualiza `streaks`.
+7. Insert en `games` con el `history_id` del nodo (incluye `local_day`: el día calendario del jugador en su huso, que manda el cliente).
+8. Si completó → recalcula `streaks` desde los días con partidas completadas. El día relevante es `games.local_day` (fallback: día UTC de `finished_at` para partidas viejas). También persiste `last_activity_at`: el instante real de la última partida completada.
 9. Devuelve snapshot: profile, streak, progress, completedNodes, recentGames.
 
 El advisory lock garantiza que si dos dispositivos suben progreso del mismo usuario al mismo tiempo, uno espera al otro. El que llega primero gana; el segundo ve el estado ya actualizado.
@@ -273,6 +273,8 @@ Subida desde: pantalla de perfil (`auth.gd`), botón "Guardar ahora" del overlay
 **Racha** (`fusionar_estado_racha`):
 - Gana la de mayor `current_count`
 - Empate → gana la de `last_activity_day` más reciente
+
+La racha cuenta **días calendario locales del jugador**, no días UTC. El badge (verde/rojo) se deriva de `last_activity_at` (instante UTC real de la última partida, expuesto por el server) convertido al huso local. `updated_at` de `streaks` es la hora del último sync y **no** debe usarse como señal de actividad: ese fue el bug que dejaba la racha "activa hoy" sin haber jugado.
 
 ---
 

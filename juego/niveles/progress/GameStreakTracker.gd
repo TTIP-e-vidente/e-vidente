@@ -40,8 +40,8 @@ static func registrar(
 	activity_type: String,
 	metadata: Dictionary
 ) -> Dictionary:
-	var today: String = Time.get_date_string_from_system(true)
-	var last_day: String = _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	var today: String = Time.get_date_string_from_system(false)
+	var last_day: String = _dia_local_de_actividad(streak_state)
 	var old_count: int = int(streak_state.get("current_count", 0))
 
 	var new_count: int = 1
@@ -153,8 +153,8 @@ static func construir_feedback(
 		return {"should_show": false}
 
 	if only_first_today:
-		var today: String = Time.get_date_string_from_system(true)
-		var already_played_today: bool = str(previous_state.get("last_activity_day", "")) == today
+		var today: String = Time.get_date_string_from_system(false)
+		var already_played_today: bool = _dia_local_de_actividad(previous_state) == today
 		var streak_updated_today: bool = str(updated_state.get("last_activity_day", "")) == today
 		if already_played_today or not streak_updated_today:
 			return {"should_show": false}
@@ -222,9 +222,9 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 		solo_local["best_count"] = best_count
 		return leer(solo_local)
 
-	var today := Time.get_date_string_from_system(true)
-	var local_day := str(local_read.get("last_activity_day", ""))
-	var online_day := str(online_read.get("last_activity_day", ""))
+	var today := Time.get_date_string_from_system(false)
+	var local_day := _dia_local_de_actividad(local_read)
+	var online_day := _dia_local_de_actividad(online_read)
 
 	# La sesión local de hoy manda: evita que un count remoto viejo pise last_activity_day.
 	if local_day == today:
@@ -384,13 +384,6 @@ static func _is_valid_date(date_string: String) -> bool:
 	return Time.get_date_string_from_unix_time(unix) == date_string
 
 
-static func _resolver_fecha_actual(current_date: String) -> String:
-	var clean_date: String = current_date.strip_edges()
-	if not clean_date.is_empty():
-		return clean_date
-	return Time.get_date_string_from_system(true)
-
-
 static func _resolver_fecha_local(current_date: String = "") -> String:
 	var clean_date: String = current_date.strip_edges()
 	if not clean_date.is_empty():
@@ -407,19 +400,10 @@ static func _dia_local_de_actividad(streak_state: Dictionary) -> String:
 			if _is_valid_date(local_day):
 				return local_day
 
-	var stored_day := _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
-	if stored_day.is_empty():
-		return ""
-
-	# last_activity_day del servidor es día UTC; convertir a calendario local.
-	var unix_mid := int(Time.get_unix_time_from_datetime_string(stored_day + "T12:00:00Z"))
-	if unix_mid > 0:
-		var local_from_stored := _fecha_local_desde_unix(unix_mid)
-		if _is_valid_date(local_from_stored):
-			return local_from_stored
-	return stored_day
+	return _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
 
 
 static func _fecha_local_desde_unix(unix_time: int) -> String:
-	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(unix_time)
+	var bias_seconds: int = int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(unix_time + bias_seconds)
 	return "%04d-%02d-%02d" % [int(dt.get("year", 0)), int(dt.get("month", 0)), int(dt.get("day", 0))]
