@@ -6,15 +6,15 @@ Las páginas HTML de diagramas y presentación **se abren desde la wiki con un c
 
 ---
 
-## Entrega 3 — defensa TTIP
+## Entrega 3
 
 | Vista | Para qué | Abrir |
 |-------|----------|-------|
-| **Presentación** | Sprint, US, guión 10 min | [▶ Pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/Entrega-3-Presentacion.html) · [Índice wiki](Entrega-3-Presentacion) |
+| **Presentación** | Sprint y diagramas | [▶ Pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/Entrega-3-Presentacion.html) · [Índice wiki](Entrega-3-Presentacion) |
 | **Flujo E1→E3** | Evolución de persistencia | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/mer-flujo.html) · [Índice wiki](Mer-Flujo) |
 | **Persistencia dual** | Local + PostgreSQL | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/mer-persistencia-e3.html) · [Índice wiki](Mer-Persistencia-E3) |
 
-Documentación en markdown (siempre en la wiki): [Resumen E3](Entrega-3) · [Cierre / guión](Entrega-3-Cierre) · [Evidencia Jira](Entrega-3-Evidencia)
+Documentación en markdown: [Resumen E3](Entrega-3) · [Evidencia](Entrega-3-Evidencia) · [User Stories](Entrega-3-User-Stories)
 
 ---
 

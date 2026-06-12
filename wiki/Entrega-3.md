@@ -1,103 +1,73 @@
 # Entrega 3 — E-VIDENTE
 
-> Junio 2026 · Sprint activo en Jira.  
-> Si tenés poco tiempo: [Presentación](Entrega-3-Presentacion) → [Cierre / defensa](Entrega-3-Cierre) → [Evidencia](Entrega-3-Evidencia).  
-> Vistas interactivas: [Vistas-Interactivas](Vistas-Interactivas)
+> Histórico Entrega 3. Estado hoy: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
 
----
+## Resumen ejecutivo
 
-## De qué va esta entrega
+En esta iteración abrimos la persistencia remota sin sacar el juego del modo offline. Se levantó un backend Node con PostgreSQL en Docker, se integraron registro y login en el flujo real del juego, y se implementó la sincronización de progreso entre el save local y la cuenta. En paralelo avanzamos el nodo único de partida, las enseñanzas por JSON, smoke test en CI y tests de interfaz para Preguntas.
 
-En la primera entrega armamos un juego que se podía jugar de punta a punta: mapa, modalidades, save en el disco. En la segunda lo pulimos hasta que se sienta producto — transiciones, estética nueva, más modalidades, primeros tests.
+El criterio de diseño fue **local primero, sync después**: la partida no espera al servidor; si hay sesión, el resumen se sube en segundo plano o queda en cola para reintentar.
 
-**Esta tercera entrega es el salto:** el juego deja de vivir solo en una máquina. Ahora puede tener cuenta, respaldar el progreso en PostgreSQL y seguir funcionando igual si no hay WiFi.
+## Qué se agregó o modificó
 
-La idea central es simple y la repetimos en defensa: **primero local, después sync**. Nada de lo que pasa en una partida espera al servidor. Si el jugador quiere, su avance viaja a la nube en segundo plano.
+- **Backend y PostgreSQL** — Docker Compose, migraciones, MER de usuario/perfil/progreso/partidas/racha; endpoints de auth y progreso documentados en `BACKEND/README.md`.
+- **Cuenta y sesión** — registro, login y modo offline en el flujo Intro → Selector; pantallas de auth integradas al juego.
+- **Sync de progreso** — merge local/remoto al loguearse, guardado de partida remota al terminar, cola offline y reintento; documentado en [Sync-Godot-Postgres](Sync-Godot-Postgres).
+- **Perfil** — edición local de datos de usuario, sync de perfil y avatar; overlay de perfil en el HUD del mapa.
+- **Nodo único de partida** — refactor hacia un nodo reutilizable que orquesta modalidades desde JSON del mapa (UNQ-170).
+- **Enseñanzas JSON** — diseño de feedback y carga parametrizada desde archivos (UNQ-167, UNQ-168 en curso).
+- **CI y smoke test** — workflow de smoke en PR (Intro → login/offline → selector → mapa → partida).
+- **Tests UX Preguntas** — suite GdUnit4 sobre interfaz visible de la modalidad (UNQ-172 en curso).
+- **Polish comidas** — borde blanco en sprites de alimentos para mejorar lectura en pantalla (UNQ-166).
 
----
+## Desafíos técnicos
 
-## Qué hicimos en concreto
+- Sincronizar progreso sin duplicar partidas ni perder avance offline (merge, `clientRunId`, cola local).
+- Mantener Godot desacoplado de SQL: capa HTTP (`AuthApi`, `SyncApi`) y contrato REST estable.
+- Unificar nodos del mapa sin romper el JSON y la demo de Celiaquía ya existente.
+- Alinear fechas de racha entre servidor UTC y calendario local del jugador.
 
-Levantamos un **backend Node** con Docker y migraciones. Integramos **registro y login** en el flujo real del juego, con salida clara para jugar offline. Armamos la **sincronización de progreso**: al loguearse migra el save local; al terminar una partida guarda el resumen remoto; si falla la red, encola y reintenta.
+## Trazabilidad commit → ticket
 
-En paralelo avanzamos hacia un **nodo único de partida** que orquesta varias modalidades desde JSON. Sumamos **smoke test en CI** y empezamos **tests de interfaz** para Preguntas. Las **enseñanzas** van desacopladas hacia JSON, con feedback visual ya diseñado.
+| Commit | Descripción | Ticket(s) |
+|---|---|---|
+| `c3e9d0a` | Setup Docker PostgreSQL (#32) | UNQ-85 |
+| `65bf2f1` | Encaminando Entrega 3 (#31) | Infra / mapa |
+| `4def73a` | Login actualizado | UNQ-91 |
+| `eb35afa` / `51eae03` | Sync local ↔ online | UNQ-160 |
+| `28e1d0b` | AuthApi, SyncApi e importador | US-02, US-03 |
+| `3f458a0` | MapApi, nomenclatura ES | US-05 |
+| `80690ab` | Smoke test actualizado | CI |
+| `b8e80e8` | Pool HTTP, cola local y background sync | US-03 |
+| `e1521d8` | Endpoint perfil en backend | US-04 |
+| `2e5a9e9` | Carga y descarga de avatar | US-04 |
+| `daaa8bc` / `82a38cd` | Sync y badge de racha con fecha local | US-03 |
+| `daf9a9a` | Estética Profile overlay | US-04 |
+| `4616d6d` | Assets comidas | UNQ-166 |
 
-Para contarlo en la mesa: [Entrega-3-Presentacion](Entrega-3-Presentacion) y el guión de [Cierre](Entrega-3-Cierre).
+## Alcance de Entrega 3
 
----
+| Bloque | Resultado | Estado |
+|---|---|---|
+| Infra PostgreSQL | Docker, migraciones, MER dual | En revisión |
+| Cuenta y sesión | Registro, login, offline | Listo (US-02) |
+| Sync de progreso | Merge, cola, importador | En revisión |
+| CI y smoke | Workflow en PR | Listo |
+| Nodo único de partida | Refactor mapa / JSON | En revisión |
+| Enseñanzas JSON | Feedback + carga parametrizada | En curso |
+| Tests UX Preguntas | Suite GdUnit4 interfaz | En curso |
+| Perfil dedicado | Diseño + overlay; escena completa | En curso |
+| Polish comidas | Borde en sprites | Listo (US-08) |
 
-## Cómo viene el sprint (Jira, 10 jun 2026)
+### Fuera de alcance
 
-Son **17 tickets UNQ** agrupados en **8 historias**. Hoy el tablero muestra **8 terminados**, **6 en revisión** y **3 en progreso**. Las historias más redondas: **cuenta y sesión (US-02)** y **borde en comidas (US-08)**.
+Leaderboard, refresh token, admin, mails reales de recuperación, validación JSON en CI y deploy productivo del backend.
 
-El detalle ticket por ticket — siempre actualizado desde Jira — está en [Evidencia](Entrega-3-Evidencia#tickets-jira-del-sprint). Todo cuelga de la epic [UNQ-8](https://tip-unq.atlassian.net/browse/UNQ-8).
+## Documentación
 
----
-
-## Qué nota el jugador (y qué nota el equipo)
-
-**Cuenta:** puede registrarse, loguearse o seguir offline. Su progreso ya no queda atado a un solo dispositivo.
-
-**Sync:** cuando hay sesión, mapa y partidas se respaldan en PostgreSQL sin frenar la partida actual.
-
-**Partidas:** un solo tipo de nodo puede combinar modalidades según el JSON del mapa.
-
-**Calidad:** smoke en cada PR; tests de interfaz en Preguntas en marcha.
-
-**Educación:** enseñanzas editables en archivos JSON, sin tocar código por cada contenido nuevo.
-
----
-
-## Decisiones que no negociamos
-
-Tomamos la **Opción B** de Entrega 1: abrir backend sin matar la demo local ([Decisiones](Entrega-3-Decisiones)). El save local sigue siendo la fuente inmediata; PostgreSQL corre en Docker para desarrollo, sin prometer producción en esta entrega. El smoke test cubre Intro → Login → offline → mapa → partida mínima en cada PR.
-
-El **perfil dedicado** tiene diseño cerrado; la escena completa sigue en implementación — no es un modal definitivo.
-
-Diagramas para mostrar: [MER persistencia E3](Mer-Persistencia-E3) · [Flujo E1→E3](Mer-Flujo).
-
----
-
-## Lo que nos costó (y cómo lo resolvimos)
-
-**Sync sin duplicar ni perder offline.** Merge local/remoto, cola con reintento, importador al login. Está en [Sync Godot↔Postgres](Sync-Godot-Postgres) y en `ProgressSyncService` / `ImportadorProgresoOnline`.
-
-**PostgreSQL sin acoplar Godot a SQL.** Capa HTTP (`AuthApi`, `SyncApi`) y MER dual — ver [Mer-Persistencia-E3](Mer-Persistencia-E3).
-
-**Unificar nodos del mapa sin romper celiaquía.** Refactor hacia nodo único (UNQ-170) manteniendo compatibilidad con el JSON actual.
-
-**CI útil pero liviano.** Smoke headless + checks de monorepo en Windows y Linux.
-
----
-
-## Qué entra y qué no en esta entrega
-
-| Bloque | Dónde estamos |
-|---|---|
-| Infra PostgreSQL | En revisión |
-| Cuenta y sesión | **US-02 lista** |
-| Sync de progreso | En revisión |
-| CI y smoke | Listo |
-| Nodo único de partida | En revisión |
-| Enseñanzas JSON | En curso |
-| Tests UX Preguntas | En curso |
-| Perfil dedicado | En curso (diseño ✅) |
-| Polish comidas | **Terminado** |
-
-**Fuera de alcance:** leaderboard, refresh token, admin, mails reales de recuperación, validación JSON en CI, deploy productivo del backend.
-
----
-
-## Dónde está todo
-
-| Página | Para qué sirve |
-|---|---|
-| [Presentación](Entrega-3-Presentacion) | Abrir en la defensa — vista clara del sprint |
-| [Cierre / defensa](Entrega-3-Cierre) | Guión, checklist, respuestas si preguntan |
-| [Evidencia](Entrega-3-Evidencia) | Jira + código + cómo probar |
-| [User Stories](Entrega-3-User-Stories) | Historias y criterios de aceptación |
-| [Arquitectura](Entrega-3-Arquitectura) | Backend, sync, auth, flujo del jugador |
-| [Decisiones](Entrega-3-Decisiones) | Por qué elegimos cada trade-off |
-| [Bitácora E3](Bitacora-Entrega-3) | Cronología de cambios |
-
-**Entrega anterior:** [Entrega-2](Entrega-2) · **Contexto Opción B:** [Entrega-1-Proximos-Pasos](Entrega-1-Proximos-Pasos)
+- [User Stories](Entrega-3-User-Stories)
+- [Arquitectura](Entrega-3-Arquitectura)
+- [Decisiones](Entrega-3-Decisiones)
+- [Evidencia](Entrega-3-Evidencia)
+- [Presentación](Entrega-3-Presentacion) — vista HTML del sprint (opcional)
+- [Bitácora E3](Bitacora-Entrega-3)
