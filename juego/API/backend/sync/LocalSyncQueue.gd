@@ -2,6 +2,7 @@ class_name LocalSyncQueue
 extends RefCounted
 
 const QUEUE_PATH := "user://backend_sync_queue.json"
+const QUEUE_BACKUP_PREFIX := "sync_queue_backup_"
 const STATUS_PENDING := "pending"
 const STATUS_SYNCED := "synced"
 const STATUS_FAILED := "failed"
@@ -12,7 +13,11 @@ static var _cache: Dictionary = {}
 static var _cache_valid: bool = false
 
 
-static func encolar_resumen_partida(resumen: Dictionary) -> void:
+## [param owner]: username de la cuenta logueada al jugar la partida ("" si offline).
+## Permite archivar/restaurar los pendientes por usuario al cambiar de cuenta,
+## en vez de descartarlos (descartar rompía la racha del server: esos días
+## nunca llegaban a sincronizarse).
+static func encolar_resumen_partida(resumen: Dictionary, owner: String = "") -> void:
 	var client_run_id := str(resumen.get("clientRunId", "")).strip_edges()
 	if client_run_id.is_empty():
 		push_warning("[LocalSyncQueue] RunSummary sin clientRunId; no se encola.")
@@ -26,6 +31,7 @@ static func encolar_resumen_partida(resumen: Dictionary) -> void:
 
 	items.append({
 		"clientRunId": client_run_id,
+		"owner": owner.strip_edges(),
 		"status": STATUS_PENDING,
 		"attempts": 0,
 		"lastError": "",
@@ -71,6 +77,130 @@ static func marcar_fallido(client_run_id: String, error: String) -> void:
 		item["lastError"] = error.substr(0, MAX_ERROR_LENGTH)
 		item["status"] = STATUS_FAILED if new_attempts >= MAX_ATTEMPTS else STATUS_PENDING
 	)
+
+
+static func descartar_pendientes(reason: String) -> void:
+	var queue: Dictionary = _cargar_cola()
+	var items: Array = queue.get("items", [])
+	var changed := false
+	for raw_item: Variant in items:
+		if not raw_item is Dictionary:
+			continue
+		var item: Dictionary = raw_item as Dictionary
+		if str(item.get("status", STATUS_PENDING)) != STATUS_PENDING:
+			continue
+		item["status"] = STATUS_FAILED
+		item["lastError"] = reason.substr(0, MAX_ERROR_LENGTH)
+		item["attempts"] = MAX_ATTEMPTS
+		changed = true
+	if changed:
+		_guardar_cola(queue)
+
+
+## Mueve los ítems PENDING del usuario a su archivo de backup. Se usa al cambiar
+## de cuenta: las partidas sin sincronizar del usuario saliente se preservan
+## y vuelven a la cola cuando ese usuario inicie sesión de nuevo.
+static func archivar_pendientes_de_usuario(owner: String) -> int:
+	var clean_owner := owner.strip_edges()
+	if clean_owner.is_empty():
+		return 0
+
+	var queue: Dictionary = _cargar_cola()
+	var items: Array = queue.get("items", [])
+	var a_archivar: Array = []
+	var restantes: Array = []
+	for raw_item: Variant in items:
+		var es_del_usuario := (
+			raw_item is Dictionary
+			and str((raw_item as Dictionary).get("status", STATUS_PENDING)) == STATUS_PENDING
+			and str((raw_item as Dictionary).get("owner", "")).strip_edges() == clean_owner
+		)
+		if es_del_usuario:
+			a_archivar.append(raw_item)
+		else:
+			restantes.append(raw_item)
+
+	if a_archivar.is_empty():
+		return 0
+
+	var backup: Array = _leer_backup_cola(clean_owner)
+	backup.append_array(a_archivar)
+	if not _escribir_backup_cola(clean_owner, backup):
+		push_warning("[LocalSyncQueue] No se pudo archivar pendientes de ", clean_owner)
+		return 0
+
+	queue["items"] = restantes
+	_guardar_cola(queue)
+	print("[LocalSyncQueue] Archivados ", a_archivar.size(), " pendientes de ", clean_owner)
+	return a_archivar.size()
+
+
+## Re-encola los ítems archivados del usuario (si los hay) y borra su backup.
+static func restaurar_pendientes_de_usuario(owner: String) -> int:
+	var clean_owner := owner.strip_edges()
+	if clean_owner.is_empty():
+		return 0
+
+	var backup: Array = _leer_backup_cola(clean_owner)
+	if backup.is_empty():
+		return 0
+
+	var queue: Dictionary = _cargar_cola()
+	var items: Array = queue.get("items", [])
+	var ids_existentes: Dictionary = {}
+	for raw_item: Variant in items:
+		if raw_item is Dictionary:
+			ids_existentes[str((raw_item as Dictionary).get("clientRunId", ""))] = true
+
+	var restaurados := 0
+	for raw_item: Variant in backup:
+		if not raw_item is Dictionary:
+			continue
+		var cid := str((raw_item as Dictionary).get("clientRunId", ""))
+		if cid.is_empty() or ids_existentes.has(cid):
+			continue
+		items.append(raw_item)
+		restaurados += 1
+
+	if restaurados > 0:
+		queue["items"] = items
+		_guardar_cola(queue)
+	_borrar_backup_cola(clean_owner)
+	if restaurados > 0:
+		print("[LocalSyncQueue] Restaurados ", restaurados, " pendientes de ", clean_owner)
+	return restaurados
+
+
+static func _ruta_backup_cola(owner: String) -> String:
+	var safe_name := owner.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	return "user://" + QUEUE_BACKUP_PREFIX + safe_name + ".json"
+
+
+static func _leer_backup_cola(owner: String) -> Array:
+	var path := _ruta_backup_cola(owner)
+	if not FileAccess.file_exists(path):
+		return []
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return []
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	return parsed as Array if parsed is Array else []
+
+
+static func _escribir_backup_cola(owner: String, items: Array) -> bool:
+	var file := FileAccess.open(_ruta_backup_cola(owner), FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(JSON.stringify(items, "\t"))
+	file.close()
+	return true
+
+
+static func _borrar_backup_cola(owner: String) -> void:
+	var path := _ruta_backup_cola(owner)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 static func aplicar_resultados(resultados: Array[Dictionary]) -> void:

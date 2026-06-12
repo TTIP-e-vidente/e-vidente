@@ -56,7 +56,7 @@ func _configurar_avatar_display() -> void:
 func _aplicar_fuentes() -> void:
 	var rubik_font: Font = load(RUBIK_FONT_PATH) as Font
 	for lbl: Label in [
-		_username_label, _email_label, _age_label, _progress_label,
+		_email_label, _age_label, _progress_label,
 		_save_status_label, _resume_hint_label, _avatar_label,
 	]:
 		if is_instance_valid(lbl) and rubik_font != null:
@@ -66,11 +66,11 @@ func _aplicar_fuentes() -> void:
 func mostrar_superposicion() -> void:
 	refrescar()
 	visible = true
-	_animar_entrada_deslizada()
+
 
 
 func ocultar_superposicion() -> void:
-	_animar_salida_deslizada()
+	visible = false
 
 
 func mostrar_feedback_guardado(message: String = "¡Guardado correctamente!") -> void:
@@ -122,6 +122,9 @@ func _on_guardar_presionado() -> void:
 func _subir_avatar_si_tiene() -> void:
 	var path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if path.is_empty():
+		return
+	if not SaveManager.es_ruta_avatar_vinculada(path):
+		print("[ProfileOverlay] Avatar upload skipped: local avatar is not linked to active account.")
 		return
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
@@ -235,8 +238,6 @@ func _on_entrada_fondo(event: InputEvent) -> void:
 
 func _animar_entrada_deslizada() -> void:
 	var target_x := _session_panel.offset_left
-	_session_panel.offset_left = target_x + 120.0
-	_session_panel.offset_right += 120.0
 	_session_panel.modulate.a = 0.0
 	_overlay_backdrop.color.a = 0.0
 
@@ -255,10 +256,6 @@ func _animar_salida_deslizada() -> void:
 	var tw := create_tween().set_parallel(true)
 	tw.tween_property(_overlay_backdrop, "color:a", 0.0, 0.18)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tw.tween_property(_session_panel, "offset_left", _session_panel.offset_left + 80.0, 0.2)\
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tw.tween_property(_session_panel, "offset_right", _session_panel.offset_right + 80.0, 0.2)\
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(_session_panel, "modulate:a", 0.0, 0.15)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(_on_salida_deslizada_finalizada)
@@ -269,3 +266,7 @@ func _on_salida_deslizada_finalizada() -> void:
 	_session_panel.offset_left = -490.0
 	_session_panel.offset_right = -16.0
 	_session_panel.modulate.a = 1.0
+
+
+func _on_guardar_button_pressed() -> void:
+	GameSceneRouter.go_to_mode_selector(get_tree())

@@ -81,10 +81,13 @@ func _enviar_formulario() -> void:
 
 	var result: Dictionary
 	if _mode == AuthMode.REGISTER:
-		var fecha_nacimiento_local := SaveManager.obtener_fecha_nacimiento_usuario_actual()
 		var fecha_nacimiento_registro: Variant = null
-		if not fecha_nacimiento_local.is_empty():
-			fecha_nacimiento_registro = fecha_nacimiento_local
+		# Solo heredar la fecha local si el save no quedó vinculado a otra
+		# cuenta online: evita crear la cuenta nueva con datos del usuario previo.
+		if SaveManager.obtener_cuenta_online_vinculada().is_empty():
+			var fecha_nacimiento_local := SaveManager.obtener_fecha_nacimiento_usuario_actual()
+			if not fecha_nacimiento_local.is_empty():
+				fecha_nacimiento_registro = fecha_nacimiento_local
 		result = await AuthApi.crear_cuenta_completa(
 			_input_username.text.strip_edges(),
 			_input_password.text,

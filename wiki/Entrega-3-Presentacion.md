@@ -1,29 +1,20 @@
-# Presentación · Entrega 3
+# Presentación — Entrega 3
 
-Vista interactiva para la **defensa TTIP**: avance del sprint, user stories, timeline E1→E3 y guión de 10 minutos.
+Vista HTML con diagramas del sprint (MER, flujo E1→E3, tickets). Sirve para proyectar en la exposición; el detalle técnico está en el resto de la wiki.
 
----
+## Link
 
-## Abrir la presentación
+**[Abrir presentación (pantalla completa)](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/Entrega-3-Presentacion.html)**
 
-| | |
+Si acabás de publicar cambios en la wiki, esperá ~1 minuto antes de recargar ([raw.githack.com](https://raw.githack.com/)).
+
+## Documentación relacionada
+
+| Página | Contenido |
 |---|---|
-| **[▶ Pantalla completa (recomendado para proyectar)](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/Entrega-3-Presentacion.html)** | Vista interactiva con navegación entre diagramas |
-| [Guión de defensa](Entrega-3-Cierre) | Markdown — checklist y frases para la mesa |
-| [Evidencia Jira](Entrega-3-Evidencia) | Tabla de tickets actualizada |
-| [Resumen E3](Entrega-3) | Narrativa del sprint |
-
----
-
-## Recorrido E3 (otras vistas)
-
-| Vista | Link |
-|-------|------|
-| Hub MER | [Mer-Hub](Mer-Hub) |
-| Flujo E1→E3 | [Mer-Flujo](Mer-Flujo) |
-| Persistencia dual | [Mer-Persistencia-E3](Mer-Persistencia-E3) |
-| Índice completo | [Vistas interactivas](Vistas-Interactivas) |
-
----
-
-*Publicado desde la wiki con [raw.githack.com](https://raw.githack.com/). Si acabás de publicar cambios, esperá ~1 min antes de recargar.*
+| [Entrega 3](Entrega-3) | Resumen del sprint |
+| [Evidencia](Entrega-3-Evidencia) | Tickets, código y pruebas |
+| [User Stories](Entrega-3-User-Stories) | Historias y criterios |
+| [Arquitectura](Entrega-3-Arquitectura) | Backend, sync, auth |
+| [MER persistencia](Mer-Persistencia-E3) | Diagrama dual local + Postgres |
+| [Flujo E1→E3](Mer-Flujo) | Evolución entre entregas |

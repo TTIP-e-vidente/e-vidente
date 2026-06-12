@@ -8,15 +8,33 @@ import { StreakRow } from './streak.types';
 
 const MS_PER_DAY = 86_400_000;
 
-function toDateOnly(value: Date | string | null | undefined): string | null {
+export function toDateOnly(value: Date | string | null | undefined): string | null {
   if (value == null) {
     return null;
   }
-  const parsed = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  if (typeof value === 'string') {
+    // El cliente manda timestamps UTC sin sufijo 'Z' ("2026-06-10T22:33:44").
+    // Date.parse los interpretaría en el timezone local del servidor y el día
+    // podría correrse ±1: tomamos la fecha literal del string.
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+    if (match) {
+      return match[1];
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+    return parsed.toISOString().slice(0, 10);
+  }
+  if (Number.isNaN(value.getTime())) {
     return null;
   }
-  return parsed.toISOString().slice(0, 10);
+  // node-postgres parsea columnas `date` como Date a medianoche LOCAL del servidor;
+  // toISOString() retrocedería un día en timezones con offset positivo.
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function daysBetween(dateA: string, dateB: string): number {
@@ -41,6 +59,7 @@ async function findStreakForUser(
         s.current_count,
         s.best_count,
         s.last_activity_day,
+        s.last_activity_at,
         s.updated_at
       FROM profiles p
       JOIN streaks s ON s.id = p.streak_id
@@ -73,12 +92,13 @@ export async function ensureStreak(
     current_count: number;
     best_count: number;
     last_activity_day: Date | null;
+    last_activity_at: Date | null;
     updated_at: Date;
   }>(
     `
       INSERT INTO streaks (current_count, best_count, last_activity_day)
       VALUES (0, 0, NULL)
-      RETURNING id, current_count, best_count, last_activity_day, updated_at;
+      RETURNING id, current_count, best_count, last_activity_day, last_activity_at, updated_at;
     `
   );
 
@@ -91,6 +111,7 @@ export async function ensureStreak(
     current_count: row.current_count,
     best_count: row.best_count,
     last_activity_day: row.last_activity_day,
+    last_activity_at: row.last_activity_at,
     updated_at: row.updated_at
   };
 }
@@ -106,20 +127,53 @@ export async function registerStreakActivity(
   client: PoolClient,
   userId: string,
   profileId: string,
-  activityDate?: string | null
+  _activityDate?: string | null
 ): Promise<StreakRow> {
-  const today = toDateOnly(activityDate ?? new Date());
-  if (!today) {
-    return ensureStreak(client, userId, profileId);
+  const existing = await ensureStreak(client, userId, profileId);
+
+  // Racha auto-curativa: en vez de incrementar un contador (sensible al orden
+  // de llegada de los syncs), se recalcula desde los días reales con partidas
+  // completadas. Un run viejo que llega tarde REPARA la racha en lugar de
+  // romperla, sin importar en qué batch o en qué orden se sincronice.
+  // El día relevante es el calendario LOCAL del jugador (games.local_day,
+  // que manda el cliente); para partidas viejas sin local_day se cae al día UTC.
+  const daysResult = await client.query<{ day: string; last_at: Date }>(
+    `
+      SELECT
+        to_char(
+          COALESCE(local_day, (COALESCE(finished_at, created_at) AT TIME ZONE 'UTC')::date),
+          'YYYY-MM-DD'
+        ) AS day,
+        MAX(COALESCE(finished_at, created_at)) AS last_at
+      FROM games
+      WHERE user_id = $1
+        AND completed = true
+        AND COALESCE(finished_at, created_at) > now() - interval '400 days'
+      GROUP BY 1
+      ORDER BY day DESC;
+    `,
+    [userId]
+  );
+
+  const days = daysResult.rows.map((row) => row.day);
+  if (days.length === 0) {
+    return existing;
   }
 
-  const existing = await ensureStreak(client, userId, profileId);
-  const lastDay = toDateOnly(existing.last_activity_day);
+  const lastActivityDay = days[0];
+  let lastActivityAt: Date | null = null;
+  for (const row of daysResult.rows) {
+    if (lastActivityAt === null || row.last_at > lastActivityAt) {
+      lastActivityAt = row.last_at;
+    }
+  }
   let newCount = 1;
-  if (lastDay === today) {
-    newCount = Math.max(existing.current_count, 1);
-  } else if (lastDay && daysBetween(lastDay, today) === 1) {
-    newCount = existing.current_count + 1;
+  for (let i = 1; i < days.length; i++) {
+    if (daysBetween(days[i - 1], days[i]) === 1) {
+      newCount++;
+    } else {
+      break;
+    }
   }
 
   const newBest = Math.max(existing.best_count, newCount);
@@ -128,6 +182,7 @@ export async function registerStreakActivity(
     current_count: number;
     best_count: number;
     last_activity_day: Date | null;
+    last_activity_at: Date | null;
     updated_at: Date;
   }>(
     `
@@ -136,11 +191,12 @@ export async function registerStreakActivity(
         current_count = $2,
         best_count = $3,
         last_activity_day = $4::date,
+        last_activity_at = $5,
         updated_at = now()
       WHERE id = $1
-      RETURNING id, current_count, best_count, last_activity_day, updated_at;
+      RETURNING id, current_count, best_count, last_activity_day, last_activity_at, updated_at;
     `,
-    [existing.id, newCount, newBest, today]
+    [existing.id, newCount, newBest, lastActivityDay, lastActivityAt]
   );
 
   const row = updated.rows[0];
@@ -151,6 +207,7 @@ export async function registerStreakActivity(
     current_count: row.current_count,
     best_count: row.best_count,
     last_activity_day: row.last_activity_day,
+    last_activity_at: row.last_activity_at,
     updated_at: row.updated_at
   };
 }

@@ -34,5 +34,6 @@ export interface InsertGameInput {
   wrongAnswers?: number | null;
   durationSeconds?: number | null;
   finishedAt?: string | null;
+  localDay?: string | null;
   clientRunId?: string | null;
 }

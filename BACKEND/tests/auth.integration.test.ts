@@ -43,7 +43,7 @@ async function run(): Promise<void> {
   const password = 'Password123';
 
   try {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [
+    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2;', [
       username,
       mail
     ]);
@@ -167,7 +167,7 @@ async function run(): Promise<void> {
 
     console.log('auth integration test passed');
   } finally {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [
+    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2;', [
       username,
       mail
     ]);

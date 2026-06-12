@@ -329,7 +329,7 @@ func _on_superposicion_reiniciar_presionado() -> void:
 
 
 func _on_superposicion_logout_presionado() -> void:
-	AuthApi.cerrar_sesion()
+	await AuthApi.cerrar_sesion()
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_main_menu(get_tree())

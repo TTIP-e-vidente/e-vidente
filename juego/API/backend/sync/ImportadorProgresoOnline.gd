@@ -267,9 +267,17 @@ static func _construir_estado_racha(racha_online: Variant) -> Dictionary:
 	var streak_state := {
 		"current_count": max(0, int(racha.get("current_count", 0))),
 		"best_count": max(0, int(racha.get("best_count", 0))),
-		"last_activity_day": str(racha.get("last_activity_day", "")),
+		"last_activity_day": _texto_o_vacio(racha.get("last_activity_day")),
+		"last_activity_at": _texto_o_vacio(racha.get("last_activity_at")),
 	}
 	return GameStreakTrackerScript.leer(streak_state)
+
+
+## Convierte null/no-string del JSON en "" (str(null) daría "<null>").
+static func _texto_o_vacio(raw_value: Variant) -> String:
+	if raw_value is String:
+		return (raw_value as String).strip_edges()
+	return ""
 
 
 static func construir_estado_racha_online(racha_online: Variant) -> Dictionary:

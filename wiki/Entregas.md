@@ -38,18 +38,14 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 | Página | Descripción |
 |--------|-------------|
-| [Presentación](Entrega-3-Presentacion) | Vista interactiva para defensa TTIP |
-| [Vistas interactivas](Vistas-Interactivas) | Índice de diagramas HTML |
-| [Resumen ejecutivo](Entrega-3) | Narrativa de la iteración |
-| [Cierre / defensa](Entrega-3-Cierre) | DoD, checklist, guión de 10 min |
-| [User Stories](Entrega-3-User-Stories) | Historias y criterios de aceptación |
+| [Resumen ejecutivo](Entrega-3) | Qué se hizo, decisiones, desafíos |
+| [User Stories](Entrega-3-User-Stories) | Historias de usuario de la entrega |
 | [Arquitectura](Entrega-3-Arquitectura) | Backend, sync, auth y CI |
-| [Decisiones](Entrega-3-Decisiones) | ADRs de la iteración |
-| [Evidencia](Entrega-3-Evidencia) | Estado Jira, código, CI (fuente única) |
+| [Decisiones](Entrega-3-Decisiones) | ADRs y decisiones tomadas |
+| [Evidencia](Entrega-3-Evidencia) | Evidencia de lo entregado |
+| [Presentación](Entrega-3-Presentacion) | Vista HTML del sprint (opcional) |
 | [Flujo E1→E3](Mer-Flujo) | Evolución de persistencia |
 | [MER persistencia E3](Mer-Persistencia-E3) | Diagrama dual local + PostgreSQL |
-| [Hub MER](Mer-Hub) | Índice visual de diagramas |
-| [Índice MER](MER) | Dominio, persistencia y mapeo |
 | [Bitácora E3](Bitacora-Entrega-3) | Cambios cronológicos |
 
 Bitácora completa: [índice](Bitacora) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).

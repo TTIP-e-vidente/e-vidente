@@ -59,53 +59,53 @@ export async function postBatchProgresoRestriccionController(
     let synced = 0;
     let failed = 0;
 
-    // Procesar en chunks de BATCH_CONCURRENCY para reducir latencia total ~5x vs for-await serial.
-    // El advisory lock por userId en saveAuthenticatedProgress serializa correctamente
-    // cualquier concurrencia real a nivel de Postgres, incluso entre instancias del servidor.
-    const BATCH_CONCURRENCY = 5;
-    for (let i = 0; i < items.length; i += BATCH_CONCURRENCY) {
-      const chunk = items.slice(i, i + BATCH_CONCURRENCY);
-      const settled = await Promise.allSettled(
-        chunk.map((item) =>
-          saveAuthenticatedProgress({ ...(item as object), userId })
-        )
-      );
+    // Secuencial y ordenado por finishedAt: la racha depende del orden de aplicación
+    // (un día viejo procesado después de uno nuevo se descarta). El advisory lock por
+    // userId ya serializaba estos writes en Postgres, así que la concurrencia previa
+    // no aportaba paralelismo real: solo orden no determinístico y conexiones ocupadas.
+    const ordered = [...items].sort((a, b) => {
+      const dateA = typeof (a as any)?.finishedAt === 'string' ? (a as any).finishedAt : '';
+      const dateB = typeof (b as any)?.finishedAt === 'string' ? (b as any).finishedAt : '';
+      return dateA.localeCompare(dateB);
+    });
 
-      for (let j = 0; j < chunk.length; j++) {
-        const item = chunk[j];
-        const clientRunId =
-          typeof (item as any)?.clientRunId === 'string'
-            ? (item as any).clientRunId
-            : '';
-        const outcome = settled[j];
-        if (outcome.status === 'fulfilled') {
-          const data = outcome.value;
-          // Solo incluir game + completedNode por ítem — no el summary completo.
-          // El summary del último sync exitoso se incluye como campo global al final.
-          results.push({
-            clientRunId,
-            ok: true,
-            data: {
-              game: (data as any).game,
-              completedNode: (data as any).completedNode ?? null,
-              mapCompleted: (data as any).mapCompleted ?? false,
-            },
-          });
-          synced++;
-        } else {
-          const message =
-            outcome.reason instanceof Error
-              ? outcome.reason.message
-              : 'error desconocido';
-          results.push({ clientRunId, ok: false, error: message });
-          failed++;
-        }
+    for (const item of ordered) {
+      const clientRunId =
+        typeof (item as any)?.clientRunId === 'string'
+          ? (item as any).clientRunId
+          : '';
+      try {
+        // includeSummary: false — el estado consolidado se consulta una sola vez al final.
+        const data = await saveAuthenticatedProgress(
+          { ...(item as object), userId },
+          { includeSummary: false }
+        );
+        results.push({
+          clientRunId,
+          ok: true,
+          data: {
+            game: data.game,
+            completedNode: data.completedNode ?? null,
+            mapCompleted: data.mapCompleted ?? false,
+          },
+        });
+        synced++;
+      } catch (itemError) {
+        const message =
+          itemError instanceof Error ? itemError.message : 'error desconocido';
+        results.push({ clientRunId, ok: false, error: message });
+        failed++;
       }
     }
+
+    // Estado consolidado post-batch (racha, nodos, exp) para que el cliente
+    // lo aplique a su save local sin otro round-trip.
+    const progressSummary = synced > 0 ? await getProgresoRestriccion(userId) : null;
 
     sendResponse(res, 200, {
       results,
       summary: { total: items.length, synced, failed },
+      progressSummary,
     });
   } catch (error) {
     sendError(res, error);

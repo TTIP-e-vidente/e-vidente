@@ -616,6 +616,44 @@ func obtener_cuenta_online_vinculada() -> String:
 	return str(_obtener_meta_guardado().get("linked_online_username", "")).strip_edges()
 
 
+func preparar_cuenta_online(usuario: Dictionary) -> void:
+	var username := str(usuario.get("username", "")).strip_edges()
+	if username.is_empty():
+		return
+
+	var linked := obtener_cuenta_online_vinculada()
+	var profile_mismatch := _perfil_actual_parece_de_otra_cuenta(usuario)
+	if linked == username and not profile_mismatch:
+		return
+
+	var should_reset := not linked.is_empty() or profile_mismatch
+	if not should_reset:
+		_establecer_cuenta_online_vinculada(username)
+		_marcar_guardado_sucio()
+		_escribir_guardado_en_disco(false, "account_linked")
+		return
+
+	if not linked.is_empty():
+		_respaldar_node_progress_por_usuario(linked)
+		# Preservar las partidas sin sincronizar del usuario saliente:
+		# vuelven a la cola cuando vuelva a iniciar sesión.
+		LocalSyncQueue.archivar_pendientes_de_usuario(linked)
+	LocalSyncQueue.descartar_pendientes(
+		"account_switch_%s_to_%s" % [linked if not linked.is_empty() else "unknown", username]
+	)
+	_reiniciar_progreso_juego_preservando_perfil()
+	_limpiar_identidad_perfil_para_cambio_cuenta()
+	limpiar_avatar_perfil()
+	_establecer_cuenta_online_vinculada(username)
+	LocalSyncQueue.restaurar_pendientes_de_usuario(username)
+	ArmadorDePartida.reiniciar_historial_sesion()
+	_marcar_guardado_sucio()
+	if not _escribir_guardado_en_disco(false, "account_switch"):
+		push_warning("[Save] No se pudo persistir el cambio de cuenta online.")
+		return
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
 func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Dictionary) -> void:
 	var username := str(usuario.get("username", "")).strip_edges()
 	if username.is_empty():
@@ -623,15 +661,7 @@ func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Diction
 
 	var linked := obtener_cuenta_online_vinculada()
 	if linked != username:
-		if linked.is_empty():
-			# Primer login: respaldar progreso guest para fusionarlo con el del servidor.
-			_respaldar_node_progress_por_usuario(username)
-		else:
-			_respaldar_node_progress_por_usuario(linked)
-			_reiniciar_progreso_juego_preservando_perfil()
-			_limpiar_identidad_perfil_para_cambio_cuenta()
-			limpiar_avatar_perfil()
-		ArmadorDePartida.reiniciar_historial_sesion()
+		preparar_cuenta_online(usuario)
 
 	_importar_progreso_online(progreso_online, username)
 	_aplicar_parche_perfil_online(usuario)
@@ -1085,6 +1115,25 @@ func _limpiar_identidad_perfil_para_cambio_cuenta() -> void:
 	save_data["profile"] = profile
 
 
+func _perfil_actual_parece_de_otra_cuenta(usuario: Dictionary) -> bool:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	var local_email := str(profile.get("email", "")).strip_edges().to_lower()
+	var online_email := str(usuario.get("mail", usuario.get("email", ""))).strip_edges().to_lower()
+	if not local_email.is_empty() and not online_email.is_empty() and local_email != online_email:
+		return true
+
+	var local_name := str(profile.get("username", "")).strip_edges().to_lower()
+	if local_name.is_empty() or local_name == str(DEFAULT_PROFILE_NAME).to_lower():
+		return false
+	var online_username := str(usuario.get("username", "")).strip_edges().to_lower()
+	var online_name := str(usuario.get("name", "")).strip_edges().to_lower()
+	return (
+		not online_username.is_empty()
+		and local_name != online_username
+		and (online_name.is_empty() or local_name != online_name)
+	)
+
+
 func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	if streak_online.is_empty():
 		return
@@ -1100,7 +1149,8 @@ func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	)
 	if merged.is_empty():
 		return
-	var today := Time.get_date_string_from_system(true)
+	# Día calendario LOCAL: la racha se registra y se compara en el huso del jugador.
+	var today := Time.get_date_string_from_system(false)
 	var local_day := str(local_streak_now.get("last_activity_day", ""))
 	if local_day == today and str(merged.get("last_activity_day", "")) != today:
 		merged["last_activity_day"] = today
@@ -1176,7 +1226,8 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 	var online_exp: int = int(snapshot.get("total_exp", 0))
 	save_data["total_exp"] = maxi(local_exp, online_exp)
 	# Leer antes de sobreescribir progress con el snapshot del servidor.
-	var local_streak: Dictionary = _obtener_racha_local_desde_save()
+	# El runtime puede tener una actividad local de hoy que todavia no llego al disco.
+	var local_streak: Dictionary = _obtener_racha_local_para_merge()
 	var server_streak: Dictionary = snapshot.get("streak_state", {})
 	print(
 		"[Racha] _importar_progreso_online: username=", username,

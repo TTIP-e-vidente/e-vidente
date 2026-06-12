@@ -21,44 +21,40 @@ export async function ensureNodeHistory(
   client: PoolClient,
   input: EnsureNodeHistoryInput
 ): Promise<EnsureNodeHistoryResult> {
-  // CTE con FOR UPDATE: serializa accesos concurrentes al mismo nodo y derivar
-  // wasNewlyCompleted de forma atómica sin race condition.
-  const result = await client.query<{
-    id: string;
-    was_inserted: boolean;
-    was_already_completed: boolean;
-  }>(
+  // Leer y bloquear el estado previo en una sentencia SEPARADA del upsert.
+  // Como CTE hermano del INSERT no funciona: el orden de ejecución entre CTEs
+  // independientes no está garantizado y, si el upsert corre primero, el
+  // FOR UPDATE encuentra la tupla auto-modificada por el mismo comando y la
+  // saltea (HeapTupleSelfUpdated) → was_already_completed=false en cada replay.
+  const lockedResult = await client.query<{ completed: boolean }>(
     `
-      WITH locked AS (
-        SELECT id, completed AS was_completed
-        FROM history_games
-        WHERE progress_id = $2 AND node_id = $3
-        FOR UPDATE
-      ),
-      upserted AS (
-        INSERT INTO history_games (
-          user_id, progress_id, node_id, node_type,
-          completed, best_score, best_accuracy, completed_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $5 THEN now() ELSE NULL END)
-        ON CONFLICT (progress_id, node_id)
-        DO UPDATE SET
-          node_type     = COALESCE(EXCLUDED.node_type, history_games.node_type),
-          completed     = history_games.completed OR EXCLUDED.completed,
-          best_score    = GREATEST(COALESCE(history_games.best_score, 0), COALESCE(EXCLUDED.best_score, 0)),
-          best_accuracy = GREATEST(
-            COALESCE(history_games.best_accuracy, 0),
-            COALESCE(EXCLUDED.best_accuracy, 0)
-          ),
-          completed_at  = COALESCE(history_games.completed_at, EXCLUDED.completed_at)
-        RETURNING id, (xmax::text::bigint = 0) AS was_inserted
+      SELECT completed
+      FROM history_games
+      WHERE progress_id = $1 AND node_id = $2
+      FOR UPDATE;
+    `,
+    [input.progressId, input.nodeId]
+  );
+  const wasAlreadyCompleted = lockedResult.rows[0]?.completed ?? false;
+
+  const result = await client.query<{ id: string; was_inserted: boolean }>(
+    `
+      INSERT INTO history_games (
+        user_id, progress_id, node_id, node_type,
+        completed, best_score, best_accuracy, completed_at
       )
-      SELECT
-        u.id,
-        u.was_inserted,
-        COALESCE(l.was_completed, false) AS was_already_completed
-      FROM upserted u
-      LEFT JOIN locked l ON true;
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $5 THEN now() ELSE NULL END)
+      ON CONFLICT (progress_id, node_id)
+      DO UPDATE SET
+        node_type     = COALESCE(EXCLUDED.node_type, history_games.node_type),
+        completed     = history_games.completed OR EXCLUDED.completed,
+        best_score    = GREATEST(COALESCE(history_games.best_score, 0), COALESCE(EXCLUDED.best_score, 0)),
+        best_accuracy = GREATEST(
+          COALESCE(history_games.best_accuracy, 0),
+          COALESCE(EXCLUDED.best_accuracy, 0)
+        ),
+        completed_at  = COALESCE(history_games.completed_at, EXCLUDED.completed_at)
+      RETURNING id, (xmax::text::bigint = 0) AS was_inserted;
     `,
     [
       input.userId,
@@ -72,11 +68,9 @@ export async function ensureNodeHistory(
   );
 
   const row = result.rows[0];
-  const wasNew = row.was_inserted;
-  const wasAlreadyCompleted = row.was_already_completed;
   const wasNewlyCompleted = input.completed && !wasAlreadyCompleted;
 
-  return { historyId: row.id, wasNew, wasNewlyCompleted };
+  return { historyId: row.id, wasNew: row.was_inserted, wasNewlyCompleted };
 }
 
 export async function listHistoryGamesByUserId(

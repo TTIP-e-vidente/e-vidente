@@ -44,6 +44,7 @@ export interface SaveAuthenticatedProgressInput {
   wrongAnswers?: unknown;
   durationSeconds?: unknown;
   finishedAt?: unknown;
+  localDay?: unknown;
   clientRunId?: unknown;
 }
 
@@ -61,6 +62,7 @@ export interface SaveDevProgressInput {
   wrongAnswers?: number;
   durationSeconds?: number;
   finishedAt?: string;
+  localDay?: string;
   clientRunId?: string;
 }
 

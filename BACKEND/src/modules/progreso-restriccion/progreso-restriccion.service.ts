@@ -90,11 +90,20 @@ function optionalIsoDate(value: unknown, fieldName: string): string | null {
   return s;
 }
 
+function optionalCalendarDay(value: unknown, fieldName: string): string | null {
+  if (value === undefined || value === null) return null;
+  const s = optionalText(value);
+  if (s === null) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(Date.parse(`${s}T00:00:00.000Z`))) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', `${fieldName} debe ser YYYY-MM-DD`);
+  }
+  return s;
+}
+
 export async function getProgresoRestriccion(userId: string): Promise<ProgresoRestriccionResponse> {
   const client = await pool.connect();
   try {
-    // READ ONLY: optimiza el manejo de locks y log en Postgres para queries de solo lectura.
-    await client.query('BEGIN READ ONLY');
+    await client.query('BEGIN');
     const user = await userRepository.findPublicUserById(userId);
     if (!user) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
@@ -127,8 +136,12 @@ export async function getProgresoRestriccion(userId: string): Promise<ProgresoRe
 }
 
 export async function saveAuthenticatedProgress(
-  input: SaveAuthenticatedProgressInput
+  input: SaveAuthenticatedProgressInput,
+  options: { includeSummary?: boolean } = {}
 ): Promise<SaveProgresoRestriccionResponse> {
+  // El batch lo desactiva: calcular el summary (3 listados) por cada ítem es trabajo
+  // que el controller batch descarta; ahí se arma un único summary al final.
+  const includeSummary = options.includeSummary !== false;
   const restriction = normalizeRestriction(input.restriction);
   const expToAdd = Math.max(0, Math.trunc(numberOrDefault(input.expToAdd, 0)));
   const nodeId = optionalText(input.nodeId);
@@ -146,6 +159,7 @@ export async function saveAuthenticatedProgress(
   const wrongAnswers = optionalNonNegativeInt(input.wrongAnswers, 'wrongAnswers');
   const durationSeconds = optionalNonNegativeInt(input.durationSeconds, 'durationSeconds');
   const finishedAt = optionalIsoDate(input.finishedAt, 'finishedAt');
+  const localDay = optionalCalendarDay(input.localDay, 'localDay');
   const clientRunId = optionalClientRunId(input.clientRunId);
 
   const client = await pool.connect();
@@ -179,12 +193,22 @@ export async function saveAuthenticatedProgress(
         clientRunId
       );
       if (existingSession) {
-        const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
-        const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
-        const recentGames = await gameRepository.listRecentGamesByUserId(
-          client,
-          input.userId
-        );
+        const duplicateSummary = includeSummary
+          ? {
+              user,
+              profile: toPublicProfile(baseProfile),
+              streak: toPublicStreak(streak),
+              progress: (
+                await progresoRestriccionRepository.listProgressByUserId(client, input.userId)
+              ).map(toPublicProgresoRestriccion),
+              completedNodes: (
+                await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId)
+              ).map(toPublicCompletedNode),
+              recentGames: (
+                await gameRepository.listRecentGamesByUserId(client, input.userId)
+              ).map(toPublicGame)
+            }
+          : null;
 
         await client.query('COMMIT');
 
@@ -196,14 +220,7 @@ export async function saveAuthenticatedProgress(
           game: toPublicGame(existingSession),
           completedNode: null,
           mapCompleted: false,
-          summary: {
-            user,
-            profile: toPublicProfile(baseProfile),
-            streak: toPublicStreak(streak),
-            progress: updatedProgress.map(toPublicProgresoRestriccion),
-            completedNodes: completedNodes.map(toPublicCompletedNode),
-            recentGames: recentGames.map(toPublicGame)
-          }
+          summary: duplicateSummary
         };
       }
     }
@@ -229,6 +246,7 @@ export async function saveAuthenticatedProgress(
       wrongAnswers,
       durationSeconds,
       finishedAt,
+      localDay,
       clientRunId
     });
     const game = insertResult.game;
@@ -257,12 +275,22 @@ export async function saveAuthenticatedProgress(
       );
     }
 
-    const updatedProgress = await progresoRestriccionRepository.listProgressByUserId(client, input.userId);
-    const completedNodes = await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId);
-    const recentGames = await gameRepository.listRecentGamesByUserId(
-      client,
-      input.userId
-    );
+    const summary = includeSummary
+      ? {
+          user,
+          profile: toPublicProfile(profile),
+          streak: toPublicStreak(streak),
+          progress: (
+            await progresoRestriccionRepository.listProgressByUserId(client, input.userId)
+          ).map(toPublicProgresoRestriccion),
+          completedNodes: (
+            await progresoRestriccionRepository.listCompletedNodesByUserId(client, input.userId)
+          ).map(toPublicCompletedNode),
+          recentGames: (
+            await gameRepository.listRecentGamesByUserId(client, input.userId)
+          ).map(toPublicGame)
+        }
+      : null;
 
     await client.query('COMMIT');
 
@@ -274,14 +302,7 @@ export async function saveAuthenticatedProgress(
       game: toPublicGame(game),
       completedNode: completedNode ? toPublicCompletedNode(completedNode) : null,
       mapCompleted,
-      summary: {
-        user,
-        profile: toPublicProfile(profile),
-        streak: toPublicStreak(streak),
-        progress: updatedProgress.map(toPublicProgresoRestriccion),
-        completedNodes: completedNodes.map(toPublicCompletedNode),
-        recentGames: recentGames.map(toPublicGame)
-      }
+      summary
     };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -323,6 +344,7 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<Save
     wrongAnswers: input.wrongAnswers,
     durationSeconds: input.durationSeconds,
     finishedAt: input.finishedAt,
+    localDay: input.localDay,
     clientRunId: input.clientRunId
   });
 }

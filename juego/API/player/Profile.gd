@@ -99,7 +99,9 @@ func _mostrar_progreso_online_en_pantalla() -> void:
 	if total_nodos == 0:
 		total_nodos = nodos_completados.size()
 
-	var sesiones_recientes: Array = progreso.get("recentGameSessions", [])
+	var sesiones_recientes: Array = progreso.get(
+		"recentGames", progreso.get("recentGameSessions", [])
+	)
 
 	_label_exp.text = "EXP: %d" % total_exp
 	_label_streak.text = "Racha actual: %d" % racha_actual
@@ -138,7 +140,7 @@ func _on_boton_cerrar_pressed() -> void:
 
 
 func _on_boton_cerrar_sesion_pressed() -> void:
-	AuthApi.cerrar_sesion()
+	await AuthApi.cerrar_sesion()
 	_mostrar_sin_sesion()
 	_establecer_estado(
 		"Sesión cerrada correctamente. Tocá Cerrar para volver al menú "

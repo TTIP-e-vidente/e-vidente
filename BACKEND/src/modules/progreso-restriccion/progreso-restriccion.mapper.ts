@@ -69,5 +69,6 @@ export interface SaveProgresoRestriccionResponse {
   completedNode: PublicCompletedNode | null;
   /** true solo cuando este POST completó el último nodo del mapa (primera vez) */
   mapCompleted: boolean;
-  summary: ProgresoRestriccionResponse;
+  /** null cuando el caller pide omitirlo (batch: se calcula una sola vez al final) */
+  summary: ProgresoRestriccionResponse | null;
 }

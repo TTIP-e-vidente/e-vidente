@@ -1,8 +1,6 @@
 # User Stories — Entrega 3
 
-Estas son las **8 historias** con las que contamos la Entrega 3 en TTIP. Detrás hay 17 tickets UNQ en Jira (jun 2026).
-
-**Estado vivo:** [Evidencia](Entrega-3-Evidencia#tickets-jira-del-sprint) · **Para mostrar:** [Presentación](Entrega-3-Presentacion) · **Guión defensa:** [Cierre](Entrega-3-Cierre).
+Historias de usuario de la Entrega 3. Epic: [UNQ-8](https://tip-unq.atlassian.net/browse/UNQ-8). Estado de tickets: [Evidencia](Entrega-3-Evidencia#tickets-jira).
 
 ---
 

@@ -52,12 +52,13 @@ export async function insertGame(
         wrong_answers,
         duration_seconds,
         finished_at,
+        local_day,
         client_run_id
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
         CASE WHEN $7 THEN now() ELSE NULL END,
-        $9, $10, $11, $12, $13
+        $9, $10, $11, $12, $13, $14
       )
       RETURNING
         id,
@@ -90,6 +91,7 @@ export async function insertGame(
       input.wrongAnswers ?? null,
       input.durationSeconds ?? null,
       input.finishedAt ?? null,
+      input.localDay ?? null,
       input.clientRunId ?? null,
     ],
   );
