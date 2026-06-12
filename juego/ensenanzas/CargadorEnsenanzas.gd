@@ -3,6 +3,11 @@ class_name CargadorEnsenanzas
 
 const RUTA_JSON := "res://contenido/mapa/ensenanzas.json"
 const ContentJsonLoaderScript := preload("res://sistemas/contenido/ContentJsonLoader.gd")
+const LEGACY_TEACHING_KEY_ALIASES := {
+	"celiaquia_cocina_segura": "ensenanza_contaminacion",
+	"celiaquia_compras": "ensenanza_etiquetas",
+	"celiaquia_salud": "ensenanza_sintomas",
+}
 
 static var _cache_por_clave: Dictionary = {}
 static var _cache_por_id: Dictionary = {}
@@ -50,21 +55,54 @@ static func _construir_ensenanza(clave: String, datos: Dictionary) -> Ensenanza:
 	return ensenanza
 
 
+static func _buscar_por_clave_json(clave_json: String) -> Ensenanza:
+	var normalizada: String = clave_json.strip_edges().to_lower()
+	if normalizada.is_empty() or not _cache_por_clave.has(normalizada):
+		return null
+	return _cache_por_clave[normalizada] as Ensenanza
+
+
+static func _buscar_por_id_normalizado(clave: String) -> Ensenanza:
+	if _cache_por_id.has(clave):
+		return _cache_por_id[clave] as Ensenanza
+	if not clave.begins_with("celiaquia_"):
+		return null
+	var sufijo: String = clave.trim_prefix("celiaquia_")
+	if not sufijo.is_valid_int():
+		return null
+	var id_padded: String = "celiaquia_%03d" % int(sufijo)
+	if _cache_por_id.has(id_padded):
+		return _cache_por_id[id_padded] as Ensenanza
+	return null
+
+
 static func resolver_por_teaching_key(teaching_key: String) -> Ensenanza:
 	_asegurar_carga()
 	var clave: String = teaching_key.strip_edges().to_lower()
 	if clave.is_empty():
 		return null
 
-	if _cache_por_clave.has(clave):
-		return _cache_por_clave[clave] as Ensenanza
-	if _cache_por_id.has(clave):
-		return _cache_por_id[clave] as Ensenanza
+	var por_clave: Ensenanza = _buscar_por_clave_json(clave)
+	if por_clave != null:
+		return por_clave
+
+	var por_id: Ensenanza = _buscar_por_id_normalizado(clave)
+	if por_id != null:
+		return por_id
+
+	if LEGACY_TEACHING_KEY_ALIASES.has(clave):
+		var alias_legacy: Ensenanza = _buscar_por_clave_json(
+			str(LEGACY_TEACHING_KEY_ALIASES[clave])
+		)
+		if alias_legacy != null:
+			return alias_legacy
 
 	if clave.begins_with("celiaquia_"):
-		var alias: String = "ensenanza_%s" % clave.trim_prefix("celiaquia_")
-		if _cache_por_clave.has(alias):
-			return _cache_por_clave[alias] as Ensenanza
+		var alias: Ensenanza = _buscar_por_clave_json(
+			"ensenanza_%s" % clave.trim_prefix("celiaquia_")
+		)
+		if alias != null:
+			return alias
 
 	return null
 

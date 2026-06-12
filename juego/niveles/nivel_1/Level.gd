@@ -118,6 +118,7 @@ var _usa_flujo_mapa := false
 var _pertenece_a_partida_de_nodo := false
 var _nodo_actual := ""
 var _json_path_nodo_actual := ""
+var _teaching_key_runtime := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
 var _arrastre_tuvo_error := false
@@ -231,6 +232,7 @@ func _reiniciar_contexto_jugable_del_nivel() -> void:
 	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
 	_json_path_nodo_actual = ""
+	_teaching_key_runtime = ""
 	_track_key_contexto = ""
 	_ruta_escena_retorno = MAP_SCENE_PATH
 
@@ -408,6 +410,8 @@ func _iniciar_runtime_de_arrastre_desde_datos(contenido_arrastre: Dictionary) ->
 	if manager_level == null or not manager_level.has_method("iniciar_desde_datos_de_arrastre"):
 		push_warning("ManagerLevel no soporta iniciar desde JSON; usando flujo legacy.")
 		return false
+
+	_teaching_key_runtime = _leer_teaching_key_de_diccionario(contenido_arrastre)
 
 	var inicio_arrastre_ok: bool = bool(
 		manager_level.iniciar_desde_datos_de_arrastre(active_track_key, contenido_arrastre, self)
@@ -1165,6 +1169,8 @@ func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 
 
 func _obtener_teaching_key_actual() -> String:
+	if not _teaching_key_runtime.is_empty():
+		return _teaching_key_runtime
 	var contenido: Variant = _datos_nodo_mapa.get("content", {})
 	if contenido is Dictionary:
 		var content_teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)
