@@ -30,6 +30,7 @@ const ContentSchemaNormalizerScript := preload(
 	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
 )
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
+const CargadorEnsenanzasScript := preload("res://ensenanzas/CargadorEnsenanzas.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
@@ -1131,7 +1132,17 @@ func _mostrar_ensenanza_de_cierre() -> void:
 		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
 		return
 	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
-	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
+	var texto_cierre: String = _obtener_texto_ensenanza_desde_json()
+	if texto_cierre.is_empty():
+		texto_cierre = TEACHING_FALLBACK_TEXT
+	_mostrar_ensenanza_textual(texto_cierre)
+
+
+func _obtener_texto_ensenanza_desde_json() -> String:
+	var teaching_key: String = _obtener_teaching_key_actual()
+	if teaching_key.is_empty():
+		return ""
+	return CargadorEnsenanzasScript.resolver_texto_cierre(teaching_key)
 
 
 func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
