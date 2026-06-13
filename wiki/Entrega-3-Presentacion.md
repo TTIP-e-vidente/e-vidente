@@ -1,12 +1,8 @@
 # Presentación — Entrega 3
 
-Vista HTML con diagramas del sprint (MER, flujo E1→E3, tickets). Sirve para proyectar en la exposición; el detalle técnico está en el resto de la wiki.
-
-## Link
 
 **[Abrir presentación (pantalla completa)](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/Entrega-3-Presentacion.html)**
 
-Si acabás de publicar cambios en la wiki, esperá ~1 minuto antes de recargar ([raw.githack.com](https://raw.githack.com/)).
 
 ## Documentación relacionada
 
