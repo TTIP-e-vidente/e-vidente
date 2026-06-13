@@ -164,6 +164,7 @@ static func construir_juegos_fijos(node_data: MapNodeData) -> Array[Dictionary]:
 		):
 			print(LOG_PREFIX, " juego explicito ignorado por json_path vacio: ", fixed_game_entry)
 			continue
+		_copiar_allow_repeated_type(fixed_game_entry, juego)
 		final_games.append(juego)
 	return final_games
 
@@ -224,6 +225,7 @@ static func construir_juegos_random(node_data: MapNodeData) -> Array[Dictionary]
 		if str(juego.get("mode", "")).strip_edges().is_empty():
 			continue
 		juego["request_key"] = str(game_entry.get("request_key", "")).strip_edges()
+		_copiar_allow_repeated_type(game_entry, juego)
 		final_games.append(juego)
 	return final_games
 
@@ -633,6 +635,11 @@ static func _copiar_campos_objetivo(origen: Dictionary, destino: Dictionary) -> 
 	for campo in OBJECTIVE_FIELDS:
 		if origen.has(campo) and origen.get(campo) != null:
 			destino[campo] = origen.get(campo)
+
+
+static func _copiar_allow_repeated_type(origen: Dictionary, destino: Dictionary) -> void:
+	if origen.has("allow_repeated_type"):
+		destino["allow_repeated_type"] = bool(origen.get("allow_repeated_type", false))
 
 
 static func _normalizar_objetivo_de_arrastre(juego: Dictionary) -> void:

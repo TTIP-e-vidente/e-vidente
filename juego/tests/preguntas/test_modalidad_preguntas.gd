@@ -20,9 +20,14 @@ func test_quiz_cargado_deja_modalidad_lista_para_jugar() -> void:
 	assert_object(label_pregunta) \
 		.override_failure_message("No se encontro el label del enunciado.") \
 		.is_not_null()
+	await _esperar_hasta_que(
+		func() -> bool:
+			return label_pregunta != null and label_pregunta.text == ENUNCIADO_PRUEBA,
+		"El enunciado no termino de mostrarse en pantalla."
+	)
 	assert_str(label_pregunta.text) \
 		.override_failure_message("El enunciado no se mostro en pantalla.") \
-		.contains("maíz")
+		.is_equal(ENUNCIADO_PRUEBA)
 
 	var boton_mala := _buscar_boton_por_texto_de_respuesta(escena, RESPUESTA_INCORRECTA)
 	var boton_buena := _buscar_boton_por_texto_de_respuesta(escena, RESPUESTA_CORRECTA)
@@ -50,7 +55,7 @@ func test_respuesta_incorrecta_pinta_boton_rojo() -> void:
 	_simular_que_el_jugador_toca_una_opcion(boton_mala)
 	await get_tree().process_frame
 
-	assert_bool(boton_mala.modulate.is_equal(MiPaleta.FEEDBACK_ERROR)) \
+	assert_bool(boton_mala.modulate.is_equal_approx(MiPaleta.FEEDBACK_ERROR)) \
 		.override_failure_message("Al fallar, el boton deberia verse rojo.") \
 		.is_true()
 
@@ -83,7 +88,7 @@ func test_respuesta_correcta_pinta_boton_verde() -> void:
 	_simular_que_el_jugador_toca_una_opcion(boton_buena)
 	await get_tree().process_frame
 
-	assert_bool(boton_buena.modulate.is_equal(MiPaleta.FEEDBACK_OK)) \
+	assert_bool(boton_buena.modulate.is_equal_approx(MiPaleta.FEEDBACK_OK)) \
 		.override_failure_message("Al acertar, el boton deberia verse verde.") \
 		.is_true()
 
