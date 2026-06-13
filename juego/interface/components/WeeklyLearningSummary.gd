@@ -57,7 +57,7 @@ func _obtener_datos_semanales() -> Dictionary:
 func _construir_desde_progreso_local() -> Dictionary:
 	var track_key := _resolver_pista_activa()
 	var node_progress: Dictionary = {}
-	if SaveManager != null:
+	if SaveManager != null and SaveManager.has_method("obtener_todo_progreso_nodos"):
 		node_progress = SaveManager.obtener_todo_progreso_nodos()
 	return ImportadorProgresoOnlineScript.construir_resumen_semanal_desde_save(
 		track_key,
@@ -67,6 +67,8 @@ func _construir_desde_progreso_local() -> Dictionary:
 
 func _resolver_pista_activa() -> String:
 	if SaveManager == null:
+		return GameTrackCatalog.TRACK_CELIAQUIA
+	if not SaveManager.has_method("obtener_estado_reanudacion"):
 		return GameTrackCatalog.TRACK_CELIAQUIA
 	var resume_state: Dictionary = SaveManager.obtener_estado_reanudacion()
 	var track_key := str(resume_state.get("track_key", "")).strip_edges()

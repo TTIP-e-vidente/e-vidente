@@ -94,7 +94,8 @@ func _on_guardar_presionado() -> void:
 	if not is_instance_valid(_guardar_btn) or _guardar_btn.disabled:
 		return
 
-	SaveManager.guardar_progreso_en_disco()
+	if _save_manager_listo():
+		SaveManager.guardar_progreso_en_disco()
 	save_pressed.emit()
 
 	if not AuthApi.esta_logueado():
@@ -120,6 +121,8 @@ func _on_guardar_presionado() -> void:
 
 
 func _subir_avatar_si_tiene() -> void:
+	if not _save_manager_listo():
+		return
 	var path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if path.is_empty():
 		return
@@ -147,25 +150,37 @@ func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
 	mostrar_feedback_guardado(SyncApi.mensaje_resultado_batch_perfil(synced, failed))
 
 
+func _save_manager_listo() -> bool:
+	return SaveManager != null and SaveManager.has_method("cargar_datos")
+
+
 func refrescar() -> void:
 	var username := _resolver_nombre_usuario_visible()
 	_username_label.text = username
 	_avatar_label.text = _iniciales_desde(username)
-	var avatar_texture: Texture2D = SaveManager.obtener_textura_avatar_usuario_actual()
+	var avatar_texture: Texture2D = null
+	if _save_manager_listo():
+		avatar_texture = SaveManager.obtener_textura_avatar_usuario_actual()
 	_avatar_preview.texture = avatar_texture
 	_avatar_preview.visible = avatar_texture != null
 	_avatar_label.visible = avatar_texture == null
 
-	var email: String = SaveManager.obtener_email_usuario_actual()
+	var email: String = ""
+	if _save_manager_listo():
+		email = SaveManager.obtener_email_usuario_actual()
 	_email_label.text = email if not email.is_empty() else "Sin correo"
 
-	var age: int = SaveManager.obtener_edad_usuario_actual()
+	var age: int = 0
+	if _save_manager_listo():
+		age = SaveManager.obtener_edad_usuario_actual()
 	_age_label.text = "Edad: %d" % age if age > 0 else ""
 
 	var summary_text := Global.formatear_progreso_resumen_texto(
 		Global.obtener_progreso_resumen()
 	).strip_edges()
-	var exp_text := "EXP total: %d" % SaveManager.obtener_exp_total()
+	var exp_text := "EXP total: 0"
+	if _save_manager_listo():
+		exp_text = "EXP total: %d" % SaveManager.obtener_exp_total()
 	_progress_label.text = (
 		(summary_text + "\n" + exp_text)
 		if not summary_text.is_empty()
@@ -175,7 +190,7 @@ func refrescar() -> void:
 	if not _syncing:
 		_save_status_label.text = _formatear_estado_con_pendientes()
 
-	var can_resume: bool = SaveManager.puede_reanudar_guardado_actual()
+	var can_resume: bool = _save_manager_listo() and SaveManager.puede_reanudar_guardado_actual()
 	_resume_hint_label.text = (
 		"Continuar partida" if can_resume else "Sin partida activa"
 	)
@@ -200,7 +215,9 @@ func _resolver_nombre_usuario_visible() -> String:
 			online_name = str(online_user.get("username", AuthApi.obtener_usuario())).strip_edges()
 		if not online_name.is_empty():
 			return online_name
-	return SaveManager.obtener_nombre_usuario_actual()
+	if _save_manager_listo():
+		return SaveManager.obtener_nombre_usuario_actual()
+	return ""
 
 
 func _iniciales_desde(full_name: String) -> String:
@@ -221,7 +238,9 @@ func _formatear_estado(state: String) -> String:
 
 
 func _formatear_estado_con_pendientes() -> String:
-	var base: String = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
+	var base: String = "Sin datos"
+	if _save_manager_listo():
+		base = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
 	if not AuthApi.esta_logueado():
 		return base
 	var pending_count: int = LocalSyncQueue.contar_pendientes()

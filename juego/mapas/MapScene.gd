@@ -63,17 +63,21 @@ func _conectar_senales() -> void:
 		map_hud.connect("back_requested", _al_pedir_volver)
 	if map_board != null and map_board.has_signal("node_selected"):
 		map_board.connect("node_selected", al_seleccionar_nodo)
-	if SaveManager != null:
+	if _save_manager_listo():
 		var callback := Callable(self, "_al_cambiar_progreso_guardado")
-		if not SaveManager.progress_loaded.is_connected(callback):
-			SaveManager.progress_loaded.connect(callback)
+		if not SaveManager.is_connected("progress_loaded", callback):
+			SaveManager.connect("progress_loaded", callback)
 
 
 func _exit_tree() -> void:
-	if SaveManager != null:
+	if _save_manager_listo():
 		var callback := Callable(self, "_al_cambiar_progreso_guardado")
-		if SaveManager.progress_loaded.is_connected(callback):
-			SaveManager.progress_loaded.disconnect(callback)
+		if SaveManager.is_connected("progress_loaded", callback):
+			SaveManager.disconnect("progress_loaded", callback)
+
+
+func _save_manager_listo() -> bool:
+	return SaveManager != null and SaveManager.has_method("cargar_datos")
 
 
 func _al_cambiar_progreso_guardado(_profile: Dictionary) -> void:

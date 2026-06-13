@@ -141,6 +141,8 @@ static func _marcar_activity_actual_completada(tree: SceneTree, estado_global: N
 	var save_manager: Node = _obtener_save_manager(tree)
 	if activity_id.is_empty() or save_manager == null:
 		return
+	if not save_manager.has_method("marcar_actividad_completada"):
+		return
 	save_manager.call("marcar_actividad_completada", request_key, activity_id)
 
 
@@ -159,6 +161,8 @@ static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary)
 	var track_key: String = str(partida_actual.get("clave_pista", "")).strip_edges()
 	var save_manager: Node = _obtener_save_manager(tree)
 	if node_key.is_empty() or save_manager == null:
+		return
+	if not save_manager.has_method("guardar_precision_nodo"):
 		return
 	var precision: int = NodoRuntime.calcular_precision(tree)
 	var total_games: int = int(partida_actual.get("total_juegos", 0))

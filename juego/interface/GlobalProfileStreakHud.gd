@@ -84,29 +84,35 @@ func _construir_hud() -> void:
 
 
 func _conectar_senales_save_manager() -> void:
-	if SaveManager == null:
+	if not _save_manager_listo():
 		return
-	if not SaveManager.save_status_changed.is_connected(_on_save_manager_cambiado):
-		SaveManager.save_status_changed.connect(_on_save_manager_cambiado)
-	if not SaveManager.progress_loaded.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.progress_loaded.connect(_on_save_manager_perfil_cambiado)
-	if not SaveManager.progress_saved.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.progress_saved.connect(_on_save_manager_perfil_cambiado)
-	if not SaveManager.user_registered.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.user_registered.connect(_on_save_manager_perfil_cambiado)
+	var sm: Node = SaveManager
+	if not sm.is_connected("save_status_changed", _on_save_manager_cambiado):
+		sm.connect("save_status_changed", _on_save_manager_cambiado)
+	if not sm.is_connected("progress_loaded", _on_save_manager_perfil_cambiado):
+		sm.connect("progress_loaded", _on_save_manager_perfil_cambiado)
+	if not sm.is_connected("progress_saved", _on_save_manager_perfil_cambiado):
+		sm.connect("progress_saved", _on_save_manager_perfil_cambiado)
+	if not sm.is_connected("user_registered", _on_save_manager_perfil_cambiado):
+		sm.connect("user_registered", _on_save_manager_perfil_cambiado)
 
 
 func _desconectar_senales_save_manager() -> void:
-	if SaveManager == null:
+	if not _save_manager_listo():
 		return
-	if SaveManager.save_status_changed.is_connected(_on_save_manager_cambiado):
-		SaveManager.save_status_changed.disconnect(_on_save_manager_cambiado)
-	if SaveManager.progress_loaded.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.progress_loaded.disconnect(_on_save_manager_perfil_cambiado)
-	if SaveManager.progress_saved.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.progress_saved.disconnect(_on_save_manager_perfil_cambiado)
-	if SaveManager.user_registered.is_connected(_on_save_manager_perfil_cambiado):
-		SaveManager.user_registered.disconnect(_on_save_manager_perfil_cambiado)
+	var sm: Node = SaveManager
+	if sm.is_connected("save_status_changed", _on_save_manager_cambiado):
+		sm.disconnect("save_status_changed", _on_save_manager_cambiado)
+	if sm.is_connected("progress_loaded", _on_save_manager_perfil_cambiado):
+		sm.disconnect("progress_loaded", _on_save_manager_perfil_cambiado)
+	if sm.is_connected("progress_saved", _on_save_manager_perfil_cambiado):
+		sm.disconnect("progress_saved", _on_save_manager_perfil_cambiado)
+	if sm.is_connected("user_registered", _on_save_manager_perfil_cambiado):
+		sm.disconnect("user_registered", _on_save_manager_perfil_cambiado)
+
+
+func _save_manager_listo() -> bool:
+	return SaveManager != null and SaveManager.has_method("cargar_datos")
 
 
 func _on_nodo_arbol_agregado(_node: Node) -> void:
@@ -182,7 +188,7 @@ func _on_superposicion_cierre_solicitado() -> void:
 func _on_superposicion_reanudar_presionado() -> void:
 	_profile_button.visible = true
 	_profile_overlay.ocultar_superposicion()
-	if not SaveManager.puede_reanudar_guardado_actual():
+	if not _save_manager_listo() or not SaveManager.puede_reanudar_guardado_actual():
 		return
 	var resume_state := SaveManager.recargar_desde_disco_y_obtener_reanudacion()
 	@warning_ignore("static_called_on_instance")
@@ -190,7 +196,8 @@ func _on_superposicion_reanudar_presionado() -> void:
 
 
 func _on_superposicion_editar_perfil_presionado() -> void:
-	SaveManager.guardar_progreso_en_disco()
+	if _save_manager_listo():
+		SaveManager.guardar_progreso_en_disco()
 	var current_scene_path := _obtener_ruta_escena_actual()
 	if current_scene_path.is_empty():
 		current_scene_path = RESUME_FALLBACK_SCENE
@@ -205,7 +212,8 @@ func _on_superposicion_guardar_presionado() -> void:
 
 func _on_superposicion_reiniciar_presionado() -> void:
 	SyncApi.reintentar_pendientes()
-	SaveManager.reiniciar_todo_progreso()
+	if _save_manager_listo():
+		SaveManager.reiniciar_todo_progreso()
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	@warning_ignore("static_called_on_instance")

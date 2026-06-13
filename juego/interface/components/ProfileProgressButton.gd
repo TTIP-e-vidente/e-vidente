@@ -77,7 +77,7 @@ func _refrescar_textura_avatar() -> void:
 		_avatar_sprite.visible = false
 		return
 	var avatar_texture: Texture2D = null
-	if SaveManager != null:
+	if SaveManager != null and SaveManager.has_method("obtener_textura_avatar_usuario_actual"):
 		avatar_texture = SaveManager.obtener_textura_avatar_usuario_actual()
 	_avatar_sprite.texture = avatar_texture
 	_avatar_sprite.visible = avatar_texture != null

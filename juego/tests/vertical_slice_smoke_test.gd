@@ -159,6 +159,10 @@ func ejecutar_prueba() -> void:
 	var save_manager = root.get_node_or_null("/root/SaveManager")
 	_verificar(global_state != null, "Autoload Global no encontrado")
 	_verificar(save_manager != null, "Autoload SaveManager no encontrado")
+	_verificar(
+		save_manager != null and save_manager.has_method("cargar_datos"),
+		"Autoload SaveManager no cargo su script (falta cargar_datos)"
+	)
 	if failed:
 		finalizar_con_error()
 		return
@@ -307,7 +311,8 @@ func _reset_test_state(global_state, save_manager) -> void:
 	ARMADOR_DE_PARTIDA_SCRIPT.reiniciar_historial_sesion()
 	_preserve_save_files_once()
 	_delete_save_files()
-	save_manager.cargar_datos()
+	if save_manager != null and save_manager.has_method("cargar_datos"):
+		save_manager.cargar_datos()
 	global_state.registrar_actividad_racha("smoke_configurar", {"track_key": "celiaquia"})
 
 
@@ -509,7 +514,10 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 	)
 	if failed:
 		return
-	level_scene.call("continuar_al_siguiente_nodo")
+	if await _esperar_y_cerrar_ensenanza_esc(level_scene):
+		pass
+	else:
+		level_scene.call("continuar_al_siguiente_nodo")
 	# La navegación es diferida (GameSceneRouter + transición).
 	# Esperar hasta que la escena Level sea efectivamente reemplazada para que el
 	# bucle externo no reingrese a _completar_escena_drag sobre la misma escena.
@@ -532,29 +540,15 @@ func _completar_escena_quiz(label: String) -> void:
 	if failed:
 		return
 	question_scene.call("_finalizar_quiz")
-	for unused_frame in range(3):
-		await process_frame
-	if not is_instance_valid(question_scene):
-		return  # quiz ya auto-avanzó al siguiente juego
-	# Con teaching_key, EnsenanzaEsc avanza directo (sin flecha intermedia).
-	if _cerrar_ensenanza_esc_si_visible(question_scene):
-		for _i in 80:
-			await process_frame
-			if not is_instance_valid(question_scene):
-				return
-			if current_scene != null and current_scene.scene_file_path != QUESTION_SCENE:
-				return
-	if not is_instance_valid(question_scene):
-		return
-	var continuar := question_scene.get_node_or_null("Contenido/ContinuarJuego") as Control
-	if continuar != null and continuar.visible:
-		question_scene.call("continuar_al_siguiente_nodo")
-	else:
-		_verificar(
-			false,
-			"%s: quiz deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar." % label
-		)
-	if failed:
+	var avanzo_quiz := await _esperar_avance_tras_cierre(
+		question_scene,
+		QUESTION_SCENE,
+		"Contenido/ContinuarJuego",
+		"continuar_al_siguiente_nodo",
+		label,
+		"quiz deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar."
+	)
+	if failed or not avanzo_quiz:
 		return
 	# La navegación es diferida (GameSceneRouter + transición).
 	# Esperar hasta que la escena quiz sea efectivamente reemplazada para que el
@@ -587,25 +581,15 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 	_verificar(bool(match_scene.get("validado")), "%s: match deberia validar correctamente." % label)
 	if failed:
 		return
-	# Con teaching_key, EnsenanzaEsc finaliza la vinculacion al continuar (sin flecha intermedia).
-	if _cerrar_ensenanza_esc_si_visible(match_scene):
-		for _i in 80:
-			await process_frame
-			if not is_instance_valid(match_scene):
-				return
-			if current_scene != null and current_scene.scene_file_path != VINCULAR_SCENE:
-				return
-	if not is_instance_valid(match_scene):
-		return
-	var continuar_validacion := match_scene.get_node_or_null("ContinuarJuego") as Control
-	if continuar_validacion != null and continuar_validacion.visible:
-		match_scene.call("_al_solicitar_continuar_juego")
-	else:
-		_verificar(
-			false,
-			"%s: match deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar." % label
-		)
-	if failed:
+	var avanzo_match := await _esperar_avance_tras_cierre(
+		match_scene,
+		VINCULAR_SCENE,
+		"ContinuarJuego",
+		"_al_solicitar_continuar_juego",
+		label,
+		"match deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar."
+	)
+	if failed or not avanzo_match:
 		return
 	# La navegación al siguiente juego es diferida (GameSceneRouter + transición).
 	# Esperar hasta que la escena vincular sea efectivamente reemplazada para que el
@@ -777,10 +761,11 @@ func _completar_escena_completar_palabra(label: String) -> void:
 	await create_timer(2.2).timeout
 	if not is_instance_valid(wo_scene):
 		return  # la escena ya avanzó sola — OK
-	# Disparar continuar explícitamente para forzar el avance
-	# (_al_solicitar_continuar_juego tiene su propio guard _continue_requested).
-	if wo_scene.has_method("_al_solicitar_continuar_juego"):
-		wo_scene.call("_al_solicitar_continuar_juego")
+	if not await _esperar_y_cerrar_ensenanza_esc(wo_scene):
+		# Disparar continuar explícitamente para forzar el avance
+		# (_al_solicitar_continuar_juego tiene su propio guard _continue_requested).
+		if wo_scene.has_method("_al_solicitar_continuar_juego"):
+			wo_scene.call("_al_solicitar_continuar_juego")
 	# La navegación es diferida. Esperar hasta que la escena sea efectivamente reemplazada.
 	for _i in 80:
 		await process_frame
@@ -791,14 +776,75 @@ func _completar_escena_completar_palabra(label: String) -> void:
 
 
 func _cerrar_ensenanza_esc_si_visible(scene: Node) -> bool:
-	# Cierra la pantalla EnsenanzaEsc (US-06) emitiendo su señal de continuar.
+	if scene == null or not is_instance_valid(scene):
+		return false
 	var capa := scene.get_node_or_null("CapaEnsenanzaEsc")
 	if capa == null or capa.get_child_count() == 0:
 		return false
 	var ensenanza := capa.get_child(0)
-	if ensenanza != null and ensenanza.has_signal("continuar_presionado"):
+	if ensenanza == null:
+		return false
+	var boton := ensenanza.get_node_or_null("Jugar") as BaseButton
+	if boton != null:
+		boton.emit_signal("pressed")
+		return true
+	if ensenanza.has_signal("continuar_presionado"):
 		ensenanza.emit_signal("continuar_presionado")
 		return true
+	return false
+
+
+func _esperar_y_cerrar_ensenanza_esc(scene: Node, max_frames: int = 120) -> bool:
+	for _i in max_frames:
+		if scene == null or not is_instance_valid(scene):
+			return false
+		if _cerrar_ensenanza_esc_si_visible(scene):
+			for _j in 80:
+				await process_frame
+				if not is_instance_valid(scene):
+					return true
+				if current_scene != null and current_scene.scene_file_path != scene.scene_file_path:
+					return true
+			return true
+		await process_frame
+	return false
+
+
+func _esperar_avance_tras_cierre(
+	scene: Node,
+	scene_path: String,
+	continuar_node_path: String,
+	continuar_method: String,
+	label: String,
+	error_message: String
+) -> bool:
+	for _i in 120:
+		if failed or prueba_finalizada:
+			return false
+		await process_frame
+		if not is_instance_valid(scene):
+			return true
+		if current_scene != null and current_scene.scene_file_path != scene_path:
+			return true
+		if _cerrar_ensenanza_esc_si_visible(scene):
+			for _j in 80:
+				await process_frame
+				if not is_instance_valid(scene):
+					return true
+				if current_scene != null and current_scene.scene_file_path != scene_path:
+					return true
+			return true
+		var continuar := scene.get_node_or_null(continuar_node_path) as Control
+		if continuar != null and continuar.visible and scene.has_method(continuar_method):
+			scene.call(continuar_method)
+			for _j in 80:
+				await process_frame
+				if not is_instance_valid(scene):
+					return true
+				if current_scene != null and current_scene.scene_file_path != scene_path:
+					return true
+			return true
+	_verificar(false, "%s: %s" % [label, error_message])
 	return false
 
 
