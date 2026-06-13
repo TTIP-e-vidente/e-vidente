@@ -569,6 +569,7 @@ func _mostrar_ensenanza_del_nivel() -> void:
 	ItemLevel.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	_ocultar_boton_adelante_anterior()
+	_ocultar_continuacion()
 	_ocultar_ensenanza_textual()
 	if _intentar_mostrar_ensenanza_esc():
 		run_completed.emit()
@@ -960,9 +961,6 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 
 
 func _continuar_flujo_mapa_legacy() -> void:
-	if _ya_continuo:
-		return
-	_ya_continuo = true
 	_ocultar_continuacion()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -1167,15 +1165,22 @@ func _intentar_mostrar_ensenanza_esc() -> bool:
 	return PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		teaching_key,
-		Callable(self, "_despues_ensenanza_esc"),
+		Callable(self, "_continuar_desde_ensenanza_esc"),
 		active_track_key,
 		_nodo_actual,
 		_numero_nivel_valido(active_track_key)
 	)
 
 
+func _continuar_desde_ensenanza_esc() -> void:
+	if not es_partida_completada():
+		return
+	_ya_continuo = false
+	_al_solicitar_continuar()
+
+
 func _despues_ensenanza_esc() -> void:
-	mostrar_continuacion()
+	_continuar_desde_ensenanza_esc()
 
 
 func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:

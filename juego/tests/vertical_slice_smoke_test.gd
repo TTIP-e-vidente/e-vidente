@@ -5,7 +5,7 @@ const GameChapterAssetCatalog := preload(
 )
 const SaveManagerScript := preload("res://interface/SaveManager.gd")
 const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdValidator.gd")
-# Lazy-load en _inicializar para evitar error de autoload al compilar.
+# Lazy-load en _initialize para evitar error de autoload al compilar.
 var VincularConceptosScript = null
 
 const MAP_SCENE := "res://mapas/MapScene.tscn"
@@ -135,7 +135,7 @@ var _save_files_preserved := false
 var _save_file_snapshots: Dictionary = {}
 
 
-func _inicializar() -> void:
+func _initialize() -> void:
 	VincularConceptosScript = load("res://vincular/vincular_conceptos.gd")
 	iniciar_timeout_de_seguridad()
 	call_deferred("ejecutar_prueba")
@@ -536,17 +536,26 @@ func _completar_escena_quiz(label: String) -> void:
 		await process_frame
 	if not is_instance_valid(question_scene):
 		return  # quiz ya auto-avanzó al siguiente juego
-	# Con teaching_key resuelta, el quiz muestra EnsenanzaEsc antes de continuar.
+	# Con teaching_key, EnsenanzaEsc avanza directo (sin flecha intermedia).
 	if _cerrar_ensenanza_esc_si_visible(question_scene):
-		for unused_frame in range(3):
+		for _i in 80:
 			await process_frame
+			if not is_instance_valid(question_scene):
+				return
+			if current_scene != null and current_scene.scene_file_path != QUESTION_SCENE:
+				return
 	if not is_instance_valid(question_scene):
 		return
 	var continuar := question_scene.get_node_or_null("Contenido/ContinuarJuego") as Control
-	_verificar(continuar != null and continuar.visible, "%s: quiz deberia mostrar continuar." % label)
+	if continuar != null and continuar.visible:
+		question_scene.call("continuar_al_siguiente_nodo")
+	else:
+		_verificar(
+			false,
+			"%s: quiz deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar." % label
+		)
 	if failed:
 		return
-	question_scene.call("continuar_al_siguiente_nodo")
 	# La navegación es diferida (GameSceneRouter + transición).
 	# Esperar hasta que la escena quiz sea efectivamente reemplazada para que el
 	# bucle externo no reingrese a _completar_escena_quiz sobre la misma escena.
@@ -578,20 +587,26 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 	_verificar(bool(match_scene.get("validado")), "%s: match deberia validar correctamente." % label)
 	if failed:
 		return
-	# Con teaching_key resuelta, el match muestra EnsenanzaEsc antes de la flecha.
+	# Con teaching_key, EnsenanzaEsc finaliza la vinculacion al continuar (sin flecha intermedia).
 	if _cerrar_ensenanza_esc_si_visible(match_scene):
-		for unused_frame in range(3):
+		for _i in 80:
 			await process_frame
+			if not is_instance_valid(match_scene):
+				return
+			if current_scene != null and current_scene.scene_file_path != VINCULAR_SCENE:
+				return
 	if not is_instance_valid(match_scene):
 		return
 	var continuar_validacion := match_scene.get_node_or_null("ContinuarJuego") as Control
-	_verificar(
-		continuar_validacion != null and continuar_validacion.visible,
-		"%s: match deberia mostrar continuar al validar." % label
-	)
+	if continuar_validacion != null and continuar_validacion.visible:
+		match_scene.call("_al_solicitar_continuar_juego")
+	else:
+		_verificar(
+			false,
+			"%s: match deberia avanzar al cerrar EnsenanzaEsc o mostrar continuar." % label
+		)
 	if failed:
 		return
-	match_scene.call("_al_solicitar_continuar_juego")
 	# La navegación al siguiente juego es diferida (GameSceneRouter + transición).
 	# Esperar hasta que la escena vincular sea efectivamente reemplazada para que el
 	# bucle externo no reingrese a _completar_escena_match sobre la misma escena.

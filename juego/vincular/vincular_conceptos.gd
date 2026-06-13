@@ -1354,12 +1354,12 @@ func _intentar_mostrar_ensenanza_esc() -> bool:
 	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
 	if clave_ensenanza.is_empty():
 		return false
-	# Al continuar vuelve al flujo de validacion pendiente (_mostrar_continuar) para
-	# que el avance siga pasando por _finalizar_vinculacion y guarde progreso.
+	# Continuar en EnsenanzaEsc cierra la ensenanza y finaliza la vinculacion
+	# (guardado + siguiente juego o cierre de nodo), sin volver a la flecha intermedia.
 	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		clave_ensenanza,
-		Callable(self, "_mostrar_continuar"),
+		Callable(self, "_continuar_desde_ensenanza_esc"),
 		clave_pista,
 		_nodo_actual,
 		nivel_id
@@ -1367,6 +1367,12 @@ func _intentar_mostrar_ensenanza_esc() -> bool:
 	if mostrado:
 		print("[Teaching] modo=EnsenanzaEsc key=%s" % clave_ensenanza)
 	return mostrado
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	if not validado or bloqueado:
+		return
+	_on_continuar_presionado()
 
 
 func _hay_siguiente_juego_de_partida() -> bool:

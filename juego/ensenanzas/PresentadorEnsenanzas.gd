@@ -99,9 +99,9 @@ static func mostrar_en_host(
 	host.add_child(capa)
 
 	var escena: Control = ENSENANZA_ESC_SCENE.instantiate()
-	capa.add_child(escena)
 	escena.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	escena.mostrar_ensenanza(ensenanza)
+	capa.add_child(escena)
+	escena.call_deferred("mostrar_ensenanza", ensenanza)
 
 	if escena.has_signal("continuar_presionado"):
 		escena.continuar_presionado.connect(
@@ -109,7 +109,7 @@ static func mostrar_en_host(
 				if is_instance_valid(capa):
 					capa.queue_free()
 				if al_continuar.is_valid():
-					al_continuar.call()
+					al_continuar.call_deferred()
 		)
 	else:
 		capa.queue_free()

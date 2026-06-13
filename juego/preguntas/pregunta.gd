@@ -751,7 +751,7 @@ func _intentar_mostrar_ensenanza_esc(cantidad_preguntas: int) -> bool:
 	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		_teaching_key,
-		Callable(self, "_mostrar_cierre_post_ensenanza").bind(cantidad_preguntas),
+		Callable(self, "_continuar_desde_ensenanza_esc"),
 		track_key,
 		_nodo_actual,
 		nivel_id
@@ -759,6 +759,11 @@ func _intentar_mostrar_ensenanza_esc(cantidad_preguntas: int) -> bool:
 	if mostrado:
 		print("%s modo=EnsenanzaEsc key=%s" % [LOG_PREFIX_TEACHING, _teaching_key])
 	return mostrado
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	ya_continuo = false
+	_al_presionar_continuar()
 
 
 func _mostrar_cierre_post_ensenanza(cantidad_preguntas: int) -> void:

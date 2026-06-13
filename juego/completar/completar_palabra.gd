@@ -497,11 +497,16 @@ func _intentar_mostrar_ensenanza_esc() -> bool:
 	return PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		_teaching_key,
-		Callable(self, "_mostrar_continuacion"),
+		Callable(self, "_continuar_desde_ensenanza_esc"),
 		"celiaquia",
 		"",
 		0
 	)
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	_continue_requested = false
+	_al_solicitar_continuar_juego()
 
 func _registrar_resultado(success: bool) -> void:
 	var global_state: Node = ContextoSesionDeJuegoScript.obtener_global()
