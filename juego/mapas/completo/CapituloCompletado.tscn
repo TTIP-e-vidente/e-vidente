@@ -4,15 +4,16 @@
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_alro2"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
-[ext_resource type="Texture2D" uid="uid://ck1nm7jnsqs30" path="res://assets-sistema/interfaz/pregunta-2.png" id="5_blob"]
+[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="5_alro2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.988235, 0.980392, 0.952941, 0.92)
+bg_color = Color(0.9367016, 0.9367016, 0.93670154, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.2, 0.184314, 0.137255, 0.12)
+border_color = Color(0.3647059, 0.34117648, 0.26666668, 0)
+border_blend = true
 corner_radius_top_left = 28
 corner_radius_top_right = 28
 corner_radius_bottom_right = 28
@@ -98,9 +99,9 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 [node name="MarginContainer" type="MarginContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card" unique_id=1389166970]
 layout_mode = 2
 theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 34
+theme_override_constants/margin_top = 129
 theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 28
+theme_override_constants/margin_bottom = 156
 
 [node name="Content" type="VBoxContainer" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer" unique_id=1838372606]
 layout_mode = 2
@@ -115,7 +116,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_chip")
 
 [node name="Title" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=538231622]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_spray")
 theme_override_font_sizes/font_size = 32
 text = "¡Felicitaciones!"
@@ -123,7 +124,7 @@ horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content" unique_id=1187940992]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.168627, 0.156863, 0.121569, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_spray")
 theme_override_font_sizes/font_size = 27
 text = "Terminaste el mapa de Celiaquía"
@@ -162,7 +163,9 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.956863, 0.945098, 0.909804, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_colors/font_hover_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_regular")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxEmpty_button")
@@ -170,7 +173,6 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Continuar"
-flat = true
 
 [node name="BlobBackground" type="TextureRect" parent="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" unique_id=1161402773]
 show_behind_parent = true
@@ -186,7 +188,7 @@ grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(0.47123045, 0.86391956)
 mouse_filter = 2
-texture = ExtResource("5_blob")
+texture = ExtResource("5_alro2")
 expand_mode = 1
 
 [connection signal="pressed" from="OverlayRoot/MarginContainer/CenterContainer/Card/MarginContainer/Content/ButtonRow/ContinueButton" to="." method="_on_continuar_presionado"]
