@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="1_2gmc3"]
 [ext_resource type="Script" uid="uid://hv4f5op7qb4b" path="res://mapas/finalización_partida.gd" id="1_k2l4b"]
 [ext_resource type="PackedScene" uid="uid://beyesjpejg0a4" path="res://mapas/StatsContainer.tscn" id="2_k2l4b"]
-[ext_resource type="Texture2D" uid="uid://dd5jbc1fkus1w" path="res://assets-sistema/final-leccion/estrellas-felicitacion.png" id="3_j2nsx"]
+[ext_resource type="Texture2D" uid="uid://cmcsgwmxsns4g" path="res://assets-sistema/final-leccion/estrellas-felicitacion.png" id="3_j2nsx"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_uokky"]
 [ext_resource type="Script" uid="uid://bpaq4rpc5y7y4" path="res://mapas/estrellas.gd" id="4_keoei"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_uokky"]
@@ -31,7 +31,7 @@ offset_left = 248.0
 offset_top = 138.0
 offset_right = 928.0
 offset_bottom = 203.0
-theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_uokky")
 theme_override_font_sizes/font_size = 54
 text = "¡LECCIÓN COMPLETA!"
@@ -90,7 +90,7 @@ stream = ExtResource("7_4j0lp")
 [node name="AudioNormal" type="AudioStreamPlayer2D" parent="." unique_id=1587941963]
 stream = ExtResource("8_j2nsx")
 
-[node name="LabelSyncStatus" type="Label" parent="."]
+[node name="LabelSyncStatus" type="Label" parent="." unique_id=85470754]
 offset_left = 376.0
 offset_top = 485.0
 offset_right = 776.0
