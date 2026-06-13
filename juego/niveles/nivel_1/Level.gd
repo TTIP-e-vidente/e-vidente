@@ -31,6 +31,7 @@ const ContentSchemaNormalizerScript := preload(
 )
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
 const CargadorEnsenanzasScript := preload("res://ensenanzas/CargadorEnsenanzas.gd")
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
@@ -569,6 +570,9 @@ func _mostrar_ensenanza_del_nivel() -> void:
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	_ocultar_boton_adelante_anterior()
 	_ocultar_ensenanza_textual()
+	if _intentar_mostrar_ensenanza_esc():
+		run_completed.emit()
+		return
 	_mostrar_ensenanza_de_cierre()
 	mostrar_continuacion()
 	run_completed.emit()
@@ -587,6 +591,9 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 		_establecer_interacciones_jugabilidad_habilitadas(false)
 		_ocultar_boton_adelante_anterior()
 		_ocultar_ensenanza_textual()
+		if _intentar_mostrar_ensenanza_esc():
+			run_completed.emit()
+			return
 		_mostrar_ensenanza_de_cierre()
 		mostrar_continuacion()
 		run_completed.emit()
@@ -704,6 +711,9 @@ func _asegurar_cierre_visible_para_continuacion() -> void:
 
 
 func _esta_visible_ensenanza_de_cierre() -> bool:
+	var capa_ensenanza: Node = get_node_or_null("CapaEnsenanzaEsc")
+	if capa_ensenanza != null and capa_ensenanza.get_child_count() > 0:
+		return true
 	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
 		return true
 	return is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible
@@ -1147,6 +1157,25 @@ func _obtener_texto_ensenanza_desde_json() -> String:
 	if teaching_key.is_empty():
 		return ""
 	return CargadorEnsenanzasScript.resolver_texto_cierre(teaching_key)
+
+
+func _intentar_mostrar_ensenanza_esc() -> bool:
+	var teaching_key: String = _obtener_teaching_key_actual()
+	if teaching_key.is_empty():
+		return false
+	print("%s modo=EnsenanzaEsc key=%s" % [LOG_PREFIX_TEACHING, teaching_key])
+	return PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		teaching_key,
+		Callable(self, "_despues_ensenanza_esc"),
+		active_track_key,
+		_nodo_actual,
+		_numero_nivel_valido(active_track_key)
+	)
+
+
+func _despues_ensenanza_esc() -> void:
+	mostrar_continuacion()
 
 
 func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:

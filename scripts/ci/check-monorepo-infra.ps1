@@ -31,12 +31,12 @@ $repoRoot = Resolve-RepoRoot
 
 $requiredDirectories = @(
     'BACKEND',
-    'BACKEND/src/controllers',
-    'BACKEND/src/services',
-    'BACKEND/src/repositories',
-    'BACKEND/src/models',
+    'BACKEND/src/modules',
     'BACKEND/src/config',
-    'docs-local',
+    'BACKEND/src/shared',
+    'BACKEND/src/modules/auth',
+    'BACKEND/src/modules/health',
+    'BACKEND/src/modules/progreso-restriccion',
     'juego',
     'scripts/ci'
 )
@@ -45,12 +45,8 @@ $requiredFiles = @(
     'BACKEND/docker-compose.yml',
     'BACKEND/.env.example',
     'BACKEND/README.md',
-    'BACKEND/src/controllers/.gitkeep',
-    'BACKEND/src/services/.gitkeep',
-    'BACKEND/src/repositories/.gitkeep',
-    'BACKEND/src/models/.gitkeep',
-    'BACKEND/src/config/.gitkeep',
-    'docs-local/.gitkeep',
+    'BACKEND/src/app.ts',
+    'BACKEND/src/server.ts',
     'juego/project.godot',
     'README.md'
 )

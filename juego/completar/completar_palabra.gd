@@ -11,6 +11,7 @@ const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
 const PostGameFlowControllerScript := preload("res://niveles/progress/PostGameFlowController.gd")
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
@@ -67,6 +68,7 @@ var _typewriter: TypewriterEffect = TypewriterEffect.new()
 var _ruta_escena_de_retorno: String = GameSceneRouter.MAP_SCENE_PATH
 var _continue_requested: bool = false
 var _activity_started_msec: int = 0
+var _teaching_key: String = ""
 
 func _ready() -> void:
 	_activity_started_msec = Time.get_ticks_msec()
@@ -92,6 +94,9 @@ func _ready() -> void:
 			var diff: int = int(challenge_data.get("difficulty", 1))
 			challenge_data = CargadorCompletar.elegir(diff)
 
+		_teaching_key = PresentadorEnsenanzasScript.leer_teaching_key_de_fuentes(
+			[activity, challenge_data]
+		)
 		configurar(challenge_data)
 	else:
 		push_warning(
@@ -480,7 +485,23 @@ func _finalizar(success: bool) -> void:
 	if completed.get_connections().size() > 0:
 		completed.emit(success)
 
+	if success and _intentar_mostrar_ensenanza_esc():
+		return
+
 	_mostrar_continuacion()
+
+
+func _intentar_mostrar_ensenanza_esc() -> bool:
+	if _teaching_key.is_empty():
+		return false
+	return PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		_teaching_key,
+		Callable(self, "_mostrar_continuacion"),
+		"celiaquia",
+		"",
+		0
+	)
 
 func _registrar_resultado(success: bool) -> void:
 	var global_state: Node = ContextoSesionDeJuegoScript.obtener_global()

@@ -7,6 +7,11 @@ const LEGACY_TEACHING_KEY_ALIASES := {
 	"celiaquia_cocina_segura": "ensenanza_contaminacion",
 	"celiaquia_compras": "ensenanza_etiquetas",
 	"celiaquia_salud": "ensenanza_sintomas",
+	"celiaquia_desayuno": "ensenanza_opciones",
+	"celiaquia_colacion": "ensenanza_natural",
+	"celiaquia_merienda": "ensenanza_opciones",
+	"celiaquia_almuerzo": "ensenanza_natural",
+	"celiaquia_cena": "ensenanza_natural",
 }
 
 static var _cache_por_clave: Dictionary = {}

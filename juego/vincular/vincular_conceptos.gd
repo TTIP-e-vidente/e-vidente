@@ -23,6 +23,7 @@ const PresentadorContinuarJuegoScript := preload(
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const ConceptItemScene := preload("res://vincular/concept_item.tscn")
 const LOG_PREFIX_MATCH := "[Match]"
 
@@ -1343,8 +1344,24 @@ func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: D
 
 func _mostrar_cierre_de_vinculacion() -> void:
 	label_pregunta.text = ""
+	if _intentar_mostrar_ensenanza_esc():
+		return
 	_mostrar_asset_de_ensenanza()
 	_mostrar_continuacion()
+
+
+func _intentar_mostrar_ensenanza_esc() -> bool:
+	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
+	if clave_ensenanza.is_empty():
+		return false
+	return PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		clave_ensenanza,
+		Callable(self, "_mostrar_continuacion"),
+		clave_pista,
+		_nodo_actual,
+		nivel_id
+	)
 
 
 func _mostrar_continuacion() -> void:
