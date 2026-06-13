@@ -2,10 +2,9 @@
   'use strict';
 
   var WIKI = 'https://github.com/TTIP-e-vidente/e-vidente/wiki';
-  var GITHACK = 'https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master';
+  var GITHACK = 'https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki';
 
   var VIEWER_PAGES = {
-    'entrega-3-presentacion.html': 'Entrega-3-Presentacion',
     'mer.html': 'Mer-Hub',
     'mer-flujo.html': 'Mer-Flujo',
     'mer-persistencia-e3.html': 'Mer-Persistencia-E3',

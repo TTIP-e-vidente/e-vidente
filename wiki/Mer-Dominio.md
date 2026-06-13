@@ -6,7 +6,7 @@ Diagrama **Excalidraw** original del dominio del juego (jugador, mapa, modalidad
 
 ## Abrir
 
-**[▶ Dominio E1/E2 — pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/mer-dominio.html)**
+**[▶ Dominio E1/E2 — pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-dominio.html?v=3)**
 
 Imagen estática en wiki: ![MER Dominio](Mer.png)
 

@@ -59,7 +59,7 @@ func _verificar_servidor_al_inicio() -> void:
 	var check := await AuthApi.verificar_servidor()
 	_servidor_ok = bool(check.get("ok", false))
 	if _servidor_ok:
-		_establecer_estado(AuthApi.mensaje_servidor_listo())
+		_establecer_estado("")
 		return
 	_establecer_estado(AuthApi.mensaje_error(check.get("result", {}), "Servidor no disponible."))
 
@@ -128,8 +128,6 @@ func _on_boton_cambiar_modo_presionado() -> void:
 	if _is_loading:
 		return
 	_establecer_modo(AuthMode.LOGIN if _mode == AuthMode.REGISTER else AuthMode.REGISTER)
-	if _servidor_ok:
-		_establecer_estado(AuthApi.mensaje_servidor_listo())
 
 
 func _on_boton_jugar_offline_presionado() -> void:

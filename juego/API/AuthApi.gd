@@ -31,11 +31,6 @@ static func verificar_servidor() -> Dictionary:
 static func mensaje_error(result: Dictionary, fallback: String = "") -> String:
 	return AuthErrorFormatter.mensaje_auth(result, fallback)
 
-
-static func mensaje_servidor_listo() -> String:
-	return AuthErrorFormatter.mensaje_servidor_listo()
-
-
 static func iniciar_sesion_completa(usuario_o_mail: String, clave: String) -> Dictionary:
 	var auth := await iniciar_sesion(usuario_o_mail, clave)
 	if not auth.get("ok", false):

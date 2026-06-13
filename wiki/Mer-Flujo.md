@@ -6,9 +6,9 @@ Swimlanes de cómo evolucionó la persistencia: local en E1, sin cambios en E2, 
 
 ## Abrir
 
-**[▶ Flujo — pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/mer-flujo.html)**
+**[▶ Flujo — pantalla completa](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-flujo.html?v=3)**
 
-Sección clave para la defensa: [evolución](https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master/mer-flujo.html#evolucion)
+Sección clave para la defensa: [evolución](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-flujo.html?v=3#evolucion)
 
 ---
 

@@ -1,14 +1,7 @@
 {
   "wikiBase": "https://github.com/TTIP-e-vidente/e-vidente/wiki",
-  "githackBase": "https://raw.githack.com/TTIP-e-vidente/e-vidente.wiki/master",
+  "githackBase": "https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki",
   "views": [
-    {
-      "wikiPage": "Entrega-3-Presentacion",
-      "htmlFile": "Entrega-3-Presentacion.html",
-      "title": "Presentación · Entrega 3",
-      "lead": "Vista para la defensa TTIP: sprint, user stories, guión de 10 minutos.",
-      "cta": "Abrir presentación"
-    },
     {
       "wikiPage": "Mer-Hub",
       "htmlFile": "mer.html",

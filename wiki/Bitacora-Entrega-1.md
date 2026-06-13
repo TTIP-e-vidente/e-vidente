@@ -14,7 +14,7 @@ Más nuevo arriba.
 **Qué se implementó**
 - Merge principal `merge/vinculacion-partidaxnodo` → PR **#23**.
 - Wiki: Entrega-1 (arquitectura, user stories, decisiones, evidencia), MER (`mer.html`), Entregas.md, Como-Empezar, Arquitectura-General.
-- Ajustes CI: Godot install directo, `Inicio.md`, strip co-author en commits.
+- Ajustes CI: Godot install directo, `Home.md`, strip co-author en commits.
 - Refactor de nombres de variables en español (`bc6c09b`).
 
 **Impacto**

@@ -84,7 +84,6 @@ body.canvas-page.canvas-dominio .nav { position: fixed; left: 0; right: 0; top: 
   <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
   <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3</span></a>
   <span class="nav-spacer"></span>
-  <a href="Entrega-3-Presentacion.html" class="nav-cta">Defensa E3</a>
 </nav>
 
 <div id="cv">
@@ -163,9 +162,9 @@ function zoomAt(cx, cy, factor) {
 function fitView() {
   if (!imgW) return;
   const cw = cv.clientWidth, ch = cv.clientHeight;
-  scale = Math.min((cw - 40) / imgW, (ch - 40) / imgH, 1.5);
+  scale = Math.min((cw - 24) / imgW, (ch - 24) / imgH, 2.2);
   ox = (cw - imgW * scale) / 2;
-  oy = Math.max(8, (ch - imgH * scale) / 2);
+  oy = Math.max(6, (ch - imgH * scale) / 2);
   render();
 }
 

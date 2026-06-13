@@ -25,11 +25,6 @@ static func mensaje_auth(result: Dictionary, fallback: String = "") -> String:
 		return fallback
 	return "No se pudo completar la operación (HTTP %d)." % status
 
-
-static func mensaje_servidor_listo() -> String:
-	return "Servidor listo. Podés iniciar sesión o crear una cuenta."
-
-
 static func _mensaje_sin_conexion(
 		result_code: int, server_error: String, phase: String) -> String:
 	if result_code == HTTPRequest.RESULT_CANT_CONNECT:

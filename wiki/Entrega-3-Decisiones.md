@@ -30,4 +30,4 @@ Persistencia, auth, sync, perfil, enseñanzas JSON y calidad automatizada.
 - Validación JSON de contenido en CI.
 - Leaderboard y admin.
 
-Presentación visual de estas decisiones: [Entrega-3-Presentacion](Entrega-3-Presentacion).
+Diagramas interactivos de estas decisiones: [Vistas-Interactivas](Vistas-Interactivas) · [Mer-Flujo](Mer-Flujo) · [Mer-Persistencia-E3](Mer-Persistencia-E3).

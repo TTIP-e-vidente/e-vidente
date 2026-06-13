@@ -74,7 +74,7 @@ El **contenido del juego** — mapa, preguntas, ítems — sigue en `juego/conte
 - Diagrama dual: [Mer-Persistencia-E3](Mer-Persistencia-E3)
 - Mapeo: [MER](MER)
 - Flujo sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)
-- Presentación E3: [Entrega-3-Presentacion](Entrega-3-Presentacion)
+- Diagramas interactivos: [Vistas-Interactivas](Vistas-Interactivas) · [Mer-Hub](Mer-Hub)
 
 ---
 

@@ -1,6 +1,5 @@
 # Entrega 3 — E-VIDENTE
 
-
 ## Qué se agregó o modificó
 
 - **Backend y PostgreSQL** — Docker Compose, migraciones, MER de usuario/perfil/progreso/partidas/racha; endpoints de auth y progreso documentados en `BACKEND/README.md`.
@@ -9,7 +8,6 @@
 - **Perfil** — edición local de datos de usuario, sync de perfil y avatar; overlay de perfil en el HUD del mapa.
 - **Nodo único de partida** — refactor hacia un nodo reutilizable que orquesta modalidades desde JSON del mapa.
 - **Enseñanzas JSON** — diseño de feedback y carga parametrizada desde archivos.
-- **CI y smoke test** — workflow de smoke en PR (Intro → login/offline → selector → mapa → partida).
 - **Tests UX Preguntas** — suite GdUnit4 sobre interfaz visible de la modalidad.
 - **Polish comidas** — borde blanco en sprites de alimentos para mejorar lectura en pantalla.
 
@@ -22,17 +20,17 @@
 
 ## Alcance de Entrega 3
 
-| Bloque | Resultado | Estado |
-|---|---|---|
-| Infra PostgreSQL | Docker, migraciones, MER dual | Listo |
-| Cuenta y sesión | Registro, login, offline | Listo |
-| Sync de progreso | Merge, cola, importador | Listo |
-| CI y smoke | Workflow en PR | Listo |
-| Nodo único de partida | Refactor mapa / JSON | Listo |
-| Enseñanzas JSON | Feedback + carga parametrizada | Listo |
-| Tests UX Preguntas | Suite GdUnit4 interfaz | Listo |
-| Perfil dedicado | Diseño + overlay; escena completa | Listo |
-| Polish comidas | Borde en sprites | Listo |
+| Bloque                | Resultado                         | Estado |
+| --------------------- | --------------------------------- | ------ |
+| Infra PostgreSQL      | Docker, migraciones, MER dual     | Listo  |
+| Cuenta y sesión       | Registro, login, offline          | Listo  |
+| Sync de progreso      | Merge, cola, importador           | Listo  |
+| CI y smoke            | Workflow en PR                    | Listo  |
+| Nodo único de partida | Refactor mapa / JSON              | Listo  |
+| Enseñanzas JSON       | Feedback + carga parametrizada    | Listo  |
+| Tests UX Preguntas    | Suite GdUnit4 interfaz            | Listo  |
+| Perfil dedicado       | Diseño + overlay; escena completa | Listo  |
+| Polish comidas        | Borde en sprites                  | Listo  |
 
 ### Fuera de alcance
 
@@ -44,5 +42,5 @@ Leaderboard, refresh token, admin, mails reales de recuperación, validación JS
 - [Arquitectura](Entrega-3-Arquitectura)
 - [Decisiones](Entrega-3-Decisiones)
 - [Evidencia](Entrega-3-Evidencia)
-- [Presentación](Entrega-3-Presentacion) — vista HTML del sprint (opcional)
+- [Vistas interactivas](Vistas-Interactivas) — diagramas MER y flujo E3
 - [Bitácora E3](Bitacora-Entrega-3)

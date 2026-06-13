@@ -25,7 +25,7 @@ missing=0
 
 required_docs="
 README.md
-wiki/Inicio.md
+wiki/Home.md
 wiki/Como-Empezar.md
 wiki/CI.md
 wiki/Arquitectura-General.md

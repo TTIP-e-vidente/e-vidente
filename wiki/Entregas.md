@@ -43,7 +43,7 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 | [Arquitectura](Entrega-3-Arquitectura) | Backend, sync, auth y CI |
 | [Decisiones](Entrega-3-Decisiones) | ADRs y decisiones tomadas |
 | [Evidencia](Entrega-3-Evidencia) | Evidencia de lo entregado |
-| [Presentación](Entrega-3-Presentacion) | Vista HTML del sprint (opcional) |
+| [Hub MER](Mer-Hub) | Índice visual de diagramas E3 |
 | [Flujo E1→E3](Mer-Flujo) | Evolución de persistencia |
 | [MER persistencia E3](Mer-Persistencia-E3) | Diagrama dual local + PostgreSQL |
 | [Bitácora E3](Bitacora-Entrega-3) | Cambios cronológicos |
