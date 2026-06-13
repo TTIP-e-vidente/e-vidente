@@ -1194,7 +1194,7 @@ func _finalizar_validacion_completa() -> void:
 	if todo_bien:
 		print("[MatchComplete] activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
 		_completar_vinculacion()
-		_mostrar_continuar()
+		_mostrar_cierre_de_vinculacion()
 		_actualizar_visual()
 		return
 
@@ -1347,27 +1347,26 @@ func _mostrar_cierre_de_vinculacion() -> void:
 	if _intentar_mostrar_ensenanza_esc():
 		return
 	_mostrar_asset_de_ensenanza()
-	_mostrar_continuacion()
+	_mostrar_continuar()
 
 
 func _intentar_mostrar_ensenanza_esc() -> bool:
 	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
 	if clave_ensenanza.is_empty():
 		return false
-	return PresentadorEnsenanzasScript.mostrar_en_host(
+	# Al continuar vuelve al flujo de validacion pendiente (_mostrar_continuar) para
+	# que el avance siga pasando por _finalizar_vinculacion y guarde progreso.
+	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		clave_ensenanza,
-		Callable(self, "_mostrar_continuacion"),
+		Callable(self, "_mostrar_continuar"),
 		clave_pista,
 		_nodo_actual,
 		nivel_id
 	)
-
-
-func _mostrar_continuacion() -> void:
-	ya_continuo = false
-	_continuar_juego_es_validacion_pendiente = false
-	PresentadorContinuarJuegoScript.mostrar(_continuar_juego, _hay_siguiente_juego_de_partida(), 5)
+	if mostrado:
+		print("[Teaching] modo=EnsenanzaEsc key=%s" % clave_ensenanza)
+	return mostrado
 
 
 func _hay_siguiente_juego_de_partida() -> bool:
