@@ -4,6 +4,7 @@ class_name QuestionJsonLoader
 const NodeContentLoaderScript := preload("res://sistemas/contenido/NodeContentLoader.gd")
 const ThemePregScript := preload("res://preguntas/theme/theme.gd")
 const PreguntasScript := preload("res://preguntas/recursos/preguntas.gd")
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const ERROR_CONTENIDO_NO_DISPONIBLE := (
 	"No se pudo cargar el contenido del nodo. Revisa su JSON o el recurso fallback."
 )
@@ -19,8 +20,17 @@ static func cargar_resultado_desde_datos_nodo(
 		)
 
 	return _resultado_ok_con_tema(
-		_crear_tema_desde_contenido(datos_nodo.get("content", {}), etiqueta_origen)
+		_crear_tema_desde_contenido(datos_nodo.get("content", {}), etiqueta_origen),
+		_leer_teaching_key_de_datos_nodo(datos_nodo)
 	)
+
+
+static func _leer_teaching_key_de_datos_nodo(datos_nodo: Dictionary) -> String:
+	var fuentes: Array = [datos_nodo]
+	var contenido: Variant = datos_nodo.get("content", {})
+	if contenido is Dictionary:
+		fuentes.append(contenido)
+	return PresentadorEnsenanzasScript.leer_teaching_key_de_fuentes(fuentes)
 
 
 static func cargar_tema_desde_sesion(contexto_sesion: Dictionary) -> Dictionary:
@@ -73,11 +83,12 @@ static func _cargar_fallback_legacy(contexto_sesion: Dictionary) -> Dictionary:
 	return _resultado_ok_con_tema(_crear_tema(pregunta_legacy))
 
 
-static func _resultado_ok_con_tema(tema: ThemePreg) -> Dictionary:
+static func _resultado_ok_con_tema(tema: ThemePreg, teaching_key: String = "") -> Dictionary:
 	return {
 		"ok": true,
 		"data": {
-			"theme": tema
+			"theme": tema,
+			"teaching_key": teaching_key.strip_edges()
 		},
 		"error": ""
 	}
