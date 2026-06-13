@@ -2,7 +2,8 @@
 
 ## Qué cambió respecto a Entrega 2
 
-Entrega 2 cerró con un juego pulido que vivía 100 % en local. Entrega 3 suma una capa **opcional** de backend — Node, PostgreSQL, auth, sync y perfil — sin tocar la regla de oro: **el save local manda**.
+Entrega 2 cerró con un juego pulido que vivía 100 % en local. 
+Entrega 3 suma una capa **opcional** de backend — Node, PostgreSQL, auth, sync y perfil — sin tocar la regla de oro: **el save local manda**.
 
 ---
 
@@ -10,7 +11,8 @@ Entrega 2 cerró con un juego pulido que vivía 100 % en local. Entrega 3 suma u
 
 ### Backend (`BACKEND/`)
 
-API REST con auth y jugador. PostgreSQL con Docker Compose. Migraciones versionadas para usuarios, perfil, progreso y partidas.
+API REST con auth y jugador. PostgreSQL con Docker Compose. 
+Migraciones versionadas para usuarios, perfil, progreso y partidas.
 
 ```
 Godot (SaveManager local)
@@ -22,7 +24,7 @@ PostgreSQL
 
 ### Cliente Godot — capa API
 
-En `juego/API/backend/` están los clientes HTTP, separados del gameplay. `interface/auth.gd` mete login y registro en Intro → Selector sin bloquear el modo offline.
+En `juego/API/backend/` están los clientes HTTP, separados del gameplay. `interface/auth.gd` login y registro en Intro → Selector sin bloquear el modo offline.
 
 ### `ProgressSyncService`
 
@@ -31,7 +33,7 @@ El corazón del sync:
 1. Siempre guarda local primero.
 2. Encola resúmenes si no hay red o sesión.
 3. Migra progreso local al iniciar sesión.
-4. Reintenta en background — las escenas de partida no hablan HTTP directo.
+4. Reintenta en background.
 
 ### CI — smoke del vertical slice
 
@@ -43,7 +45,7 @@ El corazón del sync:
 
 1. Intro → Jugar → Login (o continuar offline).
 2. Selector de restricción → mapa celiaquía.
-3. Partida armada desde JSON (`ArmadorDePartida` / nodo unificado UNQ-170).
+3. Partida armada desde JSON (`ArmadorDePartida`).
 4. Al terminar: `SaveManager` local + sync opcional si hay JWT.
 5. Vuelta al mapa — estado local al instante; remoto si el sync llegó.
 
@@ -78,4 +80,4 @@ El **contenido del juego** — mapa, preguntas, ítems — sigue en `juego/conte
 
 ## Lo que dejamos para después
 
-Leaderboard, refresh token, admin, validador JSON en CI y deploy cloud — planificados, no cerrados en Entrega 3.
+Leaderboard, refresh token, validador JSON en CI y deploy cloud.
