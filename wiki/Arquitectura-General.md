@@ -1,10 +1,10 @@
-﻿.# Arquitectura
+﻿# Arquitectura
 
 Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) · Cambios: [Bitacora](Bitacora.md)
 
 ## Flujo jugador
 
-Splash → menú → elegir restricción → mapa → partida(s) del nodo → guardado (exp, racha).
+Inicio → iniciar sesión o jugar sin conexión → menú → elegir restricción → mapa → partida(s) del nodo → guardado (exp, racha).
 
 ## Dónde tocar qué
 
@@ -22,12 +22,6 @@ Splash → menú → elegir restricción → mapa → partida(s) del nodo → gu
 | Items | `items/*.tres` + `items_celiaquia.json` |
 | Colores | `colours/miPaleta.gd` |
 
-## Racha (regla)
-
-```
-días = (hoy - última_fecha) / 86400
-0 → igual · 1 → +1 · >1 → reinicia a 1
-```
 
 ## Otros docs
 
