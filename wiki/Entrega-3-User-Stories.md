@@ -1,6 +1,6 @@
 # User Stories — Entrega 3
 
-Historias de usuario de la Entrega 3. Epic: [UNQ-8](https://tip-unq.atlassian.net/browse/UNQ-8). Estado de tickets: [Evidencia](Entrega-3-Evidencia#tickets-jira).
+Historias de usuario de la Entrega 3.
 
 ---
 
@@ -26,10 +26,6 @@ Historias de usuario de la Entrega 3. Epic: [UNQ-8](https://tip-unq.atlassian.ne
 
 **Cómo se valida:** `docker compose up` levanta la base; un endpoint o prueba mínima inserta y consulta datos; el DER y las migraciones reflejan usuario, perfil, progreso y partidas; el relevamiento de datos locales está documentado.
 
-### Estado
-
-En revisión (UNQ-161 terminado).
-
 ---
 
 ## US-02 — Crear cuenta e iniciar sesión en el juego
@@ -52,12 +48,6 @@ En revisión (UNQ-161 terminado).
 - UNQ-90 — Implementar registro de usuario
 - UNQ-91 — Implementar login de usuario
 
-**Cómo se valida:** completar registro con datos válidos, rechazar duplicados y credenciales inválidas, iniciar sesión y recuperar sesión; las pantallas respetan el diseño acordado y permiten seguir en modo offline.
-
-### Estado
-
-**Lista para cierre** — UNQ-65, UNQ-171, UNQ-90 y UNQ-91 terminados en Jira (10 jun 2026).
-
 ---
 
 ## US-03 — Sincronizar progreso local con la cuenta en PostgreSQL
@@ -77,12 +67,6 @@ En revisión (UNQ-161 terminado).
 
 - UNQ-160 — Migrar y sincronizar progreso local del jugador con PostgreSQL
 - UNQ-163 — Guardar resumen de partida en PostgreSQL
-
-**Cómo se valida:** jugar offline, iniciar sesión y verificar migración; finalizar partida con sesión activa y confirmar persistencia remota; simular caída del backend y verificar cola local + reintento.
-
-### Estado
-
-En revisión.
 
 ---
 
@@ -104,12 +88,6 @@ En revisión.
 - UNQ-107 — Diseñar pantalla de perfil de usuario
 - UNQ-27 — Implementar escena de perfil de usuario
 
-**Cómo se valida:** navegar al perfil desde el flujo principal, verificar layout y métricas, volver al mapa con la acción de continuar; la escena deja de depender exclusivamente de un modal.
-
-### Estado
-
-En curso — UNQ-107 (diseño) terminado; UNQ-27 (implementación) en progreso.
-
 ---
 
 ## US-05 — Unificar partidas del mapa en un nodo reutilizable
@@ -127,12 +105,6 @@ En curso — UNQ-107 (diseño) terminado; UNQ-27 (implementación) en progreso.
 ### Tickets relacionados
 
 - UNQ-170 — Implementar Partidas como un Nodo único que admita muchas modalidades de juego
-
-**Cómo se valida:** recorrer partidas del mapa con distintas combinaciones de modalidades; verificar que el layout y el flujo de partida se mantienen tras la unificación.
-
-### Estado
-
-En revisión.
 
 ---
 
@@ -152,12 +124,6 @@ En revisión.
 
 - UNQ-167 — Diseñar feedback enseñanzas
 - UNQ-168 — Implementar feedback enseñanzas mediante JSON
-
-**Cómo se valida:** cargar enseñanzas desde JSON en runtime, agregar una entrada nueva solo editando contenido, verificar que el feedback diseñado se integra con la lógica actual.
-
-### Estado
-
-En curso — UNQ-167 (diseño) terminado; UNQ-168 en progreso.
 
 ---
 
@@ -179,10 +145,6 @@ En curso — UNQ-167 (diseño) terminado; UNQ-168 en progreso.
 
 **Cómo se valida:** ejecutar `test_modalidad_preguntas_ux_ui.gd` (o suite equivalente) con 0 failures; el test cubre carga → interacción → feedback → continuidad sin validar balance pedagógico profundo.
 
-### Estado
-
-En curso.
-
 ---
 
 ## US-08 — Mejorar la lectura visual de los alimentos en pantalla
@@ -196,23 +158,14 @@ En curso.
 - Dado que el jugador ve comidas en una actividad, cuando se renderizan los sprites, entonces tienen un contorno que las separa del fondo.
 - Dado distintas resoluciones y escenas con alimentos, cuando se muestran los assets, entonces el tratamiento visual es coherente con el estilo del juego.
 
-### Tickets relacionados
-
-- UNQ-166 — Generar un borde blanco en las comidas para mejor percepción
-
-**Cómo se valida:** recorrido visual por modalidades con comidas (arrastre, catálogo, etc.) verificando contorno visible y consistencia gráfica.
-
-### Estado
-
-Terminada.
-
 ---
 
 ## Resumen de lo que hicimos en el sprint
 
 ### Infraestructura y persistencia
 
-Levantamos PostgreSQL con Docker, validamos la conexión y modelamos las entidades del jugador. Relevamos qué datos locales migrar primero: perfil, puntaje, EXP, partidas, nodos, racha, desbloqueos.
+Levantamos PostgreSQL con Docker, validamos la conexión y modelamos las entidades del jugador. 
+Relevamos qué datos locales migrar primero: perfil, puntaje, EXP, partidas, nodos, racha, desbloqueos.
 
 ### Cuenta y sesión
 
@@ -224,26 +177,21 @@ Al loguearse migra el save local. Al terminar una partida guarda el resumen remo
 
 ### Mapa y contenido
 
-Avanzamos el nodo único de partida con modalidades por JSON (UNQ-170).
+Avanzamos el nodo único de partida con modalidades por JSON.
 
 ### Calidad y educación
 
-Enseñanzas hacia JSON, feedback visual diseñado, tests UX/UI para Preguntas en marcha. Comidas con borde blanco cerrado (UNQ-166).
+Enseñanzas hacia JSON, feedback visual diseñado, tests UX/UI para Preguntas en marcha. Comidas con borde blanco cerrado.
 
-### Qué falta cerrar
-
-Tickets en **Revisión** (infra, sync, nodo único), escena de perfil (UNQ-27), enseñanzas JSON (UNQ-168) y test UX Preguntas (UNQ-172).
-
-Tabla ticket ↔ Jira: **[Evidencia](Entrega-3-Evidencia#tickets-jira-del-sprint)**.
 
 ---
 
 ## Decisiones tomadas durante la iteración
 
-- **Agrupar 17 tickets del sprint en 8 user stories** — mantiene la misma lógica de bloques coherentes que Entrega 1 y 2.
 - **Save local primero, sync después** — el juego nunca depende del backend para jugar; la cuenta suma persistencia remota.
 - **Backend opcional en demo** — registro, login y sync funcionan cuando el API está levantado; offline sigue siendo válido.
+- **Desacople enseñanzas a JSON** - Se continua con el desacople de partes del juego para que sea mayormente escalable. 
 - **Separar diseño (DESING) de implementación (Historia/Tarea)** — login, registro, perfil y feedback educativo siguen el mismo patrón que entregas anteriores.
-- **Tests de UX/UI acotados a interfaz** — UNQ-172 valida flujo visible, no balance ni reglas pedagógicas profundas.
+- **Tests de UX/UI acotados a interfaz** — valida flujo visible, no balance ni reglas pedagógicas profundas.
 
 ---
