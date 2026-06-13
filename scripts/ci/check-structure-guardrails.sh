@@ -59,7 +59,7 @@ juego/project.godot
 juego/interface/evidente.tscn
 juego/niveles/intro.tscn
 juego/niveles/selector.tscn
-juego/interface/archivero.tscn
+juego/interface/auth.tscn
 juego/interface/libro.tscn
 juego/niveles/nivel_1/Level.tscn
 juego/tests/vertical_slice_smoke_test.gd

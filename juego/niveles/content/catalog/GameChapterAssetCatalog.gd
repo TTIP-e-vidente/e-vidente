@@ -1,6 +1,7 @@
 extends RefCounted
 
 const GameTrackCatalog := preload("res://niveles/GameTrackCatalog.gd")
+const CargadorEnsenanzasScript := preload("res://ensenanzas/CargadorEnsenanzas.gd")
 const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
 
 const MEAL_TEXTURE_PATHS := {
@@ -157,7 +158,10 @@ static func _resolver_ruta_ensenanza(teaching_ref: String) -> String:
 	var clean_ref: String = teaching_ref.strip_edges()
 	if clean_ref.is_empty():
 		return ""
-	if clean_ref.begins_with("res://assets-sistema/ensenanza/"):
+	var json_path: String = CargadorEnsenanzasScript.resolver_ruta_imagen(clean_ref)
+	if not json_path.is_empty() and _teaching_asset_exists(json_path):
+		return json_path
+	if clean_ref.begins_with("res://"):
 		return clean_ref if _teaching_asset_exists(clean_ref) else ""
 	var normalizado_ref: String = clean_ref.to_lower()
 	var mapped_path: String = str(TEACHING_KEY_TO_ASSET.get(normalizado_ref, "")).strip_edges()

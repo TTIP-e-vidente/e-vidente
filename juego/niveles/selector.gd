@@ -206,17 +206,17 @@ func _exit_tree() -> void:
 
 
 func _conectar_senales_guardado() -> void:
-	if SaveManager == null:
+	if SaveManager == null or not SaveManager.has_method("cargar_datos"):
 		return
-	if not SaveManager.progress_loaded.is_connected(_al_actualizar_racha):
-		SaveManager.progress_loaded.connect(_al_actualizar_racha)
+	if not SaveManager.is_connected("progress_loaded", _al_actualizar_racha):
+		SaveManager.connect("progress_loaded", _al_actualizar_racha)
 
 
 func _desconectar_senales_guardado() -> void:
-	if SaveManager == null:
+	if SaveManager == null or not SaveManager.has_method("cargar_datos"):
 		return
-	if SaveManager.progress_loaded.is_connected(_al_actualizar_racha):
-		SaveManager.progress_loaded.disconnect(_al_actualizar_racha)
+	if SaveManager.is_connected("progress_loaded", _al_actualizar_racha):
+		SaveManager.disconnect("progress_loaded", _al_actualizar_racha)
 
 
 func _al_actualizar_racha(_profile: Dictionary) -> void:

@@ -30,6 +30,8 @@ const ContentSchemaNormalizerScript := preload(
 	"res://sistemas/contenido/ContentSchemaNormalizer.gd"
 )
 const DificultadArrastreScript := preload("res://niveles/nivel_1/DificultadArrastre.gd")
+const CargadorEnsenanzasScript := preload("res://ensenanzas/CargadorEnsenanzas.gd")
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const GameStreakTrackerScript      := preload(
 	"res://niveles/progress/GameStreakTracker.gd"
 )
@@ -117,6 +119,7 @@ var _usa_flujo_mapa := false
 var _pertenece_a_partida_de_nodo := false
 var _nodo_actual := ""
 var _json_path_nodo_actual := ""
+var _teaching_key_runtime := ""
 var _ruta_escena_retorno := ""
 var _track_key_contexto := ""
 var _arrastre_tuvo_error := false
@@ -230,6 +233,7 @@ func _reiniciar_contexto_jugable_del_nivel() -> void:
 	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
 	_json_path_nodo_actual = ""
+	_teaching_key_runtime = ""
 	_track_key_contexto = ""
 	_ruta_escena_retorno = MAP_SCENE_PATH
 
@@ -408,6 +412,8 @@ func _iniciar_runtime_de_arrastre_desde_datos(contenido_arrastre: Dictionary) ->
 		push_warning("ManagerLevel no soporta iniciar desde JSON; usando flujo legacy.")
 		return false
 
+	_teaching_key_runtime = _leer_teaching_key_de_diccionario(contenido_arrastre)
+
 	var inicio_arrastre_ok: bool = bool(
 		manager_level.iniciar_desde_datos_de_arrastre(active_track_key, contenido_arrastre, self)
 	)
@@ -563,7 +569,11 @@ func _mostrar_ensenanza_del_nivel() -> void:
 	ItemLevel.is_dragging = null
 	_establecer_interacciones_jugabilidad_habilitadas(false)
 	_ocultar_boton_adelante_anterior()
+	_ocultar_continuacion()
 	_ocultar_ensenanza_textual()
+	if _intentar_mostrar_ensenanza_esc():
+		run_completed.emit()
+		return
 	_mostrar_ensenanza_de_cierre()
 	mostrar_continuacion()
 	run_completed.emit()
@@ -582,6 +592,9 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 		_establecer_interacciones_jugabilidad_habilitadas(false)
 		_ocultar_boton_adelante_anterior()
 		_ocultar_ensenanza_textual()
+		if _intentar_mostrar_ensenanza_esc():
+			run_completed.emit()
+			return
 		_mostrar_ensenanza_de_cierre()
 		mostrar_continuacion()
 		run_completed.emit()
@@ -699,6 +712,9 @@ func _asegurar_cierre_visible_para_continuacion() -> void:
 
 
 func _esta_visible_ensenanza_de_cierre() -> bool:
+	var capa_ensenanza: Node = get_node_or_null("CapaEnsenanzaEsc")
+	if capa_ensenanza != null and capa_ensenanza.get_child_count() > 0:
+		return true
 	if is_instance_valid(teaching_sprite) and teaching_sprite.visible:
 		return true
 	return is_instance_valid(tarjeta_ensenanza_cierre) and tarjeta_ensenanza_cierre.visible
@@ -945,9 +961,6 @@ func _mostrar_guardar_retroalimentacion(title: String, message: String, success:
 
 
 func _continuar_flujo_mapa_legacy() -> void:
-	if _ya_continuo:
-		return
-	_ya_continuo = true
 	_ocultar_continuacion()
 	PostGameFlowControllerScript.navigate_to_return_target(
 		get_tree(),
@@ -1131,7 +1144,43 @@ func _mostrar_ensenanza_de_cierre() -> void:
 		print("%s fallback=false" % LOG_PREFIX_TEACHING_ASSET)
 		return
 	print("%s fallback=true" % LOG_PREFIX_TEACHING_ASSET)
-	_mostrar_ensenanza_textual(TEACHING_FALLBACK_TEXT)
+	var texto_cierre: String = _obtener_texto_ensenanza_desde_json()
+	if texto_cierre.is_empty():
+		texto_cierre = TEACHING_FALLBACK_TEXT
+	_mostrar_ensenanza_textual(texto_cierre)
+
+
+func _obtener_texto_ensenanza_desde_json() -> String:
+	var teaching_key: String = _obtener_teaching_key_actual()
+	if teaching_key.is_empty():
+		return ""
+	return CargadorEnsenanzasScript.resolver_texto_cierre(teaching_key)
+
+
+func _intentar_mostrar_ensenanza_esc() -> bool:
+	var teaching_key: String = _obtener_teaching_key_actual()
+	if teaching_key.is_empty():
+		return false
+	print("%s modo=EnsenanzaEsc key=%s" % [LOG_PREFIX_TEACHING, teaching_key])
+	return PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		teaching_key,
+		Callable(self, "_continuar_desde_ensenanza_esc"),
+		active_track_key,
+		_nodo_actual,
+		_numero_nivel_valido(active_track_key)
+	)
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	if not es_partida_completada():
+		return
+	_ya_continuo = false
+	_al_solicitar_continuar()
+
+
+func _despues_ensenanza_esc() -> void:
+	_continuar_desde_ensenanza_esc()
 
 
 func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
@@ -1154,6 +1203,8 @@ func _log_arrastre_cargado(datos_arrastre: Dictionary) -> void:
 
 
 func _obtener_teaching_key_actual() -> String:
+	if not _teaching_key_runtime.is_empty():
+		return _teaching_key_runtime
 	var contenido: Variant = _datos_nodo_mapa.get("content", {})
 	if contenido is Dictionary:
 		var content_teaching_key: String = _leer_teaching_key_de_diccionario(contenido as Dictionary)

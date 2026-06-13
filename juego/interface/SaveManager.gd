@@ -824,8 +824,9 @@ func _actualizar_avatar_perfil(profile: Dictionary, avatar_source_path: String) 
 
 
 func _resolver_clave_avatar(profile: Dictionary) -> String:
-	if BackendSession != null and BackendSession.esta_logueado():
-		var online_username := BackendSession.obtener_usuario().strip_edges()
+	var backend_session := get_node_or_null("/root/BackendSession") if is_inside_tree() else null
+	if backend_session != null and backend_session.esta_logueado():
+		var online_username := str(backend_session.obtener_usuario()).strip_edges()
 		if not online_username.is_empty():
 			return online_username
 	var linked := obtener_cuenta_online_vinculada()

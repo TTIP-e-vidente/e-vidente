@@ -20,6 +20,7 @@ const ContinuidadDePartidaDeNodoScript := preload(
 const NodoRuntimeScript := preload("res://sistemas/NodoRuntime.gd")
 const QuestionJsonLoaderScript := preload("res://preguntas/QuestionJsonLoader.gd")
 const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const PresentadorContinuarJuegoScript := preload(
 	"res://interface/components/ContinuarJuego/PresentadorContinuarJuego.gd"
 )
@@ -28,6 +29,7 @@ const DEFAULT_RETURN_SCENE := "res://mapas/MapScene.tscn"
 const CORRECT_ANSWER_SOUND_PATH := "res://assets-sistema/sonidos/bonus-points-190035.mp3"
 const LOG_PREFIX_QUIZ := "[Quiz]"
 const LOG_PREFIX_QUIZ_LAYOUT := "[QuizLayout]"
+const LOG_PREFIX_TEACHING := "[Teaching]"
 
 const GAME_OVER_DEFAULT_FONT_SIZE := 81
 const CONTENT_ERROR_TITLE_FONT_SIZE := 42
@@ -77,6 +79,7 @@ var bloqueado: bool = false
 var ya_continuo: bool = false
 
 var _nodo_actual: String = ""
+var _teaching_key: String = ""
 var _tiene_sesion_de_mapa: bool = false
 var _pertenece_a_partida_de_nodo: bool = false
 var _ruta_escena_de_retorno: String = DEFAULT_RETURN_SCENE
@@ -282,12 +285,16 @@ func configurar_quiz_desde_sesion() -> void:
 		)
 		return
 	quiz = resultado_quiz.get("data", {}).get("theme") as ThemePreg
+	_teaching_key = str(
+		resultado_quiz.get("data", {}).get("teaching_key", "")
+	).strip_edges()
 
 
 func _reiniciar_sesion_nodo() -> void:
 	_tiene_sesion_de_mapa = false
 	_pertenece_a_partida_de_nodo = false
 	_nodo_actual = ""
+	_teaching_key = ""
 	_ruta_escena_de_retorno = DEFAULT_RETURN_SCENE
 	_post_game_streak_feedback = {}
 	_post_game_flow_state = {}
@@ -733,6 +740,33 @@ func _mostrar_cierre_del_quiz(cantidad_preguntas: int) -> void:
 	for boton_respuesta in botones:
 		boton_respuesta.disabled = true
 
+	if _intentar_mostrar_ensenanza_esc(cantidad_preguntas):
+		return
+	_mostrar_cierre_post_ensenanza(cantidad_preguntas)
+
+
+func _intentar_mostrar_ensenanza_esc(cantidad_preguntas: int) -> bool:
+	if _teaching_key.is_empty():
+		return false
+	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		_teaching_key,
+		Callable(self, "_continuar_desde_ensenanza_esc"),
+		track_key,
+		_nodo_actual,
+		nivel_id
+	)
+	if mostrado:
+		print("%s modo=EnsenanzaEsc key=%s" % [LOG_PREFIX_TEACHING, _teaching_key])
+	return mostrado
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	ya_continuo = false
+	_al_presionar_continuar()
+
+
+func _mostrar_cierre_post_ensenanza(cantidad_preguntas: int) -> void:
 	if _debe_mostrar_continuar_de_partida_de_nodo():
 		_ocultar_resultado_final_de_pregunta()
 		_mostrar_continuacion_automatica(_debe_abrir_siguiente_juego_de_partida())

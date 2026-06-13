@@ -37,30 +37,36 @@ func _exit_tree() -> void:
 	_desconectar_senales_guardado()
 
 
+func _save_manager_listo() -> bool:
+	return SaveManager != null and SaveManager.has_method("cargar_datos")
+
+
 func _conectar_senales_guardado() -> void:
-	if SaveManager == null:
+	if not _save_manager_listo():
 		return
-	if not SaveManager.save_status_changed.is_connected(_al_cambiar_estado_guardado):
-		SaveManager.save_status_changed.connect(_al_cambiar_estado_guardado)
-	if not SaveManager.progress_loaded.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.progress_loaded.connect(_al_cambiar_perfil_guardado)
-	if not SaveManager.progress_saved.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.progress_saved.connect(_al_cambiar_perfil_guardado)
-	if not SaveManager.user_registered.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.user_registered.connect(_al_cambiar_perfil_guardado)
+	var sm: Node = SaveManager
+	if not sm.is_connected("save_status_changed", _al_cambiar_estado_guardado):
+		sm.connect("save_status_changed", _al_cambiar_estado_guardado)
+	if not sm.is_connected("progress_loaded", _al_cambiar_perfil_guardado):
+		sm.connect("progress_loaded", _al_cambiar_perfil_guardado)
+	if not sm.is_connected("progress_saved", _al_cambiar_perfil_guardado):
+		sm.connect("progress_saved", _al_cambiar_perfil_guardado)
+	if not sm.is_connected("user_registered", _al_cambiar_perfil_guardado):
+		sm.connect("user_registered", _al_cambiar_perfil_guardado)
 
 
 func _desconectar_senales_guardado() -> void:
-	if SaveManager == null:
+	if not _save_manager_listo():
 		return
-	if SaveManager.save_status_changed.is_connected(_al_cambiar_estado_guardado):
-		SaveManager.save_status_changed.disconnect(_al_cambiar_estado_guardado)
-	if SaveManager.progress_loaded.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.progress_loaded.disconnect(_al_cambiar_perfil_guardado)
-	if SaveManager.progress_saved.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.progress_saved.disconnect(_al_cambiar_perfil_guardado)
-	if SaveManager.user_registered.is_connected(_al_cambiar_perfil_guardado):
-		SaveManager.user_registered.disconnect(_al_cambiar_perfil_guardado)
+	var sm: Node = SaveManager
+	if sm.is_connected("save_status_changed", _al_cambiar_estado_guardado):
+		sm.disconnect("save_status_changed", _al_cambiar_estado_guardado)
+	if sm.is_connected("progress_loaded", _al_cambiar_perfil_guardado):
+		sm.disconnect("progress_loaded", _al_cambiar_perfil_guardado)
+	if sm.is_connected("progress_saved", _al_cambiar_perfil_guardado):
+		sm.disconnect("progress_saved", _al_cambiar_perfil_guardado)
+	if sm.is_connected("user_registered", _al_cambiar_perfil_guardado):
+		sm.disconnect("user_registered", _al_cambiar_perfil_guardado)
 
 
 func _actualizar_hud() -> void:
@@ -103,14 +109,15 @@ func _on_superposicion_cerrar_solicitado() -> void:
 
 func _on_superposicion_reanudar_presionado() -> void:
 	_ocultar_superposicion_perfil()
-	if not SaveManager.puede_reanudar_guardado_actual():
+	if not _save_manager_listo() or not SaveManager.puede_reanudar_guardado_actual():
 		return
 	var estado_reanudacion: Dictionary = SaveManager.recargar_desde_disco_y_obtener_reanudacion()
 	GameSceneRouter.ir_a_reanudar(get_tree(), estado_reanudacion, _obtener_ruta_escena_retorno())
 
 
 func _on_superposicion_edit_perfil_presionado() -> void:
-	SaveManager.guardar_progreso_en_disco()
+	if _save_manager_listo():
+		SaveManager.guardar_progreso_en_disco()
 	get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, _obtener_ruta_escena_retorno())
 	GameSceneRouter.go_to_profile_editor(get_tree())
 
@@ -127,7 +134,8 @@ func _on_superposicion_logout_presionado() -> void:
 
 func _on_superposicion_reiniciar_presionado() -> void:
 	SyncApi.reintentar_pendientes()
-	SaveManager.reiniciar_todo_progreso()
+	if _save_manager_listo():
+		SaveManager.reiniciar_todo_progreso()
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 
@@ -144,7 +152,7 @@ func _actualizar_bloque_exp_mapa() -> void:
 	if not is_instance_valid(_map_exp_numero):
 		return
 	var total_exp: int = 0
-	if SaveManager != null:
+	if _save_manager_listo():
 		total_exp = SaveManager.obtener_exp_total()
 	_map_exp_numero.text = str(total_exp)
 

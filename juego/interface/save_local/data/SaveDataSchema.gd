@@ -16,7 +16,7 @@ extends RefCounted
 const SAVE_VERSION := 4
 const DEFAULT_PROFILE_NAME := "Perfil local"
 const HISTORY_LIMIT := 25
-const ARCHIVERO_SCENE := "res://interface/archivero.tscn"
+const ARCHIVERO_SCENE := "res://niveles/selector.tscn"
 
 
 func datos_guardado_predeterminados() -> Dictionary:

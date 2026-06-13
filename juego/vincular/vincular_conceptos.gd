@@ -23,6 +23,7 @@ const PresentadorContinuarJuegoScript := preload(
 const GameChapterAssetCatalogScript := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
+const PresentadorEnsenanzasScript := preload("res://ensenanzas/PresentadorEnsenanzas.gd")
 const ConceptItemScene := preload("res://vincular/concept_item.tscn")
 const LOG_PREFIX_MATCH := "[Match]"
 
@@ -1193,7 +1194,7 @@ func _finalizar_validacion_completa() -> void:
 	if todo_bien:
 		print("[MatchComplete] activity=", str(_datos_de_ejecucion.get("id", _nodo_actual)))
 		_completar_vinculacion()
-		_mostrar_continuar()
+		_mostrar_cierre_de_vinculacion()
 		_actualizar_visual()
 		return
 
@@ -1343,14 +1344,35 @@ func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: D
 
 func _mostrar_cierre_de_vinculacion() -> void:
 	label_pregunta.text = ""
+	if _intentar_mostrar_ensenanza_esc():
+		return
 	_mostrar_asset_de_ensenanza()
-	_mostrar_continuacion()
+	_mostrar_continuar()
 
 
-func _mostrar_continuacion() -> void:
-	ya_continuo = false
-	_continuar_juego_es_validacion_pendiente = false
-	PresentadorContinuarJuegoScript.mostrar(_continuar_juego, _hay_siguiente_juego_de_partida(), 5)
+func _intentar_mostrar_ensenanza_esc() -> bool:
+	var clave_ensenanza: String = str(_datos_de_ejecucion.get("teaching_key", "")).strip_edges()
+	if clave_ensenanza.is_empty():
+		return false
+	# Continuar en EnsenanzaEsc cierra la ensenanza y finaliza la vinculacion
+	# (guardado + siguiente juego o cierre de nodo), sin volver a la flecha intermedia.
+	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(
+		self,
+		clave_ensenanza,
+		Callable(self, "_continuar_desde_ensenanza_esc"),
+		clave_pista,
+		_nodo_actual,
+		nivel_id
+	)
+	if mostrado:
+		print("[Teaching] modo=EnsenanzaEsc key=%s" % clave_ensenanza)
+	return mostrado
+
+
+func _continuar_desde_ensenanza_esc() -> void:
+	if not validado or bloqueado:
+		return
+	_on_continuar_presionado()
 
 
 func _hay_siguiente_juego_de_partida() -> bool:
