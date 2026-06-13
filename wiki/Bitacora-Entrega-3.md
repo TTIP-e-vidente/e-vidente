@@ -1,9 +1,4 @@
 # Bitácora — Entrega 3
-
-[← Índice](Bitacora) · Resumen TTIP: [Entrega-3](Entrega-3) · Estado: [ESTADO-ACTUAL](../ESTADO-ACTUAL.md)
-
-Infraestructura, sync, mapa escalable, CI y documentación. **En curso.** Más nuevo arriba.
-
 ---
 
 ### `2026-06-02` — Backend, sincronización de progreso y guardrails de CI
@@ -15,7 +10,6 @@ Se conectó el juego con una primera capa de backend para que el progreso pueda 
 - Backend con migraciones, autenticación, recuperación de contraseña y endpoints de jugador/progreso.
 - Cliente Godot para iniciar sesión, restaurar sesión, consultar perfil y sincronizar partidas.
 - Cola local de sincronización para conservar resúmenes cuando no hay conexión.
-- Flujo de Login desde "Jugar", con opción clara para continuar offline.
 - Ajuste del smoke test para cubrir el flujo real `Intro → Login → jugar offline → Selector`.
 - Guardrails de CI para validar estructura mínima del monorepo y documentación del PR.
 
@@ -48,7 +42,7 @@ Se ordenó la validación automática del proyecto para que cada PR revise dos c
 - `Technical Health` — guardrails de estructura y lint condicional.
 - `Gameplay Smoke` — flujo mínimo jugable con import headless y logs.
 
-**Impacto para el equipo**
+**Impacto**
 - Detecta temprano roturas visibles de navegación.
 - Evita merges sin documentación mínima.
 - Mantiene un control liviano para iterar rápido sin perder calidad.
@@ -58,11 +52,3 @@ Se ordenó la validación automática del proyecto para que cada PR revise dos c
 - `.github/workflows/docs-pr.yml`, `ci.yml`, `gameplay-smoke-pr.yml`
 - `juego/tests/vertical_slice_smoke_test.gd`
 - `scripts/run-godot-validation.sh`, `scripts/run-godot-validation.ps1`
-
----
-
-### Pendiente / en curso
-
-- Validación JSON de contenido en CI.
-- UX clara de estado de sync (local / pendiente / sincronizado).
-- *(Sumar acá cada entrada nueva con fecha.)*
