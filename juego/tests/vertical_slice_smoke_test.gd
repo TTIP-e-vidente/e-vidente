@@ -495,8 +495,10 @@ func _completar_escena_drag(result: Dictionary, label: String) -> void:
 	)
 	var teaching_sprite := level_scene.get_node_or_null("Ensenanza") as Sprite2D
 	var teaching_text_layer := level_scene.get_node_or_null("TarjetaEnsenanzaCierre") as Control
+	var capa_ensenanza_esc := level_scene.get_node_or_null("CapaEnsenanzaEsc")
 	var teaching_seen := (
-		(teaching_sprite != null and teaching_sprite.visible)
+		(capa_ensenanza_esc != null and capa_ensenanza_esc.get_child_count() > 0)
+		or (teaching_sprite != null and teaching_sprite.visible)
 		or (teaching_text_layer != null and teaching_text_layer.visible)
 	)
 	result["teaching_seen"] = bool(result.get("teaching_seen", false)) or teaching_seen
@@ -534,6 +536,12 @@ func _completar_escena_quiz(label: String) -> void:
 		await process_frame
 	if not is_instance_valid(question_scene):
 		return  # quiz ya auto-avanzó al siguiente juego
+	# Con teaching_key resuelta, el quiz muestra EnsenanzaEsc antes de continuar.
+	if _cerrar_ensenanza_esc_si_visible(question_scene):
+		for unused_frame in range(3):
+			await process_frame
+	if not is_instance_valid(question_scene):
+		return
 	var continuar := question_scene.get_node_or_null("Contenido/ContinuarJuego") as Control
 	_verificar(continuar != null and continuar.visible, "%s: quiz deberia mostrar continuar." % label)
 	if failed:
@@ -569,6 +577,12 @@ func _completar_escena_match(result: Dictionary, label: String) -> void:
 		await process_frame
 	_verificar(bool(match_scene.get("validado")), "%s: match deberia validar correctamente." % label)
 	if failed:
+		return
+	# Con teaching_key resuelta, el match muestra EnsenanzaEsc antes de la flecha.
+	if _cerrar_ensenanza_esc_si_visible(match_scene):
+		for unused_frame in range(3):
+			await process_frame
+	if not is_instance_valid(match_scene):
 		return
 	var continuar_validacion := match_scene.get_node_or_null("ContinuarJuego") as Control
 	_verificar(
@@ -759,6 +773,18 @@ func _completar_escena_completar_palabra(label: String) -> void:
 			return  # liberada — OK
 		if current_scene != null and current_scene.scene_file_path != COMPLETAR_PALABRA_SCENE:
 			return  # la escena cambió — OK
+
+
+func _cerrar_ensenanza_esc_si_visible(scene: Node) -> bool:
+	# Cierra la pantalla EnsenanzaEsc (US-06) emitiendo su señal de continuar.
+	var capa := scene.get_node_or_null("CapaEnsenanzaEsc")
+	if capa == null or capa.get_child_count() == 0:
+		return false
+	var ensenanza := capa.get_child(0)
+	if ensenanza != null and ensenanza.has_signal("continuar_presionado"):
+		ensenanza.emit_signal("continuar_presionado")
+		return true
+	return false
 
 
 func _scene_kind(scene_path: String) -> String:
