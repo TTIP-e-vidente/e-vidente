@@ -1,13 +1,9 @@
 # Estado actual
 
-Referencia única del repo (jun 2026). Si [Entrega 1](wiki/Entrega-1.md) u otra wiki contradice esto, manda este archivo.
-
-**Qué es:** Godot 4.6, track celiaquía por JSON, save local; backend Node+Postgres opcional para cuenta y sync.
-
 ## Hecho
 
 - Mapa y contenido celiaquía (`juego/contenido/mapa/`, catálogo `items_celiaquia.json`)
-- Modalidades: drag, quiz, match, completar palabra
+- Modalidades: drag, quiz, match, completar palabra, enseñanza
 - Score, estrellas, racha; save local sin login (`SaveManager`)
 - API local: registro, login JWT, perfil, progreso (`BACKEND/`)
 - Sync al terminar partida si hay sesión (`ProgressSyncService`)
@@ -16,14 +12,13 @@ Referencia única del repo (jun 2026). Si [Entrega 1](wiki/Entrega-1.md) u otra 
 ## Parcial
 
 - Tests Godot (smoke + pocos unitarios)
-- Sync: funciona; poca señal en UI
+- Sync
 - Vegan / keto / mixto: libros en UI; pack JSON solo celiaquía
 
 ## Pendiente
 
 - Leaderboard, logros como sistema
 - Refresh token, admin, mails reales
-- Validar JSON de contenido en CI
 
 ## Repo
 
@@ -45,11 +40,10 @@ npm install && npm run setup:dev && npm run dev
 ```
 URL del API: ver `BACKEND/README.md`.
 
-## Flujo celiaquía (código)
+## Flujo celiaquía
 
-`MapScene` → `CargadorDeMapa` → `ArmadorDePartida` → `NodeContentLoader` → `ActivityAdapter` → minijuego → `ContinuidadDePartidaDeNodo` → `SaveManager` (+ sync si hay sesión).
+`MapScene` → `CargadorDeMapa` → `ArmadorDePartida` → `NodeContentLoader` → `ActivityAdapter` → partida con mini juegos → `ContinuidadDePartidaDeNodo` → `SaveManager` (+ sync si hay sesión).
 
-Legacy: no sumar contenido en `contenido/backup/`, `DragDropNode.tscn`, rutas viejas de `CargadorDeContenidoDeNodo`. Flujo de demo congelado: [juego/README.md](juego/README.md).
 
 ## Más docs
 
