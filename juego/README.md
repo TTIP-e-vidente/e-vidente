@@ -54,3 +54,24 @@ Notas sobre `shuffle_games`:
 - solo mezcla el orden final.
 - no elige activities.
 - no modifica el JSON original.
+
+## Godot: warnings comunes al clonar
+
+### `invalid UID` en escenas (.tscn)
+
+Las escenas referencian UIDs que viven en los `.import` de cada textura/fuente. Si esos `.import` no están en git, cada máquina genera UIDs distintos y Godot avisa (pero igual carga por path).
+
+**Fix de equipo:** versionar `juego/assets-sistema/**/*.import` y `juego/fonts/**/*.import` (ya permitidos en `.gitignore`). Tras clonar:
+
+1. Abrí el proyecto en Godot 4.6 una vez (reimporta lo que falte).
+2. Commiteá los `.import` nuevos o actualizados junto con assets nuevos.
+
+**Fix local rápido:** en el editor, `Proyecto → Recargar proyecto actual`.
+
+### Íconos de guardar en Level
+
+Los SVG están en `assets-sistema/interfaz/icono-guardar*.svg`. Si no importaron aún, `Level.gd` usa fallback PNG (`logro-sin-realizar` / `logro-realizado`).
+
+### `WASAPI: GetBufferSize error`
+
+Es del driver de audio de Windows (auriculares desconectados, cambio de dispositivo default, etc.). No rompe el juego; probá reconectar el audio o reiniciar Godot. Si persiste, actualizá drivers o cambiá el dispositivo de salida en Windows antes de abrir el juego.

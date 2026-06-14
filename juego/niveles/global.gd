@@ -87,6 +87,12 @@ func reiniciar_progreso() -> void:
 		_partial_level_state_by_track[track_key] = {}
 
 
+func reiniciar_progreso_gameplay() -> void:
+	var streak_backup: Dictionary = _streak_state.duplicate(true)
+	reiniciar_progreso()
+	_streak_state = GameStreakTracker.leer(streak_backup)
+
+
 # --- Sesión de juego activa (GameSessionData) --------------------------------
 # Guardada al abrir un nodo; leída al mostrar la pantalla de resultados.
 

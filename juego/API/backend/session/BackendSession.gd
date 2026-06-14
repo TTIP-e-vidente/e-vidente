@@ -154,6 +154,35 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 
 	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
 	var datos_progreso: Dictionary = resultado_progreso.get("data", {})
+	var username_sync := str(_auth.obtener_usuario()).strip_edges()
+	var forzar_reset_remoto := (
+		SaveManager != null
+		and SaveManager.has_method("debe_forzar_reset_remoto_antes_de_sync")
+		and SaveManager.debe_forzar_reset_remoto_antes_de_sync(username_sync)
+	)
+
+	if forzar_reset_remoto:
+		var reset_result: Dictionary = await reiniciar_progreso_online("CELIAQUIA")
+		if _auth.obtener_epoch() != epoch:
+			return _resultado_sesion_cambiada()
+		if bool(reset_result.get("ok", false)):
+			var reset_data: Variant = reset_result.get("data", {})
+			if reset_data is Dictionary and not (reset_data as Dictionary).is_empty():
+				datos_progreso = reset_data as Dictionary
+			if (
+				SaveManager != null
+				and SaveManager.has_method("confirmar_reset_remoto_completado")
+			):
+				SaveManager.call(
+					"confirmar_reset_remoto_completado",
+					datos_progreso,
+					username_sync,
+					true
+				)
+		elif SaveManager.has_method("marcar_reset_remoto_pendiente"):
+			SaveManager.call("marcar_reset_remoto_pendiente")
+			if forzar_reset_remoto:
+				datos_progreso = {}
 
 	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
 	_progreso_online_en_cache = datos_progreso
@@ -521,6 +550,11 @@ func _restaurar_sesion_guardada() -> void:
 		print("[BackendSession] Token inválido o expirado — limpiando sesión local.")
 		_auth.limpiar_sesion()
 		BackendSessionStorage.borrar_sesion()
+		_usuario_en_cache.clear()
+		_progreso_online_en_cache.clear()
+		_descartar_resultado_carga_online()
+		if SaveManager != null and SaveManager.has_method("activar_modo_invitado_para_juego"):
+			SaveManager.call("activar_modo_invitado_para_juego")
 		session_restore_failed.emit(str(resultado.get("error", "Sesión inválida")))
 
 

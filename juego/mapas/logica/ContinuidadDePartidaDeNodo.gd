@@ -229,6 +229,11 @@ static func _registrar_exp_finalizacion(
 		precision_ratio
 	)
 
+	var prev_best: int = 0
+	if not node_key.is_empty() and save_manager.has_method("obtener_mejor_precision_nodo"):
+		prev_best = int(round(float(save_manager.call("obtener_mejor_precision_nodo", node_key))))
+	var best_accuracy: int = maxi(prev_best, precision_percent)
+
 	var total_exp_nuevo: int = 0
 	if save_manager.has_method("sumar_exp"):
 		total_exp_nuevo = save_manager.call("sumar_exp", exp_ganada)
@@ -260,6 +265,7 @@ static func _registrar_exp_finalizacion(
 			"dificultad": dificultad_fallback,
 			"precision": precision_percent,
 			"last_accuracy": precision_percent,
+			"best_accuracy": best_accuracy,
 			"error_percent": NodoProgressionRulesScript.calculate_error_percent(errores, intentos),
 			"tiempo": tiempo_str,
 			"aciertos": aciertos,

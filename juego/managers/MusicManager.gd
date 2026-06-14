@@ -12,6 +12,8 @@ const UMBRAL_REINICIO_SEGUNDOS := 0.1
 var _reproductor_musica: AudioStreamPlayer = null
 var _ruta_musica_actual: String = ""
 var _volumen_objetivo_db: float = VOLUMEN_PREDETERMINADO_DB
+var _reintentos_audio_fallidos: int = 0
+const MAX_REINTENTOS_AUDIO := 3
 
 
 func _ready() -> void:
@@ -29,6 +31,8 @@ func _process(_delta: float) -> void:
 		return
 
 	if not _reproductor_musica.playing:
+		if _reintentos_audio_fallidos >= MAX_REINTENTOS_AUDIO:
+			return
 		_reiniciar_musica_actual()
 		return
 
@@ -61,6 +65,7 @@ func reproducir_musica(ruta_audio: String) -> void:
 	_reproductor_musica.stream = stream_audio
 	_reproductor_musica.volume_db = _volumen_objetivo_db
 	_reproductor_musica.play()
+	_reintentos_audio_fallidos = 0
 	
 	musica_iniciada.emit(ruta_audio)
 
@@ -123,8 +128,17 @@ func _on_reproductor_musica_finalizado() -> void:
 func _reiniciar_musica_actual() -> void:
 	if _ruta_musica_actual.is_empty() or _reproductor_musica == null:
 		return
-	
+	if _reintentos_audio_fallidos >= MAX_REINTENTOS_AUDIO:
+		return
+
 	_reproductor_musica.play()
+	if not _reproductor_musica.playing:
+		_reintentos_audio_fallidos += 1
+		if _reintentos_audio_fallidos == 1:
+			push_warning(
+				"[MusicManager] El dispositivo de audio no respondió (WASAPI). "
+				+ "Revisá auriculares/salida de audio en Windows."
+			)
 
 
 func _detener_musica_actual() -> void:

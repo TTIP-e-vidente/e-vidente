@@ -136,7 +136,23 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	if _save_manager_listo():
 		var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
 		if not result.get("ok", false):
+			if is_instance_valid(profile_overlay):
+				profile_overlay.mostrar_feedback_reset(
+					str(result.get("message", "No se pudo reiniciar el progreso.")),
+					false
+				)
 			return
+		_actualizar_hud()
+		if is_instance_valid(profile_overlay):
+			profile_overlay.refrescar()
+			profile_overlay.mostrar_feedback_reset(
+				str(result.get("message", "Progreso reiniciado.")),
+				true
+			)
+		var map_scene := get_tree().current_scene
+		if map_scene != null and map_scene.has_method("actualizar_estados_de_nodos"):
+			map_scene.call("actualizar_estados_de_nodos")
+		return
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 

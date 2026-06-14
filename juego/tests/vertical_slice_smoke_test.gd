@@ -1967,6 +1967,33 @@ func _test_nodo_progression_rules_precision_display_sin_intentos() -> void:
 	)
 
 
+func _test_precision_dos_errores_un_acierto_es_33() -> void:
+	const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+	var global_state: Node = root.get_node_or_null("/root/Global")
+	if global_state == null:
+		_verificar(false, "[Precision] Global autoload no disponible")
+		return
+	global_state.iniciar_partida_de_nodo({
+		"clave_nodo": "nodo_test_precision",
+		"total_juegos": 1,
+		"indice_juego_actual": 0,
+		"juegos": [{"mode": "completar", "dificultad": 1}],
+	})
+	global_state.registrar_resultado_mini_juego(false)
+	global_state.registrar_resultado_mini_juego(false)
+	global_state.registrar_resultado_mini_juego(true)
+	var stats: Dictionary = global_state.obtener_stats_nodo_actual()
+	var precision: int = NodoProgressionRulesScript.calcular_precision(
+		int(stats.get("aciertos", 0)),
+		int(stats.get("intentos", 0))
+	)
+	_verificar(
+		precision == 33,
+		"[Precision] 2 errores + 1 acierto debe dar 33%%, obtuvo %d%%" % precision
+	)
+	global_state.finalizar_partida_de_nodo()
+
+
 func _test_logout_restaura_snapshot_invitado() -> void:
 	var save_manager := SaveManagerScript.new()
 	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
@@ -2042,6 +2069,297 @@ func _test_logout_restaura_snapshot_invitado() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(online_path))
 
 
+func _test_login_con_reset_pendiente_ignora_snapshot_online_viejo() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_viejo": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	save_manager.call("_respaldar_snapshot_online", "user_a")
+	save_manager.call("_persistir_reset_pendiente_usuario", "user_a")
+
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.call("_preparar_login_con_reset_pendiente", "user_a")
+
+	var prog: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		prog.is_empty(),
+		"[Reset] login con reset pendiente no debe restaurar snapshot online viejo"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 0,
+		"[Reset] login con reset pendiente debe quedar con EXP en cero"
+	)
+	_verificar(
+		save_manager.call("_tiene_reset_activo_para_cuenta", "user_a"),
+		"[Reset] login con reset pendiente debe mantener flag activo hasta sync"
+	)
+
+	save_manager.call("_limpiar_reset_pendiente_usuario", "user_a")
+	var online_path: String = save_manager.call("_ruta_snapshot_online", "user_a")
+	if FileAccess.file_exists(online_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(online_path))
+
+
+func _test_reset_logout_login_no_restaura_progreso_viejo() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_viejo": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	save_manager.call("_establecer_cuenta_online_vinculada", "user_a")
+	save_manager.call("_respaldar_snapshot_online", "user_a")
+
+	save_manager.call("_reiniciar_datos_guardado_actual", save_manager.obtener_perfil_usuario_actual(), true)
+	var meta: Dictionary = save_manager.call("_obtener_meta_guardado")
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	save_manager.save_data["save_meta"] = meta
+	save_manager.call("_persistir_reset_pendiente_usuario", "user_a")
+	save_manager.call("_respaldar_snapshot_online", "user_a")
+
+	save_manager.call("_restaurar_snapshot_invitado")
+	save_manager.call("_limpiar_identidad_perfil_para_cambio_cuenta")
+	save_manager.call("_limpiar_cuenta_online_vinculada")
+
+	save_manager.call("_preparar_login_con_reset_pendiente", "user_a")
+	var restaurado: bool = save_manager.call("_restaurar_snapshot_online", "user_a")
+	_verificar(
+		not restaurado,
+		"[Reset] tras logout/login con reset pendiente no debe restaurar snapshot online"
+	)
+
+	var progreso_online: Dictionary = {
+		"completedNodes": [{"nodeId": "nodo_viejo", "completed": true}],
+		"totalExp": 500,
+	}
+	save_manager.call("_importar_progreso_online", progreso_online, "user_a")
+	var prog: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		prog.is_empty(),
+		"[Reset] logout/login no debe repoblar nodos desde servidor stale"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 0,
+		"[Reset] logout/login no debe repoblar EXP desde servidor stale"
+	)
+
+	save_manager.call("_limpiar_reset_pendiente_usuario", "user_a")
+	var online_path: String = save_manager.call("_ruta_snapshot_online", "user_a")
+	if FileAccess.file_exists(online_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(online_path))
+
+
+func _test_reset_import_ignora_servidor_y_local_stale() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_viejo": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	var meta: Dictionary = save_manager.call("_obtener_meta_guardado")
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	save_manager.save_data["save_meta"] = meta
+	save_manager.call("_persistir_reset_pendiente_usuario", "user_a")
+
+	var progreso_online: Dictionary = {
+		"completedNodes": [
+			{"node_id": "nodo_viejo", "best_accuracy": 100.0},
+		],
+		"profile": {"exp_count": 500},
+	}
+	save_manager.call("_importar_progreso_online", progreso_online, "user_a")
+
+	var prog: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(prog.is_empty(), "[Reset] import con reset activo debe ignorar servidor y limpiar local stale")
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 0,
+		"[Reset] import con reset activo debe dejar EXP en cero"
+	)
+
+	save_manager.call("_limpiar_reset_pendiente_usuario", "user_a")
+
+
+func _test_reset_preserva_racha_local() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	var streak: Dictionary = {
+		"current_count": 4,
+		"best_count": 4,
+		"last_activity_day": "2026-06-14",
+	}
+	save_manager.call("_persistir_racha_en_save", streak)
+	save_manager.save_data["node_progress"] = {
+		"nodo_viejo": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 120
+
+	save_manager.call("_reiniciar_datos_guardado_actual", save_manager.obtener_perfil_usuario_actual(), true)
+
+	var prog: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(prog.is_empty(), "[Reset] reiniciar progreso debe vaciar nodos")
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 0,
+		"[Reset] reiniciar progreso debe vaciar EXP"
+	)
+	var racha: Dictionary = save_manager.call("_obtener_racha_local_desde_save")
+	_verificar(
+		int(racha.get("current_count", 0)) == 4,
+		"[Reset] reiniciar progreso debe conservar la racha local"
+	)
+
+
+func _test_logout_aisla_racha_online() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.call("_persistir_racha_en_save", {"current_count": 4, "last_activity_day": "2026-06-14"})
+
+	save_manager.save_data["node_progress"] = {
+		"nodo_online": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	save_manager.call("_establecer_cuenta_online_vinculada", "user_a")
+
+	var racha_online: Dictionary = save_manager.call("_obtener_racha_local_desde_save")
+	save_manager.call("_respaldar_snapshot_online", "user_a")
+	save_manager.call("_restaurar_snapshot_invitado")
+	save_manager.call("_limpiar_identidad_perfil_para_cambio_cuenta")
+	save_manager.call("_aislar_racha_invitado_tras_salir_online", racha_online)
+
+	var racha_invitado: Dictionary = save_manager.call("_obtener_racha_local_desde_save")
+	_verificar(
+		racha_invitado.is_empty() or int(racha_invitado.get("current_count", 0)) == 0,
+		"[Logout] sin progreso invitado no debe persistir racha online"
+	)
+
+
+func _test_jugar_offline_activa_save_invitado() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_invitado": {
+			"completed": true,
+			"best_accuracy": 40.0,
+			"best_percent": 0.4,
+		},
+	}
+	save_manager.call("_respaldar_snapshot_invitado")
+
+	save_manager.save_data["profile"] = {
+		"username": "usuario_online",
+		"email": "online@test.com",
+		"birth_date": "2000-01-01",
+		"avatar_path": "",
+	}
+	save_manager.save_data["node_progress"] = {
+		"nodo_online": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	save_manager.call("_persistir_racha_en_save", {"current_count": 4, "last_activity_day": "2026-06-14"})
+	save_manager.call("_establecer_cuenta_online_vinculada", "user_a")
+
+	save_manager.activar_modo_invitado_para_juego()
+
+	var prog: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		prog.has("nodo_invitado"),
+		"[Offline] jugar sin sesión debe restaurar progreso invitado"
+	)
+	_verificar(
+		not prog.has("nodo_online"),
+		"[Offline] jugar sin sesión no debe arrastrar nodos del usuario online"
+	)
+	_verificar(
+		save_manager.obtener_cuenta_online_vinculada().is_empty(),
+		"[Offline] linked_online_username debe quedar vacío"
+	)
+	_verificar(
+		str(save_manager.obtener_nombre_usuario_actual()) == SaveDataSchemaScript.DEFAULT_PROFILE_NAME,
+		"[Offline] perfil visible debe ser invitado (Perfil local)"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 0,
+		"[Offline] EXP invitado restaurada no debe ser la del usuario online"
+	)
+	var racha_invitado: Dictionary = save_manager.call("_obtener_racha_local_desde_save")
+	_verificar(
+		racha_invitado.is_empty() or int(racha_invitado.get("current_count", 0)) == 0,
+		"[Offline] jugar sin sesión no debe arrastrar racha online sin progreso invitado"
+	)
+
+	if FileAccess.file_exists(SaveManagerScript.GUEST_SAVE_SNAPSHOT_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManagerScript.GUEST_SAVE_SNAPSHOT_PATH))
+	var online_path: String = save_manager.call("_ruta_snapshot_online", "user_a")
+	if FileAccess.file_exists(online_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(online_path))
+
+
+func _test_jugar_offline_limpia_racha_sin_progreso_invitado() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.call("_persistir_racha_en_save", {"current_count": 4, "last_activity_day": "2026-06-14"})
+
+	save_manager.activar_modo_invitado_para_juego()
+
+	var racha: Dictionary = save_manager.call("_obtener_racha_local_desde_save")
+	_verificar(
+		racha.is_empty() or int(racha.get("current_count", 0)) == 0,
+		"[Offline] perfil invitado sin progreso no debe mostrar racha previa"
+	)
+
+
+func _test_limpiar_racha_invitado_vacia_global() -> void:
+	var global_state: Node = root.get_node_or_null("/root/Global")
+	var save_manager: Node = root.get_node_or_null("/root/SaveManager")
+	if global_state == null or save_manager == null:
+		_verificar(false, "[Offline] autoloads Global/SaveManager requeridos para limpiar racha en memoria")
+		return
+	if not global_state.has_method("establecer_estado_racha") or not global_state.has_method("obtener_estado_racha"):
+		_verificar(false, "[Offline] Global no expone API de racha")
+		return
+	if not save_manager.has_method("_limpiar_racha_invitado"):
+		_verificar(false, "[Offline] SaveManager no expone _limpiar_racha_invitado")
+		return
+
+	global_state.call(
+		"establecer_estado_racha",
+		{"current_count": 4, "last_activity_day": "2026-06-14"}
+	)
+	save_manager.call("_persistir_racha_en_save", {"current_count": 4, "last_activity_day": "2026-06-14"})
+	save_manager.call("_limpiar_racha_invitado")
+
+	var racha_global: Dictionary = global_state.call("obtener_estado_racha")
+	_verificar(
+		int(racha_global.get("current_count", 0)) == 0,
+		"[Offline] limpiar racha invitado debe vaciar la racha en Global (UI la lee desde ahi)"
+	)
+
+
 func _test_reset_merge_defensa_no_repuebla_nodos_fantasma() -> void:
 	var save_manager := SaveManagerScript.new()
 	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
@@ -2080,6 +2398,67 @@ func _test_reset_merge_defensa_no_repuebla_nodos_fantasma() -> void:
 	_verificar(
 		expanded.size() > 1,
 		"[Reset] sin progress_reset_at el merge OR debe expandir con nodos online"
+	)
+
+
+func _test_import_online_respeta_reset_local_vacio() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {}
+	save_manager.save_data["total_exp"] = 0
+	var meta: Dictionary = save_manager.call("_obtener_meta_guardado")
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	save_manager.save_data["save_meta"] = meta
+
+	var progreso_online := {
+		"completedNodes": [
+			{
+				"node_id": "celiaquia_01_desayuno_basico",
+				"completed": true,
+				"best_accuracy": 100.0,
+				"last_accuracy": 100.0,
+			},
+		],
+		"progress": [{"restriction_type": "CELIAQUIA", "total_exp": 222}],
+	}
+	save_manager.call("_importar_progreso_online", progreso_online, "test_user")
+	_verificar(
+		save_manager.obtener_todo_progreso_nodos().is_empty(),
+		"[Reset] import online no debe repoblar nodos tras reset local"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", -1)) == 0,
+		"[Reset] import online no debe restaurar EXP tras reset local"
+	)
+
+
+func _test_import_online_rechaza_servidor_stale_tras_reset_parcial() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_nuevo": {"completed": true, "best_accuracy": 90.0, "best_percent": 0.9},
+	}
+	save_manager.save_data["total_exp"] = 10
+	var meta: Dictionary = save_manager.call("_obtener_meta_guardado")
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	save_manager.save_data["save_meta"] = meta
+
+	var progreso_online := {
+		"completedNodes": [
+			{"node_id": "celiaquia_01_desayuno_basico", "completed": true, "best_accuracy": 100.0},
+			{"node_id": "celiaquia_02_almuerzo", "completed": true, "best_accuracy": 100.0},
+		],
+		"progress": [{"restriction_type": "CELIAQUIA", "total_exp": 222}],
+	}
+	save_manager.call("_importar_progreso_online", progreso_online, "test_user")
+	var merged: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		merged.size() == 1 and merged.has("nodo_nuevo"),
+		"[Reset] con reset activo no debe traer más nodos del servidor que los locales"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", -1)) == 10,
+		"[Reset] con progreso local post-reset no debe subir EXP desde servidor stale"
 	)
 
 
@@ -2188,8 +2567,19 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_fusion_node_progress_last_accuracy_no_usa_max()
 	_test_finalizacion_partida_lee_last_accuracy_con_intentos_cero()
 	_test_nodo_progression_rules_precision_display_sin_intentos()
+	_test_precision_dos_errores_un_acierto_es_33()
 	_test_logout_restaura_snapshot_invitado()
+	_test_logout_aisla_racha_online()
+	_test_login_con_reset_pendiente_ignora_snapshot_online_viejo()
+	_test_reset_logout_login_no_restaura_progreso_viejo()
+	_test_reset_import_ignora_servidor_y_local_stale()
+	_test_reset_preserva_racha_local()
+	_test_jugar_offline_activa_save_invitado()
+	_test_jugar_offline_limpia_racha_sin_progreso_invitado()
+	_test_limpiar_racha_invitado_vacia_global()
 	_test_reset_merge_defensa_no_repuebla_nodos_fantasma()
+	_test_import_online_respeta_reset_local_vacio()
+	_test_import_online_rechaza_servidor_stale_tras_reset_parcial()
 	_test_progreso_con_huecos_se_muestra_en_global()
 	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:

@@ -385,5 +385,6 @@ Otras restricciones (`VEG`, etc.) no se tocan en Postgres en esta entrega; el re
 - Al cambiar de usuario se hace backup de `node_progress` por username antes del reset.
 - La racha local se lee **antes** de pisar `save_data.progress` en el import online; si no, el merge pierde el valor local.
 - En logout se respalda el save online en `user://save_snapshot_{username}.json` y se restaura `user://guest_save_snapshot.json` (progreso invitado previo al login).
+- **Jugar sin sesión** (`intro.gd` → `SaveManager.activar_modo_invitado_para_juego()`): respalda el save online si había vínculo, restaura el snapshot invitado y limpia identidad/avatar. Si el token expiró al iniciar, `BackendSession` también activa el save invitado antes de mostrar el login.
 - El save activo invitado limpia `linked_online_username`; el vínculo se conserva dentro del snapshot online para re-login.
 - Mapas no implementados (`VEG`, `VYG`, `KETO`) tienen `total_nodes = 9999` en `restriction_node_config` para que `map_completed` nunca se active prematuramente.

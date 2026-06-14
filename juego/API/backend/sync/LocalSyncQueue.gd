@@ -203,6 +203,14 @@ static func _borrar_backup_cola(owner: String) -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
+## Descarta partidas archivadas de un usuario (p. ej. tras reiniciar progreso).
+static func descartar_backup_de_usuario(owner: String) -> void:
+	var clean_owner := owner.strip_edges()
+	if clean_owner.is_empty():
+		return
+	_borrar_backup_cola(clean_owner)
+
+
 static func aplicar_resultados(resultados: Array[Dictionary]) -> void:
 	if resultados.is_empty():
 		return

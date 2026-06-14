@@ -73,6 +73,14 @@ func ocultar_superposicion() -> void:
 	visible = false
 
 
+func mostrar_feedback_reset(message: String, ok: bool = true) -> void:
+	if not is_instance_valid(_save_status_label):
+		return
+	_save_status_label.text = message
+	if ok:
+		refrescar()
+
+
 func mostrar_feedback_guardado(message: String = "¡Guardado correctamente!") -> void:
 	if not is_instance_valid(_save_status_label) or not is_instance_valid(_guardar_btn):
 		_syncing = false
@@ -216,6 +224,8 @@ func _resolver_nombre_usuario_visible() -> String:
 		if not online_name.is_empty():
 			return online_name
 	if _save_manager_listo():
+		if not AuthApi.esta_logueado():
+			return SaveManager.DEFAULT_PROFILE_NAME
 		return SaveManager.obtener_nombre_usuario_actual()
 	return ""
 

@@ -125,6 +125,9 @@ func _on_jugar_offline_solicitado() -> void:
 	_cerrar_login()
 	if current_flow == LOGIN_FLOW_PROFILE:
 		return
+	if AuthApi.esta_logueado():
+		await AuthApi.cerrar_sesion()
+	SaveManager.activar_modo_invitado_para_juego()
 	_continuar_a_juego()
 
 

@@ -347,6 +347,7 @@ func _al_seleccionar_opcion(option: String, btn: Button) -> void:
 		_colocar_opcion_en_slot(option, btn)
 		_verificar_si_completado()
 	else:
+		_registrar_resultado(false)
 		_devolver_opcion_al_origen(btn)
 
 func _es_correcta_para_slot_actual(option: String) -> bool:

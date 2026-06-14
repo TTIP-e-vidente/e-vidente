@@ -243,6 +243,8 @@ func _agregar_insignia_racha(hud_root: Control) -> void:
 	racha_badge.offset_bottom = 152.0
 	hud_root.add_child(racha_badge)
 	_conectar_insignia_racha()
+	if racha_badge.has_method("renderizar"):
+		racha_badge.call("renderizar")
 
 
 func _agregar_boton_perfil(hud_root: Control) -> void:
@@ -323,10 +325,13 @@ func _on_superposicion_guardar_presionado() -> void:
 func _on_superposicion_reiniciar_presionado() -> void:
 	var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
 	if not result.get("ok", false):
+		_profile_overlay.mostrar_feedback_reset(
+			str(result.get("message", "No se pudo reiniciar el progreso.")),
+			false
+		)
 		return
-	_profile_overlay.visible = false
-	_profile_toggle_btn.visible = true
-	GameSceneRouter.go_to_mode_selector(get_tree())
+	_profile_overlay.refrescar()
+	_profile_overlay.mostrar_feedback_reset(str(result.get("message", "Progreso reiniciado.")), true)
 
 
 func _on_superposicion_logout_presionado() -> void:

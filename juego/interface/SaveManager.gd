@@ -49,6 +49,7 @@ const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
 const NODE_PROGRESS_BACKUP_PREFIX := "node_progress_backup_"
 const GUEST_SAVE_SNAPSHOT_PATH := "user://guest_save_snapshot.json"
 const SAVE_SNAPSHOT_PREFIX := "save_snapshot_"
+const PROGRESS_RESET_MARKER_PREFIX := "progress_reset_marker_"
 
 var save_data: Dictionary = {}
 var has_unsaved_changes: bool = false
@@ -626,12 +627,18 @@ func preparar_cuenta_online(usuario: Dictionary) -> void:
 	var linked := obtener_cuenta_online_vinculada()
 	var profile_mismatch := _perfil_actual_parece_de_otra_cuenta(usuario)
 	if linked == username and not profile_mismatch:
+		if _debe_reiniciar_save_por_reset_pendiente(username):
+			_preparar_login_con_reset_pendiente(username)
 		return
 
 	if linked.is_empty():
-		_respaldar_snapshot_invitado()
+		if _perfil_es_invitado():
+			_respaldar_snapshot_invitado()
+		if _debe_reiniciar_save_por_reset_pendiente(username):
+			_preparar_login_con_reset_pendiente(username)
+			return
 		if _restaurar_snapshot_online(username):
-			LocalSyncQueue.restaurar_pendientes_de_usuario(username)
+			_restaurar_pendientes_online_si_corresponde(username)
 			_establecer_cuenta_online_vinculada(username)
 			ArmadorDePartida.reiniciar_historial_sesion()
 			_marcar_guardado_sucio()
@@ -652,6 +659,9 @@ func preparar_cuenta_online(usuario: Dictionary) -> void:
 	LocalSyncQueue.descartar_pendientes(
 		"account_switch_%s_to_%s" % [linked if not linked.is_empty() else "unknown", username]
 	)
+	if _debe_reiniciar_save_por_reset_pendiente(username):
+		_preparar_login_con_reset_pendiente(username)
+		return
 	if _restaurar_snapshot_online(username):
 		_establecer_cuenta_online_vinculada(username)
 	else:
@@ -659,13 +669,21 @@ func preparar_cuenta_online(usuario: Dictionary) -> void:
 		_limpiar_identidad_perfil_para_cambio_cuenta()
 		limpiar_avatar_perfil()
 		_establecer_cuenta_online_vinculada(username)
-	LocalSyncQueue.restaurar_pendientes_de_usuario(username)
+	_restaurar_pendientes_online_si_corresponde(username)
 	ArmadorDePartida.reiniciar_historial_sesion()
 	_marcar_guardado_sucio()
 	if not _escribir_guardado_en_disco(false, "account_switch"):
 		push_warning("[Save] No se pudo persistir el cambio de cuenta online.")
 		return
 	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func necesita_reset_remoto_antes_de_sync(progreso_online: Dictionary, username: String = "") -> bool:
+	return debe_forzar_reset_remoto_antes_de_sync(username)
+
+
+func debe_forzar_reset_remoto_antes_de_sync(username: String = "") -> bool:
+	return _debe_reiniciar_save_por_reset_pendiente(username)
 
 
 func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Dictionary) -> void:
@@ -702,14 +720,23 @@ func al_cerrar_sesion_online() -> void:
 		ArmadorDePartida.reiniciar_historial_sesion()
 		return
 
+	var racha_online_antes_aislar: Dictionary = racha_al_salir.duplicate(true)
+	if _tiene_reset_activo_para_cuenta(linked):
+		_persistir_reset_pendiente_usuario(linked)
+		LocalSyncQueue.descartar_backup_de_usuario(linked)
+		LocalSyncQueue.descartar_pendientes("progress_reset_logout")
+	else:
+		LocalSyncQueue.archivar_pendientes_de_usuario(linked)
 	_respaldar_snapshot_online(linked)
-	LocalSyncQueue.archivar_pendientes_de_usuario(linked)
 	_restaurar_snapshot_invitado()
 	_limpiar_identidad_perfil_para_cambio_cuenta()
 	limpiar_avatar_perfil()
+	_aislar_racha_invitado_tras_salir_online(racha_online_antes_aislar)
 	_limpiar_cuenta_online_vinculada()
+	_respaldar_snapshot_invitado()
 	ArmadorDePartida.reiniciar_historial_sesion()
 
+	_marcar_guardado_sucio()
 	if not _escribir_guardado_en_disco(false, "logout_guest_restore"):
 		push_warning("[Save] No se pudo persistir el save invitado tras logout.")
 		return
@@ -719,39 +746,91 @@ func al_cerrar_sesion_online() -> void:
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
+func activar_modo_invitado_para_juego() -> void:
+	var racha_online_antes_aislar: Dictionary = _obtener_racha_local_desde_save()
+	var linked := obtener_cuenta_online_vinculada()
+	var requiere_aislamiento := (
+		not linked.is_empty()
+		or not _perfil_es_invitado()
+		or _save_parece_arrastrar_cuenta_online(racha_online_antes_aislar)
+	)
+
+	if requiere_aislamiento:
+		if not linked.is_empty():
+			_respaldar_snapshot_online(linked)
+			LocalSyncQueue.archivar_pendientes_de_usuario(linked)
+		_restaurar_snapshot_invitado()
+		_limpiar_identidad_perfil_para_cambio_cuenta()
+		_limpiar_cuenta_online_vinculada()
+		limpiar_avatar_perfil()
+		ArmadorDePartida.reiniciar_historial_sesion()
+		BackendSession.limpiar_cache_online()
+		if not linked.is_empty():
+			_respaldar_snapshot_invitado()
+	else:
+		ArmadorDePartida.reiniciar_historial_sesion()
+		BackendSession.limpiar_cache_online()
+
+	_aplicar_racha_modo_invitado(racha_online_antes_aislar)
+
+	_marcar_guardado_sucio()
+	if not _escribir_guardado_en_disco(false, "guest_mode_activate"):
+		push_warning("[Save] No se pudo persistir el save invitado.")
+		return
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
 func reiniciar_todo_progreso() -> Dictionary:
 	var current_profile: Dictionary = obtener_perfil_usuario_actual()
-	var linked_username := ""
+	var linked_username := obtener_cuenta_online_vinculada()
+	var remote_ok := true
+	var remote_warning := ""
 	if AuthApi.esta_logueado():
-		linked_username = str(AuthApi.obtener_usuario_online().get("username", "")).strip_edges()
+		var auth_username := str(AuthApi.obtener_usuario_online().get("username", "")).strip_edges()
+		if linked_username.is_empty():
+			linked_username = auth_username
+		elif linked_username != auth_username and not auth_username.is_empty():
+			linked_username = auth_username
 		var remote_result: Dictionary = await SyncApi.reiniciar_progreso_online("CELIAQUIA")
-		if not remote_result.get("ok", false):
-			return {
-				"ok": false,
-				"message": SyncApi.mensaje_error(
-					remote_result,
-					"No se pudo reiniciar el progreso en el servidor."
-				),
-			}
+		remote_ok = bool(remote_result.get("ok", false))
+		if not remote_ok:
+			remote_warning = AuthApi.mensaje_error(
+				remote_result,
+				"No se pudo reiniciar el progreso en el servidor."
+			)
+			push_warning("[Save] Reset remoto falló, se continúa con reset local: ", remote_warning)
 
 	LocalSyncQueue.descartar_pendientes("progress_reset")
 	if not linked_username.is_empty():
 		_limpiar_backups_y_snapshots_de_reset(linked_username)
+		LocalSyncQueue.descartar_backup_de_usuario(linked_username)
 	BackendSession.limpiar_cache_progreso_online()
 
-	_reiniciar_datos_guardado_actual(current_profile)
+	_reiniciar_datos_guardado_actual(current_profile, true)
 	var meta: Dictionary = _obtener_meta_guardado()
 	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
 	if not linked_username.is_empty():
 		meta["linked_online_username"] = linked_username
+		_persistir_reset_pendiente_usuario(linked_username)
 	save_data["save_meta"] = meta
 	_sincronizar_node_progress_a_global({})
+
+	if not linked_username.is_empty():
+		_respaldar_snapshot_online(linked_username)
 
 	if not _escribir_guardado_en_disco(false, "progress_reset"):
 		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
 	progress_loaded.emit(current_profile)
 	progress_saved.emit(current_profile)
-	return {"ok": true, "message": "Se reinicio el progreso local.", "profile": current_profile}
+	var message := "Se reinició el progreso del mapa. Tu racha diaria se mantiene."
+	if not remote_warning.is_empty():
+		message += " " + remote_warning
+	return {
+		"ok": true,
+		"remote_ok": remote_ok,
+		"message": message,
+		"profile": current_profile,
+	}
 
 
 func establecer_reanudar_en_libro(track_key: String, allow_level_downgrade: bool = false) -> void:
@@ -1016,9 +1095,10 @@ func _reiniciar_datos_guardado_actual(profile: Dictionary, preserve_streak: bool
 	var streak_a_preservar: Dictionary = {}
 	if preserve_streak:
 		streak_a_preservar = _obtener_racha_actual_para_preservar()
-	_global_reiniciar_progreso()
-	if preserve_streak and not streak_a_preservar.is_empty():
-		_global_establecer_racha(streak_a_preservar)
+	if preserve_streak:
+		_global_reiniciar_progreso_gameplay()
+	else:
+		_global_reiniciar_progreso()
 	save_data["profile"] = profile
 	if not settings.is_empty():
 		save_data["settings"] = settings
@@ -1030,6 +1110,8 @@ func _reiniciar_datos_guardado_actual(profile: Dictionary, preserve_streak: bool
 	save_data["map_reward_seen"] = {}
 	save_data["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
 	save_data["save_meta"] = _meta_guardado_vacia()
+	if preserve_streak and not streak_a_preservar.is_empty():
+		_persistir_racha_en_save(streak_a_preservar)
 	_marcar_guardado_sucio()
 
 
@@ -1113,9 +1195,15 @@ func _global_reiniciar_progreso() -> void:
 		global_autoload.call("reiniciar_progreso")
 
 
-func _global_establecer_racha(streak_state: Dictionary) -> void:
-	if streak_state.is_empty():
+func _global_reiniciar_progreso_gameplay() -> void:
+	var global_autoload: Node = _obtener_autoload_global()
+	if global_autoload != null and global_autoload.has_method("reiniciar_progreso_gameplay"):
+		global_autoload.call("reiniciar_progreso_gameplay")
 		return
+	_global_reiniciar_progreso()
+
+
+func _global_establecer_racha(streak_state: Dictionary) -> void:
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload != null and global_autoload.has_method("establecer_estado_racha"):
 		global_autoload.call("establecer_estado_racha", streak_state)
@@ -1164,6 +1252,20 @@ func _limpiar_cuenta_online_vinculada() -> void:
 	var meta: Dictionary = _obtener_meta_guardado()
 	meta["linked_online_username"] = ""
 	save_data["save_meta"] = meta
+
+
+func _esta_en_modo_invitado_activo() -> bool:
+	if not obtener_cuenta_online_vinculada().is_empty():
+		return false
+	return _perfil_es_invitado()
+
+
+func _perfil_es_invitado() -> bool:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	var username := str(profile.get("username", "")).strip_edges()
+	if not username.is_empty() and username != DEFAULT_PROFILE_NAME:
+		return false
+	return str(profile.get("email", "")).strip_edges().is_empty()
 
 
 func _serializar_save_actual() -> Dictionary:
@@ -1229,6 +1331,8 @@ func _respaldar_snapshot_online(username: String) -> void:
 	if username.is_empty():
 		return
 	var snapshot := _serializar_save_actual()
+	if _tiene_reset_activo_para_cuenta(username):
+		snapshot = _serializar_snapshot_online_sin_gameplay(snapshot)
 	if snapshot.is_empty():
 		return
 	var path := _ruta_snapshot_online(username)
@@ -1255,6 +1359,8 @@ func _restaurar_snapshot_invitado() -> bool:
 
 func _restaurar_snapshot_online(username: String) -> bool:
 	if username.is_empty():
+		return false
+	if _debe_reiniciar_save_por_reset_pendiente(username):
 		return false
 	var path := _ruta_snapshot_online(username)
 	var snapshot := _leer_snapshot(path)
@@ -1355,17 +1461,88 @@ func _obtener_racha_local_para_merge() -> Dictionary:
 
 
 func _persistir_racha_en_save(streak_state: Dictionary) -> void:
-	if streak_state.is_empty():
-		return
 	var progress_snapshot: Dictionary = save_data.get("progress", {}) as Dictionary
 	var systems: Dictionary = (
 		progress_snapshot.get("progress_system_states", {}) as Dictionary
 		if progress_snapshot.get("progress_system_states") is Dictionary
 		else {}
 	)
-	systems["streak"] = streak_state.duplicate(true)
+	if streak_state.is_empty():
+		systems.erase("streak")
+	else:
+		systems["streak"] = streak_state.duplicate(true)
 	progress_snapshot["progress_system_states"] = systems
 	save_data["progress"] = progress_snapshot
+
+
+func _aislar_racha_invitado_tras_salir_online(racha_online: Dictionary) -> void:
+	_aplicar_racha_modo_invitado(racha_online)
+
+
+func _aplicar_racha_modo_invitado(racha_online_referencia: Dictionary = {}) -> void:
+	if not _invitado_tiene_progreso_propio():
+		_limpiar_racha_invitado()
+		return
+	var racha_invitado: Dictionary = _obtener_racha_desde_snapshot_invitado()
+	if racha_invitado.is_empty():
+		racha_invitado = _obtener_racha_local_desde_save()
+	var online_count := int(racha_online_referencia.get("current_count", 0))
+	var guest_count := int(racha_invitado.get("current_count", 0))
+	if online_count > 0 and guest_count == online_count:
+		_limpiar_racha_invitado()
+		return
+	_global_establecer_racha(racha_invitado)
+	_persistir_racha_en_save(racha_invitado)
+
+
+func _save_parece_arrastrar_cuenta_online(racha_actual: Dictionary) -> bool:
+	if not _perfil_es_invitado():
+		return true
+	if int(racha_actual.get("current_count", 0)) <= 0:
+		return false
+	return not _invitado_tiene_progreso_propio()
+
+
+func _obtener_racha_desde_snapshot_invitado() -> Dictionary:
+	return _extraer_racha_de_save_snapshot(_leer_snapshot(GUEST_SAVE_SNAPSHOT_PATH))
+
+
+func _extraer_racha_de_save_snapshot(snapshot: Dictionary) -> Dictionary:
+	if snapshot.is_empty():
+		return {}
+	var progress: Variant = snapshot.get("progress", {})
+	if not progress is Dictionary:
+		return {}
+	var systems: Variant = (progress as Dictionary).get("progress_system_states", {})
+	if not systems is Dictionary:
+		return {}
+	var streak: Variant = (systems as Dictionary).get("streak", {})
+	return (streak as Dictionary).duplicate(true) if streak is Dictionary else {}
+
+
+func _save_tiene_progreso_propio(snapshot: Dictionary) -> bool:
+	if snapshot.is_empty():
+		return false
+	var node_progress: Variant = snapshot.get("node_progress", {})
+	if node_progress is Dictionary and not (node_progress as Dictionary).is_empty():
+		return true
+	if int(snapshot.get("total_exp", 0)) > 0:
+		return true
+	var summary: Dictionary = _resumir_progreso(snapshot.get("progress", {}))
+	return int(summary.get("total", 0)) > 0
+
+
+func _invitado_tiene_progreso_propio() -> bool:
+	return _save_tiene_progreso_propio(save_data)
+
+
+func _limpiar_racha_invitado() -> void:
+	_global_establecer_racha({})
+	_persistir_racha_en_save({})
+
+
+func _sincronizar_global_racha_desde_save() -> void:
+	_global_establecer_racha(_obtener_racha_local_desde_save())
 
 
 func _importar_progreso_online(progreso_online: Dictionary, username: String = "") -> void:
@@ -1373,25 +1550,54 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 		progreso_online
 	)
 	var local_node_progress: Dictionary = obtener_todo_progreso_nodos()
-	if not username.is_empty():
+	if not username.is_empty() and not _tiene_reset_activo_para_cuenta(username):
 		var backup: Dictionary = _restaurar_node_progress_backup(username)
 		if not backup.is_empty():
 			print("[Save] backup restaurado para username=", username, " nodos=", backup.keys())
 			local_node_progress = ImportadorProgresoOnlineScript.fusionar_node_progress(
 				backup, local_node_progress
 			)
-	var online_node_progress: Dictionary = snapshot.get("node_progress", {})
+	if _tiene_reset_activo_para_cuenta(username):
+		local_node_progress = {}
+		save_data["node_progress"] = {}
+		save_data["total_exp"] = 0
+	var online_node_progress: Dictionary = (
+		snapshot.get("node_progress", {}) as Dictionary
+		if snapshot.get("node_progress") is Dictionary
+		else {}
+	)
+	if _tiene_reset_activo_para_cuenta(username):
+		online_node_progress = {}
+		snapshot["node_progress"] = {}
+		snapshot["total_exp"] = 0
+		snapshot["progress_snapshot"] = {}
+		snapshot["streak_state"] = {}
+	elif _debe_rechazar_progreso_gameplay_online_stale(
+		online_node_progress,
+		int(snapshot.get("total_exp", 0))
+	):
+		online_node_progress = {}
+		snapshot["node_progress"] = {}
+		snapshot["total_exp"] = 0
+		snapshot["progress_snapshot"] = _global_exportar_progreso()
 	save_data["node_progress"] = ImportadorProgresoOnlineScript.fusionar_node_progress(
 		local_node_progress,
-		online_node_progress if online_node_progress is Dictionary else {}
+		online_node_progress
 	)
 	var local_exp: int = int(save_data.get("total_exp", 0))
 	var online_exp: int = int(snapshot.get("total_exp", 0))
-	save_data["total_exp"] = maxi(local_exp, online_exp)
+	save_data["total_exp"] = (
+		local_exp
+		if _tiene_reset_activo_para_cuenta(username)
+		else maxi(local_exp, online_exp)
+	)
 	# Leer antes de sobreescribir progress con el snapshot del servidor.
 	# El runtime puede tener una actividad local de hoy que todavia no llego al disco.
 	var local_streak: Dictionary = _obtener_racha_local_para_merge()
-	var server_streak: Dictionary = snapshot.get("streak_state", {})
+	var server_streak: Dictionary = (
+		{} if _tiene_reset_activo_para_cuenta(username)
+		else snapshot.get("streak_state", {})
+	)
 	print(
 		"[Racha] _importar_progreso_online: username=", username,
 		" local_count=", local_streak.get("current_count", "N/A"),
@@ -1399,12 +1605,19 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 		" server_count=", server_streak.get("current_count", "N/A"),
 		" server_day=", server_streak.get("last_activity_day", "N/A")
 	)
-	save_data["progress"] = snapshot.get("progress_snapshot", {})
+	if _tiene_reset_activo_para_cuenta(username):
+		save_data["progress"] = _global_exportar_progreso()
+	else:
+		save_data["progress"] = snapshot.get("progress_snapshot", {})
 
-	var streak_state: Dictionary = ImportadorProgresoOnlineScript.fusionar_estado_racha(
-		local_streak,
-		server_streak
-	)
+	var streak_state: Dictionary
+	if _tiene_reset_activo_para_cuenta(username):
+		streak_state = local_streak.duplicate(true)
+	else:
+		streak_state = ImportadorProgresoOnlineScript.fusionar_estado_racha(
+			local_streak,
+			server_streak
+		)
 	print("[Racha] _importar_progreso_online: streak_merged_count=", streak_state.get("current_count", "vacío"))
 	_global_importar_progreso(save_data.get("progress", {}))
 	_global_establecer_racha(streak_state)
@@ -1460,19 +1673,215 @@ func _contar_nodos_completados_locales() -> int:
 
 
 func _debe_bloquear_merge_post_reset(online_np: Dictionary) -> bool:
+	if not _tiene_reset_activo_para_cuenta(""):
+		return false
+	if _contar_nodos_completados_locales() == 0:
+		return _contar_nodos_completados_en(online_np) > 0
+	return _contar_nodos_completados_en(online_np) > _contar_nodos_completados_locales() + 1
+
+
+func marcar_reset_remoto_pendiente() -> void:
+	push_warning("[Save] Reset local activo pero el servidor aún trae progreso previo.")
+
+
+func confirmar_reset_remoto_completado(
+	progreso_online: Dictionary,
+	username: String = "",
+	remote_reset_confirmado: bool = false
+) -> void:
+	if not remote_reset_confirmado or not _tiene_reset_activo_para_cuenta(username):
+		return
+	if not progreso_online.is_empty():
+		var snapshot: Dictionary = ImportadorProgresoOnlineScript.construir_snapshot_local(
+			progreso_online
+		)
+		var online_np: Dictionary = (
+			snapshot.get("node_progress", {}) as Dictionary
+			if snapshot.get("node_progress") is Dictionary
+			else {}
+		)
+		if _contar_nodos_completados_en(online_np) > 0:
+			return
+		if int(snapshot.get("total_exp", 0)) > 0:
+			return
+	if _contar_nodos_completados_locales() > 0 or int(save_data.get("total_exp", 0)) > 0:
+		return
+	_limpiar_flags_reset_usuario(username)
+
+
+func limpiar_flag_reset_si_servidor_vacio(progreso_online: Dictionary, username: String = "") -> void:
+	confirmar_reset_remoto_completado(progreso_online, username, false)
+
+
+func _tiene_reset_local_activo() -> bool:
+	return _tiene_reset_activo_para_cuenta("")
+
+
+func _tiene_reset_activo_para_cuenta(username: String = "") -> bool:
+	var reset_at := str(_obtener_meta_guardado().get("progress_reset_at", "")).strip_edges()
+	if not reset_at.is_empty():
+		return true
+	var user := username.strip_edges()
+	if user.is_empty():
+		user = obtener_cuenta_online_vinculada()
+	if user.is_empty():
+		return false
+	return _tiene_reset_pendiente_usuario(user)
+
+
+func _ruta_reset_pendiente_usuario(username: String) -> String:
+	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	return "user://" + PROGRESS_RESET_MARKER_PREFIX + safe_name + ".json"
+
+
+func _persistir_reset_pendiente_usuario(username: String) -> void:
+	if username.is_empty():
+		return
 	var reset_at := str(_obtener_meta_guardado().get("progress_reset_at", "")).strip_edges()
 	if reset_at.is_empty():
+		reset_at = Time.get_datetime_string_from_system(false, true)
+	var payload := {"username": username, "progress_reset_at": reset_at}
+	_escribir_snapshot(_ruta_reset_pendiente_usuario(username), payload)
+
+
+func _leer_reset_pendiente_usuario(username: String) -> String:
+	if username.is_empty():
+		return ""
+	var marker: Dictionary = _leer_snapshot(_ruta_reset_pendiente_usuario(username))
+	return str(marker.get("progress_reset_at", "")).strip_edges()
+
+
+func _tiene_reset_pendiente_usuario(username: String) -> bool:
+	return not _leer_reset_pendiente_usuario(username).is_empty()
+
+
+func _limpiar_reset_pendiente_usuario(username: String) -> void:
+	if username.is_empty():
+		return
+	var path := _ruta_reset_pendiente_usuario(username)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _limpiar_flags_reset_usuario(username: String) -> void:
+	var meta: Dictionary = _obtener_meta_guardado()
+	meta.erase("progress_reset_at")
+	save_data["save_meta"] = meta
+	var user := username.strip_edges()
+	if user.is_empty():
+		user = obtener_cuenta_online_vinculada()
+	_limpiar_reset_pendiente_usuario(user)
+	_marcar_guardado_sucio()
+
+
+func _serializar_snapshot_online_sin_gameplay(snapshot: Dictionary) -> Dictionary:
+	var cleaned: Dictionary = snapshot.duplicate(true)
+	var streak: Dictionary = _extraer_racha_de_save_snapshot(snapshot)
+	cleaned["node_progress"] = {}
+	cleaned["total_exp"] = 0
+	cleaned["progress"] = {}
+	if not streak.is_empty():
+		cleaned["progress"] = {
+			"progress_system_states": {
+				"streak": streak.duplicate(true),
+			},
+		}
+	cleaned["history"] = []
+	cleaned["completed_activity_ids_by_request"] = {}
+	cleaned["map_reward_seen"] = {}
+	cleaned["resume_state"] = _resume_helper.obtener_estado_predeterminado(ARCHIVERO_SCENE)
+	return cleaned
+
+
+func _eliminar_snapshot_online(username: String) -> void:
+	if username.is_empty():
+		return
+	var snapshot_path: String = _ruta_snapshot_online(username)
+	if FileAccess.file_exists(snapshot_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(snapshot_path))
+
+
+func _preparar_login_con_reset_pendiente(username: String) -> void:
+	_eliminar_snapshot_online(username)
+	LocalSyncQueue.descartar_backup_de_usuario(username)
+	LocalSyncQueue.descartar_pendientes("progress_reset_login")
+	var reset_at := _leer_reset_pendiente_usuario(username)
+	if reset_at.is_empty():
+		var snapshot_reset: Dictionary = _leer_snapshot(_ruta_snapshot_online(username))
+		var snapshot_meta: Variant = snapshot_reset.get("save_meta", {})
+		if snapshot_meta is Dictionary:
+			reset_at = str((snapshot_meta as Dictionary).get("progress_reset_at", "")).strip_edges()
+	if reset_at.is_empty():
+		reset_at = Time.get_datetime_string_from_system(false, true)
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	_reiniciar_datos_guardado_actual(profile, true)
+	var meta: Dictionary = _obtener_meta_guardado()
+	meta["progress_reset_at"] = reset_at
+	meta["linked_online_username"] = username
+	save_data["save_meta"] = meta
+	_persistir_reset_pendiente_usuario(username)
+	_establecer_cuenta_online_vinculada(username)
+	_sincronizar_node_progress_a_global({})
+	ArmadorDePartida.reiniciar_historial_sesion()
+	_marcar_guardado_sucio()
+	if not _escribir_guardado_en_disco(false, "account_restore_reset_pending"):
+		push_warning("[Save] No se pudo persistir login con reset pendiente.")
+		return
+	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func _debe_reiniciar_save_por_reset_pendiente(username: String = "") -> bool:
+	if _tiene_reset_activo_para_cuenta(username):
+		return true
+	return _snapshot_online_indica_reset_pendiente(username)
+
+
+func _snapshot_online_indica_reset_pendiente(username: String) -> bool:
+	if username.is_empty():
 		return false
-	return online_np.size() > _contar_nodos_completados_locales() + 1
+	var snapshot := _leer_snapshot(_ruta_snapshot_online(username))
+	if snapshot.is_empty():
+		return false
+	var meta: Variant = snapshot.get("save_meta", {})
+	if not meta is Dictionary:
+		return false
+	return not str((meta as Dictionary).get("progress_reset_at", "")).strip_edges().is_empty()
+
+
+func _debe_rechazar_progreso_gameplay_online_stale(online_np: Dictionary, online_exp: int) -> bool:
+	if not _tiene_reset_activo_para_cuenta(""):
+		return false
+	var local_completed := _contar_nodos_completados_locales()
+	var local_exp := int(save_data.get("total_exp", 0))
+	var online_completed := _contar_nodos_completados_en(online_np)
+	if local_completed == 0 and local_exp == 0:
+		return online_completed > 0 or online_exp > 0
+	if online_completed > local_completed:
+		return true
+	return online_exp > local_exp and local_completed == 0 and local_exp == 0
+
+
+func _contar_nodos_completados_en(node_progress: Dictionary) -> int:
+	var count := 0
+	for entry in node_progress.values():
+		if entry is Dictionary and bool((entry as Dictionary).get("completed", false)):
+			count += 1
+	return count
+
+
+func _restaurar_pendientes_online_si_corresponde(username: String) -> void:
+	if _debe_reiniciar_save_por_reset_pendiente(username):
+		LocalSyncQueue.descartar_backup_de_usuario(username)
+		LocalSyncQueue.descartar_pendientes("progress_reset_restore")
+		return
+	LocalSyncQueue.restaurar_pendientes_de_usuario(username)
 
 
 func _limpiar_backups_y_snapshots_de_reset(username: String) -> void:
 	if username.is_empty():
 		return
 	_confirmar_eliminacion_backup(username)
-	var snapshot_path: String = _ruta_snapshot_online(username)
-	if FileAccess.file_exists(snapshot_path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(snapshot_path))
+	_eliminar_snapshot_online(username)
 
 
 func _sincronizar_node_progress_a_global(node_progress: Variant) -> void:
@@ -1480,6 +1889,11 @@ func _sincronizar_node_progress_a_global(node_progress: Variant) -> void:
 		return
 	var global_autoload: Node = _obtener_autoload_global()
 	if global_autoload == null:
+		return
+	if (node_progress as Dictionary).is_empty():
+		for track_key in GameTrackCatalog.TRACK_ORDER:
+			if global_autoload.has_method("reiniciar_progreso_nodos_pista"):
+				global_autoload.call("reiniciar_progreso_nodos_pista", track_key)
 		return
 	for raw_node_id in (node_progress as Dictionary).keys():
 		var node_id := str(raw_node_id).strip_edges()

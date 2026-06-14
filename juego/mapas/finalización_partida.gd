@@ -31,7 +31,11 @@ const MAP_SCENE := "res://mapas/MapScene.tscn"
 
 const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 
+# Comparación mejor vs. actual: datos listos; UI oculta hasta diseño (Margo).
+const MOSTRAR_COMPARACION_PRECISION_UI := false
+
 var _sync_tween: Tween = null
+var _comparacion_precision: Dictionary = {}
 
 
 func _formatear_tiempo(segundos_totales: float) -> String:
@@ -70,6 +74,10 @@ func _ready() -> void:
 	if stats.is_empty():
 		push_warning("[FinalizaciónPartida] Sin datos de finalización en Global.")
 	
+	var precision_actual := 0
+	if not stats.is_empty():
+		precision_actual = _leer_precision_real(stats)
+
 	var elapsed_seconds := float(stats.get("elapsed_seconds", -1.0))
 	var tiempo_final = "-"
 	if elapsed_seconds >= 0.0:
@@ -81,9 +89,10 @@ func _ready() -> void:
 
 	mostrar_resultados(
 		int(stats.get("exp_ganada", stats.get("exp", 0))),
-		_leer_precision_real(stats),
+		precision_actual,
 		tiempo_final
 	)
+	_mostrar_comparacion_precision(stats, precision_actual)
 
 	# Inicializar feedback de sync
 	if label_sync_status != null:
@@ -140,13 +149,46 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 	if continuar_label != null:
 		continuar_label.text = "Continuar"
 
-
 	if precision >= 100:
 		if not audio_perfecto.playing:
 			audio_perfecto.play()
 	else:
 		if not audio_normal.playing:
 			audio_normal.play()
+
+
+func _construir_comparacion_precision(stats: Dictionary, precision_actual: int) -> Dictionary:
+	var best: int = int(stats.get("best_accuracy", precision_actual))
+	if best <= 0:
+		best = precision_actual
+	var best_clamped: int = clampi(best, 0, 100)
+	var actual_clamped: int = clampi(precision_actual, 0, 100)
+	return {
+		"best_accuracy": best_clamped,
+		"last_accuracy": actual_clamped,
+		"texto": (
+			"Tu mejor precisión fue %d%%\nTu precisión actual es %d%%"
+			% [best_clamped, actual_clamped]
+		),
+	}
+
+
+## Datos de comparación para UI futura (diseño Margo). Siempre disponible aunque no se muestre.
+func obtener_comparacion_precision() -> Dictionary:
+	return _comparacion_precision.duplicate(true)
+
+
+func _mostrar_comparacion_precision(stats: Dictionary, precision_actual: int) -> void:
+	_comparacion_precision = _construir_comparacion_precision(stats, precision_actual)
+	if mensaje == null:
+		return
+	if not MOSTRAR_COMPARACION_PRECISION_UI:
+		mensaje.visible = false
+		return
+	mensaje.visible = true
+	mensaje.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mensaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mensaje.text = str(_comparacion_precision.get("texto", ""))
 
 
 func continuar_al_mapa() -> void:

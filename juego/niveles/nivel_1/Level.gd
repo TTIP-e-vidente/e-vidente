@@ -51,7 +51,9 @@ const COMPLETION_BLACK_AND_WHITE_SHADER_PATH := (
 	"res://niveles/level_completion_black_and_white.gdshader"
 )
 const SAVE_ICON_IDLE_PATH := "res://assets-sistema/interfaz/icono-guardar.svg"
-const SAVE_ICON_OK_PATH   := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+const SAVE_ICON_OK_PATH := "res://assets-sistema/interfaz/icono-guardar-ok.svg"
+const SAVE_ICON_IDLE_FALLBACK_PATH := "res://assets-sistema/interfaz/logro-sin-realizar.png"
+const SAVE_ICON_OK_FALLBACK_PATH := "res://assets-sistema/interfaz/logro-realizado.png"
 const COMPLETION_DIM_COLOR := Color(0.62, 0.62, 0.62, 1.0)
 const ResultadoDeMiniJuegoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 
@@ -157,20 +159,28 @@ func _ready() -> void:
 
 func _cargar_recursos_runtime() -> void:
 	_completion_black_and_white_shader = load(COMPLETION_BLACK_AND_WHITE_SHADER_PATH) as Shader
-	if ResourceLoader.exists(SAVE_ICON_IDLE_PATH):
-		_save_icon_idle = load(SAVE_ICON_IDLE_PATH) as Texture2D
-	else:
-		push_warning(
-			"[Level] Ícono guardar no encontrado: %s — reimportá assets en el editor Godot."
-			% SAVE_ICON_IDLE_PATH
-		)
-	if ResourceLoader.exists(SAVE_ICON_OK_PATH):
-		_save_icon_ok = load(SAVE_ICON_OK_PATH) as Texture2D
-	else:
-		push_warning(
-			"[Level] Ícono guardar-ok no encontrado: %s — reimportá assets en el editor Godot."
-			% SAVE_ICON_OK_PATH
-		)
+	_save_icon_idle = _cargar_textura_guardar(SAVE_ICON_IDLE_PATH, SAVE_ICON_IDLE_FALLBACK_PATH)
+	_save_icon_ok = _cargar_textura_guardar(SAVE_ICON_OK_PATH, SAVE_ICON_OK_FALLBACK_PATH)
+
+
+func _cargar_textura_guardar(primary_path: String, fallback_path: String) -> Texture2D:
+	if ResourceLoader.exists(primary_path):
+		var primary: Texture2D = load(primary_path) as Texture2D
+		if primary != null:
+			return primary
+	if ResourceLoader.exists(fallback_path):
+		var fallback: Texture2D = load(fallback_path) as Texture2D
+		if fallback != null:
+			push_warning(
+				"[Level] Usando fallback de ícono guardar: %s (faltaba o no importó %s)."
+				% [fallback_path, primary_path]
+			)
+			return fallback
+	push_warning(
+		"[Level] Ícono guardar no encontrado: %s ni fallback %s."
+		% [primary_path, fallback_path]
+	)
+	return null
 
 
 func _conectar_continuar_juego() -> void:

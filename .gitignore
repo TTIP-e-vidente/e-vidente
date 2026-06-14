@@ -1,6 +1,9 @@
 # Godot 4+ specific ignores
 juego/.godot/
 *.import
+# Los .import de assets versionados fijan los UID entre máquinas (evita "invalid UID" al clonar).
+!juego/assets-sistema/**/*.import
+!juego/fonts/**/*.import
 
 # Validation save directory (local dev artifact, never commit save state)
 .godot-validation-save/

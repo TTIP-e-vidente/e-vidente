@@ -213,11 +213,13 @@ func _on_superposicion_guardar_presionado() -> void:
 func _on_superposicion_reiniciar_presionado() -> void:
 	var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
 	if not result.get("ok", false):
+		_profile_overlay.mostrar_feedback_reset(
+			str(result.get("message", "No se pudo reiniciar el progreso.")),
+			false
+		)
 		return
-	_profile_overlay.visible = false
-	_profile_button.visible = true
-	@warning_ignore("static_called_on_instance")
-	GameSceneRouter.go_to_mode_selector(get_tree())
+	_profile_overlay.refrescar()
+	_profile_overlay.mostrar_feedback_reset(str(result.get("message", "Progreso reiniciado.")), true)
 
 
 func _on_superposicion_logout_presionado() -> void:

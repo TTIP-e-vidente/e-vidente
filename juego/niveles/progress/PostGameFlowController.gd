@@ -80,12 +80,15 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 				"exp_ganada": resultado.get("exp", 0),
 				"precision": accuracy_percent,
 				"last_accuracy": accuracy_percent,
+				"best_accuracy": accuracy_percent,
 				"elapsed_seconds": elapsed
 			}
 		else:
 			stats["elapsed_seconds"] = elapsed
 			if not stats.has("last_accuracy"):
 				stats["last_accuracy"] = int(stats.get("precision", accuracy_percent))
+			if not stats.has("best_accuracy"):
+				stats["best_accuracy"] = int(stats.get("last_accuracy", accuracy_percent))
 		Global.establecer_ultima_finalizacion(stats)
 
 	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
