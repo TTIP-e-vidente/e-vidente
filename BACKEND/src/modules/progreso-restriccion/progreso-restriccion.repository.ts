@@ -86,7 +86,8 @@ export async function getCompletedNodeByProgressAndNode(
         node_type,
         COALESCE(completed_at, created_at) AS completed_at,
         best_score,
-        best_accuracy
+        best_accuracy,
+        last_accuracy
       FROM history_games
       WHERE progress_id = $1 AND node_id = $2 AND completed = true;
     `,
@@ -120,7 +121,8 @@ export async function upsertCompletedNode(
         node_type,
         COALESCE(completed_at, created_at) AS completed_at,
         best_score,
-        best_accuracy
+        best_accuracy,
+        last_accuracy
       FROM history_games
       WHERE id = $1;
     `,
@@ -162,4 +164,64 @@ export async function listCompletedNodesByUserId(
   userId: string
 ): Promise<CompletedNodeRow[]> {
   return historyGameRepository.listCompletedNodesByUserId(client, userId);
+}
+
+export async function findProgressByUserAndRestriction(
+  client: PoolClient,
+  userId: string,
+  restriction: string
+): Promise<ProgresoRestriccionRow | null> {
+  const result = await client.query<ProgresoRestriccionRow>(
+    `
+      SELECT
+        id,
+        user_id,
+        profile_id,
+        restriction AS restriction_type,
+        total_exp,
+        completed_nodes_count,
+        completed_games_count,
+        map_completed,
+        created_at,
+        updated_at
+      FROM progress_restrictions
+      WHERE user_id = $1
+        AND restriction = $2;
+    `,
+    [userId, restriction]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function resetProgressCounters(
+  client: PoolClient,
+  progressId: string
+): Promise<ProgresoRestriccionRow> {
+  const result = await client.query<ProgresoRestriccionRow>(
+    `
+      UPDATE progress_restrictions
+      SET
+        total_exp = 0,
+        completed_nodes_count = 0,
+        completed_games_count = 0,
+        map_completed = false,
+        updated_at = now()
+      WHERE id = $1
+      RETURNING
+        id,
+        user_id,
+        profile_id,
+        restriction AS restriction_type,
+        total_exp,
+        completed_nodes_count,
+        completed_games_count,
+        map_completed,
+        created_at,
+        updated_at;
+    `,
+    [progressId]
+  );
+
+  return result.rows[0];
 }

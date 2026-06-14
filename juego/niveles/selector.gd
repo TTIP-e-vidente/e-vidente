@@ -321,8 +321,9 @@ func _on_superposicion_guardar_presionado() -> void:
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
-	SyncApi.reintentar_pendientes()
-	SaveManager.reiniciar_todo_progreso()
+	var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
+	if not result.get("ok", false):
+		return
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_mode_selector(get_tree())

@@ -25,6 +25,7 @@ export interface PublicCompletedNode {
   completed_at: Date;
   best_score: number | null;
   best_accuracy: string | null;
+  last_accuracy: string | null;
 }
 
 export function toPublicProgresoRestriccion(row: ProgresoRestriccionRow): PublicProgresoRestriccion {
@@ -47,7 +48,8 @@ export function toPublicCompletedNode(row: CompletedNodeRow): PublicCompletedNod
     node_type: row.node_type,
     completed_at: row.completed_at,
     best_score: row.best_score,
-    best_accuracy: row.best_accuracy
+    best_accuracy: row.best_accuracy,
+    last_accuracy: row.last_accuracy
   };
 }
 

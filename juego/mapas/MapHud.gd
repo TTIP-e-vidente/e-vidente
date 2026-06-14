@@ -133,9 +133,10 @@ func _on_superposicion_logout_presionado() -> void:
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
-	SyncApi.reintentar_pendientes()
 	if _save_manager_listo():
-		SaveManager.reiniciar_todo_progreso()
+		var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
+		if not result.get("ok", false):
+			return
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_mode_selector(get_tree())
 

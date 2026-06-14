@@ -139,14 +139,17 @@ static func _parsear_completed_nodes(completed_nodes: Variant) -> Dictionary:
 		var node_id := str(raw_entry.get("node_id", "")).strip_edges()
 		if node_id.is_empty():
 			continue
-		var accuracy := _normalizar_precision(raw_entry.get("best_accuracy", 0))
-		var percent := clampf(accuracy / 100.0, 0.0, 1.0)
+		var best_accuracy := _normalizar_precision(raw_entry.get("best_accuracy", 0))
+		var last_raw: Variant = raw_entry.get("last_accuracy", best_accuracy)
+		var last_accuracy := _normalizar_precision(last_raw)
+		var best_percent := clampf(best_accuracy / 100.0, 0.0, 1.0)
+		var last_percent := clampf(last_accuracy / 100.0, 0.0, 1.0)
 		node_progress[node_id] = {
 			"completed": true,
-			"best_accuracy": accuracy,
-			"best_percent": percent,
-			"last_accuracy": accuracy,
-			"last_percent": percent,
+			"best_accuracy": best_accuracy,
+			"best_percent": best_percent,
+			"last_accuracy": last_accuracy,
+			"last_percent": last_percent,
 		}
 		var track_key := inferir_track_key_desde_node_id(node_id)
 		if not track_key.is_empty():
@@ -243,20 +246,27 @@ static func _fusionar_entrada_node_progress(local: Dictionary, online: Dictionar
 		float(local.get("best_accuracy", 0.0)),
 		float(online.get("best_accuracy", 0.0))
 	)
-	merged_entry["last_accuracy"] = maxf(
-		float(local.get("last_accuracy", merged_entry["best_accuracy"])),
-		float(online.get("last_accuracy", online.get("best_accuracy", 0.0)))
-	)
+	var local_last := float(local.get("last_accuracy", -1.0))
+	var online_last := float(online.get("last_accuracy", -1.0))
+	if local_last >= 0.0:
+		merged_entry["last_accuracy"] = local_last
+	elif online_last >= 0.0:
+		merged_entry["last_accuracy"] = online_last
+	else:
+		merged_entry["last_accuracy"] = merged_entry["best_accuracy"]
 	merged_entry["best_percent"] = clampf(
 		maxf(float(local.get("best_percent", 0.0)), float(online.get("best_percent", 0.0))),
 		0.0,
 		1.0
 	)
-	merged_entry["last_percent"] = clampf(
-		maxf(float(local.get("last_percent", 0.0)), float(online.get("last_percent", 0.0))),
-		0.0,
-		1.0
-	)
+	var local_last_percent := float(local.get("last_percent", -1.0))
+	var online_last_percent := float(online.get("last_percent", -1.0))
+	if local_last_percent >= 0.0:
+		merged_entry["last_percent"] = clampf(local_last_percent, 0.0, 1.0)
+	elif online_last_percent >= 0.0:
+		merged_entry["last_percent"] = clampf(online_last_percent, 0.0, 1.0)
+	else:
+		merged_entry["last_percent"] = merged_entry["best_percent"]
 	return merged_entry
 
 

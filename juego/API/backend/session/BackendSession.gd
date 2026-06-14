@@ -88,6 +88,20 @@ func limpiar_cache_online() -> void:
 	_progreso_online_en_cache.clear()
 
 
+func limpiar_cache_progreso_online() -> void:
+	if _progreso_online_en_cache.is_empty():
+		return
+	_progreso_online_en_cache["completedNodes"] = []
+	var progress_rows: Variant = _progreso_online_en_cache.get("progress", [])
+	if progress_rows is Array:
+		for row in progress_rows as Array:
+			if row is Dictionary and str((row as Dictionary).get("restriction_type", "")) == "CELIAQUIA":
+				(row as Dictionary)["total_exp"] = 0
+				(row as Dictionary)["completed_nodes_count"] = 0
+				(row as Dictionary)["completed_games_count"] = 0
+				(row as Dictionary)["map_completed"] = false
+
+
 func cargar_datos_online() -> Dictionary:
 	var epoch := _auth.obtener_epoch()
 
@@ -261,6 +275,21 @@ func obtener_progreso_del_servidor() -> Dictionary:
 	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.obtener_progreso(_auth.obtener_token())
 	_verificar_sesion_expirada(resultado, epoch)
+	return resultado
+
+
+func reiniciar_progreso_online(restriction: String = "CELIAQUIA") -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "status": 401, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
+	var resultado := await _api.reiniciar_progreso(_auth.obtener_token(), restriction)
+	_verificar_sesion_expirada(resultado, epoch)
+	if _auth.obtener_epoch() != epoch:
+		return resultado
+	if bool(resultado.get("ok", false)):
+		var data: Variant = resultado.get("data", {})
+		if data is Dictionary:
+			_progreso_online_en_cache = (data as Dictionary).duplicate(true)
 	return resultado
 
 
@@ -448,6 +477,8 @@ func _al_expirar_sesion() -> void:
 	if not _auth.esta_logueado():
 		return
 	print("[BackendSession] Sesión expirada — limpiando datos de sesión")
+	if SaveManager != null and SaveManager.has_method("al_cerrar_sesion_online"):
+		SaveManager.call("al_cerrar_sesion_online")
 	_auth.limpiar_sesion()
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()

@@ -211,9 +211,9 @@ func _on_superposicion_guardar_presionado() -> void:
 
 
 func _on_superposicion_reiniciar_presionado() -> void:
-	SyncApi.reintentar_pendientes()
-	if _save_manager_listo():
-		SaveManager.reiniciar_todo_progreso()
+	var result: Dictionary = await SaveManager.reiniciar_todo_progreso()
+	if not result.get("ok", false):
+		return
 	_profile_overlay.visible = false
 	_profile_button.visible = true
 	@warning_ignore("static_called_on_instance")

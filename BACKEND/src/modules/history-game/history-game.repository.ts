@@ -41,9 +41,9 @@ export async function ensureNodeHistory(
     `
       INSERT INTO history_games (
         user_id, progress_id, node_id, node_type,
-        completed, best_score, best_accuracy, completed_at
+        completed, best_score, best_accuracy, last_accuracy, completed_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $5 THEN now() ELSE NULL END)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $7, CASE WHEN $5 THEN now() ELSE NULL END)
       ON CONFLICT (progress_id, node_id)
       DO UPDATE SET
         node_type     = COALESCE(EXCLUDED.node_type, history_games.node_type),
@@ -53,6 +53,7 @@ export async function ensureNodeHistory(
           COALESCE(history_games.best_accuracy, 0),
           COALESCE(EXCLUDED.best_accuracy, 0)
         ),
+        last_accuracy = EXCLUDED.last_accuracy,
         completed_at  = COALESCE(history_games.completed_at, EXCLUDED.completed_at)
       RETURNING id, (xmax::text::bigint = 0) AS was_inserted;
     `,
@@ -121,6 +122,7 @@ export async function listCompletedNodesByUserId(
     completed_at: Date;
     best_score: number | null;
     best_accuracy: string | null;
+    last_accuracy: string | null;
   }>
 > {
   const result = await client.query(
@@ -133,7 +135,8 @@ export async function listCompletedNodesByUserId(
         node_type,
         COALESCE(completed_at, created_at) AS completed_at,
         best_score,
-        best_accuracy
+        best_accuracy,
+        last_accuracy
       FROM history_games
       WHERE user_id = $1
         AND node_id IS NOT NULL
@@ -144,4 +147,20 @@ export async function listCompletedNodesByUserId(
   );
 
   return result.rows;
+}
+
+export async function deleteNodeHistoryByProgressId(
+  client: PoolClient,
+  progressId: string
+): Promise<number> {
+  const result = await client.query(
+    `
+      DELETE FROM history_games
+      WHERE progress_id = $1
+        AND node_id IS NOT NULL;
+    `,
+    [progressId]
+  );
+
+  return result.rowCount ?? 0;
 }

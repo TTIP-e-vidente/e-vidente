@@ -63,6 +63,13 @@ static func calcular_precision(correct: int, attempts: int) -> int:
 	return int(round(calcular_precision_ratio(correct, attempts) * 100.0))
 
 
+## Precisión para UI: sin default perfecto cuando no hay intentos.
+static func calcular_precision_display(correct: int, attempts: int) -> int:
+	if attempts <= 0:
+		return 0
+	return calcular_precision(correct, attempts)
+
+
 ## Porcentaje de error como entero 0–100.
 static func calculate_error_percent(errors: int, attempts: int) -> int:
 	if attempts <= 0:

@@ -40,6 +40,11 @@ static func reintentar_pendientes() -> void:
 	BackendSession.reintentar_sync_pendiente()
 
 
+## POST /player/me/progress/reset: borra progreso Celiaquía en servidor y actualiza cache online.
+static func reiniciar_progreso_online(restriction: String = "CELIAQUIA") -> Dictionary:
+	return await BackendSession.reiniciar_progreso_online(restriction)
+
+
 ## Reintenta hasta 100 ítems; usar desde perfil ("Guardar ahora") o colas grandes.
 static func reintentar_todos_pendientes() -> void:
 	BackendSession.reintentar_todos_sync_pendiente()

@@ -433,6 +433,78 @@ async function run(): Promise<void> {
       `best_accuracy should be >= 95, got ${bestAccuracyResult.rows[0].best_accuracy}`
     );
 
+    // 9b. Replay worse accuracy keeps best but updates last_accuracy
+    const replayAccuracyNodeId = `replay_accuracy_node_${suffix}`;
+    await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: replayAccuracyNodeId,
+        gameType: 'quiz',
+        score: 80,
+        accuracy: 100,
+        completed: true
+      })
+    });
+    await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 5,
+        nodeId: replayAccuracyNodeId,
+        gameType: 'quiz',
+        score: 20,
+        accuracy: 26,
+        completed: true
+      })
+    });
+    const replayAccuracyResult = await pool.query<{
+      best_accuracy: string;
+      last_accuracy: string;
+    }>(
+      `SELECT best_accuracy, last_accuracy FROM history_games
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2;`,
+      [username, replayAccuracyNodeId]
+    );
+    assert.equal(
+      parseFloat(replayAccuracyResult.rows[0].best_accuracy),
+      100,
+      'best_accuracy should remain 100 after worse replay'
+    );
+    assert.equal(
+      parseFloat(replayAccuracyResult.rows[0].last_accuracy),
+      26,
+      'last_accuracy should reflect the latest replay (26)'
+    );
+    const gamesAfterReplay = await pool.query<{ accuracy: string }>(
+      `SELECT accuracy FROM games
+       WHERE user_id = (SELECT id FROM users WHERE username = $1) AND node_id = $2
+       ORDER BY created_at DESC
+       LIMIT 1;`,
+      [username, replayAccuracyNodeId]
+    );
+    assert.equal(
+      parseFloat(gamesAfterReplay.rows[0].accuracy),
+      26,
+      'latest games row should store accuracy=26'
+    );
+    const progressAfterReplay = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'GET',
+      headers
+    });
+    assert.equal(progressAfterReplay.status, 200);
+    const replayNode = (progressAfterReplay.body.completedNodes as Array<{
+      node_id: string;
+      best_accuracy: string;
+      last_accuracy: string;
+    }>).find((node) => node.node_id === replayAccuracyNodeId);
+    assert.ok(replayNode, 'completedNodes should include replay node');
+    assert.equal(parseFloat(replayNode!.best_accuracy), 100);
+    assert.equal(parseFloat(replayNode!.last_accuracy), 26);
+
     // 10. correctAnswers negative → 400 VALIDATION_ERROR
     const negativeCorrectAnswers = await requestJson(baseUrl, '/player/me/progress', {
       method: 'POST',
@@ -459,6 +531,104 @@ async function run(): Promise<void> {
     });
     assert.equal(negativeDuration.status, 400);
     assert.equal(negativeDuration.body.code, 'VALIDATION_ERROR');
+
+    // 13. Reset Celiaquía borra history_games y deja solo nodos post-reset
+    const resetNodeIds = [
+      `reset_node_a_${suffix}`,
+      `reset_node_b_${suffix}`,
+      `reset_node_c_${suffix}`
+    ];
+    for (const nodeId of resetNodeIds) {
+      const resetSeedResponse = await requestJson(baseUrl, '/player/me/progress', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          restriction: 'CELIAQUIA',
+          expToAdd: 5,
+          nodeId,
+          gameType: 'quiz',
+          accuracy: 80,
+          completed: true,
+          score: 80
+        })
+      });
+      assert.equal(resetSeedResponse.status, 201);
+    }
+
+    const beforeResetProgress = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'GET',
+      headers
+    });
+    assert.equal(beforeResetProgress.status, 200);
+    const beforeResetNodes = beforeResetProgress.body.completedNodes as JsonObject[];
+    assert.ok(
+      resetNodeIds.every((nodeId) => beforeResetNodes.some((row) => row.node_id === nodeId)),
+      'completedNodes should include all seeded reset nodes'
+    );
+
+    const resetProgressResponse = await requestJson(baseUrl, '/player/me/progress/reset', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ restriction: 'CELIAQUIA' })
+    });
+    assert.equal(resetProgressResponse.status, 200);
+    assert.equal((resetProgressResponse.body.completedNodes as JsonObject[]).length, 0);
+
+    const celiaquiaProgressAfterReset = await pool.query<{
+      completed_nodes_count: number;
+      total_exp: number;
+    }>(
+      `
+        SELECT pr.completed_nodes_count, pr.total_exp
+        FROM progress_restrictions pr
+        JOIN users u ON u.id = pr.user_id
+        WHERE u.username = $1
+          AND pr.restriction = 'CELIAQUIA';
+      `,
+      [username]
+    );
+    assert.equal(celiaquiaProgressAfterReset.rows[0].completed_nodes_count, 0);
+    assert.equal(celiaquiaProgressAfterReset.rows[0].total_exp, 0);
+
+    const completedHistoryAfterReset = await pool.query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM history_games hg
+        JOIN progress_restrictions pr ON pr.id = hg.progress_id
+        JOIN users u ON u.id = pr.user_id
+        WHERE u.username = $1
+          AND pr.restriction = 'CELIAQUIA'
+          AND hg.node_id IS NOT NULL
+          AND hg.completed = true;
+      `,
+      [username]
+    );
+    assert.equal(completedHistoryAfterReset.rows[0].count, '0');
+
+    const postResetNodeId = `post_reset_node_${suffix}`;
+    const postResetSaveResponse = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restriction: 'CELIAQUIA',
+        expToAdd: 10,
+        nodeId: postResetNodeId,
+        gameType: 'quiz',
+        accuracy: 90,
+        completed: true,
+        score: 90
+      })
+    });
+    assert.equal(postResetSaveResponse.status, 201);
+
+    const afterOneNodeProgress = await requestJson(baseUrl, '/player/me/progress', {
+      method: 'GET',
+      headers
+    });
+    assert.equal(afterOneNodeProgress.status, 200);
+    const afterOneNodeCompleted = afterOneNodeProgress.body.completedNodes as JsonObject[];
+    assert.equal(afterOneNodeCompleted.length, 1);
+    assert.equal(afterOneNodeCompleted[0].node_id, postResetNodeId);
 
     const patchProfileResponse = await requestJson(baseUrl, '/player/me', {
       method: 'PATCH',

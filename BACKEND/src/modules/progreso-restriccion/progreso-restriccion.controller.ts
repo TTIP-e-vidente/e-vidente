@@ -4,6 +4,7 @@ import { sendResponse } from '../../shared/http/send-response';
 import {
   getDevProgressByUsername,
   getProgresoRestriccion,
+  resetAuthenticatedProgress,
   saveAuthenticatedProgress,
   saveDevProgress
 } from './progreso-restriccion.service';
@@ -34,6 +35,24 @@ export async function postProgresoRestriccionController(req: Request, res: Respo
     const input = { ...req.body, userId };
     const response = await saveAuthenticatedProgress(input);
     sendResponse(res, 201, response);
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+
+export async function postProgressResetController(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const response = await resetAuthenticatedProgress({
+      userId,
+      restriction: req.body?.restriction
+    });
+    sendResponse(res, 200, response);
   } catch (error) {
     sendError(res, error);
   }

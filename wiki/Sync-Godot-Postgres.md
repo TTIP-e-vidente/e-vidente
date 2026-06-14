@@ -266,7 +266,10 @@ Subida desde: pantalla de perfil (`auth.gd`), botón "Guardar ahora" del overlay
 **Nodos** (`fusionar_node_progress`):
 - `completed` = local OR online
 - `best_accuracy` / `best_percent` = máximo
+- `last_accuracy` / `last_percent` = valor local si existe; si no, online (no usar `max`)
 - Si el nodo solo está en un lado, se conserva ese lado
+
+El API expone `last_accuracy` (última corrida) y `best_accuracy` (mejor histórica) en `completedNodes[]`. La estrella del mapa sigue usando `best_percent`.
 
 **EXP:** `max(local, online)`
 
@@ -358,6 +361,22 @@ SyncApi.reintentar_pendientes()
 | Ítem con `status: failed` | llegó a 5 intentos; revisar `lastError` |
 | Avatar de otro usuario | `avatar_path` en save; archivo en `user://avatars/`; re-login fuerza descarga |
 | Batch no drena cola | consola Godot: respuesta de `/player/me/progress/batch`; backend levantado |
+| Tras reiniciar progreso aparecen nodos viejos | reset remoto falló o merge pre-reset; ver `progress_reset_at` y POST `/player/me/progress/reset` |
+
+---
+
+## Reiniciar progreso (Celiaquía)
+
+Flujo al confirmar **Reiniciar progreso** en el perfil:
+
+1. Si hay sesión JWT → `POST /player/me/progress/reset` con `{ "restriction": "CELIAQUIA" }`.
+2. Backend borra `history_games` con `node_id` de esa restricción (CASCADE en `games`) y pone en cero `progress_restrictions`.
+3. Cliente descarta la cola de sync pendiente (`progress_reset`), invalida `node_progress_backup_*` y `save_snapshot_{username}` del usuario vinculado, limpia `completedNodes` en cache online y resetea el save local.
+4. Se guarda `save_meta.progress_reset_at` (ISO) para la defensa en `fusionar_completados_desde_sync`: si el servidor aún devolviera nodos históricos, el merge OR no los repuebla.
+
+Si el reset remoto falla estando logueado, **no** se limpia el save local ni se navega fuera del overlay.
+
+Otras restricciones (`VEG`, etc.) no se tocan en Postgres en esta entrega; el reset local borra todo `node_progress` del dispositivo.
 
 ---
 
@@ -365,5 +384,6 @@ SyncApi.reintentar_pendientes()
 
 - Al cambiar de usuario se hace backup de `node_progress` por username antes del reset.
 - La racha local se lee **antes** de pisar `save_data.progress` en el import online; si no, el merge pierde el valor local.
-- En logout no se borra `node_progress` ni `linked_online_username`.
+- En logout se respalda el save online en `user://save_snapshot_{username}.json` y se restaura `user://guest_save_snapshot.json` (progreso invitado previo al login).
+- El save activo invitado limpia `linked_online_username`; el vínculo se conserva dentro del snapshot online para re-login.
 - Mapas no implementados (`VEG`, `VYG`, `KETO`) tienen `total_nodes = 9999` en `restriction_node_config` para que `map_completed` nunca se active prematuramente.

@@ -220,7 +220,9 @@ static func _registrar_exp_finalizacion(
 		aciertos,
 		intentos
 	)
-	var precision_percent: int = NodoProgressionRulesScript.calcular_precision(aciertos, intentos)
+	var precision_percent: int = NodoProgressionRulesScript.calcular_precision_display(aciertos, intentos)
+	if intentos == 0:
+		precision_percent = 0
 
 	var exp_ganada: int = NodoProgressionRulesScript.calcular_exp_final(
 		exp_base_total,
@@ -257,6 +259,7 @@ static func _registrar_exp_finalizacion(
 			"titulo_nodo": titulo_nodo,
 			"dificultad": dificultad_fallback,
 			"precision": precision_percent,
+			"last_accuracy": precision_percent,
 			"error_percent": NodoProgressionRulesScript.calculate_error_percent(errores, intentos),
 			"tiempo": tiempo_str,
 			"aciertos": aciertos,

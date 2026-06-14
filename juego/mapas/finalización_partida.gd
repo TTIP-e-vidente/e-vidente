@@ -107,14 +107,22 @@ func _exit_tree() -> void:
 
 # Completado no implica 100% de precisión.
 func _leer_precision_real(stats: Dictionary) -> int:
+	if stats.has("last_accuracy"):
+		return int(stats.get("last_accuracy", 0))
 	var intentos := int(stats.get("intentos", 0))
 	if intentos > 0:
-		return NodoProgressionRulesScript.calcular_precision(
+		return NodoProgressionRulesScript.calcular_precision_display(
 			int(stats.get("aciertos", 0)),
 			intentos
 		)
 	if stats.has("precision"):
-		return int(stats.get("precision", 0))
+		var precision := int(stats.get("precision", 0))
+		if precision >= 100 and intentos <= 0:
+			push_warning(
+				"[FinalizaciónPartida] precision=100 con intentos=0; tratando como dato inválido."
+			)
+			return 0
+		return precision
 	# Compatibilidad: algunos resultados legacy guardan accuracy como ratio 0.0–1.0.
 	if stats.has("accuracy"):
 		var accuracy := float(stats.get("accuracy", 0.0))

@@ -4,6 +4,7 @@ const GameChapterAssetCatalog := preload(
 	"res://niveles/content/catalog/GameChapterAssetCatalog.gd"
 )
 const SaveManagerScript := preload("res://interface/SaveManager.gd")
+const SaveDataSchemaScript := preload("res://interface/save_local/data/SaveDataSchema.gd")
 const ContentIdValidatorScript := preload("res://sistemas/contenido/ContentIdValidator.gd")
 # Lazy-load en _initialize para evitar error de autoload al compilar.
 var VincularConceptosScript = null
@@ -1909,6 +1910,179 @@ func _test_fusion_node_progress_no_pierde_completados_locales() -> void:
 	)
 
 
+func _test_fusion_node_progress_last_accuracy_no_usa_max() -> void:
+	var local := {
+		"nodo_replay": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+			"last_accuracy": 26.0,
+			"last_percent": 0.26,
+		},
+	}
+	var online := {
+		"nodo_replay": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+			"last_accuracy": 100.0,
+			"last_percent": 1.0,
+		},
+	}
+	var merged := ImportadorProgresoOnlineScript.fusionar_node_progress(local, online)
+	var entry: Dictionary = merged.get("nodo_replay", {}) as Dictionary
+	_verificar(
+		absf(float(entry.get("last_accuracy", -1.0)) - 26.0) < 0.01,
+		"[Sync] last_accuracy debe conservar la corrida local (26), no max con best (100)"
+	)
+	_verificar(
+		float(entry.get("best_accuracy", 0.0)) >= 99.9,
+		"[Sync] best_accuracy debe seguir siendo la mejor histórica"
+	)
+
+
+func _test_finalizacion_partida_lee_last_accuracy_con_intentos_cero() -> void:
+	const FinalizacionPartidaScript := preload("res://mapas/finalización_partida.gd")
+	var pantalla: Node = FinalizacionPartidaScript.new()
+	var precision: int = pantalla.call(
+		"_leer_precision_real",
+		{"last_accuracy": 26, "intentos": 0, "precision": 100}
+	)
+	pantalla.free()
+	_verificar(
+		precision == 26,
+		"[FinalizaciónPartida] debe priorizar last_accuracy=26 aunque precision legacy sea 100"
+	)
+
+
+func _test_nodo_progression_rules_precision_display_sin_intentos() -> void:
+	const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+	_verificar(
+		NodoProgressionRulesScript.calcular_precision_display(0, 0) == 0,
+		"[NodoProgressionRules] display con 0 intentos debe ser 0, no 100"
+	)
+	_verificar(
+		NodoProgressionRulesScript.calcular_precision(0, 0) == 100,
+		"[NodoProgressionRules] EXP ratio legacy sigue en 100 con 0 intentos"
+	)
+
+
+func _test_logout_restaura_snapshot_invitado() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_invitado": {
+			"completed": true,
+			"best_accuracy": 40.0,
+			"best_percent": 0.4,
+			"last_accuracy": 40.0,
+			"last_percent": 0.4,
+		},
+	}
+	save_manager.save_data["total_exp"] = 12
+	save_manager.call("_respaldar_snapshot_invitado")
+
+	save_manager.save_data["node_progress"] = {
+		"nodo_online": {
+			"completed": true,
+			"best_accuracy": 100.0,
+			"best_percent": 1.0,
+			"last_accuracy": 100.0,
+			"last_percent": 1.0,
+		},
+	}
+	save_manager.save_data["total_exp"] = 500
+	save_manager.call("_establecer_cuenta_online_vinculada", "user_a")
+	save_manager.call("_respaldar_snapshot_online", "user_a")
+
+	var restaurado_invitado: bool = save_manager.call("_restaurar_snapshot_invitado")
+	save_manager.call("_limpiar_identidad_perfil_para_cambio_cuenta")
+	save_manager.call("_limpiar_cuenta_online_vinculada")
+
+	_verificar(restaurado_invitado, "[Logout] debe restaurar snapshot invitado existente")
+	var prog_invitado: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		prog_invitado.has("nodo_invitado"),
+		"[Logout] save invitado debe conservar nodo_invitado"
+	)
+	_verificar(
+		not prog_invitado.has("nodo_online"),
+		"[Logout] save invitado no debe mostrar nodo_online del usuario anterior"
+	)
+	_verificar(
+		save_manager.obtener_cuenta_online_vinculada().is_empty(),
+		"[Logout] linked_online_username debe quedar vacío en modo invitado"
+	)
+	_verificar(
+		str(save_manager.obtener_nombre_usuario_actual()) == SaveDataSchemaScript.DEFAULT_PROFILE_NAME,
+		"[Logout] perfil debe volver a Perfil local"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 12,
+		"[Logout] EXP invitado debe restaurarse (12, no 500)"
+	)
+
+	var restaurado_online: bool = save_manager.call("_restaurar_snapshot_online", "user_a")
+	_verificar(restaurado_online, "[Logout] debe restaurar snapshot online al re-login")
+	var prog_online: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		prog_online.has("nodo_online"),
+		"[Logout] re-login debe recuperar nodo_online"
+	)
+	_verificar(
+		int(save_manager.save_data.get("total_exp", 0)) == 500,
+		"[Logout] re-login debe recuperar EXP online"
+	)
+
+	# Limpiar snapshots de test
+	if FileAccess.file_exists(SaveManagerScript.GUEST_SAVE_SNAPSHOT_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManagerScript.GUEST_SAVE_SNAPSHOT_PATH))
+	var online_path: String = save_manager.call("_ruta_snapshot_online", "user_a")
+	if FileAccess.file_exists(online_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(online_path))
+
+
+func _test_reset_merge_defensa_no_repuebla_nodos_fantasma() -> void:
+	var save_manager := SaveManagerScript.new()
+	save_manager.save_data = SaveDataSchemaScript.new().datos_guardado_predeterminados()
+	save_manager.save_data["node_progress"] = {
+		"nodo_post_reset": {
+			"completed": true,
+			"best_accuracy": 80.0,
+			"best_percent": 0.8,
+		},
+	}
+	var meta: Dictionary = save_manager.call("_obtener_meta_guardado")
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	save_manager.save_data["save_meta"] = meta
+
+	var completed_nodes_online: Array = []
+	for i in range(5):
+		completed_nodes_online.append({
+			"node_id": "nodo_fantasma_%d" % i,
+			"best_accuracy": 100.0,
+			"last_accuracy": 100.0,
+			"completed": true,
+		})
+	save_manager.fusionar_completados_desde_sync(completed_nodes_online)
+	var merged: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		merged.size() == 1 and merged.has("nodo_post_reset"),
+		"[Reset] con progress_reset_at no debe repoblar nodos fantasma del servidor"
+	)
+
+	save_manager.save_data["save_meta"] = save_manager.call("_meta_guardado_vacia")
+	save_manager.save_data["node_progress"] = {
+		"nodo_local": {"completed": true, "best_accuracy": 50.0, "best_percent": 0.5},
+	}
+	save_manager.fusionar_completados_desde_sync(completed_nodes_online)
+	var expanded: Dictionary = save_manager.obtener_todo_progreso_nodos()
+	_verificar(
+		expanded.size() > 1,
+		"[Reset] sin progress_reset_at el merge OR debe expandir con nodos online"
+	)
+
+
 func _test_progreso_con_huecos_se_muestra_en_global() -> void:
 	var global_state: Node = root.get_node_or_null("/root/Global")
 	if global_state == null:
@@ -2011,6 +2185,11 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_armador_pool_agotado_no_crashea()
 	_test_save_manager_precision_no_forzada_al_100()
 	_test_fusion_node_progress_no_pierde_completados_locales()
+	_test_fusion_node_progress_last_accuracy_no_usa_max()
+	_test_finalizacion_partida_lee_last_accuracy_con_intentos_cero()
+	_test_nodo_progression_rules_precision_display_sin_intentos()
+	_test_logout_restaura_snapshot_invitado()
+	_test_reset_merge_defensa_no_repuebla_nodos_fantasma()
 	_test_progreso_con_huecos_se_muestra_en_global()
 	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:

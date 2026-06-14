@@ -25,6 +25,7 @@ import * as userRepository from '../user/user.repository';
 import * as profileRepository from '../profile/profile.repository';
 import * as streakRepository from '../streak/streak.repository';
 import * as gameRepository from '../game/game.repository';
+import * as historyGameRepository from '../history-game/history-game.repository';
 import * as progresoRestriccionRepository from './progreso-restriccion.repository';
 import { toPublicProfile } from '../profile/profile.mapper';
 import { toPublicStreak } from '../streak/streak.mapper';
@@ -347,6 +348,50 @@ export async function saveDevProgress(input: SaveDevProgressInput): Promise<Save
     localDay: input.localDay,
     clientRunId: input.clientRunId
   });
+}
+
+export interface ResetAuthenticatedProgressInput {
+  userId: string;
+  restriction?: unknown;
+}
+
+export async function resetAuthenticatedProgress(
+  input: ResetAuthenticatedProgressInput
+): Promise<ProgresoRestriccionResponse> {
+  const restriction =
+    input.restriction === undefined || input.restriction === null
+      ? 'CELIAQUIA'
+      : normalizeRestriction(input.restriction);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`, [input.userId]);
+    const user = await userRepository.findPublicUserById(input.userId);
+    if (!user) {
+      throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
+    }
+
+    const progressRow = await progresoRestriccionRepository.findProgressByUserAndRestriction(
+      client,
+      input.userId,
+      restriction
+    );
+
+    if (progressRow) {
+      await historyGameRepository.deleteNodeHistoryByProgressId(client, progressRow.id);
+      await progresoRestriccionRepository.resetProgressCounters(client, progressRow.id);
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  return getProgresoRestriccion(input.userId);
 }
 
 export async function getDevProgressByUsername(username: string): Promise<ProgresoRestriccionResponse | null> {

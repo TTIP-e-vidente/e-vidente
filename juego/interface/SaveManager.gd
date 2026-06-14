@@ -47,6 +47,8 @@ const LOCAL_SAVE_TITLE := "Partida actual"
 const LOCAL_PROFILE_KEY := "local_profile"
 const GAMEPLAY_HISTORY_TYPES := ["new_game", "manual_save", "level_completed"]
 const NODE_PROGRESS_BACKUP_PREFIX := "node_progress_backup_"
+const GUEST_SAVE_SNAPSHOT_PATH := "user://guest_save_snapshot.json"
+const SAVE_SNAPSHOT_PREFIX := "save_snapshot_"
 
 var save_data: Dictionary = {}
 var has_unsaved_changes: bool = false
@@ -626,25 +628,37 @@ func preparar_cuenta_online(usuario: Dictionary) -> void:
 	if linked == username and not profile_mismatch:
 		return
 
-	var should_reset := not linked.is_empty() or profile_mismatch
-	if not should_reset:
+	if linked.is_empty():
+		_respaldar_snapshot_invitado()
+		if _restaurar_snapshot_online(username):
+			LocalSyncQueue.restaurar_pendientes_de_usuario(username)
+			_establecer_cuenta_online_vinculada(username)
+			ArmadorDePartida.reiniciar_historial_sesion()
+			_marcar_guardado_sucio()
+			if not _escribir_guardado_en_disco(false, "account_restore"):
+				push_warning("[Save] No se pudo persistir la restauración de cuenta online.")
+				return
+			progress_loaded.emit(obtener_perfil_usuario_actual())
+			return
 		_establecer_cuenta_online_vinculada(username)
 		_marcar_guardado_sucio()
 		_escribir_guardado_en_disco(false, "account_linked")
 		return
 
-	if not linked.is_empty():
+	if not linked.is_empty() and linked != username:
+		_respaldar_snapshot_online(linked)
 		_respaldar_node_progress_por_usuario(linked)
-		# Preservar las partidas sin sincronizar del usuario saliente:
-		# vuelven a la cola cuando vuelva a iniciar sesión.
 		LocalSyncQueue.archivar_pendientes_de_usuario(linked)
 	LocalSyncQueue.descartar_pendientes(
 		"account_switch_%s_to_%s" % [linked if not linked.is_empty() else "unknown", username]
 	)
-	_reiniciar_progreso_juego_preservando_perfil()
-	_limpiar_identidad_perfil_para_cambio_cuenta()
-	limpiar_avatar_perfil()
-	_establecer_cuenta_online_vinculada(username)
+	if _restaurar_snapshot_online(username):
+		_establecer_cuenta_online_vinculada(username)
+	else:
+		_reiniciar_progreso_juego_preservando_perfil()
+		_limpiar_identidad_perfil_para_cambio_cuenta()
+		limpiar_avatar_perfil()
+		_establecer_cuenta_online_vinculada(username)
 	LocalSyncQueue.restaurar_pendientes_de_usuario(username)
 	ArmadorDePartida.reiniciar_historial_sesion()
 	_marcar_guardado_sucio()
@@ -682,14 +696,57 @@ func al_cerrar_sesion_online() -> void:
 	var racha_al_salir: Dictionary = _obtener_racha_local_desde_save()
 	print("[Racha] al_cerrar_sesion_online: racha_local_antes_save=", racha_al_salir)
 	guardar_progreso_en_disco()
+
+	var linked := obtener_cuenta_online_vinculada()
+	if linked.is_empty():
+		ArmadorDePartida.reiniciar_historial_sesion()
+		return
+
+	_respaldar_snapshot_online(linked)
+	LocalSyncQueue.archivar_pendientes_de_usuario(linked)
+	_restaurar_snapshot_invitado()
+	_limpiar_identidad_perfil_para_cambio_cuenta()
+	limpiar_avatar_perfil()
+	_limpiar_cuenta_online_vinculada()
+	ArmadorDePartida.reiniciar_historial_sesion()
+
+	if not _escribir_guardado_en_disco(false, "logout_guest_restore"):
+		push_warning("[Save] No se pudo persistir el save invitado tras logout.")
+		return
+
 	var racha_guardada: Dictionary = _obtener_racha_local_desde_save()
 	print("[Racha] al_cerrar_sesion_online: racha_guardada_en_disco=", racha_guardada)
-	ArmadorDePartida.reiniciar_historial_sesion()
+	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
 func reiniciar_todo_progreso() -> Dictionary:
 	var current_profile: Dictionary = obtener_perfil_usuario_actual()
+	var linked_username := ""
+	if AuthApi.esta_logueado():
+		linked_username = str(AuthApi.obtener_usuario_online().get("username", "")).strip_edges()
+		var remote_result: Dictionary = await SyncApi.reiniciar_progreso_online("CELIAQUIA")
+		if not remote_result.get("ok", false):
+			return {
+				"ok": false,
+				"message": SyncApi.mensaje_error(
+					remote_result,
+					"No se pudo reiniciar el progreso en el servidor."
+				),
+			}
+
+	LocalSyncQueue.descartar_pendientes("progress_reset")
+	if not linked_username.is_empty():
+		_limpiar_backups_y_snapshots_de_reset(linked_username)
+	BackendSession.limpiar_cache_progreso_online()
+
 	_reiniciar_datos_guardado_actual(current_profile)
+	var meta: Dictionary = _obtener_meta_guardado()
+	meta["progress_reset_at"] = Time.get_datetime_string_from_system(false, true)
+	if not linked_username.is_empty():
+		meta["linked_online_username"] = linked_username
+	save_data["save_meta"] = meta
+	_sincronizar_node_progress_a_global({})
+
 	if not _escribir_guardado_en_disco(false, "progress_reset"):
 		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
 	progress_loaded.emit(current_profile)
@@ -1103,6 +1160,111 @@ func _establecer_cuenta_online_vinculada(username: String) -> void:
 	save_data["save_meta"] = meta
 
 
+func _limpiar_cuenta_online_vinculada() -> void:
+	var meta: Dictionary = _obtener_meta_guardado()
+	meta["linked_online_username"] = ""
+	save_data["save_meta"] = meta
+
+
+func _serializar_save_actual() -> Dictionary:
+	return save_data.duplicate(true)
+
+
+func _aplicar_snapshot_en_memoria(snapshot: Dictionary) -> void:
+	if snapshot.is_empty():
+		return
+	save_data = snapshot.duplicate(true)
+	_reparar_datos_guardado_cargados()
+	var saved_progress: Variant = save_data.get("progress", {})
+	_global_importar_progreso(saved_progress if saved_progress is Dictionary else {})
+	_sincronizar_node_progress_a_global(obtener_todo_progreso_nodos())
+	_marcar_guardado_sucio()
+
+
+func _escribir_snapshot(path: String, data: Dictionary) -> bool:
+	if data.is_empty():
+		return false
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_warning("[Save] No se pudo escribir snapshot en ", path)
+		return false
+	file.store_string(JSON.stringify(data))
+	file.flush()
+	file = null
+	return true
+
+
+func _leer_snapshot(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text: String = file.get_as_text()
+	file = null
+	var parsed: Variant = JSON.parse_string(text)
+	return parsed as Dictionary if parsed is Dictionary else {}
+
+
+func _ruta_snapshot_online(username: String) -> String:
+	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
+	return "user://" + SAVE_SNAPSHOT_PREFIX + safe_name + ".json"
+
+
+func _existe_snapshot_online(username: String) -> bool:
+	return FileAccess.file_exists(_ruta_snapshot_online(username))
+
+
+func _respaldar_snapshot_invitado() -> void:
+	var snapshot := _serializar_save_actual()
+	if snapshot.is_empty():
+		return
+	if not _escribir_snapshot(GUEST_SAVE_SNAPSHOT_PATH, snapshot):
+		push_warning("[Save] No se pudo respaldar snapshot invitado.")
+		return
+	print("[Save] snapshot invitado guardado nodos=", obtener_todo_progreso_nodos().keys())
+
+
+func _respaldar_snapshot_online(username: String) -> void:
+	if username.is_empty():
+		return
+	var snapshot := _serializar_save_actual()
+	if snapshot.is_empty():
+		return
+	var path := _ruta_snapshot_online(username)
+	if not _escribir_snapshot(path, snapshot):
+		push_warning("[Save] No se pudo respaldar snapshot online para ", username)
+		return
+	print("[Save] snapshot online guardado username=", username, " nodos=", obtener_todo_progreso_nodos().keys())
+
+
+func _restaurar_snapshot_invitado() -> bool:
+	var snapshot := _leer_snapshot(GUEST_SAVE_SNAPSHOT_PATH)
+	if not snapshot.is_empty():
+		_aplicar_snapshot_en_memoria(snapshot)
+		print("[Save] snapshot invitado restaurado nodos=", obtener_todo_progreso_nodos().keys())
+		return true
+	var guest_profile: Dictionary = obtener_perfil_usuario_actual().duplicate(true)
+	guest_profile["username"] = DEFAULT_PROFILE_NAME
+	guest_profile["birth_date"] = ""
+	guest_profile["email"] = ""
+	_reiniciar_datos_guardado_actual(guest_profile, false)
+	print("[Save] sin snapshot invitado: save invitado vacío")
+	return false
+
+
+func _restaurar_snapshot_online(username: String) -> bool:
+	if username.is_empty():
+		return false
+	var path := _ruta_snapshot_online(username)
+	var snapshot := _leer_snapshot(path)
+	if snapshot.is_empty():
+		return false
+	_aplicar_snapshot_en_memoria(snapshot)
+	print("[Save] snapshot online restaurado username=", username, " nodos=", obtener_todo_progreso_nodos().keys())
+	return true
+
+
 func _reiniciar_progreso_juego_preservando_perfil() -> void:
 	var profile: Dictionary = obtener_perfil_usuario_actual()
 	_reiniciar_datos_guardado_actual(profile, false)
@@ -1273,6 +1435,12 @@ func fusionar_completados_desde_sync(completed_nodes: Array) -> void:
 	var online_np: Dictionary = snapshot.get("node_progress", {})
 	if online_np.is_empty():
 		return
+	if _debe_bloquear_merge_post_reset(online_np):
+		push_warning(
+			"[Save] Ignorando merge post-reset: servidor trae %d nodos y local tiene %d"
+			% [online_np.size(), _contar_nodos_completados_locales()]
+		)
+		return
 	var merged: Dictionary = ImportadorProgresoOnlineScript.fusionar_node_progress(
 		obtener_todo_progreso_nodos(), online_np
 	)
@@ -1281,6 +1449,30 @@ func fusionar_completados_desde_sync(completed_nodes: Array) -> void:
 	_marcar_guardado_sucio()
 	guardar_progreso_en_disco()
 	progress_loaded.emit(obtener_perfil_usuario_actual())
+
+
+func _contar_nodos_completados_locales() -> int:
+	var count := 0
+	for entry in obtener_todo_progreso_nodos().values():
+		if entry is Dictionary and bool((entry as Dictionary).get("completed", false)):
+			count += 1
+	return count
+
+
+func _debe_bloquear_merge_post_reset(online_np: Dictionary) -> bool:
+	var reset_at := str(_obtener_meta_guardado().get("progress_reset_at", "")).strip_edges()
+	if reset_at.is_empty():
+		return false
+	return online_np.size() > _contar_nodos_completados_locales() + 1
+
+
+func _limpiar_backups_y_snapshots_de_reset(username: String) -> void:
+	if username.is_empty():
+		return
+	_confirmar_eliminacion_backup(username)
+	var snapshot_path: String = _ruta_snapshot_online(username)
+	if FileAccess.file_exists(snapshot_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(snapshot_path))
 
 
 func _sincronizar_node_progress_a_global(node_progress: Variant) -> void:

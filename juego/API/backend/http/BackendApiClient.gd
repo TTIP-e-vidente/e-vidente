@@ -84,6 +84,11 @@ func obtener_progreso(token: String) -> Dictionary:
 	return await _obtener_json("/player/me/progress", token)
 
 
+func reiniciar_progreso(token: String, restriction: String = "CELIAQUIA") -> Dictionary:
+	var body := JSON.stringify({"restriction": restriction})
+	return await _enviar_post("/player/me/progress/reset", token, body)
+
+
 func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:
 	# Avatar usa timeout largo por el tamaño del payload base64.
 	var body := JSON.stringify({"data": data, "mimeType": mime_type})

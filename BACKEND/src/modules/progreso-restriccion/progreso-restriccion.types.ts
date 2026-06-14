@@ -20,6 +20,7 @@ export interface CompletedNodeRow {
   completed_at: Date;
   best_score: number | null;
   best_accuracy: string | null;
+  last_accuracy: string | null;
 }
 
 export interface InsertCompletedNodeInput {

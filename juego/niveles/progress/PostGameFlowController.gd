@@ -66,17 +66,26 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	
 	var stats: Dictionary = {}
 	var elapsed: float = float(resultado.get("elapsed_seconds", -1.0))
+	var accuracy_percent := 0
+	var acc_raw := float(resultado.get("accuracy", 0.0))
+	if acc_raw <= 1.0:
+		accuracy_percent = int(round(acc_raw * 100.0))
+	else:
+		accuracy_percent = int(round(acc_raw))
 	if elapsed >= 0.0:
 		stats = Global.obtener_y_limpiar_ultima_finalizacion()
 		if stats.is_empty():
 			stats = {
 				"node_key": node_key,
 				"exp_ganada": resultado.get("exp", 0),
-				"precision": int(resultado.get("accuracy", 0.0) * 100) if resultado.get("accuracy", 0.0) <= 1.0 else int(resultado.get("accuracy", 0.0)),
+				"precision": accuracy_percent,
+				"last_accuracy": accuracy_percent,
 				"elapsed_seconds": elapsed
 			}
 		else:
 			stats["elapsed_seconds"] = elapsed
+			if not stats.has("last_accuracy"):
+				stats["last_accuracy"] = int(stats.get("precision", accuracy_percent))
 		Global.establecer_ultima_finalizacion(stats)
 
 	var save_manager: Node = tree.root.get_node_or_null("/root/SaveManager")
