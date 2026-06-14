@@ -45,13 +45,15 @@ func registrar_cuenta(
 	nombre: String,
 	mail: String,
 	clave: String,
-	fecha_nacimiento: Variant = null
+	fecha_nacimiento: Variant = null,
+	acepta_notificaciones_mail: bool = true
 ) -> Dictionary:
 	var payload := {
 		"username": usuario,
 		"name": nombre,
 		"mail": mail,
 		"password": clave,
+		"accept_email_notifications": acepta_notificaciones_mail,
 	}
 	if fecha_nacimiento != null:
 		var birth_date := str(fecha_nacimiento).strip_edges()

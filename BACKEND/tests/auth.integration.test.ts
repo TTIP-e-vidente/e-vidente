@@ -77,7 +77,8 @@ async function run(): Promise<void> {
         name: 'Auth User',
         mail,
         password,
-        birth_date: '2000-06-15'
+        birth_date: '2000-06-15',
+        accept_email_notifications: false
       })
     });
 
@@ -100,6 +101,13 @@ async function run(): Promise<void> {
     assert.equal(storedPasswordResult.rowCount, 1);
     assert.notEqual(storedPasswordResult.rows[0].password_hash, password);
     assert.ok(storedPasswordResult.rows[0].password_hash.length > 20);
+
+    const storedNotificationsResult = await pool.query<{ email_notifications_enabled: boolean }>(
+      'SELECT email_notifications_enabled FROM users WHERE username = $1;',
+      [username]
+    );
+    assert.equal(storedNotificationsResult.rowCount, 1);
+    assert.equal(storedNotificationsResult.rows[0].email_notifications_enabled, false);
 
     const duplicateResponse = await requestJson(baseUrl, '/auth/register', {
       method: 'POST',

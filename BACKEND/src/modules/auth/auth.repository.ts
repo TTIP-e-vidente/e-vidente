@@ -68,11 +68,25 @@ export async function findByUsernameOrMail(value: string): Promise<UserRow | nul
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
   const result = await query<UserRow>(
     `
-      INSERT INTO users (username, name, mail, password_hash, birth_date)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO users (
+        username,
+        name,
+        mail,
+        password_hash,
+        birth_date,
+        email_notifications_enabled
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING ${userColumns};
     `,
-    [input.username, input.name, input.mail, input.passwordHash, input.birthDate]
+    [
+      input.username,
+      input.name,
+      input.mail,
+      input.passwordHash,
+      input.birthDate,
+      input.emailNotificationsEnabled
+    ]
   );
 
   return result.rows[0];

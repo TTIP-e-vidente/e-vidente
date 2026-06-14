@@ -23,6 +23,7 @@ export interface RegisterInput {
   mail?: unknown;
   password?: unknown;
   birth_date?: unknown;
+  accept_email_notifications?: unknown;
 }
 
 export interface LoginInput {
@@ -48,4 +49,5 @@ export interface CreateUserInput {
   mail: string | null;
   passwordHash: string;
   birthDate: string | null;
+  emailNotificationsEnabled: boolean;
 }

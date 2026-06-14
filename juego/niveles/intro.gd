@@ -28,6 +28,7 @@ const MODE_SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const LOGIN_FLOW_GAME := "game"
 const LOGIN_FLOW_PROFILE := "profile"
+const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
 
 
 
@@ -58,6 +59,7 @@ func _ready() -> void:
 	mi_progresoi.texture = load(MI_PROGRESO_PATH) as Texture2D
 	saliri.texture = load(SALIR_PATH) as Texture2D
 	BackendSession.session_expired.connect(_on_sesion_expirada)
+	call_deferred("_mostrar_perdida_racha_si_corresponde")
 
 
 func _on_jugar_presionado() -> void:
@@ -195,3 +197,7 @@ func _on_sesion_expirada() -> void:
 
 func _abrir_opciones_menu() -> String:
 	return OPTIONS_SCENE_PATH
+
+
+func _mostrar_perdida_racha_si_corresponde() -> void:
+	await StreakLossFlowScript.mostrar_si_corresponde(self)

@@ -6,6 +6,7 @@ import { isNonEmptyString, isValidEmail } from '../../shared/validation/validato
 import { parseBirthDateInput } from '../../shared/validation/birth_date';
 import { toPublicUser } from './auth.mapper';
 import * as authRepository from './auth.repository';
+import { queueWelcomeEmail } from '../email/email.service';
 import {
   AuthErrorCode,
   AuthResponse,
@@ -58,6 +59,25 @@ export function verifyAccessToken(token: string): { sub: string; username: strin
   return { sub: payload.sub, username: payload.username };
 }
 
+function parseEmailNotificationsPreference(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'false' || normalized === '0' || normalized === 'no') {
+      return false;
+    }
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
+      return true;
+    }
+  }
+  return true;
+}
+
 export async function register(input: RegisterInput): Promise<AuthResponse> {
   const username = asTrimmedString(input.username);
   const name = asTrimmedString(input.name);
@@ -98,13 +118,25 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
   }
 
   const passwordHash = await bcrypt.hash(password, getBcryptSaltRounds());
+  const emailNotificationsEnabled = parseEmailNotificationsPreference(
+    input.accept_email_notifications
+  );
   const user = await authRepository.createUser({
     username: validUsername,
     name: validName,
     mail,
     passwordHash,
-    birthDate
+    birthDate,
+    emailNotificationsEnabled
   });
+
+  if (mail) {
+    queueWelcomeEmail({
+      userId: user.id,
+      mail,
+      name: validName
+    });
+  }
 
   return {
     user: toPublicUser(user),

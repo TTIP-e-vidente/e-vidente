@@ -1440,6 +1440,66 @@ func aplicar_racha_sincronizada(streak_online: Dictionary) -> void:
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
+func evaluar_perdida_racha_pendiente() -> Dictionary:
+	var streak_state: Dictionary = _obtener_racha_local_para_merge()
+	if streak_state.is_empty():
+		var global_autoload: Node = _obtener_autoload_global()
+		if global_autoload != null and global_autoload.has_method("obtener_estado_racha"):
+			var global_streak: Variant = global_autoload.call("obtener_estado_racha")
+			if global_streak is Dictionary:
+				streak_state = (global_streak as Dictionary).duplicate(true)
+
+	if streak_state.is_empty():
+		return {"should_show": false}
+
+	var streak_meta: Dictionary = _obtener_meta_racha()
+	var resultado: Dictionary = GameStreakTrackerScript.aplicar_vencimiento_si_corresponde(
+		streak_state,
+		streak_meta
+	)
+	if not bool(resultado.get("applied", false)):
+		return {"should_show": false}
+
+	var updated_state: Dictionary = resultado.get("updated_state", {}) as Dictionary
+	_global_establecer_racha(updated_state)
+	_persistir_racha_en_save(updated_state)
+
+	if bool(resultado.get("should_show", false)):
+		var notify_day: String = str(resultado.get("notify_day", "")).strip_edges()
+		if not notify_day.is_empty():
+			streak_meta["last_loss_notified_for_day"] = notify_day
+			_persistir_meta_racha(streak_meta)
+		_escribir_guardado_en_disco(false, "streak_loss")
+
+	return resultado
+
+
+func _obtener_meta_racha() -> Dictionary:
+	var progress: Variant = save_data.get("progress", {})
+	if not progress is Dictionary:
+		return {}
+	var systems: Variant = (progress as Dictionary).get("progress_system_states", {})
+	if not systems is Dictionary:
+		return {}
+	var meta: Variant = (systems as Dictionary).get("streak_meta", {})
+	return (meta as Dictionary).duplicate(true) if meta is Dictionary else {}
+
+
+func _persistir_meta_racha(streak_meta: Dictionary) -> void:
+	var progress_snapshot: Dictionary = save_data.get("progress", {}) as Dictionary
+	var systems: Dictionary = (
+		progress_snapshot.get("progress_system_states", {}) as Dictionary
+		if progress_snapshot.get("progress_system_states") is Dictionary
+		else {}
+	)
+	if streak_meta.is_empty():
+		systems.erase("streak_meta")
+	else:
+		systems["streak_meta"] = streak_meta.duplicate(true)
+	progress_snapshot["progress_system_states"] = systems
+	save_data["progress"] = progress_snapshot
+
+
 func _obtener_racha_local_desde_save() -> Dictionary:
 	var progress: Variant = save_data.get("progress", {})
 	if not progress is Dictionary:

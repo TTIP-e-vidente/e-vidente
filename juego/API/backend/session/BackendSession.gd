@@ -224,12 +224,20 @@ func registrar_cuenta(
 	nombre: String,
 	mail: String,
 	clave: String,
-	fecha_nacimiento: Variant = null
+	fecha_nacimiento: Variant = null,
+	acepta_notificaciones_mail: bool = true
 ) -> Dictionary:
 	var listo := await _asegurar_servidor_listo()
 	if not listo.get("ok", false):
 		return listo
-	var resultado := await _api.registrar_cuenta(usuario, nombre, mail, clave, fecha_nacimiento)
+	var resultado := await _api.registrar_cuenta(
+		usuario,
+		nombre,
+		mail,
+		clave,
+		fecha_nacimiento,
+		acepta_notificaciones_mail
+	)
 	_procesar_resultado_de_auth(resultado)
 	return resultado
 

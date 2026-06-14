@@ -4,6 +4,7 @@ class_name ModeSelector
 const RACHA_SCENE_PATH := "res://interface/components/Racha.tscn"
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE_PATH := "res://interface/components/ProfileOverlayPanel.tscn"
+const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
 const CANDADO_SELECTOR_PATH := "res://assets-sistema/selector/candado-selector.png"
@@ -80,6 +81,11 @@ func _ready() -> void:
 	_establecer_reanudar_superposicion_visible(false)
 	_configurar_botones()
 	_construir_hud()
+	call_deferred("_mostrar_perdida_racha_si_corresponde")
+
+
+func _mostrar_perdida_racha_si_corresponde() -> void:
+	await StreakLossFlowScript.mostrar_si_corresponde(self)
 
 
 func _configurar_botones() -> void:

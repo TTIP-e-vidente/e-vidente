@@ -74,6 +74,23 @@ layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Mail"
 
+[node name="LabelRegisterMailHint" type="Label" parent="VBoxContainer" unique_id=1943296518]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4392157, 0.27058825, 0.19607843, 0.9)
+theme_override_fonts/font = ExtResource("4_8a7lh")
+theme_override_font_sizes/font_size = 11
+text = "Te vamos a enviar un mail de bienvenida para confirmar tu cuenta."
+autowrap_mode = 3
+
+[node name="CheckBoxEmailNotifications" type="CheckBox" parent="VBoxContainer" unique_id=1943296519]
+visible = false
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_8a7lh")
+theme_override_font_sizes/font_size = 12
+button_pressed = true
+text = "Quiero recibir recordatorios de racha y novedades por mail."
+
 [node name="LineEditPassword" type="LineEdit" parent="VBoxContainer" unique_id=637097097]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2

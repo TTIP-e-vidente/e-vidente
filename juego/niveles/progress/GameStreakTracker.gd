@@ -196,6 +196,79 @@ static func construir_feedback(
 	}
 
 
+# --- Pérdida de racha -------------------------------------------------------
+
+static func aplicar_vencimiento_si_corresponde(
+	streak_state: Dictionary,
+	streak_meta: Dictionary = {}
+) -> Dictionary:
+	var read_state := leer(streak_state)
+	var vista := modelo_vista(read_state)
+	if str(vista.get("status_key", "")) != "expired":
+		return {
+			"applied": false,
+			"should_show": false,
+			"updated_state": read_state,
+		}
+
+	var current_count: int = int(read_state.get("current_count", 0))
+	var last_day: String = _dia_local_de_actividad(read_state)
+	var already_notified: bool = (
+		str(streak_meta.get("last_loss_notified_for_day", "")).strip_edges() == last_day
+	)
+
+	if current_count <= 0:
+		return {
+			"applied": false,
+			"should_show": false,
+			"updated_state": read_state,
+		}
+
+	var previous_count: int = current_count
+	var updated := read_state.duplicate(true)
+	updated["current_count"] = 0
+	updated["best_count"] = maxi(int(updated.get("best_count", 0)), previous_count)
+	updated = leer(updated)
+
+	if already_notified:
+		return {
+			"applied": true,
+			"should_show": false,
+			"updated_state": updated,
+			"notify_day": last_day,
+		}
+
+	return {
+		"applied": true,
+		"should_show": true,
+		"updated_state": updated,
+		"feedback": construir_feedback_perdida(previous_count, updated),
+		"notify_day": last_day,
+	}
+
+
+static func construir_feedback_perdida(
+	previous_count: int,
+	updated_state: Dictionary = {}
+) -> Dictionary:
+	var best_count: int = maxi(
+		previous_count,
+		int(updated_state.get("best_count", 0))
+	)
+	return {
+		"should_show": true,
+		"feedback_key": "lost",
+		"title": "Tu racha se cortó",
+		"message": (
+			"Tenías %d %s seguidos. ¡Arrancá de nuevo!"
+			% [previous_count, "día" if previous_count == 1 else "días"]
+		),
+		"current_count": 0,
+		"previous_count": previous_count,
+		"best_count": best_count,
+	}
+
+
 # --- Merge local / servidor -----------------------------------------------
 
 static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictionary:

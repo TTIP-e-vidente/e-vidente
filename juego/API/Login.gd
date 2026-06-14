@@ -10,6 +10,8 @@ signal play_offline_requested()
 @onready var _input_password: LineEdit = $VBoxContainer/LineEditPassword
 @onready var _input_register_name: LineEdit = $VBoxContainer/LineEditRegisterName
 @onready var _input_register_mail: LineEdit = $VBoxContainer/LineEditRegisterMail
+@onready var _label_register_mail_hint: Label = $VBoxContainer/LabelRegisterMailHint
+@onready var _checkbox_email_notifications: CheckBox = $VBoxContainer/CheckBoxEmailNotifications
 @onready var _button_submit: Button = $VBoxContainer/ButtonSubmit
 @onready var _button_switch_mode: Button = $VBoxContainer/ButtonSwitchMode
 @onready var _button_play_offline: Button = $VBoxContainer/ButtonPlayOffline
@@ -40,6 +42,8 @@ func _establecer_modo(mode: AuthMode) -> void:
 	label_title.text = "Crear cuenta" if is_register else "Iniciar sesión"
 	_input_register_name.visible = is_register
 	_input_register_mail.visible = is_register
+	_label_register_mail_hint.visible = is_register
+	_checkbox_email_notifications.visible = is_register
 	_input_username.placeholder_text = "Usuario" if is_register else "Usuario o mail"
 	_button_submit.text = "Crear cuenta" if is_register else "Iniciar sesión"
 	_button_switch_mode.text = "Ya tengo cuenta" if is_register else "Crear cuenta"
@@ -93,7 +97,8 @@ func _enviar_formulario() -> void:
 			_input_password.text,
 			_input_register_mail.text.strip_edges(),
 			_input_register_name.text.strip_edges(),
-			fecha_nacimiento_registro
+			fecha_nacimiento_registro,
+			_checkbox_email_notifications.button_pressed
 		)
 	else:
 		result = await AuthApi.iniciar_sesion_completa(
@@ -157,6 +162,7 @@ func _establecer_cargando(value: bool) -> void:
 	_input_password.editable = not value
 	_input_register_name.editable = not value
 	_input_register_mail.editable = not value
+	_checkbox_email_notifications.disabled = value
 
 
 func _establecer_estado(texto: String) -> void:

@@ -207,6 +207,39 @@ func test_registrar_y_modelo_vista_quedan_activos_el_mismo_dia_local() -> void:
 	assert_str(str(vista.get("streak_state", ""))).is_equal("active")
 
 
+func test_aplicar_vencimiento_deja_racha_en_cero_y_mantiene_best() -> void:
+	var today := Time.get_date_string_from_system(false)
+	var hace_tres_dias := _dia_anterior(_dia_anterior(_dia_anterior(today)))
+	var streak := {
+		"current_count": 5,
+		"best_count": 5,
+		"last_activity_day": hace_tres_dias,
+	}
+
+	var resultado: Dictionary = GameStreakTracker.aplicar_vencimiento_si_corresponde(streak, {})
+	assert_true(bool(resultado.get("applied", false)))
+	assert_true(bool(resultado.get("should_show", false)))
+
+	var updated: Dictionary = resultado.get("updated_state", {}) as Dictionary
+	assert_int(int(updated.get("current_count", -1))).is_equal(0)
+	assert_int(int(updated.get("best_count", 0))).is_equal(5)
+
+
+func test_aplicar_vencimiento_no_repite_overlay_para_misma_perdida() -> void:
+	var today := Time.get_date_string_from_system(false)
+	var hace_tres_dias := _dia_anterior(_dia_anterior(_dia_anterior(today)))
+	var streak := {
+		"current_count": 4,
+		"best_count": 4,
+		"last_activity_day": hace_tres_dias,
+	}
+	var meta := {"last_loss_notified_for_day": hace_tres_dias}
+
+	var resultado: Dictionary = GameStreakTracker.aplicar_vencimiento_si_corresponde(streak, meta)
+	assert_true(bool(resultado.get("applied", false)))
+	assert_false(bool(resultado.get("should_show", false)))
+
+
 func _dia_anterior(today: String) -> String:
 	var unix_today := int(Time.get_unix_time_from_datetime_string(today))
 	return Time.get_date_string_from_unix_time(unix_today - GameStreakTracker.SECONDS_PER_DAY)

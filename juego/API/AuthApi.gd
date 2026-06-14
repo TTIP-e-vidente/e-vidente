@@ -44,9 +44,17 @@ static func crear_cuenta_completa(
 		clave: String,
 		mail: String,
 		nombre: String = "",
-		fecha_nacimiento: Variant = null
+		fecha_nacimiento: Variant = null,
+		acepta_notificaciones_mail: bool = true
 ) -> Dictionary:
-	var auth := await crear_cuenta(usuario, clave, mail, nombre, fecha_nacimiento)
+	var auth := await crear_cuenta(
+		usuario,
+		clave,
+		mail,
+		nombre,
+		fecha_nacimiento,
+		acepta_notificaciones_mail
+	)
 	if not auth.get("ok", false):
 		return _fallo("auth", auth, "No se pudo crear la cuenta.")
 	var datos := await cargar_datos_online()
@@ -86,7 +94,8 @@ static func crear_cuenta(
 		clave: String,
 		mail: String,
 		nombre: String = "",
-		fecha_nacimiento: Variant = null
+		fecha_nacimiento: Variant = null,
+		acepta_notificaciones_mail: bool = true
 ) -> Dictionary:
 	var usuario_limpio := usuario.strip_edges()
 	var mail_limpio := mail.strip_edges()
@@ -94,7 +103,12 @@ static func crear_cuenta(
 	if nombre_limpio.is_empty():
 		nombre_limpio = usuario_limpio
 	return await BackendSession.registrar_cuenta(
-		usuario_limpio, nombre_limpio, mail_limpio, clave, fecha_nacimiento
+		usuario_limpio,
+		nombre_limpio,
+		mail_limpio,
+		clave,
+		fecha_nacimiento,
+		acepta_notificaciones_mail
 	)
 
 

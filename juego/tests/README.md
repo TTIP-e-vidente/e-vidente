@@ -9,6 +9,8 @@ Guía de referencia. Documentación de defensa: [`docs-local/onboarding-jugabili
 | Capa | Archivo | Framework | Qué protege |
 |---|---|---|---|
 | Smoke CI | `vertical_slice_smoke_test.gd` | Godot headless | Flujo completo Intro → mapa → partida → cierre |
+| Racha / sync | `progress/test_racha_sync.gd` | GdUnit4 | Merge online, modelo vista, vencimiento |
+| Pérdida racha UI | `progress/test_streak_loss_flow.gd` | GdUnit4 | Overlay in-game, flujo y SaveManager |
 | Pipeline JSON | `preguntas/carga_json_preguntas_test.gd` | GdUnit4 | JSON → loader → `Preguntas` → evaluador |
 | UX Preguntas | `preguntas/test_modalidad_preguntas.gd` | GdUnit4 (UNQ-172) | Feedback rojo/verde, reintento, panel final |
 
@@ -51,6 +53,12 @@ Solo UNQ-172:
 godot --headless --path juego -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --ignoreHeadlessMode -a res://tests/preguntas/test_modalidad_preguntas.gd
 ```
 
+Suites de racha (`sync` + pérdida in-game):
+
+```bash
+godot --headless --path juego -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --ignoreHeadlessMode -a res://tests/progress/
+```
+
 También desde el panel GdUnit en el editor.
 
 ---
@@ -80,6 +88,8 @@ Simula el click con `boton.pressed.emit()`.
 | Archivo | Tipo | Descripción |
 |---|---|---|
 | `vertical_slice_smoke_test.gd` | Smoke CI | Flujo principal headless |
+| `progress/test_racha_sync.gd` | GdUnit4 | Merge y vencimiento de racha |
+| `progress/test_streak_loss_flow.gd` | GdUnit4 | Overlay pérdida de racha (5 tests) |
 | `preguntas/carga_json_preguntas_test.gd` | GdUnit4 | Pipeline JSON (8 tests) |
 | `preguntas/test_modalidad_preguntas.gd` | GdUnit4 | UX modalidad preguntas (5 tests, UNQ-172) |
 

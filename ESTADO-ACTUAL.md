@@ -18,7 +18,8 @@
 ## Pendiente
 
 - Leaderboard, logros como sistema
-- Refresh token, admin, mails reales
+- Refresh token, admin
+- Emails en producción (módulo listo; activar con Brevo + `EMAIL_ENABLED=true`)
 
 ## Repo
 
