@@ -13,12 +13,12 @@ function runTemplateTests(): void {
   });
   assert.equal(welcome.to, 'agus@example.com');
   assert.equal(welcome.toName, 'Agus');
-  assert.match(welcome.subject, /Bienvenido/);
+  assert.match(welcome.subject, /E-VIDENTE ya está creada/);
   assert.match(welcome.textContent, /Agus/);
   assert.match(welcome.htmlContent, /Agus/);
   assert.match(welcome.htmlContent, /#42785e/i);
   assert.match(welcome.htmlContent, /Rubik/i);
-  assert.match(welcome.htmlContent, /¡Bienvenido\/a!/);
+  assert.match(welcome.htmlContent, /Bienvenido\/a a E-VIDENTE/);
   assert.doesNotMatch(welcome.htmlContent, /<script/i);
 
   const escaped = escapeHtml(`<Agus> "test" & 'ok'`);
@@ -31,14 +31,14 @@ function runTemplateTests(): void {
     name: 'Margo',
     streak_count: 4
   });
-  assert.match(atRisk.subject, /riesgo/i);
+  assert.match(atRisk.subject, /sigue en juego/i);
   assert.match(atRisk.textContent, /4 días/);
   assert.match(atRisk.textContent, /desactivar los recordatorios/i);
   assert.match(atRisk.htmlContent, /desactivar los recordatorios/i);
 
   const lost = previewEmailTemplate('streak_lost', { streak_count: 1 });
   assert.match(lost.textContent, /1 día/);
-  assert.match(lost.textContent, /se cortó tu racha/i);
+  assert.match(lost.textContent, /volvió a cero/i);
 
   const metadata = listEmailTemplateMetadata();
   assert.equal(metadata.length, 3);

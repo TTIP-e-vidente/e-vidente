@@ -14,27 +14,27 @@ export function buildStreakLostEmail(context: StreakTemplateContext): EmailMessa
   const { name, mail, streakCount } = context;
   const safeName = escapeHtml(name);
   const dayLabel = formatDayLabel(streakCount);
-  const subject = 'Se cortó tu racha en E-VIDENTE';
+  const subject = 'Se reinició tu racha — podés arrancar otra cuando quieras';
   const textContent = buildTextLines([
     `Hola ${name},`,
     '',
-    `Pasaron más de un día sin actividad y se cortó tu racha de ${streakCount} ${dayLabel}.`,
-    'No pasa nada: siempre podés empezar de nuevo cuando quieras.',
+    `Pasaron varios días sin actividad y tu racha de ${streakCount} ${dayLabel} volvió a cero.`,
+    'No pasa nada: cada día es una nueva oportunidad para aprender jugando.',
     '',
     NOTIFICATION_OPT_OUT_TEXT,
     '',
     'Equipo E-VIDENTE'
   ]);
   const htmlContent = wrapHtml({
-    headline: 'Tu racha se cortó',
+    headline: 'Tu racha se reinició',
     subtitle: 'Siempre podés volver a empezar',
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(`Hola <strong style="color: #42785e;">${safeName}</strong>,`),
       bodyHighlight(
-        `Pasaron más de un día sin actividad y se cortó tu racha de <strong style="color: #704533;">${streakCount} ${dayLabel}</strong>.`
+        `Pasaron varios días sin actividad y tu racha de <strong style="color: #704533;">${streakCount} ${dayLabel}</strong> volvió a cero.`
       ),
-      bodyParagraph('No pasa nada: siempre podés empezar de nuevo cuando quieras.')
+      bodyParagraph('No pasa nada: cada día es una nueva oportunidad para aprender jugando.')
     ].join('')
   });
 

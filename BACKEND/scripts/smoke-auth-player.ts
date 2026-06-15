@@ -93,7 +93,7 @@ async function run(): Promise<void> {
       )
     );
   } finally {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2 OR email = $2;', [
+    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2;', [
       username,
       mail
     ]);

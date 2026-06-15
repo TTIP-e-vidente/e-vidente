@@ -93,7 +93,3 @@ export function previewEmailTemplate(
 
   return EMAIL_TEMPLATE_DEFINITIONS.streak_lost.build(context);
 }
-
-export { buildWelcomeEmail } from './welcome.template';
-export { buildStreakAtRiskEmail } from './streak-at-risk.template';
-export { buildStreakLostEmail } from './streak-lost.template';

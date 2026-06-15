@@ -68,7 +68,7 @@ type DeliveryBatchStats = {
   skipped: number;
 };
 
-export async function cleanupStalePendingDeliveries(): Promise<number> {
+async function cleanupStalePendingDeliveries(): Promise<number> {
   const expiredCount = await emailRepository.expireStalePendingDeliveries(
     getPendingStaleMinutes()
   );
@@ -138,7 +138,7 @@ async function shouldSkipWelcomeEmail(userId: string): Promise<boolean> {
   return emailRepository.isWelcomeEmailSkipped(userId);
 }
 
-export async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
+async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
   if (!recipient.mail) {
     return;
   }
@@ -291,7 +291,7 @@ export async function runStreakEmailJob(referenceDate?: string): Promise<{
   return { today, expiredPending, atRisk, lost };
 }
 
-export function getTodayInConfiguredTimezone(reference = new Date()): string {
+function getTodayInConfiguredTimezone(reference = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: emailConfig.timezone,
     year: 'numeric',

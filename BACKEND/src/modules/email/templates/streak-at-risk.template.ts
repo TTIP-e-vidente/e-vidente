@@ -14,27 +14,27 @@ export function buildStreakAtRiskEmail(context: StreakTemplateContext): EmailMes
   const { name, mail, streakCount } = context;
   const safeName = escapeHtml(name);
   const dayLabel = formatDayLabel(streakCount);
-  const subject = 'Tu racha está en riesgo — jugá hoy en E-VIDENTE';
+  const subject = `Tu racha de ${streakCount} ${dayLabel} sigue en juego — jugá hoy`;
   const textContent = buildTextLines([
     `Hola ${name},`,
     '',
-    `Tu racha de ${streakCount} ${dayLabel} sigue viva, pero hoy todavía no registraste actividad.`,
-    'Entrá al juego y completá una partida para mantenerla.',
+    `Llevás ${streakCount} ${dayLabel} de racha, pero hoy todavía no registramos que hayas jugado.`,
+    'Entrá y completá una partida para no perderla.',
     '',
     NOTIFICATION_OPT_OUT_TEXT,
     '',
     'Equipo E-VIDENTE'
   ]);
   const htmlContent = wrapHtml({
-    headline: 'Tu racha está en riesgo',
-    subtitle: 'Jugá hoy para mantenerla',
+    headline: 'Tu racha sigue en juego',
+    subtitle: 'Entrá hoy para mantenerla',
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(`Hola <strong style="color: #42785e;">${safeName}</strong>,`),
       bodyHighlight(
-        `Tu racha de <strong style="color: #42785e;">${streakCount} ${dayLabel}</strong> sigue viva, pero hoy todavía no registraste actividad.`
+        `Llevás <strong style="color: #42785e;">${streakCount} ${dayLabel}</strong> de racha, pero hoy todavía no registramos que hayas jugado.`
       ),
-      bodyParagraph('Entrá al juego y completá una partida para mantenerla.')
+      bodyParagraph('Entrá y completá una partida para no perderla.')
     ].join('')
   });
 

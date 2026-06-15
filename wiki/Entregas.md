@@ -48,4 +48,17 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 | [MER persistencia E3](Mer-Persistencia-E3) | Diagrama dual local + PostgreSQL |
 | [Bitácora E3](Bitacora-Entrega-3) | Cambios cronológicos |
 
-Bitácora completa: [índice](Bitacora) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).
+---
+
+## Entrega 4 (en curso)
+
+| Página | Descripción |
+|--------|-------------|
+| [Resumen ejecutivo](Entrega-4) | Emails Brevo, consentimiento, cron y alcance |
+| [User Stories](Entrega-4-User-Stories) | Historias de usuario de mails y rachas |
+| [Arquitectura](Entrega-4-Arquitectura) | Módulo email, flujos, SQL y cron |
+| [Mails — redacción](Entrega-4-Mails) | Copy aprobado, tono y cómo publicar cambios |
+| [Decisiones](Entrega-4-Decisiones) | ADRs: Brevo, dedupe, consentimiento |
+| [Evidencia](Entrega-4-Evidencia) | Checklist para demo y producción |
+
+Bitácora completa: [índice](Bitacora) · [E3](Bitacora-Entrega-3) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).
