@@ -39,7 +39,7 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 
 ### 1. Bienvenida (`welcome`)
 
-**Cuándo:** registro exitoso con mail. **No** requiere checkbox de notificaciones.
+**Cuándo:** registro exitoso con mail. **No** requiere checkbox de notificaciones. Se encola en `email_deliveries` (outbox) y se envía al procesar la cola (`npm run dev` con `EMAIL_PROCESS_ON_STARTUP`, o `npm run email:run-local`).
 
 | Campo | Texto |
 |-------|-------|
@@ -61,7 +61,7 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 
 ### 2. Racha en riesgo (`streak_at_risk`)
 
-**Cuándo:** jugó ayer, hoy no. Requiere `email_notifications_enabled = true`.
+**Cuándo:** jugó **ayer** (fecha ART en Postgres), **hoy no** hay actividad en servidor. Requiere `email_notifications_enabled = true`, mail en cuenta, racha `> 0` en DB, y que haya corrido el **job** (`npm run email:streaks` o `npm run email:run-local`). **No** se dispara solo por abrir Godot.
 
 | Campo | Texto |
 |-------|-------|
@@ -75,7 +75,7 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 >
 > Llevás **{N} {día|días}** de racha, pero hoy todavía no registramos que hayas jugado. Entrá y completá una partida para no perderla.
 >
-> Podés desactivar estos recordatorios desde tu perfil en el juego.
+> Podés desactivar los recordatorios de racha desde tu cuenta en el juego.
 
 **Tono:** urgencia suave, sin culpa. El número de días es el dato que más motiva.
 
@@ -83,7 +83,7 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 
 ### 3. Racha perdida (`streak_lost`)
 
-**Cuándo:** 2+ días sin actividad. Mismo consentimiento.
+**Cuándo:** 2+ días sin actividad en servidor (`last_activity_day <= hoy - 2`). Mismo consentimiento. El job envía el mail y luego **reconcilia** la racha en Postgres (`current_count = 0`); al loguear, Godot sincroniza con el servidor.
 
 | Campo | Texto |
 |-------|-------|
@@ -97,7 +97,7 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 >
 > Pasaron varios días sin actividad y tu racha de **{N} {día|días}** volvió a cero. No pasa nada: cada día es una nueva oportunidad para aprender jugando.
 >
-> Podés desactivar estos recordatorios desde tu perfil en el juego.
+> Podés desactivar los recordatorios de racha desde tu cuenta en el juego.
 
 **Tono:** empático, sin dramatizar. Alineado al panel in-game `StreakLossMessagePanel`.
 
@@ -155,19 +155,27 @@ npm run dev
 # http://localhost:3000/dev/email/preview?template_key=streak_at_risk&name=Agus&streak_count=7
 ```
 
-### 4. Probar envío real (opcional, dev)
+### 4. Probar envío real (dev)
 
-En `.env`: `EMAIL_ENABLED=true` + credenciales Brevo. Registrar usuario de prueba o correr job de rachas con datos semilla.
+En `.env`: `EMAIL_ENABLED=true` + credenciales Brevo. En Brevo: remitente verified + IP autorizada (o bloqueo API desactivado). Ver `BACKEND/docs/BREVO_SETUP.md`.
 
-Auditoría: `GET /dev/email/deliveries?limit=20`
+```bash
+cd BACKEND
+docker compose up -d
+npm run validate:email-flow          # circuito completo (recomendado)
+npm run seed:streak-email-demo -- --run-job   # demo streak_at_risk
+npm run smoke:email -- --send        # welcome de prueba (con SMOKE_EMAIL_TO)
+```
+
+Auditoría: `GET /dev/email/deliveries?limit=20` (con `npm run dev`).
 
 ### 5. Alinear copy en Godot (si aplica)
 
 | Lugar | Qué revisar |
 |-------|-------------|
-| `juego/API/Login.tscn` | Hint del mail de bienvenida |
-| `CheckBoxEmailNotifications` | “recordatorios de racha” (no “novedades” si no las enviamos) |
-| `ProfileOverlayPanel` | Línea “Recordatorios mail: Sí/No” |
+| `juego/API/Login.tscn` | Hint del mail de bienvenida; checkbox *“Quiero recibir recordatorios de racha por mail.”* |
+| `juego/interface/auth.tscn` | Toggle *“Recibir recordatorios de racha por correo”* (editar perfil, sesión online) |
+| `ProfileOverlayPanel` | Solo lectura: *“Recordatorios mail: Sí/No”* |
 
 ---
 
@@ -196,7 +204,25 @@ FROM email_deliveries
 GROUP BY template_key, status;
 ```
 
-Correlacionar picos de `failed` con `error_message` y límites de rate de Brevo.
+Correlacionar picos de `failed` con `error_message` y límites de rate de Brevo. Error frecuente en local: `unrecognised IP address` → autorizar IP en Brevo → Seguridad.
+
+---
+
+## Operación — qué esperar (no confundir con el juego)
+
+| Pregunta | Respuesta |
+|----------|-----------|
+| ¿Me manda mail al abrir Godot? | **No** (salvo welcome pendiente si el backend procesa cola al iniciar). |
+| ¿Me avisa “por perder racha” al instante? | **No.** Es batch diario vía job. |
+| ¿Qué datos usa el job? | Postgres (`streaks.last_activity_day`), no solo el save local offline. |
+| ¿Cómo programo envíos en local? | Task Scheduler: `scripts/local/register-email-tasks-windows.ps1` o manual `npm run email:run-local`. |
+
+**Flujo mínimo para recibir `streak_at_risk` con tu cuenta:**
+
+1. Login + partida **online** (racha en servidor).
+2. `last_activity_day` = ayer y hoy sin jugar en DB (o `npm run seed:streak-email-demo`).
+3. `npm run email:streaks` (o `email:run-local`).
+4. Revisar bandeja + `email_deliveries` con `status=sent`.
 
 ---
 
