@@ -1,5 +1,5 @@
 import { emailConfig, isEmailDeliveryConfigured } from './email.config';
-import { EmailMessage } from './email.types';
+import { EmailMessage, EmailTemplateKey } from './email.types';
 
 export class EmailDeliveryError extends Error {
   constructor(message: string) {
@@ -10,6 +10,10 @@ export class EmailDeliveryError extends Error {
 
 const BREVO_TRANSACTIONAL_URL = 'https://api.brevo.com/v3/smtp/email';
 
+export interface SendTransactionalEmailOptions {
+  templateKey?: EmailTemplateKey;
+}
+
 function buildBrevoHeaders(): Record<string, string> {
   return {
     'api-key': emailConfig.brevoApiKey,
@@ -18,8 +22,11 @@ function buildBrevoHeaders(): Record<string, string> {
   };
 }
 
-function buildBrevoPayload(message: EmailMessage): Record<string, unknown> {
-  return {
+function buildBrevoPayload(
+  message: EmailMessage,
+  templateKey?: EmailTemplateKey
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
     sender: {
       name: emailConfig.senderName,
       email: emailConfig.senderEmail
@@ -29,27 +36,93 @@ function buildBrevoPayload(message: EmailMessage): Record<string, unknown> {
     htmlContent: message.htmlContent,
     textContent: message.textContent
   };
+
+  if (templateKey) {
+    payload.tags = [templateKey];
+  }
+
+  return payload;
 }
 
-export async function sendTransactionalEmail(message: EmailMessage): Promise<string | null> {
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatFetchError(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.name === 'AbortError') {
+      return `Brevo request timed out after ${emailConfig.requestTimeoutMs}ms`;
+    }
+    return error.message;
+  }
+  return String(error);
+}
+
+async function postToBrevo(payload: Record<string, unknown>): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), emailConfig.requestTimeoutMs);
+
+  try {
+    return await fetch(BREVO_TRANSACTIONAL_URL, {
+      method: 'POST',
+      headers: buildBrevoHeaders(),
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function sendTransactionalEmail(
+  message: EmailMessage,
+  options: SendTransactionalEmailOptions = {}
+): Promise<string | null> {
   if (!isEmailDeliveryConfigured()) {
     console.warn('[email] delivery skipped: EMAIL_ENABLED=false or missing Brevo config');
     return null;
   }
 
-  const response = await fetch(BREVO_TRANSACTIONAL_URL, {
-    method: 'POST',
-    headers: buildBrevoHeaders(),
-    body: JSON.stringify(buildBrevoPayload(message))
-  });
+  const payload = buildBrevoPayload(message, options.templateKey);
+  const maxAttempts = emailConfig.requestMaxAttempts;
+  let lastErrorMessage = 'Brevo request failed';
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new EmailDeliveryError(
-      `Brevo request failed (${response.status}): ${body.slice(0, 300)}`
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await postToBrevo(payload);
+
+      if (response.ok) {
+        const body = (await response.json()) as { messageId?: string };
+        return typeof body.messageId === 'string' ? body.messageId : null;
+      }
+
+      const body = await response.text();
+      lastErrorMessage = `Brevo request failed (${response.status}): ${body.slice(0, 300)}`;
+
+      if (!isRetryableStatus(response.status) || attempt === maxAttempts) {
+        throw new EmailDeliveryError(lastErrorMessage);
+      }
+    } catch (error) {
+      if (error instanceof EmailDeliveryError) {
+        throw error;
+      }
+
+      lastErrorMessage = formatFetchError(error);
+      if (attempt === maxAttempts) {
+        throw new EmailDeliveryError(lastErrorMessage);
+      }
+    }
+
+    const backoffMs = emailConfig.requestRetryBaseMs * attempt;
+    console.warn(
+      `[email] Brevo attempt ${attempt}/${maxAttempts} failed, retrying in ${backoffMs}ms`
     );
+    await sleep(backoffMs);
   }
 
-  const payload = (await response.json()) as { messageId?: string };
-  return typeof payload.messageId === 'string' ? payload.messageId : null;
+  throw new EmailDeliveryError(lastErrorMessage);
 }

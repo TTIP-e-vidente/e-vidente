@@ -63,7 +63,112 @@ EMAIL_CRON_SECRET=change_me
 EMAIL_TIMEZONE=America/Argentina/Buenos_Aires
 EMAIL_PENDING_STALE_MINUTES=15
 EMAIL_BATCH_CONCURRENCY=5
+EMAIL_REQUEST_TIMEOUT_MS=15000
+EMAIL_REQUEST_MAX_ATTEMPTS=3
+EMAIL_REQUEST_RETRY_BASE_MS=500
 ```
+
+## Smoke y demo local
+
+### Validar módulo (`smoke:email`)
+
+```bash
+cd BACKEND
+docker compose up -d
+npm run smoke:email
+```
+
+Verifica config Brevo, genera previews de los 3 templates y lista `email_deliveries`.
+
+Envío real de prueba (welcome):
+
+```bash
+# PowerShell
+$env:SMOKE_EMAIL_TO="tu@mail.com"
+npm run smoke:email -- --send
+```
+
+### Demo racha en riesgo (`seed:streak-email-demo`)
+
+Crea/actualiza usuario `streak_demo` con racha 7 y `last_activity_day = ayer`:
+
+```bash
+npm run seed:streak-email-demo
+npm run email:streaks
+```
+
+Todo en uno (seed + job):
+
+```bash
+npm run seed:streak-email-demo -- --run-job
+```
+
+Variables opcionales: `STREAK_DEMO_USERNAME`, `STREAK_DEMO_MAIL`, `STREAK_DEMO_PASSWORD`, `STREAK_DEMO_COUNT`.
+
+## Cómo validar todo el flujo
+
+### Capa 1 — Automatizado sin Brevo (CI / cada PR)
+
+```bash
+cd BACKEND
+npm run test
+npm run test:email
+```
+
+### Capa 2 — Smoke operativo
+
+```bash
+npm run smoke:email
+```
+
+### Capa 3 — Circuito real end-to-end
+
+```bash
+docker compose up -d
+npm run migrate
+npm run validate:email-flow
+```
+
+Opcional limpieza: `npm run validate:email-flow -- --cleanup`
+
+### Capa 4 — Manual Godot + bandeja (evidencia wiki)
+
+Ver sección *Cómo asegurar que lleguen los mails* más abajo.
+
+## Cómo asegurar que lleguen los mails (local)
+
+Los mails **no se disparan solo por abrir Godot**. Necesitás backend + Brevo + cola procesada.
+
+| Mail | Qué lo dispara | Cómo asegurarlo |
+|------|----------------|-----------------|
+| **Welcome** | Registro con mail | Backend prendido (`npm run dev`). El registro encola `pending` en DB y el servidor procesa la cola al iniciar (`EMAIL_PROCESS_ON_STARTUP=true`) o en background tras registrar. |
+| **Racha** | Job diario | Postgres con racha online + `npm run email:streaks` o `npm run email:run-local` (o Task Scheduler 19:00). |
+| **Pendientes / fallidos** | Cola outbox | `npm run email:run-local` procesa welcome pending + rachas + reintentos en un solo paso. |
+
+### Flujo recomendado para demo
+
+```bash
+docker compose up -d
+npm run migrate
+npm run dev                    # al iniciar procesa cola outbound si EMAIL_ENABLED=true
+# Registrar usuario con mail desde Godot
+npm run smoke:email            # validar config
+npm run seed:streak-email-demo -- --run-job   # demo racha en riesgo
+```
+
+### Outbox welcome
+
+El registro ya no depende de un envío fire-and-forget: primero persiste `email_deliveries.status=pending` y después `processPendingWelcomeEmails()` envía a Brevo. Si el servidor se cayó, al reiniciar (`EMAIL_PROCESS_ON_STARTUP`) o con `email:run-local` se reanuda.
+
+### Coherencia de racha
+
+- El mail `streak_lost` **solo notifica**.
+- El reset de `current_count` en Postgres lo hace `reconcileExpiredStreaksInDatabase()` al final del job (inactividad real, independiente del envío).
+- Al loguear, Godot sincroniza racha del servidor (`aplicar_racha_sincronizada`).
+
+### Webhook Brevo (rebotes)
+
+`POST /internal/jobs/brevo-webhook` con header `X-Brevo-Webhook-Secret`. En hard bounce desactiva `email_notifications_enabled` para ese mail. Requiere URL pública en producción; en local es opcional.
 
 ## Endpoints dev (solo `NODE_ENV !== production`)
 

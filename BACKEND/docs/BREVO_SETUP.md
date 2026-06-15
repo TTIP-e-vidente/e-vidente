@@ -21,6 +21,25 @@ Si la key apareció en chat, logs, capturas o commits:
 
 ## 2. Remitente verificado
 
+### IP autorizada (error 401 `unrecognised IP address`)
+
+Si Brevo tiene **Authorized IPs** activo, cada IP desde la que llamás la API debe estar en la lista. En local o con IP dinámica suele fallar con:
+
+```json
+{"message":"We have detected you are using an unrecognised IP address ...","code":"unauthorized"}
+```
+
+**Opciones:**
+
+| Opción | Cuándo |
+|--------|--------|
+| Agregar tu IP pública en [Brevo → Security → Authorized IPs](https://app.brevo.com/security/authorised_ips) | Dev estable en una red |
+| Desactivar la restricción de IP en Brevo | Dev local / IP que cambia (recomendado para demo) |
+
+Los **tests de integración** (`npm run test`) fuerzan `EMAIL_ENABLED=false` para no llamar a Brevo ni dejar envíos async abiertos.
+
+Para probar envío real: `EMAIL_ENABLED=true` en `.env` y correr `npm run dev` o los scripts `email:*` — no `npm run test`.
+
 En Brevo → **Senders & IP** → **Senders**:
 
 | Campo | Valor recomendado local |

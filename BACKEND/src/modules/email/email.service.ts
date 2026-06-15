@@ -15,12 +15,17 @@ import {
   EmailRecipient,
   EmailTemplateKey,
   FailedDeliveryRetryCandidate,
-  ListEmailDeliveriesFilters
+  ListEmailDeliveriesFilters,
+  PendingWelcomeDelivery
 } from './email.types';
 
 function logEmailFailure(context: string, error: unknown): void {
   const message = error instanceof Error ? error.message : String(error);
   console.warn(`[email] ${context}: ${message}`);
+}
+
+function logEmailInfo(event: string, details: Record<string, unknown>): void {
+  console.log(`[email] ${event} ${JSON.stringify(details)}`);
 }
 
 function formatDeliveryError(error: unknown): string {
@@ -110,7 +115,9 @@ async function deliverTrackedEmail(input: {
   }
 
   try {
-    const providerMessageId = await sendTransactionalEmail(input.message);
+    const providerMessageId = await sendTransactionalEmail(input.message, {
+      templateKey: input.templateKey
+    });
 
     const postClient = await pool.connect();
     try {
@@ -138,33 +145,120 @@ async function shouldSkipWelcomeEmail(userId: string): Promise<boolean> {
   return emailRepository.isWelcomeEmailSkipped(userId);
 }
 
-async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
+async function dispatchPendingWelcomeDelivery(
+  pending: PendingWelcomeDelivery
+): Promise<'sent' | 'failed'> {
+  const user = await emailRepository.findUserEmailContext(pending.userId);
+  const userName = user?.name?.trim() || 'Jugador';
+  const mail = pending.recipientEmail.trim();
+  if (!mail) {
+    await emailRepository.markDeliveryFailed(pending.id, 'Missing recipient email');
+    return 'failed';
+  }
+
+  const message = buildEmailMessage('welcome', { name: userName, mail });
+
+  try {
+    const providerMessageId = await sendTransactionalEmail(message, { templateKey: 'welcome' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await emailRepository.markDeliverySent(pending.id, providerMessageId);
+      await emailRepository.markWelcomeEmailSent(client, pending.userId);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    return 'sent';
+  } catch (error) {
+    await emailRepository.markDeliveryFailed(pending.id, formatDeliveryError(error));
+    throw error;
+  }
+}
+
+export async function enqueueWelcomeEmail(
+  recipient: EmailRecipient
+): Promise<'queued' | 'skipped'> {
   if (!recipient.mail) {
-    return;
+    return 'skipped';
   }
   if (!isEmailDeliveryConfigured()) {
     console.warn('[email] welcome skipped: EMAIL_ENABLED=false or missing Brevo config');
-    return;
+    return 'skipped';
   }
   if (await shouldSkipWelcomeEmail(recipient.userId)) {
-    return;
+    return 'skipped';
   }
 
-  await cleanupStalePendingDeliveries();
   const message = buildEmailMessage('welcome', {
     name: recipient.name,
     mail: recipient.mail
   });
 
-  await deliverTrackedEmail({
-    userId: recipient.userId,
-    templateKey: 'welcome',
-    dedupeKey: 'welcome',
-    message,
-    afterSent: async (client) => {
-      await emailRepository.markWelcomeEmailSent(client, recipient.userId);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const deliveryId = await emailRepository.acquireDeliverySlot(client, {
+      userId: recipient.userId,
+      templateKey: 'welcome',
+      dedupeKey: 'welcome',
+      recipientEmail: message.to,
+      subject: message.subject
+    });
+    if (!deliveryId) {
+      await client.query('ROLLBACK');
+      return 'skipped';
     }
-  });
+    await client.query('COMMIT');
+    logEmailInfo('welcome_queued', { userId: recipient.userId, deliveryId });
+    return 'queued';
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function processPendingWelcomeEmails(): Promise<DeliveryBatchStats> {
+  if (!isEmailDeliveryConfigured()) {
+    return { attempted: 0, sent: 0, failed: 0, skipped: 0 };
+  }
+
+  await cleanupStalePendingDeliveries();
+  const pending = await emailRepository.findPendingWelcomeDeliveries(
+    emailConfig.pendingWelcomeBatchLimit
+  );
+  const stats: DeliveryBatchStats = {
+    attempted: pending.length,
+    sent: 0,
+    failed: 0,
+    skipped: 0
+  };
+
+  for (const row of pending) {
+    try {
+      const result = await dispatchPendingWelcomeDelivery(row);
+      if (result === 'sent') {
+        stats.sent += 1;
+      }
+    } catch (error) {
+      stats.failed += 1;
+      logEmailFailure(`pending welcome ${row.id}`, error);
+    }
+  }
+
+  return stats;
+}
+
+async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
+  const queued = await enqueueWelcomeEmail(recipient);
+  if (queued === 'queued') {
+    scheduleOutboundEmailJob();
+  }
 }
 
 export function queueWelcomeEmail(recipient: EmailRecipient): void {
@@ -258,11 +352,7 @@ export async function sendStreakLostEmailsForDate(
         userId: candidate.userId,
         templateKey: 'streak_lost',
         dedupeKey,
-        message,
-        afterSent: async (client) => {
-          await emailRepository.resetExpiredStreak(client, candidate.streakId);
-          stats.resetCount += 1;
-        }
+        message
       });
       if (result === 'sent') {
         stats.sent += 1;
@@ -283,15 +373,80 @@ export async function runStreakEmailJob(referenceDate?: string): Promise<{
   expiredPending: number;
   atRisk: { attempted: number; sent: number; failed: number; skipped: number };
   lost: { attempted: number; sent: number; failed: number; skipped: number; resetCount: number };
+  reconciledStreaks: number;
 }> {
   const expiredPending = await cleanupStalePendingDeliveries();
   const today = referenceDate ?? getTodayInConfiguredTimezone();
   const atRisk = await sendStreakAtRiskEmailsForDate(today, { cleanupStale: false });
   const lost = await sendStreakLostEmailsForDate(today, { cleanupStale: false });
-  return { today, expiredPending, atRisk, lost };
+  const reconciledStreaks = await emailRepository.reconcileExpiredStreaksInDatabase(today);
+
+  if (reconciledStreaks > 0) {
+    logEmailInfo('streaks_reconciled', { today, reconciledStreaks });
+  }
+
+  return {
+    today,
+    expiredPending,
+    atRisk,
+    lost: { ...lost, resetCount: reconciledStreaks },
+    reconciledStreaks
+  };
 }
 
-function getTodayInConfiguredTimezone(reference = new Date()): string {
+export async function runOutboundEmailJob(referenceDate?: string): Promise<{
+  today: string;
+  expiredPending: number;
+  pendingWelcome: DeliveryBatchStats;
+  atRisk: DeliveryBatchStats;
+  lost: DeliveryBatchStats & { resetCount: number };
+  reconciledStreaks: number;
+  retry: DeliveryBatchStats;
+}> {
+  if (!isEmailDeliveryConfigured()) {
+    console.warn('[email] outbound skipped: EMAIL_ENABLED=false or missing Brevo config');
+    return {
+      today: referenceDate ?? getTodayInConfiguredTimezone(),
+      expiredPending: 0,
+      pendingWelcome: { attempted: 0, sent: 0, failed: 0, skipped: 0 },
+      atRisk: { attempted: 0, sent: 0, failed: 0, skipped: 0 },
+      lost: { attempted: 0, sent: 0, failed: 0, skipped: 0, resetCount: 0 },
+      reconciledStreaks: 0,
+      retry: { attempted: 0, sent: 0, failed: 0, skipped: 0 }
+    };
+  }
+
+  const expiredPending = await cleanupStalePendingDeliveries();
+  const today = referenceDate ?? getTodayInConfiguredTimezone();
+  const pendingWelcome = await processPendingWelcomeEmails();
+  const atRisk = await sendStreakAtRiskEmailsForDate(today, { cleanupStale: false });
+  const lost = await sendStreakLostEmailsForDate(today, { cleanupStale: false });
+  const reconciledStreaks = await emailRepository.reconcileExpiredStreaksInDatabase(today);
+  const retryResult = await runRetryFailedEmailJob();
+
+  const summary = {
+    today,
+    expiredPending,
+    pendingWelcome,
+    atRisk,
+    lost: { ...lost, resetCount: reconciledStreaks },
+    reconciledStreaks,
+    retry: retryResult.retry
+  };
+  logEmailInfo('outbound_completed', summary);
+  return summary;
+}
+
+export function scheduleOutboundEmailJob(referenceDate?: string): void {
+  if (!isEmailDeliveryConfigured()) {
+    return;
+  }
+  void runOutboundEmailJob(referenceDate).catch((error) => {
+    logEmailFailure('outbound_background', error);
+  });
+}
+
+export function getTodayInConfiguredTimezone(reference = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: emailConfig.timezone,
     year: 'numeric',
@@ -333,16 +488,6 @@ function buildRetryAfterSent(
   if (candidate.templateKey === 'welcome') {
     return async (client) => {
       await emailRepository.markWelcomeEmailSent(client, candidate.userId);
-    };
-  }
-
-  if (candidate.templateKey === 'streak_lost') {
-    return async (client) => {
-      const streak = await emailRepository.findUserStreakContext(candidate.userId);
-      if (streak === null || streak.currentCount <= 0) {
-        return;
-      }
-      await emailRepository.resetExpiredStreak(client, streak.streakId);
     };
   }
 

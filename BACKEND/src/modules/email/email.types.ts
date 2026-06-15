@@ -66,6 +66,12 @@ export interface UserEmailContext {
   mail: string | null;
 }
 
+export interface PendingWelcomeDelivery {
+  id: string;
+  userId: string;
+  recipientEmail: string;
+}
+
 export interface UserStreakContext {
   streakId: string;
   currentCount: number;

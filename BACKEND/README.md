@@ -106,6 +106,8 @@ Módulo en `src/modules/email/`. Por defecto `EMAIL_ENABLED=false` en `.env`.
   - `GET /dev/email/templates`
   - `GET /dev/email/preview?template_key=welcome&name=Agus`
   - `GET /dev/email/deliveries?limit=50&status=sent`
+- Smoke: `npm run smoke:email` — config, previews y auditoría (`--send` + `SMOKE_EMAIL_TO` para prueba real).
+- Demo racha: `npm run seed:streak-email-demo` + `npm run email:streaks`.
 
 ## Problemas frecuentes
 

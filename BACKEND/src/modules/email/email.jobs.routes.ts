@@ -1,15 +1,24 @@
 import { Router, Request, Response } from 'express';
 import { emailConfig } from './email.config';
-import { runRetryFailedEmailJob, runStreakEmailJob } from './email.service';
+import {
+  runOutboundEmailJob,
+  runRetryFailedEmailJob,
+  runStreakEmailJob
+} from './email.service';
+import { handleBrevoWebhookEvents, BrevoWebhookEvent } from './email.webhook.service';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
 
 export const internalJobsRouter = Router();
 
+function isAuthorizedJob(request: Request): boolean {
+  const providedSecret = request.header('x-job-secret') ?? '';
+  return Boolean(emailConfig.cronSecret) && providedSecret === emailConfig.cronSecret;
+}
+
 internalJobsRouter.post('/streak-emails', async (request: Request, response: Response) => {
   try {
-    const providedSecret = request.header('x-job-secret') ?? '';
-    if (!emailConfig.cronSecret || providedSecret !== emailConfig.cronSecret) {
+    if (!isAuthorizedJob(request)) {
       sendResponse(response, 401, { error: 'Unauthorized job secret' });
       return;
     }
@@ -23,13 +32,43 @@ internalJobsRouter.post('/streak-emails', async (request: Request, response: Res
 
 internalJobsRouter.post('/retry-failed-emails', async (request: Request, response: Response) => {
   try {
-    const providedSecret = request.header('x-job-secret') ?? '';
-    if (!emailConfig.cronSecret || providedSecret !== emailConfig.cronSecret) {
+    if (!isAuthorizedJob(request)) {
       sendResponse(response, 401, { error: 'Unauthorized job secret' });
       return;
     }
 
     const result = await runRetryFailedEmailJob();
+    sendResponse(response, 200, result);
+  } catch (error) {
+    sendError(response, error);
+  }
+});
+
+internalJobsRouter.post('/outbound-emails', async (request: Request, response: Response) => {
+  try {
+    if (!isAuthorizedJob(request)) {
+      sendResponse(response, 401, { error: 'Unauthorized job secret' });
+      return;
+    }
+
+    const result = await runOutboundEmailJob();
+    sendResponse(response, 200, result);
+  } catch (error) {
+    sendError(response, error);
+  }
+});
+
+internalJobsRouter.post('/brevo-webhook', async (request: Request, response: Response) => {
+  try {
+    const providedSecret = request.header('x-brevo-webhook-secret') ?? '';
+    if (!emailConfig.webhookSecret || providedSecret !== emailConfig.webhookSecret) {
+      sendResponse(response, 401, { error: 'Unauthorized webhook secret' });
+      return;
+    }
+
+    const body = request.body;
+    const events: BrevoWebhookEvent[] = Array.isArray(body) ? body : [body as BrevoWebhookEvent];
+    const result = await handleBrevoWebhookEvents(events);
     sendResponse(response, 200, result);
   } catch (error) {
     sendError(response, error);

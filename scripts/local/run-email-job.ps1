@@ -5,7 +5,7 @@
 
 param(
 	[Parameter(Mandatory = $true)]
-	[ValidateSet('streaks', 'retry-failed')]
+	[ValidateSet('streaks', 'retry-failed', 'outbound')]
 	[string]$Job
 )
 
@@ -33,6 +33,7 @@ if (-not (Test-Path (Join-Path $backendDir '.env'))) {
 $npmScript = switch ($Job) {
 	'streaks' { 'email:streaks' }
 	'retry-failed' { 'email:retry-failed' }
+	'outbound' { 'email:run-local' }
 }
 
 Push-Location $backendDir

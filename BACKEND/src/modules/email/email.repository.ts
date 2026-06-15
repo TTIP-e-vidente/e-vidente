@@ -6,6 +6,7 @@ import {
   EmailTemplateKey,
   FailedDeliveryRetryCandidate,
   ListEmailDeliveriesFilters,
+  PendingWelcomeDelivery,
   StreakEmailCandidate,
   UserEmailContext,
   UserStreakContext
@@ -308,6 +309,70 @@ export async function resetExpiredStreak(client: PoolClient, streakId: string): 
       WHERE id = $1;
     `,
     [streakId]
+  );
+}
+
+export async function reconcileExpiredStreaksInDatabase(today: string): Promise<number> {
+  const result = await query(
+    `
+      UPDATE streaks s
+      SET current_count = 0, updated_at = now()
+      FROM profiles p
+      WHERE p.streak_id = s.id
+        AND s.current_count > 0
+        AND s.last_activity_day <= ($1::date - INTERVAL '2 days')::date
+      RETURNING s.id;
+    `,
+    [today]
+  );
+
+  return result.rowCount ?? 0;
+}
+
+export async function findPendingWelcomeDeliveries(
+  limit: number
+): Promise<PendingWelcomeDelivery[]> {
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const result = await query<PendingWelcomeDelivery>(
+    `
+      SELECT
+        ed.id,
+        ed.user_id AS "userId",
+        ed.recipient_email AS "recipientEmail"
+      FROM email_deliveries ed
+      WHERE ed.status = 'pending'
+        AND ed.template_key = 'welcome'
+        AND ed.recipient_email IS NOT NULL
+      ORDER BY ed.created_at ASC
+      LIMIT $1;
+    `,
+    [safeLimit]
+  );
+
+  return result.rows;
+}
+
+export async function findUserIdByMail(mail: string): Promise<string | null> {
+  const result = await query<{ id: string }>(
+    `
+      SELECT id
+      FROM users
+      WHERE mail = $1;
+    `,
+    [mail]
+  );
+
+  return result.rows[0]?.id ?? null;
+}
+
+export async function disableEmailNotificationsByUserId(userId: string): Promise<void> {
+  await query(
+    `
+      UPDATE users
+      SET email_notifications_enabled = false, updated_at = now()
+      WHERE id = $1;
+    `,
+    [userId]
   );
 }
 

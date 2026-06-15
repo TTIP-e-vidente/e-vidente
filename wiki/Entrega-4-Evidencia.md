@@ -55,10 +55,41 @@ GET /dev/email/preview?template_key=streak_lost&name=Agus&streak_count=12
 
 ```bash
 cd BACKEND
+npm run test
+```
+
+`npm run test` corre migraciones y suites con `NODE_ENV=test` y **sin envío a Brevo** (`EMAIL_ENABLED=false` en el runner). Así no dependés de IP autorizada ni de API key para que pasen auth/player.
+
+Solo templates (unitario, sin red):
+
+```bash
 npm run test:email
 ```
 
-Cubre escape HTML, pluralización `día/días`, metadata de templates y presencia de estilos de marca.
+Smoke operativo (config + previews + deliveries; envío opcional):
+
+```bash
+npm run smoke:email
+# $env:SMOKE_EMAIL_TO="tu@mail.com"; npm run smoke:email -- --send
+```
+
+Demo racha en riesgo:
+
+```bash
+npm run seed:streak-email-demo
+npm run email:streaks
+```
+
+### Validación end-to-end (un comando)
+
+Con Docker + `.env` + Brevo configurado:
+
+```bash
+npm run validate:email-flow
+```
+
+Valida: DB, config, templates, seed de racha, outbox welcome, job outbound y auditoría en `email_deliveries`.  
+Limpieza opcional: `npm run validate:email-flow -- --cleanup`.
 
 ---
 
