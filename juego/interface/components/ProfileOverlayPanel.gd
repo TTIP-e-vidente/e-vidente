@@ -176,7 +176,13 @@ func refrescar() -> void:
 	var email: String = ""
 	if _save_manager_listo():
 		email = SaveManager.obtener_email_usuario_actual()
-	_email_label.text = email if not email.is_empty() else "Sin correo"
+	var email_line := email if not email.is_empty() else "Sin correo"
+	if AuthApi.esta_logueado():
+		var notifications_on := bool(
+			AuthApi.obtener_usuario_online().get("email_notifications_enabled", true)
+		)
+		email_line += "\nRecordatorios mail: %s" % ("Sí" if notifications_on else "No")
+	_email_label.text = email_line
 
 	var age: int = 0
 	if _save_manager_listo():

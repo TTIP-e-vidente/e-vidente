@@ -36,10 +36,31 @@ export interface UpdatePlayerMeInput {
   name?: unknown;
   mail?: unknown;
   birth_date?: unknown;
+  email_notifications_enabled?: unknown;
 }
 
 function asTrimmedString(value: unknown): string | null {
   return typeof value === 'string' ? value.trim() : null;
+}
+
+function parseEmailNotificationsEnabled(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') {
+      return true;
+    }
+    if (normalized === 'false' || normalized === '0') {
+      return false;
+    }
+  }
+  throw new PlayerError(
+    400,
+    'INVALID_BODY',
+    'email_notifications_enabled must be a boolean'
+  );
 }
 
 export async function updatePlayerMe(
@@ -49,9 +70,17 @@ export async function updatePlayerMe(
   const hasName = Object.prototype.hasOwnProperty.call(input, 'name');
   const hasMail = Object.prototype.hasOwnProperty.call(input, 'mail');
   const hasBirthDate = Object.prototype.hasOwnProperty.call(input, 'birth_date');
+  const hasEmailNotifications = Object.prototype.hasOwnProperty.call(
+    input,
+    'email_notifications_enabled'
+  );
 
-  if (!hasName && !hasMail && !hasBirthDate) {
-    throw new PlayerError(400, 'INVALID_BODY', 'At least one of name, mail or birth_date is required');
+  if (!hasName && !hasMail && !hasBirthDate && !hasEmailNotifications) {
+    throw new PlayerError(
+      400,
+      'INVALID_BODY',
+      'At least one of name, mail, birth_date or email_notifications_enabled is required'
+    );
   }
 
   const updates: userRepository.UpdateUserProfileInput = {};
@@ -90,6 +119,12 @@ export async function updatePlayerMe(
       }
       updates.birth_date = birthDate;
     }
+  }
+
+  if (hasEmailNotifications) {
+    updates.email_notifications_enabled = parseEmailNotificationsEnabled(
+      input.email_notifications_enabled
+    );
   }
 
   const client = await pool.connect();

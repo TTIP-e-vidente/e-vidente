@@ -20,6 +20,7 @@ var avatar_preview: TextureRect
 var back_button: Button
 var avatar_dialog: FileDialog
 var _age_display_label: Label
+var _email_notifications_checkbox: CheckBox
 
 func _ready() -> void:
 	_cachear_nodos_ui()
@@ -30,6 +31,8 @@ func _ready() -> void:
 	username_input.focus_exited.connect(_intentar_autosave)
 	birth_date_input.focus_exited.connect(_intentar_autosave)
 	email_input.focus_exited.connect(_intentar_autosave)
+	if is_instance_valid(_email_notifications_checkbox):
+		_email_notifications_checkbox.toggled.connect(_on_notificaciones_mail_cambiadas)
 	_cargar_estado_perfil_actual()
 	_establecer_feedback("Los cambios se guardan automáticamente.", true)
 	BackendSession.session_expired.connect(_on_sesion_expirada)
@@ -82,6 +85,9 @@ func _cachear_nodos_ui() -> void:
 	_age_display_label.modulate = Color(0.4, 0.4, 0.4, 1.0)
 	age_column.add_child(_age_display_label)
 	email_input = form_content.get_node("EmailEdit") as LineEdit
+	_email_notifications_checkbox = form_content.get_node(
+		"EmailNotificationsCheckBox"
+	) as CheckBox
 	avatar_path_input = form_content.get_node("AvatarRow/AvatarPathEdit") as LineEdit
 	choose_avatar_button = form_content.get_node(
 		"AvatarRow/ChooseAvatarButton"
@@ -107,6 +113,7 @@ func _cargar_estado_perfil_actual() -> void:
 	birth_date_input.text = birth_date
 	email_input.text = SaveManager.obtener_email_usuario_actual()
 	avatar_path_input.text = SaveManager.obtener_ruta_avatar_usuario_actual()
+	_configurar_checkbox_notificaciones_mail()
 
 	_refrescar_controles_avatar()
 	_actualizar_etiquetas_vista_previa(
@@ -253,10 +260,18 @@ func _aplicar_ruta_avatar(path: String) -> void:
 
 
 func _sincronizar_perfil_al_backend() -> void:
+	var notificaciones_mail: Variant = null
+	if (
+		is_instance_valid(_email_notifications_checkbox)
+		and _email_notifications_checkbox.visible
+	):
+		notificaciones_mail = _email_notifications_checkbox.button_pressed
+
 	var result := await BackendSession.actualizar_perfil_online(
 		username_input.text.strip_edges(),
 		email_input.text.strip_edges(),
-		birth_date_input.text.strip_edges()
+		birth_date_input.text.strip_edges(),
+		notificaciones_mail
 	)
 	if bool(result.get("ok", false)):
 		_establecer_feedback("Datos guardados correctamente.", true)
@@ -310,6 +325,24 @@ func _subir_avatar_al_backend(silencioso: bool = false) -> void:
 
 func _subir_avatar_al_backend_silencioso() -> void:
 	_subir_avatar_al_backend(true)
+
+
+func _on_notificaciones_mail_cambiadas(_pressed: bool) -> void:
+	if BackendSession.esta_logueado():
+		_intentar_autosave()
+
+
+func _configurar_checkbox_notificaciones_mail() -> void:
+	if not is_instance_valid(_email_notifications_checkbox):
+		return
+	if not BackendSession.esta_logueado():
+		_email_notifications_checkbox.visible = false
+		return
+	_email_notifications_checkbox.visible = true
+	var online_user := AuthApi.obtener_usuario_online()
+	_email_notifications_checkbox.button_pressed = bool(
+		online_user.get("email_notifications_enabled", true)
+	)
 
 
 func _refrescar_controles_avatar() -> void:

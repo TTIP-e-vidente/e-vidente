@@ -14,6 +14,7 @@ import {
   EmailMessage,
   EmailRecipient,
   EmailTemplateKey,
+  FailedDeliveryRetryCandidate,
   ListEmailDeliveriesFilters
 } from './email.types';
 
@@ -33,6 +34,39 @@ function getPendingStaleMinutes(): number {
   }
   return configured;
 }
+
+async function mapWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  if (items.length === 0) {
+    return;
+  }
+
+  const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
+  let nextIndex = 0;
+
+  async function runWorker(): Promise<void> {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      if (currentIndex >= items.length) {
+        return;
+      }
+      await worker(items[currentIndex]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: safeConcurrency }, () => runWorker()));
+}
+
+type DeliveryBatchStats = {
+  attempted: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+};
 
 export async function cleanupStalePendingDeliveries(): Promise<number> {
   const expiredCount = await emailRepository.expireStalePendingDeliveries(
@@ -101,14 +135,7 @@ async function deliverTrackedEmail(input: {
 }
 
 async function shouldSkipWelcomeEmail(userId: string): Promise<boolean> {
-  const user = await emailRepository.findWelcomeEmailCandidate(userId);
-  if (!user?.mail) {
-    return true;
-  }
-  if (user.welcome_email_sent_at !== null) {
-    return true;
-  }
-  return emailRepository.hasSuccessfulDelivery(userId, 'welcome', 'welcome');
+  return emailRepository.isWelcomeEmailSkipped(userId);
 }
 
 export async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
@@ -146,24 +173,28 @@ export function queueWelcomeEmail(recipient: EmailRecipient): void {
   });
 }
 
-export async function sendStreakAtRiskEmailsForDate(today: string): Promise<{
-  attempted: number;
-  sent: number;
-  failed: number;
-  skipped: number;
-}> {
+export async function sendStreakAtRiskEmailsForDate(
+  today: string,
+  options: { cleanupStale?: boolean } = {}
+): Promise<DeliveryBatchStats> {
   if (!isEmailDeliveryConfigured()) {
     console.warn('[email] streak_at_risk skipped: EMAIL_ENABLED=false or missing Brevo config');
     return { attempted: 0, sent: 0, failed: 0, skipped: 0 };
   }
 
-  await cleanupStalePendingDeliveries();
-  const candidates = await emailRepository.findStreakAtRiskCandidates(today);
-  let sent = 0;
-  let failed = 0;
-  let skipped = 0;
+  if (options.cleanupStale ?? true) {
+    await cleanupStalePendingDeliveries();
+  }
 
-  for (const candidate of candidates) {
+  const candidates = await emailRepository.findStreakAtRiskCandidates(today);
+  const stats: DeliveryBatchStats = {
+    attempted: candidates.length,
+    sent: 0,
+    failed: 0,
+    skipped: 0
+  };
+
+  await mapWithConcurrency(candidates, emailConfig.batchConcurrency, async (candidate) => {
     const dedupeKey = `at_risk:${today}`;
     const message = buildEmailMessage('streak_at_risk', {
       name: candidate.name,
@@ -179,39 +210,42 @@ export async function sendStreakAtRiskEmailsForDate(today: string): Promise<{
         message
       });
       if (result === 'sent') {
-        sent += 1;
+        stats.sent += 1;
       } else {
-        skipped += 1;
+        stats.skipped += 1;
       }
     } catch (error) {
-      failed += 1;
+      stats.failed += 1;
       logEmailFailure(`streak_at_risk failed for user ${candidate.userId}`, error);
     }
-  }
+  });
 
-  return { attempted: candidates.length, sent, failed, skipped };
+  return stats;
 }
 
-export async function sendStreakLostEmailsForDate(today: string): Promise<{
-  attempted: number;
-  sent: number;
-  failed: number;
-  skipped: number;
-  resetCount: number;
-}> {
+export async function sendStreakLostEmailsForDate(
+  today: string,
+  options: { cleanupStale?: boolean } = {}
+): Promise<DeliveryBatchStats & { resetCount: number }> {
   if (!isEmailDeliveryConfigured()) {
     console.warn('[email] streak_lost skipped: EMAIL_ENABLED=false or missing Brevo config');
     return { attempted: 0, sent: 0, failed: 0, skipped: 0, resetCount: 0 };
   }
 
-  await cleanupStalePendingDeliveries();
-  const candidates = await emailRepository.findStreakLostCandidates(today);
-  let sent = 0;
-  let failed = 0;
-  let skipped = 0;
-  let resetCount = 0;
+  if (options.cleanupStale ?? true) {
+    await cleanupStalePendingDeliveries();
+  }
 
-  for (const candidate of candidates) {
+  const candidates = await emailRepository.findStreakLostCandidates(today);
+  const stats: DeliveryBatchStats & { resetCount: number } = {
+    attempted: candidates.length,
+    sent: 0,
+    failed: 0,
+    skipped: 0,
+    resetCount: 0
+  };
+
+  await mapWithConcurrency(candidates, emailConfig.batchConcurrency, async (candidate) => {
     const dedupeKey = `lost:${candidate.lastActivityDay}`;
     const message = buildEmailMessage('streak_lost', {
       name: candidate.name,
@@ -227,21 +261,21 @@ export async function sendStreakLostEmailsForDate(today: string): Promise<{
         message,
         afterSent: async (client) => {
           await emailRepository.resetExpiredStreak(client, candidate.streakId);
-          resetCount += 1;
+          stats.resetCount += 1;
         }
       });
       if (result === 'sent') {
-        sent += 1;
+        stats.sent += 1;
       } else {
-        skipped += 1;
+        stats.skipped += 1;
       }
     } catch (error) {
-      failed += 1;
+      stats.failed += 1;
       logEmailFailure(`streak_lost failed for user ${candidate.userId}`, error);
     }
-  }
+  });
 
-  return { attempted: candidates.length, sent, failed, skipped, resetCount };
+  return stats;
 }
 
 export async function runStreakEmailJob(referenceDate?: string): Promise<{
@@ -252,8 +286,8 @@ export async function runStreakEmailJob(referenceDate?: string): Promise<{
 }> {
   const expiredPending = await cleanupStalePendingDeliveries();
   const today = referenceDate ?? getTodayInConfiguredTimezone();
-  const atRisk = await sendStreakAtRiskEmailsForDate(today);
-  const lost = await sendStreakLostEmailsForDate(today);
+  const atRisk = await sendStreakAtRiskEmailsForDate(today, { cleanupStale: false });
+  const lost = await sendStreakLostEmailsForDate(today, { cleanupStale: false });
   return { today, expiredPending, atRisk, lost };
 }
 
@@ -264,6 +298,112 @@ export function getTodayInConfiguredTimezone(reference = new Date()): string {
     month: '2-digit',
     day: '2-digit'
   }).format(reference);
+}
+
+async function buildRetryMessage(
+  candidate: FailedDeliveryRetryCandidate,
+  userName: string
+): Promise<EmailMessage | null> {
+  const mail = candidate.recipientEmail.trim();
+  if (!mail) {
+    return null;
+  }
+
+  switch (candidate.templateKey) {
+    case 'welcome':
+      return buildEmailMessage('welcome', { name: userName, mail });
+    case 'streak_at_risk':
+    case 'streak_lost': {
+      const streak = await emailRepository.findUserStreakContext(candidate.userId);
+      const streakCount = Math.max(1, streak?.currentCount ?? 1);
+      return buildEmailMessage(candidate.templateKey, {
+        name: userName,
+        mail,
+        streakCount
+      });
+    }
+    default:
+      return null;
+  }
+}
+
+function buildRetryAfterSent(
+  candidate: FailedDeliveryRetryCandidate
+): ((client: PoolClient) => Promise<void>) | undefined {
+  if (candidate.templateKey === 'welcome') {
+    return async (client) => {
+      await emailRepository.markWelcomeEmailSent(client, candidate.userId);
+    };
+  }
+
+  if (candidate.templateKey === 'streak_lost') {
+    return async (client) => {
+      const streak = await emailRepository.findUserStreakContext(candidate.userId);
+      if (streak === null || streak.currentCount <= 0) {
+        return;
+      }
+      await emailRepository.resetExpiredStreak(client, streak.streakId);
+    };
+  }
+
+  return undefined;
+}
+
+export async function runRetryFailedEmailJob(): Promise<{
+  expiredPending: number;
+  retry: DeliveryBatchStats;
+}> {
+  if (!isEmailDeliveryConfigured()) {
+    console.warn('[email] retry_failed skipped: EMAIL_ENABLED=false or missing Brevo config');
+    return {
+      expiredPending: 0,
+      retry: { attempted: 0, sent: 0, failed: 0, skipped: 0 }
+    };
+  }
+
+  const expiredPending = await cleanupStalePendingDeliveries();
+  const candidates = await emailRepository.findRetryableFailedDeliveries({
+    limit: emailConfig.retryBatchLimit,
+    maxAttempts: emailConfig.retryMaxAttempts,
+    maxAgeHours: emailConfig.retryMaxAgeHours
+  });
+
+  const stats: DeliveryBatchStats = {
+    attempted: candidates.length,
+    sent: 0,
+    failed: 0,
+    skipped: 0
+  };
+
+  await mapWithConcurrency(candidates, emailConfig.batchConcurrency, async (candidate) => {
+    const user = await emailRepository.findUserEmailContext(candidate.userId);
+    const userName = user?.name?.trim() || 'Jugador';
+    const message = await buildRetryMessage(candidate, userName);
+    if (message === null) {
+      stats.skipped += 1;
+      return;
+    }
+
+    try {
+      const result = await deliverTrackedEmail({
+        userId: candidate.userId,
+        templateKey: candidate.templateKey,
+        dedupeKey: candidate.dedupeKey,
+        message,
+        afterSent: buildRetryAfterSent(candidate)
+      });
+      if (result === 'sent') {
+        stats.sent += 1;
+      } else {
+        stats.skipped += 1;
+      }
+    } catch (error) {
+      stats.failed += 1;
+      logEmailFailure(`retry_failed delivery ${candidate.id}`, error);
+    }
+  });
+
+  return { expiredPending, retry: stats };
 }
 
 export async function listEmailDeliveries(filters: ListEmailDeliveriesFilters = {}) {

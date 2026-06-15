@@ -4,8 +4,11 @@ import {
   EmailDeliveryRow,
   EmailDeliveryStatus,
   EmailTemplateKey,
+  FailedDeliveryRetryCandidate,
   ListEmailDeliveriesFilters,
-  StreakEmailCandidate
+  StreakEmailCandidate,
+  UserEmailContext,
+  UserStreakContext
 } from './email.types';
 
 interface AcquireDeliveryInput {
@@ -16,26 +19,28 @@ interface AcquireDeliveryInput {
   subject: string;
 }
 
-export async function hasSuccessfulDelivery(
-  userId: string,
-  templateKey: EmailTemplateKey,
-  dedupeKey: string
-): Promise<boolean> {
-  const result = await query<{ exists: boolean }>(
+export async function isWelcomeEmailSkipped(userId: string): Promise<boolean> {
+  const result = await query<{ skip: boolean }>(
     `
-      SELECT EXISTS (
-        SELECT 1
-        FROM email_deliveries
-        WHERE user_id = $1
-          AND template_key = $2
-          AND dedupe_key = $3
-          AND status = 'sent'
-      ) AS exists;
+      SELECT (
+        u.mail IS NULL
+        OR u.welcome_email_sent_at IS NOT NULL
+        OR EXISTS (
+          SELECT 1
+          FROM email_deliveries ed
+          WHERE ed.user_id = u.id
+            AND ed.template_key = 'welcome'
+            AND ed.dedupe_key = 'welcome'
+            AND ed.status = 'sent'
+        )
+      ) AS skip
+      FROM users u
+      WHERE u.id = $1;
     `,
-    [userId, templateKey, dedupeKey]
+    [userId]
   );
 
-  return Boolean(result.rows[0]?.exists);
+  return Boolean(result.rows[0]?.skip);
 }
 
 export async function expireStalePendingDeliveries(staleMinutes: number): Promise<number> {
@@ -173,26 +178,6 @@ export async function markWelcomeEmailSent(
   );
 }
 
-export async function findWelcomeEmailCandidate(
-  userId: string
-): Promise<{ id: string; mail: string; name: string; welcome_email_sent_at: Date | null } | null> {
-  const result = await query<{
-    id: string;
-    mail: string;
-    name: string;
-    welcome_email_sent_at: Date | null;
-  }>(
-    `
-      SELECT id, mail, name, welcome_email_sent_at
-      FROM users
-      WHERE id = $1;
-    `,
-    [userId]
-  );
-
-  return result.rows[0] ?? null;
-}
-
 export async function listDeliveries(
   filters: ListEmailDeliveriesFilters = {}
 ): Promise<EmailDeliveryRow[]> {
@@ -266,7 +251,15 @@ export async function findStreakAtRiskCandidates(today: string): Promise<StreakE
       WHERE u.mail IS NOT NULL
         AND u.email_notifications_enabled = true
         AND s.current_count > 0
-        AND s.last_activity_day = ($1::date - INTERVAL '1 day')::date;
+        AND s.last_activity_day = ($1::date - INTERVAL '1 day')::date
+        AND NOT EXISTS (
+          SELECT 1
+          FROM email_deliveries ed
+          WHERE ed.user_id = u.id
+            AND ed.template_key = 'streak_at_risk'
+            AND ed.dedupe_key = 'at_risk:' || $1
+            AND ed.status IN ('sent', 'pending')
+        );
     `,
     [today]
   );
@@ -291,7 +284,15 @@ export async function findStreakLostCandidates(today: string): Promise<StreakEma
       WHERE u.mail IS NOT NULL
         AND u.email_notifications_enabled = true
         AND s.current_count > 0
-        AND s.last_activity_day <= ($1::date - INTERVAL '2 days')::date;
+        AND s.last_activity_day <= ($1::date - INTERVAL '2 days')::date
+        AND NOT EXISTS (
+          SELECT 1
+          FROM email_deliveries ed
+          WHERE ed.user_id = u.id
+            AND ed.template_key = 'streak_lost'
+            AND ed.dedupe_key = 'lost:' || to_char(s.last_activity_day, 'YYYY-MM-DD')
+            AND ed.status IN ('sent', 'pending')
+        );
     `,
     [today]
   );
@@ -308,4 +309,78 @@ export async function resetExpiredStreak(client: PoolClient, streakId: string): 
     `,
     [streakId]
   );
+}
+
+export async function findRetryableFailedDeliveries(input: {
+  limit: number;
+  maxAttempts: number;
+  maxAgeHours: number;
+}): Promise<FailedDeliveryRetryCandidate[]> {
+  const safeLimit = Math.max(1, Math.min(input.limit, 200));
+  const safeMaxAttempts = Math.max(1, input.maxAttempts);
+  const safeMaxAgeHours = Math.max(1, input.maxAgeHours);
+
+  const result = await query<FailedDeliveryRetryCandidate>(
+    `
+      SELECT
+        id,
+        user_id AS "userId",
+        template_key AS "templateKey",
+        dedupe_key AS "dedupeKey",
+        recipient_email AS "recipientEmail",
+        attempt_count AS "attemptCount"
+      FROM email_deliveries ed
+      WHERE status = 'failed'
+        AND recipient_email IS NOT NULL
+        AND attempt_count < $1
+        AND failed_at >= now() - ($2::text || ' hours')::interval
+        AND (
+          ed.template_key = 'welcome'
+          OR EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ed.user_id
+              AND u.email_notifications_enabled = true
+          )
+        )
+      ORDER BY failed_at ASC
+      LIMIT $3;
+    `,
+    [safeMaxAttempts, String(safeMaxAgeHours), safeLimit]
+  );
+
+  return result.rows;
+}
+
+export async function findUserEmailContext(
+  userId: string
+): Promise<UserEmailContext | null> {
+  const result = await query<UserEmailContext>(
+    `
+      SELECT id AS "userId", name, mail
+      FROM users
+      WHERE id = $1;
+    `,
+    [userId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function findUserStreakContext(
+  userId: string
+): Promise<UserStreakContext | null> {
+  const result = await query<UserStreakContext>(
+    `
+      SELECT
+        s.id AS "streakId",
+        s.current_count AS "currentCount"
+      FROM profiles p
+      JOIN streaks s ON s.id = p.streak_id
+      WHERE p.user_id = $1;
+    `,
+    [userId]
+  );
+
+  return result.rows[0] ?? null;
 }

@@ -90,11 +90,16 @@ Refresh tokens, admin, leaderboard online, rename destructivo de tablas.
 
 ## Emails (Brevo)
 
+Configuración de remitente, rotación de API key y checklist local: [`docs/BREVO_SETUP.md`](docs/BREVO_SETUP.md).
+
 Módulo en `src/modules/email/`. Por defecto `EMAIL_ENABLED=false` en `.env`.
 
 - Registro: mail de bienvenida (async, no bloquea el 201).
 - Cron diario: `npm run email:streaks` o `POST /internal/jobs/streak-emails` con header `X-Job-Secret`.
-- Consentimiento de racha: `users.email_notifications_enabled` (campo `accept_email_notifications` en registro).
+- Reintento de fallidos: `npm run email:retry-failed` o `POST /internal/jobs/retry-failed-emails`.
+- Cron local (Windows): `powershell -ExecutionPolicy Bypass -File scripts/local/register-email-tasks-windows.ps1`
+- Cron programado en la nube (cuando haya deploy): `.github/workflows/email-cron.yml`.
+- Consentimiento de racha: `users.email_notifications_enabled` (registro: `accept_email_notifications`; perfil: `PATCH /player/me` con `email_notifications_enabled`).
 - Auditoría: tabla `email_deliveries` con `status` (`pending` | `sent` | `failed`), destinatario, asunto, error y `provider_message_id`.
 - Templates: carpeta `src/modules/email/templates/` (ver `src/modules/email/README.md`).
 - Dev:

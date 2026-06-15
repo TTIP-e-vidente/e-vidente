@@ -11,6 +11,7 @@
     "seed:dev": "ts-node scripts/seed-dev-users.ts",
     "setup:dev": "ts-node scripts/setup-dev.ts",
     "email:streaks": "ts-node scripts/send-streak-emails.ts",
+    "email:retry-failed": "ts-node scripts/retry-failed-emails.ts",
     "test:email": "ts-node tests/email.templates.unit.test.ts",
     "test": "npm run migrate && ts-node tests/postgres.integration.test.ts && ts-node tests/email.templates.unit.test.ts && ts-node tests/auth.integration.test.ts && ts-node tests/player_authenticated.integration.test.ts"
   },

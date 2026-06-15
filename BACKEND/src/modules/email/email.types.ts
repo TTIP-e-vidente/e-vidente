@@ -50,3 +50,23 @@ export interface StreakEmailCandidate {
   bestCount: number;
   lastActivityDay: string;
 }
+
+export interface FailedDeliveryRetryCandidate {
+  id: string;
+  userId: string;
+  templateKey: EmailTemplateKey;
+  dedupeKey: string;
+  recipientEmail: string;
+  attemptCount: number;
+}
+
+export interface UserEmailContext {
+  userId: string;
+  name: string;
+  mail: string | null;
+}
+
+export interface UserStreakContext {
+  streakId: string;
+  currentCount: number;
+}

@@ -28,6 +28,8 @@ email/
 | `streak_at_risk` | Jugó ayer, hoy sin actividad            | Sí                       |
 | `streak_lost`    | 2+ días sin actividad                   | Sí                       |
 
+Consentimiento: `email_notifications_enabled` en `users` (registro `accept_email_notifications`, perfil `PATCH /player/me`). Config Brevo: `BACKEND/docs/BREVO_SETUP.md`.
+
 ## Variables por template
 
 - **welcome:** `name`, `mail`
@@ -48,6 +50,8 @@ Estados: `pending` → `sent` | `failed`
 
 Los `pending` viejos (> `EMAIL_PENDING_STALE_MINUTES`, default 15) pasan a `failed` automáticamente.
 
+El cron de rachas envía en paralelo con límite (`EMAIL_BATCH_CONCURRENCY`, default 5) para no saturar Brevo ni el pool de Postgres. Los candidatos ya enviados o en `pending` se filtran en SQL antes del loop.
+
 ## Configuración (`.env`)
 
 ```env
@@ -58,6 +62,7 @@ BREVO_SENDER_NAME=E-VIDENTE
 EMAIL_CRON_SECRET=change_me
 EMAIL_TIMEZONE=America/Argentina/Buenos_Aires
 EMAIL_PENDING_STALE_MINUTES=15
+EMAIL_BATCH_CONCURRENCY=5
 ```
 
 ## Endpoints dev (solo `NODE_ENV !== production`)
@@ -69,13 +74,116 @@ GET /dev/email/preview?template_key=streak_at_risk&name=Agus&streak_count=7
 GET /dev/email/deliveries?status=sent&limit=20
 ```
 
-## Cron de rachas
+## Cron local (desarrollo / demo sin deploy)
+
+Si todo corre en tu PC (Postgres Docker + `BACKEND/.env` + Brevo), **no uses GitHub Actions**: no puede llegar a `localhost`.
+
+### Manual
+
+```powershell
+# Desde la raíz del repo (PowerShell 5+)
+powershell -ExecutionPolicy Bypass -File scripts/local/run-email-job.ps1 -Job streaks
+powershell -ExecutionPolicy Bypass -File scripts/local/run-email-job.ps1 -Job retry-failed
+```
+
+Equivalente en Git Bash / WSL:
+
+```bash
+sh scripts/local/run-email-job.sh streaks
+sh scripts/local/run-email-job.sh retry-failed
+```
+
+El script levanta `docker compose up -d postgres` y corre `npm run email:*` en `BACKEND/`.
+
+### Automático en Windows (Task Scheduler)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/local/register-email-tasks-windows.ps1
+```
+
+| Tarea | Hora (ART) | Job |
+|-------|------------|-----|
+| `E-VIDENTE-Email-Streaks` | 19:00 | rachas |
+| `E-VIDENTE-Email-Retry-AM` | 08:00 | reintento fallidos |
+| `E-VIDENTE-Email-Retry-PM` | 20:00 | reintento fallidos |
+
+Quitar tareas:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/local/register-email-tasks-windows.ps1 -Unregister
+```
+
+**Requisitos:** Docker Desktop corriendo (o al menos disponible al disparar la tarea), Node/npm en PATH, `.env` con `EMAIL_ENABLED=true` y Brevo configurado.
+
+### Manual directo (sin script)
+
+```bash
+cd BACKEND
+docker compose up -d
+npm run email:streaks
+npm run email:retry-failed
+```
+
+## Cron de rachas (API / servidor levantado)
+
+Si el backend está corriendo (`npm run dev`), también podés disparar por HTTP:
 
 ```bash
 npm run email:streaks
 # o
 POST /internal/jobs/streak-emails
 Header: X-Job-Secret: <EMAIL_CRON_SECRET>
+```
+
+## Reintento de envíos fallidos
+
+Reprocesa filas `failed` recientes (`attempt_count` < `EMAIL_RETRY_MAX_ATTEMPTS`, default 3) sin duplicar por `dedupe_key`.
+
+```bash
+npm run email:retry-failed
+# o
+POST /internal/jobs/retry-failed-emails
+Header: X-Job-Secret: <EMAIL_CRON_SECRET>
+```
+
+Variables:
+
+| Variable | Default | Uso |
+|----------|---------|-----|
+| `EMAIL_RETRY_MAX_ATTEMPTS` | 3 | Máximo de intentos por delivery |
+| `EMAIL_RETRY_MAX_AGE_HOURS` | 48 | Solo reintenta fallos de las últimas N horas |
+| `EMAIL_RETRY_BATCH_LIMIT` | 50 | Máximo de filas por corrida |
+
+Migración `023_email_deliveries_retry_indexes.sql` agrega índices para dedupe activo y búsqueda de `failed`.
+
+## Cron en GitHub Actions (solo con backend público)
+
+> **Entorno 100 % local:** usá la sección **Cron local** de arriba. El workflow de GitHub no puede llamar a `localhost`.
+
+Cuando tengas el backend desplegado en internet, workflow: `.github/workflows/email-cron.yml`
+
+| Horario (ART, UTC-3) | Job |
+|----------------------|-----|
+| 19:00 diario | `streak-emails` |
+| 08:00 y 20:00 diario | `retry-failed-emails` |
+
+También podés dispararlo a mano: **Actions → Email cron jobs → Run workflow**.
+
+### Secrets del repositorio (Settings → Secrets → Actions)
+
+| Secret | Ejemplo | Debe coincidir con |
+|--------|---------|-------------------|
+| `BACKEND_BASE_URL` | `https://api.tudominio.com` | URL pública del backend (sin `/` final) |
+| `EMAIL_CRON_SECRET` | valor largo | `EMAIL_CRON_SECRET` del servidor |
+
+El workflow hace `POST` a `/internal/jobs/<job>` con header `X-Job-Secret`.
+
+Prueba local del mismo script:
+
+```bash
+BACKEND_BASE_URL=http://localhost:3000 \
+EMAIL_CRON_SECRET=evidente_email_cron_local_dev_change_me \
+sh scripts/ci/trigger-email-job.sh streak-emails
 ```
 
 ## Diseño visual

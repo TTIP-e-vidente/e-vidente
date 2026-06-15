@@ -443,6 +443,12 @@ theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Mail (opcional)"
 
+[node name="EmailNotificationsCheckBox" type="CheckBox" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120337]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_font_sizes/font_size = 13
+text = "Recibir recordatorios de racha por correo"
+
 [node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2024719766]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)

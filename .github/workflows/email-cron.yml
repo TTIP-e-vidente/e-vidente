@@ -1,0 +1,78 @@
+# Solo útil cuando el backend está desplegado en internet (secret BACKEND_BASE_URL).
+# Desarrollo 100 % local: scripts/local/run-email-job.ps1 + Task Scheduler (ver email/README).
+name: Email cron jobs
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual email {0}', github.event.inputs.job) || 'Scheduled email jobs' }}"
+
+on:
+  schedule:
+    # 19:00 ART (UTC-3) — rachas en riesgo / perdidas
+    - cron: '0 22 * * *'
+    # 08:00 ART — reintento de fallidos
+    - cron: '0 11 * * *'
+    # 20:00 ART — reintento de fallidos
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job a ejecutar
+        required: true
+        default: streak-emails
+        type: choice
+        options:
+          - streak-emails
+          - retry-failed-emails
+
+concurrency:
+  group: email-cron-${{ github.event.schedule || github.event.inputs.job }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-email-job:
+    name: Trigger ${{ github.event.inputs.job || 'scheduled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve job name
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 22 * * *" ]; then
+            echo "job=streak-emails" >> "$GITHUB_OUTPUT"
+          else
+            echo "job=retry-failed-emails" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger backend email job
+        env:
+          BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+          EMAIL_CRON_SECRET: ${{ secrets.EMAIL_CRON_SECRET }}
+          EMAIL_JOB: ${{ steps.resolve.outputs.job }}
+        run: |
+          set -euo pipefail
+          sh scripts/ci/trigger-email-job.sh "$EMAIL_JOB"
+
+      - name: Job summary
+        if: always() && env.GITHUB_STEP_SUMMARY != ''
+        shell: bash
+        run: |
+          {
+            echo "### Email cron"
+            echo "- Job: \`${{ steps.resolve.outputs.job }}\`"
+            echo "- Trigger: \`${{ github.event_name }}\`"
+            if [ -f response.json ]; then
+              echo "- Response:"
+              echo '```json'
+              cat response.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

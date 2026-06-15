@@ -10,6 +10,7 @@ export interface PublicUser {
   name: string;
   mail: string | null;
   birth_date: string | null;
+  email_notifications_enabled: boolean;
 }
 
 export interface AuthResponse {
@@ -41,6 +42,7 @@ export interface UserRow {
   updated_at: Date;
   name: string;
   mail: string | null;
+  email_notifications_enabled: boolean;
 }
 
 export interface CreateUserInput {

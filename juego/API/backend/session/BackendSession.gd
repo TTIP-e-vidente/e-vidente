@@ -260,7 +260,12 @@ func eliminar_avatar_online() -> Dictionary:
 	return resultado
 
 
-func actualizar_perfil_online(nombre: String, mail: String, fecha_nacimiento: String) -> Dictionary:
+func actualizar_perfil_online(
+	nombre: String,
+	mail: String,
+	fecha_nacimiento: String,
+	notificaciones_mail: Variant = null
+) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
 
@@ -279,6 +284,9 @@ func actualizar_perfil_online(nombre: String, mail: String, fecha_nacimiento: St
 	var clean_birth := fecha_nacimiento.strip_edges()
 	if not clean_birth.is_empty():
 		payload["birth_date"] = clean_birth
+
+	if notificaciones_mail is bool:
+		payload["email_notifications_enabled"] = notificaciones_mail
 
 	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.actualizar_perfil(_auth.obtener_token(), payload)

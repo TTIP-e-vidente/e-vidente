@@ -4,4 +4,5 @@ export interface UserPublicRow {
   name: string;
   mail: string | null;
   birth_date: Date | string | null;
+  email_notifications_enabled: boolean;
 }

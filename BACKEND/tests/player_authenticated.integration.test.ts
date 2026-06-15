@@ -643,6 +643,7 @@ async function run(): Promise<void> {
     assert.equal((patchProfileResponse.body.user as JsonObject).name, 'Player Auth Updated');
     assert.equal((patchProfileResponse.body.user as JsonObject).mail, updatedMail);
     assert.equal((patchProfileResponse.body.user as JsonObject).birth_date, '1999-01-01');
+    assert.equal((patchProfileResponse.body.user as JsonObject).email_notifications_enabled, true);
     assert.ok(patchProfileResponse.body.profile);
     assert.ok(patchProfileResponse.body.streak);
 
@@ -657,6 +658,23 @@ async function run(): Promise<void> {
     assert.equal(storedUser.rows[0].name, 'Player Auth Updated');
     assert.equal(storedUser.rows[0].mail, updatedMail);
     assert.equal(storedUser.rows[0].birth_date, '1999-01-01');
+
+    const disableNotificationsResponse = await requestJson(baseUrl, '/player/me', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ email_notifications_enabled: false })
+    });
+    assert.equal(disableNotificationsResponse.status, 200);
+    assert.equal(
+      (disableNotificationsResponse.body.user as JsonObject).email_notifications_enabled,
+      false
+    );
+
+    const storedNotifications = await pool.query<{ email_notifications_enabled: boolean }>(
+      'SELECT email_notifications_enabled FROM users WHERE username = $1;',
+      [username]
+    );
+    assert.equal(storedNotifications.rows[0].email_notifications_enabled, false);
 
     const otherRegisterResponse = await requestJson(baseUrl, '/auth/register', {
       method: 'POST',
