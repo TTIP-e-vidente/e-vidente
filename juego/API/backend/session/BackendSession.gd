@@ -305,6 +305,35 @@ func actualizar_perfil_online(
 	return resultado
 
 
+## Solicita el envío de un código de verificación de 6 dígitos al email configurado.
+## Retorna status 'sent', 'already_verified' o error (rate_limited, 422, etc.).
+func solicitar_verificacion_email() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
+	var resultado := await _api.solicitar_verificacion_email(_auth.obtener_token())
+	_verificar_sesion_expirada(resultado, epoch)
+	return resultado
+
+
+## Confirma el código de verificación ingresado por el usuario (6 dígitos numéricos).
+## Retorna status 'verified' o error (invalid, expired, no_pending).
+func confirmar_verificacion_email(codigo: String) -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
+	var resultado := await _api.confirmar_verificacion_email(_auth.obtener_token(), codigo.strip_edges())
+	_verificar_sesion_expirada(resultado, epoch)
+	# Si se verificó, actualizar el cache de usuario con mail_verified_at
+	if bool(resultado.get("ok", false)):
+		var data: Variant = resultado.get("data", {})
+		if data is Dictionary:
+			var verified_at: Variant = (data as Dictionary).get("mail_verified_at", null)
+			if not _usuario_en_cache.is_empty():
+				_usuario_en_cache["mail_verified_at"] = verified_at
+	return resultado
+
+
 func obtener_usuario_del_servidor() -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}

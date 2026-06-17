@@ -1,4 +1,6 @@
 import { EmailMessage, EmailTemplateKey } from '../email.types';
+import { buildEmailVerificationEmail } from './email-verification.template';
+import { buildMailChangedEmail } from './mail-changed.template';
 import { buildStreakAtRiskEmail } from './streak-at-risk.template';
 import { buildStreakLostEmail } from './streak-lost.template';
 import {
@@ -43,6 +45,29 @@ export const EMAIL_TEMPLATE_DEFINITIONS: {
       streakCount: 5
     }),
     build: buildStreakLostEmail
+  },
+  email_verification: {
+    key: 'email_verification',
+    title: 'Verificación de email',
+    description: 'Código OTP para confirmar que el email pertenece al usuario.',
+    sampleContext: () => ({
+      name: 'Jugador',
+      mail: 'jugador@example.com',
+      code: '123456',
+      expiresMinutes: 15
+    }),
+    build: buildEmailVerificationEmail
+  },
+  mail_changed: {
+    key: 'mail_changed',
+    title: 'Email cambiado',
+    description: 'Notificación de seguridad al mail anterior cuando el usuario actualiza su email.',
+    sampleContext: () => ({
+      name: 'Jugador',
+      oldMail: 'anterior@example.com',
+      newMail: 'nuevo@example.com'
+    }),
+    build: buildMailChangedEmail
   }
 };
 
@@ -76,14 +101,33 @@ export function previewEmailTemplate(
     });
   }
 
-  const sample = EMAIL_TEMPLATE_DEFINITIONS[templateKey].sampleContext();
+  if (templateKey === 'email_verification') {
+    const sample = EMAIL_TEMPLATE_DEFINITIONS.email_verification.sampleContext();
+    return EMAIL_TEMPLATE_DEFINITIONS.email_verification.build({
+      name: params.name?.trim() || sample.name,
+      mail: params.mail?.trim() || sample.mail,
+      code: sample.code,
+      expiresMinutes: sample.expiresMinutes
+    });
+  }
+
+  if (templateKey === 'mail_changed') {
+    const sample = EMAIL_TEMPLATE_DEFINITIONS.mail_changed.sampleContext();
+    return EMAIL_TEMPLATE_DEFINITIONS.mail_changed.build({
+      name: params.name?.trim() || sample.name,
+      oldMail: sample.oldMail,
+      newMail: sample.newMail
+    });
+  }
+
+  const sample = EMAIL_TEMPLATE_DEFINITIONS[templateKey as 'streak_at_risk' | 'streak_lost'].sampleContext();
   const streakCount = Number.isFinite(params.streak_count)
     ? Math.max(1, Number(params.streak_count))
-    : sample.streakCount;
+    : (sample as { streakCount: number }).streakCount;
 
   const context: StreakTemplateContext = {
-    name: params.name?.trim() || sample.name,
-    mail: params.mail?.trim() || sample.mail,
+    name: params.name?.trim() || (sample as { name: string }).name,
+    mail: params.mail?.trim() || (sample as { mail: string }).mail,
     streakCount
   };
 

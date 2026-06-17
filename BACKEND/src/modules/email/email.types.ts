@@ -1,4 +1,4 @@
-export type EmailTemplateKey = 'welcome' | 'streak_at_risk' | 'streak_lost';
+export type EmailTemplateKey = 'welcome' | 'streak_at_risk' | 'streak_lost' | 'email_verification' | 'mail_changed';
 
 export type EmailDeliveryStatus = 'pending' | 'sent' | 'failed';
 

@@ -11,7 +11,8 @@ const userColumns = `
   updated_at,
   name,
   mail,
-  email_notifications_enabled
+  email_notifications_enabled,
+  mail_verified_at
 `;
 
 export async function findById(id: string): Promise<UserRow | null> {

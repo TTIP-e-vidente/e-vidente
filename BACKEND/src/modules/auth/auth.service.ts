@@ -7,6 +7,7 @@ import { parseBirthDateInput } from '../../shared/validation/birth_date';
 import { toPublicUser } from './auth.mapper';
 import * as authRepository from './auth.repository';
 import { queueWelcomeEmail } from '../email/email.service';
+import { sendVerificationCode } from '../email/email.verification.service';
 import {
   AuthErrorCode,
   AuthResponse,
@@ -135,6 +136,11 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
       userId: user.id,
       mail,
       name: validName
+    });
+    // Envía código de verificación en background (fail-safe)
+    void sendVerificationCode(user.id, mail, validName).catch((error) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[email:verify] post-register send failed for user ${user.id}: ${msg}`);
     });
   }
 

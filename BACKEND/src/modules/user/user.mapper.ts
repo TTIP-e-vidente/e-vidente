@@ -8,6 +8,7 @@ export interface PublicUser {
   mail: string | null;
   birth_date: string | null;
   email_notifications_enabled: boolean;
+  mail_verified_at: string | null;
 }
 
 export function toPublicUser(row: UserPublicRow): PublicUser {
@@ -17,6 +18,7 @@ export function toPublicUser(row: UserPublicRow): PublicUser {
     name: row.name,
     mail: row.mail,
     birth_date: formatBirthDate(row.birth_date),
-    email_notifications_enabled: row.email_notifications_enabled
+    email_notifications_enabled: row.email_notifications_enabled,
+    mail_verified_at: row.mail_verified_at ? row.mail_verified_at.toISOString() : null
   };
 }

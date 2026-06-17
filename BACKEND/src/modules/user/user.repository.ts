@@ -14,7 +14,7 @@ import { UserPublicRow } from './user.types';
 export async function findPublicUserById(userId: string): Promise<UserPublicRow | null> {
   const result = await query<UserPublicRow>(
     `
-      SELECT id, username, name, mail, birth_date, email_notifications_enabled
+      SELECT id, username, name, mail, birth_date, email_notifications_enabled, mail_verified_at
       FROM users
       WHERE id = $1;
     `,
@@ -30,7 +30,7 @@ export async function findPublicUserByUsername(
 ): Promise<UserPublicRow | null> {
   const result = await client.query<UserPublicRow>(
     `
-      SELECT id, username, name, mail, birth_date, email_notifications_enabled
+      SELECT id, username, name, mail, birth_date, email_notifications_enabled, mail_verified_at
       FROM users
       WHERE username = $1;
     `,
@@ -68,7 +68,7 @@ export async function findByMailExcludingUserId(
 
   const result = await executor.query<UserPublicRow>(
     `
-      SELECT id, username, name, mail, birth_date, email_notifications_enabled
+      SELECT id, username, name, mail, birth_date, email_notifications_enabled, mail_verified_at
       FROM users
       WHERE mail = $1 AND id <> $2;
     `,
@@ -97,6 +97,8 @@ export async function updateUserProfile(
   if (input.mail !== undefined) {
     sets.push(`mail = $${paramIndex++}`);
     params.push(input.mail);
+    // Al cambiar el mail, se resetea la verificación automáticamente
+    sets.push('mail_verified_at = NULL');
   }
 
   if (input.birth_date !== undefined) {
@@ -114,7 +116,7 @@ export async function updateUserProfile(
       UPDATE users
       SET ${sets.join(', ')}
       WHERE id = $1
-      RETURNING id, username, name, mail, birth_date, email_notifications_enabled;
+      RETURNING id, username, name, mail, birth_date, email_notifications_enabled, mail_verified_at;
     `,
     params
   );
@@ -136,7 +138,7 @@ export async function upsertDevUser(
         name = COALESCE(EXCLUDED.name, users.name),
         display_name = COALESCE(EXCLUDED.name, users.display_name),
         updated_at = now()
-      RETURNING id, username, name, mail, birth_date, email_notifications_enabled;
+      RETURNING id, username, name, mail, birth_date, email_notifications_enabled, mail_verified_at;
     `,
     [username, name]
   );

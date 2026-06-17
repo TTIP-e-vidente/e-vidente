@@ -1,4 +1,4 @@
-import { PoolClient } from 'pg';
+import { PoolClient, QueryResult } from 'pg';
 import { query } from '../../config/database';
 import {
   EmailDeliveryRow,
@@ -129,10 +129,30 @@ export async function acquireDeliverySlot(
 }
 
 export async function markDeliverySent(
-  deliveryId: string,
-  providerMessageId: string | null
+  deliveryIdOrClient: string | PoolClient,
+  deliveryIdOrMessageId: string,
+  providerMessageIdArg?: string | null
 ): Promise<void> {
-  await query(
+  // Overloads:
+  //   markDeliverySent(deliveryId, providerMessageId)           — pool global
+  //   markDeliverySent(client, deliveryId, providerMessageId)   — transaccional
+  let executor: (sql: string, params: unknown[]) => Promise<QueryResult>;
+  let deliveryId: string;
+  let providerMessageId: string | null;
+
+  if (typeof deliveryIdOrClient === 'string') {
+    // Pool global (backward compatible)
+    executor = (sql, params) => query(sql, params);
+    deliveryId = deliveryIdOrClient;
+    providerMessageId = deliveryIdOrMessageId as string | null;
+  } else {
+    // Transaccional: usa el PoolClient proporcionado
+    executor = (sql, params) => (deliveryIdOrClient as PoolClient).query(sql, params);
+    deliveryId = deliveryIdOrMessageId;
+    providerMessageId = providerMessageIdArg ?? null;
+  }
+
+  await executor(
     `
       UPDATE email_deliveries
       SET
@@ -250,6 +270,7 @@ export async function findStreakAtRiskCandidates(today: string): Promise<StreakE
       JOIN profiles p ON p.user_id = u.id
       JOIN streaks s ON s.id = p.streak_id
       WHERE u.mail IS NOT NULL
+        AND u.mail_verified_at IS NOT NULL
         AND u.email_notifications_enabled = true
         AND s.current_count > 0
         AND s.last_activity_day = ($1::date - INTERVAL '1 day')::date
@@ -283,6 +304,7 @@ export async function findStreakLostCandidates(today: string): Promise<StreakEma
       JOIN profiles p ON p.user_id = u.id
       JOIN streaks s ON s.id = p.streak_id
       WHERE u.mail IS NOT NULL
+        AND u.mail_verified_at IS NOT NULL
         AND u.email_notifications_enabled = true
         AND s.current_count > 0
         AND s.last_activity_day <= ($1::date - INTERVAL '2 days')::date
@@ -448,4 +470,135 @@ export async function findUserStreakContext(
   );
 
   return result.rows[0] ?? null;
+}
+
+// ─── Verificación de email ────────────────────────────────────────────────────
+
+export interface EmailVerificationCodeRow {
+  id: string;
+  userId: string;
+  codeHash: string;
+  targetMail: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+  createdAt: Date;
+}
+
+export async function createVerificationCode(
+  client: PoolClient,
+  input: {
+    userId: string;
+    codeHash: string;
+    targetMail: string;
+    expiresAt: Date;
+  }
+): Promise<string> {
+  const result = await client.query<{ id: string }>(
+    `
+      INSERT INTO email_verification_codes (user_id, code_hash, target_mail, expires_at)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id;
+    `,
+    [input.userId, input.codeHash, input.targetMail, input.expiresAt]
+  );
+  return result.rows[0].id;
+}
+
+export async function findActiveVerificationCode(
+  userId: string
+): Promise<EmailVerificationCodeRow | null> {
+  const result = await query<{
+    id: string;
+    user_id: string;
+    code_hash: string;
+    target_mail: string;
+    expires_at: Date;
+    used_at: Date | null;
+    created_at: Date;
+  }>(
+    `
+      SELECT id, user_id, code_hash, target_mail, expires_at, used_at, created_at
+      FROM email_verification_codes
+      WHERE user_id = $1
+        AND used_at IS NULL
+        AND expires_at > now()
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [userId]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.user_id,
+    codeHash: row.code_hash,
+    targetMail: row.target_mail,
+    expiresAt: row.expires_at,
+    usedAt: row.used_at,
+    createdAt: row.created_at
+  };
+}
+
+export async function getLastVerificationCodeCreatedAt(
+  userId: string
+): Promise<Date | null> {
+  const result = await query<{ created_at: Date }>(
+    `
+      SELECT created_at
+      FROM email_verification_codes
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [userId]
+  );
+  return result.rows[0]?.created_at ?? null;
+}
+
+export async function invalidatePreviousVerificationCodes(
+  client: PoolClient,
+  userId: string
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE email_verification_codes
+      SET used_at = now()
+      WHERE user_id = $1
+        AND used_at IS NULL;
+    `,
+    [userId]
+  );
+}
+
+export async function markVerificationCodeUsed(
+  client: PoolClient,
+  codeId: string
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE email_verification_codes
+      SET used_at = now()
+      WHERE id = $1;
+    `,
+    [codeId]
+  );
+}
+
+export async function markMailVerified(
+  client: PoolClient,
+  userId: string,
+  mail: string
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE users
+      SET mail_verified_at = now(), updated_at = now()
+      WHERE id = $1
+        AND mail = $2
+        AND mail_verified_at IS NULL;
+    `,
+    [userId, mail]
+  );
 }

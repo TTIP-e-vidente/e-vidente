@@ -19,6 +19,9 @@ import * as profileRepository from './profile.repository';
 import * as streakRepository from '../streak/streak.repository';
 import { PublicProfile, toPublicProfile } from './profile.mapper';
 import { PublicStreak, toPublicStreak } from '../streak/streak.mapper';
+import { sendVerificationCode } from '../email/email.verification.service';
+import { sendTransactionalEmail } from '../email/email.client';
+import { buildEmailMessage } from '../email/templates';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
@@ -128,6 +131,14 @@ export async function updatePlayerMe(
   }
 
   const client = await pool.connect();
+  // Capturar el mail actual antes de actualizarlo para notificar al mail viejo
+  let oldMail: string | null = null;
+  if (validatedMail !== undefined && validatedMail !== null) {
+    const currentUser = await userRepository.findPublicUserById(userId);
+    if (currentUser?.mail && currentUser.mail !== validatedMail) {
+      oldMail = currentUser.mail;
+    }
+  }
   try {
     await client.query('BEGIN');
 
@@ -158,6 +169,29 @@ export async function updatePlayerMe(
     throw error;
   } finally {
     client.release();
+  }
+
+  // Si el mail cambió a uno válido, enviar código de verificación al nuevo mail
+  if (validatedMail) {
+    const updatedUser = await userRepository.findPublicUserById(userId);
+    if (updatedUser) {
+      void sendVerificationCode(userId, validatedMail, updatedUser.name).catch((error) => {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.warn(`[email:verify] post-mail-update send failed for user ${userId}: ${msg}`);
+      });
+      // Notificar al mail viejo por seguridad
+      if (oldMail) {
+        const message = buildEmailMessage('mail_changed', {
+          name: updatedUser.name,
+          oldMail,
+          newMail: validatedMail
+        });
+        void sendTransactionalEmail(message, { templateKey: 'mail_changed' }).catch((error) => {
+          const msg = error instanceof Error ? error.message : String(error);
+          console.warn(`[email:mail_changed] notify old mail failed for user ${userId}: ${msg}`);
+        });
+      }
+    }
   }
 
   return getPlayerMe(userId);

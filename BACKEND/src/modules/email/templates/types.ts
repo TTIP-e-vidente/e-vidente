@@ -1,4 +1,6 @@
 import { EmailMessage, EmailTemplateKey } from '../email.types';
+import { EmailVerificationTemplateContext } from './email-verification.template';
+import { MailChangedTemplateContext } from './mail-changed.template';
 
 export interface WelcomeTemplateContext {
   name: string;
@@ -15,6 +17,8 @@ export type TemplateContextByKey = {
   welcome: WelcomeTemplateContext;
   streak_at_risk: StreakTemplateContext;
   streak_lost: StreakTemplateContext;
+  email_verification: EmailVerificationTemplateContext;
+  mail_changed: MailChangedTemplateContext;
 };
 
 export interface EmailTemplateDefinition<K extends EmailTemplateKey = EmailTemplateKey> {

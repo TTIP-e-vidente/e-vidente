@@ -3,9 +3,12 @@ import {
   bodyHighlight,
   bodyParagraph,
   buildTextLines,
+  ctaButton,
   escapeHtml,
   formatDayLabel,
+  GAME_EMAIL_THEME,
   NOTIFICATION_OPT_OUT_TEXT,
+  streakBadge,
   wrapHtml
 } from './layout';
 import { StreakTemplateContext } from './types';
@@ -14,27 +17,37 @@ export function buildStreakAtRiskEmail(context: StreakTemplateContext): EmailMes
   const { name, mail, streakCount } = context;
   const safeName = escapeHtml(name);
   const dayLabel = formatDayLabel(streakCount);
-  const subject = `Tu racha de ${streakCount} ${dayLabel} sigue en juego — jugá hoy`;
+  const t = GAME_EMAIL_THEME;
+  const subject = `🔥 Tu racha de ${streakCount} ${dayLabel} sigue en juego — jugá hoy`;
+
   const textContent = buildTextLines([
-    `Hola ${name},`,
+    `¡Hola ${name}!`,
     '',
     `Llevás ${streakCount} ${dayLabel} de racha, pero hoy todavía no registramos que hayas jugado.`,
-    'Entrá y completá una partida para no perderla.',
+    'Entrá y completá una partida antes de que termine el día para no perderla.',
     '',
     NOTIFICATION_OPT_OUT_TEXT,
     '',
-    'Equipo E-VIDENTE'
+    '— Equipo E-VIDENTE'
   ]);
+
   const htmlContent = wrapHtml({
-    headline: 'Tu racha sigue en juego',
-    subtitle: 'Entrá hoy para mantenerla',
+    headline: '¡Tu racha está en riesgo!',
+    subtitle: `${streakCount} ${dayLabel} · jugá hoy para mantenerla`,
+    headerEmoji: '🔥',
+    headerScheme: 'green',
     includeNotificationOptOut: true,
     bodyHtml: [
-      bodyParagraph(`Hola <strong style="color: #42785e;">${safeName}</strong>,`),
-      bodyHighlight(
-        `Llevás <strong style="color: #42785e;">${streakCount} ${dayLabel}</strong> de racha, pero hoy todavía no registramos que hayas jugado.`
+      bodyParagraph(
+        `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>!`
       ),
-      bodyParagraph('Entrá y completá una partida para no perderla.')
+      streakBadge(streakCount),
+      bodyHighlight(
+        `Hoy todavía no registramos que hayas jugado. ` +
+        `Tu racha de <strong>${streakCount} ${dayLabel}</strong> podría perderse si no entrás antes de que termine el día.`
+      ),
+      bodyParagraph('Completá una partida corta y mantenela activa. ¡Podés hacerlo!'),
+      ctaButton('¡Jugar ahora!', t.orangeAccent)
     ].join('')
   });
 

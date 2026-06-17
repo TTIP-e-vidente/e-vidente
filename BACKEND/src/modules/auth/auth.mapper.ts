@@ -8,6 +8,7 @@ export function toPublicUser(user: UserRow): PublicUser {
     name: user.name,
     mail: user.mail,
     birth_date: formatBirthDate(user.birth_date),
-    email_notifications_enabled: user.email_notifications_enabled
+    email_notifications_enabled: user.email_notifications_enabled,
+    mail_verified_at: user.mail_verified_at ? user.mail_verified_at.toISOString() : null
   };
 }

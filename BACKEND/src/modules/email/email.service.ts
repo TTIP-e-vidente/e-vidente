@@ -122,7 +122,7 @@ async function deliverTrackedEmail(input: {
     const postClient = await pool.connect();
     try {
       await postClient.query('BEGIN');
-      await emailRepository.markDeliverySent(deliveryId, providerMessageId);
+      await emailRepository.markDeliverySent(postClient, deliveryId, providerMessageId);
       if (input.afterSent) {
         await input.afterSent(postClient);
       }
@@ -163,7 +163,7 @@ async function dispatchPendingWelcomeDelivery(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await emailRepository.markDeliverySent(pending.id, providerMessageId);
+      await emailRepository.markDeliverySent(client, pending.id, providerMessageId);
       await emailRepository.markWelcomeEmailSent(client, pending.userId);
       await client.query('COMMIT');
     } catch (error) {

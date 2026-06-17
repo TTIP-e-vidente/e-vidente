@@ -1,30 +1,50 @@
 import { EmailMessage } from '../email.types';
-import { bodyHighlight, bodyParagraph, buildTextLines, escapeHtml, wrapHtml } from './layout';
+import {
+  bodyHighlight,
+  bodyParagraph,
+  buildTextLines,
+  ctaButton,
+  escapeHtml,
+  GAME_EMAIL_THEME,
+  streakBadge,
+  wrapHtml
+} from './layout';
 import { WelcomeTemplateContext } from './types';
 
 export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage {
   const { name, mail } = context;
   const safeName = escapeHtml(name);
+  const t = GAME_EMAIL_THEME;
   const subject = '¡Listo! Tu cuenta en E-VIDENTE ya está creada';
+
   const textContent = buildTextLines([
-    `Hola ${name},`,
+    `¡Hola ${name}! 🎉`,
     '',
-    'Creaste tu cuenta correctamente. Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.',
+    'Creaste tu cuenta correctamente en E-VIDENTE.',
+    'Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.',
     '',
-    'Nos alegra que estés acá. ¡Que disfrutes el camino!',
+    'Aprender sobre restricciones alimentarias nunca fue tan entretenido.',
+    '¡Que disfrutes el camino!',
     '',
-    'Equipo E-VIDENTE'
+    '— Equipo E-VIDENTE'
   ]);
+
   const htmlContent = wrapHtml({
-    headline: '¡Bienvenido/a a E-VIDENTE!',
+    headline: '¡Bienvenido/a!',
     subtitle: 'Tu cuenta está lista para jugar',
+    headerEmoji: '✨',
+    headerScheme: 'green',
     bodyHtml: [
-      bodyParagraph(`Hola <strong style="color: #42785e;">${safeName}</strong>,`),
-      bodyParagraph('Creaste tu cuenta correctamente.'),
-      bodyHighlight(
-        'Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.'
+      bodyParagraph(
+        `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>! Nos alegra que estés acá.`
       ),
-      bodyParagraph('Nos alegra que estés acá. ¡Que disfrutes el camino!')
+      bodyHighlight(
+        `Ya podés entrar al juego, sumar experiencia y empezar tu <strong>racha diaria</strong>.`
+      ),
+      bodyParagraph(
+        'Aprender sobre restricciones alimentarias nunca fue tan entretenido. 🥗'
+      ),
+      ctaButton('¡Empezar a jugar!', t.primaryGreen)
     ].join('')
   });
 
