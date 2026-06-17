@@ -15,11 +15,17 @@
 - Sync
 - Vegan / keto / mixto: libros en UI; pack JSON solo celiaquía
 
+## Entrega 4 (emails)
+
+- Código y tests integración jobs: **listo**
+- Validación Brevo real: correr `npm run validate:email-flow` con `.env` + IP autorizada
+- Producción: pendiente activación (`EMAIL_ENABLED` + dominio)
+
 ## Pendiente
 
 - Leaderboard, logros como sistema
 - Refresh token, admin
-- Emails en producción (módulo listo; activar con Brevo + `EMAIL_ENABLED=true`)
+- Emails en producción (módulo listo; activar con Brevo + deploy)
 
 ## Repo
 

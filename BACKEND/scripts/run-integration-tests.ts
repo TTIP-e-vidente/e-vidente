@@ -6,6 +6,7 @@ const backendRoot = path.resolve(__dirname, '..');
 const integrationTests = [
   'tests/postgres.integration.test.ts',
   'tests/email.templates.unit.test.ts',
+  'tests/email.jobs.integration.test.ts',
   'tests/auth.integration.test.ts',
   'tests/player_authenticated.integration.test.ts'
 ];

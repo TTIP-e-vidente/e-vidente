@@ -50,7 +50,7 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 ---
 
-## Entrega 4 (en curso)
+## Entrega 4 (lista para revisión)
 
 | Página | Descripción |
 |--------|-------------|

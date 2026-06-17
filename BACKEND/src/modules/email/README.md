@@ -111,7 +111,7 @@ Variables opcionales: `STREAK_DEMO_USERNAME`, `STREAK_DEMO_MAIL`, `STREAK_DEMO_P
 
 ```bash
 cd BACKEND
-npm run test
+npm run test          # incluye email.jobs.integration.test.ts
 npm run test:email
 ```
 

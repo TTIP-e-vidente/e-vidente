@@ -63,7 +63,7 @@ Jugó **ayer**, hoy **sin** actividad registrada, racha `current_count > 0`, mai
 
 ### Criterio SQL — racha perdida
 
-Última actividad **hace 2+ días**, misma racha activa en DB. Tras envío exitoso: `current_count → 0`.
+Última actividad **hace 2+ días**, misma racha activa en DB. Tras el job: mail `streak_lost` (si consentimiento) y `reconcileExpiredStreaksInDatabase` resetea `current_count → 0`.
 
 ---
 

@@ -68,13 +68,13 @@ Historias de usuario de la Entrega 4 (emails y notificaciones por correo).
 ## US-04 — Enterarme por mail si perdí la racha
 
 **Actor/es:** Jugador con notificaciones habilitadas  
-**Funcionalidad:** Recibir aviso cuando pasaron 2+ días sin actividad; la racha se reinicia en backend tras envío exitoso.  
+**Funcionalidad:** Recibir aviso cuando pasaron 2+ días sin actividad; la racha se reinicia en backend al correr el job (reconcile), independiente del envío del mail.  
 **Valor que aporta:** Cierre claro del ciclo de racha, alineado al mensaje in-game de pérdida.
 
 ### Criterios de aceptación
 
 - Dado última actividad hace 2 o más días, cuando corre el cron, entonces se envía `streak_lost` una vez por `dedupe_key` basado en el último día activo.
-- Dado envío exitoso, cuando finaliza `afterSent`, entonces `streaks.current_count` pasa a 0.
+- Dado inactividad de 2+ días, cuando finaliza el job, entonces `reconcileExpiredStreaksInDatabase` pone `streaks.current_count = 0` (aunque falle Brevo).
 - Dado el contenido del mail, cuando lo lee el jugador, entonces el tono es empático y ofrece reenganche sin culpa.
 
 ### Tickets relacionados

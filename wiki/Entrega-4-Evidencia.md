@@ -39,7 +39,7 @@ Checklist para demostrar el circuito de mails en revisión TTIP o defensa.
 ### D — Racha perdida
 
 1. `last_activity_day <= hoy - 2 días`.
-2. Job de rachas → `streak_lost` + `current_count = 0`.
+2. Job de rachas → `streak_lost` + `reconcileExpiredStreaksInDatabase` → `current_count = 0`.
 
 ### E — Preview sin enviar
 
@@ -58,7 +58,7 @@ cd BACKEND
 npm run test
 ```
 
-`npm run test` corre migraciones y suites con `NODE_ENV=test` y **sin envío a Brevo** (`EMAIL_ENABLED=false` en el runner). Así no dependés de IP autorizada ni de API key para que pasen auth/player.
+`npm run test` corre migraciones y suites con `NODE_ENV=test` y **sin envío a Brevo** (`EMAIL_ENABLED=false` en el runner). Incluye `tests/email.jobs.integration.test.ts` (candidatos SQL, dedupe, reconcile).
 
 Solo templates (unitario, sin red):
 
@@ -88,8 +88,21 @@ Con Docker + `.env` + Brevo configurado:
 npm run validate:email-flow
 ```
 
-Valida: DB, config, templates, seed de racha, outbox welcome, job outbound y auditoría en `email_deliveries`.  
+Valida: DB, config, templates, seed `streak_at_risk` + `streak_lost`, outbox welcome, job outbound, reconcile y auditoría en `email_deliveries`.  
 Limpieza opcional: `npm run validate:email-flow -- --cleanup`.
+
+---
+
+## Checklist revisión TTIP (local)
+
+- [x] Módulo email + migraciones aplicadas
+- [x] Tests automatizados (`npm run test`) en verde
+- [x] Copy alineado (`wiki/Entrega-4-Mails.md`)
+- [x] Consentimiento registro + perfil (Godot + API)
+- [x] Mensaje in-game pérdida racha (UNQ-149)
+- [x] `npm run validate:email-flow` en verde con Brevo real (local, jun 2026)
+- [ ] Captura bandeja + `email_deliveries` con `provider_message_id`
+- [ ] Cron local registrado (opcional demo)
 
 ---
 

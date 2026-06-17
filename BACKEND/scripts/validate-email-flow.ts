@@ -19,7 +19,11 @@ dotenv.config();
 
 const TEMPLATE_KEYS: EmailTemplateKey[] = ['welcome', 'streak_at_risk', 'streak_lost'];
 const VALIDATION_USERNAME = process.env.EMAIL_VALIDATE_USERNAME ?? 'email_flow_validate';
+const VALIDATION_LOST_USERNAME =
+  process.env.EMAIL_VALIDATE_LOST_USERNAME ?? 'email_flow_lost_validate';
 const VALIDATION_MAIL = process.env.EMAIL_VALIDATE_MAIL ?? 'email.flow.validate@evidente.test';
+const VALIDATION_LOST_MAIL =
+  process.env.EMAIL_VALIDATE_LOST_MAIL ?? 'email.flow.lost.validate@evidente.test';
 const VALIDATION_PASSWORD = process.env.EMAIL_VALIDATE_PASSWORD ?? 'Password123';
 
 type StepStatus = 'PASS' | 'FAIL' | 'SKIP' | 'WARN';
@@ -195,6 +199,90 @@ async function seedStreakCandidate(): Promise<boolean> {
   return true;
 }
 
+async function seedStreakLostCandidate(): Promise<boolean> {
+  const today = getTodayInConfiguredTimezone();
+  const threeDaysAgo = shiftDateIso(today, -3);
+  const passwordHash = await bcrypt.hash(VALIDATION_PASSWORD, authConfig.bcryptSaltRounds);
+
+  const client = await pool.connect();
+  let userId = '';
+  try {
+    await client.query('BEGIN');
+    const result = await client.query<{ id: string }>(
+      `
+        INSERT INTO users (
+          username,
+          name,
+          display_name,
+          mail,
+          password_hash,
+          email_notifications_enabled
+        )
+        VALUES ($1, $2, $2, $3, $4, true)
+        ON CONFLICT (username)
+        DO UPDATE SET
+          name = EXCLUDED.name,
+          display_name = EXCLUDED.display_name,
+          mail = EXCLUDED.mail,
+          password_hash = EXCLUDED.password_hash,
+          email_notifications_enabled = true,
+          updated_at = now()
+        RETURNING id;
+      `,
+      [VALIDATION_LOST_USERNAME, 'Email Flow Lost Validate', VALIDATION_LOST_MAIL, passwordHash]
+    );
+    userId = result.rows[0].id;
+    const profile = await profileRepository.ensureProfile(client, userId, 'CELIAQUIA');
+    await streakRepository.ensureStreak(client, userId, profile.id);
+    await client.query(
+      `
+        UPDATE streaks s
+        SET
+          current_count = 6,
+          best_count = GREATEST(s.best_count, 6),
+          last_activity_day = $2::date,
+          updated_at = now()
+        FROM profiles p
+        WHERE p.user_id = $1
+          AND p.streak_id = s.id;
+      `,
+      [userId, threeDaysAgo]
+    );
+    await client.query(
+      `
+        DELETE FROM email_deliveries
+        WHERE user_id = $1
+          AND template_key = 'streak_lost'
+          AND dedupe_key = 'lost:' || $2;
+      `,
+      [userId, threeDaysAgo]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    const message = error instanceof Error ? error.message : String(error);
+    recordStep('seed_lost', 'Seed racha perdida', 'FAIL', message);
+    return false;
+  } finally {
+    client.release();
+  }
+
+  const candidates = await emailRepository.findStreakLostCandidates(today);
+  const isCandidate = candidates.some((row) => row.userId === userId);
+  if (!isCandidate) {
+    recordStep('seed_lost', 'Seed racha perdida', 'FAIL', 'Usuario no califica como streak_lost');
+    return false;
+  }
+
+  recordStep(
+    'seed_lost',
+    'Seed racha perdida',
+    'PASS',
+    `user=${VALIDATION_LOST_USERNAME} last_activity_day=${threeDaysAgo}`
+  );
+  return true;
+}
+
 async function checkWelcomeOutbox(): Promise<void> {
   if (!isEmailDeliveryConfigured()) {
     recordStep('outbox', 'Welcome outbox', 'SKIP', 'EMAIL deshabilitado');
@@ -217,8 +305,15 @@ async function checkWelcomeOutbox(): Promise<void> {
         DELETE FROM email_deliveries
         WHERE user_id = $1
           AND template_key = 'welcome'
-          AND dedupe_key = 'welcome'
-          AND status IN ('pending', 'failed');
+          AND dedupe_key = 'welcome';
+      `,
+      [userId]
+    );
+    await pool.query(
+      `
+        UPDATE users
+        SET welcome_email_sent_at = NULL, updated_at = now()
+        WHERE id = $1;
       `,
       [userId]
     );
@@ -268,8 +363,10 @@ async function runOutboundAndVerify(): Promise<void> {
         'FAIL',
         'Falló envío (revisar IP autorizada en Brevo)'
       );
+    } else if (result.pendingWelcome.skipped > 0 && result.pendingWelcome.attempted === 0) {
+      recordStep('outbound', 'Welcome enviado', 'WARN', 'Sin pending welcome en cola');
     } else {
-      recordStep('outbound', 'Welcome enviado', 'WARN', 'Sin envíos (quizá ya estaba sent)');
+      recordStep('outbound', 'Welcome enviado', 'FAIL', 'No se envió welcome en esta corrida');
     }
 
     if (atRiskSent > 0) {
@@ -285,11 +382,58 @@ async function runOutboundAndVerify(): Promise<void> {
       recordStep('outbound', 'Streak at_risk enviado', 'WARN', 'Sin envíos en esta corrida');
     }
 
+    const lostSent = result.lost.sent;
+    const lostFailed = result.lost.failed;
+    if (lostSent > 0) {
+      recordStep('outbound', 'Streak lost enviado', 'PASS', `sent=${lostSent}`);
+    } else if (lostFailed > 0) {
+      recordStep(
+        'outbound',
+        'Streak lost enviado',
+        'FAIL',
+        `failed=${lostFailed} (revisar Brevo/IP)`
+      );
+    } else {
+      recordStep('outbound', 'Streak lost enviado', 'WARN', 'Sin envíos en esta corrida');
+    }
+
+    if (result.reconciledStreaks > 0) {
+      recordStep(
+        'outbound',
+        'Reconcile rachas vencidas',
+        'PASS',
+        `reconciled=${result.reconciledStreaks}`
+      );
+    } else {
+      recordStep('outbound', 'Reconcile rachas vencidas', 'WARN', 'Sin rachas reconciliadas');
+    }
+
+    const lostUser = await pool.query<{ current_count: number }>(
+      `
+        SELECT s.current_count
+        FROM streaks s
+        JOIN profiles p ON p.streak_id = s.id
+        JOIN users u ON u.id = p.user_id
+        WHERE u.username = $1;
+      `,
+      [VALIDATION_LOST_USERNAME]
+    );
+    if (lostUser.rows[0]?.current_count === 0) {
+      recordStep('outbound', 'Reset racha perdida en DB', 'PASS', 'current_count=0');
+    } else {
+      recordStep(
+        'outbound',
+        'Reset racha perdida en DB',
+        'FAIL',
+        `current_count=${lostUser.rows[0]?.current_count ?? 'null'}`
+      );
+    }
+
     recordStep(
       'outbound',
       'Job outbound',
       'PASS',
-      `reconciledStreaks=${result.reconciledStreaks} retry.sent=${result.retry.sent}`
+      `retry.sent=${result.retry.sent}`
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -357,14 +501,16 @@ function printSummary(): void {
 }
 
 async function cleanupValidationUser(): Promise<void> {
-  await pool.query(
-    `
-      DELETE FROM email_deliveries
-      WHERE user_id IN (SELECT id FROM users WHERE username = $1);
-    `,
-    [VALIDATION_USERNAME]
-  );
-  await pool.query('DELETE FROM users WHERE username = $1;', [VALIDATION_USERNAME]);
+  for (const username of [VALIDATION_USERNAME, VALIDATION_LOST_USERNAME]) {
+    await pool.query(
+      `
+        DELETE FROM email_deliveries
+        WHERE user_id IN (SELECT id FROM users WHERE username = $1);
+      `,
+      [username]
+    );
+    await pool.query('DELETE FROM users WHERE username = $1;', [username]);
+  }
 }
 
 async function run(): Promise<void> {
@@ -380,6 +526,7 @@ async function run(): Promise<void> {
   }
 
   await seedStreakCandidate();
+  await seedStreakLostCandidate();
   await checkWelcomeOutbox();
   await runOutboundAndVerify();
   await checkDeliveriesAudit();

@@ -22,13 +22,13 @@
 | Módulo email (Brevo) | Cliente API, service, repository, templates | Listo |
 | Mail de bienvenida | Async post-registro, sin bloquear 201 | Listo |
 | Racha en riesgo | Cron diario 19:00 ART, SQL de candidatos | Listo |
-| Racha perdida | Mail + reset de `current_count` post-envío | Listo |
+| Racha perdida | Mail + reset de `current_count` vía reconcile del job | Listo |
 | Reintento de fallidos | Job 08:00 y 20:00 ART | Listo |
 | Consentimiento UI | Login + perfil (Godot) | Listo |
 | Auditoría | Tabla `email_deliveries` + endpoints dev | Listo |
-| Copy y guía editorial | Documentación en wiki | En curso |
-| Activación producción | `EMAIL_ENABLED=true` + dominio verificado | Pendiente |
-| Tests integración jobs | Candidatos SQL + dedupe | Pendiente |
+| Copy y guía editorial | Documentación en wiki | Listo |
+| Tests integración jobs | Candidatos SQL + dedupe + reconcile | Listo |
+| Activación producción | `EMAIL_ENABLED=true` + dominio verificado | Pendiente (deploy) |
 
 ### Fuera de alcance
 
