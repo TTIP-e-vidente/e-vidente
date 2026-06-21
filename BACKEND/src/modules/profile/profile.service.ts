@@ -19,9 +19,13 @@ import * as profileRepository from './profile.repository';
 import * as streakRepository from '../streak/streak.repository';
 import { PublicProfile, toPublicProfile } from './profile.mapper';
 import { PublicStreak, toPublicStreak } from '../streak/streak.mapper';
-import { sendVerificationCode } from '../email/email.verification.service';
-import { sendTransactionalEmail } from '../email/email.client';
-import { buildEmailMessage } from '../email/templates';
+import {
+  getVerificationConfig,
+  getVerificationCooldownRemainingSeconds,
+  sendVerificationCode,
+  SendVerificationResult
+} from '../email/email.verification.service';
+import { sendMailChangedEmail } from '../email/email.service';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
@@ -35,6 +39,18 @@ export interface PlayerMeResponse {
   streak: PublicStreak;
 }
 
+export type ProfileVerificationSendStatus = SendVerificationResult | 'not_requested';
+
+export interface ProfileVerificationMeta {
+  mail_changed: boolean;
+  code_send_status: ProfileVerificationSendStatus;
+  cooldown_seconds: number;
+}
+
+export interface UpdatePlayerMeResponse extends PlayerMeResponse {
+  verification?: ProfileVerificationMeta;
+}
+
 export interface UpdatePlayerMeInput {
   name?: unknown;
   mail?: unknown;
@@ -44,6 +60,14 @@ export interface UpdatePlayerMeInput {
 
 function asTrimmedString(value: unknown): string | null {
   return typeof value === 'string' ? value.trim() : null;
+}
+
+function normalizeMail(value: string | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
 }
 
 function parseEmailNotificationsEnabled(value: unknown): boolean {
@@ -66,10 +90,37 @@ function parseEmailNotificationsEnabled(value: unknown): boolean {
   );
 }
 
+async function buildVerificationMeta(
+  userId: string,
+  sendResult: ProfileVerificationSendStatus
+): Promise<ProfileVerificationMeta> {
+  if (sendResult === 'sent') {
+    return {
+      mail_changed: true,
+      code_send_status: sendResult,
+      cooldown_seconds: getVerificationConfig().cooldownSeconds
+    };
+  }
+
+  if (sendResult === 'rate_limited') {
+    return {
+      mail_changed: true,
+      code_send_status: sendResult,
+      cooldown_seconds: await getVerificationCooldownRemainingSeconds(userId)
+    };
+  }
+
+  return {
+    mail_changed: true,
+    code_send_status: sendResult,
+    cooldown_seconds: 0
+  };
+}
+
 export async function updatePlayerMe(
   userId: string,
   input: UpdatePlayerMeInput
-): Promise<PlayerMeResponse> {
+): Promise<UpdatePlayerMeResponse> {
   const hasName = Object.prototype.hasOwnProperty.call(input, 'name');
   const hasMail = Object.prototype.hasOwnProperty.call(input, 'mail');
   const hasBirthDate = Object.prototype.hasOwnProperty.call(input, 'birth_date');
@@ -85,6 +136,12 @@ export async function updatePlayerMe(
       'At least one of name, mail, birth_date or email_notifications_enabled is required'
     );
   }
+
+  const userBeforeUpdate = await userRepository.findPublicUserById(userId);
+  if (!userBeforeUpdate) {
+    throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
+  }
+  const previousMail = normalizeMail(userBeforeUpdate.mail);
 
   const updates: userRepository.UpdateUserProfileInput = {};
 
@@ -130,15 +187,30 @@ export async function updatePlayerMe(
     );
   }
 
-  const client = await pool.connect();
-  // Capturar el mail actual antes de actualizarlo para notificar al mail viejo
-  let oldMail: string | null = null;
-  if (validatedMail !== undefined && validatedMail !== null) {
-    const currentUser = await userRepository.findPublicUserById(userId);
-    if (currentUser?.mail && currentUser.mail !== validatedMail) {
-      oldMail = currentUser.mail;
+  if (updates.email_notifications_enabled === true) {
+    const mailWillChange = validatedMail !== undefined &&
+      normalizeMail(validatedMail) !== previousMail;
+    const hasMail = Boolean(
+      (validatedMail !== undefined ? validatedMail : userBeforeUpdate.mail)?.trim()
+    );
+    const staysVerified = !mailWillChange && Boolean(userBeforeUpdate.mail_verified_at);
+    if (!hasMail || !staysVerified) {
+      throw new PlayerError(
+        422,
+        'MAIL_NOT_VERIFIED',
+        'Verify your email before enabling streak reminders'
+      );
     }
   }
+
+  let oldMail: string | null = null;
+  if (validatedMail !== undefined && validatedMail !== null) {
+    if (previousMail && previousMail !== normalizeMail(validatedMail)) {
+      oldMail = userBeforeUpdate.mail?.trim() ?? null;
+    }
+  }
+
+  const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
@@ -171,30 +243,37 @@ export async function updatePlayerMe(
     client.release();
   }
 
-  // Si el mail cambió a uno válido, enviar código de verificación al nuevo mail
-  if (validatedMail) {
+  const mailChanged =
+    validatedMail !== undefined &&
+    normalizeMail(validatedMail) !== previousMail;
+
+  let verification: ProfileVerificationMeta | undefined;
+
+  if (mailChanged && validatedMail) {
     const updatedUser = await userRepository.findPublicUserById(userId);
     if (updatedUser) {
-      void sendVerificationCode(userId, validatedMail, updatedUser.name).catch((error) => {
-        const msg = error instanceof Error ? error.message : String(error);
-        console.warn(`[email:verify] post-mail-update send failed for user ${userId}: ${msg}`);
-      });
-      // Notificar al mail viejo por seguridad
+      const sendResult = await sendVerificationCode(userId, validatedMail, updatedUser.name);
+      verification = await buildVerificationMeta(userId, sendResult);
+
       if (oldMail) {
-        const message = buildEmailMessage('mail_changed', {
+        void sendMailChangedEmail({
+          userId,
           name: updatedUser.name,
           oldMail,
           newMail: validatedMail
         });
-        void sendTransactionalEmail(message, { templateKey: 'mail_changed' }).catch((error) => {
-          const msg = error instanceof Error ? error.message : String(error);
-          console.warn(`[email:mail_changed] notify old mail failed for user ${userId}: ${msg}`);
-        });
       }
     }
+  } else if (mailChanged && validatedMail === null) {
+    verification = {
+      mail_changed: true,
+      code_send_status: 'not_requested',
+      cooldown_seconds: 0
+    };
   }
 
-  return getPlayerMe(userId);
+  const response = await getPlayerMe(userId);
+  return verification ? { ...response, verification } : response;
 }
 
 export async function getPlayerMe(userId: string): Promise<PlayerMeResponse> {

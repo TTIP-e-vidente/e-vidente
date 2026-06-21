@@ -91,7 +91,7 @@ export async function previewEmailTemplateController(
     const templateKey = parseTemplateKey(request.query.template_key);
     if (!templateKey) {
       sendResponse(response, 400, {
-        error: 'template_key is required (welcome | streak_at_risk | streak_lost)'
+        error: 'template_key is required (welcome | streak_at_risk | streak_lost | email_verification | mail_changed)'
       });
       return;
     }

@@ -423,6 +423,7 @@ export async function findRetryableFailedDeliveries(input: {
         AND failed_at >= now() - ($2::text || ' hours')::interval
         AND (
           ed.template_key = 'welcome'
+          OR ed.template_key = 'mail_changed'
           OR EXISTS (
             SELECT 1
             FROM users u
@@ -482,6 +483,7 @@ export interface EmailVerificationCodeRow {
   expiresAt: Date;
   usedAt: Date | null;
   createdAt: Date;
+  failedAttemptCount: number;
 }
 
 export async function createVerificationCode(
@@ -515,9 +517,10 @@ export async function findActiveVerificationCode(
     expires_at: Date;
     used_at: Date | null;
     created_at: Date;
+    failed_attempt_count: number;
   }>(
     `
-      SELECT id, user_id, code_hash, target_mail, expires_at, used_at, created_at
+      SELECT id, user_id, code_hash, target_mail, expires_at, used_at, created_at, failed_attempt_count
       FROM email_verification_codes
       WHERE user_id = $1
         AND used_at IS NULL
@@ -537,7 +540,8 @@ export async function findActiveVerificationCode(
     targetMail: row.target_mail,
     expiresAt: row.expires_at,
     usedAt: row.used_at,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    failedAttemptCount: row.failed_attempt_count
   };
 }
 
@@ -601,4 +605,17 @@ export async function markMailVerified(
     `,
     [userId, mail]
   );
+}
+
+export async function incrementVerificationFailedAttempts(codeId: string): Promise<number> {
+  const result = await query<{ failed_attempt_count: number }>(
+    `
+      UPDATE email_verification_codes
+      SET failed_attempt_count = failed_attempt_count + 1
+      WHERE id = $1
+      RETURNING failed_attempt_count;
+    `,
+    [codeId]
+  );
+  return result.rows[0]?.failed_attempt_count ?? 0;
 }

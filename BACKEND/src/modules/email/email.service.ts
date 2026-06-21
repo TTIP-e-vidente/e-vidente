@@ -7,7 +7,7 @@ import {
   listEmailTemplateMetadata,
   previewEmailTemplate
 } from './templates';
-import { EmailTemplatePreviewParams } from './templates/types';
+import { EmailTemplatePreviewParams, WelcomeTemplateContext } from './templates/types';
 import * as emailRepository from './email.repository';
 import {
   EmailDeliveryStatus,
@@ -30,6 +30,15 @@ function logEmailInfo(event: string, details: Record<string, unknown>): void {
 
 function formatDeliveryError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function buildWelcomeMessageContext(name: string, mail: string): WelcomeTemplateContext {
+  const playUrl = emailConfig.appPlayUrl;
+  return {
+    name,
+    mail,
+    playUrl: playUrl.length > 0 ? playUrl : undefined
+  };
 }
 
 function getPendingStaleMinutes(): number {
@@ -156,7 +165,7 @@ async function dispatchPendingWelcomeDelivery(
     return 'failed';
   }
 
-  const message = buildEmailMessage('welcome', { name: userName, mail });
+  const message = buildEmailMessage('welcome', buildWelcomeMessageContext(userName, mail));
 
   try {
     const providerMessageId = await sendTransactionalEmail(message, { templateKey: 'welcome' });
@@ -193,10 +202,10 @@ export async function enqueueWelcomeEmail(
     return 'skipped';
   }
 
-  const message = buildEmailMessage('welcome', {
-    name: recipient.name,
-    mail: recipient.mail
-  });
+  const message = buildEmailMessage(
+    'welcome',
+    buildWelcomeMessageContext(recipient.name, recipient.mail)
+  );
 
   const client = await pool.connect();
   try {
@@ -466,7 +475,7 @@ async function buildRetryMessage(
 
   switch (candidate.templateKey) {
     case 'welcome':
-      return buildEmailMessage('welcome', { name: userName, mail });
+      return buildEmailMessage('welcome', buildWelcomeMessageContext(userName, mail));
     case 'streak_at_risk':
     case 'streak_lost': {
       const streak = await emailRepository.findUserStreakContext(candidate.userId);
@@ -475,6 +484,16 @@ async function buildRetryMessage(
         name: userName,
         mail,
         streakCount
+      });
+    }
+    case 'mail_changed': {
+      // mail = oldMail (recipient guardado), newMail = mail actual del usuario
+      const userCtx = await emailRepository.findUserEmailContext(candidate.userId);
+      if (!userCtx?.mail) return null;
+      return buildEmailMessage('mail_changed', {
+        name: userName,
+        oldMail: mail,
+        newMail: userCtx.mail
       });
     }
     default:
@@ -492,6 +511,74 @@ function buildRetryAfterSent(
   }
 
   return undefined;
+}
+
+export async function sendMailChangedEmail(input: {
+  userId: string;
+  name: string;
+  oldMail: string;
+  newMail: string;
+}): Promise<void> {
+  if (!isEmailDeliveryConfigured()) {
+    return;
+  }
+
+  const dedupeKey = `mail_changed:${input.newMail}`;
+  const message = buildEmailMessage('mail_changed', {
+    name: input.name,
+    oldMail: input.oldMail,
+    newMail: input.newMail
+  });
+
+  try {
+    await deliverTrackedEmail({
+      userId: input.userId,
+      templateKey: 'mail_changed',
+      dedupeKey,
+      message
+    });
+  } catch (error) {
+    logEmailFailure(`mail_changed failed for user ${input.userId}`, error);
+  }
+}
+
+export async function sendTrackedVerificationEmail(input: {
+  userId: string;
+  verificationCodeId: string;
+  name: string;
+  mail: string;
+  code: string;
+  expiresMinutes: number;
+}): Promise<'sent' | 'failed' | 'skipped'> {
+  if (!isEmailDeliveryConfigured()) {
+    return 'skipped';
+  }
+
+  const message = buildEmailMessage('email_verification', {
+    name: input.name.trim() || 'Jugador',
+    mail: input.mail.trim(),
+    code: input.code,
+    expiresMinutes: input.expiresMinutes
+  });
+
+  try {
+    const result = await deliverTrackedEmail({
+      userId: input.userId,
+      templateKey: 'email_verification',
+      dedupeKey: `verify:${input.userId}:${input.verificationCodeId}`,
+      message
+    });
+    if (result === 'sent') {
+      return 'sent';
+    }
+    if (result === 'skipped') {
+      return 'skipped';
+    }
+    return 'failed';
+  } catch (error) {
+    logEmailFailure(`verification failed for user ${input.userId}`, error);
+    return 'failed';
+  }
 }
 
 export async function runRetryFailedEmailJob(): Promise<{
@@ -582,8 +669,14 @@ export function parseTemplateKey(value: unknown): EmailTemplateKey | undefined {
     return undefined;
   }
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'welcome' || normalized === 'streak_at_risk' || normalized === 'streak_lost') {
-    return normalized;
+  if (
+    normalized === 'welcome' ||
+    normalized === 'streak_at_risk' ||
+    normalized === 'streak_lost' ||
+    normalized === 'email_verification' ||
+    normalized === 'mail_changed'
+  ) {
+    return normalized as EmailTemplateKey;
   }
   return undefined;
 }

@@ -26,6 +26,7 @@ export interface RegisterInput {
   password?: unknown;
   birth_date?: unknown;
   accept_email_notifications?: unknown;
+  request_email_verification?: unknown;
 }
 
 export interface LoginInput {

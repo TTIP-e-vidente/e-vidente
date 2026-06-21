@@ -6,7 +6,6 @@ import { isNonEmptyString, isValidEmail } from '../../shared/validation/validato
 import { parseBirthDateInput } from '../../shared/validation/birth_date';
 import { toPublicUser } from './auth.mapper';
 import * as authRepository from './auth.repository';
-import { queueWelcomeEmail } from '../email/email.service';
 import { sendVerificationCode } from '../email/email.verification.service';
 import {
   AuthErrorCode,
@@ -60,9 +59,9 @@ export function verifyAccessToken(token: string): { sub: string; username: strin
   return { sub: payload.sub, username: payload.username };
 }
 
-function parseEmailNotificationsPreference(value: unknown): boolean {
+function parseBooleanPreference(value: unknown, defaultValue: boolean): boolean {
   if (value === undefined || value === null) {
-    return true;
+    return defaultValue;
   }
   if (typeof value === 'boolean') {
     return value;
@@ -76,7 +75,15 @@ function parseEmailNotificationsPreference(value: unknown): boolean {
       return true;
     }
   }
-  return true;
+  return defaultValue;
+}
+
+function parseEmailNotificationsPreference(value: unknown): boolean {
+  return parseBooleanPreference(value, false);
+}
+
+function parseEmailVerificationRequest(value: unknown): boolean {
+  return parseBooleanPreference(value, false);
 }
 
 export async function register(input: RegisterInput): Promise<AuthResponse> {
@@ -131,18 +138,16 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     emailNotificationsEnabled
   });
 
-  if (mail) {
-    queueWelcomeEmail({
-      userId: user.id,
-      mail,
-      name: validName
-    });
+  const requestEmailVerification = parseEmailVerificationRequest(input.request_email_verification);
+
+  if (mail && requestEmailVerification) {
     // Envía código de verificación en background (fail-safe)
     void sendVerificationCode(user.id, mail, validName).catch((error) => {
       const msg = error instanceof Error ? error.message : String(error);
       console.warn(`[email:verify] post-register send failed for user ${user.id}: ${msg}`);
     });
   }
+  // Welcome solo tras verificar mail (confirmVerificationController).
 
   return {
     user: toPublicUser(user),

@@ -18,11 +18,13 @@ async function createUserWithStreak(
   options: {
     mail: string;
     emailNotificationsEnabled: boolean;
+    mailVerified?: boolean;
     currentCount: number;
     lastActivityDay: string;
   }
 ): Promise<{ userId: string; streakId: string }> {
   const username = `email_job_${suffix}`;
+  const mailVerified = options.mailVerified ?? options.emailNotificationsEnabled;
   const userResult = await client.query<{ id: string }>(
     `
       INSERT INTO users (
@@ -30,12 +32,13 @@ async function createUserWithStreak(
         name,
         display_name,
         mail,
-        email_notifications_enabled
+        email_notifications_enabled,
+        mail_verified_at
       )
-      VALUES ($1, $2, $2, $3, $4)
+      VALUES ($1, $2, $2, $3, $4, CASE WHEN $5 THEN now() ELSE NULL END)
       RETURNING id;
     `,
-    [username, `Email Job ${suffix}`, options.mail, options.emailNotificationsEnabled]
+    [username, `Email Job ${suffix}`, options.mail, options.emailNotificationsEnabled, mailVerified]
   );
   const userId = userResult.rows[0].id;
   const profile = await profileRepository.ensureProfile(client, userId, 'CELIAQUIA');

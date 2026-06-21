@@ -57,6 +57,14 @@ export function ctaButton(label: string, color: string = GAME_EMAIL_THEME.orange
   </div>`;
 }
 
+export function ctaLink(label: string, href: string, color: string = GAME_EMAIL_THEME.orangeAccent): string {
+  const safeHref = escapeHtml(href);
+  const safeLabel = escapeHtml(label);
+  return `<div style="text-align: center; margin: 0 0 24px;">
+    <a href="${safeHref}" style="display: inline-block; padding: 14px 36px; background: ${color}; border-radius: 50px; font-family: 'Rubik', Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.02em; color: #ffffff; text-decoration: none; box-shadow: 0 4px 12px rgba(219,157,75,0.35);">${safeLabel}</a>
+  </div>`;
+}
+
 export function streakBadge(count: number): string {
   const t = GAME_EMAIL_THEME;
   const label = formatDayLabel(count);

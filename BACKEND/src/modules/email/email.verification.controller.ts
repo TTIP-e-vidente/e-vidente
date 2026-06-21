@@ -2,9 +2,11 @@ import { Request, Response } from 'express';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
 import * as userRepository from '../user/user.repository';
+import { queueWelcomeEmail } from './email.service';
 import {
   confirmVerificationCode,
   getVerificationConfig,
+  getVerificationCooldownRemainingSeconds,
   sendVerificationCode
 } from './email.verification.service';
 
@@ -54,15 +56,28 @@ export async function requestVerificationController(
     }
 
     if (result === 'rate_limited') {
+      const cooldownSeconds = await getVerificationCooldownRemainingSeconds(userId);
       sendResponse(response, 429, {
-        error: `Esperá ${config.cooldownSeconds} segundos antes de pedir otro código.`,
-        cooldown_seconds: config.cooldownSeconds
+        error: `Esperá ${cooldownSeconds} segundos antes de pedir otro código.`,
+        code: 'RATE_LIMITED',
+        cooldown_seconds: cooldownSeconds
+      });
+      return;
+    }
+
+    if (result === 'send_failed') {
+      sendResponse(response, 503, {
+        error: 'No se pudo enviar el código. Intentá de nuevo en unos minutos.',
+        code: 'SEND_FAILED'
       });
       return;
     }
 
     if (result === 'skipped') {
-      sendResponse(response, 503, { error: 'Servicio de email no disponible.' });
+      sendResponse(response, 503, {
+        error: 'Servicio de email no disponible.',
+        code: 'EMAIL_UNAVAILABLE'
+      });
       return;
     }
 
@@ -91,10 +106,18 @@ export async function confirmVerificationController(
       return;
     }
 
+    const config = getVerificationConfig();
     const result = await confirmVerificationCode(userId, code);
 
-    if (result === 'verified') {
+    if (result.status === 'verified') {
       const user = await userRepository.findPublicUserById(userId);
+      if (user?.mail) {
+        queueWelcomeEmail({
+          userId,
+          mail: user.mail,
+          name: user.name
+        });
+      }
       sendResponse(response, 200, {
         status: 'verified',
         message: '¡Email verificado correctamente!',
@@ -103,15 +126,31 @@ export async function confirmVerificationController(
       return;
     }
 
-    if (result === 'invalid') {
+    if (result.status === 'invalid') {
+      const remaining = result.attemptsRemaining ?? 0;
       sendResponse(response, 422, {
-        error: 'Código incorrecto. Verificá e intentá de nuevo.',
-        code: 'INVALID_CODE'
+        error:
+          remaining > 0
+            ? `Código incorrecto. Te quedan ${remaining} intento${remaining === 1 ? '' : 's'}.`
+            : 'Código incorrecto. Verificá e intentá de nuevo.',
+        code: 'INVALID_CODE',
+        attempts_remaining: remaining,
+        max_attempts: config.maxAttempts
       });
       return;
     }
 
-    if (result === 'expired') {
+    if (result.status === 'too_many_attempts') {
+      sendResponse(response, 429, {
+        error: 'Demasiados intentos incorrectos. El código fue invalidado. Solicitá uno nuevo.',
+        code: 'TOO_MANY_ATTEMPTS',
+        attempts_remaining: 0,
+        max_attempts: config.maxAttempts
+      });
+      return;
+    }
+
+    if (result.status === 'expired') {
       sendResponse(response, 422, {
         error: 'El código expiró. Solicitá uno nuevo.',
         code: 'CODE_EXPIRED'
@@ -119,7 +158,6 @@ export async function confirmVerificationController(
       return;
     }
 
-    // no_pending
     sendResponse(response, 422, {
       error: 'No hay un código de verificación pendiente. Solicitá uno primero.',
       code: 'NO_PENDING_CODE'

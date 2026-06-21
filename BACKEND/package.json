@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "migrate": "ts-node scripts/run-migrations.ts",
     "smoke:api": "ts-node scripts/smoke-auth-player.ts",
+    "smoke:leaderboard": "ts-node scripts/smoke-leaderboard.ts",
     "seed:dev": "ts-node scripts/seed-dev-users.ts",
     "setup:dev": "ts-node scripts/setup-dev.ts",
     "email:streaks": "ts-node scripts/send-streak-emails.ts",
@@ -15,6 +16,7 @@
     "email:run-local": "ts-node scripts/run-email-outbound.ts",
     "test:email": "ts-node tests/email.templates.unit.test.ts",
     "smoke:email": "ts-node scripts/smoke-email.ts",
+    "smoke:email-verification": "ts-node scripts/smoke-email-verification.ts",
     "seed:streak-email-demo": "ts-node scripts/seed-streak-email-demo.ts",
     "validate:email-flow": "ts-node scripts/validate-email-flow.ts",
     "test": "npm run migrate && ts-node scripts/run-integration-tests.ts"

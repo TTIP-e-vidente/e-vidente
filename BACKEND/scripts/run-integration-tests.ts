@@ -11,6 +11,10 @@ const integrationTests = [
   'tests/player_authenticated.integration.test.ts'
 ];
 
+const smokeScripts = [
+  'scripts/smoke-email-verification.ts'
+];
+
 function runIntegrationTests(): void {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -22,6 +26,15 @@ function runIntegrationTests(): void {
     const testPath = path.join(backendRoot, relativeTestPath);
     console.log(`\n> ts-node ${relativeTestPath}`);
     execSync(`npx ts-node "${testPath}"`, {
+      cwd: backendRoot,
+      env,
+      stdio: 'inherit'
+    });
+  }
+
+  for (const relativeScriptPath of smokeScripts) {
+    console.log(`\n> ts-node ${relativeScriptPath}`);
+    execSync(`npx ts-node "${path.join(backendRoot, relativeScriptPath)}"`, {
       cwd: backendRoot,
       env,
       stdio: 'inherit'

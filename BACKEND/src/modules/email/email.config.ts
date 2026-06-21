@@ -72,7 +72,8 @@ export const emailConfig = {
   pendingWelcomeBatchLimit: Math.max(
     1,
     Number.parseInt(process.env.EMAIL_PENDING_WELCOME_BATCH_LIMIT ?? '25', 10) || 25
-  )
+  ),
+  appPlayUrl: (process.env.EMAIL_APP_PLAY_URL ?? process.env.APP_PLAY_URL ?? '').trim()
 };
 
 export function isEmailDeliveryConfigured(): boolean {

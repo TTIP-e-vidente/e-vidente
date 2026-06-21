@@ -4,6 +4,7 @@ import {
   bodyParagraph,
   buildTextLines,
   ctaButton,
+  ctaLink,
   escapeHtml,
   GAME_EMAIL_THEME,
   streakBadge,
@@ -12,10 +13,14 @@ import {
 import { WelcomeTemplateContext } from './types';
 
 export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage {
-  const { name, mail } = context;
+  const { name, mail, playUrl } = context;
   const safeName = escapeHtml(name);
   const t = GAME_EMAIL_THEME;
   const subject = '¡Listo! Tu cuenta en E-VIDENTE ya está creada';
+  const ctaLines: string[] = [];
+  if (playUrl) {
+    ctaLines.push('', `Abrí el juego acá: ${playUrl}`);
+  }
 
   const textContent = buildTextLines([
     `¡Hola ${name}! 🎉`,
@@ -25,9 +30,14 @@ export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage
     '',
     'Aprender sobre restricciones alimentarias nunca fue tan entretenido.',
     '¡Que disfrutes el camino!',
+    ...ctaLines,
     '',
     '— Equipo E-VIDENTE'
   ]);
+
+  const ctaHtml = playUrl
+    ? ctaLink('¡Empezar a jugar!', playUrl, t.primaryGreen)
+    : ctaButton('¡Empezar a jugar!', t.primaryGreen);
 
   const htmlContent = wrapHtml({
     headline: '¡Bienvenido/a!',
@@ -44,7 +54,7 @@ export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage
       bodyParagraph(
         'Aprender sobre restricciones alimentarias nunca fue tan entretenido. 🥗'
       ),
-      ctaButton('¡Empezar a jugar!', t.primaryGreen)
+      ctaHtml
     ].join('')
   });
 

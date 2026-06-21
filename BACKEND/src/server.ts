@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { app } from './app';
 import { scheduleOutboundEmailJob } from './modules/email/email.service';
 import { emailConfig, isEmailDeliveryConfigured } from './modules/email/email.config';
+import { warmUpLeaderboard } from './modules/leaderboard/leaderboard.service';
 
 dotenv.config();
 
@@ -15,5 +16,9 @@ app.listen(port, () => {
       console.log('[email] processing outbound queue on startup');
       scheduleOutboundEmailJob();
     }
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    warmUpLeaderboard();
   }
 });

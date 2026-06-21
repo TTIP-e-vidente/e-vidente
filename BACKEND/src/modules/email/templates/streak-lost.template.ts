@@ -8,7 +8,6 @@ import {
   formatDayLabel,
   GAME_EMAIL_THEME,
   NOTIFICATION_OPT_OUT_TEXT,
-  streakBadge,
   wrapHtml
 } from './layout';
 import { StreakTemplateContext } from './types';

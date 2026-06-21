@@ -5,6 +5,7 @@ import { MailChangedTemplateContext } from './mail-changed.template';
 export interface WelcomeTemplateContext {
   name: string;
   mail: string;
+  playUrl?: string;
 }
 
 export interface StreakTemplateContext {

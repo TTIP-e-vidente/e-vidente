@@ -22,17 +22,21 @@ email/
 
 ## Templates disponibles
 
-| `template_key`   | Cuándo se envía                         | Consentimiento requerido |
-|------------------|-----------------------------------------|--------------------------|
-| `welcome`        | Registro exitoso con mail               | No (transaccional)       |
-| `streak_at_risk` | Jugó ayer, hoy sin actividad            | Sí                       |
-| `streak_lost`    | 2+ días sin actividad                   | Sí                       |
+| `template_key`        | Cuándo se envía                                      | Consentimiento requerido |
+|-----------------------|------------------------------------------------------|--------------------------|
+| `welcome`             | Tras confirmar verificación de mail                    | No (transaccional)       |
+| `email_verification`  | Cambio de mail en perfil o request explícito           | No (transaccional)       |
+| `mail_changed`        | Cambio de mail (aviso al mail anterior)              | No (seguridad)           |
+| `streak_at_risk`      | Jugó ayer, hoy sin actividad                         | Sí                       |
+| `streak_lost`         | 2+ días sin actividad                                | Sí                       |
 
 Consentimiento: `email_notifications_enabled` en `users` (registro `accept_email_notifications`, perfil `PATCH /player/me`). Config Brevo: `BACKEND/docs/BREVO_SETUP.md`.
 
 ## Variables por template
 
-- **welcome:** `name`, `mail`
+- **welcome:** `name`, `mail`, `playUrl` (opcional, desde `EMAIL_APP_PLAY_URL`)
+- **email_verification:** `name`, `mail`, `code`, `expiresMinutes`
+- **mail_changed:** `name`, `oldMail`, `newMail`
 - **streak_at_risk / streak_lost:** `name`, `mail`, `streakCount`
 
 ## Auditoría (`email_deliveries`)
@@ -46,7 +50,7 @@ Estados: `pending` → `sent` | `failed`
 | `provider_message_id` | ID de Brevo |
 | `error_message` | Error si falló |
 | `attempt_count` | Reintentos sobre la misma fila |
-| `dedupe_key` | Evita duplicados (`welcome`, `at_risk:YYYY-MM-DD`, `lost:YYYY-MM-DD`) |
+| `dedupe_key` | Evita duplicados (`welcome`, `verify:{userId}:{codeId}`, `at_risk:YYYY-MM-DD`, …) |
 
 Los `pending` viejos (> `EMAIL_PENDING_STALE_MINUTES`, default 15) pasan a `failed` automáticamente.
 
@@ -66,6 +70,7 @@ EMAIL_BATCH_CONCURRENCY=5
 EMAIL_REQUEST_TIMEOUT_MS=15000
 EMAIL_REQUEST_MAX_ATTEMPTS=3
 EMAIL_REQUEST_RETRY_BASE_MS=500
+EMAIL_APP_PLAY_URL=https://tu-juego.itch.io/evidente
 ```
 
 ## Smoke y demo local
@@ -141,7 +146,8 @@ Los mails **no se disparan solo por abrir Godot**. Necesitás backend + Brevo + 
 
 | Mail | Qué lo dispara | Cómo asegurarlo |
 |------|----------------|-----------------|
-| **Welcome** | Registro con mail | Backend prendido (`npm run dev`). El registro encola `pending` en DB y el servidor procesa la cola al iniciar (`EMAIL_PROCESS_ON_STARTUP=true`) o en background tras registrar. |
+| **Welcome** | Verificación confirmada (o registro sin OTP) | Tras `POST /player/verify-email/confirm` se encola welcome. Con `EMAIL_APP_PLAY_URL`, el botón del mail abre el juego. |
+| **Verificación OTP** | Registro/perfil/reintento manual | Auditado en `email_deliveries`. Cooldown 120 s. Máx. 5 intentos por código (`failed_attempt_count` en DB). |
 | **Racha** | Job diario | Postgres con racha online + `npm run email:streaks` o `npm run email:run-local` (o Task Scheduler 19:00). |
 | **Pendientes / fallidos** | Cola outbox | `npm run email:run-local` procesa welcome pending + rachas + reintentos en un solo paso. |
 
