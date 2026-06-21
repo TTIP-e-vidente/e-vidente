@@ -2,6 +2,65 @@ class_name AuthErrorFormatter
 extends RefCounted
 
 static func mensaje_auth(result: Dictionary, fallback: String = "") -> String:
+	return _mensaje_auth_generico(result, fallback)
+
+
+static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> String:
+	var code := str(result.get("code", "")).strip_edges()
+	var data: Dictionary = {}
+	var raw_data: Variant = result.get("data", {})
+	if raw_data is Dictionary:
+		data = raw_data as Dictionary
+
+	if code.is_empty():
+		code = str(data.get("code", "")).strip_edges()
+
+	match code:
+		"RATE_LIMITED":
+			var cooldown := int(data.get("cooldown_seconds", result.get("cooldown_seconds", 0)))
+			if cooldown > 0:
+				return "Esperá %d segundos antes de pedir otro código." % cooldown
+			return "Esperá un momento antes de pedir otro código."
+		"SEND_FAILED":
+			return "No se pudo enviar el código. Intentá de nuevo en unos minutos."
+		"EMAIL_UNAVAILABLE":
+			return "El servicio de mail no está disponible. Contactá al equipo si persiste."
+		"INVALID_CODE":
+			var remaining := int(data.get("attempts_remaining", -1))
+			if remaining >= 0:
+				if remaining == 1:
+					return "Código incorrecto. Te queda 1 intento."
+				if remaining > 1:
+					return "Código incorrecto. Te quedan %d intentos." % remaining
+			return "Código incorrecto. Verificá e intentá de nuevo."
+		"TOO_MANY_ATTEMPTS":
+			return "Demasiados intentos incorrectos. Solicitá un código nuevo."
+		"CODE_EXPIRED":
+			return "El código expiró. Solicitá uno nuevo."
+		"NO_PENDING_CODE":
+			return "No hay código pendiente. Pedí uno nuevo primero."
+
+	if not fallback.is_empty():
+		return fallback
+	return ""
+
+
+static func cooldown_verificacion(result: Dictionary, fallback: int = 120) -> int:
+	var data: Dictionary = {}
+	var raw_data: Variant = result.get("data", {})
+	if raw_data is Dictionary:
+		data = raw_data as Dictionary
+	for key in ["cooldown_seconds", "cooldownSeconds"]:
+		var value := int(data.get(key, 0))
+		if value > 0:
+			return value
+		value = int(result.get(key, 0))
+		if value > 0:
+			return value
+	return fallback
+
+
+static func _mensaje_auth_generico(result: Dictionary, fallback: String = "") -> String:
 	var status := int(result.get("status", 0))
 	var code := str(result.get("code", "")).strip_edges()
 	var server_error := str(result.get("error", "")).strip_edges()

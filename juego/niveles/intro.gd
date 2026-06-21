@@ -24,6 +24,7 @@ const MI_PROGRESO_PATH := "res://assets-sistema/perfil/perfil-menu.png"
 const SALIR_PATH := "res://assets-sistema/intro/salir-intro-1.png"
 const LOGIN_SCENE_PATH := "res://API/Login.tscn"
 const PROFILE_SCENE_PATH := "res://API/player/Profile.tscn"
+const MAIN_MENU_SCENE_PATH := "res://niveles/intro.tscn"
 const MODE_SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const LOGIN_FLOW_GAME := "game"
@@ -39,11 +40,14 @@ const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd"
 	$MenuBar/Salir,
 ]
 
+const MAIL_NUDGE_SCENE_PATH := "res://interface/auth/MailVerifyNudge.tscn"
+
 var _login_overlay: Control = null
 var _login_canvas_layer: CanvasLayer = null
 var _login_flow: String = LOGIN_FLOW_GAME
 var _profile_overlay: Control = null
 var _profile_canvas_layer: CanvasLayer = null
+var _mail_verify_nudge: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -60,6 +64,7 @@ func _ready() -> void:
 	saliri.texture = load(SALIR_PATH) as Texture2D
 	BackendSession.session_expired.connect(_on_sesion_expirada)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
+	call_deferred("_instalar_aviso_verificacion_mail")
 
 
 func _on_jugar_presionado() -> void:
@@ -116,6 +121,7 @@ func _instanciar_login_overlay() -> void:
 func _on_login_completado() -> void:
 	var current_flow := _login_flow
 	_cerrar_login()
+	_refrescar_aviso_verificacion_mail()
 	if current_flow == LOGIN_FLOW_PROFILE:
 		_mostrar_perfil()
 		return
@@ -201,3 +207,27 @@ func _abrir_opciones_menu() -> String:
 
 func _mostrar_perdida_racha_si_corresponde() -> void:
 	await StreakLossFlowScript.mostrar_si_corresponde(self)
+	_refrescar_aviso_verificacion_mail()
+
+
+func _instalar_aviso_verificacion_mail() -> void:
+	var nudge_scene := load(MAIL_NUDGE_SCENE_PATH) as PackedScene
+	if nudge_scene == null:
+		return
+	_mail_verify_nudge = nudge_scene.instantiate() as CanvasLayer
+	if _mail_verify_nudge == null:
+		return
+	add_child(_mail_verify_nudge)
+	if _mail_verify_nudge.has_signal("ir_a_perfil_solicitado"):
+		_mail_verify_nudge.ir_a_perfil_solicitado.connect(_on_aviso_verificacion_ir_perfil)
+	_refrescar_aviso_verificacion_mail()
+
+
+func _refrescar_aviso_verificacion_mail() -> void:
+	if is_instance_valid(_mail_verify_nudge) and _mail_verify_nudge.has_method("refrescar"):
+		_mail_verify_nudge.refrescar()
+
+
+func _on_aviso_verificacion_ir_perfil() -> void:
+	get_tree().root.set_meta("profile_return_scene", MAIN_MENU_SCENE_PATH)
+	GameSceneRouter.go_to_profile_editor(get_tree())

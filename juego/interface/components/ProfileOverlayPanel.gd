@@ -9,6 +9,7 @@ signal edit_profile_pressed
 signal reestablecer_progreso_pressed
 signal logout_pressed
 signal close_requested
+signal ranking_pressed
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
@@ -26,6 +27,7 @@ signal close_requested
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
+@onready var _leaderboard_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/LeaderboardButton
 @onready var _logout_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/LogoutButton
 @onready var _reset_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/ResetButton
 
@@ -38,6 +40,8 @@ func _ready() -> void:
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
 	_guardar_btn.pressed.connect(_on_guardar_presionado)
 	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
+	if is_instance_valid(_leaderboard_btn):
+		_leaderboard_btn.pressed.connect(func(): ranking_pressed.emit())
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
@@ -177,10 +181,12 @@ func refrescar() -> void:
 	if _save_manager_listo():
 		email = SaveManager.obtener_email_usuario_actual()
 	var email_line := email if not email.is_empty() else "Sin correo"
-	if AuthApi.esta_logueado():
-		var notifications_on := bool(
-			AuthApi.obtener_usuario_online().get("email_notifications_enabled", true)
-		)
+	if AuthApi.esta_logueado() and not email.is_empty():
+		var user_online := AuthApi.obtener_usuario_online()
+		var verified_at := str(user_online.get("mail_verified_at", "")).strip_edges()
+		var verified := not verified_at.is_empty()
+		email_line += "\nVerificación: %s" % ("verificado" if verified else "pendiente")
+		var notifications_on := bool(user_online.get("email_notifications_enabled", false))
 		email_line += "\nRecordatorios mail: %s" % ("Sí" if notifications_on else "No")
 	_email_label.text = email_line
 

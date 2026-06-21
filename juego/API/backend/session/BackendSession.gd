@@ -225,7 +225,8 @@ func registrar_cuenta(
 	mail: String,
 	clave: String,
 	fecha_nacimiento: Variant = null,
-	acepta_notificaciones_mail: bool = true
+	acepta_notificaciones_mail: bool = true,
+	solicitar_verificacion_mail: bool = false
 ) -> Dictionary:
 	var listo := await _asegurar_servidor_listo()
 	if not listo.get("ok", false):
@@ -236,7 +237,8 @@ func registrar_cuenta(
 		mail,
 		clave,
 		fecha_nacimiento,
-		acepta_notificaciones_mail
+		acepta_notificaciones_mail,
+		solicitar_verificacion_mail
 	)
 	_procesar_resultado_de_auth(resultado)
 	return resultado
@@ -365,6 +367,36 @@ func reiniciar_progreso_online(restriction: String = "CELIAQUIA") -> Dictionary:
 		if data is Dictionary:
 			_progreso_online_en_cache = (data as Dictionary).duplicate(true)
 	return resultado
+
+
+# --- Leaderboard ---
+
+func obtener_leaderboard_online(
+	scope: String = "global_xp",
+	limit: int = 50,
+	offset: int = 0,
+	include_self: bool = false
+) -> Dictionary:
+	var token := _auth.obtener_token() if _auth.esta_logueado() else ""
+	return await _api.obtener_leaderboard(token, scope, limit, offset, include_self)
+
+
+func obtener_mi_posicion_leaderboard_online() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "status": 401, "error": "No active session"}
+	return await _api.obtener_mi_posicion_leaderboard(_auth.obtener_token())
+
+
+# Obtiene el contexto competitivo del jugador autenticado.
+# Retorna { available: true, current, next, exp_to_next_rank, ... } o { available: false }.
+func obtener_resumen_ranking_online() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "status": 401, "error": "No active session"}
+	return await _api.obtener_resumen_ranking(_auth.obtener_token())
+
+
+func obtener_meta_leaderboard_online() -> Dictionary:
+	return await _api.obtener_meta_leaderboard()
 
 
 ## Marca la sesión como expirada solo si el 401 corresponde a la sesión actual:

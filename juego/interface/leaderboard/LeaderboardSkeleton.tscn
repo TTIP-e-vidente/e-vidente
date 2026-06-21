@@ -1,0 +1,76 @@
+[gd_scene load_steps=2 format=3 uid="uid://lb_skeleton_001"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardSkeleton.gd" id="1_skel"]
+
+[node name="LeaderboardSkeleton" type="VBoxContainer"]
+script = ExtResource("1_skel")
+theme_override_constants/separation = 12
+
+[node name="Fila1" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+
+[node name="Box1" type="ColorRect" parent="Fila1"]
+custom_minimum_size = Vector2(40, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box2" type="ColorRect" parent="Fila1"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+custom_minimum_size = Vector2(0, 30)
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box3" type="ColorRect" parent="Fila1"]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Fila2" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+
+[node name="Box1" type="ColorRect" parent="Fila2"]
+custom_minimum_size = Vector2(40, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box2" type="ColorRect" parent="Fila2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+custom_minimum_size = Vector2(0, 30)
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box3" type="ColorRect" parent="Fila2"]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Fila3" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+
+[node name="Box1" type="ColorRect" parent="Fila3"]
+custom_minimum_size = Vector2(40, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box2" type="ColorRect" parent="Fila3"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+custom_minimum_size = Vector2(0, 30)
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="Box3" type="ColorRect" parent="Fila3"]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.4, 0.4, 0.4, 1)

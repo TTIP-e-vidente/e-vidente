@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3 uid="uid://progreso_puesto_card"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/ProgresoPuestoCard.gd" id="1_script"]
+
+[node name="ProgresoPuestoCard" type="PanelContainer"]
+script = ExtResource("1_script")
+
+[node name="Cargando" type="Label" parent="."]
+visible = false
+layout_mode = 2
+text = "Cargando ranking..."
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FilaSuperior" type="HBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="LabelPuesto" type="Label" parent="MarginContainer/VBox/FilaSuperior"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "—"
+theme_override_font_sizes/font_size = 22
+
+[node name="LabelExp" type="Label" parent="MarginContainer/VBox/FilaSuperior"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0 XP"
+horizontal_alignment = 2
+
+[node name="BarraProgreso" type="ProgressBar" parent="MarginContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+min_value = 0.0
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="FilaInferior" type="HBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="LabelMeta" type="Label" parent="MarginContainer/VBox/FilaInferior"]
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+text = ""
+theme_override_font_sizes/font_size = 11
+modulate = Color(0.8, 0.8, 0.8, 1)

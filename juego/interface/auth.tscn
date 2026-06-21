@@ -428,6 +428,12 @@ theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Edad (opcional)"
 
+[node name="EmailSectionLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120341]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_font_sizes/font_size = 14
+text = "Correo y avisos"
+
 [node name="EmailLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1634638263]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
@@ -443,11 +449,32 @@ theme_override_styles/read_only = SubResource("StyleBoxFlat_field")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "Mail (opcional)"
 
+[node name="EmailVerifyStatusLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120338]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.568627, 0.184314, 0.141176, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+text = "Tu mail aún no está verificado."
+
+[node name="EmailVerifyButton" type="Button" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120339]
+visible = false
+layout_mode = 2
+text = "Verificar mail con código"
+
+[node name="EmailVerifyHintLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120340]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "Te enviamos un código de 6 dígitos a tu casilla. Podés configurarlo cuando quieras."
+
 [node name="EmailNotificationsCheckBox" type="CheckBox" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120337]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 13
-text = "Recibir recordatorios de racha por correo"
+text = "Recibir recordatorios de racha por correo (requiere mail verificado)"
 
 [node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2024719766]
 layout_mode = 2

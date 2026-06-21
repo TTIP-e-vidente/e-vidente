@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bjvys771chohe" path="res://niveles/botones.tscn" id="6_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://cbukx38vl5g7d" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://7ej3tir1dmri" path="res://assets-sistema/sonidos/leccion-terminada.mp3" id="8_j2nsx"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/ProgresoPuestoCard.tscn" id="9_ranking"]
 
 [node name="FinalizacionPartida" type="Node2D" unique_id=2003681950]
 script = ExtResource("1_k2l4b")
@@ -102,5 +103,17 @@ theme_override_font_sizes/font_size = 18
 text = "Guardado localmente"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="RankingContainer" type="Control" parent="." unique_id=3001234567]
+visible = false
+offset_left = 330.0
+offset_top = 520.0
+offset_right = 830.0
+offset_bottom = 590.0
+
+[node name="ProgresoPuestoCard" parent="RankingContainer" unique_id=3001234568 instance=ExtResource("9_ranking")]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
 
 [connection signal="pressed" from="Continuar" to="." method="_on_continuar_presionado"]

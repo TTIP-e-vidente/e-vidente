@@ -46,7 +46,8 @@ func registrar_cuenta(
 	mail: String,
 	clave: String,
 	fecha_nacimiento: Variant = null,
-	acepta_notificaciones_mail: bool = true
+	acepta_notificaciones_mail: bool = true,
+	solicitar_verificacion_mail: bool = false
 ) -> Dictionary:
 	var payload := {
 		"username": usuario,
@@ -54,6 +55,7 @@ func registrar_cuenta(
 		"mail": mail,
 		"password": clave,
 		"accept_email_notifications": acepta_notificaciones_mail,
+		"request_email_verification": solicitar_verificacion_mail,
 	}
 	if fecha_nacimiento != null:
 		var birth_date := str(fecha_nacimiento).strip_edges()
@@ -89,6 +91,33 @@ func obtener_progreso(token: String) -> Dictionary:
 func reiniciar_progreso(token: String, restriction: String = "CELIAQUIA") -> Dictionary:
 	var body := JSON.stringify({"restriction": restriction})
 	return await _enviar_post("/player/me/progress/reset", token, body)
+
+
+func obtener_leaderboard(
+	token: String,
+	scope: String = "global_xp",
+	limit: int = 50,
+	offset: int = 0,
+	include_self: bool = false
+) -> Dictionary:
+	var qs := "?scope=%s&limit=%d&offset=%d" % [scope, limit, offset]
+	if include_self and not token.is_empty():
+		qs += "&include_self=true"
+	return await _obtener_json("/leaderboard" + qs, token)
+
+
+func obtener_mi_posicion_leaderboard(token: String) -> Dictionary:
+	return await _obtener_json("/leaderboard/me", token)
+
+
+# Obtiene el contexto competitivo del jugador (puesto actual, siguiente rival, EXP faltante).
+# Endpoint: GET /leaderboard/me/summary
+func obtener_resumen_ranking(token: String) -> Dictionary:
+	return await _obtener_json("/leaderboard/me/summary", token)
+
+
+func obtener_meta_leaderboard() -> Dictionary:
+	return await _obtener_json("/leaderboard/meta", "")
 
 
 func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:

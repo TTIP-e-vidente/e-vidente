@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://lb_tabs_001"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/ScopeTabs.gd" id="1_tabs"]
+
+[node name="ScopeTabs" type="HBoxContainer"]
+script = ExtResource("1_tabs")
+custom_minimum_size = Vector2(0, 44)
+size_flags_horizontal = 3
+theme_override_constants/separation = 4

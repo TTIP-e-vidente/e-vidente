@@ -8,6 +8,7 @@ const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverla
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const PROFILE_EDITOR_SCENE_PATH := "res://interface/auth.tscn"
+const MAIL_NUDGE_SCENE_PATH := "res://interface/auth/MailVerifyNudge.tscn"
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
 const SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
@@ -21,6 +22,7 @@ var _racha: Control
 var _profile_button: Button
 var _last_scene_path := ""
 var _profile_overlay: ProfileOverlayPanel
+var _mail_verify_nudge: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -33,7 +35,9 @@ func _ready() -> void:
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_editar_perfil_presionado)
 	_profile_overlay.reestablecer_progreso_pressed.connect(_on_superposicion_reiniciar_presionado)
 	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
+	_profile_overlay.ranking_pressed.connect(_on_superposicion_ranking_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cierre_solicitado)
+	_instalar_aviso_verificacion_mail()
 	_conectar_senales_save_manager()
 	get_tree().node_added.connect(_on_nodo_arbol_agregado)
 	_refrescar_hud()
@@ -139,6 +143,7 @@ func _refrescar_hud() -> void:
 		_racha.call("renderizar")
 	if _profile_button != null and _profile_button.has_method("refrescar_icono_perfil"):
 		_profile_button.call("refrescar_icono_perfil")
+	_refrescar_aviso_verificacion_mail()
 
 
 func _aplicar_visibilidad_escena(scene_path: String) -> void:
@@ -221,7 +226,11 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.refrescar()
 	_profile_overlay.mostrar_feedback_reset(str(result.get("message", "Progreso reiniciado.")), true)
 
-
+func _on_superposicion_ranking_presionado() -> void:
+	_profile_overlay.ocultar_superposicion()
+	var leaderboard := preload("res://interface/leaderboard/LeaderboardScene.tscn").instantiate()
+	add_child(leaderboard)
+	
 func _on_superposicion_logout_presionado() -> void:
 	_ejecutar_logout()
 
@@ -238,3 +247,38 @@ func _obtener_ruta_escena_actual() -> String:
 	if get_tree() == null or get_tree().current_scene == null:
 		return ""
 	return str(get_tree().current_scene.scene_file_path).strip_edges()
+
+
+func _instalar_aviso_verificacion_mail() -> void:
+	var nudge_scene := load(MAIL_NUDGE_SCENE_PATH) as PackedScene
+	if nudge_scene == null:
+		return
+	_mail_verify_nudge = nudge_scene.instantiate() as CanvasLayer
+	if _mail_verify_nudge == null:
+		return
+	add_child(_mail_verify_nudge)
+	if _mail_verify_nudge.has_signal("ir_a_perfil_solicitado"):
+		_mail_verify_nudge.ir_a_perfil_solicitado.connect(_on_aviso_verificacion_ir_perfil)
+	_refrescar_aviso_verificacion_mail()
+
+
+func _refrescar_aviso_verificacion_mail() -> void:
+	if not is_instance_valid(_mail_verify_nudge) or not _mail_verify_nudge.has_method("refrescar"):
+		return
+	var scene_path := _obtener_ruta_escena_actual()
+	var hidden := scene_path in [
+		PROFILE_EDITOR_SCENE_PATH,
+		SPLASH_SCENE_PATH,
+		INTRO_SCENE_PATH,
+	]
+	if hidden:
+		_mail_verify_nudge.visible = false
+		return
+	_mail_verify_nudge.refrescar()
+
+
+func _on_aviso_verificacion_ir_perfil() -> void:
+	var scene_path := _obtener_ruta_escena_actual()
+	if not scene_path.is_empty():
+		get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, scene_path)
+	GameSceneRouter.go_to_profile_editor(get_tree())

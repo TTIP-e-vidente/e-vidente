@@ -27,6 +27,7 @@ MusicManager="*res://managers/MusicManager.gd"
 TransicionEscenas="*uid://bqo1erivdcxmk"
 GameSceneRouter="*uid://cmx7rnj15vkd"
 BackendSession="*res://API/backend/session/BackendSession.gd"
+LeaderboardService="*res://sistemas/leaderboard/LeaderboardService.gd"
 
 [display]
 

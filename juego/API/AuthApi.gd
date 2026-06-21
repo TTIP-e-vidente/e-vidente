@@ -2,6 +2,9 @@ class_name AuthApi
 extends RefCounted
 
 const MIN_PASSWORD_LENGTH := 8
+const SaveLocalProfileHelperScript := preload(
+	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
+)
 
 
 static func esta_logueado() -> bool:
@@ -31,6 +34,27 @@ static func verificar_servidor() -> Dictionary:
 static func mensaje_error(result: Dictionary, fallback: String = "") -> String:
 	return AuthErrorFormatter.mensaje_auth(result, fallback)
 
+
+static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> String:
+	var msg := AuthErrorFormatter.mensaje_verificacion(result, fallback)
+	if not msg.is_empty():
+		return msg
+	return mensaje_error(result, fallback)
+
+
+static func cooldown_verificacion(result: Dictionary, fallback: int = 120) -> int:
+	return AuthErrorFormatter.cooldown_verificacion(result, fallback)
+
+
+static func meta_verificacion_perfil(result: Dictionary) -> Dictionary:
+	var data: Variant = result.get("data", {})
+	if not data is Dictionary:
+		return {}
+	var verification: Variant = (data as Dictionary).get("verification", {})
+	if verification is Dictionary:
+		return verification as Dictionary
+	return {}
+
 static func iniciar_sesion_completa(usuario_o_mail: String, clave: String) -> Dictionary:
 	var auth := await iniciar_sesion(usuario_o_mail, clave)
 	if not auth.get("ok", false):
@@ -45,7 +69,8 @@ static func crear_cuenta_completa(
 		mail: String,
 		nombre: String = "",
 		fecha_nacimiento: Variant = null,
-		acepta_notificaciones_mail: bool = true
+		acepta_notificaciones_mail: bool = true,
+		solicitar_verificacion_mail: bool = false
 ) -> Dictionary:
 	var auth := await crear_cuenta(
 		usuario,
@@ -53,12 +78,21 @@ static func crear_cuenta_completa(
 		mail,
 		nombre,
 		fecha_nacimiento,
-		acepta_notificaciones_mail
+		acepta_notificaciones_mail,
+		solicitar_verificacion_mail
 	)
 	if not auth.get("ok", false):
 		return _fallo("auth", auth, "No se pudo crear la cuenta.")
 	var datos := await cargar_datos_online()
 	return _exito(auth, datos)
+
+
+static func solicitar_codigo_verificacion() -> Dictionary:
+	return await BackendSession.solicitar_verificacion_email()
+
+
+static func confirmar_codigo_verificacion(codigo: String) -> Dictionary:
+	return await BackendSession.confirmar_verificacion_email(codigo)
 
 
 static func precargar_datos_online() -> void:
@@ -95,7 +129,8 @@ static func crear_cuenta(
 		mail: String,
 		nombre: String = "",
 		fecha_nacimiento: Variant = null,
-		acepta_notificaciones_mail: bool = true
+		acepta_notificaciones_mail: bool = true,
+		solicitar_verificacion_mail: bool = false
 ) -> Dictionary:
 	var usuario_limpio := usuario.strip_edges()
 	var mail_limpio := mail.strip_edges()
@@ -108,7 +143,8 @@ static func crear_cuenta(
 		mail_limpio,
 		clave,
 		fecha_nacimiento,
-		acepta_notificaciones_mail
+		acepta_notificaciones_mail,
+		solicitar_verificacion_mail
 	)
 
 
@@ -123,11 +159,26 @@ static func validar_campos_login(usuario_o_mail: String, clave: String) -> Strin
 
 
 static func validar_campos_registro(
-		usuario: String, mail: String, clave: String) -> String:
-	if usuario.strip_edges().is_empty() or mail.strip_edges().is_empty() or clave.is_empty():
-		return "Completá usuario, mail y contraseña."
+		usuario: String,
+		nombre: String,
+		mail: String,
+		clave: String,
+		fecha_nacimiento: String
+) -> String:
+	if (
+		usuario.strip_edges().is_empty()
+		or nombre.strip_edges().is_empty()
+		or mail.strip_edges().is_empty()
+		or clave.is_empty()
+	):
+		return "Completá usuario, nombre, mail y contraseña."
 	if clave.length() < MIN_PASSWORD_LENGTH:
 		return "La contraseña debe tener al menos %d caracteres." % MIN_PASSWORD_LENGTH
+	var fecha_limpia := fecha_nacimiento.strip_edges()
+	if fecha_limpia.is_empty():
+		return "Ingresá tu fecha de nacimiento (AAAA-MM-DD)."
+	if not SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(fecha_limpia):
+		return "La fecha de nacimiento debe tener formato AAAA-MM-DD."
 	return ""
 
 

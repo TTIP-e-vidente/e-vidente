@@ -18,6 +18,8 @@ const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 @onready var label_sync_status: Label = $LabelSyncStatus
+@onready var _ranking_container: Control          = $RankingContainer
+@onready var _card_ranking:      ProgresoPuestoCard = $RankingContainer/ProgresoPuestoCard
 
 @onready var stats_1: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer
 @onready var stats_2: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer2
@@ -109,6 +111,10 @@ func _ready() -> void:
 	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
 		continuar_btn.pressed.connect(continuar_al_mapa)
 
+	# Cargar ranking post-partida de forma no bloqueante (UNQ-174).
+	# El flujo de finalización no espera esta llamada; si falla, no se muestra nada.
+	_cargar_ranking_post_partida()
+
 
 func _exit_tree() -> void:
 	_limpiar_feedback_sync()
@@ -193,6 +199,28 @@ func _mostrar_comparacion_precision(stats: Dictionary, precision_actual: int) ->
 
 func continuar_al_mapa() -> void:
 	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE)
+
+
+# Solicita el resumen de ranking post-partida en background.
+# El jugador puede presionar "Continuar" en cualquier momento: esto no lo bloquea.
+func _cargar_ranking_post_partida() -> void:
+	if not AuthApi.esta_logueado():
+		return
+	if not is_instance_valid(_ranking_container) or not is_instance_valid(_card_ranking):
+		return
+
+	var resultado := await LeaderboardApi.obtener_resumen_competitivo()
+
+	if not is_inside_tree():
+		return
+
+	if not resultado.get("ok", false):
+		return
+
+	var datos: Variant = resultado.get("data", resultado)
+	if datos is Dictionary and bool((datos as Dictionary).get("available", false)):
+		_card_ranking.mostrar_desde_datos(datos as Dictionary)
+		_ranking_container.visible = true
 
 
 func _on_continuar_presionado() -> void:

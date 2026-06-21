@@ -194,6 +194,18 @@ func obtener_email_usuario_actual() -> String:
 	return str(obtener_perfil_usuario_actual().get("email", "")).strip_edges()
 
 
+func obtener_preferencia_notificaciones_mail_local() -> bool:
+	return bool(obtener_perfil_usuario_actual().get("email_notifications_enabled", false))
+
+
+func guardar_preferencia_notificaciones_mail_local(enabled: bool) -> void:
+	var profile: Dictionary = obtener_perfil_usuario_actual()
+	profile["email_notifications_enabled"] = enabled
+	save_data["profile"] = profile
+	_marcar_guardado_sucio()
+	_guardar_estado_actual("profile_notifications_pref", "", {}, false)
+
+
 func obtener_fecha_nacimiento_usuario_actual() -> String:
 	return SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
 		obtener_perfil_usuario_actual().get("birth_date", "")

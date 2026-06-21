@@ -467,6 +467,18 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_edit_btn_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_edit_btn_hover")
 text = "Editar"
 
+[node name="LeaderboardButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow" unique_id=987654321]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_c2ncf")
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBoxFlat_edit_btn_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_edit_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_edit_btn_hover")
+text = "Ver Ranking"
+
 [node name="SecondaryRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=2100818127]
 layout_mode = 2
 alignment = 2

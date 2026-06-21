@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://lb_entry_001"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardEntry.gd" id="1_entry"]
+
+[node name="LeaderboardEntry" type="HBoxContainer"]
+script = ExtResource("1_entry")
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+
+[node name="BgHighlight" type="ColorRect" parent="."]
+layout_mode = 2
+color = Color(1, 1, 1, 0.12)
+visible = false
+mouse_filter = 2
+
+[node name="RankLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(52, 0)
+size_flags_horizontal = 0
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "#1"
+
+[node name="NombreLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+vertical_alignment = 1
+text_overrun_behavior = 3
+text = "nombre"
+
+[node name="ScoreLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(72, 0)
+size_flags_horizontal = 0
+horizontal_alignment = 2
+vertical_alignment = 1
+text = "0"
+
+[node name="BotonArea" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+visible = false
+flat = true

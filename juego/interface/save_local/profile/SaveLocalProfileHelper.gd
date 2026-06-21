@@ -106,6 +106,7 @@ func normalizar_datos_perfil(raw_profile: Dictionary, default_profile_name: Stri
 		"username": str(raw_profile.get("username", default_profile_name)).strip_edges(),
 		"birth_date": birth_date,
 		"email": str(raw_profile.get("email", "")).strip_edges(),
+		"email_notifications_enabled": bool(raw_profile.get("email_notifications_enabled", false)),
 		"avatar_path": str(raw_profile.get("avatar_path", "")).strip_edges(),
 		"created_at": str(raw_profile.get("created_at", "")),
 		"updated_at": str(raw_profile.get("updated_at", ""))

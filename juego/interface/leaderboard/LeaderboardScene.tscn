@@ -1,0 +1,100 @@
+[gd_scene load_steps=8 format=3 uid="uid://lb_scene_001"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="2_tabs"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardList.tscn" id="3_list"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/OwnPositionCard.tscn" id="4_card"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardSkeleton.tscn" id="5_skeleton"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEmpty.tscn" id="6_empty"]
+
+[node name="LeaderboardScene" type="CanvasLayer"]
+script = ExtResource("1_scene")
+layer = 80
+
+[node name="Fondo" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+color = Color(0.05, 0.05, 0.1, 0.92)
+mouse_filter = 0
+
+[node name="PanelCentral" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -340.0
+offset_right = 260.0
+offset_bottom = 340.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxPrincipal" type="VBoxContainer" parent="PanelCentral"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+
+[node name="TituloLabel" type="Label" parent="PanelCentral/VBoxPrincipal/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+vertical_alignment = 1
+text = "Tabla de posiciones"
+
+[node name="BotonCerrar" type="Button" parent="PanelCentral/VBoxPrincipal/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "✕"
+flat = true
+
+[node name="ScopeTabs" type="Node" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+instance = ExtResource("2_tabs")
+
+[node name="ContenedorCarga" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+visible = true
+
+[node name="LeaderboardSkeleton" parent="PanelCentral/VBoxPrincipal/ContenedorCarga" instance=ExtResource("5_skeleton")]
+layout_mode = 2
+
+[node name="ContenedorDatos" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="LeaderboardList" type="Node" parent="PanelCentral/VBoxPrincipal/ContenedorDatos"]
+unique_name_in_owner = true
+instance = ExtResource("3_list")
+
+[node name="ContenedorVacio" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="LeaderboardEmpty" parent="PanelCentral/VBoxPrincipal/ContenedorVacio" instance=ExtResource("6_empty")]
+layout_mode = 2
+
+[node name="ContenedorError" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="LabelError" type="Label" parent="PanelCentral/VBoxPrincipal/ContenedorError"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+text = "No se pudo cargar el leaderboard."
+
+[node name="OwnPositionCard" type="Node" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+instance = ExtResource("4_card")
