@@ -1,12 +1,37 @@
-// Scopes soportados en v1. Extensible sin cambios en DB.
-export type LeaderboardScope = 'global_xp' | 'streak';
+import { Restriction, VALID_RESTRICTIONS } from '../../config/restrictions';
 
-export const LEADERBOARD_SCOPES: LeaderboardScope[] = ['global_xp', 'streak'];
+// Scopes base + ranking por restricción (restriction:CELIAQUIA, etc.)
+export type RestrictionLeaderboardScope = `restriction:${Restriction}`;
+export type LeaderboardScope = 'global_xp' | 'streak' | RestrictionLeaderboardScope;
+
+export const RESTRICTION_LEADERBOARD_SCOPES: RestrictionLeaderboardScope[] = VALID_RESTRICTIONS.map(
+  (r) => `restriction:${r}` as RestrictionLeaderboardScope
+);
+
+export const LEADERBOARD_SCOPES: LeaderboardScope[] = [
+  'global_xp',
+  'streak',
+  ...RESTRICTION_LEADERBOARD_SCOPES
+];
 
 export const LEADERBOARD_SCOPE_LABELS: Record<LeaderboardScope, string> = {
   global_xp: 'XP Global',
-  streak: 'Mejor Racha'
+  streak: 'Mejor Racha',
+  'restriction:CELIAQUIA': 'Celiaquía',
+  'restriction:VEG': 'Veganismo',
+  'restriction:VYG': 'Veganismo + Celiaquía',
+  'restriction:KETO': 'Keto'
 };
+
+export function isRestrictionLeaderboardScope(scope: string): scope is RestrictionLeaderboardScope {
+  return scope.startsWith('restriction:');
+}
+
+export function restrictionFromLeaderboardScope(scope: LeaderboardScope): Restriction | null {
+  if (!isRestrictionLeaderboardScope(scope)) return null;
+  const code = scope.slice('restriction:'.length);
+  return (VALID_RESTRICTIONS as readonly string[]).includes(code) ? (code as Restriction) : null;
+}
 
 // ─── Filas de DB ──────────────────────────────────────────────────────────────
 
@@ -99,6 +124,8 @@ export interface RankingParticipant {
  * Responde a GET /leaderboard/me/summary.
  */
 export interface RankingSummary {
+  scope: LeaderboardScope;
+  scopeLabel: string;
   /** Posición y score del jugador autenticado. */
   current: RankingParticipant;
   /** Jugador que está un puesto por encima. null si el jugador es primero. */
@@ -115,4 +142,3 @@ export interface RankingSummary {
   /** true si el resultado viene del snapshot; false si es fallback en vivo. */
   isFromSnapshot: boolean;
 }
-

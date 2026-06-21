@@ -1,6 +1,7 @@
 /**
  * Smoke test del leaderboard.
- * Verifica: endpoints públicos, meta, refresh job, cache headers, paginación.
+ * Verifica: endpoints públicos, meta, refresh job, cache headers, paginación,
+ * scopes por restricción, summary por scope y avatar público.
  *
  * Uso:
  *   BACKEND_URL=http://localhost:3000 JOB_SECRET=xxx npx ts-node scripts/smoke-leaderboard.ts
@@ -12,10 +13,20 @@ dotenv.config();
 const BASE_URL    = process.env.BACKEND_URL ?? 'http://localhost:3000';
 const JOB_SECRET  = process.env.INTERNAL_JOB_SECRET ?? '';
 const AUTH_TOKEN  = process.env.SMOKE_AUTH_TOKEN ?? '';
+const SMOKE_USER_ID = process.env.SMOKE_USER_ID ?? '';
 
 type Color = 'green' | 'red' | 'yellow' | 'cyan';
 const C: Record<Color, string> = { green: '\x1b[32m', red: '\x1b[31m', yellow: '\x1b[33m', cyan: '\x1b[36m' };
 const R = '\x1b[0m';
+
+const LEADERBOARD_SCOPES = [
+  'global_xp',
+  'streak',
+  'restriction:CELIAQUIA',
+  'restriction:VEG',
+  'restriction:VYG',
+  'restriction:KETO'
+] as const;
 
 function log(color: Color, icon: string, label: string, detail = ''): void {
   console.log(`${C[color]}${icon} ${label}${R}${detail ? ` — ${detail}` : ''}`);
@@ -97,14 +108,24 @@ async function run() {
     return true;
   }));
 
-  // 4. Scope inválido → 400
+  // 4. Scopes por restricción
+  for (const scope of LEADERBOARD_SCOPES.filter(s => s.startsWith('restriction:'))) {
+    results.push(await check(`GET /leaderboard?scope=${scope}`, async () => {
+      const { status, body } = await get(`/leaderboard?scope=${encodeURIComponent(scope)}`);
+      if (status !== 200) return `HTTP ${status}`;
+      if (body.scope !== scope) return `scope incorrecto: ${String(body.scope)}`;
+      return true;
+    }));
+  }
+
+  // 5. Scope inválido → 400
   results.push(await check('GET /leaderboard?scope=INVALID → 400', async () => {
     const { status } = await get('/leaderboard?scope=INVALID');
     if (status !== 400) return `esperaba 400, got ${status}`;
     return true;
   }));
 
-  // 5. Paginación
+  // 6. Paginación
   results.push(await check('GET /leaderboard?limit=5&offset=0 — paginación', async () => {
     const { status, body } = await get('/leaderboard?limit=5&offset=0');
     if (status !== 200) return `HTTP ${status}`;
@@ -115,12 +136,11 @@ async function run() {
     return true;
   }));
 
-  // 6. ETag / 304 Not Modified
+  // 7. ETag / 304 Not Modified
   results.push(await check('GET /leaderboard — ETag y 304 Not Modified', async () => {
     const first  = await get('/leaderboard');
     const etag   = first.headers.get('etag');
     if (!etag) {
-      // Puede no tener ETag si el snapshot aún no existe (fallback en vivo)
       return first.body.is_live_fallback ? 'SKIPPED (live fallback, sin ETag)' : 'ETag ausente en snapshot';
     }
     const second = await fetch(`${BASE_URL}/leaderboard`, {
@@ -130,7 +150,7 @@ async function run() {
     return true;
   }));
 
-  // 7. GET /leaderboard/meta
+  // 8. GET /leaderboard/meta
   results.push(await check('GET /leaderboard/meta', async () => {
     const { status, body } = await get('/leaderboard/meta');
     if (status !== 200) return `HTTP ${status}`;
@@ -141,14 +161,28 @@ async function run() {
     return `all_ok=${String(body.all_ok)} — ${summary}`;
   }));
 
-  // 8. GET /leaderboard/me (sin auth → 401)
+  // 9. GET /leaderboard/me (sin auth → 401)
   results.push(await check('GET /leaderboard/me sin auth → 401', async () => {
     const { status } = await get('/leaderboard/me');
     if (status !== 401) return `esperaba 401, got ${status}`;
     return true;
   }));
 
-  // 9. GET /leaderboard/me con auth
+  // 10. Avatar público
+  if (SMOKE_USER_ID) {
+    results.push(await check('GET /player/users/:id/avatar (público)', async () => {
+      const res = await fetch(`${BASE_URL}/player/users/${encodeURIComponent(SMOKE_USER_ID)}/avatar`);
+      if (res.status === 404) return 'SKIPPED (usuario sin avatar)';
+      if (res.status !== 200) return `HTTP ${res.status}`;
+      const ct = res.headers.get('content-type') ?? '';
+      if (!ct.includes('image')) return `content-type inesperado: ${ct}`;
+      return true;
+    }));
+  } else {
+    log('yellow', '⚠', 'Avatar público', 'SKIPPED (SMOKE_USER_ID no configurado)');
+  }
+
+  // 11. GET /leaderboard/me con auth
   if (AUTH_TOKEN) {
     results.push(await check('GET /leaderboard/me con Bearer', async () => {
       const { status, body } = await get('/leaderboard/me', {
@@ -157,21 +191,32 @@ async function run() {
       if (status !== 200) return `HTTP ${status}: ${JSON.stringify(body)}`;
       if (!Array.isArray(body.positions)) return 'positions no es array';
       const pos = body.positions as Array<{ scope: string; rank: number | null }>;
+      if (pos.length < LEADERBOARD_SCOPES.length) {
+        return `positions tiene ${pos.length} items, esperaba ${LEADERBOARD_SCOPES.length}`;
+      }
       const summary = pos.map(p => `${p.scope}:rank=${String(p.rank)}`).join(', ');
       return `OK — ${summary}`;
     }));
 
-    // 10. include_self con Bearer
     results.push(await check('GET /leaderboard?include_self=true con Bearer', async () => {
       const { status, body } = await get('/leaderboard?include_self=true', {
         Authorization: `Bearer ${AUTH_TOKEN}`
       });
       if (status !== 200) return `HTTP ${status}`;
-      // own_position puede ser null si el usuario aún no tiene datos
       return `OK — own_position=${body.own_position === null ? 'null' : JSON.stringify(body.own_position)}`;
     }));
+
+    results.push(await check('GET /leaderboard/me/summary?scope=restriction:KETO', async () => {
+      const { status, body } = await get('/leaderboard/me/summary?scope=restriction:KETO', {
+        Authorization: `Bearer ${AUTH_TOKEN}`
+      });
+      if (status !== 200) return `HTTP ${status}: ${JSON.stringify(body)}`;
+      if (body.available === false) return 'available=false (sin progreso keto)';
+      if (body.scope !== 'restriction:KETO') return `scope incorrecto: ${String(body.scope)}`;
+      return `rank=${String((body.current as { rank?: number })?.rank)}`;
+    }));
   } else {
-    log('yellow', '⚠', '/leaderboard/me y include_self', 'SKIPPED (SMOKE_AUTH_TOKEN no configurado)');
+    log('yellow', '⚠', '/leaderboard/me, include_self y summary', 'SKIPPED (SMOKE_AUTH_TOKEN no configurado)');
   }
 
   // ─── Resumen ─────────────────────────────────────────────────────────────────

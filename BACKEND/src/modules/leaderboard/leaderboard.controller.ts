@@ -171,7 +171,16 @@ export async function getMyRankingSummaryController(
       return;
     }
 
-    const summary = await getUserRankingSummary(userId);
+    const scopeParam = request.query.scope;
+    const scope = scopeParam !== undefined ? parseScope(scopeParam) : 'global_xp';
+    if (scopeParam !== undefined && !scope) {
+      sendResponse(response, 400, {
+        error: `scope inválido. Valores aceptados: ${LEADERBOARD_SCOPES.join(', ')}`
+      });
+      return;
+    }
+
+    const summary = await getUserRankingSummary(userId, scope ?? 'global_xp');
 
     response.setHeader('Cache-Control', 'private, max-age=30');
 

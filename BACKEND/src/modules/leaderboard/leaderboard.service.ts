@@ -9,8 +9,11 @@ import {
   LeaderboardScope,
   RankingSummary,
   RefreshLeaderboardResult,
-  UserLeaderboardPosition
+  UserLeaderboardPosition,
+  isRestrictionLeaderboardScope,
+  restrictionFromLeaderboardScope
 } from './leaderboard.types';
+import { VALID_RESTRICTIONS } from '../../config/restrictions';
 
 const DEFAULT_LIMIT               = 50;
 const MAX_LIMIT                   = 200;
@@ -25,8 +28,25 @@ const refreshingScopes = new Set<LeaderboardScope>();
 
 export function parseScope(value: unknown): LeaderboardScope | undefined {
   if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase() as LeaderboardScope;
-  return (LEADERBOARD_SCOPES as string[]).includes(normalized) ? normalized : undefined;
+  const trimmed = value.trim();
+  if ((LEADERBOARD_SCOPES as string[]).includes(trimmed)) {
+    return trimmed as LeaderboardScope;
+  }
+
+  const lower = trimmed.toLowerCase();
+  if (lower === 'global_xp' || lower === 'streak') {
+    return lower as LeaderboardScope;
+  }
+
+  if (lower.startsWith('restriction:')) {
+    const code = trimmed.slice('restriction:'.length).toUpperCase();
+    if ((VALID_RESTRICTIONS as readonly string[]).includes(code)) {
+      const scope = `restriction:${code}` as LeaderboardScope;
+      if ((LEADERBOARD_SCOPES as string[]).includes(scope)) return scope;
+    }
+  }
+
+  return undefined;
 }
 
 function parseLimit(value: unknown): number {
@@ -115,9 +135,17 @@ async function getLiveEntriesForScope(
   limit: number,
   offset: number
 ): Promise<LeaderboardEntry[]> {
-  return scope === 'global_xp'
-    ? leaderboardRepository.getLiveGlobalXpEntries(limit, offset)
-    : leaderboardRepository.getLiveStreakEntries(limit, offset);
+  if (scope === 'global_xp') {
+    return leaderboardRepository.getLiveGlobalXpEntries(limit, offset);
+  }
+  if (scope === 'streak') {
+    return leaderboardRepository.getLiveStreakEntries(limit, offset);
+  }
+  const restriction = restrictionFromLeaderboardScope(scope);
+  if (restriction) {
+    return leaderboardRepository.getLiveRestrictionEntries(restriction, limit, offset);
+  }
+  return [];
 }
 
 /**
@@ -204,15 +232,19 @@ export async function getLeaderboardMeta() {
  *
  * Retorna null si el jugador no aparece en ningún registro (sin progreso registrado).
  */
-export async function getUserRankingSummary(userId: string): Promise<RankingSummary | null> {
-  const context = await leaderboardRepository.getUserRankingContext(userId);
+export async function getUserRankingSummary(
+  userId: string,
+  scope: LeaderboardScope = 'global_xp'
+): Promise<RankingSummary | null> {
+  const context = await leaderboardRepository.getUserRankingContext(userId, scope);
   if (!context) return null;
 
   const { current, next, isFromSnapshot } = context;
 
   if (!next) {
-    // El jugador es primero.
     return {
+      scope,
+      scopeLabel: LEADERBOARD_SCOPE_LABELS[scope],
       current,
       next: null,
       expToNextRank: 0,
@@ -222,21 +254,19 @@ export async function getUserRankingSummary(userId: string): Promise<RankingSumm
     };
   }
 
-  // EXP que necesita ganar para superar al jugador de arriba.
-  // +1 para realmente superarlo (no solo empatarlo).
   const expToNextRank = Math.max(next.score - current.score + 1, 0);
 
-  // Progreso como porcentaje del score del rival.
-  // Si el rival tiene 0 EXP, el jugador ya debería ser primero (caso imposible normal).
   let progressToNextRank = 0;
   if (next.score > 0) {
     progressToNextRank = Math.min(
       Math.floor((current.score / next.score) * 100),
-      99  // nunca 100% mientras no haya superado al rival
+      99
     );
   }
 
   return {
+    scope,
+    scopeLabel: LEADERBOARD_SCOPE_LABELS[scope],
     current,
     next,
     expToNextRank,
@@ -282,6 +312,11 @@ export async function refreshLeaderboard(scope: LeaderboardScope): Promise<Refre
       rowsInserted = await leaderboardRepository.refreshGlobalXpSnapshot(startedAt);
     } else if (scope === 'streak') {
       rowsInserted = await leaderboardRepository.refreshStreakSnapshot(startedAt);
+    } else {
+      const restriction = restrictionFromLeaderboardScope(scope);
+      if (restriction) {
+        rowsInserted = await leaderboardRepository.refreshRestrictionSnapshot(restriction, startedAt);
+      }
     }
 
     cacheInvalidate(scope);

@@ -80,6 +80,8 @@ function serializeParticipant(p: RankingSummary['current'] | NonNullable<Ranking
 
 export function serializeRankingSummary(summary: RankingSummary) {
   return {
+    scope:                summary.scope,
+    scope_label:          summary.scopeLabel,
     current:              serializeParticipant(summary.current),
     next:                 summary.next ? serializeParticipant(summary.next) : null,
     exp_to_next_rank:     summary.expToNextRank,

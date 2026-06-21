@@ -1,10 +1,13 @@
 import { pool, query } from '../../config/database';
+import { Restriction } from '../../config/restrictions';
 import {
   LeaderboardEntry,
   LeaderboardMeta,
   LeaderboardScope,
   LeaderboardSnapshotRow
 } from './leaderboard.types';
+
+const AVATAR_KEY_SQL = `CASE WHEN img.data IS NOT NULL THEN img.id::text ELSE NULL END`;
 
 // ─── Helpers internos ─────────────────────────────────────────────────────────
 
@@ -98,14 +101,14 @@ export async function refreshGlobalXpSnapshot(startedAt: Date): Promise<number> 
         u.id                                                          AS user_id,
         u.username                                                    AS username,
         u.name                                                        AS display_name,
-        ui.image_key                                                  AS avatar_key,
+        ${AVATAR_KEY_SQL}                                             AS avatar_key,
         COALESCE(p.exp_count, 0)                                      AS score,
         RANK() OVER (ORDER BY COALESCE(p.exp_count, 0) DESC)::integer AS rank,
         now()                                                         AS computed_at,
         $1                                                            AS generation
       FROM users u
-      LEFT JOIN profiles    p  ON p.user_id  = u.id
-      LEFT JOIN user_images ui ON ui.user_id = u.id
+      LEFT JOIN profiles p  ON p.user_id  = u.id
+      LEFT JOIN images   img ON img.user_id = u.id
     `,
     [],
     startedAt
@@ -123,15 +126,45 @@ export async function refreshStreakSnapshot(startedAt: Date): Promise<number> {
         u.id                                                             AS user_id,
         u.username                                                       AS username,
         u.name                                                           AS display_name,
-        ui.image_key                                                     AS avatar_key,
+        ${AVATAR_KEY_SQL}                                                AS avatar_key,
         COALESCE(s.best_count, 0)                                        AS score,
         RANK() OVER (ORDER BY COALESCE(s.best_count, 0) DESC)::integer   AS rank,
         now()                                                            AS computed_at,
         $1                                                               AS generation
       FROM users u
-      LEFT JOIN profiles    p  ON p.user_id   = u.id
-      LEFT JOIN streaks      s  ON s.id        = p.streak_id
-      LEFT JOIN user_images  ui ON ui.user_id  = u.id
+      LEFT JOIN profiles p  ON p.user_id   = u.id
+      LEFT JOIN streaks  s  ON s.id        = p.streak_id
+      LEFT JOIN images   img ON img.user_id = u.id
+    `,
+    [],
+    startedAt
+  );
+}
+
+export async function refreshRestrictionSnapshot(
+  restriction: Restriction,
+  startedAt: Date
+): Promise<number> {
+  const scope = `restriction:${restriction}`;
+  return doRefresh(
+    scope as LeaderboardScope,
+    `
+      INSERT INTO leaderboard_snapshots
+        (scope, user_id, username, display_name, avatar_key, score, rank, computed_at, generation)
+      SELECT
+        '${scope}'                                                    AS scope,
+        u.id                                                          AS user_id,
+        u.username                                                    AS username,
+        u.name                                                        AS display_name,
+        ${AVATAR_KEY_SQL}                                             AS avatar_key,
+        COALESCE(pr.total_exp, 0)                                     AS score,
+        RANK() OVER (ORDER BY COALESCE(pr.total_exp, 0) DESC)::integer AS rank,
+        now()                                                         AS computed_at,
+        $1                                                            AS generation
+      FROM users u
+      INNER JOIN profiles p ON p.user_id = u.id
+      INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = '${restriction}'
+      LEFT JOIN images img ON img.user_id = u.id
     `,
     [],
     startedAt
@@ -249,11 +282,11 @@ const LIVE_SELECT_GLOBAL_XP = `
     u.id          AS user_id,
     u.username    AS username,
     u.name        AS display_name,
-    ui.image_key  AS avatar_key,
+    CASE WHEN img.data IS NOT NULL THEN img.id::text ELSE NULL END AS avatar_key,
     COALESCE(p.exp_count, 0) AS score
   FROM users u
-  LEFT JOIN profiles    p  ON p.user_id  = u.id
-  LEFT JOIN user_images ui ON ui.user_id = u.id
+  LEFT JOIN profiles p  ON p.user_id  = u.id
+  LEFT JOIN images   img ON img.user_id = u.id
   ORDER BY score DESC
   LIMIT $1 OFFSET $2
 `;
@@ -264,12 +297,12 @@ const LIVE_SELECT_STREAK = `
     u.id          AS user_id,
     u.username    AS username,
     u.name        AS display_name,
-    ui.image_key  AS avatar_key,
+    CASE WHEN img.data IS NOT NULL THEN img.id::text ELSE NULL END AS avatar_key,
     COALESCE(s.best_count, 0) AS score
   FROM users u
-  LEFT JOIN profiles    p  ON p.user_id  = u.id
-  LEFT JOIN streaks      s  ON s.id       = p.streak_id
-  LEFT JOIN user_images  ui ON ui.user_id = u.id
+  LEFT JOIN profiles p  ON p.user_id  = u.id
+  LEFT JOIN streaks  s  ON s.id       = p.streak_id
+  LEFT JOIN images   img ON img.user_id = u.id
   ORDER BY score DESC
   LIMIT $1 OFFSET $2
 `;
@@ -306,6 +339,34 @@ export async function getLiveStreakEntries(limit: number, offset: number): Promi
   return result.rows.map(liveRowToEntry);
 }
 
+export async function getLiveRestrictionEntries(
+  restriction: Restriction,
+  limit: number,
+  offset: number
+): Promise<LeaderboardEntry[]> {
+  const sql = `
+    SELECT
+      RANK() OVER (ORDER BY COALESCE(pr.total_exp, 0) DESC)::integer AS rank,
+      u.id          AS user_id,
+      u.username    AS username,
+      u.name        AS display_name,
+      CASE WHEN img.data IS NOT NULL THEN img.id::text ELSE NULL END AS avatar_key,
+      COALESCE(pr.total_exp, 0) AS score
+    FROM users u
+    INNER JOIN profiles p ON p.user_id = u.id
+    INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = $3
+    LEFT JOIN images img ON img.user_id = u.id
+    ORDER BY score DESC
+    LIMIT $1 OFFSET $2
+  `;
+  const result = await query<LiveRow>(sql, [
+    Math.max(1, Math.min(limit, 200)),
+    Math.max(0, offset),
+    restriction
+  ]);
+  return result.rows.map(liveRowToEntry);
+}
+
 /**
  * Posición en vivo del usuario (cuando no hay snapshot).
  * Usa una subquery de RANK para no escanear toda la tabla.
@@ -315,6 +376,8 @@ export async function getLiveUserRank(
   userId: string
 ): Promise<{ rank: number; score: number } | null> {
   let sql: string;
+  let params: unknown[] = [userId];
+
   if (scope === 'global_xp') {
     sql = `
       WITH ranked AS (
@@ -327,7 +390,7 @@ export async function getLiveUserRank(
       )
       SELECT rank, score FROM ranked WHERE user_id = $1 LIMIT 1
     `;
-  } else {
+  } else if (scope === 'streak') {
     sql = `
       WITH ranked AS (
         SELECT
@@ -340,8 +403,26 @@ export async function getLiveUserRank(
       )
       SELECT rank, score FROM ranked WHERE user_id = $1 LIMIT 1
     `;
+  } else if (scope.startsWith('restriction:')) {
+    const restriction = scope.slice('restriction:'.length);
+    sql = `
+      WITH ranked AS (
+        SELECT
+          u.id AS user_id,
+          RANK() OVER (ORDER BY COALESCE(pr.total_exp, 0) DESC)::integer AS rank,
+          COALESCE(pr.total_exp, 0) AS score
+        FROM users u
+        INNER JOIN profiles p ON p.user_id = u.id
+        INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = $2
+      )
+      SELECT rank, score FROM ranked WHERE user_id = $1 LIMIT 1
+    `;
+    params = [userId, restriction];
+  } else {
+    return null;
   }
-  const result = await query<{ rank: number; score: string }>(sql, [userId]);
+
+  const result = await query<{ rank: number; score: string }>(sql, params);
   const row = result.rows[0];
   if (!row) return null;
   return { rank: row.rank, score: parseInt(String(row.score), 10) };
@@ -369,7 +450,7 @@ type RankingContextRow = {
 };
 
 /**
- * Obtiene el contexto competitivo del jugador en el scope global_xp.
+ * Obtiene el contexto competitivo del jugador en un scope.
  * Busca el jugador en el snapshot y al jugador que está exactamente un puesto
  * por encima (el inmediato siguiente a superar).
  *
@@ -377,7 +458,8 @@ type RankingContextRow = {
  * Retorna null si el jugador no tiene progreso registrado en absoluto.
  */
 export async function getUserRankingContext(
-  userId: string
+  userId: string,
+  scope: LeaderboardScope = 'global_xp'
 ): Promise<{
   current: { rank: number; username: string; displayName: string | null; score: number };
   next: { rank: number; username: string; displayName: string | null; score: number } | null;
@@ -389,13 +471,13 @@ export async function getUserRankingContext(
       WITH player AS (
         SELECT rank, username, display_name, score
         FROM leaderboard_snapshots
-        WHERE scope = 'global_xp' AND user_id = $1
+        WHERE scope = $2 AND user_id = $1
         LIMIT 1
       ),
       rival AS (
         SELECT rank, username, display_name, score
         FROM leaderboard_snapshots
-        WHERE scope = 'global_xp'
+        WHERE scope = $2
           AND rank = (SELECT rank FROM player) - 1
         LIMIT 1
       )
@@ -412,7 +494,7 @@ export async function getUserRankingContext(
       FROM player p
       LEFT JOIN rival r ON true
     `,
-    [userId]
+    [userId, scope]
   );
 
   if (snapshotResult.rows.length > 0) {
@@ -434,20 +516,24 @@ export async function getUserRankingContext(
     };
   }
 
-  // Fallback en vivo si el snapshot está vacío o no incluye al jugador.
-  // Ordenamiento estable equivalente al snapshot:
-  // score DESC, user_id ASC (no tenemos computed_at en vivo, user_id es suficiente).
-  const liveResult = await query<{
-    current_rank: number;
-    current_username: string;
-    current_display_name: string | null;
-    current_score: string;
-    next_rank: number | null;
-    next_username: string | null;
-    next_display_name: string | null;
-    next_score: string | null;
-  }>(
-    `
+  const liveResult = await queryLiveRankingContext(userId, scope);
+  if (!liveResult) return null;
+  return liveResult;
+}
+
+async function queryLiveRankingContext(
+  userId: string,
+  scope: LeaderboardScope
+): Promise<{
+  current: { rank: number; username: string; displayName: string | null; score: number };
+  next: { rank: number; username: string; displayName: string | null; score: number } | null;
+  isFromSnapshot: boolean;
+} | null> {
+  let rankedSql: string;
+  let params: unknown[] = [userId];
+
+  if (scope === 'global_xp') {
+    rankedSql = `
       WITH ranked AS (
         SELECT
           u.id          AS user_id,
@@ -477,9 +563,89 @@ export async function getUserRankingContext(
         rv.score         AS next_score
       FROM player pl
       LEFT JOIN rival rv ON true
-    `,
-    [userId]
-  );
+    `;
+  } else if (scope === 'streak') {
+    rankedSql = `
+      WITH ranked AS (
+        SELECT
+          u.id          AS user_id,
+          u.username    AS username,
+          u.name        AS display_name,
+          COALESCE(s.best_count, 0) AS score,
+          RANK() OVER (
+            ORDER BY COALESCE(s.best_count, 0) DESC, u.id ASC
+          )::integer AS rank
+        FROM users u
+        LEFT JOIN profiles p ON p.user_id = u.id
+        LEFT JOIN streaks  s ON s.id = p.streak_id
+      ),
+      player AS (
+        SELECT * FROM ranked WHERE user_id = $1 LIMIT 1
+      ),
+      rival AS (
+        SELECT * FROM ranked WHERE rank = (SELECT rank FROM player) - 1 LIMIT 1
+      )
+      SELECT
+        pl.rank          AS current_rank,
+        pl.username      AS current_username,
+        pl.display_name  AS current_display_name,
+        pl.score         AS current_score,
+        rv.rank          AS next_rank,
+        rv.username      AS next_username,
+        rv.display_name  AS next_display_name,
+        rv.score         AS next_score
+      FROM player pl
+      LEFT JOIN rival rv ON true
+    `;
+  } else if (scope.startsWith('restriction:')) {
+    const restriction = scope.slice('restriction:'.length);
+    rankedSql = `
+      WITH ranked AS (
+        SELECT
+          u.id          AS user_id,
+          u.username    AS username,
+          u.name        AS display_name,
+          COALESCE(pr.total_exp, 0) AS score,
+          RANK() OVER (
+            ORDER BY COALESCE(pr.total_exp, 0) DESC, u.id ASC
+          )::integer AS rank
+        FROM users u
+        INNER JOIN profiles p ON p.user_id = u.id
+        INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = $2
+      ),
+      player AS (
+        SELECT * FROM ranked WHERE user_id = $1 LIMIT 1
+      ),
+      rival AS (
+        SELECT * FROM ranked WHERE rank = (SELECT rank FROM player) - 1 LIMIT 1
+      )
+      SELECT
+        pl.rank          AS current_rank,
+        pl.username      AS current_username,
+        pl.display_name  AS current_display_name,
+        pl.score         AS current_score,
+        rv.rank          AS next_rank,
+        rv.username      AS next_username,
+        rv.display_name  AS next_display_name,
+        rv.score         AS next_score
+      FROM player pl
+      LEFT JOIN rival rv ON true
+    `;
+    params = [userId, restriction];
+  } else {
+    return null;
+  }
+
+  const liveResult = await query<{
+    current_rank: number;
+    current_username: string;
+    current_display_name: string | null;
+    current_score: string;
+    next_rank: number | null;
+    next_username: string | null;
+    next_display_name: string | null;
+    next_score: string | null;
+  }>(rankedSql, params);
 
   if (liveResult.rows.length === 0) return null;
 

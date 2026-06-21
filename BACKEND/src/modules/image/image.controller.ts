@@ -73,18 +73,39 @@ export async function getAvatarController(req: Request, res: Response): Promise<
     const userId = req.user?.id;
     if (!userId) throw new AppError(401, 'UNAUTHORIZED', 'No active session');
 
-    const client = await pool.connect();
-    try {
-      const row = await getImageByUserId(client, userId);
-      if (!row || !row.data) {
-        sendResponse(res, 200, { data: null, mimeType: null });
-        return;
-      }
-      sendResponse(res, 200, { data: row.data, mimeType: row.mime_type, updatedAt: row.updated_at });
-    } finally {
-      client.release();
-    }
+    await sendAvatarForUser(userId, res);
   } catch (error) {
     sendError(res, error);
+  }
+}
+
+export async function getPublicAvatarController(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = typeof req.params.userId === 'string' ? req.params.userId.trim() : '';
+    if (!userId) {
+      throw new AppError(400, 'INVALID_PARAMS', 'userId is required');
+    }
+
+    await sendAvatarForUser(userId, res);
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+
+async function sendAvatarForUser(userId: string, res: Response): Promise<void> {
+  const client = await pool.connect();
+  try {
+    const row = await getImageByUserId(client, userId);
+    if (!row || !row.data) {
+      sendResponse(res, 200, { data: null, mimeType: null });
+      return;
+    }
+    sendResponse(res, 200, {
+      data: row.data,
+      mimeType: row.mime_type,
+      updatedAt: row.updated_at
+    });
+  } finally {
+    client.release();
   }
 }

@@ -13,7 +13,7 @@ export const leaderboardRouter = Router();
 /**
  * GET /leaderboard
  * Público. Usa auth opcional para soportar include_self=true con Bearer token.
- * Scopes: global_xp | streak
+ * Scopes: global_xp | streak | restriction:CELIAQUIA | restriction:VEG | ...
  * Query: ?scope=global_xp&limit=50&offset=0&include_self=true
  */
 leaderboardRouter.get('/', optionalAuthenticateToken, getLeaderboardController);

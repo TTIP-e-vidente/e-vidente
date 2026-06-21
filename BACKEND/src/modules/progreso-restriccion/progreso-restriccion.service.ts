@@ -8,8 +8,8 @@
  */
 import { pool } from '../../config/database';
 import { AppError } from '../../shared/errors/app_error';
+import { normalizeRestrictionInput } from '../../config/restrictions';
 import {
-  isAllowedRestriction,
   isNonEmptyString,
   parseNumberOrDefault
 } from '../../shared/validation/validators';
@@ -67,9 +67,10 @@ function numberOrDefault(value: unknown, defaultValue: number): number {
 }
 
 function normalizeRestriction(value: unknown): string {
-  const restriction = requiredText(value, 'restriction').toUpperCase();
-  if (!isAllowedRestriction(restriction)) {
-    throw new PlayerError(400, 'VALIDATION_ERROR', `restriction invalida: ${restriction}`);
+  const raw = requiredText(value, 'restriction');
+  const restriction = normalizeRestrictionInput(raw);
+  if (!restriction) {
+    throw new PlayerError(400, 'VALIDATION_ERROR', `restriction invalida: ${raw}`);
   }
   return restriction;
 }
