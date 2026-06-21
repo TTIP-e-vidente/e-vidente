@@ -2,51 +2,32 @@ extends Node
 
 # Singleton (Autoload) que gestiona la carga del leaderboard.
 #
-# Centraliza toda la comunicación con el API del leaderboard.
-# Incluye cache en memoria para evitar requests repetidos.
+# Centraliza comunicación con el API, cache en memoria y evita requests duplicados.
 # Las escenas de UI se suscriben a las señales y reaccionan a los cambios.
 
 
-# ── Señales ────────────────────────────────────────────────────────────────────
-
-# Emitida cuando los datos de un scope se cargan correctamente.
 signal leaderboard_cargado(scope: String, datos: Dictionary)
-
-# Emitida cuando ocurre un error al cargar un scope.
 signal leaderboard_fallido(scope: String, mensaje: String)
-
-# Emitida cuando se carga la posición propia del jugador logueado.
 signal posicion_propia_cargada(posiciones: Array)
+signal resumen_competitivo_cargado(datos: Dictionary)
+signal resumen_competitivo_fallido(mensaje: String)
 
 
-# ── Constantes ─────────────────────────────────────────────────────────────────
-
-# Segundos que un resultado en cache se considera "fresco" antes de re-pedir al API.
 const SEGUNDOS_CACHE_VALIDO := 60.0
-
-# Cuántas entradas pedimos por página al API.
 const LIMITE_POR_PAGINA := 50
 
 
-# ── Estado interno ─────────────────────────────────────────────────────────────
-
-# Cache por scope: { "global_xp": { "datos": {...}, "timestamp": 1234 }, ... }
 var _cache: Dictionary = {}
-
-# Flags para evitar requests dobles mientras uno está en vuelo.
 var _cargando_scope: Dictionary = {}
 
-# Cache de posición propia y su timestamp.
 var _cache_posicion_propia: Array = []
 var _timestamp_posicion_propia: float = -1.0
 var _cargando_posicion_propia: bool = false
 
+var _cache_resumen_por_scope: Dictionary = {}
+var _cargando_resumen: bool = false
 
-# ── API pública ────────────────────────────────────────────────────────────────
 
-# Carga el leaderboard de un scope dado.
-# Si hay cache fresco, emite la señal inmediatamente sin ir al API.
-# Si hay una solicitud en vuelo para ese scope, no lanza otra.
 func cargar(scope: String = "global_xp", forzar: bool = false) -> void:
 	if not forzar and _cache_esta_fresco(scope):
 		leaderboard_cargado.emit(scope, _cache[scope]["datos"])
@@ -66,18 +47,24 @@ func cargar(scope: String = "global_xp", forzar: bool = false) -> void:
 
 	if resultado.get("ok", false):
 		var datos: Variant = resultado.get("data", {})
+		var datos_dict := datos as Dictionary if datos is Dictionary else {}
 		_cache[scope] = {
-			"datos": datos as Dictionary if datos is Dictionary else {},
+			"datos": datos_dict,
 			"timestamp": Time.get_unix_time_from_system()
 		}
-		leaderboard_cargado.emit(scope, _cache[scope]["datos"])
+		_actualizar_cache_posicion_desde_leaderboard(scope, datos_dict)
+		leaderboard_cargado.emit(scope, datos_dict)
 	else:
 		var mensaje := LeaderboardApi.mensaje_error(resultado)
 		leaderboard_fallido.emit(scope, mensaje)
 
 
-# Pide la siguiente página de resultados y la adjunta a la lista existente.
-# Usa un scope especial "scope:mas" para diferenciarlo de una carga completa.
+func prefetch(scope: String) -> void:
+	if _cache_esta_fresco(scope) or _cargando_scope.get(scope, false):
+		return
+	cargar(scope)
+
+
 func cargar_mas(scope: String, desplazamiento: int) -> void:
 	var resultado := await LeaderboardApi.obtener_leaderboard(
 		scope, LIMITE_POR_PAGINA, desplazamiento, false
@@ -89,8 +76,6 @@ func cargar_mas(scope: String, desplazamiento: int) -> void:
 		leaderboard_fallido.emit(scope, LeaderboardApi.mensaje_error(resultado))
 
 
-# Carga la posición propia del jugador en todos los scopes.
-# Solo funciona si el jugador tiene sesión activa.
 func cargar_posicion_propia(forzar: bool = false) -> void:
 	if not AuthApi.esta_logueado():
 		return
@@ -114,29 +99,137 @@ func cargar_posicion_propia(forzar: bool = false) -> void:
 		posicion_propia_cargada.emit(_cache_posicion_propia)
 
 
-# Borra el cache de un scope específico, o todo el cache si no se pasa scope.
+func cargar_resumen_competitivo(forzar: bool = false, scope: String = "global_xp") -> Dictionary:
+	if not AuthApi.esta_logueado():
+		return {"ok": false, "error": "Sin sesión activa"}
+
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = "global_xp"
+
+	if not forzar and _cache_resumen_esta_fresco(scope_final):
+		var cacheado: Dictionary = _cache_resumen_por_scope[scope_final]["datos"]
+		resumen_competitivo_cargado.emit(cacheado)
+		return {"ok": true, "data": cacheado}
+
+	if _cargando_resumen:
+		return {"ok": false, "error": "Carga en curso"}
+
+	_cargando_resumen = true
+	var resultado := await LeaderboardApi.obtener_resumen_competitivo(scope_final)
+	_cargando_resumen = false
+
+	if resultado.get("ok", false):
+		var datos: Variant = resultado.get("data", resultado)
+		var datos_dict := datos as Dictionary if datos is Dictionary else {}
+		_cache_resumen_por_scope[scope_final] = {
+			"datos": datos_dict,
+			"timestamp": Time.get_unix_time_from_system()
+		}
+		resumen_competitivo_cargado.emit(datos_dict)
+	else:
+		var mensaje := LeaderboardApi.mensaje_error(resultado)
+		resumen_competitivo_fallido.emit(mensaje)
+
+	return resultado
+
+
 func invalidar_cache(scope: String = "") -> void:
 	if scope.is_empty():
 		_cache.clear()
+		_cache_posicion_propia.clear()
+		_timestamp_posicion_propia = -1.0
+		_cache_resumen_por_scope.clear()
 	else:
 		_cache.erase(scope)
+		_cache_resumen_por_scope.erase(scope)
+		_remover_posicion_cache_para_scope(scope)
 
 
-# Retorna los datos cacheados de un scope (o vacío si no hay cache fresco).
 func obtener_desde_cache(scope: String) -> Dictionary:
 	if _cache_esta_fresco(scope):
 		return _cache[scope]["datos"]
 	return {}
 
 
-# Indica si hay un request activo para ese scope.
+func obtener_resumen_desde_cache(scope: String = "global_xp") -> Dictionary:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = "global_xp"
+	if _cache_resumen_esta_fresco(scope_final):
+		return _cache_resumen_por_scope[scope_final]["datos"]
+	return {}
+
+
+# Devuelve el puesto (#rank) guardado en cache para un scope.
+# Si no hay datos o el jugador no aparece, retorna 0.
+func obtener_puesto_desde_resumen_cache(scope: String = "global_xp") -> int:
+	var resumen := obtener_resumen_desde_cache(scope)
+	if resumen.is_empty():
+		return 0
+	if not bool(resumen.get("available", false)):
+		return 0
+
+	var datos_jugador: Variant = resumen.get("current", null)
+	if not datos_jugador is Dictionary:
+		return 0
+
+	return int((datos_jugador as Dictionary).get("rank", 0))
+
+
 func esta_cargando(scope: String) -> bool:
 	return _cargando_scope.get(scope, false)
 
 
-# ── Internos ───────────────────────────────────────────────────────────────────
+func _actualizar_cache_posicion_desde_leaderboard(scope: String, datos: Dictionary) -> void:
+	if not AuthApi.esta_logueado():
+		return
 
-# Retorna true si el cache del scope existe y no venció.
+	var own: Variant = datos.get("own_position", null)
+	if own is Dictionary:
+		var own_dict := own as Dictionary
+		if own_dict.get("rank") != null:
+			_merge_posicion_en_cache(scope, int(own_dict.get("rank", 0)), int(own_dict.get("score", 0)))
+			return
+
+	for entrada in datos.get("entries", []) as Array:
+		if entrada is Dictionary:
+			var entry := entrada as Dictionary
+			var user_id := str(entry.get("user_id", ""))
+			if user_id == _obtener_id_usuario_logueado():
+				_merge_posicion_en_cache(scope, int(entry.get("rank", 0)), int(entry.get("score", 0)))
+				return
+
+
+func _merge_posicion_en_cache(scope: String, rank: int, score: int) -> void:
+	var idx := -1
+	for i in _cache_posicion_propia.size():
+		var pos: Variant = _cache_posicion_propia[i]
+		if pos is Dictionary and str((pos as Dictionary).get("scope", "")) == scope:
+			idx = i
+			break
+
+	var nueva: Dictionary = {"scope": scope, "rank": rank, "score": score}
+	if idx >= 0:
+		_cache_posicion_propia[idx] = nueva
+	else:
+		_cache_posicion_propia.append(nueva)
+	_timestamp_posicion_propia = Time.get_unix_time_from_system()
+
+
+func _remover_posicion_cache_para_scope(scope: String) -> void:
+	var filtradas: Array = []
+	for pos in _cache_posicion_propia:
+		if pos is Dictionary and str((pos as Dictionary).get("scope", "")) != scope:
+			filtradas.append(pos)
+	_cache_posicion_propia = filtradas
+
+
+func _obtener_id_usuario_logueado() -> String:
+	var datos_usuario := BackendSession.obtener_usuario_en_cache()
+	return str(datos_usuario.get("id", ""))
+
+
 func _cache_esta_fresco(scope: String) -> bool:
 	if not _cache.has(scope):
 		return false
@@ -144,9 +237,15 @@ func _cache_esta_fresco(scope: String) -> bool:
 	return antiguedad < SEGUNDOS_CACHE_VALIDO
 
 
-# Retorna true si el cache de posición propia existe y no venció.
 func _cache_posicion_propia_esta_fresco() -> bool:
 	if _timestamp_posicion_propia < 0:
 		return false
 	var antiguedad := Time.get_unix_time_from_system() - _timestamp_posicion_propia
+	return antiguedad < SEGUNDOS_CACHE_VALIDO
+
+
+func _cache_resumen_esta_fresco(scope: String) -> bool:
+	if not _cache_resumen_por_scope.has(scope):
+		return false
+	var antiguedad := Time.get_unix_time_from_system() - float(_cache_resumen_por_scope[scope]["timestamp"])
 	return antiguedad < SEGUNDOS_CACHE_VALIDO

@@ -2,72 +2,73 @@ class_name LeaderboardEntry
 extends HBoxContainer
 
 # Fila individual dentro de la lista del leaderboard.
-#
-# Muestra la posición (#1, #2... o medalla 🥇🥈🥉), el nombre del jugador
-# y su puntaje formateado (ej: 12.4K, 1.2M).
-# Si la fila corresponde al jugador logueado, se resalta con un fondo de color.
 
 
-# ── Señales ────────────────────────────────────────────────────────────────────
-
-# Emitida cuando el jugador toca esta fila.
-signal entrada_presionada(id_usuario: String)
+signal entrada_presionada(id_usuario: String, entrada: Dictionary)
 
 
-# ── Configuración visual (exportada al editor) ─────────────────────────────────
-
-@export var color_medalla_oro:    Color = Color("FFD700")  # #1
-@export var color_medalla_plata:  Color = Color("C0C0C0")  # #2
-@export var color_medalla_bronce: Color = Color("CD7F32")  # #3
-@export var color_fila_propia:    Color = Color(1, 1, 1, 0.15)  # jugador logueado
+@export var color_fila_propia: Color = Color(MiPaleta.VERDE_BOSQUE.r, MiPaleta.VERDE_BOSQUE.g, MiPaleta.VERDE_BOSQUE.b, 0.14)
 
 
-# ── Nodos de la escena ─────────────────────────────────────────────────────────
+@onready var _avatar_badge: LeaderboardAvatarBadge = $AvatarBadge
+@onready var _label_posicion: Label           = $RankLabel
+@onready var _label_nombre:   Label           = $NombreLabel
+@onready var _label_puntaje:  Label           = $ScoreLabel
+@onready var _boton_area:     Button          = $BotonArea
 
-@onready var _label_posicion: Label     = $RankLabel
-@onready var _label_nombre:   Label     = $NombreLabel
-@onready var _label_puntaje:  Label     = $ScoreLabel
-@onready var _fondo_destacado: ColorRect = $BgHighlight
-@onready var _boton_area:     Button    = $BotonArea
-
-
-# ── Estado interno ─────────────────────────────────────────────────────────────
 
 var _id_usuario: String = ""
+var _entrada: Dictionary = {}
+var _scope: String = "global_xp"
+var _resaltar_propia: bool = false
 
-
-# ── Ciclo de vida ──────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	if is_instance_valid(_boton_area):
 		_boton_area.pressed.connect(_al_presionar_fila)
-	if is_instance_valid(_fondo_destacado):
-		_fondo_destacado.visible = false
+	_aplicar_fuentes()
 
 
-# ── API pública ────────────────────────────────────────────────────────────────
+func _draw() -> void:
+	if _resaltar_propia:
+		draw_rect(Rect2(Vector2.ZERO, size), color_fila_propia)
 
-# Llena la fila con los datos de una entrada del API.
-# entrada = { rank, user_id, username, display_name, score }
-# es_propio = true si este jugador es el que está logueado actualmente.
-func poblar(entrada: Dictionary, es_propio: bool = false) -> void:
+
+func _aplicar_fuentes() -> void:
+	var rubik: Font = load("res://fonts/Rubik-VariableFont_wght.ttf") as Font
+	if rubik == null:
+		return
+	for lbl: Label in [_label_posicion, _label_nombre, _label_puntaje]:
+		if is_instance_valid(lbl):
+			lbl.add_theme_font_override("font", rubik)
+	if is_instance_valid(_label_nombre):
+		_label_nombre.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
+	if is_instance_valid(_label_puntaje):
+		_label_puntaje.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
+
+
+func poblar(entrada: Dictionary, es_propio: bool = false, scope: String = "global_xp") -> void:
+	_entrada = entrada
 	_id_usuario = str(entrada.get("user_id", ""))
+	_scope = scope
+	_resaltar_propia = es_propio
 
 	var posicion: int  = int(entrada.get("rank", 0))
 	var puntaje: int   = int(entrada.get("score", 0))
 	var nombre: String = _resolver_nombre(entrada)
 
-	_label_posicion.text = _texto_posicion(posicion)
+	_label_posicion.text = LeaderboardFormat.texto_posicion(posicion)
 	_label_nombre.text   = nombre
-	_label_puntaje.text  = _formatear_puntaje(puntaje)
+	_label_puntaje.text  = LeaderboardFormat.formatear_score(puntaje, scope)
+
+	if is_instance_valid(_avatar_badge):
+		_avatar_badge.mostrar_para_entrada(entrada, es_propio)
 
 	_aplicar_color_posicion(posicion, es_propio)
-	_aplicar_fondo_destacado(es_propio)
+	_aplicar_estilo_propia(es_propio)
+	queue_redraw()
 
 
-# ── Internos ───────────────────────────────────────────────────────────────────
-
-# Prioriza el display_name si existe, si no usa el username.
 func _resolver_nombre(entrada: Dictionary) -> String:
 	var nombre_visible: Variant = entrada.get("display_name", null)
 	if nombre_visible != null and nombre_visible is String and not (nombre_visible as String).is_empty():
@@ -76,49 +77,35 @@ func _resolver_nombre(entrada: Dictionary) -> String:
 	return nombre_usuario as String if nombre_usuario is String else "—"
 
 
-# Las primeras 3 posiciones muestran medallas, el resto muestra "#N".
-func _texto_posicion(posicion: int) -> String:
-	match posicion:
-		1: return "🥇"
-		2: return "🥈"
-		3: return "🥉"
-		_: return "#%d" % posicion
-
-
-# Formatea el puntaje con sufijo K o M para que sea legible.
-func _formatear_puntaje(puntaje: int) -> String:
-	if puntaje >= 1_000_000:
-		return "%.1fM" % (float(puntaje) / 1_000_000)
-	if puntaje >= 1_000:
-		return "%.1fK" % (float(puntaje) / 1_000)
-	return str(puntaje)
-
-
-# Colorea el label de posición según el puesto o si es el jugador propio.
 func _aplicar_color_posicion(posicion: int, es_propio: bool) -> void:
 	if not is_instance_valid(_label_posicion):
 		return
+	_label_posicion.add_theme_color_override(
+		"font_color",
+		LeaderboardFormat.color_posicion(posicion, es_propio)
+	)
+
+
+func _aplicar_estilo_propia(es_propio: bool) -> void:
 	if es_propio:
-		_label_posicion.add_theme_color_override("font_color", Color.WHITE)
+		if is_instance_valid(_label_nombre):
+			_label_nombre.add_theme_color_override("font_color", Color.WHITE)
+		if is_instance_valid(_label_puntaje):
+			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+	else:
+		if is_instance_valid(_label_nombre):
+			_label_nombre.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
+		if is_instance_valid(_label_puntaje):
+			_label_puntaje.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
+
+
+func refrescar_avatar_si_coincide(user_id: String) -> void:
+	if user_id.is_empty() or user_id != _id_usuario:
 		return
-	match posicion:
-		1: _label_posicion.add_theme_color_override("font_color", color_medalla_oro)
-		2: _label_posicion.add_theme_color_override("font_color", color_medalla_plata)
-		3: _label_posicion.add_theme_color_override("font_color", color_medalla_bronce)
-		_: _label_posicion.remove_theme_color_override("font_color")
+	if is_instance_valid(_avatar_badge):
+		_avatar_badge.mostrar_para_entrada(_entrada, _resaltar_propia)
 
-
-# Muestra u oculta el fondo de color que resalta la fila propia.
-func _aplicar_fondo_destacado(es_propio: bool) -> void:
-	if not is_instance_valid(_fondo_destacado):
-		return
-	_fondo_destacado.visible = es_propio
-	if es_propio:
-		_fondo_destacado.color = color_fila_propia
-
-
-# ── Callbacks ──────────────────────────────────────────────────────────────────
 
 func _al_presionar_fila() -> void:
 	if not _id_usuario.is_empty():
-		entrada_presionada.emit(_id_usuario)
+		entrada_presionada.emit(_id_usuario, _entrada)

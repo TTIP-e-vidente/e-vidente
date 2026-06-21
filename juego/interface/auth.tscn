@@ -474,7 +474,14 @@ text = "Te enviamos un código de 6 dígitos a tu casilla. Podés configurarlo c
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
 theme_override_font_sizes/font_size = 13
-text = "Recibir recordatorios de racha por correo (requiere mail verificado)"
+text = "Quiero recibir recordatorios de racha por correo"
+
+[node name="EmailNotificationsHintLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120342]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "Activá esta opción solo si querés avisos. Requiere mail verificado."
 
 [node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2024719766]
 layout_mode = 2

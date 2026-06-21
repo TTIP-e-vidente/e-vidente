@@ -5,6 +5,8 @@ enum AuthMode { LOGIN, REGISTER }
 signal login_completed()
 signal play_offline_requested()
 
+signal verificacion_escena_solicitada(es_registro: bool, result: Dictionary)
+
 @onready var label_title: Label = $VBoxContainer/LabelTitle
 @onready var _input_username: LineEdit = $VBoxContainer/LineEditUsernameOrMail
 @onready var _input_password: LineEdit = $VBoxContainer/LineEditPassword
@@ -21,6 +23,7 @@ signal play_offline_requested()
 var _is_loading := false
 var _mode := AuthMode.LOGIN
 var _servidor_ok := false
+var _tween_carga: Tween = null
 
 
 func _ready() -> void:
@@ -76,10 +79,31 @@ func _verificar_servidor_al_inicio() -> void:
 	_establecer_estado("Comprobando servidor...")
 	var check := await AuthApi.verificar_servidor()
 	_servidor_ok = bool(check.get("ok", false))
-	if _servidor_ok:
-		_establecer_estado("")
+	if not _servidor_ok:
+		_establecer_estado(AuthApi.mensaje_error(check.get("result", {}), "Servidor no disponible."), true)
 		return
-	_establecer_estado(AuthApi.mensaje_error(check.get("result", {}), "Servidor no disponible."))
+	_establecer_estado("")
+	await _verificar_salud_email_al_inicio()
+
+
+func _verificar_salud_email_al_inicio() -> void:
+	var email_check := await AuthApi.verificar_salud_email()
+	if not bool(email_check.get("ok", false)):
+		return
+	var data: Variant = email_check.get("data", {})
+	if not data is Dictionary:
+		return
+	var payload := data as Dictionary
+	if bool(payload.get("delivery_configured", true)):
+		return
+	if bool(payload.get("dev_code_in_logs", false)):
+		_establecer_estado(
+			"Modo desarrollo: sin Brevo. El código OTP aparece en la consola del backend."
+		)
+	else:
+		_establecer_estado(
+			"Aviso: el servidor no tiene mail configurado. La verificación por código puede fallar."
+		)
 
 
 func _on_boton_enviar_presionado() -> void:
@@ -91,7 +115,7 @@ func _on_boton_enviar_presionado() -> void:
 func _enviar_formulario() -> void:
 	var error_validacion := _validar_formulario()
 	if not error_validacion.is_empty():
-		_establecer_estado(error_validacion)
+		_establecer_estado(error_validacion, true)
 		return
 
 	_establecer_cargando(true)
@@ -106,7 +130,7 @@ func _enviar_formulario() -> void:
 			_input_register_name.text.strip_edges(),
 			_input_register_birth_date.text.strip_edges(),
 			false,
-			false
+			true
 		)
 	else:
 		result = await AuthApi.iniciar_sesion_completa(
@@ -116,15 +140,22 @@ func _enviar_formulario() -> void:
 
 	_establecer_cargando(false)
 	if not result.get("ok", false):
-		_establecer_estado(str(result.get("mensaje", "No se pudo completar la operación.")))
+		_establecer_estado(str(result.get("mensaje", "No se pudo completar la operación.")), true)
 		return
 
 	if _mode == AuthMode.REGISTER:
-		_establecer_estado(
-			"Cuenta creada. Podés verificar tu mail y elegir avisos desde Mi progreso."
-		)
+		var mail_registro := _input_register_mail.text.strip_edges()
+		if mail_registro.is_empty():
+			_establecer_estado("El mail es obligatorio para crear la cuenta.", true)
+			return
+		verificacion_escena_solicitada.emit(true, result)
+		return
 	else:
 		_establecer_estado(str(result.get("mensaje", "Sesión iniciada.")))
+		if AuthApi.mail_pendiente_verificacion():
+			verificacion_escena_solicitada.emit(false, {})
+			return
+
 	login_completed.emit()
 
 
@@ -164,7 +195,8 @@ func _on_sesion_restaurada(user: Dictionary) -> void:
 func _on_fallo_restauracion_sesion(reason: String) -> void:
 	_establecer_estado(
 		"Sesión anterior expirada.\n"
-		+ AuthApi.mensaje_error({"error": reason, "status": 401}, reason)
+		+ AuthApi.mensaje_error({"error": reason, "status": 401}, reason),
+		true
 	)
 
 
@@ -178,9 +210,37 @@ func _establecer_cargando(value: bool) -> void:
 	_input_register_name.editable = not value
 	_input_register_mail.editable = not value
 	_input_register_birth_date.editable = not value
+	if value:
+		_iniciar_animacion_carga()
+	else:
+		_detener_animacion_carga()
 
 
-func _establecer_estado(texto: String) -> void:
-	print("[Login] ", texto.replace("\n", " | "))
+func _iniciar_animacion_carga() -> void:
+	_detener_animacion_carga()
+	if not is_instance_valid(_label_status):
+		return
+	_tween_carga = create_tween().set_loops()
+	_tween_carga.tween_property(_label_status, "modulate:a", 0.4, 0.55)
+	_tween_carga.tween_property(_label_status, "modulate:a", 1.0, 0.55)
+
+
+func _detener_animacion_carga() -> void:
+	if _tween_carga != null and _tween_carga.is_valid():
+		_tween_carga.kill()
+	_tween_carga = null
 	if is_instance_valid(_label_status):
-		_label_status.text = texto
+		_label_status.modulate.a = 1.0
+
+
+func _establecer_estado(texto: String, es_error: bool = false) -> void:
+	print("[Login] ", texto.replace("\n", " | "))
+	if not is_instance_valid(_label_status):
+		return
+	_label_status.text = texto
+	if es_error:
+		_label_status.add_theme_color_override("font_color", MiPaleta.FEEDBACK_ERROR)
+	elif texto.is_empty():
+		_label_status.remove_theme_color_override("font_color")
+	else:
+		_label_status.add_theme_color_override("font_color", MiPaleta.FEEDBACK_OK)

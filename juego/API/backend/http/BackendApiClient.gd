@@ -32,6 +32,10 @@ func verificar_salud_db() -> Dictionary:
 	return await _obtener_json("/health/db", "")
 
 
+func verificar_salud_email() -> Dictionary:
+	return await _obtener_json("/health/email", "")
+
+
 func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 	var body := JSON.stringify({
 		"usernameOrMail": usuario_o_mail,
@@ -100,7 +104,7 @@ func obtener_leaderboard(
 	offset: int = 0,
 	include_self: bool = false
 ) -> Dictionary:
-	var qs := "?scope=%s&limit=%d&offset=%d" % [scope, limit, offset]
+	var qs := "?scope=%s&limit=%d&offset=%d" % [scope.uri_encode(), limit, offset]
 	if include_self and not token.is_empty():
 		qs += "&include_self=true"
 	return await _obtener_json("/leaderboard" + qs, token)
@@ -112,8 +116,9 @@ func obtener_mi_posicion_leaderboard(token: String) -> Dictionary:
 
 # Obtiene el contexto competitivo del jugador (puesto actual, siguiente rival, EXP faltante).
 # Endpoint: GET /leaderboard/me/summary
-func obtener_resumen_ranking(token: String) -> Dictionary:
-	return await _obtener_json("/leaderboard/me/summary", token)
+func obtener_resumen_ranking(token: String, scope: String = "global_xp") -> Dictionary:
+	var qs := "?scope=%s" % scope.strip_edges().uri_encode()
+	return await _obtener_json("/leaderboard/me/summary" + qs, token)
 
 
 func obtener_meta_leaderboard() -> Dictionary:
@@ -133,6 +138,13 @@ func descargar_avatar(token: String) -> Dictionary:
 	return await _obtener_json("/player/me/avatar", token)
 
 
+func descargar_avatar_publico(user_id: String) -> Dictionary:
+	var clean_id := user_id.strip_edges()
+	if clean_id.is_empty():
+		return {"ok": false, "error": "userId vacío"}
+	return await _obtener_json("/player/users/%s/avatar" % clean_id.uri_encode(), "")
+
+
 func eliminar_avatar(token: String) -> Dictionary:
 	var headers := _armar_headers(token)
 	return await _enviar_peticion(HTTPClient.METHOD_DELETE, "/player/me/avatar", headers, "")
@@ -145,6 +157,10 @@ func solicitar_verificacion_email(token: String) -> Dictionary:
 func confirmar_verificacion_email(token: String, codigo: String) -> Dictionary:
 	var body := JSON.stringify({"code": codigo})
 	return await _enviar_post("/player/verify-email/confirm", token, body)
+
+
+func obtener_estado_email(token: String) -> Dictionary:
+	return await _obtener_json("/player/me/email-status", token)
 
 
 func _enviar_post(endpoint: String, token: String, body: String) -> Dictionary:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://lb_scene_001"]
+[gd_scene load_steps=16 format=3 uid="uid://lb_scene_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="2_tabs"]
@@ -6,95 +6,227 @@
 [ext_resource type="PackedScene" path="res://interface/leaderboard/OwnPositionCard.tscn" id="4_card"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardSkeleton.tscn" id="5_skeleton"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEmpty.tscn" id="6_empty"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEntryPeek.tscn" id="7_peek"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.09, 0.12, 0.10, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.859, 0.753, 0.318, 0.55)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+shadow_size = 18
+shadow_offset = Vector2(0, 8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
+bg_color = Color(0.06, 0.09, 0.07, 1.0)
+border_width_bottom = 2
+border_color = Color(0.859, 0.753, 0.318, 0.45)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reintentar_normal"]
+bg_color = Color(0.859, 0.753, 0.318, 0.15)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.50)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16
+content_margin_top = 8
+content_margin_right = 16
+content_margin_bottom = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reintentar_hover"]
+bg_color = Color(0.859, 0.753, 0.318, 0.28)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.80)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16
+content_margin_top = 8
+content_margin_right = 16
+content_margin_bottom = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.03, 0.05, 0.04, 0.60)
 
 [node name="LeaderboardScene" type="CanvasLayer"]
 script = ExtResource("1_scene")
 layer = 80
 
-[node name="Fondo" type="ColorRect" parent="."]
+[node name="Fondo" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
-color = Color(0.05, 0.05, 0.1, 0.92)
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
 
 [node name="PanelCentral" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -340.0
-offset_right = 260.0
-offset_bottom = 340.0
+offset_left = -268.0
+offset_top = -350.0
+offset_right = 268.0
+offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="VBoxPrincipal" type="VBoxContainer" parent="PanelCentral"]
 layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HeaderBar" type="PanelContainer" parent="PanelCentral/VBoxPrincipal"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 56)
+theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+
+[node name="MarginHeader" type="MarginContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Header" type="HBoxContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader"]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Header" type="HBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="IconoTitulo" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 48)
+theme_override_font_sizes/font_size = 20
+text = "🏆"
+vertical_alignment = 1
 
-[node name="TituloLabel" type="Label" parent="PanelCentral/VBoxPrincipal/Header"]
+[node name="TituloLabel" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-vertical_alignment = 1
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1.0)
+theme_override_font_sizes/font_size = 19
 text = "Tabla de posiciones"
+vertical_alignment = 1
 
-[node name="BotonCerrar" type="Button" parent="PanelCentral/VBoxPrincipal/Header"]
+[node name="BotonCerrar" type="Button" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "✕"
+custom_minimum_size = Vector2(36, 36)
+theme_override_colors/font_color = Color(0.55, 0.58, 0.56, 1)
+theme_override_font_sizes/font_size = 18
 flat = true
+text = "✕"
 
-[node name="ScopeTabs" type="Node" parent="PanelCentral/VBoxPrincipal"]
+[node name="Contenido" type="MarginContainer" parent="PanelCentral/VBoxPrincipal"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="VBoxContenido" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="ScopeTabs" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" instance=ExtResource("2_tabs")]
 unique_name_in_owner = true
-instance = ExtResource("2_tabs")
+layout_mode = 2
 
-[node name="ContenedorCarga" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="LabelMeta" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.75)
+theme_override_font_sizes/font_size = 12
+text = ""
+horizontal_alignment = 1
+
+[node name="ContenedorCarga" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 visible = true
 
-[node name="LeaderboardSkeleton" parent="PanelCentral/VBoxPrincipal/ContenedorCarga" instance=ExtResource("5_skeleton")]
+[node name="LeaderboardSkeleton" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorCarga" instance=ExtResource("5_skeleton")]
 layout_mode = 2
 
-[node name="ContenedorDatos" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="ContenedorDatos" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 visible = false
 
-[node name="LeaderboardList" type="Node" parent="PanelCentral/VBoxPrincipal/ContenedorDatos"]
-unique_name_in_owner = true
-instance = ExtResource("3_list")
-
-[node name="ContenedorVacio" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="LeaderboardList" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("3_list")]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 3
-visible = false
 
-[node name="LeaderboardEmpty" parent="PanelCentral/VBoxPrincipal/ContenedorVacio" instance=ExtResource("6_empty")]
+[node name="EntryPeek" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("7_peek")]
+unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ContenedorError" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="ContenedorVacio" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 visible = false
 
-[node name="LabelError" type="Label" parent="PanelCentral/VBoxPrincipal/ContenedorError"]
+[node name="LeaderboardEmpty" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorVacio" instance=ExtResource("6_empty")]
+layout_mode = 2
+
+[node name="ContenedorError" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 3
+visible = false
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="IconoError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "⚠"
 horizontal_alignment = 1
-text = "No se pudo cargar el leaderboard."
 
-[node name="OwnPositionCard" type="Node" parent="PanelCentral/VBoxPrincipal"]
+[node name="LabelError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
 unique_name_in_owner = true
-instance = ExtResource("4_card")
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.40, 0.38, 1)
+text = "No se pudo cargar el leaderboard."
+horizontal_alignment = 1
+
+[node name="BotonReintentar" type="Button" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1.0)
+theme_override_styles/normal = SubResource("StyleBoxFlat_reintentar_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_reintentar_hover")
+text = "Reintentar"
+
+[node name="OwnPositionCard" parent="PanelCentral/VBoxPrincipal" instance=ExtResource("4_card")]
+unique_name_in_owner = true
+layout_mode = 2

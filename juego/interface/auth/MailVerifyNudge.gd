@@ -1,15 +1,15 @@
 extends CanvasLayer
 
-signal ir_a_perfil_solicitado()
+signal verificar_ahora_solicitado()
 
 @onready var _panel: PanelContainer = $PanelContainer
 @onready var _label: Label = $PanelContainer/MarginContainer/HBoxContainer/LabelMensaje
-@onready var _boton: Button = $PanelContainer/MarginContainer/HBoxContainer/BotonPerfil
+@onready var _boton: Button = $PanelContainer/MarginContainer/HBoxContainer/BotonVerificar
 
 
 func _ready() -> void:
 	layer = 5
-	_boton.pressed.connect(func(): ir_a_perfil_solicitado.emit())
+	_boton.pressed.connect(func(): verificar_ahora_solicitado.emit())
 	visible = false
 
 
@@ -29,4 +29,5 @@ func refrescar() -> void:
 		visible = false
 		return
 	_label.text = "Verificá tu mail para activar avisos y recuperar tu cuenta."
+	_boton.text = "Verificar ahora"
 	visible = true

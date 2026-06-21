@@ -210,6 +210,10 @@ func verificar_estado_del_servidor() -> Dictionary:
 	return {"ok": true}
 
 
+func verificar_salud_email() -> Dictionary:
+	return await _api.verificar_salud_email()
+
+
 func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 	var listo := await _asegurar_servidor_listo()
 	if not listo.get("ok", false):
@@ -262,6 +266,10 @@ func eliminar_avatar_online() -> Dictionary:
 	return resultado
 
 
+func descargar_avatar_publico(user_id: String) -> Dictionary:
+	return await _api.descargar_avatar_publico(user_id)
+
+
 func actualizar_perfil_online(
 	nombre: String,
 	mail: String,
@@ -271,24 +279,33 @@ func actualizar_perfil_online(
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
 
+	var payload := {}
+	var cached := _usuario_en_cache
+
 	var clean_name := nombre.strip_edges()
 	if clean_name.is_empty():
 		clean_name = obtener_usuario()
-
-	var payload := {
-		"name": clean_name,
-	}
+	var cached_name := str(cached.get("name", cached.get("username", ""))).strip_edges()
+	if cached.is_empty() or clean_name != cached_name:
+		payload["name"] = clean_name
 
 	var clean_mail := mail.strip_edges()
-	if not clean_mail.is_empty():
-		payload["mail"] = clean_mail
+	var cached_mail := str(cached.get("mail", "")).strip_edges()
+	if clean_mail != cached_mail:
+		payload["mail"] = clean_mail if not clean_mail.is_empty() else null
 
 	var clean_birth := fecha_nacimiento.strip_edges()
-	if not clean_birth.is_empty():
-		payload["birth_date"] = clean_birth
+	var cached_birth := str(cached.get("birth_date", "")).strip_edges()
+	if clean_birth != cached_birth:
+		payload["birth_date"] = clean_birth if not clean_birth.is_empty() else null
 
 	if notificaciones_mail is bool:
-		payload["email_notifications_enabled"] = notificaciones_mail
+		var cached_notifications := bool(cached.get("email_notifications_enabled", false))
+		if cached.is_empty() or cached_notifications != notificaciones_mail:
+			payload["email_notifications_enabled"] = notificaciones_mail
+
+	if payload.is_empty():
+		return {"ok": true, "data": {"user": cached.duplicate(true)}, "skipped": true}
 
 	var epoch := _auth.obtener_epoch()
 	var resultado := await _api.actualizar_perfil(_auth.obtener_token(), payload)
@@ -333,6 +350,22 @@ func confirmar_verificacion_email(codigo: String) -> Dictionary:
 			var verified_at: Variant = (data as Dictionary).get("mail_verified_at", null)
 			if not _usuario_en_cache.is_empty():
 				_usuario_en_cache["mail_verified_at"] = verified_at
+				BackendSessionStorage.guardar_sesion(
+					_auth.obtener_token(),
+					_auth.obtener_usuario(),
+					_usuario_en_cache
+				)
+				if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
+					SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+	return resultado
+
+
+func obtener_estado_verificacion_email() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
+	var resultado := await _api.obtener_estado_email(_auth.obtener_token())
+	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
@@ -389,10 +422,10 @@ func obtener_mi_posicion_leaderboard_online() -> Dictionary:
 
 # Obtiene el contexto competitivo del jugador autenticado.
 # Retorna { available: true, current, next, exp_to_next_rank, ... } o { available: false }.
-func obtener_resumen_ranking_online() -> Dictionary:
+func obtener_resumen_ranking_online(scope: String = "global_xp") -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "status": 401, "error": "No active session"}
-	return await _api.obtener_resumen_ranking(_auth.obtener_token())
+	return await _api.obtener_resumen_ranking(_auth.obtener_token(), scope)
 
 
 func obtener_meta_leaderboard_online() -> Dictionary:

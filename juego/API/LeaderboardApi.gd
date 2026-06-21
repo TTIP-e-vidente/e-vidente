@@ -48,11 +48,11 @@ static func obtener_meta() -> Dictionary:
 
 # Obtiene el contexto competitivo del jugador logueado.
 # Retorna los datos de /leaderboard/me/summary:
-#   { available, current, next, exp_to_next_rank, progress_to_next_rank, is_first_place }
-static func obtener_resumen_competitivo() -> Dictionary:
+#   { available, scope, scope_label, current, next, exp_to_next_rank, progress_to_next_rank, is_first_place }
+static func obtener_resumen_competitivo(scope: String = SCOPE_XP_GLOBAL) -> Dictionary:
 	if not AuthApi.esta_logueado():
 		return {"ok": false, "error": "Sin sesión activa"}
-	return await BackendSession.obtener_resumen_ranking_online()
+	return await BackendSession.obtener_resumen_ranking_online(scope)
 
 
 # ── Helpers para procesar respuestas ──────────────────────────────────────────

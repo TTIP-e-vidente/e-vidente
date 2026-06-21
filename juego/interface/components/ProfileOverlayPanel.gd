@@ -11,6 +11,8 @@ signal logout_pressed
 signal close_requested
 signal ranking_pressed
 
+signal login_pressed
+
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
 @onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
@@ -39,7 +41,7 @@ func _ready() -> void:
 	_close_btn.pressed.connect(func(): close_requested.emit())
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
 	_guardar_btn.pressed.connect(_on_guardar_presionado)
-	_edit_btn.pressed.connect(func(): edit_profile_pressed.emit())
+	_edit_btn.pressed.connect(_on_editar_perfil_o_login_presionado)
 	if is_instance_valid(_leaderboard_btn):
 		_leaderboard_btn.pressed.connect(func(): ranking_pressed.emit())
 	if _logout_btn:
@@ -81,6 +83,7 @@ func mostrar_feedback_reset(message: String, ok: bool = true) -> void:
 	if not is_instance_valid(_save_status_label):
 		return
 	_save_status_label.text = message
+	_save_status_label.modulate = MiPaleta.FEEDBACK_OK if ok else MiPaleta.FEEDBACK_ERROR
 	if ok:
 		refrescar()
 
@@ -93,6 +96,7 @@ func mostrar_feedback_guardado(message: String = "¡Guardado correctamente!") ->
 	_guardar_btn.disabled = true
 	_guardar_btn.text = "✓"
 	_save_status_label.text = message
+	_save_status_label.modulate = MiPaleta.FEEDBACK_OK
 	await get_tree().create_timer(2.5).timeout
 	_syncing = false
 	if is_instance_valid(_guardar_btn):
@@ -167,7 +171,10 @@ func _save_manager_listo() -> bool:
 
 
 func refrescar() -> void:
+	var es_invitado := not AuthApi.esta_logueado()
 	var username := _resolver_nombre_usuario_visible()
+	if es_invitado:
+		username = "Modo invitado"
 	_username_label.text = username
 	_avatar_label.text = _iniciales_desde(username)
 	var avatar_texture: Texture2D = null
@@ -181,7 +188,9 @@ func refrescar() -> void:
 	if _save_manager_listo():
 		email = SaveManager.obtener_email_usuario_actual()
 	var email_line := email if not email.is_empty() else "Sin correo"
-	if AuthApi.esta_logueado() and not email.is_empty():
+	if es_invitado:
+		email_line = "Progreso solo en este dispositivo.\nIniciá sesión para ranking online y sync."
+	elif AuthApi.esta_logueado() and not email.is_empty():
 		var user_online := AuthApi.obtener_usuario_online()
 		var verified_at := str(user_online.get("mail_verified_at", "")).strip_edges()
 		var verified := not verified_at.is_empty()
@@ -222,7 +231,20 @@ func refrescar() -> void:
 		_weekly_summary.call("refrescar")
 		
 	if _logout_btn:
-		_logout_btn.visible = AuthApi.esta_logueado()
+		_logout_btn.visible = not es_invitado
+	if is_instance_valid(_edit_btn):
+		_edit_btn.text = "Iniciar sesión" if es_invitado else "Editar perfil"
+	if is_instance_valid(_guardar_btn):
+		_guardar_btn.visible = not es_invitado
+	if is_instance_valid(_reset_btn):
+		_reset_btn.visible = not es_invitado
+
+
+func _on_editar_perfil_o_login_presionado() -> void:
+	if not AuthApi.esta_logueado():
+		login_pressed.emit()
+		return
+	edit_profile_pressed.emit()
 
 
 # --- Helpers ---
@@ -264,7 +286,7 @@ func _formatear_estado_con_pendientes() -> String:
 	if _save_manager_listo():
 		base = _formatear_estado(SaveManager.obtener_estado_guardado_actual())
 	if not AuthApi.esta_logueado():
-		return base
+		return "Modo invitado — progreso solo local"
 	var pending_count: int = LocalSyncQueue.contar_pendientes()
 	if pending_count <= 0:
 		return base

@@ -1,6 +1,9 @@
-[gd_scene format=3 uid="uid://lb_empty_001"]
+[gd_scene load_steps=2 format=3 uid="uid://lb_empty_001"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardEmpty.gd" id="1_script"]
 
 [node name="LeaderboardEmpty" type="VBoxContainer"]
+script = ExtResource("1_script")
 custom_minimum_size = Vector2(0, 200)
 anchors_preset = 15
 anchor_right = 1.0
@@ -8,16 +11,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
+theme_override_constants/separation = 12
 
-[node name="Icono" type="Label" parent="."]
+[node name="Titulo" type="Label" parent="."]
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
-text = "🏜️"
+theme_override_font_sizes/font_size = 18
+text = "Todavía no hay datos"
 horizontal_alignment = 1
 
 [node name="Mensaje" type="Label" parent="."]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
-theme_override_font_sizes/font_size = 18
-text = "No hay datos para mostrar."
+theme_override_colors/font_color = Color(0.45, 0.42, 0.36, 1)
+theme_override_font_sizes/font_size = 15
+text = "Jugá una partida para aparecer en el ranking."
 horizontal_alignment = 1
+
+[node name="BotonIniciarSesion" type="Button" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Iniciar sesión"

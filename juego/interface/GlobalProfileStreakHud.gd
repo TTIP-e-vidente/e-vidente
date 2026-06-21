@@ -5,10 +5,11 @@ extends CanvasLayer
 const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
+const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
+const LeaderboardOverlayHelper := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const PROFILE_EDITOR_SCENE_PATH := "res://interface/auth.tscn"
-const MAIL_NUDGE_SCENE_PATH := "res://interface/auth/MailVerifyNudge.tscn"
 const SPLASH_SCENE_PATH := "res://interface/evidente.tscn"
 const INTRO_SCENE_PATH := "res://niveles/intro.tscn"
 const SELECTOR_SCENE_PATH := "res://niveles/selector.tscn"
@@ -36,6 +37,7 @@ func _ready() -> void:
 	_profile_overlay.reestablecer_progreso_pressed.connect(_on_superposicion_reiniciar_presionado)
 	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
 	_profile_overlay.ranking_pressed.connect(_on_superposicion_ranking_presionado)
+	_profile_overlay.login_pressed.connect(_on_superposicion_login_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cierre_solicitado)
 	_instalar_aviso_verificacion_mail()
 	_conectar_senales_save_manager()
@@ -227,10 +229,20 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.mostrar_feedback_reset(str(result.get("message", "Progreso reiniciado.")), true)
 
 func _on_superposicion_ranking_presionado() -> void:
+	_profile_button.visible = true
 	_profile_overlay.ocultar_superposicion()
-	var leaderboard := preload("res://interface/leaderboard/LeaderboardScene.tscn").instantiate()
-	add_child(leaderboard)
-	
+	LeaderboardOverlayHelper.abrir(get_tree(), LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+
+
+func _on_superposicion_login_presionado() -> void:
+	_profile_overlay.ocultar_superposicion()
+	var helper := AuthLoginOverlayHelper.new()
+	await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_PERFIL)
+	_profile_button.visible = true
+	if AuthApi.esta_logueado():
+		_profile_overlay.refrescar()
+		_profile_overlay.mostrar_superposicion()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 func _on_superposicion_logout_presionado() -> void:
 	_ejecutar_logout()
 
@@ -250,35 +262,30 @@ func _obtener_ruta_escena_actual() -> String:
 
 
 func _instalar_aviso_verificacion_mail() -> void:
-	var nudge_scene := load(MAIL_NUDGE_SCENE_PATH) as PackedScene
-	if nudge_scene == null:
-		return
-	_mail_verify_nudge = nudge_scene.instantiate() as CanvasLayer
-	if _mail_verify_nudge == null:
-		return
-	add_child(_mail_verify_nudge)
-	if _mail_verify_nudge.has_signal("ir_a_perfil_solicitado"):
-		_mail_verify_nudge.ir_a_perfil_solicitado.connect(_on_aviso_verificacion_ir_perfil)
+	_mail_verify_nudge = MailVerifyNudgeHelper.instalar_en(
+		self,
+		Callable(self, "_on_aviso_verificacion_verificar_ahora")
+	)
 	_refrescar_aviso_verificacion_mail()
 
 
 func _refrescar_aviso_verificacion_mail() -> void:
-	if not is_instance_valid(_mail_verify_nudge) or not _mail_verify_nudge.has_method("refrescar"):
-		return
 	var scene_path := _obtener_ruta_escena_actual()
 	var hidden := scene_path in [
 		PROFILE_EDITOR_SCENE_PATH,
 		SPLASH_SCENE_PATH,
 		INTRO_SCENE_PATH,
 	]
-	if hidden:
-		_mail_verify_nudge.visible = false
-		return
-	_mail_verify_nudge.refrescar()
+	MailVerifyNudgeHelper.refrescar(_mail_verify_nudge, hidden)
 
 
-func _on_aviso_verificacion_ir_perfil() -> void:
+func _on_aviso_verificacion_verificar_ahora() -> void:
 	var scene_path := _obtener_ruta_escena_actual()
-	if not scene_path.is_empty():
-		get_tree().root.set_meta(PROFILE_RETURN_SCENE_META, scene_path)
-	GameSceneRouter.go_to_profile_editor(get_tree())
+	var return_scene := scene_path if not scene_path.is_empty() else GameSceneRouter.MAIN_MENU_SCENE_PATH
+	EmailVerificationBridge.iniciar_pendiente(
+		false,
+		{
+			"return_scene": return_scene,
+			"after_success": "none",
+		}
+	)

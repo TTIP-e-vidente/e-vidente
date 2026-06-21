@@ -57,7 +57,10 @@ static func sincronizar_post_partida(
 	if node_id.is_empty():
 		node_id = "unknown_node"
 
-	var restriction := resolver_restriccion(tree, resultado, pista_fallback)
+	var restriction_raw := resolver_restriccion(tree, resultado, pista_fallback)
+	var restriction := RestrictionCodes.normalizar_desde_juego(restriction_raw)
+	if restriction.is_empty():
+		restriction = RestrictionCodes.CODE_CELIAQUIA
 
 	var game_type := _leer_tipo_juego(tree, resultado)
 	var score := int(stats.get("aciertos", 0))

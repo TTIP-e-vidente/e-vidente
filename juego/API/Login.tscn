@@ -80,7 +80,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.4392157, 0.27058825, 0.19607843, 0.9)
 theme_override_fonts/font = ExtResource("4_8a7lh")
 theme_override_font_sizes/font_size = 11
-text = "Usaremos tu mail para recuperar la cuenta y avisos opcionales."
+text = "Después de crear la cuenta te pediremos el código de 6 dígitos."
 autowrap_mode = 3
 
 [node name="LineEditRegisterBirthDate" type="LineEdit" parent="VBoxContainer" unique_id=1943296520]

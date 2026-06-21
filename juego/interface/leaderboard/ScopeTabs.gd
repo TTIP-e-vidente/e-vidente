@@ -1,85 +1,94 @@
 class_name ScopeTabs
-extends HBoxContainer
+extends ScrollContainer
 
-# Selector de categorías (scopes) del leaderboard.
-#
-# Genera botones dinámicamente desde la lista SCOPES.
-# Al cambiar de categoría emite "scope_cambiado" para que LeaderboardScene recargue la lista.
-# No llama al API directamente: su responsabilidad es solo la UI.
+# Selector scrolleable de categorías (scopes) del leaderboard.
 
 
-# ── Señales ────────────────────────────────────────────────────────────────────
-
-# Emitida cuando el jugador elige una categoría diferente.
 signal scope_cambiado(scope: String)
 
 
-# ── Categorías disponibles ─────────────────────────────────────────────────────
-
-# Cada categoría tiene un "scope" (identificador del API) y un "etiqueta" (texto del botón).
-const CATEGORIAS: Array[Dictionary] = [
-	{"scope": "global_xp", "etiqueta": "XP Global"},
-	{"scope": "streak",    "etiqueta": "Mejor Racha"},
-]
+const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 
 
-# ── Configuración ──────────────────────────────────────────────────────────────
-
-# Categoría seleccionada al abrir el leaderboard.
 @export var categoria_inicial: String = "global_xp"
 
 
-# ── Estado interno ─────────────────────────────────────────────────────────────
-
 var _scope_activo: String = ""
 var _botones: Array[Button] = []
+var _contenedor: HBoxContainer
 
-
-# ── Ciclo de vida ──────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_contenedor = HBoxContainer.new()
+	_contenedor.add_theme_constant_override("separation", 4)
+	_contenedor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_child(_contenedor)
 	_construir_botones()
 	seleccionar(categoria_inicial)
 
 
-# ── API pública ────────────────────────────────────────────────────────────────
-
-# Marca visualmente un scope como activo sin emitir la señal.
-# Útil para sincronización externa (ej: cuando LeaderboardScene cambia el scope).
 func seleccionar(scope: String) -> void:
 	_scope_activo = scope
+	var categorias := LeaderboardScopeCatalog.obtener_categorias()
 	for i in _botones.size():
-		_botones[i].button_pressed = (CATEGORIAS[i]["scope"] == scope)
+		if i < categorias.size():
+			_botones[i].button_pressed = str(categorias[i].get("scope", "")) == scope
 
 
-# Retorna el scope que está activo en este momento.
 func obtener_scope_activo() -> String:
 	return _scope_activo
 
 
-# ── Internos ───────────────────────────────────────────────────────────────────
-
-# Crea un botón por cada categoría definida en CATEGORIAS.
 func _construir_botones() -> void:
-	for categoria in CATEGORIAS:
+	var rubik: Font = load(RUBIK_FONT_PATH) as Font
+	for categoria in LeaderboardScopeCatalog.obtener_categorias():
 		var boton := Button.new()
-		boton.text                    = str(categoria["etiqueta"])
-		boton.toggle_mode             = true
-		boton.action_mode             = BaseButton.ACTION_MODE_BUTTON_PRESS
-		boton.focus_mode              = Control.FOCUS_NONE
-		boton.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
-		var scope_del_boton: String   = str(categoria["scope"])
+		boton.text = str(categoria.get("etiqueta", ""))
+		boton.toggle_mode = true
+		boton.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		boton.focus_mode = Control.FOCUS_NONE
+		if rubik != null:
+			boton.add_theme_font_override("font", rubik)
+		_aplicar_estilo_boton(boton)
+		var scope_del_boton: String = str(categoria.get("scope", ""))
 		boton.pressed.connect(func() -> void: _al_presionar_tab(scope_del_boton))
-		add_child(boton)
+		_contenedor.add_child(boton)
 		_botones.append(boton)
 
 
-# ── Callbacks ──────────────────────────────────────────────────────────────────
+func _aplicar_estilo_boton(boton: Button) -> void:
+	var inactivo := StyleBoxFlat.new()
+	inactivo.bg_color = Color(0.204, 0.247, 0.173, 0.08)
+	inactivo.set_corner_radius_all(10)
+	inactivo.content_margin_left = 10
+	inactivo.content_margin_right = 10
+	inactivo.content_margin_top = 8
+	inactivo.content_margin_bottom = 8
+
+	var activo := StyleBoxFlat.new()
+	activo.bg_color = MiPaleta.VERDE_BOSQUE
+	activo.set_corner_radius_all(10)
+	activo.content_margin_left = 10
+	activo.content_margin_right = 10
+	activo.content_margin_top = 8
+	activo.content_margin_bottom = 8
+
+	var hover := inactivo.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(0.204, 0.247, 0.173, 0.14)
+
+	boton.add_theme_stylebox_override("normal", inactivo)
+	boton.add_theme_stylebox_override("hover", hover)
+	boton.add_theme_stylebox_override("pressed", activo)
+	boton.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
+	boton.add_theme_color_override("font_pressed_color", Color.WHITE)
+	boton.add_theme_color_override("font_hover_color", MiPaleta.VERDE_BOSQUE)
+
 
 func _al_presionar_tab(scope: String) -> void:
 	if scope == _scope_activo:
-		return  # Ya está activo, no hace falta recargar.
+		return
 	_scope_activo = scope
-	for i in _botones.size():
-		_botones[i].button_pressed = (CATEGORIAS[i]["scope"] == scope)
+	seleccionar(scope)
 	scope_cambiado.emit(scope)

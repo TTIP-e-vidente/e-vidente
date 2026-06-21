@@ -20,8 +20,16 @@ func _ready() -> void:
 	_ocultar_superposicion_perfil()
 	_conectar_insignia_racha()
 	_conectar_senales_guardado()
+	if is_instance_valid(profile_overlay):
+		profile_overlay.ranking_pressed.connect(_on_superposicion_ranking_presionado)
+		profile_overlay.login_pressed.connect(_on_superposicion_login_presionado)
 	_actualizar_hud()
 	_aplicar_fuentes_exp()
+	call_deferred("_procesar_deep_link_leaderboard")
+
+
+func _procesar_deep_link_leaderboard() -> void:
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _aplicar_fuentes_exp() -> void:
@@ -130,6 +138,21 @@ func _on_superposicion_logout_presionado() -> void:
 	await AuthApi.cerrar_sesion()
 	_ocultar_superposicion_perfil()
 	GameSceneRouter.go_to_main_menu(get_tree())
+
+
+func _on_superposicion_ranking_presionado() -> void:
+	_ocultar_superposicion_perfil()
+	LeaderboardOverlayHelper.abrir(get_tree(), LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+
+
+func _on_superposicion_login_presionado() -> void:
+	_ocultar_superposicion_perfil()
+	var helper := AuthLoginOverlayHelper.new()
+	await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_PERFIL)
+	if AuthApi.esta_logueado():
+		profile_overlay.refrescar()
+		profile_overlay.mostrar_superposicion()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _on_superposicion_reiniciar_presionado() -> void:

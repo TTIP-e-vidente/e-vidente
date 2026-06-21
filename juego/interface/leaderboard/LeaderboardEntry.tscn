@@ -1,23 +1,27 @@
-[gd_scene load_steps=2 format=3 uid="uid://lb_entry_001"]
+[gd_scene load_steps=3 format=3 uid="uid://lb_entry_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardEntry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardAvatarBadge.gd" id="2_avatar"]
 
 [node name="LeaderboardEntry" type="HBoxContainer"]
 script = ExtResource("1_entry")
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 58)
 size_flags_horizontal = 3
+theme_override_constants/separation = 10
 
-[node name="BgHighlight" type="ColorRect" parent="."]
+[node name="AvatarBadge" type="Control" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_avatar")
+custom_minimum_size = Vector2(38, 38)
 layout_mode = 2
-color = Color(1, 1, 1, 0.12)
-visible = false
-mouse_filter = 2
+size_flags_vertical = 4
 
 [node name="RankLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(52, 0)
+custom_minimum_size = Vector2(42, 0)
 size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "#1"
@@ -27,6 +31,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
+theme_override_font_sizes/font_size = 14
 vertical_alignment = 1
 text_overrun_behavior = 3
 text = "nombre"
@@ -34,8 +39,9 @@ text = "nombre"
 [node name="ScoreLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(76, 0)
 size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
 vertical_alignment = 1
 text = "0"
@@ -43,6 +49,6 @@ text = "0"
 [node name="BotonArea" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
-visible = false
+size_flags_horizontal = 3
+size_flags_vertical = 3
 flat = true

@@ -28,6 +28,9 @@ TransicionEscenas="*uid://bqo1erivdcxmk"
 GameSceneRouter="*uid://cmx7rnj15vkd"
 BackendSession="*res://API/backend/session/BackendSession.gd"
 LeaderboardService="*res://sistemas/leaderboard/LeaderboardService.gd"
+LeaderboardAvatarCache="*res://sistemas/leaderboard/LeaderboardAvatarCache.gd"
+LeaderboardDeepLinkBridge="*res://interface/leaderboard/LeaderboardDeepLinkBridge.gd"
+EmailVerificationBridge="*res://interface/auth/EmailVerificationBridge.gd"
 
 [display]
 

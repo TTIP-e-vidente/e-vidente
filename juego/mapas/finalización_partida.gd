@@ -36,8 +36,11 @@ const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
 # Comparación mejor vs. actual: datos listos; UI oculta hasta diseño (Margo).
 const MOSTRAR_COMPARACION_PRECISION_UI := false
 
+const SincronizadorPartidaScript := preload("res://API/backend/sync/SincronizadorPartida.gd")
+
 var _sync_tween: Tween = null
 var _comparacion_precision: Dictionary = {}
+var _scope_ranking_post_partida: String = LeaderboardApi.SCOPE_XP_GLOBAL
 
 
 func _formatear_tiempo(segundos_totales: float) -> String:
@@ -113,6 +116,9 @@ func _ready() -> void:
 
 	# Cargar ranking post-partida de forma no bloqueante (UNQ-174).
 	# El flujo de finalización no espera esta llamada; si falla, no se muestra nada.
+	if is_instance_valid(_card_ranking):
+		_card_ranking.ver_ranking_solicitado.connect(_abrir_leaderboard_completo)
+		_card_ranking.iniciar_sesion_solicitado.connect(_al_iniciar_sesion_desde_post_partida)
 	_cargar_ranking_post_partida()
 
 
@@ -201,15 +207,50 @@ func continuar_al_mapa() -> void:
 	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE)
 
 
+func _resolver_scope_ranking_post_partida() -> String:
+	var track := SincronizadorPartidaScript.resolver_restriccion(get_tree())
+	return RestrictionCodes.scope_leaderboard_desde_juego(track)
+
+
 # Solicita el resumen de ranking post-partida en background.
 # El jugador puede presionar "Continuar" en cualquier momento: esto no lo bloquea.
 func _cargar_ranking_post_partida() -> void:
-	if not AuthApi.esta_logueado():
-		return
 	if not is_instance_valid(_ranking_container) or not is_instance_valid(_card_ranking):
 		return
 
-	var resultado := await LeaderboardApi.obtener_resumen_competitivo()
+	if not AuthApi.esta_logueado():
+		_card_ranking.mostrar_invitacion_login()
+		_ranking_container.visible = true
+		return
+
+	_scope_ranking_post_partida = _resolver_scope_ranking_post_partida()
+
+	# 1) Intentamos leer el puesto desde cache (rápido, sin red).
+	var puesto_antes_de_jugar := LeaderboardService.obtener_puesto_desde_resumen_cache(
+		_scope_ranking_post_partida
+	)
+
+	# 2) Si no había cache, pedimos el resumen SIN invalidar todavía.
+	if puesto_antes_de_jugar <= CelebracionSubidaRanking.PUESTO_NO_REGISTRADO:
+		var resultado_previo: Variant = await LeaderboardService.cargar_resumen_competitivo(
+			false,
+			_scope_ranking_post_partida
+		)
+		if resultado_previo is Dictionary and bool((resultado_previo as Dictionary).get("ok", false)):
+			puesto_antes_de_jugar = LeaderboardService.obtener_puesto_desde_resumen_cache(
+				_scope_ranking_post_partida
+			)
+
+	# 3) Ahora sí refrescamos para mostrar el puesto actualizado post-partida.
+	LeaderboardService.invalidar_cache(_scope_ranking_post_partida)
+
+	var resultado_raw: Variant = await LeaderboardService.cargar_resumen_competitivo(
+		true,
+		_scope_ranking_post_partida
+	)
+	if not resultado_raw is Dictionary:
+		return
+	var resultado := resultado_raw as Dictionary
 
 	if not is_inside_tree():
 		return
@@ -219,8 +260,24 @@ func _cargar_ranking_post_partida() -> void:
 
 	var datos: Variant = resultado.get("data", resultado)
 	if datos is Dictionary and bool((datos as Dictionary).get("available", false)):
-		_card_ranking.mostrar_desde_datos(datos as Dictionary)
+		_card_ranking.mostrar_desde_datos(datos as Dictionary, puesto_antes_de_jugar)
 		_ranking_container.visible = true
+
+
+func _abrir_leaderboard_completo(scope: String = "") -> void:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = _scope_ranking_post_partida
+	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
+
+
+func _al_iniciar_sesion_desde_post_partida() -> void:
+	var helper := AuthLoginOverlayHelper.new()
+	var inicio_ok := await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_JUEGO)
+	if not inicio_ok:
+		return
+	_cargar_ranking_post_partida()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _on_continuar_presionado() -> void:

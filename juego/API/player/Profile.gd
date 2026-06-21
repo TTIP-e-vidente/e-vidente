@@ -12,8 +12,13 @@ signal close_requested()
 @onready var _label_status: Label = $CenterContainer/PanelContainer/VBoxContainer/LabelStatus
 
 
+const MAIN_MENU_SCENE_PATH := "res://niveles/intro.tscn"
+
 func _ready() -> void:
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonRefresh.pressed.connect(_on_boton_actualizar_pressed)
+	var btn_edit := $CenterContainer/PanelContainer/VBoxContainer/ButtonEditProfile
+	if btn_edit:
+		btn_edit.pressed.connect(_on_boton_editar_perfil_presionado)
 	$CenterContainer/PanelContainer/VBoxContainer/ButtonClose.pressed.connect(_on_boton_cerrar_pressed)
 	var btn_logout = $CenterContainer/PanelContainer/VBoxContainer/ButtonLogout
 	if btn_logout:
@@ -137,6 +142,11 @@ func _on_boton_actualizar_pressed() -> void:
 func _on_boton_cerrar_pressed() -> void:
 	close_requested.emit()
 	queue_free()
+
+
+func _on_boton_editar_perfil_presionado() -> void:
+	get_tree().root.set_meta("profile_return_scene", MAIN_MENU_SCENE_PATH)
+	GameSceneRouter.go_to_profile_editor(get_tree())
 
 
 func _on_boton_cerrar_sesion_pressed() -> void:

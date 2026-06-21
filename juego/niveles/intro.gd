@@ -30,6 +30,7 @@ const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const LOGIN_FLOW_GAME := "game"
 const LOGIN_FLOW_PROFILE := "profile"
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
+const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
 
 
 
@@ -39,8 +40,6 @@ const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd"
 	$MenuBar/MiProgreso,
 	$MenuBar/Salir,
 ]
-
-const MAIL_NUDGE_SCENE_PATH := "res://interface/auth/MailVerifyNudge.tscn"
 
 var _login_overlay: Control = null
 var _login_canvas_layer: CanvasLayer = null
@@ -65,6 +64,12 @@ func _ready() -> void:
 	BackendSession.session_expired.connect(_on_sesion_expirada)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
 	call_deferred("_instalar_aviso_verificacion_mail")
+	call_deferred("_procesar_retorno_verificacion_mail")
+	call_deferred("_procesar_deep_link_leaderboard")
+
+
+func _procesar_deep_link_leaderboard() -> void:
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _on_jugar_presionado() -> void:
@@ -79,6 +84,9 @@ func _on_jugar_presionado() -> void:
 
 
 func _continuar_a_juego() -> void:
+	if AuthApi.esta_logueado() and AuthApi.mail_pendiente_verificacion():
+		_mostrar_login()
+		return
 	GameSceneRouter.transicionar_a_escena(_abrir_modo_selector())
 
 
@@ -116,12 +124,22 @@ func _instanciar_login_overlay() -> void:
 	_login_canvas_layer.add_child(_login_overlay)
 	_login_overlay.connect("login_completed", Callable(self, "_on_login_completado"))
 	_login_overlay.connect("play_offline_requested", Callable(self, "_on_jugar_offline_solicitado"))
+	_login_overlay.connect(
+		"verificacion_escena_solicitada",
+		Callable(self, "_on_login_verificacion_escena_solicitada")
+	)
 
 
 func _on_login_completado() -> void:
 	var current_flow := _login_flow
+	if current_flow == LOGIN_FLOW_GAME and AuthApi.mail_pendiente_verificacion():
+		# Respaldo: no avanzar al juego sin mail verificado.
+		if not is_instance_valid(_login_overlay):
+			_mostrar_login()
+		return
 	_cerrar_login()
 	_refrescar_aviso_verificacion_mail()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 	if current_flow == LOGIN_FLOW_PROFILE:
 		_mostrar_perfil()
 		return
@@ -211,23 +229,42 @@ func _mostrar_perdida_racha_si_corresponde() -> void:
 
 
 func _instalar_aviso_verificacion_mail() -> void:
-	var nudge_scene := load(MAIL_NUDGE_SCENE_PATH) as PackedScene
-	if nudge_scene == null:
-		return
-	_mail_verify_nudge = nudge_scene.instantiate() as CanvasLayer
-	if _mail_verify_nudge == null:
-		return
-	add_child(_mail_verify_nudge)
-	if _mail_verify_nudge.has_signal("ir_a_perfil_solicitado"):
-		_mail_verify_nudge.ir_a_perfil_solicitado.connect(_on_aviso_verificacion_ir_perfil)
+	_mail_verify_nudge = MailVerifyNudgeHelper.instalar_en(
+		self,
+		Callable(self, "_on_aviso_verificacion_verificar_ahora")
+	)
 	_refrescar_aviso_verificacion_mail()
 
 
 func _refrescar_aviso_verificacion_mail() -> void:
-	if is_instance_valid(_mail_verify_nudge) and _mail_verify_nudge.has_method("refrescar"):
-		_mail_verify_nudge.refrescar()
+	MailVerifyNudgeHelper.refrescar(_mail_verify_nudge)
 
 
-func _on_aviso_verificacion_ir_perfil() -> void:
-	get_tree().root.set_meta("profile_return_scene", MAIN_MENU_SCENE_PATH)
-	GameSceneRouter.go_to_profile_editor(get_tree())
+func _on_login_verificacion_escena_solicitada(es_registro: bool, result: Dictionary) -> void:
+	_cerrar_login()
+	var after_success := (
+		"login_continue_profile"
+		if _login_flow == LOGIN_FLOW_PROFILE
+		else "login_continue_game"
+	)
+	var nav := {
+		"return_scene": MAIN_MENU_SCENE_PATH,
+		"after_success": after_success,
+	}
+	if es_registro:
+		EmailVerificationBridge.iniciar_post_registro(result, nav)
+	else:
+		EmailVerificationBridge.iniciar_pendiente(false, nav)
+
+
+func _procesar_retorno_verificacion_mail() -> void:
+	EmailVerificationBridge.procesar_retorno_escena(self)
+	_refrescar_aviso_verificacion_mail()
+
+
+func _on_aviso_verificacion_verificar_ahora() -> void:
+	var nav := {
+		"return_scene": MAIN_MENU_SCENE_PATH,
+		"after_success": "none",
+	}
+	EmailVerificationBridge.iniciar_pendiente(false, nav)

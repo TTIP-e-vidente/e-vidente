@@ -4,6 +4,7 @@ class_name ModeSelector
 const RACHA_SCENE_PATH := "res://interface/components/Racha.tscn"
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE_PATH := "res://interface/components/ProfileOverlayPanel.tscn"
+const LeaderboardOverlayHelper := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
@@ -82,6 +83,11 @@ func _ready() -> void:
 	_configurar_botones()
 	_construir_hud()
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
+	call_deferred("_procesar_deep_link_leaderboard")
+
+
+func _procesar_deep_link_leaderboard() -> void:
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _mostrar_perdida_racha_si_corresponde() -> void:
@@ -283,6 +289,8 @@ func _agregar_superposicion_perfil(hud_root: Control) -> void:
 	_profile_overlay.edit_profile_pressed.connect(_on_superposicion_edit_perfil_presionado)
 	_profile_overlay.reestablecer_progreso_pressed.connect(_on_superposicion_reiniciar_presionado)
 	_profile_overlay.logout_pressed.connect(_on_superposicion_logout_presionado)
+	_profile_overlay.ranking_pressed.connect(_on_superposicion_ranking_presionado)
+	_profile_overlay.login_pressed.connect(_on_superposicion_login_presionado)
 	_profile_overlay.close_requested.connect(_on_superposicion_cerrar_solicitado)
 
 
@@ -345,6 +353,23 @@ func _on_superposicion_logout_presionado() -> void:
 	_profile_overlay.visible = false
 	_profile_toggle_btn.visible = true
 	GameSceneRouter.go_to_main_menu(get_tree())
+
+
+func _on_superposicion_ranking_presionado() -> void:
+	_profile_toggle_btn.visible = true
+	_profile_overlay.ocultar_superposicion()
+	LeaderboardOverlayHelper.abrir(get_tree(), LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+
+
+func _on_superposicion_login_presionado() -> void:
+	_profile_overlay.ocultar_superposicion()
+	var helper := AuthLoginOverlayHelper.new()
+	await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_PERFIL)
+	_profile_toggle_btn.visible = true
+	if AuthApi.esta_logueado():
+		_profile_overlay.refrescar()
+		_profile_overlay.mostrar_superposicion()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 func _abrir_archivero() -> void:

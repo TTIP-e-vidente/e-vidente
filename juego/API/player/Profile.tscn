@@ -84,6 +84,10 @@ autowrap_mode = 3
 layout_mode = 2
 text = "Actualizar"
 
+[node name="ButtonEditProfile" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
+layout_mode = 2
+text = "Editar perfil, mail y notificaciones"
+
 [node name="ButtonLogout" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer"]
 layout_mode = 2
 text = "Cerrar sesión"

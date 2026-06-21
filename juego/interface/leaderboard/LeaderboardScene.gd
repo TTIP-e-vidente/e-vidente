@@ -10,20 +10,22 @@ extends CanvasLayer
 # Al cerrarse emite la señal "cerrado" y se destruye.
 
 
+const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
+
+
 # ── Señales ────────────────────────────────────────────────────────────────────
 
-# Emitida cuando el jugador cierra el leaderboard.
 signal cerrado
 
 
 # ── Estados posibles de la UI ─────────────────────────────────────────────────
 
-enum Estado {
-	INACTIVO,  # Pantalla recién creada, sin datos todavía.
-	CARGANDO,  # Esperando respuesta del servidor.
-	DATOS,     # Hay datos para mostrar en la lista.
-	VACIO,     # La lista llegó vacía del servidor.
-	ERROR,     # Hubo un error al cargar.
+enum EstadoUi {
+	INACTIVO,
+	CARGANDO,
+	DATOS,
+	VACIO,
+	ERROR,
 }
 
 
@@ -33,16 +35,24 @@ enum Estado {
 @onready var _lista:               LeaderboardList = %LeaderboardList
 @onready var _card_posicion_propia: OwnPositionCard = %OwnPositionCard
 @onready var _boton_cerrar:        Button          = %BotonCerrar
+@onready var _boton_reintentar:    Button          = %BotonReintentar
+@onready var _panel_central:       PanelContainer  = %PanelCentral
+@onready var _header_bar:          PanelContainer  = %HeaderBar
+@onready var _titulo:              Label           = %TituloLabel
+@onready var _label_meta:          Label           = %LabelMeta
 @onready var _contenedor_datos:    Control         = %ContenedorDatos
 @onready var _contenedor_cargando: Control         = %ContenedorCarga
 @onready var _contenedor_error:    Control         = %ContenedorError
 @onready var _contenedor_vacio:    Control         = %ContenedorVacio
+@onready var _panel_vacio:        VBoxContainer   = %ContenedorVacio/LeaderboardEmpty
 @onready var _etiqueta_error:      Label           = %LabelError
+@onready var _entry_peek:          LeaderboardEntryPeek = %EntryPeek
+@onready var _fondo:               ColorRect       = $Fondo
 
 
 # ── Estado interno ─────────────────────────────────────────────────────────────
 
-var _estado_actual: Estado = Estado.INACTIVO
+var _estado_actual: EstadoUi = EstadoUi.INACTIVO
 var _scope_activo: String = "global_xp"
 var _id_usuario_propio: String = ""
 
@@ -50,14 +60,18 @@ var _id_usuario_propio: String = ""
 # ── Ciclo de vida ──────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	layer = 80  # Por encima del HUD global (layer 75).
+	layer = 80
 
 	_id_usuario_propio = _obtener_id_usuario_logueado()
+	_aplicar_estilos()
 
 	_conectar_servicio()
 	_conectar_componentes()
 
-	modulate.a = 0.0
+	if not AuthApi.esta_logueado() and is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.mostrar_invitacion_login()
+
+	_preparar_fade_inicial()
 	_cargar_scope(_scope_activo)
 	_animar_entrada()
 
@@ -74,12 +88,74 @@ func _input(evento: InputEvent) -> void:
 
 # ── API pública ────────────────────────────────────────────────────────────────
 
-# Abre el leaderboard mostrando un scope específico.
 func abrir(scope: String = "global_xp") -> void:
 	_scope_activo = scope
 	if is_instance_valid(_pestanias):
 		_pestanias.seleccionar(scope)
 	_cargar_scope(scope)
+
+
+# ── Estilos E-VIDENTE ─────────────────────────────────────────────────────────
+
+func _aplicar_estilos() -> void:
+	var rubik: Font = load(RUBIK_FONT_PATH) as Font
+
+	if is_instance_valid(_panel_central):
+		var panel := StyleBoxFlat.new()
+		panel.bg_color = Color(0.995, 0.992, 0.985, 1)
+		panel.set_corner_radius_all(24)
+		panel.shadow_color = Color(0, 0, 0, 0.14)
+		panel.shadow_size = 12
+		panel.shadow_offset = Vector2(0, 4)
+		_panel_central.add_theme_stylebox_override("panel", panel)
+
+	if is_instance_valid(_header_bar):
+		var header := StyleBoxFlat.new()
+		header.bg_color = MiPaleta.VERDE_BOSQUE
+		header.corner_radius_top_left = 24
+		header.corner_radius_top_right = 24
+		header.corner_radius_bottom_left = 0
+		header.corner_radius_bottom_right = 0
+		_header_bar.add_theme_stylebox_override("panel", header)
+
+	if is_instance_valid(_titulo) and rubik != null:
+		_titulo.add_theme_font_override("font", rubik)
+		_titulo.add_theme_color_override("font_color", Color.WHITE)
+
+	if is_instance_valid(_boton_cerrar):
+		_boton_cerrar.add_theme_color_override("font_color", Color(1, 1, 1, 0.65))
+		_boton_cerrar.add_theme_color_override("font_hover_color", Color.WHITE)
+		_boton_cerrar.add_theme_font_size_override("font_size", 22)
+
+	if is_instance_valid(_label_meta) and rubik != null:
+		_label_meta.add_theme_font_override("font", rubik)
+		_label_meta.add_theme_color_override("font_color", Color(0.45, 0.42, 0.36, 1))
+
+	if is_instance_valid(_etiqueta_error) and rubik != null:
+		_etiqueta_error.add_theme_font_override("font", rubik)
+		_etiqueta_error.add_theme_color_override("font_color", MiPaleta.MARRON_ROJIZO)
+
+	_estilizar_boton_primario(_boton_reintentar, rubik)
+
+
+func _estilizar_boton_primario(boton: Button, rubik: Font) -> void:
+	if not is_instance_valid(boton):
+		return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = MiPaleta.VERDE_BOSQUE
+	normal.set_corner_radius_all(12)
+	normal.content_margin_left = 20
+	normal.content_margin_right = 20
+	normal.content_margin_top = 10
+	normal.content_margin_bottom = 10
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = MiPaleta.VERDE_BOSQUE.lightened(0.08)
+	boton.add_theme_stylebox_override("normal", normal)
+	boton.add_theme_stylebox_override("hover", hover)
+	boton.add_theme_stylebox_override("pressed", hover)
+	boton.add_theme_color_override("font_color", Color.WHITE)
+	if rubik != null:
+		boton.add_theme_font_override("font", rubik)
 
 
 # ── Conexiones ─────────────────────────────────────────────────────────────────
@@ -101,53 +177,101 @@ func _conectar_componentes() -> void:
 		_pestanias.scope_cambiado.connect(_al_cambiar_scope)
 	if is_instance_valid(_boton_cerrar):
 		_boton_cerrar.pressed.connect(_cerrar)
+	if is_instance_valid(_boton_reintentar):
+		_boton_reintentar.pressed.connect(_al_presionar_reintentar)
 	if is_instance_valid(_lista):
 		_lista.cargar_mas_solicitado.connect(_al_solicitar_mas)
 		_lista.entrada_seleccionada.connect(_al_seleccionar_entrada)
+	if is_instance_valid(_entry_peek):
+		_entry_peek.cerrado.connect(_ocultar_peek_entrada)
+	if is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.iniciar_sesion_solicitado.connect(_al_iniciar_sesion_solicitado)
+	if is_instance_valid(_panel_vacio) and _panel_vacio.has_signal("iniciar_sesion_solicitado"):
+		_panel_vacio.iniciar_sesion_solicitado.connect(_al_iniciar_sesion_solicitado)
 
 
 # ── Carga y estados ────────────────────────────────────────────────────────────
 
-# Pide al servicio que cargue el scope dado y actualiza el estado a CARGANDO.
-func _cargar_scope(scope: String) -> void:
+func _cargar_scope(scope: String, forzar: bool = false) -> void:
 	_scope_activo = scope
-	_cambiar_estado(Estado.CARGANDO)
-	LeaderboardService.cargar(scope)
-	if is_instance_valid(_card_posicion_propia):
-		_card_posicion_propia.cargar_y_mostrar(scope)
+	_ocultar_peek_entrada()
+	_cambiar_estado(EstadoUi.CARGANDO)
+	if not AuthApi.esta_logueado() and is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.mostrar_invitacion_login()
+	if forzar:
+		LeaderboardService.invalidar_cache(scope)
+	LeaderboardService.cargar(scope, forzar)
+	if is_instance_valid(_label_meta):
+		_label_meta.text = ""
+		_label_meta.visible = false
 
 
-# Cambia la visibilidad de los contenedores según el nuevo estado.
-func _cambiar_estado(nuevo_estado: Estado) -> void:
+func _cambiar_estado(nuevo_estado: EstadoUi) -> void:
 	_estado_actual = nuevo_estado
+	if nuevo_estado == EstadoUi.VACIO:
+		_configurar_estado_vacio()
 	var mapa_visibilidad: Dictionary = {
-		Estado.CARGANDO: _contenedor_cargando,
-		Estado.DATOS:    _contenedor_datos,
-		Estado.ERROR:    _contenedor_error,
-		Estado.VACIO:    _contenedor_vacio,
+		EstadoUi.CARGANDO: _contenedor_cargando,
+		EstadoUi.DATOS:    _contenedor_datos,
+		EstadoUi.ERROR:    _contenedor_error,
+		EstadoUi.VACIO:    _contenedor_vacio,
 	}
-	for estado: Estado in mapa_visibilidad:
+	for estado: EstadoUi in mapa_visibilidad:
 		var nodo: Control = mapa_visibilidad[estado]
 		if is_instance_valid(nodo):
 			nodo.visible = (estado == nuevo_estado)
 
 
+func _actualizar_meta(datos: Dictionary) -> void:
+	if not is_instance_valid(_label_meta):
+		return
+	var texto := LeaderboardFormat.texto_meta(datos)
+	_label_meta.text = texto
+	_label_meta.visible = not texto.is_empty()
+
+
+func _configurar_estado_vacio() -> void:
+	if is_instance_valid(_panel_vacio) and _panel_vacio.has_method("configurar_para_jugador"):
+		_panel_vacio.call("configurar_para_jugador", not AuthApi.esta_logueado())
+
+
+func _al_iniciar_sesion_solicitado() -> void:
+	var helper := AuthLoginOverlayHelper.new()
+	await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_JUEGO)
+	if not AuthApi.esta_logueado():
+		return
+	_id_usuario_propio = _obtener_id_usuario_logueado()
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
+	_cargar_scope(_scope_activo, true)
+
+
 # ── Animaciones ────────────────────────────────────────────────────────────────
 
 func _animar_entrada() -> void:
-	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.25) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(_fondo):
+		tween.tween_property(_fondo, "modulate:a", 1.0, 0.25)
+	if is_instance_valid(_panel_central):
+		tween.tween_property(_panel_central, "modulate:a", 1.0, 0.25)
 
 
 func _animar_salida() -> void:
-	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.2) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tween.tween_callback(func() -> void:
+	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	if is_instance_valid(_fondo):
+		tween.tween_property(_fondo, "modulate:a", 0.0, 0.2)
+	if is_instance_valid(_panel_central):
+		tween.tween_property(_panel_central, "modulate:a", 0.0, 0.2)
+	tween.chain().tween_callback(func() -> void:
 		cerrado.emit()
 		queue_free()
 	)
+
+
+func _preparar_fade_inicial() -> void:
+	if is_instance_valid(_fondo):
+		_fondo.modulate.a = 0.0
+	if is_instance_valid(_panel_central):
+		_panel_central.modulate.a = 0.0
 
 
 func _cerrar() -> void:
@@ -170,40 +294,66 @@ func _al_cambiar_scope(scope: String) -> void:
 
 
 func _al_leaderboard_cargado(scope: String, datos: Dictionary) -> void:
-	# Ignorar respuestas de scopes que ya no son el activo.
 	if scope != _scope_activo and not scope.ends_with(":mas"):
 		return
 
-	# Si es paginación extra, agregar al final de la lista existente.
 	if scope.ends_with(":mas"):
 		if is_instance_valid(_lista):
 			_lista.agregar_mas(datos)
 		return
 
-	# Si llegaron 0 entradas, mostrar estado vacío.
 	var entradas: Variant = datos.get("entries", [])
 	if entradas is Array and (entradas as Array).is_empty():
-		_cambiar_estado(Estado.VACIO)
+		_actualizar_meta(datos)
+		if is_instance_valid(_card_posicion_propia):
+			_card_posicion_propia.mostrar_desde_respuesta_leaderboard(_scope_activo, datos)
+		_cambiar_estado(EstadoUi.VACIO)
 		return
 
 	if is_instance_valid(_lista):
 		_lista.poblar(datos, _id_usuario_propio)
 
-	_cambiar_estado(Estado.DATOS)
+	if is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.mostrar_desde_respuesta_leaderboard(_scope_activo, datos)
+
+	_actualizar_meta(datos)
+	_cambiar_estado(EstadoUi.DATOS)
+	_prefetch_scope_alternativo()
 
 
 func _al_leaderboard_fallido(scope: String, mensaje: String) -> void:
 	if scope != _scope_activo:
 		return
 	if is_instance_valid(_etiqueta_error):
-		_etiqueta_error.text = mensaje
-	_cambiar_estado(Estado.ERROR)
+		var texto := mensaje.strip_edges()
+		if texto.is_empty():
+			texto = "No se pudo cargar el ranking."
+		if not AuthApi.esta_logueado():
+			texto += "\nPodés ver el ranking global; iniciá sesión para tu posición."
+		_etiqueta_error.text = texto
+	_cambiar_estado(EstadoUi.ERROR)
+
+
+func _al_presionar_reintentar() -> void:
+	_cargar_scope(_scope_activo, true)
 
 
 func _al_solicitar_mas(scope: String, desplazamiento: int) -> void:
 	LeaderboardService.cargar_mas(scope, desplazamiento)
 
 
-func _al_seleccionar_entrada(_id_usuario: String) -> void:
-	# Hook para futura pantalla de perfil público del jugador.
-	pass
+func _prefetch_scope_alternativo() -> void:
+	LeaderboardService.prefetch(LeaderboardScopeCatalog.siguiente_scope(_scope_activo))
+
+
+func _ocultar_peek_entrada() -> void:
+	if is_instance_valid(_entry_peek):
+		_entry_peek.visible = false
+
+
+func _al_seleccionar_entrada(id_usuario: String, entrada: Dictionary) -> void:
+	if not is_instance_valid(_entry_peek):
+		return
+	var es_propio := id_usuario == _id_usuario_propio and not _id_usuario_propio.is_empty()
+	_entry_peek.mostrar(entrada, _scope_activo, es_propio)
+	_entry_peek.visible = true

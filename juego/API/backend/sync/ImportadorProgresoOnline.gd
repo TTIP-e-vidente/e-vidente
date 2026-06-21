@@ -124,7 +124,7 @@ static func inferir_track_key_desde_node_id(node_id: String) -> String:
 
 
 static func restriction_a_track_key(restriction: String) -> String:
-	return restriction.strip_edges().to_lower()
+	return RestrictionCodes.track_desde_codigo(restriction)
 
 
 static func _parsear_completed_nodes(completed_nodes: Variant) -> Dictionary:

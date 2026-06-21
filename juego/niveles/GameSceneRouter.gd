@@ -30,6 +30,7 @@ const ARCHIVERO_SCENE_PATH := MODE_SELECTOR_SCENE_PATH
 const STREAK_SCENE_PATH := "res://interface/components/ProgressManagerRacha.tscn"
 const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const PROFILE_SCENE_PATH := "res://interface/auth.tscn"
+const EMAIL_VERIFICATION_SCENE_PATH := "res://interface/auth/EmailVerification.tscn"
 const QUESTIONS_SCENE_PATH := "res://preguntas/pregunta.tscn"
 const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"

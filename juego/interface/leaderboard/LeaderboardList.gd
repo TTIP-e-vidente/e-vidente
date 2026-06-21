@@ -14,7 +14,7 @@ extends ScrollContainer
 signal cargar_mas_solicitado(scope: String, desplazamiento: int)
 
 # Emitida cuando el jugador toca una fila del ranking.
-signal entrada_seleccionada(id_usuario: String)
+signal entrada_seleccionada(id_usuario: String, entrada: Dictionary)
 
 
 # ── Recursos ───────────────────────────────────────────────────────────────────
@@ -48,6 +48,31 @@ func _ready() -> void:
 	if is_instance_valid(_boton_ver_mas):
 		_boton_ver_mas.visible = false
 		_boton_ver_mas.pressed.connect(_al_presionar_ver_mas)
+		_estilizar_boton_ver_mas()
+	if not LeaderboardAvatarCache.avatar_cargado.is_connected(_al_avatar_cargado):
+		LeaderboardAvatarCache.avatar_cargado.connect(_al_avatar_cargado)
+
+
+func _exit_tree() -> void:
+	if LeaderboardAvatarCache.avatar_cargado.is_connected(_al_avatar_cargado):
+		LeaderboardAvatarCache.avatar_cargado.disconnect(_al_avatar_cargado)
+
+
+func _estilizar_boton_ver_mas() -> void:
+	if not is_instance_valid(_boton_ver_mas):
+		return
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color(0.204, 0.247, 0.173, 0.08)
+	estilo.set_corner_radius_all(10)
+	estilo.content_margin_top = 8
+	estilo.content_margin_bottom = 8
+	_boton_ver_mas.flat = false
+	_boton_ver_mas.add_theme_stylebox_override("normal", estilo)
+	_boton_ver_mas.add_theme_stylebox_override("hover", estilo)
+	_boton_ver_mas.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
+	var rubik: Font = load("res://fonts/Rubik-VariableFont_wght.ttf") as Font
+	if rubik != null:
+		_boton_ver_mas.add_theme_font_override("font", rubik)
 
 
 # ── API pública ────────────────────────────────────────────────────────────────
@@ -106,9 +131,10 @@ func _agregar_fila(entrada: Dictionary, es_propio: bool) -> void:
 	_contenedor.add_child(fila)
 	if posicion_boton >= 0:
 		_contenedor.move_child(fila, posicion_boton)
-	fila.poblar(entrada, es_propio)
+	fila.poblar(entrada, es_propio, _scope_actual)
 	fila.entrada_presionada.connect(
-		func(id_usuario: String) -> void: entrada_seleccionada.emit(id_usuario)
+		func(id_usuario: String, entrada: Dictionary) -> void:
+			entrada_seleccionada.emit(id_usuario, entrada)
 	)
 
 
@@ -132,3 +158,11 @@ func _mostrar_boton_ver_mas(hay_mas: bool) -> void:
 
 func _al_presionar_ver_mas() -> void:
 	cargar_mas_solicitado.emit(_scope_actual, _desplazamiento)
+
+
+func _al_avatar_cargado(user_id: String, _texture: Texture2D) -> void:
+	for hijo in _contenedor.get_children():
+		if hijo == _boton_ver_mas:
+			continue
+		if hijo is LeaderboardEntry:
+			(hijo as LeaderboardEntry).refrescar_avatar_si_coincide(user_id)
