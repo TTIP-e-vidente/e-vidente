@@ -7,7 +7,9 @@ import {
   listEmailTemplateMetadata,
   previewEmailTemplate
 } from './templates';
-import { EmailTemplatePreviewParams, WelcomeTemplateContext } from './templates/types';
+import { embedInlineAssetsForPreview } from './templates/email-assets';
+import { buildLeaderboardDeepLink } from './templates/app-deep-links';
+import { EmailTemplatePreviewParams, StreakTemplateContext, WelcomeTemplateContext } from './templates/types';
 import * as emailRepository from './email.repository';
 import {
   EmailDeliveryStatus,
@@ -33,11 +35,35 @@ function formatDeliveryError(error: unknown): string {
 }
 
 function buildWelcomeMessageContext(name: string, mail: string): WelcomeTemplateContext {
-  const playUrl = emailConfig.appPlayUrl;
+  const playUrl = emailConfig.appPlayUrl.trim();
+  const leaderboardUrl = playUrl.length > 0
+    ? buildLeaderboardDeepLink(playUrl, 'global_xp')
+    : undefined;
+
   return {
     name,
     mail,
-    playUrl: playUrl.length > 0 ? playUrl : undefined
+    playUrl: playUrl.length > 0 ? playUrl : undefined,
+    leaderboardUrl
+  };
+}
+
+function buildStreakMessageContext(
+  name: string,
+  mail: string,
+  streakCount: number
+): StreakTemplateContext {
+  const playUrl = emailConfig.appPlayUrl.trim();
+  const leaderboardUrl = playUrl.length > 0
+    ? buildLeaderboardDeepLink(playUrl, 'global_xp')
+    : undefined;
+
+  return {
+    name,
+    mail,
+    streakCount,
+    playUrl: playUrl.length > 0 ? playUrl : undefined,
+    leaderboardUrl
   };
 }
 
@@ -83,13 +109,19 @@ type DeliveryBatchStats = {
 };
 
 async function cleanupStalePendingDeliveries(): Promise<number> {
+  const cancelledUnverified = await emailRepository.cancelPendingWelcomeForUnverifiedUsers();
+  if (cancelledUnverified > 0) {
+    console.warn(
+      `[email] cancelled ${cancelledUnverified} pending welcome deliveries for unverified users`
+    );
+  }
   const expiredCount = await emailRepository.expireStalePendingDeliveries(
     getPendingStaleMinutes()
   );
   if (expiredCount > 0) {
     console.warn(`[email] expired ${expiredCount} stale pending deliveries`);
   }
-  return expiredCount;
+  return expiredCount + cancelledUnverified;
 }
 
 async function deliverTrackedEmail(input: {
@@ -198,6 +230,10 @@ export async function enqueueWelcomeEmail(
     console.warn('[email] welcome skipped: EMAIL_ENABLED=false or missing Brevo config');
     return 'skipped';
   }
+  if (!(await emailRepository.isUserMailVerified(recipient.userId))) {
+    logEmailInfo('welcome_skipped_unverified', { userId: recipient.userId });
+    return 'skipped';
+  }
   if (await shouldSkipWelcomeEmail(recipient.userId)) {
     return 'skipped';
   }
@@ -264,9 +300,56 @@ export async function processPendingWelcomeEmails(): Promise<DeliveryBatchStats>
 }
 
 async function sendWelcomeEmail(recipient: EmailRecipient): Promise<void> {
-  const queued = await enqueueWelcomeEmail(recipient);
-  if (queued === 'queued') {
-    scheduleOutboundEmailJob();
+  const result = await sendWelcomeEmailAfterVerification(recipient);
+  if (result === 'failed') {
+    const queued = await enqueueWelcomeEmail(recipient);
+    if (queued === 'queued') {
+      scheduleOutboundEmailJob();
+    }
+  }
+}
+
+export async function sendWelcomeEmailAfterVerification(
+  recipient: EmailRecipient
+): Promise<'sent' | 'skipped' | 'failed'> {
+  if (!recipient.mail) {
+    return 'skipped';
+  }
+  if (!isEmailDeliveryConfigured()) {
+    console.warn('[email] welcome skipped: EMAIL_ENABLED=false or missing Brevo config');
+    return 'skipped';
+  }
+  if (!(await emailRepository.isUserMailVerified(recipient.userId))) {
+    logEmailInfo('welcome_skipped_unverified', { userId: recipient.userId });
+    return 'skipped';
+  }
+  if (await shouldSkipWelcomeEmail(recipient.userId)) {
+    return 'skipped';
+  }
+
+  const message = buildEmailMessage(
+    'welcome',
+    buildWelcomeMessageContext(recipient.name, recipient.mail)
+  );
+
+  try {
+    const result = await deliverTrackedEmail({
+      userId: recipient.userId,
+      templateKey: 'welcome',
+      dedupeKey: 'welcome',
+      message,
+      afterSent: async (client) => {
+        await emailRepository.markWelcomeEmailSent(client, recipient.userId);
+      }
+    });
+    if (result === 'sent') {
+      logEmailInfo('welcome_sent', { userId: recipient.userId, mail: recipient.mail });
+      return 'sent';
+    }
+    return 'failed';
+  } catch (error) {
+    logEmailFailure(`welcome failed for user ${recipient.userId}`, error);
+    return 'failed';
   }
 }
 
@@ -299,11 +382,11 @@ export async function sendStreakAtRiskEmailsForDate(
 
   await mapWithConcurrency(candidates, emailConfig.batchConcurrency, async (candidate) => {
     const dedupeKey = `at_risk:${today}`;
-    const message = buildEmailMessage('streak_at_risk', {
-      name: candidate.name,
-      mail: candidate.mail,
-      streakCount: candidate.currentCount
-    });
+    const message = buildEmailMessage('streak_at_risk', buildStreakMessageContext(
+      candidate.name,
+      candidate.mail,
+      candidate.currentCount
+    ));
 
     try {
       const result = await deliverTrackedEmail({
@@ -350,11 +433,11 @@ export async function sendStreakLostEmailsForDate(
 
   await mapWithConcurrency(candidates, emailConfig.batchConcurrency, async (candidate) => {
     const dedupeKey = `lost:${candidate.lastActivityDay}`;
-    const message = buildEmailMessage('streak_lost', {
-      name: candidate.name,
-      mail: candidate.mail,
-      streakCount: candidate.currentCount
-    });
+    const message = buildEmailMessage('streak_lost', buildStreakMessageContext(
+      candidate.name,
+      candidate.mail,
+      candidate.currentCount
+    ));
 
     try {
       const result = await deliverTrackedEmail({
@@ -480,11 +563,11 @@ async function buildRetryMessage(
     case 'streak_lost': {
       const streak = await emailRepository.findUserStreakContext(candidate.userId);
       const streakCount = Math.max(1, streak?.currentCount ?? 1);
-      return buildEmailMessage(candidate.templateKey, {
-        name: userName,
+      return buildEmailMessage(candidate.templateKey, buildStreakMessageContext(
+        userName,
         mail,
         streakCount
-      });
+      ));
     }
     case 'mail_changed': {
       // mail = oldMail (recipient guardado), newMail = mail actual del usuario
@@ -549,16 +632,21 @@ export async function sendTrackedVerificationEmail(input: {
   mail: string;
   code: string;
   expiresMinutes: number;
+  expiresAt?: Date;
 }): Promise<'sent' | 'failed' | 'skipped'> {
   if (!isEmailDeliveryConfigured()) {
     return 'skipped';
   }
 
+  const expiresAt =
+    input.expiresAt ?? new Date(Date.now() + Math.max(1, input.expiresMinutes) * 60 * 1000);
+
   const message = buildEmailMessage('email_verification', {
     name: input.name.trim() || 'Jugador',
     mail: input.mail.trim(),
     code: input.code,
-    expiresMinutes: input.expiresMinutes
+    expiresMinutes: input.expiresMinutes,
+    expiresAt
   });
 
   try {
@@ -650,7 +738,11 @@ export function buildTemplatePreview(
   templateKey: EmailTemplateKey,
   params: EmailTemplatePreviewParams = {}
 ) {
-  return previewEmailTemplate(templateKey, params);
+  const preview = previewEmailTemplate(templateKey, params);
+  return {
+    ...preview,
+    htmlContent: embedInlineAssetsForPreview(preview.htmlContent)
+  };
 }
 
 export function parseDeliveryStatus(value: unknown): EmailDeliveryStatus | undefined {

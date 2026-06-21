@@ -6,7 +6,10 @@ import { isNonEmptyString, isValidEmail } from '../../shared/validation/validato
 import { parseBirthDateInput } from '../../shared/validation/birth_date';
 import { toPublicUser } from './auth.mapper';
 import * as authRepository from './auth.repository';
-import { sendVerificationCode } from '../email/email.verification.service';
+import {
+  buildVerificationSendMeta,
+  sendVerificationCode
+} from '../email/email.verification.service';
 import {
   AuthErrorCode,
   AuthResponse,
@@ -82,10 +85,6 @@ function parseEmailNotificationsPreference(value: unknown): boolean {
   return parseBooleanPreference(value, false);
 }
 
-function parseEmailVerificationRequest(value: unknown): boolean {
-  return parseBooleanPreference(value, false);
-}
-
 export async function register(input: RegisterInput): Promise<AuthResponse> {
   const username = asTrimmedString(input.username);
   const name = asTrimmedString(input.name);
@@ -138,20 +137,23 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     emailNotificationsEnabled
   });
 
-  const requestEmailVerification = parseEmailVerificationRequest(input.request_email_verification);
-
-  if (mail && requestEmailVerification) {
-    // Envía código de verificación en background (fail-safe)
-    void sendVerificationCode(user.id, mail, validName).catch((error) => {
+  let verification: AuthResponse['verification'];
+  if (mail) {
+    let sendResult: Awaited<ReturnType<typeof sendVerificationCode>> = 'send_failed';
+    try {
+      sendResult = await sendVerificationCode(user.id, mail, validName);
+    } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.warn(`[email:verify] post-register send failed for user ${user.id}: ${msg}`);
-    });
+    }
+    verification = await buildVerificationSendMeta(user.id, sendResult);
   }
   // Welcome solo tras verificar mail (confirmVerificationController).
 
   return {
     user: toPublicUser(user),
-    accessToken: signAccessToken(user)
+    accessToken: signAccessToken(user),
+    ...(verification ? { verification } : {})
   };
 }
 

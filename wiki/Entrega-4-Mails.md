@@ -39,23 +39,25 @@ Siempre hay versión **texto plano** y **HTML** con el mismo significado.
 
 ### 1. Bienvenida (`welcome`)
 
-**Cuándo:** registro exitoso con mail. **No** requiere checkbox de notificaciones. Se encola en `email_deliveries` (outbox) y se envía al procesar la cola (`npm run dev` con `EMAIL_PROCESS_ON_STARTUP`, o `npm run email:run-local`).
+**Cuándo:** **después** de confirmar el código OTP (`POST /player/verify-email/confirm`), no al registrarse. Si el usuario se registra sin verificar, **no** se encola welcome. Se persiste en `email_deliveries` (outbox) y se envía al procesar la cola (`npm run dev` con `EMAIL_PROCESS_ON_STARTUP`, o `npm run email:run-local`).
 
 | Campo | Texto |
 |-------|-------|
-| **Asunto** | `¡Listo! Tu cuenta en E-VIDENTE ya está creada` |
+| **Asunto** | `Mail verificado — ¡Bienvenido/a a E-VIDENTE!` |
 | **Headline** | `¡Bienvenido/a a E-VIDENTE!` |
-| **Subtitle** | `Tu cuenta está lista para jugar` |
+| **Subtitle** | `Tu mail ya está verificado` |
 
 **Cuerpo (propuesta):**
 
 > Hola {nombre},
 >
-> Creaste tu cuenta correctamente. Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.
+> Confirmaste tu mail correctamente. Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.
 >
 > Nos alegra que estés acá. ¡Que disfrutes el camino!
 
-**Qué evitar en UI de registro:** frases como *“te enviamos un mail para confirmar tu cuenta”* si no hay verificación por link.
+**Registro:** el mail que llega al crear cuenta es el de **verificación OTP** (`email_verification`), asunto `Código E-VIDENTE: {código} (verificá tu mail)`. No confundirlo con la bienvenida.
+
+**Qué evitar en UI de registro:** frases como *“te enviamos el mail de bienvenida”* antes de verificar el código.
 
 ---
 

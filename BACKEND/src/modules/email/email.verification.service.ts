@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { pool } from '../../config/database';
-import { isEmailDeliveryConfigured } from './email.config';
+import { emailConfig, isEmailDeliveryConfigured } from './email.config';
+import * as userRepository from '../user/user.repository';
 import { sendTrackedVerificationEmail } from './email.service';
 import * as emailRepository from './email.repository';
 
@@ -43,6 +44,81 @@ export type SendVerificationResult =
   | 'no_mail'
   | 'send_failed';
 
+function isDevelopmentEnvironment(): boolean {
+  return process.env.NODE_ENV === 'development';
+}
+
+function verificationStatusMessage(
+  sendResult: SendVerificationResult,
+  expiresMinutes: number
+): string {
+  switch (sendResult) {
+    case 'sent':
+      return `Te enviamos el código de verificación (no el de bienvenida). Válido por ${expiresMinutes} minutos. Revisá spam.`;
+    case 'rate_limited':
+      return 'Ya hay un código activo. Revisá tu casilla o esperá para reenviar.';
+    case 'send_failed':
+      return 'No se pudo enviar el mail. Tocá Reenviar código para intentar de nuevo.';
+    case 'skipped':
+      return isDevelopmentEnvironment()
+        ? 'Mail no configurado. En desarrollo, el código aparece en la consola del backend.'
+        : 'Servicio de mail no disponible. Contactá al administrador.';
+    case 'no_mail':
+      return 'No hay un mail configurado en tu cuenta.';
+    default:
+      return '';
+  }
+}
+
+async function invalidateActiveVerificationCodes(userId: string): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await emailRepository.invalidatePreviousVerificationCodes(client, userId);
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function buildVerificationSendMeta(
+  userId: string,
+  sendResult: SendVerificationResult
+): Promise<{
+  code_send_status: SendVerificationResult;
+  cooldown_seconds: number;
+  message: string;
+  expires_minutes: number;
+}> {
+  const config = getVerificationConfig();
+  const message = verificationStatusMessage(sendResult, config.expiresMinutes);
+  if (sendResult === 'sent') {
+    return {
+      code_send_status: sendResult,
+      cooldown_seconds: config.cooldownSeconds,
+      message,
+      expires_minutes: config.expiresMinutes
+    };
+  }
+  if (sendResult === 'rate_limited') {
+    return {
+      code_send_status: sendResult,
+      cooldown_seconds: await getVerificationCooldownRemainingSeconds(userId),
+      message,
+      expires_minutes: config.expiresMinutes
+    };
+  }
+  return {
+    code_send_status: sendResult,
+    cooldown_seconds: 0,
+    message,
+    expires_minutes: config.expiresMinutes
+  };
+}
+
 export async function sendVerificationCode(
   userId: string,
   mail: string,
@@ -51,11 +127,6 @@ export async function sendVerificationCode(
   const trimmedMail = mail.trim();
   if (!trimmedMail) {
     return 'no_mail';
-  }
-
-  if (!isEmailDeliveryConfigured()) {
-    logWarn('send_skipped', { userId, reason: 'email not configured' });
-    return 'skipped';
   }
 
   const lastCreatedAt = await emailRepository.getLastVerificationCodeCreatedAt(userId);
@@ -90,6 +161,22 @@ export async function sendVerificationCode(
     client.release();
   }
 
+  if (!isEmailDeliveryConfigured()) {
+    if (isDevelopmentEnvironment()) {
+      logInfo('dev_code', {
+        userId,
+        mail: trimmedMail,
+        codeId,
+        code,
+        hint: 'EMAIL/Brevo no configurado; usá este código en desarrollo'
+      });
+      return 'sent';
+    }
+    await invalidateActiveVerificationCodes(userId);
+    logWarn('send_skipped', { userId, reason: 'email not configured', codeId });
+    return 'skipped';
+  }
+
   const deliveryResult = await sendTrackedVerificationEmail({
     userId,
     verificationCodeId: codeId,
@@ -104,8 +191,10 @@ export async function sendVerificationCode(
     return 'sent';
   }
 
+  await invalidateActiveVerificationCodes(userId);
+
   if (deliveryResult === 'skipped') {
-    logWarn('send_skipped', { userId, reason: 'email not configured' });
+    logWarn('send_skipped', { userId, reason: 'email delivery skipped', codeId });
     return 'skipped';
   }
 
@@ -192,4 +281,84 @@ export async function getVerificationCooldownRemainingSeconds(userId: string): P
   }
   const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
   return Math.max(0, Math.ceil(config.cooldownSeconds - secondsSinceLast));
+}
+
+export interface EmailVerificationStatusDto {
+  mail: string | null;
+  mail_verified_at: string | null;
+  email_notifications_enabled: boolean;
+  delivery_configured: boolean;
+  dev_code_in_logs: boolean;
+  last_verification_delivery: {
+    status: 'pending' | 'sent' | 'failed';
+    sent_at: string | null;
+    failed_at: string | null;
+    error_message: string | null;
+  } | null;
+  verification: {
+    required: boolean;
+    has_pending_code: boolean;
+    pending_target_mail: string | null;
+    expires_at: string | null;
+    cooldown_seconds: number;
+    max_attempts: number;
+    attempts_remaining: number | null;
+  };
+}
+
+export async function getEmailVerificationStatus(
+  userId: string
+): Promise<EmailVerificationStatusDto | null> {
+  const user = await userRepository.findPublicUserById(userId);
+  if (!user) {
+    return null;
+  }
+
+  const deliveryConfigured = isEmailDeliveryConfigured();
+  const config = getVerificationConfig();
+  const active = await emailRepository.findActiveVerificationCode(userId);
+  const cooldownSeconds = await getVerificationCooldownRemainingSeconds(userId);
+  const trimmedMail = user.mail?.trim() ?? '';
+  const mailVerified = user.mail_verified_at != null;
+  const required = trimmedMail.length > 0 && !mailVerified;
+
+  let attemptsRemaining: number | null = null;
+  if (active && active.expiresAt >= new Date()) {
+    attemptsRemaining = Math.max(0, config.maxAttempts - active.failedAttemptCount);
+  }
+
+  const lastVerificationDelivery = await emailRepository.findLatestDeliveryForUser(
+    userId,
+    'email_verification'
+  );
+
+  return {
+    mail: trimmedMail || null,
+    mail_verified_at: user.mail_verified_at ? user.mail_verified_at.toISOString() : null,
+    email_notifications_enabled: user.email_notifications_enabled,
+    delivery_configured: deliveryConfigured,
+    dev_code_in_logs:
+      isDevelopmentEnvironment() && emailConfig.enabled && !deliveryConfigured,
+    last_verification_delivery: lastVerificationDelivery
+      ? {
+          status: lastVerificationDelivery.status,
+          sent_at: lastVerificationDelivery.sent_at
+            ? lastVerificationDelivery.sent_at.toISOString()
+            : null,
+          failed_at: lastVerificationDelivery.failed_at
+            ? lastVerificationDelivery.failed_at.toISOString()
+            : null,
+          error_message: lastVerificationDelivery.error_message
+        }
+      : null,
+    verification: {
+      required,
+      has_pending_code: active != null && active.expiresAt >= new Date(),
+      pending_target_mail: active?.targetMail ?? null,
+      expires_at: active ? active.expiresAt.toISOString() : null,
+      cooldown_seconds: cooldownSeconds,
+      max_attempts: config.maxAttempts,
+      attempts_remaining: attemptsRemaining
+    }
+  };
 }

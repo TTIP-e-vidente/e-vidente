@@ -183,6 +183,17 @@ GET /dev/email/templates
 GET /dev/email/preview?template_key=welcome&name=Agus&mail=agus@test.com
 GET /dev/email/preview?template_key=streak_at_risk&name=Agus&streak_count=7
 GET /dev/email/deliveries?status=sent&limit=20
+
+### Auditoría interna (prod y local, sin ngrok)
+
+```http
+GET /internal/email/deliveries?mail=usuario@ejemplo.com&template_key=email_verification
+X-Job-Secret: <EMAIL_CRON_SECRET>
+```
+
+Filtros: `userId` | `user_id`, `username`, `mail`, `template_key`, `status`, `limit`.
+
+Respuesta: `lookup` del usuario, `summary` (pending/sent/failed), `verification` (OTP) y `deliveries`.
 ```
 
 ## Cron local (desarrollo / demo sin deploy)

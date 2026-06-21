@@ -211,6 +211,7 @@ export async function updatePlayerMe(
   }
 
   const client = await pool.connect();
+  let updatedUserRow: Awaited<ReturnType<typeof userRepository.updateUserProfile>> = null;
   try {
     await client.query('BEGIN');
 
@@ -226,8 +227,8 @@ export async function updatePlayerMe(
       updates.mail = validatedMail;
     }
 
-    const updatedUser = await userRepository.updateUserProfile(client, userId, updates);
-    if (!updatedUser) {
+    updatedUserRow = await userRepository.updateUserProfile(client, userId, updates);
+    if (!updatedUserRow) {
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
     }
     await client.query('COMMIT');
@@ -249,20 +250,17 @@ export async function updatePlayerMe(
 
   let verification: ProfileVerificationMeta | undefined;
 
-  if (mailChanged && validatedMail) {
-    const updatedUser = await userRepository.findPublicUserById(userId);
-    if (updatedUser) {
-      const sendResult = await sendVerificationCode(userId, validatedMail, updatedUser.name);
-      verification = await buildVerificationMeta(userId, sendResult);
+  if (mailChanged && validatedMail && updatedUserRow) {
+    const sendResult = await sendVerificationCode(userId, validatedMail, updatedUserRow.name);
+    verification = await buildVerificationMeta(userId, sendResult);
 
-      if (oldMail) {
-        void sendMailChangedEmail({
-          userId,
-          name: updatedUser.name,
-          oldMail,
-          newMail: validatedMail
-        });
-      }
+    if (oldMail) {
+      void sendMailChangedEmail({
+        userId,
+        name: updatedUserRow.name,
+        oldMail,
+        newMail: validatedMail
+      });
     }
   } else if (mailChanged && validatedMail === null) {
     verification = {

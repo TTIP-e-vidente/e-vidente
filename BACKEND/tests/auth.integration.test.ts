@@ -85,6 +85,10 @@ async function run(): Promise<void> {
     assert.equal(registerResponse.status, 201);
     assert.ok(registerResponse.body.user);
     assert.equal(typeof registerResponse.body.accessToken, 'string');
+    assert.ok(registerResponse.body.verification);
+    const verification = registerResponse.body.verification as JsonObject;
+    assert.equal(typeof verification.code_send_status, 'string');
+    assert.equal(typeof verification.message, 'string');
 
     const registeredUser = registerResponse.body.user as JsonObject;
     assert.equal(registeredUser.username, username);

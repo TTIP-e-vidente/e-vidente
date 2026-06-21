@@ -1,4 +1,12 @@
+process.env.EMAIL_CRON_SECRET = process.env.EMAIL_CRON_SECRET || 'email-template-test-secret';
+process.env.BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || 'https://api.example.com';
+
 import assert from 'assert/strict';
+import {
+  createVerificationCopyToken,
+  parseVerificationCopyToken
+} from '../src/modules/email/email.verification-copy';
+import { embedInlineAssetsForPreview } from '../src/modules/email/templates/email-assets';
 import { escapeHtml, formatDayLabel } from '../src/modules/email/templates/layout';
 import {
   buildEmailMessage,
@@ -18,9 +26,8 @@ function runTemplateTests(): void {
   assert.match(welcome.htmlContent, /Agus/);
   assert.match(welcome.htmlContent, /#42785e/i);
   assert.match(welcome.htmlContent, /Rubik/i);
-  // Chequea que el HTML tenga estructura básica correcta
   assert.match(welcome.htmlContent, /E-VIDENTE/);
-  assert.match(welcome.htmlContent, /Bienvenid/);
+  assert.match(welcome.htmlContent, /Mail verificado/);
   assert.doesNotMatch(welcome.htmlContent, /<script/i);
 
   const escaped = escapeHtml(`<Agus> "test" & 'ok'`);
@@ -48,6 +55,33 @@ function runTemplateTests(): void {
     metadata.map((item) => item.key).sort(),
     ['email_verification', 'mail_changed', 'streak_at_risk', 'streak_lost', 'welcome']
   );
+
+  const verify = buildEmailMessage('email_verification', {
+    name: 'Agus',
+    mail: 'agus@example.com',
+    code: '843184',
+    expiresMinutes: 15
+  });
+  assert.match(verify.subject, /843184/);
+  assert.match(verify.textContent, /843184/);
+  assert.doesNotMatch(verify.htmlContent, /843 184/);
+  assert.match(verify.htmlContent, /843184/);
+  assert.match(verify.htmlContent, /sin espacios/i);
+  assert.match(verify.htmlContent, /Copiar código/);
+  assert.match(verify.htmlContent, /\/public\/email\/verification-copy\//);
+  assert.match(verify.textContent, /Copiar código:/);
+  const welcomeHtml = embedInlineAssetsForPreview(welcome.htmlContent);
+  assert.match(welcomeHtml, /data:image\/png;base64,/);
+  assert.match(welcome.htmlContent, /cid:evidente-logo/);
+  assert.match(welcome.htmlContent, /cid:ev-icon-play/);
+  assert.doesNotMatch(welcome.htmlContent, /data:image\/svg\+xml/i);
+  assert.doesNotMatch(welcome.htmlContent, /🔥|🎉|🔐|🔒|💪|⏱/u);
+  assert.doesNotMatch(atRisk.subject, /🔥/u);
+
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  const token = createVerificationCopyToken('843184', expiresAt);
+  assert.ok(token);
+  assert.equal(parseVerificationCopyToken(token!)?.code, '843184');
 
   console.log('email templates unit test passed');
 }

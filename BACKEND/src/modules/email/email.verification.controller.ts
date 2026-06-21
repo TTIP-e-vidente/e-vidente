@@ -5,10 +5,34 @@ import * as userRepository from '../user/user.repository';
 import { queueWelcomeEmail } from './email.service';
 import {
   confirmVerificationCode,
+  getEmailVerificationStatus,
   getVerificationConfig,
   getVerificationCooldownRemainingSeconds,
   sendVerificationCode
 } from './email.verification.service';
+
+export async function getEmailStatusController(
+  request: Request,
+  response: Response
+): Promise<void> {
+  try {
+    const userId = request.user?.id;
+    if (!userId) {
+      sendResponse(response, 401, { error: 'Unauthorized' });
+      return;
+    }
+
+    const status = await getEmailVerificationStatus(userId);
+    if (!status) {
+      sendResponse(response, 401, { error: 'Unauthorized' });
+      return;
+    }
+
+    sendResponse(response, 200, status);
+  } catch (error) {
+    sendError(response, error);
+  }
+}
 
 export async function requestVerificationController(
   request: Request,
@@ -48,7 +72,7 @@ export async function requestVerificationController(
     if (result === 'sent') {
       sendResponse(response, 200, {
         status: 'sent',
-        message: `Código enviado a ${user.mail}. Válido por ${config.expiresMinutes} minutos.`,
+        message: `Código de verificación enviado a ${user.mail}. Revisá spam. Válido por ${config.expiresMinutes} minutos. El mail de bienvenida llega después de confirmar el código.`,
         expires_minutes: config.expiresMinutes,
         cooldown_seconds: config.cooldownSeconds
       });

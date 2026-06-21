@@ -643,7 +643,10 @@ async function run(): Promise<void> {
     assert.equal((patchProfileResponse.body.user as JsonObject).name, 'Player Auth Updated');
     assert.equal((patchProfileResponse.body.user as JsonObject).mail, updatedMail);
     assert.equal((patchProfileResponse.body.user as JsonObject).birth_date, '1999-01-01');
-    assert.equal((patchProfileResponse.body.user as JsonObject).email_notifications_enabled, true);
+    assert.equal((patchProfileResponse.body.user as JsonObject).email_notifications_enabled, false);
+    assert.ok(patchProfileResponse.body.verification);
+    const verification = patchProfileResponse.body.verification as JsonObject;
+    assert.equal(verification.mail_changed, true);
     assert.ok(patchProfileResponse.body.profile);
     assert.ok(patchProfileResponse.body.streak);
 

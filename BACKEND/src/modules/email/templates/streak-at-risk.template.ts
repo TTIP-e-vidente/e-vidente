@@ -1,30 +1,35 @@
 import { EmailMessage } from '../email.types';
 import {
+  bodyDivider,
   bodyHighlight,
   bodyParagraph,
+  bodyWarmPanel,
+  buildStreakEmailCtas,
   buildTextLines,
-  ctaButton,
+  emailSignOff,
   escapeHtml,
   formatDayLabel,
   GAME_EMAIL_THEME,
   NOTIFICATION_OPT_OUT_TEXT,
-  streakBadge,
+  streakHero,
   wrapHtml
 } from './layout';
 import { StreakTemplateContext } from './types';
 
 export function buildStreakAtRiskEmail(context: StreakTemplateContext): EmailMessage {
-  const { name, mail, streakCount } = context;
+  const { name, mail, streakCount, playUrl, leaderboardUrl } = context;
   const safeName = escapeHtml(name);
   const dayLabel = formatDayLabel(streakCount);
   const t = GAME_EMAIL_THEME;
-  const subject = `🔥 Tu racha de ${streakCount} ${dayLabel} sigue en juego — jugá hoy`;
+  const subject = `Tu racha de ${streakCount} ${dayLabel} sigue en juego — jugá hoy`;
 
   const textContent = buildTextLines([
     `¡Hola ${name}!`,
     '',
     `Llevás ${streakCount} ${dayLabel} de racha, pero hoy todavía no registramos que hayas jugado.`,
     'Entrá y completá una partida antes de que termine el día para no perderla.',
+    ...(playUrl ? ['', `Jugar: ${playUrl}`] : []),
+    ...(leaderboardUrl ? [`Ver ranking: ${leaderboardUrl}`] : []),
     '',
     NOTIFICATION_OPT_OUT_TEXT,
     '',
@@ -32,22 +37,26 @@ export function buildStreakAtRiskEmail(context: StreakTemplateContext): EmailMes
   ]);
 
   const htmlContent = wrapHtml({
-    headline: '¡Tu racha está en riesgo!',
+    headline: 'Tu racha está en riesgo',
     subtitle: `${streakCount} ${dayLabel} · jugá hoy para mantenerla`,
-    headerEmoji: '🔥',
-    headerScheme: 'green',
+    preheader: `${name}, tu racha de ${streakCount} ${dayLabel} puede perderse si no jugás hoy.`,
+    headerIcon: 'streak',
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(
         `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>!`
       ),
-      streakBadge(streakCount),
-      bodyHighlight(
-        `Hoy todavía no registramos que hayas jugado. ` +
-        `Tu racha de <strong>${streakCount} ${dayLabel}</strong> podría perderse si no entrás antes de que termine el día.`
+      streakHero(streakCount, 'at_risk'),
+      bodyWarmPanel(
+        'Último llamado',
+        `Hoy todavía no registramos actividad. Tu racha de <strong>${streakCount} ${dayLabel}</strong> se pierde si no completás una partida antes de que termine el día.`
       ),
-      bodyParagraph('Completá una partida corta y mantenela activa. ¡Podés hacerlo!'),
-      ctaButton('¡Jugar ahora!', t.orangeAccent)
+      bodyHighlight(
+        'Una partida corta alcanza. Entrá, juega una lección y mantené viva tu progreso diario.'
+      ),
+      bodyDivider(),
+      buildStreakEmailCtas(playUrl, leaderboardUrl),
+      emailSignOff()
     ].join('')
   });
 

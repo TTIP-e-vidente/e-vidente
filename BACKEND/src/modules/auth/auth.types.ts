@@ -14,9 +14,25 @@ export interface PublicUser {
   mail_verified_at: string | null;
 }
 
+export type AuthVerificationSendStatus =
+  | 'sent'
+  | 'skipped'
+  | 'rate_limited'
+  | 'no_mail'
+  | 'send_failed'
+  | 'not_requested';
+
+export interface AuthVerificationMeta {
+  code_send_status: AuthVerificationSendStatus;
+  cooldown_seconds: number;
+  message: string;
+  expires_minutes: number;
+}
+
 export interface AuthResponse {
   user: PublicUser;
   accessToken: string;
+  verification?: AuthVerificationMeta;
 }
 
 export interface RegisterInput {

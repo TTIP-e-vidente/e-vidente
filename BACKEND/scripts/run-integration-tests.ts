@@ -7,6 +7,8 @@ const integrationTests = [
   'tests/postgres.integration.test.ts',
   'tests/email.templates.unit.test.ts',
   'tests/email.jobs.integration.test.ts',
+  'tests/email.webhook.integration.test.ts',
+  'tests/email.internal.integration.test.ts',
   'tests/auth.integration.test.ts',
   'tests/player_authenticated.integration.test.ts'
 ];
@@ -19,7 +21,8 @@ function runIntegrationTests(): void {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     NODE_ENV: 'test',
-    EMAIL_ENABLED: 'false'
+    EMAIL_ENABLED: 'false',
+    EMAIL_CRON_SECRET: process.env.EMAIL_CRON_SECRET ?? 'evidente_email_cron_test_secret'
   };
 
   for (const relativeTestPath of integrationTests) {

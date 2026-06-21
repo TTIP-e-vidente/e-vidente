@@ -185,6 +185,64 @@ export async function markDeliveryFailed(
   );
 }
 
+export interface LatestEmailDeliverySnapshot {
+  status: EmailDeliveryStatus;
+  sent_at: Date | null;
+  failed_at: Date | null;
+  error_message: string | null;
+  created_at: Date;
+}
+
+export async function findLatestDeliveryForUser(
+  userId: string,
+  templateKey: EmailTemplateKey
+): Promise<LatestEmailDeliverySnapshot | null> {
+  const result = await query<LatestEmailDeliverySnapshot>(
+    `
+      SELECT status, sent_at, failed_at, error_message, created_at
+      FROM email_deliveries
+      WHERE user_id = $1
+        AND template_key = $2
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [userId, templateKey]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+function normalizeProviderMessageId(providerMessageId: string): string {
+  return providerMessageId.replace(/^<|>$/g, '').trim();
+}
+
+export async function markDeliveryFailedByProviderMessageId(
+  providerMessageId: string,
+  errorMessage: string
+): Promise<number> {
+  const normalized = normalizeProviderMessageId(providerMessageId);
+  if (!normalized) {
+    return 0;
+  }
+
+  const result = await query(
+    `
+      UPDATE email_deliveries
+      SET
+        status = 'failed',
+        error_message = $2,
+        failed_at = now(),
+        sent_at = NULL
+      WHERE provider_message_id = $1
+         OR provider_message_id = $3
+         OR provider_message_id = $4;
+    `,
+    [normalized, errorMessage.slice(0, 1000), `<${normalized}>`, providerMessageId.trim()]
+  );
+
+  return result.rowCount ?? 0;
+}
+
 export async function markWelcomeEmailSent(
   client: PoolClient,
   userId: string
@@ -253,6 +311,58 @@ export async function listDeliveries(
   );
 
   return result.rows;
+}
+
+export interface EmailDeliverySummary {
+  pending: number;
+  sent: number;
+  failed: number;
+  total: number;
+}
+
+export async function summarizeDeliveries(filters: {
+  userId?: string;
+  templateKey?: EmailTemplateKey;
+} = {}): Promise<EmailDeliverySummary> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (filters.userId) {
+    params.push(filters.userId);
+    conditions.push(`user_id = $${params.length}`);
+  }
+
+  if (filters.templateKey) {
+    params.push(filters.templateKey);
+    conditions.push(`template_key = $${params.length}`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await query<{ status: EmailDeliveryStatus; count: string }>(
+    `
+      SELECT status, COUNT(*)::text AS count
+      FROM email_deliveries
+      ${whereClause}
+      GROUP BY status;
+    `,
+    params
+  );
+
+  const summary: EmailDeliverySummary = {
+    pending: 0,
+    sent: 0,
+    failed: 0,
+    total: 0
+  };
+
+  for (const row of result.rows) {
+    const count = Number.parseInt(row.count, 10);
+    summary[row.status] = count;
+    summary.total += count;
+  }
+
+  return summary;
 }
 
 export async function findStreakAtRiskCandidates(today: string): Promise<StreakEmailCandidate[]> {
@@ -351,6 +461,36 @@ export async function reconcileExpiredStreaksInDatabase(today: string): Promise<
   return result.rowCount ?? 0;
 }
 
+export async function isUserMailVerified(userId: string): Promise<boolean> {
+  const result = await query<{ verified: boolean }>(
+    `
+      SELECT (mail_verified_at IS NOT NULL) AS verified
+      FROM users
+      WHERE id = $1;
+    `,
+    [userId]
+  );
+  return Boolean(result.rows[0]?.verified);
+}
+
+export async function cancelPendingWelcomeForUnverifiedUsers(): Promise<number> {
+  const result = await query(
+    `
+      UPDATE email_deliveries ed
+      SET
+        status = 'failed',
+        error_message = 'Cancelled: user mail not verified',
+        failed_at = now()
+      FROM users u
+      WHERE ed.user_id = u.id
+        AND ed.template_key = 'welcome'
+        AND ed.status = 'pending'
+        AND u.mail_verified_at IS NULL;
+    `
+  );
+  return result.rowCount ?? 0;
+}
+
 export async function findPendingWelcomeDeliveries(
   limit: number
 ): Promise<PendingWelcomeDelivery[]> {
@@ -362,9 +502,11 @@ export async function findPendingWelcomeDeliveries(
         ed.user_id AS "userId",
         ed.recipient_email AS "recipientEmail"
       FROM email_deliveries ed
+      INNER JOIN users u ON u.id = ed.user_id
       WHERE ed.status = 'pending'
         AND ed.template_key = 'welcome'
         AND ed.recipient_email IS NOT NULL
+        AND u.mail_verified_at IS NOT NULL
       ORDER BY ed.created_at ASC
       LIMIT $1;
     `,
@@ -553,6 +695,8 @@ export async function getLastVerificationCodeCreatedAt(
       SELECT created_at
       FROM email_verification_codes
       WHERE user_id = $1
+        AND used_at IS NULL
+        AND expires_at > now()
       ORDER BY created_at DESC
       LIMIT 1;
     `,

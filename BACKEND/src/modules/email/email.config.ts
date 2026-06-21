@@ -30,6 +30,19 @@ function resolveEmailEnabled(): boolean {
   return true;
 }
 
+function resolvePublicBaseUrl(): string {
+  const configured =
+    (process.env.BACKEND_BASE_URL ?? process.env.PUBLIC_API_URL ?? process.env.API_PUBLIC_URL ?? '').trim();
+  if (configured.length > 0) {
+    return configured.replace(/\/+$/, '');
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    const port = process.env.PORT ?? '3000';
+    return `http://localhost:${port}`;
+  }
+  return '';
+}
+
 export const emailConfig = {
   enabled: resolveEmailEnabled(),
   brevoApiKey: process.env.BREVO_API_KEY ?? '',
@@ -73,7 +86,11 @@ export const emailConfig = {
     1,
     Number.parseInt(process.env.EMAIL_PENDING_WELCOME_BATCH_LIMIT ?? '25', 10) || 25
   ),
-  appPlayUrl: (process.env.EMAIL_APP_PLAY_URL ?? process.env.APP_PLAY_URL ?? '').trim()
+  appPlayUrl: (process.env.EMAIL_APP_PLAY_URL ?? process.env.APP_PLAY_URL ?? '').trim(),
+  logoUrl: (process.env.EMAIL_LOGO_URL ?? '').trim(),
+  publicBaseUrl: resolvePublicBaseUrl(),
+  verificationCopySecret:
+    (process.env.EMAIL_VERIFICATION_COPY_SECRET ?? process.env.EMAIL_CRON_SECRET ?? '').trim()
 };
 
 export function isEmailDeliveryConfigured(): boolean {

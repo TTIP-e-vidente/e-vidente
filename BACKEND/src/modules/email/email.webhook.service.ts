@@ -7,33 +7,59 @@ const HARD_BOUNCE_EVENTS = new Set([
   'unsubscribed'
 ]);
 
+const SOFT_BOUNCE_EVENTS = new Set(['soft_bounce', 'deferred']);
+
 export interface BrevoWebhookEvent {
   event?: unknown;
   email?: unknown;
   'message-id'?: unknown;
   messageId?: unknown;
+  reason?: unknown;
 }
 
 function asTrimmedString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function extractProviderMessageId(event: BrevoWebhookEvent): string {
+  return asTrimmedString(event['message-id']) || asTrimmedString(event.messageId);
+}
+
+function buildFailureMessage(eventName: string, reason: string): string {
+  if (reason) {
+    return `Brevo ${eventName}: ${reason}`.slice(0, 1000);
+  }
+  return `Brevo ${eventName}`.slice(0, 1000);
+}
+
 export async function handleBrevoWebhookEvents(
   events: BrevoWebhookEvent[]
-): Promise<{ processed: number; suppressed: number }> {
+): Promise<{ processed: number; suppressed: number; deliveries_updated: number }> {
   let processed = 0;
   let suppressed = 0;
+  let deliveriesUpdated = 0;
 
   for (const event of events) {
     const eventName = asTrimmedString(event.event).toLowerCase();
     const email = asTrimmedString(event.email).toLowerCase();
-    if (!eventName || !email) {
+    const providerMessageId = extractProviderMessageId(event);
+    const reason = asTrimmedString(event.reason);
+
+    if (!eventName) {
       continue;
     }
 
     processed += 1;
 
-    if (!HARD_BOUNCE_EVENTS.has(eventName)) {
+    if (providerMessageId && (HARD_BOUNCE_EVENTS.has(eventName) || SOFT_BOUNCE_EVENTS.has(eventName))) {
+      const updated = await emailRepository.markDeliveryFailedByProviderMessageId(
+        providerMessageId,
+        buildFailureMessage(eventName, reason)
+      );
+      deliveriesUpdated += updated;
+    }
+
+    if (!email || !HARD_BOUNCE_EVENTS.has(eventName)) {
       continue;
     }
 
@@ -45,5 +71,5 @@ export async function handleBrevoWebhookEvents(
     }
   }
 
-  return { processed, suppressed };
+  return { processed, suppressed, deliveries_updated: deliveriesUpdated };
 }

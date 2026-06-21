@@ -6,6 +6,7 @@ import {
   runStreakEmailJob
 } from './email.service';
 import { handleBrevoWebhookEvents, BrevoWebhookEvent } from './email.webhook.service';
+import { isAuthorizedInternalRequest } from './email.internal-auth';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
 import { refreshAllLeaderboards } from '../leaderboard/leaderboard.service';
@@ -13,8 +14,7 @@ import { refreshAllLeaderboards } from '../leaderboard/leaderboard.service';
 export const internalJobsRouter = Router();
 
 function isAuthorizedJob(request: Request): boolean {
-  const providedSecret = request.header('x-job-secret') ?? '';
-  return Boolean(emailConfig.cronSecret) && providedSecret === emailConfig.cronSecret;
+  return isAuthorizedInternalRequest(request);
 }
 
 internalJobsRouter.post('/streak-emails', async (request: Request, response: Response) => {

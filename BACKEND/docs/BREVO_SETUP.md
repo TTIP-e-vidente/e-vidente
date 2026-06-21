@@ -95,9 +95,20 @@ Jobs locales:
 powershell -ExecutionPolicy Bypass -File ../scripts/local/run-email-job.ps1 -Job streaks
 ```
 
-Auditoría:
+Auditoría (solo desarrollo, `NODE_ENV !== production`):
 
 `http://localhost:3000/dev/email/deliveries?limit=20`
+
+Auditoría en **cualquier entorno** (requiere secreto, no hace falta ngrok):
+
+```bash
+curl -s -H "X-Job-Secret: $EMAIL_CRON_SECRET" \
+  "http://localhost:3000/internal/email/deliveries?mail=tu@mail.com&template_key=email_verification"
+```
+
+También podés filtrar por `userId`, `username`, `status` y `limit`. La respuesta incluye resumen (`pending/sent/failed`), estado OTP del usuario y la lista de `email_deliveries`.
+
+Útil mientras no tengas webhook Brevo público: ves si el backend marcó el OTP como `sent` o `failed` aunque Brevo no te avise del bounce.
 
 ## 5. Consentimiento de rachas
 

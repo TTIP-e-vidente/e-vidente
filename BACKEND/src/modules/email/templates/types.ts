@@ -6,12 +6,18 @@ export interface WelcomeTemplateContext {
   name: string;
   mail: string;
   playUrl?: string;
+  /** Enlace directo al ranking dentro del juego. */
+  leaderboardUrl?: string;
 }
 
 export interface StreakTemplateContext {
   name: string;
   mail: string;
   streakCount: number;
+  /** URL base del juego (itch, web, etc.). */
+  playUrl?: string;
+  /** Enlace directo al ranking dentro del juego. */
+  leaderboardUrl?: string;
 }
 
 export type TemplateContextByKey = {

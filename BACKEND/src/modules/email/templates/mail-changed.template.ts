@@ -1,8 +1,12 @@
 import { EmailMessage } from '../email.types';
 import {
+  bodyDivider,
   bodyHighlight,
   bodyParagraph,
+  bodyWarmPanel,
+  checklistBlock,
   buildTextLines,
+  emailSignOff,
   escapeHtml,
   GAME_EMAIL_THEME,
   wrapHtml
@@ -36,8 +40,8 @@ export function buildMailChangedEmail(context: MailChangedTemplateContext): Emai
   const htmlContent = wrapHtml({
     headline: 'Tu email fue cambiado',
     subtitle: 'Aviso de seguridad de cuenta',
-    headerEmoji: '🔒',
-    headerScheme: 'gold',
+    preheader: `Se actualizó el email de tu cuenta E-VIDENTE a ${newMail}. Si no fuiste vos, revisá esto.`,
+    headerIcon: 'security',
     bodyHtml: [
       bodyParagraph(
         `Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>,`
@@ -46,15 +50,23 @@ export function buildMailChangedEmail(context: MailChangedTemplateContext): Emai
         'Te informamos que el email asociado a tu cuenta de <strong>E-VIDENTE</strong> fue actualizado.'
       ),
       bodyHighlight(
-        `<span style="font-size: 14px; color: ${t.textMuted};">Nuevo email registrado:</span><br/>` +
-        `<strong style="font-size: 17px; color: ${t.primaryGreen};">${safeNewMail}</strong>`
+        `<span style="font-size: 13px; color: ${t.textMuted}; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700;">Nuevo email registrado</span><br/>` +
+        `<strong style="font-size: 18px; color: ${t.primaryGreen}; line-height: 1.4;">${safeNewMail}</strong>`
       ),
+      bodyWarmPanel(
+        '¿No fuiste vos?',
+        'Si no reconocés este cambio, tu cuenta podría estar en riesgo. Actuá rápido para protegerla.'
+      ),
+      checklistBlock([
+        'Cambiá la contraseña de tu cuenta de juego',
+        'Revisá si tenés sesiones abiertas en otros dispositivos',
+        'Contactanos si necesitás ayuda para recuperar tu cuenta'
+      ]),
+      bodyDivider(),
       bodyParagraph(
-        `<span style="font-size: 13px; color: ${t.textMuted};">` +
-        `Si fuiste vos, podés ignorar este mensaje. ` +
-        `Si <strong>no reconocés este cambio</strong>, contactanos de inmediato para proteger tu cuenta.` +
-        `</span>`
-      )
+        `<span style="font-size: 13px; color: ${t.textMuted};">Si fuiste vos, podés ignorar este mensaje.</span>`
+      ),
+      emailSignOff()
     ].join('')
   });
 

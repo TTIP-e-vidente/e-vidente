@@ -40,6 +40,32 @@ export async function findPublicUserByUsername(
   return result.rows[0] ?? null;
 }
 
+export async function findUserIdByUsername(username: string): Promise<string | null> {
+  const result = await query<{ id: string }>(
+    `
+      SELECT id
+      FROM users
+      WHERE username = $1;
+    `,
+    [username.trim()]
+  );
+
+  return result.rows[0]?.id ?? null;
+}
+
+export async function findUserIdByMail(mail: string): Promise<string | null> {
+  const result = await query<{ id: string }>(
+    `
+      SELECT id
+      FROM users
+      WHERE lower(mail) = lower($1);
+    `,
+    [mail.trim()]
+  );
+
+  return result.rows[0]?.id ?? null;
+}
+
 export interface UpdateUserProfileInput {
   name?: string;
   mail?: string | null;
