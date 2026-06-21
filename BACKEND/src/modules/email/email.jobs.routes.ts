@@ -8,6 +8,7 @@ import {
 import { handleBrevoWebhookEvents, BrevoWebhookEvent } from './email.webhook.service';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
+import { refreshAllLeaderboards } from '../leaderboard/leaderboard.service';
 
 export const internalJobsRouter = Router();
 
@@ -70,6 +71,26 @@ internalJobsRouter.post('/brevo-webhook', async (request: Request, response: Res
     const events: BrevoWebhookEvent[] = Array.isArray(body) ? body : [body as BrevoWebhookEvent];
     const result = await handleBrevoWebhookEvents(events);
     sendResponse(response, 200, result);
+  } catch (error) {
+    sendError(response, error);
+  }
+});
+
+// ─── Leaderboard refresh ──────────────────────────────────────────────────────
+
+internalJobsRouter.post('/refresh-leaderboard', async (request: Request, response: Response) => {
+  try {
+    if (!isAuthorizedJob(request)) {
+      sendResponse(response, 401, { error: 'Unauthorized job secret' });
+      return;
+    }
+
+    const startMs = Date.now();
+    const results = await refreshAllLeaderboards();
+    sendResponse(response, 200, {
+      totalDurationMs: Date.now() - startMs,
+      results
+    });
   } catch (error) {
     sendError(response, error);
   }

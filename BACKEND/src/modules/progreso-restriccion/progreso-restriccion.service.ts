@@ -30,6 +30,7 @@ import * as progresoRestriccionRepository from './progreso-restriccion.repositor
 import { toPublicProfile } from '../profile/profile.mapper';
 import { toPublicStreak } from '../streak/streak.mapper';
 import { toPublicGame } from '../game/game.mapper';
+import { triggerLeaderboardRefresh } from '../leaderboard/leaderboard.service';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
@@ -294,6 +295,12 @@ export async function saveAuthenticatedProgress(
       : null;
 
     await client.query('COMMIT');
+
+    // Trigger no bloqueante: el leaderboard se actualizará en background
+    // (debounce de 5s, no afecta la latencia de este endpoint)
+    if (expToAdd > 0 || completed) {
+      triggerLeaderboardRefresh();
+    }
 
     return {
       user,
