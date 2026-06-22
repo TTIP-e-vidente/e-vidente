@@ -1,26 +1,27 @@
 extends VBoxContainer
 
 # Skeleton animado para la lista del Leaderboard.
-# Se encarga de hacer oscilar la opacidad de las barras (efecto "respiración").
+# Colores y layout definidos en LeaderboardSkeletonRow.tscn.
 
-@export var speed: float = 2.0
+
+@export var speed: float = 2.2
+@export var desfase_fila: float = 0.45
+
 var _time: float = 0.0
+var _filas: Array[Control] = []
 
 
 func _ready() -> void:
-	_aplicar_colores_skeleton()
+	for hijo in get_children():
+		if hijo is Control:
+			_filas.append(hijo as Control)
 
-
-func _aplicar_colores_skeleton() -> void:
-	var color_base := Color(MiPaleta.VERDE_BOSQUE.r, MiPaleta.VERDE_BOSQUE.g, MiPaleta.VERDE_BOSQUE.b, 0.18)
-	for fila in get_children():
-		if fila is HBoxContainer:
-			for hijo in fila.get_children():
-				if hijo is ColorRect:
-					(hijo as ColorRect).color = color_base
 
 func _process(delta: float) -> void:
 	_time += delta
-	# Oscilar la modulación (transparencia) entre 0.3 y 0.7 usando el seno del tiempo
-	var alpha: float = 0.5 + 0.2 * sin(_time * speed)
-	modulate.a = alpha
+	for i in _filas.size():
+		var fila := _filas[i]
+		if not is_instance_valid(fila):
+			continue
+		var alpha: float = 0.42 + 0.28 * sin(_time * speed + i * desfase_fila)
+		fila.modulate.a = alpha

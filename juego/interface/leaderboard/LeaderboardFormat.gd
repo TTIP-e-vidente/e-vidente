@@ -38,6 +38,46 @@ static func texto_posicion(posicion: int) -> String:
 	return "#%d" % posicion
 
 
+static func entradas_cercanas(entradas: Array, puesto_centro: int, radio: int = 2) -> Array:
+	if puesto_centro <= 0 or radio < 0:
+		return []
+
+	var min_rank := maxi(1, puesto_centro - radio)
+	var max_rank := puesto_centro + radio
+	var filtradas: Array = []
+
+	for entrada in entradas:
+		if not entrada is Dictionary:
+			continue
+		var rank := int((entrada as Dictionary).get("rank", 0))
+		if rank >= min_rank and rank <= max_rank:
+			filtradas.append(entrada)
+
+	filtradas.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a.get("rank", 0)) < int(b.get("rank", 0))
+	)
+	return filtradas
+
+
+static func entradas_contexto_desde_resumen(resumen: Dictionary) -> Array:
+	var salida: Array = []
+	var current: Variant = resumen.get("current", null)
+	if current is Dictionary:
+		salida.append(current)
+	var siguiente: Variant = resumen.get("next", null)
+	if siguiente is Dictionary:
+		var rank_sig := int((siguiente as Dictionary).get("rank", 0))
+		var rank_actual := int((current as Dictionary).get("rank", 0)) if current is Dictionary else 0
+		if rank_sig > 0 and rank_sig != rank_actual:
+			salida.append(siguiente)
+
+	if current is Dictionary:
+		var puesto := int((current as Dictionary).get("rank", 0))
+		return entradas_cercanas(salida, puesto, 2)
+	return salida
+
+
 static func color_posicion(posicion: int, es_propio: bool = false) -> Color:
 	if es_propio:
 		return Color.WHITE

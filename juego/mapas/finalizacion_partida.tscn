@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bjvys771chohe" path="res://niveles/botones.tscn" id="6_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://cbukx38vl5g7d" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://7ej3tir1dmri" path="res://assets-sistema/sonidos/leccion-terminada.mp3" id="8_j2nsx"]
-[ext_resource type="PackedScene" path="res://interface/leaderboard/ProgresoPuestoCard.tscn" id="9_ranking"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/RankingResumenPostPartida.tscn" id="9_ranking"]
 
 [node name="FinalizacionPartida" type="Node2D" unique_id=2003681950]
 script = ExtResource("1_k2l4b")
@@ -92,11 +92,30 @@ stream = ExtResource("7_4j0lp")
 [node name="AudioNormal" type="AudioStreamPlayer2D" parent="." unique_id=1587941963]
 stream = ExtResource("8_j2nsx")
 
-[node name="LabelSyncStatus" type="Label" parent="." unique_id=85470754]
-offset_left = 376.0
-offset_top = 485.0
-offset_right = 776.0
-offset_bottom = 515.0
+[node name="UiAnchor" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1152.0
+offset_bottom = 800.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LabelSyncStatus" type="Label" parent="UiAnchor" unique_id=85470754]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -315.0
+offset_right = 200.0
+offset_bottom = -285.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 1, 0.7)
 theme_override_fonts/font = ExtResource("4_uokky")
 theme_override_font_sizes/font_size = 18
@@ -104,16 +123,27 @@ text = "Guardado localmente"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RankingContainer" type="Control" parent="." unique_id=3001234567]
+[node name="RankingContainer" type="Control" parent="UiAnchor" unique_id=3001234567]
 visible = false
-offset_left = 330.0
-offset_top = 520.0
-offset_right = 830.0
-offset_bottom = 590.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -300.0
+offset_right = 340.0
+offset_bottom = -88.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="ProgresoPuestoCard" parent="RankingContainer" unique_id=3001234568 instance=ExtResource("9_ranking")]
-layout_mode = 0
+[node name="RankingResumenPostPartida" parent="UiAnchor/RankingContainer" unique_id=3001234568 instance=ExtResource("9_ranking")]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [connection signal="pressed" from="Continuar" to="." method="_on_continuar_presionado"]

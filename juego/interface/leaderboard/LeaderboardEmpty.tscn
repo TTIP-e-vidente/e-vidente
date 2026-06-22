@@ -1,9 +1,32 @@
-[gd_scene load_steps=2 format=3 uid="uid://lb_empty_001"]
+[gd_scene load_steps=6 format=3 uid="uid://lb_empty_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardEmpty.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.259, 0.471, 0.369, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 18
+content_margin_top = 10
+content_margin_right = 18
+content_margin_bottom = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.320, 0.560, 0.440, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 18
+content_margin_top = 10
+content_margin_right = 18
+content_margin_bottom = 10
 
 [node name="LeaderboardEmpty" type="VBoxContainer"]
-script = ExtResource("1_script")
 custom_minimum_size = Vector2(0, 200)
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,22 +34,40 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
-theme_override_constants/separation = 12
+theme_override_constants/separation = 14
+script = ExtResource("1_script")
+
+[node name="IconoVacio" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 0.55)
+theme_override_fonts/font = ExtResource("3_spray")
+theme_override_font_sizes/font_size = 36
+text = "—"
+horizontal_alignment = 1
 
 [node name="Titulo" type="Label" parent="."]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_fonts/font = ExtResource("3_spray")
+theme_override_font_sizes/font_size = 20
 text = "Todavía no hay datos"
 horizontal_alignment = 1
 
 [node name="Mensaje" type="Label" parent="."]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.42, 0.36, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
 text = "Jugá una partida para aparecer en el ranking."
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="BotonIniciarSesion" type="Button" parent="."]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 text = "Iniciar sesión"

@@ -10,9 +10,6 @@ extends CanvasLayer
 # Al cerrarse emite la señal "cerrado" y se destruye.
 
 
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-
-
 # ── Señales ────────────────────────────────────────────────────────────────────
 
 signal cerrado
@@ -47,7 +44,7 @@ enum EstadoUi {
 @onready var _panel_vacio:        VBoxContainer   = %ContenedorVacio/LeaderboardEmpty
 @onready var _etiqueta_error:      Label           = %LabelError
 @onready var _entry_peek:          LeaderboardEntryPeek = %EntryPeek
-@onready var _fondo:               ColorRect       = $Fondo
+@onready var _fondo:               PanelContainer  = $Fondo
 
 
 # ── Estado interno ─────────────────────────────────────────────────────────────
@@ -63,7 +60,6 @@ func _ready() -> void:
 	layer = 80
 
 	_id_usuario_propio = _obtener_id_usuario_logueado()
-	_aplicar_estilos()
 
 	_conectar_servicio()
 	_conectar_componentes()
@@ -93,69 +89,6 @@ func abrir(scope: String = "global_xp") -> void:
 	if is_instance_valid(_pestanias):
 		_pestanias.seleccionar(scope)
 	_cargar_scope(scope)
-
-
-# ── Estilos E-VIDENTE ─────────────────────────────────────────────────────────
-
-func _aplicar_estilos() -> void:
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-
-	if is_instance_valid(_panel_central):
-		var panel := StyleBoxFlat.new()
-		panel.bg_color = Color(0.995, 0.992, 0.985, 1)
-		panel.set_corner_radius_all(24)
-		panel.shadow_color = Color(0, 0, 0, 0.14)
-		panel.shadow_size = 12
-		panel.shadow_offset = Vector2(0, 4)
-		_panel_central.add_theme_stylebox_override("panel", panel)
-
-	if is_instance_valid(_header_bar):
-		var header := StyleBoxFlat.new()
-		header.bg_color = MiPaleta.VERDE_BOSQUE
-		header.corner_radius_top_left = 24
-		header.corner_radius_top_right = 24
-		header.corner_radius_bottom_left = 0
-		header.corner_radius_bottom_right = 0
-		_header_bar.add_theme_stylebox_override("panel", header)
-
-	if is_instance_valid(_titulo) and rubik != null:
-		_titulo.add_theme_font_override("font", rubik)
-		_titulo.add_theme_color_override("font_color", Color.WHITE)
-
-	if is_instance_valid(_boton_cerrar):
-		_boton_cerrar.add_theme_color_override("font_color", Color(1, 1, 1, 0.65))
-		_boton_cerrar.add_theme_color_override("font_hover_color", Color.WHITE)
-		_boton_cerrar.add_theme_font_size_override("font_size", 22)
-
-	if is_instance_valid(_label_meta) and rubik != null:
-		_label_meta.add_theme_font_override("font", rubik)
-		_label_meta.add_theme_color_override("font_color", Color(0.45, 0.42, 0.36, 1))
-
-	if is_instance_valid(_etiqueta_error) and rubik != null:
-		_etiqueta_error.add_theme_font_override("font", rubik)
-		_etiqueta_error.add_theme_color_override("font_color", MiPaleta.MARRON_ROJIZO)
-
-	_estilizar_boton_primario(_boton_reintentar, rubik)
-
-
-func _estilizar_boton_primario(boton: Button, rubik: Font) -> void:
-	if not is_instance_valid(boton):
-		return
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = MiPaleta.VERDE_BOSQUE
-	normal.set_corner_radius_all(12)
-	normal.content_margin_left = 20
-	normal.content_margin_right = 20
-	normal.content_margin_top = 10
-	normal.content_margin_bottom = 10
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = MiPaleta.VERDE_BOSQUE.lightened(0.08)
-	boton.add_theme_stylebox_override("normal", normal)
-	boton.add_theme_stylebox_override("hover", hover)
-	boton.add_theme_stylebox_override("pressed", hover)
-	boton.add_theme_color_override("font_color", Color.WHITE)
-	if rubik != null:
-		boton.add_theme_font_override("font", rubik)
 
 
 # ── Conexiones ─────────────────────────────────────────────────────────────────

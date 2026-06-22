@@ -26,6 +26,9 @@ signal login_pressed
 @onready var _resume_hint_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeHintLabel
 @onready var _resume_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow/ResumeCard/VBox/ResumeButton
 @onready var _weekly_summary: Node = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/WeeklyLearningSummary
+@onready var _ranking_detalle: RankingDetallePerfil = (
+	$SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/RankingDetallePerfil
+)
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
@@ -44,6 +47,11 @@ func _ready() -> void:
 	_edit_btn.pressed.connect(_on_editar_perfil_o_login_presionado)
 	if is_instance_valid(_leaderboard_btn):
 		_leaderboard_btn.pressed.connect(func(): ranking_pressed.emit())
+	if is_instance_valid(_ranking_detalle):
+		_ranking_detalle.ver_tabla_completa_solicitada.connect(
+			func(_scope: String) -> void: ranking_pressed.emit()
+		)
+		_ranking_detalle.iniciar_sesion_solicitado.connect(func() -> void: login_pressed.emit())
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
@@ -229,6 +237,9 @@ func refrescar() -> void:
 	# Refrescar resumen semanal
 	if is_instance_valid(_weekly_summary) and _weekly_summary.has_method("refrescar"):
 		_weekly_summary.call("refrescar")
+
+	if is_instance_valid(_ranking_detalle):
+		_ranking_detalle.call_deferred("cargar")
 		
 	if _logout_btn:
 		_logout_btn.visible = not es_invitado

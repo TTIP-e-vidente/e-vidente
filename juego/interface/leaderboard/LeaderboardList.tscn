@@ -1,19 +1,58 @@
-[gd_scene load_steps=3 format=3 uid="uid://lb_list_001"]
+[gd_scene load_steps=5 format=3 uid="uid://lb_list_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardList.gd" id="1_list"]
-[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardEntry.gd" id="2_entry"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ver_mas_normal"]
+bg_color = Color(0.08, 0.12, 0.10, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.28)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 16
+content_margin_top = 10
+content_margin_right = 16
+content_margin_bottom = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ver_mas_hover"]
+bg_color = Color(0.12, 0.18, 0.14, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.55)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 16
+content_margin_top = 10
+content_margin_right = 16
+content_margin_bottom = 10
 
 [node name="LeaderboardList" type="ScrollContainer"]
-script = ExtResource("1_list")
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = ExtResource("1_list")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
 [node name="BotonVerMas" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Ver más"
 visible = false
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_hover_color = Color(0.950, 0.840, 0.380, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_ver_mas_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ver_mas_hover")
+text = "Ver más jugadores"

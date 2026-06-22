@@ -5,32 +5,20 @@ extends PanelContainer
 # No hace requests: usa los datos ya cargados en la fila.
 
 
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-
-
 signal cerrado
 
 
 @onready var _avatar_badge: LeaderboardAvatarBadge = $Margin/VBox/Header/AvatarBadge
-@onready var _label_nombre: Label = $Margin/VBox/Header/NombreLabel
-@onready var _label_posicion: Label = $Margin/VBox/DetalleLabel
-@onready var _label_puntaje: Label = $Margin/VBox/PuntajeLabel
-@onready var _boton_cerrar: Button = $Margin/VBox/BotonCerrar
+@onready var _label_nombre: Label = %NombreLabel
+@onready var _label_posicion: Label = %DetalleLabel
+@onready var _label_puntaje: Label = %PuntajeLabel
+@onready var _badge_propia: PanelContainer = %BadgePropia
+@onready var _boton_cerrar: Button = %BotonCerrar
 
 
 func _ready() -> void:
-	_aplicar_fuente()
 	if is_instance_valid(_boton_cerrar):
 		_boton_cerrar.pressed.connect(func() -> void: cerrado.emit())
-
-
-func _aplicar_fuente() -> void:
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-	if rubik == null:
-		return
-	for nodo: Node in [_label_nombre, _label_posicion, _label_puntaje, _boton_cerrar]:
-		if is_instance_valid(nodo):
-			(nodo as Control).add_theme_font_override("font", rubik)
 
 
 func mostrar(entrada: Dictionary, scope: String, es_propio: bool) -> void:
@@ -42,10 +30,24 @@ func mostrar(entrada: Dictionary, scope: String, es_propio: bool) -> void:
 		_avatar_badge.mostrar_para_entrada(entrada, es_propio)
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = nombre
+		if es_propio:
+			_label_nombre.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+		else:
+			_label_nombre.remove_theme_color_override("font_color")
+	if is_instance_valid(_badge_propia):
+		_badge_propia.visible = es_propio
 	if is_instance_valid(_label_posicion):
-		_label_posicion.text = "Puesto %s" % LeaderboardFormat.texto_posicion(posicion)
+		_label_posicion.text = LeaderboardFormat.texto_posicion(posicion)
+		_label_posicion.add_theme_color_override(
+			"font_color",
+			LeaderboardFormat.color_posicion(posicion, es_propio)
+		)
 	if is_instance_valid(_label_puntaje):
 		_label_puntaje.text = LeaderboardFormat.formatear_score(puntaje, scope)
+		if es_propio:
+			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+		else:
+			_label_puntaje.remove_theme_color_override("font_color")
 
 
 func _resolver_nombre(entrada: Dictionary) -> String:

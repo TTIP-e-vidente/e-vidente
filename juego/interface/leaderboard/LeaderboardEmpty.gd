@@ -6,9 +6,6 @@ extends VBoxContainer
 signal iniciar_sesion_solicitado
 
 
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-
-
 @onready var _label_titulo: Label = $Titulo
 @onready var _label_mensaje: Label = $Mensaje
 @onready var _boton_iniciar_sesion: Button = $BotonIniciarSesion
@@ -18,7 +15,6 @@ func _ready() -> void:
 	if is_instance_valid(_boton_iniciar_sesion):
 		_boton_iniciar_sesion.visible = false
 		_boton_iniciar_sesion.pressed.connect(func() -> void: iniciar_sesion_solicitado.emit())
-		_aplicar_estilo_boton()
 
 
 func configurar_para_jugador(es_invitado: bool) -> void:
@@ -36,19 +32,3 @@ func configurar_para_jugador(es_invitado: bool) -> void:
 
 	if is_instance_valid(_boton_iniciar_sesion):
 		_boton_iniciar_sesion.visible = es_invitado
-
-
-func _aplicar_estilo_boton() -> void:
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-	var btn := StyleBoxFlat.new()
-	btn.bg_color = MiPaleta.VERDE_BOSQUE
-	btn.set_corner_radius_all(10)
-	btn.content_margin_left = 16
-	btn.content_margin_right = 16
-	btn.content_margin_top = 8
-	btn.content_margin_bottom = 8
-	_boton_iniciar_sesion.add_theme_stylebox_override("normal", btn)
-	_boton_iniciar_sesion.add_theme_stylebox_override("hover", btn)
-	_boton_iniciar_sesion.add_theme_color_override("font_color", Color.WHITE)
-	if rubik != null:
-		_boton_iniciar_sesion.add_theme_font_override("font", rubik)

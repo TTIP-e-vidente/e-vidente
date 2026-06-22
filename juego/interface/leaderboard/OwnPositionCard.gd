@@ -7,9 +7,6 @@ extends PanelContainer
 signal iniciar_sesion_solicitado
 
 
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-
-
 @onready var _label_posicion: Label = $MarginContainer/HBox/RankLabel
 @onready var _label_puntaje:  Label = $MarginContainer/HBox/ScoreLabel
 @onready var _label_texto:    Label = $MarginContainer/HBox/TextoLabel
@@ -24,18 +21,6 @@ func _ready() -> void:
 	if is_instance_valid(_boton_iniciar_sesion):
 		_boton_iniciar_sesion.visible = false
 		_boton_iniciar_sesion.pressed.connect(func() -> void: iniciar_sesion_solicitado.emit())
-	_aplicar_fuente()
-
-
-func _aplicar_fuente() -> void:
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-	if rubik == null:
-		return
-	for lbl: Label in [_label_posicion, _label_puntaje, _label_texto]:
-		if is_instance_valid(lbl):
-			lbl.add_theme_font_override("font", rubik)
-	if is_instance_valid(_boton_iniciar_sesion):
-		_boton_iniciar_sesion.add_theme_font_override("font", rubik)
 
 
 func _ocultar_boton_iniciar_sesion() -> void:

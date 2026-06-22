@@ -17,9 +17,11 @@ const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules
 @onready var mensaje: Label = $Mensaje
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
-@onready var label_sync_status: Label = $LabelSyncStatus
-@onready var _ranking_container: Control          = $RankingContainer
-@onready var _card_ranking:      ProgresoPuestoCard = $RankingContainer/ProgresoPuestoCard
+@onready var label_sync_status: Label = $UiAnchor/LabelSyncStatus
+@onready var _ranking_container: Control = $UiAnchor/RankingContainer
+@onready var _card_ranking: RankingResumenPostPartida = (
+	$UiAnchor/RankingContainer/RankingResumenPostPartida
+)
 
 @onready var stats_1: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer
 @onready var stats_2: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer2
@@ -52,6 +54,7 @@ func _formatear_tiempo(segundos_totales: float) -> String:
 	if rem_s == 0:
 		return "%dm" % m
 	return "%dm %ds" % [m, rem_s]
+
 
 func _ready() -> void:
 	# Iconos de los bloques de stats
@@ -97,6 +100,7 @@ func _ready() -> void:
 		precision_actual,
 		tiempo_final
 	)
+	_actualizar_titulo_leccion(precision_actual)
 	_mostrar_comparacion_precision(stats, precision_actual)
 
 	# Inicializar feedback de sync
@@ -169,6 +173,17 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 			audio_normal.play()
 
 
+func _actualizar_titulo_leccion(precision: int) -> void:
+	var titulo := get_node_or_null("LeccionCompleta") as Label
+	if titulo == null:
+		return
+	if precision >= 100:
+		titulo.text = "¡LECCIÓN PERFECTA!"
+		titulo.add_theme_color_override("font_color", Color(0.859, 0.753, 0.318, 1))
+	else:
+		titulo.text = "¡LECCIÓN COMPLETA!"
+
+
 func _construir_comparacion_precision(stats: Dictionary, precision_actual: int) -> Dictionary:
 	var best: int = int(stats.get("best_accuracy", precision_actual))
 	if best <= 0:
@@ -224,6 +239,9 @@ func _cargar_ranking_post_partida() -> void:
 		return
 
 	_scope_ranking_post_partida = _resolver_scope_ranking_post_partida()
+	_ranking_container.visible = true
+	if is_instance_valid(_card_ranking):
+		_card_ranking.mostrar_estado_carga()
 
 	# 1) Intentamos leer el puesto desde cache (rápido, sin red).
 	var puesto_antes_de_jugar := LeaderboardService.obtener_puesto_desde_resumen_cache(

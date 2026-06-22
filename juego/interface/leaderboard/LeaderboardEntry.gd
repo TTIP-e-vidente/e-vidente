@@ -26,25 +26,11 @@ var _resaltar_propia: bool = false
 func _ready() -> void:
 	if is_instance_valid(_boton_area):
 		_boton_area.pressed.connect(_al_presionar_fila)
-	_aplicar_fuentes()
 
 
 func _draw() -> void:
 	if _resaltar_propia:
 		draw_rect(Rect2(Vector2.ZERO, size), color_fila_propia)
-
-
-func _aplicar_fuentes() -> void:
-	var rubik: Font = load("res://fonts/Rubik-VariableFont_wght.ttf") as Font
-	if rubik == null:
-		return
-	for lbl: Label in [_label_posicion, _label_nombre, _label_puntaje]:
-		if is_instance_valid(lbl):
-			lbl.add_theme_font_override("font", rubik)
-	if is_instance_valid(_label_nombre):
-		_label_nombre.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
-	if is_instance_valid(_label_puntaje):
-		_label_puntaje.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
 
 
 func poblar(entrada: Dictionary, es_propio: bool = false, scope: String = "global_xp") -> void:
@@ -94,9 +80,9 @@ func _aplicar_estilo_propia(es_propio: bool) -> void:
 			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
 	else:
 		if is_instance_valid(_label_nombre):
-			_label_nombre.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
+			_label_nombre.remove_theme_color_override("font_color")
 		if is_instance_valid(_label_puntaje):
-			_label_puntaje.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
+			_label_puntaje.remove_theme_color_override("font_color")
 
 
 func refrescar_avatar_si_coincide(user_id: String) -> void:

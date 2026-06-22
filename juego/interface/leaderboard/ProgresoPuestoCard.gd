@@ -1,25 +1,21 @@
 class_name ProgresoPuestoCard
 extends PanelContainer
 
-# Tarjeta de progreso competitivo del jugador (UNQ-173).
+# Tarjeta detallada de progreso competitivo (perfil / contexto expandido).
 
 
 signal ver_ranking_solicitado(scope: String)
 signal iniciar_sesion_solicitado
 
 
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-
-
-@onready var _label_celebracion: Label       = $MarginContainer/VBox/LabelCelebracion
-@onready var _label_puesto:    Label       = $MarginContainer/VBox/FilaSuperior/LabelPuesto
-@onready var _label_exp:       Label       = $MarginContainer/VBox/FilaSuperior/LabelExp
-@onready var _label_meta:      Label       = $MarginContainer/VBox/FilaInferior/LabelMeta
-@onready var _barra_progreso:  ProgressBar = $MarginContainer/VBox/BarraProgreso
-@onready var _boton_ver_ranking: Button     = $MarginContainer/VBox/BotonVerRanking
-@onready var _contenedor_carga: Control    = $Cargando
-@onready var _contenedor_datos: Control    = $MarginContainer
-
+@onready var _label_celebracion: Label = %LabelCelebracion
+@onready var _label_puesto: Label = %LabelPuesto
+@onready var _label_exp: Label = %LabelExp
+@onready var _label_meta: Label = %LabelMeta
+@onready var _barra_progreso: ProgressBar = %BarraProgreso
+@onready var _boton_ver_ranking: Button = %BotonVerRanking
+@onready var _contenedor_carga: Label = %Cargando
+@onready var _contenedor_datos: MarginContainer = %MarginContainer
 
 var _cargando: bool = false
 var _scope_preferido: String = LeaderboardApi.SCOPE_XP_GLOBAL
@@ -28,57 +24,19 @@ var _tween_celebracion_borde: Tween = null
 
 
 func _ready() -> void:
-	_contenedor_datos.visible = false
+	var base := get_theme_stylebox("panel") as StyleBoxFlat
+	if base != null:
+		_estilo_panel_base = base.duplicate() as StyleBoxFlat
+		add_theme_stylebox_override("panel", _estilo_panel_base)
+
 	_ocultar_mensaje_celebracion()
 	if is_instance_valid(_contenedor_carga):
 		_contenedor_carga.visible = false
-	_aplicar_estilos()
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = false
+
 	if is_instance_valid(_boton_ver_ranking):
 		_boton_ver_ranking.pressed.connect(_al_presionar_boton_inferior)
-
-
-func _aplicar_estilos() -> void:
-	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.975, 0.972, 0.96, 1)
-	panel.border_color = Color(MiPaleta.VERDE_BOSQUE.r, MiPaleta.VERDE_BOSQUE.g, MiPaleta.VERDE_BOSQUE.b, 0.2)
-	panel.set_border_width_all(1)
-	panel.set_corner_radius_all(16)
-	_estilo_panel_base = panel
-	add_theme_stylebox_override("panel", panel)
-
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-	if rubik == null:
-		return
-	for lbl: Label in [_label_celebracion, _label_puesto, _label_exp, _label_meta]:
-		if is_instance_valid(lbl):
-			lbl.add_theme_font_override("font", rubik)
-	if is_instance_valid(_label_puesto):
-		_label_puesto.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
-	if is_instance_valid(_label_exp):
-		_label_exp.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
-	if is_instance_valid(_label_meta):
-		_label_meta.add_theme_color_override("font_color", Color(0.45, 0.42, 0.36, 1))
-
-	if is_instance_valid(_barra_progreso):
-		var bg := StyleBoxFlat.new()
-		bg.bg_color = Color(0.204, 0.247, 0.173, 0.12)
-		bg.set_corner_radius_all(4)
-		var fill := StyleBoxFlat.new()
-		fill.bg_color = MiPaleta.VERDE_BOSQUE
-		fill.set_corner_radius_all(4)
-		_barra_progreso.add_theme_stylebox_override("background", bg)
-		_barra_progreso.add_theme_stylebox_override("fill", fill)
-
-	if is_instance_valid(_boton_ver_ranking):
-		var btn := StyleBoxFlat.new()
-		btn.bg_color = Color(0.204, 0.247, 0.173, 0.1)
-		btn.set_corner_radius_all(10)
-		btn.content_margin_top = 8
-		btn.content_margin_bottom = 8
-		_boton_ver_ranking.add_theme_stylebox_override("normal", btn)
-		_boton_ver_ranking.add_theme_stylebox_override("hover", btn)
-		_boton_ver_ranking.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
-		_boton_ver_ranking.add_theme_font_override("font", rubik)
 
 
 func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL) -> void:
@@ -123,7 +81,8 @@ func mostrar_desde_datos(
 		return
 
 	visible = true
-	_contenedor_datos.visible = true
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = true
 	if is_instance_valid(_contenedor_carga):
 		_contenedor_carga.visible = false
 
@@ -167,7 +126,7 @@ func mostrar_desde_datos(
 		_label_meta.text = "En %s: faltan %s para superar a %s" % [
 			etiqueta_scope,
 			faltante,
-			nombre_rival
+			nombre_rival,
 		]
 
 	_animar_valores(exp_actual, progreso)
@@ -213,7 +172,6 @@ func _mostrar_celebracion_si_subio_en_ranking(
 
 	_label_celebracion.text = mensaje
 	_label_celebracion.visible = true
-	_label_celebracion.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
 	var puestos_ganados := int(resultado_celebracion.get("cantidad_puestos_ganados", 0))
 	var es_primera := bool(resultado_celebracion.get("es_primera_aparicion_en_ranking", false))
 	_animar_celebracion_subida_ranking(puestos_ganados, es_primera)
@@ -230,7 +188,6 @@ func _animar_celebracion_subida_ranking(puestos_ganados: int, es_primera_aparici
 		return
 
 	await get_tree().process_frame
-
 	_detener_animacion_borde_celebracion()
 
 	var intensidad := 1
@@ -243,31 +200,19 @@ func _animar_celebracion_subida_ranking(puestos_ganados: int, es_primera_aparici
 
 	var font_size := 16 if intensidad < 3 else 18
 	_label_celebracion.add_theme_font_size_override("font_size", font_size)
-	_label_celebracion.pivot_offset = _label_celebracion.size * 0.5
 	_label_celebracion.modulate = Color(1, 1, 1, 0.0)
-	_label_celebracion.scale = Vector2(0.72, 0.72)
-
-	scale = Vector2(0.97, 0.97)
-	pivot_offset = size * 0.5
+	_label_celebracion.scale = Vector2(0.85, 0.85)
 
 	var tween_label := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween_label.tween_property(_label_celebracion, "modulate", Color.WHITE, 0.42)
-	var escala_celebracion := Vector2(1.08, 1.08) if intensidad >= 2 else Vector2(1.04, 1.04)
-	tween_label.tween_property(_label_celebracion, "scale", escala_celebracion, 0.42)
-
-	var tween_card := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween_card.tween_property(self, "scale", Vector2.ONE, 0.48)
+	var escala := Vector2(1.06, 1.06) if intensidad >= 2 else Vector2(1.03, 1.03)
+	tween_label.tween_property(_label_celebracion, "scale", escala, 0.42)
 
 	if is_instance_valid(_label_puesto):
-		_label_puesto.pivot_offset = _label_puesto.size * 0.5
-		var escala_puesto := 1.22 if intensidad >= 3 else (1.16 if intensidad >= 2 else 1.1)
 		var tween_puesto := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		var escala_puesto := 1.15 if intensidad >= 3 else 1.1
 		tween_puesto.tween_property(_label_puesto, "scale", Vector2(escala_puesto, escala_puesto), 0.28)
 		tween_puesto.tween_property(_label_puesto, "scale", Vector2.ONE, 0.32)
-
-	var tween_label_fin := create_tween()
-	tween_label_fin.tween_interval(0.35)
-	tween_label_fin.tween_property(_label_celebracion, "scale", Vector2.ONE, 0.22)
 
 	_pulso_borde_celebracion(intensidad)
 
@@ -277,19 +222,21 @@ func _mostrar_estado_carga() -> void:
 	_detener_animacion_borde_celebracion()
 	if is_instance_valid(_contenedor_carga):
 		_contenedor_carga.visible = true
-	_contenedor_datos.visible = false
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = false
 
 
 func mostrar_invitacion_login() -> void:
 	visible = true
-	_contenedor_datos.visible = true
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = true
 	if is_instance_valid(_contenedor_carga):
 		_contenedor_carga.visible = false
 
 	_label_puesto.text = "—"
-	_label_puesto.add_theme_color_override("font_color", Color(0.45, 0.42, 0.36, 1))
+	_label_puesto.remove_theme_color_override("font_color")
 	_label_exp.text = ""
-	_label_meta.text = "Creá cuenta o iniciá sesión para ver tu puesto en el ranking."
+	_label_meta.text = "Iniciá sesión para ver tu puesto y progreso competitivo."
 	if is_instance_valid(_barra_progreso):
 		_barra_progreso.value = 0.0
 	if is_instance_valid(_boton_ver_ranking):

@@ -3,8 +3,13 @@
 [ext_resource type="Script" path="res://interface/leaderboard/ScopeTabs.gd" id="1_tabs"]
 
 [node name="ScopeTabs" type="ScrollContainer"]
-script = ExtResource("1_tabs")
 custom_minimum_size = Vector2(0, 44)
 size_flags_horizontal = 3
 horizontal_scroll_mode = 2
 vertical_scroll_mode = 0
+script = ExtResource("1_tabs")
+
+[node name="TabsHBox" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6

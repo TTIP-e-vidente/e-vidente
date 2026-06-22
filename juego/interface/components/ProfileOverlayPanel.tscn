@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://dgs75hpxwfhdk" path="res://interface/components/ProfileOverlayPanel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_c2ncf"]
 [ext_resource type="PackedScene" path="res://interface/components/WeeklyLearningSummary.tscn" id="2_weekly_summary"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/RankingDetallePerfil.tscn" id="2_ranking_detalle"]
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="3_42aac"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_c2ncf"]
 
@@ -437,6 +438,9 @@ text = "Continuar"
 [node name="WeeklyLearningSummary" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=947393076 instance=ExtResource("2_weekly_summary")]
 visible = false
 
+[node name="RankingDetallePerfil" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("2_ranking_detalle")]
+layout_mode = 2
+
 [node name="ActionsRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1118333200]
 layout_mode = 2
 theme_override_constants/separation = 12
@@ -468,6 +472,7 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_edit_btn_hover")
 text = "Editar"
 
 [node name="LeaderboardButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow" unique_id=987654321]
+visible = false
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3

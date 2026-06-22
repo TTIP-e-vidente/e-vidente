@@ -1,70 +1,134 @@
-[gd_scene load_steps=2 format=3 uid="uid://progreso_puesto_card"]
+[gd_scene load_steps=8 format=3 uid="uid://progreso_puesto_card"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/ProgresoPuestoCard.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.975, 0.972, 0.96, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.18)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+content_margin_left = 0
+content_margin_top = 0
+content_margin_right = 0
+content_margin_bottom = 0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.204, 0.247, 0.173, 0.12)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.259, 0.471, 0.369, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.204, 0.247, 0.173, 0.1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 12
+content_margin_top = 8
+content_margin_right = 12
+content_margin_bottom = 8
 
 [node name="ProgresoPuestoCard" type="PanelContainer"]
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 script = ExtResource("1_script")
 
 [node name="Cargando" type="Label" parent="."]
+unique_name_in_owner = true
 visible = false
 layout_mode = 2
-text = "Cargando ranking..."
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.6)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 13
+text = "Cargando tu posición..."
 horizontal_alignment = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="LabelCelebracion" type="Label" parent="MarginContainer/VBox"]
+unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = ""
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="FilaSuperior" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 12
 
 [node name="LabelPuesto" type="Label" parent="MarginContainer/VBox/FilaSuperior"]
+unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_font_sizes/font_size = 22
-text = "—"
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("3_spray")
+theme_override_font_sizes/font_size = 28
+text = "#—"
 
 [node name="LabelExp" type="Label" parent="MarginContainer/VBox/FilaSuperior"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "0 XP"
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 2
+vertical_alignment = 1
+text = "0 XP"
 
 [node name="BarraProgreso" type="ProgressBar" parent="MarginContainer/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
-custom_minimum_size = Vector2(0, 8)
-min_value = 0.0
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
 max_value = 100.0
-value = 0.0
 show_percentage = false
 
-[node name="FilaInferior" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="LabelMeta" type="Label" parent="MarginContainer/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
-
-[node name="LabelMeta" type="Label" parent="MarginContainer/VBox/FilaInferior"]
-layout_mode = 2
-size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
+theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
-text = ""
 
 [node name="BotonVerRanking" type="Button" parent="MarginContainer/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
-flat = true
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+flat = false
 text = "Ver ranking completo"
