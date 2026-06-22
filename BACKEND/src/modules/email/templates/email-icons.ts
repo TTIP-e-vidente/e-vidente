@@ -1,5 +1,10 @@
 import { escapeHtml } from './html-utils';
-import { resolveIconSrc, type EmailIconVariant } from './email-assets';
+import {
+  canUsePublicEmailAssetUrls,
+  resolveIconPublicUrl,
+  resolveIconSrc,
+  type EmailIconVariant
+} from './email-assets';
 
 export type EmailIconKey =
   | 'mail'
@@ -13,10 +18,50 @@ export type EmailIconKey =
   | 'check'
   | 'alert';
 
-const ICON_RENDER_MODE: 'cid' | 'embed' = 'cid';
+type EmailIconsBuildMode = 'send' | 'embed';
+
+let iconsBuildMode: EmailIconsBuildMode = 'send';
+
+/** Solo para preview HTML en dev (`/dev/email/preview`). */
+export function setEmailIconsBuildMode(mode: EmailIconsBuildMode): void {
+  iconsBuildMode = mode;
+}
+
+const ICON_TEXT_LABELS: Record<EmailIconKey, string> = {
+  mail: 'M',
+  welcome: 'E',
+  streak: '*',
+  security: 'S',
+  shield_check: 'OK',
+  play: '>',
+  clock: 'T',
+  xp: 'XP',
+  check: '+',
+  alert: '!'
+};
 
 function iconSrc(icon: EmailIconKey, variant: EmailIconVariant = 'default'): string {
-  return resolveIconSrc(icon, ICON_RENDER_MODE, variant);
+  if (iconsBuildMode === 'embed') {
+    return resolveIconSrc(icon, 'embed', variant);
+  }
+  if (canUsePublicEmailAssetUrls()) {
+    return resolveIconPublicUrl(icon, variant);
+  }
+  return '';
+}
+
+function iconTextFallback(
+  icon: EmailIconKey,
+  size: number,
+  display: 'block' | 'inline'
+): string {
+  const label = escapeHtml(ICON_TEXT_LABELS[icon] ?? '•');
+  const fontSize = Math.max(11, size - (label.length > 2 ? 10 : 6));
+  const blockStyle =
+    display === 'block'
+      ? `display:block;margin:0 auto;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;`
+      : 'display:inline-block;vertical-align:middle;line-height:1;';
+  return `<span style="${blockStyle}font-family:'Rubik',Arial,sans-serif;font-size:${fontSize}px;font-weight:900;color:#42785e;">${label}</span>`;
 }
 
 function iconImg(
@@ -27,10 +72,14 @@ function iconImg(
 ): string {
   const src = iconSrc(icon, variant);
   if (!src) {
-    return '';
+    return iconTextFallback(icon, size, display);
   }
-  const displayStyle = display === 'block' ? 'display:block;margin:0 auto;border:0;' : 'display:inline-block;border:0;vertical-align:middle;';
-  return `<img src="${src}" alt="" width="${size}" height="${size}" style="${displayStyle}" />`;
+  const safeSrc = escapeHtml(src);
+  const displayStyle =
+    display === 'block'
+      ? 'display:block;margin:0 auto;border:0;'
+      : 'display:inline-block;border:0;vertical-align:middle;';
+  return `<img src="${safeSrc}" alt="" width="${size}" height="${size}" style="${displayStyle}" />`;
 }
 
 export function emailIconImg(icon: EmailIconKey, size = 40): string {
@@ -48,6 +97,9 @@ export function emailIconInline(icon: EmailIconKey, size = 20): string {
 export function inlineIconLabel(icon: EmailIconKey, label: string): string {
   const safeLabel = escapeHtml(label);
   const inline = emailIconInline(icon, 18);
+  if (!inline) {
+    return safeLabel;
+  }
   return `<span style="display:inline-block;vertical-align:middle;">${inline}<span style="display:inline-block;vertical-align:middle;margin-left:6px;">${safeLabel}</span></span>`;
 }
 

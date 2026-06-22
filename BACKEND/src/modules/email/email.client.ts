@@ -1,5 +1,4 @@
 import { emailConfig, isEmailDeliveryConfigured } from './email.config';
-import { buildInlineEmailAttachments } from './templates/email-assets';
 import { EmailMessage, EmailTemplateKey } from './email.types';
 
 export class EmailDeliveryError extends Error {
@@ -42,15 +41,7 @@ function buildBrevoPayload(
     payload.tags = [templateKey];
   }
 
-  const inlineAttachments = buildInlineEmailAttachments(message.htmlContent);
-  if (inlineAttachments.length > 0) {
-    payload.attachment = inlineAttachments.map((item) => ({
-      name: item.name,
-      content: item.content,
-      contentId: item.contentId
-    }));
-  }
-
+  // Brevo transactional no soporta CID inline: las imágenes van por URL pública en el HTML.
   return payload;
 }
 

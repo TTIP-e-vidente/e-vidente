@@ -8,6 +8,7 @@ import {
   previewEmailTemplate
 } from './templates';
 import { embedInlineAssetsForPreview } from './templates/email-assets';
+import { setEmailIconsBuildMode } from './templates/email-icons';
 import { buildLeaderboardDeepLink } from './templates/app-deep-links';
 import { EmailTemplatePreviewParams, StreakTemplateContext, WelcomeTemplateContext } from './templates/types';
 import * as emailRepository from './email.repository';
@@ -738,7 +739,9 @@ export function buildTemplatePreview(
   templateKey: EmailTemplateKey,
   params: EmailTemplatePreviewParams = {}
 ) {
+  setEmailIconsBuildMode('embed');
   const preview = previewEmailTemplate(templateKey, params);
+  setEmailIconsBuildMode('send');
   return {
     ...preview,
     htmlContent: embedInlineAssetsForPreview(preview.htmlContent)

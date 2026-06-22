@@ -89,6 +89,14 @@ export const emailConfig = {
   appPlayUrl: (process.env.EMAIL_APP_PLAY_URL ?? process.env.APP_PLAY_URL ?? '').trim(),
   logoUrl: (process.env.EMAIL_LOGO_URL ?? '').trim(),
   publicBaseUrl: resolvePublicBaseUrl(),
+  assetsBaseUrl: (() => {
+    const explicit = (process.env.EMAIL_ASSETS_BASE_URL ?? '').trim().replace(/\/+$/, '');
+    if (explicit.length > 0) {
+      return explicit;
+    }
+    const publicBase = resolvePublicBaseUrl();
+    return publicBase.length > 0 ? `${publicBase}/public/email/assets` : '';
+  })(),
   verificationCopySecret:
     (process.env.EMAIL_VERIFICATION_COPY_SECRET ?? process.env.EMAIL_CRON_SECRET ?? '').trim()
 };

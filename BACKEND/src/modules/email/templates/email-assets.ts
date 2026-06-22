@@ -41,8 +41,8 @@ function iconAssetPath(icon: EmailIconKey, variant: EmailIconVariant = 'default'
 function assetsRoot(): string {
   const candidates = [
     path.join(__dirname, '..', 'assets'),
-    path.join(process.cwd(), 'src', 'modules', 'email', 'assets'),
-    path.join(process.cwd(), 'dist', 'modules', 'email', 'assets')
+    path.join(process.cwd(), 'dist', 'modules', 'email', 'assets'),
+    path.join(process.cwd(), 'src', 'modules', 'email', 'assets')
   ];
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -50,6 +50,31 @@ function assetsRoot(): string {
     }
   }
   return path.join(process.cwd(), 'src', 'modules', 'email', 'assets');
+}
+
+export function resolveEmailAssetsDirectory(): string {
+  return assetsRoot();
+}
+
+function isLocalAssetHost(url: string): boolean {
+  return /localhost|127\.0\.0\.1/i.test(url);
+}
+
+export function canUsePublicEmailAssetUrls(): boolean {
+  const base = emailConfig.assetsBaseUrl.trim();
+  return base.length > 0 && !isLocalAssetHost(base);
+}
+
+export function resolveIconPublicUrl(
+  icon: EmailIconKey,
+  variant: EmailIconVariant = 'default'
+): string {
+  const base = emailConfig.assetsBaseUrl.trim().replace(/\/+$/, '');
+  if (!base || isLocalAssetHost(base)) {
+    return '';
+  }
+  const rel = iconAssetPath(icon, variant).replace(/\\/g, '/');
+  return `${base}/${rel}`;
 }
 
 function readAssetBytes(relPath: string): Buffer | null {
@@ -118,55 +143,43 @@ export interface InlineEmailAttachment {
 }
 
 export function buildInlineEmailAttachments(html: string): InlineEmailAttachment[] {
-  const attachments: InlineEmailAttachment[] = [];
-
-  if (html.includes(`cid:${EMAIL_LOGO_CID}`)) {
-    const logoBytes = readAssetBytes('logo.png');
-    if (logoBytes) {
-      attachments.push({
-        name: 'logo.png',
-        contentId: EMAIL_LOGO_CID,
-        content: logoBytes.toString('base64')
-      });
-    }
-  }
-
-  for (const icon of EMAIL_ICON_KEYS) {
-    const cid = emailIconCid(icon);
-    if (!html.includes(`cid:${cid}`)) {
-      continue;
-    }
-    const bytes = readAssetBytes(`icons/${icon}.png`);
-    if (!bytes) {
-      continue;
-    }
-    attachments.push({
-      name: `${icon}.png`,
-      contentId: cid,
-      content: bytes.toString('base64')
-    });
-  }
-
-  for (const extra of EMAIL_ICON_EXTRA_ASSETS) {
-    if (!html.includes(`cid:${extra.contentId}`)) {
-      continue;
-    }
-    const bytes = readAssetBytes(extra.file);
-    if (!bytes) {
-      continue;
-    }
-    attachments.push({
-      name: path.basename(extra.file),
-      contentId: extra.contentId,
-      content: bytes.toString('base64')
-    });
-  }
-
-  return attachments;
+  // Brevo transactional API no renderiza CID inline; evitamos adjuntos huérfanos.
+  void html;
+  return [];
 }
 
 export function embedInlineAssetsForPreview(html: string): string {
   let result = html;
+
+  if (canUsePublicEmailAssetUrls()) {
+    for (const icon of EMAIL_ICON_KEYS) {
+      const publicUrl = resolveIconPublicUrl(icon);
+      if (publicUrl && result.includes(publicUrl)) {
+        const dataUri = loadIconDataUri(icon);
+        if (dataUri) {
+          result = result.replaceAll(publicUrl, dataUri);
+        }
+      }
+      const headerUrl = resolveIconPublicUrl(icon, 'header');
+      if (headerUrl && result.includes(headerUrl)) {
+        const dataUri = loadIconDataUri(icon, 'header');
+        if (dataUri) {
+          result = result.replaceAll(headerUrl, dataUri);
+        }
+      }
+    }
+    for (const extra of EMAIL_ICON_EXTRA_ASSETS) {
+      const base = emailConfig.assetsBaseUrl.trim().replace(/\/+$/, '');
+      const publicUrl = `${base}/${extra.file.replace(/\\/g, '/')}`;
+      if (result.includes(publicUrl)) {
+        const dataUri = loadDataUri(extra.file);
+        if (dataUri) {
+          result = result.replaceAll(publicUrl, dataUri);
+        }
+      }
+    }
+  }
+
   if (result.includes(`cid:${EMAIL_LOGO_CID}`)) {
     const logoSrc = loadLogoDataUri();
     if (logoSrc) {
