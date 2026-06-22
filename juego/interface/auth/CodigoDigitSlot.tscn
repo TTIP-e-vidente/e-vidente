@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://codigo_digit_slot"]
+
+[ext_resource type="Script" path="res://interface/auth/CodigoDigitSlot.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot"]
+bg_color = Color(0.05, 0.09, 0.07, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.859, 0.753, 0.318, 0.35)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="CodigoDigitSlot" type="PanelContainer"]
+custom_minimum_size = Vector2(46, 54)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot")
+script = ExtResource("1_script")
+
+[node name="DigitLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 0.45)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 28
+text = "·"
+horizontal_alignment = 1
+vertical_alignment = 1

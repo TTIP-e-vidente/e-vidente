@@ -4,19 +4,15 @@ signal verificacion_completada()
 signal verificacion_omitida()
 
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
-const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
 
 
-@onready var _panel_central: PanelContainer = (
-	$MarginRoot/VBoxRoot/CenterContainer/PanelCentral
-)
-@onready var _label_titulo: Label = (
-	$MarginRoot/VBoxRoot/CenterContainer/PanelCentral/MarginContainer/VBoxContainer/Titulo
-)
 @onready var _line_edit_codigo: LineEdit = %LineEditCodigo
+@onready var _digit_slots: Array[PanelContainer] = [
+	%DigitSlot0, %DigitSlot1, %DigitSlot2, %DigitSlot3, %DigitSlot4, %DigitSlot5,
+]
 @onready var _boton_verificar: Button = %BotonVerificar
 @onready var _boton_reenviar: Button = %BotonReenviar
 @onready var _boton_omitir: Button = %BotonOmitir
@@ -54,7 +50,7 @@ func _ready() -> void:
 	_line_edit_codigo.text_changed.connect(_on_codigo_text_changed)
 
 	_label_ayuda_mail.visible = false
-	_aplicar_estilos()
+	_actualizar_casillas_digitos("")
 	_configurar_boton_volver()
 	_aplicar_configuracion_desde_meta()
 	_mostrar_email_usuario()
@@ -150,57 +146,6 @@ func _configurar_boton_volver() -> void:
 	_boton_volver.custom_minimum_size = Vector2(72, 72)
 
 
-func _aplicar_estilos() -> void:
-	var rubik: Font = load(RUBIK_FONT_PATH) as Font
-
-	if is_instance_valid(_panel_central):
-		var panel := StyleBoxFlat.new()
-		panel.bg_color = Color(0.995, 0.992, 0.985, 1)
-		panel.set_corner_radius_all(20)
-		panel.shadow_color = Color(0, 0, 0, 0.12)
-		panel.shadow_size = 10
-		panel.shadow_offset = Vector2(0, 4)
-		_panel_central.add_theme_stylebox_override("panel", panel)
-
-	if is_instance_valid(_label_titulo):
-		_label_titulo.add_theme_color_override("font_color", MiPaleta.VERDE_BOSQUE)
-		if rubik != null:
-			_label_titulo.add_theme_font_override("font", rubik)
-
-	if is_instance_valid(_label_email):
-		_label_email.add_theme_color_override("font_color", Color(0.2, 0.35, 0.28, 1))
-		if rubik != null:
-			_label_email.add_theme_font_override("font", rubik)
-
-	if is_instance_valid(_line_edit_codigo):
-		var input_bg := StyleBoxFlat.new()
-		input_bg.bg_color = Color(0.975, 0.972, 0.96, 1)
-		input_bg.border_color = Color(MiPaleta.ORO_CLARO.r, MiPaleta.ORO_CLARO.g, MiPaleta.ORO_CLARO.b, 0.85)
-		input_bg.set_border_width_all(2)
-		input_bg.set_corner_radius_all(12)
-		_line_edit_codigo.add_theme_stylebox_override("normal", input_bg)
-		_line_edit_codigo.add_theme_stylebox_override("focus", input_bg)
-		_line_edit_codigo.add_theme_color_override("font_color", Color(0.14, 0.13, 0.09, 1))
-		if rubik != null:
-			_line_edit_codigo.add_theme_font_override("font", rubik)
-
-	if is_instance_valid(_boton_verificar):
-		var btn := StyleBoxFlat.new()
-		btn.bg_color = MiPaleta.VERDE_BOSQUE
-		btn.set_corner_radius_all(12)
-		btn.content_margin_top = 10
-		btn.content_margin_bottom = 10
-		_boton_verificar.add_theme_stylebox_override("normal", btn)
-		_boton_verificar.add_theme_stylebox_override("hover", btn)
-		_boton_verificar.add_theme_color_override("font_color", Color.WHITE)
-		if rubik != null:
-			_boton_verificar.add_theme_font_override("font", rubik)
-
-	for lbl: Label in [_label_mensaje, _label_ayuda_mail]:
-		if is_instance_valid(lbl) and rubik != null:
-			lbl.add_theme_font_override("font", rubik)
-
-
 func _on_ayuda_mail_presionado() -> void:
 	if not is_instance_valid(_label_ayuda_mail):
 		return
@@ -241,6 +186,19 @@ func _on_codigo_text_changed(new_text: String) -> void:
 	if digits != new_text:
 		_line_edit_codigo.text = digits
 		_line_edit_codigo.caret_position = digits.length()
+	_actualizar_casillas_digitos(digits)
+
+
+func _actualizar_casillas_digitos(digits: String) -> void:
+	for i in _digit_slots.size():
+		var slot := _digit_slots[i]
+		if not is_instance_valid(slot):
+			continue
+		var ch := ""
+		if i < digits.length():
+			ch = digits[i]
+		if slot.has_method("mostrar_caracter"):
+			slot.call("mostrar_caracter", ch)
 
 
 static func _extraer_digitos_codigo(text: String) -> String:
