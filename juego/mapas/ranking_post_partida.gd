@@ -25,7 +25,6 @@ func _ready() -> void:
 		_continuar_btn.pressed.connect(continuar_al_mapa)
 
 	if is_instance_valid(_card_ranking):
-		_card_ranking.ver_ranking_solicitado.connect(_abrir_leaderboard_completo)
 		_card_ranking.iniciar_sesion_solicitado.connect(_al_iniciar_sesion)
 
 	call_deferred("_cargar_ranking")
@@ -89,13 +88,6 @@ func _cargar_ranking() -> void:
 	if not is_instance_valid(_card_ranking):
 		return
 	_scope_ranking = await PostPartidaFlow.cargar_ranking_en_card(_card_ranking, get_tree())
-
-
-func _abrir_leaderboard_completo(scope: String = "") -> void:
-	var scope_final := scope.strip_edges()
-	if scope_final.is_empty():
-		scope_final = _scope_ranking
-	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
 
 
 func _al_iniciar_sesion() -> void:

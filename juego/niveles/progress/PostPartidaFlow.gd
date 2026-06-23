@@ -77,6 +77,7 @@ static func cargar_ranking_en_card(
 
 	if not AuthApi.esta_logueado():
 		card.mostrar_modo_invitado(scope)
+		await card.cargar_tabla_invitado()
 		return scope
 
 	card.mostrar_estado_carga()
@@ -97,12 +98,12 @@ static func cargar_ranking_en_card(
 	if not is_instance_valid(card):
 		return scope
 	if not resultado_raw is Dictionary:
-		card.mostrar_modo_invitado(scope)
+		await _mostrar_invitado_y_tabla(card, scope)
 		return scope
 
 	var resultado := resultado_raw as Dictionary
 	if not resultado.get("ok", false):
-		card.mostrar_modo_invitado(scope)
+		await _mostrar_invitado_y_tabla(card, scope)
 		return scope
 
 	var datos: Variant = resultado.get("data", resultado)
@@ -110,6 +111,13 @@ static func cargar_ranking_en_card(
 		card.mostrar_desde_datos(datos as Dictionary, puesto_antes)
 		LeaderboardService.marcar_refresco_tras_partida(scope)
 	else:
-		card.mostrar_modo_invitado(scope)
+		await _mostrar_invitado_y_tabla(card, scope)
 
 	return scope
+
+
+static func _mostrar_invitado_y_tabla(card: RankingResumenPostPartida, scope: String) -> void:
+	if not is_instance_valid(card):
+		return
+	card.mostrar_modo_invitado(scope)
+	await card.cargar_tabla_invitado()

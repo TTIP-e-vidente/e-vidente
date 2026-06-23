@@ -2,13 +2,15 @@ class_name RankingResumenPostPartida
 extends PanelContainer
 
 # Resumen compacto del ranking para la pantalla post-partida.
+# La tabla (colores, layout, estados vacío/carga) vive en el .tscn para rediseño visual.
+# Este script solo carga datos y alterna visibilidad de nodos ya definidos en escena.
 
 
 signal ver_ranking_solicitado(scope: String)
 signal iniciar_sesion_solicitado
 
 
-@onready var _contenedor_carga: Control = %Cargando
+@onready var _contenedor_carga: Label = %Cargando
 @onready var _contenedor_datos: VBoxContainer = %VBoxRoot
 @onready var _label_celebracion: Label = %LabelCelebracion
 @onready var _label_scope: Label = %LabelScope
@@ -16,6 +18,8 @@ signal iniciar_sesion_solicitado
 @onready var _label_exp: Label = %LabelExp
 @onready var _label_meta: Label = %LabelMeta
 @onready var _mini_list: LeaderboardMiniList = %MiniList
+@onready var _label_cargando_tabla: Label = %LabelCargandoTabla
+@onready var _label_vacio_tabla: Label = %LabelVacioTabla
 @onready var _boton_accion: Button = %BotonAccion
 @onready var _etiqueta_top: Label = %EtiquetaTop
 @onready var _titulo_seccion: Label = $VBoxRoot/HeaderBar/MarginHeader/HBoxHeader/TituloSeccion
@@ -40,9 +44,8 @@ func _ready() -> void:
 		_contenedor_carga.visible = false
 	if is_instance_valid(_contenedor_datos):
 		_contenedor_datos.visible = false
-
 	if is_instance_valid(_boton_accion):
-		_boton_accion.pressed.connect(_al_presionar_accion)
+		_boton_accion.visible = false
 
 
 func mostrar_invitacion_login() -> void:
@@ -54,9 +57,30 @@ func mostrar_invitacion_login() -> void:
 
 	_ocultar_mensaje_celebracion()
 	_aplicar_vista_invitado_compacta()
-	if is_instance_valid(_boton_accion):
-		_boton_accion.text = "Ver tabla completa"
-	call_deferred("_cargar_top_global_invitado")
+
+
+func cargar_tabla_invitado() -> void:
+	if AuthApi.esta_logueado() or not is_instance_valid(_mini_list):
+		return
+
+	var scope := _scope_preferido
+	if scope.is_empty():
+		scope = LeaderboardApi.SCOPE_XP_GLOBAL
+
+	_mostrar_carga_tabla(true)
+
+	var datos := LeaderboardService.obtener_desde_cache(scope)
+	if datos.is_empty():
+		await LeaderboardService.cargar(scope, false)
+		datos = LeaderboardService.obtener_desde_cache(scope)
+
+	_mostrar_carga_tabla(false)
+
+	if datos.is_empty():
+		_mostrar_tabla_vacia("Ranking no disponible")
+		return
+
+	_poblar_tabla(datos, "")
 
 
 func _aplicar_vista_invitado_compacta() -> void:
@@ -108,9 +132,6 @@ func mostrar_desde_datos(
 		_contenedor_carga.visible = false
 	if is_instance_valid(_contenedor_datos):
 		_contenedor_datos.visible = true
-
-	if is_instance_valid(_boton_accion):
-		_boton_accion.text = "Ver tabla completa"
 
 	var scope_datos := str(datos.get("scope", _scope_preferido)).strip_edges()
 	if not scope_datos.is_empty():
@@ -177,82 +198,86 @@ func _cargar_mini_tabla(scope: String) -> void:
 	if not is_instance_valid(_mini_list):
 		return
 
+	_mostrar_carga_tabla(true)
+
 	var id_propio := ""
 	if AuthApi.esta_logueado():
 		id_propio = str(BackendSession.obtener_usuario_en_cache().get("id", ""))
 
 	if not _datos_resumen.is_empty() and _mini_list.poblar_desde_nearby(_datos_resumen, id_propio, scope):
+		_mostrar_carga_tabla(false)
+		_finalizar_tabla_visible()
 		return
 
 	var datos_cache := LeaderboardService.obtener_desde_cache(scope)
 	if datos_cache.is_empty():
-		_conectar_carga_mini_una_vez(scope)
-		LeaderboardService.cargar(scope, true)
+		await LeaderboardService.cargar(scope, true)
+		datos_cache = LeaderboardService.obtener_desde_cache(scope)
+
+	_mostrar_carga_tabla(false)
+
+	if datos_cache.is_empty():
+		_mostrar_tabla_vacia("Ranking no disponible")
 		return
 
-	_poblar_mini_lista(datos_cache)
+	_poblar_tabla(datos_cache, id_propio)
 
 
-func _conectar_carga_mini_una_vez(scope: String) -> void:
-	if LeaderboardService.leaderboard_cargado.is_connected(_al_leaderboard_para_mini):
-		return
-	LeaderboardService.leaderboard_cargado.connect(
-		func(scope_cargado: String, datos: Dictionary) -> void:
-			if scope_cargado == scope or scope_cargado.ends_with(":mas"):
-				_al_leaderboard_para_mini(scope_cargado, datos),
-		CONNECT_ONE_SHOT
-	)
-
-
-func _al_leaderboard_para_mini(scope_cargado: String, datos: Dictionary) -> void:
-	if scope_cargado.ends_with(":mas"):
-		return
-	if str(datos.get("scope", "")) != _scope_preferido:
-		return
-	_poblar_mini_lista(datos)
-
-
-func _poblar_mini_lista(datos: Dictionary) -> void:
+func _poblar_tabla(datos: Dictionary, id_propio: String) -> void:
 	if not is_instance_valid(_mini_list):
 		return
-	var id_propio := ""
-	if AuthApi.esta_logueado():
-		id_propio = str(BackendSession.obtener_usuario_en_cache().get("id", ""))
 	if _puesto_actual > 0 and not _datos_resumen.is_empty():
-		_mini_list.poblar_contexto_post_partida(
-			datos,
-			_datos_resumen,
-			_puesto_actual,
-			id_propio,
-			2
-		)
+		if not _mini_list.poblar_desde_nearby(_datos_resumen, id_propio, _scope_preferido):
+			_mini_list.poblar_contexto_post_partida(
+				datos,
+				_datos_resumen,
+				_puesto_actual,
+				id_propio,
+				2
+			)
 	else:
-		_mini_list.poblar(datos, id_propio, 3)
+		_mini_list.poblar(datos, id_propio, _limite_filas_tabla())
+	_finalizar_tabla_visible()
 
 
-func _cargar_top_global_invitado() -> void:
-	if AuthApi.esta_logueado() or not is_instance_valid(_mini_list):
+func _finalizar_tabla_visible() -> void:
+	if not is_instance_valid(_mini_list) or _mini_list.get_child_count() == 0:
+		_mostrar_tabla_vacia()
 		return
-
-	var scope := _scope_preferido
-	if scope.is_empty():
-		scope = LeaderboardApi.SCOPE_XP_GLOBAL
-	var datos := LeaderboardService.obtener_desde_cache(scope)
-	if datos.is_empty():
-		if not LeaderboardService.leaderboard_cargado.is_connected(_al_leaderboard_invitado):
-			LeaderboardService.leaderboard_cargado.connect(_al_leaderboard_invitado, CONNECT_ONE_SHOT)
-		LeaderboardService.cargar(scope, false)
-		return
-
-	_mini_list.poblar(datos, "", 3)
+	if is_instance_valid(_label_cargando_tabla):
+		_label_cargando_tabla.visible = false
+	if is_instance_valid(_label_vacio_tabla):
+		_label_vacio_tabla.visible = false
+	_mini_list.visible = true
+	if is_instance_valid(_etiqueta_top):
+		_etiqueta_top.visible = false
 
 
-func _al_leaderboard_invitado(scope_cargado: String, datos: Dictionary) -> void:
-	if scope_cargado.ends_with(":mas"):
-		return
-	if not is_instance_valid(_mini_list) or AuthApi.esta_logueado():
-		return
-	_mini_list.poblar(datos, "", 3)
+func _limite_filas_tabla() -> int:
+	return _mini_list.max_filas if is_instance_valid(_mini_list) else 5
+
+
+func _mostrar_carga_tabla(activo: bool) -> void:
+	if is_instance_valid(_label_cargando_tabla):
+		_label_cargando_tabla.visible = activo
+	if is_instance_valid(_label_vacio_tabla) and activo:
+		_label_vacio_tabla.visible = false
+	if is_instance_valid(_mini_list):
+		_mini_list.visible = not activo
+
+
+func _mostrar_tabla_vacia(mensaje: String = "") -> void:
+	if is_instance_valid(_mini_list):
+		_mini_list.limpiar()
+		_mini_list.visible = false
+	if is_instance_valid(_label_cargando_tabla):
+		_label_cargando_tabla.visible = false
+	if is_instance_valid(_label_vacio_tabla):
+		var texto := mensaje.strip_edges()
+		if texto.is_empty():
+			texto = "Sin jugadores en %s todavía" % RestrictionCodes.etiqueta_scope(_scope_preferido)
+		_label_vacio_tabla.text = texto
+		_label_vacio_tabla.visible = true
 
 
 func _mostrar_celebracion_si_subio(
@@ -344,10 +369,6 @@ func _detener_animacion_borde() -> void:
 func _restaurar_estilo_panel() -> void:
 	if _estilo_panel_base != null:
 		add_theme_stylebox_override("panel", _estilo_panel_base)
-
-
-func _al_presionar_accion() -> void:
-	ver_ranking_solicitado.emit(_scope_preferido)
 
 
 func _nombre_rival(siguiente: Variant) -> String:
