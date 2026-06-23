@@ -141,4 +141,6 @@ export interface RankingSummary {
   isFirstPlace: boolean;
   /** true si el resultado viene del snapshot; false si es fallback en vivo. */
   isFromSnapshot: boolean;
+  /** Jugadores en rank ±N alrededor del jugador (incluye al propio). */
+  nearbyEntries: LeaderboardEntry[];
 }

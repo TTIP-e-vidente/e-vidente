@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://lb_card_001"]
+[gd_scene load_steps=8 format=3 uid="uid://lb_card_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/OwnPositionCard.gd" id="1_card"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
@@ -33,6 +33,38 @@ corner_radius_bottom_left = 10
 content_margin_left = 12
 content_margin_top = 6
 content_margin_right = 12
+content_margin_bottom = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_outline_normal"]
+bg_color = Color(0.859, 0.753, 0.318, 0.10)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.55)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 10
+content_margin_top = 6
+content_margin_right = 10
+content_margin_bottom = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_outline_hover"]
+bg_color = Color(0.859, 0.753, 0.318, 0.22)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.859, 0.753, 0.318, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 10
+content_margin_top = 6
+content_margin_right = 10
 content_margin_bottom = 6
 
 [node name="OwnPositionCard" type="PanelContainer"]
@@ -83,6 +115,34 @@ theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 13
 vertical_alignment = 1
 text = "Tu posición"
+
+[node name="NavBotones" type="HBoxContainer" parent="MarginContainer/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 6
+
+[node name="BotonVolverTop" type="Button" parent="MarginContainer/HBox/NavBotones"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_outline_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_outline_hover")
+text = "Volver al top"
+
+[node name="BotonIrPosicion" type="Button" parent="MarginContainer/HBox/NavBotones"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "Ir a mi fila"
 
 [node name="BotonIniciarSesion" type="Button" parent="MarginContainer/HBox"]
 layout_mode = 2

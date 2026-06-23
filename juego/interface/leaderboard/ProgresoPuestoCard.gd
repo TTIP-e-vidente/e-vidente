@@ -39,7 +39,7 @@ func _ready() -> void:
 		_boton_ver_ranking.pressed.connect(_al_presionar_boton_inferior)
 
 
-func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL) -> void:
+func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL, forzar: bool = false) -> void:
 	_scope_preferido = scope.strip_edges()
 	if _scope_preferido.is_empty():
 		_scope_preferido = LeaderboardApi.SCOPE_XP_GLOBAL
@@ -50,15 +50,19 @@ func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL) -> void:
 		mostrar_invitacion_login()
 		return
 
-	var cacheado := LeaderboardService.obtener_resumen_desde_cache(_scope_preferido)
-	if not cacheado.is_empty():
-		mostrar_desde_datos(cacheado)
-		return
+	if not forzar:
+		var cacheado := LeaderboardService.obtener_resumen_desde_cache(_scope_preferido)
+		if not cacheado.is_empty():
+			if bool(cacheado.get("available", false)):
+				mostrar_desde_datos(cacheado)
+			else:
+				mostrar_scope_sin_progreso(_scope_preferido, cacheado)
+			return
 
 	_cargando = true
 	_mostrar_estado_carga()
 
-	var resultado := await LeaderboardService.cargar_resumen_competitivo(false, _scope_preferido)
+	var resultado := await LeaderboardService.cargar_resumen_competitivo(forzar, _scope_preferido)
 	_cargando = false
 
 	if not resultado.get("ok", false):
@@ -67,7 +71,11 @@ func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL) -> void:
 
 	var datos: Variant = resultado.get("data", resultado)
 	if datos is Dictionary:
-		mostrar_desde_datos(datos as Dictionary)
+		var datos_dict := datos as Dictionary
+		if bool(datos_dict.get("available", false)):
+			mostrar_desde_datos(datos_dict)
+		else:
+			mostrar_scope_sin_progreso(_scope_preferido, datos_dict)
 	else:
 		visible = false
 
@@ -86,7 +94,10 @@ func mostrar_desde_datos(
 	if is_instance_valid(_contenedor_carga):
 		_contenedor_carga.visible = false
 
+	_label_puesto.visible = true
+	_label_exp.visible = true
 	if is_instance_valid(_boton_ver_ranking):
+		_boton_ver_ranking.visible = true
 		_boton_ver_ranking.text = "Ver ranking completo"
 
 	var scope_datos := str(datos.get("scope", _scope_preferido)).strip_edges()
@@ -100,9 +111,13 @@ func mostrar_desde_datos(
 		visible = false
 		return
 
-	var puesto_despues_de_jugar: int = int((current as Dictionary).get("rank", 0))
-	var exp_actual: int = int((current as Dictionary).get("score", 0))
-	var exp_faltante: int = int(datos.get("exp_to_next_rank", 0))
+	var puesto_despues_de_jugar: int = LeaderboardFormat.entero_desde_json(
+		(current as Dictionary).get("rank", 0)
+	)
+	var exp_actual: int = LeaderboardFormat.entero_desde_json(
+		(current as Dictionary).get("score", 0)
+	)
+	var exp_faltante: int = LeaderboardFormat.entero_desde_json(datos.get("exp_to_next_rank", 0))
 	var progreso: float = float(datos.get("progress_to_next_rank", 0))
 
 	_label_puesto.text = LeaderboardFormat.texto_posicion(puesto_despues_de_jugar)
@@ -130,6 +145,8 @@ func mostrar_desde_datos(
 		]
 
 	_animar_valores(exp_actual, progreso)
+	if is_instance_valid(_barra_progreso):
+		_barra_progreso.visible = not es_primero and progreso > 0.0
 
 
 func _animar_valores(exp_meta: int, progreso_meta: float) -> void:
@@ -234,19 +251,49 @@ func mostrar_invitacion_login() -> void:
 		_contenedor_carga.visible = false
 
 	_label_puesto.text = "—"
+	_label_puesto.visible = false
 	_label_puesto.remove_theme_color_override("font_color")
 	_label_exp.text = ""
-	_label_meta.text = "Iniciá sesión para ver tu puesto y progreso competitivo."
+	_label_exp.visible = false
+	_label_meta.text = LeaderboardFormat.mensaje_progreso_no_suma()
 	if is_instance_valid(_barra_progreso):
+		_barra_progreso.visible = false
 		_barra_progreso.value = 0.0
 	if is_instance_valid(_boton_ver_ranking):
-		_boton_ver_ranking.text = "Iniciar sesión"
+		_boton_ver_ranking.visible = false
+
+
+func mostrar_scope_sin_progreso(scope: String, datos: Dictionary = {}) -> void:
+	visible = true
+	_ocultar_mensaje_celebracion()
+	_detener_animacion_borde_celebracion()
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = true
+	if is_instance_valid(_contenedor_carga):
+		_contenedor_carga.visible = false
+
+	var scope_datos := str(datos.get("scope", scope)).strip_edges()
+	if not scope_datos.is_empty():
+		_scope_preferido = scope_datos
+
+	var etiqueta := str(
+		datos.get("scope_label", RestrictionCodes.etiqueta_scope(_scope_preferido))
+	)
+	_label_puesto.text = "—"
+	_label_puesto.visible = false
+	_label_puesto.remove_theme_color_override("font_color")
+	_label_exp.text = ""
+	_label_exp.visible = false
+	_label_meta.text = LeaderboardFormat.mensaje_scope_sin_progreso(_scope_preferido, etiqueta)
+	if is_instance_valid(_barra_progreso):
+		_barra_progreso.visible = false
+		_barra_progreso.value = 0.0
+	if is_instance_valid(_boton_ver_ranking):
+		_boton_ver_ranking.visible = true
+		_boton_ver_ranking.text = "Ver ranking completo"
 
 
 func _al_presionar_boton_inferior() -> void:
-	if not AuthApi.esta_logueado():
-		iniciar_sesion_solicitado.emit()
-		return
 	ver_ranking_solicitado.emit(_scope_preferido)
 
 

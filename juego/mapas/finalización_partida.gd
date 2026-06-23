@@ -3,9 +3,6 @@ extends Node2D
 const RUBIK_SPRAY := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 
-@onready var textura : TextureRect = $CenterContainer/VBoxContainer/StatsContainer/Imagen
-@onready var textura_2: TextureRect = $CenterContainer/VBoxContainer/StatsContainer2/Imagen
-@onready var textura_3: TextureRect = $CenterContainer/VBoxContainer/StatsContainer3/Imagen
 @onready var label : Label = $CenterContainer/VBoxContainer/StatsContainer/Imagen/Label
 @onready var label_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Label
 @onready var label_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Label
@@ -13,15 +10,10 @@ const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules
 @onready var numero_2: Label = $CenterContainer/VBoxContainer/StatsContainer2/Imagen/Numero
 @onready var numero_3: Label = $CenterContainer/VBoxContainer/StatsContainer3/Imagen/Numero
 @onready var continuar_label: Label = $Continuar/Label
-@onready var continuar_btn: TextureButton = $Continuar
-@onready var mensaje: Label = $Mensaje
 @onready var audio_perfecto: AudioStreamPlayer2D = $AudioPerfecto
 @onready var audio_normal: AudioStreamPlayer2D = $AudioNormal
 @onready var label_sync_status: Label = $UiAnchor/LabelSyncStatus
-@onready var _ranking_container: Control = $UiAnchor/RankingContainer
-@onready var _card_ranking: RankingResumenPostPartida = (
-	$UiAnchor/RankingContainer/RankingResumenPostPartida
-)
+@onready var mensaje: Label = $Mensaje
 
 @onready var stats_1: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer
 @onready var stats_2: ContenedorEstadisticas = $CenterContainer/VBoxContainer/StatsContainer2
@@ -30,19 +22,10 @@ const EXP_ICON = preload("res://assets-sistema/final-leccion/exp-icon.png")
 const PRECISION_ICON = preload("res://assets-sistema/final-leccion/precision-icon.png")
 const TIEMPO_ICON = preload("res://assets-sistema/final-leccion/tiempo-icon.png")
 
-
-const MAP_SCENE := "res://mapas/MapScene.tscn"
-
-const CUADRADO_2X_2 = preload("res://assets-sistema/interfaz/cuadrado-2x2.png")
-
-# Comparación mejor vs. actual: datos listos; UI oculta hasta diseño (Margo).
 const MOSTRAR_COMPARACION_PRECISION_UI := false
-
-const SincronizadorPartidaScript := preload("res://API/backend/sync/SincronizadorPartida.gd")
 
 var _sync_tween: Tween = null
 var _comparacion_precision: Dictionary = {}
-var _scope_ranking_post_partida: String = LeaderboardApi.SCOPE_XP_GLOBAL
 
 
 func _formatear_tiempo(segundos_totales: float) -> String:
@@ -57,31 +40,24 @@ func _formatear_tiempo(segundos_totales: float) -> String:
 
 
 func _ready() -> void:
-	# Iconos de los bloques de stats
 	label.text = "EXP"
 	label_2.text = "Precisión"
 	label_3.text = "Tiempo"
 	stats_1.setear_icono(EXP_ICON)
 	stats_2.setear_icono(PRECISION_ICON)
 	stats_3.setear_icono(TIEMPO_ICON)
-	
-	# Colores de los valores (dorado, naranja, azul)
+
 	numero.modulate = Color("#DBC151")
 	numero_2.modulate = Color("#DB9D4B")
 	numero_3.modulate = Color("#4B79DB")
 
-	# Tipografía de los números
 	for lbl in [numero, numero_2, numero_3]:
 		lbl.add_theme_font_override("font", RUBIK_SPRAY)
 
-	if continuar_label != null:
-		continuar_label.text = "Continuar"
-
-	# Leer los datos de resultado guardados en Global y mostrarlos
-	var stats: Dictionary = Global.obtener_y_limpiar_ultima_finalizacion()
+	var stats: Dictionary = Global.obtener_ultima_finalizacion()
 	if stats.is_empty():
 		push_warning("[FinalizaciónPartida] Sin datos de finalización en Global.")
-	
+
 	var precision_actual := 0
 	if not stats.is_empty():
 		precision_actual = _leer_precision_real(stats)
@@ -90,10 +66,8 @@ func _ready() -> void:
 	var tiempo_final = "-"
 	if elapsed_seconds >= 0.0:
 		tiempo_final = _formatear_tiempo(elapsed_seconds)
-		print("[FinalizacionPartida] displaying_time=", tiempo_final)
 	elif stats.has("tiempo") and str(stats.get("tiempo", "")) != "—" and str(stats.get("tiempo", "")) != "":
 		tiempo_final = str(stats.get("tiempo", ""))
-		print("[FinalizacionPartida] displaying_time=", tiempo_final)
 
 	mostrar_resultados(
 		int(stats.get("exp_ganada", stats.get("exp", 0))),
@@ -102,8 +76,10 @@ func _ready() -> void:
 	)
 	_actualizar_titulo_leccion(precision_actual)
 	_mostrar_comparacion_precision(stats, precision_actual)
+	_ocultar_ui_de_ranking()
+	_configurar_boton_continuar()
+	_aplicar_estilo_sync()
 
-	# Inicializar feedback de sync
 	if label_sync_status != null:
 		label_sync_status.text = SyncApi.mensaje_guardado_local()
 		if SyncApi.puede_sincronizar():
@@ -114,23 +90,36 @@ func _ready() -> void:
 			_iniciar_animacion_sync()
 			call_deferred("_evaluar_estado_sync_inicial")
 
-	# Conectar botón Continuar
-	if continuar_btn != null and not continuar_btn.pressed.is_connected(continuar_al_mapa):
-		continuar_btn.pressed.connect(continuar_al_mapa)
-
-	# Cargar ranking post-partida de forma no bloqueante (UNQ-174).
-	# El flujo de finalización no espera esta llamada; si falla, no se muestra nada.
-	if is_instance_valid(_card_ranking):
-		_card_ranking.ver_ranking_solicitado.connect(_abrir_leaderboard_completo)
-		_card_ranking.iniciar_sesion_solicitado.connect(_al_iniciar_sesion_desde_post_partida)
-	_cargar_ranking_post_partida()
+	call_deferred("_prefetch_ranking_en_segundo_plano")
 
 
 func _exit_tree() -> void:
 	_limpiar_feedback_sync()
 
 
-# Completado no implica 100% de precisión.
+func _ocultar_ui_de_ranking() -> void:
+	if mensaje != null and not MOSTRAR_COMPARACION_PRECISION_UI:
+		mensaje.visible = false
+	var saltar := get_node_or_null("UiAnchor/SaltarAlMapa")
+	if saltar != null:
+		saltar.visible = false
+	var checkbox := get_node_or_null("UiAnchor/CheckboxOmitirRanking")
+	if checkbox != null:
+		checkbox.visible = false
+
+
+func _configurar_boton_continuar() -> void:
+	if continuar_label != null:
+		continuar_label.text = PostPartidaFlow.texto_boton_dashboard()
+
+
+func _aplicar_estilo_sync() -> void:
+	if label_sync_status == null:
+		return
+	label_sync_status.add_theme_color_override("font_color", Color(0.302, 0.322, 0.361, 0.9))
+	label_sync_status.add_theme_font_size_override("font_size", 16)
+
+
 func _leer_precision_real(stats: Dictionary) -> int:
 	if stats.has("last_accuracy"):
 		return int(stats.get("last_accuracy", 0))
@@ -148,7 +137,6 @@ func _leer_precision_real(stats: Dictionary) -> int:
 			)
 			return 0
 		return precision
-	# Compatibilidad: algunos resultados legacy guardan accuracy como ratio 0.0–1.0.
 	if stats.has("accuracy"):
 		var accuracy := float(stats.get("accuracy", 0.0))
 		if accuracy <= 1.0:
@@ -161,9 +149,6 @@ func mostrar_resultados(exp_ganada: int, precision: int, tiempo: String) -> void
 	numero.text = str(exp_ganada)
 	numero_2.text = str(clamp(precision, 0, 100)) + "%"
 	numero_3.text = tiempo if not tiempo.is_empty() else "--"
-
-	if continuar_label != null:
-		continuar_label.text = "Continuar"
 
 	if precision >= 100:
 		if not audio_perfecto.playing:
@@ -200,17 +185,13 @@ func _construir_comparacion_precision(stats: Dictionary, precision_actual: int) 
 	}
 
 
-## Datos de comparación para UI futura (diseño Margo). Siempre disponible aunque no se muestre.
 func obtener_comparacion_precision() -> Dictionary:
 	return _comparacion_precision.duplicate(true)
 
 
 func _mostrar_comparacion_precision(stats: Dictionary, precision_actual: int) -> void:
 	_comparacion_precision = _construir_comparacion_precision(stats, precision_actual)
-	if mensaje == null:
-		return
-	if not MOSTRAR_COMPARACION_PRECISION_UI:
-		mensaje.visible = false
+	if mensaje == null or not MOSTRAR_COMPARACION_PRECISION_UI:
 		return
 	mensaje.visible = true
 	mensaje.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -218,88 +199,12 @@ func _mostrar_comparacion_precision(stats: Dictionary, precision_actual: int) ->
 	mensaje.text = str(_comparacion_precision.get("texto", ""))
 
 
-func continuar_al_mapa() -> void:
-	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE)
-
-
-func _resolver_scope_ranking_post_partida() -> String:
-	var track := SincronizadorPartidaScript.resolver_restriccion(get_tree())
-	return RestrictionCodes.scope_leaderboard_desde_juego(track)
-
-
-# Solicita el resumen de ranking post-partida en background.
-# El jugador puede presionar "Continuar" en cualquier momento: esto no lo bloquea.
-func _cargar_ranking_post_partida() -> void:
-	if not is_instance_valid(_ranking_container) or not is_instance_valid(_card_ranking):
-		return
-
-	if not AuthApi.esta_logueado():
-		_card_ranking.mostrar_invitacion_login()
-		_ranking_container.visible = true
-		return
-
-	_scope_ranking_post_partida = _resolver_scope_ranking_post_partida()
-	_ranking_container.visible = true
-	if is_instance_valid(_card_ranking):
-		_card_ranking.mostrar_estado_carga()
-
-	# 1) Intentamos leer el puesto desde cache (rápido, sin red).
-	var puesto_antes_de_jugar := LeaderboardService.obtener_puesto_desde_resumen_cache(
-		_scope_ranking_post_partida
-	)
-
-	# 2) Si no había cache, pedimos el resumen SIN invalidar todavía.
-	if puesto_antes_de_jugar <= CelebracionSubidaRanking.PUESTO_NO_REGISTRADO:
-		var resultado_previo: Variant = await LeaderboardService.cargar_resumen_competitivo(
-			false,
-			_scope_ranking_post_partida
-		)
-		if resultado_previo is Dictionary and bool((resultado_previo as Dictionary).get("ok", false)):
-			puesto_antes_de_jugar = LeaderboardService.obtener_puesto_desde_resumen_cache(
-				_scope_ranking_post_partida
-			)
-
-	# 3) Ahora sí refrescamos para mostrar el puesto actualizado post-partida.
-	LeaderboardService.invalidar_cache(_scope_ranking_post_partida)
-
-	var resultado_raw: Variant = await LeaderboardService.cargar_resumen_competitivo(
-		true,
-		_scope_ranking_post_partida
-	)
-	if not resultado_raw is Dictionary:
-		return
-	var resultado := resultado_raw as Dictionary
-
-	if not is_inside_tree():
-		return
-
-	if not resultado.get("ok", false):
-		return
-
-	var datos: Variant = resultado.get("data", resultado)
-	if datos is Dictionary and bool((datos as Dictionary).get("available", false)):
-		_card_ranking.mostrar_desde_datos(datos as Dictionary, puesto_antes_de_jugar)
-		_ranking_container.visible = true
-
-
-func _abrir_leaderboard_completo(scope: String = "") -> void:
-	var scope_final := scope.strip_edges()
-	if scope_final.is_empty():
-		scope_final = _scope_ranking_post_partida
-	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
-
-
-func _al_iniciar_sesion_desde_post_partida() -> void:
-	var helper := AuthLoginOverlayHelper.new()
-	var inicio_ok := await helper.mostrar_y_esperar(self, AuthLoginOverlayHelper.FLUJO_JUEGO)
-	if not inicio_ok:
-		return
-	_cargar_ranking_post_partida()
-	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
+func _prefetch_ranking_en_segundo_plano() -> void:
+	PostPartidaFlow.prefetch_ranking_si_corresponde(get_tree())
 
 
 func _on_continuar_presionado() -> void:
-	pass # Replace with function body.
+	PostPartidaFlow.continuar_desde_dashboard(get_tree())
 
 
 func _al_sync_exitosa(_progress: Dictionary) -> void:

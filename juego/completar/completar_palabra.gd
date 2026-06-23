@@ -57,6 +57,9 @@ const COLOR_PLACED   := Color(0.20, 0.55, 0.35, 1.0)
 @onready var _continuar_juego: Node = (
 	$Control/ContinuarJuego if has_node("Control/ContinuarJuego") else null
 )
+@onready var _progress_bar: Control = (
+	$Control/ProgressBar if has_node("Control/ProgressBar") else null
+)
 
 var _answers: Array[String] = []
 var _placed: Array[String]  = []
@@ -75,6 +78,7 @@ func _ready() -> void:
 
 	_configurar_typewriter()
 	_validar_nodos_escena()
+	_configurar_indicador_de_progreso_de_juego()
 
 	if _continuar_juego != null:
 		_continuar_juego.continuar_solicitado.connect(_al_solicitar_continuar_juego)
@@ -84,15 +88,11 @@ func _ready() -> void:
 
 	var activity: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
 	if not activity.is_empty():
-		var challenge_data: Dictionary = activity.get("content", activity)
+		var challenge_data: Dictionary = _resolver_challenge_desde_actividad(activity)
 
 		var return_to: String = str(activity.get("return_to", "")).strip_edges()
 		if not return_to.is_empty():
 			_ruta_escena_de_retorno = return_to
-
-		if not challenge_data.has("sentence") and not challenge_data.has("prompt"):
-			var diff: int = int(challenge_data.get("difficulty", 1))
-			challenge_data = CargadorCompletar.elegir(diff)
 
 		_teaching_key = PresentadorEnsenanzasScript.leer_teaching_key_de_fuentes(
 			[activity, challenge_data]
@@ -384,7 +384,81 @@ func _colocar_opcion_en_slot(option: String, btn: Button) -> void:
 
 func _verificar_si_completado() -> void:
 	if _placed.size() == _answers.size():
-		_finalizar(true)
+		_iniciar_cierre_despues_de_acierto()
+
+
+func _resolver_challenge_desde_actividad(activity: Dictionary) -> Dictionary:
+	var activity_id: String = str(activity.get("activity_id", activity.get("id", ""))).strip_edges()
+	if not activity_id.is_empty():
+		var por_id: Dictionary = CargadorCompletar.resolver_por_id(activity_id)
+		if not por_id.is_empty():
+			return por_id
+
+	var content_raw: Variant = activity.get("content", {})
+	if content_raw is Dictionary:
+		var content: Dictionary = content_raw as Dictionary
+		if _es_desafio_valido(content):
+			return content
+
+	if _es_desafio_valido(activity):
+		return activity
+
+	var diff: int = int(activity.get("difficulty", activity.get("dificultad", 1)))
+	return CargadorCompletar.elegir(diff)
+
+
+func _configurar_indicador_de_progreso_de_juego() -> void:
+	if _progress_bar == null:
+		return
+	var contexto: Dictionary = ContextoSesionDeJuegoScript.obtener_modelo_indicador_actual()
+	var actual: int = int(contexto.get("actual", 1))
+	var total: int = int(contexto.get("total", 1))
+	if _progress_bar.has_method("actualizar_progreso"):
+		_progress_bar.call("actualizar_progreso", actual, total)
+
+
+func _iniciar_cierre_despues_de_acierto() -> void:
+	if _already_finished:
+		return
+
+	_already_finished = true
+	_interaction_locked = true
+	_deshabilitar_interaccion()
+
+	var delay: float = (
+		SUCCESS_HOLD_SECONDS
+		if ENABLE_SUCCESS_TRANSITION and _sentence_label != null
+		else FINISH_DELAY
+	)
+	if ENABLE_SUCCESS_TRANSITION and _sentence_label != null:
+		_sentence_label.pivot_offset = _sentence_label.size / 2.0
+		var tween := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(_sentence_label, "scale", SUCCESS_SENTENCE_SCALE, 0.3)
+
+	var timer := get_tree().create_timer(delay, true)
+	timer.timeout.connect(_procesar_cierre_post_acierto, CONNECT_ONE_SHOT)
+
+
+func _procesar_cierre_post_acierto() -> void:
+	_registrar_resultado(true)
+
+	if completed.get_connections().size() > 0:
+		completed.emit(true)
+
+	call_deferred("_mostrar_cierre_post_exito")
+
+
+func _mostrar_cierre_post_exito() -> void:
+	if PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
+		if _progress_bar != null and _progress_bar.has_method("completar_progreso"):
+			_progress_bar.call("completar_progreso")
+		_finalizar_actividad(true)
+		return
+
+	if _intentar_mostrar_ensenanza_esc():
+		return
+
+	_mostrar_continuacion()
 
 func _devolver_opcion_al_origen(btn: Button) -> void:
 	_interaction_locked = true
@@ -465,43 +539,17 @@ func _limpiar_bbcode(text: String) -> String:
 	regex.compile("\\[.*?\\]")
 	return regex.sub(text, "", true)
 
-func _finalizar(success: bool) -> void:
-	if _already_finished:
-		return
-
-	_already_finished = true
-	_interaction_locked = true
-
-	_deshabilitar_interaccion()
-
-	if ENABLE_SUCCESS_TRANSITION and _sentence_label != null:
-		var t := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-		t.tween_property(_sentence_label, "scale", SUCCESS_SENTENCE_SCALE, 0.3)
-		await get_tree().create_timer(SUCCESS_HOLD_SECONDS).timeout
-	else:
-		await get_tree().create_timer(FINISH_DELAY).timeout
-
-	_registrar_resultado(success)
-
-	if completed.get_connections().size() > 0:
-		completed.emit(success)
-
-	if success and _intentar_mostrar_ensenanza_esc():
-		return
-
-	_mostrar_continuacion()
-
-
 func _intentar_mostrar_ensenanza_esc() -> bool:
 	if _teaching_key.is_empty():
 		return false
+	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
 	return PresentadorEnsenanzasScript.mostrar_en_host(
 		self,
 		_teaching_key,
 		Callable(self, "_continuar_desde_ensenanza_esc"),
-		"celiaquia",
-		"",
-		0
+		str(actividad.get("track_key", "celiaquia")),
+		str(actividad.get("node_key", "")),
+		int(actividad.get("level_number", 0))
 	)
 
 
@@ -518,11 +566,31 @@ func _mostrar_continuacion() -> void:
 	if _continuar_juego == null:
 		_continuar_o_cerrar_nodo()
 		return
+	_preparar_ui_continuar()
 	PresentadorContinuarJuegoScript.mostrar(
 		_continuar_juego,
 		NODO_RUNTIME.hay_siguiente_mini_juego(get_tree()),
 		5
 	)
+
+
+func _preparar_ui_continuar() -> void:
+	if _continuar_juego == null or not (_continuar_juego is Control):
+		return
+	var continuar := _continuar_juego as Control
+	if continuar.get_parent() != self:
+		var parent := continuar.get_parent()
+		if parent != null:
+			parent.remove_child(continuar)
+		add_child(continuar)
+	continuar.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	continuar.position = Vector2(960.0, 632.0)
+	continuar.size = Vector2(128.0, 128.0)
+	continuar.z_as_relative = false
+	continuar.z_index = 250
+	continuar.modulate = Color.WHITE
+	continuar.show()
+	continuar.move_to_front()
 
 func _al_solicitar_continuar_juego() -> void:
 	if _continue_requested:

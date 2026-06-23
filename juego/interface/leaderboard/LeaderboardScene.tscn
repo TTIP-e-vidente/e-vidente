@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://lb_scene_001"]
+[gd_scene load_steps=19 format=3 uid="uid://lb_scene_001"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="2_tabs"]
@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEntryPeek.tscn" id="7_peek"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="8_font"]
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="9_spray"]
+
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPodium.tscn" id="10_podium"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.09, 0.12, 0.10, 0.98)
@@ -90,9 +92,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -268.0
-offset_top = -350.0
+offset_top = -380.0
 offset_right = 268.0
-offset_bottom = 350.0
+offset_bottom = 380.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -187,6 +189,11 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 visible = false
+theme_override_constants/separation = 8
+
+[node name="LeaderboardPodium" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("10_podium")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="LeaderboardList" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("3_list")]
 unique_name_in_owner = true

@@ -35,15 +35,20 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
-bg_color = Color(0.204, 0.247, 0.173, 0.1)
+bg_color = Color(0.259, 0.471, 0.369, 0.14)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.35)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-content_margin_left = 12
-content_margin_top = 8
-content_margin_right = 12
-content_margin_bottom = 8
+content_margin_left = 14
+content_margin_top = 9
+content_margin_right = 14
+content_margin_bottom = 9
 
 [node name="ProgresoPuestoCard" type="PanelContainer"]
 size_flags_horizontal = 3
@@ -117,9 +122,9 @@ show_percentage = false
 [node name="LabelMeta" type="Label" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.85)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
 [node name="BotonVerRanking" type="Button" parent="MarginContainer/VBox"]

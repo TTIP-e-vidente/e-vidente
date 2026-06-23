@@ -120,9 +120,9 @@ func test_save_manager_evaluar_perdida_con_racha_vencida() -> void:
 
 	var resultado: Dictionary = save_manager.evaluar_perdida_racha_pendiente()
 
-	assert_true(bool(resultado.get("should_show", false)))
+	assert_bool(bool(resultado.get("should_show", false))).is_true()
 	var feedback: Variant = resultado.get("feedback", {})
-	assert_true(feedback is Dictionary)
+	assert_bool(feedback is Dictionary).is_true()
 	assert_str(str((feedback as Dictionary).get("feedback_key", ""))).is_equal("lost")
 
 	var streak_guardada: Dictionary = (

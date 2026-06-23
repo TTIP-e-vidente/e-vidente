@@ -8,11 +8,48 @@ const ROW_SCENE := preload("res://interface/leaderboard/LeaderboardMiniRow.tscn"
 
 
 @export var max_filas: int = 5
+@export var animar_fila_propia: bool = true
+@export var tema_claro: bool = false
+
+
+func _ready() -> void:
+	if not LeaderboardAvatarCache.avatar_cargado.is_connected(_al_avatar_cargado):
+		LeaderboardAvatarCache.avatar_cargado.connect(_al_avatar_cargado)
+
+
+func _exit_tree() -> void:
+	if LeaderboardAvatarCache.avatar_cargado.is_connected(_al_avatar_cargado):
+		LeaderboardAvatarCache.avatar_cargado.disconnect(_al_avatar_cargado)
 
 
 func limpiar() -> void:
 	for hijo in get_children():
 		hijo.queue_free()
+
+
+func poblar_desde_nearby(resumen: Dictionary, id_propio: String, scope: String = "") -> bool:
+	var nearby: Variant = resumen.get("nearby_entries", [])
+	if not nearby is Array or (nearby as Array).is_empty():
+		return false
+
+	limpiar()
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = str(resumen.get("scope", "global_xp"))
+
+	var puesto_propio := 0
+	var current: Variant = resumen.get("current", null)
+	if current is Dictionary:
+		puesto_propio = int((current as Dictionary).get("rank", 0))
+
+	_agregar_filas_desde_entradas(
+		nearby as Array,
+		id_propio,
+		scope_final,
+		(nearby as Array).size(),
+		puesto_propio
+	)
+	return true
 
 
 func poblar(datos: Dictionary, id_propio: String = "", limite: int = -1) -> void:
@@ -22,7 +59,7 @@ func poblar(datos: Dictionary, id_propio: String = "", limite: int = -1) -> void
 		return
 
 	var maximo := limite if limite > 0 else max_filas
-	_agregar_filas_desde_entradas(entradas as Array, id_propio, str(datos.get("scope", "global_xp")), maximo)
+	_agregar_filas_desde_entradas(entradas as Array, id_propio, str(datos.get("scope", "global_xp")), maximo, 0)
 
 
 func poblar_cercanos(
@@ -42,7 +79,7 @@ func poblar_cercanos(
 		poblar(datos, id_propio, max_filas)
 		return
 
-	_agregar_filas_desde_entradas(cercanas, id_propio, scope, cercanas.size())
+	_agregar_filas_desde_entradas(cercanas, id_propio, scope, cercanas.size(), puesto_centro)
 
 
 func poblar_contexto_post_partida(
@@ -53,6 +90,9 @@ func poblar_contexto_post_partida(
 	radio: int = 2
 ) -> void:
 	limpiar()
+	if poblar_desde_nearby(resumen_competitivo, id_propio, str(datos_leaderboard.get("scope", ""))):
+		return
+
 	if puesto_centro <= 0:
 		poblar(datos_leaderboard, id_propio, max_filas)
 		return
@@ -80,14 +120,15 @@ func poblar_contexto_post_partida(
 		poblar(datos_leaderboard, id_propio, max_filas)
 		return
 
-	_agregar_filas_desde_entradas(cercanas, id_propio, scope, cercanas.size())
+	_agregar_filas_desde_entradas(cercanas, id_propio, scope, cercanas.size(), puesto_centro)
 
 
 func _agregar_filas_desde_entradas(
 	entradas: Array,
 	id_propio: String,
 	scope: String,
-	maximo: int
+	maximo: int,
+	puesto_propio: int = 0
 ) -> void:
 	var contador := 0
 	for entrada in entradas:
@@ -99,10 +140,22 @@ func _agregar_filas_desde_entradas(
 		var fila := ROW_SCENE.instantiate() as LeaderboardMiniRow
 		if fila == null:
 			continue
-		var es_propio := str(entry.get("user_id", "")) == id_propio and not id_propio.is_empty()
+		fila.tema_claro = tema_claro
+		var es_propio := _es_fila_propia(entry, id_propio, puesto_propio)
 		fila.poblar(entry, es_propio, scope)
 		add_child(fila)
 		contador += 1
+
+	if animar_fila_propia:
+		call_deferred("_animar_fila_propia")
+
+
+func _es_fila_propia(entry: Dictionary, id_propio: String, puesto_propio: int) -> bool:
+	if not id_propio.is_empty() and str(entry.get("user_id", "")) == id_propio:
+		return true
+	if puesto_propio > 0 and int(entry.get("rank", 0)) == puesto_propio:
+		return true
+	return false
 
 
 func _incluye_usuario(entradas: Array, id_propio: String) -> bool:
@@ -126,3 +179,16 @@ func _entrada_ya_listada(entradas: Array, candidata: Dictionary) -> bool:
 		if not user_c.is_empty() and str(e.get("user_id", "")) == user_c:
 			return true
 	return false
+
+
+func _al_avatar_cargado(user_id: String, _texture: Texture2D) -> void:
+	for hijo in get_children():
+		if hijo is LeaderboardMiniRow:
+			(hijo as LeaderboardMiniRow).refrescar_avatar_si_coincide(user_id)
+
+
+func _animar_fila_propia() -> void:
+	for hijo in get_children():
+		if hijo is LeaderboardMiniRow and (hijo as LeaderboardMiniRow).es_fila_propia():
+			(hijo as LeaderboardMiniRow).animar_atencion()
+			return

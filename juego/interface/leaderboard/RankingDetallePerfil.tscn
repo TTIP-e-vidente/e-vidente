@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://ranking_detalle_perfil"]
+[gd_scene load_steps=9 format=3 uid="uid://ranking_detalle_perfil"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/RankingDetallePerfil.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="4_tabs"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ProgresoPuestoCard.tscn" id="5_card"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardMiniList.tscn" id="6_mini"]
+
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPosicionesHub.tscn" id="7_hub"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.962, 0.957, 0.937, 1)
@@ -47,7 +49,7 @@ theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 14
 
 [node name="HeaderRow" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
@@ -58,7 +60,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_spray")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 22
 text = "Ranking competitivo"
 
 [node name="LabelInvitado" type="Label" parent="Margin/VBox/HeaderRow"]
@@ -70,6 +72,10 @@ theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
 text = "Iniciá sesión"
 vertical_alignment = 1
+
+[node name="PosicionesHub" parent="Margin/VBox" instance=ExtResource("7_hub")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="ScopeTabs" parent="Margin/VBox" instance=ExtResource("4_tabs")]
 unique_name_in_owner = true
@@ -90,6 +96,7 @@ text = "TABLA — TOP 8"
 unique_name_in_owner = true
 layout_mode = 2
 max_filas = 8
+tema_claro = true
 
 [node name="BotonTablaCompleta" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true

@@ -597,6 +597,21 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 	var updated_streak: Dictionary = Global.obtener_estado_racha()
 	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa:
+		if (
+			_pertenece_a_partida_de_nodo
+			and PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree())
+		):
+			_bloquear_completado_partida()
+			NodoRuntimeScript.finalizar_mini_juego(get_tree(), Callable(), Callable())
+			_encolar_sync_partida_mapa()
+			PostGameFlowControllerScript.navegar_despues_ensenanza(
+				get_tree(),
+				_tomar_estado_flujo_post_juego(),
+				_take_post_game_streak_feedback(),
+				true
+			)
+			run_completed.emit()
+			return
 		# Bloquear input sin dim/grayscale: la ensenanza cubre el gameplay inmediatamente.
 		ItemLevel.is_dragging = null
 		_establecer_interacciones_jugabilidad_habilitadas(false)

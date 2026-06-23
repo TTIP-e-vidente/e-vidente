@@ -428,6 +428,127 @@ export async function getLiveUserRank(
   return { rank: row.rank, score: parseInt(String(row.score), 10) };
 }
 
+// ─── Entradas cercanas al jugador (±N ranks) ───────────────────────────────────
+
+/**
+ * Devuelve las filas del ranking en un rango ±radius alrededor del jugador.
+ * Prioriza snapshot; si no hay filas, usa fallback en vivo.
+ */
+export async function getNearbyEntries(
+  userId: string,
+  scope: LeaderboardScope,
+  radius: number = 2
+): Promise<LeaderboardEntry[]> {
+  const safeRadius = Math.max(0, Math.min(radius, 10));
+
+  const snapshotResult = await query<LeaderboardSnapshotRow>(
+    `
+      WITH player AS (
+        SELECT rank
+        FROM leaderboard_snapshots
+        WHERE scope = $2 AND user_id = $1
+        LIMIT 1
+      )
+      SELECT s.rank, s.user_id, s.username, s.display_name, s.avatar_key, s.score, s.computed_at
+      FROM leaderboard_snapshots s
+      INNER JOIN player p ON true
+      WHERE s.scope = $2
+        AND s.rank BETWEEN p.rank - $3 AND p.rank + $3
+      ORDER BY s.rank ASC
+    `,
+    [userId, scope, safeRadius]
+  );
+
+  if (snapshotResult.rows.length > 0) {
+    return snapshotResult.rows.map(rowToEntry);
+  }
+
+  const liveRank = await getLiveUserRank(scope, userId);
+  if (!liveRank) return [];
+
+  return getLiveNearbyEntries(scope, liveRank.rank, safeRadius);
+}
+
+async function getLiveNearbyEntries(
+  scope: LeaderboardScope,
+  centerRank: number,
+  radius: number
+): Promise<LeaderboardEntry[]> {
+  const minRank = Math.max(1, centerRank - radius);
+  const maxRank = centerRank + radius;
+
+  let rankedSql: string;
+  let params: unknown[] = [minRank, maxRank];
+
+  if (scope === 'global_xp') {
+    rankedSql = `
+      WITH ranked AS (
+        SELECT
+          RANK() OVER (ORDER BY COALESCE(p.exp_count, 0) DESC, u.id ASC)::integer AS rank,
+          u.id          AS user_id,
+          u.username    AS username,
+          u.name        AS display_name,
+          ${AVATAR_KEY_SQL} AS avatar_key,
+          COALESCE(p.exp_count, 0) AS score
+        FROM users u
+        LEFT JOIN profiles p ON p.user_id = u.id
+        LEFT JOIN images img ON img.user_id = u.id
+      )
+      SELECT rank, user_id, username, display_name, avatar_key, score
+      FROM ranked
+      WHERE rank BETWEEN $1 AND $2
+      ORDER BY rank ASC
+    `;
+  } else if (scope === 'streak') {
+    rankedSql = `
+      WITH ranked AS (
+        SELECT
+          RANK() OVER (ORDER BY COALESCE(s.best_count, 0) DESC, u.id ASC)::integer AS rank,
+          u.id          AS user_id,
+          u.username    AS username,
+          u.name        AS display_name,
+          ${AVATAR_KEY_SQL} AS avatar_key,
+          COALESCE(s.best_count, 0) AS score
+        FROM users u
+        LEFT JOIN profiles p ON p.user_id = u.id
+        LEFT JOIN streaks  s ON s.id = p.streak_id
+        LEFT JOIN images img ON img.user_id = u.id
+      )
+      SELECT rank, user_id, username, display_name, avatar_key, score
+      FROM ranked
+      WHERE rank BETWEEN $1 AND $2
+      ORDER BY rank ASC
+    `;
+  } else if (scope.startsWith('restriction:')) {
+    const restriction = scope.slice('restriction:'.length);
+    rankedSql = `
+      WITH ranked AS (
+        SELECT
+          RANK() OVER (ORDER BY COALESCE(pr.total_exp, 0) DESC, u.id ASC)::integer AS rank,
+          u.id          AS user_id,
+          u.username    AS username,
+          u.name        AS display_name,
+          ${AVATAR_KEY_SQL} AS avatar_key,
+          COALESCE(pr.total_exp, 0) AS score
+        FROM users u
+        INNER JOIN profiles p ON p.user_id = u.id
+        INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = $3
+        LEFT JOIN images img ON img.user_id = u.id
+      )
+      SELECT rank, user_id, username, display_name, avatar_key, score
+      FROM ranked
+      WHERE rank BETWEEN $1 AND $2
+      ORDER BY rank ASC
+    `;
+    params = [minRank, maxRank, restriction];
+  } else {
+    return [];
+  }
+
+  const result = await query<LiveRow>(rankedSql, params);
+  return result.rows.map(liveRowToEntry);
+}
+
 // ─── Contexto competitivo del jugador (/me/summary) ──────────────────────────
 
 /**

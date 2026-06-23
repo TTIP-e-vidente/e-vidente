@@ -3,6 +3,15 @@ extends RefCounted
 
 # Catálogo de scopes del leaderboard (UI + prefetch).
 
+const GameTrackCatalogScript := preload("res://niveles/GameTrackCatalog.gd")
+
+const CODE_TO_TRACK := {
+	"CELIAQUIA": GameTrackCatalogScript.TRACK_CELIAQUIA,
+	"VEG": GameTrackCatalogScript.TRACK_VEGANISMO,
+	"VYG": GameTrackCatalogScript.TRACK_VEGANISMO_CELIAQUIA,
+	"KETO": GameTrackCatalogScript.TRACK_CETOGENICA,
+}
+
 
 static func obtener_categorias() -> Array[Dictionary]:
 	var categorias: Array[Dictionary] = [
@@ -22,7 +31,13 @@ static func scope_restriccion(code: String) -> String:
 
 
 static func etiqueta_restriccion(code: String) -> String:
-	match code.strip_edges().to_upper():
+	var code_upper := code.strip_edges().to_upper()
+	if CODE_TO_TRACK.has(code_upper):
+		var track: String = CODE_TO_TRACK[code_upper]
+		var etiqueta := GameTrackCatalogScript.obtener_etiqueta_pista(track, "")
+		if not etiqueta.is_empty():
+			return etiqueta
+	match code_upper:
 		"CELIAQUIA": return "Celiaquía"
 		"VEG":       return "Veganismo"
 		"VYG":       return "Veganismo + Celiaquía"

@@ -15,6 +15,7 @@ signal resumen_competitivo_fallido(mensaje: String)
 
 const SEGUNDOS_CACHE_VALIDO := 60.0
 const LIMITE_POR_PAGINA := 50
+const META_REFRESH_POST_PARTIDA := "leaderboard_refresh_scope_post_partida"
 
 
 var _cache: Dictionary = {}
@@ -28,32 +29,38 @@ var _cache_resumen_por_scope: Dictionary = {}
 var _cargando_resumen: bool = false
 
 
-func cargar(scope: String = "global_xp", forzar: bool = false) -> void:
-	if not forzar and _cache_esta_fresco(scope):
-		leaderboard_cargado.emit(scope, _cache[scope]["datos"])
+func cargar(scope: String = "global_xp", forzar: bool = false, offset: int = 0) -> void:
+	offset = maxi(0, offset)
+	var es_pagina := offset > 0
+	var scope_evento := scope if not es_pagina else "%s:pagina" % scope
+	var cache_key := scope if not es_pagina else "%s@o%d" % [scope, offset]
+
+	if not forzar and _cache_esta_fresco(cache_key):
+		leaderboard_cargado.emit(scope_evento, _cache[cache_key]["datos"])
 		return
 
-	if _cargando_scope.get(scope, false):
+	if _cargando_scope.get(cache_key, false):
 		return
 
-	_cargando_scope[scope] = true
+	_cargando_scope[cache_key] = true
 	var resultado := await LeaderboardApi.obtener_leaderboard(
 		scope,
 		LIMITE_POR_PAGINA,
-		0,
+		offset,
 		AuthApi.esta_logueado()
 	)
-	_cargando_scope[scope] = false
+	_cargando_scope[cache_key] = false
 
 	if resultado.get("ok", false):
 		var datos: Variant = resultado.get("data", {})
 		var datos_dict := datos as Dictionary if datos is Dictionary else {}
-		_cache[scope] = {
+		_cache[cache_key] = {
 			"datos": datos_dict,
 			"timestamp": Time.get_unix_time_from_system()
 		}
-		_actualizar_cache_posicion_desde_leaderboard(scope, datos_dict)
-		leaderboard_cargado.emit(scope, datos_dict)
+		if not es_pagina:
+			_actualizar_cache_posicion_desde_leaderboard(scope, datos_dict)
+		leaderboard_cargado.emit(scope_evento, datos_dict)
 	else:
 		var mensaje := LeaderboardApi.mensaje_error(resultado)
 		leaderboard_fallido.emit(scope, mensaje)
@@ -63,6 +70,17 @@ func prefetch(scope: String) -> void:
 	if _cache_esta_fresco(scope) or _cargando_scope.get(scope, false):
 		return
 	cargar(scope)
+
+
+func prefetch_resumen_competitivo(scope: String = "global_xp") -> void:
+	if not AuthApi.esta_logueado():
+		return
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = "global_xp"
+	if _cache_resumen_esta_fresco(scope_final) or _cargando_resumen:
+		return
+	cargar_resumen_competitivo(false, scope_final)
 
 
 func cargar_mas(scope: String, desplazamiento: int) -> void:
@@ -137,11 +155,19 @@ func cargar_resumen_competitivo(forzar: bool = false, scope: String = "global_xp
 func invalidar_cache(scope: String = "") -> void:
 	if scope.is_empty():
 		_cache.clear()
+		_cargando_scope.clear()
 		_cache_posicion_propia.clear()
 		_timestamp_posicion_propia = -1.0
 		_cache_resumen_por_scope.clear()
 	else:
 		_cache.erase(scope)
+		var prefijo := "%s@o" % scope
+		for clave in _cache.keys():
+			if clave == scope or str(clave).begins_with(prefijo):
+				_cache.erase(clave)
+		for clave in _cargando_scope.keys():
+			if clave == scope or str(clave).begins_with(prefijo):
+				_cargando_scope.erase(clave)
 		_cache_resumen_por_scope.erase(scope)
 		_remover_posicion_cache_para_scope(scope)
 
@@ -179,6 +205,13 @@ func obtener_puesto_desde_resumen_cache(scope: String = "global_xp") -> int:
 
 func esta_cargando(scope: String) -> bool:
 	return _cargando_scope.get(scope, false)
+
+
+static func calcular_offset_para_rank(rank: int, limite: int = LIMITE_POR_PAGINA) -> int:
+	if rank <= 1:
+		return 0
+	var pagina := int(floor(float(rank - 1) / float(limite)))
+	return pagina * limite
 
 
 func _actualizar_cache_posicion_desde_leaderboard(scope: String, datos: Dictionary) -> void:
@@ -249,3 +282,23 @@ func _cache_resumen_esta_fresco(scope: String) -> bool:
 		return false
 	var antiguedad := Time.get_unix_time_from_system() - float(_cache_resumen_por_scope[scope]["timestamp"])
 	return antiguedad < SEGUNDOS_CACHE_VALIDO
+
+
+func marcar_refresco_tras_partida(scope: String) -> void:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null and tree.root != null:
+		tree.root.set_meta(META_REFRESH_POST_PARTIDA, scope_final)
+
+
+func consumir_refresco_tras_partida() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return ""
+	if not tree.root.has_meta(META_REFRESH_POST_PARTIDA):
+		return ""
+	var scope := str(tree.root.get_meta(META_REFRESH_POST_PARTIDA, "")).strip_edges()
+	tree.root.remove_meta(META_REFRESH_POST_PARTIDA)
+	return scope

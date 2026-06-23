@@ -355,10 +355,13 @@ func _on_superposicion_logout_presionado() -> void:
 	GameSceneRouter.go_to_main_menu(get_tree())
 
 
-func _on_superposicion_ranking_presionado() -> void:
+func _on_superposicion_ranking_presionado(scope: String = "") -> void:
 	_profile_toggle_btn.visible = true
 	_profile_overlay.ocultar_superposicion()
-	LeaderboardOverlayHelper.abrir(get_tree(), LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
+	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
 
 
 func _on_superposicion_login_presionado() -> void:

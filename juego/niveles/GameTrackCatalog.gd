@@ -59,7 +59,7 @@ const TRACK_DEFINITIONS := {
 	TRACK_VEGANISMO_CELIAQUIA: {
 		"key": TRACK_VEGANISMO_CELIAQUIA,
 		"label": "Veganismo + Celiaquia",
-		"summary_label": "Mixto",
+		"summary_label": "Veganismo + Celiaquía",
 		"archive_texture_path": (
 			"res://assets-sistema/interfaz/archivero-celiaquia-veganismo.png"
 		),

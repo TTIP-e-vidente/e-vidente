@@ -1291,6 +1291,9 @@ func _finalizar_vinculacion() -> void:
 	var racha_actualizada: Dictionary = Global.obtener_estado_racha()
 	_preparar_flujo_post_juego(racha_anterior, racha_actualizada)
 	print("[VincularConceptos] relaciones_completadas=true")
+	if _pertenece_a_partida_de_nodo and PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
+		_finalizar_actividad(true)
+		return
 	_al_solicitar_continuar()
 
 

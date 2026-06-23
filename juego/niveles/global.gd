@@ -476,6 +476,10 @@ func establecer_ultima_finalizacion(datos: Dictionary) -> void:
 	_ultima_finalizacion = datos.duplicate(true)
 
 
+func obtener_ultima_finalizacion() -> Dictionary:
+	return _ultima_finalizacion.duplicate(true)
+
+
 func obtener_y_limpiar_ultima_finalizacion() -> Dictionary:
 	var datos: Dictionary = _ultima_finalizacion.duplicate(true)
 	_ultima_finalizacion = {}

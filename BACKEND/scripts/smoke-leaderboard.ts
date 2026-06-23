@@ -213,7 +213,13 @@ async function run() {
       if (status !== 200) return `HTTP ${status}: ${JSON.stringify(body)}`;
       if (body.available === false) return 'available=false (sin progreso keto)';
       if (body.scope !== 'restriction:KETO') return `scope incorrecto: ${String(body.scope)}`;
-      return `rank=${String((body.current as { rank?: number })?.rank)}`;
+      if (!Array.isArray(body.nearby_entries)) return 'nearby_entries no es array';
+      const nearby = body.nearby_entries as Array<{ rank: number; user_id: string }>;
+      if (nearby.length === 0) return 'nearby_entries vacío';
+      const currentRank = (body.current as { rank?: number })?.rank;
+      const includesSelf = nearby.some(e => e.rank === currentRank);
+      if (!includesSelf) return `nearby no incluye rank actual (${String(currentRank)})`;
+      return `rank=${String(currentRank)} nearby=${nearby.length} ranks=[${nearby.map(e => e.rank).join(',')}]`;
     }));
   } else {
     log('yellow', '⚠', '/leaderboard/me, include_self y summary', 'SKIPPED (SMOKE_AUTH_TOKEN no configurado)');

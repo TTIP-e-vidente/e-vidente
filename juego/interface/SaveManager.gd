@@ -206,6 +206,23 @@ func guardar_preferencia_notificaciones_mail_local(enabled: bool) -> void:
 	_guardar_estado_actual("profile_notifications_pref", "", {}, false)
 
 
+const SETTINGS_KEY_OMITIR_RANKING_POST_PARTIDA := "omitir_ranking_post_partida_invitado"
+
+
+func omitir_ranking_post_partida_invitado() -> bool:
+	if AuthApi.esta_logueado():
+		return false
+	return bool(_obtener_settings_guardado_actual().get(SETTINGS_KEY_OMITIR_RANKING_POST_PARTIDA, false))
+
+
+func guardar_omitir_ranking_post_partida_invitado(omitir: bool) -> void:
+	var settings: Dictionary = _obtener_settings_guardado_actual()
+	settings[SETTINGS_KEY_OMITIR_RANKING_POST_PARTIDA] = omitir
+	save_data["settings"] = settings
+	_marcar_guardado_sucio()
+	_guardar_estado_actual("settings_ranking_pref", "", {}, false)
+
+
 func obtener_fecha_nacimiento_usuario_actual() -> String:
 	return SaveLocalProfileHelperScript.normalizar_fecha_nacimiento(
 		obtener_perfil_usuario_actual().get("birth_date", "")

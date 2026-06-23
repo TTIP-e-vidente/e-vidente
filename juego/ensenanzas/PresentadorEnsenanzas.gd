@@ -96,10 +96,15 @@ static func mostrar_en_host(
 	var capa := CanvasLayer.new()
 	capa.layer = 90
 	capa.name = "CapaEnsenanzaEsc"
-	host.add_child(capa)
+	capa.follow_viewport_enabled = true
+	var contenedor_host: Node = host.get_tree().current_scene
+	if contenedor_host == null:
+		contenedor_host = host
+	contenedor_host.add_child(capa)
 
 	var escena: Control = ENSENANZA_ESC_SCENE.instantiate()
 	escena.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	escena.mouse_filter = Control.MOUSE_FILTER_STOP
 	capa.add_child(escena)
 	escena.call_deferred("mostrar_ensenanza", ensenanza)
 
