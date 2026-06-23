@@ -92,6 +92,17 @@ func refrescar_avatar_si_coincide(user_id: String) -> void:
 		_avatar_badge.mostrar_para_entrada(_entrada, _resaltar_propia)
 
 
+func es_usuario(id_usuario: String) -> bool:
+	return not id_usuario.is_empty() and _id_usuario == id_usuario
+
+
+func animar_atencion() -> void:
+	modulate = Color(1.15, 1.10, 0.88, 1.0)
+	var tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate", Color.WHITE, 0.5)
+	queue_redraw()
+
+
 func _al_presionar_fila() -> void:
 	if not _id_usuario.is_empty():
 		entrada_presionada.emit(_id_usuario, _entrada)

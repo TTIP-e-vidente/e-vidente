@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3 uid="uid://lb_podium"]
+
+[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardPodium.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://lb_podium_slot" path="res://interface/leaderboard/LeaderboardPodiumSlot.tscn" id="2_slot"]
+
+[node name="LeaderboardPodium" type="Control"]
+custom_minimum_size = Vector2(0, 148)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("1_script")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="SlotSegundo" parent="HBox" instance=ExtResource("2_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+color_pedestal = Color(0.75, 0.75, 0.78, 0.24)
+color_borde_pedestal = Color(0.75, 0.75, 0.78, 0.65)
+altura_pedestal = 28
+escala_rank = 0.9
+
+[node name="SlotPrimero" parent="HBox" instance=ExtResource("2_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+avatar_size = 52
+altura_pedestal = 44
+escala_rank = 1.1
+
+[node name="SlotTercero" parent="HBox" instance=ExtResource("2_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+color_pedestal = Color(0.805, 0.498, 0.196, 0.22)
+color_borde_pedestal = Color(0.805, 0.498, 0.196, 0.60)
+altura_pedestal = 22
+escala_rank = 0.85

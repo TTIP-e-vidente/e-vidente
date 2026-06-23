@@ -4,6 +4,26 @@ extends RefCounted
 # Helpers de formato compartidos entre filas, card propia y meta del leaderboard.
 
 
+static func entero_desde_json(valor: Variant, por_defecto: int = 0) -> int:
+	# El backend puede devolver null en rank/score si el jugador no está en la tabla.
+	if valor == null:
+		return por_defecto
+	if valor is int:
+		return valor as int
+	if valor is float:
+		return int(valor)
+	if valor is String:
+		var texto := (valor as String).strip_edges()
+		if texto.is_empty():
+			return por_defecto
+		if texto.is_valid_int():
+			return int(texto)
+		return por_defecto
+	if valor is bool:
+		return 1 if valor else 0
+	return por_defecto
+
+
 static func es_scope_racha(scope: String) -> bool:
 	return scope == "streak" or scope == LeaderboardApi.SCOPE_RACHA
 
@@ -88,6 +108,21 @@ static func color_posicion(posicion: int, es_propio: bool = false) -> Color:
 		_: return Color(0.14, 0.13, 0.09, 1)
 
 
+# Colores legibles sobre tarjetas claras (hub del perfil).
+static func color_posicion_tarjeta_clara(posicion: int) -> Color:
+	if posicion <= 0:
+		return Color(0.55, 0.52, 0.48, 1)
+	match posicion:
+		1: return Color(0.62, 0.48, 0.08, 1)
+		2: return Color(0.38, 0.40, 0.44, 1)
+		3: return Color(0.50, 0.32, 0.14, 1)
+		_: return Color(0.22, 0.38, 0.30, 1)
+
+
+static func color_texto_secundario_tarjeta() -> Color:
+	return Color(0.35, 0.32, 0.28, 0.92)
+
+
 static func parsear_computed_at(valor: Variant) -> float:
 	if valor == null:
 		return -1.0
@@ -132,7 +167,102 @@ static func texto_meta(datos: Dictionary) -> String:
 	var total := int(datos.get("total", 0))
 	if total > 0:
 		partes.append("%d jugadores" % total)
+	var rango := texto_rango_pagina(datos)
+	if not rango.is_empty():
+		partes.append(rango)
 	var freshness := texto_actualizacion(datos)
 	if not freshness.is_empty():
 		partes.append(freshness)
 	return " · ".join(partes)
+
+
+static func texto_rango_pagina(datos: Dictionary) -> String:
+	var paginacion: Variant = datos.get("pagination", {})
+	if not paginacion is Dictionary:
+		return ""
+	var offset := int((paginacion as Dictionary).get("offset", 0))
+	if offset <= 0:
+		return ""
+
+	var entradas: Variant = datos.get("entries", [])
+	if not entradas is Array or (entradas as Array).is_empty():
+		return "Página desde puesto %d" % (offset + 1)
+
+	var primera: Dictionary = (entradas as Array)[0] as Dictionary
+	var ultima: Dictionary = (entradas as Array)[(entradas as Array).size() - 1] as Dictionary
+	var rank_min := int(primera.get("rank", offset + 1))
+	var rank_max := int(ultima.get("rank", rank_min))
+	if rank_min == rank_max:
+		return "Mostrando %s" % texto_posicion(rank_min)
+	return "Mostrando %s – %s" % [texto_posicion(rank_min), texto_posicion(rank_max)]
+
+
+static func mensaje_sin_ranking(scope: String) -> String:
+	if es_scope_racha(scope):
+		return "Sin racha activa"
+	if LeaderboardScopeCatalog.es_scope_restriccion(scope):
+		return "Sin partidas"
+	return "Sin datos"
+
+
+static func mensaje_scope_sin_progreso(scope: String, etiqueta: String = "") -> String:
+	var nombre := etiqueta.strip_edges()
+	if nombre.is_empty():
+		nombre = RestrictionCodes.etiqueta_scope(scope)
+	if es_scope_racha(scope):
+		return "Todavía no tenés racha activa en el ranking."
+	if LeaderboardScopeCatalog.es_scope_restriccion(scope):
+		return "Todavía no aparecés en %s. Jugá una partida para sumarte." % nombre
+	return "Todavía no aparecés en el ranking de %s." % nombre
+
+
+static func texto_tarjeta_modo_invitado() -> String:
+	return "Modo invitado · solo lectura"
+
+
+static func mensaje_progreso_no_suma() -> String:
+	return "Podés ver el ranking. Tu progreso no suma puntos hasta iniciar sesión."
+
+
+static func hint_meta_modo_invitado() -> String:
+	return "Modo invitado · sin puntos"
+
+
+static func mensaje_ranking_vacio_invitado() -> String:
+	return "Cuando haya jugadores registrados vas a verlos acá. Iniciá sesión para sumar puntos."
+
+
+static func titulo_ranking_post_partida() -> String:
+	if AuthApi.esta_logueado():
+		return "Tu posición"
+	return "Ranking"
+
+
+static func subtitulo_ranking_post_partida() -> String:
+	if AuthApi.esta_logueado():
+		return "Tu puesto después de esta partida."
+	return ""
+
+
+static func texto_no_volver_a_mostrar_ranking() -> String:
+	return "Omitir ranking la próxima vez"
+
+
+static func texto_ver_ranking() -> String:
+	return "Ver ranking"
+
+
+static func texto_saltar_ranking() -> String:
+	return "Continuar al mapa"
+
+
+static func texto_ver_ranking_esta_vez() -> String:
+	return "Ver ranking esta vez"
+
+
+static func texto_continuar_dashboard() -> String:
+	return "Continuar"
+
+
+static func texto_iniciar_sesion_para_competir() -> String:
+	return "Iniciá sesión"

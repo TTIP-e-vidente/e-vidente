@@ -34,9 +34,6 @@ static func registrar_solicitud_desde_arranque_del_sistema() -> void:
 static func abrir_leaderboard_si_hay_solicitud_pendiente(nodo_escena: Node) -> bool:
 	if nodo_escena == null or nodo_escena.get_tree() == null:
 		return false
-	if not AuthApi.esta_logueado():
-		# Sin sesión: dejamos la solicitud guardada para después del login.
-		return false
 
 	var arbol := nodo_escena.get_tree()
 	var scope := _consumir_scope_pendiente(arbol.root)

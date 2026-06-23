@@ -228,10 +228,13 @@ func _on_superposicion_reiniciar_presionado() -> void:
 	_profile_overlay.refrescar()
 	_profile_overlay.mostrar_feedback_reset(str(result.get("message", "Progreso reiniciado.")), true)
 
-func _on_superposicion_ranking_presionado() -> void:
+func _on_superposicion_ranking_presionado(scope: String = "") -> void:
 	_profile_button.visible = true
 	_profile_overlay.ocultar_superposicion()
-	LeaderboardOverlayHelper.abrir(get_tree(), LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
+	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
 
 
 func _on_superposicion_login_presionado() -> void:

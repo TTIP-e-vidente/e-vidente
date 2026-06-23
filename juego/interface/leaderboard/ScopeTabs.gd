@@ -27,6 +27,41 @@ func _ready() -> void:
 	seleccionar(categoria_inicial)
 
 
+func _gui_input(event: InputEvent) -> void:
+	if not _es_rueda_vertical(event):
+		return
+	var scroll_padre := _buscar_scroll_vertical_padre()
+	if scroll_padre == null:
+		return
+	var barra := scroll_padre.get_v_scroll_bar()
+	if barra == null:
+		return
+	var paso := barra.page * 0.18
+	if (event as InputEventMouseButton).button_index == MOUSE_BUTTON_WHEEL_UP:
+		barra.value = maxf(barra.min_value, barra.value - paso)
+	else:
+		barra.value = minf(barra.max_value, barra.value + paso)
+	accept_event()
+
+
+func _es_rueda_vertical(event: InputEvent) -> bool:
+	if not event is InputEventMouseButton or not (event as InputEventMouseButton).pressed:
+		return false
+	var boton := (event as InputEventMouseButton).button_index
+	return boton == MOUSE_BUTTON_WHEEL_UP or boton == MOUSE_BUTTON_WHEEL_DOWN
+
+
+func _buscar_scroll_vertical_padre() -> ScrollContainer:
+	var nodo := get_parent()
+	while nodo != null:
+		if nodo is ScrollContainer and nodo != self:
+			var scroll := nodo as ScrollContainer
+			if scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+				return scroll
+		nodo = nodo.get_parent()
+	return null
+
+
 func seleccionar(scope: String) -> void:
 	_scope_activo = scope
 	var categorias := LeaderboardScopeCatalog.obtener_categorias()

@@ -9,7 +9,7 @@ signal edit_profile_pressed
 signal reestablecer_progreso_pressed
 signal logout_pressed
 signal close_requested
-signal ranking_pressed
+signal ranking_pressed(scope: String)
 
 signal login_pressed
 
@@ -46,10 +46,12 @@ func _ready() -> void:
 	_guardar_btn.pressed.connect(_on_guardar_presionado)
 	_edit_btn.pressed.connect(_on_editar_perfil_o_login_presionado)
 	if is_instance_valid(_leaderboard_btn):
-		_leaderboard_btn.pressed.connect(func(): ranking_pressed.emit())
+		_leaderboard_btn.pressed.connect(
+			func() -> void: ranking_pressed.emit(LeaderboardOverlayHelper.scope_desde_arbol(get_tree()))
+		)
 	if is_instance_valid(_ranking_detalle):
 		_ranking_detalle.ver_tabla_completa_solicitada.connect(
-			func(_scope: String) -> void: ranking_pressed.emit()
+			func(scope: String) -> void: ranking_pressed.emit(scope)
 		)
 		_ranking_detalle.iniciar_sesion_solicitado.connect(func() -> void: login_pressed.emit())
 	if _logout_btn:
@@ -80,6 +82,11 @@ func _aplicar_fuentes() -> void:
 func mostrar_superposicion() -> void:
 	refrescar()
 	visible = true
+	call_deferred("_procesar_deep_link_leaderboard")
+
+
+func _procesar_deep_link_leaderboard() -> void:
+	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 
 
 
@@ -239,7 +246,11 @@ func refrescar() -> void:
 		_weekly_summary.call("refrescar")
 
 	if is_instance_valid(_ranking_detalle):
-		_ranking_detalle.call_deferred("cargar")
+		var scope_refresh := LeaderboardService.consumir_refresco_tras_partida()
+		if not scope_refresh.is_empty():
+			_ranking_detalle.call_deferred("cargar", scope_refresh, true)
+		else:
+			_ranking_detalle.call_deferred("cargar")
 		
 	if _logout_btn:
 		_logout_btn.visible = not es_invitado

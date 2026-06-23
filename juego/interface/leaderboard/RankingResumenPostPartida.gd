@@ -18,6 +18,9 @@ signal iniciar_sesion_solicitado
 @onready var _mini_list: LeaderboardMiniList = %MiniList
 @onready var _boton_accion: Button = %BotonAccion
 @onready var _etiqueta_top: Label = %EtiquetaTop
+@onready var _titulo_seccion: Label = $VBoxRoot/HeaderBar/MarginHeader/HBoxHeader/TituloSeccion
+@onready var _hbox_puesto: HBoxContainer = $VBoxRoot/MarginBody/VBoxBody/HBoxPuesto
+@onready var _separador_mini: ColorRect = $VBoxRoot/MarginBody/VBoxBody/SeparadorMini
 
 var _scope_preferido: String = LeaderboardApi.SCOPE_XP_GLOBAL
 var _puesto_actual: int = 0
@@ -50,16 +53,46 @@ func mostrar_invitacion_login() -> void:
 		_contenedor_datos.visible = true
 
 	_ocultar_mensaje_celebracion()
-	_label_puesto.text = "—"
-	_label_exp.text = ""
-	_label_meta.text = "Iniciá sesión para ver tu puesto y el top del ranking."
-	if is_instance_valid(_mini_list):
-		_mini_list.limpiar()
-	if is_instance_valid(_etiqueta_top):
-		_etiqueta_top.text = "TOP DEL RANKING"
+	_aplicar_vista_invitado_compacta()
 	if is_instance_valid(_boton_accion):
-		_boton_accion.text = "Iniciar sesión"
+		_boton_accion.text = "Ver tabla completa"
 	call_deferred("_cargar_top_global_invitado")
+
+
+func _aplicar_vista_invitado_compacta() -> void:
+	if is_instance_valid(_titulo_seccion):
+		_titulo_seccion.text = "Top jugadores"
+	if is_instance_valid(_hbox_puesto):
+		_hbox_puesto.visible = false
+	if is_instance_valid(_label_meta):
+		_label_meta.visible = false
+		_label_meta.text = ""
+	if is_instance_valid(_etiqueta_top):
+		_etiqueta_top.visible = false
+	if is_instance_valid(_separador_mini):
+		_separador_mini.visible = false
+
+
+func _aplicar_vista_jugador_registrado() -> void:
+	if is_instance_valid(_titulo_seccion):
+		_titulo_seccion.text = "Tu puesto en la tabla"
+	if is_instance_valid(_hbox_puesto):
+		_hbox_puesto.visible = true
+	if is_instance_valid(_label_meta):
+		_label_meta.visible = true
+	if is_instance_valid(_etiqueta_top):
+		_etiqueta_top.visible = false
+	if is_instance_valid(_separador_mini):
+		_separador_mini.visible = true
+
+
+func mostrar_modo_invitado(scope: String = "") -> void:
+	var scope_final := scope.strip_edges()
+	if not scope_final.is_empty():
+		_scope_preferido = scope_final
+	if is_instance_valid(_label_scope):
+		_label_scope.text = RestrictionCodes.etiqueta_scope(_scope_preferido)
+	mostrar_invitacion_login()
 
 
 func mostrar_desde_datos(
@@ -98,8 +131,7 @@ func mostrar_desde_datos(
 	var exp_actual := int((current as Dictionary).get("score", 0))
 	_puesto_actual = puesto_despues
 	_datos_resumen = datos.duplicate(true)
-	if is_instance_valid(_etiqueta_top):
-		_etiqueta_top.text = "CERCA DE TU PUESTO"
+	_aplicar_vista_jugador_registrado()
 
 	_label_puesto.text = LeaderboardFormat.texto_posicion(puesto_despues)
 	_label_puesto.add_theme_color_override(
@@ -143,6 +175,13 @@ func _actualizar_meta(datos: Dictionary, etiqueta_scope: String) -> void:
 
 func _cargar_mini_tabla(scope: String) -> void:
 	if not is_instance_valid(_mini_list):
+		return
+
+	var id_propio := ""
+	if AuthApi.esta_logueado():
+		id_propio = str(BackendSession.obtener_usuario_en_cache().get("id", ""))
+
+	if not _datos_resumen.is_empty() and _mini_list.poblar_desde_nearby(_datos_resumen, id_propio, scope):
 		return
 
 	var datos_cache := LeaderboardService.obtener_desde_cache(scope)
@@ -195,7 +234,9 @@ func _cargar_top_global_invitado() -> void:
 	if AuthApi.esta_logueado() or not is_instance_valid(_mini_list):
 		return
 
-	var scope := LeaderboardApi.SCOPE_XP_GLOBAL
+	var scope := _scope_preferido
+	if scope.is_empty():
+		scope = LeaderboardApi.SCOPE_XP_GLOBAL
 	var datos := LeaderboardService.obtener_desde_cache(scope)
 	if datos.is_empty():
 		if not LeaderboardService.leaderboard_cargado.is_connected(_al_leaderboard_invitado):
@@ -306,9 +347,6 @@ func _restaurar_estilo_panel() -> void:
 
 
 func _al_presionar_accion() -> void:
-	if not AuthApi.esta_logueado():
-		iniciar_sesion_solicitado.emit()
-		return
 	ver_ranking_solicitado.emit(_scope_preferido)
 
 

@@ -6,7 +6,8 @@ extends Control
 
 
 const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
-const AVATAR_SIZE := 36
+
+@export var avatar_size: int = 36
 
 const COLORES_INICIAL: Array[Color] = [
 	MiPaleta.VERDE_BOSQUE,
@@ -25,7 +26,7 @@ var _avatar_key: String = ""
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(AVATAR_SIZE, AVATAR_SIZE)
+	custom_minimum_size = Vector2(avatar_size, avatar_size)
 	_construir_nodos()
 	if not LeaderboardAvatarCache.avatar_cargado.is_connected(_al_avatar_cargado):
 		LeaderboardAvatarCache.avatar_cargado.connect(_al_avatar_cargado)
@@ -60,21 +61,22 @@ func _al_avatar_cargado(user_id: String, tex: Texture2D) -> void:
 
 
 func _construir_nodos() -> void:
+	var tam := maxi(avatar_size, 24)
 	_fondo = PanelContainer.new()
-	_fondo.custom_minimum_size = Vector2(AVATAR_SIZE, AVATAR_SIZE)
+	_fondo.custom_minimum_size = Vector2(tam, tam)
 	_fondo.clip_contents = true
 	add_child(_fondo)
 
 	var estilo := StyleBoxFlat.new()
 	estilo.bg_color = MiPaleta.VERDE_BOSQUE
-	estilo.set_corner_radius_all(AVATAR_SIZE / 2)
+	estilo.set_corner_radius_all(tam / 2)
 	_fondo.add_theme_stylebox_override("panel", estilo)
 
 	var center := CenterContainer.new()
 	_fondo.add_child(center)
 
 	_texture = TextureRect.new()
-	_texture.custom_minimum_size = Vector2(AVATAR_SIZE - 4, AVATAR_SIZE - 4)
+	_texture.custom_minimum_size = Vector2(tam - 4, tam - 4)
 	_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_texture.visible = false
@@ -86,7 +88,7 @@ func _construir_nodos() -> void:
 	var rubik: Font = load(RUBIK_FONT_PATH) as Font
 	if rubik != null:
 		_inicial.add_theme_font_override("font", rubik)
-	_inicial.add_theme_font_size_override("font_size", 15)
+	_inicial.add_theme_font_size_override("font_size", maxi(12, tam / 2 - 2))
 	_inicial.add_theme_color_override("font_color", Color.WHITE)
 	center.add_child(_inicial)
 

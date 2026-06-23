@@ -23,12 +23,10 @@ func configurar_para_jugador(es_invitado: bool) -> void:
 
 	if es_invitado:
 		_label_titulo.text = "Ranking global disponible"
-		_label_mensaje.text = (
-			"Iniciá sesión para ver tu posición y competir con otros jugadores."
-		)
+		_label_mensaje.text = LeaderboardFormat.mensaje_ranking_vacio_invitado()
 	else:
 		_label_titulo.text = "Todavía no hay datos"
 		_label_mensaje.text = "Jugá una partida para aparecer en el ranking."
 
 	if is_instance_valid(_boton_iniciar_sesion):
-		_boton_iniciar_sesion.visible = es_invitado
+		_boton_iniciar_sesion.visible = false

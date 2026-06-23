@@ -13,13 +13,13 @@ static func scope_desde_arbol(arbol: SceneTree) -> String:
 	return RestrictionCodes.scope_leaderboard_desde_juego(track)
 
 
-static func abrir(arbol: SceneTree, scope: String = LeaderboardApi.SCOPE_XP_GLOBAL) -> void:
+static func abrir(arbol: SceneTree, scope: String = "") -> void:
 	if arbol == null or arbol.root == null:
 		return
 
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
-		scope_final = LeaderboardApi.SCOPE_XP_GLOBAL
+		scope_final = scope_desde_arbol(arbol)
 
 	var root := arbol.root
 	var existente := root.get_node_or_null(OVERLAY_NODE_NAME)
