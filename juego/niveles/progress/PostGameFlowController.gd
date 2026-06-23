@@ -110,6 +110,12 @@ static func _tiene_partida_de_nodo_activa(tree: SceneTree) -> bool:
 	return partida is Dictionary and not (partida as Dictionary).is_empty()
 
 
+static func es_cierre_de_nodo_mapa(tree: SceneTree) -> bool:
+	if not _tiene_partida_de_nodo_activa(tree):
+		return false
+	var NodoRuntimeScript = load("res://sistemas/NodoRuntime.gd")
+	return not bool(NodoRuntimeScript.hay_siguiente_mini_juego(tree))
+
 
 static func construir_estado_flujo_post_juego(
 	previous_streak: Dictionary,

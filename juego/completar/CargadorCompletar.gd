@@ -12,6 +12,22 @@ const ContentSchemaNormalizerScript := preload(
 static var _cache: Dictionary = {}
 
 
+static func resolver_por_id(activity_id: String) -> Dictionary:
+	var id: String = activity_id.strip_edges()
+	if id.is_empty():
+		return {}
+	var todos: Dictionary = cargar_todo()
+	if not todos.has(id):
+		return {}
+	var entrada: Dictionary = (todos[id] as Dictionary).duplicate(true)
+	var opciones_raw: Array = entrada.get("choices", entrada.get("options", []))
+	var opciones: Array = opciones_raw.duplicate()
+	opciones.shuffle()
+	entrada["choices"] = opciones
+	entrada["options"] = opciones
+	return entrada
+
+
 static func elegir(dificultad: int) -> Dictionary:
 	var todos: Dictionary = cargar_todo()
 	if todos.is_empty():

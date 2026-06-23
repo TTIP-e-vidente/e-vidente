@@ -740,6 +740,10 @@ func _mostrar_cierre_del_quiz(cantidad_preguntas: int) -> void:
 	for boton_respuesta in botones:
 		boton_respuesta.disabled = true
 
+	if _es_juego_de_partida_de_nodo() and PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
+		_finalizar_actividad(true)
+		return
+
 	if _intentar_mostrar_ensenanza_esc(cantidad_preguntas):
 		return
 	_mostrar_cierre_post_ensenanza(cantidad_preguntas)

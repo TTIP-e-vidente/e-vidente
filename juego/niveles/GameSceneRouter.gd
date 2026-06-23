@@ -36,6 +36,7 @@ const LEVEL_SCENE_PATH := "res://niveles/nivel_1/Level.tscn"
 const VINCULACION_CONCEPTOS_SCENE_PATH := "res://vincular/VincularConceptos.tscn"
 const COMPLETAR_PALABRA_SCENE_PATH := "res://completar/completar_palabra.tscn"
 const FINALIZACION_PARTIDA_SCENE_PATH := "res://mapas/finalizacion_partida.tscn"
+const RANKING_POST_PARTIDA_SCENE_PATH := "res://mapas/ranking_post_partida.tscn"
 
 const ROUTES := {
 	ROUTE_SPLASH: SPLASH_SCENE_PATH,
@@ -346,10 +347,14 @@ func go_to_target(
 			var scene_path: String = str(
 				router_target.get("scene_path", fallback_scene_path)
 			).strip_edges()
-			_cambiar_escena_to_path(
-				tree,
-				scene_path if not scene_path.is_empty() else fallback_scene_path
-			)
+			var destino: String = scene_path if not scene_path.is_empty() else fallback_scene_path
+			if destino == FINALIZACION_PARTIDA_SCENE_PATH:
+				call_deferred("_transicionar_a_finalizacion_partida")
+				return
+			if destino == RANKING_POST_PARTIDA_SCENE_PATH:
+				call_deferred("_transicionar_a_ranking_post_partida")
+				return
+			_cambiar_escena_to_path(tree, destino)
 		"playable_mode":
 			ir_a_modo_jugable(
 				tree,
@@ -399,7 +404,23 @@ func ir_a_reanudar(
 func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
 	if tree == null:
 		return
-	go_to_target(tree, {"type": "scene_path", "scene_path": FINALIZACION_PARTIDA_SCENE_PATH}, fallback_return_to)
+	_clear_active_playable_session(tree)
+	call_deferred("_transicionar_a_finalizacion_partida")
+
+
+func _transicionar_a_finalizacion_partida() -> void:
+	await transicionar_a_escena(FINALIZACION_PARTIDA_SCENE_PATH, TransitionType.FADE)
+
+
+func ir_a_ranking_post_partida(tree: SceneTree) -> void:
+	if tree == null:
+		return
+	_clear_active_playable_session(tree)
+	call_deferred("_transicionar_a_ranking_post_partida")
+
+
+func _transicionar_a_ranking_post_partida() -> void:
+	await transicionar_a_escena(RANKING_POST_PARTIDA_SCENE_PATH, TransitionType.FADE)
 
 
 func ir_a_escena_segura(tree: SceneTree, scene_path: String, fallback_path: String = MAP_SCENE_PATH) -> void:

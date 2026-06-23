@@ -1,0 +1,124 @@
+[gd_scene load_steps=7 format=3 uid="uid://ranking_post_partida"]
+
+[ext_resource type="Script" path="res://mapas/ranking_post_partida.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_fondo"]
+[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_font"]
+[ext_resource type="PackedScene" uid="uid://bjvys771chohe" path="res://niveles/botones.tscn" id="5_btn"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/RankingResumenPostPartida.tscn" id="6_ranking"]
+
+[node name="RankingPostPartida" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="FondoFicha" parent="." instance=ExtResource("2_fondo")]
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 1152.0
+offset_bottom = 798.0
+
+[node name="Titulo" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 72.0
+offset_right = 1032.0
+offset_bottom = 132.0
+theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_fonts/font = ExtResource("3_spray")
+theme_override_font_sizes/font_size = 42
+text = "Tu posición en el ranking"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitulo" type="Label" parent="."]
+offset_left = 160.0
+offset_top = 132.0
+offset_right = 992.0
+offset_bottom = 168.0
+theme_override_colors/font_color = Color(0.35, 0.38, 0.42, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 18
+text = "Podés ver el ranking. Tu progreso no suma puntos hasta iniciar sesión."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="UiAnchor" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1152.0
+offset_bottom = 800.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RankingContainer" type="Control" parent="UiAnchor"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -200.0
+offset_right = 360.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RankingResumenPostPartida" parent="UiAnchor/RankingContainer" instance=ExtResource("6_ranking")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Continuar" parent="." instance=ExtResource("5_btn")]
+z_index = 10
+offset_left = 418.0
+offset_top = 529.0
+offset_right = 953.0
+offset_bottom = 787.0
+scale = Vector2(0.6112045, 0.61994773)
+
+[node name="CheckboxOmitirRanking" type="CheckBox" parent="UiAnchor"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -108.0
+offset_right = 280.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.22, 0.24, 0.27, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 17
+text = "Omitir ranking la próxima vez"
+alignment = 1
+
+[node name="IniciarSesionCompetir" type="LinkButton" parent="UiAnchor"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -64.0
+offset_right = 200.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/font_hover_color = Color(0.435, 0.812, 0.592, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 18
+text = "Iniciá sesión"
+underline = 2
+horizontal_alignment = 1
+
+[connection signal="pressed" from="Continuar" to="." method="_on_continuar_presionado"]

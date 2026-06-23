@@ -17,6 +17,7 @@ const COMPLETAR_PALABRA_SCENE := "res://completar/completar_palabra.tscn"
 const LEGACY_DRAG_DROP_SCENE := "res://mapas/drag_drop/DragDropNode.tscn"
 
 const FINALIZACION_PARTIDA_SCENE := "res://mapas/finalizacion_partida.tscn"
+const RANKING_POST_PARTIDA_SCENE := "res://mapas/ranking_post_partida.tscn"
 const TIEMPO_MAXIMO_SMOKE_TEST := 90.0
 const NODE_1_KEY := "celiaquia_01_desayuno_basico"
 const NODE_5_KEY := "celiaquia_05_intro_mixta"
@@ -421,16 +422,23 @@ func _validar_nodo(global_state: Node, node_key: String, label: String) -> Dicti
 		if failed:
 			return result
 
-		var next_scenes: Array[String] = [MAP_SCENE, FINALIZACION_PARTIDA_SCENE]
+		var next_scenes: Array[String] = [MAP_SCENE, FINALIZACION_PARTIDA_SCENE, RANKING_POST_PARTIDA_SCENE]
 		next_scenes.append_array(GAME_SCENES)
 		await _esperar_a_any(next_scenes, "%s continuar" % label)
 		if (
 			current_scene != null
 			and current_scene.scene_file_path == FINALIZACION_PARTIDA_SCENE
+			and current_scene.has_method("_on_continuar_presionado")
+		):
+			current_scene.call("_on_continuar_presionado")
+			await _esperar_a(RANKING_POST_PARTIDA_SCENE, "%s post-dashboard" % label)
+		if (
+			current_scene != null
+			and current_scene.scene_file_path == RANKING_POST_PARTIDA_SCENE
 			and current_scene.has_method("continuar_al_mapa")
 		):
 			current_scene.call("continuar_al_mapa")
-			await _esperar_a(MAP_SCENE, "%s post-finalizacion" % label)
+			await _esperar_a(MAP_SCENE, "%s post-ranking" % label)
 		safety += 1
 
 	_verificar(
