@@ -234,12 +234,14 @@ export async function getLeaderboardMeta() {
  */
 export async function getUserRankingSummary(
   userId: string,
-  scope: LeaderboardScope = 'global_xp'
+  scope: LeaderboardScope = 'global_xp',
+  nearbyRadius: number = 2
 ): Promise<RankingSummary | null> {
   const context = await leaderboardRepository.getUserRankingContext(userId, scope);
   if (!context) return null;
 
   const { current, next, isFromSnapshot } = context;
+  const nearbyEntries = await leaderboardRepository.getNearbyEntries(userId, scope, nearbyRadius);
 
   if (!next) {
     return {
@@ -250,7 +252,8 @@ export async function getUserRankingSummary(
       expToNextRank: 0,
       progressToNextRank: 100,
       isFirstPlace: true,
-      isFromSnapshot
+      isFromSnapshot,
+      nearbyEntries
     };
   }
 
@@ -272,7 +275,8 @@ export async function getUserRankingSummary(
     expToNextRank,
     progressToNextRank,
     isFirstPlace: false,
-    isFromSnapshot
+    isFromSnapshot,
+    nearbyEntries
   };
 }
 

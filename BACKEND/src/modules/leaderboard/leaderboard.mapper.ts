@@ -87,6 +87,7 @@ export function serializeRankingSummary(summary: RankingSummary) {
     exp_to_next_rank:     summary.expToNextRank,
     progress_to_next_rank: summary.progressToNextRank,
     is_first_place:       summary.isFirstPlace,
-    is_from_snapshot:     summary.isFromSnapshot
+    is_from_snapshot:     summary.isFromSnapshot,
+    nearby_entries:       summary.nearbyEntries.map(serializeEntry)
   };
 }
