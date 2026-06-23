@@ -217,8 +217,8 @@ func test_aplicar_vencimiento_deja_racha_en_cero_y_mantiene_best() -> void:
 	}
 
 	var resultado: Dictionary = GameStreakTracker.aplicar_vencimiento_si_corresponde(streak, {})
-	assert_true(bool(resultado.get("applied", false)))
-	assert_true(bool(resultado.get("should_show", false)))
+	assert_bool(bool(resultado.get("applied", false))).is_true()
+	assert_bool(bool(resultado.get("should_show", false))).is_true()
 
 	var updated: Dictionary = resultado.get("updated_state", {}) as Dictionary
 	assert_int(int(updated.get("current_count", -1))).is_equal(0)
@@ -236,8 +236,8 @@ func test_aplicar_vencimiento_no_repite_overlay_para_misma_perdida() -> void:
 	var meta := {"last_loss_notified_for_day": hace_tres_dias}
 
 	var resultado: Dictionary = GameStreakTracker.aplicar_vencimiento_si_corresponde(streak, meta)
-	assert_true(bool(resultado.get("applied", false)))
-	assert_false(bool(resultado.get("should_show", false)))
+	assert_bool(bool(resultado.get("applied", false))).is_true()
+	assert_bool(bool(resultado.get("should_show", false))).is_false()
 
 
 func _dia_anterior(today: String) -> String:
