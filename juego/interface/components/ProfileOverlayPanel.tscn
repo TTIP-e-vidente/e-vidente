@@ -7,22 +7,34 @@
 [ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="3_42aac"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_c2ncf"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_checkbox_hover"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_session_panel"]
-bg_color = Color(0.995, 0.992, 0.985, 1)
+bg_color = Color(0.995, 0.993, 0.985, 1)
+border_width_left = 1
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.204, 0.247, 0.173, 0.12)
 corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
 corner_radius_bottom_left = 28
-shadow_color = Color(0, 0, 0, 0.12)
-shadow_size = 381
-shadow_offset = Vector2(-4, 2)
+shadow_color = Color(0.08, 0.07, 0.04, 0.12)
+shadow_size = 16
+shadow_offset = Vector2(-4, 0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip_active"]
 content_margin_left = 10.0
 content_margin_top = 4.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
-bg_color = Color(0.31, 0.373, 0.267, 1)
+bg_color = Color(0.259, 0.471, 0.369, 0.1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.25)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -33,7 +45,12 @@ content_margin_left = 10.0
 content_margin_top = 4.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
-bg_color = Color(0.204, 0.247, 0.173, 0.1)
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.15)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -44,19 +61,24 @@ content_margin_left = 20.0
 content_margin_top = 18.0
 content_margin_right = 20.0
 content_margin_bottom = 18.0
-bg_color = Color(0.962, 0.957, 0.937, 1)
+bg_color = Color(0.975, 0.972, 0.96, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.204, 0.247, 0.173, 0.08)
+border_color = Color(0.204, 0.247, 0.173, 0.1)
 corner_radius_top_left = 20
 corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_avatar_circle"]
-bg_color = Color(0.31, 0.373, 0.267, 0.85)
+bg_color = Color(0.259, 0.471, 0.369, 0.08)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.259, 0.471, 0.369, 0.25)
 corner_radius_top_left = 28
 corner_radius_top_right = 28
 corner_radius_bottom_right = 28
@@ -135,90 +157,101 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_normal"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.259, 0.471, 0.369, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.8)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_pressed"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.220, 0.400, 0.310, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.8)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_hover"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.320, 0.560, 0.440, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_guardar_btn_normal"]
 content_margin_left = 16.0
 content_margin_top = 10.0
 content_margin_right = 16.0
 content_margin_bottom = 10.0
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.2)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_guardar_btn_pressed"]
 content_margin_left = 16.0
 content_margin_top = 10.0
 content_margin_right = 16.0
 content_margin_bottom = 10.0
-bg_color = Color(0.2635, 0.31705, 0.22695, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+bg_color = Color(0.975, 0.972, 0.96, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.3)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_guardar_btn_hover"]
 content_margin_left = 16.0
 content_margin_top = 10.0
 content_margin_right = 16.0
 content_margin_bottom = 10.0
-bg_color = Color(0.2852, 0.34316, 0.24556, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_normal"]
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-bg_color = Color(0.25882354, 0.47058824, 0.36862746, 0.88235295)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.20392157, 0.24705882, 0.17254902, 0.85882354)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_pressed"]
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-bg_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.204, 0.247, 0.173, 0.12)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edit_btn_hover"]
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-bg_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.204, 0.247, 0.173, 0.12)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+bg_color = Color(0.975, 0.972, 0.96, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.35)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 
 [node name="ProfileOverlayPanel" type="Control" unique_id=136278916]
 visible = false
@@ -238,7 +271,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.05, 0.04, 0)
+color = Color(0.18, 0.20, 0.22, 0)
 
 [node name="SessionPanel" type="PanelContainer" parent="." unique_id=568804599]
 layout_mode = 1
@@ -246,7 +279,7 @@ anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -564.0
+offset_left = -720.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_session_panel")
@@ -273,7 +306,6 @@ size_flags_vertical = 3
 theme_override_constants/separation = 18
 
 [node name="HeaderRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=372853401]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 
@@ -283,9 +315,9 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_chip_active")
 
 [node name="Label" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/ChipActive" unique_id=1106769864]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_font_sizes/font_size = 12
-text = "Perfil activo"
+text = "Modo invitado"
 
 [node name="ChipLocal" type="PanelContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow" unique_id=1917822756]
 layout_mode = 2
@@ -293,9 +325,9 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_chip_local")
 
 [node name="Label" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/ChipLocal" unique_id=1316022245]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.165, 0.122, 0.82)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.65)
 theme_override_font_sizes/font_size = 12
-text = "Guardado local"
+text = "Cuenta activa"
 
 [node name="Spacer" type="Control" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow" unique_id=565621647]
 layout_mode = 2
@@ -305,7 +337,7 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
-theme_override_colors/font_hover_color = Color(0.278, 0.251, 0.184, 0.85)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_font_sizes/font_size = 22
 text = "✕"
 flat = true
@@ -326,7 +358,7 @@ layout_mode = 2
 theme_override_constants/separation = 16
 
 [node name="AvatarContainer" type="CenterContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow" unique_id=691795938]
-custom_minimum_size = Vector2(131.525, 131.17)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 
 [node name="AvatarBg" type="PanelContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer" unique_id=437080183]
@@ -345,7 +377,7 @@ stretch_mode = 5
 
 [node name="AvatarLabel" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer" unique_id=1372125644]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_font_sizes/font_size = 30
 text = "?"
 horizontal_alignment = 1
@@ -354,28 +386,29 @@ vertical_alignment = 1
 [node name="InfoColumn" type="VBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow" unique_id=1956208508]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 27
+theme_override_constants/separation = 8
 
 [node name="UsernameLabel" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn" unique_id=721481793]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_c2ncf")
-theme_override_font_sizes/font_size = 52
+theme_override_font_sizes/font_size = 24
+text = "Modo invitado"
 
 [node name="MetaRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn" unique_id=989815489]
 layout_mode = 2
-theme_override_constants/separation = 210
+theme_override_constants/separation = 12
 
 [node name="EmailLabel" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow" unique_id=198663111]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.58)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.65)
+theme_override_font_sizes/font_size = 14
 text = "Sin correo"
 
 [node name="AgeLabel" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn/MetaRow" unique_id=2128248313]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.58)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.65)
+theme_override_font_sizes/font_size = 14
 
 [node name="Separator" type="HSeparator" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/InfoColumn" unique_id=1146584574]
 layout_mode = 2
@@ -444,6 +477,34 @@ visible = false
 [node name="RankingDetallePerfil" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("2_ranking_detalle")]
 layout_mode = 2
 
+[node name="GuestPreferencesPanel" type="VBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CheckboxOmitirRankingPostPartida" type="CheckBox" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/GuestPreferencesPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.88)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/font_pressed_color = Color(0.22, 0.38, 0.3, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/font_focus_color = Color(0.278, 0.251, 0.184, 0.88)
+theme_override_fonts/font = ExtResource("4_c2ncf")
+theme_override_font_sizes/font_size = 14
+theme_override_constants/h_separation = 10
+theme_override_styles/hover = SubResource("StyleBoxEmpty_checkbox_hover")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_checkbox_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_checkbox_hover")
+text = "Omitir ranking después de cada partida"
+
+[node name="HintOmitirRanking" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/GuestPreferencesPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.5)
+theme_override_fonts/font = ExtResource("4_c2ncf")
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "Podés cambiarlo acá o al terminar una partida."
+
 [node name="ActionsRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1118333200]
 layout_mode = 2
 theme_override_constants/separation = 12
@@ -452,15 +513,13 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 0
-theme_override_fonts/font = ExtResource("3_42aac")
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.75)
+theme_override_fonts/font = ExtResource("4_c2ncf")
 theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleBoxFlat_guardar_btn_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_guardar_btn_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_guardar_btn_hover")
-text = "Volver"
+text = "Cerrar"
 
 [node name="EditProfileButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow" unique_id=1037653186]
 custom_minimum_size = Vector2(0, 46)
@@ -468,7 +527,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("4_c2ncf")
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_edit_btn_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_edit_btn_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_edit_btn_hover")
@@ -493,8 +552,8 @@ alignment = 2
 
 [node name="LogoutButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow" unique_id=879399550]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.45, 0.15, 0.7)
-theme_override_colors/font_hover_color = Color(0.72, 0.45, 0.15, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.55)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Cerrar sesión"
 flat = true
@@ -505,10 +564,8 @@ size_flags_horizontal = 3
 
 [node name="ResetButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow" unique_id=1924926456]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.2, 0.15, 0.7)
-theme_override_colors/font_hover_color = Color(0.72, 0.2, 0.15, 1)
+theme_override_colors/font_color = Color(0.75, 0.45, 0.40, 0.65)
+theme_override_colors/font_hover_color = Color(0.95, 0.55, 0.48, 1)
 theme_override_font_sizes/font_size = 12
 text = "Reiniciar progreso"
 flat = true
-
-[connection signal="pressed" from="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton" to="." method="_on_guardar_button_pressed"]

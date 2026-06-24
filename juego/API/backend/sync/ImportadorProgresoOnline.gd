@@ -100,10 +100,29 @@ static func contar_nodos_mapa(map_json_path: String) -> int:
 	if map_json_path.is_empty():
 		return 0
 	var resultado: Dictionary = CargadorDeMapaScript.cargar_mapa(map_json_path)
-	if not resultado.get("ok", false):
+	if bool(resultado.get("ok", false)):
+		var datos: Variant = resultado.get("data", {})
+		if datos is Dictionary:
+			var nodos: Variant = (datos as Dictionary).get("nodes", [])
+			if nodos is Array:
+				return (nodos as Array).size()
+	return _contar_nodos_mapa_desde_json(map_json_path)
+
+
+static func _contar_nodos_mapa_desde_json(map_json_path: String) -> int:
+	var raw_result: Dictionary = CargadorDeMapaScript.leer_archivo_json(map_json_path)
+	if not bool(raw_result.get("ok", false)):
 		return 0
-	var nodos: Variant = resultado.get("nodes", [])
-	return nodos.size() if nodos is Array else 0
+	var raw_map: Variant = raw_result.get("data", {})
+	if not raw_map is Dictionary:
+		return 0
+	var map_data := raw_map as Dictionary
+	var nodos: Variant = map_data.get("nodes", null)
+	if nodos is Array:
+		return (nodos as Array).size()
+	if nodos is Dictionary:
+		return (nodos as Dictionary).size()
+	return 0
 
 
 static func inferir_track_key_desde_node_id(node_id: String) -> String:

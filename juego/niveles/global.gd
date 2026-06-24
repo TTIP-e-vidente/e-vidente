@@ -12,6 +12,10 @@ const SaveCampanaHelperScript := preload(
 const SaveEstadoHelperScript := preload(
 	"res://interface/save_local/progress/estado/SaveEstadoHelper.gd"
 )
+const ImportadorProgresoOnlineScript := preload(
+	"res://API/backend/sync/ImportadorProgresoOnline.gd"
+)
+const ArmadorDePartidaScript := preload("res://mapas/logica/ArmadorDePartida.gd")
 
 const DEFAULT_PROGRESS_LABEL := "Tu progreso"
 const STREAK_SYSTEM_KEY := "streak"
@@ -138,18 +142,27 @@ func es_nivel_completado(track_key: String, level_number: int) -> bool:
 func obtener_progreso_resumen() -> Dictionary:
 	var summary: Dictionary = {
 		"total": 0,
-		"max_total": _level_content.obtener_total_nivel_cantidad(
-			GameTrackCatalog.obtener_total_nivel_cantidad()
-		)
+		"max_total": 0,
 	}
 	for track_key in GameTrackCatalog.TRACK_ORDER:
-		var count: int = 0
-		for level in range(1, obtener_pista_nivel_cantidad(track_key) + 1):
-			if es_nivel_completado(track_key, level):
-				count += 1
+		var total_pista := obtener_total_contenido_pista(track_key)
+		var count: int = _contar_contenido_completado_pista(track_key)
 		summary[track_key] = count
 		summary["total"] += count
+		summary["max_total"] += total_pista
 	return summary
+
+
+func obtener_total_contenido_pista(track_key: String) -> int:
+	var key := _obtener_clave_pista_valida(track_key)
+	if key.is_empty():
+		return 0
+	var map_path := _obtener_ruta_mapa_pista(key)
+	if not map_path.is_empty():
+		var total_nodos := ImportadorProgresoOnlineScript.contar_nodos_mapa(map_path)
+		if total_nodos > 0:
+			return total_nodos
+	return obtener_pista_nivel_cantidad(key)
 
 
 func formatear_progreso_resumen_texto(summary: Dictionary = {}) -> String:
@@ -159,18 +172,69 @@ func formatear_progreso_resumen_texto(summary: Dictionary = {}) -> String:
 		var key: String = str(track_definition.get("key", "")).strip_edges()
 		if key.is_empty():
 			continue
-		var level_count: int = obtener_pista_nivel_cantidad(key)
-		if level_count <= 0:
+		var total: int = obtener_total_contenido_pista(key)
+		if total <= 0:
 			continue
-		var completed: int = int(by_track.get(key, 0))
+		var completed: int = clampi(int(by_track.get(key, 0)), 0, total)
 		var label: String = GameTrackCatalog.obtener_etiqueta_resumen_pista(
 			key,
 			GameTrackCatalog.obtener_etiqueta_pista(key, DEFAULT_PROGRESS_LABEL)
 		)
 		if label.is_empty():
 			label = DEFAULT_PROGRESS_LABEL
-		lines.append("%s %d/%d" % [label, min(level_count, completed + 1), level_count])
+		lines.append("%s %d/%d" % [label, completed, total])
 	return "\n".join(lines)
+
+
+func _obtener_ruta_mapa_pista(track_key: String) -> String:
+	return str(
+		ArmadorDePartidaScript.RUTA_MAPA_POR_PISTA.get(track_key.strip_edges(), "")
+	).strip_edges()
+
+
+func _contar_contenido_completado_pista(track_key: String) -> int:
+	var key := _obtener_clave_pista_valida(track_key)
+	if key.is_empty():
+		return 0
+	if not _obtener_ruta_mapa_pista(key).is_empty():
+		return _contar_nodos_completados_pista(key)
+	var count := 0
+	for level in range(1, obtener_pista_nivel_cantidad(key) + 1):
+		if es_nivel_completado(key, level):
+			count += 1
+	return count
+
+
+func _contar_nodos_completados_pista(track_key: String) -> int:
+	var key := _obtener_clave_pista_valida(track_key)
+	if key.is_empty():
+		return 0
+	var raw_progress: Variant = _playable_node_progress_by_track.get(key, {})
+	if raw_progress is Dictionary and not (raw_progress as Dictionary).is_empty():
+		var count := 0
+		for raw_node_key in (raw_progress as Dictionary).keys():
+			if bool((raw_progress as Dictionary)[raw_node_key]):
+				count += 1
+		return count
+	return 0
+
+
+func aplicar_progreso_nodos_plano(node_progress: Dictionary) -> void:
+	if not node_progress is Dictionary:
+		return
+	for track_key in GameTrackCatalog.TRACK_ORDER:
+		reiniciar_progreso_nodos_pista(track_key)
+	for raw_node_id in node_progress.keys():
+		var node_id := str(raw_node_id).strip_edges()
+		if node_id.is_empty():
+			continue
+		var entry: Variant = node_progress[raw_node_id]
+		if not entry is Dictionary or not bool((entry as Dictionary).get("completed", false)):
+			continue
+		var track_key := ImportadorProgresoOnlineScript.inferir_track_key_desde_node_id(node_id)
+		if track_key.is_empty():
+			continue
+		marcar_nodo_jugable_completado(track_key, node_id)
 
 
 # --- Estado parcial de niveles ---------------------------------------------

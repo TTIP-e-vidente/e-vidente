@@ -108,19 +108,19 @@ static func color_posicion(posicion: int, es_propio: bool = false) -> Color:
 		_: return Color(0.14, 0.13, 0.09, 1)
 
 
-# Colores legibles sobre tarjetas claras (hub del perfil).
+# Colores legibles sobre tarjetas claras del drawer/perfil.
 static func color_posicion_tarjeta_clara(posicion: int) -> Color:
 	if posicion <= 0:
-		return Color(0.55, 0.52, 0.48, 1)
+		return Color(0.278, 0.251, 0.184, 0.45)
 	match posicion:
-		1: return Color(0.62, 0.48, 0.08, 1)
-		2: return Color(0.38, 0.40, 0.44, 1)
-		3: return Color(0.50, 0.32, 0.14, 1)
-		_: return Color(0.22, 0.38, 0.30, 1)
+		1: return MiPaleta.ORO_CLARO
+		2: return Color("#C0C0C0")
+		3: return Color("#CD7F32")
+		_: return Color(0.25882354, 0.47058824, 0.36862746, 1)
 
 
 static func color_texto_secundario_tarjeta() -> Color:
-	return Color(0.35, 0.32, 0.28, 0.92)
+	return Color(0.278, 0.251, 0.184, 0.72)
 
 
 static func parsear_computed_at(valor: Variant) -> float:
@@ -246,6 +246,14 @@ static func subtitulo_ranking_post_partida() -> String:
 
 static func texto_no_volver_a_mostrar_ranking() -> String:
 	return "Omitir ranking la próxima vez"
+
+
+static func texto_preferencia_omitir_ranking_perfil() -> String:
+	return "Omitir ranking después de cada partida"
+
+
+static func hint_preferencia_omitir_ranking_perfil() -> String:
+	return "Podés cambiarlo acá o al terminar una partida."
 
 
 static func texto_ver_ranking() -> String:

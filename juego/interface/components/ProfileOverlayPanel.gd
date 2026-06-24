@@ -30,20 +30,35 @@ signal login_pressed
 	$SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/RankingDetallePerfil
 )
 @onready var _close_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/CloseButton
+@onready var _chip_active: PanelContainer = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/ChipActive
+@onready var _chip_local: PanelContainer = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/ChipLocal
+@onready var _chip_active_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow/ChipActive/Label
+@onready var _title_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/TitleLabel
 @onready var _guardar_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/GuardarButton
 @onready var _edit_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton
 @onready var _leaderboard_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/LeaderboardButton
 @onready var _logout_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/LogoutButton
 @onready var _reset_btn: Button = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow/ResetButton
+@onready var _secondary_row: HBoxContainer = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SecondaryRow
+@onready var _guest_preferences_panel: VBoxContainer = (
+	$SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/GuestPreferencesPanel
+)
+@onready var _checkbox_omitir_ranking: CheckBox = (
+	$SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/GuestPreferencesPanel/CheckboxOmitirRankingPostPartida
+)
+@onready var _hint_omitir_ranking: Label = (
+	$SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/GuestPreferencesPanel/HintOmitirRanking
+)
 
 var _syncing: bool = false
+var _sincronizando_preferencia_ranking: bool = false
 
 
 func _ready() -> void:
 	_overlay_backdrop.gui_input.connect(_on_entrada_fondo)
 	_close_btn.pressed.connect(func(): close_requested.emit())
 	_resume_btn.pressed.connect(func(): resume_pressed.emit())
-	_guardar_btn.pressed.connect(_on_guardar_presionado)
+	_guardar_btn.pressed.connect(_on_cerrar_o_volver_presionado)
 	_edit_btn.pressed.connect(_on_editar_perfil_o_login_presionado)
 	if is_instance_valid(_leaderboard_btn):
 		_leaderboard_btn.pressed.connect(
@@ -57,6 +72,8 @@ func _ready() -> void:
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
+	if is_instance_valid(_checkbox_omitir_ranking):
+		_checkbox_omitir_ranking.toggled.connect(_al_cambiar_preferencia_omitir_ranking)
 	_aplicar_fuentes()
 	_configurar_avatar_display()
 
@@ -204,7 +221,7 @@ func refrescar() -> void:
 		email = SaveManager.obtener_email_usuario_actual()
 	var email_line := email if not email.is_empty() else "Sin correo"
 	if es_invitado:
-		email_line = "Progreso solo en este dispositivo.\nIniciá sesión para ranking online y sync."
+		email_line = "Progreso local en este dispositivo."
 	elif AuthApi.esta_logueado() and not email.is_empty():
 		var user_online := AuthApi.obtener_usuario_online()
 		var verified_at := str(user_online.get("mail_verified_at", "")).strip_edges()
@@ -219,7 +236,10 @@ func refrescar() -> void:
 		age = SaveManager.obtener_edad_usuario_actual()
 	_age_label.text = "Edad: %d" % age if age > 0 else ""
 
-	var summary_text := Global.formatear_progreso_resumen_texto(
+	var summary_text := ""
+	if _save_manager_listo():
+		Global.aplicar_progreso_nodos_plano(SaveManager.obtener_todo_progreso_nodos())
+	summary_text = Global.formatear_progreso_resumen_texto(
 		Global.obtener_progreso_resumen()
 	).strip_edges()
 	var exp_text := "EXP total: 0"
@@ -254,12 +274,51 @@ func refrescar() -> void:
 		
 	if _logout_btn:
 		_logout_btn.visible = not es_invitado
-	if is_instance_valid(_edit_btn):
-		_edit_btn.text = "Iniciar sesión" if es_invitado else "Editar perfil"
+	_aplicar_layout_acciones(es_invitado)
+
+
+func _aplicar_layout_acciones(es_invitado: bool) -> void:
+	if is_instance_valid(_chip_active):
+		_chip_active.visible = es_invitado
+	if is_instance_valid(_chip_local):
+		_chip_local.visible = not es_invitado
+	if is_instance_valid(_chip_active_label):
+		_chip_active_label.text = "Modo invitado"
+	if is_instance_valid(_title_label):
+		_title_label.visible = not es_invitado
+
+	if es_invitado:
+		if is_instance_valid(_guardar_btn):
+			_guardar_btn.visible = false
+		if is_instance_valid(_edit_btn):
+			_edit_btn.visible = true
+			_edit_btn.text = "Iniciar sesión"
+			_edit_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if is_instance_valid(_secondary_row):
+			_secondary_row.visible = false
+		_configurar_preferencias_invitado(true)
+		return
+
+	_configurar_preferencias_invitado(false)
+
+	if is_instance_valid(_secondary_row):
+		_secondary_row.visible = true
+
 	if is_instance_valid(_guardar_btn):
-		_guardar_btn.visible = not es_invitado
+		_guardar_btn.visible = false
+	if is_instance_valid(_edit_btn):
+		_edit_btn.visible = true
+		_edit_btn.text = "Editar perfil"
+		_edit_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if is_instance_valid(_reset_btn):
-		_reset_btn.visible = not es_invitado
+		_reset_btn.visible = true
+
+
+func _on_cerrar_o_volver_presionado() -> void:
+	if not AuthApi.esta_logueado():
+		close_requested.emit()
+		return
+	_on_guardar_presionado()
 
 
 func _on_editar_perfil_o_login_presionado() -> void:
@@ -267,6 +326,25 @@ func _on_editar_perfil_o_login_presionado() -> void:
 		login_pressed.emit()
 		return
 	edit_profile_pressed.emit()
+
+
+func _configurar_preferencias_invitado(visible: bool) -> void:
+	if is_instance_valid(_guest_preferences_panel):
+		_guest_preferences_panel.visible = visible
+	if not visible or not is_instance_valid(_checkbox_omitir_ranking):
+		return
+	if is_instance_valid(_hint_omitir_ranking):
+		_hint_omitir_ranking.text = LeaderboardFormat.hint_preferencia_omitir_ranking_perfil()
+	_checkbox_omitir_ranking.text = LeaderboardFormat.texto_preferencia_omitir_ranking_perfil()
+	_sincronizando_preferencia_ranking = true
+	_checkbox_omitir_ranking.button_pressed = SaveManager.omitir_ranking_post_partida_invitado()
+	_sincronizando_preferencia_ranking = false
+
+
+func _al_cambiar_preferencia_omitir_ranking(omitir: bool) -> void:
+	if _sincronizando_preferencia_ranking:
+		return
+	PostPartidaFlow.persistir_preferencia_omitir_ranking(omitir)
 
 
 # --- Helpers ---
@@ -327,7 +405,7 @@ func _animar_entrada_deslizada() -> void:
 	_overlay_backdrop.color.a = 0.0
 
 	var tw := create_tween().set_parallel(true)
-	tw.tween_property(_overlay_backdrop, "color:a", 0.38, 0.25)\
+	tw.tween_property(_overlay_backdrop, "color:a", 0.35, 0.25)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tw.tween_property(_session_panel, "offset_left", target_x, 0.3)\
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -348,7 +426,7 @@ func _animar_salida_deslizada() -> void:
 
 func _on_salida_deslizada_finalizada() -> void:
 	visible = false
-	_session_panel.offset_left = -490.0
+	_session_panel.offset_left = -646.0
 	_session_panel.offset_right = -16.0
 	_session_panel.modulate.a = 1.0
 

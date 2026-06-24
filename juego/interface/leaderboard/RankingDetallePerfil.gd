@@ -13,6 +13,7 @@ signal iniciar_sesion_solicitado
 @onready var _pestanias: ScopeTabs = %ScopeTabs
 @onready var _card: ProgresoPuestoCard = %ProgresoCard
 @onready var _mini_list: LeaderboardMiniList = %MiniList
+@onready var _etiqueta_lista: Label = $Margin/VBox/EtiquetaLista
 @onready var _boton_tabla: Button = %BotonTablaCompleta
 
 var _scope_activo: String = LeaderboardApi.SCOPE_XP_GLOBAL
@@ -59,15 +60,27 @@ func _mostrar_invitado() -> void:
 	if is_instance_valid(_hub):
 		_hub.visible = false
 	if is_instance_valid(_card):
-		_card.mostrar_invitacion_login()
+		_card.visible = false
+	if is_instance_valid(_etiqueta_lista):
+		_etiqueta_lista.text = "TOP DEL RANKING"
+	if is_instance_valid(_mini_list):
+		_mini_list.tema_claro = true
 	if is_instance_valid(_boton_tabla):
-		_boton_tabla.text = "Abrir tabla completa"
+		_boton_tabla.text = "Ver ranking (solo lectura)"
 	call_deferred("_cargar_mini_tabla_invitado")
 
 
 func _ocultar_invitado() -> void:
 	if is_instance_valid(_label_invitado):
 		_label_invitado.visible = false
+	if is_instance_valid(_card):
+		_card.visible = true
+	if is_instance_valid(_etiqueta_lista):
+		_etiqueta_lista.visible = true
+		_etiqueta_lista.text = "TABLA — TOP 8"
+	if is_instance_valid(_mini_list):
+		_mini_list.visible = true
+		_mini_list.tema_claro = true
 	if is_instance_valid(_boton_tabla):
 		_boton_tabla.text = "Abrir tabla completa"
 
@@ -75,8 +88,6 @@ func _ocultar_invitado() -> void:
 func _al_cambiar_scope(scope: String) -> void:
 	_scope_activo = scope
 	if not AuthApi.esta_logueado():
-		if is_instance_valid(_card):
-			_card.mostrar_invitacion_login()
 		call_deferred("_cargar_mini_tabla_invitado")
 		return
 	await _refrescar_scope(scope)
