@@ -18,7 +18,7 @@ var _estilo_normal: StyleBox
 var _estilo_hover: StyleBox
 var _estilo_destacada: StyleBoxFlat
 
-const _COLOR_ETIQUETA := Color(0.22, 0.38, 0.30, 0.9)
+const _COLOR_ETIQUETA := Color(0.22, 0.38, 0.3, 0.9)
 
 
 func _ready() -> void:
@@ -105,8 +105,8 @@ func _aplicar_contenido_ranking(rank: int, score: int, scope: String) -> void:
 func _crear_estilo_destacada() -> StyleBoxFlat:
 	var base := _estilo_normal as StyleBoxFlat
 	var estilo := base.duplicate() as StyleBoxFlat if base != null else StyleBoxFlat.new()
-	estilo.bg_color = Color(0.98, 0.96, 0.90, 1.0)
-	estilo.border_color = Color(0.859, 0.753, 0.318, 0.85)
+	estilo.bg_color = Color(0.259, 0.471, 0.369, 0.08)
+	estilo.border_color = Color(0.259, 0.471, 0.369, 0.45)
 	estilo.set_border_width_all(2)
 	return estilo
 

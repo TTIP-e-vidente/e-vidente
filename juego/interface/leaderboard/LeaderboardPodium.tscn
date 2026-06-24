@@ -22,8 +22,8 @@ alignment = 2
 [node name="SlotSegundo" parent="HBox" instance=ExtResource("2_slot")]
 unique_name_in_owner = true
 layout_mode = 2
-color_pedestal = Color(0.75, 0.75, 0.78, 0.24)
-color_borde_pedestal = Color(0.75, 0.75, 0.78, 0.65)
+color_pedestal = Color(0.75, 0.75, 0.78, 0.18)
+color_borde_pedestal = Color(0.75, 0.75, 0.78, 0.45)
 altura_pedestal = 28
 escala_rank = 0.9
 
@@ -37,7 +37,7 @@ escala_rank = 1.1
 [node name="SlotTercero" parent="HBox" instance=ExtResource("2_slot")]
 unique_name_in_owner = true
 layout_mode = 2
-color_pedestal = Color(0.805, 0.498, 0.196, 0.22)
-color_borde_pedestal = Color(0.805, 0.498, 0.196, 0.60)
+color_pedestal = Color(0.805, 0.498, 0.196, 0.15)
+color_borde_pedestal = Color(0.805, 0.498, 0.196, 0.40)
 altura_pedestal = 22
 escala_rank = 0.85

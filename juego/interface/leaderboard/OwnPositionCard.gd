@@ -186,7 +186,7 @@ func _mostrar_posicion(posicion: int, puntaje: int) -> void:
 	_label_texto.text    = "Tu posición"
 	_label_posicion.add_theme_color_override(
 		"font_color",
-		LeaderboardFormat.color_posicion(posicion, true)
+		LeaderboardFormat.color_posicion_tarjeta_clara(posicion)
 	)
 
 

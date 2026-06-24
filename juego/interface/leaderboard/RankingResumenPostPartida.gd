@@ -22,9 +22,8 @@ signal iniciar_sesion_solicitado
 @onready var _label_vacio_tabla: Label = %LabelVacioTabla
 @onready var _boton_accion: Button = %BotonAccion
 @onready var _etiqueta_top: Label = %EtiquetaTop
-@onready var _titulo_seccion: Label = $VBoxRoot/HeaderBar/MarginHeader/HBoxHeader/TituloSeccion
-@onready var _hbox_puesto: HBoxContainer = $VBoxRoot/MarginBody/VBoxBody/HBoxPuesto
-@onready var _separador_mini: ColorRect = $VBoxRoot/MarginBody/VBoxBody/SeparadorMini
+@onready var _titulo_seccion: Label = $VBoxRoot/MarginOuter/VBoxBody/HBoxHeader/TituloSeccion
+@onready var _hbox_puesto: HBoxContainer = $VBoxRoot/MarginOuter/VBoxBody/HBoxPuesto
 
 var _scope_preferido: String = LeaderboardApi.SCOPE_XP_GLOBAL
 var _puesto_actual: int = 0
@@ -93,9 +92,6 @@ func _aplicar_vista_invitado_compacta() -> void:
 		_label_meta.text = ""
 	if is_instance_valid(_etiqueta_top):
 		_etiqueta_top.visible = false
-	if is_instance_valid(_separador_mini):
-		_separador_mini.visible = false
-
 
 func _aplicar_vista_jugador_registrado() -> void:
 	if is_instance_valid(_titulo_seccion):
@@ -105,9 +101,7 @@ func _aplicar_vista_jugador_registrado() -> void:
 	if is_instance_valid(_label_meta):
 		_label_meta.visible = true
 	if is_instance_valid(_etiqueta_top):
-		_etiqueta_top.visible = false
-	if is_instance_valid(_separador_mini):
-		_separador_mini.visible = true
+		_etiqueta_top.visible = true
 
 
 func mostrar_modo_invitado(scope: String = "") -> void:

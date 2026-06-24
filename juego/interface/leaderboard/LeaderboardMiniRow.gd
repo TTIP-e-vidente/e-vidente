@@ -54,14 +54,18 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 		)
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = _resolver_nombre(entrada)
-		if es_propio:
+		if es_propio and not tema_claro:
 			_label_nombre.add_theme_color_override("font_color", Color.WHITE)
+		elif es_propio:
+			_label_nombre.add_theme_color_override("font_color", Color(0.22, 0.38, 0.30, 1))
 		else:
 			_label_nombre.remove_theme_color_override("font_color")
 	if is_instance_valid(_label_puntaje):
 		_label_puntaje.text = LeaderboardFormat.formatear_score(puntaje, scope)
-		if es_propio:
+		if es_propio and not tema_claro:
 			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+		elif es_propio:
+			_label_puntaje.add_theme_color_override("font_color", Color(0.25882354, 0.47058824, 0.36862746, 1))
 		else:
 			_label_puntaje.remove_theme_color_override("font_color")
 	if is_instance_valid(_avatar):

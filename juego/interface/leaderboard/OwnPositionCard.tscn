@@ -4,12 +4,12 @@
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.08, 0.13, 0.10, 1.0)
+bg_color = Color(0.976, 0.973, 0.961, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.259, 0.471, 0.369, 0.6)
+border_color = Color(0.204, 0.247, 0.173, 0.12)
 corner_radius_bottom_left = 12
 corner_radius_bottom_right = 12
 
@@ -36,12 +36,12 @@ content_margin_right = 12
 content_margin_bottom = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_outline_normal"]
-bg_color = Color(0.859, 0.753, 0.318, 0.10)
+bg_color = Color(0.259, 0.471, 0.369, 0.06)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.55)
+border_color = Color(0.259, 0.471, 0.369, 0.35)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -52,12 +52,12 @@ content_margin_right = 10
 content_margin_bottom = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_outline_hover"]
-bg_color = Color(0.859, 0.753, 0.318, 0.22)
+bg_color = Color(0.259, 0.471, 0.369, 0.14)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.85)
+border_color = Color(0.259, 0.471, 0.369, 0.55)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -89,7 +89,7 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(48, 0)
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1.0)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
@@ -100,7 +100,7 @@ text = "#—"
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(80, 0)
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 1.0)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 15
 vertical_alignment = 1
@@ -110,7 +110,7 @@ text = ""
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 13
 vertical_alignment = 1
@@ -126,7 +126,7 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_outline_normal")

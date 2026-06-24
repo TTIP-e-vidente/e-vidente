@@ -8,21 +8,39 @@ signal scope_cambiado(scope: String)
 
 
 const TAB_BUTTON_SCENE := preload("res://interface/leaderboard/ScopeTabButton.tscn")
+const TAB_BUTTON_LIGHT_SCENE := preload("res://interface/leaderboard/ScopeTabButtonLight.tscn")
 
 
 @export var categoria_inicial: String = "global_xp"
+@export var tema_claro: bool = false
+@export var diseno_en_filas: bool = false
+@export var columnas_en_filas: int = 3
 
 
 var _scope_activo: String = ""
 var _botones: Array[ScopeTabButton] = []
+var _contenedor_tabs: Container
 
 
 @onready var _contenedor: HBoxContainer = %TabsHBox
 
 
 func _ready() -> void:
-	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	if diseno_en_filas:
+		_contenedor.visible = false
+		var grid := GridContainer.new()
+		grid.columns = maxi(1, columnas_en_filas)
+		grid.add_theme_constant_override("h_separation", 6)
+		grid.add_theme_constant_override("v_separation", 6)
+		grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		add_child(grid)
+		_contenedor_tabs = grid
+		custom_minimum_size.y = 78
+		horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	else:
+		_contenedor_tabs = _contenedor
+		horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_construir_botones()
 	seleccionar(categoria_inicial)
 
@@ -75,16 +93,19 @@ func obtener_scope_activo() -> String:
 
 
 func _construir_botones() -> void:
-	if not is_instance_valid(_contenedor):
+	var contenedor := _contenedor_tabs if _contenedor_tabs != null else _contenedor
+	if not is_instance_valid(contenedor):
 		return
 	for categoria in LeaderboardScopeCatalog.obtener_categorias():
-		var boton := TAB_BUTTON_SCENE.instantiate() as ScopeTabButton
+		var scene_tab := TAB_BUTTON_LIGHT_SCENE if tema_claro else TAB_BUTTON_SCENE
+		var boton := scene_tab.instantiate() as ScopeTabButton
 		if boton == null:
 			continue
 		var scope_del_boton: String = str(categoria.get("scope", ""))
-		boton.configurar(str(categoria.get("etiqueta", "")), scope_del_boton)
+		var etiqueta := str(categoria.get("etiqueta_tab", categoria.get("etiqueta", "")))
+		boton.configurar(etiqueta, scope_del_boton)
 		boton.pressed.connect(func() -> void: _al_presionar_tab(scope_del_boton))
-		_contenedor.add_child(boton)
+		contenedor.add_child(boton)
 		_botones.append(boton)
 
 

@@ -39,7 +39,7 @@ script = ExtResource("1_script")
 
 [node name="IconoVacio" type="Label" parent="."]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 0.55)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 0.45)
 theme_override_fonts/font = ExtResource("3_spray")
 theme_override_font_sizes/font_size = 36
 text = "—"
@@ -47,7 +47,7 @@ horizontal_alignment = 1
 
 [node name="Titulo" type="Label" parent="."]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_spray")
 theme_override_font_sizes/font_size = 20
 text = "Todavía no hay datos"
@@ -55,7 +55,7 @@ horizontal_alignment = 1
 
 [node name="Mensaje" type="Label" parent="."]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 14
 text = "Jugá una partida para aparecer en el ranking."

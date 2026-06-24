@@ -19,10 +19,14 @@ static func obtener_categorias() -> Array[Dictionary]:
 		{"scope": LeaderboardApi.SCOPE_RACHA, "etiqueta": "Mejor Racha"},
 	]
 	for code in _codigos_restriccion():
-		categorias.append({
+		var etiqueta := etiqueta_restriccion(code)
+		var entry := {
 			"scope": scope_restriccion(code),
-			"etiqueta": etiqueta_restriccion(code),
-		})
+			"etiqueta": etiqueta,
+		}
+		if code.strip_edges().to_upper() == "VYG":
+			entry["etiqueta_tab"] = "Veg + Celía"
+		categorias.append(entry)
 	return categorias
 
 

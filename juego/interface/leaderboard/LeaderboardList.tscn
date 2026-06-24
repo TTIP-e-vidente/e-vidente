@@ -4,12 +4,12 @@
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ver_mas_normal"]
-bg_color = Color(0.08, 0.12, 0.10, 0.85)
+bg_color = Color(0.976, 0.973, 0.961, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.28)
+border_color = Color(0.204, 0.247, 0.173, 0.12)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -20,12 +20,12 @@ content_margin_right = 16
 content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ver_mas_hover"]
-bg_color = Color(0.12, 0.18, 0.14, 0.95)
+bg_color = Color(0.259, 0.471, 0.369, 0.08)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.55)
+border_color = Color(0.259, 0.471, 0.369, 0.25)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -49,8 +49,8 @@ theme_override_constants/separation = 6
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
-theme_override_colors/font_hover_color = Color(0.950, 0.840, 0.380, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_colors/font_hover_color = Color(0.320, 0.560, 0.440, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_ver_mas_normal")

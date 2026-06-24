@@ -6,17 +6,17 @@
 [ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_spray"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_peek"]
-bg_color = Color(0.07, 0.11, 0.08, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.859, 0.753, 0.318, 0.45)
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.12)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(0.0, 0.0, 0.0, 0.35)
+shadow_color = Color(0.08, 0.07, 0.04, 0.08)
 shadow_size = 8
 shadow_offset = Vector2(0, 3)
 content_margin_left = 0
@@ -25,12 +25,12 @@ content_margin_right = 0
 content_margin_bottom = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
-bg_color = Color(0.859, 0.753, 0.318, 0.12)
+bg_color = Color(0.259, 0.471, 0.369, 0.1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.35)
+border_color = Color(0.259, 0.471, 0.369, 0.3)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -41,7 +41,7 @@ content_margin_right = 10
 content_margin_bottom = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cerrar_hover"]
-bg_color = Color(0.859, 0.753, 0.318, 0.1)
+bg_color = Color(0.259, 0.471, 0.369, 0.08)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -83,7 +83,7 @@ theme_override_constants/separation = 4
 
 [node name="EtiquetaSeccion" type="Label" parent="Margin/VBox/Header/VBoxNombre"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.75)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.55)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 11
 text = "DETALLE DEL JUGADOR"
@@ -91,7 +91,7 @@ text = "DETALLE DEL JUGADOR"
 [node name="NombreLabel" type="Label" parent="Margin/VBox/Header/VBoxNombre"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.92, 0.90, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("4_spray")
 theme_override_font_sizes/font_size = 22
 text = "Nombre"
@@ -106,7 +106,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
 
 [node name="BadgeLabel" type="Label" parent="Margin/VBox/Header/BadgePropia"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 11
 text = "VOS"
@@ -116,7 +116,7 @@ vertical_alignment = 1
 [node name="Separador" type="ColorRect" parent="Margin/VBox"]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-color = Color(0.859, 0.753, 0.318, 0.2)
+color = Color(0.204, 0.247, 0.173, 0.1)
 
 [node name="HBoxStats" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
@@ -129,7 +129,7 @@ theme_override_constants/separation = 2
 
 [node name="EtiquetaPosicion" type="Label" parent="Margin/VBox/HBoxStats/VBoxPosicion"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.55)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 11
 text = "PUESTO"
@@ -137,7 +137,7 @@ text = "PUESTO"
 [node name="DetalleLabel" type="Label" parent="Margin/VBox/HBoxStats/VBoxPosicion"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("4_spray")
 theme_override_font_sizes/font_size = 20
 text = "#1"
@@ -149,7 +149,7 @@ theme_override_constants/separation = 2
 
 [node name="EtiquetaPuntaje" type="Label" parent="Margin/VBox/HBoxStats/VBoxPuntaje"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.55)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 11
 text = "PUNTAJE"
@@ -157,7 +157,7 @@ text = "PUNTAJE"
 [node name="PuntajeLabel" type="Label" parent="Margin/VBox/HBoxStats/VBoxPuntaje"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 18
 text = "0 XP"
@@ -166,8 +166,8 @@ text = "0 XP"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_colors/font_color = Color(0.55, 0.58, 0.56, 1)
-theme_override_colors/font_hover_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 13
 theme_override_styles/hover = SubResource("StyleBoxFlat_cerrar_hover")

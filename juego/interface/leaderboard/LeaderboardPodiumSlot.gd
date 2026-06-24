@@ -65,18 +65,24 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 		_label_rank.text = LeaderboardFormat.texto_posicion(posicion)
 		_label_rank.add_theme_color_override(
 			"font_color",
-			LeaderboardFormat.color_posicion(posicion, es_propio)
+			LeaderboardFormat.color_posicion_tarjeta_clara(posicion)
 		)
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = nombre
 		if es_propio:
-			_label_nombre.add_theme_color_override("font_color", Color.WHITE)
+			_label_nombre.add_theme_color_override(
+				"font_color",
+				Color(0.22, 0.38, 0.30, 1)
+			)
 		else:
 			_label_nombre.remove_theme_color_override("font_color")
 	if is_instance_valid(_label_puntaje):
 		_label_puntaje.text = LeaderboardFormat.formatear_score(puntaje, scope)
 		if es_propio:
-			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+			_label_puntaje.add_theme_color_override(
+				"font_color",
+				Color(0.25882354, 0.47058824, 0.36862746, 1)
+			)
 		else:
 			_label_puntaje.remove_theme_color_override("font_color")
 	if is_instance_valid(_avatar):

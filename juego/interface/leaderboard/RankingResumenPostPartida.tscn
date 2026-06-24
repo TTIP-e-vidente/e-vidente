@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://ranking_resumen_post"]
+[gd_scene load_steps=9 format=3 uid="uid://ranking_resumen_post"]
 
 [ext_resource type="Script" path="res://interface/leaderboard/RankingResumenPostPartida.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
@@ -6,68 +6,61 @@
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardMiniList.tscn" id="4_mini"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.08, 0.12, 0.10, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.859, 0.753, 0.318, 0.45)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_color = Color(0, 0, 0, 0.35)
-shadow_size = 10
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.204, 0.247, 0.173, 0.12)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0.08, 0.07, 0.04, 0.08)
+shadow_size = 12
 shadow_offset = Vector2(0, 4)
 content_margin_left = 0
 content_margin_top = 0
 content_margin_right = 0
 content_margin_bottom = 0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
-bg_color = Color(0.10, 0.16, 0.12, 1)
-border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.25)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
 bg_color = Color(0.259, 0.471, 0.369, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 content_margin_left = 16
-content_margin_top = 8
+content_margin_top = 10
 content_margin_right = 16
-content_margin_bottom = 8
+content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
 bg_color = Color(0.320, 0.560, 0.440, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 content_margin_left = 16
-content_margin_top = 8
+content_margin_top = 10
 content_margin_right = 16
-content_margin_bottom = 8
+content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tabla"]
-bg_color = Color(0.945, 0.938, 0.918, 1)
+bg_color = Color(0.975, 0.972, 0.96, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.22)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-content_margin_left = 8
-content_margin_top = 8
-content_margin_right = 8
-content_margin_bottom = 8
+border_color = Color(0.204, 0.247, 0.173, 0.1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+content_margin_left = 12
+content_margin_top = 12
+content_margin_right = 12
+content_margin_bottom = 12
 
 [node name="RankingResumenPostPartida" type="PanelContainer"]
 size_flags_horizontal = 3
@@ -78,7 +71,7 @@ script = ExtResource("1_script")
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.8)
+theme_override_colors/font_color = Color(0.35, 0.38, 0.42, 0.8)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 13
 text = "Actualizando tu puesto..."
@@ -89,117 +82,100 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HeaderBar" type="PanelContainer" parent="VBoxRoot"]
+[node name="MarginOuter" type="MarginContainer" parent="VBoxRoot"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
 
-[node name="MarginHeader" type="MarginContainer" parent="VBoxRoot/HeaderBar"]
+[node name="VBoxBody" type="VBoxContainer" parent="VBoxRoot/MarginOuter"]
 layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 10
+theme_override_constants/separation = 12
 
-[node name="HBoxHeader" type="HBoxContainer" parent="VBoxRoot/HeaderBar/MarginHeader"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="TituloSeccion" type="Label" parent="VBoxRoot/HeaderBar/MarginHeader/HBoxHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
-theme_override_fonts/font = ExtResource("3_spray")
-theme_override_font_sizes/font_size = 18
-text = "Tu puesto en la tabla"
-
-[node name="LabelScope" type="Label" parent="VBoxRoot/HeaderBar/MarginHeader/HBoxHeader"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.85)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
-text = "XP Global"
-vertical_alignment = 1
-
-[node name="MarginBody" type="MarginContainer" parent="VBoxRoot"]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 14
-
-[node name="VBoxBody" type="VBoxContainer" parent="VBoxRoot/MarginBody"]
+[node name="HBoxHeader" type="HBoxContainer" parent="VBoxRoot/MarginOuter/VBoxBody"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="LabelCelebracion" type="Label" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="TituloSeccion" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/HBoxHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+theme_override_fonts/font = ExtResource("3_spray")
+theme_override_font_sizes/font_size = 20
+text = "Top jugadores"
+
+[node name="LabelScope" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/HBoxHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.65)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "Celiaquía"
+vertical_alignment = 1
+
+[node name="LabelCelebracion" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="HBoxPuesto" type="HBoxContainer" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="HBoxPuesto" type="HBoxContainer" parent="VBoxRoot/MarginOuter/VBoxBody"]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="LabelPuesto" type="Label" parent="VBoxRoot/MarginBody/VBoxBody/HBoxPuesto"]
+[node name="LabelPuesto" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/HBoxPuesto"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_spray")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 36
 text = "#12"
 
-[node name="LabelExp" type="Label" parent="VBoxRoot/MarginBody/VBoxBody/HBoxPuesto"]
+[node name="LabelExp" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/HBoxPuesto"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.78)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 16
 vertical_alignment = 1
 text = "0 XP"
 
-[node name="LabelMeta" type="Label" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="LabelMeta" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.60, 0.57, 1)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.72)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="SeparadorMini" type="ColorRect" parent="VBoxRoot/MarginBody/VBoxBody"]
-custom_minimum_size = Vector2(0, 1)
-layout_mode = 2
-color = Color(0.859, 0.753, 0.318, 0.15)
-
-[node name="EtiquetaTop" type="Label" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="EtiquetaTop" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.7)
+theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 11
 text = "CERCA DE TU PUESTO"
 horizontal_alignment = 1
 
-[node name="FondoTabla" type="PanelContainer" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="FondoTabla" type="PanelContainer" parent="VBoxRoot/MarginOuter/VBoxBody"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_tabla")
 
-[node name="VBoxTabla" type="VBoxContainer" parent="VBoxRoot/MarginBody/VBoxBody/FondoTabla"]
+[node name="VBoxTabla" type="VBoxContainer" parent="VBoxRoot/MarginOuter/VBoxBody/FondoTabla"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LabelCargandoTabla" type="Label" parent="VBoxRoot/MarginBody/VBoxBody/FondoTabla/VBoxTabla"]
+[node name="LabelCargandoTabla" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/FondoTabla/VBoxTabla"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -210,7 +186,7 @@ text = "Cargando ranking..."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LabelVacioTabla" type="Label" parent="VBoxRoot/MarginBody/VBoxBody/FondoTabla/VBoxTabla"]
+[node name="LabelVacioTabla" type="Label" parent="VBoxRoot/MarginOuter/VBoxBody/FondoTabla/VBoxTabla"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -222,21 +198,22 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="MiniList" parent="VBoxRoot/MarginBody/VBoxBody/FondoTabla/VBoxTabla" instance=ExtResource("4_mini")]
+[node name="MiniList" parent="VBoxRoot/MarginOuter/VBoxBody/FondoTabla/VBoxTabla" instance=ExtResource("4_mini")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 max_filas = 5
 tema_claro = true
 
-[node name="BotonAccion" type="Button" parent="VBoxRoot/MarginBody/VBoxBody"]
+[node name="BotonAccion" type="Button" parent="VBoxRoot/MarginOuter/VBoxBody"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
 text = "Ver tabla completa"

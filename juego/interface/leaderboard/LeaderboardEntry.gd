@@ -68,16 +68,22 @@ func _aplicar_color_posicion(posicion: int, es_propio: bool) -> void:
 		return
 	_label_posicion.add_theme_color_override(
 		"font_color",
-		LeaderboardFormat.color_posicion(posicion, es_propio)
+		LeaderboardFormat.color_posicion_tarjeta_clara(posicion)
 	)
 
 
 func _aplicar_estilo_propia(es_propio: bool) -> void:
 	if es_propio:
 		if is_instance_valid(_label_nombre):
-			_label_nombre.add_theme_color_override("font_color", Color.WHITE)
+			_label_nombre.add_theme_color_override(
+				"font_color",
+				Color(0.22, 0.38, 0.30, 1)
+			)
 		if is_instance_valid(_label_puntaje):
-			_label_puntaje.add_theme_color_override("font_color", MiPaleta.ORO_CLARO)
+			_label_puntaje.add_theme_color_override(
+				"font_color",
+				Color(0.25882354, 0.47058824, 0.36862746, 1)
+			)
 	else:
 		if is_instance_valid(_label_nombre):
 			_label_nombre.remove_theme_color_override("font_color")
