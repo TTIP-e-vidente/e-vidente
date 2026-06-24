@@ -93,7 +93,7 @@ static func _mensaje_sin_conexion(
 				+ "En BACKEND ejecutá: docker compose up -d"
 			)
 		return (
-			"No hay servidor en localhost:3000.\n"
+			"No hay servidor en %s.\n" % BackendConfig.obtener_base_url()
 			+ "1) cd BACKEND\n"
 			+ "2) docker compose up -d\n"
 			+ "3) npm run dev"

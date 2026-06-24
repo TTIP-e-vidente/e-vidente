@@ -37,7 +37,7 @@ function resolvePublicBaseUrl(): string {
     return configured.replace(/\/+$/, '');
   }
   if (process.env.NODE_ENV !== 'production') {
-    const port = process.env.PORT ?? '3000';
+    const port = process.env.BACKEND_PORT ?? '3010';
     return `http://localhost:${port}`;
   }
   return '';

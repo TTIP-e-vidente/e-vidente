@@ -1,13 +1,16 @@
 class_name BackendApiClient
 extends Node
 
-const DEFAULT_BASE_URL := "http://localhost:3000"
 # 8s: GET /player/me/progress corre una transacción con varias queries; con 3s
 # expiraba en frío y el login quedaba sin datos online hasta el próximo intento.
 const HTTP_TIMEOUT := 8.0
 const AVATAR_UPLOAD_TIMEOUT := 30.0
 
-var base_url: String = DEFAULT_BASE_URL
+var base_url: String = ""
+
+
+func _init() -> void:
+	base_url = BackendConfig.obtener_base_url()
 var _pool: Array[HTTPRequest] = []
 
 

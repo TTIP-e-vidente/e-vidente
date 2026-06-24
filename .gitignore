@@ -16,6 +16,7 @@ juego/reports/
 *.env
 !*.env.example
 BACKEND/.env
+juego/config/backend.local.json
 BACKEND/postgres-data/
 BACKEND/pgdata/
 BACKEND/node_modules/

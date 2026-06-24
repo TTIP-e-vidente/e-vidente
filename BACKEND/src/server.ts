@@ -6,7 +6,7 @@ import { warmUpLeaderboard } from './modules/leaderboard/leaderboard.service';
 
 dotenv.config();
 
-const port = Number.parseInt(process.env.BACKEND_PORT ?? '3000', 10);
+const port = Number.parseInt(process.env.BACKEND_PORT ?? '3010', 10);
 
 function logEmailStartupStatus(): void {
   if (process.env.NODE_ENV === 'test') {

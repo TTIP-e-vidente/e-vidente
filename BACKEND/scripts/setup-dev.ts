@@ -84,24 +84,28 @@ async function main(): Promise<void> {
   console.log('═══════════════════════════════════════════');
 
   // 1. Levantar PostgreSQL
-  step('1/5  Levantando PostgreSQL con Docker Compose...');
+  step('1/6  Levantando PostgreSQL con Docker Compose...');
   run('docker compose up -d', 'docker compose up -d');
 
   // 2. Esperar a que Postgres esté listo
-  step('2/5  Esperando conexión con PostgreSQL...');
+  step('2/6  Esperando conexión con PostgreSQL...');
   await waitForPostgres();
 
   // 3. Migraciones
-  step('3/5  Ejecutando migraciones...');
+  step('3/6  Ejecutando migraciones...');
   run('npx ts-node scripts/run-migrations.ts', 'npm run migrate');
 
   // 4. Seed de usuarios demo
-  step('4/5  Creando usuarios demo...');
+  step('4/6  Creando usuarios demo...');
   run('npx ts-node scripts/seed-dev-users.ts', 'seed-dev-users');
 
   // 5. Validación de conexión
-  step('5/5  Validando conexión con la base...');
+  step('5/6  Validando conexión con la base...');
   await validateConnection();
+
+  // 6. Sincronizar URL del backend con Godot
+  step('6/6  Sincronizando config de Godot...');
+  run('npx ts-node scripts/sync-godot-backend-config.ts', 'sync-godot-backend-config');
 
   // Instrucciones finales
   console.log('\n═══════════════════════════════════════════');

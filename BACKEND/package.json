@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node src/server.ts",
+    "dev": "ts-node scripts/sync-godot-backend-config.ts && ts-node scripts/start-dev-if-needed.ts",
+    "dev:stop": "ts-node scripts/stop-dev-server.ts",
+    "dev:restart": "npm run dev:stop && npm run dev",
     "build": "tsc && node scripts/copy-email-assets.cjs",
     "start": "node dist/server.js",
     "migrate": "ts-node scripts/run-migrations.ts",
@@ -11,6 +13,7 @@
     "smoke:leaderboard": "ts-node scripts/smoke-leaderboard.ts",
     "seed:dev": "ts-node scripts/seed-dev-users.ts",
     "setup:dev": "ts-node scripts/setup-dev.ts",
+    "sync:godot-config": "ts-node scripts/sync-godot-backend-config.ts",
     "email:streaks": "ts-node scripts/send-streak-emails.ts",
     "email:retry-failed": "ts-node scripts/retry-failed-emails.ts",
     "email:run-local": "ts-node scripts/run-email-outbound.ts",

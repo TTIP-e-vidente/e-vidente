@@ -10,7 +10,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const BASE_URL    = process.env.BACKEND_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.BACKEND_URL
+  ?? `http://localhost:${process.env.BACKEND_PORT ?? '3010'}`;
 const JOB_SECRET  = process.env.INTERNAL_JOB_SECRET ?? '';
 const AUTH_TOKEN  = process.env.SMOKE_AUTH_TOKEN ?? '';
 const SMOKE_USER_ID = process.env.SMOKE_USER_ID ?? '';
