@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://bgatuq1kmpiwl"]
 
 [ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_taonf"]
-[ext_resource type="Texture2D" uid="uid://btbwctpr4ybmo" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="2_taonf"]
+[ext_resource type="Texture2D" uid="uid://bkyxvo5kknx68" path="res://assets-sistema/interfaz/cuadrado-8x2-blanco.png" id="2_taonf"]
 [ext_resource type="Script" uid="uid://dt242bab4eg0k" path="res://niveles/botones_intro.gd" id="3_aao33"]
-[ext_resource type="Texture2D" uid="uid://3dd0s1s85ksr" path="res://assets-sistema/selector/diabetes-selector.png" id="4_rkrw2"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_oyp17"]
+[ext_resource type="Texture2D" uid="uid://d3kyjhv2c3tiv" path="res://assets-sistema/selector/diabetes-selector.png" id="4_rkrw2"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_oyp17"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
 shader = ExtResource("1_taonf")
@@ -14,6 +14,8 @@ shader_parameter/radius = 0.5
 
 [node name="Jugar" type="TextureButton" unique_id=1307767255]
 editor_description = "Jugar"
+light_mask = 64
+visibility_layer = 64
 material = SubResource("ShaderMaterial_544v7")
 custom_minimum_size = Vector2(160, 160)
 anchors_preset = -1
@@ -34,8 +36,9 @@ script = ExtResource("3_aao33")
 metadata/_edit_group_ = true
 
 [node name="imagen" type="Sprite2D" parent="." unique_id=1169675825]
-z_index = 12
-position = Vector2(110.25743, 122.42218)
+z_index = 1000
+y_sort_enabled = true
+position = Vector2(114.53927, 125.58827)
 scale = Vector2(1.4272954, 1.4272954)
 texture = ExtResource("4_rkrw2")
 
