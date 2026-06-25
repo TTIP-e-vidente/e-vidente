@@ -1,31 +1,137 @@
 # Decisiones — Entrega 4
 
-## Por dónde arrancamos
-
-Cerrar UNQ-64 y el circuito de mails sin acoplar Godot al proveedor, con consentimiento claro y auditoría en Postgres.
+Architecture Decision Records (ADRs) del circuito de mails. [Resumen](Entrega-4) · [Arquitectura](Entrega-4-Arquitectura)
 
 ---
 
-## Decisiones que tomamos
+## Contexto
 
-| Decisión | Por qué | Qué implica | ¿Queda algo? |
-|----------|---------|-------------|--------------|
-| Brevo vía API transaccional | SMTP simple, buen tier free, dashboard de entregas | `BREVO_API_KEY` solo en servidor | Dominio propio en producción |
-| Templates en TypeScript versionados | Mismo repo que el backend; preview en dev | Cambios de copy = PR + `test:email` | Editor visual para no-devs |
-| `EMAIL_ENABLED` master switch | Evitar envíos accidentales en CI/dev | Por defecto `false` en `.env.example` | Activar en deploy |
-| Bienvenida sin consentimiento | Mail transaccional de alta de cuenta | No mezclar con marketing de racha | Copy honesto (sin “verificar cuenta”) |
-| Rachas con opt-in | Respeto al jugador; menos spam | SQL filtra `email_notifications_enabled` | Texto opt-out en cada mail de racha |
-| Dedupe en `email_deliveries` | Idempotencia ante cron duplicado o retry | `pending` bloquea segundo envío | Tests integración (`email.jobs.integration.test.ts`) |
-| Cron 19:00 ART | Ventana razonable antes de fin del día local | `EMAIL_TIMEZONE=America/Argentina/Buenos_Aires` | Ajuste si hay jugadores en otras zonas |
-| Godot no llama a Brevo | Separación de responsabilidades | Solo flags y registro HTTP | — |
-| Feedback in-game + mail | Canales complementarios | UNQ-149 + UNQ-64 en paralelo | — |
+Cerrar [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) sin acoplar Godot a Brevo, con mail verificado, consentimiento explícito y trazabilidad en Postgres.
 
 ---
 
-## Cómo movimos las prioridades
+## ADR-01 — Brevo como proveedor transaccional
 
-1. Módulo completo en backend (implementado en E3 tardío / pre-E4).
-2. Documentación wiki y copy editorial (Entrega 4).
-3. Activación producción + dominio verificado.
-4. ~~Tests de integración del job.~~ Hecho (`tests/email.jobs.integration.test.ts`).
-5. Recuperación de contraseña por mail (entrega futura).
+**Decisión:** API REST de Brevo (`/v3/smtp/email`), no SMTP directo desde el backend.
+
+**Motivo:** Dashboard de entregas, tier free usable, integración simple con Node.
+
+**Consecuencias:** `BREVO_API_KEY` solo en servidor; dominio propio recomendado en prod.
+
+---
+
+## ADR-02 — Templates versionados en TypeScript
+
+**Decisión:** Copy y HTML en `templates/*.ts` dentro del repo, no en Brevo UI.
+
+**Motivo:** Mismo PR para copy + lógica; preview en dev; tests unitarios.
+
+**Consecuencias:** Cambios editoriales pasan por code review. Editor visual queda para el futuro.
+
+---
+
+## ADR-03 — `EMAIL_ENABLED` como interruptor maestro
+
+**Decisión:** Default `false` en `.env.example`; sin key no hay envíos.
+
+**Motivo:** Evitar mails accidentales en CI y laptops de dev.
+
+**Consecuencias:** Activación explícita en deploy productivo.
+
+---
+
+## ADR-04 — OTP antes de bienvenida y recordatorios
+
+**Decisión:** Código 6 dígitos en juego; bienvenida solo tras `mail_verified_at`.
+
+**Motivo:** Mails a direcciones typo no verificadas; base para opt-in confiable.
+
+**Consecuencias:** UI Godot dedicada; dos mails en onboarding (OTP + welcome).
+
+---
+
+## ADR-05 — Consentimiento separado de transaccional
+
+**Decisión:** OTP, welcome y `mail_changed` ignoran `email_notifications_enabled`. Rachas lo requieren.
+
+**Motivo:** Cumplimiento de buenas prácticas; transaccional ≠ marketing de hábito.
+
+**Consecuencias:** Opt-out visible en cada mail de racha.
+
+---
+
+## ADR-06 — Dedupe en `email_deliveries`
+
+**Decisión:** `dedupe_key` único por usuario/evento/día; estado `pending` bloquea duplicados.
+
+**Motivo:** Cron duplicado, retries HTTP y re-ejecución manual sin spam.
+
+**Consecuencias:** Tests de integración obligatorios para jobs.
+
+---
+
+## ADR-07 — Reconcile de racha independiente del mail
+
+**Decisión:** `reconcileExpiredStreaksInDatabase` corre aunque falle Brevo.
+
+**Motivo:** Consistencia servidor > entrega de notificación.
+
+**Consecuencias:** Jugador puede perder racha en DB sin recibir mail (edge case aceptado).
+
+---
+
+## ADR-08 — Godot no integra Brevo
+
+**Decisión:** Solo REST al backend (`AuthApi`, verificación, perfil).
+
+**Motivo:** Separación de responsabilidades; secretos solo en servidor.
+
+**Consecuencias:** Todo envío auditable centralmente.
+
+---
+
+## ADR-09 — Cron 19:00 ART + timezone única
+
+**Decisión:** `EMAIL_TIMEZONE=America/Argentina/Buenos_Aires`; job principal antes de medianoche local.
+
+**Motivo:** Equipo y demo en Argentina; ventana razonable para “jugá hoy”.
+
+**Consecuencias:** Jugadores en otras zonas: mejora futura (ADR pendiente).
+
+---
+
+## ADR-10 — Outbox async para welcome
+
+**Decisión:** Encolar en `email_deliveries` pending; procesar con startup o job outbound.
+
+**Motivo:** No bloquear respuesta HTTP de confirm OTP (201 rápido).
+
+**Consecuencias:** Welcome puede llegar segundos después de verificar.
+
+---
+
+## Alternativas descartadas
+
+| Alternativa | Por qué no |
+|-------------|------------|
+| Godot → Brevo directo | Expone API key |
+| Bienvenida al registro sin OTP | Mails a cuentas inválidas |
+| Link mágico vs OTP | Godot no es browser; OTP copiable en mobile |
+| Un mail genérico de racha | Peor UX y conversión |
+| Sin dedupe | Duplicados en cada retry |
+
+---
+
+## Roadmap de decisiones
+
+| # | Tema | Estado |
+|---|------|--------|
+| 1 | Módulo backend | ✅ Hecho |
+| 2 | Wiki + copy | ✅ Hecho |
+| 3 | OTP + Godot | ✅ Hecho |
+| 4 | Tests integración | ✅ Hecho |
+| 5 | E2E `validate:email-flow` | ✅ Hecho |
+| 6 | Producción + dominio | ⏳ Pendiente |
+| 7 | Recuperación contraseña por mail | 🔜 E5 candidato |
+
+Ver [Próximos pasos](Entrega-4-Proximos-Pasos).

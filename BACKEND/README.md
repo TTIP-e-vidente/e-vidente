@@ -90,24 +90,17 @@ Refresh tokens, admin, leaderboard online, rename destructivo de tablas.
 
 ## Emails (Brevo)
 
-Configuración de remitente, rotación de API key y checklist local: [`docs/BREVO_SETUP.md`](docs/BREVO_SETUP.md).
+Documentación completa: [wiki/Entrega-4-Guia-Rapida.md](../wiki/Entrega-4-Guia-Rapida.md) · Setup: [`docs/BREVO_SETUP.md`](docs/BREVO_SETUP.md)
 
-Módulo en `src/modules/email/`. Por defecto `EMAIL_ENABLED=false` en `.env`.
+Módulo en `src/modules/email/` — **5 templates** (OTP, bienvenida, 2 rachas, cambio mail). Por defecto `EMAIL_ENABLED=false`.
 
-- Registro: mail de bienvenida (async, no bloquea el 201).
-- Cron diario: `npm run email:streaks` o `POST /internal/jobs/streak-emails` con header `X-Job-Secret`.
-- Reintento de fallidos: `npm run email:retry-failed` o `POST /internal/jobs/retry-failed-emails`.
-- Cron local (Windows): `powershell -ExecutionPolicy Bypass -File scripts/local/register-email-tasks-windows.ps1`
-- Cron programado en la nube (cuando haya deploy): `.github/workflows/email-cron.yml`.
-- Consentimiento de racha: `users.email_notifications_enabled` (registro: `accept_email_notifications`; perfil: `PATCH /player/me` con `email_notifications_enabled`).
-- Auditoría: tabla `email_deliveries` con `status` (`pending` | `sent` | `failed`), destinatario, asunto, error y `provider_message_id`.
-- Templates: carpeta `src/modules/email/templates/` (ver `src/modules/email/README.md`).
-- Dev:
-  - `GET /dev/email/templates`
-  - `GET /dev/email/preview?template_key=welcome&name=Agus`
-  - `GET /dev/email/deliveries?limit=50&status=sent`
-- Smoke: `npm run smoke:email` — config, previews y auditoría (`--send` + `SMOKE_EMAIL_TO` para prueba real).
-- Demo racha: `npm run seed:streak-email-demo` + `npm run email:streaks`.
+- Verificación OTP → bienvenida **tras** confirmar (no al registro).
+- Cron 19:00 ART: `npm run email:streaks` o `POST /internal/jobs/streak-emails` (`X-Job-Secret`).
+- Reintento: `npm run email:retry-failed` · Cron cloud: `.github/workflows/email-cron.yml`.
+- Consentimiento racha: `email_notifications_enabled` (registro + `PATCH /player/me`).
+- Auditoría: `email_deliveries` (`pending` | `sent` | `failed` | `skipped`).
+- Validación E2E: `npm run validate:email-flow` · Detalle: `src/modules/email/README.md`.
+- Dev: `GET /dev/email/templates` · `/preview` · `/deliveries`.
 
 ## Problemas frecuentes
 

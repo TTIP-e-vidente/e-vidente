@@ -4,7 +4,7 @@ Puzzle educativo sobre restricciones alimentarias (celiaquía, veganismo, etc.).
 
 Público: 10–60 años. Single-player. Estilo cuaderno a mano.
 
-**Estado y roadmap:** [ESTADO-ACTUAL.md](ESTADO-ACTUAL.md)
+**Estado y roadmap:** [ESTADO-ACTUAL.md](ESTADO-ACTUAL.md) · **Entrega actual:** [wiki/Entrega-4-Guia-Rapida.md](wiki/Entrega-4-Guia-Rapida.md)
 
 ## Stack
 
@@ -34,6 +34,10 @@ API y migraciones: [BACKEND/README.md](BACKEND/README.md).
 
 Todo el track celiaquía vive en JSON: [juego/contenido/README.md](juego/contenido/README.md).  
 Flujo de runtime congelado para la demo: [juego/README.md](juego/README.md).
+
+## Documentación TTIP
+
+Entregas del proyecto: [wiki/Entregas.md](wiki/Entregas.md) · **E4 (emails):** [Guía rápida](wiki/Entrega-4-Guia-Rapida.md)
 
 ## Equipo
 

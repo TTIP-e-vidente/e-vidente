@@ -2,6 +2,8 @@
 
 Envío transaccional con auditoría en PostgreSQL. Los templates viven en `templates/` y se versionan en git.
 
+**Documentación TTIP:** [Guía rápida](../../../../wiki/Entrega-4-Guia-Rapida.md) · [Arquitectura](../../../../wiki/Entrega-4-Arquitectura.md) · [Copy](../../../../wiki/Entrega-4-Mails.md)
+
 ## Estructura
 
 ```
@@ -83,7 +85,7 @@ docker compose up -d
 npm run smoke:email
 ```
 
-Verifica config Brevo, genera previews de los 3 templates y lista `email_deliveries`.
+Verifica config Brevo, genera previews de los **5 templates** y lista `email_deliveries`.
 
 Envío real de prueba (welcome):
 

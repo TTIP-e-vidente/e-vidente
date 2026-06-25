@@ -38,6 +38,6 @@ godot --headless --path juego -s res://tests/vertical_slice_smoke_test.gd
 
 ## PR
 
-Rama → commit → push → PR. Trazabilidad: [Bitacora-Entrega-3](Bitacora-Entrega-3). Índice: [Bitacora](Bitacora). Checks: [CI](CI).
+Rama → commit → push → PR. Trazabilidad: [Bitacora-Entrega-4](Bitacora-Entrega-4). Índice: [Bitacora](Bitacora). Checks: [CI](CI).
 
 **Problemas:** no importa → existe `juego/project.godot`; borrar `juego/.godot/` y reimportar. Recursos rotos → Reimport All. Docs en CI → `wiki/Bitacora*.md` o ESTADO-ACTUAL.

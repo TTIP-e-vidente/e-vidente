@@ -44,3 +44,5 @@ Leaderboard, refresh token, admin, mails reales de recuperación, validación JS
 - [Evidencia](Entrega-3-Evidencia)
 - [Vistas interactivas](Vistas-Interactivas) — diagramas MER y flujo E3
 - [Bitácora E3](Bitacora-Entrega-3)
+
+**Siguiente entrega:** [Entrega 4 — Emails y OTP](Entrega-4) · [Guía rápida E4](Entrega-4-Guia-Rapida) · [Flujo E3→E4](Entrega-4-Flujo-E3-E4)

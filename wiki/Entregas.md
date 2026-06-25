@@ -34,7 +34,7 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 ---
 
-## Entrega 3 (en curso)
+## Entrega 3
 
 | Página | Descripción |
 |--------|-------------|
@@ -52,13 +52,21 @@ Estado actual: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 ## Entrega 4 (lista para revisión)
 
+Circuito completo de **mails transaccionales**: OTP, bienvenida, recordatorios de racha, auditoría PostgreSQL.
+
+**Empezá acá:** [Guía rápida E4 (5 min)](Entrega-4-Guia-Rapida)
+
 | Página | Descripción |
 |--------|-------------|
-| [Resumen ejecutivo](Entrega-4) | Emails Brevo, consentimiento, cron y alcance |
-| [User Stories](Entrega-4-User-Stories) | Historias de usuario de mails y rachas |
-| [Arquitectura](Entrega-4-Arquitectura) | Módulo email, flujos, SQL y cron |
-| [Mails — redacción](Entrega-4-Mails) | Copy aprobado, tono y cómo publicar cambios |
-| [Decisiones](Entrega-4-Decisiones) | ADRs: Brevo, dedupe, consentimiento |
-| [Evidencia](Entrega-4-Evidencia) | Checklist para demo y producción |
+| [Guía rápida](Entrega-4-Guia-Rapida) | Validación express para revisores TTIP |
+| [Resumen ejecutivo](Entrega-4) | Alcance, diagramas, comandos npm |
+| [User Stories](Entrega-4-User-Stories) | 7 historias con criterios de aceptación |
+| [Arquitectura](Entrega-4-Arquitectura) | Endpoints, modelo DB, cron, secuencias |
+| [Flujo E3→E4](Entrega-4-Flujo-E3-E4) | Evolución desde backend y rachas E3 |
+| [Mails](Entrega-4-Mails) | Copy aprobado de los 5 correos |
+| [Decisiones](Entrega-4-Decisiones) | ADR-01 … ADR-10 |
+| [Evidencia](Entrega-4-Evidencia) | Demo TTIP, curl, SQL, checklist |
+| [Próximos pasos](Entrega-4-Proximos-Pasos) | Post-E4 y candidatos E5 |
+| [Bitácora E4](Bitacora-Entrega-4) | Cronología de implementación |
 
-Bitácora completa: [índice](Bitacora) · [E3](Bitacora-Entrega-3) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).
+Bitácora completa: [índice](Bitacora) · [E4](Bitacora-Entrega-4) · [E3](Bitacora-Entrega-3) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).

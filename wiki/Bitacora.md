@@ -14,13 +14,12 @@ Rutas `project/` en entradas viejas = hoy `juego/`.
 | POC | [Bitacora-POC](Bitacora-POC) | Prueba de concepto jugable |
 | Entrega 1 | [Bitacora-Entrega-1](Bitacora-Entrega-1) | Demo local |
 | Entrega 2 | [Bitacora-Entrega-2](Bitacora-Entrega-2) | Polish celiaquía |
-| **Entrega 3** (actual) | [Bitacora-Entrega-3](Bitacora-Entrega-3) | Backend, CI, mapa |
+| Entrega 3 | [Bitacora-Entrega-3](Bitacora-Entrega-3) | Backend, CI, mapa |
+| **Entrega 4** (actual) | [Bitacora-Entrega-4](Bitacora-Entrega-4) | Emails, OTP, rachas |
 
 ## Dónde escribir hoy
 
-**Entrada nueva →** [Bitacora-Entrega-3](Bitacora-Entrega-3) (arriba del todo).
-
-Al cerrar E3 y abrir E4 (si aplica): crear `Bitacora-Entrega-4.md` y enlazarlo acá.
+**Entrada nueva →** [Bitacora-Entrega-4](Bitacora-Entrega-4) (arriba del todo).
 
 **Pre-POC / POC / E1** se reconstruyeron desde `git log` (mar–may 2026). Si falta detalle de un hito, ampliá la entrada en el archivo de esa etapa.
 

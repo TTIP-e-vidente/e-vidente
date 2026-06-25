@@ -15,17 +15,20 @@
 - Sync
 - Vegan / keto / mixto: libros en UI; pack JSON solo celiaquía
 
-## Entrega 4 (emails)
+## Entrega 4 (emails) — lista para revisión
 
-- Código y tests integración jobs: **listo**
-- Validación Brevo real: correr `npm run validate:email-flow` con `.env` + IP autorizada
-- Producción: pendiente activación (`EMAIL_ENABLED` + dominio)
+- **Entrada recomendada:** [wiki/Entrega-4-Guia-Rapida.md](wiki/Entrega-4-Guia-Rapida.md) (5 min)
+- **Código:** 5 templates, OTP, jobs, dedupe, UI Godot — listo
+- **Docs:** 10 páginas en `wiki/Entrega-4*.md` + bitácora
+- **Tests:** `npm run test:email` ✅ (2026-06-25, 5/5 con Brevo) · `validate:email-flow` ✅
+- **Evidencia visual:** capturas bandeja — [checklist](wiki/Entrega-4-Evidencia.md)
+- **Producción:** deploy + dominio — pendiente
 
 ## Pendiente
 
 - Leaderboard, logros como sistema
 - Refresh token, admin
-- Emails en producción (módulo listo; activar con Brevo + deploy)
+- Activación mails en producción
 
 ## Repo
 
@@ -60,4 +63,4 @@ URL del API: ver `BACKEND/README.md`.
 - API: [BACKEND/README.md](BACKEND/README.md)
 - Tests: [juego/tests/README.md](juego/tests/README.md)
 - CI: [wiki/CI.md](wiki/CI.md)
-- Bitácora: [wiki/Bitacora.md](wiki/Bitacora.md) → [E3](wiki/Bitacora-Entrega-3.md) (activa), [E2](wiki/Bitacora-Entrega-2.md), …
+- Bitácora: [wiki/Bitacora.md](wiki/Bitacora.md) → [E4](wiki/Bitacora-Entrega-4.md) (activa), [E3](wiki/Bitacora-Entrega-3.md), …

@@ -1,6 +1,30 @@
 # Mails — redacción y operación (Entrega 4)
 
-Guía para escribir, revisar y publicar los correos de E-VIDENTE. El código vive en `BACKEND/src/modules/email/templates/`; esta página es la **fuente editorial** que el equipo valida antes de tocar TypeScript.
+Guía editorial para los **5 correos transaccionales** de E-VIDENTE. Fuente de verdad antes de tocar TypeScript.
+
+**Revisor TTIP:** [Guía rápida 5 min](Entrega-4-Guia-Rapida) · [Resumen](Entrega-4) · [Arquitectura](Entrega-4-Arquitectura) · [Evidencia](Entrega-4-Evidencia)
+
+---
+
+## Catálogo rápido
+
+| # | `template_key` | Cuándo | Consentimiento | Opt-out racha |
+|---|----------------|--------|----------------|---------------|
+| 1 | `email_verification` | Registro o cambio de mail | No | — |
+| 2 | `welcome` | Tras confirmar OTP | No | — |
+| 3 | `streak_at_risk` | Job 19:00 ART, jugó ayer | Sí | Sí |
+| 4 | `streak_lost` | Job, 2+ días sin jugar | Sí | Sí |
+| 5 | `mail_changed` | Cambio de mail confirmado | No (seguridad) | — |
+
+```mermaid
+flowchart TD
+  R[Registro] --> V[email_verification]
+  V -->|OTP OK| W[welcome]
+  P[Partida online] --> S{Racha?}
+  S -->|ayer sí, hoy no| AR[streak_at_risk]
+  S -->|2+ días off| AL[streak_lost]
+  C[Cambio mail] --> M[mail_changed al anterior]
+```
 
 ---
 
@@ -10,178 +34,219 @@ Guía para escribir, revisar y publicar los correos de E-VIDENTE. El código viv
 |-----------|----------------|
 | Cercano, no infantil | Voseo rioplatense; sin exceso de emojis |
 | Breve | Un mensaje = una idea; párrafos cortos |
-| Honesto | No prometer “confirmar cuenta” si no hay link de verificación |
+| Honesto | OTP explícito; bienvenida solo tras verificar |
 | Pedagógico | Recordar que se aprende jugando, sin sermonear |
 | Respetuoso | Opt-out visible en mails de racha; bienvenida sin presión |
 
-**Marca:** siempre **E-VIDENTE** (mayúsculas en marca, minúsculas en frases normales).
-
-**Cierre estándar (texto plano):** `Equipo E-VIDENTE`
-
-**Footer HTML (fijo en layout):** *E-VIDENTE — aprender jugando sobre restricciones alimentarias.*
+**Marca:** **E-VIDENTE** (mayúsculas en marca).  
+**Cierre estándar:** `Equipo E-VIDENTE`  
+**Footer HTML:** *E-VIDENTE — aprender jugando sobre restricciones alimentarias.*
 
 ---
 
 ## Anatomía de cada mail
 
-Cada template define cuatro capas:
-
-1. **Asunto** — lo que decide si abren el mail (máx. ~50 caracteres ideal).
+1. **Asunto** — decide si abren (~50 caracteres ideal).
 2. **Headline** — titular del bloque verde (HTML).
-3. **Subtitle** — una línea de contexto bajo el titular.
-4. **Cuerpo** — saludo + mensaje principal + (opcional) opt-out.
+3. **Subtitle** — contexto bajo el titular.
+4. **Cuerpo** — saludo + mensaje + (opcional) opt-out.
 
-Siempre hay versión **texto plano** y **HTML** con el mismo significado.
+Siempre: versión **texto plano** y **HTML** con el mismo significado.
 
 ---
 
-## Copy aprobado (Entrega 4)
+## Copy aprobado
 
-### 1. Bienvenida (`welcome`)
+### 1. Verificación OTP (`email_verification`)
 
-**Cuándo:** **después** de confirmar el código OTP (`POST /player/verify-email/confirm`), no al registrarse. Si el usuario se registra sin verificar, **no** se encola welcome. Se persiste en `email_deliveries` (outbox) y se envía al procesar la cola (`npm run dev` con `EMAIL_PROCESS_ON_STARTUP`, o `npm run email:run-local`).
+**Cuándo:** al registrarse con mail o al solicitar verificación desde perfil (`POST /player/verify-email/request`). **No** es la bienvenida.
 
 | Campo | Texto |
 |-------|-------|
-| **Asunto** | `Mail verificado — ¡Bienvenido/a a E-VIDENTE!` |
-| **Headline** | `¡Bienvenido/a a E-VIDENTE!` |
-| **Subtitle** | `Tu mail ya está verificado` |
+| **Asunto** | `Código E-VIDENTE: {código} (verificá tu mail)` |
+| **Headline** | `Verificá tu email` |
+| **Subtitle** | `Código válido por {N} minutos` |
 
-**Cuerpo (propuesta):**
+**Cuerpo:**
 
 > Hola {nombre},
+>
+> Tu código de verificación es: **{código}** (6 números seguidos, sin espacios). Válido por {N} minutos.
+>
+> Copiá el código del asunto o de este mail y pegalo en el juego.
+>
+> 1. Abrí E-VIDENTE  
+> 2. Pegá el código en la pantalla de verificación  
+> 3. Listo — tu cuenta quedará confirmada
+>
+> Si no lo pediste vos, ignorá este mensaje.
+
+**Tono:** instructivo, sin alarmismo. El código va también en el **asunto** para copiar rápido desde la bandeja.
+
+---
+
+### 2. Bienvenida (`welcome`)
+
+**Cuándo:** **después** de `POST /player/verify-email/confirm`. Sin verificar → **no** se encola. Outbox async (`EMAIL_PROCESS_ON_STARTUP` o `npm run email:run-local`).
+
+| Campo | Texto |
+|-------|-------|
+| **Asunto** | `Mail verificado — Bienvenido/a a E-VIDENTE` |
+| **Headline** | `Mail verificado` |
+| **Subtitle** | `Tu cuenta está lista` |
+
+**Cuerpo:**
+
+> ¡Hola {nombre}!
 >
 > Confirmaste tu mail correctamente. Ya podés entrar al juego, sumar experiencia y empezar tu racha diaria.
 >
-> Nos alegra que estés acá. ¡Que disfrutes el camino!
+> Aprender sobre restricciones alimentarias nunca fue tan entretenido. ¡Que disfrutes el camino!
 
-**Registro:** el mail que llega al crear cuenta es el de **verificación OTP** (`email_verification`), asunto `Código E-VIDENTE: {código} (verificá tu mail)`. No confundirlo con la bienvenida.
+**CTAs HTML (opcionales):** enlace a jugar (`EMAIL_APP_PLAY_URL`) y ranking.
 
-**Qué evitar en UI de registro:** frases como *“te enviamos el mail de bienvenida”* antes de verificar el código.
+**Evitar en UI:** *“te enviamos el mail de bienvenida”* antes de verificar el código.
 
 ---
 
-### 2. Racha en riesgo (`streak_at_risk`)
+### 3. Racha en riesgo (`streak_at_risk`)
 
-**Cuándo:** jugó **ayer** (fecha ART en Postgres), **hoy no** hay actividad en servidor. Requiere `email_notifications_enabled = true`, mail en cuenta, racha `> 0` en DB, y que haya corrido el **job** (`npm run email:streaks` o `npm run email:run-local`). **No** se dispara solo por abrir Godot.
+**Cuándo:** jugó **ayer** (ART), **hoy no** hay actividad en servidor. Requiere mail verificado, `email_notifications_enabled = true`, racha `> 0`, y job ejecutado. **No** al abrir Godot.
 
 | Campo | Texto |
 |-------|-------|
-| **Asunto** | `Tu racha de {N} {día|días} sigue en juego — jugá hoy` |
+| **Asunto** | `Tu racha de {N} días sigue en juego — jugá hoy` |
 | **Headline** | `Tu racha sigue en juego` |
 | **Subtitle** | `Entrá hoy para mantenerla` |
 
-**Cuerpo (propuesta):**
+**Cuerpo:**
 
 > Hola {nombre},
 >
-> Llevás **{N} {día|días}** de racha, pero hoy todavía no registramos que hayas jugado. Entrá y completá una partida para no perderla.
+> Llevás **{N} días** de racha, pero hoy todavía no registramos que hayas jugado. Entrá y completá una partida para no perderla.
 >
 > Podés desactivar los recordatorios de racha desde tu cuenta en el juego.
 
-**Tono:** urgencia suave, sin culpa. El número de días es el dato que más motiva.
+**Tono:** urgencia suave, sin culpa.
 
 ---
 
-### 3. Racha perdida (`streak_lost`)
+### 4. Racha perdida (`streak_lost`)
 
-**Cuándo:** 2+ días sin actividad en servidor (`last_activity_day <= hoy - 2`). Mismo consentimiento. El job envía el mail y luego **reconcilia** la racha en Postgres (`current_count = 0`); al loguear, Godot sincroniza con el servidor.
+**Cuándo:** 2+ días sin actividad. El job envía el mail y **reconcilia** `current_count = 0` en Postgres.
 
 | Campo | Texto |
 |-------|-------|
-| **Asunto** | `Se reinició tu racha — podés arrancar otra cuando quieras` |
+| **Asunto** | `Tu racha se reinició — podés arrancar otra cuando quieras` |
 | **Headline** | `Tu racha se reinició` |
 | **Subtitle** | `Siempre podés volver a empezar` |
 
-**Cuerpo (propuesta):**
+**Cuerpo:**
 
 > Hola {nombre},
 >
-> Pasaron varios días sin actividad y tu racha de **{N} {día|días}** volvió a cero. No pasa nada: cada día es una nueva oportunidad para aprender jugando.
+> Pasaron varios días sin actividad y tu racha de **{N} días** volvió a cero. No pasa nada: cada día es una nueva oportunidad para aprender jugando.
 >
 > Podés desactivar los recordatorios de racha desde tu cuenta en el juego.
 
-**Tono:** empático, sin dramatizar. Alineado al panel in-game `StreakLossMessagePanel`.
+**Tono:** empático. Alineado a `StreakLossMessagePanel`.
+
+---
+
+### 5. Cambio de mail (`mail_changed`)
+
+**Cuándo:** se confirma un nuevo mail en perfil. Se envía al **mail anterior** como aviso de seguridad.
+
+| Campo | Texto |
+|-------|-------|
+| **Asunto** | `Aviso de seguridad: tu email en E-VIDENTE fue cambiado` |
+| **Headline** | `Tu email fue cambiado` |
+| **Subtitle** | `Aviso de seguridad de cuenta` |
+
+**Cuerpo:**
+
+> Hola {nombre},
+>
+> Te avisamos que el email asociado a tu cuenta en E-VIDENTE fue actualizado.  
+> Nuevo email: **{nuevo_mail}**
+>
+> Si fuiste vos, podés ignorar este mensaje.  
+> Si **no** reconocés este cambio, contactanos de inmediato.
+
+**Tono:** serio pero calmado; checklist de pasos si no fue el usuario.
 
 ---
 
 ## Checklist antes de publicar un cambio de copy
 
-- [ ] Asunto claro y distinto por template (no repetir “E-VIDENTE” al inicio si ya hay marca en remitente).
-- [ ] `{nombre}` y `{N}` escapados en HTML (`escapeHtml` en código).
-- [ ] Texto plano = mismo mensaje que HTML (sin depender solo del diseño).
-- [ ] Mails de racha incluyen línea de opt-out.
-- [ ] Bienvenida **sin** opt-out de racha (no aplica).
-- [ ] Preview en dev: `GET /dev/email/preview?template_key=...&name=Agus&streak_count=7`
+- [ ] Asunto distinto por template.
+- [ ] `{nombre}`, `{N}`, `{código}` escapados en HTML (`escapeHtml`).
+- [ ] Texto plano = mismo mensaje que HTML.
+- [ ] Mails de racha incluyen opt-out.
+- [ ] Bienvenida y OTP **sin** opt-out de racha.
+- [ ] Preview dev de los 5 templates.
 - [ ] `npm run test:email` en verde.
-- [ ] Revisión en cliente real (Gmail + uno móvil): legibilidad, no carpeta spam.
+- [ ] Prueba en Gmail + móvil (spam, legibilidad).
 
 ---
 
-## Cómo implementar un cambio de redacción (paso a paso)
+## Cómo implementar un cambio (paso a paso)
 
 ### 1. Editar en wiki primero
 
-Acordar el copy en esta página (o en PR de docs). Evita sorpresas de producto.
+Acordar copy acá → después TypeScript. Evita sorpresas de producto.
 
-### 2. Actualizar el template TypeScript
+### 2. Actualizar template TypeScript
 
-Archivos:
+| Template | Archivo |
+|----------|---------|
+| OTP | `email-verification.template.ts` |
+| Bienvenida | `welcome.template.ts` |
+| Racha riesgo | `streak-at-risk.template.ts` |
+| Racha perdida | `streak-lost.template.ts` |
+| Mail cambiado | `mail-changed.template.ts` |
 
-- `welcome.template.ts`
-- `streak-at-risk.template.ts`
-- `streak-lost.template.ts`
-
-Patrón:
-
-```typescript
-const subject = '...';
-const textContent = buildTextLines([...]);
-const htmlContent = wrapHtml({
-  headline: '...',
-  subtitle: '...',
-  includeNotificationOptOut: true, // solo rachas
-  bodyHtml: [...]
-});
-```
-
-Textos compartidos (opt-out): `NOTIFICATION_OPT_OUT_TEXT` y `includeNotificationOptOut` en `layout.ts`.
+Registrar metadata en `templates/index.ts`.
 
 ### 3. Verificar sin enviar
 
 ```bash
-cd BACKEND
-npm run dev
-# Navegador:
-# http://localhost:3000/dev/email/preview?template_key=welcome&name=Agus&mail=agus@test.com
-# http://localhost:3000/dev/email/preview?template_key=streak_at_risk&name=Agus&streak_count=7
+cd BACKEND && npm run dev
 ```
 
-### 4. Probar envío real (dev)
+Previews (reemplazá `localhost:3000` si usás otro puerto):
 
-En `.env`: `EMAIL_ENABLED=true` + credenciales Brevo. En Brevo: remitente verified + IP autorizada (o bloqueo API desactivado). Ver `BACKEND/docs/BREVO_SETUP.md`.
+```
+/dev/email/preview?template_key=email_verification&name=Agus&mail=test@example.com
+/dev/email/preview?template_key=welcome&name=Agus&mail=test@example.com
+/dev/email/preview?template_key=streak_at_risk&name=Agus&streak_count=7
+/dev/email/preview?template_key=streak_lost&name=Agus&streak_count=12
+/dev/email/preview?template_key=mail_changed&name=Agus
+```
+
+### 4. Probar envío real
+
+`.env`: `EMAIL_ENABLED=true` + Brevo. Ver `BACKEND/docs/BREVO_SETUP.md`.
 
 ```bash
-cd BACKEND
 docker compose up -d
-npm run validate:email-flow          # circuito completo (recomendado)
-npm run seed:streak-email-demo -- --run-job   # demo streak_at_risk
-npm run smoke:email -- --send        # welcome de prueba (con SMOKE_EMAIL_TO)
+npm run validate:email-flow
+npm run smoke:email-verification
+npm run seed:streak-email-demo -- --run-job
 ```
 
-Auditoría: `GET /dev/email/deliveries?limit=20` (con `npm run dev`).
-
-### 5. Alinear copy en Godot (si aplica)
+### 5. Alinear copy en Godot
 
 | Lugar | Qué revisar |
 |-------|-------------|
-| `juego/API/Login.tscn` | Hint del mail de bienvenida; checkbox *“Quiero recibir recordatorios de racha por mail.”* |
-| `juego/interface/auth.tscn` | Toggle *“Recibir recordatorios de racha por correo”* (editar perfil, sesión online) |
-| `ProfileOverlayPanel` | Solo lectura: *“Recordatorios mail: Sí/No”* |
+| `juego/API/Login.tscn` | Checkbox recordatorios; hint de verificación (no bienvenida prematura) |
+| `juego/interface/auth.tscn` | Toggle recordatorios en perfil |
+| `EmailVerification.tscn` | Textos del flujo OTP |
+| `ProfileOverlayPanel` | *“Recordatorios mail: Sí/No”* |
 
 ---
 
-## Diseño visual (ya implementado)
+## Diseño visual
 
 Tokens en `templates/layout.ts` (`GAME_EMAIL_THEME`):
 
@@ -190,41 +255,27 @@ Tokens en `templates/layout.ts` (`GAME_EMAIL_THEME`):
 | Verde primario | `#42785e` | Header, énfasis |
 | Crema | `#f4f7f2` | Fondo |
 | Marrón acento | `#704533` | Racha perdida |
-| Radio card | `28px` | Coherente con paneles del juego |
+| Radio card | `28px` | Paneles del juego |
 
-Tipografía: **Rubik** (Google Fonts). No usar Rubik Spray Paint en mail (compatibilidad con clientes).
-
----
-
-## Métricas útiles (post-activación)
-
-En Brevo: entregados, rebotes, spam. En Postgres:
-
-```sql
-SELECT template_key, status, COUNT(*)
-FROM email_deliveries
-GROUP BY template_key, status;
-```
-
-Correlacionar picos de `failed` con `error_message` y límites de rate de Brevo. Error frecuente en local: `unrecognised IP address` → autorizar IP en Brevo → Seguridad.
+Tipografía: **Rubik** (Google Fonts). Íconos en `assets/icons/` (welcome, mail, streak, security, alert).
 
 ---
 
-## Operación — qué esperar (no confundir con el juego)
+## Operación — FAQ
 
 | Pregunta | Respuesta |
 |----------|-----------|
-| ¿Me manda mail al abrir Godot? | **No** (salvo welcome pendiente si el backend procesa cola al iniciar). |
-| ¿Me avisa “por perder racha” al instante? | **No.** Es batch diario vía job. |
-| ¿Qué datos usa el job? | Postgres (`streaks.last_activity_day`), no solo el save local offline. |
-| ¿Cómo programo envíos en local? | Task Scheduler: `scripts/local/register-email-tasks-windows.ps1` o manual `npm run email:run-local`. |
+| ¿Mail al abrir Godot? | **No** (salvo outbox pendiente al iniciar backend). |
+| ¿Aviso instantáneo de racha perdida? | **No.** Batch diario vía job. |
+| ¿Qué datos usa el job? | Postgres (`streaks.last_activity_day`), no solo save offline. |
+| ¿Cron en local? | `register-email-tasks-windows.ps1` o `npm run email:run-local`. |
 
-**Flujo mínimo para recibir `streak_at_risk` con tu cuenta:**
+**Flujo mínimo `streak_at_risk`:**
 
-1. Login + partida **online** (racha en servidor).
-2. `last_activity_day` = ayer y hoy sin jugar en DB (o `npm run seed:streak-email-demo`).
-3. `npm run email:streaks` (o `email:run-local`).
-4. Revisar bandeja + `email_deliveries` con `status=sent`.
+1. Mail verificado + notificaciones ON + partida online.
+2. `last_activity_day` = ayer (o `npm run seed:streak-email-demo`).
+3. `npm run email:streaks`.
+4. Bandeja + `email_deliveries` con `status=sent`.
 
 ---
 
@@ -232,6 +283,5 @@ Correlacionar picos de `failed` con `error_message` y límites de rate de Brevo.
 
 | Mail | Notas |
 |------|-------|
-| Recuperación de contraseña | Link firmado con TTL; ticket futuro |
-| Verificación de cuenta | Cambia el copy de registro y el flujo de auth |
-| Resumen semanal | Requiere job nuevo + template; distinto consentimiento |
+| Recuperación de contraseña | Link firmado con TTL |
+| Resumen semanal | Job nuevo + consentimiento distinto |
