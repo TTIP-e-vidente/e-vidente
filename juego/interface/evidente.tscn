@@ -2,21 +2,43 @@
 
 [ext_resource type="Script" uid="uid://h6ls8bqg44gf" path="res://interface/evidente.gd" id="1_6okih"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_0xe3y"]
-[ext_resource type="Texture2D" uid="uid://r8p3r346k43p" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
-[ext_resource type="Texture2D" uid="uid://bkiryhehjomw7" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
-[ext_resource type="Texture2D" uid="uid://28lwsf411ufu" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
-[ext_resource type="Texture2D" uid="uid://ctir3nrtl3n27" path="res://assets-sistema/intro/intro-3-3.png" id="6_2f6ov"]
-[ext_resource type="Texture2D" uid="uid://cx7rnhiwjfl2p" path="res://assets-sistema/intro/intro-3-4.png" id="7_7i8j3"]
-[ext_resource type="Texture2D" uid="uid://birwr0tn8mfdi" path="res://assets-sistema/intro/intro-3-5.png" id="8_1o5dh"]
-[ext_resource type="Texture2D" uid="uid://upl74gyfl2vh" path="res://assets-sistema/intro/intro-3.png" id="9_ythax"]
-[ext_resource type="Texture2D" uid="uid://bm1f7vvww1odb" path="res://assets-sistema/intro/intro-4.png" id="10_qj1gl"]
-[ext_resource type="Texture2D" uid="uid://drkhgxpmo3qhq" path="res://assets-sistema/intro/intro-5.png" id="11_0pita"]
-[ext_resource type="Texture2D" uid="uid://cgt0dov15nmn2" path="res://assets-sistema/intro/intro-6.png" id="12_6vnxt"]
-[ext_resource type="Texture2D" uid="uid://cg034mtep522x" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
-[ext_resource type="Texture2D" uid="uid://2yg71efiqcn4" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
-[ext_resource type="Texture2D" uid="uid://b3kmyivdgjajn" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
-[ext_resource type="Texture2D" uid="uid://dvieosc1mn71b" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
-[ext_resource type="AudioStream" uid="uid://b3066err46pf6" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
+[ext_resource type="Texture2D" uid="uid://bv2v51i0yo8qj" path="res://assets-sistema/intro/intro-1.png" id="3_kejcq"]
+[ext_resource type="Texture2D" uid="uid://c15l4kt5ieykp" path="res://assets-sistema/intro/intro-2.png" id="4_bq8g4"]
+[ext_resource type="Texture2D" uid="uid://bx110duab2dy0" path="res://assets-sistema/intro/intro-3-2.png" id="5_8f2pd"]
+[ext_resource type="Texture2D" uid="uid://cqir621w3y3e5" path="res://assets-sistema/intro/intro-3-3.png" id="6_2f6ov"]
+[ext_resource type="Texture2D" uid="uid://3xtxbq1rq1tn" path="res://assets-sistema/intro/intro-3-4.png" id="7_7i8j3"]
+[ext_resource type="Texture2D" uid="uid://d0kefp2ivmnoa" path="res://assets-sistema/intro/intro-3-5.png" id="8_1o5dh"]
+[ext_resource type="Texture2D" uid="uid://bsivrvlbyf4xp" path="res://assets-sistema/intro/intro-3.png" id="9_ythax"]
+[ext_resource type="Texture2D" uid="uid://cdwsyb7bav77" path="res://assets-sistema/intro/intro-4.png" id="10_qj1gl"]
+[ext_resource type="Texture2D" uid="uid://beqp2l10ibfs5" path="res://assets-sistema/intro/intro-5.png" id="11_0pita"]
+[ext_resource type="Texture2D" uid="uid://dlifwp40ja5e" path="res://assets-sistema/intro/intro-6.png" id="12_6vnxt"]
+[ext_resource type="Texture2D" uid="uid://bxlwfeoeq4bbe" path="res://assets-sistema/intro/intro-7.png" id="13_ut5ws"]
+[ext_resource type="Texture2D" uid="uid://d20l43m1or756" path="res://assets-sistema/intro/intro-8.png" id="14_5hl4t"]
+[ext_resource type="Texture2D" uid="uid://c6oe32lkuxq4m" path="res://assets-sistema/intro/intro-9.png" id="15_qui1y"]
+[ext_resource type="Texture2D" uid="uid://c6ulm0u5runwk" path="res://assets-sistema/interfaz/go.png" id="16_1sa43"]
+[ext_resource type="Texture2D" uid="uid://cnrapj8oumfr" path="res://assets-sistema/intro/intro-10.png" id="16_a0dnb"]
+[ext_resource type="AudioStream" uid="uid://cg8hq2tf5x33w" path="res://assets-sistema/sonidos/wingrandpiano-96338.mp3" id="17_0xxjx"]
+[ext_resource type="Texture2D" uid="uid://k4jnq52ab0ij" path="res://assets-sistema/intro/intro-11.png" id="17_fq5yo"]
+[ext_resource type="Texture2D" uid="uid://c8gn5mwiwq5mk" path="res://assets-sistema/intro/intro-12.png" id="18_u5q2u"]
+[ext_resource type="Texture2D" uid="uid://ds6cfjui1dnce" path="res://assets-sistema/intro/intro-13.png" id="19_yu1jn"]
+[ext_resource type="Texture2D" uid="uid://ddnfvqwtrtu6b" path="res://assets-sistema/intro/intro-14.png" id="20_hussk"]
+[ext_resource type="Texture2D" uid="uid://do2uwslrjw0b" path="res://assets-sistema/intro/intro-15.png" id="21_rvgj5"]
+[ext_resource type="Texture2D" uid="uid://cdporv3tunbhq" path="res://assets-sistema/intro/intro-16.png" id="22_bq3nj"]
+[ext_resource type="Texture2D" uid="uid://b5vw3t6b3j7k2" path="res://assets-sistema/intro/intro-17.png" id="23_lxcca"]
+[ext_resource type="Texture2D" uid="uid://c7f615aek1ua0" path="res://assets-sistema/intro/intro-18.png" id="24_lxsjl"]
+[ext_resource type="Texture2D" uid="uid://doqvnj6ksg0ms" path="res://assets-sistema/intro/intro-19.png" id="25_6yvhb"]
+[ext_resource type="Texture2D" uid="uid://bhnveixnaai68" path="res://assets-sistema/intro/intro-20.png" id="26_hc6e3"]
+[ext_resource type="Texture2D" uid="uid://bjwrh1ujniuve" path="res://assets-sistema/intro/intro-21.png" id="27_lars1"]
+[ext_resource type="Texture2D" uid="uid://du52smwwmorok" path="res://assets-sistema/intro/intro-22.png" id="28_n4wbo"]
+[ext_resource type="Texture2D" uid="uid://d4b57240mum2l" path="res://assets-sistema/intro/intro-23.png" id="29_oi3lg"]
+[ext_resource type="Texture2D" uid="uid://beui4oew6c3a8" path="res://assets-sistema/intro/intro-24.png" id="30_iy6tj"]
+[ext_resource type="Texture2D" uid="uid://syrgscmubvwe" path="res://assets-sistema/intro/intro-25.png" id="31_gcnjf"]
+[ext_resource type="Texture2D" uid="uid://dm3coqie2h6p8" path="res://assets-sistema/intro/intro-26.png" id="32_fvyjo"]
+[ext_resource type="Texture2D" uid="uid://b81mjriq0qkro" path="res://assets-sistema/intro/intro-27.png" id="33_61vrm"]
+[ext_resource type="Texture2D" uid="uid://cfvc5wwii1pa2" path="res://assets-sistema/intro/intro-28.png" id="34_aptru"]
+[ext_resource type="Texture2D" uid="uid://1qlbrdlojssg" path="res://assets-sistema/intro/intro-29.png" id="35_pe6nq"]
+[ext_resource type="Texture2D" uid="uid://qf2ryvp0ux5b" path="res://assets-sistema/intro/intro-30.png" id="36_qsdoi"]
+[ext_resource type="Texture2D" uid="uid://c4ojoafpivspq" path="res://assets-sistema/intro/intro-31.png" id="37_qbrhv"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_8sp5d"]
 animations = [{
@@ -59,6 +81,72 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("15_qui1y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_a0dnb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_fq5yo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_u5q2u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_yu1jn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_hussk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_rvgj5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_bq3nj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_lxcca")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_lxsjl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_6yvhb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_hc6e3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_lars1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_n4wbo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_oi3lg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_iy6tj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_gcnjf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_fvyjo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_61vrm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_aptru")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_pe6nq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_qsdoi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_qbrhv")
 }],
 "loop": true,
 "name": &"intro",
@@ -78,11 +166,12 @@ scale = Vector2(1.0817637, 1.1093603)
 [node name="e-vidente" type="Sprite2D" parent="." unique_id=1551667496]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="e-vidente" unique_id=1301594328]
-position = Vector2(581, 402)
-scale = Vector2(0.877111, 0.877111)
+position = Vector2(597.00006, 204.00002)
+scale = Vector2(0.867372, 0.8584028)
 sprite_frames = SubResource("SpriteFrames_8sp5d")
 animation = &"intro"
-frame_progress = 0.219101
+frame_progress = 0.5368788
+speed_scale = 2.0
 
 [node name="go" type="Button" parent="." unique_id=767903247]
 offset_left = 447.0
