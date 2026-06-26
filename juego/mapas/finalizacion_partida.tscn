@@ -10,9 +10,38 @@
 [ext_resource type="PackedScene" uid="uid://bjvys771chohe" path="res://niveles/botones.tscn" id="6_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://c8c27au2g0sam" path="res://assets-sistema/sonidos/leccion-perfecta.mp3" id="7_4j0lp"]
 [ext_resource type="AudioStream" uid="uid://bu84s3yxkdovy" path="res://assets-sistema/sonidos/leccion-terminada.mp3" id="8_j2nsx"]
+[ext_resource type="Texture2D" uid="uid://e8t4phfxxqh5" path="res://assets-sistema/player/personaje-sintiendose-bien-1.png" id="11_v6eb7"]
+[ext_resource type="Texture2D" uid="uid://bx6frudhnkoeu" path="res://assets-sistema/player/personaje-sintiendose-bien-2.png" id="12_24pyk"]
+[ext_resource type="Texture2D" uid="uid://dvssk6gnf2r7o" path="res://assets-sistema/player/personaje-sintiendose-bien-3.png" id="13_15pif"]
+[ext_resource type="Texture2D" uid="uid://070thk0b760h" path="res://assets-sistema/player/personaje-sintiendose-bien-4.png" id="14_t2w5s"]
+[ext_resource type="Texture2D" uid="uid://b61hofyw75xh1" path="res://assets-sistema/player/personaje-sintiendose-bien-5.png" id="15_xon3d"]
 
-[node name="FinalizacionPartida" type="Node2D" unique_id=2003681950]
+[sub_resource type="SpriteFrames" id="SpriteFrames_icrbm"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_v6eb7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_24pyk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_15pif")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_t2w5s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_xon3d")
+}],
+"loop": true,
+"name": &"recontento",
+"speed": 5.0
+}]
+
+[node name="FinalizacionPartida" type="Node2D" unique_id=2003681950 node_paths=PackedStringArray("animated_sprite_2d")]
 script = ExtResource("1_k2l4b")
+animated_sprite_2d = NodePath("AnimatedSprite2D")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("1_2gmc3")]
 offset_left = -1.0
@@ -168,5 +197,11 @@ theme_override_fonts/font = ExtResource("4_uokky")
 theme_override_font_sizes/font_size = 17
 text = "No volver a mostrar el ranking"
 alignment = 1
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1951365905]
+position = Vector2(204.00012, 595.2715)
+scale = Vector2(1.5384606, 1.4824265)
+sprite_frames = SubResource("SpriteFrames_icrbm")
+animation = &"recontento"
 
 [connection signal="pressed" from="Continuar" to="." method="_on_continuar_presionado"]

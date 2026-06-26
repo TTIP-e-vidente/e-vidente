@@ -156,6 +156,8 @@ func _ready() -> void:
 	_configurar_indicador_de_progreso_de_juego()
 	configurar_retroalimentacion_de_guardado()
 
+	
+
 
 func _cargar_recursos_runtime() -> void:
 	_completion_black_and_white_shader = load(COMPLETION_BLACK_AND_WHITE_SHADER_PATH) as Shader

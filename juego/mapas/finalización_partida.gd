@@ -21,6 +21,7 @@ const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules
 const EXP_ICON = preload("res://assets-sistema/final-leccion/exp-icon.png")
 const PRECISION_ICON = preload("res://assets-sistema/final-leccion/precision-icon.png")
 const TIEMPO_ICON = preload("res://assets-sistema/final-leccion/tiempo-icon.png")
+@export var animated_sprite_2d: AnimatedSprite2D
 
 const MOSTRAR_COMPARACION_PRECISION_UI := false
 
@@ -46,7 +47,7 @@ func _ready() -> void:
 	stats_1.setear_icono(EXP_ICON)
 	stats_2.setear_icono(PRECISION_ICON)
 	stats_3.setear_icono(TIEMPO_ICON)
-
+	animated_sprite_2d.play("recontento")
 	numero.modulate = Color("#DBC151")
 	numero_2.modulate = Color("#DB9D4B")
 	numero_3.modulate = Color("#4B79DB")
