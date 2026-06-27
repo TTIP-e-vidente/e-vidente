@@ -75,6 +75,60 @@ func obtener_usuario_en_cache() -> Dictionary:
 	return _usuario_en_cache
 
 
+func _mail_verified_at_valido(verified_at: Variant) -> bool:
+	if verified_at == null:
+		return false
+	var texto := str(verified_at).strip_edges()
+	if texto.is_empty() or texto.to_lower() == "null":
+		return false
+	return true
+
+
+func _persistir_usuario_en_cache(user: Dictionary) -> void:
+	if user.is_empty():
+		return
+	var normalizado := user.duplicate(true)
+	if not _mail_verified_at_valido(normalizado.get("mail_verified_at", null)):
+		normalizado.erase("mail_verified_at")
+	_usuario_en_cache = normalizado
+	BackendSessionStorage.guardar_sesion(
+		_auth.obtener_token(),
+		_auth.obtener_usuario(),
+		_usuario_en_cache
+	)
+
+
+func _aplicar_mail_verified_at_en_cache(verified_at: Variant) -> void:
+	if _usuario_en_cache.is_empty():
+		return
+	if _mail_verified_at_valido(verified_at):
+		_usuario_en_cache["mail_verified_at"] = verified_at
+	else:
+		_usuario_en_cache.erase("mail_verified_at")
+	_persistir_usuario_en_cache(_usuario_en_cache)
+
+
+func limpiar_mail_verificado_en_cache() -> void:
+	_aplicar_mail_verified_at_en_cache(null)
+
+
+func refrescar_usuario_en_cache() -> Dictionary:
+	if not _auth.esta_logueado():
+		return {"ok": false, "status": 401, "error": "No active session"}
+	var epoch := _auth.obtener_epoch()
+	var resultado := await obtener_usuario_del_servidor()
+	if not bool(resultado.get("ok", false)):
+		return resultado
+	if _auth.obtener_epoch() != epoch:
+		return _resultado_sesion_cambiada()
+	var data: Variant = resultado.get("data", {})
+	if data is Dictionary:
+		var user_data: Variant = (data as Dictionary).get("user", data)
+		if user_data is Dictionary and not (user_data as Dictionary).is_empty():
+			_persistir_usuario_en_cache(user_data as Dictionary)
+	return resultado
+
+
 func obtener_progreso_online_en_cache() -> Dictionary:
 	return _progreso_online_en_cache
 
@@ -146,15 +200,17 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 	if _auth.obtener_epoch() != epoch:
 		return _resultado_sesion_cambiada()
 
+	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
+	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
+	var username_sync := str(_auth.obtener_usuario()).strip_edges()
+
 	var resultado_progreso: Dictionary = await obtener_progreso_del_servidor()
 	if not resultado_progreso.get("ok", false):
 		return resultado_progreso
 	if _auth.obtener_epoch() != epoch:
 		return _resultado_sesion_cambiada()
 
-	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
 	var datos_progreso: Dictionary = resultado_progreso.get("data", {})
-	var username_sync := str(_auth.obtener_usuario()).strip_edges()
 	var forzar_reset_remoto := (
 		SaveManager != null
 		and SaveManager.has_method("debe_forzar_reset_remoto_antes_de_sync")
@@ -274,7 +330,8 @@ func actualizar_perfil_online(
 	nombre: String,
 	mail: String,
 	fecha_nacimiento: String,
-	notificaciones_mail: Variant = null
+	notificaciones_mail: Variant = null,
+	forzar_sincronizar_mail: bool = false
 ) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
@@ -291,7 +348,9 @@ func actualizar_perfil_online(
 
 	var clean_mail := mail.strip_edges()
 	var cached_mail := str(cached.get("mail", "")).strip_edges()
-	if clean_mail != cached_mail:
+	if forzar_sincronizar_mail and not clean_mail.is_empty():
+		payload["mail"] = clean_mail
+	elif clean_mail != cached_mail:
 		payload["mail"] = clean_mail if not clean_mail.is_empty() else null
 
 	var clean_birth := fecha_nacimiento.strip_edges()
@@ -320,17 +379,21 @@ func actualizar_perfil_online(
 	if data is Dictionary:
 		var user_data: Variant = (data as Dictionary).get("user", {})
 		if user_data is Dictionary and not (user_data as Dictionary).is_empty():
-			_usuario_en_cache = user_data as Dictionary
+			_persistir_usuario_en_cache(user_data as Dictionary)
+	resultado["skipped"] = false
 	return resultado
 
 
 ## Solicita el envío de un código de verificación de 6 dígitos al email configurado.
 ## Retorna status 'sent', 'already_verified' o error (rate_limited, 422, etc.).
-func solicitar_verificacion_email() -> Dictionary:
+func solicitar_verificacion_email(mail_esperado: String = "") -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
-	var resultado := await _api.solicitar_verificacion_email(_auth.obtener_token())
+	var resultado := await _api.solicitar_verificacion_email(
+		_auth.obtener_token(),
+		mail_esperado
+	)
 	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
@@ -347,16 +410,9 @@ func confirmar_verificacion_email(codigo: String) -> Dictionary:
 	if bool(resultado.get("ok", false)):
 		var data: Variant = resultado.get("data", {})
 		if data is Dictionary:
-			var verified_at: Variant = (data as Dictionary).get("mail_verified_at", null)
-			if not _usuario_en_cache.is_empty():
-				_usuario_en_cache["mail_verified_at"] = verified_at
-				BackendSessionStorage.guardar_sesion(
-					_auth.obtener_token(),
-					_auth.obtener_usuario(),
-					_usuario_en_cache
-				)
-				if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
-					SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+			_aplicar_mail_verified_at_en_cache((data as Dictionary).get("mail_verified_at", null))
+			if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
+				SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
 	return resultado
 
 
@@ -606,10 +662,11 @@ func _procesar_resultado_de_auth(resultado: Dictionary) -> void:
 	_progreso_online_en_cache.clear()
 	_descartar_resultado_carga_online()
 	_auth.establecer_sesion(access_token, username)
+	if not user.is_empty():
+		_persistir_usuario_en_cache(user.duplicate(true))
 	if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
-		SaveManager.call("preparar_cuenta_online", user)
-	BackendSessionStorage.guardar_sesion(access_token, username, user)
-	login_succeeded.emit(user)
+		SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+	login_succeeded.emit(_usuario_en_cache.duplicate(true))
 
 
 func _al_expirar_sesion() -> void:

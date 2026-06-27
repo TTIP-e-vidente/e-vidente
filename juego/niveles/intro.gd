@@ -30,7 +30,6 @@ const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const LOGIN_FLOW_GAME := "game"
 const LOGIN_FLOW_PROFILE := "profile"
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
-const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
 
 
 
@@ -46,7 +45,6 @@ var _login_canvas_layer: CanvasLayer = null
 var _login_flow: String = LOGIN_FLOW_GAME
 var _profile_overlay: Control = null
 var _profile_canvas_layer: CanvasLayer = null
-var _mail_verify_nudge: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -63,7 +61,6 @@ func _ready() -> void:
 	saliri.texture = load(SALIR_PATH) as Texture2D
 	BackendSession.session_expired.connect(_on_sesion_expirada)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
-	call_deferred("_instalar_aviso_verificacion_mail")
 	call_deferred("_procesar_retorno_verificacion_mail")
 	call_deferred("_procesar_deep_link_leaderboard")
 
@@ -84,9 +81,7 @@ func _on_jugar_presionado() -> void:
 
 
 func _continuar_a_juego() -> void:
-	if AuthApi.esta_logueado() and AuthApi.mail_pendiente_verificacion():
-		_mostrar_login()
-		return
+	EmailVerificationBridge.habilitar_aviso_mail()
 	GameSceneRouter.transicionar_a_escena(_abrir_modo_selector())
 
 
@@ -132,13 +127,8 @@ func _instanciar_login_overlay() -> void:
 
 func _on_login_completado() -> void:
 	var current_flow := _login_flow
-	if current_flow == LOGIN_FLOW_GAME and AuthApi.mail_pendiente_verificacion():
-		# Respaldo: no avanzar al juego sin mail verificado.
-		if not is_instance_valid(_login_overlay):
-			_mostrar_login()
-		return
 	_cerrar_login()
-	_refrescar_aviso_verificacion_mail()
+	EmailVerificationBridge.refrescar_nudge_global()
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 	if current_flow == LOGIN_FLOW_PROFILE:
 		_mostrar_perfil()
@@ -225,19 +215,7 @@ func _abrir_opciones_menu() -> String:
 
 func _mostrar_perdida_racha_si_corresponde() -> void:
 	await StreakLossFlowScript.mostrar_si_corresponde(self)
-	_refrescar_aviso_verificacion_mail()
-
-
-func _instalar_aviso_verificacion_mail() -> void:
-	_mail_verify_nudge = MailVerifyNudgeHelper.instalar_en(
-		self,
-		Callable(self, "_on_aviso_verificacion_verificar_ahora")
-	)
-	_refrescar_aviso_verificacion_mail()
-
-
-func _refrescar_aviso_verificacion_mail() -> void:
-	MailVerifyNudgeHelper.refrescar(_mail_verify_nudge)
+	EmailVerificationBridge.refrescar_nudge_global()
 
 
 func _on_login_verificacion_escena_solicitada(es_registro: bool, result: Dictionary) -> void:
@@ -259,12 +237,4 @@ func _on_login_verificacion_escena_solicitada(es_registro: bool, result: Diction
 
 func _procesar_retorno_verificacion_mail() -> void:
 	EmailVerificationBridge.procesar_retorno_escena(self)
-	_refrescar_aviso_verificacion_mail()
-
-
-func _on_aviso_verificacion_verificar_ahora() -> void:
-	var nav := {
-		"return_scene": MAIN_MENU_SCENE_PATH,
-		"after_success": "none",
-	}
-	EmailVerificationBridge.iniciar_pendiente(false, nav)
+	EmailVerificationBridge.refrescar_nudge_global()

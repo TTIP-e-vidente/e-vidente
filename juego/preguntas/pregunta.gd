@@ -658,7 +658,11 @@ func _set_opciones_habilitadas(habilitadas: bool) -> void:
 
 
 func _finalizar_pregunta() -> void:
-	_finalizar_quiz()
+	indice_pregunta_actual += 1
+	if indice_pregunta_actual >= _cantidad_de_preguntas():
+		_finalizar_quiz()
+		return
+	mostrar_pregunta()
 
 
 func _mostrar_feedback_respuesta(boton: Button, es_correcta: bool) -> void:

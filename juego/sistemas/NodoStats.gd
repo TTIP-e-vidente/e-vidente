@@ -1,5 +1,6 @@
 extends RefCounted
 
+const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 const _ResultadoScript := preload("res://modalidades/ResultadoDeMiniJuego.gd")
 
 static func registrar(tree: SceneTree, resultado: Dictionary) -> void:
@@ -24,18 +25,31 @@ static func registrar(tree: SceneTree, resultado: Dictionary) -> void:
 		global_state.call("registrar_resultado_mini_juego_multiple", correctos, errores)
 
 
+## Deduce intentos desde aciertos+errores cuando el contador quedó en 0.
+static func normalizar_stats_dict(stats: Dictionary) -> Dictionary:
+	var normalizado: Dictionary = stats.duplicate(true)
+	var aciertos: int = int(normalizado.get("aciertos", 0))
+	var errores: int = int(normalizado.get("errores", 0))
+	var intentos: int = int(normalizado.get("intentos", 0))
+	if intentos <= 0:
+		var deducidos: int = aciertos + errores
+		if deducidos > 0:
+			normalizado["intentos"] = deducidos
+	return normalizado
+
+
 ## Devuelve todos los stats acumulados del nodo activo.
 static func obtener_estadisticas(tree: SceneTree) -> Dictionary:
 	var global_state: Node = _global(tree)
 	if global_state == null or not global_state.has_method("obtener_stats_nodo_actual"):
 		return {"aciertos": 0, "errores": 0, "intentos": 0}
-	return global_state.call("obtener_stats_nodo_actual")
+	return normalizar_stats_dict(global_state.call("obtener_stats_nodo_actual"))
 
 
 ## Precisión como porcentaje entero 0–100.
 static func obtener_precision(tree: SceneTree) -> int:
 	var s: Dictionary = obtener_estadisticas(tree)
-	return NodoProgressionRules.calcular_precision(
+	return NodoProgressionRulesScript.calcular_precision(
 		int(s.get("aciertos", 0)),
 		int(s.get("intentos", 0))
 	)
@@ -44,7 +58,7 @@ static func obtener_precision(tree: SceneTree) -> int:
 ## Porcentaje de error como entero 0–100.
 static func get_error_percent(tree: SceneTree) -> int:
 	var s: Dictionary = obtener_estadisticas(tree)
-	return NodoProgressionRules.calculate_error_percent(
+	return NodoProgressionRulesScript.calculate_error_percent(
 		int(s.get("errores", 0)),
 		int(s.get("intentos", 0))
 	)
@@ -69,7 +83,7 @@ static func obtener_duracion_formateada(tree: SceneTree) -> String:
 	var global_state: Node = _global(tree)
 	if global_state != null and global_state.has_method("obtener_tiempo_nodo_formato"):
 		return str(global_state.call("obtener_tiempo_nodo_formato")).strip_edges()
-	return NodoProgressionRules.formatear_duracion(get_duration_ms(tree))
+	return NodoProgressionRulesScript.formatear_duracion(get_duration_ms(tree))
 
 
 ## Bridge: registra un ResultadoDeMiniJuego en el acumulador global.

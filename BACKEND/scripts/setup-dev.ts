@@ -2,6 +2,7 @@ import { execSync, spawnSync } from 'child_process';
 import dotenv from 'dotenv';
 import path from 'path';
 import { Pool } from 'pg';
+import { createPostgresPoolConfig, isRemotePostgres } from '../src/config/postgresPoolConfig';
 
 dotenv.config();
 
@@ -25,14 +26,7 @@ function run(command: string, description: string): void {
 }
 
 async function waitForPostgres(maxRetries = 20, delayMs = 2000): Promise<void> {
-  const pool = new Pool({
-    host: process.env.POSTGRES_HOST ?? 'localhost',
-    port: Number.parseInt(process.env.POSTGRES_PORT ?? '5432', 10),
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    connectionTimeoutMillis: 3000,
-  });
+  const pool = new Pool(createPostgresPoolConfig({ connectionTimeoutMillis: 3000 }));
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -56,13 +50,7 @@ async function waitForPostgres(maxRetries = 20, delayMs = 2000): Promise<void> {
 }
 
 async function validateConnection(): Promise<void> {
-  const pool = new Pool({
-    host: process.env.POSTGRES_HOST ?? 'localhost',
-    port: Number.parseInt(process.env.POSTGRES_PORT ?? '5432', 10),
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-  });
+  const pool = new Pool(createPostgresPoolConfig());
 
   try {
     const result = await pool.query<{ current_database: string; current_user: string }>(
@@ -82,6 +70,12 @@ async function main(): Promise<void> {
   console.log('  E-VIDENTE — Backend Dev Setup');
   console.log('  SOLO PARA DESARROLLO LOCAL');
   console.log('═══════════════════════════════════════════');
+
+  if (isRemotePostgres()) {
+    console.error('\nERROR: setup:dev es solo para Docker local (POSTGRES_SSL=false).');
+    console.error('Para Supabase usá: npm run setup:supabase');
+    process.exit(1);
+  }
 
   // 1. Levantar PostgreSQL
   step('1/6  Levantando PostgreSQL con Docker Compose...');

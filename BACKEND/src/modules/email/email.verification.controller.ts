@@ -11,6 +11,14 @@ import {
   sendVerificationCode
 } from './email.verification.service';
 
+function normalizeMailForCompare(value: string | null | undefined): string {
+  if (value == null) {
+    return '';
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.toLowerCase() : '';
+}
+
 export async function getEmailStatusController(
   request: Request,
   response: Response
@@ -53,6 +61,20 @@ export async function requestVerificationController(
 
     if (!user.mail) {
       sendResponse(response, 422, { error: 'No tenés un email configurado en tu cuenta.' });
+      return;
+    }
+
+    const body = (request.body ?? {}) as Record<string, unknown>;
+    const requestedMail = typeof body.mail === 'string' ? body.mail.trim() : '';
+    if (
+      requestedMail &&
+      normalizeMailForCompare(requestedMail) !== normalizeMailForCompare(user.mail)
+    ) {
+      sendResponse(response, 409, {
+        error: 'Guardá el mail en tu perfil antes de pedir el código.',
+        code: 'MAIL_OUT_OF_SYNC',
+        mail: user.mail
+      });
       return;
     }
 

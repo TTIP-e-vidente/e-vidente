@@ -122,14 +122,20 @@ func _aplicar_estilo_sync() -> void:
 
 
 func _leer_precision_real(stats: Dictionary) -> int:
-	if stats.has("last_accuracy"):
-		return int(stats.get("last_accuracy", 0))
+	var aciertos := int(stats.get("aciertos", 0))
+	var errores := int(stats.get("errores", 0))
 	var intentos := int(stats.get("intentos", 0))
+	if intentos <= 0:
+		var deducidos := aciertos + errores
+		if deducidos > 0:
+			intentos = deducidos
+	if stats.has("last_accuracy"):
+		var last_accuracy := int(stats.get("last_accuracy", 0))
+		if last_accuracy > 0 or intentos <= 0:
+			return last_accuracy
+		return NodoProgressionRulesScript.calcular_precision_display(aciertos, intentos)
 	if intentos > 0:
-		return NodoProgressionRulesScript.calcular_precision_display(
-			int(stats.get("aciertos", 0)),
-			intentos
-		)
+		return NodoProgressionRulesScript.calcular_precision_display(aciertos, intentos)
 	if stats.has("precision"):
 		var precision := int(stats.get("precision", 0))
 		if precision >= 100 and intentos <= 0:

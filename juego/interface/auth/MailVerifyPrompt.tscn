@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://mail_verify_prompt_001"]
+
+[ext_resource type="Script" path="res://interface/auth/MailVerifyPrompt.gd" id="1_script"]
+
+[node name="MailVerifyPrompt" type="CanvasLayer"]
+layer = 25
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.11, 0.1, 0.09, 0.45)
+
+[node name="PanelWrapper" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="PanelWrapper"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelWrapper/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelWrapper/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LabelMensaje" type="Label" parent="PanelWrapper/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Tu mail todavía no está verificado."
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="Botones" type="HBoxContainer" parent="PanelWrapper/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="BotonDespues" type="Button" parent="PanelWrapper/PanelContainer/MarginContainer/VBoxContainer/Botones"]
+layout_mode = 2
+text = "Después"
+
+[node name="BotonVerificar" type="Button" parent="PanelWrapper/PanelContainer/MarginContainer/VBoxContainer/Botones"]
+layout_mode = 2
+text = "Verificar ahora"

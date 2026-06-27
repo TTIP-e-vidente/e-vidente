@@ -10,6 +10,7 @@ const FLECHA_ATRAS := preload(
 
 
 @onready var _line_edit_codigo: LineEdit = %LineEditCodigo
+@onready var _codigo_input_wrap: Control = %CodigoInputWrap
 @onready var _digit_slots: Array[PanelContainer] = [
 	%DigitSlot0, %DigitSlot1, %DigitSlot2, %DigitSlot3, %DigitSlot4, %DigitSlot5,
 ]
@@ -33,6 +34,9 @@ const AYUDA_MAIL_TEXTO := (
 )
 @onready var _label_mensaje: Label = %LabelMensaje
 @onready var _label_email: Label = %LabelEmail
+@onready var _email_chip: PanelContainer = _label_email.get_parent() as PanelContainer
+
+const EMAIL_CHIP_PADDING_X := 28.0
 
 var _is_loading := false
 var _tiempo_cooldown := 0.0
@@ -48,14 +52,24 @@ func _ready() -> void:
 	_boton_volver.pressed.connect(_on_volver_presionado)
 	_line_edit_codigo.text_submitted.connect(func(_texto: String) -> void: _on_verificar_presionado())
 	_line_edit_codigo.text_changed.connect(_on_codigo_text_changed)
+	_line_edit_codigo.gui_input.connect(_on_digitos_gui_input)
+	if is_instance_valid(_codigo_input_wrap):
+		_codigo_input_wrap.gui_input.connect(_on_digitos_gui_input)
 
+	_configurar_entrada_codigo()
 	_label_ayuda_mail.visible = false
 	_actualizar_casillas_digitos("")
 	_configurar_boton_volver()
 	_aplicar_configuracion_desde_meta()
-	_mostrar_email_usuario()
+	call_deferred("_inicializar_correo_y_estado")
 	call_deferred("_enfocar_codigo")
-	call_deferred("_sincronizar_estado_desde_servidor")
+
+
+func _inicializar_correo_y_estado() -> void:
+	if AuthApi.esta_logueado():
+		await BackendSession.refrescar_usuario_en_cache()
+	_mostrar_email_usuario()
+	await _sincronizar_estado_desde_servidor()
 
 
 func _aplicar_configuracion_desde_meta() -> void:
@@ -74,7 +88,7 @@ func _aplicar_configuracion_desde_meta() -> void:
 			establecer_mensaje_inicial(feedback, bool(ev.get("feedback_ok", true)))
 		elif ev.is_empty():
 			establecer_mensaje_inicial(
-				"Ingresá el código de 6 dígitos que te enviamos por mail.",
+				"Tocá las casillas, escribí o pegá el código de 6 dígitos.",
 				true
 			)
 
@@ -88,10 +102,18 @@ func _sincronizar_estado_desde_servidor() -> void:
 	var data: Variant = res.get("data", {})
 	if not data is Dictionary:
 		return
-	var verification: Variant = (data as Dictionary).get("verification", {})
+	var payload := data as Dictionary
+	var mail_servidor := str(payload.get("mail", "")).strip_edges()
+	var verification: Variant = payload.get("verification", {})
 	if not verification is Dictionary:
 		return
 	var v := verification as Dictionary
+	var pending_mail := str(v.get("pending_target_mail", "")).strip_edges()
+	var mail_mostrar := pending_mail if not pending_mail.is_empty() else mail_servidor
+	if mail_mostrar.is_empty():
+		mail_mostrar = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	if not mail_mostrar.is_empty():
+		_establecer_mail_en_ui(mail_mostrar)
 	var cooldown := int(v.get("cooldown_seconds", 0))
 	if cooldown > 0:
 		_iniciar_cooldown(float(cooldown))
@@ -111,9 +133,35 @@ func _sincronizar_estado_desde_servidor() -> void:
 			_mostrar_mensaje(msg, false)
 
 
+func _configurar_entrada_codigo() -> void:
+	if not is_instance_valid(_line_edit_codigo):
+		return
+	var fondo_transparente := StyleBoxEmpty.new()
+	_line_edit_codigo.add_theme_stylebox_override("normal", fondo_transparente)
+	_line_edit_codigo.add_theme_stylebox_override("focus", fondo_transparente)
+	_line_edit_codigo.add_theme_stylebox_override("read_only", fondo_transparente)
+	_line_edit_codigo.add_theme_color_override("font_color", Color(1, 1, 1, 0))
+	_line_edit_codigo.add_theme_color_override("font_selected_color", Color(1, 1, 1, 0))
+	_line_edit_codigo.add_theme_color_override("font_uneditable_color", Color(1, 1, 1, 0))
+	_line_edit_codigo.add_theme_color_override("caret_color", Color(1, 1, 1, 0))
+	_line_edit_codigo.placeholder_text = ""
+	_line_edit_codigo.context_menu_enabled = false
+	_line_edit_codigo.flat = true
+	_line_edit_codigo.mouse_filter = Control.MOUSE_FILTER_STOP
+	_line_edit_codigo.focus_mode = Control.FOCUS_ALL
+
+
 func _enfocar_codigo() -> void:
 	if is_instance_valid(_line_edit_codigo):
 		_line_edit_codigo.grab_focus()
+
+
+func _on_digitos_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var click := event as InputEventMouseButton
+		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
+			call_deferred("_enfocar_codigo")
+			_line_edit_codigo.accept_event()
 
 
 func establecer_mensaje_inicial(texto: String, es_info: bool = true) -> void:
@@ -173,12 +221,42 @@ func _process(delta: float) -> void:
 
 
 func _mostrar_email_usuario() -> void:
-	var user := AuthApi.obtener_usuario_online()
-	var mail := str(user.get("mail", ""))
-	if not mail.is_empty():
-		_label_email.text = mail
-	else:
+	var mail := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	if mail.is_empty():
 		_label_email.text = "tu casilla de correo"
+		call_deferred("_ajustar_chip_mail")
+	else:
+		_establecer_mail_en_ui(mail)
+
+
+func _establecer_mail_en_ui(mail: String) -> void:
+	var clean := mail.strip_edges()
+	if clean.is_empty():
+		return
+	_label_email.text = clean
+	call_deferred("_ajustar_chip_mail")
+
+
+func _ajustar_chip_mail() -> void:
+	if not is_instance_valid(_label_email):
+		return
+	var texto := _label_email.text.strip_edges()
+	if texto.is_empty():
+		return
+	var font: Font = _label_email.get_theme_font("font")
+	var font_size := _label_email.get_theme_font_size("font_size")
+	if font == null:
+		return
+	var ancho_texto := font.get_string_size(
+		texto,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		font_size
+	).x
+	var ancho := ceili(ancho_texto + EMAIL_CHIP_PADDING_X)
+	_label_email.custom_minimum_size = Vector2(ancho, 0)
+	if is_instance_valid(_email_chip):
+		_email_chip.custom_minimum_size = Vector2(ancho, 0)
 
 
 func _on_codigo_text_changed(new_text: String) -> void:
@@ -246,8 +324,14 @@ func _on_reenviar_presionado() -> void:
 	_establecer_cargando(true)
 	_mostrar_mensaje("Solicitando nuevo código...", true)
 
-	var res := await AuthApi.solicitar_codigo_verificacion()
+	var mail_esperado := _label_email.text.strip_edges()
+	if mail_esperado == "tu casilla de correo":
+		mail_esperado = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	var res := await AuthApi.solicitar_codigo_verificacion(mail_esperado)
 	_establecer_cargando(false)
+
+	if res.get("ok", false):
+		await _sincronizar_estado_desde_servidor()
 
 	var evaluacion := AuthApi.evaluar_respuesta_verificacion(res)
 	var cooldown := int(evaluacion.get("cooldown_seconds", 0))

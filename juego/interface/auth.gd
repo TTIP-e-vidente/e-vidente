@@ -39,10 +39,7 @@ func _ready() -> void:
 	birth_date_input.text_changed.connect(_marcar_perfil_online_sucio)
 	email_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
 	email_input.text_changed.connect(_marcar_perfil_online_sucio)
-	email_input.text_changed.connect(func(_text: String) -> void:
-		_actualizar_estado_verificacion_mail()
-		_actualizar_checkbox_notificaciones_habilitado()
-	)
+	email_input.text_changed.connect(_on_email_input_cambiado)
 	username_input.focus_exited.connect(_intentar_autosave)
 	birth_date_input.focus_exited.connect(_intentar_autosave)
 	email_input.focus_exited.connect(_intentar_autosave)
@@ -51,6 +48,7 @@ func _ready() -> void:
 	_cargar_estado_perfil_actual()
 	_establecer_feedback("Los cambios se guardan automáticamente.", true)
 	BackendSession.session_expired.connect(_on_sesion_expirada)
+	call_deferred("_sincronizar_verificacion_mail_desde_servidor")
 	call_deferred("_procesar_retorno_verificacion_mail")
 
 
@@ -218,7 +216,11 @@ func _intentar_autosave() -> void:
 			avatar_path_input.text = persisted_avatar
 			_refrescar_controles_avatar()
 		if BackendSession.esta_logueado():
-			if not _perfil_online_sucio:
+			await _asegurar_cache_perfil_servidor()
+			var necesita_sync_online := (
+				_perfil_online_sucio or _mail_formulario_difiere_del_servidor()
+			)
+			if not necesita_sync_online:
 				_establecer_feedback("Datos guardados correctamente.", true)
 				return
 			_establecer_feedback("Guardando datos...", true)
@@ -271,7 +273,7 @@ func _actualizar_etiquetas_vista_previa(
 	)
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
 	if BackendSession.esta_logueado() and not email.is_empty():
-		if _mail_esta_verificado():
+		if AuthApi.mail_esta_verificado():
 			profile_email_preview_label.text += " · verificado"
 		else:
 			profile_email_preview_label.text += " · pendiente"
@@ -296,7 +298,38 @@ func _aplicar_ruta_avatar(path: String) -> void:
 		_subir_avatar_al_backend()
 
 
-func _sincronizar_perfil_al_backend(silencioso: bool = false) -> Dictionary:
+func _on_email_input_cambiado(texto: String) -> void:
+	if BackendSession.esta_logueado():
+		var mail_cache := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+		if texto.strip_edges() != mail_cache:
+			BackendSession.limpiar_mail_verificado_en_cache()
+	_actualizar_estado_verificacion_mail()
+	_actualizar_checkbox_notificaciones_habilitado()
+
+
+func _mail_formulario_difiere_del_servidor() -> bool:
+	if not BackendSession.esta_logueado():
+		return false
+	var form_mail := email_input.text.strip_edges()
+	if form_mail.is_empty():
+		return false
+	var server_mail := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	return form_mail != server_mail
+
+
+func _asegurar_cache_perfil_servidor() -> void:
+	if BackendSession.esta_logueado():
+		await BackendSession.refrescar_usuario_en_cache()
+
+
+func _sincronizar_perfil_al_backend(
+	silencioso: bool = false,
+	forzar_mail: bool = false
+) -> Dictionary:
+	await _asegurar_cache_perfil_servidor()
+	if not forzar_mail and _mail_formulario_difiere_del_servidor():
+		forzar_mail = true
+
 	var notificaciones_mail: Variant = null
 	if is_instance_valid(_email_notifications_checkbox):
 		notificaciones_mail = _email_notifications_checkbox.button_pressed
@@ -305,10 +338,13 @@ func _sincronizar_perfil_al_backend(silencioso: bool = false) -> Dictionary:
 		username_input.text.strip_edges(),
 		email_input.text.strip_edges(),
 		birth_date_input.text.strip_edges(),
-		notificaciones_mail
+		notificaciones_mail,
+		forzar_mail
 	)
 	if bool(result.get("ok", false)):
 		_perfil_online_sucio = false
+		if not bool(result.get("skipped", false)):
+			AuthApi.aplicar_progreso_online_a_guardado_local()
 		_actualizar_estado_verificacion_mail()
 		_actualizar_checkbox_notificaciones_habilitado()
 		var overlay_shown := _manejar_verificacion_respuesta_perfil(result, silencioso)
@@ -322,13 +358,16 @@ func _sincronizar_perfil_al_backend(silencioso: bool = false) -> Dictionary:
 		return {"ok": false, "overlay_shown": false}
 	match status_code:
 		409:
-			_establecer_feedback("Ese mail ya está en uso por otra cuenta.", false)
-		422:
-			if str(result.get("code", "")) == "MAIL_NOT_VERIFIED":
+			if str(result.get("code", "")) == "MAIL_OUT_OF_SYNC":
 				_establecer_feedback(
-					"Verificá tu mail antes de activar recordatorios de racha.",
+					"Guardá el mail en tu perfil antes de pedir el código.",
 					false
 				)
+			else:
+				_establecer_feedback("Ese mail ya está en uso por otra cuenta.", false)
+		422:
+			if str(result.get("code", "")) == "MAIL_NOT_VERIFIED":
+				_responder_mail_no_verificado()
 			else:
 				var msg := server_error if not server_error.is_empty() else "Datos inválidos."
 				_establecer_feedback(msg, false)
@@ -391,6 +430,11 @@ func _subir_avatar_al_backend_silencioso() -> void:
 
 
 func _on_notificaciones_mail_cambiadas(pressed: bool) -> void:
+	if pressed and BackendSession.esta_logueado() and not AuthApi.mail_esta_verificado():
+		_email_notifications_checkbox.button_pressed = false
+		SaveManager.guardar_preferencia_notificaciones_mail_local(false)
+		_responder_mail_no_verificado()
+		return
 	SaveManager.guardar_preferencia_notificaciones_mail_local(pressed)
 	_marcar_perfil_online_sucio()
 	_actualizar_checkbox_notificaciones_habilitado()
@@ -398,10 +442,44 @@ func _on_notificaciones_mail_cambiadas(pressed: bool) -> void:
 		_intentar_autosave()
 
 
-func _mail_esta_verificado() -> bool:
+func _mail_editado_sin_guardar_en_servidor() -> bool:
 	if not BackendSession.esta_logueado():
 		return false
-	return not str(AuthApi.obtener_usuario_online().get("mail_verified_at", "")).strip_edges().is_empty()
+	var mail_form := email_input.text.strip_edges()
+	if mail_form.is_empty():
+		return false
+	var mail_servidor := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	return mail_form != mail_servidor
+
+
+func _mail_esta_verificado() -> bool:
+	if not AuthApi.mail_esta_verificado():
+		return false
+	if _mail_editado_sin_guardar_en_servidor():
+		return false
+	return true
+
+
+func _sincronizar_verificacion_mail_desde_servidor() -> void:
+	if not BackendSession.esta_logueado():
+		return
+	var res: Dictionary = await BackendSession.refrescar_usuario_en_cache()
+	if not bool(res.get("ok", false)):
+		return
+	_actualizar_estado_verificacion_mail()
+	_actualizar_checkbox_notificaciones_habilitado()
+	_refrescar_vista_previa_desde_formulario()
+
+
+func _responder_mail_no_verificado() -> void:
+	BackendSession.limpiar_mail_verificado_en_cache()
+	_actualizar_estado_verificacion_mail()
+	_actualizar_checkbox_notificaciones_habilitado()
+	_refrescar_vista_previa_desde_formulario()
+	_establecer_feedback(
+		"Tu mail no está verificado. Usá «Verificar mail con código» para activar avisos.",
+		false
+	)
 
 
 func _actualizar_estado_verificacion_mail() -> void:
@@ -444,7 +522,7 @@ func _on_boton_verificar_mail_presionado() -> void:
 		return
 
 	_establecer_feedback("Guardando mail...", true)
-	var sync := await _sincronizar_perfil_al_backend(true)
+	var sync := await _sincronizar_perfil_al_backend(true, true)
 	if not bool(sync.get("ok", false)):
 		_establecer_feedback("No se pudo guardar el mail antes de verificar.", false)
 		return
@@ -453,7 +531,8 @@ func _on_boton_verificar_mail_presionado() -> void:
 
 	_button_verify_email.disabled = true
 	_establecer_feedback("Enviando código de verificación...", true)
-	var res := await AuthApi.solicitar_codigo_verificacion()
+	var mail_form := email_input.text.strip_edges()
+	var res := await AuthApi.solicitar_codigo_verificacion(mail_form)
 	_button_verify_email.disabled = false
 	var evaluacion := AuthApi.evaluar_respuesta_verificacion(res)
 	if not str(evaluacion.get("feedback", "")).is_empty():
@@ -478,9 +557,7 @@ func _ejecutar_overlay_verificacion_perfil(evaluacion: Dictionary) -> void:
 
 
 func _refrescar_tras_verificacion_mail() -> void:
-	_actualizar_estado_verificacion_mail()
-	_actualizar_checkbox_notificaciones_habilitado()
-	_refrescar_vista_previa_desde_formulario()
+	await _sincronizar_verificacion_mail_desde_servidor()
 	_establecer_feedback("Mail verificado. Te enviamos un mail de bienvenida.", true)
 
 
@@ -508,7 +585,7 @@ func _actualizar_checkbox_notificaciones_habilitado() -> void:
 	if not is_instance_valid(_email_notifications_checkbox):
 		return
 	var mail_ok := not email_input.text.strip_edges().is_empty()
-	var verified := _mail_esta_verificado()
+	var verified := AuthApi.mail_esta_verificado()
 	var puede_activar := mail_ok and verified
 	if not puede_activar and _email_notifications_checkbox.button_pressed:
 		_email_notifications_checkbox.button_pressed = false

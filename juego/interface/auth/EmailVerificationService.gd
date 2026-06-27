@@ -9,13 +9,16 @@ static func preparar_evaluacion_post_registro(result: Dictionary) -> Dictionary:
 	if meta.is_empty():
 		return {"needs_request": true, "evaluacion": {}}
 	var evaluacion := AuthApi.evaluar_respuesta_verificacion({"ok": true}, meta)
-	evaluacion["show_overlay"] = true
-	_asegurar_feedback_default(evaluacion)
+	if bool(evaluacion.get("show_overlay", false)):
+		_asegurar_feedback_default(evaluacion)
 	return {"needs_request": false, "evaluacion": evaluacion}
 
 
 static func preparar_evaluacion_tras_solicitud(res: Dictionary) -> Dictionary:
-	return AuthApi.evaluar_respuesta_verificacion(res)
+	var evaluacion := AuthApi.evaluar_respuesta_verificacion(res)
+	if bool(evaluacion.get("show_overlay", false)):
+		_asegurar_feedback_default(evaluacion)
+	return evaluacion
 
 
 static func _asegurar_feedback_default(evaluacion: Dictionary) -> void:
@@ -31,6 +34,48 @@ static func _resolver_navegacion(contexto: Node, opciones: Dictionary = {}) -> D
 	if not nav.has("after_success") or str(nav.get("after_success", "")).strip_edges().is_empty():
 		nav["after_success"] = "none"
 	return nav
+
+
+static func _fallo_envio(evaluacion: Dictionary, fallback: String = "") -> Dictionary:
+	var mensaje := str(evaluacion.get("feedback", "")).strip_edges()
+	if mensaje.is_empty():
+		mensaje = fallback if not fallback.is_empty() else "No se pudo enviar el código."
+	return {
+		"ok": false,
+		"mensaje": mensaje,
+		"feedback": mensaje,
+		"feedback_ok": bool(evaluacion.get("feedback_ok", false)),
+	}
+
+
+static func _asegurar_servidor_y_sesion() -> Dictionary:
+	if not AuthApi.esta_logueado():
+		return {
+			"ok": false,
+			"mensaje": "Iniciá sesión para verificar tu mail.",
+		}
+	var health: Dictionary = await AuthApi.verificar_servidor()
+	if not bool(health.get("ok", false)):
+		return {
+			"ok": false,
+			"mensaje": AuthApi.mensaje_error(
+				health,
+				"No hay conexión con el servidor. Levantá BACKEND con npm run dev."
+			),
+		}
+	return {"ok": true, "mensaje": ""}
+
+
+static func _sincronizar_si_ya_verificado(evaluacion: Dictionary) -> Dictionary:
+	if bool(evaluacion.get("show_overlay", false)):
+		return {}
+	if not bool(evaluacion.get("feedback_ok", false)):
+		return {}
+	await BackendSession.refrescar_usuario_en_cache()
+	return {
+		"ok": true,
+		"mensaje": str(evaluacion.get("feedback", "Tu mail ya está verificado.")),
+	}
 
 
 static func interpretar_outcome(outcome: String, obligatorio: bool) -> Dictionary:
@@ -65,7 +110,9 @@ static func mostrar_escena(
 		obligatorio: bool,
 		navegacion: Dictionary = {}
 ) -> Dictionary:
-	evaluacion["show_overlay"] = true
+	if not bool(evaluacion.get("show_overlay", false)):
+		return _fallo_envio(evaluacion, "No se pudo abrir la verificación de mail.")
+
 	_asegurar_feedback_default(evaluacion)
 	var nav := _resolver_navegacion(contexto, navegacion)
 	var outcome := await FlowHelper.mostrar_y_esperar(
@@ -96,17 +143,19 @@ static func ejecutar_post_registro(
 	var prep := preparar_evaluacion_post_registro(result)
 	var evaluacion: Dictionary
 	if bool(prep.get("needs_request", false)):
+		var preflight := await _asegurar_servidor_y_sesion()
+		if not bool(preflight.get("ok", false)):
+			return preflight
 		var res := await AuthApi.solicitar_codigo_verificacion()
 		evaluacion = preparar_evaluacion_tras_solicitud(res)
-		if not bool(evaluacion.get("show_overlay", false)):
-			return {
-				"ok": false,
-				"mensaje": str(evaluacion.get("feedback", "No se pudo enviar el código.")),
-			}
-		evaluacion["show_overlay"] = true
-		_asegurar_feedback_default(evaluacion)
 	else:
 		evaluacion = prep.get("evaluacion", {}) as Dictionary
+
+	var ya_verificado := await _sincronizar_si_ya_verificado(evaluacion)
+	if not ya_verificado.is_empty():
+		return ya_verificado
+	if not bool(evaluacion.get("show_overlay", false)):
+		return _fallo_envio(evaluacion)
 	return await mostrar_escena(contexto, evaluacion, true, nav)
 
 
@@ -115,17 +164,28 @@ static func ejecutar_pendiente(
 		obligatorio: bool = false,
 		navegacion: Dictionary = {}
 ) -> Dictionary:
+	if AuthApi.mail_esta_verificado():
+		return {"ok": true, "mensaje": "Tu mail ya está verificado."}
+
+	var preflight := await _asegurar_servidor_y_sesion()
+	if not bool(preflight.get("ok", false)):
+		return preflight
+
 	var nav := _resolver_navegacion(contexto, navegacion)
 	if obligatorio and str(nav.get("after_success")) == "none":
 		nav["after_success"] = "login_continue_game"
 
 	var res := await AuthApi.solicitar_codigo_verificacion()
 	var evaluacion := preparar_evaluacion_tras_solicitud(res)
+
+	var ya_verificado := await _sincronizar_si_ya_verificado(evaluacion)
+	if not ya_verificado.is_empty():
+		EmailVerificationBridge.refrescar_nudge_global()
+		return ya_verificado
+
 	if not bool(evaluacion.get("show_overlay", false)):
-		return {
-			"ok": false,
-			"mensaje": str(evaluacion.get("feedback", "No se pudo enviar el código.")),
-		}
+		return _fallo_envio(evaluacion)
+
 	return await mostrar_escena(contexto, evaluacion, obligatorio, nav)
 
 
@@ -136,19 +196,12 @@ static func ejecutar_desde_nudge(contexto: Node) -> Dictionary:
 
 
 static func ejecutar_desde_perfil(contexto: Node, evaluacion: Dictionary) -> Dictionary:
+	var nav := {
+		"return_scene": GameSceneRouter.PROFILE_SCENE_PATH,
+		"after_success": "profile_refresh",
+	}
 	if evaluacion.is_empty():
-		evaluacion = {
-			"show_overlay": true,
-			"cooldown_seconds": 120.0,
-			"feedback": "",
-			"feedback_ok": true,
-		}
-	return await mostrar_escena(
-		contexto,
-		evaluacion,
-		false,
-		{
-			"return_scene": GameSceneRouter.PROFILE_SCENE_PATH,
-			"after_success": "profile_refresh",
-		}
-	)
+		return await ejecutar_pendiente(contexto, false, nav)
+	if not bool(evaluacion.get("show_overlay", false)):
+		return _fallo_envio(evaluacion)
+	return await mostrar_escena(contexto, evaluacion, false, nav)

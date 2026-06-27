@@ -5,10 +5,10 @@ const SCENE_PATH := "res://interface/auth/MailVerifyNudge.tscn"
 
 
 static func instalar_en(padre: Node, al_verificar_ahora: Callable) -> CanvasLayer:
-	var scene := load(SCENE_PATH) as PackedScene
+	var scene: PackedScene = load(SCENE_PATH) as PackedScene
 	if scene == null:
 		return null
-	var nudge := scene.instantiate() as CanvasLayer
+	var nudge: CanvasLayer = scene.instantiate() as CanvasLayer
 	if nudge == null:
 		return null
 	padre.add_child(nudge)

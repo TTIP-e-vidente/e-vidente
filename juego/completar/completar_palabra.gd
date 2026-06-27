@@ -616,12 +616,13 @@ func _finalizar_actividad(success: bool) -> void:
 	if success:
 		Global.registrar_actividad_racha("completar_palabra_completed", {})
 	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
+	var precision_real: int = NODO_RUNTIME.calcular_precision(get_tree())
 	var resultado := {
 		"activity_id": str(actividad.get("id", actividad.get("activity_id", ""))),
 		"node_key": str(actividad.get("node_key", "")),
 		"map_id": SyncApi.resolver_restriccion_para_partida(get_tree(), {}),
 		"success": success,
-		"accuracy": 1.0 if success else 0.0,
+		"accuracy": clampf(float(precision_real) / 100.0, 0.0, 1.0),
 		"exp": 10,
 		"elapsed_seconds": _calcular_elapsed_seconds()
 	}

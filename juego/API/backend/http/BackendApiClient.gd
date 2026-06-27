@@ -153,8 +153,12 @@ func eliminar_avatar(token: String) -> Dictionary:
 	return await _enviar_peticion(HTTPClient.METHOD_DELETE, "/player/me/avatar", headers, "")
 
 
-func solicitar_verificacion_email(token: String) -> Dictionary:
-	return await _enviar_post("/player/verify-email/request", token, "{}")
+func solicitar_verificacion_email(token: String, mail_esperado: String = "") -> Dictionary:
+	var body := {}
+	var mail := mail_esperado.strip_edges()
+	if not mail.is_empty():
+		body["mail"] = mail
+	return await _enviar_post("/player/verify-email/request", token, JSON.stringify(body))
 
 
 func confirmar_verificacion_email(token: String, codigo: String) -> Dictionary:

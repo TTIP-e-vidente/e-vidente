@@ -30,7 +30,16 @@ static func mail_pendiente_verificacion() -> bool:
 	var mail := str(user.get("mail", "")).strip_edges()
 	if mail.is_empty():
 		return false
-	return str(user.get("mail_verified_at", "")).strip_edges().is_empty()
+	return not mail_verified_at_valido(user.get("mail_verified_at", null))
+
+
+static func mail_verified_at_valido(verified_at: Variant) -> bool:
+	if verified_at == null:
+		return false
+	var texto := str(verified_at).strip_edges()
+	if texto.is_empty() or texto.to_lower() == "null":
+		return false
+	return true
 
 
 static func mail_esta_verificado() -> bool:
@@ -108,53 +117,24 @@ static func evaluar_respuesta_verificacion(
 		meta: Dictionary = {},
 		fallback_cooldown: int = 120
 ) -> Dictionary:
+	if int(result.get("status", 0)) == 0:
+		return {
+			"show_overlay": false,
+			"cooldown_seconds": 0,
+			"feedback": mensaje_error(
+				result,
+				"No se pudo conectar al servidor. Levantá BACKEND con npm run dev."
+			),
+			"feedback_ok": false,
+		}
+
 	var verification_meta := meta if not meta.is_empty() else meta_verificacion_perfil(result)
 	if not verification_meta.is_empty():
 		var mail_changed := bool(verification_meta.get("mail_changed", false))
-		var status := str(verification_meta.get("code_send_status", ""))
-		var cooldown := int(verification_meta.get("cooldown_seconds", fallback_cooldown))
+		var status := str(verification_meta.get("code_send_status", "")).strip_edges()
+		var cooldown_meta := int(verification_meta.get("cooldown_seconds", fallback_cooldown))
 		if mail_changed:
-			match status:
-				"sent":
-					return {
-						"show_overlay": true,
-						"cooldown_seconds": cooldown,
-						"feedback": _feedback_desde_meta(
-							verification_meta,
-							"Te enviamos el código de verificación (no el de bienvenida). Revisá tu casilla y spam."
-						),
-						"feedback_ok": true,
-					}
-				"rate_limited":
-					return {
-						"show_overlay": true,
-						"cooldown_seconds": cooldown,
-						"feedback": _feedback_desde_meta(
-							verification_meta,
-							"Ya hay un código activo. Revisá tu casilla o esperá para reenviar."
-						),
-						"feedback_ok": false,
-					}
-				"send_failed":
-					return {
-						"show_overlay": true,
-						"cooldown_seconds": 0,
-						"feedback": _feedback_desde_meta(
-							verification_meta,
-							"No se pudo enviar el código. Tocá Reenviar para intentar de nuevo."
-						),
-						"feedback_ok": false,
-					}
-				"skipped":
-					return {
-						"show_overlay": true,
-						"cooldown_seconds": 0,
-						"feedback": _feedback_desde_meta(
-							verification_meta,
-							"Servicio de mail no disponible. En desarrollo, revisá la consola del backend."
-						),
-						"feedback_ok": false,
-					}
+			return _evaluar_estado_envio_verificacion(status, cooldown_meta, verification_meta)
 
 	if bool(result.get("skipped", false)):
 		return {
@@ -165,10 +145,25 @@ static func evaluar_respuesta_verificacion(
 		}
 
 	if bool(result.get("ok", false)):
+		var data: Variant = result.get("data", {})
+		if data is Dictionary:
+			var api_status := str((data as Dictionary).get("status", "")).strip_edges()
+			if api_status == "already_verified":
+				return {
+					"show_overlay": false,
+					"cooldown_seconds": 0,
+					"feedback": str(
+						(data as Dictionary).get(
+							"message",
+							"Tu mail ya está verificado."
+						)
+					),
+					"feedback_ok": true,
+				}
 		return {
 			"show_overlay": true,
 			"cooldown_seconds": cooldown_verificacion(result, fallback_cooldown),
-			"feedback": "¡Código reenviado! Revisá tu correo.",
+			"feedback": "Te enviamos el código de verificación. Revisá tu correo y la carpeta de spam.",
 			"feedback_ok": true,
 		}
 
@@ -186,6 +181,64 @@ static func evaluar_respuesta_verificacion(
 		"feedback": mensaje_verificacion(result, "No se pudo enviar el código."),
 		"feedback_ok": false,
 	}
+
+
+static func _evaluar_estado_envio_verificacion(
+		status: String,
+		cooldown: int,
+		verification_meta: Dictionary
+) -> Dictionary:
+	match status:
+		"sent":
+			return {
+				"show_overlay": true,
+				"cooldown_seconds": cooldown,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"Te enviamos el código de verificación (no el de bienvenida). Revisá tu casilla y spam."
+				),
+				"feedback_ok": true,
+			}
+		"rate_limited":
+			return {
+				"show_overlay": true,
+				"cooldown_seconds": cooldown,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"Ya hay un código activo. Revisá tu casilla o esperá para reenviar."
+				),
+				"feedback_ok": false,
+			}
+		"send_failed":
+			return {
+				"show_overlay": false,
+				"cooldown_seconds": 0,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"No se pudo enviar el código. Revisá que el backend esté activo e intentá de nuevo."
+				),
+				"feedback_ok": false,
+			}
+		"skipped":
+			return {
+				"show_overlay": false,
+				"cooldown_seconds": 0,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"Servicio de mail no disponible. En desarrollo, revisá la consola del backend."
+				),
+				"feedback_ok": false,
+			}
+		_:
+			return {
+				"show_overlay": false,
+				"cooldown_seconds": 0,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"No se pudo enviar el código de verificación."
+				),
+				"feedback_ok": false,
+			}
 
 static func iniciar_sesion_completa(usuario_o_mail: String, clave: String) -> Dictionary:
 	var auth := await iniciar_sesion(usuario_o_mail, clave)
@@ -223,8 +276,11 @@ static func crear_cuenta_completa(
 	return exito
 
 
-static func solicitar_codigo_verificacion() -> Dictionary:
-	return await BackendSession.solicitar_verificacion_email()
+static func solicitar_codigo_verificacion(mail_esperado: String = "") -> Dictionary:
+	var mail := mail_esperado.strip_edges()
+	if mail.is_empty() and esta_logueado():
+		mail = str(obtener_usuario_online().get("mail", "")).strip_edges()
+	return await BackendSession.solicitar_verificacion_email(mail)
 
 
 static func confirmar_codigo_verificacion(codigo: String) -> Dictionary:

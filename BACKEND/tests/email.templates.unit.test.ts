@@ -21,8 +21,7 @@ function runTemplateTests(): void {
   });
   assert.equal(welcome.to, 'agus@example.com');
   assert.equal(welcome.toName, 'Agus');
-  assert.match(welcome.subject, /E-VIDENTE/);
-  assert.match(welcome.subject, /Bienvenido\/a/);
+  assert.equal(welcome.subject, 'Mail verificado');
   assert.match(welcome.textContent, /Agus/);
   assert.match(welcome.textContent, /Confirmaste tu mail correctamente/);
   assert.doesNotMatch(welcome.textContent, /código de verificación/i);

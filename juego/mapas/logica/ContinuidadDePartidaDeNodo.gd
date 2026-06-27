@@ -3,6 +3,7 @@ class_name ContinuidadDePartidaDeNodo
 
 
 const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+const NodoStatsScript := preload("res://sistemas/NodoStats.gd")
 const ModalidadRouterScript := preload("res://sistemas/ModalidadRouter.gd")
 const LOG_PREFIX_NODE_PROGRESS := "[NodeProgress]"
 const LOG_PREFIX_NODE_COMPLETE := "[NodeComplete]"
@@ -206,6 +207,7 @@ static func _registrar_exp_finalizacion(
 	var stats: Dictionary = {}
 	if estado_global.has_method("obtener_stats_nodo_actual"):
 		stats = estado_global.call("obtener_stats_nodo_actual")
+	stats = NodoStatsScript.normalizar_stats_dict(stats)
 	var aciertos: int = int(stats.get("aciertos", 0))
 	var errores: int = int(stats.get("errores", 0))
 	var intentos: int = int(stats.get("intentos", 0))
@@ -221,8 +223,6 @@ static func _registrar_exp_finalizacion(
 		intentos
 	)
 	var precision_percent: int = NodoProgressionRulesScript.calcular_precision_display(aciertos, intentos)
-	if intentos == 0:
-		precision_percent = 0
 
 	var exp_ganada: int = NodoProgressionRulesScript.calcular_exp_final(
 		exp_base_total,

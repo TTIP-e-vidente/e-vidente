@@ -3,10 +3,10 @@ extends PanelContainer
 # Casilla visual de un dígito del código de verificación.
 
 
-const COLOR_VACIO := Color(0.859, 0.753, 0.318, 0.45)
-const COLOR_LLENO := Color(0.859, 0.753, 0.318, 1.0)
-const COLOR_BORDE_VACIO := Color(0.859, 0.753, 0.318, 0.35)
-const COLOR_BORDE_LLENO := Color(0.859, 0.753, 0.318, 0.95)
+const COLOR_VACIO := Color(0.259, 0.471, 0.369, 0.4)
+const COLOR_LLENO := Color(0.18, 0.34, 0.26, 1.0)
+const COLOR_BORDE_VACIO := Color(0.259, 0.471, 0.369, 0.35)
+const COLOR_BORDE_LLENO := Color(0.259, 0.471, 0.369, 0.85)
 
 
 @onready var _label: Label = %DigitLabel

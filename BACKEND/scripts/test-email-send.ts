@@ -119,7 +119,6 @@ async function sendTemplate(templateKey: EmailTemplateKey, recipient: TestRecipi
   const message = buildTestMessage(templateKey, recipient);
   message.to = recipient.mail;
   message.toName = recipient.name;
-  message.subject = `[TEST] ${message.subject}`;
 
   const messageId = await sendTransactionalEmail(message, { templateKey });
   console.log(`[test:email] OK ${templateKey} → ${recipient.mail} (messageId=${messageId ?? 'n/a'})`);

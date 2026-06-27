@@ -17,7 +17,7 @@ export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage
   const { name, mail, playUrl, leaderboardUrl } = context;
   const safeName = escapeHtml(name);
   const t = GAME_EMAIL_THEME;
-  const subject = 'Mail verificado — Bienvenido/a a E-VIDENTE';
+  const subject = 'Mail verificado';
 
   const textContent = buildTextLines([
     `¡Hola ${name}!`,

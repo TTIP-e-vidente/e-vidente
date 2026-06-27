@@ -2,22 +2,14 @@ import { execSync } from 'child_process';
 import dotenv from 'dotenv';
 import path from 'path';
 import { Pool } from 'pg';
+import { createPostgresPoolConfig, isRemotePostgres } from '../src/config/postgresPoolConfig';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 function createPool(): Pool {
-  const postgresPort = Number.parseInt(process.env.POSTGRES_PORT ?? '5432', 10);
-
-  return new Pool({
-    host: process.env.POSTGRES_HOST ?? 'localhost',
-    port: Number.isNaN(postgresPort) ? 5432 : postgresPort,
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    connectionTimeoutMillis: 3000,
-  });
+  return new Pool(createPostgresPoolConfig({ connectionTimeoutMillis: 3000 }));
 }
 
 async function canConnect(pool: Pool): Promise<boolean> {
@@ -80,6 +72,12 @@ export async function ensurePostgres(): Promise<void> {
     }
   } finally {
     await pool.end();
+  }
+
+  if (isRemotePostgres()) {
+    console.error('\nERROR: no se puede conectar a PostgreSQL remoto (POSTGRES_SSL=true).');
+    console.error('Verificá credenciales en BACKEND/.env y que el proyecto Supabase esté activo.');
+    process.exit(1);
   }
 
   if (!isDockerAvailable()) {

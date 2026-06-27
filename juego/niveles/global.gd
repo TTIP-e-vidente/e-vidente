@@ -569,6 +569,8 @@ func obtener_tiempo_nodo_formato() -> String:
 func registrar_resultado_mini_juego(acierto: bool) -> void:
 	## Registra 1 intento (acierto o error) para el acumulador de stats del nodo activo.
 	## Llamar desde cada modalidad al completar un intento o mini juego.
+	if _stats_nodo_actual.is_empty():
+		_stats_nodo_actual = {"aciertos": 0, "errores": 0, "intentos": 0}
 	_stats_nodo_actual["intentos"] = int(_stats_nodo_actual.get("intentos", 0)) + 1
 	if acierto:
 		_stats_nodo_actual["aciertos"] = int(_stats_nodo_actual.get("aciertos", 0)) + 1

@@ -278,7 +278,7 @@ func _refrescar_aviso_verificacion_mail() -> void:
 		PROFILE_EDITOR_SCENE_PATH,
 		SPLASH_SCENE_PATH,
 		INTRO_SCENE_PATH,
-	]
+	] or not EmailVerificationBridge.aviso_mail_habilitado()
 	MailVerifyNudgeHelper.refrescar(_mail_verify_nudge, hidden)
 
 

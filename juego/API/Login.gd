@@ -151,10 +151,14 @@ func _enviar_formulario() -> void:
 		verificacion_escena_solicitada.emit(true, result)
 		return
 	else:
-		_establecer_estado(str(result.get("mensaje", "Sesión iniciada.")))
 		if AuthApi.mail_pendiente_verificacion():
+			_establecer_estado(
+				"Tu mail no está verificado. Te vamos a pedir el código de 6 dígitos.",
+				false
+			)
 			verificacion_escena_solicitada.emit(false, {})
 			return
+		_establecer_estado(str(result.get("mensaje", "Sesión iniciada.")))
 
 	login_completed.emit()
 

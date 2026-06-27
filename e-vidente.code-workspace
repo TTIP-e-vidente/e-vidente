@@ -1,0 +1,16 @@
+﻿{
+  "folders": [
+    {
+      "name": "Godot (juego)",
+      "path": "juego"
+    },
+    {
+      "name": "Repo",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "godotTools.editorPath.godot4": "C:/Users/Equipo/Desktop/Godot_v4.6.1-stable_win64.exe",
+    "godotTools.lsp.headless": true
+  }
+}

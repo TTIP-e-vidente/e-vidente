@@ -51,6 +51,10 @@ const MAP_BOARD_SCENE_PATH := "res://mapas/MapBoard.tscn"
 const MAP_NODES_CONTAINER_PATH := "ScrollContainer/Contenido/NodesContainer"
 # Debe coincidir con MapRouteRegistry.ROUTES_FOLDER
 const MAP_ROUTES_FOLDER := "Rutas"
+const DOT_SCENE_DRAG_OBJECTIVE := "res://interface/components/DragObjectiveText/DragObjectiveText.tscn"
+const FinalizacionPartidaScript := preload("res://mapas/finalización_partida.gd")
+const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
+const NodoStatsScript := preload("res://sistemas/NodoStats.gd")
 
 
 func _es_map_node_data(value: Variant) -> bool:
@@ -1377,8 +1381,7 @@ func _test_drag_objective_renormalizacion_segura() -> void:
 func _test_drag_objective_no_layout_runtime() -> void:
 	# El script del componente no debe tener funciones que pisen posiciones
 	# o tamaños de los labels en runtime. El layout debe vivir en el TSCN.
-	const DOT_SCENE := "res://interface/components/DragObjectiveText/DragObjectiveText.tscn"
-	var packed := load(DOT_SCENE) as PackedScene
+	var packed := load(DOT_SCENE_DRAG_OBJECTIVE) as PackedScene
 	_verificar(packed != null, "[DragObjective] DragObjectiveText.tscn debe poder cargarse")
 	if packed == null:
 		return
@@ -1950,7 +1953,6 @@ func _test_fusion_node_progress_last_accuracy_no_usa_max() -> void:
 
 
 func _test_finalizacion_partida_lee_last_accuracy_con_intentos_cero() -> void:
-	const FinalizacionPartidaScript := preload("res://mapas/finalización_partida.gd")
 	var pantalla: Node = FinalizacionPartidaScript.new()
 	var precision: int = pantalla.call(
 		"_leer_precision_real",
@@ -1964,7 +1966,6 @@ func _test_finalizacion_partida_lee_last_accuracy_con_intentos_cero() -> void:
 
 
 func _test_nodo_progression_rules_precision_display_sin_intentos() -> void:
-	const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 	_verificar(
 		NodoProgressionRulesScript.calcular_precision_display(0, 0) == 0,
 		"[NodoProgressionRules] display con 0 intentos debe ser 0, no 100"
@@ -1975,8 +1976,25 @@ func _test_nodo_progression_rules_precision_display_sin_intentos() -> void:
 	)
 
 
+func _test_normalizar_stats_deduce_intentos() -> void:
+	var stats: Dictionary = NodoStatsScript.normalizar_stats_dict(
+		{"aciertos": 1, "errores": 2, "intentos": 0}
+	)
+	_verificar(
+		int(stats.get("intentos", 0)) == 3,
+		"[NodoStats] debe deducir intentos=3 desde aciertos+errores"
+	)
+	var precision: int = NodoProgressionRulesScript.calcular_precision_display(
+		int(stats.get("aciertos", 0)),
+		int(stats.get("intentos", 0))
+	)
+	_verificar(
+		precision == 33,
+		"[NodoStats] 1 acierto / 3 intentos debe dar 33%%, obtuvo %d%%" % precision
+	)
+
+
 func _test_precision_dos_errores_un_acierto_es_33() -> void:
-	const NodoProgressionRulesScript := preload("res://sistemas/NodoProgressionRules.gd")
 	var global_state: Node = root.get_node_or_null("/root/Global")
 	if global_state == null:
 		_verificar(false, "[Precision] Global autoload no disponible")
@@ -2575,6 +2593,7 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_fusion_node_progress_last_accuracy_no_usa_max()
 	_test_finalizacion_partida_lee_last_accuracy_con_intentos_cero()
 	_test_nodo_progression_rules_precision_display_sin_intentos()
+	_test_normalizar_stats_deduce_intentos()
 	_test_precision_dos_errores_un_acierto_es_33()
 	_test_logout_restaura_snapshot_invitado()
 	_test_logout_aisla_racha_online()

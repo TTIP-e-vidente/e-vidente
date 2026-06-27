@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://email_verify_001"]
+[gd_scene load_steps=20 format=3 uid="uid://email_verify_001"]
 
 [ext_resource type="Script" path="res://interface/auth/EmailVerification.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_fondo"]
@@ -7,46 +7,41 @@
 [ext_resource type="PackedScene" path="res://interface/auth/CodigoDigitSlot.tscn" id="5_digit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.10, 0.14, 0.11, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.859, 0.753, 0.318, 0.85)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 20
 corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
-shadow_color = Color(0.0, 0.0, 0.0, 0.55)
-shadow_size = 16
-shadow_offset = Vector2(0, 8)
+shadow_color = Color(0.18, 0.34, 0.26, 0.12)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
-bg_color = Color(0.12, 0.22, 0.17, 1)
-border_width_bottom = 2
-border_color = Color(0.859, 0.753, 0.318, 0.4)
+bg_color = Color(1, 1, 1, 1)
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.15)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
-bg_color = Color(0.859, 0.753, 0.318, 0.18)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.859, 0.753, 0.318, 0.65)
+bg_color = Color(0.94, 0.97, 0.95, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.35)
 corner_radius_top_left = 28
 corner_radius_top_right = 28
 corner_radius_bottom_right = 28
 corner_radius_bottom_left = 28
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_input"]
-bg_color = Color(0.04, 0.07, 0.05, 0.35)
+bg_color = Color(0.97, 0.99, 0.98, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.25)
+border_color = Color(0.259, 0.471, 0.369, 0.25)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -57,12 +52,12 @@ content_margin_right = 12
 content_margin_bottom = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_input_focus"]
-bg_color = Color(0.05, 0.09, 0.07, 0.5)
+bg_color = Color(0.94, 0.97, 0.95, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.55)
+border_color = Color(0.259, 0.471, 0.369, 0.55)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -71,6 +66,8 @@ content_margin_left = 12
 content_margin_top = 6
 content_margin_right = 12
 content_margin_bottom = 6
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_codigo_input"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton"]
 bg_color = Color(0.259, 0.471, 0.369, 1)
@@ -105,6 +102,22 @@ content_margin_top = 12
 content_margin_right = 20
 content_margin_bottom = 12
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_email"]
+bg_color = Color(0.94, 0.97, 0.95, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.259, 0.471, 0.369, 0.2)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 14
+content_margin_top = 8
+content_margin_right = 14
+content_margin_bottom = 8
+
 [node name="EmailVerification" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -130,7 +143,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.04, 0.06, 0.05, 0.62)
+color = Color(0.94, 0.97, 0.95, 0.72)
 
 [node name="MarginRoot" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -144,172 +157,203 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxRoot" type="VBoxContainer" parent="MarginRoot"]
+[node name="CenterContainer" type="CenterContainer" parent="MarginRoot"]
 layout_mode = 2
-theme_override_constants/separation = 12
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="BotonVolver" type="Button" parent="MarginRoot/VBoxRoot"]
+[node name="BotonVolver" type="Button" parent="MarginRoot"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_horizontal = 0
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+size_flags_vertical = 0
+z_index = 2
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("3_font")
 flat = true
 text = "← Volver"
 
-[node name="CenterContainer" type="CenterContainer" parent="MarginRoot/VBoxRoot"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="PanelCentral" type="PanelContainer" parent="MarginRoot/VBoxRoot/CenterContainer"]
+[node name="PanelCentral" type="PanelContainer" parent="MarginRoot/CenterContainer"]
 custom_minimum_size = Vector2(460, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxPanel" type="VBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral"]
+[node name="VBoxPanel" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral"]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HeaderBar" type="PanelContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel"]
+[node name="HeaderBar" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 72)
 theme_override_styles/panel = SubResource("StyleBoxFlat_header")
 
-[node name="MarginHeader" type="MarginContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar"]
+[node name="MarginHeader" type="MarginContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar"]
 layout_mode = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 14
 
-[node name="HBoxHeader" type="HBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader"]
+[node name="HBoxHeader" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="BadgeMail" type="PanelContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader"]
+[node name="BadgeMail" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader"]
 custom_minimum_size = Vector2(52, 52)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
 
-[node name="BadgeLabel" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/BadgeMail"]
+[node name="BadgeLabel" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/BadgeMail"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 22
 text = "@"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="VBoxTitulos" type="VBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader"]
+[node name="VBoxTitulos" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Titulo" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos"]
+[node name="Titulo" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.18, 0.34, 0.26, 1)
 theme_override_fonts/font = ExtResource("4_spray")
 theme_override_font_sizes/font_size = 26
 text = "Verificá tu correo"
 
-[node name="SubtituloHeader" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos"]
+[node name="SubtituloHeader" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.85)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.75)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 13
 text = "Código de 6 dígitos en tu casilla"
 
-[node name="MarginBody" type="MarginContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel"]
+[node name="MarginBody" type="MarginContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Descripcion" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="Descripcion" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.70, 0.67, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.85)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 14
 text = "Te enviamos el código a:"
 horizontal_alignment = 1
 
-[node name="LabelEmail" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="EmailRow" type="CenterContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EmailChip" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_email")
+
+[node name="LabelEmail" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow/EmailChip"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 16
 text = "tu_mail@ejemplo.com"
 horizontal_alignment = 1
-autowrap_mode = 2
+vertical_alignment = 1
+autowrap_mode = 0
+clip_text = false
 
-[node name="Espaciador1" type="Control" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="Espaciador1" type="Control" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 
-[node name="HBoxDigitos" type="HBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="CodigoInputWrap" type="Control" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 4
+
+[node name="HBoxDigitos" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="DigitSlot0" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot0" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot1" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot1" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot2" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot2" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot3" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot3" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot4" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot4" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot5" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxDigitos" instance=ExtResource("5_digit")]
+[node name="DigitSlot5" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LineEditCodigo" type="LineEdit" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="LineEditCodigo" type="LineEdit" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 40)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/caret_color = Color(0.859, 0.753, 0.318, 0.8)
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 0.9)
-theme_override_colors/font_placeholder_color = Color(0.45, 0.48, 0.46, 0.7)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+z_index = 1
+theme_override_colors/caret_color = Color(0.259, 0.471, 0.369, 0)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0)
+theme_override_colors/font_placeholder_color = Color(0.259, 0.471, 0.369, 0)
+theme_override_colors/font_selected_color = Color(0.259, 0.471, 0.369, 0)
+theme_override_colors/font_uneditable_color = Color(0.259, 0.471, 0.369, 0)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxFlat_input")
-theme_override_styles/focus = SubResource("StyleBoxFlat_input_focus")
-placeholder_text = "Pegá o escribí el código aquí"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_codigo_input")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_codigo_input")
+placeholder_text = ""
 alignment = 1
 max_length = 6
+context_menu_enabled = false
+flat = true
 
-[node name="LabelMensaje" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="LabelMensaje" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.9)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="BotonVerificar" type="Button" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="BotonVerificar" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -321,50 +365,50 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_boton_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_boton_pressed")
 text = "Verificar código"
 
-[node name="BotonAyudaMail" type="Button" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="BotonAyudaMail" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.636, 0.878, 0.647, 0.9)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.9)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 13
 text = "¿No llegó el mail?"
 flat = true
 
-[node name="LabelAyudaMail" type="Label" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="LabelAyudaMail" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.60, 0.65, 0.62, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.7)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
 horizontal_alignment = 1
 
-[node name="SeparadorSecundario" type="ColorRect" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="SeparadorSecundario" type="ColorRect" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-color = Color(0.859, 0.753, 0.318, 0.15)
+color = Color(0.259, 0.471, 0.369, 0.12)
 
-[node name="HBoxBotonesSecundarios" type="HBoxContainer" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
+[node name="HBoxBotonesSecundarios" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="BotonReenviar" type="Button" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios"]
+[node name="BotonReenviar" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.859, 0.753, 0.318, 0.85)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.9)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 14
 text = "Reenviar código"
 flat = true
 
-[node name="BotonOmitir" type="Button" parent="MarginRoot/VBoxRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios"]
+[node name="BotonOmitir" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.45, 0.48, 0.46, 1)
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.55)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 14
 text = "Verificar más tarde"

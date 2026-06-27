@@ -265,11 +265,13 @@ func request_scene_preload(scene_path: String) -> void:
 		return
 	if _preloaded_scenes.has(normalizado_scene_path):
 		return
+
 	var loaded_scene: PackedScene = load(normalizado_scene_path) as PackedScene
-	if loaded_scene != null:
-		_preloaded_scenes[normalizado_scene_path] = loaded_scene
+	if loaded_scene == null:
+		push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalizado_scene_path)
 		return
-	push_warning(LOG_PREFIX + " No se pudo precargar escena: " + normalizado_scene_path)
+
+	_preloaded_scenes[normalizado_scene_path] = loaded_scene
 
 
 func request_initial_scene_preload() -> void:
