@@ -22,12 +22,17 @@ function runTemplateTests(): void {
   assert.equal(welcome.to, 'agus@example.com');
   assert.equal(welcome.toName, 'Agus');
   assert.match(welcome.subject, /E-VIDENTE/);
+  assert.match(welcome.subject, /Bienvenido\/a/);
   assert.match(welcome.textContent, /Agus/);
+  assert.match(welcome.textContent, /Confirmaste tu mail correctamente/);
+  assert.doesNotMatch(welcome.textContent, /código de verificación/i);
   assert.match(welcome.htmlContent, /Agus/);
   assert.match(welcome.htmlContent, /#42785e/i);
   assert.match(welcome.htmlContent, /Rubik/i);
   assert.match(welcome.htmlContent, /E-VIDENTE/);
   assert.match(welcome.htmlContent, /Mail verificado/);
+  assert.match(welcome.htmlContent, /Tu cuenta est/);
+  assert.doesNotMatch(welcome.htmlContent, /843184/);
   assert.doesNotMatch(welcome.htmlContent, /<script/i);
 
   const escaped = escapeHtml(`<Agus> "test" & 'ok'`);
@@ -67,6 +72,8 @@ function runTemplateTests(): void {
   assert.doesNotMatch(verify.htmlContent, /843 184/);
   assert.match(verify.htmlContent, /843184/);
   assert.match(verify.htmlContent, /sin espacios|asunto/i);
+  assert.doesNotMatch(verify.htmlContent, /letter-spacing: 0\.35em/);
+  assert.doesNotMatch(verify.htmlContent, /Seleccioná y copiá estos 6 números/);
   assert.doesNotMatch(verify.htmlContent, /Copiar código/);
   assert.doesNotMatch(verify.textContent, /localhost/i);
   const welcomeHtml = embedInlineAssetsForPreview(welcome.htmlContent);

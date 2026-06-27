@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import http from 'http';
 import path from 'path';
+import { ensurePostgres } from './ensure-postgres';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -36,6 +37,8 @@ async function main(): Promise<void> {
     console.log('No hace falta levantar otro. Para reiniciar: npm run dev:restart');
     return;
   }
+
+  await ensurePostgres();
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('../src/server');

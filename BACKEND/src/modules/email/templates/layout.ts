@@ -146,15 +146,12 @@ export function verificationCodeBlock(code: string): string {
     })
     .join('');
 
-  const fullCode = escapeHtml(digits.join(''));
-
   return `<div style="margin: 0 0 20px; padding: 22px 20px; background: ${t.badgeGold}; border: 2px solid ${t.badgeGoldBorder}; border-radius: 16px; text-align: center; font-family: 'Rubik', Arial, sans-serif;">
     <p style="margin: 0 0 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #7a6200;">Tu código de verificación</p>
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 12px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 14px;">
       <tr>${digitBoxes}</tr>
     </table>
-    <p style="margin: 0; font-family: 'Rubik', 'Courier New', monospace; font-size: 28px; font-weight: 900; letter-spacing: 0.35em; color: #4a3800; user-select: all; -webkit-user-select: all;">${fullCode}</p>
-    <p style="margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: ${t.textMuted};">Seleccioná y copiá estos 6 números (sin espacios). También está en el asunto del mail.</p>
+    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: ${t.textMuted};">Son 6 números, sin espacios. También están en el asunto del mail para copiarlos rápido.</p>
   </div>`;
 }
 
