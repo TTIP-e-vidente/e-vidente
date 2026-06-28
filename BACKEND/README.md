@@ -39,6 +39,21 @@ npm run setup:dev   # compose + migrate + usuarios demo
 npm run dev
 ```
 
+### Supabase (staging / prod Postgres)
+
+Guía completa: [`docs/SUPABASE_MIGRATION.md`](docs/SUPABASE_MIGRATION.md)
+
+```sh
+cd BACKEND
+copy .env.staging.example .env.staging   # completar credenciales Supabase
+npm run setup:supabase                   # schema + migración 030 RLS
+npm run migrate:data-to-supabase:dry-run # opcional: preview datos local → remoto
+npm run smoke:api:staging
+npm run dev:staging                      # backend contra Supabase (.env.staging)
+```
+
+Arquitectura: Godot → Express (JWT propio) → Postgres Supabase. **No** usamos Supabase Auth.
+
 `.env` no se commitea. Valores base en `.env.example` (`POSTGRES_*`, `BACKEND_PORT=3000`, `JWT_*`).
 
 **Demo:** `agus` / `123`, `margo` / `123`

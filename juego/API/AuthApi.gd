@@ -175,6 +175,16 @@ static func evaluar_respuesta_verificacion(
 			"feedback": mensaje_verificacion(result, "Esperá antes de pedir otro código."),
 			"feedback_ok": false,
 		}
+
+	var code := str(result.get("code", "")).strip_edges()
+	if code == "MAIL_OUT_OF_SYNC":
+		return {
+			"show_overlay": false,
+			"cooldown_seconds": 0,
+			"feedback": mensaje_verificacion(result, "Guardá el mail en tu perfil e intentá de nuevo."),
+			"feedback_ok": false,
+		}
+
 	return {
 		"show_overlay": false,
 		"cooldown_seconds": 0,

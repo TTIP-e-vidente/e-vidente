@@ -45,6 +45,8 @@ export interface ProfileVerificationMeta {
   mail_changed: boolean;
   code_send_status: ProfileVerificationSendStatus;
   cooldown_seconds: number;
+  target_mail?: string;
+  message?: string;
 }
 
 export interface UpdatePlayerMeResponse extends PlayerMeResponse {
@@ -92,13 +94,22 @@ function parseEmailNotificationsEnabled(value: unknown): boolean {
 
 async function buildVerificationMeta(
   userId: string,
-  sendResult: ProfileVerificationSendStatus
+  sendResult: ProfileVerificationSendStatus,
+  targetMail?: string | null
 ): Promise<ProfileVerificationMeta> {
+  const trimmedTarget = targetMail?.trim() ?? '';
+
   if (sendResult === 'sent') {
     return {
       mail_changed: true,
       code_send_status: sendResult,
-      cooldown_seconds: getVerificationConfig().cooldownSeconds
+      cooldown_seconds: getVerificationConfig().cooldownSeconds,
+      ...(trimmedTarget
+        ? {
+            target_mail: trimmedTarget,
+            message: `Código enviado a ${trimmedTarget}. Revisá spam.`
+          }
+        : {})
     };
   }
 
@@ -106,14 +117,16 @@ async function buildVerificationMeta(
     return {
       mail_changed: true,
       code_send_status: sendResult,
-      cooldown_seconds: await getVerificationCooldownRemainingSeconds(userId)
+      cooldown_seconds: await getVerificationCooldownRemainingSeconds(userId),
+      ...(trimmedTarget ? { target_mail: trimmedTarget } : {})
     };
   }
 
   return {
     mail_changed: true,
     code_send_status: sendResult,
-    cooldown_seconds: 0
+    cooldown_seconds: 0,
+    ...(trimmedTarget ? { target_mail: trimmedTarget } : {})
   };
 }
 
@@ -252,7 +265,7 @@ export async function updatePlayerMe(
 
   if (mailChanged && validatedMail && updatedUserRow) {
     const sendResult = await sendVerificationCode(userId, validatedMail, updatedUserRow.name);
-    verification = await buildVerificationMeta(userId, sendResult);
+    verification = await buildVerificationMeta(userId, sendResult, validatedMail);
 
     if (oldMail) {
       void sendMailChangedEmail({

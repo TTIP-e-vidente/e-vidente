@@ -6,6 +6,9 @@ const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const SaveLocalProfileHelperScript := preload(
 	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
 )
+const ProfileMailSyncHelperScript := preload(
+	"res://interface/auth/ProfileMailSyncHelper.gd"
+)
 
 var profile_name_preview_label: Label
 var profile_email_preview_label: Label
@@ -216,9 +219,19 @@ func _intentar_autosave() -> void:
 			avatar_path_input.text = persisted_avatar
 			_refrescar_controles_avatar()
 		if BackendSession.esta_logueado():
-			await _asegurar_cache_perfil_servidor()
+			var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
+			if not bool(refresh.get("ok", false)):
+				_establecer_feedback(
+					ProfileMailSyncHelperScript.mensaje_error(
+						{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"}
+					),
+					false
+				)
+				return
+			var form_mail := email_input.text.strip_edges()
 			var necesita_sync_online := (
-				_perfil_online_sucio or _mail_formulario_difiere_del_servidor()
+				_perfil_online_sucio
+				or ProfileMailSyncHelperScript.formulario_difiere_del_servidor(form_mail)
 			)
 			if not necesita_sync_online:
 				_establecer_feedback("Datos guardados correctamente.", true)
@@ -273,7 +286,9 @@ func _actualizar_etiquetas_vista_previa(
 	)
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
 	if BackendSession.esta_logueado() and not email.is_empty():
-		if AuthApi.mail_esta_verificado():
+		if ProfileMailSyncHelperScript.formulario_difiere_del_servidor(email):
+			profile_email_preview_label.text += " · sin sincronizar"
+		elif _mail_esta_verificado():
 			profile_email_preview_label.text += " · verificado"
 		else:
 			profile_email_preview_label.text += " · pendiente"
@@ -300,34 +315,46 @@ func _aplicar_ruta_avatar(path: String) -> void:
 
 func _on_email_input_cambiado(texto: String) -> void:
 	if BackendSession.esta_logueado():
-		var mail_cache := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
-		if texto.strip_edges() != mail_cache:
+		if not ProfileMailSyncHelperScript.mails_coinciden(
+			texto.strip_edges(),
+			ProfileMailSyncHelperScript.obtener_mail_servidor()
+		):
 			BackendSession.limpiar_mail_verificado_en_cache()
 	_actualizar_estado_verificacion_mail()
 	_actualizar_checkbox_notificaciones_habilitado()
 
 
 func _mail_formulario_difiere_del_servidor() -> bool:
-	if not BackendSession.esta_logueado():
-		return false
-	var form_mail := email_input.text.strip_edges()
-	if form_mail.is_empty():
-		return false
-	var server_mail := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
-	return form_mail != server_mail
-
-
-func _asegurar_cache_perfil_servidor() -> void:
-	if BackendSession.esta_logueado():
-		await BackendSession.refrescar_usuario_en_cache()
+	return ProfileMailSyncHelperScript.formulario_difiere_del_servidor(
+		email_input.text.strip_edges()
+	)
 
 
 func _sincronizar_perfil_al_backend(
 	silencioso: bool = false,
 	forzar_mail: bool = false
 ) -> Dictionary:
-	await _asegurar_cache_perfil_servidor()
-	if not forzar_mail and _mail_formulario_difiere_del_servidor():
+	var form_mail := email_input.text.strip_edges()
+	var formato := ProfileMailSyncHelperScript.validar_formato_mail(form_mail)
+	if not form_mail.is_empty() and not bool(formato.get("ok", false)):
+		return _responder_error_sync_perfil(
+			{
+				"ok": false,
+				"status": 400,
+				"code": "INVALID_MAIL",
+				"error": str(formato.get("mensaje", "")),
+			},
+			silencioso
+		)
+
+	var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
+	if BackendSession.esta_logueado() and not bool(refresh.get("ok", false)):
+		return _responder_error_sync_perfil(
+			{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"},
+			silencioso
+		)
+
+	if ProfileMailSyncHelperScript.debe_forzar_sync_mail(form_mail, forzar_mail):
 		forzar_mail = true
 
 	var notificaciones_mail: Variant = null
@@ -341,6 +368,7 @@ func _sincronizar_perfil_al_backend(
 		notificaciones_mail,
 		forzar_mail
 	)
+	result = ProfileMailSyncHelperScript.validar_resultado_sync(form_mail, result)
 	if bool(result.get("ok", false)):
 		_perfil_online_sucio = false
 		if not bool(result.get("skipped", false)):
@@ -351,34 +379,33 @@ func _sincronizar_perfil_al_backend(
 		if not silencioso and not overlay_shown:
 			_establecer_feedback("Datos guardados correctamente.", true)
 		return {"ok": true, "overlay_shown": overlay_shown}
+	return _responder_error_sync_perfil(result, silencioso)
+
+
+func _responder_error_sync_perfil(result: Dictionary, silencioso: bool) -> Dictionary:
 	var status_code := int(result.get("status", 0))
 	var server_error := str(result.get("error", ""))
-	print("[Auth] Profile sync failed (status=%d): %s" % [status_code, server_error])
+	print(
+		"[Auth] Profile sync failed (status=%d, code=%s): %s"
+		% [status_code, str(result.get("code", "")), server_error]
+	)
 	if silencioso:
+		return {"ok": false, "overlay_shown": false, "error": server_error, "code": result.get("code", "")}
+
+	if str(result.get("code", "")) == "MAIL_NOT_VERIFIED":
+		_responder_mail_no_verificado()
+		return {"ok": false, "overlay_shown": false, "error": server_error, "code": result.get("code", "")}
+
+	var mensaje := ProfileMailSyncHelperScript.mensaje_error(result)
+	if mensaje.is_empty():
+		mensaje = "No se pudo sincronizar. Revisá los datos."
+	if status_code == 0 and str(result.get("code", "")) != "PROFILE_REFRESH_FAILED":
+		mensaje = "Guardado localmente. Se sincronizará cuando haya conexión."
+		_establecer_feedback(mensaje, true)
 		return {"ok": false, "overlay_shown": false}
-	match status_code:
-		409:
-			if str(result.get("code", "")) == "MAIL_OUT_OF_SYNC":
-				_establecer_feedback(
-					"Guardá el mail en tu perfil antes de pedir el código.",
-					false
-				)
-			else:
-				_establecer_feedback("Ese mail ya está en uso por otra cuenta.", false)
-		422:
-			if str(result.get("code", "")) == "MAIL_NOT_VERIFIED":
-				_responder_mail_no_verificado()
-			else:
-				var msg := server_error if not server_error.is_empty() else "Datos inválidos."
-				_establecer_feedback(msg, false)
-		400:
-			var msg := server_error if not server_error.is_empty() else "Datos inválidos."
-			_establecer_feedback(msg, false)
-		0:
-			_establecer_feedback("Guardado localmente. Se sincronizará cuando haya conexión.", true)
-		_:
-			_establecer_feedback("No se pudo sincronizar. Revisá los datos.", false)
-	return {"ok": false, "overlay_shown": false}
+
+	_establecer_feedback(mensaje, false)
+	return {"ok": false, "overlay_shown": false, "error": server_error, "code": result.get("code", "")}
 
 
 func _manejar_verificacion_respuesta_perfil(result: Dictionary, silencioso: bool) -> bool:
@@ -443,13 +470,9 @@ func _on_notificaciones_mail_cambiadas(pressed: bool) -> void:
 
 
 func _mail_editado_sin_guardar_en_servidor() -> bool:
-	if not BackendSession.esta_logueado():
-		return false
-	var mail_form := email_input.text.strip_edges()
-	if mail_form.is_empty():
-		return false
-	var mail_servidor := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
-	return mail_form != mail_servidor
+	return ProfileMailSyncHelperScript.formulario_difiere_del_servidor(
+		email_input.text.strip_edges()
+	)
 
 
 func _mail_esta_verificado() -> bool:
@@ -505,17 +528,31 @@ func _actualizar_estado_verificacion_mail() -> void:
 	else:
 		_mail_verify_status_label.text = "Tu mail aún no está verificado."
 		_mail_verify_status_label.modulate = Color(0.568627, 0.184314, 0.141176, 1)
+		var sin_sync := _mail_editado_sin_guardar_en_servidor()
+		if sin_sync:
+			_mail_verify_status_label.text = (
+				"Guardá el perfil para sincronizar el mail antes de verificar."
+			)
 		_button_verify_email.visible = true
-		_button_verify_email.disabled = false
+		_button_verify_email.disabled = sin_sync
+		_button_verify_email.tooltip_text = (
+			"Primero guardá el perfil para sincronizar el mail."
+			if sin_sync
+			else "Te enviamos un código de 6 dígitos a tu casilla."
+		)
 
 
 func _on_boton_verificar_mail_presionado() -> void:
 	if not BackendSession.esta_logueado():
 		_establecer_feedback("Iniciá sesión para verificar tu mail.", false)
 		return
-	if email_input.text.strip_edges().is_empty():
-		_establecer_feedback("Completá un mail antes de pedir el código.", false)
+
+	var form_mail := email_input.text.strip_edges()
+	var precheck := ProfileMailSyncHelperScript.puede_solicitar_verificacion(form_mail)
+	if not bool(precheck.get("ok", false)):
+		_establecer_feedback(str(precheck.get("mensaje", "")), false)
 		return
+
 	if _mail_esta_verificado():
 		_establecer_feedback("Tu mail ya está verificado.", true)
 		_actualizar_estado_verificacion_mail()
@@ -524,7 +561,11 @@ func _on_boton_verificar_mail_presionado() -> void:
 	_establecer_feedback("Guardando mail...", true)
 	var sync := await _sincronizar_perfil_al_backend(true, true)
 	if not bool(sync.get("ok", false)):
-		_establecer_feedback("No se pudo guardar el mail antes de verificar.", false)
+		var msg := ProfileMailSyncHelperScript.mensaje_error(sync)
+		_establecer_feedback(
+			msg if not msg.is_empty() else "No se pudo guardar el mail antes de verificar.",
+			false
+		)
 		return
 	if bool(sync.get("overlay_shown", false)):
 		return

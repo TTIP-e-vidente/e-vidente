@@ -4,6 +4,9 @@ signal verificacion_completada()
 signal verificacion_omitida()
 
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
+const ProfileMailSyncHelperScript := preload(
+	"res://interface/auth/ProfileMailSyncHelper.gd"
+)
 const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
@@ -66,8 +69,14 @@ func _ready() -> void:
 
 
 func _inicializar_correo_y_estado() -> void:
-	if AuthApi.esta_logueado():
-		await BackendSession.refrescar_usuario_en_cache()
+	var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
+	if AuthApi.esta_logueado() and not bool(refresh.get("ok", false)):
+		_mostrar_mensaje(
+			ProfileMailSyncHelperScript.mensaje_error(
+				{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"}
+			),
+			false
+		)
 	_mostrar_email_usuario()
 	await _sincronizar_estado_desde_servidor()
 
@@ -103,17 +112,13 @@ func _sincronizar_estado_desde_servidor() -> void:
 	if not data is Dictionary:
 		return
 	var payload := data as Dictionary
-	var mail_servidor := str(payload.get("mail", "")).strip_edges()
+	var mail_mostrar := ProfileMailSyncHelperScript.resolver_mail_visible(payload)
+	if not mail_mostrar.is_empty():
+		_establecer_mail_en_ui(mail_mostrar)
 	var verification: Variant = payload.get("verification", {})
 	if not verification is Dictionary:
 		return
 	var v := verification as Dictionary
-	var pending_mail := str(v.get("pending_target_mail", "")).strip_edges()
-	var mail_mostrar := pending_mail if not pending_mail.is_empty() else mail_servidor
-	if mail_mostrar.is_empty():
-		mail_mostrar = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
-	if not mail_mostrar.is_empty():
-		_establecer_mail_en_ui(mail_mostrar)
 	var cooldown := int(v.get("cooldown_seconds", 0))
 	if cooldown > 0:
 		_iniciar_cooldown(float(cooldown))

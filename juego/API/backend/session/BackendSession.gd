@@ -380,6 +380,18 @@ func actualizar_perfil_online(
 		var user_data: Variant = (data as Dictionary).get("user", {})
 		if user_data is Dictionary and not (user_data as Dictionary).is_empty():
 			_persistir_usuario_en_cache(user_data as Dictionary)
+
+	if payload.has("mail") and not clean_mail.is_empty():
+		var persisted := str(_usuario_en_cache.get("mail", "")).strip_edges()
+		if persisted.to_lower() != clean_mail.to_lower():
+			return {
+				"ok": false,
+				"status": 409,
+				"code": "MAIL_SYNC_MISMATCH",
+				"error": "El mail del servidor no coincide con el del formulario.",
+				"data": data if data is Dictionary else {},
+			}
+
 	resultado["skipped"] = false
 	return resultado
 

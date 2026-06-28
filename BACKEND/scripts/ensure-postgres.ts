@@ -1,10 +1,10 @@
 import { execSync } from 'child_process';
-import dotenv from 'dotenv';
 import path from 'path';
 import { Pool } from 'pg';
 import { createPostgresPoolConfig, isRemotePostgres } from '../src/config/postgresPoolConfig';
+import { loadBackendEnv } from './lib/postgres-env';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const { envFile } = loadBackendEnv();
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
@@ -58,7 +58,7 @@ async function waitForPostgres(maxRetries = 20, delayMs = 2000): Promise<void> {
   }
 
   console.error('\nERROR: PostgreSQL no responde en el puerto configurado.');
-  console.error('Verificá BACKEND/.env (POSTGRES_PORT=5433) y que Docker Desktop esté abierto.');
+  console.error(`Verificá BACKEND/${envFile} (POSTGRES_PORT=5433) y que Docker Desktop esté abierto.`);
   console.error('Luego corré: docker compose up -d');
   process.exit(1);
 }
@@ -76,7 +76,7 @@ export async function ensurePostgres(): Promise<void> {
 
   if (isRemotePostgres()) {
     console.error('\nERROR: no se puede conectar a PostgreSQL remoto (POSTGRES_SSL=true).');
-    console.error('Verificá credenciales en BACKEND/.env y que el proyecto Supabase esté activo.');
+    console.error(`Verificá credenciales en BACKEND/${envFile} y que el proyecto Supabase esté activo.`);
     process.exit(1);
   }
 

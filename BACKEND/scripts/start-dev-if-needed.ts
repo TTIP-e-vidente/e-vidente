@@ -1,9 +1,8 @@
-import dotenv from 'dotenv';
 import http from 'http';
-import path from 'path';
 import { ensurePostgres } from './ensure-postgres';
+import { loadBackendEnv } from './lib/postgres-env';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+loadBackendEnv();
 
 const port = Number.parseInt(process.env.BACKEND_PORT ?? '3010', 10);
 

@@ -10,7 +10,8 @@ const integrationTests = [
   'tests/email.webhook.integration.test.ts',
   'tests/email.internal.integration.test.ts',
   'tests/auth.integration.test.ts',
-  'tests/player_authenticated.integration.test.ts'
+  'tests/player_authenticated.integration.test.ts',
+  'tests/profile-mail-verification.integration.test.ts'
 ];
 
 const smokeScripts = [

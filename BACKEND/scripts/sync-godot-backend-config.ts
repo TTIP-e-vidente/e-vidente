@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import dotenv from 'dotenv';
+import { loadBackendEnv } from './lib/postgres-env';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+loadBackendEnv();
 
 const port = process.env.BACKEND_PORT ?? '3010';
 const host = (process.env.BACKEND_HOST ?? 'localhost').trim();

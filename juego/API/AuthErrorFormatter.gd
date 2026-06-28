@@ -39,10 +39,41 @@ static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> S
 			return "El código expiró. Solicitá uno nuevo."
 		"NO_PENDING_CODE":
 			return "No hay código pendiente. Pedí uno nuevo primero."
+		"MAIL_OUT_OF_SYNC":
+			return (
+				"El mail del formulario no coincide con tu cuenta. "
+				+ "Guardá el perfil e intentá de nuevo."
+			)
 
 	if not fallback.is_empty():
 		return fallback
 	return ""
+
+
+static func mensaje_perfil_sync(result: Dictionary, fallback: String = "") -> String:
+	var code := str(result.get("code", "")).strip_edges()
+	match code:
+		"MAIL_OUT_OF_SYNC":
+			return mensaje_verificacion(result, "Guardá el mail en tu perfil antes de pedir el código.")
+		"MAIL_SYNC_SKIPPED", "MAIL_SYNC_MISMATCH":
+			return str(result.get("error", "")).strip_edges() if not str(result.get("error", "")).is_empty() else (
+				"No pudimos sincronizar el mail con el servidor. Revisá la conexión y volvé a guardar."
+			)
+		"MAIL_NOT_VERIFIED":
+			return "Verificá tu mail antes de activar recordatorios."
+		"MAIL_NOT_SYNCED":
+			return "Guardá el perfil para sincronizar el mail antes de verificar."
+		"INVALID_MAIL":
+			var invalid_msg := str(result.get("error", "")).strip_edges()
+			return invalid_msg if not invalid_msg.is_empty() else "El mail no tiene un formato válido."
+		"DUPLICATE_MAIL":
+			return "Ese mail ya está en uso por otra cuenta."
+		"PROFILE_REFRESH_FAILED":
+			return (
+				"No pudimos leer tu perfil del servidor. "
+				+ "Revisá la conexión e intentá de nuevo."
+			)
+	return mensaje_auth(result, fallback if not fallback.is_empty() else "No se pudo sincronizar el perfil.")
 
 
 static func cooldown_verificacion(result: Dictionary, fallback: int = 120) -> int:
@@ -119,6 +150,12 @@ static func _mensaje_por_codigo(code: String) -> String:
 			return "Ese nombre de usuario ya existe. Elegí otro."
 		"DUPLICATE_MAIL":
 			return "Ese mail ya está registrado. Probá iniciar sesión."
+		"MAIL_NOT_VERIFIED":
+			return "Verificá tu mail antes de activar recordatorios."
+		"MAIL_NOT_SYNCED":
+			return "Guardá el perfil para sincronizar el mail antes de verificar."
+		"MAIL_OUT_OF_SYNC":
+			return "Guardá el mail en tu perfil antes de pedir el código."
 		"INVALID_BODY":
 			return "Datos inválidos. Revisá usuario, mail y contraseña (mín. 8 caracteres)."
 		"UNEXPECTED_ERROR":
