@@ -1,6 +1,6 @@
-import dotenv from 'dotenv';
+import { loadEnvFile } from '../../config/load-env';
 
-dotenv.config();
+loadEnvFile();
 
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) {

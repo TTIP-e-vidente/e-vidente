@@ -29,7 +29,40 @@ Capas: `route → controller → service → repository → mapper`. Sin SQL en 
 
 ## Levantar
 
-Requisitos: Node, npm, Docker.
+Requisitos: Node, npm. Docker solo para Postgres **local offline** (tests/CI).
+
+### Desarrollo normal (Supabase staging)
+
+**Guía rápida:** [`docs/SUPABASE_QUICKSTART.md`](docs/SUPABASE_QUICKSTART.md)  
+**Stack completo (DB + deploy):** [`docs/SUPABASE_FULL_STACK.md`](docs/SUPABASE_FULL_STACK.md)
+
+```sh
+cd BACKEND
+npm install
+npm run supabase:init
+# completar .env.staging (password, JWT, Brevo si aplica)
+npm run supabase:bootstrap:apply:seed
+npm run staging:verify    # status + schema + smoke API (+ email si Brevo OK)
+npm run dev:staging       # Express + Godot config → Supabase
+```
+
+| Comando | Para qué |
+|---------|----------|
+| `npm run dev:staging` | Desarrollo diario contra Supabase |
+| `npm run staging:verify` | Chequeo completo antes de demo/deploy |
+| `npm run staging:verify:email` | Igual + smoke Brevo obligatorio |
+| `npm run validate:email-flow:staging` | E2E mails contra Supabase |
+| `npm run smoke:email:staging` | Smoke transaccional Brevo |
+
+Deploy: `npm run build` + `npm run start:prod` · health `GET /health/ready` · blueprint `render.yaml`
+
+Arquitectura: Godot → Express (JWT propio) → Postgres Supabase. **No** usamos Supabase Auth.
+
+`.env.staging` / `.env` no se commitean. Templates: `.env.staging.example`, `.env.example`.
+
+**Demo:** `agus` / `123`, `margo` / `123`
+
+### Postgres local (Docker — offline / tests)
 
 ```sh
 cd BACKEND
@@ -39,26 +72,7 @@ npm run setup:dev   # compose + migrate + usuarios demo
 npm run dev
 ```
 
-### Supabase (staging / prod Postgres)
-
-Guía completa: [`docs/SUPABASE_MIGRATION.md`](docs/SUPABASE_MIGRATION.md)
-
-```sh
-cd BACKEND
-copy .env.staging.example .env.staging   # completar credenciales Supabase
-npm run setup:supabase                   # schema + migración 030 RLS
-npm run migrate:data-to-supabase:dry-run # opcional: preview datos local → remoto
-npm run smoke:api:staging
-npm run dev:staging                      # backend contra Supabase (.env.staging)
-```
-
-Arquitectura: Godot → Express (JWT propio) → Postgres Supabase. **No** usamos Supabase Auth.
-
-`.env` no se commitea. Valores base en `.env.example` (`POSTGRES_*`, `BACKEND_PORT=3000`, `JWT_*`).
-
-**Demo:** `agus` / `123`, `margo` / `123`
-
-**Postgres (DataGrip):** host `localhost`, port según `POSTGRES_PORT` en `.env` (default `5433`), db `evidente_dev`, user `evidente_user`, pass en `.env`.
+**Postgres (DataGrip local):** host `localhost`, port según `POSTGRES_PORT` en `.env` (default `5433`), db `evidente_dev`, user `evidente_user`.
 
 ```sh
 docker exec -it e-vidente-postgres psql -U evidente_user -d evidente_dev -c "SELECT current_database();"

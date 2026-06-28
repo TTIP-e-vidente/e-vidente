@@ -1,12 +1,9 @@
 import { execSync } from 'child_process';
-import dotenv from 'dotenv';
 import { pool } from '../src/config/database';
 import { isEmailDeliveryConfigured } from '../src/modules/email/email.config';
 import { sendTransactionalEmail } from '../src/modules/email/email.client';
 import { buildEmailMessage } from '../src/modules/email/templates';
 import { EmailMessage, EmailTemplateKey } from '../src/modules/email/email.types';
-
-dotenv.config();
 
 const DEFAULT_TEST_EMAIL_TO = 'agusdisanto99@gmail.com';
 const DEFAULT_TEST_EMAIL_NAME = 'Agus';

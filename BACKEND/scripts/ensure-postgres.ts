@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import path from 'path';
 import { Pool } from 'pg';
 import { createPostgresPoolConfig, isRemotePostgres } from '../src/config/postgresPoolConfig';
-import { loadBackendEnv } from './lib/postgres-env';
+import { connectSupabase, loadBackendEnv } from './lib/postgres-env';
 
 const { envFile } = loadBackendEnv();
 
@@ -64,6 +64,7 @@ async function waitForPostgres(maxRetries = 20, delayMs = 2000): Promise<void> {
 }
 
 export async function ensurePostgres(): Promise<void> {
+  const { envPath } = loadBackendEnv();
   const pool = createPool();
 
   try {
@@ -75,8 +76,26 @@ export async function ensurePostgres(): Promise<void> {
   }
 
   if (isRemotePostgres()) {
-    console.error('\nERROR: no se puede conectar a PostgreSQL remoto (POSTGRES_SSL=true).');
-    console.error(`Verificá credenciales en BACKEND/${envFile} y que el proyecto Supabase esté activo.`);
+    console.log('[postgres] reintentando conexión Supabase (fallback pooler)…');
+    try {
+      await connectSupabase({ envPath, persistToEnvFile: true, silent: false });
+    } catch (error) {
+      console.error('\nERROR: no se puede conectar a PostgreSQL remoto (POSTGRES_SSL=true).');
+      console.error((error as Error).message);
+      console.error(`\nProbá: npm run supabase:diagnose`);
+      process.exit(1);
+    }
+
+    const retryPool = createPool();
+    try {
+      if (await canConnect(retryPool)) {
+        return;
+      }
+    } finally {
+      await retryPool.end();
+    }
+
+    console.error('\nERROR: Supabase respondió en diagnose pero el pool local falla.');
     process.exit(1);
   }
 

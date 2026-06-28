@@ -1,10 +1,11 @@
-import dotenv from 'dotenv';
+import { loadEnvFile } from './config/load-env';
 import { app } from './app';
 import { scheduleOutboundEmailJob } from './modules/email/email.service';
 import { emailConfig, isEmailDeliveryConfigured } from './modules/email/email.config';
 import { warmUpLeaderboard } from './modules/leaderboard/leaderboard.service';
+import { verifyRemotePostgresOnStartup } from './startup/verify-remote-postgres';
 
-dotenv.config();
+loadEnvFile();
 
 const port = Number.parseInt(process.env.BACKEND_PORT ?? '3010', 10);
 
@@ -28,18 +29,27 @@ function logEmailStartupStatus(): void {
   console.log('[email] Brevo configurado — verificación y bienvenida activas');
 }
 
-app.listen(port, () => {
-  console.log(`E-VIDENTE backend listening on port ${port}`);
-  logEmailStartupStatus();
+async function startServer(): Promise<void> {
+  await verifyRemotePostgresOnStartup();
 
-  if (isEmailDeliveryConfigured() && process.env.NODE_ENV !== 'test') {
-    if (emailConfig.processOnStartup) {
-      console.log('[email] processing outbound queue on startup');
-      scheduleOutboundEmailJob();
+  app.listen(port, () => {
+    console.log(`E-VIDENTE backend listening on port ${port}`);
+    logEmailStartupStatus();
+
+    if (isEmailDeliveryConfigured() && process.env.NODE_ENV !== 'test') {
+      if (emailConfig.processOnStartup) {
+        console.log('[email] processing outbound queue on startup');
+        scheduleOutboundEmailJob();
+      }
     }
-  }
 
-  if (process.env.NODE_ENV !== 'test') {
-    warmUpLeaderboard();
-  }
+    if (process.env.NODE_ENV !== 'test') {
+      warmUpLeaderboard();
+    }
+  });
+}
+
+startServer().catch((error) => {
+  console.error('[startup] falló:', error);
+  process.exit(1);
 });

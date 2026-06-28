@@ -1,0 +1,49 @@
+# Post-deploy checklist — backend staging/prod contra Supabase.
+# Ejecutar manualmente después de deploy en Render/Railway/Docker.
+
+name: Backend deploy verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: URL pública del backend (https://...)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify-deploy:
+    name: Verify deployed backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          URL="${{ inputs.backend_url }}"
+          URL="${URL%/}"
+          echo "GET ${URL}/health/ready"
+          CODE=$(curl -sS -o body.json -w "%{http_code}" "${URL}/health/ready")
+          cat body.json
+          echo ""
+          test "$CODE" = "200"
+
+      - name: Smoke API (optional, needs staging DB with test isolation)
+        if: false
+        run: echo "Run smoke manually against staging if needed"
+
+      - name: Summary
+        if: always() && env.GITHUB_STEP_SUMMARY != ''
+        run: |
+          {
+            echo "### Backend deploy verify"
+            echo "- URL: \`${{ inputs.backend_url }}\`"
+            echo "- Health: \`/health/ready\`"
+          } >> "$GITHUB_STEP_SUMMARY"

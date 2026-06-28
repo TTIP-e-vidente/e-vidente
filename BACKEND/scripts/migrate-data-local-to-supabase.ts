@@ -6,39 +6,24 @@
  *   npx ts-node scripts/migrate-data-local-to-supabase.ts --dry-run
  *   npx ts-node scripts/migrate-data-local-to-supabase.ts --apply
  */
-import { Pool, PoolClient } from 'pg';
+import { PoolClient } from 'pg';
 import {
   assertLocalDockerEnv,
   assertSupabaseStagingEnv,
+  connectSupabase,
   createPoolFromCurrentEnv,
   loadPostgresEnv,
   validatePoolConnection,
 } from './lib/postgres-env';
+import {
+  countTableRows,
+  listPublicTables,
+  quoteIdent,
+  sortPublicTablesByForeignKeys,
+  truncatePublicTables,
+} from './lib/public-tables';
 
-const EXCLUDED_TABLES = new Set(['schema_migrations']);
-
-async function listPublicTables(client: PoolClient): Promise<string[]> {
-  const result = await client.query<{ tablename: string }>(
-    `
-      SELECT tablename
-      FROM pg_tables
-      WHERE schemaname = 'public'
-      ORDER BY tablename;
-    `
-  );
-  return result.rows.map((row) => row.tablename).filter((name) => !EXCLUDED_TABLES.has(name));
-}
-
-async function countRows(client: PoolClient, table: string): Promise<number> {
-  const result = await client.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM public.${quoteIdent(table)};`
-  );
-  return Number.parseInt(result.rows[0]?.count ?? '0', 10);
-}
-
-function quoteIdent(value: string): string {
-  return `"${value.replace(/"/g, '""')}"`;
-}
+const INSERT_BATCH_SIZE = 200;
 
 async function copyTable(
   local: PoolClient,
@@ -58,14 +43,22 @@ async function copyTable(
 
   const columns = Object.keys(rows[0]);
   const columnList = columns.map(quoteIdent).join(', ');
-  const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
 
-  await remote.query(`TRUNCATE public.${quoteIdent(table)} CASCADE;`);
+  for (let offset = 0; offset < rows.length; offset += INSERT_BATCH_SIZE) {
+    const batch = rows.slice(offset, offset + INSERT_BATCH_SIZE);
+    const valueGroups: string[] = [];
+    const values: unknown[] = [];
 
-  for (const row of rows) {
-    const values = columns.map((column) => row[column]);
+    batch.forEach((row, rowIndex) => {
+      const placeholders = columns.map((_, columnIndex) => {
+        values.push(row[columns[columnIndex]]);
+        return `$${rowIndex * columns.length + columnIndex + 1}`;
+      });
+      valueGroups.push(`(${placeholders.join(', ')})`);
+    });
+
     await remote.query(
-      `INSERT INTO public.${quoteIdent(table)} (${columnList}) VALUES (${placeholders});`,
+      `INSERT INTO public.${quoteIdent(table)} (${columnList}) VALUES ${valueGroups.join(', ')};`,
       values
     );
   }
@@ -77,7 +70,7 @@ async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
   const dryRun = process.argv.includes('--dry-run') || !apply;
 
-  if (apply && dryRun) {
+  if (apply && process.argv.includes('--dry-run')) {
     console.error('Usá solo uno: --dry-run o --apply');
     process.exit(1);
   }
@@ -86,13 +79,12 @@ async function main(): Promise<void> {
   console.log('  E-VIDENTE — Datos local → Supabase');
   console.log('═══════════════════════════════════════════');
 
-  const localEnv = loadPostgresEnv('local');
+  loadPostgresEnv('local');
   assertLocalDockerEnv();
 
   const localPool = createPoolFromCurrentEnv({ connectionTimeoutMillis: 5000 });
-  let localInfo: { database: string; user: string };
   try {
-    localInfo = await validatePoolConnection(localPool);
+    const localInfo = await validatePoolConnection(localPool);
     console.log(`\nOrigen (local): ${localInfo.user}@${localInfo.database}`);
   } catch (error) {
     console.error('\nERROR: no se conecta al Postgres local.');
@@ -104,10 +96,11 @@ async function main(): Promise<void> {
   const stagingEnv = loadPostgresEnv('staging');
   assertSupabaseStagingEnv(stagingEnv.envPath);
 
+  await connectSupabase({ envPath: stagingEnv.envPath, persistToEnvFile: true });
+
   const remotePool = createPoolFromCurrentEnv({ connectionTimeoutMillis: 10000 });
-  let remoteInfo: { database: string; user: string };
   try {
-    remoteInfo = await validatePoolConnection(remotePool);
+    const remoteInfo = await validatePoolConnection(remotePool);
     console.log(`Destino (Supabase): ${remoteInfo.user}@${remoteInfo.database}`);
   } catch (error) {
     console.error('\nERROR: no se conecta a Supabase.');
@@ -121,34 +114,56 @@ async function main(): Promise<void> {
 
   try {
     const tables = await listPublicTables(localClient);
-    console.log(`\nTablas a copiar: ${tables.length} (sin schema_migrations)`);
+    const orderedTables = await sortPublicTablesByForeignKeys(localClient, tables);
+
+    console.log(`\nTablas a copiar: ${orderedTables.length} (sin schema_migrations)`);
+    console.log(`Orden: ${orderedTables.join(' → ')}`);
     console.log(dryRun ? '\nModo: DRY-RUN (sin escribir en Supabase)\n' : '\nModo: APPLY (trunca y copia)\n');
 
-    let totalRows = 0;
-    for (const table of tables) {
-      const localCount = await countRows(localClient, table);
+    const tablesWithRows: string[] = [];
+    for (const table of orderedTables) {
+      const localCount = await countTableRows(localClient, table);
       if (localCount === 0) {
         console.log(`  skip ${table} (0 filas)`);
         continue;
       }
-
+      tablesWithRows.push(table);
       if (dryRun) {
         console.log(`  copy ${table}: ${localCount} filas`);
-        totalRows += localCount;
-        continue;
       }
+    }
 
-      const copied = await copyTable(localClient, remoteClient, table, true);
-      console.log(`  done ${table}: ${copied} filas`);
-      totalRows += copied;
+    if (!dryRun && tablesWithRows.length > 0) {
+      console.log('\nTruncando tablas destino (CASCADE)…');
+      await remoteClient.query('BEGIN');
+      try {
+        await truncatePublicTables(remoteClient, tablesWithRows);
+        await remoteClient.query('COMMIT');
+      } catch (error) {
+        await remoteClient.query('ROLLBACK');
+        throw error;
+      }
+    }
+
+    let totalRows = 0;
+    if (!dryRun) {
+      for (const table of tablesWithRows) {
+        const copied = await copyTable(localClient, remoteClient, table, true);
+        console.log(`  done ${table}: ${copied} filas`);
+        totalRows += copied;
+      }
+    } else {
+      for (const table of tablesWithRows) {
+        totalRows += await countTableRows(localClient, table);
+      }
     }
 
     if (dryRun) {
       console.log(`\nDRY-RUN OK — se copiarían ${totalRows} filas en total.`);
-      console.log('Para aplicar: npx ts-node scripts/migrate-data-local-to-supabase.ts --apply');
+      console.log('Para aplicar: npm run migrate:data-to-supabase');
     } else {
       console.log(`\nCopiadas ${totalRows} filas.`);
-      console.log('Opcional: npm run smoke:api:staging');
+      console.log('Siguiente: npm run verify:supabase');
     }
   } finally {
     localClient.release();

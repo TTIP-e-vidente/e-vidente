@@ -1,0 +1,46 @@
+# Blueprint Render — backend E-VIDENTE contra Supabase.
+# Docs: BACKEND/docs/SUPABASE_QUICKSTART.md
+
+services:
+  - type: web
+    name: e-vidente-api
+    runtime: node
+    rootDir: BACKEND
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health/ready
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: POSTGRES_SSL
+        value: true
+      - key: EMAIL_ENABLED
+        value: true
+      - key: EMAIL_PROCESS_ON_STARTUP
+        value: true
+      - key: POSTGRES_POOL_MAX
+        value: 8
+      - key: SUPABASE_PROJECT_REF
+        sync: false
+      - key: SUPABASE_POOLER_PREFIX
+        value: aws-1
+      - key: SUPABASE_POOLER_REGION
+        value: us-east-1
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_DB
+        value: postgres
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_CRON_SECRET
+        generateValue: true
+      - key: BACKEND_BASE_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false

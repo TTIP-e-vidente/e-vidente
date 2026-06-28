@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import { pool } from '../src/config/database';
 import { emailConfig, isEmailDeliveryConfigured } from '../src/modules/email/email.config';
 import {
@@ -14,8 +13,6 @@ import { authConfig } from '../src/config/auth';
 import * as profileRepository from '../src/modules/profile/profile.repository';
 import * as streakRepository from '../src/modules/streak/streak.repository';
 import { PoolClient } from 'pg';
-
-dotenv.config();
 
 const TEMPLATE_KEYS: EmailTemplateKey[] = ['welcome', 'streak_at_risk', 'streak_lost'];
 const VALIDATION_USERNAME = process.env.EMAIL_VALIDATE_USERNAME ?? 'email_flow_validate';

@@ -1,10 +1,8 @@
-import dotenv from 'dotenv';
-import path from 'path';
 import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { loadEnvFile } from './load-env';
 import { createPostgresPoolConfig } from './postgresPoolConfig';
 
-const envFile = process.env.ENV_FILE ?? '.env';
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+loadEnvFile();
 
 export const pool = new Pool(createPostgresPoolConfig());
 

@@ -1,4 +1,4 @@
-# Migración a Supabase (Postgres)
+> **Stack completo (DB + deploy Express):** [SUPABASE_FULL_STACK.md](./SUPABASE_FULL_STACK.md)
 
 E-VIDENTE **no migra a Supabase Auth**. Solo movemos **PostgreSQL** a Supabase; el juego sigue hablando con **Express + JWT propio**.
 
@@ -12,17 +12,21 @@ Supabase Auth, Realtime y Storage **no** forman parte de este flujo hoy.
 
 ---
 
-## Qué ya está preparado en el repo
+## Qué está integrado en el repo
 
-| Pieza | Ubicación |
-|-------|-----------|
+| Pieza | Comando / ubicación |
+|-------|---------------------|
 | SSL remoto | `POSTGRES_SSL=true` → `postgresPoolConfig.ts` |
 | Sin Docker si remoto | `ensure-postgres.ts`, `setup-dev.ts` |
 | Migraciones SQL | `BACKEND/migrations/` (001–030) |
 | RLS en `public` | `030_supabase_public_rls_lockdown.sql` |
-| Setup staging | `npm run setup:supabase` |
-| Copia de datos local | `npm run migrate:data-to-supabase` |
-| Smoke contra staging | `npm run smoke:api:staging` |
+| Setup schema | `npm run setup:supabase` |
+| Copia de datos (orden FK) | `npm run migrate:data-to-supabase` |
+| Verificación post-migrate | `npm run verify:supabase` |
+| Orquestador completo | `npm run migrate:all-to-supabase` |
+| Migrate en deploy | `npm run deploy:migrate` |
+| Smoke staging | `npm run smoke:staging` |
+| CI manual | `.github/workflows/supabase-staging-verify.yml` |
 
 La migración **030** activa RLS en todas las tablas `public`. El backend Node usa el rol `postgres` y **no se ve afectado**; bloquea acceso directo vía Data API de Supabase sin policies.
 
@@ -55,33 +59,63 @@ POSTGRES_DB=postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=...
 POSTGRES_SSL=true
+JWT_SECRET=<secret fuerte, no el placeholder>
 ```
 
-### 3. Schema (migraciones)
+### 3. Migración completa (recomendado)
 
-Usá **conexión directa** (no pooler) para DDL:
+**Preview (sin escribir en Supabase):**
+
+```powershell
+npm run migrate:all-to-supabase -- --dry-run
+```
+
+**Aplicar schema + datos + verificación + smoke:**
+
+```powershell
+npm run migrate:all-to-supabase -- --apply --with-smoke
+```
+
+Flags útiles:
+
+| Flag | Efecto |
+|------|--------|
+| `--dry-run` | Solo preview de datos (default sin `--apply`) |
+| `--apply` | Ejecuta setup, copia datos y verify |
+| `--with-smoke` | Corre `smoke:api:staging` al final |
+| `--skip-setup` | Omite `setup:supabase` (schema ya aplicado) |
+| `--skip-data` | Solo schema/verify, sin copiar datos |
+
+### 4. Pasos manuales (alternativa)
+
+**Solo schema:**
 
 ```powershell
 npm run setup:supabase
 ```
 
-Esto valida conexión, corre `001…030` y registra `schema_migrations`.
+Incluye `verify:supabase` al final.
 
-### 4. (Opcional) Datos desde Docker local
-
-Si tenés usuarios/progreso en Docker local y querés llevarlos a Supabase:
+**Datos desde Docker local** (orden topológico por FK, batch insert):
 
 ```powershell
-npm run setup:dev          # local con datos demo, si hace falta
+npm run setup:dev
 npm run migrate:data-to-supabase:dry-run
 npm run migrate:data-to-supabase
+npm run verify:supabase:compare-local
+```
+
+**Sin datos locales** (usuarios demo en Supabase):
+
+```powershell
+npm run seed:staging
 ```
 
 **Atención:** `--apply` hace `TRUNCATE … CASCADE` en Supabase antes de copiar.
 
 ### 5. Runtime con pooler
 
-Tras migrar, en `.env.staging` podés cambiar a **Session pooler** (mejor para muchas conexiones):
+Tras migrar, en `.env.staging` podés cambiar a **Session pooler**:
 
 ```env
 POSTGRES_HOST=aws-0-us-east-1.pooler.supabase.com
@@ -91,11 +125,54 @@ POSTGRES_USER=postgres.TU_REF
 ### 6. Validar
 
 ```powershell
-npm run smoke:api:staging
+npm run verify:supabase
+npm run smoke:staging
 npm run dev:staging
 ```
 
 Godot apunta al mismo `BACKEND_PORT` (3010); solo cambia la DB detrás.
+
+---
+
+## Producción
+
+1. Proyecto Supabase **prod** separado de staging.
+2. Copiar `.env.production.example` → `.env.production` en el servidor.
+3. En cada deploy:
+
+```powershell
+ENV_FILE=.env.production npm run deploy:migrate
+```
+
+O en Linux:
+
+```bash
+npx ts-node scripts/deploy-migrate.ts .env.production
+```
+
+4. Configurar en el host de deploy:
+   - `BACKEND_BASE_URL` y `EMAIL_CRON_SECRET` (GitHub Secrets para `email-cron.yml`)
+5. Brevo + dominio verificado (SPF/DKIM).
+6. Backups: Supabase dashboard → Database → Backups (plan Pro) o `pg_dump` programado.
+
+---
+
+## CI (GitHub Actions)
+
+Workflow manual: **Supabase staging verify** (`supabase-staging-verify.yml`).
+
+Secrets requeridos en el repo:
+
+| Secret | Descripción |
+|--------|-------------|
+| `STAGING_POSTGRES_HOST` | Host directo o pooler |
+| `STAGING_POSTGRES_PASSWORD` | Password de DB |
+| `STAGING_JWT_SECRET` | JWT del backend staging |
+| `STAGING_POSTGRES_USER` | (opcional) default `postgres` |
+| `STAGING_POSTGRES_PORT` | (opcional) default `5432` |
+| `STAGING_POSTGRES_DB` | (opcional) default `postgres` |
+
+El workflow escribe `.env.staging` vía `scripts/ci/write-staging-env.sh` y corre `verify:supabase` + smoke opcional.
 
 ---
 
@@ -105,17 +182,8 @@ Godot apunta al mismo `BACKEND_PORT` (3010); solo cambia la DB detrás.
 |---------|----------|---------------|----------|
 | Dev local | `.env` | `npm run setup:dev` | Docker |
 | Staging Supabase | `.env.staging` | `npm run setup:supabase` | Supabase |
+| Producción | `.env.production` | `npm run deploy:migrate` | Supabase |
 | CI tests | `.env` + `EMAIL_ENABLED=false` | `npm test` | Docker |
-
----
-
-## Producción (cuando toque)
-
-1. Proyecto Supabase **prod** separado de staging.
-2. `.env` en el servidor (no commitear) con pooler + secrets de prod.
-3. `ENV_FILE=.env npm run migrate` en deploy (o `setup:supabase` equivalente).
-4. Brevo + dominio verificado (SPF/DKIM).
-5. Backups: Supabase dashboard → Database → Backups (plan Pro) o `pg_dump` programado.
 
 ---
 
@@ -127,6 +195,8 @@ Godot apunta al mismo `BACKEND_PORT` (3010); solo cambia la DB detrás.
 | SSL / timeout en migrate | Usás pooler para DDL | Host `db.<ref>.supabase.co` |
 | `password authentication failed` | Password incorrecta | Reset en Supabase dashboard |
 | `setup:dev` con SSL true | Comando equivocado | Usá `setup:supabase` |
+| FK violation al copiar datos | Orden incorrecto (viejo) | Actualizá repo; usa `migrate:data-to-supabase` actual |
+| `JWT_SECRET sigue siendo placeholder` | verify:supabase | Cambiá el secret en `.env.staging` |
 | Tests tocan Brevo | Normal en CI | `npm test` fuerza `EMAIL_ENABLED=false` |
 
 ---
@@ -144,9 +214,8 @@ Godot apunta al mismo `BACKEND_PORT` (3010); solo cambia la DB detrás.
 
 ```powershell
 cd BACKEND
-npm run setup:supabase
-npm run migrate:data-to-supabase:dry-run
-npm run migrate:data-to-supabase
-npm run smoke:api:staging
+npm run migrate:all-to-supabase -- --apply --with-smoke
+npm run verify:supabase
+npm run seed:staging
 npm run dev:staging
 ```

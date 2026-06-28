@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import { pool } from '../src/config/database';
 import { emailConfig, isEmailDeliveryConfigured } from '../src/modules/email/email.config';
 import { sendTransactionalEmail } from '../src/modules/email/email.client';
@@ -8,8 +7,6 @@ import {
   previewEmailTemplate
 } from '../src/modules/email/templates';
 import { EmailTemplateKey } from '../src/modules/email/email.types';
-
-dotenv.config();
 
 const TEMPLATE_KEYS: EmailTemplateKey[] = ['welcome', 'streak_at_risk', 'streak_lost'];
 

@@ -2,14 +2,28 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { Pool } from 'pg';
 import { createPostgresPoolConfig, isRemotePostgres } from '../../src/config/postgresPoolConfig';
+import {
+  ensureSupabaseConnection,
+  type EnsureSupabaseConnectionOptions,
+} from './supabase-connect';
 
 export const BACKEND_ROOT = path.resolve(__dirname, '../..');
 
-export type PostgresEnvKind = 'local' | 'staging';
+export type PostgresEnvKind = 'local' | 'staging' | 'production';
 
 /** Archivo env activo: ENV_FILE del proceso o `.env`. */
 export function resolveEnvFile(): string {
   return process.env.ENV_FILE?.trim() || '.env';
+}
+
+function resolveEnvKind(envFile: string): PostgresEnvKind {
+  if (envFile.includes('staging')) {
+    return 'staging';
+  }
+  if (envFile.includes('production')) {
+    return 'production';
+  }
+  return 'local';
 }
 
 /** Carga dotenv desde BACKEND/<ENV_FILE|.env> y fija ENV_FILE en el proceso. */
@@ -18,8 +32,7 @@ export function loadBackendEnv(): LoadedPostgresEnv {
   const envPath = path.resolve(BACKEND_ROOT, envFile);
   dotenv.config({ path: envPath });
   process.env.ENV_FILE = envFile;
-  const kind: PostgresEnvKind = envFile === '.env.staging' ? 'staging' : 'local';
-  return { kind, envFile, envPath };
+  return { kind: resolveEnvKind(envFile), envFile, envPath };
 }
 
 export interface LoadedPostgresEnv {
@@ -29,7 +42,8 @@ export interface LoadedPostgresEnv {
 }
 
 export function loadPostgresEnv(kind: PostgresEnvKind): LoadedPostgresEnv {
-  const envFile = kind === 'staging' ? '.env.staging' : '.env';
+  const envFile =
+    kind === 'staging' ? '.env.staging' : kind === 'production' ? '.env.production' : '.env';
   const envPath = path.resolve(BACKEND_ROOT, envFile);
   dotenv.config({ path: envPath });
   process.env.ENV_FILE = envFile;
@@ -54,8 +68,8 @@ export function assertSupabaseStagingEnv(envPath: string): void {
   if (!process.env.POSTGRES_PASSWORD?.trim()) {
     throw new Error(`Falta POSTGRES_PASSWORD en ${envPath}`);
   }
-  if (!process.env.POSTGRES_HOST?.trim()) {
-    throw new Error(`Falta POSTGRES_HOST en ${envPath}`);
+  if (!process.env.POSTGRES_HOST?.trim() && !process.env.SUPABASE_PROJECT_REF?.trim()) {
+    throw new Error(`Falta POSTGRES_HOST o SUPABASE_PROJECT_REF en ${envPath}`);
   }
 }
 
@@ -80,4 +94,12 @@ export async function validatePoolConnection(pool: Pool): Promise<{
   );
   const row = result.rows[0];
   return { database: row.current_database, user: row.current_user };
+}
+
+/** Conecta a Supabase probando direct + pooler; opcionalmente persiste host en el env file. */
+export async function connectSupabase(
+  options: EnsureSupabaseConnectionOptions = {}
+): Promise<{ database: string; user: string }> {
+  const result = await ensureSupabaseConnection(options);
+  return { database: result.database, user: result.user };
 }

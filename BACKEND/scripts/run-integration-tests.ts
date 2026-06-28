@@ -4,6 +4,10 @@ import path from 'path';
 const backendRoot = path.resolve(__dirname, '..');
 
 const integrationTests = [
+  'tests/public-tables.unit.test.ts',
+  'tests/supabase-env.unit.test.ts',
+  'tests/supabase-env-password.unit.test.ts',
+  'tests/supabase-connect.unit.test.ts',
   'tests/postgres.integration.test.ts',
   'tests/email.templates.unit.test.ts',
   'tests/email.jobs.integration.test.ts',

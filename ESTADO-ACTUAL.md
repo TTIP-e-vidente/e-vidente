@@ -43,12 +43,17 @@
 
 **Solo juego:** Godot 4.6 → `juego/project.godot` → F5.
 
-**Con backend:**
+**Con backend (Supabase staging — recomendado):**
 ```sh
-cd BACKEND && cp .env.example .env && docker compose up -d
-npm install && npm run setup:dev && npm run dev
+cd BACKEND
+npm install
+npm run supabase:init   # primera vez: completar .env.staging
+npm run dev:staging
 ```
-URL del API: ver `BACKEND/README.md`.
+
+Verificación: `npm run staging:verify` · Guía: [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md)
+
+**Backend local offline (Docker):** ver [BACKEND/README.md](BACKEND/README.md#postgres-local-docker--offline--tests).
 
 ## Flujo celiaquía
 

@@ -1,0 +1,67 @@
+name: Supabase staging verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_smoke:
+        description: Correr smoke API contra staging
+        required: true
+        default: true
+        type: boolean
+      compare_local:
+        description: Comparar conteo de filas con local (requiere Postgres en runner)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  verify-staging:
+    name: Verify Supabase staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: BACKEND
+        run: npm ci
+
+      - name: Write staging env from secrets
+        env:
+          POSTGRES_HOST: ${{ secrets.STAGING_POSTGRES_HOST }}
+          POSTGRES_PASSWORD: ${{ secrets.STAGING_POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+          POSTGRES_USER: ${{ secrets.STAGING_POSTGRES_USER }}
+          POSTGRES_PORT: ${{ secrets.STAGING_POSTGRES_PORT }}
+          POSTGRES_DB: ${{ secrets.STAGING_POSTGRES_DB }}
+        run: |
+          set -euo pipefail
+          sh scripts/ci/write-staging-env.sh
+
+      - name: Verify Supabase schema and RLS
+        working-directory: BACKEND
+        run: npm run verify:supabase
+
+      - name: Smoke API staging
+        if: inputs.run_smoke
+        working-directory: BACKEND
+        run: npm run smoke:api:staging
+
+      - name: Job summary
+        if: always() && env.GITHUB_STEP_SUMMARY != ''
+        run: |
+          {
+            echo "### Supabase staging verify"
+            echo "- Smoke API: \`${{ inputs.run_smoke }}\`"
+            echo "- Compare local: \`${{ inputs.compare_local }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
