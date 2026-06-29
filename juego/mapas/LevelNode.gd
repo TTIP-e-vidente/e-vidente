@@ -9,17 +9,14 @@ const DEBUG_BADGES := false
 
 signal selected(node_data: MapNodeData)
 
-const COLOR_AVAILABLE := Color("#7fff3a")  # Verde-lima brillante para nodo desbloqueado/recomendado
-const COLOR_COMPLETED := Color("#2d6a2f")  # Verde oscuro para nodos completados
+const COLOR_AVAILABLE := MiPaleta.GRIS_AZULADO
+const COLOR_COMPLETED := MiPaleta.VERDE_BOSQUE
 const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
-const RADIO_CIRCULO := 34.0      # Radio del círculo de fondo que se dibuja detrás del ícono
 
-var _color_fondo: Color = Color.TRANSPARENT  # Color actual del círculo de fondo
 @onready var next_lesson: Sprite2D = $"Next Lesson"
-const INDICADOR_LECCION_SCENE := preload("res://mapas/components/IndicadorLeccionSiguiente.tscn")
 const ICONO_NODO_MAPA_UNIFICADO := preload("res://assets-sistema/mapa/desafio-mapa-8.png")
 const ESCALA_ICONO_NODO_UNIFICADO := Vector2(0.28, 0.28)
 const ESCALA_NODO_UNIFICADA := Vector2.ONE
@@ -81,19 +78,15 @@ var _click_in_progress: bool = false
 var _disponible_tween: Tween = null
 var _best_accuracy: float = 0.0
 var _best_percent: float = 0.0
-var _es_nodo_recomendado: bool = false
-var _indicador_activo_previo: bool = false
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
 @onready var title_label: Label = get_node_or_null("TitleLabel") as Label
 @onready var node_badge: Node2D = get_node_or_null("NodeProgressBadge")
-var _indicador_leccion: Node2D = null
 
 
 func _ready() -> void:
 	_base_scale = scale
-	_asegurar_indicador_leccion()
 	actualizar_vista()
 
 
@@ -130,10 +123,6 @@ func aplicar_presentacion_unificada() -> void:
 	reiniciar_escala_base()
 
 
-func es_leccion_actual() -> bool:
-	return _es_nodo_recomendado and visual_state == STATE_AVAILABLE and not completed
-
-
 func actualizar_vista() -> void:
 	if not is_node_ready():
 		return
@@ -153,7 +142,6 @@ func actualizar_vista() -> void:
 	_aplicar_parametros_visuales()
 	_actualizar_insignia()
 	next_lesson.visible = unlocked and not completed
-	_actualizar_indicador_leccion()
 
 
 func _aplicar_parametros_visuales() -> void:
@@ -259,87 +247,26 @@ func _boton_esta_deshabilitado() -> bool:
 	return not Engine.is_editor_hint() and not can_play
 
 
-func _draw() -> void:
-	if _color_fondo.a <= 0.01:
-		return
-	draw_circle(Vector2.ZERO, RADIO_CIRCULO, _color_fondo)
-
-
 func _aplicar_color_estado() -> void:
-	_cancelar_tween_disponible()
-	# El ícono siempre en blanco — el color de estado se dibuja como
-	# círculo sólido detrás via _draw(), evitando colorear el borde grueso de la textura.
-	state_icon.modulate = Color.WHITE
 	match visual_state:
 		STATE_COMPLETED:
-			_color_fondo = COLOR_COMPLETED
+			_cancelar_tween_disponible()
+			state_icon.modulate = COLOR_COMPLETED
 			modulate = Color.WHITE
-		STATE_AVAILABLE:
-			if _es_nodo_recomendado and not completed:
-				# Nodo desbloqueado/siguiente: verde-lima brillante + pulso de escala.
-				_color_fondo = COLOR_AVAILABLE
-				modulate = Color.WHITE
-				_animar_disponible()
-			else:
-				_color_fondo = Color(1.0, 1.0, 1.0, 0.35)
-				modulate = COLOR_LOCKED
-		_:
-			_color_fondo = Color(1.0, 1.0, 1.0, 0.35)
+
+		STATE_LOCKED:
+			_cancelar_tween_disponible()
+			state_icon.modulate = Color.WHITE
 			modulate = COLOR_LOCKED
-	queue_redraw()
 
-
-func _asegurar_indicador_leccion() -> void:
-	if _indicador_leccion != null and is_instance_valid(_indicador_leccion):
-		return
-	_indicador_leccion = get_node_or_null("IndicadorLeccionSiguiente") as Node2D
-	if _indicador_leccion == null and INDICADOR_LECCION_SCENE != null:
-		_indicador_leccion = INDICADOR_LECCION_SCENE.instantiate() as Node2D
-		if _indicador_leccion != null:
-			_indicador_leccion.name = "IndicadorLeccionSiguiente"
-			add_child(_indicador_leccion)
-
-
-func _actualizar_indicador_leccion() -> void:
-	if _indicador_leccion == null or Engine.is_editor_hint():
-		return
-	var mostrar: bool = (
-		_es_nodo_recomendado
-		and visual_state == STATE_AVAILABLE
-		and not completed
-	)
-	if _indicador_leccion.has_method("establecer_activo"):
-		var numero_leccion: int = _obtener_numero_leccion()
-		_indicador_leccion.call(
-			"establecer_activo",
-			mostrar,
-			numero_leccion,
-			_obtener_titulo(),
-			_obtener_radio_anillo()
-		)
-	_indicador_activo_previo = mostrar
-
-
-func _obtener_radio_anillo() -> float:
-	if button != null:
-		return maxf(button.size.x, button.size.y) * 0.48
-	return 78.0
-
-
-func _obtener_numero_leccion() -> int:
-	if node_data != null and node_data.order > 0:
-		return node_data.order
-	if level_number > 0:
-		return level_number
-	if question_number > 0:
-		return question_number
-	return max(1, nivel_id)
-
-
+		_:
+			_cancelar_tween_disponible()
+			state_icon.modulate = COLOR_AVAILABLE
+			modulate = Color.WHITE
+	
 func _aplicar_estado_progreso(progress_state: Dictionary) -> void:
 	var is_unlocked: bool = bool(progress_state.get("is_unlocked", false))
 	var is_completed: bool = bool(progress_state.get("is_completed", false))
-	_es_nodo_recomendado = bool(progress_state.get("is_recommended", false))
 	# _best_accuracy primero para que los setters con actualizar_vista() ya lo vean correcto
 	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 	_best_percent = float(progress_state.get("best_percent", _best_accuracy / 100.0))
@@ -357,7 +284,6 @@ func _aplicar_estado_progreso(progress_state: Dictionary) -> void:
 
 
 func _aplicar_estado_progreso_legado(is_unlocked: bool, is_completed: bool) -> void:
-	_es_nodo_recomendado = false
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = is_unlocked or is_completed
@@ -405,8 +331,7 @@ func _animar_disponible() -> void:
 
 
 func _animar_escala_hasta(escala_destino: Vector2) -> void:
-	if _es_nodo_recomendado and visual_state == STATE_AVAILABLE:
-		escala_destino = _base_scale
+	escala_destino = _base_scale
 	var tween := create_tween()
 	tween.tween_property(self, "scale", escala_destino, 0.12)
 
