@@ -71,6 +71,9 @@ function setSecrets(projectRef: string): void {
 }
 
 function deployFunctions(projectRef: string): void {
+  console.log('\n▶ Sincronizando templates de email (BACKEND → Edge)...');
+  run('node scripts/sync-email-templates-edge.cjs', BACKEND_ROOT);
+
   const functions = [
     'verify-email-request',
     'verify-email-confirm',

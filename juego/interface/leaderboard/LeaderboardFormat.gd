@@ -80,6 +80,66 @@ static func entradas_cercanas(entradas: Array, puesto_centro: int, radio: int = 
 	return filtradas
 
 
+static func entrada_es_valida(entry: Dictionary) -> bool:
+	var user_id := str(entry.get("user_id", "")).strip_edges()
+	if user_id.is_empty():
+		return false
+	var rank := entero_desde_json(entry.get("rank", 0))
+	if rank <= 0:
+		return false
+	return entero_desde_json(entry.get("score", 0)) > 0
+
+
+static func filtrar_entradas_validas(entradas: Array) -> Array:
+	var salida: Array = []
+	var vistos_usuario: Dictionary = {}
+	var vistos_puesto: Dictionary = {}
+
+	for entrada in entradas:
+		if not entrada is Dictionary:
+			continue
+		var entry := entrada as Dictionary
+		if not entrada_es_valida(entry):
+			continue
+		var user_id := str(entry.get("user_id", "")).strip_edges()
+		var rank := entero_desde_json(entry.get("rank", 0))
+		if vistos_usuario.has(user_id) or vistos_puesto.has(rank):
+			continue
+		vistos_usuario[user_id] = true
+		vistos_puesto[rank] = true
+		salida.append(entry)
+
+	salida.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			return entero_desde_json(a.get("rank", 0)) < entero_desde_json(b.get("rank", 0))
+	)
+	return salida
+
+
+static func preparar_datos_listado(datos: Dictionary, id_propio: String = "") -> Dictionary:
+	var salida := datos.duplicate(true)
+	var entradas_raw: Variant = salida.get("entries", [])
+	if not entradas_raw is Array:
+		return salida
+
+	var filtradas := filtrar_entradas_validas(entradas_raw as Array)
+	var own: Variant = salida.get("own_position", null)
+	if own is Dictionary and entrada_es_valida(own as Dictionary):
+		var own_dict := own as Dictionary
+		var uid := str(own_dict.get("user_id", "")).strip_edges()
+		var incluye := false
+		for entrada in filtradas:
+			if entrada is Dictionary and str((entrada as Dictionary).get("user_id", "")) == uid:
+				incluye = true
+				break
+		if not incluye and (id_propio.is_empty() or uid == id_propio):
+			filtradas.append(own_dict)
+			filtradas = filtrar_entradas_validas(filtradas)
+
+	salida["entries"] = filtradas
+	return salida
+
+
 static func entradas_contexto_desde_resumen(resumen: Dictionary) -> Array:
 	var salida: Array = []
 	var current: Variant = resumen.get("current", null)
@@ -198,6 +258,8 @@ static func texto_rango_pagina(datos: Dictionary) -> String:
 
 
 static func mensaje_sin_ranking(scope: String) -> String:
+	if not LeaderboardScopeCatalog.scope_disponible(scope):
+		return mensaje_proximamente()
 	if es_scope_racha(scope):
 		return "Sin racha activa"
 	if LeaderboardScopeCatalog.es_scope_restriccion(scope):
@@ -205,7 +267,13 @@ static func mensaje_sin_ranking(scope: String) -> String:
 	return "Sin datos"
 
 
+static func mensaje_proximamente() -> String:
+	return "Próximamente"
+
+
 static func mensaje_scope_sin_progreso(scope: String, etiqueta: String = "") -> String:
+	if not LeaderboardScopeCatalog.scope_disponible(scope):
+		return "Este ranking estará disponible próximamente."
 	var nombre := etiqueta.strip_edges()
 	if nombre.is_empty():
 		nombre = RestrictionCodes.etiqueta_scope(scope)

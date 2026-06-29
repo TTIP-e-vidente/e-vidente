@@ -31,6 +31,8 @@ func _ready() -> void:
 func configurar(etiqueta: String, scope: String, rank: int, score: int) -> void:
 	_scope = scope
 	_rank_actual = rank
+	disabled = false
+	modulate = Color.WHITE
 	if is_instance_valid(_label_etiqueta):
 		_label_etiqueta.text = etiqueta
 		_label_etiqueta.add_theme_color_override("font_color", _COLOR_ETIQUETA)
@@ -38,9 +40,31 @@ func configurar(etiqueta: String, scope: String, rank: int, score: int) -> void:
 	_aplicar_contenido_ranking(rank, score, scope)
 
 
+func marcar_proximamente(etiqueta: String, scope: String) -> void:
+	_scope = scope
+	_rank_actual = 0
+	disabled = true
+	modulate = Color(0.55, 0.55, 0.55, 0.85)
+	marcar_destacada(false)
+	if is_instance_valid(_label_etiqueta):
+		_label_etiqueta.text = etiqueta
+		_label_etiqueta.add_theme_color_override("font_color", _COLOR_ETIQUETA)
+	if is_instance_valid(_label_posicion):
+		_label_posicion.visible = false
+	if is_instance_valid(_label_puntaje):
+		_label_puntaje.visible = true
+		_label_puntaje.text = LeaderboardFormat.mensaje_proximamente()
+		_label_puntaje.add_theme_color_override(
+			"font_color",
+			LeaderboardFormat.color_texto_secundario_tarjeta()
+		)
+
+
 func marcar_cargando(etiqueta: String, scope: String) -> void:
 	_scope = scope
 	_rank_actual = 0
+	disabled = false
+	modulate = Color.WHITE
 	marcar_destacada(false)
 	if is_instance_valid(_label_etiqueta):
 		_label_etiqueta.text = etiqueta
@@ -112,5 +136,7 @@ func _crear_estilo_destacada() -> StyleBoxFlat:
 
 
 func _al_presionar() -> void:
+	if not LeaderboardScopeCatalog.scope_disponible(_scope):
+		return
 	if not _scope.is_empty():
 		scope_presionado.emit(_scope)

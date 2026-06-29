@@ -23,6 +23,29 @@ function rowToEntry(row: LeaderboardSnapshotRow): LeaderboardEntry {
   };
 }
 
+/** Evita filas duplicadas o basura (snapshots viejos, score 0 de tests). */
+function dedupeEntries(entries: LeaderboardEntry[]): LeaderboardEntry[] {
+  const seenUsers = new Set<string>();
+  const seenRanks = new Set<number>();
+  const result: LeaderboardEntry[] = [];
+  for (const entry of entries) {
+    if (!entry.userId?.trim()) continue;
+    if (entry.score <= 0) continue;
+    if (seenUsers.has(entry.userId)) continue;
+    if (entry.rank > 0 && seenRanks.has(entry.rank)) continue;
+    seenUsers.add(entry.userId);
+    if (entry.rank > 0) seenRanks.add(entry.rank);
+    result.push(entry);
+  }
+  return result.sort((a, b) => a.rank - b.rank);
+}
+
+/** Solo filas de la generación activa (evita snapshots viejos mezclados). */
+const SNAPSHOT_CURRENT_GEN_SQL = `
+  FROM leaderboard_snapshots s
+  INNER JOIN leaderboard_meta m ON m.scope = s.scope AND s.generation = m.current_generation
+`;
+
 // ─── Refresh con generation swap atómico ─────────────────────────────────────
 //
 // Estrategia (nunca ventana vacía):
@@ -101,6 +124,7 @@ export async function refreshGlobalXpSnapshot(startedAt: Date): Promise<number> 
       FROM users u
       LEFT JOIN profiles p  ON p.user_id  = u.id
       LEFT JOIN images   img ON img.user_id = u.id
+      WHERE COALESCE(p.exp_count, 0) > 0
     `,
     [],
     startedAt
@@ -127,6 +151,7 @@ export async function refreshStreakSnapshot(startedAt: Date): Promise<number> {
       LEFT JOIN profiles p  ON p.user_id   = u.id
       LEFT JOIN streaks  s  ON s.id        = p.streak_id
       LEFT JOIN images   img ON img.user_id = u.id
+      WHERE COALESCE(s.best_count, 0) > 0
     `,
     [],
     startedAt
@@ -157,6 +182,7 @@ export async function refreshRestrictionSnapshot(
       INNER JOIN profiles p ON p.user_id = u.id
       INNER JOIN progress_restrictions pr ON pr.profile_id = p.id AND pr.restriction = '${restriction}'
       LEFT JOIN images img ON img.user_id = u.id
+      WHERE COALESCE(pr.total_exp, 0) > 0
     `,
     [],
     startedAt
@@ -228,16 +254,16 @@ export async function getTopEntries(
 
   const rows = await queryRows<LeaderboardSnapshotRow>(
     `
-      SELECT rank, user_id, username, display_name, avatar_key, score, computed_at
-      FROM leaderboard_snapshots
-      WHERE scope = $1
-      ORDER BY rank ASC
+      SELECT s.rank, s.user_id, s.username, s.display_name, s.avatar_key, s.score, s.computed_at
+      ${SNAPSHOT_CURRENT_GEN_SQL}
+      WHERE s.scope = $1 AND s.score > 0
+      ORDER BY s.rank ASC
       LIMIT $2 OFFSET $3
     `,
     [scope, safeLimit, safeOffset]
   );
 
-  return rows.map(rowToEntry);
+  return dedupeEntries(rows.map(rowToEntry));
 }
 
 /**
@@ -250,9 +276,10 @@ export async function getUserRankInSnapshot(
 ): Promise<LeaderboardEntry & { computedAt: Date } | null> {
   const rows = await queryRows<LeaderboardSnapshotRow & { computed_at: Date }>(
     `
-      SELECT rank, user_id, username, display_name, avatar_key, score, computed_at
-      FROM leaderboard_snapshots
-      WHERE scope = $1 AND user_id = $2
+      SELECT s.rank, s.user_id, s.username, s.display_name, s.avatar_key, s.score, s.computed_at
+      ${SNAPSHOT_CURRENT_GEN_SQL}
+      WHERE s.scope = $1 AND s.user_id = $2 AND s.score > 0
+      ORDER BY s.generation DESC
       LIMIT 1
     `,
     [scope, userId]
@@ -436,15 +463,16 @@ export async function getNearbyEntries(
   const snapshotRows = await queryRows<LeaderboardSnapshotRow>(
     `
       WITH player AS (
-        SELECT rank
-        FROM leaderboard_snapshots
-        WHERE scope = $2 AND user_id = $1
+        SELECT s.rank
+        ${SNAPSHOT_CURRENT_GEN_SQL}
+        WHERE s.scope = $2 AND s.user_id = $1 AND s.score > 0
         LIMIT 1
       )
       SELECT s.rank, s.user_id, s.username, s.display_name, s.avatar_key, s.score, s.computed_at
-      FROM leaderboard_snapshots s
+      ${SNAPSHOT_CURRENT_GEN_SQL}
       INNER JOIN player p ON true
       WHERE s.scope = $2
+        AND s.score > 0
         AND s.rank BETWEEN p.rank - $3 AND p.rank + $3
       ORDER BY s.rank ASC
     `,
@@ -452,13 +480,13 @@ export async function getNearbyEntries(
   );
 
   if (snapshotRows.length > 0) {
-    return snapshotRows.map(rowToEntry);
+    return dedupeEntries(snapshotRows.map(rowToEntry));
   }
 
   const liveRank = await getLiveUserRank(scope, userId);
   if (!liveRank) return [];
 
-  return getLiveNearbyEntries(scope, liveRank.rank, safeRadius);
+  return dedupeEntries(await getLiveNearbyEntries(scope, liveRank.rank, safeRadius));
 }
 
 async function getLiveNearbyEntries(

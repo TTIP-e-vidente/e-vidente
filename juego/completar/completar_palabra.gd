@@ -450,12 +450,11 @@ func _procesar_cierre_post_acierto() -> void:
 
 func _mostrar_cierre_post_exito() -> void:
 	if PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
+		if _intentar_mostrar_ensenanza_esc():
+			return
 		if _progress_bar != null and _progress_bar.has_method("completar_progreso"):
 			_progress_bar.call("completar_progreso")
 		_finalizar_actividad(true)
-		return
-
-	if _intentar_mostrar_ensenanza_esc():
 		return
 
 	_mostrar_continuacion()

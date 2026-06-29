@@ -1,10 +1,10 @@
-export interface EmailMessage {
-  to: string;
-  toName: string;
-  subject: string;
-  htmlContent: string;
-  textContent: string;
-}
+export type { EmailMessage } from './email/email-types.ts';
+export {
+  buildStreakAtRiskEmail,
+  buildStreakLostEmail,
+  buildVerificationEmail,
+  buildWelcomeEmail,
+} from './email/build-messages.ts';
 
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -24,7 +24,7 @@ export function isDevelopmentEnvironment(): boolean {
 }
 
 export async function sendTransactionalEmail(
-  message: EmailMessage,
+  message: import('./email/email-types.ts').EmailMessage,
   templateKey?: string,
 ): Promise<string | null> {
   if (!isEmailDeliveryConfigured()) {
@@ -63,77 +63,4 @@ export async function sendTransactionalEmail(
 
   const body = (await response.json()) as { messageId?: string };
   return typeof body.messageId === 'string' ? body.messageId : null;
-}
-
-export function buildVerificationEmail(input: {
-  name: string;
-  mail: string;
-  code: string;
-  expiresMinutes: number;
-}): EmailMessage {
-  const digits = input.code.replace(/\D/g, '').slice(0, 6);
-  const safeName = input.name.trim() || 'Jugador';
-  const subject = `Código E-VIDENTE: ${digits} (verificá tu mail)`;
-  const textContent = [
-    `Hola ${safeName},`,
-    '',
-    `Tu código de verificación es: ${digits}`,
-    `Válido por ${input.expiresMinutes} minutos.`,
-    '',
-    'Copiá el código y pegalo en el juego.',
-    '',
-    '— Equipo E-VIDENTE',
-  ].join('\n');
-
-  const htmlContent = `<!DOCTYPE html><html><body style="font-family:sans-serif;color:#1a1a1a;">
-<p>Hola <strong>${escapeHtml(safeName)}</strong>,</p>
-<p>Tu código de verificación para E-VIDENTE:</p>
-<p style="font-size:28px;letter-spacing:6px;font-weight:bold;">${digits}</p>
-<p>Válido por ${input.expiresMinutes} minutos. Copialo y pegalo en el juego.</p>
-<p style="color:#666;font-size:13px;">Si no lo pediste, ignorá este mail.</p>
-<p>— Equipo E-VIDENTE</p>
-</body></html>`;
-
-  return {
-    to: input.mail.trim(),
-    toName: safeName,
-    subject,
-    htmlContent,
-    textContent,
-  };
-}
-
-export function buildWelcomeEmail(input: {
-  name: string;
-  mail: string;
-}): EmailMessage {
-  const safeName = input.name.trim() || 'Jugador';
-  const subject = '¡Bienvenido/a a E-VIDENTE!';
-  const textContent = [
-    `Hola ${safeName},`,
-    '',
-    'Tu mail quedó verificado. ¡Gracias por unirte a E-VIDENTE!',
-    '',
-    '— Equipo E-VIDENTE',
-  ].join('\n');
-  const htmlContent = `<!DOCTYPE html><html><body style="font-family:sans-serif;">
-<p>Hola <strong>${escapeHtml(safeName)}</strong>,</p>
-<p>Tu mail quedó verificado. ¡Gracias por unirte a E-VIDENTE!</p>
-<p>— Equipo E-VIDENTE</p>
-</body></html>`;
-  return {
-    to: input.mail.trim(),
-    toName: safeName,
-    subject,
-    htmlContent,
-    textContent,
-  };
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
 }

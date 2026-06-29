@@ -14,6 +14,7 @@ signal resumen_competitivo_fallido(mensaje: String)
 
 
 const SEGUNDOS_CACHE_VALIDO := 60.0
+const SEGUNDOS_CACHE_STALE := 300.0
 const LIMITE_POR_PAGINA := 50
 const META_REFRESH_POST_PARTIDA := "leaderboard_refresh_scope_post_partida"
 const META_PUESTO_ANTES_PARTIDA := "leaderboard_puesto_antes_por_scope"
@@ -27,7 +28,7 @@ var _timestamp_posicion_propia: float = -1.0
 var _cargando_posicion_propia: bool = false
 
 var _cache_resumen_por_scope: Dictionary = {}
-var _cargando_resumen: bool = false
+var _cargando_resumen_por_scope: Dictionary = {}
 
 
 func cargar(scope: String = "global_xp", forzar: bool = false, offset: int = 0) -> void:
@@ -36,9 +37,10 @@ func cargar(scope: String = "global_xp", forzar: bool = false, offset: int = 0) 
 	var scope_evento := scope if not es_pagina else "%s:pagina" % scope
 	var cache_key := scope if not es_pagina else "%s@o%d" % [scope, offset]
 
-	if not forzar and _cache_esta_fresco(cache_key):
+	if not forzar and _cache_puede_mostrar_stale(cache_key):
 		leaderboard_cargado.emit(scope_evento, _cache[cache_key]["datos"])
-		return
+		if _cache_esta_fresco(cache_key):
+			return
 
 	if _cargando_scope.get(cache_key, false):
 		return
@@ -73,13 +75,22 @@ func prefetch(scope: String) -> void:
 	cargar(scope)
 
 
+func prefetch_datos_perfil() -> void:
+	if not AuthApi.esta_logueado():
+		return
+	for scope in LeaderboardScopeCatalog.obtener_scopes_visibles():
+		prefetch(scope)
+		prefetch_resumen_competitivo(scope)
+	cargar_posicion_propia(false)
+
+
 func prefetch_resumen_competitivo(scope: String = "global_xp") -> void:
 	if not AuthApi.esta_logueado():
 		return
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
 		scope_final = "global_xp"
-	if _cache_resumen_esta_fresco(scope_final) or _cargando_resumen:
+	if _cache_resumen_esta_fresco(scope_final) or _cargando_resumen_por_scope.get(scope_final, false):
 		return
 	cargar_resumen_competitivo(false, scope_final)
 
@@ -99,9 +110,10 @@ func cargar_posicion_propia(forzar: bool = false) -> void:
 	if not AuthApi.esta_logueado():
 		return
 
-	if not forzar and _cache_posicion_propia_esta_fresco():
+	if not forzar and _cache_posicion_puede_mostrar_stale():
 		posicion_propia_cargada.emit(_cache_posicion_propia)
-		return
+		if _cache_posicion_propia_esta_fresco():
+			return
 
 	if _cargando_posicion_propia:
 		return
@@ -126,17 +138,18 @@ func cargar_resumen_competitivo(forzar: bool = false, scope: String = "global_xp
 	if scope_final.is_empty():
 		scope_final = "global_xp"
 
-	if not forzar and _cache_resumen_esta_fresco(scope_final):
+	if not forzar and _cache_resumen_puede_mostrar_stale(scope_final):
 		var cacheado: Dictionary = _cache_resumen_por_scope[scope_final]["datos"]
 		resumen_competitivo_cargado.emit(cacheado)
-		return {"ok": true, "data": cacheado}
+		if _cache_resumen_esta_fresco(scope_final):
+			return {"ok": true, "data": cacheado}
 
-	if _cargando_resumen:
+	if _cargando_resumen_por_scope.get(scope_final, false):
 		return {"ok": false, "error": "Carga en curso"}
 
-	_cargando_resumen = true
+	_cargando_resumen_por_scope[scope_final] = true
 	var resultado := await LeaderboardApi.obtener_resumen_competitivo(scope_final)
-	_cargando_resumen = false
+	_cargando_resumen_por_scope[scope_final] = false
 
 	if resultado.get("ok", false):
 		var datos: Variant = resultado.get("data", resultado)
@@ -160,6 +173,7 @@ func invalidar_cache(scope: String = "") -> void:
 		_cache_posicion_propia.clear()
 		_timestamp_posicion_propia = -1.0
 		_cache_resumen_por_scope.clear()
+		_cargando_resumen_por_scope.clear()
 	else:
 		_cache.erase(scope)
 		var prefijo := "%s@o" % scope
@@ -174,7 +188,7 @@ func invalidar_cache(scope: String = "") -> void:
 
 
 func obtener_desde_cache(scope: String) -> Dictionary:
-	if _cache_esta_fresco(scope):
+	if _cache_puede_mostrar_stale(scope):
 		return _cache[scope]["datos"]
 	return {}
 
@@ -183,7 +197,7 @@ func obtener_resumen_desde_cache(scope: String = "global_xp") -> Dictionary:
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
 		scope_final = "global_xp"
-	if _cache_resumen_esta_fresco(scope_final):
+	if _cache_resumen_puede_mostrar_stale(scope_final):
 		return _cache_resumen_por_scope[scope_final]["datos"]
 	return {}
 
@@ -264,25 +278,52 @@ func _obtener_id_usuario_logueado() -> String:
 	return str(datos_usuario.get("id", ""))
 
 
-func _cache_esta_fresco(scope: String) -> bool:
+func _cache_antiguedad(scope: String) -> float:
 	if not _cache.has(scope):
-		return false
-	var antiguedad := Time.get_unix_time_from_system() - float(_cache[scope]["timestamp"])
-	return antiguedad < SEGUNDOS_CACHE_VALIDO
+		return -1.0
+	return Time.get_unix_time_from_system() - float(_cache[scope]["timestamp"])
+
+
+func _cache_esta_fresco(scope: String) -> bool:
+	var antiguedad := _cache_antiguedad(scope)
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_VALIDO
+
+
+func _cache_puede_mostrar_stale(scope: String) -> bool:
+	var antiguedad := _cache_antiguedad(scope)
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_STALE
+
+
+func _cache_posicion_antiguedad() -> float:
+	if _timestamp_posicion_propia < 0:
+		return -1.0
+	return Time.get_unix_time_from_system() - _timestamp_posicion_propia
 
 
 func _cache_posicion_propia_esta_fresco() -> bool:
-	if _timestamp_posicion_propia < 0:
-		return false
-	var antiguedad := Time.get_unix_time_from_system() - _timestamp_posicion_propia
-	return antiguedad < SEGUNDOS_CACHE_VALIDO
+	var antiguedad := _cache_posicion_antiguedad()
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_VALIDO
+
+
+func _cache_posicion_puede_mostrar_stale() -> bool:
+	var antiguedad := _cache_posicion_antiguedad()
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_STALE and not _cache_posicion_propia.is_empty()
+
+
+func _cache_resumen_antiguedad(scope: String) -> float:
+	if not _cache_resumen_por_scope.has(scope):
+		return -1.0
+	return Time.get_unix_time_from_system() - float(_cache_resumen_por_scope[scope]["timestamp"])
 
 
 func _cache_resumen_esta_fresco(scope: String) -> bool:
-	if not _cache_resumen_por_scope.has(scope):
-		return false
-	var antiguedad := Time.get_unix_time_from_system() - float(_cache_resumen_por_scope[scope]["timestamp"])
-	return antiguedad < SEGUNDOS_CACHE_VALIDO
+	var antiguedad := _cache_resumen_antiguedad(scope)
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_VALIDO
+
+
+func _cache_resumen_puede_mostrar_stale(scope: String) -> bool:
+	var antiguedad := _cache_resumen_antiguedad(scope)
+	return antiguedad >= 0.0 and antiguedad < SEGUNDOS_CACHE_STALE
 
 
 ## Captura puesto online antes de subir progreso (para celebración post-partida).

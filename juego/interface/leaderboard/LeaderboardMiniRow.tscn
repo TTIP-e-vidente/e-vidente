@@ -58,8 +58,8 @@ theme_override_colors/font_color = Color(0.22, 0.25, 0.23, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 12
 vertical_alignment = 1
-text_overrun_behavior = 3
-text = "jugador"
+clip_text = false
+text = ""
 
 [node name="ScoreLabel" type="Label" parent="HBox"]
 unique_name_in_owner = true

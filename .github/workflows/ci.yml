@@ -56,3 +56,10 @@ jobs:
         run: |
           set -euo pipefail
           sh scripts/ci/check-lint-guardrails.sh
+
+      - name: Check Edge email templates sync
+        if: hashFiles('BACKEND/package.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          node BACKEND/scripts/check-email-templates-edge.cjs

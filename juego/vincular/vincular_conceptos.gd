@@ -1347,9 +1347,10 @@ func _preparar_flujo_post_juego(racha_anterior: Dictionary, racha_actualizada: D
 
 func _mostrar_cierre_de_vinculacion() -> void:
 	label_pregunta.text = ""
-	if _intentar_mostrar_ensenanza_esc():
-		return
-	_mostrar_asset_de_ensenanza()
+	if not _hay_siguiente_juego_de_partida():
+		if _intentar_mostrar_ensenanza_esc():
+			return
+		_mostrar_asset_de_ensenanza()
 	_mostrar_continuar()
 
 

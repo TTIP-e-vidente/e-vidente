@@ -13,6 +13,13 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 
 
-func configurar(etiqueta: String, scope_valor: String) -> void:
-	text = etiqueta
+func configurar(etiqueta: String, scope_valor: String, disponible: bool = true) -> void:
 	scope = scope_valor
+	if disponible:
+		text = etiqueta
+		disabled = false
+		modulate = Color.WHITE
+	else:
+		text = "%s · próx." % etiqueta
+		disabled = true
+		modulate = Color(0.55, 0.55, 0.55, 0.85)

@@ -69,12 +69,13 @@ func _exit_tree() -> void:
 # Llena la lista completa con los datos del API (borra lo que hubiera antes).
 # datos = { scope, entries: Array, total, pagination: { limit, offset, hasMore } }
 func poblar(datos: Dictionary, id_propio: String = "", omitir_top: int = -1) -> void:
-	_scope_actual = str(datos.get("scope", "global_xp"))
+	var datos_prep := LeaderboardFormat.preparar_datos_listado(datos, id_propio)
+	_scope_actual = str(datos_prep.get("scope", "global_xp"))
 	_id_propio    = id_propio
-	_total        = int(datos.get("total", 0))
+	_total        = int(datos_prep.get("total", 0))
 	_limpiar_filas()
 
-	var entradas: Variant = datos.get("entries", [])
+	var entradas: Variant = datos_prep.get("entries", [])
 	if not entradas is Array:
 		return
 
@@ -88,12 +89,13 @@ func poblar(datos: Dictionary, id_propio: String = "", omitir_top: int = -1) -> 
 			var es_propio := str(entry.get("user_id", "")) == _id_propio
 			_agregar_fila(entry, es_propio)
 
-	_actualizar_paginacion(datos)
+	_actualizar_paginacion(datos_prep)
 
 
 # Adjunta más entradas al final de la lista (paginación append).
 func agregar_mas(datos: Dictionary) -> void:
-	var entradas: Variant = datos.get("entries", [])
+	var datos_prep := LeaderboardFormat.preparar_datos_listado(datos, _id_propio)
+	var entradas: Variant = datos_prep.get("entries", [])
 	if not entradas is Array:
 		return
 
@@ -102,7 +104,7 @@ func agregar_mas(datos: Dictionary) -> void:
 			var es_propio := str(entrada.get("user_id", "")) == _id_propio
 			_agregar_fila(entrada as Dictionary, es_propio)
 
-	_actualizar_paginacion(datos)
+	_actualizar_paginacion(datos_prep)
 
 
 # Elimina todas las filas de la lista.

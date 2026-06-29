@@ -1,5 +1,7 @@
 import type { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts';
 import {
+  buildStreakAtRiskEmail,
+  buildStreakLostEmail,
   buildWelcomeEmail,
   isEmailDeliveryConfigured,
   type EmailMessage,
@@ -33,20 +35,18 @@ function emailConfig() {
   };
 }
 
-function buildStreakAtRiskEmail(name: string, mail: string, count: number): EmailMessage {
-  const safeName = name.trim() || 'Jugador';
-  const subject = `¡Tu racha de ${count} días está en riesgo! — E-VIDENTE`;
-  const text = `Hola ${safeName},\n\nJugá hoy para mantener tu racha de ${count} días.\n\n— E-VIDENTE`;
-  const html = `<p>Hola <strong>${safeName}</strong>,</p><p>Jugá hoy para mantener tu racha de <strong>${count}</strong> días.</p><p>— E-VIDENTE</p>`;
-  return { to: mail, toName: safeName, subject, htmlContent: html, textContent: text };
-}
-
-function buildStreakLostEmail(name: string, mail: string, count: number): EmailMessage {
-  const safeName = name.trim() || 'Jugador';
-  const subject = `Se reinició tu racha — E-VIDENTE`;
-  const text = `Hola ${safeName},\n\nTu racha de ${count} días se reinició. ¡Volvé a sumar días!\n\n— E-VIDENTE`;
-  const html = `<p>Hola <strong>${safeName}</strong>,</p><p>Tu racha se reinició. ¡Volvé a sumar días!</p><p>— E-VIDENTE</p>`;
-  return { to: mail, toName: safeName, subject, htmlContent: html, textContent: text };
+async function findUserStreakCount(db: Client, userId: string): Promise<number> {
+  const result = await db.queryObject<{ current_count: number }>(
+    `
+      SELECT s.current_count
+      FROM profiles p
+      JOIN streaks s ON s.id = p.streak_id
+      WHERE p.user_id = $1
+      LIMIT 1;
+    `,
+    [userId],
+  );
+  return Math.max(1, result.rows[0]?.current_count ?? 1);
 }
 
 async function findStreakAtRisk(db: Client, today: string): Promise<StreakCandidate[]> {
@@ -288,9 +288,11 @@ export async function runRetryFailedEmailJob() {
       if (row.template_key === 'welcome') {
         message = buildWelcomeEmail({ name, mail: row.recipient_email });
       } else if (row.template_key === 'streak_at_risk') {
-        message = buildStreakAtRiskEmail(name, row.recipient_email, 1);
+        const streakCount = await findUserStreakCount(db, row.user_id);
+        message = buildStreakAtRiskEmail(name, row.recipient_email, streakCount);
       } else if (row.template_key === 'streak_lost') {
-        message = buildStreakLostEmail(name, row.recipient_email, 1);
+        const streakCount = await findUserStreakCount(db, row.user_id);
+        message = buildStreakLostEmail(name, row.recipient_email, streakCount);
       }
       if (!message) {
         stats.skipped += 1;

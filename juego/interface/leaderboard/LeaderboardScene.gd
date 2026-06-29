@@ -89,6 +89,8 @@ func abrir(scope: String = "") -> void:
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
 		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
+	if not LeaderboardScopeCatalog.scope_disponible(scope_final):
+		scope_final = LeaderboardApi.SCOPE_XP_GLOBAL
 	_scope_activo = scope_final
 	if is_instance_valid(_pestanias):
 		_pestanias.seleccionar(scope_final)
@@ -403,11 +405,10 @@ func _al_volver_al_top_solicitado() -> void:
 
 func _guardar_entradas_podio(entradas: Array) -> void:
 	_entradas_podio_cache.clear()
-	for entrada in entradas:
-		if entrada is Dictionary:
-			var rank := int((entrada as Dictionary).get("rank", 0))
-			if rank >= 1 and rank <= 3:
-				_entradas_podio_cache.append(entrada)
+	for entrada in LeaderboardFormat.filtrar_entradas_validas(entradas):
+		var rank := int((entrada as Dictionary).get("rank", 0))
+		if rank >= 1 and rank <= 3:
+			_entradas_podio_cache.append(entrada)
 
 
 func _restaurar_podio_si_hace_falta() -> void:

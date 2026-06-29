@@ -49,6 +49,10 @@ func cargar_y_mostrar(scope: String = LeaderboardApi.SCOPE_XP_GLOBAL, forzar: bo
 		mostrar_invitacion_login()
 		return
 
+	if not LeaderboardScopeCatalog.scope_disponible(_scope_preferido):
+		mostrar_proximamente(_scope_preferido)
+		return
+
 	if not forzar:
 		var cacheado := LeaderboardService.obtener_resumen_desde_cache(_scope_preferido)
 		if not cacheado.is_empty():
@@ -255,6 +259,29 @@ func mostrar_invitacion_login() -> void:
 	_label_exp.text = ""
 	_label_exp.visible = false
 	_label_meta.text = LeaderboardFormat.mensaje_progreso_no_suma()
+	if is_instance_valid(_barra_progreso):
+		_barra_progreso.visible = false
+		_barra_progreso.value = 0.0
+	if is_instance_valid(_boton_ver_ranking):
+		_boton_ver_ranking.visible = false
+
+
+func mostrar_proximamente(scope: String) -> void:
+	visible = true
+	_scope_preferido = scope
+	_ocultar_mensaje_celebracion()
+	_detener_animacion_borde_celebracion()
+	if is_instance_valid(_contenedor_datos):
+		_contenedor_datos.visible = true
+	if is_instance_valid(_contenedor_carga):
+		_contenedor_carga.visible = false
+
+	var etiqueta := RestrictionCodes.etiqueta_scope(scope)
+	_label_puesto.text = "—"
+	_label_puesto.visible = false
+	_label_exp.text = ""
+	_label_exp.visible = false
+	_label_meta.text = LeaderboardFormat.mensaje_scope_sin_progreso(scope, etiqueta)
 	if is_instance_valid(_barra_progreso):
 		_barra_progreso.visible = false
 		_barra_progreso.value = 0.0

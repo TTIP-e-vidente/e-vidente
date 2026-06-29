@@ -34,10 +34,15 @@ func cargar(scope: String = "", forzar: bool = false) -> void:
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
 		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
+	if not LeaderboardScopeCatalog.scope_disponible(scope_final):
+		scope_final = LeaderboardApi.SCOPE_XP_GLOBAL
 
 	_scope_activo = scope_final
 	if is_instance_valid(_pestanias):
 		_pestanias.seleccionar(scope_final)
+
+	if AuthApi.esta_logueado() and not forzar:
+		LeaderboardService.prefetch_datos_perfil()
 
 	if not AuthApi.esta_logueado():
 		_mostrar_invitado()
@@ -92,6 +97,25 @@ func _al_cambiar_scope(scope: String) -> void:
 
 
 func _refrescar_scope(scope: String, forzar: bool = false) -> void:
+	if not LeaderboardScopeCatalog.scope_disponible(scope):
+		if is_instance_valid(_card):
+			_card.mostrar_proximamente(scope)
+		if is_instance_valid(_mini_list):
+			_mini_list.limpiar()
+			_mini_list.visible = false
+		if is_instance_valid(_etiqueta_lista):
+			_etiqueta_lista.visible = false
+		if is_instance_valid(_boton_tabla):
+			_boton_tabla.disabled = true
+		return
+
+	if is_instance_valid(_mini_list):
+		_mini_list.visible = true
+	if is_instance_valid(_etiqueta_lista):
+		_etiqueta_lista.visible = true
+	if is_instance_valid(_boton_tabla):
+		_boton_tabla.disabled = false
+
 	if is_instance_valid(_card):
 		await _card.cargar_y_mostrar(scope, forzar)
 
@@ -148,10 +172,14 @@ func _al_ver_ranking_desde_card(scope: String) -> void:
 
 
 func _al_presionar_tabla_completa() -> void:
+	if not LeaderboardScopeCatalog.scope_disponible(_scope_activo):
+		return
 	ver_tabla_completa_solicitada.emit(_scope_activo)
 
 
 func _al_hub_scope_presionado(scope: String) -> void:
+	if not LeaderboardScopeCatalog.scope_disponible(scope):
+		return
 	_scope_activo = scope
 	if is_instance_valid(_pestanias):
 		_pestanias.seleccionar(scope)

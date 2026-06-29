@@ -32,6 +32,10 @@ func poblar_desde_nearby(resumen: Dictionary, id_propio: String, scope: String =
 	if not nearby is Array or (nearby as Array).is_empty():
 		return false
 
+	var entradas := LeaderboardFormat.filtrar_entradas_validas(nearby as Array)
+	if entradas.is_empty():
+		return false
+
 	limpiar()
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
@@ -43,10 +47,10 @@ func poblar_desde_nearby(resumen: Dictionary, id_propio: String, scope: String =
 		puesto_propio = int((current as Dictionary).get("rank", 0))
 
 	_agregar_filas_desde_entradas(
-		nearby as Array,
+		entradas,
 		id_propio,
 		scope_final,
-		(nearby as Array).size(),
+		entradas.size(),
 		puesto_propio
 	)
 	return true
@@ -54,12 +58,19 @@ func poblar_desde_nearby(resumen: Dictionary, id_propio: String, scope: String =
 
 func poblar(datos: Dictionary, id_propio: String = "", limite: int = -1) -> void:
 	limpiar()
-	var entradas: Variant = datos.get("entries", [])
+	var datos_prep := LeaderboardFormat.preparar_datos_listado(datos, id_propio)
+	var entradas: Variant = datos_prep.get("entries", [])
 	if not entradas is Array:
 		return
 
 	var maximo := limite if limite > 0 else max_filas
-	_agregar_filas_desde_entradas(entradas as Array, id_propio, str(datos.get("scope", "global_xp")), maximo, 0)
+	_agregar_filas_desde_entradas(
+		entradas as Array,
+		id_propio,
+		str(datos_prep.get("scope", "global_xp")),
+		maximo,
+		0
+	)
 
 
 func poblar_cercanos(
@@ -131,12 +142,26 @@ func _agregar_filas_desde_entradas(
 	puesto_propio: int = 0
 ) -> void:
 	var contador := 0
+	var vistos_usuario: Dictionary = {}
+	var vistos_puesto: Dictionary = {}
 	for entrada in entradas:
 		if contador >= maximo:
 			break
 		if not entrada is Dictionary:
 			continue
 		var entry := entrada as Dictionary
+		if not LeaderboardFormat.entrada_es_valida(entry):
+			continue
+		var user_id := str(entry.get("user_id", "")).strip_edges()
+		var rank := int(entry.get("rank", 0))
+		if not user_id.is_empty() and vistos_usuario.has(user_id):
+			continue
+		if rank > 0 and vistos_puesto.has(rank):
+			continue
+		if not user_id.is_empty():
+			vistos_usuario[user_id] = true
+		if rank > 0:
+			vistos_puesto[rank] = true
 		var fila := ROW_SCENE.instantiate() as LeaderboardMiniRow
 		if fila == null:
 			continue
@@ -148,6 +173,10 @@ func _agregar_filas_desde_entradas(
 
 	if animar_fila_propia:
 		call_deferred("_animar_fila_propia")
+
+
+func _entrada_es_valida(entry: Dictionary) -> bool:
+	return LeaderboardFormat.entrada_es_valida(entry)
 
 
 func _es_fila_propia(entry: Dictionary, id_propio: String, puesto_propio: int) -> bool:

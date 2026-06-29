@@ -1,7 +1,7 @@
 class_name LeaderboardPosicionesHub
 extends PanelContainer
 
-# Hub "Tus rankings": una card por scope con la posición del jugador.
+# Hub "Tus rankings": una card por scope activo con la posición del jugador.
 
 
 signal scope_presionado(scope: String)
@@ -45,7 +45,7 @@ func _construir_cards() -> void:
 		hijo.queue_free()
 	_cards_por_scope.clear()
 
-	for categoria in LeaderboardScopeCatalog.obtener_categorias():
+	for categoria in LeaderboardScopeCatalog.obtener_categorias_visibles():
 		var scope := str(categoria.get("scope", ""))
 		var etiqueta := str(categoria.get("etiqueta", scope))
 		if scope.is_empty():
@@ -59,7 +59,7 @@ func _construir_cards() -> void:
 
 
 func _marcar_todas_cargando() -> void:
-	for categoria in LeaderboardScopeCatalog.obtener_categorias():
+	for categoria in LeaderboardScopeCatalog.obtener_categorias_visibles():
 		var scope := str(categoria.get("scope", ""))
 		var etiqueta := str(categoria.get("etiqueta", scope))
 		if scope.is_empty() or not _cards_por_scope.has(scope):
@@ -81,7 +81,7 @@ func _al_posiciones_cargadas(posiciones: Array) -> void:
 				mapa[scope] = pos
 
 	var items_orden: Array[Dictionary] = []
-	for categoria in LeaderboardScopeCatalog.obtener_categorias():
+	for categoria in LeaderboardScopeCatalog.obtener_categorias_visibles():
 		var scope := str(categoria.get("scope", ""))
 		var etiqueta := str(categoria.get("etiqueta", scope))
 		if scope.is_empty() or not _cards_por_scope.has(scope):
@@ -97,6 +97,9 @@ func _al_posiciones_cargadas(posiciones: Array) -> void:
 				etiqueta = etiqueta_api
 			rank = LeaderboardFormat.entero_desde_json(datos.get("rank", 0))
 			score = LeaderboardFormat.entero_desde_json(datos.get("score", 0))
+			if rank <= 0 or score <= 0:
+				rank = 0
+				score = 0
 		card.configurar(etiqueta, scope, rank, score)
 		items_orden.append({"scope": scope, "card": card, "rank": rank})
 

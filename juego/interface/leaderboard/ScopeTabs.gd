@@ -82,7 +82,7 @@ func _buscar_scroll_vertical_padre() -> ScrollContainer:
 
 func seleccionar(scope: String) -> void:
 	_scope_activo = scope
-	var categorias := LeaderboardScopeCatalog.obtener_categorias()
+	var categorias := LeaderboardScopeCatalog.obtener_categorias_visibles()
 	for i in _botones.size():
 		if i < categorias.size():
 			_botones[i].button_pressed = str(categorias[i].get("scope", "")) == scope
@@ -96,14 +96,14 @@ func _construir_botones() -> void:
 	var contenedor := _contenedor_tabs if _contenedor_tabs != null else _contenedor
 	if not is_instance_valid(contenedor):
 		return
-	for categoria in LeaderboardScopeCatalog.obtener_categorias():
+	for categoria in LeaderboardScopeCatalog.obtener_categorias_visibles():
 		var scene_tab := TAB_BUTTON_LIGHT_SCENE if tema_claro else TAB_BUTTON_SCENE
 		var boton := scene_tab.instantiate() as ScopeTabButton
 		if boton == null:
 			continue
 		var scope_del_boton: String = str(categoria.get("scope", ""))
 		var etiqueta := str(categoria.get("etiqueta_tab", categoria.get("etiqueta", "")))
-		boton.configurar(etiqueta, scope_del_boton)
+		boton.configurar(etiqueta, scope_del_boton, true)
 		boton.pressed.connect(func() -> void: _al_presionar_tab(scope_del_boton))
 		contenedor.add_child(boton)
 		_botones.append(boton)

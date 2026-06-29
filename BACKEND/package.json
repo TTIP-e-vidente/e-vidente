@@ -9,6 +9,8 @@
     "dev:restart": "npm run dev:stop && npm run dev",
     "dev:restart:local": "npm run dev:stop && npm run dev:local",
     "build": "tsc && node scripts/copy-email-assets.cjs",
+    "sync:email-templates:edge": "node scripts/sync-email-templates-edge.cjs",
+    "check:email-templates:edge": "node scripts/check-email-templates-edge.cjs",
     "start": "node dist/server.js",
     "migrate": "ts-node scripts/run-migrations.ts",
     "smoke:api": "ts-node scripts/smoke-auth-player.ts",

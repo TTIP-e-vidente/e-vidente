@@ -31,11 +31,10 @@ func limpiar() -> void:
 
 func poblar(entradas: Array, scope: String, id_propio: String) -> void:
 	var por_rank: Dictionary = {}
-	for entrada in entradas:
-		if entrada is Dictionary:
-			var rank := int((entrada as Dictionary).get("rank", 0))
-			if rank >= 1 and rank <= 3:
-				por_rank[rank] = entrada
+	for entrada in LeaderboardFormat.filtrar_entradas_validas(entradas):
+		var rank := int((entrada as Dictionary).get("rank", 0))
+		if rank >= 1 and rank <= 3:
+			por_rank[rank] = entrada
 
 	visible = not por_rank.is_empty()
 	if not visible:

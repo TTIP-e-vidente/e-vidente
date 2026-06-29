@@ -556,21 +556,42 @@ func _finalizar_partida() -> void:
 	var activity_id: String = _obtener_activity_id_actual()
 	var teaching_key: String = _obtener_teaching_key_actual()
 	print("%s activity=%s key=%s" % [LOG_PREFIX_TEACHING, activity_id, teaching_key])
-	if _debe_mostrar_ensenanza_antes_de_continuar_partida():
+	if _pertenece_a_partida_de_nodo:
+		if NodoRuntimeScript.hay_siguiente_mini_juego(get_tree()):
+			_avanzar_al_siguiente_mini_juego_sin_ensenanza()
+			return
 		print(
 			LOG_PREFIX_ARRASTRE,
 			" completado=true llamando_ensenanza=true teaching_key=",
 			_obtener_teaching_key_actual()
 		)
-		_mostrar_ensenanza_del_nivel()
+		_mostrar_ensenanza_cierre_de_nodo(track_key, level_number)
 		return
 	_finalizar_partida_normal(track_key, level_number)
 
 
-func _debe_mostrar_ensenanza_antes_de_continuar_partida() -> bool:
-	if not _pertenece_a_partida_de_nodo:
-		return false
-	return NodoRuntimeScript.hay_siguiente_mini_juego(get_tree())
+func _avanzar_al_siguiente_mini_juego_sin_ensenanza() -> void:
+	_current_run_completion_handled = true
+	ItemLevel.is_dragging = null
+	_establecer_interacciones_jugabilidad_habilitadas(false)
+	_ocultar_boton_adelante_anterior()
+	_ocultar_continuacion()
+	_ocultar_ensenanza_textual()
+	if not _continuar_partida_de_nodo_si_corresponde():
+		push_error("[POST_GAME] No se pudo avanzar al siguiente mini juego del nodo.")
+	run_completed.emit()
+
+
+func _mostrar_ensenanza_cierre_de_nodo(track_key: String, level_number: int) -> void:
+	var previous_streak: Dictionary = Global.obtener_estado_racha()
+	guardar_progreso_de_finalizacion(track_key, level_number)
+	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	construir_flujo_post_game(level_number, previous_streak, updated_streak)
+	if _usa_flujo_mapa and PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
+		_bloquear_completado_partida()
+		NodoRuntimeScript.finalizar_mini_juego(get_tree(), Callable(), Callable())
+		_encolar_sync_partida_mapa()
+	_mostrar_ensenanza_del_nivel()
 
 
 func _mostrar_ensenanza_del_nivel() -> void:
@@ -614,16 +635,16 @@ func _finalizar_partida_normal(track_key: String, level_number: int) -> void:
 			)
 			run_completed.emit()
 			return
-		# Bloquear input sin dim/grayscale: la ensenanza cubre el gameplay inmediatamente.
-		ItemLevel.is_dragging = null
-		_establecer_interacciones_jugabilidad_habilitadas(false)
-		_ocultar_boton_adelante_anterior()
-		_ocultar_ensenanza_textual()
-		if _intentar_mostrar_ensenanza_esc():
-			run_completed.emit()
-			return
-		_mostrar_ensenanza_de_cierre()
-		mostrar_continuacion()
+		if not _pertenece_a_partida_de_nodo:
+			ItemLevel.is_dragging = null
+			_establecer_interacciones_jugabilidad_habilitadas(false)
+			_ocultar_boton_adelante_anterior()
+			_ocultar_ensenanza_textual()
+			if _intentar_mostrar_ensenanza_esc():
+				run_completed.emit()
+				return
+			_mostrar_ensenanza_de_cierre()
+			mostrar_continuacion()
 		run_completed.emit()
 		return
 

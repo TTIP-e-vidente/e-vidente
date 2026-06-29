@@ -266,6 +266,8 @@ func refrescar() -> void:
 
 	if is_instance_valid(_ranking_detalle):
 		var scope_refresh := LeaderboardService.consumir_refresco_tras_partida()
+		if AuthApi.esta_logueado() and scope_refresh.is_empty():
+			LeaderboardService.prefetch_datos_perfil()
 		if not scope_refresh.is_empty():
 			_ranking_detalle.call_deferred("cargar", scope_refresh, true)
 		else:

@@ -11,6 +11,9 @@ export function buildEdgeFunctionSecrets(): Record<string, string> {
     BREVO_WEBHOOK_SECRET: process.env.BREVO_WEBHOOK_SECRET?.trim() ?? '',
     EMAIL_ENABLED: process.env.EMAIL_ENABLED?.trim() || 'true',
     EMAIL_TIMEZONE: process.env.EMAIL_TIMEZONE?.trim() || 'America/Argentina/Buenos_Aires',
+    EMAIL_APP_PLAY_URL: process.env.EMAIL_APP_PLAY_URL?.trim() || process.env.APP_PLAY_URL?.trim() || '',
+    EMAIL_ASSETS_BASE_URL: process.env.EMAIL_ASSETS_BASE_URL?.trim() || '',
+    EMAIL_LOGO_URL: process.env.EMAIL_LOGO_URL?.trim() || '',
     NODE_ENV: process.env.NODE_ENV?.trim() || 'production',
   };
 
@@ -37,6 +40,9 @@ export function validateEdgeFunctionSecrets(secrets: Record<string, string>): st
     'BREVO_SENDER_NAME',
     'BREVO_WEBHOOK_SECRET',
     'EMAIL_TIMEZONE',
+    'EMAIL_APP_PLAY_URL',
+    'EMAIL_ASSETS_BASE_URL',
+    'EMAIL_LOGO_URL',
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'GAME_CLIENT_API_KEYS',
