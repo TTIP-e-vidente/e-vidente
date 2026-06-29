@@ -9,7 +9,7 @@ Público: 10–60 años. Single-player. Estilo cuaderno a mano.
 ## Stack
 
 - `juego/` — Godot 4.6
-- `BACKEND/` — Express + PostgreSQL (opcional)
+- `BACKEND/` — Express + **Supabase Postgres** (DB, mails OTP y jobs vía Edge Functions)
 - `wiki/` — documentación
 
 ## Arranque rápido
@@ -17,7 +17,7 @@ Público: 10–60 años. Single-player. Estilo cuaderno a mano.
 ```sh
 # Solo juego (offline): abrir juego/project.godot en Godot 4.6 → F5
 
-# Juego + cuenta + Supabase (recomendado)
+# Juego + cuenta + Supabase (único camino de desarrollo)
 cd BACKEND
 npm install
 npm run supabase:init    # primera vez: completar .env.staging
@@ -27,7 +27,7 @@ npm run dev              # Express → Supabase + sync Godot config
 
 Guía: [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md)
 
-**Postgres local (Docker, offline):** `npm run dev:local` — ver [BACKEND/README.md](BACKEND/README.md).
+Verificación: `npm run integrate:status` · Mails/jobs: Edge Functions + `pg_cron` (no Docker local).
 
 ## Persistencia
 

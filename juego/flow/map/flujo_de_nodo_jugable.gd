@@ -13,20 +13,20 @@ signal apertura_fallida(error: String)
 func seleccionar_nodo(
 	tree: SceneTree,
 	nodos_mapa: Array,
-	node_data: MapNodeData
+	node_data: MapNodeData,
+	node_states: Array[Dictionary] = []
 ) -> void:
 	if node_data == null or not node_data.es_valido():
 		return
 
-	if not _nodo_esta_desbloqueado(nodos_mapa, node_data):
+	if not AvanceDeNodoScript.puede_abrir_nodo(nodos_mapa, node_data, node_states):
 		return
 
 	_abrir_nodo_jugable(tree, node_data)
 
 
 func _nodo_esta_desbloqueado(nodos_mapa: Array, node_data: MapNodeData) -> bool:
-	var estado: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, node_data)
-	return bool(estado.get("is_unlocked", false))
+	return AvanceDeNodoScript.puede_abrir_nodo(nodos_mapa, node_data)
 
 
 func _abrir_nodo_jugable(tree: SceneTree, node_data: MapNodeData) -> void:

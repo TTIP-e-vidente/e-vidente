@@ -45,6 +45,7 @@ function main(): void {
     { id: 'supabase:status', command: 'npm run supabase:status' },
     { id: 'check:deploy:staging', command: 'npm run check:deploy:staging' },
     { id: 'verify:supabase', command: 'npm run verify:supabase' },
+    { id: 'setup:supabase:cron', command: 'npm run setup:supabase:cron' },
   ];
 
   if (!skipSmoke) {

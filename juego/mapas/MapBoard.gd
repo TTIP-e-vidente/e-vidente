@@ -68,13 +68,21 @@ func configurar_nodos(
 	for visual_node in visual_nodes:
 		visual_node.hide()
 
+	var estados_por_clave: Dictionary = _construir_estados_por_clave(map_nodes, node_states)
+
 	for index in range(visible_count):
 		var visual_node: Node2D = visual_nodes[index]
 		var node_data: MapNodeData = map_nodes[index] as MapNodeData
-		var node_state: Dictionary = _obtener_estado_nodo(node_states, index)
+		var node_state: Dictionary = _obtener_estado_para_nodo(
+			node_data, node_states, index, estados_por_clave
+		)
 		if node_data == null or not node_data.es_valido():
 			continue
 
+		if "node_key" in visual_node:
+			visual_node.set("node_key", node_data.node_key)
+		if "nivel_id" in visual_node:
+			visual_node.set("nivel_id", node_data.order)
 		visual_node.show()
 		if index < layout_positions.size():
 			visual_node.position = layout_positions[index]
@@ -166,6 +174,45 @@ func _obtener_estado_nodo(node_states: Array[Dictionary], index: int) -> Diction
 	if index < 0 or index >= node_states.size():
 		return {}
 	return node_states[index]
+
+
+func _construir_estados_por_clave(
+		map_nodes: Array,
+		node_states: Array[Dictionary]) -> Dictionary:
+	var estados_por_clave: Dictionary = {}
+	var limite: int = mini(map_nodes.size(), node_states.size())
+	for index in range(limite):
+		var node_data: MapNodeData = map_nodes[index] as MapNodeData
+		if node_data == null:
+			continue
+		var clave: String = node_data.node_key.strip_edges()
+		if clave.is_empty():
+			continue
+		estados_por_clave[clave] = node_states[index]
+	return estados_por_clave
+
+
+func _obtener_estado_para_nodo(
+		node_data: MapNodeData,
+		node_states: Array[Dictionary],
+		index: int,
+		estados_por_clave: Dictionary) -> Dictionary:
+	if node_data != null:
+		var clave: String = node_data.node_key.strip_edges()
+		if not clave.is_empty() and estados_por_clave.has(clave):
+			return estados_por_clave[clave] as Dictionary
+	return _obtener_estado_nodo(node_states, index)
+
+
+func desplazar_al_nodo_recomendado() -> void:
+	if contenedor_scroll == null or contenedor_nodos == null:
+		return
+	var visual_nodes: Array[Node2D] = obtener_nodos_runtime_mapa()
+	for visual_node in visual_nodes:
+		if visual_node.has_method("es_leccion_actual") and bool(visual_node.call("es_leccion_actual")):
+			_desplazar_a_nodo.call_deferred(visual_node)
+			return
+	desplazar_al_primer_nodo_disponible()
 
 
 func desplazar_al_primer_nodo_disponible() -> void:

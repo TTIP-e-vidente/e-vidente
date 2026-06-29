@@ -10,6 +10,25 @@ import {
   getVerificationCooldownRemainingSeconds,
   sendVerificationCode
 } from './email.verification.service';
+import { isEmailDeliveryConfigured } from './email.config';
+import * as emailRepository from './email.repository';
+import { isSupabaseEmailEdgeMode } from '../../config/supabase-email-mode';
+
+function rejectIfEmailViaSupabaseEdge(response: Response): boolean {
+  if (!isSupabaseEmailEdgeMode()) {
+    return false;
+  }
+  sendResponse(response, 410, {
+    error: 'La verificación de mail corre en Supabase Edge Functions.',
+    code: 'EMAIL_VIA_SUPABASE_EDGE',
+    hint: 'Godot debe usar verify-email-request/confirm en Supabase (npm run sync:godot-config:staging)',
+  });
+  return true;
+}
+
+function isDevelopmentEnvironment(): boolean {
+  return process.env.NODE_ENV === 'development';
+}
 
 function normalizeMailForCompare(value: string | null | undefined): string {
   if (value == null) {
@@ -47,6 +66,9 @@ export async function requestVerificationController(
   response: Response
 ): Promise<void> {
   try {
+    if (rejectIfEmailViaSupabaseEdge(response)) {
+      return;
+    }
     const userId = request.user?.id;
     if (!userId) {
       sendResponse(response, 401, { error: 'Unauthorized' });
@@ -101,6 +123,18 @@ export async function requestVerificationController(
       return;
     }
 
+    if (result === 'dev_console') {
+      sendResponse(response, 200, {
+        status: 'dev_console',
+        message:
+          'Brevo no configurado. El código de 6 dígitos está en la consola del backend (evento dev_code).',
+        dev_code_in_logs: true,
+        expires_minutes: config.expiresMinutes,
+        cooldown_seconds: 0
+      });
+      return;
+    }
+
     if (result === 'rate_limited') {
       const cooldownSeconds = await getVerificationCooldownRemainingSeconds(userId);
       sendResponse(response, 429, {
@@ -112,17 +146,31 @@ export async function requestVerificationController(
     }
 
     if (result === 'send_failed') {
+      const lastDelivery = await emailRepository.findLatestDeliveryForUser(
+        userId,
+        'email_verification'
+      );
+      const detail = lastDelivery?.error_message?.trim() ?? '';
       sendResponse(response, 503, {
-        error: 'No se pudo enviar el código. Intentá de nuevo en unos minutos.',
-        code: 'SEND_FAILED'
+        error: detail
+          ? `No se pudo enviar el código: ${detail}`
+          : 'No se pudo enviar el código. Intentá de nuevo en unos minutos.',
+        code: 'SEND_FAILED',
+        ...(detail ? { detail } : {})
       });
       return;
     }
 
     if (result === 'skipped') {
+      const brevoMissing = !isEmailDeliveryConfigured();
       sendResponse(response, 503, {
-        error: 'Servicio de email no disponible.',
-        code: 'EMAIL_UNAVAILABLE'
+        error: brevoMissing
+          ? isDevelopmentEnvironment()
+            ? 'Brevo no está configurado en el backend. Revisá BACKEND/.env.staging (BREVO_API_KEY, BREVO_SENDER_EMAIL) y reiniciá npm run dev.'
+            : 'Servicio de email no disponible. Contactá al administrador.'
+          : 'Servicio de email no disponible.',
+        code: 'EMAIL_UNAVAILABLE',
+        dev_code_in_logs: brevoMissing && isDevelopmentEnvironment()
       });
       return;
     }
@@ -138,6 +186,9 @@ export async function confirmVerificationController(
   response: Response
 ): Promise<void> {
   try {
+    if (rejectIfEmailViaSupabaseEdge(response)) {
+      return;
+    }
     const userId = request.user?.id;
     if (!userId) {
       sendResponse(response, 401, { error: 'Unauthorized' });
@@ -192,6 +243,15 @@ export async function confirmVerificationController(
         code: 'TOO_MANY_ATTEMPTS',
         attempts_remaining: 0,
         max_attempts: config.maxAttempts
+      });
+      return;
+    }
+
+    if (result.status === 'mail_sync_failed') {
+      sendResponse(response, 409, {
+        error:
+          'El mail de tu cuenta no coincide con el del código. Guardá el perfil e pedí un código nuevo.',
+        code: 'MAIL_OUT_OF_SYNC'
       });
       return;
     }

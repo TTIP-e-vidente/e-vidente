@@ -17,6 +17,7 @@ export interface PublicUser {
 export type AuthVerificationSendStatus =
   | 'sent'
   | 'skipped'
+  | 'dev_console'
   | 'rate_limited'
   | 'no_mail'
   | 'send_failed'

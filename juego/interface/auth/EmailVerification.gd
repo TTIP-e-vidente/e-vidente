@@ -17,7 +17,7 @@ const AYUDA_MAIL_TEXTO := (
 	+ "• Puede tardar 1–2 minutos.\n"
 	+ "• Usá «Reenviar código» si pasaron más de 2 minutos.\n"
 	+ "• El mail de bienvenida llega recién después de verificar.\n"
-	+ "• En desarrollo sin Brevo: el código aparece en la consola del backend."
+	+ "• En desarrollo sin Brevo: el código aparece en los logs de Supabase Edge Functions."
 )
 
 @onready var _line_edit_codigo: LineEdit = %LineEditCodigo
@@ -188,8 +188,30 @@ func _configurar_entrada_codigo() -> void:
 
 
 func _enfocar_codigo() -> void:
+	_intentar_pegar_desde_portapapeles()
 	if is_instance_valid(_line_edit_codigo):
 		_line_edit_codigo.grab_focus()
+
+
+func _intentar_pegar_desde_portapapeles() -> void:
+	if not is_instance_valid(_line_edit_codigo):
+		return
+	if not _line_edit_codigo.text.strip_edges().is_empty():
+		return
+	var clip := DisplayServer.clipboard_get().strip_edges()
+	if clip.is_empty():
+		return
+	var digits := ""
+	for i in clip.length():
+		var ch := clip[i]
+		if ch >= "0" and ch <= "9":
+			digits += ch
+		if digits.length() >= 6:
+			break
+	if digits.length() != 6:
+		return
+	_line_edit_codigo.text = digits
+	_actualizar_casillas_digitos(digits)
 
 
 func _on_digitos_gui_input(event: InputEvent) -> void:
@@ -342,6 +364,7 @@ func _on_verificar_presionado() -> void:
 	_establecer_cargando(false)
 
 	if res.get("ok", false):
+		await BackendSession.refrescar_usuario_en_cache()
 		_mostrar_mensaje("¡Mail verificado! Ahora te enviamos el mail de bienvenida.", true)
 		await get_tree().create_timer(0.8).timeout
 		verificacion_completada.emit()

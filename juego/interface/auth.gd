@@ -785,6 +785,13 @@ func _on_boton_verificar_mail_presionado() -> void:
 
 	_button_verify_email.disabled = true
 	_establecer_feedback("Enviando código de verificación...", true)
+
+	var preflight := await ProfileMailSyncHelperScript.preflight_envio_verificacion()
+	if not bool(preflight.get("ok", false)):
+		_button_verify_email.disabled = false
+		_establecer_feedback(str(preflight.get("mensaje", "")), false)
+		return
+
 	var mail_form := email_input.text.strip_edges()
 	await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
 	var res := await AuthApi.solicitar_codigo_verificacion(mail_form)

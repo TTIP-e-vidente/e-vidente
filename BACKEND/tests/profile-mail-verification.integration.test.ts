@@ -77,7 +77,7 @@ async function run(): Promise<void> {
     assert.equal(verification.mail_changed, true);
     assert.equal(verification.target_mail, updatedMail);
     const sendStatus = String(verification.code_send_status);
-    assert.ok(['sent', 'skipped', 'rate_limited', 'send_failed'].includes(sendStatus));
+    assert.ok(['sent', 'skipped', 'dev_console', 'rate_limited', 'send_failed'].includes(sendStatus));
     if (sendStatus === 'sent') {
       assert.equal(typeof verification.message, 'string');
       assert.ok(String(verification.message).includes(updatedMail));

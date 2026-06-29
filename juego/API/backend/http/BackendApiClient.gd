@@ -7,6 +7,7 @@ const HTTP_TIMEOUT := 8.0
 const AVATAR_UPLOAD_TIMEOUT := 30.0
 
 var base_url: String = ""
+var _supabase: SupabaseVerifyClient = null
 
 
 func _init() -> void:
@@ -27,6 +28,13 @@ func _liberar_http(http: HTTPRequest) -> void:
 	_pool.push_back(http)
 
 
+func _obtener_supabase() -> SupabaseVerifyClient:
+	if _supabase == null:
+		_supabase = SupabaseVerifyClient.new()
+		add_child(_supabase)
+	return _supabase
+
+
 func verificar_salud_api() -> Dictionary:
 	return await _obtener_json("/health", "")
 
@@ -36,6 +44,8 @@ func verificar_salud_db() -> Dictionary:
 
 
 func verificar_salud_email() -> Dictionary:
+	if BackendConfig.email_via_supabase():
+		return await _obtener_supabase().verificar_salud_email()
 	return await _obtener_json("/health/email", "")
 
 
@@ -154,6 +164,8 @@ func eliminar_avatar(token: String) -> Dictionary:
 
 
 func solicitar_verificacion_email(token: String, mail_esperado: String = "") -> Dictionary:
+	if BackendConfig.email_via_supabase():
+		return await _obtener_supabase().solicitar_verificacion_email(token, mail_esperado)
 	var body := {}
 	var mail := mail_esperado.strip_edges()
 	if not mail.is_empty():
@@ -162,6 +174,8 @@ func solicitar_verificacion_email(token: String, mail_esperado: String = "") -> 
 
 
 func confirmar_verificacion_email(token: String, codigo: String) -> Dictionary:
+	if BackendConfig.email_via_supabase():
+		return await _obtener_supabase().confirmar_verificacion_email(token, codigo)
 	var body := JSON.stringify({"code": codigo})
 	return await _enviar_post("/player/verify-email/confirm", token, body)
 

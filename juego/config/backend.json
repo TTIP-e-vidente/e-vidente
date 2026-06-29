@@ -1,4 +1,5 @@
 {
   "base_url": "http://localhost:3010",
-  "db": "supabase"
+  "db": "supabase",
+  "_comment": "Generado por npm run sync:godot-config:staging — no editar a mano"
 }

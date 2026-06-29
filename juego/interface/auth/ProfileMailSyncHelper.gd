@@ -123,6 +123,87 @@ static func puede_solicitar_verificacion(form_mail: String) -> Dictionary:
 	return {"ok": true, "mensaje": "", "code": ""}
 
 
+static func preflight_envio_verificacion() -> Dictionary:
+	if BackendConfig.email_via_supabase():
+		return await _preflight_supabase_verificacion()
+	return await _preflight_express_verificacion()
+
+
+static func _preflight_supabase_verificacion() -> Dictionary:
+	var health := await AuthApi.verificar_salud_email()
+	if int(health.get("status", 0)) == 0:
+		return {
+			"ok": false,
+			"mensaje": "No se pudo conectar a Supabase Edge Functions. Revisá supabase_functions_url en backend.local.json.",
+			"code": "SUPABASE_OFFLINE",
+		}
+
+	var data: Variant = health.get("data", {})
+	if not data is Dictionary:
+		return {"ok": true, "mensaje": "", "code": ""}
+
+	var email_data := data as Dictionary
+	var configured := bool(email_data.get("delivery_configured", false))
+	if not configured:
+		var hints: Variant = email_data.get("hints", [])
+		var hint := ""
+		if hints is Array and not (hints as Array).is_empty():
+			hint = str((hints as Array)[0])
+		return {
+			"ok": false,
+			"mensaje": hint if not hint.is_empty() else "Brevo no configurado en Supabase Edge Functions.",
+			"code": "EMAIL_UNAVAILABLE",
+		}
+
+	return {"ok": true, "mensaje": "", "code": ""}
+
+
+static func _preflight_express_verificacion() -> Dictionary:
+	var health := await AuthApi.verificar_salud_email()
+	if int(health.get("status", 0)) == 0:
+		return {
+			"ok": false,
+			"mensaje": "No se pudo conectar al backend. Levantá BACKEND con npm run dev.",
+			"code": "BACKEND_OFFLINE",
+		}
+
+	var data: Variant = health.get("data", {})
+	if not data is Dictionary:
+		return {"ok": true, "mensaje": "", "code": ""}
+
+	var email_data := data as Dictionary
+	var enabled := bool(email_data.get("email_enabled", false))
+	var configured := bool(email_data.get("delivery_configured", false))
+
+	if enabled and not configured:
+		var hints: Variant = email_data.get("hints", [])
+		var hint := ""
+		if hints is Array and not (hints as Array).is_empty():
+			hint = str((hints as Array)[0])
+		return {
+			"ok": false,
+			"mensaje": (
+				hint
+				if not hint.is_empty()
+				else "El backend no tiene Brevo cargado. Reiniciá con npm run dev:restart en BACKEND."
+			),
+			"code": "EMAIL_UNAVAILABLE",
+		}
+
+	var probe: Variant = email_data.get("brevo_probe", {})
+	if enabled and configured and probe is Dictionary:
+		var probe_dict := probe as Dictionary
+		if probe_dict.has("ok") and not bool(probe_dict.get("ok", true)):
+			var probe_hint := str(probe_dict.get("hint", "")).strip_edges()
+			var probe_error := str(probe_dict.get("error", "")).strip_edges()
+			var mensaje := probe_hint if not probe_hint.is_empty() else probe_error
+			if mensaje.is_empty():
+				mensaje = "Brevo rechazó la conexión. Revisá BACKEND/docs/BREVO_SETUP.md."
+			return {"ok": false, "mensaje": mensaje, "code": "BREVO_PROBE_FAILED"}
+
+	return {"ok": true, "mensaje": "", "code": ""}
+
+
 static func _error_sync(code: String, error: String) -> Dictionary:
 	return {
 		"ok": false,

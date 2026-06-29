@@ -18,6 +18,8 @@ juego/reports/
 BACKEND/.env
 BACKEND/.env.staging
 BACKEND/.env.production
+BACKEND/.env.supabase-keys.local
+BACKEND/.env.*.local
 juego/config/backend.local.json
 BACKEND/postgres-data/
 BACKEND/pgdata/

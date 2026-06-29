@@ -194,6 +194,18 @@ static func evaluar_respuesta_verificacion(
 					),
 					"feedback_ok": true,
 				}
+			if api_status == "dev_console":
+				return {
+					"show_overlay": true,
+					"cooldown_seconds": 0,
+					"feedback": str(
+						(data as Dictionary).get(
+							"message",
+							"El c?digo est? en la consola del backend (dev_code)."
+						)
+					),
+					"feedback_ok": true,
+				}
 		return _evaluacion_con_target_mail({
 			"show_overlay": true,
 			"cooldown_seconds": cooldown_verificacion(result, fallback_cooldown),
@@ -259,9 +271,19 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"No se pudo enviar el c?digo. Revis? que el backend est? activo e intent? de nuevo."
+					"No se pudo enviar el c?digo. Pod?s reintentar de inmediato."
 				),
 				"feedback_ok": false,
+			}, verification_meta)
+		"dev_console":
+			return _evaluacion_con_target_mail({
+				"show_overlay": true,
+				"cooldown_seconds": 0,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"Brevo no configurado. El c?digo est? en la consola del backend (dev_code)."
+				),
+				"feedback_ok": true,
 			}, verification_meta)
 		"skipped":
 			return _evaluacion_con_target_mail({

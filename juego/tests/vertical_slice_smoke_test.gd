@@ -2516,6 +2516,75 @@ func _test_progreso_con_huecos_se_muestra_en_global() -> void:
 	global_state.reiniciar_progreso()
 
 
+func _test_todos_los_nodos_del_mapa_arman_plan() -> void:
+	ARMADOR_DE_PARTIDA_SCRIPT.reiniciar_historial_sesion()
+	var fake_save := FakeSaveManager.new()
+	root.add_child(fake_save)
+	ARMADOR_DE_PARTIDA_SCRIPT.inicializar_con_save_manager(fake_save)
+
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.cargar_mapa(
+		"res://contenido/mapa/celiaquia_mapa.json"
+	)
+	_verificar(bool(result.get("ok", false)), "[MapaNodos] Debe cargar celiaquia_mapa.json")
+	if not bool(result.get("ok", false)):
+		ARMADOR_DE_PARTIDA_SCRIPT.inicializar_con_save_manager(root.get_node_or_null("/root/SaveManager"))
+		fake_save.queue_free()
+		return
+
+	var nodes: Array = result.get("data", {}).get("nodes", [])
+	_verificar(nodes.size() == 30, "[MapaNodos] Debe haber 30 nodos en JSON")
+	for raw_node in nodes:
+		var node_data: Variant = _como_map_node_data(raw_node)
+		if node_data == null:
+			_verificar(false, "[MapaNodos] Entrada de nodo invalida en el mapa")
+			continue
+		var plan: Dictionary = ARMADOR_DE_PARTIDA_SCRIPT.construir_plan_de_partida(node_data)
+		var total_juegos: int = int(plan.get("total_juegos", 0))
+		_verificar(
+			total_juegos > 0,
+			"[MapaNodos] %s debe armar plan con juegos (obtenido=%d)"
+			% [node_data.node_key, total_juegos]
+		)
+
+	ARMADOR_DE_PARTIDA_SCRIPT.inicializar_con_save_manager(root.get_node_or_null("/root/SaveManager"))
+	fake_save.queue_free()
+
+
+func _test_avance_de_nodo_un_solo_recomendado() -> void:
+	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.cargar_mapa(
+		"res://contenido/mapa/celiaquia_mapa.json"
+	)
+	if not bool(result.get("ok", false)):
+		_verificar(false, "[MapaEstado] No se pudo cargar el mapa")
+		return
+	var nodos: Array = result.get("data", {}).get("nodes", [])
+	var progreso: Dictionary = {
+		"celiaquia_01_desayuno_basico": {"completed": true, "best_percent": 1.0},
+		"celiaquia_02_colacion_basica": {"completed": true, "best_percent": 0.8},
+	}
+	var estados: Array[Dictionary] = AVANCE_DE_NODO_SCRIPT.construir_estados_mapa(nodos, progreso)
+	var recomendados: int = 0
+	var indice_recomendado: int = -1
+	for index in range(estados.size()):
+		if bool(estados[index].get("is_recommended", false)):
+			recomendados += 1
+			indice_recomendado = index
+	_verificar(recomendados == 1, "[MapaEstado] Debe haber exactamente un nodo recomendado")
+	if indice_recomendado < 0 or indice_recomendado >= nodos.size():
+		return
+	var nodo_recomendado: Variant = _como_map_node_data(nodos[indice_recomendado])
+	if nodo_recomendado == null:
+		return
+	_verificar(
+		nodo_recomendado.node_key == "celiaquia_03_quiz_gluten",
+		"[MapaEstado] Tras completar 01 y 02, el recomendado debe ser el 03"
+	)
+	_verificar(
+		bool(estados[indice_recomendado].get("can_play", false)),
+		"[MapaEstado] El nodo recomendado debe ser jugable"
+	)
+
+
 func _test_curva_real_mapa_todos_los_nodos_sin_posicion_manual() -> void:
 	var result: Dictionary = CARGADOR_DE_MAPA_SCRIPT.cargar_mapa(
 		"res://contenido/mapa/celiaquia_mapa.json"
@@ -2608,6 +2677,8 @@ func ejecutar_tests_ids_de_contenido() -> void:
 	_test_import_online_respeta_reset_local_vacio()
 	_test_import_online_rechaza_servidor_stale_tras_reset_parcial()
 	_test_progreso_con_huecos_se_muestra_en_global()
+	_test_todos_los_nodos_del_mapa_arman_plan()
+	_test_avance_de_nodo_un_solo_recomendado()
 	_test_curva_real_mapa_todos_los_nodos_sin_posicion_manual()
 	if not failed:
 		print("[ContentId] ✓ Todos los tests pasaron.")

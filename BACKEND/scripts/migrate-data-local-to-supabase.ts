@@ -88,7 +88,7 @@ async function main(): Promise<void> {
     console.log(`\nOrigen (local): ${localInfo.user}@${localInfo.database}`);
   } catch (error) {
     console.error('\nERROR: no se conecta al Postgres local.');
-    console.error('Corré: npm run setup:dev');
+    console.error('Necesitás Postgres local legacy (docker-compose.yml) o datos ya en Supabase.');
     console.error((error as Error).message);
     process.exit(1);
   }

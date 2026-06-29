@@ -10,8 +10,21 @@ import { isAuthorizedInternalRequest } from './email.internal-auth';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
 import { refreshAllLeaderboards } from '../leaderboard/leaderboard.service';
+import { isSupabaseEmailEdgeMode } from '../../config/supabase-email-mode';
 
 export const internalJobsRouter = Router();
+
+function rejectMailJobIfEdgeMode(response: Response): boolean {
+  if (!isSupabaseEmailEdgeMode()) {
+    return false;
+  }
+  sendResponse(response, 410, {
+    error: 'Los jobs de mail corren en Supabase Edge (internal-job).',
+    code: 'EMAIL_JOBS_VIA_SUPABASE_EDGE',
+    hint: 'npm run setup:supabase:cron && npm run supabase:functions:deploy',
+  });
+  return true;
+}
 
 function isAuthorizedJob(request: Request): boolean {
   return isAuthorizedInternalRequest(request);
@@ -19,6 +32,9 @@ function isAuthorizedJob(request: Request): boolean {
 
 internalJobsRouter.post('/streak-emails', async (request: Request, response: Response) => {
   try {
+    if (rejectMailJobIfEdgeMode(response)) {
+      return;
+    }
     if (!isAuthorizedJob(request)) {
       sendResponse(response, 401, { error: 'Unauthorized job secret' });
       return;
@@ -33,6 +49,9 @@ internalJobsRouter.post('/streak-emails', async (request: Request, response: Res
 
 internalJobsRouter.post('/retry-failed-emails', async (request: Request, response: Response) => {
   try {
+    if (rejectMailJobIfEdgeMode(response)) {
+      return;
+    }
     if (!isAuthorizedJob(request)) {
       sendResponse(response, 401, { error: 'Unauthorized job secret' });
       return;
@@ -47,6 +66,9 @@ internalJobsRouter.post('/retry-failed-emails', async (request: Request, respons
 
 internalJobsRouter.post('/outbound-emails', async (request: Request, response: Response) => {
   try {
+    if (rejectMailJobIfEdgeMode(response)) {
+      return;
+    }
     if (!isAuthorizedJob(request)) {
       sendResponse(response, 401, { error: 'Unauthorized job secret' });
       return;

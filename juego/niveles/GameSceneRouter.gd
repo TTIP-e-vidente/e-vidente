@@ -65,6 +65,8 @@ const STREAK_RETURN_TO_META := "streak_return_to"
 const STREAK_FEEDBACK_META := "streak_feedback"
 const STREAK_CONTINUE_TARGET_META := "streak_continue_target"
 const LOG_PREFIX := "[ROUTER]"
+const MAP_VIEW_SYSTEM_KEY := "map_view"
+const MAP_VIEW_FOCUS_RECOMMENDED_KEY := "focus_recommended_on_enter"
 
 static var _preloaded_scenes: Dictionary = {}
 static var _pending_preload_paths: Dictionary = {}
@@ -94,7 +96,14 @@ func go_to_mode_selector(_tree: SceneTree) -> void:
 
 
 func ir_al_mapa(_tree: SceneTree) -> void:
+	_solicitar_enfoque_leccion_en_mapa()
 	await TransicionEscenas.cambiar_escena_normal(MAP_SCENE_PATH)
+
+
+func _solicitar_enfoque_leccion_en_mapa() -> void:
+	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
+	map_view_state[MAP_VIEW_FOCUS_RECOMMENDED_KEY] = true
+	Global.establecer_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY, map_view_state)
 
 
 func go_to_archivero(tree: SceneTree) -> void:

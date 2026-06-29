@@ -12,7 +12,15 @@ const LOCAL_ENV = path.resolve(BACKEND_ROOT, '.env');
 const STAGING_ENV = path.resolve(BACKEND_ROOT, '.env.staging');
 
 /** Vars que suelen vivir en .env local y deben replicarse a staging. */
-const SYNC_KEYS = ['BREVO_API_KEY', 'BREVO_WEBHOOK_SECRET'] as const;
+const SYNC_KEYS = [
+  'EMAIL_ENABLED',
+  'BREVO_API_KEY',
+  'BREVO_SENDER_EMAIL',
+  'BREVO_SENDER_NAME',
+  'BREVO_WEBHOOK_SECRET',
+  'EMAIL_CRON_SECRET',
+  'BACKEND_BASE_URL',
+] as const;
 
 function parseEnvMap(content: string): Map<string, string> {
   const map = new Map<string, string>();

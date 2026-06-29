@@ -33,19 +33,23 @@ function fetchHealthDb(port: number): Promise<HealthDbPayload | null> {
   });
 }
 
-export async function printDevReadyBanner(): Promise<void> {
+export async function printDevReadyBanner(cloudBaseUrl?: string): Promise<void> {
   const { envFile } = loadBackendEnv();
   const port = Number.parseInt(process.env.BACKEND_PORT ?? '3010', 10);
-  const baseUrl = `http://${(process.env.BACKEND_HOST ?? 'localhost').trim()}:${port}`;
-  const health = await fetchHealthDb(port);
+  const localBase = `http://${(process.env.BACKEND_HOST ?? 'localhost').trim()}:${port}`;
+  const baseUrl = cloudBaseUrl?.trim() || localBase;
+  const isCloud = Boolean(cloudBaseUrl?.trim());
+  const health = isCloud ? null : await fetchHealthDb(port);
 
   console.log('\n═══════════════════════════════════════════');
   console.log('  E-VIDENTE — Listo para Godot');
   console.log('═══════════════════════════════════════════');
-  console.log(`  API:   ${baseUrl}`);
+  console.log(`  API:   ${baseUrl}${isCloud ? ' (cloud — sin terminal)' : ''}`);
   console.log(`  Env:   ${envFile}`);
 
-  if (health?.remote === true) {
+  if (isCloud) {
+    console.log('  DB:    Supabase (remoto)');
+  } else if (health?.remote === true) {
     const migrations = health.migrations;
     const migLabel =
       migrations?.applied != null && migrations?.expected != null
@@ -66,7 +70,10 @@ export async function printDevReadyBanner(): Promise<void> {
     Boolean(process.env.BREVO_API_KEY?.trim()) &&
     Boolean(process.env.BREVO_SENDER_EMAIL?.trim());
   if (brevoReady) {
-    console.log(`  Mail:  Brevo activo (${process.env.BREVO_SENDER_EMAIL?.trim()})`);
+    const viaEdge = Boolean(process.env.SUPABASE_ANON_KEY?.trim());
+    console.log(
+      `  Mail:  Brevo activo (${process.env.BREVO_SENDER_EMAIL?.trim()})${viaEdge ? ' · verify→Supabase Edge' : ' · verify→Express'}`,
+    );
   } else if (emailEnabled) {
     console.log('  Mail:  EMAIL_ENABLED=true pero falta BREVO_API_KEY o sender');
   } else {
@@ -75,8 +82,15 @@ export async function printDevReadyBanner(): Promise<void> {
 
   console.log('  Godot: juego/project.godot → F5');
   console.log('  Sync:  juego/config/backend.local.json actualizado');
-  if (health?.remote === true) {
+  if (isCloud) {
+    console.log('  Jobs:  Supabase pg_cron → Edge Functions');
+  } else if (Boolean(process.env.SUPABASE_ANON_KEY?.trim())) {
+    console.log('  Verify: Supabase Edge (npm run supabase:functions:deploy si falla)');
+    console.log('  Check:  npm run integrate:status');
+  } else if (health?.remote === true) {
     console.log('  Check: npm run staging:verify');
+    console.log('  Cron:  GET /health/cron · npm run setup:supabase:cron');
+    console.log('  Tip:   deploy Render → npm run staging:cloud -- https://...');
   }
   console.log('═══════════════════════════════════════════\n');
 }

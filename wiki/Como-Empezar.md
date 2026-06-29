@@ -4,7 +4,7 @@ Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
 
 ## Requisitos
 
-Godot 4.6 · Git · (opcional) Node 20 + Docker para `BACKEND/`
+Godot 4.6 · Git · Node 20 · proyecto Supabase (staging)
 
 ## Juego
 
@@ -15,16 +15,16 @@ cd e-vidente
 
 Importar `juego/project.godot` → F5. No hace falta backend.
 
-## Backend
+## Backend (Supabase)
 
 ```bash
 cd BACKEND
-cp .env.example .env
-docker compose up -d
-npm install && npm run setup:dev && npm run dev
+npm install
+npm run supabase:init      # primera vez: completar .env.staging
+npm run dev                # Express → Supabase + sync Godot
 ```
 
-URL en Godot: `BACKEND/README.md`. Probar: `npm run build && npm test` y con server up `npm run smoke:api`.
+Guía: [BACKEND/docs/SUPABASE_QUICKSTART.md](../BACKEND/docs/SUPABASE_QUICKSTART.md) · Verificación: `npm run integrate:status`
 
 ## Carpetas útiles
 

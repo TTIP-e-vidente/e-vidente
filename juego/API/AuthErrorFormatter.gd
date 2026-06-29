@@ -48,9 +48,19 @@ static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> S
 				return "Esperá %d segundos antes de pedir otro código." % cooldown
 			return "Esperá un momento antes de pedir otro código."
 		"SEND_FAILED":
-			return "No se pudo enviar el código. Intentá de nuevo en unos minutos."
+			var detail := str(data.get("detail", result.get("detail", ""))).strip_edges()
+			if not detail.is_empty():
+				if "unrecognised IP" in detail or "unauthorized" in detail.to_lower():
+					return (
+						"No se pudo enviar el mail: Brevo bloqueó tu IP. "
+						+ "Agregala en Brevo → Security → Authorized IPs o desactivá la restricción."
+					)
+				return "No se pudo enviar el código: %s" % detail
+			return "No se pudo enviar el código. Intentá de nuevo."
 		"EMAIL_UNAVAILABLE":
-			return "El servicio de mail no está disponible. Contactá al equipo si persiste."
+			if bool(data.get("dev_code_in_logs", false)):
+				return "Brevo no está configurado. El código aparece en la consola del backend."
+			return "El servicio de mail no está disponible. Reiniciá el backend (npm run dev:restart)."
 		"INVALID_CODE":
 			var remaining := int(data.get("attempts_remaining", -1))
 			if remaining >= 0:
@@ -148,18 +158,30 @@ static func _mensaje_sin_conexion(
 		if phase == "db":
 			return (
 				"El backend responde pero Supabase no.\n"
-				+ "En BACKEND ejecutá: npm run dev"
+				+ "En BACKEND ejecutá: npm run dev:staging"
+			)
+		if base_url.contains(":3000"):
+			return (
+				"No hay servidor en %s (puerto viejo).\n" % base_url
+				+ "En BACKEND: npm run sync:godot-config:staging && npm run dev:staging"
 			)
 		return (
 			"No hay servidor en %s.\n" % base_url
 			+ "1) cd BACKEND\n"
-			+ "2) npm run dev\n"
+			+ "2) npm run dev:staging\n"
 			+ "3) Volvé a Godot (F5)"
 		)
 	if result_code == HTTPRequest.RESULT_TIMEOUT:
+		var hint := "¿Está npm run dev:staging corriendo en BACKEND?"
+		if base_url.contains(":3000"):
+			hint = (
+				"Puerto incorrecto (3000). En BACKEND:\n"
+				+ "  npm run sync:godot-config:staging\n"
+				+ "  npm run dev:staging"
+			)
 		return (
 			"El servidor tardó demasiado (%s).\n" % base_url
-			+ "¿Está npm run dev corriendo?"
+			+ hint
 		)
 	if not server_error.is_empty():
 		return server_error

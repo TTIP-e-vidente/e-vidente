@@ -56,7 +56,7 @@ npm run dev              # = Supabase staging (antes: dev:staging)
 Al terminar ves un banner **Listo para Godot** con API, DB remota y puerto.
 Luego abrís Godot → F5.
 
-Alias: `npm run dev:staging` · Offline Docker: `npm run dev:local`
+Alias: `npm run dev:staging` · Verificación: `npm run integrate:status`
 
 ---
 
