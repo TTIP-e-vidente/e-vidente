@@ -130,14 +130,14 @@
 	"difficulty": 3,
 	"meal": "almuerzo",
 	"teaching_key": "celiaquia_almuerzo",
-	"pick": { "correct": 3, "incorrect": 3 }
+	"pick": { "correct": 1, "incorrect": 4 }
   },
   "drag_almuerzo_dificil_plus": {
 	"mode": "drag_food",
 	"difficulty": 3,
 	"meal": "almuerzo",
 	"teaching_key": "celiaquia_almuerzo",
-	"pick": { "correct": 4, "incorrect": 3 }
+	"pick": { "correct": 3, "incorrect": 4 }
   },
   "drag_cena_facil": {
 	"mode": "drag_food",

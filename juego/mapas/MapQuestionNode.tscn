@@ -25,7 +25,7 @@ metadata/_edit_use_anchors_ = true
 
 [node name="Next Lesson" type="Sprite2D" parent="." unique_id=558311822]
 visible = false
-scale = Vector2(0.2806164, 0.2727762)
+scale = Vector2(0.32721958, 0.3180773)
 texture = ExtResource("3_fgfjh")
 script = ExtResource("4_jucj5")
 
