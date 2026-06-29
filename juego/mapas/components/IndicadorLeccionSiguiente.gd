@@ -3,8 +3,8 @@ extends Node2D
 class_name IndicadorLeccionSiguiente
 
 const RADIO_BASE := 78.0
-const GROSOR_ANILLO := 5.0
-const COLOR_ANILLO := Color("#4d525c")
+const GROSOR_ANILLO := 3.0
+const COLOR_ANILLO := Color("#7fff3a")  # Verde-lima brillante, igual que el ícono desbloqueado
 
 var _pulso_tween: Tween = null
 var _radio_anillo: float = RADIO_BASE
@@ -64,8 +64,9 @@ func _iniciar_pulso() -> void:
 	_pulso_tween = create_tween().set_loops()
 	_pulso_tween.set_trans(Tween.TRANS_SINE)
 	_pulso_tween.set_ease(Tween.EASE_IN_OUT)
-	_pulso_tween.tween_property(self, "modulate:a", 0.55, 0.7)
-	_pulso_tween.tween_property(self, "modulate:a", 1.0, 0.7)
+	# Pulso más drámático: baja hasta 0.4 de alpha para resaltar bien
+	_pulso_tween.tween_property(self, "modulate:a", 0.4, 0.6)
+	_pulso_tween.tween_property(self, "modulate:a", 1.0, 0.6)
 
 
 func _detener_pulso() -> void:

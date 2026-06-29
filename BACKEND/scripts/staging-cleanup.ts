@@ -24,6 +24,14 @@ const TEST_USERNAME_PATTERNS: RegExp[] = [
   /^integration_player_/,
   /^email_flow_validate$/,
   /^email_flow_lost_validate$/,
+  // Usuarios generados por smoke tests de Edge Functions
+  /^edge_auth_/,
+  /^edge_prog_/,
+  /^edge_avatar_/,
+  /^edge_lb_/,
+  /^edge_verify_/,
+  /^edge_rank_/,
+  /^edge_login_dbg_/,
 ];
 
 interface UserRow {

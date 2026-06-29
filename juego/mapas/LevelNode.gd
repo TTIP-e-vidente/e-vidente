@@ -9,11 +9,15 @@ const DEBUG_BADGES := false
 
 signal selected(node_data: MapNodeData)
 
-const COLOR_AVAILABLE := MiPaleta.GRIS_AZULADO
+const COLOR_AVAILABLE := Color("#7fff3a")  # Verde-lima brillante para nodo desbloqueado/recomendado
+const COLOR_COMPLETED := Color("#2d6a2f")  # Verde oscuro para nodos completados
 const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
+const RADIO_CIRCULO := 34.0      # Radio del círculo de fondo que se dibuja detrás del ícono
+
+var _color_fondo: Color = Color.TRANSPARENT  # Color actual del círculo de fondo
 @onready var next_lesson: Sprite2D = $"Next Lesson"
 const INDICADOR_LECCION_SCENE := preload("res://mapas/components/IndicadorLeccionSiguiente.tscn")
 const ICONO_NODO_MAPA_UNIFICADO := preload("res://assets-sistema/mapa/desafio-mapa-8.png")
@@ -255,24 +259,34 @@ func _boton_esta_deshabilitado() -> bool:
 	return not Engine.is_editor_hint() and not can_play
 
 
+func _draw() -> void:
+	if _color_fondo.a <= 0.01:
+		return
+	draw_circle(Vector2.ZERO, RADIO_CIRCULO, _color_fondo)
+
+
 func _aplicar_color_estado() -> void:
 	_cancelar_tween_disponible()
+	# El ícono siempre en blanco — el color de estado se dibuja como
+	# círculo sólido detrás via _draw(), evitando colorear el borde grueso de la textura.
+	state_icon.modulate = Color.WHITE
 	match visual_state:
 		STATE_COMPLETED:
-			# Completado: la estrella marca el progreso; el ícono queda neutro (sin halo verde).
-			state_icon.modulate = Color.WHITE
+			_color_fondo = COLOR_COMPLETED
 			modulate = Color.WHITE
 		STATE_AVAILABLE:
 			if _es_nodo_recomendado and not completed:
-				# Único "siguiente": tono gris-azulado + anillo IndicadorLeccionSiguiente.
-				state_icon.modulate = COLOR_AVAILABLE
+				# Nodo desbloqueado/siguiente: verde-lima brillante + pulso de escala.
+				_color_fondo = COLOR_AVAILABLE
 				modulate = Color.WHITE
+				_animar_disponible()
 			else:
-				state_icon.modulate = Color.WHITE
+				_color_fondo = Color(1.0, 1.0, 1.0, 0.35)
 				modulate = COLOR_LOCKED
 		_:
-			state_icon.modulate = Color.WHITE
+			_color_fondo = Color(1.0, 1.0, 1.0, 0.35)
 			modulate = COLOR_LOCKED
+	queue_redraw()
 
 
 func _asegurar_indicador_leccion() -> void:
