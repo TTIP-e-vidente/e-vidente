@@ -12,6 +12,7 @@ const MAP_JSON_PATH := "res://contenido/mapa/celiaquia_mapa.json"
 const DEFAULT_TRACK_KEY := GameTrackCatalog.TRACK_CELIAQUIA
 const MAP_VIEW_SYSTEM_KEY := "map_view"
 const MAP_VIEW_SCROLL_VERTICAL_KEY := "scroll_vertical"
+const MAP_VIEW_FOCUS_RECOMMENDED_KEY := "focus_recommended_on_enter"
 const FlujoDeNodoJugableScript := preload("res://flow/map/flujo_de_nodo_jugable.gd")
 
 var map_id: String = ""
@@ -20,6 +21,8 @@ var track_key_mapa: String = DEFAULT_TRACK_KEY
 var nodos_mapa: Array[MapNodeData] = []
 var layout_config: MapLayoutConfig = null
 var _flujo_de_nodo: FlujoDeNodoJugable = null
+var _clave_nodo_recomendado: String = ""
+var _estados_nodos_cache: Array[Dictionary] = []
 
 @onready var map_hud: CanvasLayer = $MapHud
 @onready var map_board: Node2D = $MapBoard
@@ -37,7 +40,7 @@ func _ready() -> void:
 	Global.finalizar_partida_de_nodo()
 	Global.limpiar_sesion_nodo_jugable_activo()
 	actualizar_estados_de_nodos()
-	call_deferred("_restaurar_scroll_guardado_del_mapa")
+	call_deferred("_enfocar_mapa_al_entrar")
 
 	if await _mostrar_finalizacion_de_nodo_si_corresponde():
 		return
@@ -124,8 +127,8 @@ func actualizar_estados_de_nodos() -> void:
 		node_progress = save_manager.call("obtener_todo_progreso_nodos")
 
 	_sincronizar_completados_al_global(node_progress)
-	var node_states: Array[Dictionary] = _construir_estados_de_nodos(node_progress)
-	MapApiScript.aplicar_tablero(map_board, nodos_mapa, node_states, layout_config)
+	_estados_nodos_cache = _construir_estados_de_nodos(node_progress)
+	MapApiScript.aplicar_tablero(map_board, nodos_mapa, _estados_nodos_cache, layout_config)
 
 
 func al_seleccionar_nodo(node_data: MapNodeData) -> void:
@@ -134,7 +137,7 @@ func al_seleccionar_nodo(node_data: MapNodeData) -> void:
 		return
 
 	_guardar_scroll_actual_del_mapa()
-	_flujo_de_nodo.seleccionar_nodo(get_tree(), nodos_mapa, node_data)
+	_flujo_de_nodo.seleccionar_nodo(get_tree(), nodos_mapa, node_data, _estados_nodos_cache)
 
 
 func abrir_nodo_del_mapa(node_data: MapNodeData) -> void:
@@ -154,7 +157,13 @@ func continuar_desde_nodo(node_key: String) -> void:
 	if next_node == null:
 		volver_al_mapa()
 		return
-	var next_state: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, next_node)
+	var indice_siguiente: int = AvanceDeNodoScript.obtener_indice_nodo(nodos_mapa, next_node.node_key)
+	var next_state: Dictionary = AvanceDeNodoScript.estado_en_indice(
+		_estados_nodos_cache,
+		indice_siguiente
+	)
+	if next_state.is_empty():
+		next_state = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, next_node)
 	if bool(next_state.get("is_completed", false)):
 		actualizar_estados_de_nodos()
 		_desplazar_a_proximo_disponible()
@@ -178,71 +187,44 @@ func volver_al_mapa() -> void:
 
 
 func _desplazar_a_proximo_disponible() -> void:
-	if map_board == null or not map_board.has_method("desplazar_al_primer_nodo_disponible"):
+	if map_board == null:
 		return
-	map_board.call("desplazar_al_primer_nodo_disponible")
+	if map_board.has_method("desplazar_al_nodo_recomendado"):
+		map_board.call("desplazar_al_nodo_recomendado")
+		return
+	if map_board.has_method("desplazar_al_primer_nodo_disponible"):
+		map_board.call("desplazar_al_primer_nodo_disponible")
+
+
+func _enfocar_mapa_al_entrar() -> void:
+	var map_view_state: Dictionary = Global.obtener_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY)
+	if bool(map_view_state.get(MAP_VIEW_FOCUS_RECOMMENDED_KEY, false)):
+		map_view_state[MAP_VIEW_FOCUS_RECOMMENDED_KEY] = false
+		Global.establecer_progreso_sistema_estado(MAP_VIEW_SYSTEM_KEY, map_view_state)
+		_desplazar_a_proximo_disponible()
+		return
+	_restaurar_scroll_guardado_del_mapa()
 
 
 func _sincronizar_completados_al_global(node_progress: Dictionary) -> void:
 	Global.reiniciar_progreso_nodos_pista(track_key_mapa)
 	for node_data in nodos_mapa:
 		var key: String = node_data.node_key.strip_edges()
-		var saved: Dictionary = _progreso_guardado(node_progress, key)
+		var saved: Dictionary = AvanceDeNodoScript.progreso_guardado_para_clave(node_progress, key)
 		if bool(saved.get("completed", false)):
 			Global.marcar_nodo_jugable_completado(track_key_mapa, key)
 
 
 func _construir_estados_de_nodos(node_progress: Dictionary) -> Array[Dictionary]:
-	var node_states: Array[Dictionary] = []
-	for node_data in nodos_mapa:
-		var state: Dictionary = AvanceDeNodoScript.obtener_estado_nodo(nodos_mapa, node_data)
-		var saved: Dictionary = _progreso_guardado(node_progress, node_data.node_key)
-		if not saved.is_empty():
-			_aplicar_progreso_guardado(state, saved)
-		node_states.append(state)
-	_aplicar_secuencia_de_desbloqueo(node_states)
+	var node_states: Array[Dictionary] = AvanceDeNodoScript.construir_estados_mapa(
+		nodos_mapa,
+		node_progress
+	)
+	_clave_nodo_recomendado = AvanceDeNodoScript.obtener_clave_nodo_recomendado(
+		nodos_mapa,
+		node_states
+	)
 	return node_states
-
-
-func _progreso_guardado(node_progress: Dictionary, node_key: String) -> Dictionary:
-	var key: String = node_key.strip_edges()
-	if key.is_empty() or not node_progress.has(key):
-		return {}
-	var np: Variant = node_progress[key]
-	return np as Dictionary if np is Dictionary else {}
-
-
-func _aplicar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
-	state["best_percent"] = float(saved.get("best_percent", 0.0))
-	var fallback_accuracy: float = float(saved.get("best_percent", 0.0)) * 100.0
-	state["best_accuracy"] = float(saved.get("best_accuracy", fallback_accuracy))
-	if not bool(saved.get("completed", false)):
-		return
-	state["is_completed"] = true
-	state["visual_state"] = AvanceDeNodoScript.STATE_COMPLETED
-	state["state"] = AvanceDeNodoScript.STATE_COMPLETED
-
-
-func _aplicar_secuencia_de_desbloqueo(node_states: Array[Dictionary]) -> void:
-	var anterior_completado := true
-	for state in node_states:
-		var raw_completado := bool(state.get("is_completed", false))
-		var completado := raw_completado and anterior_completado
-		if raw_completado and not completado:
-			state["is_completed"] = false
-			state["state"] = AvanceDeNodoScript.STATE_LOCKED
-			state["visual_state"] = AvanceDeNodoScript.STATE_LOCKED
-		var desbloqueado := anterior_completado
-		state["is_unlocked"] = desbloqueado
-		state["can_play"] = desbloqueado
-		if not completado:
-			if anterior_completado:
-				state["visual_state"] = AvanceDeNodoScript.STATE_AVAILABLE
-				state["state"] = AvanceDeNodoScript.STATE_AVAILABLE
-			else:
-				state["visual_state"] = AvanceDeNodoScript.STATE_LOCKED
-				state["state"] = AvanceDeNodoScript.STATE_LOCKED
-		anterior_completado = completado
 
 
 func _mostrar_finalizacion_de_nodo_si_corresponde() -> bool:

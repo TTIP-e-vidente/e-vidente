@@ -6,7 +6,6 @@ const COLOR_TEXTO_OK := Color(0.18, 0.34, 0.26, 1)
 const COLOR_TEXTO_ERROR := Color(0.72, 0.28, 0.22, 1)
 const COLOR_TEXTO_BASE := Color(0.259, 0.471, 0.369, 1)
 
-@onready var _panel: PanelContainer = $PopupAnchor/PanelContainer
 @onready var _label: Label = $PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/LabelMensaje
 @onready var _boton: Button = $PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/BotonVerificar
 

@@ -5,8 +5,8 @@ extends CanvasLayer
 const RACHA_SCENE := preload("res://interface/components/Racha.tscn")
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE := preload("res://interface/components/ProfileOverlayPanel.tscn")
-const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
-const LeaderboardOverlayHelper := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
+const MailVerifyNudgeHelperScript := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
+const LeaderboardOverlayHelperScript := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
 
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const PROFILE_EDITOR_SCENE_PATH := "res://interface/auth.tscn"
@@ -233,8 +233,8 @@ func _on_superposicion_ranking_presionado(scope: String = "") -> void:
 	_profile_overlay.ocultar_superposicion()
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
-		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
-	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
+		scope_final = LeaderboardOverlayHelperScript.scope_desde_arbol(get_tree())
+	LeaderboardOverlayHelperScript.abrir(get_tree(), scope_final)
 
 
 func _on_superposicion_login_presionado() -> void:
@@ -265,7 +265,7 @@ func _obtener_ruta_escena_actual() -> String:
 
 
 func _instalar_aviso_verificacion_mail() -> void:
-	_mail_verify_nudge = MailVerifyNudgeHelper.instalar_en(
+	_mail_verify_nudge = MailVerifyNudgeHelperScript.instalar_en(
 		self,
 		Callable(self, "_on_aviso_verificacion_verificar_ahora")
 	)
@@ -279,7 +279,7 @@ func _refrescar_aviso_verificacion_mail() -> void:
 		SPLASH_SCENE_PATH,
 		INTRO_SCENE_PATH,
 	] or not EmailVerificationBridge.aviso_mail_habilitado()
-	MailVerifyNudgeHelper.refrescar(_mail_verify_nudge, hidden)
+	MailVerifyNudgeHelperScript.refrescar(_mail_verify_nudge, hidden)
 
 
 func _on_aviso_verificacion_verificar_ahora() -> void:

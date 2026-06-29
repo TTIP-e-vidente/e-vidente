@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://codigo_digit_slot"]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://interface/auth/CodigoDigitSlot.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot"]
 bg_color = Color(1, 1, 1, 1)

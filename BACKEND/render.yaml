@@ -35,12 +35,16 @@ services:
       - key: POSTGRES_DB
         value: postgres
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: EMAIL_CRON_SECRET
-        generateValue: true
+        sync: false
       - key: BACKEND_BASE_URL
         sync: false
       - key: BREVO_API_KEY
         sync: false
       - key: BREVO_SENDER_EMAIL
         sync: false
+      - key: BREVO_SENDER_NAME
+        value: E-VIDENTE
+      - key: EMAIL_TIMEZONE
+        value: America/Argentina/Buenos_Aires

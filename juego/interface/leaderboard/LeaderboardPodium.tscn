@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://lb_podium"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardPodium.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://lb_podium_slot" path="res://interface/leaderboard/LeaderboardPodiumSlot.tscn" id="2_slot"]
+[ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPodiumSlot.tscn" id="2_slot"]
 
 [node name="LeaderboardPodium" type="Control"]
 custom_minimum_size = Vector2(0, 148)

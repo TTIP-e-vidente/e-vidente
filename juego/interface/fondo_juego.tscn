@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://bv4ukjnb8b5yb"]
+[gd_scene format=3]
 
-[ext_resource type="Texture2D" uid="uid://ccha6mr80kymu" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_8u8ai"]
-[ext_resource type="Script" uid="uid://w3sts8tv4v1o" path="res://interface/imagen_ficha.gd" id="2_lv06n"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/fondo-capitulo-1.png" id="1_8u8ai"]
+[ext_resource type="Script" path="res://interface/imagen_ficha.gd" id="2_lv06n"]
 
 [node name="FondoFicha" type="ColorRect" unique_id=1289609653]
 offset_left = 3.0

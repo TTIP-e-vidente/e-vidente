@@ -67,7 +67,7 @@ static func registrar(
 static func _resolver_estado_visual(
 	streak_state: Dictionary,
 	current_date: String = "",
-	current_hour: int = -1
+	_current_hour: int = -1
 ) -> String:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
@@ -87,13 +87,13 @@ static func _resolver_estado_visual(
 static func modelo_vista(
 	streak_state: Dictionary,
 	current_date: String = "",
-	current_hour: int = -1
+	_current_hour: int = -1
 ) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_day: String = _dia_local_de_actividad(streak_state)
 	var today: String = _resolver_fecha_local(current_date)
-	var visual_state: String = _resolver_estado_visual(streak_state, today, current_hour)
+	var visual_state: String = _resolver_estado_visual(streak_state, today, _current_hour)
 
 	if current_count <= 0:
 		return {

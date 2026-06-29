@@ -29,9 +29,9 @@ Capas: `route → controller → service → repository → mapper`. Sin SQL en 
 
 ## Levantar
 
-Requisitos: Node, npm. Docker solo para Postgres **local offline** (tests/CI).
+Requisitos: Node, npm, proyecto Supabase (staging).
 
-### Desarrollo normal (Supabase staging)
+### Desarrollo (Supabase — único camino)
 
 **Guía rápida:** [`docs/SUPABASE_QUICKSTART.md`](docs/SUPABASE_QUICKSTART.md)  
 **Stack completo (DB + deploy):** [`docs/SUPABASE_FULL_STACK.md`](docs/SUPABASE_FULL_STACK.md)
@@ -43,40 +43,32 @@ npm run supabase:init
 # completar .env.staging (password, JWT, Brevo si aplica)
 npm run supabase:bootstrap:apply:seed
 npm run staging:verify    # status + schema + smoke API (+ email si Brevo OK)
-npm run dev:staging       # Express + Godot config → Supabase
+npm run dev               # Express → Supabase + sync Godot (:3010)
 ```
 
 | Comando | Para qué |
 |---------|----------|
-| `npm run dev:staging` | Desarrollo diario contra Supabase |
+| `npm run dev` | **Default:** Supabase staging + sync Godot |
+| `npm run dev:staging` | Alias de `dev` |
+| `npm run integrate:status` | Panel DB + Edge + cron + Godot config |
 | `npm run staging:verify` | Chequeo completo antes de demo/deploy |
 | `npm run staging:verify:email` | Igual + smoke Brevo obligatorio |
 | `npm run validate:email-flow:staging` | E2E mails contra Supabase |
 | `npm run smoke:email:staging` | Smoke transaccional Brevo |
 
+`dev:local` y `setup:dev` están **deshabilitados** (antes levantaban Postgres con Docker).
+
 Deploy: `npm run build` + `npm run start:prod` · health `GET /health/ready` · blueprint `render.yaml`
 
-Arquitectura: Godot → Express (JWT propio) → Postgres Supabase. **No** usamos Supabase Auth.
+**Arquitectura:** Godot → Express (JWT propio) → Postgres Supabase. Mails OTP y jobs → **Edge Functions** + Brevo + `pg_cron`. **No** usamos Supabase Auth ni Docker local.
 
 `.env.staging` / `.env` no se commitean. Templates: `.env.staging.example`, `.env.example`.
 
 **Demo:** `agus` / `123`, `margo` / `123`
 
-### Postgres local (Docker — offline / tests)
+### Postgres local (Docker) — retirado
 
-```sh
-cd BACKEND
-cp .env.example .env
-npm install
-npm run setup:dev   # compose + migrate + usuarios demo
-npm run dev
-```
-
-**Postgres (DataGrip local):** host `localhost`, port según `POSTGRES_PORT` en `.env` (default `5433`), db `evidente_dev`, user `evidente_user`.
-
-```sh
-docker exec -it e-vidente-postgres psql -U evidente_user -d evidente_dev -c "SELECT current_database();"
-```
+El flujo `docker compose` + `.env` local ya no se usa en desarrollo. `docker-compose.yml` queda solo como referencia histórica o migración puntual de datos (`migrate-data-local-to-supabase.ts` si tenés un dump viejo).
 
 Migraciones: `BACKEND/migrations/`, `npm run migrate`. No editar migraciones viejas; agregar archivo nuevo.
 
@@ -133,30 +125,17 @@ Módulo en `src/modules/email/` — **5 templates** (OTP, bienvenida, 2 rachas, 
 
 ## Problemas frecuentes
 
-### `setup:dev` se queda en "Esperando PostgreSQL..."
-
-En Windows suele pasar si ya tenés **Postgres instalado localmente** en el puerto `5432`. El script conecta a ese servicio en lugar del contenedor Docker y falla la autenticación de `evidente_user`.
-
-**Solución:** en `.env` usá `POSTGRES_PORT=5433` (valor por defecto en `.env.example`), reiniciá el contenedor y volvé a correr el setup:
+### No conecta a Supabase
 
 ```sh
-docker compose down
-docker compose up -d
-npm run setup:dev
+npm run supabase:diagnose
+npm run integrate:status
 ```
 
-**Alternativa:** parar el servicio Postgres local (`Get-Service *postgres*`) y dejar `POSTGRES_PORT=5432`.
-
-Verificar qué ocupa el puerto:
-
-```powershell
-netstat -ano | findstr ":5432"
-Get-Process -Id <PID>
-```
+Revisá `BACKEND/.env.staging` (`POSTGRES_SSL=true`, password entre comillas si tiene `#`) y `BACKEND/.env.supabase-keys.local`.
 
 ## Cuidado
 
-- `docker compose down -v` borra la DB local.
 - No `DROP TABLE` sin backup.
 - No cambiar endpoints/contratos sin revisar Godot.
 - No commitear `.env`, `node_modules`, `dist`, volúmenes Postgres.

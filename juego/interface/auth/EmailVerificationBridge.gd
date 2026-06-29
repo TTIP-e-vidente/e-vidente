@@ -2,7 +2,7 @@ extends Node
 
 const Service := preload("res://interface/auth/EmailVerificationService.gd")
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
-const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
+const MailVerifyNudgeHelperScript := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
 
 const ESCENAS_SIN_AVISO_MAIL := [
 	"res://interface/evidente.tscn",
@@ -33,7 +33,7 @@ func deshabilitar_aviso_mail() -> void:
 
 
 func _ready() -> void:
-	_nudge_global = MailVerifyNudgeHelper.instalar_en(
+	_nudge_global = MailVerifyNudgeHelperScript.instalar_en(
 		self,
 		Callable(self, "_on_nudge_verificar_ahora")
 	)
@@ -82,7 +82,7 @@ func _refrescar_nudge_global() -> void:
 		_escena_actual_sin_aviso_mail()
 		or not _aviso_mail_activo_en_sesion
 	)
-	MailVerifyNudgeHelper.refrescar(_nudge_global, ocultar)
+	MailVerifyNudgeHelperScript.refrescar(_nudge_global, ocultar)
 
 
 func _escena_actual_sin_aviso_mail() -> bool:
@@ -147,10 +147,23 @@ func procesar_retorno_escena(nodo_escena: Node) -> Dictionary:
 			if nodo_escena.has_method("_mostrar_perfil"):
 				nodo_escena.call("_mostrar_perfil")
 		"profile_refresh":
-			if nodo_escena.has_method("_refrescar_tras_verificacion_mail"):
-				nodo_escena.call("_refrescar_tras_verificacion_mail")
+			_refrescar_perfil_tras_verificacion(nodo_escena)
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(nodo_escena)
 	return retorno
+
+
+func _refrescar_perfil_tras_verificacion(nodo_escena: Node) -> void:
+	if not nodo_escena.has_method("_refrescar_tras_verificacion_mail"):
+		return
+	call_deferred("_await_refresco_perfil", nodo_escena)
+
+
+func _await_refresco_perfil(nodo_escena: Node) -> void:
+	if not is_instance_valid(nodo_escena):
+		return
+	if not nodo_escena.has_method("_refrescar_tras_verificacion_mail"):
+		return
+	await nodo_escena._refrescar_tras_verificacion_mail()
 
 
 func _ejecutar_en_segundo_plano(job: Callable) -> void:

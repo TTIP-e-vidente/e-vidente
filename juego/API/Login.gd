@@ -18,9 +18,11 @@ signal verificacion_escena_solicitada(es_registro: bool, result: Dictionary)
 @onready var _button_submit: Button = $VBoxContainer/ButtonSubmit
 @onready var _button_switch_mode: Button = $VBoxContainer/ButtonSwitchMode
 @onready var _button_play_offline: Button = $VBoxContainer/ButtonPlayOffline
+@onready var _button_retry: Button = $VBoxContainer/ButtonRetryConnection
 @onready var _label_status: Label = $VBoxContainer/LabelStatus
 
 var _is_loading := false
+var _verificando_conexion := false
 var _mode := AuthMode.LOGIN
 var _servidor_ok := false
 var _tween_carga: Tween = null
@@ -30,14 +32,16 @@ func _ready() -> void:
 	_button_submit.pressed.connect(_on_boton_enviar_presionado)
 	_button_switch_mode.pressed.connect(_on_boton_cambiar_modo_presionado)
 	_button_play_offline.pressed.connect(_on_boton_jugar_offline_presionado)
+	_button_retry.pressed.connect(_on_boton_reintentar_conexion_presionado)
 	_input_password.text_submitted.connect(_on_clave_enviada)
 	BackendSession.session_restored.connect(_on_sesion_restaurada)
 	BackendSession.session_restore_failed.connect(_on_fallo_restauracion_sesion)
 
 	_establecer_modo(AuthMode.LOGIN)
 	_actualizar_estado_sesion()
+	_actualizar_ui_conexion()
 	_input_username.grab_focus()
-	call_deferred("_verificar_servidor_al_inicio")
+	call_deferred("_verificar_conexion_al_inicio")
 
 
 func _establecer_modo(mode: AuthMode) -> void:
@@ -54,8 +58,9 @@ func _establecer_modo(mode: AuthMode) -> void:
 	_button_switch_mode.text = "Ya tengo cuenta" if is_register else "Crear cuenta"
 	if is_register:
 		_precargar_fecha_nacimiento_registro()
-	if not _is_loading and not AuthApi.esta_logueado():
+	if not _is_loading and not AuthApi.esta_logueado() and _servidor_ok:
 		_establecer_estado("Sin sesión")
+	_actualizar_ui_conexion()
 
 
 func _precargar_fecha_nacimiento_registro() -> void:
@@ -70,44 +75,82 @@ func _precargar_fecha_nacimiento_registro() -> void:
 
 func _actualizar_estado_sesion() -> void:
 	if AuthApi.esta_logueado():
+		_servidor_ok = true
 		_establecer_estado("Sesión activa: " + AuthApi.obtener_usuario())
+		_actualizar_ui_conexion()
 
 
-func _verificar_servidor_al_inicio() -> void:
+func _verificar_conexion_al_inicio() -> void:
+	await _verificar_conexion(false)
+
+
+func _on_boton_reintentar_conexion_presionado() -> void:
+	if _is_loading or _verificando_conexion:
+		return
+	await _verificar_conexion(true)
+
+
+func _verificar_conexion(es_reintento: bool) -> void:
 	if _is_loading or AuthApi.esta_logueado():
 		return
-	_establecer_estado("Comprobando servidor...")
-	var check := await AuthApi.verificar_servidor()
-	_servidor_ok = bool(check.get("ok", false))
-	if not _servidor_ok:
-		_establecer_estado(AuthApi.mensaje_error(check.get("result", {}), "Servidor no disponible."), true)
-		return
-	_establecer_estado("")
-	await _verificar_salud_email_al_inicio()
 
+	_verificando_conexion = true
+	_servidor_ok = false
+	_actualizar_ui_conexion()
 
-func _verificar_salud_email_al_inicio() -> void:
-	var email_check := await AuthApi.verificar_salud_email()
-	if not bool(email_check.get("ok", false)):
-		return
-	var data: Variant = email_check.get("data", {})
-	if not data is Dictionary:
-		return
-	var payload := data as Dictionary
-	if bool(payload.get("delivery_configured", true)):
-		return
-	if bool(payload.get("dev_code_in_logs", false)):
-		_establecer_estado(
-			"Modo desarrollo: sin Brevo. El código OTP aparece en la consola del backend."
-		)
+	if es_reintento:
+		_establecer_estado("Reintentando conexión a Supabase...")
 	else:
+		_establecer_estado("Comprobando Supabase y mail...")
+
+	BackendConfig.recargar()
+	var check := await AuthApi.verificar_stack()
+	_servidor_ok = bool(check.get("ok", false))
+
+	_verificando_conexion = false
+
+	if not _servidor_ok:
 		_establecer_estado(
-			"Aviso: el servidor no tiene mail configurado. La verificación por código puede fallar."
+			AuthApi.mensaje_check_conexion(check, "Supabase no disponible."),
+			true
 		)
+		_actualizar_ui_conexion()
+		return
+
+	var resumen := AuthApi.resumen_conexion_ok(check)
+	var email: Variant = check.get("email", {})
+	if email is Dictionary:
+		var email_dict := email as Dictionary
+		if bool(email_dict.get("enabled", false)) and not bool(email_dict.get("configured", false)):
+			if bool(email_dict.get("dev_code_in_logs", false)):
+				resumen += "\nModo dev: el OTP aparece en la consola del backend."
+			else:
+				resumen += "\nAviso: Brevo no configurado — la verificación por mail puede fallar."
+	_establecer_estado(resumen)
+	_actualizar_ui_conexion()
+
+
+func _actualizar_ui_conexion() -> void:
+	if not is_instance_valid(_button_retry):
+		return
+
+	var sesion_activa := AuthApi.esta_logueado()
+	var bloquear_login := not _servidor_ok and not sesion_activa
+
+	_button_retry.visible = bloquear_login and not _verificando_conexion
+	_button_retry.disabled = _is_loading or _verificando_conexion
+	_button_submit.disabled = _is_loading or bloquear_login
 
 
 func _on_boton_enviar_presionado() -> void:
 	if _is_loading:
+		return
+	if not _servidor_ok and not AuthApi.esta_logueado():
+		_establecer_estado(
+			"Sin conexión a Supabase.\nLevantá BACKEND (npm run dev) y tocá «Reintentar conexión».",
+			true
+		)
+		_actualizar_ui_conexion()
 		return
 	await _enviar_formulario()
 
@@ -193,7 +236,9 @@ func _on_boton_jugar_offline_presionado() -> void:
 
 
 func _on_sesion_restaurada(user: Dictionary) -> void:
+	_servidor_ok = true
 	_establecer_estado("Sesión activa: " + str(user.get("username", AuthApi.obtener_usuario())))
+	_actualizar_ui_conexion()
 
 
 func _on_fallo_restauracion_sesion(reason: String) -> void:
@@ -202,11 +247,11 @@ func _on_fallo_restauracion_sesion(reason: String) -> void:
 		+ AuthApi.mensaje_error({"error": reason, "status": 401}, reason),
 		true
 	)
+	call_deferred("_verificar_conexion_al_inicio")
 
 
 func _establecer_cargando(value: bool) -> void:
 	_is_loading = value
-	_button_submit.disabled = value
 	_button_switch_mode.disabled = value
 	_button_play_offline.disabled = value
 	_input_username.editable = not value
@@ -214,6 +259,7 @@ func _establecer_cargando(value: bool) -> void:
 	_input_register_name.editable = not value
 	_input_register_mail.editable = not value
 	_input_register_birth_date.editable = not value
+	_actualizar_ui_conexion()
 	if value:
 		_iniciar_animacion_carga()
 	else:

@@ -1,9 +1,9 @@
-[gd_scene format=3 uid="uid://bjvys771chohe"]
+[gd_scene format=3]
 
-[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_r8pak"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="2_u7xbc"]
-[ext_resource type="Script" uid="uid://7wlkhkbqmbkf" path="res://niveles/botones.gd" id="3_5yqoj"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_i65pt"]
+[ext_resource type="Shader" path="res://niveles/intro.gdshader" id="1_r8pak"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="2_u7xbc"]
+[ext_resource type="Script" path="res://niveles/botones.gd" id="3_5yqoj"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="5_i65pt"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
 shader = ExtResource("1_r8pak")

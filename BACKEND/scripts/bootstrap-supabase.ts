@@ -48,8 +48,8 @@ function printNextSteps(): void {
   console.log('  1. (Opcional) Cambiar .env.staging al Session pooler para runtime');
   console.log('  2. npm run check:deploy:staging');
   console.log('  3. npm run dev:staging');
-  console.log('  4. Deploy: configurá BACKEND_BASE_URL + secrets en GitHub');
-  console.log('     → Actions → Email cron jobs (o npm run smoke:cron:staging)');
+  console.log('  4. Deploy: BACKEND_BASE_URL público → npm run setup:supabase:cron');
+  console.log('     → Supabase pg_cron + GitHub Actions (email-cron.yml) como respaldo');
   console.log('  Guía: docs/SUPABASE_QUICKSTART.md');
 }
 

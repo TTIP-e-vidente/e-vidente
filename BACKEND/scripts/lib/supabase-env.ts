@@ -63,6 +63,7 @@ export function validateSupabaseEnvFields(options: {
   envPath: string;
   requirePublicUrl?: boolean;
   requireBrevo?: boolean;
+  requireEdgeFunctions?: boolean;
 }): EnvFieldCheck[] {
   const checks: EnvFieldCheck[] = [];
   const host = process.env.POSTGRES_HOST?.trim() ?? '';
@@ -168,6 +169,16 @@ export function validateSupabaseEnvFields(options: {
       ok: false,
       message: 'Falta SUPABASE_PROJECT_REF o reemplazá TU_PROJECT_REF en POSTGRES_HOST',
       hint: 'SUPABASE_PROJECT_REF=<tu-ref>',
+    });
+  }
+
+  if (options.requireEdgeFunctions) {
+    const anonKey = process.env.SUPABASE_ANON_KEY?.trim() ?? '';
+    checks.push({
+      key: 'SUPABASE_ANON_KEY',
+      ok: anonKey.length > 20,
+      message: anonKey ? 'Anon key presente (Godot + pg_cron → Edge)' : 'Falta SUPABASE_ANON_KEY',
+      hint: 'Dashboard Supabase → Settings → API → anon public',
     });
   }
 

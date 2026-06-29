@@ -10,12 +10,15 @@ const DEBUG_BADGES := false
 signal selected(node_data: MapNodeData)
 
 const COLOR_AVAILABLE := MiPaleta.GRIS_AZULADO
-const COLOR_COMPLETED := MiPaleta.VERDE_BOSQUE
 const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
 @onready var next_lesson: Sprite2D = $"Next Lesson"
+const INDICADOR_LECCION_SCENE := preload("res://mapas/components/IndicadorLeccionSiguiente.tscn")
+const ICONO_NODO_MAPA_UNIFICADO := preload("res://assets-sistema/mapa/desafio-mapa-8.png")
+const ESCALA_ICONO_NODO_UNIFICADO := Vector2(0.28, 0.28)
+const ESCALA_NODO_UNIFICADA := Vector2.ONE
 
 @export_group("Runtime")
 @export var nivel_id: int = 0
@@ -74,15 +77,19 @@ var _click_in_progress: bool = false
 var _disponible_tween: Tween = null
 var _best_accuracy: float = 0.0
 var _best_percent: float = 0.0
+var _es_nodo_recomendado: bool = false
+var _indicador_activo_previo: bool = false
 
 @onready var button: TextureButton = $Button
 @onready var state_icon: Sprite2D = $Icon
 @onready var title_label: Label = get_node_or_null("TitleLabel") as Label
 @onready var node_badge: Node2D = get_node_or_null("NodeProgressBadge")
+var _indicador_leccion: Node2D = null
 
 
 func _ready() -> void:
 	_base_scale = scale
+	_asegurar_indicador_leccion()
 	actualizar_vista()
 
 
@@ -91,12 +98,36 @@ func configurar(
 	progress_state: Variant = {},
 	is_completed: bool = false
 ) -> void:
+	_cancelar_tween_disponible()
 	node_data = data
 	if progress_state is Dictionary:
 		_aplicar_estado_progreso(progress_state as Dictionary)
 	else:
 		_aplicar_estado_progreso_legado(bool(progress_state), is_completed)
+	reiniciar_escala_base()
+	aplicar_presentacion_unificada()
 	actualizar_vista()
+
+
+func reiniciar_escala_base() -> void:
+	_cancelar_tween_disponible()
+	if _is_hovering:
+		_is_hovering = false
+	scale = ESCALA_NODO_UNIFICADA
+	_base_scale = ESCALA_NODO_UNIFICADA
+
+
+func aplicar_presentacion_unificada() -> void:
+	# Sprint 2: un solo look por nodo. Evita halos verdes gigantes de preguntas
+	# con texturas/escalas distintas heredadas del editor (MapChapter vs MapQuestion).
+	icon_texture = ICONO_NODO_MAPA_UNIFICADO
+	icon_scale = ESCALA_ICONO_NODO_UNIFICADO
+	icon_material = null
+	reiniciar_escala_base()
+
+
+func es_leccion_actual() -> bool:
+	return _es_nodo_recomendado and visual_state == STATE_AVAILABLE and not completed
 
 
 func actualizar_vista() -> void:
@@ -118,6 +149,8 @@ func actualizar_vista() -> void:
 	_aplicar_parametros_visuales()
 	_actualizar_insignia()
 	next_lesson.visible = unlocked and not completed
+	_actualizar_indicador_leccion()
+
 
 func _aplicar_parametros_visuales() -> void:
 	if state_icon == null:
@@ -223,25 +256,76 @@ func _boton_esta_deshabilitado() -> bool:
 
 
 func _aplicar_color_estado() -> void:
+	_cancelar_tween_disponible()
 	match visual_state:
 		STATE_COMPLETED:
-			_cancelar_tween_disponible()
-			# Solo teñir el ícono; el badge debe conservar sus colores propios.
-			state_icon.modulate = COLOR_COMPLETED
+			# Completado: la estrella marca el progreso; el ícono queda neutro (sin halo verde).
+			state_icon.modulate = Color.WHITE
 			modulate = Color.WHITE
-		STATE_LOCKED:
-			_cancelar_tween_disponible()
+		STATE_AVAILABLE:
+			if _es_nodo_recomendado and not completed:
+				# Único "siguiente": tono gris-azulado + anillo IndicadorLeccionSiguiente.
+				state_icon.modulate = COLOR_AVAILABLE
+				modulate = Color.WHITE
+			else:
+				state_icon.modulate = Color.WHITE
+				modulate = COLOR_LOCKED
+		_:
 			state_icon.modulate = Color.WHITE
 			modulate = COLOR_LOCKED
-		_:
-			_cancelar_tween_disponible()
-			state_icon.modulate = COLOR_AVAILABLE
-			modulate = Color.WHITE
+
+
+func _asegurar_indicador_leccion() -> void:
+	if _indicador_leccion != null and is_instance_valid(_indicador_leccion):
+		return
+	_indicador_leccion = get_node_or_null("IndicadorLeccionSiguiente") as Node2D
+	if _indicador_leccion == null and INDICADOR_LECCION_SCENE != null:
+		_indicador_leccion = INDICADOR_LECCION_SCENE.instantiate() as Node2D
+		if _indicador_leccion != null:
+			_indicador_leccion.name = "IndicadorLeccionSiguiente"
+			add_child(_indicador_leccion)
+
+
+func _actualizar_indicador_leccion() -> void:
+	if _indicador_leccion == null or Engine.is_editor_hint():
+		return
+	var mostrar: bool = (
+		_es_nodo_recomendado
+		and visual_state == STATE_AVAILABLE
+		and not completed
+	)
+	if _indicador_leccion.has_method("establecer_activo"):
+		var numero_leccion: int = _obtener_numero_leccion()
+		_indicador_leccion.call(
+			"establecer_activo",
+			mostrar,
+			numero_leccion,
+			_obtener_titulo(),
+			_obtener_radio_anillo()
+		)
+	_indicador_activo_previo = mostrar
+
+
+func _obtener_radio_anillo() -> float:
+	if button != null:
+		return maxf(button.size.x, button.size.y) * 0.48
+	return 78.0
+
+
+func _obtener_numero_leccion() -> int:
+	if node_data != null and node_data.order > 0:
+		return node_data.order
+	if level_number > 0:
+		return level_number
+	if question_number > 0:
+		return question_number
+	return max(1, nivel_id)
 
 
 func _aplicar_estado_progreso(progress_state: Dictionary) -> void:
 	var is_unlocked: bool = bool(progress_state.get("is_unlocked", false))
 	var is_completed: bool = bool(progress_state.get("is_completed", false))
+	_es_nodo_recomendado = bool(progress_state.get("is_recommended", false))
 	# _best_accuracy primero para que los setters con actualizar_vista() ya lo vean correcto
 	_best_accuracy = float(progress_state.get("best_accuracy", 0.0))
 	_best_percent = float(progress_state.get("best_percent", _best_accuracy / 100.0))
@@ -259,6 +343,7 @@ func _aplicar_estado_progreso(progress_state: Dictionary) -> void:
 
 
 func _aplicar_estado_progreso_legado(is_unlocked: bool, is_completed: bool) -> void:
+	_es_nodo_recomendado = false
 	unlocked = is_unlocked
 	completed = is_completed
 	can_play = is_unlocked or is_completed
@@ -306,6 +391,8 @@ func _animar_disponible() -> void:
 
 
 func _animar_escala_hasta(escala_destino: Vector2) -> void:
+	if _es_nodo_recomendado and visual_state == STATE_AVAILABLE:
+		escala_destino = _base_scale
 	var tween := create_tween()
 	tween.tween_property(self, "scale", escala_destino, 0.12)
 

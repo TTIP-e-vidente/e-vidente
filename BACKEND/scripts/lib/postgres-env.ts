@@ -45,7 +45,7 @@ export function loadPostgresEnv(kind: PostgresEnvKind): LoadedPostgresEnv {
   const envFile =
     kind === 'staging' ? '.env.staging' : kind === 'production' ? '.env.production' : '.env';
   const envPath = path.resolve(BACKEND_ROOT, envFile);
-  dotenv.config({ path: envPath });
+  dotenv.config({ path: envPath, override: true });
   process.env.ENV_FILE = envFile;
   return { kind, envFile, envPath };
 }

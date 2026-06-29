@@ -1,9 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://ranking_post_partida"]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://mapas/ranking_post_partida.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_fondo"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_font"]
+[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_fondo"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_font"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/RankingResumenPostPartida.tscn" id="6_ranking"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_continuar"]

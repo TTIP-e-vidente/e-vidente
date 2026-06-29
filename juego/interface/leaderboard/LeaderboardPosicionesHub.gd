@@ -11,7 +11,6 @@ const ESCENA_CARD := preload("res://interface/leaderboard/LeaderboardPosicionHub
 
 
 @onready var _grid: GridContainer = %GridCards
-@onready var _label_titulo: Label = %TituloHub
 
 
 var _cards_por_scope: Dictionary = {}

@@ -115,12 +115,41 @@ export function sortTablesByForeignKeys(tables: string[], edges: ForeignKeyEdge[
   return sorted;
 }
 
+/** Orden preferido para copia de datos (padres antes que hijos cuando hay ciclos FK). */
+export const DATA_MIGRATION_TABLE_ORDER = [
+  'leaderboard_meta',
+  'restriction_node_config',
+  'streaks',
+  'users',
+  'images',
+  'profiles',
+  'progress_restrictions',
+  'history_games',
+  'games',
+  'email_verification_codes',
+  'email_deliveries',
+  'leaderboard_snapshots',
+] as const;
+
+export function orderTablesForDataMigration(
+  tables: string[],
+  topoSorted: string[]
+): string[] {
+  const tableSet = new Set(tables);
+  const preferred = DATA_MIGRATION_TABLE_ORDER.filter((table) => tableSet.has(table));
+  const remainder = topoSorted.filter(
+    (table) => tableSet.has(table) && !preferred.includes(table as (typeof DATA_MIGRATION_TABLE_ORDER)[number])
+  );
+  return [...preferred, ...remainder];
+}
+
 export async function sortPublicTablesByForeignKeys(
   client: PoolClient,
   tables: string[]
 ): Promise<string[]> {
   const edges = await listForeignKeyEdges(client);
-  return sortTablesByForeignKeys(tables, edges);
+  const topoSorted = sortTablesByForeignKeys(tables, edges);
+  return orderTablesForDataMigration(tables, topoSorted);
 }
 
 export async function countTableRows(client: PoolClient, table: string): Promise<number> {

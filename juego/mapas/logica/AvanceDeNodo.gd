@@ -130,6 +130,124 @@ static func mapa_esta_completado(nodos_mapa: Array, track_key: String) -> bool:
 	return true
 
 
+static func construir_estados_mapa(
+	nodos_mapa: Array,
+	node_progress: Dictionary = {}
+) -> Array[Dictionary]:
+	var node_states: Array[Dictionary] = []
+	for node_data in nodos_mapa:
+		if node_data is MapNodeData:
+			var state: Dictionary = obtener_estado_nodo(nodos_mapa, node_data as MapNodeData)
+			var saved: Dictionary = _progreso_guardado(node_progress, (node_data as MapNodeData).node_key)
+			if not saved.is_empty():
+				fusionar_progreso_guardado(state, saved)
+			node_states.append(state)
+	aplicar_reglas_secuenciales(node_states)
+	return node_states
+
+
+static func fusionar_progreso_guardado(state: Dictionary, saved: Dictionary) -> void:
+	state["best_percent"] = float(saved.get("best_percent", 0.0))
+	var fallback_accuracy: float = float(saved.get("best_percent", 0.0)) * 100.0
+	state["best_accuracy"] = float(saved.get("best_accuracy", fallback_accuracy))
+	if not bool(saved.get("completed", false)):
+		return
+	state["is_completed"] = true
+	state["visual_state"] = STATE_COMPLETED
+	state["state"] = STATE_COMPLETED
+
+
+static func aplicar_reglas_secuenciales(node_states: Array[Dictionary]) -> void:
+	var indice_recomendado := -1
+	var anterior_completado := true
+	for index in range(node_states.size()):
+		var state: Dictionary = node_states[index]
+		var raw_completado := bool(state.get("is_completed", false))
+		var completado := raw_completado and anterior_completado
+		if raw_completado and not completado:
+			state["is_completed"] = false
+			state["state"] = STATE_LOCKED
+			state["visual_state"] = STATE_LOCKED
+		var desbloqueado := anterior_completado
+		state["is_unlocked"] = desbloqueado
+		state["can_play"] = desbloqueado or completado
+		if not completado:
+			if anterior_completado:
+				state["visual_state"] = STATE_AVAILABLE
+				state["state"] = STATE_AVAILABLE
+			else:
+				state["visual_state"] = STATE_LOCKED
+				state["state"] = STATE_LOCKED
+		anterior_completado = completado
+		if indice_recomendado < 0 and desbloqueado and not completado:
+			indice_recomendado = index
+
+	for index in range(node_states.size()):
+		node_states[index]["is_recommended"] = index == indice_recomendado
+
+
+static func puede_abrir_nodo(
+	nodos_mapa: Array,
+	node_data: MapNodeData,
+	node_states: Array[Dictionary] = []
+) -> bool:
+	if node_data == null:
+		return false
+	var indice: int = obtener_indice_nodo(nodos_mapa, node_data.node_key)
+	if indice < 0:
+		return false
+	var estados: Array[Dictionary] = node_states
+	if estados.is_empty() or indice >= estados.size():
+		estados = construir_estados_mapa(nodos_mapa, _obtener_progreso_nodos_guardado())
+	if indice >= estados.size():
+		return false
+	return bool(estados[indice].get("can_play", false))
+
+
+static func estado_en_indice(
+	node_states: Array[Dictionary],
+	indice: int
+) -> Dictionary:
+	if indice < 0 or indice >= node_states.size():
+		return {}
+	return node_states[indice]
+
+
+static func obtener_clave_nodo_recomendado(
+	nodos_mapa: Array,
+	node_states: Array[Dictionary]
+) -> String:
+	for index in range(mini(nodos_mapa.size(), node_states.size())):
+		if not bool(node_states[index].get("is_recommended", false)):
+			continue
+		return _obtener_node_key(nodos_mapa[index])
+	return ""
+
+
+static func progreso_guardado_para_clave(node_progress: Dictionary, node_key: String) -> Dictionary:
+	return _progreso_guardado(node_progress, node_key)
+
+
+static func _progreso_guardado(node_progress: Dictionary, node_key: String) -> Dictionary:
+	var key: String = node_key.strip_edges()
+	if key.is_empty() or not node_progress.has(key):
+		return {}
+	var np: Variant = node_progress[key]
+	return np as Dictionary if np is Dictionary else {}
+
+
+static func _obtener_progreso_nodos_guardado() -> Dictionary:
+	if not Engine.get_main_loop() is SceneTree:
+		return {}
+	var save_manager: Node = (
+		(Engine.get_main_loop() as SceneTree).root.get_node_or_null("/root/SaveManager")
+	)
+	if save_manager != null and save_manager.has_method("obtener_todo_progreso_nodos"):
+		var raw: Variant = save_manager.call("obtener_todo_progreso_nodos")
+		return raw as Dictionary if raw is Dictionary else {}
+	return {}
+
+
 static func _estado(desbloqueado: bool, completado: bool, nombre_estado: String) -> Dictionary:
 	return {
 		"is_unlocked": desbloqueado,
@@ -137,6 +255,7 @@ static func _estado(desbloqueado: bool, completado: bool, nombre_estado: String)
 		"can_play": desbloqueado or completado,
 		"state": nombre_estado,
 		"visual_state": nombre_estado,
+		"is_recommended": false,
 	}
 
 

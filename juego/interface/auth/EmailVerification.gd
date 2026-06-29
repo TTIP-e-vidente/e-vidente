@@ -4,26 +4,10 @@ signal verificacion_completada()
 signal verificacion_omitida()
 
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
-const ProfileMailSyncHelperScript := preload(
-	"res://interface/auth/ProfileMailSyncHelper.gd"
-)
 const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
-
-
-@onready var _line_edit_codigo: LineEdit = %LineEditCodigo
-@onready var _codigo_input_wrap: Control = %CodigoInputWrap
-@onready var _digit_slots: Array[PanelContainer] = [
-	%DigitSlot0, %DigitSlot1, %DigitSlot2, %DigitSlot3, %DigitSlot4, %DigitSlot5,
-]
-@onready var _boton_verificar: Button = %BotonVerificar
-@onready var _boton_reenviar: Button = %BotonReenviar
-@onready var _boton_omitir: Button = %BotonOmitir
-@onready var _boton_ayuda_mail: Button = %BotonAyudaMail
-@onready var _boton_volver: Button = %BotonVolver
-@onready var _label_ayuda_mail: Label = %LabelAyudaMail
-
+const EMAIL_CHIP_PADDING_X := 28.0
 const AYUDA_MAIL_TEXTO := (
 	"• Buscá un mail con asunto «Código E-VIDENTE: ######» (no el de bienvenida).\n"
 	+ "• Copiá los 6 números del asunto o del bloque dorado del mail.\n"
@@ -33,13 +17,22 @@ const AYUDA_MAIL_TEXTO := (
 	+ "• Puede tardar 1–2 minutos.\n"
 	+ "• Usá «Reenviar código» si pasaron más de 2 minutos.\n"
 	+ "• El mail de bienvenida llega recién después de verificar.\n"
-	+ "• En desarrollo sin Brevo: el código aparece en la consola del backend."
+	+ "• En desarrollo sin Brevo: el código aparece en los logs de Supabase Edge Functions."
 )
+
+@onready var _line_edit_codigo: LineEdit = %LineEditCodigo
+@onready var _codigo_input_wrap: Control = %CodigoInputWrap
+@onready var _boton_verificar: Button = %BotonVerificar
+@onready var _boton_reenviar: Button = %BotonReenviar
+@onready var _boton_omitir: Button = %BotonOmitir
+@onready var _boton_ayuda_mail: Button = %BotonAyudaMail
+@onready var _boton_volver: Button = %BotonVolver
+@onready var _label_ayuda_mail: Label = %LabelAyudaMail
 @onready var _label_mensaje: Label = %LabelMensaje
 @onready var _label_email: Label = %LabelEmail
-@onready var _email_chip: PanelContainer = _label_email.get_parent() as PanelContainer
 
-const EMAIL_CHIP_PADDING_X := 28.0
+var _digit_slots: Array[PanelContainer] = []
+var _email_chip: PanelContainer
 
 var _is_loading := false
 var _tiempo_cooldown := 0.0
@@ -48,6 +41,11 @@ var _salida_en_curso := false
 
 
 func _ready() -> void:
+	_digit_slots = [
+		%DigitSlot0, %DigitSlot1, %DigitSlot2, %DigitSlot3, %DigitSlot4, %DigitSlot5,
+	]
+	_email_chip = _label_email.get_parent() as PanelContainer
+
 	_boton_verificar.pressed.connect(_on_verificar_presionado)
 	_boton_reenviar.pressed.connect(_on_reenviar_presionado)
 	_boton_omitir.pressed.connect(_on_omitir_presionado)
@@ -69,16 +67,20 @@ func _ready() -> void:
 
 
 func _inicializar_correo_y_estado() -> void:
-	var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
+	var refresh := await ProfileMailSyncHelper.refrescar_perfil_servidor()
 	if AuthApi.esta_logueado() and not bool(refresh.get("ok", false)):
 		_mostrar_mensaje(
-			ProfileMailSyncHelperScript.mensaje_error(
+			ProfileMailSyncHelper.mensaje_error(
 				{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"}
 			),
 			false
 		)
-	_mostrar_email_usuario()
 	await _sincronizar_estado_desde_servidor()
+	var mail_ui := _label_email.text.strip_edges()
+	if mail_ui.is_empty() or mail_ui == "tu casilla de correo":
+		_aplicar_mail_desde_evaluacion_meta()
+	if _label_email.text.strip_edges().is_empty() or _label_email.text == "tu casilla de correo":
+		_mostrar_email_usuario()
 
 
 func _aplicar_configuracion_desde_meta() -> void:
@@ -100,6 +102,35 @@ func _aplicar_configuracion_desde_meta() -> void:
 				"Tocá las casillas, escribí o pegá el código de 6 dígitos.",
 				true
 			)
+	_aplicar_mail_desde_evaluacion_meta()
+
+
+func _aplicar_mail_desde_evaluacion_meta() -> void:
+	var root := get_tree().root
+	if root == null or not root.has_meta(FlowHelper.META_EVALUACION):
+		return
+	var evaluacion: Variant = root.get_meta(FlowHelper.META_EVALUACION, {})
+	if not evaluacion is Dictionary:
+		return
+	var target := str((evaluacion as Dictionary).get("target_mail", "")).strip_edges()
+	if target.is_empty():
+		return
+
+	var server_mail := ProfileMailSyncHelper.obtener_mail_servidor()
+	if not server_mail.is_empty():
+		if not ProfileMailSyncHelper.mails_coinciden(target, server_mail):
+			_establecer_mail_en_ui(server_mail)
+			return
+
+	var actual_ui := _label_email.text.strip_edges()
+	if (
+		not actual_ui.is_empty()
+		and actual_ui != "tu casilla de correo"
+		and not ProfileMailSyncHelper.mails_coinciden(actual_ui, target)
+	):
+		return
+
+	_establecer_mail_en_ui(target)
 
 
 func _sincronizar_estado_desde_servidor() -> void:
@@ -112,7 +143,7 @@ func _sincronizar_estado_desde_servidor() -> void:
 	if not data is Dictionary:
 		return
 	var payload := data as Dictionary
-	var mail_mostrar := ProfileMailSyncHelperScript.resolver_mail_visible(payload)
+	var mail_mostrar := ProfileMailSyncHelper.resolver_mail_visible(payload)
 	if not mail_mostrar.is_empty():
 		_establecer_mail_en_ui(mail_mostrar)
 	var verification: Variant = payload.get("verification", {})
@@ -157,8 +188,30 @@ func _configurar_entrada_codigo() -> void:
 
 
 func _enfocar_codigo() -> void:
+	_intentar_pegar_desde_portapapeles()
 	if is_instance_valid(_line_edit_codigo):
 		_line_edit_codigo.grab_focus()
+
+
+func _intentar_pegar_desde_portapapeles() -> void:
+	if not is_instance_valid(_line_edit_codigo):
+		return
+	if not _line_edit_codigo.text.strip_edges().is_empty():
+		return
+	var clip := DisplayServer.clipboard_get().strip_edges()
+	if clip.is_empty():
+		return
+	var digits := ""
+	for i in clip.length():
+		var ch := clip[i]
+		if ch >= "0" and ch <= "9":
+			digits += ch
+		if digits.length() >= 6:
+			break
+	if digits.length() != 6:
+		return
+	_line_edit_codigo.text = digits
+	_actualizar_casillas_digitos(digits)
 
 
 func _on_digitos_gui_input(event: InputEvent) -> void:
@@ -311,6 +364,7 @@ func _on_verificar_presionado() -> void:
 	_establecer_cargando(false)
 
 	if res.get("ok", false):
+		await BackendSession.refrescar_usuario_en_cache()
 		_mostrar_mensaje("¡Mail verificado! Ahora te enviamos el mail de bienvenida.", true)
 		await get_tree().create_timer(0.8).timeout
 		verificacion_completada.emit()

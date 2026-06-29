@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://y10p322ni15g" path="res://mapas/components/StarProgress.gd" id="1_script"]
+[ext_resource type="Script" path="res://mapas/components/StarProgress.gd" id="1_script"]
 
 [node name="StarProgress" type="Node2D"]
 script = ExtResource("1_script")

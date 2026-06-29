@@ -1,12 +1,11 @@
-[gd_scene format=3 uid="uid://csi4t0q828okm"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://ckcb6asdec3cm" path="res://interface/auth.gd" id="1_auth"]
-[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
-[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="4_defg6"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
-[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_0vpd6"]
+[ext_resource type="Script" path="res://interface/auth.gd" id="1_auth"]
+[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_0vpd6"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_chip"]
 bg_color = Color(0.780392, 0.839216, 0.658824, 0.62)
@@ -158,12 +157,15 @@ metadata/_edit_horizontal_guides_ = [-93.0]
 layout_mode = 0
 
 [node name="BackButton" type="Button" parent="." unique_id=1957216421]
-layout_mode = 0
-offset_left = 105.99999
-offset_top = 601.0
-offset_right = 198.0
-offset_bottom = 693.0
-scale = Vector2(1.1777242, 1.1774213)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 95.0
+offset_top = -92.0
+offset_right = 187.0
+offset_bottom = 0.0
+grow_vertical = 0
 icon = ExtResource("3_back")
 flat = true
 expand_icon = true
@@ -174,13 +176,12 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 71.0
-offset_top = 98.99999
-offset_right = 18.95996
+offset_left = 95.0
+offset_top = 99.0
+offset_right = -95.0
 offset_bottom = -161.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.9348943, 0.9319561)
 follow_focus = true
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 0
@@ -538,7 +539,6 @@ theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content" unique_id=1605697821]
-custom_minimum_size = Vector2(-71.05, 0)
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 16
@@ -546,26 +546,30 @@ theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 16
 
 [node name="RegisterButton" type="Button" parent="." unique_id=820342557]
-custom_minimum_size = Vector2(34.245, 31.535)
-layout_mode = 0
-offset_left = 779.00006
-offset_top = 573.0
-offset_right = 1346.0
-offset_bottom = 847.0
-scale = Vector2(0.5534265, 0.55059147)
-theme_override_colors/font_color = Color(0.37111905, 0.37111905, 0.37111905, 1)
-theme_override_colors/font_focus_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
-theme_override_colors/font_hover_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
+custom_minimum_size = Vector2(400, 72)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -120.0
+offset_right = 200.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("4_nuujq")
-theme_override_font_sizes/font_size = 45
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_primary_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_button_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_primary_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_primary_button_hover")
 text = "Guardar perfil"
-icon = ExtResource("4_defg6")
-flat = true
-icon_alignment = 1
+flat = false
 
 [node name="AvatarDialog" type="FileDialog" parent="." unique_id=1349551692]
 title = "Open a File"
@@ -573,8 +577,6 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.png ; PNG", "*.jpg ; JPG", "*.jpeg ; JPEG", "*.webp ; WEBP")
 
-[connection signal="pressed" from="BackButton" to="." method="_on_boton_volver_presionado"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ChooseAvatarButton" to="." method="_on_boton_elegir_avatar_presionado"]
 [connection signal="pressed" from="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/AvatarRow/ClearAvatarButton" to="." method="_on_boton_limpiar_avatar_presionado"]
-[connection signal="pressed" from="RegisterButton" to="." method="_on_boton_registrar_presionado"]
 [connection signal="file_selected" from="AvatarDialog" to="." method="_on_archivo_avatar_seleccionado"]

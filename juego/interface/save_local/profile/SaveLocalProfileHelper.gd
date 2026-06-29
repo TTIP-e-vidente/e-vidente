@@ -1,4 +1,5 @@
 extends RefCounted
+class_name SaveLocalProfileHelper
 
 
 static func normalizar_fecha_nacimiento(raw: Variant) -> String:
@@ -221,7 +222,7 @@ func buscar_avatar_gestionado_existente(avatars_dir: String, user_key: String) -
 	return ""
 
 
-func es_email_valido(email: String) -> bool:
+static func es_email_valido(email: String) -> bool:
 	var regex := RegEx.new()
 	regex.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
 	return regex.search(email) != null

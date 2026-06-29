@@ -54,6 +54,18 @@ static func verificar_servidor() -> Dictionary:
 	return await BackendSession.verificar_estado_del_servidor()
 
 
+static func verificar_stack() -> Dictionary:
+	return await BackendSession.verificar_stack_completo()
+
+
+static func mensaje_check_conexion(check: Dictionary, fallback: String = "") -> String:
+	return AuthErrorFormatter.mensaje_desde_check_conexion(check, fallback)
+
+
+static func resumen_conexion_ok(check: Dictionary) -> String:
+	return AuthErrorFormatter.resumen_conexion_ok(check)
+
+
 static func verificar_salud_email() -> Dictionary:
 	return await BackendSession.verificar_salud_email()
 
@@ -102,7 +114,26 @@ static func meta_verificacion_registro(result: Dictionary) -> Dictionary:
 		"code_send_status": str(meta.get("code_send_status", "")),
 		"cooldown_seconds": int(meta.get("cooldown_seconds", 120)),
 		"message": str(meta.get("message", "")),
+		"target_mail": str(meta.get("target_mail", "")),
 	}
+
+
+static func _evaluacion_con_target_mail(evaluacion: Dictionary, meta: Dictionary) -> Dictionary:
+	var enriched := evaluacion.duplicate(true)
+	var target := str(meta.get("target_mail", "")).strip_edges()
+	if target.is_empty():
+		target = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	if not target.is_empty():
+		enriched["target_mail"] = target
+	return enriched
+
+
+## Fuerza el mail del formulario/perfil como destino visible del overlay de verificaci?n.
+static func evaluacion_con_mail_formulario(evaluacion: Dictionary, form_mail: String) -> Dictionary:
+	var clean := form_mail.strip_edges()
+	if clean.is_empty():
+		return evaluacion
+	return _evaluacion_con_target_mail(evaluacion, {"target_mail": clean})
 
 
 static func _feedback_desde_meta(verification_meta: Dictionary, fallback: String) -> String:
@@ -110,7 +141,7 @@ static func _feedback_desde_meta(verification_meta: Dictionary, fallback: String
 	return msg if not msg.is_empty() else fallback
 
 
-## Unifica respuestas de envío OTP (registro, PATCH perfil o POST verify-email/request).
+## Unifica respuestas de env?o OTP (registro, PATCH perfil o POST verify-email/request).
 ## Retorna: show_overlay, cooldown_seconds, feedback, feedback_ok
 static func evaluar_respuesta_verificacion(
 		result: Dictionary,
@@ -123,7 +154,7 @@ static func evaluar_respuesta_verificacion(
 			"cooldown_seconds": 0,
 			"feedback": mensaje_error(
 				result,
-				"No se pudo conectar al servidor. Levantá BACKEND con npm run dev."
+				"No se pudo conectar al servidor. Levant? BACKEND con npm run dev."
 			),
 			"feedback_ok": false,
 		}
@@ -134,7 +165,10 @@ static func evaluar_respuesta_verificacion(
 		var status := str(verification_meta.get("code_send_status", "")).strip_edges()
 		var cooldown_meta := int(verification_meta.get("cooldown_seconds", fallback_cooldown))
 		if mail_changed:
-			return _evaluar_estado_envio_verificacion(status, cooldown_meta, verification_meta)
+			return _evaluacion_con_target_mail(
+				_evaluar_estado_envio_verificacion(status, cooldown_meta, verification_meta),
+				verification_meta
+			)
 
 	if bool(result.get("skipped", false)):
 		return {
@@ -155,24 +189,36 @@ static func evaluar_respuesta_verificacion(
 					"feedback": str(
 						(data as Dictionary).get(
 							"message",
-							"Tu mail ya está verificado."
+							"Tu mail ya est? verificado."
 						)
 					),
 					"feedback_ok": true,
 				}
-		return {
+			if api_status == "dev_console":
+				return {
+					"show_overlay": true,
+					"cooldown_seconds": 0,
+					"feedback": str(
+						(data as Dictionary).get(
+							"message",
+							"El c?digo est? en la consola del backend (dev_code)."
+						)
+					),
+					"feedback_ok": true,
+				}
+		return _evaluacion_con_target_mail({
 			"show_overlay": true,
 			"cooldown_seconds": cooldown_verificacion(result, fallback_cooldown),
-			"feedback": "Te enviamos el código de verificación. Revisá tu correo y la carpeta de spam.",
+			"feedback": "Te enviamos el c?digo de verificaci?n. Revis? tu correo y la carpeta de spam.",
 			"feedback_ok": true,
-		}
+		}, meta_verificacion_perfil(result))
 
 	var cooldown := cooldown_verificacion(result, 0)
 	if cooldown > 0:
 		return {
 			"show_overlay": true,
 			"cooldown_seconds": cooldown,
-			"feedback": mensaje_verificacion(result, "Esperá antes de pedir otro código."),
+			"feedback": mensaje_verificacion(result, "Esper? antes de pedir otro c?digo."),
 			"feedback_ok": false,
 		}
 
@@ -181,14 +227,14 @@ static func evaluar_respuesta_verificacion(
 		return {
 			"show_overlay": false,
 			"cooldown_seconds": 0,
-			"feedback": mensaje_verificacion(result, "Guardá el mail en tu perfil e intentá de nuevo."),
+			"feedback": mensaje_verificacion(result, "Guard? el mail en tu perfil e intent? de nuevo."),
 			"feedback_ok": false,
 		}
 
 	return {
 		"show_overlay": false,
 		"cooldown_seconds": 0,
-		"feedback": mensaje_verificacion(result, "No se pudo enviar el código."),
+		"feedback": mensaje_verificacion(result, "No se pudo enviar el c?digo."),
 		"feedback_ok": false,
 	}
 
@@ -200,52 +246,62 @@ static func _evaluar_estado_envio_verificacion(
 ) -> Dictionary:
 	match status:
 		"sent":
-			return {
+			return _evaluacion_con_target_mail({
 				"show_overlay": true,
 				"cooldown_seconds": cooldown,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Te enviamos el código de verificación (no el de bienvenida). Revisá tu casilla y spam."
+					"Te enviamos el c?digo de verificaci?n (no el de bienvenida). Revis? tu casilla y spam."
 				),
 				"feedback_ok": true,
-			}
+			}, verification_meta)
 		"rate_limited":
-			return {
+			return _evaluacion_con_target_mail({
 				"show_overlay": true,
 				"cooldown_seconds": cooldown,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Ya hay un código activo. Revisá tu casilla o esperá para reenviar."
+					"Ya hay un c?digo activo. Revis? tu casilla o esper? para reenviar."
 				),
 				"feedback_ok": false,
-			}
+			}, verification_meta)
 		"send_failed":
-			return {
+			return _evaluacion_con_target_mail({
 				"show_overlay": false,
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"No se pudo enviar el código. Revisá que el backend esté activo e intentá de nuevo."
+					"No se pudo enviar el c?digo. Pod?s reintentar de inmediato."
 				),
 				"feedback_ok": false,
-			}
+			}, verification_meta)
+		"dev_console":
+			return _evaluacion_con_target_mail({
+				"show_overlay": true,
+				"cooldown_seconds": 0,
+				"feedback": _feedback_desde_meta(
+					verification_meta,
+					"Brevo no configurado. El c?digo est? en la consola del backend (dev_code)."
+				),
+				"feedback_ok": true,
+			}, verification_meta)
 		"skipped":
-			return {
+			return _evaluacion_con_target_mail({
 				"show_overlay": false,
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Servicio de mail no disponible. En desarrollo, revisá la consola del backend."
+					"Servicio de mail no disponible. En desarrollo, revis? la consola del backend."
 				),
 				"feedback_ok": false,
-			}
+			}, verification_meta)
 		_:
 			return {
 				"show_overlay": false,
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"No se pudo enviar el código de verificación."
+					"No se pudo enviar el c?digo de verificaci?n."
 				),
 				"feedback_ok": false,
 			}
@@ -253,7 +309,7 @@ static func _evaluar_estado_envio_verificacion(
 static func iniciar_sesion_completa(usuario_o_mail: String, clave: String) -> Dictionary:
 	var auth := await iniciar_sesion(usuario_o_mail, clave)
 	if not auth.get("ok", false):
-		return _fallo("auth", auth, "No se pudo iniciar sesión.")
+		return _fallo("auth", auth, "No se pudo iniciar sesi?n.")
 	var datos := await cargar_datos_online()
 	return _exito(auth, datos)
 
@@ -318,7 +374,7 @@ static func aplicar_progreso_online_a_guardado_local() -> void:
 
 
 static func cerrar_sesion() -> void:
-	# Vaciar la cola mientras el token sigue activo, antes de limpiar la sesión.
+	# Vaciar la cola mientras el token sigue activo, antes de limpiar la sesi?n.
 	if esta_logueado():
 		await SyncApi.esperar_drenaje_pendientes()
 	SaveManager.al_cerrar_sesion_online()
@@ -356,7 +412,7 @@ static func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 
 static func validar_campos_login(usuario_o_mail: String, clave: String) -> String:
 	if usuario_o_mail.strip_edges().is_empty() or clave.is_empty():
-		return "Completá usuario y contraseña."
+		return "Complet? usuario y contrase?a."
 	return ""
 
 
@@ -373,12 +429,12 @@ static func validar_campos_registro(
 		or mail.strip_edges().is_empty()
 		or clave.is_empty()
 	):
-		return "Completá usuario, nombre, mail y contraseña."
+		return "Complet? usuario, nombre, mail y contrase?a."
 	if clave.length() < MIN_PASSWORD_LENGTH:
-		return "La contraseña debe tener al menos %d caracteres." % MIN_PASSWORD_LENGTH
+		return "La contrase?a debe tener al menos %d caracteres." % MIN_PASSWORD_LENGTH
 	var fecha_limpia := fecha_nacimiento.strip_edges()
 	if fecha_limpia.is_empty():
-		return "Ingresá tu fecha de nacimiento (AAAA-MM-DD)."
+		return "Ingres? tu fecha de nacimiento (AAAA-MM-DD)."
 	if not SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(fecha_limpia):
 		return "La fecha de nacimiento debe tener formato AAAA-MM-DD."
 	return ""
@@ -398,11 +454,11 @@ static func _fallo(fase: String, result: Dictionary, fallback: String) -> Dictio
 static func _exito(_auth: Dictionary, datos_online: Dictionary) -> Dictionary:
 	var datos_ok := bool(datos_online.get("ok", false))
 	var mensaje := (
-		"Sesión iniciada. Progreso sincronizado."
+		"Sesi?n iniciada. Progreso sincronizado."
 		if datos_ok
 		else (
-			"Sesión iniciada, pero no se pudo recuperar progreso online.\n"
-			+ "Podés jugar igual; el save local sigue activo."
+			"Sesi?n iniciada, pero no se pudo recuperar progreso online.\n"
+			+ "Pod?s jugar igual; el save local sigue activo."
 		)
 	)
 	return {

@@ -1,3 +1,6 @@
+# LEGACY — no usar en desarrollo diario.
+# El proyecto corre 100% contra Supabase (ver docs/SUPABASE_QUICKSTART.md).
+# Conservado solo para migración puntual de datos locales viejos.
 services:
   postgres:
     image: postgres:16-alpine

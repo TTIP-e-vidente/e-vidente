@@ -54,11 +54,32 @@ static func _asegurar_servidor_y_sesion() -> Dictionary:
 			"ok": false,
 			"mensaje": "Iniciá sesión para verificar tu mail.",
 		}
+
+	if BackendConfig.email_via_supabase():
+		var mail_ready := await ProfileMailSyncHelper.preflight_envio_verificacion()
+		if not bool(mail_ready.get("ok", false)):
+			return {
+				"ok": false,
+				"mensaje": str(mail_ready.get("mensaje", "Supabase Edge no disponible para verify.")),
+			}
+		var api := await AuthApi.verificar_servidor()
+		if not bool(api.get("ok", false)):
+			return {
+				"ok": false,
+				"mensaje": (
+					AuthApi.mensaje_check_conexion(
+						api,
+						"Express apagado — necesario para login. Verify va por Supabase."
+					)
+				),
+			}
+		return {"ok": true, "mensaje": ""}
+
 	var health: Dictionary = await AuthApi.verificar_servidor()
 	if not bool(health.get("ok", false)):
 		return {
 			"ok": false,
-			"mensaje": AuthApi.mensaje_error(
+			"mensaje": AuthApi.mensaje_check_conexion(
 				health,
 				"No hay conexión con el servidor. Levantá BACKEND con npm run dev."
 			),

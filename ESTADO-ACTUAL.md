@@ -53,7 +53,7 @@ npm run dev:staging
 
 Verificación: `npm run staging:verify` · Guía: [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md)
 
-**Backend local offline (Docker):** ver [BACKEND/README.md](BACKEND/README.md#postgres-local-docker--offline--tests).
+**Arquitectura dev:** Express → Supabase Postgres · OTP verify y jobs de mail → Edge Functions + Brevo · `pg_cron` en Supabase. No se usa Docker Compose ni Postgres local.
 
 ## Flujo celiaquía
 

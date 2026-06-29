@@ -1,8 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://ranking_detalle_perfil"]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://interface/leaderboard/RankingDetallePerfil.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="4_tabs"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ProgresoPuestoCard.tscn" id="5_card"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardMiniList.tscn" id="6_mini"]

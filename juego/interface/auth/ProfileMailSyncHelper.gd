@@ -69,17 +69,23 @@ static func validar_resultado_sync(form_mail: String, result: Dictionary) -> Dic
 
 
 static func resolver_mail_visible(payload: Dictionary, fallback: String = "") -> String:
+	var account_mail := str(payload.get("mail", "")).strip_edges()
+	var pending := ""
 	var verification: Variant = payload.get("verification", {})
 	if verification is Dictionary:
-		var pending := str((verification as Dictionary).get("pending_target_mail", "")).strip_edges()
-		if not pending.is_empty():
-			return pending
+		pending = str((verification as Dictionary).get("pending_target_mail", "")).strip_edges()
 
-	var mail := str(payload.get("mail", "")).strip_edges()
-	if not mail.is_empty():
-		return mail
+	if not account_mail.is_empty() and not pending.is_empty():
+		if not mails_coinciden(account_mail, pending):
+			return account_mail
+		return pending
 
-	mail = obtener_mail_servidor()
+	if not account_mail.is_empty():
+		return account_mail
+	if not pending.is_empty():
+		return pending
+
+	var mail := obtener_mail_servidor()
 	if not mail.is_empty():
 		return mail
 
@@ -113,6 +119,87 @@ static func puede_solicitar_verificacion(form_mail: String) -> Dictionary:
 			"mensaje": "Guardá el perfil para sincronizar el mail antes de verificar.",
 			"code": "MAIL_NOT_SYNCED",
 		}
+
+	return {"ok": true, "mensaje": "", "code": ""}
+
+
+static func preflight_envio_verificacion() -> Dictionary:
+	if BackendConfig.email_via_supabase():
+		return await _preflight_supabase_verificacion()
+	return await _preflight_express_verificacion()
+
+
+static func _preflight_supabase_verificacion() -> Dictionary:
+	var health := await AuthApi.verificar_salud_email()
+	if int(health.get("status", 0)) == 0:
+		return {
+			"ok": false,
+			"mensaje": "No se pudo conectar a Supabase Edge Functions. Revisá supabase_functions_url en backend.local.json.",
+			"code": "SUPABASE_OFFLINE",
+		}
+
+	var data: Variant = health.get("data", {})
+	if not data is Dictionary:
+		return {"ok": true, "mensaje": "", "code": ""}
+
+	var email_data := data as Dictionary
+	var configured := bool(email_data.get("delivery_configured", false))
+	if not configured:
+		var hints: Variant = email_data.get("hints", [])
+		var hint := ""
+		if hints is Array and not (hints as Array).is_empty():
+			hint = str((hints as Array)[0])
+		return {
+			"ok": false,
+			"mensaje": hint if not hint.is_empty() else "Brevo no configurado en Supabase Edge Functions.",
+			"code": "EMAIL_UNAVAILABLE",
+		}
+
+	return {"ok": true, "mensaje": "", "code": ""}
+
+
+static func _preflight_express_verificacion() -> Dictionary:
+	var health := await AuthApi.verificar_salud_email()
+	if int(health.get("status", 0)) == 0:
+		return {
+			"ok": false,
+			"mensaje": "No se pudo conectar al backend. Levantá BACKEND con npm run dev.",
+			"code": "BACKEND_OFFLINE",
+		}
+
+	var data: Variant = health.get("data", {})
+	if not data is Dictionary:
+		return {"ok": true, "mensaje": "", "code": ""}
+
+	var email_data := data as Dictionary
+	var enabled := bool(email_data.get("email_enabled", false))
+	var configured := bool(email_data.get("delivery_configured", false))
+
+	if enabled and not configured:
+		var hints: Variant = email_data.get("hints", [])
+		var hint := ""
+		if hints is Array and not (hints as Array).is_empty():
+			hint = str((hints as Array)[0])
+		return {
+			"ok": false,
+			"mensaje": (
+				hint
+				if not hint.is_empty()
+				else "El backend no tiene Brevo cargado. Reiniciá con npm run dev:restart en BACKEND."
+			),
+			"code": "EMAIL_UNAVAILABLE",
+		}
+
+	var probe: Variant = email_data.get("brevo_probe", {})
+	if enabled and configured and probe is Dictionary:
+		var probe_dict := probe as Dictionary
+		if probe_dict.has("ok") and not bool(probe_dict.get("ok", true)):
+			var probe_hint := str(probe_dict.get("hint", "")).strip_edges()
+			var probe_error := str(probe_dict.get("error", "")).strip_edges()
+			var mensaje := probe_hint if not probe_hint.is_empty() else probe_error
+			if mensaje.is_empty():
+				mensaje = "Brevo rechazó la conexión. Revisá BACKEND/docs/BREVO_SETUP.md."
+			return {"ok": false, "mensaje": mensaje, "code": "BREVO_PROBE_FAILED"}
 
 	return {"ok": true, "mensaje": "", "code": ""}
 

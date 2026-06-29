@@ -29,6 +29,7 @@ const MIGRATIONS_DIR = path.join(BACKEND_ROOT, 'migrations');
 
 interface CheckResult {
   ok: boolean;
+  warn?: boolean;
   message: string;
 }
 
@@ -38,6 +39,10 @@ function fail(message: string): CheckResult {
 
 function pass(message: string): CheckResult {
   return { ok: true, message };
+}
+
+function warn(message: string): CheckResult {
+  return { ok: true, warn: true, message };
 }
 
 async function expectedMigrationFilenames(): Promise<string[]> {
@@ -73,13 +78,91 @@ async function main(): Promise<void> {
     checks.push(pass(`Conexión OK (${describeConnection()}) — user: ${info.user}`));
 
   const extensionResult = await pool.query<{ extname: string }>(
-    `SELECT extname FROM pg_extension WHERE extname = 'pgcrypto';`
+    `SELECT extname FROM pg_extension WHERE extname IN ('pgcrypto', 'pg_cron', 'pg_net');`
   );
+  const installedExtensions = new Set(extensionResult.rows.map((row) => row.extname));
   checks.push(
-    extensionResult.rowCount
+    installedExtensions.has('pgcrypto')
       ? pass('Extensión pgcrypto instalada')
       : fail('Falta extensión pgcrypto')
   );
+  checks.push(
+    installedExtensions.has('pg_cron')
+      ? pass('Extensión pg_cron instalada (jobs Supabase)')
+      : fail('Falta extensión pg_cron — corré npm run setup:supabase')
+  );
+  checks.push(
+    installedExtensions.has('pg_net')
+      ? pass('Extensión pg_net instalada (HTTP desde cron)')
+      : fail('Falta extensión pg_net — corré npm run setup:supabase')
+  );
+
+  try {
+    const cronJobs = await pool.query<{ jobname: string }>(
+      `SELECT jobname FROM cron.job WHERE jobname LIKE 'evidente-%' ORDER BY jobname;`
+    );
+    const cronJobCount = cronJobs.rowCount ?? 0;
+    checks.push(
+      cronJobCount >= 4
+        ? pass(`Jobs pg_cron evidente: ${cronJobCount} (${cronJobs.rows.map((r) => r.jobname).join(', ')})`)
+        : fail(
+            `Jobs pg_cron incompletos: ${cronJobCount}/4 — corré npm run setup:supabase:cron`
+          )
+    );
+
+    const cronSettings = await pool.query<{ key: string }>(
+      `SELECT key FROM private.internal_cron_settings WHERE key IN ('backend_base_url', 'email_cron_secret');`
+    );
+    const settingKeys = new Set(cronSettings.rows.map((row) => row.key));
+    checks.push(
+      settingKeys.has('backend_base_url') && settingKeys.has('email_cron_secret')
+        ? pass('Config cron en Supabase (URL + secret)')
+        : fail('Faltan settings cron — npm run setup:supabase:cron')
+    );
+
+    const baseUrlRow = await pool.query<{ value: string }>(
+      `SELECT value FROM private.internal_cron_settings WHERE key = 'backend_base_url';`
+    );
+    const baseUrl = baseUrlRow.rows[0]?.value ?? '';
+    if (/localhost|127\.0\.0\.1/i.test(baseUrl)) {
+      checks.push(
+        warn(
+          `BACKEND_BASE_URL es local (${baseUrl}) — crons Supabase omiten envío; dev usa npm run dev`
+        )
+      );
+    } else if (baseUrl.length > 0) {
+      checks.push(pass(`BACKEND_BASE_URL cron: ${baseUrl}`));
+    }
+
+    try {
+      const lastRun = await pool.query<{ jobname: string; status: string; start_time: Date }>(
+        `
+          SELECT j.jobname, d.status, d.start_time
+          FROM cron.job_run_details d
+          INNER JOIN cron.job j ON j.jobid = d.jobid
+          WHERE j.jobname LIKE 'evidente-%'
+          ORDER BY d.start_time DESC
+          LIMIT 1;
+        `
+      );
+      const row = lastRun.rows[0];
+      if (row) {
+        checks.push(
+          pass(`Último pg_cron: ${row.jobname} ${row.status} @ ${row.start_time.toISOString()}`)
+        );
+      } else if (!/localhost|127\.0\.0\.1/i.test(baseUrl)) {
+        checks.push(warn('Aún no hay ejecuciones pg_cron registradas (normal tras el setup)'));
+      }
+    } catch {
+      checks.push(warn('cron.job_run_details no disponible'));
+    }
+  } catch (error) {
+    checks.push(
+      fail(
+        `Cron Supabase no verificado (¿migración 031?): ${error instanceof Error ? error.message : String(error)}`
+      )
+    );
+  }
 
   const expectedFiles = await expectedMigrationFilenames();
   const appliedResult = await pool.query<{ filename: string }>(
@@ -213,7 +296,8 @@ async function main(): Promise<void> {
 function printChecks(checks: CheckResult[]): void {
   console.log('\nChecks:');
   for (const check of checks) {
-    console.log(`  ${check.ok ? 'OK' : 'FAIL'} — ${check.message}`);
+    const label = check.ok ? (check.warn ? 'WARN' : 'OK') : 'FAIL';
+    console.log(`  ${label} — ${check.message}`);
   }
 }
 

@@ -1,10 +1,10 @@
-[gd_scene format=3 uid="uid://llnw5j83mj4c"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://bh345no747w0g" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
-[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_alro2"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="5_alro2"]
+[ext_resource type="Script" path="res://mapas/completo/capitulo_completado.gd" id="1_xxxk7"]
+[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_alro2"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_regular"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="5_alro2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
 bg_color = Color(0.9367016, 0.9367016, 0.93670154, 1)

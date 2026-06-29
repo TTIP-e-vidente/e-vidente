@@ -46,16 +46,17 @@ npm run supabase:bootstrap:full
 
 ---
 
-## 3. Desarrollo contra Supabase
+## 3. Desarrollo (un comando)
 
 ```powershell
-npm run staging:verify   # recomendado antes de demo
-npm run dev:staging
+cd BACKEND
+npm run dev              # = Supabase staging (antes: dev:staging)
 ```
 
-Godot usa `juego/config/backend.local.json` (generado automáticamente).
+Al terminar ves un banner **Listo para Godot** con API, DB remota y puerto.
+Luego abrís Godot → F5.
 
-Emails contra staging: `npm run validate:email-flow:staging` (requiere Brevo en `.env.staging`).
+Alias: `npm run dev:staging` · Verificación: `npm run integrate:status`
 
 ---
 

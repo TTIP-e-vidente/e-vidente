@@ -738,17 +738,20 @@ export async function markMailVerified(
   client: PoolClient,
   userId: string,
   mail: string
-): Promise<void> {
-  await client.query(
+): Promise<boolean> {
+  const normalizedMail = mail.trim().toLowerCase();
+  const result = await client.query(
     `
       UPDATE users
       SET mail_verified_at = now(), updated_at = now()
       WHERE id = $1
-        AND mail = $2
-        AND mail_verified_at IS NULL;
+        AND mail_verified_at IS NULL
+        AND lower(trim(coalesce(mail, ''))) = $2
+      RETURNING id;
     `,
-    [userId, mail]
+    [userId, normalizedMail]
   );
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function incrementVerificationFailedAttempts(codeId: string): Promise<number> {

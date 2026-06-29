@@ -40,6 +40,7 @@ function logWarn(event: string, details: Record<string, unknown>): void {
 export type SendVerificationResult =
   | 'sent'
   | 'skipped'
+  | 'dev_console'
   | 'rate_limited'
   | 'no_mail'
   | 'send_failed';
@@ -59,6 +60,8 @@ function verificationStatusMessage(
       return 'Ya hay un código activo. Revisá tu casilla o esperá para reenviar.';
     case 'send_failed':
       return 'No se pudo enviar el mail. Tocá Reenviar código para intentar de nuevo.';
+    case 'dev_console':
+      return 'Brevo no configurado. El código de 6 dígitos está en la consola del backend (buscá dev_code).';
     case 'skipped':
       return isDevelopmentEnvironment()
         ? 'Mail no configurado. En desarrollo, el código aparece en la consola del backend.'
@@ -95,10 +98,10 @@ export async function buildVerificationSendMeta(
 }> {
   const config = getVerificationConfig();
   const message = verificationStatusMessage(sendResult, config.expiresMinutes);
-  if (sendResult === 'sent') {
+  if (sendResult === 'sent' || sendResult === 'dev_console') {
     return {
       code_send_status: sendResult,
-      cooldown_seconds: config.cooldownSeconds,
+      cooldown_seconds: sendResult === 'sent' ? config.cooldownSeconds : 0,
       message,
       expires_minutes: config.expiresMinutes
     };
@@ -122,15 +125,22 @@ export async function buildVerificationSendMeta(
 export async function sendVerificationCode(
   userId: string,
   mail: string,
-  name: string
+  name: string,
+  options?: { bypassCooldown?: boolean }
 ): Promise<SendVerificationResult> {
-  const trimmedMail = mail.trim();
+  const trimmedMail = mail.trim().toLowerCase();
   if (!trimmedMail) {
     return 'no_mail';
   }
 
+  const lastDelivery = await emailRepository.findLatestDeliveryForUser(
+    userId,
+    'email_verification'
+  );
+  const lastSendFailed = lastDelivery?.status === 'failed';
+
   const lastCreatedAt = await emailRepository.getLastVerificationCodeCreatedAt(userId);
-  if (lastCreatedAt) {
+  if (lastCreatedAt && !options?.bypassCooldown && !lastSendFailed) {
     const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
     if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
       logWarn('rate_limited', { userId, secondsSinceLast: Math.floor(secondsSinceLast) });
@@ -168,12 +178,23 @@ export async function sendVerificationCode(
         mail: trimmedMail,
         codeId,
         code,
-        hint: 'EMAIL/Brevo no configurado; usá este código en desarrollo'
+        hint: 'Brevo no configurado — código solo en consola del backend'
       });
-      return 'sent';
+      logWarn('send_skipped', {
+        userId,
+        reason: 'email not configured',
+        codeId,
+        dev_code_logged: true
+      });
+      return 'dev_console';
     }
     await invalidateActiveVerificationCodes(userId);
-    logWarn('send_skipped', { userId, reason: 'email not configured', codeId });
+    logWarn('send_skipped', {
+      userId,
+      reason: 'email not configured',
+      codeId,
+      dev_code_logged: false
+    });
     return 'skipped';
   }
 
@@ -191,19 +212,29 @@ export async function sendVerificationCode(
     return 'sent';
   }
 
-  await invalidateActiveVerificationCodes(userId);
-
   if (deliveryResult === 'skipped') {
+    await invalidateActiveVerificationCodes(userId);
     logWarn('send_skipped', { userId, reason: 'email delivery skipped', codeId });
     return 'skipped';
   }
 
-  logWarn('send_failed', { userId, mail: trimmedMail, codeId });
+  logWarn('send_failed', {
+    userId,
+    mail: trimmedMail,
+    codeId,
+    hint: 'OTP conservado en DB — reintentá de inmediato (sin cooldown)'
+  });
   return 'send_failed';
 }
 
 export type ConfirmVerificationResult = {
-  status: 'verified' | 'invalid' | 'expired' | 'no_pending' | 'too_many_attempts';
+  status:
+    | 'verified'
+    | 'invalid'
+    | 'expired'
+    | 'no_pending'
+    | 'too_many_attempts'
+    | 'mail_sync_failed';
   attemptsRemaining?: number;
 };
 
@@ -248,7 +279,20 @@ export async function confirmVerificationCode(
   try {
     await client.query('BEGIN');
     await emailRepository.markVerificationCodeUsed(client, active.id);
-    await emailRepository.markMailVerified(client, userId, active.targetMail);
+    const markedVerified = await emailRepository.markMailVerified(
+      client,
+      userId,
+      active.targetMail
+    );
+    if (!markedVerified) {
+      await client.query('ROLLBACK');
+      logWarn('mail_sync_failed', {
+        userId,
+        targetMail: active.targetMail,
+        hint: 'El mail del código no coincide con el de la cuenta. Guardá el perfil e pedí un código nuevo.'
+      });
+      return { status: 'mail_sync_failed' };
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

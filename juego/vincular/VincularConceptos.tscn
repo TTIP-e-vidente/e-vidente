@@ -1,14 +1,14 @@
-[gd_scene format=3 uid="uid://cebyctwjqnut6"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://bdbfsjbwr8736" path="res://vincular/vincular_conceptos.gd" id="1_xh4rf"]
-[ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_y4o07"]
-[ext_resource type="PackedScene" uid="uid://ce668s10g001j" path="res://niveles/nivel_1/titulo_nivel.tscn" id="3_ayk73"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_ayk73"]
-[ext_resource type="PackedScene" uid="uid://dreulrv8mq1oa" path="res://vincular/concept_item.tscn" id="4_y4o07"]
-[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_ala0e"]
+[ext_resource type="Script" path="res://vincular/vincular_conceptos.gd" id="1_xh4rf"]
+[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_y4o07"]
+[ext_resource type="PackedScene" path="res://niveles/nivel_1/titulo_nivel.tscn" id="3_ayk73"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_ayk73"]
+[ext_resource type="PackedScene" path="res://vincular/concept_item.tscn" id="4_y4o07"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="6_ala0e"]
 [ext_resource type="PackedScene" path="res://interface/components/IndicadorProgresoDeJuego.tscn" id="7_hud00"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="8_continuar"]
-[ext_resource type="PackedScene" uid="uid://brkr6l6bnonfs" path="res://interface/Progress_Bar.tscn" id="9_n2qdd"]
+[ext_resource type="PackedScene" path="res://interface/Progress_Bar.tscn" id="9_n2qdd"]
 
 [node name="VincularConceptos" type="Node2D" unique_id=1460006904]
 script = ExtResource("1_xh4rf")

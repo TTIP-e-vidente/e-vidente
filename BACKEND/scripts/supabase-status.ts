@@ -54,7 +54,7 @@ async function main(): Promise<void> {
     console.log(`  Usuarios: ${userCount}`);
 
     console.log('\nRuntime local:');
-    console.log('  npm run dev:staging');
+    console.log('  npm run dev');
 
     console.log('\nDeploy cloud (Express + Supabase Postgres):');
     console.log('  1. Render/Railway/Docker → npm run start:prod');

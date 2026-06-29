@@ -1,6 +1,32 @@
 class_name AuthErrorFormatter
 extends RefCounted
 
+static func mensaje_desde_check_conexion(check: Dictionary, fallback: String = "") -> String:
+	var payload: Dictionary = {}
+	if check.get("result") is Dictionary:
+		payload = (check.get("result") as Dictionary).duplicate(true)
+	else:
+		payload = check.duplicate(true)
+	if check.has("phase"):
+		payload["phase"] = str(check.get("phase", "")).strip_edges()
+	return _mensaje_auth_generico(payload, fallback)
+
+
+static func resumen_conexion_ok(check: Dictionary) -> String:
+	var partes: PackedStringArray = PackedStringArray(["Conectado"])
+	var db: Variant = check.get("db", {})
+	if db is Dictionary and bool((db as Dictionary).get("remote", false)):
+		partes.append("Supabase")
+	var email: Variant = check.get("email", {})
+	if email is Dictionary:
+		var email_dict := email as Dictionary
+		if bool(email_dict.get("configured", false)):
+			partes.append("Brevo")
+		elif bool(email_dict.get("enabled", false)):
+			partes.append("Mail pendiente de config")
+	return " · ".join(partes)
+
+
 static func mensaje_auth(result: Dictionary, fallback: String = "") -> String:
 	return _mensaje_auth_generico(result, fallback)
 
@@ -22,9 +48,19 @@ static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> S
 				return "Esperá %d segundos antes de pedir otro código." % cooldown
 			return "Esperá un momento antes de pedir otro código."
 		"SEND_FAILED":
-			return "No se pudo enviar el código. Intentá de nuevo en unos minutos."
+			var detail := str(data.get("detail", result.get("detail", ""))).strip_edges()
+			if not detail.is_empty():
+				if "unrecognised IP" in detail or "unauthorized" in detail.to_lower():
+					return (
+						"No se pudo enviar el mail: Brevo bloqueó tu IP. "
+						+ "Agregala en Brevo → Security → Authorized IPs o desactivá la restricción."
+					)
+				return "No se pudo enviar el código: %s" % detail
+			return "No se pudo enviar el código. Intentá de nuevo."
 		"EMAIL_UNAVAILABLE":
-			return "El servicio de mail no está disponible. Contactá al equipo si persiste."
+			if bool(data.get("dev_code_in_logs", false)):
+				return "Brevo no está configurado. El código aparece en la consola del backend."
+			return "El servicio de mail no está disponible. Reiniciá el backend (npm run dev:restart)."
 		"INVALID_CODE":
 			var remaining := int(data.get("attempts_remaining", -1))
 			if remaining >= 0:
@@ -117,25 +153,41 @@ static func _mensaje_auth_generico(result: Dictionary, fallback: String = "") ->
 
 static func _mensaje_sin_conexion(
 		result_code: int, server_error: String, phase: String) -> String:
+	var base_url := BackendConfig.obtener_base_url()
 	if result_code == HTTPRequest.RESULT_CANT_CONNECT:
 		if phase == "db":
 			return (
-				"El backend responde pero Postgres no.\n"
-				+ "En BACKEND ejecutá: docker compose up -d"
+				"El backend responde pero Supabase no.\n"
+				+ "En BACKEND ejecutá: npm run dev:staging"
+			)
+		if base_url.contains(":3000"):
+			return (
+				"No hay servidor en %s (puerto viejo).\n" % base_url
+				+ "En BACKEND: npm run sync:godot-config:staging && npm run dev:staging"
 			)
 		return (
-			"No hay servidor en %s.\n" % BackendConfig.obtener_base_url()
+			"No hay servidor en %s.\n" % base_url
 			+ "1) cd BACKEND\n"
-			+ "2) docker compose up -d\n"
-			+ "3) npm run dev"
+			+ "2) npm run dev:staging\n"
+			+ "3) Volvé a Godot (F5)"
 		)
 	if result_code == HTTPRequest.RESULT_TIMEOUT:
-		return "El servidor tardó demasiado. ¿Está npm run dev corriendo?"
+		var hint := "¿Está npm run dev:staging corriendo en BACKEND?"
+		if base_url.contains(":3000"):
+			hint = (
+				"Puerto incorrecto (3000). En BACKEND:\n"
+				+ "  npm run sync:godot-config:staging\n"
+				+ "  npm run dev:staging"
+			)
+		return (
+			"El servidor tardó demasiado (%s).\n" % base_url
+			+ hint
+		)
 	if not server_error.is_empty():
 		return server_error
 	return (
-		"No se pudo conectar al backend.\n"
-		+ "Levantá BACKEND con docker compose up -d && npm run dev"
+		"No se pudo conectar al backend (%s).\n" % base_url
+		+ "Levantá BACKEND con: npm run dev"
 	)
 
 
@@ -161,7 +213,12 @@ static func _mensaje_por_codigo(code: String) -> String:
 		"UNEXPECTED_ERROR":
 			return (
 				"Error interno del servidor.\n"
-				+ "Verificá Postgres: cd BACKEND && docker compose up -d"
+				+ "Revisá la consola de BACKEND (npm run dev)."
+			)
+		"NOT_SUPABASE":
+			return (
+				"El backend no usa Supabase (Postgres local).\n"
+				+ "En BACKEND ejecutá: npm run dev"
 			)
 		_:
 			return ""
@@ -181,6 +238,6 @@ static func _mensaje_por_texto_servidor(server_error: String, status: int) -> St
 			if status >= 500:
 				return (
 					"Error del servidor (HTTP %d).\n" % status
-					+ "Revisá la consola de BACKEND y que Postgres esté activo."
+					+ "Revisá la consola de BACKEND (npm run dev)."
 				)
 			return server_error

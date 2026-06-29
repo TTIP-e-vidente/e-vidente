@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://r20wgxspx7pc"]
+[gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_7djtf"]

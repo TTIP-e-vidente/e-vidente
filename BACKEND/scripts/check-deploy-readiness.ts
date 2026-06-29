@@ -42,6 +42,7 @@ async function main(): Promise<void> {
     envPath,
     requirePublicUrl: production,
     requireBrevo: production && emailConfig.enabled,
+    requireEdgeFunctions: production,
   });
 
   console.log('Variables de entorno:');
@@ -112,8 +113,25 @@ async function main(): Promise<void> {
       process.exit(1);
     }
   } else if (production && publicUrl) {
-    console.log('\nCron: configurá secrets en GitHub (BACKEND_BASE_URL + EMAIL_CRON_SECRET)');
-    console.log('  Probar: npm run check:deploy:staging -- --test-cron');
+    console.log('\nCron: pg_cron en Supabase → Edge internal-job (migración 033)');
+    console.log('  Verificar: npm run check:edge (con el mismo ENV_FILE)');
+    console.log('  Leaderboard opcional: BACKEND_BASE_URL en secrets Edge + Express');
+  }
+
+  if (process.argv.includes('--edge') || production) {
+    console.log('\nEdge Functions:');
+    try {
+      execSync('npx ts-node scripts/check-edge-functions.ts', {
+        cwd: BACKEND_ROOT,
+        stdio: 'inherit',
+        env: process.env,
+      });
+    } catch {
+      if (production) {
+        process.exit(1);
+      }
+      console.log('  warn: Edge Functions no verificadas (deploy pendiente)');
+    }
   }
 
   console.log('\nDeploy readiness OK.');

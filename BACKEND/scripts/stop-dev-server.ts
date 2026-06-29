@@ -1,12 +1,11 @@
 import { execSync } from 'child_process';
-import dotenv from 'dotenv';
-import path from 'path';
+import { loadBackendEnv } from './lib/postgres-env';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+loadBackendEnv();
 
 const port = process.env.BACKEND_PORT ?? '3010';
 
-function getListeningPids(targetPort: string): number[] {
+export function getListeningPids(targetPort: string): number[] {
   try {
     const output = execSync(`netstat -ano | findstr ":${targetPort}"`, {
       encoding: 'utf8',
@@ -29,15 +28,27 @@ function getListeningPids(targetPort: string): number[] {
   }
 }
 
-const pids = getListeningPids(port);
-if (pids.length === 0) {
-  console.log(`Ningún proceso escuchando en el puerto ${port}.`);
-  process.exit(0);
+export function stopDevServerOnPort(targetPort: string = port): boolean {
+  const pids = getListeningPids(targetPort);
+  if (pids.length === 0) {
+    return false;
+  }
+
+  for (const pid of pids) {
+    console.log(`Deteniendo PID ${pid} en puerto ${targetPort}...`);
+    execSync(`taskkill /PID ${pid} /F`, { stdio: 'inherit' });
+  }
+
+  console.log(`Puerto ${targetPort} liberado.`);
+  return true;
 }
 
-for (const pid of pids) {
-  console.log(`Deteniendo PID ${pid} en puerto ${port}...`);
-  execSync(`taskkill /PID ${pid} /F`, { stdio: 'inherit' });
+function main(): void {
+  if (!stopDevServerOnPort(port)) {
+    console.log(`Ningún proceso escuchando en el puerto ${port}.`);
+  }
 }
 
-console.log(`Puerto ${port} liberado.`);
+if (require.main === module) {
+  main();
+}

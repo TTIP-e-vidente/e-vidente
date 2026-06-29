@@ -8,7 +8,12 @@
 import { loadBackendEnv } from './lib/postgres-env';
 import { emailConfig } from '../src/modules/email/email.config';
 
-const ALLOWED_JOBS = new Set(['streak-emails', 'retry-failed-emails', 'outbound-emails']);
+const ALLOWED_JOBS = new Set([
+  'streak-emails',
+  'retry-failed-emails',
+  'outbound-emails',
+  'refresh-leaderboard',
+]);
 
 async function main(): Promise<void> {
   loadBackendEnv();

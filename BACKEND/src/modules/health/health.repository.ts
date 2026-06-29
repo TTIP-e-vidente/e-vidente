@@ -16,3 +16,83 @@ export async function getAppliedMigrationCount(): Promise<number> {
   );
   return Number.parseInt(result.rows[0]?.count ?? '0', 10);
 }
+
+export type SupabaseCronJobRow = {
+  jobname: string;
+  schedule: string;
+  active: boolean;
+};
+
+export type SupabaseCronInvocationRow = {
+  job_path: string;
+  target_url: string | null;
+  skipped_reason: string | null;
+  request_id: string | null;
+  created_at: Date;
+};
+
+export async function getSupabaseCronSnapshot(): Promise<{
+  available: boolean;
+  backend_base_url?: string | null;
+  jobs: SupabaseCronJobRow[];
+  recent_invocations: SupabaseCronInvocationRow[];
+  last_pg_cron_run?: { jobname: string; status: string; start_time: Date } | null;
+}> {
+  try {
+    const settings = await query<{ key: string; value: string }>(
+      `SELECT key, value FROM private.internal_cron_settings WHERE key = 'backend_base_url';`
+    );
+    const backendBaseUrl = settings.rows[0]?.value ?? null;
+
+    const jobs = await query<SupabaseCronJobRow>(
+      `
+        SELECT jobname, schedule, active
+        FROM cron.job
+        WHERE jobname LIKE 'evidente-%'
+        ORDER BY jobname;
+      `
+    );
+
+    const invocations = await query<{
+      job_path: string;
+      target_url: string | null;
+      skipped_reason: string | null;
+      request_id: string | null;
+      created_at: Date;
+    }>(
+      `
+        SELECT job_path, target_url, skipped_reason, request_id::text, created_at
+        FROM private.cron_invocation_log
+        ORDER BY created_at DESC
+        LIMIT 8;
+      `
+    );
+
+    let lastPgCronRun: { jobname: string; status: string; start_time: Date } | null = null;
+    try {
+      const runDetails = await query<{ jobname: string; status: string; start_time: Date }>(
+        `
+          SELECT j.jobname, d.status, d.start_time
+          FROM cron.job_run_details d
+          INNER JOIN cron.job j ON j.jobid = d.jobid
+          WHERE j.jobname LIKE 'evidente-%'
+          ORDER BY d.start_time DESC
+          LIMIT 1;
+        `
+      );
+      lastPgCronRun = runDetails.rows[0] ?? null;
+    } catch {
+      lastPgCronRun = null;
+    }
+
+    return {
+      available: true,
+      backend_base_url: backendBaseUrl,
+      jobs: jobs.rows,
+      recent_invocations: invocations.rows,
+      last_pg_cron_run: lastPgCronRun
+    };
+  } catch {
+    return { available: false, jobs: [], recent_invocations: [] };
+  }
+}

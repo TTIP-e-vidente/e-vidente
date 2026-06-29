@@ -1,0 +1,14 @@
+# Edge Functions de verificación de email (JWT propio de Express, no Supabase Auth).
+project_id = "kpvjdzdynqfhqfiatwqz"
+
+[functions.verify-email-request]
+verify_jwt = false
+
+[functions.verify-email-confirm]
+verify_jwt = false
+
+[functions.verify-email-health]
+verify_jwt = false
+
+[functions.internal-job]
+verify_jwt = false
