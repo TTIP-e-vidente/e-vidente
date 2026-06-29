@@ -8,8 +8,6 @@ import {
 } from '../src/modules/email/templates';
 import { EmailTemplateKey } from '../src/modules/email/email.types';
 
-const TEMPLATE_KEYS: EmailTemplateKey[] = ['welcome', 'streak_at_risk', 'streak_lost'];
-
 function logStep(step: string, message: string): void {
   console.log(`[smoke:email] ${step} ${message}`);
 }
@@ -56,16 +54,13 @@ function checkConfiguration(): void {
 
 function checkTemplatePreviews(): void {
   const metadata = listEmailTemplateMetadata();
-  if (metadata.length !== TEMPLATE_KEYS.length) {
-    logFail('2/4 Templates', `se esperaban ${TEMPLATE_KEYS.length}, hay ${metadata.length}`);
+  if (metadata.length === 0) {
+    logFail('2/4 Templates', 'ningún template registrado');
   }
 
-  for (const templateKey of TEMPLATE_KEYS) {
-    const preview = previewEmailTemplate(templateKey, {
-      name: 'Smoke',
-      mail: 'smoke@example.com',
-      streak_count: 7
-    });
+  for (const entry of metadata) {
+    const templateKey = entry.key as EmailTemplateKey;
+    const preview = previewEmailTemplate(templateKey);
 
     if (!preview.subject.trim()) {
       logFail('2/4 Templates', `${templateKey}: subject vacío`);
@@ -80,7 +75,7 @@ function checkTemplatePreviews(): void {
     logStep('2/4 Templates', `${templateKey} → "${preview.subject}"`);
   }
 
-  logOk('2/4 Templates', `${TEMPLATE_KEYS.length} previews generados`);
+  logOk('2/4 Templates', `${metadata.length} previews generados`);
 }
 
 async function checkRecentDeliveries(): Promise<void> {

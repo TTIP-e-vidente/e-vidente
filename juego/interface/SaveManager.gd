@@ -707,7 +707,7 @@ func preparar_cuenta_online(usuario: Dictionary) -> void:
 	progress_loaded.emit(obtener_perfil_usuario_actual())
 
 
-func necesita_reset_remoto_antes_de_sync(progreso_online: Dictionary, username: String = "") -> bool:
+func necesita_reset_remoto_antes_de_sync(_progreso_online: Dictionary, username: String = "") -> bool:
 	return debe_forzar_reset_remoto_antes_de_sync(username)
 
 

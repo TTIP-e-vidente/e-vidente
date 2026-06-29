@@ -135,22 +135,20 @@ async function main(): Promise<void> {
 
     if (!dryRun && tablesWithRows.length > 0) {
       console.log('\nTruncando tablas destino (CASCADE)…');
-      await remoteClient.query('BEGIN');
-      try {
-        await truncatePublicTables(remoteClient, tablesWithRows);
-        await remoteClient.query('COMMIT');
-      } catch (error) {
-        await remoteClient.query('ROLLBACK');
-        throw error;
-      }
+      await truncatePublicTables(remoteClient, tablesWithRows);
     }
 
     let totalRows = 0;
     if (!dryRun) {
-      for (const table of tablesWithRows) {
-        const copied = await copyTable(localClient, remoteClient, table, true);
-        console.log(`  done ${table}: ${copied} filas`);
-        totalRows += copied;
+      await remoteClient.query('SET session_replication_role = replica');
+      try {
+        for (const table of tablesWithRows) {
+          const copied = await copyTable(localClient, remoteClient, table, true);
+          console.log(`  done ${table}: ${copied} filas`);
+          totalRows += copied;
+        }
+      } finally {
+        await remoteClient.query('SET session_replication_role = DEFAULT');
       }
     } else {
       for (const table of tablesWithRows) {

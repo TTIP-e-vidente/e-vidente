@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://lb_scene_001"]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="2_tabs"]
@@ -7,8 +7,8 @@
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardSkeleton.tscn" id="5_skeleton"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEmpty.tscn" id="6_empty"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEntryPeek.tscn" id="7_peek"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="8_font"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="9_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="8_font"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="9_spray"]
 
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPodium.tscn" id="10_podium"]
 

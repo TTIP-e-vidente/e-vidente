@@ -122,7 +122,8 @@ export async function buildVerificationSendMeta(
 export async function sendVerificationCode(
   userId: string,
   mail: string,
-  name: string
+  name: string,
+  options?: { bypassCooldown?: boolean }
 ): Promise<SendVerificationResult> {
   const trimmedMail = mail.trim();
   if (!trimmedMail) {
@@ -130,7 +131,7 @@ export async function sendVerificationCode(
   }
 
   const lastCreatedAt = await emailRepository.getLastVerificationCodeCreatedAt(userId);
-  if (lastCreatedAt) {
+  if (lastCreatedAt && !options?.bypassCooldown) {
     const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
     if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
       logWarn('rate_limited', { userId, secondsSinceLast: Math.floor(secondsSinceLast) });

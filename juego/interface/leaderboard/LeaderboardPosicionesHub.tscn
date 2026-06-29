@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://lb_posiciones_hub"]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardPosicionesHub.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.975, 0.972, 0.96, 1)

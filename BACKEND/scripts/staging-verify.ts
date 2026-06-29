@@ -86,7 +86,7 @@ function main(): void {
 
   console.log('\n═══════════════════════════════════════════');
   console.log('  Staging verify OK');
-  console.log('  Siguiente: npm run dev:staging');
+  console.log('  Siguiente: npm run dev');
   console.log('═══════════════════════════════════════════\n');
 }
 

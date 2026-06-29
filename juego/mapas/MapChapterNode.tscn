@@ -1,9 +1,9 @@
-[gd_scene format=3 uid="uid://ccolhcqvnrd8d"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://cn4bgnmdxhghx" path="res://mapas/LevelNode.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="3_icon"]
-[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="3_jebby"]
-[ext_resource type="PackedScene" uid="uid://o5sbuikyhiv5" path="res://mapas/components/NodeProgressBadge.tscn" id="4_badge"]
+[ext_resource type="Script" path="res://mapas/LevelNode.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="3_icon"]
+[ext_resource type="Shader" path="res://niveles/intro.gdshader" id="3_jebby"]
+[ext_resource type="PackedScene" path="res://mapas/components/NodeProgressBadge.tscn" id="4_badge"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a0hgu"]
 shader = ExtResource("3_jebby")

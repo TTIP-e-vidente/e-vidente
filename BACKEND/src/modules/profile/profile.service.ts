@@ -26,6 +26,7 @@ import {
   SendVerificationResult
 } from '../email/email.verification.service';
 import { sendMailChangedEmail } from '../email/email.service';
+import * as emailRepository from '../email/email.repository';
 
 export class PlayerError extends AppError {
   constructor(statusCode: number, code: string, message: string) {
@@ -238,6 +239,7 @@ export async function updatePlayerMe(
         }
       }
       updates.mail = validatedMail;
+      await emailRepository.invalidatePreviousVerificationCodes(client, userId);
     }
 
     updatedUserRow = await userRepository.updateUserProfile(client, userId, updates);
@@ -264,7 +266,9 @@ export async function updatePlayerMe(
   let verification: ProfileVerificationMeta | undefined;
 
   if (mailChanged && validatedMail && updatedUserRow) {
-    const sendResult = await sendVerificationCode(userId, validatedMail, updatedUserRow.name);
+    const sendResult = await sendVerificationCode(userId, validatedMail, updatedUserRow.name, {
+      bypassCooldown: true
+    });
     verification = await buildVerificationMeta(userId, sendResult, validatedMail);
 
     if (oldMail) {

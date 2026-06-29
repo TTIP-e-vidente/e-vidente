@@ -1,10 +1,10 @@
-[gd_scene format=3 uid="uid://beyesjpejg0a4"]
+[gd_scene format=3]
 
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="1_qna23"]
-[ext_resource type="Script" uid="uid://dt38ycwpwtmvw" path="res://mapas/stats_container.gd" id="1_vb1hf"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_0pyo7"]
-[ext_resource type="Texture2D" uid="uid://l5bvsd03ttd0" path="res://assets-sistema/interfaz/cuadrado-2x6-fino.png" id="2_ddg4m"]
-[ext_resource type="Texture2D" uid="uid://cg3gchbiimak0" path="res://assets-sistema/interfaz/cuadrado-2x2.png" id="2_uxrmc"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="1_qna23"]
+[ext_resource type="Script" path="res://mapas/stats_container.gd" id="1_vb1hf"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_0pyo7"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-2x6-fino.png" id="2_ddg4m"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-2x2.png" id="2_uxrmc"]
 
 [node name="StatsContainer" type="Container" unique_id=1924378753]
 anchors_preset = 8

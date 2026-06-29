@@ -1,10 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://b8k2streakloss01"]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://interface/components/StreakLossMessagePanel.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://d310wsm1t43q5" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_arrow"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_rubik"]
-[ext_resource type="FontFile" uid="uid://dvb0328q613p" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="5_italic"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_arrow"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_rubik"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="5_italic"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 28.0

@@ -68,7 +68,6 @@ func _ready() -> void:
 		_ranking_detalle.ver_tabla_completa_solicitada.connect(
 			func(scope: String) -> void: ranking_pressed.emit(scope)
 		)
-		_ranking_detalle.iniciar_sesion_solicitado.connect(func() -> void: login_pressed.emit())
 	if _logout_btn:
 		_logout_btn.pressed.connect(func(): logout_pressed.emit())
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
@@ -328,10 +327,10 @@ func _on_editar_perfil_o_login_presionado() -> void:
 	edit_profile_pressed.emit()
 
 
-func _configurar_preferencias_invitado(visible: bool) -> void:
+func _configurar_preferencias_invitado(mostrar_prefs: bool) -> void:
 	if is_instance_valid(_guest_preferences_panel):
-		_guest_preferences_panel.visible = visible
-	if not visible or not is_instance_valid(_checkbox_omitir_ranking):
+		_guest_preferences_panel.visible = mostrar_prefs
+	if not mostrar_prefs or not is_instance_valid(_checkbox_omitir_ranking):
 		return
 	if is_instance_valid(_hint_omitir_ranking):
 		_hint_omitir_ranking.text = LeaderboardFormat.hint_preferencia_omitir_ranking_perfil()

@@ -31,7 +31,11 @@ var _email_notifications_hint_label: Label
 var _mail_verify_status_label: Label
 var _mail_verify_hint_label: Label
 var _button_verify_email: Button
+var _button_save_profile: Button
+var _form_hint_label: Label
 var _perfil_online_sucio := false
+var _guardando_perfil := false
+var _suprimir_marca_sucio := false
 
 func _ready() -> void:
 	_cachear_nodos_ui()
@@ -43,16 +47,30 @@ func _ready() -> void:
 	email_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
 	email_input.text_changed.connect(_marcar_perfil_online_sucio)
 	email_input.text_changed.connect(_on_email_input_cambiado)
+	email_input.text_changed.connect(_actualizar_estado_boton_guardar)
+	username_input.text_changed.connect(_actualizar_estado_boton_guardar)
+	birth_date_input.text_changed.connect(_actualizar_estado_boton_guardar)
 	username_input.focus_exited.connect(_intentar_autosave)
 	birth_date_input.focus_exited.connect(_intentar_autosave)
 	email_input.focus_exited.connect(_intentar_autosave)
 	if is_instance_valid(_email_notifications_checkbox):
 		_email_notifications_checkbox.toggled.connect(_on_notificaciones_mail_cambiadas)
+		_email_notifications_checkbox.toggled.connect(_actualizar_estado_boton_guardar)
 	_cargar_estado_perfil_actual()
-	_establecer_feedback("Los cambios se guardan automáticamente.", true)
+	if BackendSession.esta_logueado():
+		_establecer_feedback("Cargando perfil desde Supabase...", true)
+	else:
+		_establecer_feedback("Los cambios se guardan localmente.", true)
 	BackendSession.session_expired.connect(_on_sesion_expirada)
+	call_deferred("_inicializar_perfil_async")
 	call_deferred("_sincronizar_verificacion_mail_desde_servidor")
 	call_deferred("_procesar_retorno_verificacion_mail")
+
+
+func _inicializar_perfil_async() -> void:
+	if BackendSession.esta_logueado():
+		await _cargar_perfil_desde_servidor_si_online()
+	_actualizar_estado_boton_guardar()
 
 
 func _on_sesion_expirada() -> void:
@@ -120,6 +138,10 @@ func _cachear_nodos_ui() -> void:
 		"AvatarRow/ClearAvatarButton"
 	) as Button
 	feedback_label = form_content.get_node("RegisterMessage") as Label
+	_button_save_profile = $RegisterButton as Button
+	if not _button_save_profile.pressed.is_connected(_on_boton_guardar_perfil_presionado):
+		_button_save_profile.pressed.connect(_on_boton_guardar_perfil_presionado)
+	_form_hint_label = form_content.get_node("FormHint") as Label
 
 
 func _configurar_ui_estatica() -> void:
@@ -128,20 +150,43 @@ func _configurar_ui_estatica() -> void:
 	email_input.placeholder_text = "Mail (opcional)"
 	back_button.text = ""
 	back_button.tooltip_text = "Volver"
-	back_button.z_index = 100
 	back_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	move_child(back_button, -1)
+	_elevar_boton_volver()
 	if not back_button.pressed.is_connected(_on_boton_volver_presionado):
 		back_button.pressed.connect(_on_boton_volver_presionado)
+	_centrar_boton_guardar_perfil()
+	if not _button_save_profile.resized.is_connected(_centrar_boton_guardar_perfil):
+		_button_save_profile.resized.connect(_centrar_boton_guardar_perfil)
+
+
+func _centrar_boton_guardar_perfil() -> void:
+	if not is_instance_valid(_button_save_profile):
+		return
+	var btn_size := _button_save_profile.size
+	if btn_size.x <= 0.0 or btn_size.y <= 0.0:
+		return
+	_button_save_profile.pivot_offset = btn_size * 0.5
+
+
+func _elevar_boton_volver() -> void:
+	if back_button.get_parent() is CanvasLayer:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "BackButtonLayer"
+	layer.layer = 90
+	add_child(layer)
+	back_button.reparent(layer)
 
 
 func _cargar_estado_perfil_actual() -> void:
 	var username := SaveManager.obtener_nombre_usuario_actual()
+	_suprimir_marca_sucio = true
 	username_input.text = "" if username == SaveManager.DEFAULT_PROFILE_NAME else username
 	var birth_date := SaveManager.obtener_fecha_nacimiento_usuario_actual()
 	birth_date_input.text = birth_date
 	email_input.text = SaveManager.obtener_email_usuario_actual()
 	avatar_path_input.text = SaveManager.obtener_ruta_avatar_usuario_actual()
+	_suprimir_marca_sucio = false
 	_configurar_checkbox_notificaciones_mail()
 	_actualizar_estado_verificacion_mail()
 	_perfil_online_sucio = false
@@ -193,22 +238,184 @@ func _on_boton_limpiar_avatar_presionado() -> void:
 
 
 func _marcar_perfil_online_sucio(_text: String = "") -> void:
-	_perfil_online_sucio = true
+	if _suprimir_marca_sucio:
+		return
+	if not BackendSession.esta_logueado():
+		_perfil_online_sucio = true
+	_actualizar_estado_boton_guardar()
+
+
+func _cargar_perfil_desde_servidor_si_online() -> void:
+	if not BackendSession.esta_logueado():
+		return
+	var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
+	if not bool(refresh.get("ok", false)):
+		_establecer_feedback(
+			ProfileMailSyncHelperScript.mensaje_error(
+				{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"}
+			),
+			false
+		)
+		return
+	_aplicar_datos_servidor_al_formulario()
+	_persistir_formulario_en_save_local()
+	_perfil_online_sucio = false
+	_actualizar_estado_verificacion_mail()
+	_configurar_checkbox_notificaciones_mail()
+	_establecer_feedback("Perfil sincronizado con Supabase.", true)
+
+
+func _aplicar_datos_servidor_al_formulario() -> void:
+	var user := AuthApi.obtener_usuario_online()
+	_suprimir_marca_sucio = true
+	var display_name := str(user.get("name", "")).strip_edges()
+	if display_name.is_empty():
+		display_name = str(user.get("username", "")).strip_edges()
+	if display_name != AuthApi.obtener_usuario():
+		username_input.text = display_name
+	var mail := str(user.get("mail", "")).strip_edges()
+	if not mail.is_empty():
+		email_input.text = mail
+	var birth := str(user.get("birth_date", "")).strip_edges()
+	if not birth.is_empty():
+		birth_date_input.text = birth
+	_suprimir_marca_sucio = false
+	_refrescar_controles_avatar()
+	_refrescar_vista_previa_desde_formulario()
+
+
+func _persistir_formulario_en_save_local() -> void:
+	SaveManager.actualizar_perfil_local(
+		username_input.text.strip_edges(),
+		birth_date_input.text.strip_edges(),
+		email_input.text.strip_edges(),
+		avatar_path_input.text
+	)
+
+
+func _validar_fecha_nacimiento_perfil() -> String:
+	var birth_date_text := birth_date_input.text.strip_edges()
+	if birth_date_text.is_empty():
+		return ""
+	if SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(birth_date_text):
+		return ""
+	return "La fecha de nacimiento debe tener formato AAAA-MM-DD o quedar vacía."
+
+
+func _hay_cambios_respecto_servidor() -> bool:
+	if not BackendSession.esta_logueado():
+		return _perfil_online_sucio
+	return _formulario_difiere_del_servidor()
+
+
+func _formulario_difiere_del_servidor() -> bool:
+	var user := AuthApi.obtener_usuario_online()
+	var form_mail := email_input.text.strip_edges()
+	if ProfileMailSyncHelperScript.formulario_difiere_del_servidor(form_mail):
+		return true
+	var clean_name := username_input.text.strip_edges()
+	if clean_name.is_empty():
+		clean_name = AuthApi.obtener_usuario()
+	var server_name := str(user.get("name", user.get("username", ""))).strip_edges()
+	if clean_name != server_name:
+		return true
+	var clean_birth := birth_date_input.text.strip_edges()
+	var server_birth := str(user.get("birth_date", "")).strip_edges()
+	if clean_birth != server_birth:
+		return true
+	if is_instance_valid(_email_notifications_checkbox):
+		var server_notif := bool(user.get("email_notifications_enabled", false))
+		if _email_notifications_checkbox.button_pressed != server_notif:
+			return true
+	return false
+
+
+func _actualizar_estado_boton_guardar(_ignored: Variant = null) -> void:
+	if not is_instance_valid(_button_save_profile):
+		return
+	var online := BackendSession.esta_logueado()
+	if is_instance_valid(_form_hint_label):
+		_form_hint_label.visible = online
+		if online:
+			_form_hint_label.text = (
+				"Editá tus datos y tocá «Guardar perfil» para sincronizar con Supabase."
+			)
+	var pendiente := online and _formulario_difiere_del_servidor() and not _guardando_perfil
+	if online:
+		_button_save_profile.text = (
+			"Guardar perfil · sin subir" if pendiente else "Guardar perfil"
+		)
+	else:
+		_button_save_profile.text = "Guardar perfil"
+	_button_save_profile.disabled = _guardando_perfil
+
+
+func _on_boton_guardar_perfil_presionado() -> void:
+	if _guardando_perfil:
+		return
+	await _guardar_perfil_completo(true, true)
+
+
+func _guardar_perfil_completo(forzar_supabase: bool, forzar_mail: bool) -> Dictionary:
+	if _guardando_perfil:
+		return {"ok": false}
+	var error_fecha := _validar_fecha_nacimiento_perfil()
+	if not error_fecha.is_empty():
+		_establecer_feedback(error_fecha, false)
+		return {"ok": false}
+
+	_guardando_perfil = true
+	_actualizar_estado_boton_guardar()
+
+	var save_result := SaveManager.actualizar_perfil_local(
+		username_input.text.strip_edges(),
+		birth_date_input.text.strip_edges(),
+		email_input.text.strip_edges(),
+		avatar_path_input.text
+	)
+	if not bool(save_result.get("ok", false)):
+		_guardando_perfil = false
+		_actualizar_estado_boton_guardar()
+		_establecer_feedback(str(save_result.get("message", "Error al guardar")), false)
+		return {"ok": false}
+
+	var persisted_avatar := SaveManager.obtener_ruta_avatar_usuario_actual()
+	if not persisted_avatar.is_empty() and persisted_avatar != avatar_path_input.text:
+		avatar_path_input.text = persisted_avatar
+		_refrescar_controles_avatar()
+
+	if BackendSession.esta_logueado():
+		var debe_sync := (
+			forzar_supabase
+			or _hay_cambios_respecto_servidor()
+			or forzar_mail
+		)
+		if debe_sync:
+			_establecer_feedback("Guardando en Supabase...", true)
+			var sync := await _sincronizar_perfil_al_backend(false, forzar_mail)
+			if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
+				await _subir_avatar_al_backend(true)
+			_guardando_perfil = false
+			_actualizar_estado_boton_guardar()
+			return sync
+		_establecer_feedback("Nada que sincronizar — ya coincide con Supabase.", true)
+	else:
+		_establecer_feedback("Perfil guardado localmente.", true)
+
+	_guardando_perfil = false
+	_actualizar_estado_boton_guardar()
+	return {"ok": true}
 
 
 func _intentar_autosave() -> void:
-	var birth_date_text := birth_date_input.text.strip_edges()
-	if not birth_date_text.is_empty():
-		if not SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(birth_date_text):
-			_establecer_feedback(
-				"La fecha de nacimiento debe tener formato AAAA-MM-DD o quedar vacía.",
-				false
-			)
-			return
+	var error_fecha := _validar_fecha_nacimiento_perfil()
+	if not error_fecha.is_empty():
+		_establecer_feedback(error_fecha, false)
+		return
 
 	var save_result: Dictionary = SaveManager.actualizar_perfil_local(
 		username_input.text.strip_edges(),
-		birth_date_text,
+		birth_date_input.text.strip_edges(),
 		email_input.text.strip_edges(),
 		avatar_path_input.text
 	)
@@ -218,50 +425,30 @@ func _intentar_autosave() -> void:
 		if not persisted_avatar.is_empty() and persisted_avatar != avatar_path_input.text:
 			avatar_path_input.text = persisted_avatar
 			_refrescar_controles_avatar()
-		if BackendSession.esta_logueado():
-			var refresh := await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
-			if not bool(refresh.get("ok", false)):
-				_establecer_feedback(
-					ProfileMailSyncHelperScript.mensaje_error(
-						{"ok": false, "status": 0, "code": "PROFILE_REFRESH_FAILED"}
-					),
-					false
-				)
-				return
-			var form_mail := email_input.text.strip_edges()
-			var necesita_sync_online := (
-				_perfil_online_sucio
-				or ProfileMailSyncHelperScript.formulario_difiere_del_servidor(form_mail)
+		if BackendSession.esta_logueado() and _hay_cambios_respecto_servidor():
+			_establecer_feedback(
+				"Cambios locales guardados. Tocá «Guardar perfil» para subir a Supabase.",
+				true
 			)
-			if not necesita_sync_online:
-				_establecer_feedback("Datos guardados correctamente.", true)
-				return
-			_establecer_feedback("Guardando datos...", true)
-			await _sincronizar_perfil_al_backend()
-		else:
+			_actualizar_estado_boton_guardar()
+		elif not BackendSession.esta_logueado():
 			_establecer_feedback("Datos guardados correctamente.", true)
 	else:
 		_establecer_feedback(str(save_result.get("message", "Error al guardar")), false)
 
 
 func _on_boton_registrar_presionado() -> void:
-	_intentar_autosave()
-	if BackendSession.esta_logueado() and not avatar_path_input.text.strip_edges().is_empty():
-		_subir_avatar_al_backend()
-	if SaveLocalProfileHelperScript.es_fecha_nacimiento_valida(
-		birth_date_input.text.strip_edges()
-	) or birth_date_input.text.strip_edges().is_empty():
-		_ir_a_escena_retorno()
+	await _on_boton_guardar_perfil_presionado()
 
 
 func _on_boton_login_presionado() -> void:
-	_intentar_autosave()
-	_ir_a_escena_retorno()
+	await _guardar_perfil_completo(BackendSession.esta_logueado(), true)
+	await _ir_a_escena_retorno()
 
 
 func _on_boton_volver_presionado() -> void:
 	_intentar_autosave()
-	_ir_a_escena_retorno()
+	await _ir_a_escena_retorno()
 
 
 func _refrescar_vista_previa_desde_formulario(_text: String = "") -> void:
@@ -287,11 +474,11 @@ func _actualizar_etiquetas_vista_previa(
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
 	if BackendSession.esta_logueado() and not email.is_empty():
 		if ProfileMailSyncHelperScript.formulario_difiere_del_servidor(email):
-			profile_email_preview_label.text += " · sin sincronizar"
+			profile_email_preview_label.text += " · sin subir"
 		elif _mail_esta_verificado():
 			profile_email_preview_label.text += " · verificado"
 		else:
-			profile_email_preview_label.text += " · pendiente"
+			profile_email_preview_label.text += " · falta verificar"
 	var age_preview := SaveLocalProfileHelperScript.calcular_edad_desde_fecha_nacimiento(
 		birth_date_text
 	)
@@ -373,13 +560,32 @@ func _sincronizar_perfil_al_backend(
 		_perfil_online_sucio = false
 		if not bool(result.get("skipped", false)):
 			AuthApi.aplicar_progreso_online_a_guardado_local()
+			_aplicar_mail_servidor_al_formulario()
+			_persistir_formulario_en_save_local()
+		_refrescar_vista_previa_desde_formulario()
 		_actualizar_estado_verificacion_mail()
 		_actualizar_checkbox_notificaciones_habilitado()
+		_actualizar_estado_boton_guardar()
 		var overlay_shown := _manejar_verificacion_respuesta_perfil(result, silencioso)
 		if not silencioso and not overlay_shown:
 			_establecer_feedback("Datos guardados correctamente.", true)
 		return {"ok": true, "overlay_shown": overlay_shown}
+	_refrescar_vista_previa_desde_formulario()
+	_actualizar_estado_verificacion_mail()
+	_actualizar_estado_boton_guardar()
 	return _responder_error_sync_perfil(result, silencioso)
+
+
+func _aplicar_mail_servidor_al_formulario() -> void:
+	if not BackendSession.esta_logueado():
+		return
+	var mail := ProfileMailSyncHelperScript.obtener_mail_servidor()
+	if mail.is_empty():
+		return
+	_suprimir_marca_sucio = true
+	email_input.text = mail
+	_suprimir_marca_sucio = false
+	_refrescar_vista_previa_desde_formulario()
 
 
 func _responder_error_sync_perfil(result: Dictionary, silencioso: bool) -> Dictionary:
@@ -399,6 +605,10 @@ func _responder_error_sync_perfil(result: Dictionary, silencioso: bool) -> Dicti
 	var mensaje := ProfileMailSyncHelperScript.mensaje_error(result)
 	if mensaje.is_empty():
 		mensaje = "No se pudo sincronizar. Revisá los datos."
+	if str(result.get("code", "")) == "DUPLICATE_MAIL" and BackendSession.esta_logueado():
+		var mail_servidor := ProfileMailSyncHelperScript.obtener_mail_servidor()
+		if not mail_servidor.is_empty():
+			mensaje += " En Supabase figura: %s." % mail_servidor
 	if status_code == 0 and str(result.get("code", "")) != "PROFILE_REFRESH_FAILED":
 		mensaje = "Guardado localmente. Se sincronizará cuando haya conexión."
 		_establecer_feedback(mensaje, true)
@@ -409,7 +619,9 @@ func _responder_error_sync_perfil(result: Dictionary, silencioso: bool) -> Dicti
 
 
 func _manejar_verificacion_respuesta_perfil(result: Dictionary, silencioso: bool) -> bool:
+	var form_mail := email_input.text.strip_edges()
 	var evaluacion := AuthApi.evaluar_respuesta_verificacion(result)
+	evaluacion = AuthApi.evaluacion_con_mail_formulario(evaluacion, form_mail)
 	if not bool(evaluacion.get("show_overlay", false)):
 		if not silencioso and not str(evaluacion.get("feedback", "")).is_empty():
 			_establecer_feedback(str(evaluacion.get("feedback", "")), bool(evaluacion.get("feedback_ok", false)))
@@ -466,7 +678,7 @@ func _on_notificaciones_mail_cambiadas(pressed: bool) -> void:
 	_marcar_perfil_online_sucio()
 	_actualizar_checkbox_notificaciones_habilitado()
 	if BackendSession.esta_logueado():
-		_intentar_autosave()
+		_establecer_feedback("Tocá «Guardar perfil» para sincronizar notificaciones.", true)
 
 
 func _mail_editado_sin_guardar_en_servidor() -> bool:
@@ -531,12 +743,12 @@ func _actualizar_estado_verificacion_mail() -> void:
 		var sin_sync := _mail_editado_sin_guardar_en_servidor()
 		if sin_sync:
 			_mail_verify_status_label.text = (
-				"Guardá el perfil para sincronizar el mail antes de verificar."
+				"El mail se sincronizará al tocar «Verificar mail»."
 			)
 		_button_verify_email.visible = true
-		_button_verify_email.disabled = sin_sync
+		_button_verify_email.disabled = false
 		_button_verify_email.tooltip_text = (
-			"Primero guardá el perfil para sincronizar el mail."
+			"Guardaremos el mail en Supabase y te enviaremos el código."
 			if sin_sync
 			else "Te enviamos un código de 6 dígitos a tu casilla."
 		)
@@ -546,6 +758,19 @@ func _on_boton_verificar_mail_presionado() -> void:
 	if not BackendSession.esta_logueado():
 		_establecer_feedback("Iniciá sesión para verificar tu mail.", false)
 		return
+
+	if _hay_cambios_respecto_servidor():
+		_establecer_feedback("Guardando mail en Supabase...", true)
+		var sync_previo := await _guardar_perfil_completo(true, true)
+		if not bool(sync_previo.get("ok", false)):
+			var msg_previo := ProfileMailSyncHelperScript.mensaje_error(sync_previo)
+			_establecer_feedback(
+				msg_previo if not msg_previo.is_empty() else "No se pudo guardar el mail antes de verificar.",
+				false
+			)
+			return
+		if bool(sync_previo.get("overlay_shown", false)):
+			return
 
 	var form_mail := email_input.text.strip_edges()
 	var precheck := ProfileMailSyncHelperScript.puede_solicitar_verificacion(form_mail)
@@ -558,24 +783,14 @@ func _on_boton_verificar_mail_presionado() -> void:
 		_actualizar_estado_verificacion_mail()
 		return
 
-	_establecer_feedback("Guardando mail...", true)
-	var sync := await _sincronizar_perfil_al_backend(true, true)
-	if not bool(sync.get("ok", false)):
-		var msg := ProfileMailSyncHelperScript.mensaje_error(sync)
-		_establecer_feedback(
-			msg if not msg.is_empty() else "No se pudo guardar el mail antes de verificar.",
-			false
-		)
-		return
-	if bool(sync.get("overlay_shown", false)):
-		return
-
 	_button_verify_email.disabled = true
 	_establecer_feedback("Enviando código de verificación...", true)
 	var mail_form := email_input.text.strip_edges()
+	await ProfileMailSyncHelperScript.refrescar_perfil_servidor()
 	var res := await AuthApi.solicitar_codigo_verificacion(mail_form)
 	_button_verify_email.disabled = false
 	var evaluacion := AuthApi.evaluar_respuesta_verificacion(res)
+	evaluacion = AuthApi.evaluacion_con_mail_formulario(evaluacion, mail_form)
 	if not str(evaluacion.get("feedback", "")).is_empty():
 		_establecer_feedback(str(evaluacion.get("feedback", "")), bool(evaluacion.get("feedback_ok", false)))
 	if bool(evaluacion.get("show_overlay", false)):
@@ -664,12 +879,19 @@ func _establecer_feedback(message: String, success: bool) -> void:
 	feedback_label.modulate = MiPaleta.FEEDBACK_OK if success else MiPaleta.FEEDBACK_ERROR
 
 
-func _deberia_volver_a_intro() -> bool:
-	return get_tree().root.get_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE) == INTRO_SCENE
-
-
 func _ir_a_escena_retorno() -> void:
-	if _deberia_volver_a_intro():
-		GameSceneRouter.go_to_main_menu(get_tree())
+	var return_scene := str(
+		get_tree().root.get_meta(PROFILE_RETURN_SCENE_META, ARCHIVERO_SCENE)
+	).strip_edges()
+	if return_scene.is_empty():
+		return_scene = ARCHIVERO_SCENE
+	if return_scene == INTRO_SCENE:
+		await GameSceneRouter.go_to_main_menu(get_tree())
 		return
-	GameSceneRouter.go_to_mode_selector(get_tree())
+	if return_scene == ARCHIVERO_SCENE:
+		await GameSceneRouter.go_to_mode_selector(get_tree())
+		return
+	if ResourceLoader.exists(return_scene):
+		GameSceneRouter.ir_a_escena_segura(get_tree(), return_scene, ARCHIVERO_SCENE)
+		return
+	await GameSceneRouter.go_to_mode_selector(get_tree())

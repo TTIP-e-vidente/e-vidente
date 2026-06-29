@@ -69,17 +69,23 @@ static func validar_resultado_sync(form_mail: String, result: Dictionary) -> Dic
 
 
 static func resolver_mail_visible(payload: Dictionary, fallback: String = "") -> String:
+	var account_mail := str(payload.get("mail", "")).strip_edges()
+	var pending := ""
 	var verification: Variant = payload.get("verification", {})
 	if verification is Dictionary:
-		var pending := str((verification as Dictionary).get("pending_target_mail", "")).strip_edges()
-		if not pending.is_empty():
-			return pending
+		pending = str((verification as Dictionary).get("pending_target_mail", "")).strip_edges()
 
-	var mail := str(payload.get("mail", "")).strip_edges()
-	if not mail.is_empty():
-		return mail
+	if not account_mail.is_empty() and not pending.is_empty():
+		if not mails_coinciden(account_mail, pending):
+			return account_mail
+		return pending
 
-	mail = obtener_mail_servidor()
+	if not account_mail.is_empty():
+		return account_mail
+	if not pending.is_empty():
+		return pending
+
+	var mail := obtener_mail_servidor()
 	if not mail.is_empty():
 		return mail
 

@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://8mlb875rgn"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://crve8k6tqymjf" path="res://interface/components/Racha.gd" id="1_racha_script"]
-[ext_resource type="Texture2D" uid="uid://cp3if4v0woi4g" path="res://assets-sistema/racha-diaria/racha-diaria-1.png" id="2_ua6bm"]
-[ext_resource type="FontFile" uid="uid://b3n6r5hls8unw" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_4icum"]
+[ext_resource type="Script" path="res://interface/components/Racha.gd" id="1_racha_script"]
+[ext_resource type="Texture2D" path="res://assets-sistema/racha-diaria/racha-diaria-1.png" id="2_ua6bm"]
+[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_4icum"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4icum"]
 

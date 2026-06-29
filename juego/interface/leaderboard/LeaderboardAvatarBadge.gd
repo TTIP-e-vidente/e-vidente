@@ -69,7 +69,7 @@ func _construir_nodos() -> void:
 
 	var estilo := StyleBoxFlat.new()
 	estilo.bg_color = MiPaleta.VERDE_BOSQUE
-	estilo.set_corner_radius_all(tam / 2)
+	estilo.set_corner_radius_all(int(tam / 2.0))
 	_fondo.add_theme_stylebox_override("panel", estilo)
 
 	var center := CenterContainer.new()
@@ -88,7 +88,7 @@ func _construir_nodos() -> void:
 	var rubik: Font = load(RUBIK_FONT_PATH) as Font
 	if rubik != null:
 		_inicial.add_theme_font_override("font", rubik)
-	_inicial.add_theme_font_size_override("font_size", maxi(12, tam / 2 - 2))
+	_inicial.add_theme_font_size_override("font_size", maxi(12, int(tam / 2.0) - 2))
 	_inicial.add_theme_color_override("font_color", Color.WHITE)
 	center.add_child(_inicial)
 

@@ -23,9 +23,6 @@ func _ready() -> void:
 	if is_instance_valid(_continuar_btn) and not _continuar_btn.pressed.is_connected(continuar_al_mapa):
 		_continuar_btn.pressed.connect(continuar_al_mapa)
 
-	if is_instance_valid(_card_ranking):
-		_card_ranking.iniciar_sesion_solicitado.connect(_al_iniciar_sesion)
-
 	call_deferred("_cargar_ranking")
 
 

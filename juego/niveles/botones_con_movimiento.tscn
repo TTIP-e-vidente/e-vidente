@@ -1,10 +1,10 @@
-[gd_scene format=3 uid="uid://d28gt7lkl6ff4"]
+[gd_scene format=3]
 
-[ext_resource type="Shader" uid="uid://cwemvkdk6k8qn" path="res://niveles/intro.gdshader" id="1_b6oox"]
-[ext_resource type="Texture2D" uid="uid://chv5gu3o41pr3" path="res://assets-sistema/interfaz/cuadrado-2x2----1.png" id="2_r8t42"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_fmovk"]
-[ext_resource type="Script" uid="uid://bddtbmjjaef31" path="res://niveles/botones_con_movimiento.gd" id="3_r8t42"]
-[ext_resource type="Texture2D" uid="uid://3dd0s1s85ksr" path="res://assets-sistema/selector/diabetes-selector.png" id="4_r8t42"]
+[ext_resource type="Shader" path="res://niveles/intro.gdshader" id="1_b6oox"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-2x2----1.png" id="2_r8t42"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_fmovk"]
+[ext_resource type="Script" path="res://niveles/botones_con_movimiento.gd" id="3_r8t42"]
+[ext_resource type="Texture2D" path="res://assets-sistema/selector/diabetes-selector.png" id="4_r8t42"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_544v7"]
 shader = ExtResource("1_b6oox")

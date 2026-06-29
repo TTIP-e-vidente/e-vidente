@@ -5,7 +5,6 @@ extends PanelContainer
 
 
 signal ver_tabla_completa_solicitada(scope: String)
-signal iniciar_sesion_solicitado
 
 
 @onready var _label_invitado: Label = %LabelInvitado
@@ -27,7 +26,6 @@ func _ready() -> void:
 		_pestanias.scope_cambiado.connect(_al_cambiar_scope)
 	if is_instance_valid(_card):
 		_card.ver_ranking_solicitado.connect(_al_ver_ranking_desde_card)
-		_card.iniciar_sesion_solicitado.connect(func() -> void: iniciar_sesion_solicitado.emit())
 	if is_instance_valid(_boton_tabla):
 		_boton_tabla.pressed.connect(_al_presionar_tabla_completa)
 

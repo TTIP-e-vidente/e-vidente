@@ -403,7 +403,7 @@ func ir_a_reanudar(
 	_cambiar_escena_to_path(tree, safe_scene_path)
 
 
-func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", fallback_return_to: String = MAP_SCENE_PATH) -> void:
+func ir_a_finalizacion_partida(tree: SceneTree, _node_key: String = "", _fallback_return_to: String = MAP_SCENE_PATH) -> void:
 	if tree == null:
 		return
 	_clear_active_playable_session(tree)
@@ -525,7 +525,6 @@ func _clear_active_playable_session(tree: SceneTree) -> void:
 
 func transicionar_a_escena(scene_path: String, transition_type: TransitionType = TransitionType.FADE) -> void:
 	if _is_transitioning:
-		push_warning("[ROUTER] transicionar_a_escena ignorado: ya hay una transicion en curso.")
 		return
 
 	var ruta_normalizada := scene_path.strip_edges()

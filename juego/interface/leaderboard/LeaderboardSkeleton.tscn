@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://lb_skeleton_001"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://interface/leaderboard/LeaderboardSkeleton.gd" id="1_skel"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardSkeletonRow.tscn" id="2_row"]

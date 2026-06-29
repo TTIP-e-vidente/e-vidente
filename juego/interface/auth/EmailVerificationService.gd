@@ -58,7 +58,7 @@ static func _asegurar_servidor_y_sesion() -> Dictionary:
 	if not bool(health.get("ok", false)):
 		return {
 			"ok": false,
-			"mensaje": AuthApi.mensaje_error(
+			"mensaje": AuthApi.mensaje_check_conexion(
 				health,
 				"No hay conexión con el servidor. Levantá BACKEND con npm run dev."
 			),

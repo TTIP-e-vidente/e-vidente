@@ -3,6 +3,7 @@ import { app } from './app';
 import { scheduleOutboundEmailJob } from './modules/email/email.service';
 import { emailConfig, isEmailDeliveryConfigured } from './modules/email/email.config';
 import { warmUpLeaderboard } from './modules/leaderboard/leaderboard.service';
+import { isRemotePostgres } from './config/postgresPoolConfig';
 import { verifyRemotePostgresOnStartup } from './startup/verify-remote-postgres';
 
 loadEnvFile();
@@ -32,9 +33,15 @@ function logEmailStartupStatus(): void {
 async function startServer(): Promise<void> {
   await verifyRemotePostgresOnStartup();
 
-  app.listen(port, () => {
+  app.listen(port, async () => {
     console.log(`E-VIDENTE backend listening on port ${port}`);
     logEmailStartupStatus();
+
+    if (isRemotePostgres() && process.env.NODE_ENV !== 'test') {
+      console.log(
+        `[dev] Godot → http://localhost:${port} (juego/config/backend.local.json)`
+      );
+    }
 
     if (isEmailDeliveryConfigured() && process.env.NODE_ENV !== 'test') {
       if (emailConfig.processOnStartup) {

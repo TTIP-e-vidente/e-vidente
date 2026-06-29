@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://bqej50i0i8jv6"]
+[gd_scene format=3]
 
-[ext_resource type="Texture2D" uid="uid://c1jwb4mgfilfi" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ecd81"]
-[ext_resource type="Script" uid="uid://char88e1ctc35" path="res://preguntas/botones_preguntas.gd" id="2_bxuur"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/pregunta-1.png" id="1_ecd81"]
+[ext_resource type="Script" path="res://preguntas/botones_preguntas.gd" id="2_bxuur"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn1"]
 content_margin_left = 32.0

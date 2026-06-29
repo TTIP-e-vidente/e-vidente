@@ -4,7 +4,7 @@ class_name ModeSelector
 const RACHA_SCENE_PATH := "res://interface/components/Racha.tscn"
 const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgressButton.gd")
 const PROFILE_OVERLAY_SCENE_PATH := "res://interface/components/ProfileOverlayPanel.tscn"
-const LeaderboardOverlayHelper := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
+const LeaderboardOverlayHelperScript := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
@@ -360,8 +360,8 @@ func _on_superposicion_ranking_presionado(scope: String = "") -> void:
 	_profile_overlay.ocultar_superposicion()
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
-		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
-	LeaderboardOverlayHelper.abrir(get_tree(), scope_final)
+		scope_final = LeaderboardOverlayHelperScript.scope_desde_arbol(get_tree())
+	LeaderboardOverlayHelperScript.abrir(get_tree(), scope_final)
 
 
 func _on_superposicion_login_presionado() -> void:

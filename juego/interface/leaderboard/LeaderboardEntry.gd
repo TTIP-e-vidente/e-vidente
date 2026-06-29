@@ -63,7 +63,7 @@ func _resolver_nombre(entrada: Dictionary) -> String:
 	return nombre_usuario as String if nombre_usuario is String else "—"
 
 
-func _aplicar_color_posicion(posicion: int, es_propio: bool) -> void:
+func _aplicar_color_posicion(posicion: int, _es_propio: bool) -> void:
 	if not is_instance_valid(_label_posicion):
 		return
 	_label_posicion.add_theme_color_override(

@@ -6,10 +6,6 @@ extends PanelContainer
 # Este script solo carga datos y alterna visibilidad de nodos ya definidos en escena.
 
 
-signal ver_ranking_solicitado(scope: String)
-signal iniciar_sesion_solicitado
-
-
 @onready var _contenedor_carga: Label = %Cargando
 @onready var _contenedor_datos: VBoxContainer = %VBoxRoot
 @onready var _label_celebracion: Label = %LabelCelebracion

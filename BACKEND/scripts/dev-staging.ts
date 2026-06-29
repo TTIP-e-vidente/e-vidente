@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 import { connectSupabase, loadPostgresEnv } from './lib/postgres-env';
+import { printDevReadyBanner } from './print-dev-ready';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const STAGING_ENV = '.env.staging';
@@ -8,7 +9,13 @@ const STAGING_ENV = '.env.staging';
 async function main(): Promise<void> {
   const staging = loadPostgresEnv('staging');
 
-  console.log('[dev:staging] Conectando a Supabase…');
+  console.log('[dev] Modo Supabase (staging) — Express → pooler remoto\n');
+
+  execSync('npx ts-node scripts/sync-staging-secrets.ts', {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+  });
+
   await connectSupabase({ envPath: staging.envPath, persistToEnvFile: true });
 
   execSync('npx ts-node scripts/sync-godot-backend-config.ts', {
@@ -22,6 +29,9 @@ async function main(): Promise<void> {
     stdio: 'inherit',
     env: { ...process.env, ENV_FILE: STAGING_ENV },
   });
+
+  process.env.ENV_FILE = STAGING_ENV;
+  await printDevReadyBanner();
 }
 
 main().catch((error) => {

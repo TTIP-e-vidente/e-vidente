@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://bbhg7rn0m123c"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://cdmtjey7f7b2v" path="res://interface/components/DragObjectiveText/drag_objective_text.gd" id="1_dot"]
-[ext_resource type="Texture2D" uid="uid://tf60noplu1no" path="res://assets-sistema/interfaz/cuadrado-2x2-blanco.png" id="2_b1cue"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_rubik"]
+[ext_resource type="Script" path="res://interface/components/DragObjectiveText/drag_objective_text.gd" id="1_dot"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-2x2-blanco.png" id="2_b1cue"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_rubik"]
 
 [node name="DragObjectiveText" type="Control" unique_id=120701528]
 custom_minimum_size = Vector2(280, 105)

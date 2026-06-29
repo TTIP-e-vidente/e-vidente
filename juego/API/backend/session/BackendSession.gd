@@ -263,7 +263,76 @@ func verificar_estado_del_servidor() -> Dictionary:
 	var salud_db := await _api.verificar_salud_db()
 	if not salud_db.get("ok", false):
 		return {"ok": false, "phase": "db", "result": salud_db}
+	var raw_db: Variant = salud_db.get("data", {})
+	if raw_db is Dictionary and not bool((raw_db as Dictionary).get("remote", false)):
+		return {
+			"ok": false,
+			"phase": "db",
+			"result": {
+				"ok": false,
+				"status": 503,
+				"code": "NOT_SUPABASE",
+				"error": "El backend no está conectado a Supabase.",
+			},
+		}
 	return {"ok": true}
+
+
+func verificar_stack_completo() -> Dictionary:
+	var salud_api := await _api.verificar_salud_api()
+	if not salud_api.get("ok", false):
+		return {"ok": false, "phase": "api", "result": salud_api}
+
+	var salud_db := await _api.verificar_salud_db()
+	if not salud_db.get("ok", false):
+		return {"ok": false, "phase": "db", "result": salud_db}
+
+	var db_data: Dictionary = {}
+	var raw_db: Variant = salud_db.get("data", {})
+	if raw_db is Dictionary:
+		db_data = raw_db as Dictionary
+
+	if not bool(db_data.get("remote", false)):
+		return {
+			"ok": false,
+			"phase": "db",
+			"result": {
+				"ok": false,
+				"status": 503,
+				"code": "NOT_SUPABASE",
+				"error": "El backend no está conectado a Supabase.",
+			},
+		}
+
+	if not BackendConfig.es_supabase():
+		push_warning(
+			"[BackendSession] backend.local.json no marca db=supabase — corré npm run dev en BACKEND"
+		)
+
+	var migrations: Dictionary = {}
+	var raw_migrations: Variant = db_data.get("migrations", {})
+	if raw_migrations is Dictionary:
+		migrations = raw_migrations as Dictionary
+
+	var salud_email := await _api.verificar_salud_email()
+	var email_data: Dictionary = {}
+	var raw_email: Variant = salud_email.get("data", {})
+	if raw_email is Dictionary:
+		email_data = raw_email as Dictionary
+
+	return {
+		"ok": true,
+		"base_url": BackendConfig.obtener_base_url(),
+		"db": {
+			"remote": bool(db_data.get("remote", false)),
+			"migrations_healthy": bool(migrations.get("healthy", true)),
+		},
+		"email": {
+			"enabled": bool(email_data.get("email_enabled", false)),
+			"configured": bool(email_data.get("delivery_configured", false)),
+			"dev_code_in_logs": bool(email_data.get("dev_code_in_logs", false)),
+		},
+	}
 
 
 func verificar_salud_email() -> Dictionary:
@@ -350,7 +419,7 @@ func actualizar_perfil_online(
 	var cached_mail := str(cached.get("mail", "")).strip_edges()
 	if forzar_sincronizar_mail and not clean_mail.is_empty():
 		payload["mail"] = clean_mail
-	elif clean_mail != cached_mail:
+	elif _mail_normalizado(clean_mail) != _mail_normalizado(cached_mail):
 		payload["mail"] = clean_mail if not clean_mail.is_empty() else null
 
 	var clean_birth := fecha_nacimiento.strip_edges()
@@ -383,7 +452,7 @@ func actualizar_perfil_online(
 
 	if payload.has("mail") and not clean_mail.is_empty():
 		var persisted := str(_usuario_en_cache.get("mail", "")).strip_edges()
-		if persisted.to_lower() != clean_mail.to_lower():
+		if _mail_normalizado(persisted) != _mail_normalizado(clean_mail):
 			return {
 				"ok": false,
 				"status": 409,
@@ -394,6 +463,10 @@ func actualizar_perfil_online(
 
 	resultado["skipped"] = false
 	return resultado
+
+
+func _mail_normalizado(value: String) -> String:
+	return value.strip_edges().to_lower()
 
 
 ## Solicita el envío de un código de verificación de 6 dígitos al email configurado.
@@ -602,11 +675,11 @@ func _al_sync_pendientes_terminado(synced: int, failed: int) -> void:
 ## si la señal nunca se emite por un bug en [ProgressSyncService].
 func _esperar_sync_con_timeout(timeout_s: float) -> void:
 	var timer := get_tree().create_timer(timeout_s)
-	var timed_out := false
-	timer.timeout.connect(func(): timed_out = true, CONNECT_ONE_SHOT)
-	while not timed_out and _sync.esta_sincronizando():
+	var timeout_state := {"expired": false}
+	timer.timeout.connect(func() -> void: timeout_state["expired"] = true, CONNECT_ONE_SHOT)
+	while not timeout_state["expired"] and _sync.esta_sincronizando():
 		await get_tree().process_frame
-	if timed_out:
+	if timeout_state["expired"]:
 		push_warning("[BackendSession] esperar_drenaje_sync_pendiente: timeout tras %.0fs" % timeout_s)
 
 

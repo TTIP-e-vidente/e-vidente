@@ -35,8 +35,6 @@ enum EstadoUi {
 @onready var _boton_cerrar:        Button          = %BotonCerrar
 @onready var _boton_reintentar:    Button          = %BotonReintentar
 @onready var _panel_central:       PanelContainer  = %PanelCentral
-@onready var _header_bar:          PanelContainer  = %HeaderBar
-@onready var _titulo:              Label           = %TituloLabel
 @onready var _label_meta:          Label           = %LabelMeta
 @onready var _contenedor_datos:    Control         = %ContenedorDatos
 @onready var _contenedor_cargando: Control         = %ContenedorCarga
@@ -376,10 +374,10 @@ func _actualizar_accion_posicion_propia(datos: Dictionary) -> void:
 	if rank <= 0:
 		_card_posicion_propia.configurar_navegacion(0, true, _offset_lista_actual)
 		return
-	var visible := rank <= 3
+	var visible_en_lista := rank <= 3
 	if is_instance_valid(_lista):
-		visible = visible or _lista.contiene_usuario(_id_usuario_propio)
-	_card_posicion_propia.configurar_navegacion(rank, visible, _offset_lista_actual)
+		visible_en_lista = visible_en_lista or _lista.contiene_usuario(_id_usuario_propio)
+	_card_posicion_propia.configurar_navegacion(rank, visible_en_lista, _offset_lista_actual)
 
 
 func _al_ir_a_posicion_solicitada(rank: int) -> void:
@@ -389,9 +387,9 @@ func _al_ir_a_posicion_solicitada(rank: int) -> void:
 		_card_posicion_propia.marcar_buscando_posicion(true)
 	if is_instance_valid(_lista):
 		_lista.mostrar_cargando(true)
-	var offset := LeaderboardService.calcular_offset_para_rank(rank)
-	_offset_lista_actual = offset
-	LeaderboardService.cargar(_scope_activo, true, offset)
+	var pagina_offset := LeaderboardService.calcular_offset_para_rank(rank)
+	_offset_lista_actual = pagina_offset
+	LeaderboardService.cargar(_scope_activo, true, pagina_offset)
 
 
 func _al_volver_al_top_solicitado() -> void:

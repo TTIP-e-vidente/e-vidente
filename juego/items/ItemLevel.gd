@@ -8,7 +8,7 @@ signal intento_incorrecto  # emitido cuando un item negativo se suelta sobre el 
 var condiciones: Array[int] = []
 var body_ref 
 var plato 
-var offset := Vector2.ZERO
+var _drag_offset := Vector2.ZERO
 var es_positivo = true
 var draggable = false
 var categoria 
@@ -94,10 +94,10 @@ func _process(_delta):
 		return
 	if draggable:
 		if Input.is_action_just_pressed("click"):
-			offset = get_global_mouse_position() - global_position
+			_drag_offset = get_global_mouse_position() - global_position
 			is_dragging = self
 		if Input.is_action_pressed("click") && is_dragging == self:
-			global_position = get_global_mouse_position() - offset
+			global_position = get_global_mouse_position() - _drag_offset
 		elif Input.is_action_just_released("click") && is_dragging == self:
 			is_dragging = null
 			if is_inside_droppable and is_instance_valid(body_ref):

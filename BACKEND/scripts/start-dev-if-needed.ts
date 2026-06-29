@@ -1,6 +1,7 @@
 import http from 'http';
 import { ensurePostgres } from './ensure-postgres';
 import { loadBackendEnv } from './lib/postgres-env';
+import { printDevReadyBanner } from './print-dev-ready';
 
 loadBackendEnv();
 
@@ -34,6 +35,7 @@ async function main(): Promise<void> {
   if (await isBackendHealthy()) {
     console.log(`E-VIDENTE backend ya corre en http://localhost:${port}`);
     console.log('No hace falta levantar otro. Para reiniciar: npm run dev:restart');
+    await printDevReadyBanner();
     return;
   }
 

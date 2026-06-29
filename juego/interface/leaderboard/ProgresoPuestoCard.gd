@@ -5,7 +5,6 @@ extends PanelContainer
 
 
 signal ver_ranking_solicitado(scope: String)
-signal iniciar_sesion_solicitado
 
 
 @onready var _label_celebracion: Label = %LabelCelebracion

@@ -2,7 +2,7 @@ extends Node
 
 const Service := preload("res://interface/auth/EmailVerificationService.gd")
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
-const MailVerifyNudgeHelper := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
+const MailVerifyNudgeHelperScript := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
 
 const ESCENAS_SIN_AVISO_MAIL := [
 	"res://interface/evidente.tscn",
@@ -33,7 +33,7 @@ func deshabilitar_aviso_mail() -> void:
 
 
 func _ready() -> void:
-	_nudge_global = MailVerifyNudgeHelper.instalar_en(
+	_nudge_global = MailVerifyNudgeHelperScript.instalar_en(
 		self,
 		Callable(self, "_on_nudge_verificar_ahora")
 	)
@@ -82,7 +82,7 @@ func _refrescar_nudge_global() -> void:
 		_escena_actual_sin_aviso_mail()
 		or not _aviso_mail_activo_en_sesion
 	)
-	MailVerifyNudgeHelper.refrescar(_nudge_global, ocultar)
+	MailVerifyNudgeHelperScript.refrescar(_nudge_global, ocultar)
 
 
 func _escena_actual_sin_aviso_mail() -> bool:

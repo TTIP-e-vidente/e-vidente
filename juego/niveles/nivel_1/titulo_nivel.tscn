@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://ce668s10g001j"]
+[gd_scene format=3]
 
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="1_2usb3"]
-[ext_resource type="Script" uid="uid://ckxox5l28kaoc" path="res://niveles/nivel_1/titulo_nivel.gd" id="2_2usb3"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_2usb3"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="1_2usb3"]
+[ext_resource type="Script" path="res://niveles/nivel_1/titulo_nivel.gd" id="2_2usb3"]
+[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_2usb3"]
 
 [node name="TituloNivel" type="Sprite2D" unique_id=74001118]
 z_index = 1

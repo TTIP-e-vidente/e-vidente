@@ -43,12 +43,14 @@ npm run supabase:init
 # completar .env.staging (password, JWT, Brevo si aplica)
 npm run supabase:bootstrap:apply:seed
 npm run staging:verify    # status + schema + smoke API (+ email si Brevo OK)
-npm run dev:staging       # Express + Godot config → Supabase
+npm run dev               # Express → Supabase + sync Godot (:3010)
 ```
 
 | Comando | Para qué |
 |---------|----------|
-| `npm run dev:staging` | Desarrollo diario contra Supabase |
+| `npm run dev` | **Default:** Supabase staging + sync Godot |
+| `npm run dev:staging` | Alias de `dev` |
+| `npm run dev:local` | Postgres Docker (offline) |
 | `npm run staging:verify` | Chequeo completo antes de demo/deploy |
 | `npm run staging:verify:email` | Igual + smoke Brevo obligatorio |
 | `npm run validate:email-flow:staging` | E2E mails contra Supabase |
@@ -69,7 +71,7 @@ cd BACKEND
 cp .env.example .env
 npm install
 npm run setup:dev   # compose + migrate + usuarios demo
-npm run dev
+npm run dev:local
 ```
 
 **Postgres (DataGrip local):** host `localhost`, port según `POSTGRES_PORT` en `.env` (default `5433`), db `evidente_dev`, user `evidente_user`.

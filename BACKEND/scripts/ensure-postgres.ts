@@ -99,6 +99,12 @@ export async function ensurePostgres(): Promise<void> {
     process.exit(1);
   }
 
+  if (envFile.includes('staging')) {
+    console.error('\nERROR: .env.staging debe apuntar a Supabase (POSTGRES_SSL=true).');
+    console.error('No se usa Docker en staging. Completá BACKEND/.env.staging y corré npm run dev.');
+    process.exit(1);
+  }
+
   if (!isDockerAvailable()) {
     console.error('\nERROR: no se puede conectar a PostgreSQL y Docker no está disponible.');
     console.error('Abrí Docker Desktop y volvé a correr npm run dev.');

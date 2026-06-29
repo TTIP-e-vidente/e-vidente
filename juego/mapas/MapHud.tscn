@@ -1,12 +1,12 @@
-[gd_scene format=3 uid="uid://jjtcsaulb7id"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://cey4kx0gvqukp" path="res://mapas/MapHud.gd" id="1_maphud"]
+[ext_resource type="Script" path="res://mapas/MapHud.gd" id="1_maphud"]
 [ext_resource type="PackedScene" path="res://interface/components/Racha.tscn" id="2_racha"]
-[ext_resource type="Script" uid="uid://c0i1s6mt4a8qw" path="res://interface/components/ProfileProgressButton.gd" id="3_profile"]
-[ext_resource type="Texture2D" uid="uid://bdu85qoabpbhh" path="res://assets-sistema/perfil/perfil-menu.png" id="4_c1si2"]
+[ext_resource type="Script" path="res://interface/components/ProfileProgressButton.gd" id="3_profile"]
+[ext_resource type="Texture2D" path="res://assets-sistema/perfil/perfil-menu.png" id="4_c1si2"]
 [ext_resource type="PackedScene" path="res://interface/components/ProfileOverlayPanel.tscn" id="4_overlay"]
-[ext_resource type="Texture2D" uid="uid://75gl1m4qqp3h" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="5_back"]
-[ext_resource type="Font" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_rubik"]
+[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="5_back"]
+[ext_resource type="Font" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_rubik"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_c1si2"]
 
