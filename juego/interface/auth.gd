@@ -343,7 +343,7 @@ func _actualizar_estado_boton_guardar(_ignored: Variant = null) -> void:
 	var pendiente := online and _formulario_difiere_del_servidor() and not _guardando_perfil
 	if online:
 		_button_save_profile.text = (
-			"Guardar perfil · sin subir" if pendiente else "Guardar perfil"
+			"Guardar y sincronizar" if pendiente else "Guardar perfil"
 		)
 	else:
 		_button_save_profile.text = "Guardar perfil"
@@ -474,7 +474,7 @@ func _actualizar_etiquetas_vista_previa(
 	profile_email_preview_label.text = "Mail: %s" % (email if not email.is_empty() else "sin dato")
 	if BackendSession.esta_logueado() and not email.is_empty():
 		if ProfileMailSyncHelperScript.formulario_difiere_del_servidor(email):
-			profile_email_preview_label.text += " · sin subir"
+			profile_email_preview_label.text += " · sin sincronizar"
 		elif _mail_esta_verificado():
 			profile_email_preview_label.text += " · verificado"
 		else:
