@@ -3,17 +3,17 @@
 [ext_resource type="Script" uid="uid://x7kmrf51ynq0" path="res://mapas/MapBoard.gd" id="1_mapboard"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_oop13"]
 [ext_resource type="PackedScene" uid="uid://ccolhcqvnrd8d" path="res://mapas/MapChapterNode.tscn" id="3_chapternode"]
-[ext_resource type="Texture2D" uid="uid://cnvqketi0ybrg" path="res://assets-sistema/mapa/mapa.png" id="4_oop13"]
+[ext_resource type="Texture2D" uid="uid://jb1k5apdn65r" path="res://assets-sistema/mapa/mapa.png" id="4_oop13"]
 [ext_resource type="PackedScene" uid="uid://din6p4bh3wne" path="res://mapas/MapQuestionNode.tscn" id="4_questionnode"]
-[ext_resource type="Texture2D" uid="uid://mcof2sm2ahqa" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
-[ext_resource type="Texture2D" uid="uid://by7xv8nbafkmx" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
-[ext_resource type="Texture2D" uid="uid://cuivjmxrcmd6l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
+[ext_resource type="Texture2D" uid="uid://c1cmb68ka7773" path="res://assets-sistema/mapa/desafio-mapa-5.png" id="8_icon5"]
+[ext_resource type="Texture2D" uid="uid://bvke8wefoa18u" path="res://assets-sistema/mapa/desafio-mapa-4.png" id="10_icon4"]
+[ext_resource type="Texture2D" uid="uid://dlih7yyjl608l" path="res://assets-sistema/mapa/desafio-mapa-8.png" id="10_m2v86"]
 [ext_resource type="Shader" uid="uid://ouiuwpm2wm3h" path="res://mapas/MapScene.gdshader" id="11_fade_shader"]
-[ext_resource type="Texture2D" uid="uid://bqfkpi1snn3ox" path="res://assets-sistema/mapa/desafio-mapa-1 .png" id="11_gaknv"]
-[ext_resource type="Texture2D" uid="uid://r678a7suekp2" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
-[ext_resource type="Texture2D" uid="uid://buqf74swbmle8" path="res://assets-sistema/mapa/desafio-mapa-6.png" id="12_h6wjv"]
-[ext_resource type="Texture2D" uid="uid://d3y4c5vs00vic" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="13_gaknv"]
-[ext_resource type="FontFile" uid="uid://bmwl1alcwh8ru" path="res://fonts/Rubik-VariableFont_wght.ttf" id="14_h6wjv"]
+[ext_resource type="Texture2D" uid="uid://cuunyj5psa4sm" path="res://assets-sistema/mapa/desafio-mapa-1 .png" id="11_gaknv"]
+[ext_resource type="Texture2D" uid="uid://d0a6m755p486x" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
+[ext_resource type="Texture2D" uid="uid://d4m68o00e7at8" path="res://assets-sistema/mapa/desafio-mapa-6.png" id="12_h6wjv"]
+[ext_resource type="Texture2D" uid="uid://cpsl4rd8ftu6o" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="13_gaknv"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="14_h6wjv"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_scroll"]
 shader = ExtResource("11_fade_shader")
@@ -23,147 +23,21 @@ shader_parameter/fade_size = 0.15
 shader = ExtResource("11_fade_shader")
 shader_parameter/fade_size = 0.15
 
+[sub_resource type="Curve2D" id="Curve2D_ruta_1"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 960, 297.389, 0, 0, 0, 0, 804, 370.728, 0, 0, 0, 0, 571, 355.82, 0, 0, 0, 0, 329, 399.551, 0, 0, 0, 0, 282, 558.573, 0, 0, 0, 0, 459, 666.907, 0, 0, 0, 0, 700, 630.133, 0, 0, 0, 0, 942, 666.907, 0, 0, 0, 0, 942, 803.07, 0, 0, 0, 0, 804, 927.306, 0, 0, 0, 0, 612, 876.617, 0, 0, 0, 0, 394, 850.776, 0, 0, 0, 0, 213, 944.202, 0, 0, 0, 0, 252, 1224.479, 0, 0, 0, 0, 562, 1272.185, 0, 0, 0, 0, 759, 1120.12, 0, 0, 0, 0, 942, 1194.662, 0, 0, 0, 0, 942, 1388.47, 0, 0, 0, 0, 750, 1432.201, 0, 0, 0, 0, 552, 1432.201, 0, 0, 0, 0, 329, 1379.525, 0, 0, 0, 0, 174, 1481.896, 0, 0, 0, 0, 331, 1688.625, 0, 0, 0, 0, 593, 1654.832, 0, 0, 0, 0, 840, 1688.625, 0, 0, 0, 0, 824, 1948.03, 0, 0, 0, 0, 638, 2029.528, 0, 0, 0, 0, 301, 1948.03, 0, 0, 0, 0, 270, 2221.349, 0, 0, 0, 0, 638, 2326.701)
+}
+point_count = 30
+
+[sub_resource type="Curve2D" id="Curve2D_ruta_2"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 960, 297, 0, 0, 0, 0, 750, 500, 0, 0, 0, 0, 500, 650, 0, 0, 0, 0, 200, 800, 0, 0, 0, 0, 350, 1050, 0, 0, 0, 0, 600, 1200, 0, 0, 0, 0, 900, 1350, 0, 0, 0, 0, 650, 1500, 0, 0, 0, 0, 350, 1700, 0, 0, 0, 0, 200, 1900, 0, 0, 0, 0, 400, 2100, 0, 0, 0, 0, 650, 2300, 0, 0, 0, 0, 900, 2450, 0, 0, 0, 0, 638, 2695)
+}
+point_count = 14
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_overlay"]
 shader = ExtResource("11_fade_shader")
 shader_parameter/fade_size = 0.1270000060325
-
-[sub_resource type="Curve2D" id="Curve2D_ruta_1"]
-point_count = 30
-point_0/position = Vector2(960, 297.389)
-point_0/in = Vector2(0, 0)
-point_0/out = Vector2(0, 0)
-point_1/position = Vector2(804, 370.728)
-point_1/in = Vector2(0, 0)
-point_1/out = Vector2(0, 0)
-point_2/position = Vector2(571, 355.82)
-point_2/in = Vector2(0, 0)
-point_2/out = Vector2(0, 0)
-point_3/position = Vector2(329, 399.551)
-point_3/in = Vector2(0, 0)
-point_3/out = Vector2(0, 0)
-point_4/position = Vector2(282, 558.573)
-point_4/in = Vector2(0, 0)
-point_4/out = Vector2(0, 0)
-point_5/position = Vector2(459, 666.907)
-point_5/in = Vector2(0, 0)
-point_5/out = Vector2(0, 0)
-point_6/position = Vector2(700, 630.133)
-point_6/in = Vector2(0, 0)
-point_6/out = Vector2(0, 0)
-point_7/position = Vector2(942, 666.907)
-point_7/in = Vector2(0, 0)
-point_7/out = Vector2(0, 0)
-point_8/position = Vector2(942, 803.07)
-point_8/in = Vector2(0, 0)
-point_8/out = Vector2(0, 0)
-point_9/position = Vector2(804, 927.306)
-point_9/in = Vector2(0, 0)
-point_9/out = Vector2(0, 0)
-point_10/position = Vector2(612, 876.617)
-point_10/in = Vector2(0, 0)
-point_10/out = Vector2(0, 0)
-point_11/position = Vector2(394, 850.776)
-point_11/in = Vector2(0, 0)
-point_11/out = Vector2(0, 0)
-point_12/position = Vector2(213, 944.202)
-point_12/in = Vector2(0, 0)
-point_12/out = Vector2(0, 0)
-point_13/position = Vector2(252, 1224.479)
-point_13/in = Vector2(0, 0)
-point_13/out = Vector2(0, 0)
-point_14/position = Vector2(562, 1272.185)
-point_14/in = Vector2(0, 0)
-point_14/out = Vector2(0, 0)
-point_15/position = Vector2(759, 1120.12)
-point_15/in = Vector2(0, 0)
-point_15/out = Vector2(0, 0)
-point_16/position = Vector2(942, 1194.662)
-point_16/in = Vector2(0, 0)
-point_16/out = Vector2(0, 0)
-point_17/position = Vector2(942, 1388.47)
-point_17/in = Vector2(0, 0)
-point_17/out = Vector2(0, 0)
-point_18/position = Vector2(750, 1432.201)
-point_18/in = Vector2(0, 0)
-point_18/out = Vector2(0, 0)
-point_19/position = Vector2(552, 1432.201)
-point_19/in = Vector2(0, 0)
-point_19/out = Vector2(0, 0)
-point_20/position = Vector2(329, 1379.525)
-point_20/in = Vector2(0, 0)
-point_20/out = Vector2(0, 0)
-point_21/position = Vector2(174, 1481.896)
-point_21/in = Vector2(0, 0)
-point_21/out = Vector2(0, 0)
-point_22/position = Vector2(331, 1688.625)
-point_22/in = Vector2(0, 0)
-point_22/out = Vector2(0, 0)
-point_23/position = Vector2(593, 1654.832)
-point_23/in = Vector2(0, 0)
-point_23/out = Vector2(0, 0)
-point_24/position = Vector2(840, 1688.625)
-point_24/in = Vector2(0, 0)
-point_24/out = Vector2(0, 0)
-point_25/position = Vector2(824, 1948.03)
-point_25/in = Vector2(0, 0)
-point_25/out = Vector2(0, 0)
-point_26/position = Vector2(638, 2029.528)
-point_26/in = Vector2(0, 0)
-point_26/out = Vector2(0, 0)
-point_27/position = Vector2(301, 1948.03)
-point_27/in = Vector2(0, 0)
-point_27/out = Vector2(0, 0)
-point_28/position = Vector2(270, 2221.349)
-point_28/in = Vector2(0, 0)
-point_28/out = Vector2(0, 0)
-point_29/position = Vector2(638, 2326.701)
-point_29/in = Vector2(0, 0)
-point_29/out = Vector2(0, 0)
-
-[sub_resource type="Curve2D" id="Curve2D_ruta_2"]
-point_count = 14
-point_0/position = Vector2(960, 297)
-point_0/in = Vector2(0, 0)
-point_0/out = Vector2(0, 0)
-point_1/position = Vector2(750, 500)
-point_1/in = Vector2(0, 0)
-point_1/out = Vector2(0, 0)
-point_2/position = Vector2(500, 650)
-point_2/in = Vector2(0, 0)
-point_2/out = Vector2(0, 0)
-point_3/position = Vector2(200, 800)
-point_3/in = Vector2(0, 0)
-point_3/out = Vector2(0, 0)
-point_4/position = Vector2(350, 1050)
-point_4/in = Vector2(0, 0)
-point_4/out = Vector2(0, 0)
-point_5/position = Vector2(600, 1200)
-point_5/in = Vector2(0, 0)
-point_5/out = Vector2(0, 0)
-point_6/position = Vector2(900, 1350)
-point_6/in = Vector2(0, 0)
-point_6/out = Vector2(0, 0)
-point_7/position = Vector2(650, 1500)
-point_7/in = Vector2(0, 0)
-point_7/out = Vector2(0, 0)
-point_8/position = Vector2(350, 1700)
-point_8/in = Vector2(0, 0)
-point_8/out = Vector2(0, 0)
-point_9/position = Vector2(200, 1900)
-point_9/in = Vector2(0, 0)
-point_9/out = Vector2(0, 0)
-point_10/position = Vector2(400, 2100)
-point_10/in = Vector2(0, 0)
-point_10/out = Vector2(0, 0)
-point_11/position = Vector2(650, 2300)
-point_11/in = Vector2(0, 0)
-point_11/out = Vector2(0, 0)
-point_12/position = Vector2(900, 2450)
-point_12/in = Vector2(0, 0)
-point_12/out = Vector2(0, 0)
-point_13/position = Vector2(638, 2695)
-point_13/in = Vector2(0, 0)
-point_13/out = Vector2(0, 0)
 
 [node name="MapBoard" type="Node2D" unique_id=1733738547]
 script = ExtResource("1_mapboard")
@@ -196,13 +70,13 @@ texture = ExtResource("4_oop13")
 [node name="NodesContainer" type="Node2D" parent="ScrollContainer/Contenido" unique_id=102587014]
 position = Vector2(-52, -198)
 
-[node name="Rutas" type="Node2D" parent="ScrollContainer/Contenido/NodesContainer"]
+[node name="Rutas" type="Node2D" parent="ScrollContainer/Contenido/NodesContainer" unique_id=1830361192]
 
 [node name="RutaCeliaquia1" type="Path2D" parent="ScrollContainer/Contenido/NodesContainer/Rutas" unique_id=1840400020]
 visible = false
 curve = SubResource("Curve2D_ruta_1")
 
-[node name="RutaCeliaquia2" type="Path2D" parent="ScrollContainer/Contenido/NodesContainer/Rutas"]
+[node name="RutaCeliaquia2" type="Path2D" parent="ScrollContainer/Contenido/NodesContainer/Rutas" unique_id=2075313940]
 visible = false
 curve = SubResource("Curve2D_ruta_2")
 
@@ -213,7 +87,7 @@ level_number = 1
 label_text = "Receta 1"
 
 [node name="Pregunta1" parent="ScrollContainer/Contenido/NodesContainer" unique_id=478850551 instance=ExtResource("4_questionnode")]
-position = Vector2(804.00006, 370.72794)
+position = Vector2(811.00006, 368.74017)
 scale = Vector2(1.7999902, 1.7999902)
 nivel_id = 2
 question_number = 1

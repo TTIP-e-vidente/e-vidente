@@ -217,6 +217,3 @@ func debug_ruta_y_nodos(layout_config: MapLayoutConfig = null) -> void:
 	print("[MapBoard] PUNTOS curva:", curva.point_count)
 	for i in range(curva.point_count):
 		print("[MapBoard] Punto ", i, ": ", curva.get_point_position(i))
-
-
-

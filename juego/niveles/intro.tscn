@@ -2,9 +2,72 @@
 
 [ext_resource type="Script" uid="uid://du8fmxeen5bx3" path="res://niveles/intro.gd" id="1_1l6ju"]
 [ext_resource type="PackedScene" uid="uid://bv4ukjnb8b5yb" path="res://interface/fondo_juego.tscn" id="2_7djtf"]
-[ext_resource type="Texture2D" uid="uid://djtm0xnnwdl1x" path="res://interface/intro-13.png" id="3_uu8qn"]
+[ext_resource type="Texture2D" uid="uid://ds6cfjui1dnce" path="res://assets-sistema/intro/intro-13.png" id="3_vh48x"]
+[ext_resource type="Texture2D" uid="uid://ddnfvqwtrtu6b" path="res://assets-sistema/intro/intro-14.png" id="4_18q37"]
 [ext_resource type="PackedScene" uid="uid://bgatuq1kmpiwl" path="res://niveles/botones_intro.tscn" id="4_uu8qn"]
+[ext_resource type="Texture2D" uid="uid://do2uwslrjw0b" path="res://assets-sistema/intro/intro-15.png" id="5_4q10j"]
 [ext_resource type="AudioStream" uid="uid://ch0hnc4gmwoxe" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="6_eoqxh"]
+[ext_resource type="Texture2D" uid="uid://bjwrh1ujniuve" path="res://assets-sistema/intro/intro-21.png" id="6_u33fr"]
+[ext_resource type="Texture2D" uid="uid://du52smwwmorok" path="res://assets-sistema/intro/intro-22.png" id="7_nd6t2"]
+[ext_resource type="Texture2D" uid="uid://d4b57240mum2l" path="res://assets-sistema/intro/intro-23.png" id="8_hs0xs"]
+[ext_resource type="Texture2D" uid="uid://beui4oew6c3a8" path="res://assets-sistema/intro/intro-24.png" id="9_1dghu"]
+[ext_resource type="Texture2D" uid="uid://syrgscmubvwe" path="res://assets-sistema/intro/intro-25.png" id="10_gluhv"]
+[ext_resource type="Texture2D" uid="uid://dm3coqie2h6p8" path="res://assets-sistema/intro/intro-26.png" id="11_jkccw"]
+[ext_resource type="Texture2D" uid="uid://b81mjriq0qkro" path="res://assets-sistema/intro/intro-27.png" id="12_5xsrg"]
+[ext_resource type="Texture2D" uid="uid://cfvc5wwii1pa2" path="res://assets-sistema/intro/intro-28.png" id="13_8cixh"]
+[ext_resource type="Texture2D" uid="uid://1qlbrdlojssg" path="res://assets-sistema/intro/intro-29.png" id="14_1ejy4"]
+[ext_resource type="Texture2D" uid="uid://qf2ryvp0ux5b" path="res://assets-sistema/intro/intro-30.png" id="15_v3obh"]
+[ext_resource type="Texture2D" uid="uid://c4ojoafpivspq" path="res://assets-sistema/intro/intro-31.png" id="16_75e1b"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ocone"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_vh48x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_18q37")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_4q10j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_u33fr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_nd6t2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_hs0xs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_1dghu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_gluhv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_jkccw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_5xsrg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_8cixh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_1ejy4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_v3obh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_75e1b")
+}],
+"loop": true,
+"name": &"intro",
+"speed": 3.0
+}]
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
@@ -14,23 +77,26 @@ script = ExtResource("1_1l6ju")
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_7djtf")]
 size_flags_vertical = 4
 
-[node name="Sprite2D2" type="Sprite2D" parent="." unique_id=348476412]
-position = Vector2(580.99994, 40)
-scale = Vector2(0.4409817, 0.44281265)
-texture = ExtResource("3_uu8qn")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=472110544]
+position = Vector2(596, 48)
+scale = Vector2(0.46359944, 0.45880553)
+sprite_frames = SubResource("SpriteFrames_ocone")
+animation = &"intro"
+frame_progress = 0.76516306
+speed_scale = 2.0
 
 [node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
 layout_direction = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 411.99997
-offset_top = 304.0
-offset_right = 411.99997
-offset_bottom = 304.0
+offset_left = 388.0
+offset_top = 200.0
+offset_right = 388.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.5504135, 0.5504135)
+scale = Vector2(0.6358162, 0.6358162)
 theme_override_constants/h_separation = 414
 flat = true
 start_index = 2
@@ -42,12 +108,13 @@ anchors_preset = 0
 anchor_top = 0.0
 anchor_bottom = 0.0
 offset_left = 19.736572
-offset_top = -131.08139
+offset_top = 145.34525
 offset_right = 562.7366
-offset_bottom = 129.91861
+offset_bottom = 406.34525
 scale = Vector2(1.145724, 1.1621135)
 
 [node name="Opciones" parent="MenuBar" unique_id=1594801136 instance=ExtResource("4_uu8qn")]
+visible = false
 layout_mode = 1
 offset_left = 19.736572
 offset_top = 163.87448

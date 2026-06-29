@@ -7,6 +7,7 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 @onready var opcionesb: TextureButton = $MenuBar/Opciones
 @onready var mi_progresob: TextureButton = $MenuBar/MiProgreso
 @onready var salirb: TextureButton = $MenuBar/Salir
+@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
 @onready var jugar: Label = $MenuBar/Jugar/Label
 @onready var opciones: Label = $MenuBar/Opciones/Label
@@ -63,7 +64,7 @@ func _ready() -> void:
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
 	call_deferred("_procesar_retorno_verificacion_mail")
 	call_deferred("_procesar_deep_link_leaderboard")
-
+	animated_sprite_2d.play("intro")
 
 func _procesar_deep_link_leaderboard() -> void:
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)

@@ -15,6 +15,7 @@ const COLOR_LOCKED := Color(1, 1, 1, 0.28)
 const STATE_COMPLETED := "completed"
 const STATE_AVAILABLE := "available"
 const STATE_LOCKED := "locked"
+@onready var next_lesson: Sprite2D = $"Next Lesson"
 
 @export_group("Runtime")
 @export var nivel_id: int = 0
@@ -116,7 +117,7 @@ func actualizar_vista() -> void:
 	_aplicar_color_estado()
 	_aplicar_parametros_visuales()
 	_actualizar_insignia()
-
+	next_lesson.visible = unlocked and not completed
 
 func _aplicar_parametros_visuales() -> void:
 	if state_icon == null:
