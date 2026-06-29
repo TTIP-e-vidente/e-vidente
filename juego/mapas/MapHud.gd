@@ -20,6 +20,7 @@ func _ready() -> void:
 	_ocultar_superposicion_perfil()
 	_conectar_insignia_racha()
 	_conectar_senales_guardado()
+	_conectar_senales_sync()
 	if is_instance_valid(profile_overlay):
 		profile_overlay.ranking_pressed.connect(_on_superposicion_ranking_presionado)
 		profile_overlay.login_pressed.connect(_on_superposicion_login_presionado)
@@ -43,6 +44,7 @@ func _aplicar_fuentes_exp() -> void:
 
 func _exit_tree() -> void:
 	_desconectar_senales_guardado()
+	_desconectar_senales_sync()
 
 
 func _save_manager_listo() -> bool:
@@ -75,6 +77,28 @@ func _desconectar_senales_guardado() -> void:
 		sm.disconnect("progress_saved", _al_cambiar_perfil_guardado)
 	if sm.is_connected("user_registered", _al_cambiar_perfil_guardado):
 		sm.disconnect("user_registered", _al_cambiar_perfil_guardado)
+
+
+func _conectar_senales_sync() -> void:
+	if not BackendSession.pending_sync_finished.is_connected(_al_cambiar_sync_pendiente):
+		BackendSession.pending_sync_finished.connect(_al_cambiar_sync_pendiente)
+	if not BackendSession.pending_sync_started.is_connected(_al_cambiar_sync_pendiente_count):
+		BackendSession.pending_sync_started.connect(_al_cambiar_sync_pendiente_count)
+
+
+func _desconectar_senales_sync() -> void:
+	if BackendSession.pending_sync_finished.is_connected(_al_cambiar_sync_pendiente):
+		BackendSession.pending_sync_finished.disconnect(_al_cambiar_sync_pendiente)
+	if BackendSession.pending_sync_started.is_connected(_al_cambiar_sync_pendiente_count):
+		BackendSession.pending_sync_started.disconnect(_al_cambiar_sync_pendiente_count)
+
+
+func _al_cambiar_sync_pendiente(_synced: int = 0, _failed: int = 0) -> void:
+	_actualizar_hud()
+
+
+func _al_cambiar_sync_pendiente_count(_count: int = 0) -> void:
+	_actualizar_hud()
 
 
 func _actualizar_hud() -> void:

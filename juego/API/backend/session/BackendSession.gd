@@ -14,6 +14,7 @@ signal login_failed(reason: String)
 signal logout_completed()
 signal session_restored(user: Dictionary)
 signal session_restore_failed(reason: String)
+signal online_progress_synced(user: Dictionary)
 
 var _api: BackendApiClient
 var _auth: AuthSession
@@ -248,12 +249,14 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 	if LocalSyncQueue.contar_pendientes() > 0 and not _sync.esta_sincronizando():
 		_sync.reintentar_pendientes()
 
-	return {
+	var resultado_sync := {
 		"ok": true,
 		"status": 200,
 		"user": _usuario_en_cache,
 		"progress": _progreso_online_en_cache
 	}
+	online_progress_synced.emit(_usuario_en_cache.duplicate(true))
+	return resultado_sync
 
 
 func verificar_estado_del_servidor() -> Dictionary:
@@ -304,9 +307,9 @@ func verificar_stack_completo() -> Dictionary:
 			},
 		}
 
-	if not BackendConfig.es_supabase():
+	if not BackendConfig.es_supabase() and not BackendConfig.es_modo_supabase_edge():
 		push_warning(
-			"[BackendSession] backend.local.json no marca db=supabase — corré npm run dev en BACKEND"
+			"[BackendSession] backend.local.json no marca db=supabase — corré npm run sync:godot-config:staging"
 		)
 
 	var migrations: Dictionary = {}
@@ -322,7 +325,7 @@ func verificar_stack_completo() -> Dictionary:
 
 	return {
 		"ok": true,
-		"base_url": BackendConfig.obtener_base_url(),
+		"base_url": BackendConfig.obtener_api_base_url(),
 		"db": {
 			"remote": bool(db_data.get("remote", false)),
 			"migrations_healthy": bool(migrations.get("healthy", true)),

@@ -127,25 +127,25 @@ export function getEmailHealth(_request: Request, response: Response): void {
   });
 }
 
-function isLocalCronUrl(url: string | null | undefined): boolean {
-  if (!url) {
-    return false;
-  }
-  return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/i.test(url.trim());
-}
 
 export async function getCronHealth(_request: Request, response: Response): Promise<void> {
   try {
     const snapshot = await getSupabaseCronSnapshot();
-    const configuredUrl = snapshot.backend_base_url ?? emailConfig.publicBaseUrl;
-    const localUrl = isLocalCronUrl(configuredUrl);
-    const jobsOk = snapshot.jobs.length >= 4;
+    const edgeUrl = snapshot.supabase_functions_url ?? null;
+    const edgeConfigured = Boolean(edgeUrl?.includes('/functions/v1'));
+    const jobsOk = snapshot.jobs.length >= 5;
 
     sendResponse(response, 200, {
-      status: !snapshot.available ? 'unavailable' : localUrl ? 'local_dev' : jobsOk ? 'ok' : 'degraded',
+      status: !snapshot.available
+        ? 'unavailable'
+        : !edgeConfigured
+          ? 'misconfigured'
+          : jobsOk
+            ? 'ok'
+            : 'degraded',
       supabase_pg_cron: snapshot.available,
-      backend_base_url: configuredUrl || null,
-      local_url_not_reachable_from_supabase: localUrl,
+      supabase_functions_url: edgeUrl,
+      edge_cron_configured: edgeConfigured,
       node_dev_scheduler:
         !isSupabaseEmailEdgeMode() &&
         process.env.NODE_ENV === 'development' &&
@@ -155,19 +155,9 @@ export async function getCronHealth(_request: Request, response: Response): Prom
       recent_invocations: snapshot.recent_invocations,
       email_via_supabase_edge: isSupabaseEmailEdgeMode(),
       hints: isSupabaseEmailEdgeMode()
-        ? localUrl
-          ? [
-              'Crons de mail van a Edge (internal-job). localhost solo afecta leaderboard opcional.',
-              'npm run setup:supabase:cron',
-            ]
-          : !jobsOk
-            ? ['npm run setup:supabase:cron']
-            : []
-        : localUrl
-        ? [
-            'Supabase no puede llamar localhost. En dev los mails los procesa npm run dev.',
-            'Con deploy público: BACKEND_BASE_URL + npm run setup:supabase:cron'
-          ]
+        ? !edgeConfigured || !jobsOk
+          ? ['npm run setup:supabase:cron', 'npm run configure:supabase-keys']
+          : []
         : !jobsOk
           ? ['Corré npm run setup:supabase:cron']
           : []

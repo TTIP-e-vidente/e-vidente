@@ -1,5 +1,5 @@
 {
-  "base_url": "http://localhost:3010",
+  "api_mode": "supabase_edge",
   "db": "supabase",
-  "_comment": "Generado por npm run sync:godot-config:staging — no editar a mano"
+  "_comment": "Plantilla — valores reales en backend.local.json (gitignored) vía npm run sync:godot-config:staging"
 }

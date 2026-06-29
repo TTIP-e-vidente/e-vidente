@@ -23,13 +23,19 @@ static func resolver_restriccion_para_partida(
 
 
 ## Construye RunSummary, encola en [LocalSyncQueue] y reintenta subida si hay sesión.
+## Captura el puesto en ranking antes del sync (celebración post-partida).
 static func sincronizar_partida_terminada(
 	tree: SceneTree,
 	resultado: Dictionary,
 	stats: Dictionary,
 	pista_fallback: String = ""
 ) -> void:
-	SincronizadorPartida.sincronizar_post_partida(tree, resultado, stats, pista_fallback)
+	LeaderboardService.ejecutar_pre_sync_post_partida(
+		tree,
+		func() -> void: SincronizadorPartida.sincronizar_post_partida(
+			tree, resultado, stats, pista_fallback
+		)
+	)
 
 
 # --- Cola y retry -------------------------------------------------------------
@@ -53,6 +59,16 @@ static func reintentar_todos_pendientes() -> void:
 ## True mientras corre un batch POST en [ProgressSyncService].
 static func esta_sincronizando_pendientes() -> bool:
 	return BackendSession.esta_sincronizando_sync()
+
+
+## Cantidad de partidas/progreso en cola local sin subir.
+static func contar_pendientes_sync() -> int:
+	return LocalSyncQueue.contar_pendientes()
+
+
+## True si hay ítems en cola local pendientes de subir.
+static func tiene_sync_pendiente() -> bool:
+	return contar_pendientes_sync() > 0
 
 
 ## Espera a que la cola se drene; [AuthApi] lo usa antes de cerrar sesión.

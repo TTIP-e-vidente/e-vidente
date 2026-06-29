@@ -102,20 +102,20 @@ async function main(): Promise<void> {
   }
 
   const publicUrl = process.env.BACKEND_BASE_URL?.trim();
-  if (testCron && publicUrl) {
-    console.log('\nCron smoke (POST /internal/jobs/outbound-emails):');
+  if (testCron) {
+    console.log('\nCron smoke (Edge internal-job):');
     try {
-      execSync(
-        `npx ts-node scripts/smoke-cron.ts "${publicUrl}" outbound-emails`,
-        { cwd: BACKEND_ROOT, stdio: 'inherit' }
-      );
+      execSync('npx ts-node scripts/smoke-cron.ts outbound-emails', {
+        cwd: BACKEND_ROOT,
+        stdio: 'inherit',
+      });
     } catch {
       process.exit(1);
     }
-  } else if (production && publicUrl) {
-    console.log('\nCron: pg_cron en Supabase → Edge internal-job (migración 033)');
-    console.log('  Verificar: npm run check:edge (con el mismo ENV_FILE)');
-    console.log('  Leaderboard opcional: BACKEND_BASE_URL en secrets Edge + Express');
+  } else if (production) {
+    console.log('\nCron: pg_cron en Supabase → Edge internal-job');
+    console.log('  Configurar: npm run setup:supabase:cron');
+    console.log('  Verificar: npm run verify:integration:full');
   }
 
   if (process.argv.includes('--edge') || production) {

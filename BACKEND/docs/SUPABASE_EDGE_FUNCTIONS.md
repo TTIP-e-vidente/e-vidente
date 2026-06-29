@@ -1,152 +1,134 @@
 # Mails y jobs en Supabase Edge Functions
 
-**Auth y progreso siguen en Express** (login JWT). **Todo lo de mail** (verify OTP, rachas, retry, welcome pendiente) corre en Supabase cuando está desplegado.
+**API de juego (auth, progreso, perfil, avatares, leaderboard):** Supabase Edge — ver [SUPABASE_QUICKSTART.md](./SUPABASE_QUICKSTART.md).
 
-OAuth **no** está incluido — en Godot desktop suma complejidad sin simplificar verify.
+**Express:** solo legacy para tests locales — [EXPRESS_LEGACY.md](./EXPRESS_LEGACY.md).
 
 ## Arquitectura
 
 ```text
-Godot ──login/progreso──► Express (local o Render)
-Godot ──verify OTP──────► Edge: verify-email-request / confirm
-pg_cron (Supabase) ─────► Edge: internal-job
-                              ├─ streak-emails
-                              ├─ retry-failed-emails
-                              └─ refresh-leaderboard → proxy Express (opcional)
-Edge Functions ──► Postgres + Brevo
+Godot ──login/progreso/perfil/ranking──► Edge Functions (api_mode=supabase_edge)
+Godot ──verify OTP──────────────────────► Edge: verify-email-request / confirm
+pg_cron (Supabase) ─────────────────────► Edge: internal-job
+                                              ├─ streak-at-risk-emails  (18:00 ART)
+                                              ├─ streak-lost-emails     (00:00 ART)
+                                              ├─ retry-failed-emails
+                                              └─ refresh-leaderboard
+Edge Functions ──► Postgres + Storage (avatares) + Brevo
 ```
 
 ## Setup (una vez)
 
-1. **`BACKEND/.env.staging`:**
+1. **`BACKEND/.env.staging` + `.env.supabase-keys.local`:**
    ```env
    SUPABASE_PROJECT_REF=<ref>
-   SUPABASE_ANON_KEY=<anon public key>
+   SUPABASE_PUBLISHABLE_KEY=<sb_publishable_...>   # preferido
+   SUPABASE_ANON_KEY=<legacy anon JWT>             # opcional
    JWT_SECRET=...
    EMAIL_CRON_SECRET=...
    BREVO_API_KEY=...
    BREVO_SENDER_EMAIL=...
    ```
 
-2. **Deploy:**
+2. **Integración completa:**
    ```powershell
-   npx supabase login
    cd BACKEND
-   npm run migrate:supabase          # incluye migración 033 (cron → edge)
-   npm run supabase:functions:deploy
-   npm run setup:supabase:cron
-   npm run sync:godot-config
+   npm run integrate:staging
    ```
+   (migraciones, deploy Edge, pg_cron, sync Godot, smokes)
 
 3. **Verificar:**
    ```powershell
-   npm run smoke:verify-edge
-   npm run verify:supabase
+   npm run integrate:status
+   npm run verify:integration:full   # integral (~3 min) — recomendado
+   npm run smoke:edge:staging
+   npm run smoke:brevo-edge
+   npm run smoke:verify-email-edge
+   npm run check:edge:staging
    ```
 
 ## Flujo verify en Godot
 
-1. Login (Express).
-2. Guardar mail en perfil.
-3. Botón verificar → Supabase manda OTP por Brevo.
-4. Pegar 6 dígitos → Supabase marca `mail_verified_at`.
+1. `email_via_supabase: true` en `backend.local.json`
+2. OTP → `verify-email-request` / `verify-email-confirm`
+3. Mails automáticos → `pg_cron` → `internal-job`
 
-`BackendConfig.email_via_supabase()` se activa solo si hay `supabase_functions_url` + `supabase_anon_key` en `backend.local.json`.
-
-## Jobs automáticos (pg_cron)
-
-| Job | Horario UTC | Edge Function |
-|-----|-------------|---------------|
-| streak-emails | 22:00 | `internal-job` |
-| retry-failed | 11:00, 23:00 | `internal-job` |
-| refresh-leaderboard | :15 cada hora | proxy a Express* |
-
-\* Leaderboard sigue en Express hasta portarlo; mails **no** dependen de Express.
-
-## Supervisión
-
-- **Logs:** Supabase Dashboard → Edge Functions → Logs
-- **Crons:** `SELECT * FROM private.cron_invocation_log ORDER BY created_at DESC LIMIT 20;`
-- **Mails fallidos:** `SELECT * FROM email_deliveries WHERE status = 'failed' ORDER BY failed_at DESC;`
-- **Smoke:** `npm run smoke:verify-edge`
-
-## Secrets Edge Functions
+## Secrets Edge
 
 | Secret | Uso |
 |--------|-----|
-| DATABASE_URL | Postgres |
-| JWT_SECRET | Verify OTP (token Express) |
-| EMAIL_CRON_SECRET | internal-job (header X-Job-Secret) |
-| BREVO_* | Envío transactional |
-| SUPABASE_ANON_KEY | Validación gateway |
-| BACKEND_BASE_URL | Opcional — solo leaderboard cron |
+| `DATABASE_URL` | Postgres |
+| `JWT_SECRET` | Login + sesión |
+| `EMAIL_CRON_SECRET` | `internal-job` |
+| `GAME_CLIENT_API_KEYS` | publishable + anon (deploy) |
+| `BREVO_*` | Mails |
+| `BREVO_WEBHOOK_SECRET` | Webhook bounce/unsubscribe → Edge `brevo-webhook` |
 
-## ¿Por qué no OAuth?
+`npm run supabase:functions:secrets`
 
-OAuth (Google) requiere Supabase Auth, deep links en Godot y migrar `users` ↔ `auth.users`. El OTP actual ya funciona con mail/password y **no necesita terminal** una vez desplegado.
+## Crons (solo Supabase pg_cron)
 
----
-
-## Producción — checklist
-
-### 1. Entornos separados
-
-| | Staging | Producción |
-|---|---------|------------|
-| Supabase project | `kpvjdz…` (actual) | **Proyecto nuevo** recomendado |
-| Secrets | `.env.staging` | `.env.production` (ver `docs/env.production.example`) |
-| Brevo sender | Gmail dev OK | **Dominio verificado** |
-| JWT / cron secrets | dev | **Rotar** — no reutilizar staging |
-
-### 2. Bootstrap automatizado
+Los jobs programados corren **dentro de Supabase** con `pg_cron` + `pg_net` → `internal-job` (Edge). **No** usamos GitHub Actions para mails ni rachas.
 
 ```powershell
-cp BACKEND/docs/env.production.example BACKEND/.env.production
-# Completar todos los valores
-
-npx supabase login
-cd BACKEND
-npm run prod:bootstrap
+npm run setup:supabase:cron
 ```
 
-Hace: migraciones 033, deploy Edge Functions, pg_cron → Edge, sync Godot, checks.
+| Job pg_cron | Horario ART | Edge `internal-job` |
+|-------------|-------------|---------------------|
+| `evidente-streak-at-risk` | 18:00 | `streak-at-risk-emails` |
+| `evidente-streak-lost` | 00:00 | `streak-lost-emails` |
+| `evidente-retry-failed-am` | 08:00 | `retry-failed-emails` |
+| `evidente-retry-failed-pm` | 20:00 | `retry-failed-emails` |
+| `evidente-refresh-leaderboard` | cada hora :15 UTC | `refresh-leaderboard` |
 
-### 3. Express en Render (login + progreso)
-
-- Blueprint: `BACKEND/render.yaml`
-- Variables desde `.env.production`
-- `BACKEND_BASE_URL=https://e-vidente-api.onrender.com`
-- Health: `GET /health/ready`
-- `EMAIL_PROCESS_ON_STARTUP=false` en prod (mails van por Edge)
-
-### 4. Verificación continua
+**Probar manualmente** (mismo camino que pg_cron):
 
 ```powershell
-npm run check:deploy:production   # DB + env + Edge
-npm run check:edge:production
-npm run verify:supabase           # con ENV_FILE=.env.production
+npm run smoke:cron:staging -- streak-at-risk-emails
+npm run verify:integration:full   # dispara todos los jobs
 ```
 
-### 5. Supervisión en prod
+**Observabilidad:** tabla `private.cron_invocation_log` · fila en `npm run integrate:status` (“Crons recientes”).
 
-- **Supabase → Edge Functions → Logs** — errores Brevo, OTP, crons
-- **SQL:** `SELECT * FROM private.cron_invocation_log ORDER BY created_at DESC LIMIT 20;`
-- **SQL:** `SELECT status, count(*) FROM email_deliveries GROUP BY status;`
-- **Render → Logs** — login, progreso, `/health/ready`
+### CI en GitHub (solo verificación, no crons)
 
-### 6. Godot release
+| Workflow | Para qué |
+|----------|----------|
+| `supabase-staging-verify.yml` | `verify:supabase` + smokes Edge (manual dispatch) |
+
+No hace falta configurar secrets de GitHub para que salgan los mails: todo lo hace pg_cron en el proyecto Supabase.
+
+Verificación local:
 
 ```powershell
-$env:ENV_FILE=".env.production"; npm run sync:godot-config
+npm run verify:integration:full
+npm run integrate:status
 ```
 
-Exportar con `email_via_supabase: true` y `base_url` = Render.
+## Brevo (Edge)
 
-### 7. Qué corre dónde en prod
+1. **Secrets:** `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME` → `npm run supabase:functions:secrets`
+2. **Probe en runtime:** `GET /verify-email-health` llama a Brevo `/v3/account` y devuelve `brevo_probe` + `delivery_configured`
+3. **Webhook (recomendado):** en Brevo → Email transaccional → Webhook:
+   - URL: `https://<ref>.supabase.co/functions/v1/brevo-webhook`
+   - Header: `X-Brevo-Webhook-Secret: <BREVO_WEBHOOK_SECRET>` (mismo valor en `.env.staging` y Edge secrets)
+   - Eventos: hard bounce, soft bounce, blocked, unsubscribed
+4. **Smoke:** `npm run smoke:brevo-edge`
 
+Ver `docs/BREVO_SETUP.md` (remitente verified, Authorized IPs desactivadas para Edge).
+
+## Producción
+
+Mismo stack con `.env.production`:
+
+```powershell
+$env:ENV_FILE=".env.production"
+npm run migrate
+npm run supabase:functions:deploy
+npm run setup:supabase:cron
+npm run sync:godot-config
+npm run verify:integration:full
 ```
-Jugadores → Render (Express)     auth, perfil, progreso, leaderboard API
-Jugadores → Supabase Edge        verify OTP
-pg_cron   → Supabase Edge        rachas, retry mails
-pg_cron   → Render (opcional)    refresh-leaderboard si BACKEND_BASE_URL en Edge secrets
-```
+
+Ver `docs/env.production.example`.

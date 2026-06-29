@@ -8,6 +8,7 @@ const AVATAR_SCALE_IN_LEFT_TILE := 0.64
 
 var _background_sprite: Sprite2D = null
 var _avatar_sprite: Sprite2D = null
+var _sync_badge: Label = null
 
 
 func _ready() -> void:
@@ -38,6 +39,7 @@ func _notification(what: int) -> void:
 func refrescar_icono_perfil() -> void:
 	_asegurar_nodos_visuales()
 	_refrescar_textura_avatar()
+	_actualizar_badge_sync()
 	_distribuir_nodos_visuales()
 
 
@@ -121,6 +123,45 @@ func _distribuir_nodos_visuales() -> void:
 		left_tile_size * 0.5,
 		scaled_size.y * 0.5
 	)
+
+	_posicionar_badge_sync()
+
+
+func _asegurar_sync_badge() -> void:
+	if Engine.is_editor_hint():
+		return
+	if _sync_badge != null and is_instance_valid(_sync_badge):
+		return
+	_sync_badge = Label.new()
+	_sync_badge.name = "SyncPendingBadge"
+	_sync_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_sync_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_sync_badge.custom_minimum_size = Vector2(22.0, 22.0)
+	_sync_badge.add_theme_font_size_override("font_size", 12)
+	_sync_badge.add_theme_color_override("font_color", Color.WHITE)
+	_sync_badge.z_index = 2
+	add_child(_sync_badge)
+
+
+func _actualizar_badge_sync() -> void:
+	_asegurar_sync_badge()
+	if _sync_badge == null:
+		return
+	if Engine.is_editor_hint():
+		_sync_badge.visible = false
+		return
+	var pending := 0
+	if AuthApi.esta_logueado():
+		pending = LocalSyncQueue.contar_pendientes()
+	_sync_badge.visible = pending > 0
+	if pending > 0:
+		_sync_badge.text = "9+" if pending >= 10 else str(pending)
+
+
+func _posicionar_badge_sync() -> void:
+	if _sync_badge == null or not _sync_badge.visible:
+		return
+	_sync_badge.position = Vector2(size.x - 18.0, 6.0)
 
 
 func _aplicar_sobrescrituras_estilo_vacio() -> void:

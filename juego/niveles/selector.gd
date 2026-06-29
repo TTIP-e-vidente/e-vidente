@@ -82,6 +82,8 @@ func _ready() -> void:
 	_establecer_reanudar_superposicion_visible(false)
 	_configurar_botones()
 	_construir_hud()
+	if not BackendSession.online_progress_synced.is_connected(_on_progreso_online_sincronizado):
+		BackendSession.online_progress_synced.connect(_on_progreso_online_sincronizado)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
 	call_deferred("_procesar_deep_link_leaderboard")
 
@@ -92,6 +94,10 @@ func _procesar_deep_link_leaderboard() -> void:
 
 func _mostrar_perdida_racha_si_corresponde() -> void:
 	await StreakLossFlowScript.mostrar_si_corresponde(self)
+
+
+func _on_progreso_online_sincronizado(_user: Dictionary) -> void:
+	await _mostrar_perdida_racha_si_corresponde()
 
 
 func _configurar_botones() -> void:

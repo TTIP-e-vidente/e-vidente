@@ -61,6 +61,8 @@ func _ready() -> void:
 	mi_progresoi.texture = load(MI_PROGRESO_PATH) as Texture2D
 	saliri.texture = load(SALIR_PATH) as Texture2D
 	BackendSession.session_expired.connect(_on_sesion_expirada)
+	if not BackendSession.online_progress_synced.is_connected(_on_progreso_online_sincronizado):
+		BackendSession.online_progress_synced.connect(_on_progreso_online_sincronizado)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
 	call_deferred("_procesar_retorno_verificacion_mail")
 	call_deferred("_procesar_deep_link_leaderboard")
@@ -129,6 +131,7 @@ func _instanciar_login_overlay() -> void:
 func _on_login_completado() -> void:
 	var current_flow := _login_flow
 	_cerrar_login()
+	await _mostrar_perdida_racha_si_corresponde()
 	EmailVerificationBridge.refrescar_nudge_global()
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
 	if current_flow == LOGIN_FLOW_PROFILE:
@@ -217,6 +220,12 @@ func _abrir_opciones_menu() -> String:
 func _mostrar_perdida_racha_si_corresponde() -> void:
 	await StreakLossFlowScript.mostrar_si_corresponde(self)
 	EmailVerificationBridge.refrescar_nudge_global()
+
+
+func _on_progreso_online_sincronizado(_user: Dictionary) -> void:
+	if is_instance_valid(_login_overlay):
+		return
+	await _mostrar_perdida_racha_si_corresponde()
 
 
 func _on_login_verificacion_escena_solicitada(es_registro: bool, result: Dictionary) -> void:

@@ -76,6 +76,31 @@ EMAIL_TIMEZONE=America/Argentina/Buenos_Aires
 
 Con `EMAIL_ENABLED=false` el backend no llama a Brevo (útil sin red o sin key).
 
+## 3b. Supabase Edge (staging/producción)
+
+Los mails salen desde **Edge Functions**, no desde Express ni `npm run dev`.
+
+```powershell
+cd BACKEND
+# BREVO_API_KEY y BREVO_SENDER_EMAIL en .env.staging
+npm run supabase:functions:secrets
+npm run smoke:brevo-edge
+```
+
+**Authorized IPs:** Supabase Edge usa IPs de la nube de Supabase, no tu PC. En Brevo → Security → **desactivá** la restricción de IP o los envíos fallan con `unrecognised IP`.
+
+**Webhook (mejora deliverability):** Brevo → Email transaccional → Webhook:
+
+| Campo | Valor |
+|-------|--------|
+| URL | `https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/brevo-webhook` |
+| Header | `X-Brevo-Webhook-Secret: <BREVO_WEBHOOK_SECRET>` |
+| Eventos | hard_bounce, soft_bounce, blocked, unsubscribed |
+
+Generá `BREVO_WEBHOOK_SECRET` (string largo aleatorio) en `.env.staging`, subilo con `npm run supabase:functions:secrets` y pegalo en Brevo.
+
+Efecto: bounces marcan `email_deliveries` como `failed` y desactivan `email_notifications_enabled` para ese mail (sin depender de Express).
+
 ## 4. Verificar que funciona
 
 ```bash

@@ -5,7 +5,7 @@ y porque podés ver el futuro, como un vidente.
 
 si lo tengo que explicar pierde la gracia verdad...?
 
-Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) · JSON: [contenido/README.md](contenido/README.md) · Mapa: [mapas/README.md](mapas/README.md) · Vincular: [vincular/README.md](vincular/README.md)
+Setup: [BACKEND/docs/SUPABASE_QUICKSTART.md](../BACKEND/docs/SUPABASE_QUICKSTART.md) · JSON: [contenido/README.md](contenido/README.md) · Mapa: [mapas/README.md](mapas/README.md) · Vincular: [vincular/README.md](vincular/README.md)
 
 ## Flujo congelado para demo
 

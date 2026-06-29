@@ -1,6 +1,6 @@
 ﻿# Arquitectura
 
-Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) · Cambios: [Bitacora](Bitacora.md)
+Arquitectura: [Arquitectura-General](Arquitectura-General) · Cambios: [Bitacora](Bitacora.md)
 
 ## Flujo jugador
 

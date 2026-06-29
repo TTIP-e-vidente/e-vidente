@@ -75,7 +75,26 @@ function deployFunctions(projectRef: string): void {
     'verify-email-request',
     'verify-email-confirm',
     'verify-email-health',
+    'brevo-webhook',
     'internal-job',
+    'auth-login',
+    'auth-register',
+    'auth-me',
+    'auth-health',
+    'player-me',
+    'player-email-status',
+    'player-progress-get',
+    'player-progress-save',
+    'player-progress-batch',
+    'player-progress-reset',
+    'avatar-upload',
+    'avatar-get',
+    'avatar-delete',
+    'avatar-public',
+    'leaderboard-list',
+    'leaderboard-meta',
+    'leaderboard-me',
+    'leaderboard-me-summary',
   ];
 
   console.log('\n▶ Desplegando Edge Functions...');
@@ -144,7 +163,7 @@ async function main(): Promise<void> {
   const functionsUrl = resolveSupabaseFunctionsUrl(projectRef);
   console.log('\n✓ Edge Functions listas');
   console.log(`  URL base: ${functionsUrl}`);
-  console.log('  Endpoints: verify-email-*, internal-job (crons pg_cron)');
+  console.log('  Endpoints: verify-email-*, auth-*, internal-job (crons pg_cron)');
   console.log('\nPróximo paso: npm run setup:supabase:cron && npm run sync:godot-config');
 }
 

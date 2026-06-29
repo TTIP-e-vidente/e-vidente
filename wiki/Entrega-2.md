@@ -1,6 +1,6 @@
 # Entrega 2 — E-VIDENTE
 
-> Histórico Entrega 2. Estado hoy: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+> Histórico Entrega 2. Stack actual: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md).
 
 ## Resumen ejecutivo
 

@@ -4,8 +4,8 @@ import { scheduleOutboundEmailJob } from './email.service';
 const DEV_RECURRING_MS = 6 * 60 * 60 * 1000;
 
 /**
- * En desarrollo, re-ejecuta la cola outbound (bienvenida, rachas, reintentos)
- * sin comandos npm manuales. Producción usa GitHub Actions (email-cron.yml).
+ * En desarrollo con Express local, re-ejecuta la cola outbound cada 6 h.
+ * Staging/producción: pg_cron en Supabase → Edge internal-job.
  */
 export function scheduleDevRecurringEmailJobs(): void {
   if (process.env.NODE_ENV !== 'development') {

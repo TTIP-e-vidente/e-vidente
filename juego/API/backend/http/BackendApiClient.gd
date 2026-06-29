@@ -8,6 +8,7 @@ const AVATAR_UPLOAD_TIMEOUT := 30.0
 
 var base_url: String = ""
 var _supabase: SupabaseVerifyClient = null
+var _edge: SupabaseEdgeClient = null
 
 
 func _init() -> void:
@@ -35,11 +36,33 @@ func _obtener_supabase() -> SupabaseVerifyClient:
 	return _supabase
 
 
+func _obtener_edge() -> SupabaseEdgeClient:
+	if _edge == null:
+		_edge = SupabaseEdgeClient.new()
+		add_child(_edge)
+	return _edge
+
+
 func verificar_salud_api() -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		var salud := await _obtener_edge().enviar_get("auth-health", "")
+		if not salud.get("ok", false):
+			return salud
+		var data: Dictionary = salud.get("data", {})
+		if str(data.get("status", "")) != "ok":
+			return {
+				"ok": false,
+				"status": salud.get("status", 503),
+				"error": "API Edge no disponible",
+				"data": data,
+			}
+		return {"ok": true, "status": 200, "data": {"status": "ok"}}
 	return await _obtener_json("/health", "")
 
 
 func verificar_salud_db() -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("auth-health", "")
 	return await _obtener_json("/health/db", "")
 
 
@@ -54,6 +77,8 @@ func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 		"usernameOrMail": usuario_o_mail,
 		"password": clave,
 	})
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post("auth-login", "", body)
 	return await _enviar_post("/auth/login", "", body)
 
 
@@ -78,35 +103,49 @@ func registrar_cuenta(
 		var birth_date := str(fecha_nacimiento).strip_edges()
 		if not birth_date.is_empty():
 			payload["birth_date"] = birth_date
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post("auth-register", "", JSON.stringify(payload))
 	return await _enviar_post("/auth/register", "", JSON.stringify(payload))
 
 
 func obtener_mi_usuario(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("auth-me", token)
 	return await _obtener_json("/auth/me", token)
 
 
 func actualizar_perfil(token: String, payload: Dictionary) -> Dictionary:
 	var body := JSON.stringify(payload)
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_patch("player-me", token, body)
 	var headers := _armar_headers(token)
 	return await _enviar_peticion(HTTPClient.METHOD_PATCH, "/player/me", headers, body)
 
 
 func guardar_progreso(token: String, resumen_partida: Dictionary) -> Dictionary:
 	var body := JSON.stringify(resumen_partida)
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post("player-progress-save", token, body)
 	return await _enviar_post("/player/me/progress", token, body)
 
 
 func guardar_progreso_batch(token: String, items: Array) -> Dictionary:
 	var body := JSON.stringify({"items": items})
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post("player-progress-batch", token, body)
 	return await _enviar_post("/player/me/progress/batch", token, body)
 
 
 func obtener_progreso(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("player-progress-get", token)
 	return await _obtener_json("/player/me/progress", token)
 
 
 func reiniciar_progreso(token: String, restriction: String = "CELIAQUIA") -> Dictionary:
 	var body := JSON.stringify({"restriction": restriction})
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post("player-progress-reset", token, body)
 	return await _enviar_post("/player/me/progress/reset", token, body)
 
 
@@ -117,30 +156,42 @@ func obtener_leaderboard(
 	offset: int = 0,
 	include_self: bool = false
 ) -> Dictionary:
-	var qs := "?scope=%s&limit=%d&offset=%d" % [scope.uri_encode(), limit, offset]
+	var qs := "scope=%s&limit=%d&offset=%d" % [scope.uri_encode(), limit, offset]
 	if include_self and not token.is_empty():
 		qs += "&include_self=true"
-	return await _obtener_json("/leaderboard" + qs, token)
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("leaderboard-list", token, qs)
+	var endpoint := "/leaderboard?" + qs
+	return await _obtener_json(endpoint, token)
 
 
 func obtener_mi_posicion_leaderboard(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("leaderboard-me", token)
 	return await _obtener_json("/leaderboard/me", token)
 
 
 # Obtiene el contexto competitivo del jugador (puesto actual, siguiente rival, EXP faltante).
 # Endpoint: GET /leaderboard/me/summary
 func obtener_resumen_ranking(token: String, scope: String = "global_xp") -> Dictionary:
-	var qs := "?scope=%s" % scope.strip_edges().uri_encode()
-	return await _obtener_json("/leaderboard/me/summary" + qs, token)
+	var qs := "scope=%s" % scope.strip_edges().uri_encode()
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("leaderboard-me-summary", token, qs)
+	return await _obtener_json("/leaderboard/me/summary?" + qs, token)
 
 
 func obtener_meta_leaderboard() -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("leaderboard-meta", "")
 	return await _obtener_json("/leaderboard/meta", "")
 
 
 func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:
-	# Avatar usa timeout largo por el tamaño del payload base64.
 	var body := JSON.stringify({"data": data, "mimeType": mime_type})
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_post_con_timeout(
+			"avatar-upload", token, body, AVATAR_UPLOAD_TIMEOUT
+		)
 	var headers := _armar_headers(token)
 	return await _enviar_peticion_con_timeout(
 		HTTPClient.METHOD_POST, "/player/me/avatar", headers, body, AVATAR_UPLOAD_TIMEOUT
@@ -148,6 +199,8 @@ func subir_avatar(token: String, data: String, mime_type: String) -> Dictionary:
 
 
 func descargar_avatar(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("avatar-get", token)
 	return await _obtener_json("/player/me/avatar", token)
 
 
@@ -155,10 +208,14 @@ func descargar_avatar_publico(user_id: String) -> Dictionary:
 	var clean_id := user_id.strip_edges()
 	if clean_id.is_empty():
 		return {"ok": false, "error": "userId vacío"}
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("avatar-public", "", "userId=" + clean_id.uri_encode())
 	return await _obtener_json("/player/users/%s/avatar" % clean_id.uri_encode(), "")
 
 
 func eliminar_avatar(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_delete("avatar-delete", token)
 	var headers := _armar_headers(token)
 	return await _enviar_peticion(HTTPClient.METHOD_DELETE, "/player/me/avatar", headers, "")
 
@@ -181,6 +238,8 @@ func confirmar_verificacion_email(token: String, codigo: String) -> Dictionary:
 
 
 func obtener_estado_email(token: String) -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		return await _obtener_edge().enviar_get("player-email-status", token)
 	return await _obtener_json("/player/me/email-status", token)
 
 

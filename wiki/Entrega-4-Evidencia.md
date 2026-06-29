@@ -63,7 +63,7 @@ Templates validados con envío real (jun 2026):
 | Consentimiento | `auth.gd`, `Login.tscn` | Checkbox + toggle perfil |
 | Jobs racha | `email.jobs.routes.ts` | `npm run email:streaks` |
 | Auditoría | `email.repository.ts` | `GET /dev/email/deliveries` |
-| Cron cloud | `.github/workflows/email-cron.yml` | Manual dispatch / schedule |
+| Cron programado | Supabase `pg_cron` → Edge `internal-job` | `npm run setup:supabase:cron` |
 | Cron local | `scripts/local/*.ps1` | Task Scheduler |
 | E2E | `scripts/validate-email-flow.ts` | Un comando |
 

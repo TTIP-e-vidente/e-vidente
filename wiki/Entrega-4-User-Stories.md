@@ -154,4 +154,4 @@ Historias de usuario: **verificación OTP, bienvenida, consentimiento, rachas y 
 - Dado filas `failed` recientes, cuando corre `retry-failed-emails`, entonces reintenta dentro de `EMAIL_RETRY_MAX_ATTEMPTS`.
 - Dado `npm run validate:email-flow`, cuando corre con Brevo real, entonces valida el circuito completo en un solo comando.
 
-**Cómo se valida:** `scripts/local/` · `GET /dev/email/deliveries` · `.github/workflows/email-cron.yml` · [Evidencia](Entrega-4-Evidencia).
+**Cómo se valida:** `npm run smoke:cron:staging` · `npm run verify:integration:full` · `GET /dev/email/deliveries` · [Evidencia](Entrega-4-Evidencia).

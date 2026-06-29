@@ -1,5 +1,5 @@
 /**
- * Bootstrap producción: migraciones, Edge Functions, crons, checks.
+ * Bootstrap producción: migraciones, Edge Functions, pg_cron, Godot.
  *
  * Uso:
  *   cp .env.production.example .env.production   # completar secrets
@@ -7,6 +7,7 @@
  */
 import { execSync } from 'child_process';
 import { BACKEND_ROOT, loadBackendEnv } from './lib/postgres-env';
+import { resolveSupabaseFunctionsUrl } from './lib/supabase-functions-env';
 
 const ENV_FILE = process.env.ENV_FILE?.trim() || '.env.production';
 
@@ -27,58 +28,58 @@ function run(label: string, command: string, optional = false): void {
   }
 }
 
-function printPostBootstrapChecklist(publicUrl: string): void {
+function printPostBootstrapChecklist(functionsUrl: string): void {
+  const ref = process.env.SUPABASE_PROJECT_REF?.trim() ?? '<ref>';
   console.log(`
 ═══════════════════════════════════════════
   Checklist manual post-bootstrap
 ═══════════════════════════════════════════
 
-1. Render (o tu host):
-   • Conectar repo → BACKEND/render.yaml
-   • Secrets desde .env.production (JWT, DB, Brevo, EMAIL_CRON_SECRET)
-   • BACKEND_BASE_URL=${publicUrl || 'https://TU-SERVICIO.onrender.com'}
-   • Health: GET /health/ready → 200
-
-2. Supabase Dashboard:
+1. Supabase (${ref}):
    • Edge Functions → Logs (verify-email-*, internal-job)
-   • Authentication → desactivado (usamos JWT Express)
    • SQL: SELECT * FROM private.cron_invocation_log ORDER BY created_at DESC LIMIT 10;
+   • pg_cron: npm run setup:supabase:cron (con ENV_FILE=.env.production)
 
-3. Brevo:
+2. Brevo:
    • Sender verificado (dominio propio en prod)
-   • Webhook opcional → ${publicUrl || 'https://API'}/internal/jobs/brevo-webhook
+   • Webhook → https://${ref}.supabase.co/functions/v1/brevo-webhook
 
-4. Godot release:
-   • npm run sync:godot-config (con ENV_FILE=.env.production)
-   • Exportar con backend.local.json apuntando a API prod + email_via_supabase
+3. Godot release:
+   • ENV_FILE=.env.production npm run sync:godot-config
+   • api_mode=supabase_edge en backend.local.json
 
-5. Monitoreo:
-   • npm run check:deploy:production
-   • npm run check:edge:production
-   • npm run verify:supabase (con .env.production)
+4. Verificación:
+   • ENV_FILE=.env.production npm run verify:integration:full
+   • ENV_FILE=.env.production npm run check:edge
+
+Edge URL: ${functionsUrl || '(configurar SUPABASE_PROJECT_REF)'}
 `);
 }
 
 async function main(): Promise<void> {
-  const envFile = process.env.ENV_FILE?.trim() || '.env.production';
-  process.env.ENV_FILE = envFile;
+  process.env.ENV_FILE = ENV_FILE;
   loadBackendEnv();
 
   console.log('═══════════════════════════════════════════');
   console.log('  E-VIDENTE — Production bootstrap');
   console.log('═══════════════════════════════════════════');
-  console.log(`Env: ${envFile}\n`);
+  console.log(`Env: ${ENV_FILE}\n`);
 
   run('Deploy readiness', `npx ts-node scripts/check-deploy-readiness.ts --production`);
   run('Migraciones SQL', 'npx ts-node scripts/run-migrations.ts');
-  run('Edge Functions deploy', 'npx ts-node scripts/setup-supabase-functions.ts', true);
-  run('pg_cron → Edge Functions', 'npx ts-node scripts/setup-supabase-cron.ts');
+  run('Edge Functions deploy', 'npx ts-node scripts/setup-supabase-functions.ts');
+  run('pg_cron → Edge', 'npx ts-node scripts/setup-supabase-cron.ts');
   run('Godot config sync', 'npx ts-node scripts/sync-godot-backend-config.ts');
-  run('Edge Functions smoke', 'npx ts-node scripts/check-edge-functions.ts', true);
+  run('Edge health', 'npx ts-node scripts/check-edge-functions.ts');
   run('Schema verify', 'npx ts-node scripts/verify-supabase.ts', true);
 
-  const publicUrl = (process.env.BACKEND_BASE_URL ?? '').trim().replace(/\/+$/, '');
-  printPostBootstrapChecklist(publicUrl);
+  let functionsUrl = '';
+  try {
+    functionsUrl = resolveSupabaseFunctionsUrl();
+  } catch {
+    functionsUrl = '';
+  }
+  printPostBootstrapChecklist(functionsUrl);
   console.log('prod:bootstrap completado.');
 }
 

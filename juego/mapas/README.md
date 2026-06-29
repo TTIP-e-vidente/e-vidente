@@ -1,6 +1,6 @@
 # Mapas
 
-Orquestación del tablero y apertura de nodos. **Contenido JSON** (activities, `games`, catálogo): [contenido/README](../contenido/README.md). Estado del repo: [ESTADO-ACTUAL](../../ESTADO-ACTUAL.md).
+Orquestación del tablero y apertura de nodos. **Contenido JSON** (activities, `games`, catálogo): [contenido/README](../contenido/README.md).
 
 ## Empeza por aca
 

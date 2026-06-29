@@ -1,7 +1,5 @@
 # Contenido (celiaquía)
 
-Estado repo: [ESTADO-ACTUAL.md](../../ESTADO-ACTUAL.md)
-
 ## Carpetas
 
 ```

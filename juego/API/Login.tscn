@@ -139,7 +139,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("3_r0oxj")
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_secondary")
-text = "Reintentar conexión"
+text = "Reintentar"
 flat = true
 
 [node name="LabelStatus" type="Label" parent="VBoxContainer" unique_id=673412557]

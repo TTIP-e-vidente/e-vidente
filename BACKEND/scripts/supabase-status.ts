@@ -58,8 +58,8 @@ async function main(): Promise<void> {
 
     console.log('\nDeploy cloud (Express + Supabase Postgres):');
     console.log('  1. Render/Railway/Docker → npm run start:prod');
-    console.log('  2. BACKEND_BASE_URL + secrets GitHub (crons)');
-    console.log('  Guía: docs/SUPABASE_FULL_STACK.md');
+    console.log('  2. npm run setup:supabase:cron (pg_cron → Edge)');
+    console.log('  Guía: docs/SUPABASE_QUICKSTART.md');
   } finally {
     await pool.end();
   }

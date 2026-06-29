@@ -1,18 +1,25 @@
 # Guía rápida Supabase (5 minutos)
 
-Integración **solo Postgres**. Auth sigue siendo Express + JWT.
+**Stack actual (staging):** Godot → **Supabase Edge Functions** → Postgres + Storage. Mails → Edge + Brevo + `pg_cron`.
 
 ```text
-Godot → Express → Supabase Postgres
-              ↑
-        GitHub Actions (crons email)
+Godot (api_mode=supabase_edge)
+  → Edge Functions (auth, progreso, avatar, ranking, verify-mail)
+  → Postgres Supabase
+  → Storage (avatares)
+pg_cron → internal-job → Brevo
 ```
+
+**Express** queda solo para tests Node legacy — [EXPRESS_LEGACY.md](./EXPRESS_LEGACY.md).  
+**No hace falta** `npm run dev` para jugar online.
+
+Detalle Edge: [SUPABASE_EDGE_FUNCTIONS.md](./SUPABASE_EDGE_FUNCTIONS.md)
 
 ---
 
 ## 1. Crear proyecto Supabase
 
-1. [dashboard.supabase.com](https://supabase.com/dashboard) → **New project**
+1. [dashboard.supabase.com](https://dashboard.supabase.com) → **New project**
 2. Anotá **project ref** y **database password**
 3. En **Settings → Database**:
    - **Direct** (migrate): `db.<ref>.supabase.co` · user `postgres`
@@ -20,96 +27,100 @@ Godot → Express → Supabase Postgres
 
 ---
 
-## 2. Un solo comando (recomendado)
+## 2. Setup staging (recomendado)
 
 ```powershell
 cd BACKEND
 npm install
 
-npm run supabase:init
-# Editar .env.staging: password, JWT_SECRET, EMAIL_CRON_SECRET
-# Agregar: SUPABASE_PROJECT_REF=<ref>  (habilita fallback automático al pooler)
+# Keys anon/publishable (no commitear)
+copy docs\env.supabase-keys.local.example .env.supabase-keys.local
+# Pegar SUPABASE_ANON_KEY del dashboard → Settings → API
 
-npm run supabase:diagnose          # prueba DNS + conexión; persiste pooler si hace falta
-npm run supabase:bootstrap:apply:seed
+npm run configure:supabase-keys
+npm run integrate:staging
 ```
 
-Si `db.<ref>.supabase.co` falla (IPv6/DNS), `supabase:diagnose` prueba poolers (`aws-1`/`aws-0`) y **persiste el host que funciona** en `.env.staging`.
+`integrate:staging` hace: migraciones → deploy Edge → pg_cron → sync Godot → smokes.
+
+Si la DB no conecta:
+
+```powershell
+npm run supabase:diagnose    # prueba poolers y persiste host en .env.staging
+```
 
 **Password con `#`:** en el `.env` va entre comillas → `POSTGRES_PASSWORD="tu#pass"`.
 
-Con datos locales:
+---
+
+## 3. Jugar (sin Express)
 
 ```powershell
-npm run supabase:bootstrap:full
+# Verificación rápida
+npm run integrate:status
+
+# Verificación completa (~3 min) — sin dudas
+npm run verify:integration:full
 ```
+
+Godot 4.6 → `juego/project.godot` → **F5** → login → jugar.
+
+`juego/config/backend.local.json` debe tener `api_mode: supabase_edge` (lo escribe `sync:godot-config:staging`).
+
+**Ranking post-partida:** al guardar progreso, Edge refresca en background los scopes relevantes (`global_xp`, `streak` si completó, y la restricción jugada). El cron horario sigue como respaldo.
 
 ---
 
-## 3. Desarrollo (un comando)
+## 4. Brevo (mails OTP + rachas)
+
+Secrets en Edge (no en Express):
 
 ```powershell
-cd BACKEND
-npm run dev              # = Supabase staging (antes: dev:staging)
+# BREVO_API_KEY, BREVO_SENDER_EMAIL, EMAIL_ENABLED=true en .env.staging
+npm run sync:staging-secrets
+npm run supabase:functions:secrets
+npm run smoke:brevo-edge
 ```
 
-Al terminar ves un banner **Listo para Godot** con API, DB remota y puerto.
-Luego abrís Godot → F5.
+OTP end-to-end:
 
-Alias: `npm run dev:staging` · Verificación: `npm run integrate:status`
+```powershell
+npm run smoke:verify-email-edge
+# Casilla real:
+# $env:SMOKE_EMAIL_TO="tu@mail.com"
+# npm run smoke:verify-email-edge -- --send
+```
+
+Detalle: [BREVO_SETUP.md](./BREVO_SETUP.md) · [SUPABASE_EDGE_FUNCTIONS.md](./SUPABASE_EDGE_FUNCTIONS.md)
 
 ---
 
-## 4. Deploy del backend (Render u otro)
+## 5. Crons (pg_cron en Supabase)
 
-1. Conectá el repo y usá `BACKEND/render.yaml` o configurá manualmente:
-   - **Build:** `npm ci && npm run build`
-   - **Start:** `npm run start:prod` (migrate + server)
-   - **Health:** `GET /health/ready`
-
-2. Variables en el host (ver `.env.production.example`):
-
-| Variable | Valor |
-|----------|-------|
-| `POSTGRES_HOST` | Session pooler |
-| `POSTGRES_USER` | `postgres.<ref>` |
-| `POSTGRES_PASSWORD` | password Supabase |
-| `POSTGRES_SSL` | `true` |
-| `POSTGRES_POOL_MAX` | `8` |
-| `JWT_SECRET` | secret largo |
-| `EMAIL_CRON_SECRET` | secret largo |
-| `BACKEND_BASE_URL` | `https://tu-api...` |
-| `BREVO_API_KEY` | API key |
-| `BREVO_SENDER_EMAIL` | remitente verificado |
-
-3. Preflight antes del deploy:
+Los jobs corren **en Supabase**, no en GitHub ni Express:
 
 ```powershell
-ENV_FILE=.env.production npm run check:deploy -- --production
+npm run setup:supabase:cron
+npm run smoke:cron:staging -- streak-at-risk-emails
 ```
+
+| Job pg_cron | Horario ART | Edge `internal-job` |
+|-------------|-------------|---------------------|
+| `evidente-streak-at-risk` | 18:00 | `streak-at-risk-emails` |
+| `evidente-streak-lost` | 00:00 | `streak-lost-emails` |
+| `evidente-retry-failed-am/pm` | 08:00 / 20:00 | `retry-failed-emails` |
+| `evidente-refresh-leaderboard` | cada hora :15 UTC | `refresh-leaderboard` |
+
+Los jobs corren **solo en Supabase** (`pg_cron` → Edge). No hay workflow de crons en GitHub.
 
 ---
 
-## 5. Crons de email (GitHub Actions)
+## 6. Producción (pendiente)
 
-Los crons **no corren en Supabase**. Corren cuando el backend está **público en internet**.
-
-1. Deploy del backend con URL pública
-2. En GitHub → **Settings → Secrets → Actions**:
-
-| Secret | Valor |
-|--------|-------|
-| `BACKEND_BASE_URL` | `https://tu-api...` |
-| `EMAIL_CRON_SECRET` | mismo que en el servidor |
-
-3. Probar:
-
-```powershell
-npm run smoke:cron:staging
-# o manual: Actions → Email cron jobs → Run workflow
-```
-
-Horarios (ART): rachas 19:00 · retry 08:00 y 20:00.
+1. Proyecto Supabase **prod** separado de staging
+2. `npm run prod:init-env` → `.env.production`
+3. `ENV_FILE=.env.production npm run integrate:staging` (o pasos equivalentes)
+4. `ENV_FILE=.env.production npm run verify:integration:full`
 
 ---
 
@@ -117,15 +128,15 @@ Horarios (ART): rachas 19:00 · retry 08:00 y 20:00.
 
 | Comando | Para qué |
 |---------|----------|
-| `npm run supabase:init` | Crear `.env.staging` |
-| `npm run staging:verify` | Chequeo completo (status + deploy + schema + smoke) |
-| `npm run supabase:bootstrap -- --apply` | Schema + verify |
-| `npm run check:deploy:staging` | Preflight staging |
-| `npm run verify:supabase` | Chequeo DB/RLS/migraciones |
-| `npm run validate:email-flow:staging` | E2E mails con Brevo |
-| `npm run seed:staging` | Usuarios demo |
-| `npm run start:prod` | Migrate + server (deploy) |
-| `GET /health/ready` | Probe para Render/Railway |
+| `npm run integrate:staging` | Setup completo staging |
+| `npm run integrate:status` | Panel DB + Edge + cron + Godot |
+| `npm run verify:integration:full` | **Verificación integral** (recomendado) |
+| `npm run smoke:edge:staging` | Smokes auth/progress/avatar/leaderboard |
+| `npm run check:edge:staging` | Guards Edge (JWT, internal-job) |
+| `npm run verify:supabase` | Schema + RLS + migraciones (35/35) |
+| `npm run supabase:functions:deploy` | Redeploy Edge Functions |
+| `npm run sync:godot-config:staging` | Solo `backend.local.json` |
+| `npm run dev` | **Legacy:** Express :3010 (solo tests Node) |
 
 ---
 
@@ -133,9 +144,8 @@ Horarios (ART): rachas 19:00 · retry 08:00 y 20:00.
 
 | Problema | Solución |
 |----------|----------|
-| Timeout en migrate | Usá host **directo**, no pooler |
-| Crons no corren | Falta deploy público o secrets GitHub |
-| `not_ready` en /health/ready | Corré `npm run deploy:migrate` |
-| Pool agotado | Bajá `POSTGRES_POOL_MAX` a 5–8 |
-
-Guía completa: [SUPABASE_MIGRATION.md](./SUPABASE_MIGRATION.md)
+| Timeout en migrate | Host **directo**, no pooler |
+| `integrate:status` falla Edge | `npm run supabase:functions:deploy` |
+| Brevo no configurado | `sync:staging-secrets` + `supabase:functions:secrets` |
+| Crons omitidos | `npm run setup:supabase:cron` |
+| Godot pide localhost | `npm run sync:godot-config:staging` |

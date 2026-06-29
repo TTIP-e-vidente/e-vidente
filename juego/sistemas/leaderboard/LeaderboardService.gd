@@ -16,6 +16,7 @@ signal resumen_competitivo_fallido(mensaje: String)
 const SEGUNDOS_CACHE_VALIDO := 60.0
 const LIMITE_POR_PAGINA := 50
 const META_REFRESH_POST_PARTIDA := "leaderboard_refresh_scope_post_partida"
+const META_PUESTO_ANTES_PARTIDA := "leaderboard_puesto_antes_por_scope"
 
 
 var _cache: Dictionary = {}
@@ -284,6 +285,90 @@ func _cache_resumen_esta_fresco(scope: String) -> bool:
 	return antiguedad < SEGUNDOS_CACHE_VALIDO
 
 
+## Captura puesto online antes de subir progreso (para celebración post-partida).
+func ejecutar_pre_sync_post_partida(tree: SceneTree, sync_callable: Callable) -> void:
+	_pre_sync_post_partida_async(tree, sync_callable)
+
+
+func ejecutar_pipeline_post_partida(
+	tree: SceneTree,
+	sync_callable: Callable,
+	navigate_callable: Callable = Callable()
+) -> void:
+	_pipeline_post_partida_async(tree, sync_callable, navigate_callable)
+
+
+func _pre_sync_post_partida_async(tree: SceneTree, sync_callable: Callable) -> void:
+	if AuthApi.esta_logueado() and tree != null:
+		var scope := _resolver_scope_desde_arbol(tree)
+		await capturar_puesto_antes_partida_online(scope)
+	if sync_callable.is_valid():
+		sync_callable.call()
+
+
+func _pipeline_post_partida_async(
+	tree: SceneTree,
+	sync_callable: Callable,
+	navigate_callable: Callable
+) -> void:
+	await _pre_sync_post_partida_async(tree, sync_callable)
+	if navigate_callable.is_valid():
+		navigate_callable.call()
+
+
+func capturar_puesto_antes_partida_online(scope: String) -> void:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty() or not AuthApi.esta_logueado():
+		return
+	var puesto := obtener_puesto_desde_resumen_cache(scope_final)
+	if puesto <= CelebracionSubidaRanking.PUESTO_NO_REGISTRADO:
+		var resultado := await cargar_resumen_competitivo(false, scope_final)
+		if bool(resultado.get("ok", false)):
+			puesto = obtener_puesto_desde_resumen_cache(scope_final)
+	_guardar_puesto_antes(scope_final, puesto)
+
+
+func consumir_puesto_antes_partida(scope: String) -> int:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		return CelebracionSubidaRanking.PUESTO_NO_REGISTRADO
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return CelebracionSubidaRanking.PUESTO_NO_REGISTRADO
+	if not tree.root.has_meta(META_PUESTO_ANTES_PARTIDA):
+		return CelebracionSubidaRanking.PUESTO_NO_REGISTRADO
+	var mapa_raw: Variant = tree.root.get_meta(META_PUESTO_ANTES_PARTIDA, {})
+	if not mapa_raw is Dictionary:
+		tree.root.remove_meta(META_PUESTO_ANTES_PARTIDA)
+		return CelebracionSubidaRanking.PUESTO_NO_REGISTRADO
+	var mapa := (mapa_raw as Dictionary).duplicate(true)
+	var puesto := int(mapa.get(scope_final, CelebracionSubidaRanking.PUESTO_NO_REGISTRADO))
+	mapa.erase(scope_final)
+	if mapa.is_empty():
+		tree.root.remove_meta(META_PUESTO_ANTES_PARTIDA)
+	else:
+		tree.root.set_meta(META_PUESTO_ANTES_PARTIDA, mapa)
+	return puesto
+
+
+func _guardar_puesto_antes(scope: String, puesto: int) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return
+	var mapa: Dictionary = {}
+	if tree.root.has_meta(META_PUESTO_ANTES_PARTIDA):
+		var existente: Variant = tree.root.get_meta(META_PUESTO_ANTES_PARTIDA, {})
+		if existente is Dictionary:
+			mapa = (existente as Dictionary).duplicate(true)
+	mapa[scope] = maxi(0, puesto)
+	tree.root.set_meta(META_PUESTO_ANTES_PARTIDA, mapa)
+
+
+func _resolver_scope_desde_arbol(tree: SceneTree) -> String:
+	const PostPartidaFlowScript := preload("res://niveles/progress/PostPartidaFlow.gd")
+	return PostPartidaFlowScript.resolver_scope_desde_arbol(tree)
+
+
 func marcar_refresco_tras_partida(scope: String) -> void:
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
@@ -291,6 +376,26 @@ func marcar_refresco_tras_partida(scope: String) -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree != null and tree.root != null:
 		tree.root.set_meta(META_REFRESH_POST_PARTIDA, scope_final)
+
+
+## Espera a que el snapshot del scope se refresque tras guardar progreso (post-partida).
+func esperar_refresh_scope(
+	scope: String,
+	desde_unix: float,
+	max_segundos: float = 3.0
+) -> void:
+	var scope_final := scope.strip_edges()
+	if scope_final.is_empty():
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var deadline := Time.get_unix_time_from_system() + max_segundos
+	while Time.get_unix_time_from_system() < deadline:
+		var meta := await LeaderboardApi.obtener_meta()
+		if _meta_scope_reciente(meta, scope_final, desde_unix):
+			return
+		await tree.create_timer(0.35).timeout
 
 
 func consumir_refresco_tras_partida() -> String:
@@ -302,3 +407,32 @@ func consumir_refresco_tras_partida() -> String:
 	var scope := str(tree.root.get_meta(META_REFRESH_POST_PARTIDA, "")).strip_edges()
 	tree.root.remove_meta(META_REFRESH_POST_PARTIDA)
 	return scope
+
+
+func _meta_scope_reciente(meta_resultado: Dictionary, scope: String, desde_unix: float) -> bool:
+	if not meta_resultado.get("ok", false):
+		return false
+	var datos: Variant = meta_resultado.get("data", meta_resultado)
+	if not datos is Dictionary:
+		return false
+	var snapshots: Variant = (datos as Dictionary).get("snapshots", [])
+	if not snapshots is Array:
+		return false
+	for snap in snapshots as Array:
+		if not snap is Dictionary:
+			continue
+		var snap_dict := snap as Dictionary
+		if str(snap_dict.get("scope", "")) != scope:
+			continue
+		var refreshed := str(snap_dict.get("last_refreshed_at", "")).strip_edges()
+		if refreshed.is_empty():
+			return false
+		return _iso_a_unix(refreshed) >= desde_unix - 0.5
+	return false
+
+
+func _iso_a_unix(iso: String) -> float:
+	var cleaned := iso.replace("Z", "+00:00")
+	if cleaned.contains("T") and not cleaned.contains(" "):
+		cleaned = cleaned.replace("T", " ")
+	return float(Time.get_unix_time_from_datetime_string(cleaned))

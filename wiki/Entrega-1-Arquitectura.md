@@ -1,6 +1,6 @@
 # Arquitectura — Entrega 1
 
-> Histórico Entrega 1. Ver [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+> Histórico Entrega 1. Stack actual: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md).
 
 ## Modelo de Entidades y Relaciones
 

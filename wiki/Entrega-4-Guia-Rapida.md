@@ -115,7 +115,7 @@ Prefijo: `http://localhost:3000` (o el puerto de tu `.env`).
 | Por qué Brevo, OTP, dedupe | [Decisiones](Entrega-4-Decisiones) |
 | Demo, tests, capturas | [Evidencia](Entrega-4-Evidencia) |
 | Evolución E3 → E4 | [Flujo E3→E4](Entrega-4-Flujo-E3-E4) |
-| Qué sigue después | [Próximos pasos](Entrega-4-Proximos-Pasos) |
+| Qué sigue después | [Bitácora E4](Bitacora-Entrega-4) |
 | Cronología de implementación | [Bitácora E4](Bitacora-Entrega-4) |
 
 ---

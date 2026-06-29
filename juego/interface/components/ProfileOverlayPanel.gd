@@ -304,7 +304,13 @@ func _aplicar_layout_acciones(es_invitado: bool) -> void:
 		_secondary_row.visible = true
 
 	if is_instance_valid(_guardar_btn):
-		_guardar_btn.visible = false
+		var pending := 0
+		if AuthApi.esta_logueado():
+			pending = LocalSyncQueue.contar_pendientes()
+		_guardar_btn.visible = pending > 0
+		if pending > 0:
+			_guardar_btn.text = "Sincronizar (%d)" % pending
+			_guardar_btn.disabled = _syncing or SyncApi.esta_sincronizando_pendientes()
 	if is_instance_valid(_edit_btn):
 		_edit_btn.visible = true
 		_edit_btn.text = "Editar perfil"

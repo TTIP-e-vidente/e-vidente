@@ -154,7 +154,9 @@ static func evaluar_respuesta_verificacion(
 			"cooldown_seconds": 0,
 			"feedback": mensaje_error(
 				result,
-				"No se pudo conectar al servidor. Levant? BACKEND con npm run dev."
+				BackendConfig.mensaje_sin_conexion_edge()
+				if BackendConfig.es_modo_supabase_edge()
+				else "No se pudo conectar al servidor. Levantá BACKEND con npm run dev."
 			),
 			"feedback_ok": false,
 		}

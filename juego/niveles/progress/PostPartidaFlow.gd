@@ -82,7 +82,10 @@ static func cargar_ranking_en_card(
 
 	card.mostrar_estado_carga()
 
-	var puesto_antes := LeaderboardService.obtener_puesto_desde_resumen_cache(scope)
+	var inicio_carga := Time.get_unix_time_from_system()
+	var puesto_antes := LeaderboardService.consumir_puesto_antes_partida(scope)
+	if puesto_antes <= CelebracionSubidaRanking.PUESTO_NO_REGISTRADO:
+		puesto_antes = LeaderboardService.obtener_puesto_desde_resumen_cache(scope)
 	if puesto_antes <= CelebracionSubidaRanking.PUESTO_NO_REGISTRADO:
 		var resultado_previo: Variant = await LeaderboardService.cargar_resumen_competitivo(
 			false,
@@ -93,6 +96,7 @@ static func cargar_ranking_en_card(
 			puesto_antes = LeaderboardService.obtener_puesto_desde_resumen_cache(scope)
 
 	LeaderboardService.invalidar_cache(scope)
+	await LeaderboardService.esperar_refresh_scope(scope, inicio_carga - 45.0, 3.0)
 
 	var resultado_raw: Variant = await LeaderboardService.cargar_resumen_competitivo(true, scope)
 	if not is_instance_valid(card):

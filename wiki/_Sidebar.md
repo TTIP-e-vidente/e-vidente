@@ -1,8 +1,7 @@
 ## E-VIDENTE
 
-- [Estado actual](../ESTADO-ACTUAL.md)
+- [Cómo empezar](Como-Empezar)
 - [Home](Home)
-- [Como-Empezar](Como-Empezar)
 - [Arquitectura](Arquitectura-General)
 - [Sync Godot↔Postgres](Sync-Godot-Postgres)
 - [Bitácora](Bitacora)
@@ -32,7 +31,6 @@
 - [Decisiones](Entrega-1-Decisiones)
 - [Evidencia](Entrega-1-Evidencia)
 - [Bitácora E1](Bitacora-Entrega-1)
-- [Próximos pasos](Entrega-1-Proximos-Pasos)
 
 **[Entrega 2](Entrega-2)**
 - [Resumen](Entrega-2)

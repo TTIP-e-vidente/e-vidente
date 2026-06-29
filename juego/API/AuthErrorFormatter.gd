@@ -12,19 +12,8 @@ static func mensaje_desde_check_conexion(check: Dictionary, fallback: String = "
 	return _mensaje_auth_generico(payload, fallback)
 
 
-static func resumen_conexion_ok(check: Dictionary) -> String:
-	var partes: PackedStringArray = PackedStringArray(["Conectado"])
-	var db: Variant = check.get("db", {})
-	if db is Dictionary and bool((db as Dictionary).get("remote", false)):
-		partes.append("Supabase")
-	var email: Variant = check.get("email", {})
-	if email is Dictionary:
-		var email_dict := email as Dictionary
-		if bool(email_dict.get("configured", false)):
-			partes.append("Brevo")
-		elif bool(email_dict.get("enabled", false)):
-			partes.append("Mail pendiente de config")
-	return " · ".join(partes)
+static func resumen_conexion_ok(_check: Dictionary) -> String:
+	return "Listo para jugar."
 
 
 static func mensaje_auth(result: Dictionary, fallback: String = "") -> String:
@@ -58,6 +47,10 @@ static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> S
 				return "No se pudo enviar el código: %s" % detail
 			return "No se pudo enviar el código. Intentá de nuevo."
 		"EMAIL_UNAVAILABLE":
+			if BackendConfig.es_modo_supabase_edge():
+				if bool(data.get("dev_code_in_logs", false)):
+					return "Brevo no está configurado en Edge. Revisá npm run supabase:functions:secrets en BACKEND."
+				return "El servicio de mail no está disponible en Supabase Edge."
 			if bool(data.get("dev_code_in_logs", false)):
 				return "Brevo no está configurado. El código aparece en la consola del backend."
 			return "El servicio de mail no está disponible. Reiniciá el backend (npm run dev:restart)."
@@ -153,6 +146,19 @@ static func _mensaje_auth_generico(result: Dictionary, fallback: String = "") ->
 
 static func _mensaje_sin_conexion(
 		result_code: int, server_error: String, phase: String) -> String:
+	if BackendConfig.es_modo_supabase_edge():
+		if not BackendConfig.edge_listo_para_usar():
+			return (
+				"Falta configurar Supabase Edge en Godot.\n"
+				+ BackendConfig.mensaje_sync_requerido()
+			)
+		if result_code == HTTPRequest.RESULT_TIMEOUT:
+			return (
+				"Supabase Edge tardó demasiado (%s).\n" % BackendConfig.obtener_api_base_url()
+				+ "Verificá tu conexión o npm run integrate:status en BACKEND."
+			)
+		return BackendConfig.mensaje_sin_conexion_edge()
+
 	var base_url := BackendConfig.obtener_base_url()
 	if result_code == HTTPRequest.RESULT_CANT_CONNECT:
 		if phase == "db":
@@ -211,11 +217,15 @@ static func _mensaje_por_codigo(code: String) -> String:
 		"INVALID_BODY":
 			return "Datos inválidos. Revisá usuario, mail y contraseña (mín. 8 caracteres)."
 		"UNEXPECTED_ERROR":
+			if BackendConfig.es_modo_supabase_edge():
+				return "Error interno en Supabase Edge. Revisá logs en el dashboard de Supabase."
 			return (
 				"Error interno del servidor.\n"
 				+ "Revisá la consola de BACKEND (npm run dev)."
 			)
 		"NOT_SUPABASE":
+			if BackendConfig.es_modo_supabase_edge():
+				return "Supabase Edge no responde correctamente. Corré npm run integrate:status en BACKEND."
 			return (
 				"El backend no usa Supabase (Postgres local).\n"
 				+ "En BACKEND ejecutá: npm run dev"
@@ -236,6 +246,11 @@ static func _mensaje_por_texto_servidor(server_error: String, status: int) -> St
 			return _mensaje_por_codigo("DUPLICATE_MAIL")
 		_:
 			if status >= 500:
+				if BackendConfig.es_modo_supabase_edge():
+					return (
+						"Error de Supabase Edge (HTTP %d).\n" % status
+						+ "Revisá npm run integrate:status en BACKEND."
+					)
 				return (
 					"Error del servidor (HTTP %d).\n" % status
 					+ "Revisá la consola de BACKEND (npm run dev)."

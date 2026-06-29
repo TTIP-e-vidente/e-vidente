@@ -128,16 +128,19 @@ export function validateSupabaseEnvFields(options: {
     message: isPlaceholderSecret(cronSecret, PLACEHOLDER_CRON_SECRETS)
       ? 'EMAIL_CRON_SECRET es placeholder o muy corto'
       : 'EMAIL_CRON_SECRET configurado',
-    hint: 'Debe coincidir con el secret de GitHub Actions (email-cron.yml)',
+    hint: 'Debe coincidir con Edge secrets y private.internal_cron_settings (npm run setup:supabase:cron)',
   });
 
   if (options.requirePublicUrl) {
-    const publicUrl = process.env.BACKEND_BASE_URL?.trim() ?? '';
+    const projectRef = process.env.SUPABASE_PROJECT_REF?.trim() ?? '';
+    const functionsUrl =
+      process.env.SUPABASE_FUNCTIONS_URL?.trim() ||
+      (projectRef ? `https://${projectRef}.supabase.co/functions/v1` : '');
     checks.push({
-      key: 'BACKEND_BASE_URL',
-      ok: publicUrl.startsWith('https://'),
-      message: publicUrl ? `URL pública: ${publicUrl}` : 'Falta BACKEND_BASE_URL (https://...)',
-      hint: 'Requerido para crons de GitHub Actions y webhooks Brevo',
+      key: 'SUPABASE_FUNCTIONS_URL',
+      ok: functionsUrl.includes('/functions/v1'),
+      message: functionsUrl ? `Edge: ${functionsUrl}` : 'Falta SUPABASE_PROJECT_REF o SUPABASE_FUNCTIONS_URL',
+      hint: 'Crons y Godot usan Edge Functions (no Express)',
     });
   }
 

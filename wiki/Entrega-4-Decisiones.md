@@ -134,4 +134,4 @@ Cerrar [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) sin acoplar Godot a
 | 6 | Producción + dominio | ⏳ Pendiente |
 | 7 | Recuperación contraseña por mail | 🔜 E5 candidato |
 
-Ver [Próximos pasos](Entrega-4-Proximos-Pasos).
+Ver [Bitácora E4](Bitacora-Entrega-4).

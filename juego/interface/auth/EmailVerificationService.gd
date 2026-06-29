@@ -66,11 +66,9 @@ static func _asegurar_servidor_y_sesion() -> Dictionary:
 		if not bool(api.get("ok", false)):
 			return {
 				"ok": false,
-				"mensaje": (
-					AuthApi.mensaje_check_conexion(
-						api,
-						"Express apagado — necesario para login. Verify va por Supabase."
-					)
+				"mensaje": AuthApi.mensaje_check_conexion(
+					api,
+					BackendConfig.mensaje_sin_conexion_edge()
 				),
 			}
 		return {"ok": true, "mensaje": ""}
@@ -81,7 +79,9 @@ static func _asegurar_servidor_y_sesion() -> Dictionary:
 			"ok": false,
 			"mensaje": AuthApi.mensaje_check_conexion(
 				health,
-				"No hay conexión con el servidor. Levantá BACKEND con npm run dev."
+				BackendConfig.mensaje_sin_conexion_edge()
+				if BackendConfig.es_modo_supabase_edge()
+				else "No hay conexión con el servidor. Levantá BACKEND con npm run dev."
 			),
 		}
 	return {"ok": true, "mensaje": ""}

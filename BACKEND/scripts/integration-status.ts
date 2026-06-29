@@ -8,15 +8,16 @@ import {
   assertSupabaseStagingEnv,
   connectSupabase,
   createPoolFromCurrentEnv,
-  loadBackendEnv,
 } from './lib/postgres-env';
+import { loadStagingWithKeys } from './lib/supabase-keys-local';
 import { EXPECTED_MIGRATION_COUNT } from './lib/public-tables';
 import {
   canUseSupabaseEmailFunctions,
+  resolveSupabaseClientApiKey,
   resolveSupabaseFunctionsUrl,
 } from './lib/supabase-functions-env';
 import { fetchRemoteHealth, isLocalBackendUrl, resolvePublicBackendUrl } from './lib/cloud-backend-url';
-import { isSupabaseEmailEdgeMode, canReachSupabaseEmailEdge } from '../src/config/supabase-email-mode';
+import { isSupabaseEmailEdgeMode, isSupabaseApiEdgeMode, canReachSupabaseEmailEdge } from '../src/config/supabase-email-mode';
 import { isEmailDeliveryConfigured } from '../src/modules/email/email.config';
 
 const BACKEND_ROOT = path.resolve(__dirname, '..');
@@ -25,35 +26,83 @@ const KEYS_LOCAL = path.resolve(BACKEND_ROOT, '.env.supabase-keys.local');
 
 type Row = { label: string; ok: boolean; detail: string };
 
+const strict =
+  process.argv.includes('--strict') || process.env.VERIFY_INTEGRATION_STRICT === '1';
+
 function row(label: string, ok: boolean, detail: string): Row {
   return { label, ok, detail };
 }
 
-async function checkEdgeHealth(): Promise<Row> {
+async function checkEdgeHealth(): Promise<{ row: Row; deliveryConfigured: boolean }> {
   if (!canUseSupabaseEmailFunctions()) {
-    return row('Edge Functions', false, 'Falta SUPABASE_ANON_KEY en .env.staging');
+    return {
+      row: row('Edge Functions', false, 'Falta SUPABASE_PUBLISHABLE_KEY en .env.staging'),
+      deliveryConfigured: false,
+    };
   }
   const baseUrl = resolveSupabaseFunctionsUrl();
-  const anonKey = process.env.SUPABASE_ANON_KEY!.trim();
+  const anonKey = resolveSupabaseClientApiKey();
   try {
     const response = await fetch(`${baseUrl}/verify-email-health`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
     });
     if (response.status === 404) {
-      return row('Edge Functions', false, 'No desplegadas — npm run supabase:functions:deploy');
+      return {
+        row: row('Edge Functions', false, 'No desplegadas — npm run supabase:functions:deploy'),
+        deliveryConfigured: false,
+      };
     }
     if (!response.ok) {
-      return row('Edge Functions', false, `verify-email-health HTTP ${response.status}`);
+      return {
+        row: row('Edge Functions', false, `verify-email-health HTTP ${response.status}`),
+        deliveryConfigured: false,
+      };
     }
-    const body = (await response.json()) as { delivery_configured?: boolean };
-    const brevo = body.delivery_configured ? 'Brevo OK' : 'Brevo no configurado en Edge secrets';
-    return row('Edge Functions', true, `${baseUrl} · ${brevo}`);
+    const body = (await response.json()) as {
+      delivery_configured?: boolean;
+      brevo_probe?: { ok?: boolean; hint?: string; error?: string };
+    };
+    const authHealthResponse = await fetch(`${baseUrl}/auth-health`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    });
+    const authHealthBody = (await authHealthResponse.json().catch(() => ({}))) as {
+      status?: string;
+      migrations?: { applied?: number; expected?: number; healthy?: boolean };
+    };
+    const authOk =
+      authHealthResponse.ok &&
+      authHealthBody.status === 'ok' &&
+      authHealthBody.migrations?.healthy === true &&
+      authHealthBody.migrations?.expected === EXPECTED_MIGRATION_COUNT;
+    const deliveryConfigured = body.delivery_configured === true;
+    const probeHint = body.brevo_probe?.hint ?? body.brevo_probe?.error;
+    const brevo = deliveryConfigured
+      ? 'Brevo OK'
+      : probeHint
+        ? `Brevo: ${probeHint.slice(0, 120)}`
+        : 'Brevo no configurado — npm run supabase:functions:secrets';
+    const migDetail = authHealthBody.migrations
+      ? `migraciones Edge ${authHealthBody.migrations.applied}/${authHealthBody.migrations.expected}`
+      : 'auth-health sin migraciones';
+    const gameApi = authOk
+      ? `auth+game API OK · ${migDetail}`
+      : `falta deploy o migraciones desalineadas (${migDetail})`;
+    return {
+      row: row('Edge Functions', authOk && deliveryConfigured, `${baseUrl} · ${brevo} · ${gameApi}`),
+      deliveryConfigured,
+    };
   } catch (error) {
-    return row('Edge Functions', false, error instanceof Error ? error.message : String(error));
+    return {
+      row: row('Edge Functions', false, error instanceof Error ? error.message : String(error)),
+      deliveryConfigured: false,
+    };
   }
 }
 
 async function checkExpress(): Promise<Row> {
+  if (isSupabaseApiEdgeMode()) {
+    return row('Express API', true, 'No requerido (api_mode=supabase_edge)');
+  }
   const publicUrl = resolvePublicBackendUrl();
   if (!isLocalBackendUrl(publicUrl)) {
     const health = await fetchRemoteHealth(publicUrl);
@@ -82,7 +131,7 @@ async function checkExpress(): Promise<Row> {
 }
 
 async function main(): Promise<void> {
-  loadBackendEnv();
+  loadStagingWithKeys();
   const envPath = path.resolve(BACKEND_ROOT, process.env.ENV_FILE?.trim() || '.env.staging');
   assertSupabaseStagingEnv(envPath);
 
@@ -102,13 +151,23 @@ async function main(): Promise<void> {
 
   if (fs.existsSync(GODOT_CONFIG)) {
     const godot = JSON.parse(fs.readFileSync(GODOT_CONFIG, 'utf8')) as Record<string, unknown>;
+    const apiMode = str(godot.api_mode);
+    const edgeMode = apiMode === 'supabase_edge';
+    const baseUrl = str(godot.base_url);
+    const functionsUrl = str(godot.supabase_functions_url);
+    const anonKey = str(godot.supabase_anon_key);
     const viaSupabase = bool(godot.email_via_supabase) || str(godot.db) === 'supabase';
-    const portOk = !str(godot.base_url).includes(':3000');
+    const noLocalhost =
+      !isLocalBackendUrl(baseUrl) && !isLocalBackendUrl(functionsUrl) && !baseUrl.includes(':3000');
+    const edgeUrlsOk = !edgeMode || (functionsUrl.includes('/functions/v1') && noLocalhost);
+    const anonOk = anonKey.startsWith('sb_publishable_') || anonKey.length >= 20;
+    const configOk =
+      baseUrl.length > 0 && noLocalhost && canReachSupabaseEmailEdge() && edgeUrlsOk && anonOk;
     rows.push(
       row(
         'Godot config',
-        viaSupabase && str(godot.base_url).length > 0 && portOk && canReachSupabaseEmailEdge(),
-        `base=${str(godot.base_url)} · verify→${viaSupabase ? 'supabase' : 'express'} · db=${str(godot.db)}`,
+        viaSupabase && configOk,
+        `api=${apiMode || 'local'} · base=${baseUrl} · edge=${edgeMode ? 'sí' : 'no'}`,
       ),
     );
   } else {
@@ -147,6 +206,64 @@ async function main(): Promise<void> {
 
     const users = await client.query<{ c: string }>('SELECT COUNT(*)::text AS c FROM users;');
     rows.push(row('Usuarios DB', true, `${users.rows[0]?.c ?? 0} en Supabase`));
+
+    const cronLog = await client.query<{
+      job_path: string;
+      skipped_reason: string | null;
+      created_at: Date;
+    }>(
+      `SELECT job_path, skipped_reason, created_at
+       FROM private.cron_invocation_log
+       ORDER BY created_at DESC
+       LIMIT 8`,
+    );
+    const cronRows = cronLog.rows;
+    const cronInvocationsOk =
+      cronRows.length === 0 || cronRows.some((entry) => !entry.skipped_reason);
+    const lastCron = cronRows[0];
+    const cronDetail =
+      lastCron == null
+        ? 'sin registros — npm run setup:supabase:cron'
+        : `último ${lastCron.job_path} · ${
+            lastCron.skipped_reason
+              ? `SKIP ${lastCron.skipped_reason}`
+              : 'enviado a Edge'
+          }`;
+    rows.push(row('Crons recientes', cronInvocationsOk, cronDetail));
+
+    const failedMails = await client.query<{ c: string }>(
+      `SELECT COUNT(*)::text AS c FROM email_deliveries
+       WHERE status = 'failed'
+         AND COALESCE(failed_at, created_at) >= now() - interval '24 hours'`,
+    );
+    const failedCount = Number.parseInt(failedMails.rows[0]?.c ?? '0', 10);
+    rows.push(
+      row(
+        'Mails failed 24h',
+        failedCount === 0,
+        failedCount === 0 ? 'ninguno' : `${failedCount} fallido(s) — revisá Brevo / verify-email-health`,
+      ),
+    );
+
+    const lbMeta = await client.query<{
+      scope: string;
+      error_message: string | null;
+      last_refreshed_at: Date | null;
+    }>(
+      `SELECT scope, error_message, last_refreshed_at
+       FROM leaderboard_meta
+       ORDER BY scope`,
+    );
+    const lbRows = lbMeta.rows;
+    const lbErrors = lbRows.filter((entry) => entry.error_message);
+    const lbOk = lbRows.length > 0 && lbErrors.length === 0;
+    const lbDetail =
+      lbRows.length === 0
+        ? 'sin filas — npm run smoke:leaderboard-edge'
+        : lbErrors.length > 0
+          ? `error en: ${lbErrors.map((entry) => entry.scope).join(', ')}`
+          : `${lbRows.length} scope(s) OK`;
+    rows.push(row('Leaderboard meta', lbOk, lbDetail));
   } finally {
     client.release();
     await pool.end();
@@ -162,19 +279,26 @@ async function main(): Promise<void> {
     ),
   );
 
+  const edgeHealth = await checkEdgeHealth();
+
+  const brevoConfigured = edgeHealth.deliveryConfigured;
+  const brevoDetail = isSupabaseEmailEdgeMode()
+    ? brevoConfigured
+      ? 'Brevo activo en Edge'
+      : 'Pendiente — npm run supabase:functions:secrets (mail OTP no enviará)'
+    : isEmailDeliveryConfigured()
+      ? 'OK en .env local'
+      : 'Falta BREVO_*';
+
   rows.push(
     row(
       'Brevo (Edge secrets)',
-      isSupabaseEmailEdgeMode() ? canReachSupabaseEmailEdge() : isEmailDeliveryConfigured(),
-      isSupabaseEmailEdgeMode()
-        ? 'Brevo vive en Edge Function secrets (npm run supabase:functions:deploy)'
-        : isEmailDeliveryConfigured()
-          ? 'OK en .env local'
-          : 'Falta BREVO_*',
+      !isSupabaseEmailEdgeMode() || brevoConfigured || !strict,
+      brevoDetail,
     ),
   );
 
-  rows.push(await checkEdgeHealth());
+  rows.push(edgeHealth.row);
   rows.push(await checkExpress());
 
   console.log('═══════════════════════════════════════════');
@@ -191,7 +315,7 @@ async function main(): Promise<void> {
 
   console.log('\n───────────────────────────────────────────');
   console.log('  Flujo objetivo:');
-  console.log('    Login/progreso → Express (local o Render)');
+  console.log('    Login/progreso → Supabase Edge (api_mode=supabase_edge)');
   console.log('    Verify OTP     → Supabase Edge Functions');
   console.log('    Jobs mail      → pg_cron → Edge internal-job');
   console.log('───────────────────────────────────────────');
@@ -199,6 +323,9 @@ async function main(): Promise<void> {
   if (failed > 0) {
     console.log(`\n${failed} chequeo(s) pendientes → npm run integrate:staging\n`);
     process.exit(1);
+  }
+  if (strict) {
+    console.log('\nModo strict: corré también npm run verify:integration:strict tras configurar Brevo.\n');
   }
   console.log('\nIntegración OK.\n');
 }

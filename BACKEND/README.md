@@ -1,10 +1,12 @@
 # Backend
 
-Estado monorepo: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md)
+Guía: [SUPABASE_QUICKSTART.md](docs/SUPABASE_QUICKSTART.md) · Verificación: `npm run verify:integration:full`
 
-API local (Node, Express, TypeScript, PostgreSQL) para registro, login JWT, perfil y progreso. Godot guarda local primero; si hay sesión, sincroniza al cerrar partida. Sin API, el juego sigue.
+**API online:** Supabase Edge Functions (Deno). **Express** queda como legacy para tests Node — [docs/EXPRESS_LEGACY.md](docs/EXPRESS_LEGACY.md).
 
-**Godot:** `BackendSession.gd` → `BackendApiClient.gd` → Express → service → repository → Postgres.  
+Godot guarda local primero; si hay sesión, sincroniza al cerrar partida. Sin API, el juego sigue.
+
+**Godot (producción):** `BackendSession.gd` → `BackendApiClient.gd` → **Edge Functions** → Postgres/Storage.  
 **Save local:** `SaveManager.gd` (no se reemplaza).
 
 ## MER → tablas
@@ -27,101 +29,100 @@ Notas: `password_hash` (bcrypt), nunca password en claro. `client_run_id` idempo
 
 Capas: `route → controller → service → repository → mapper`. Sin SQL en controllers; sin `password_hash` en respuestas.
 
-## Levantar
+## Levantar (jugar online — sin Express)
 
-Requisitos: Node, npm, proyecto Supabase (staging).
-
-### Desarrollo (Supabase — único camino)
+Requisitos: Node 20, proyecto Supabase (staging), keys en `.env.supabase-keys.local`.
 
 **Guía rápida:** [`docs/SUPABASE_QUICKSTART.md`](docs/SUPABASE_QUICKSTART.md)  
-**Stack completo (DB + deploy):** [`docs/SUPABASE_FULL_STACK.md`](docs/SUPABASE_FULL_STACK.md)
+**Guía rápida:** [`docs/SUPABASE_QUICKSTART.md`](docs/SUPABASE_QUICKSTART.md)  
+**Express legacy:** [`docs/EXPRESS_LEGACY.md`](docs/EXPRESS_LEGACY.md)
 
 ```sh
 cd BACKEND
 npm install
-npm run supabase:init
-# completar .env.staging (password, JWT, Brevo si aplica)
-npm run supabase:bootstrap:apply:seed
-npm run staging:verify    # status + schema + smoke API (+ email si Brevo OK)
-npm run dev               # Express → Supabase + sync Godot (:3010)
+npm run configure:supabase-keys    # primera vez
+npm run integrate:staging          # migrate + deploy + cron + godot + smokes Edge
 ```
+
+Godot → F5. **No** hace falta `npm run dev`.
 
 | Comando | Para qué |
 |---------|----------|
-| `npm run dev` | **Default:** Supabase staging + sync Godot |
-| `npm run dev:staging` | Alias de `dev` |
-| `npm run integrate:status` | Panel DB + Edge + cron + Godot config |
-| `npm run staging:verify` | Chequeo completo antes de demo/deploy |
-| `npm run staging:verify:email` | Igual + smoke Brevo obligatorio |
-| `npm run validate:email-flow:staging` | E2E mails contra Supabase |
-| `npm run smoke:email:staging` | Smoke transaccional Brevo |
+| `npm run integrate:staging` | Setup completo staging (recomendado) |
+| `npm run integrate:status` | Panel DB + Edge + cron + Godot |
+| `npm run verify:integration:full` | **Verificación integral** (~3 min, recomendado) |
+| `npm run smoke:edge:staging` | Smokes auth/progress/avatar/leaderboard |
+| `npm run smoke:brevo-edge` | Brevo + verify-email-health |
+| `npm run smoke:verify-email-edge` | OTP vía Edge (register + request) |
+| `npm run check:edge:staging` | Health Edge Functions |
+| `npm run sync:godot-config:staging` | Solo actualizar `backend.local.json` |
+| `npm run dev` | **Legacy:** Express local :3010 (solo portar lógica Node) |
 
-`dev:local` y `setup:dev` están **deshabilitados** (antes levantaban Postgres con Docker).
+**Arquitectura:** Godot → **Edge Functions** (JWT propio) → Postgres Supabase + Storage. Mails → Edge + Brevo + `pg_cron`.
 
-Deploy: `npm run build` + `npm run start:prod` · health `GET /health/ready` · blueprint `render.yaml`
-
-**Arquitectura:** Godot → Express (JWT propio) → Postgres Supabase. Mails OTP y jobs → **Edge Functions** + Brevo + `pg_cron`. **No** usamos Supabase Auth ni Docker local.
-
-`.env.staging` / `.env` no se commitean. Templates: `.env.staging.example`, `.env.example`.
-
-**Demo:** `agus` / `123`, `margo` / `123`
-
-### Postgres local (Docker) — retirado
-
-El flujo `docker compose` + `.env` local ya no se usa en desarrollo. `docker-compose.yml` queda solo como referencia histórica o migración puntual de datos (`migrate-data-local-to-supabase.ts` si tenés un dump viejo).
+`.env.staging` / `.env.supabase-keys.local` no se commitean.
 
 Migraciones: `BACKEND/migrations/`, `npm run migrate`. No editar migraciones viejas; agregar archivo nuevo.
 
-## Endpoints
+## API (Edge Functions)
 
-| Grupo | Rutas |
-|-------|--------|
-| Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/logout` |
-| Jugador | `GET /player/me`, `PATCH /player/me`, `GET /player/me/progress`, `POST /player/me/progress` |
-| Health | `GET /health`, `GET /health/db` |
-| Dev (PoC) | `POST /dev/player-progress`, `GET /dev/player-progress/:username` |
+En staging/producción el cliente Godot llama a `https://<ref>.supabase.co/functions/v1/<nombre>`.
 
-Integración real: `/player/me/progress` con Bearer token. `/dev/*` solo pruebas manuales.
+| Grupo | Edge Function(s) |
+|-------|------------------|
+| Auth | `auth-register`, `auth-login`, `auth-me`, `auth-health` |
+| Perfil | `player-me` (GET/PATCH) |
+| Progreso | `player-progress-get`, `player-progress-save`, `player-progress-batch`, `player-progress-reset` |
+| Avatar | `avatar-upload`, `avatar-get`, `avatar-delete`, `avatar-public` |
+| Ranking | `leaderboard-list`, `leaderboard-meta`, `leaderboard-me`, `leaderboard-me-summary` |
+| Verify mail | `verify-email-request`, `verify-email-confirm`, `verify-email-health` |
+| Jobs (cron) | `internal-job` (`X-Job-Secret`) |
+
+Contrato Express legacy (solo tests Node): ver [EXPRESS_LEGACY.md](docs/EXPRESS_LEGACY.md).
 
 ### POST `/player/me/progress` (contrato Godot)
 
 Campos usados por el cliente: `clientRunId`, `restriction`, `expToAdd`, `nodeId`, `gameType`, `accuracy`, `completed`, `score`, `correctAnswers`, `wrongAnswers`, `durationSeconds`. No cambiar nombres sin actualizar `RunSummaryBuilder` / `BackendApiClient`.
 
-## Probar
+## Probar (staging)
 
 ```sh
-curl http://localhost:3000/health
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"usernameOrMail":"agus","password":"123"}'
-curl http://localhost:3000/player/me -H "Authorization: Bearer TOKEN"
-curl -X POST http://localhost:3000/player/me/progress \
-  -H "Content-Type: application/json" -H "Authorization: Bearer TOKEN" \
-  -d '{"clientRunId":"run_demo_1","restriction":"CELIAQUIA","expToAdd":10,"nodeId":"demo_node_1","gameType":"quiz","accuracy":90,"completed":true,"score":100,"correctAnswers":8,"wrongAnswers":2,"durationSeconds":60}'
+npm run verify:integration:full   # integral: panel + Edge + Brevo + OTP + crons + schema
+npm run integrate:status            # panel rápido
+npm run smoke:edge:staging
 ```
+
+Inbox real (opcional):
+
+```sh
+SMOKE_EMAIL_TO=tu@mail.com npm run smoke:verify-email-edge -- --send
+```
+
+Tests Node (Express legacy, solo desarrollo de módulos):
 
 ```sh
 npm run build && npm test
-npm run smoke:api   # con server up
+npm run dev          # Express :3010
+npm run smoke:api    # contra Express local
 ```
 
-## Fuera de alcance
+## Fuera de alcance (por ahora)
 
-Refresh tokens, admin, leaderboard online, rename destructivo de tablas.
+Refresh tokens, admin panel, Supabase Auth nativo (Fase 7 opcional).
 
-## Emails (Brevo)
+## Emails (Brevo vía Edge)
 
-Documentación completa: [wiki/Entrega-4-Guia-Rapida.md](../wiki/Entrega-4-Guia-Rapida.md) · Setup: [`docs/BREVO_SETUP.md`](docs/BREVO_SETUP.md)
+Documentación: [wiki/Entrega-4-Guia-Rapida.md](../wiki/Entrega-4-Guia-Rapida.md) · [docs/BREVO_SETUP.md](docs/BREVO_SETUP.md) · [docs/SUPABASE_EDGE_FUNCTIONS.md](docs/SUPABASE_EDGE_FUNCTIONS.md)
 
-Módulo en `src/modules/email/` — **5 templates** (OTP, bienvenida, 2 rachas, cambio mail). Por defecto `EMAIL_ENABLED=false`.
+En staging/producción los mails salen desde **Edge Functions** + secrets Supabase (no Express).
 
-- Verificación OTP → bienvenida **tras** confirmar (no al registro).
-- Cron 19:00 ART: `npm run email:streaks` o `POST /internal/jobs/streak-emails` (`X-Job-Secret`).
-- Reintento: `npm run email:retry-failed` · Cron cloud: `.github/workflows/email-cron.yml`.
-- Consentimiento racha: `email_notifications_enabled` (registro + `PATCH /player/me`).
-- Auditoría: `email_deliveries` (`pending` | `sent` | `failed` | `skipped`).
-- Validación E2E: `npm run validate:email-flow` · Detalle: `src/modules/email/README.md`.
-- Dev: `GET /dev/email/templates` · `/preview` · `/deliveries`.
+- **5 templates:** OTP, bienvenida, racha en riesgo, racha perdida, cambio mail
+- **OTP:** `verify-email-request` → Brevo; bienvenida tras confirmar
+- **Crons (pg_cron → `internal-job`):** racha 18:00 y 00:00 ART; retry 08:00 y 20:00 ART
+- **Auditoría:** tabla `email_deliveries`
+- **Verificación:** `npm run smoke:brevo-edge` · `npm run smoke:verify-email-edge` · `npm run verify:integration:full`
+
+Módulo Express en `src/modules/email/` — legacy para tests Node (`validate:email-flow` local).
 
 ## Problemas frecuentes
 

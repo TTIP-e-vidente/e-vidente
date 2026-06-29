@@ -1,5 +1,5 @@
 /**
- * Deja la integración staging lista (keys + migrate + cron + godot + status).
+ * Deja la integración staging lista (keys + migrate + cron + godot + verify).
  * Uso: npm run integrate:staging
  */
 import { execSync } from 'child_process';
@@ -42,13 +42,17 @@ function main(): void {
     process.exit(1);
   }
 
+  run('Sync secrets staging', 'npx ts-node scripts/sync-staging-secrets.ts', true);
   run('CLI acceso proyecto', 'npx ts-node scripts/verify-supabase-cli-access.ts');
-
   run('Migraciones', 'npx ts-node scripts/run-migrations.ts');
-  run('Edge Functions deploy', 'npx ts-node scripts/setup-supabase-functions.ts', true);
+  run('Edge Functions deploy + secrets', 'npx ts-node scripts/setup-supabase-functions.ts');
   run('pg_cron → Edge', 'npx ts-node scripts/setup-supabase-cron.ts');
   run('Sync Godot', 'npx ts-node scripts/sync-godot-backend-config.ts');
-  run('Usuarios Supabase', 'npx ts-node scripts/query-supabase-users.ts');
+  run('Edge health', 'npx ts-node scripts/check-edge-functions.ts');
+  run('Smoke Brevo', 'npx ts-node scripts/smoke-brevo-edge.ts');
+  run('Smoke Edge (auth/progress/avatar/leaderboard)', 'npx ts-node scripts/smoke-edge-staging.ts');
+  run('Smoke OTP Edge', 'npx ts-node scripts/smoke-verify-email-edge.ts', true);
+  run('Smoke cron Edge', 'npx ts-node scripts/smoke-cron.ts outbound-emails');
   run('Panel integración', 'npx ts-node scripts/integration-status.ts');
 }
 

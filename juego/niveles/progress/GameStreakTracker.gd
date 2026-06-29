@@ -358,8 +358,8 @@ static func fusionar_con_remoto(local: Dictionary, online: Dictionary) -> Dictio
 		ganador = online_read.duplicate(true)
 
 	ganador["last_activity_day"] = _dia_mas_reciente(local_day, online_day)
-	if not local_alive and not online_alive:
-		ganador["current_count"] = 0
+	# No poner current_count en 0 acá: evaluar_perdida_racha_pendiente() necesita
+	# el valor previo para mostrar el overlay una sola vez al iniciar sesión.
 
 	ganador["best_count"] = best_count
 	ganador["last_activity_at"] = _interaccion_mas_reciente(local_read, online_read)

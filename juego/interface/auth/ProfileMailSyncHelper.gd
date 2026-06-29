@@ -134,7 +134,10 @@ static func _preflight_supabase_verificacion() -> Dictionary:
 	if int(health.get("status", 0)) == 0:
 		return {
 			"ok": false,
-			"mensaje": "No se pudo conectar a Supabase Edge Functions. Revisá supabase_functions_url en backend.local.json.",
+			"mensaje": AuthApi.mensaje_check_conexion(
+				health,
+				BackendConfig.mensaje_sin_conexion_edge()
+			),
 			"code": "SUPABASE_OFFLINE",
 		}
 

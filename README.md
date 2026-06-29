@@ -4,7 +4,7 @@ Puzzle educativo sobre restricciones alimentarias (celiaquía, veganismo, etc.).
 
 Público: 10–60 años. Single-player. Estilo cuaderno a mano.
 
-**Estado y roadmap:** [ESTADO-ACTUAL.md](ESTADO-ACTUAL.md) · **Entrega actual:** [wiki/Entrega-4-Guia-Rapida.md](wiki/Entrega-4-Guia-Rapida.md)
+**Setup y verificación:** [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md) · **Entrega actual:** [wiki/Entrega-4-Guia-Rapida.md](wiki/Entrega-4-Guia-Rapida.md)
 
 ## Stack
 

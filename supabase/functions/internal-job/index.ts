@@ -1,13 +1,17 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts';
 import {
-  proxyLeaderboardRefresh,
+  runLeaderboardRefreshJob,
   runPendingWelcomeJob,
   runRetryFailedEmailJob,
+  runStreakAtRiskEmailJob,
   runStreakEmailJob,
+  runStreakLostEmailJob,
 } from '../_shared/jobs/email-jobs.ts';
 
 const ALLOWED_JOBS = new Set([
   'streak-emails',
+  'streak-at-risk-emails',
+  'streak-lost-emails',
   'retry-failed-emails',
   'outbound-emails',
   'refresh-leaderboard',
@@ -52,6 +56,18 @@ Deno.serve(async (req) => {
       return jsonResponse(result);
     }
 
+    if (job === 'streak-at-risk-emails') {
+      const result = await runStreakAtRiskEmailJob();
+      console.log(`[internal-job] done ${job}`, JSON.stringify(result));
+      return jsonResponse(result);
+    }
+
+    if (job === 'streak-lost-emails') {
+      const result = await runStreakLostEmailJob();
+      console.log(`[internal-job] done ${job}`, JSON.stringify(result));
+      return jsonResponse(result);
+    }
+
     if (job === 'retry-failed-emails') {
       const result = await runRetryFailedEmailJob();
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
@@ -60,14 +76,15 @@ Deno.serve(async (req) => {
 
     if (job === 'outbound-emails') {
       const welcome = await runPendingWelcomeJob();
-      const streak = await runStreakEmailJob();
+      const atRisk = await runStreakAtRiskEmailJob();
+      const lost = await runStreakLostEmailJob();
       const retry = await runRetryFailedEmailJob();
-      const result = { welcome, streak, retry };
+      const result = { welcome, atRisk, lost, retry };
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
-    const result = await proxyLeaderboardRefresh();
+    const result = await runLeaderboardRefreshJob();
     console.log(`[internal-job] done ${job}`, JSON.stringify(result));
     return jsonResponse(result);
   } catch (error) {

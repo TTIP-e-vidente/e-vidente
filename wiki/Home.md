@@ -1,6 +1,6 @@
 # Home
 
-Índice del repo. Estado del producto: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+Índice del repo. Setup: [Como-Empezar](Como-Empezar) · Verificación: `npm run verify:integration:full` (desde `BACKEND/`).
 
 | Doc | Para qué |
 |-----|----------|
@@ -17,6 +17,6 @@
 | [completar/README](../juego/completar/README.md) | Modalidad completar palabra |
 | [Entregas](Entregas) | Entregas TTIP (histórico) |
 
-**Primera vez:** ESTADO-ACTUAL → Como-Empezar → abrir `juego/project.godot` → leer `interface/evidente.gd`, `GameSceneRouter.gd`, `SaveManager.gd`.
+**Primera vez:** Como-Empezar → abrir `juego/project.godot` → leer `interface/evidente.gd`, `GameSceneRouter.gd`, `SaveManager.gd`.
 
-Entrega 1/2 pueden estar desactualizadas; priorizar ESTADO-ACTUAL.
+Entrega 1/2 pueden estar desactualizadas; priorizar [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) y smokes Edge.

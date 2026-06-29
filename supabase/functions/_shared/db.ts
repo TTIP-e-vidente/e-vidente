@@ -40,6 +40,24 @@ export async function withTransaction<T>(
   });
 }
 
+export async function queryRows<T>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<T[]> {
+  return withDb(async (db) => {
+    const result = await db.queryObject<T>(sql, params);
+    return result.rows;
+  });
+}
+
+export async function queryRow<T>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<T | null> {
+  const rows = await queryRows<T>(sql, params);
+  return rows[0] ?? null;
+}
+
 export interface PublicUserRow {
   id: string;
   username: string;

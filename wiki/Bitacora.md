@@ -1,6 +1,6 @@
 ﻿# Bitácora — índice
 
-Diario del proyecto: **qué problema había, qué hicimos, impacto y archivos**. No reemplaza [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) ni [Entregas](Entregas.md).
+Diario del proyecto: **qué problema había, qué hicimos, impacto y archivos**. Complementa [Entregas](Entregas.md).
 
 Cada etapa tiene su **propio archivo** para que esto pueda crecer sin un solo `.md` gigante. Dentro de cada archivo: **más nuevo arriba**.
 

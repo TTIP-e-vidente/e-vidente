@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       run_smoke:
-        description: Correr smoke API contra staging
+        description: Correr smoke Edge contra staging
         required: true
         default: true
         type: boolean
@@ -21,7 +21,7 @@ jobs:
   verify-staging:
     name: Verify Supabase staging
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -44,6 +44,10 @@ jobs:
           POSTGRES_USER: ${{ secrets.STAGING_POSTGRES_USER }}
           POSTGRES_PORT: ${{ secrets.STAGING_POSTGRES_PORT }}
           POSTGRES_DB: ${{ secrets.STAGING_POSTGRES_DB }}
+          SUPABASE_PROJECT_REF: ${{ secrets.STAGING_SUPABASE_PROJECT_REF }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+          EMAIL_CRON_SECRET: ${{ secrets.EMAIL_CRON_SECRET }}
         run: |
           set -euo pipefail
           sh scripts/ci/write-staging-env.sh
@@ -52,16 +56,16 @@ jobs:
         working-directory: BACKEND
         run: npm run verify:supabase
 
-      - name: Smoke API staging
+      - name: Smoke Edge staging
         if: inputs.run_smoke
         working-directory: BACKEND
-        run: npm run smoke:api:staging
+        run: npm run smoke:edge:staging
 
       - name: Job summary
         if: always() && env.GITHUB_STEP_SUMMARY != ''
         run: |
           {
             echo "### Supabase staging verify"
-            echo "- Smoke API: \`${{ inputs.run_smoke }}\`"
+            echo "- Smoke Edge: \`${{ inputs.run_smoke }}\`"
             echo "- Compare local: \`${{ inputs.compare_local }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

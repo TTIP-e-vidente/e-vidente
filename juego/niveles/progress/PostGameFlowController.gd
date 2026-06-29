@@ -1,6 +1,7 @@
 extends RefCounted
 
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
+const SincronizadorPartidaScript := preload("res://API/backend/sync/SincronizadorPartida.gd")
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
@@ -95,9 +96,11 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 	if save_manager != null and save_manager.has_method("guardar_progreso_en_disco"):
 		save_manager.call("guardar_progreso_en_disco")
 
-	SyncApi.sincronizar_partida_terminada(tree, resultado, stats)
-
-	GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
+	LeaderboardService.ejecutar_pipeline_post_partida(
+		tree,
+		func() -> void: SincronizadorPartidaScript.sincronizar_post_partida(tree, resultado, stats),
+		func() -> void: GameSceneRouter.ir_a_finalizacion_partida(tree, node_key)
+	)
 
 
 static func _tiene_partida_de_nodo_activa(tree: SceneTree) -> bool:

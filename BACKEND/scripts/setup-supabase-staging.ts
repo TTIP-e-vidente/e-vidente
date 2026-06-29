@@ -25,9 +25,9 @@ async function main(): Promise<void> {
   console.log('  E-VIDENTE — Setup Supabase');
   console.log('═══════════════════════════════════════════');
   console.log('\nArquitectura:');
-  console.log('  • Godot → Express (JWT propio) → Postgres Supabase');
-  console.log('  • NO usamos Supabase Auth; el backend conecta como postgres (bypass RLS)');
-  console.log('  • Migración 030 activa RLS en public (bloquea Data API anon/authenticated)\n');
+  console.log('  • Godot → Supabase Edge Functions → Postgres + Storage');
+  console.log('  • Crons: pg_cron → internal-job (Edge) → Brevo');
+  console.log('  • Express solo legacy/tests — ver EXPRESS_LEGACY.md\n');
 
   console.log('Paso 1/5 — Resolver conexión (direct → pooler fallback)');
   console.log(`  Config: ${describeConnection()}\n`);
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
     env: { ...process.env, ENV_FILE: staging.envFile },
   });
 
-  console.log('\nPaso 4/5 — Programar jobs en Supabase (pg_cron → backend)');
+  console.log('\nPaso 4/5 — Programar jobs en Supabase (pg_cron → Edge)');
   try {
     execSync('npm run setup:supabase:cron', {
       cwd: BACKEND_ROOT,
@@ -68,14 +68,14 @@ async function main(): Promise<void> {
       env: { ...process.env, ENV_FILE: staging.envFile },
     });
   } catch {
-    console.warn('\nAVISO: setup cron falló (¿BACKEND_BASE_URL local?). Reintentá: npm run setup:supabase:cron');
+    console.warn('\nAVISO: setup cron falló. Reintentá: npm run setup:supabase:cron');
   }
 
   console.log('\nPaso 5/5 — Próximos pasos');
-  console.log('  npm run dev:staging');
+  console.log('  npm run integrate:staging');
   console.log('  npm run seed:staging   (si no hay usuarios)');
-  console.log('  npm run setup:supabase:cron  (si cambiás BACKEND_BASE_URL o EMAIL_CRON_SECRET)');
-  console.log('  npm run check:deploy:staging');
+  console.log('  npm run setup:supabase:cron  (si cambiás EMAIL_CRON_SECRET o Edge URL)');
+  console.log('  npm run verify:integration:full');
   console.log('\nSetup Supabase completado.');
 }
 

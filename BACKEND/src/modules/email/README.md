@@ -280,35 +280,37 @@ Variables:
 
 Migración `023_email_deliveries_retry_indexes.sql` agrega índices para dedupe activo y búsqueda de `failed`.
 
-## Cron en GitHub Actions (solo con backend público)
+## Cron en Supabase (pg_cron → Edge)
 
-> **Entorno 100 % local:** usá la sección **Cron local** de arriba. El workflow de GitHub no puede llamar a `localhost`.
+En staging y producción **todos** los mails programados los dispara Supabase:
 
-Cuando tengas el backend desplegado en internet, workflow: `.github/workflows/email-cron.yml`
+```powershell
+npm run setup:supabase:cron
+```
 
-| Horario (ART, UTC-3) | Job |
-|----------------------|-----|
-| 19:00 diario | `streak-emails` |
-| 08:00 y 20:00 diario | `retry-failed-emails` |
+| Horario ART | Job Edge |
+|-------------|----------|
+| 18:00 | `streak-at-risk-emails` |
+| 00:00 | `streak-lost-emails` |
+| 08:00 y 20:00 | `retry-failed-emails` |
 
-También podés dispararlo a mano: **Actions → Email cron jobs → Run workflow**.
+Probar:
 
-### Secrets del repositorio (Settings → Secrets → Actions)
+```powershell
+npm run smoke:cron:staging -- streak-at-risk-emails
+npm run verify:integration:full
+```
 
-| Secret | Ejemplo | Debe coincidir con |
-|--------|---------|-------------------|
-| `BACKEND_BASE_URL` | `https://api.tudominio.com` | URL pública del backend (sin `/` final) |
-| `EMAIL_CRON_SECRET` | valor largo | `EMAIL_CRON_SECRET` del servidor |
-
-El workflow hace `POST` a `/internal/jobs/<job>` con header `X-Job-Secret`.
-
-Prueba local del mismo script:
+Disparo manual (mismo contrato que pg_cron):
 
 ```bash
-BACKEND_BASE_URL=http://localhost:3000 \
-EMAIL_CRON_SECRET=evidente_email_cron_local_dev_change_me \
-sh scripts/ci/trigger-email-job.sh streak-emails
+SUPABASE_PROJECT_REF=<ref> \
+SUPABASE_ANON_KEY=<key> \
+EMAIL_CRON_SECRET=<secret> \
+sh scripts/ci/trigger-email-job.sh streak-at-risk-emails
 ```
+
+No se usa GitHub Actions para crons. Ver `docs/SUPABASE_EDGE_FUNCTIONS.md`.
 
 ## Diseño visual
 

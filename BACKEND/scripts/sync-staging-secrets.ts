@@ -19,7 +19,6 @@ const SYNC_KEYS = [
   'BREVO_SENDER_NAME',
   'BREVO_WEBHOOK_SECRET',
   'EMAIL_CRON_SECRET',
-  'BACKEND_BASE_URL',
 ] as const;
 
 function parseEnvMap(content: string): Map<string, string> {
@@ -84,7 +83,7 @@ function main(): void {
       console.log(`[sync:staging-secrets] SKIP ${key} — no está en .env`);
       continue;
     }
-    if (stagingValue) {
+    if (stagingValue && !(key === 'EMAIL_ENABLED' && localValue === 'true' && stagingValue === 'false')) {
       console.log(`[sync:staging-secrets] OK ${key} — ya en .env.staging`);
       continue;
     }

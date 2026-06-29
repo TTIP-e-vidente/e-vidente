@@ -23,16 +23,23 @@ export async function verifyExpressAccessToken(
   }
 
   const key = new TextEncoder().encode(secret);
-  const { payload } = await jose.jwtVerify(token, key);
+  try {
+    const { payload } = await jose.jwtVerify(token, key);
 
-  if (
-    typeof payload.sub !== 'string' ||
-    typeof payload.username !== 'string'
-  ) {
+    if (
+      typeof payload.sub !== 'string' ||
+      typeof payload.username !== 'string'
+    ) {
+      throw new AuthError('Invalid token');
+    }
+
+    return { sub: payload.sub, username: payload.username };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error;
+    }
     throw new AuthError('Invalid token');
   }
-
-  return { sub: payload.sub, username: payload.username };
 }
 
 export class AuthError extends Error {
@@ -49,16 +56,65 @@ export class ConfigError extends Error {
   }
 }
 
+function extractBearer(authorization: string | null): string {
+  if (!authorization?.startsWith('Bearer ')) {
+    return '';
+  }
+  return authorization.slice('Bearer '.length).trim();
+}
+
+function collectAcceptedApiKeys(): Set<string> {
+  const keys = new Set<string>();
+
+  const gameKeys = Deno.env.get('GAME_CLIENT_API_KEYS')?.split(',') ?? [];
+  for (const key of gameKeys) {
+    const trimmed = key.trim();
+    if (trimmed) {
+      keys.add(trimmed);
+    }
+  }
+
+  for (const envName of ['SUPABASE_ANON_KEY', 'SUPABASE_PUBLISHABLE_KEY'] as const) {
+    const value = Deno.env.get(envName)?.trim();
+    if (value) {
+      keys.add(value);
+    }
+  }
+
+  const legacy = readLegacyAnonFromPublishableKeys();
+  if (legacy) {
+    keys.add(legacy);
+  }
+
+  const raw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')?.trim();
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      for (const value of Object.values(parsed)) {
+        if (typeof value === 'string' && value.trim()) {
+          keys.add(value.trim());
+        }
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+
+  return keys;
+}
+
 export function requireAnonKey(req: Request): void {
-  // SUPABASE_ANON_KEY viene por defecto en Edge (dashboard → Default secrets).
-  const expected =
-    Deno.env.get('SUPABASE_ANON_KEY')?.trim() ||
-    readLegacyAnonFromPublishableKeys();
-  if (!expected) {
+  const accepted = collectAcceptedApiKeys();
+  if (accepted.size === 0) {
     return;
   }
-  const provided = req.headers.get('apikey')?.trim();
-  if (provided && provided !== expected) {
+
+  const provided = req.headers.get('apikey')?.trim() || extractBearer(req.headers.get('Authorization'));
+  if (!provided) {
+    return;
+  }
+
+  if (!accepted.has(provided)) {
     throw new AuthError('Invalid apikey');
   }
 }

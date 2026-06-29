@@ -1,6 +1,6 @@
 # Entrega 1 — E-VIDENTE
 
-> Histórico Entrega 1. Estado hoy: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md).
+> Histórico Entrega 1. Stack actual: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md).
 
 ## Resumen ejecutivo
 
@@ -81,4 +81,3 @@ Backend, autenticación, leaderboard, base de datos, panel de administración no
 - [Arquitectura](Entrega-1-Arquitectura)
 - [Evidencia](Entrega-1-Evidencia)
 - [Decisiones](Entrega-1-Decisiones)
-- [Próximos pasos](Entrega-1-Proximos-Pasos)

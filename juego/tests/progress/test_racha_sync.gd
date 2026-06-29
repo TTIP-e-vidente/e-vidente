@@ -240,6 +240,31 @@ func test_aplicar_vencimiento_no_repite_overlay_para_misma_perdida() -> void:
 	assert_bool(bool(resultado.get("should_show", false))).is_false()
 
 
+func test_merge_rachas_vencidas_conserva_count_para_aviso_de_perdida() -> void:
+	var today := Time.get_date_string_from_system(false)
+	var hace_cuatro_dias := _dia_anterior(_dia_anterior(_dia_anterior(_dia_anterior(today))))
+	var hace_cinco_dias := _dia_anterior(hace_cuatro_dias)
+	var local_vencida := {
+		"current_count": 2,
+		"best_count": 2,
+		"last_activity_day": hace_cinco_dias,
+	}
+	var online_vencida := {
+		"current_count": 1,
+		"best_count": 1,
+		"last_activity_day": hace_cuatro_dias,
+	}
+
+	var merged: Dictionary = GameStreakTracker.fusionar_con_remoto(
+		local_vencida,
+		online_vencida
+	)
+
+	assert_int(int(merged.get("current_count", -1))).is_equal(1)
+	var resultado: Dictionary = GameStreakTracker.aplicar_vencimiento_si_corresponde(merged, {})
+	assert_bool(bool(resultado.get("should_show", false))).is_true()
+
+
 func _dia_anterior(today: String) -> String:
 	var unix_today := int(Time.get_unix_time_from_datetime_string(today))
 	return Time.get_date_string_from_unix_time(unix_today - GameStreakTracker.SECONDS_PER_DAY)

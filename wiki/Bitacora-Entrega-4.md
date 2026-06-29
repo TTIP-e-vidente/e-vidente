@@ -10,7 +10,7 @@ Diario de la entrega de **emails transaccionales, verificación OTP y recordator
 Segunda pasada de documentación: guía rápida para revisores, flujo E3→E4, ADRs numerados, endpoints API, evidencia con resultados de `test:email` y próximos pasos post-E4.
 
 **Qué se agregó**
-- `Entrega-4-Guia-Rapida.md`, `Entrega-4-Flujo-E3-E4.md`, `Entrega-4-Proximos-Pasos.md`
+- `Entrega-4-Guia-Rapida.md`, `Entrega-4-Flujo-E3-E4.md`
 - Tablas npm, curl, SQL y cron en Arquitectura/Evidencia
 - Enlaces desde README raíz, Entrega 3 y `BACKEND/email/README`
 
@@ -111,7 +111,7 @@ Jobs programados para rachas (19:00 ART) y reintentos (08:00 / 20:00 ART).
 
 **Qué se implementó**
 - `POST /internal/jobs/streak-emails` y `retry-failed-emails` con `X-Job-Secret`
-- `.github/workflows/email-cron.yml`
+- Crons: Supabase `pg_cron` → Edge `internal-job` (reemplaza workflow GitHub histórico)
 - Scripts Windows: `register-email-tasks-windows.ps1`, `run-email-job.ps1`
 - `EMAIL_ENABLED` master switch y auditoría `email_deliveries`
 

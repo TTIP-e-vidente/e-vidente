@@ -2,6 +2,14 @@ extends Control
 
 enum AuthMode { LOGIN, REGISTER }
 
+const MSG_LISTO_JUGAR := "Listo para jugar."
+const MSG_PREPARANDO := "Preparando todo..."
+const MSG_SIN_SERVICIO := "No pudimos conectar ahora. Reintentá en un momento."
+const MSG_SIN_SESION := "Iniciá sesión para guardar tu progreso en la nube."
+const MSG_SESION_ACTIVA := "Listo para jugar."
+const MSG_SESION_EXPIRADA := "Tu sesión expiró. Iniciá sesión de nuevo."
+const MSG_OFFLINE := "Continuando sin cuenta.\nEl progreso queda solo en este dispositivo."
+
 signal login_completed()
 signal play_offline_requested()
 
@@ -59,7 +67,7 @@ func _establecer_modo(mode: AuthMode) -> void:
 	if is_register:
 		_precargar_fecha_nacimiento_registro()
 	if not _is_loading and not AuthApi.esta_logueado() and _servidor_ok:
-		_establecer_estado("Sin sesión")
+		_establecer_estado(MSG_SIN_SESION)
 	_actualizar_ui_conexion()
 
 
@@ -76,7 +84,7 @@ func _precargar_fecha_nacimiento_registro() -> void:
 func _actualizar_estado_sesion() -> void:
 	if AuthApi.esta_logueado():
 		_servidor_ok = true
-		_establecer_estado("Sesión activa: " + AuthApi.obtener_usuario())
+		_establecer_estado(MSG_SESION_ACTIVA)
 		_actualizar_ui_conexion()
 
 
@@ -98,10 +106,7 @@ func _verificar_conexion(es_reintento: bool) -> void:
 	_servidor_ok = false
 	_actualizar_ui_conexion()
 
-	if es_reintento:
-		_establecer_estado("Reintentando conexión a Supabase...")
-	else:
-		_establecer_estado("Comprobando Supabase y mail...")
+	_establecer_estado(MSG_PREPARANDO)
 
 	BackendConfig.recargar()
 	var check := await AuthApi.verificar_stack()
@@ -110,23 +115,11 @@ func _verificar_conexion(es_reintento: bool) -> void:
 	_verificando_conexion = false
 
 	if not _servidor_ok:
-		_establecer_estado(
-			AuthApi.mensaje_check_conexion(check, "Supabase no disponible."),
-			true
-		)
+		_establecer_estado(MSG_SIN_SERVICIO, true)
 		_actualizar_ui_conexion()
 		return
 
-	var resumen := AuthApi.resumen_conexion_ok(check)
-	var email: Variant = check.get("email", {})
-	if email is Dictionary:
-		var email_dict := email as Dictionary
-		if bool(email_dict.get("enabled", false)) and not bool(email_dict.get("configured", false)):
-			if bool(email_dict.get("dev_code_in_logs", false)):
-				resumen += "\nModo dev: el OTP aparece en la consola del backend."
-			else:
-				resumen += "\nAviso: Brevo no configurado — la verificación por mail puede fallar."
-	_establecer_estado(resumen)
+	_establecer_estado(MSG_LISTO_JUGAR if not AuthApi.esta_logueado() else MSG_SESION_ACTIVA)
 	_actualizar_ui_conexion()
 
 
@@ -146,10 +139,7 @@ func _on_boton_enviar_presionado() -> void:
 	if _is_loading:
 		return
 	if not _servidor_ok and not AuthApi.esta_logueado():
-		_establecer_estado(
-			"Sin conexión a Supabase.\nLevantá BACKEND (npm run dev) y tocá «Reintentar conexión».",
-			true
-		)
+		_establecer_estado(MSG_SIN_SERVICIO, true)
 		_actualizar_ui_conexion()
 		return
 	await _enviar_formulario()
@@ -201,7 +191,7 @@ func _enviar_formulario() -> void:
 			)
 			verificacion_escena_solicitada.emit(false, {})
 			return
-		_establecer_estado(str(result.get("mensaje", "Sesión iniciada.")))
+		_establecer_estado(MSG_LISTO_JUGAR)
 
 	login_completed.emit()
 
@@ -231,22 +221,18 @@ func _on_boton_cambiar_modo_presionado() -> void:
 func _on_boton_jugar_offline_presionado() -> void:
 	if _is_loading:
 		return
-	_establecer_estado("Continuando sin iniciar sesión.\nEl progreso queda solo en este dispositivo.")
+	_establecer_estado(MSG_OFFLINE)
 	play_offline_requested.emit()
 
 
-func _on_sesion_restaurada(user: Dictionary) -> void:
+func _on_sesion_restaurada(_user: Dictionary) -> void:
 	_servidor_ok = true
-	_establecer_estado("Sesión activa: " + str(user.get("username", AuthApi.obtener_usuario())))
+	_establecer_estado(MSG_SESION_ACTIVA)
 	_actualizar_ui_conexion()
 
 
-func _on_fallo_restauracion_sesion(reason: String) -> void:
-	_establecer_estado(
-		"Sesión anterior expirada.\n"
-		+ AuthApi.mensaje_error({"error": reason, "status": 401}, reason),
-		true
-	)
+func _on_fallo_restauracion_sesion(_reason: String) -> void:
+	_establecer_estado(MSG_SESION_EXPIRADA, true)
 	call_deferred("_verificar_conexion_al_inicio")
 
 

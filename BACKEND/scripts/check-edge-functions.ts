@@ -4,9 +4,10 @@
  */
 import {
   canUseSupabaseEmailFunctions,
+  resolveSupabaseClientApiKey,
   resolveSupabaseFunctionsUrl,
 } from './lib/supabase-functions-env';
-import { loadBackendEnv } from './lib/postgres-env';
+import { loadStagingWithKeys } from './lib/supabase-keys-local';
 
 type JsonObject = Record<string, unknown>;
 
@@ -23,7 +24,7 @@ async function fetchJson(
 }
 
 async function main(): Promise<void> {
-  loadBackendEnv();
+  loadStagingWithKeys();
 
   console.log('═══════════════════════════════════════════');
   console.log('  Edge Functions — health check');
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
   }
 
   const baseUrl = resolveSupabaseFunctionsUrl();
-  const anonKey = process.env.SUPABASE_ANON_KEY!.trim();
+  const anonKey = resolveSupabaseClientApiKey();
   const cronSecret = process.env.EMAIL_CRON_SECRET?.trim() ?? '';
   const headers = {
     apikey: anonKey,
@@ -54,6 +55,28 @@ async function main(): Promise<void> {
     console.log(`    delivery_configured=${health.body.delivery_configured}`);
   } else {
     console.error(`FAIL verify-email-health HTTP ${health.status}`);
+    failed = true;
+  }
+
+  const authHealth = await fetchJson(`${baseUrl}/auth-health`, {
+    method: 'GET',
+    headers,
+  });
+  if (authHealth.status === 200 && authHealth.body.status === 'ok') {
+    const migrations = authHealth.body.migrations as JsonObject | undefined;
+    const migrationsHealthy = migrations?.healthy === true;
+    const expectedOk = migrations?.expected === 36;
+    if (migrationsHealthy && expectedOk) {
+      console.log('OK  auth-health');
+      console.log(`    migrations=${migrations?.applied}/${migrations?.expected}`);
+    } else {
+      console.error(
+        `FAIL auth-health migrations unhealthy (${JSON.stringify(migrations)}) — redeploy auth-health`,
+      );
+      failed = true;
+    }
+  } else {
+    console.error(`FAIL auth-health HTTP ${authHealth.status}`);
     failed = true;
   }
 

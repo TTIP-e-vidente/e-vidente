@@ -33,16 +33,18 @@ export type SupabaseCronInvocationRow = {
 
 export async function getSupabaseCronSnapshot(): Promise<{
   available: boolean;
-  backend_base_url?: string | null;
+  supabase_functions_url?: string | null;
   jobs: SupabaseCronJobRow[];
   recent_invocations: SupabaseCronInvocationRow[];
   last_pg_cron_run?: { jobname: string; status: string; start_time: Date } | null;
 }> {
   try {
     const settings = await query<{ key: string; value: string }>(
-      `SELECT key, value FROM private.internal_cron_settings WHERE key = 'backend_base_url';`
+      `SELECT key, value FROM private.internal_cron_settings
+       WHERE key IN ('supabase_functions_url', 'supabase_anon_key', 'email_cron_secret');`
     );
-    const backendBaseUrl = settings.rows[0]?.value ?? null;
+    const settingsMap = new Map(settings.rows.map((row) => [row.key, row.value]));
+    const functionsUrl = settingsMap.get('supabase_functions_url') ?? null;
 
     const jobs = await query<SupabaseCronJobRow>(
       `
@@ -87,7 +89,7 @@ export async function getSupabaseCronSnapshot(): Promise<{
 
     return {
       available: true,
-      backend_base_url: backendBaseUrl,
+      supabase_functions_url: functionsUrl,
       jobs: jobs.rows,
       recent_invocations: invocations.rows,
       last_pg_cron_run: lastPgCronRun

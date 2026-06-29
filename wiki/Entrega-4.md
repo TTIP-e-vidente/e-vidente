@@ -2,7 +2,7 @@
 
 > **Resumen en una línea:** el juego puede hablar con el jugador fuera de la pantalla — con mails transaccionales auditados, verificación OTP y recordatorios de racha que respetan el consentimiento.
 
-**¿Primera vez acá?** → [Guía rápida (5 min)](Entrega-4-Guia-Rapida) · Estado: [ESTADO-ACTUAL.md](../ESTADO-ACTUAL.md) · Índice: [Entregas](Entregas)
+**¿Primera vez acá?** → [Guía rápida (5 min)](Entrega-4-Guia-Rapida) · Setup: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) · Índice: [Entregas](Entregas)
 
 ---
 
@@ -62,7 +62,7 @@ flowchart LR
 | **Verificación** | OTP 6 dígitos + UI Godot | `email.verification.*`, `EmailVerification.*` |
 | **Consentimiento** | Registro + perfil | `auth.gd`, `PATCH /player/me` |
 | **Rachas** | Job 19:00 ART, dedupe, reconcile | `email.jobs.routes.ts`, `send-streak-emails.ts` |
-| **Operación** | Local, npm, GitHub Actions | `scripts/local/`, `email-cron.yml` |
+| **Operación** | Supabase pg_cron → Edge | `npm run setup:supabase:cron`, `smoke:cron:staging` |
 | **Diseño** | Rubik, verde/crema, íconos CID | `templates/layout.ts`, `assets/` |
 | **In-game** | Badge riesgo + panel pérdida | `StreakLossMessagePanel`, HUD |
 
@@ -103,7 +103,7 @@ flowchart LR
 
 Recuperación de contraseña por mail · Newsletters · Push nativas · Editor visual templates.
 
-Ver [Próximos pasos](Entrega-4-Proximos-Pasos) para la iteración siguiente.
+Ver [Bitácora E4](Bitacora-Entrega-4) para la iteración siguiente.
 
 ---
 
@@ -151,7 +151,6 @@ Todos desde `BACKEND/`. Detalle: [Evidencia](Entrega-4-Evidencia).
 | [Mails](Entrega-4-Mails) | Copy aprobado de los 5 correos |
 | [Decisiones](Entrega-4-Decisiones) | ADRs y alternativas descartadas |
 | [Evidencia](Entrega-4-Evidencia) | Demo TTIP, tests, checklist |
-| [Próximos pasos](Entrega-4-Proximos-Pasos) | Post-E4 y candidatos E5 |
 | [Bitácora E4](Bitacora-Entrega-4) | Cronología |
 
 ### Referencia en código

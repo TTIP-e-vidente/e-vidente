@@ -1,5 +1,6 @@
 import { loadEnvFile } from './load-env';
 import { isRemotePostgres } from './postgresPoolConfig';
+import { resolveSupabaseClientApiKey } from './supabase-edge-client';
 
 loadEnvFile();
 
@@ -19,10 +20,21 @@ export function isSupabaseEmailEdgeMode(): boolean {
   return true;
 }
 
+/** Auth y health del juego vía Edge Functions (sin Express). */
+export function isSupabaseApiEdgeMode(): boolean {
+  if (!isSupabaseEmailEdgeMode()) {
+    return false;
+  }
+  if (parseDisabledFlag(process.env.SUPABASE_API_EDGE)) {
+    return false;
+  }
+  return true;
+}
+
 export function canReachSupabaseEmailEdge(): boolean {
-  const anonKey = process.env.SUPABASE_ANON_KEY?.trim() ?? '';
+  const clientKey = resolveSupabaseClientApiKey();
   const projectRef = process.env.SUPABASE_PROJECT_REF?.trim() ?? '';
-  return anonKey.length > 0 && projectRef.length > 0 && !projectRef.includes('TU_');
+  return clientKey.length > 0 && projectRef.length > 0 && !projectRef.includes('TU_');
 }
 
 /** Express no debe enviar mails ni correr cola outbound cuando Edge está activo. */

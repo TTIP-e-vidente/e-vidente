@@ -111,27 +111,27 @@ async function main(): Promise<void> {
     );
 
     const cronSettings = await pool.query<{ key: string }>(
-      `SELECT key FROM private.internal_cron_settings WHERE key IN ('backend_base_url', 'email_cron_secret');`
+      `SELECT key FROM private.internal_cron_settings WHERE key IN (
+        'supabase_functions_url', 'supabase_anon_key', 'email_cron_secret'
+      );`
     );
     const settingKeys = new Set(cronSettings.rows.map((row) => row.key));
     checks.push(
-      settingKeys.has('backend_base_url') && settingKeys.has('email_cron_secret')
-        ? pass('Config cron en Supabase (URL + secret)')
-        : fail('Faltan settings cron — npm run setup:supabase:cron')
+      settingKeys.has('supabase_functions_url') &&
+        settingKeys.has('supabase_anon_key') &&
+        settingKeys.has('email_cron_secret')
+        ? pass('Config cron en Supabase (Edge URL + anon + secret)')
+        : fail('Faltan settings cron Edge — npm run setup:supabase:cron')
     );
 
-    const baseUrlRow = await pool.query<{ value: string }>(
-      `SELECT value FROM private.internal_cron_settings WHERE key = 'backend_base_url';`
+    const edgeUrlRow = await pool.query<{ value: string }>(
+      `SELECT value FROM private.internal_cron_settings WHERE key = 'supabase_functions_url';`
     );
-    const baseUrl = baseUrlRow.rows[0]?.value ?? '';
-    if (/localhost|127\.0\.0\.1/i.test(baseUrl)) {
-      checks.push(
-        warn(
-          `BACKEND_BASE_URL es local (${baseUrl}) — crons Supabase omiten envío; dev usa npm run dev`
-        )
-      );
-    } else if (baseUrl.length > 0) {
-      checks.push(pass(`BACKEND_BASE_URL cron: ${baseUrl}`));
+    const edgeUrl = edgeUrlRow.rows[0]?.value ?? '';
+    if (edgeUrl.includes('/functions/v1')) {
+      checks.push(pass(`pg_cron → Edge: ${edgeUrl}/internal-job`));
+    } else if (edgeUrl.length > 0) {
+      checks.push(warn(`supabase_functions_url inusual: ${edgeUrl}`));
     }
 
     try {
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
         checks.push(
           pass(`Último pg_cron: ${row.jobname} ${row.status} @ ${row.start_time.toISOString()}`)
         );
-      } else if (!/localhost|127\.0\.0\.1/i.test(baseUrl)) {
+      } else if (edgeUrl.includes('/functions/v1')) {
         checks.push(warn('Aún no hay ejecuciones pg_cron registradas (normal tras el setup)'));
       }
     } catch {

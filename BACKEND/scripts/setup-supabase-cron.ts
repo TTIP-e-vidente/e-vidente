@@ -1,12 +1,12 @@
 /**
- * Configura URL + secret en Supabase y (re)programa pg_cron → POST /internal/jobs/*
+ * Configura pg_cron en Supabase → Edge `internal-job`.
  *
  * Uso:
  *   npm run setup:supabase:cron
  *
  * Variables (.env.staging):
- *   BACKEND_BASE_URL  — URL pública del backend (Render, etc.). localhost no funciona desde Supabase.
- *   EMAIL_CRON_SECRET — mismo valor que usa el backend (header X-Job-Secret)
+ *   EMAIL_CRON_SECRET — mismo valor que secrets Edge (header X-Job-Secret)
+ *   SUPABASE_ANON_KEY / SUPABASE_PUBLISHABLE_KEY — para que pg_cron autorice Edge
  */
 import {
   assertSupabaseStagingEnv,
@@ -15,18 +15,7 @@ import {
   describeConnection,
   loadBackendEnv,
 } from './lib/postgres-env';
-import { resolveSupabaseFunctionsUrl } from './lib/supabase-functions-env';
-
-const LOCALHOST_PATTERN = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/i;
-
-function resolveBackendBaseUrl(): string {
-  const explicit = (process.env.BACKEND_BASE_URL ?? process.env.PUBLIC_API_URL ?? '').trim();
-  if (explicit.length > 0) {
-    return explicit.replace(/\/+$/, '');
-  }
-  const port = process.env.BACKEND_PORT ?? '3010';
-  return `http://127.0.0.1:${port}`;
-}
+import { resolveSupabaseClientApiKey, resolveSupabaseFunctionsUrl } from './lib/supabase-functions-env';
 
 function resolveCronSecret(): string {
   return (process.env.EMAIL_CRON_SECRET ?? '').trim();
@@ -52,7 +41,6 @@ async function main(): Promise<void> {
   const loaded = loadBackendEnv();
   assertSupabaseStagingEnv(loaded.envPath);
 
-  const baseUrl = resolveBackendBaseUrl();
   const cronSecret = resolveCronSecret();
 
   console.log('═══════════════════════════════════════════');
@@ -64,12 +52,12 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  if (LOCALHOST_PATTERN.test(baseUrl)) {
-    console.warn('AVISO: BACKEND_BASE_URL es local (%s).', baseUrl);
-    console.warn('  Supabase pg_cron NO puede llamar localhost.');
-    console.warn('  Los jobs quedan programados pero se omiten hasta tener URL pública (Render + BACKEND_BASE_URL).\n');
-  } else {
-    console.log(`Backend objetivo: ${baseUrl}`);
+  const functionsUrl = resolveSupabaseFunctionsUrl();
+  const anonKey = resolveSupabaseClientApiKey();
+  if (!functionsUrl || !anonKey) {
+    console.error('ERROR: Falta SUPABASE_ANON_KEY o SUPABASE_PROJECT_REF — pg_cron requiere Edge Functions.');
+    console.error('  Corré: npm run configure:supabase-keys');
+    process.exit(1);
   }
 
   await connectSupabase({ envPath: loaded.envPath, persistToEnvFile: true });
@@ -88,20 +76,10 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    await upsertSetting(client, 'backend_base_url', baseUrl);
     await upsertSetting(client, 'email_cron_secret', cronSecret);
-
-    const functionsUrl = resolveSupabaseFunctionsUrl();
-    const anonKey = (process.env.SUPABASE_ANON_KEY ?? '').trim();
-    if (functionsUrl && anonKey) {
-      await upsertSetting(client, 'supabase_functions_url', functionsUrl);
-      await upsertSetting(client, 'supabase_anon_key', anonKey);
-      console.log(`Edge Functions cron: ${functionsUrl}/internal-job`);
-    } else {
-      console.warn(
-        'AVISO: Falta SUPABASE_ANON_KEY — pg_cron usará fallback Express (BACKEND_BASE_URL).'
-      );
-    }
+    await upsertSetting(client, 'supabase_functions_url', functionsUrl);
+    await upsertSetting(client, 'supabase_anon_key', anonKey);
+    console.log(`Edge Functions cron: ${functionsUrl}/internal-job`);
 
     const refresh = await client.query<{ refresh_evidente_cron_jobs: unknown }>(
       `SELECT private.refresh_evidente_cron_jobs() AS refresh_evidente_cron_jobs;`
@@ -131,8 +109,9 @@ async function main(): Promise<void> {
       console.log(`  • ${job.jobname}  ${job.schedule}  active=${job.active}`);
     }
 
-    console.log('\nHorarios UTC (ART ≈ UTC−3):');
-    console.log('  evidente-streak-emails      → 22:00 UTC (19:00 ART)');
+    console.log('\nHorarios UTC (ART ≈ UTC−3, ver EMAIL_TIMEZONE en Edge):');
+    console.log('  evidente-streak-at-risk     → 21:00 UTC (18:00 ART) — aviso racha en riesgo');
+    console.log('  evidente-streak-lost        → 03:00 UTC (00:00 ART) — racha perdida + reset DB');
     console.log('  evidente-retry-failed-am    → 11:00 UTC (08:00 ART)');
     console.log('  evidente-retry-failed-pm    → 23:00 UTC (20:00 ART)');
     console.log('  evidente-refresh-leaderboard → cada hora :15 UTC');

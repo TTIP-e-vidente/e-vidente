@@ -433,6 +433,65 @@ export async function confirmVerificationCode(
   };
 }
 
+function verificationStatusMessage(
+  sendResult: SendVerificationResult,
+  expiresMinutes: number,
+): string {
+  switch (sendResult) {
+    case 'sent':
+      return `Te enviamos el código de verificación (no el de bienvenida). Válido por ${expiresMinutes} minutos. Revisá spam.`;
+    case 'rate_limited':
+      return 'Ya hay un código activo. Revisá tu casilla o esperá para reenviar.';
+    case 'send_failed':
+      return 'No se pudo enviar el mail. Tocá Reenviar código para intentar de nuevo.';
+    case 'dev_console':
+      return 'Brevo no configurado. El código de 6 dígitos está en la consola del backend (buscá dev_code).';
+    case 'skipped':
+      return isDevelopmentEnvironment()
+        ? 'Mail no configurado. En desarrollo, el código aparece en la consola del backend.'
+        : 'Servicio de mail no disponible. Contactá al administrador.';
+    case 'no_mail':
+      return 'No hay un mail configurado en tu cuenta.';
+    default:
+      return '';
+  }
+}
+
+export async function buildVerificationSendMeta(
+  userId: string,
+  sendResult: SendVerificationResult,
+): Promise<{
+  code_send_status: SendVerificationResult;
+  cooldown_seconds: number;
+  message: string;
+  expires_minutes: number;
+}> {
+  const config = getVerificationConfig();
+  const message = verificationStatusMessage(sendResult, config.expiresMinutes);
+  if (sendResult === 'sent' || sendResult === 'dev_console') {
+    return {
+      code_send_status: sendResult,
+      cooldown_seconds: sendResult === 'sent' ? config.cooldownSeconds : 0,
+      message,
+      expires_minutes: config.expiresMinutes,
+    };
+  }
+  if (sendResult === 'rate_limited') {
+    return {
+      code_send_status: sendResult,
+      cooldown_seconds: await getVerificationCooldownRemainingSeconds(userId),
+      message,
+      expires_minutes: config.expiresMinutes,
+    };
+  }
+  return {
+    code_send_status: sendResult,
+    cooldown_seconds: 0,
+    message,
+    expires_minutes: config.expiresMinutes,
+  };
+}
+
 export async function getLatestDeliveryError(userId: string): Promise<string> {
   return withDb(async (db) => {
     const row = await findLatestDelivery(db, userId);

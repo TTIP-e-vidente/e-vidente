@@ -12,6 +12,7 @@ import {
   type DeliveryBatchStats,
 } from '../delivery.ts';
 import { withDb } from '../db.ts';
+import { refreshAllLeaderboards } from '../services/leaderboard-refresh.ts';
 
 interface StreakCandidate {
   userId: string;
@@ -173,7 +174,7 @@ async function batchDeliver(
   return stats;
 }
 
-export async function runStreakEmailJob(referenceDate?: string) {
+export async function runStreakAtRiskEmailJob(referenceDate?: string) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
   }
@@ -183,8 +184,6 @@ export async function runStreakEmailJob(referenceDate?: string) {
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
     const atRiskRows = await findStreakAtRisk(db, today);
-    const lostRows = await findStreakLost(db, today);
-
     const atRisk = await batchDeliver(
       atRiskRows.map((c) => ({
         userId: c.userId,
@@ -195,7 +194,20 @@ export async function runStreakEmailJob(referenceDate?: string) {
         message: buildStreakAtRiskEmail(c.name, c.mail, c.currentCount),
       })),
     );
+    return { today, expiredPending, atRisk };
+  });
+}
 
+export async function runStreakLostEmailJob(referenceDate?: string) {
+  if (!isEmailDeliveryConfigured()) {
+    return { skipped: true, reason: 'brevo_not_configured' };
+  }
+  const cfg = emailConfig();
+  const today = referenceDate ?? getTodayInTimezone(cfg.timezone);
+
+  return withDb(async (db) => {
+    const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
+    const lostRows = await findStreakLost(db, today);
     const lost = await batchDeliver(
       lostRows.map((c) => ({
         userId: c.userId,
@@ -206,10 +218,29 @@ export async function runStreakEmailJob(referenceDate?: string) {
         message: buildStreakLostEmail(c.name, c.mail, c.currentCount),
       })),
     );
-
     const reconciledStreaks = await reconcileExpiredStreaks(db, today);
-    return { today, expiredPending, atRisk, lost, reconciledStreaks };
+    return { today, expiredPending, lost, reconciledStreaks };
   });
+}
+
+export async function runStreakEmailJob(referenceDate?: string) {
+  const atRisk = await runStreakAtRiskEmailJob(referenceDate);
+  const lost = await runStreakLostEmailJob(referenceDate);
+  if ('skipped' in atRisk && atRisk.skipped) {
+    return atRisk;
+  }
+  if ('skipped' in lost && lost.skipped) {
+    return lost;
+  }
+  return {
+    today: (atRisk as { today: string }).today,
+    expiredPending:
+      ((atRisk as { expiredPending: number }).expiredPending ?? 0)
+      + ((lost as { expiredPending: number }).expiredPending ?? 0),
+    atRisk: (atRisk as { atRisk: DeliveryBatchStats }).atRisk,
+    lost: (lost as { lost: DeliveryBatchStats }).lost,
+    reconciledStreaks: (lost as { reconciledStreaks: number }).reconciledStreaks,
+  };
 }
 
 export async function runRetryFailedEmailJob() {
@@ -338,27 +369,13 @@ export async function runPendingWelcomeJob() {
   });
 }
 
-export async function proxyLeaderboardRefresh(): Promise<unknown> {
-  const baseUrl = Deno.env.get('BACKEND_BASE_URL')?.trim().replace(/\/+$/, '');
-  const secret = Deno.env.get('EMAIL_CRON_SECRET')?.trim();
-  if (!baseUrl || !secret) {
-    return { skipped: true, reason: 'leaderboard_requires_backend_url' };
-  }
-  if (/^https?:\/\/(127\.0\.0\.1|localhost)/i.test(baseUrl)) {
-    return { skipped: true, reason: 'backend_url_local' };
-  }
-  const response = await fetch(`${baseUrl}/internal/jobs/refresh-leaderboard`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Job-Secret': secret,
-    },
-    body: '{}',
-  });
-  const text = await response.text();
-  try {
-    return { status: response.status, body: JSON.parse(text) };
-  } catch {
-    return { status: response.status, body: text.slice(0, 500) };
-  }
+export async function runLeaderboardRefreshJob(): Promise<unknown> {
+  const results = await refreshAllLeaderboards();
+  const failed = results.filter((row) => row.error);
+  return {
+    source: 'supabase-edge',
+    scopes: results.length,
+    failed: failed.length,
+    results,
+  };
 }
