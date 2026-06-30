@@ -59,7 +59,7 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 
 	var posicion := int(entrada.get("rank", 0))
 	var puntaje := int(entrada.get("score", 0))
-	var nombre := _resolver_nombre(entrada)
+	var nombre := LeaderboardFormat.resolver_nombre_entrada(entrada)
 
 	if is_instance_valid(_label_rank):
 		_label_rank.text = LeaderboardFormat.texto_posicion(posicion)
@@ -99,14 +99,6 @@ func refrescar_avatar_si_coincide(user_id: String) -> void:
 		return
 	if is_instance_valid(_avatar):
 		_avatar.mostrar_para_entrada(_entrada, _es_propio)
-
-
-func _resolver_nombre(entrada: Dictionary) -> String:
-	var display: Variant = entrada.get("display_name", null)
-	if display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = entrada.get("username", "")
-	return username as String if username is String else "—"
 
 
 func _aplicar_estilo_pedestal() -> void:

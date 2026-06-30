@@ -18,6 +18,7 @@ import {
   sendVerificationCode,
   type SendVerificationResult,
 } from '../verification.ts';
+import { sendMailChangedEmail } from './mail-changed.ts';
 
 export interface PlayerMeResponse {
   user: PublicUser;
@@ -137,6 +138,7 @@ export async function updatePlayerMe(
     throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
   }
   const previousMail = normalizeMail(userBeforeUpdate.mail);
+  const oldMailRaw = userBeforeUpdate.mail?.trim() ?? '';
 
   const updates: UpdateUserProfileInput = {};
 
@@ -232,6 +234,14 @@ export async function updatePlayerMe(
   if (mailChanged && validatedMail) {
     const sendResult = await sendVerificationCode(userId, validatedMail, userBeforeUpdate.name);
     verification = await buildVerificationMeta(userId, sendResult, validatedMail);
+    if (oldMailRaw) {
+      void sendMailChangedEmail({
+        userId,
+        name: userBeforeUpdate.name,
+        oldMail: oldMailRaw,
+        newMail: validatedMail,
+      });
+    }
   } else if (mailChanged && validatedMail === null) {
     verification = {
       mail_changed: true,

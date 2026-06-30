@@ -2,6 +2,7 @@ extends Control
 class_name ProfileOverlayPanel
 
 const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
+const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
 
 signal resume_pressed
 signal save_pressed
@@ -227,7 +228,10 @@ func refrescar() -> void:
 		var verified := not verified_at.is_empty()
 		email_line += "\nVerificación: %s" % ("verificado" if verified else "pendiente")
 		var notifications_on := bool(user_online.get("email_notifications_enabled", false))
-		email_line += "\nRecordatorios mail: %s" % ("Sí" if notifications_on else "No")
+		var recordatorios := "Sí" if notifications_on else "No"
+		if not notifications_on and StreakReminderHelperScript.racha_en_riesgo():
+			recordatorios += " (racha en riesgo — activalos en perfil)"
+		email_line += "\nRecordatorios mail: %s" % recordatorios
 	_email_label.text = email_line
 
 	var age: int = 0

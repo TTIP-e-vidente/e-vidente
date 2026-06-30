@@ -183,16 +183,14 @@ static func evaluar_respuesta_verificacion(
 	if bool(result.get("ok", false)):
 		var data: Variant = result.get("data", {})
 		if data is Dictionary:
-			var api_status := str((data as Dictionary).get("status", "")).strip_edges()
+			var api_data := data as Dictionary
+			var api_status := str(api_data.get("status", "")).strip_edges()
 			if api_status == "already_verified":
 				return {
 					"show_overlay": false,
 					"cooldown_seconds": 0,
 					"feedback": str(
-						(data as Dictionary).get(
-							"message",
-							"Tu mail ya est? verificado."
-						)
+						api_data.get("message", "Tu mail ya está verificado.")
 					),
 					"feedback_ok": true,
 				}
@@ -201,26 +199,41 @@ static func evaluar_respuesta_verificacion(
 					"show_overlay": true,
 					"cooldown_seconds": 0,
 					"feedback": str(
-						(data as Dictionary).get(
+						api_data.get(
 							"message",
-							"El c?digo est? en la consola del backend (dev_code)."
+							"El código está en los logs de Supabase Edge (dev_code)."
 						)
 					),
 					"feedback_ok": true,
 				}
-		return _evaluacion_con_target_mail({
-			"show_overlay": true,
-			"cooldown_seconds": cooldown_verificacion(result, fallback_cooldown),
-			"feedback": "Te enviamos el c?digo de verificaci?n. Revis? tu correo y la carpeta de spam.",
-			"feedback_ok": true,
-		}, meta_verificacion_perfil(result))
+			if api_status == "sent":
+				return _evaluacion_con_target_mail({
+					"show_overlay": true,
+					"cooldown_seconds": cooldown_verificacion(result, fallback_cooldown),
+					"feedback": str(
+						api_data.get(
+							"message",
+							"Te enviamos el código de verificación. Revisá tu correo y la carpeta de spam."
+						)
+					),
+					"feedback_ok": true,
+				}, meta_verificacion_perfil(result))
+		return {
+			"show_overlay": false,
+			"cooldown_seconds": 0,
+			"feedback": mensaje_verificacion(
+				result,
+				"No se pudo enviar el código. Revisá tu conexión e intentá de nuevo."
+			),
+			"feedback_ok": false,
+		}
 
 	var cooldown := cooldown_verificacion(result, 0)
 	if cooldown > 0:
 		return {
 			"show_overlay": true,
 			"cooldown_seconds": cooldown,
-			"feedback": mensaje_verificacion(result, "Esper? antes de pedir otro c?digo."),
+			"feedback": mensaje_verificacion(result, "Esperá antes de pedir otro código."),
 			"feedback_ok": false,
 		}
 
@@ -229,14 +242,14 @@ static func evaluar_respuesta_verificacion(
 		return {
 			"show_overlay": false,
 			"cooldown_seconds": 0,
-			"feedback": mensaje_verificacion(result, "Guard? el mail en tu perfil e intent? de nuevo."),
+			"feedback": mensaje_verificacion(result, "Guardá el mail en tu perfil e intentá de nuevo."),
 			"feedback_ok": false,
 		}
 
 	return {
 		"show_overlay": false,
 		"cooldown_seconds": 0,
-		"feedback": mensaje_verificacion(result, "No se pudo enviar el c?digo."),
+		"feedback": mensaje_verificacion(result, "No se pudo enviar el código."),
 		"feedback_ok": false,
 	}
 
@@ -253,7 +266,7 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": cooldown,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Te enviamos el c?digo de verificaci?n (no el de bienvenida). Revis? tu casilla y spam."
+					"Te enviamos el código de verificación (no el de bienvenida). Revisá tu casilla y spam."
 				),
 				"feedback_ok": true,
 			}, verification_meta)
@@ -263,17 +276,17 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": cooldown,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Ya hay un c?digo activo. Revis? tu casilla o esper? para reenviar."
+					"Ya hay un código activo. Revisá tu casilla o esperá para reenviar."
 				),
 				"feedback_ok": false,
 			}, verification_meta)
 		"send_failed":
 			return _evaluacion_con_target_mail({
-				"show_overlay": false,
+				"show_overlay": true,
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"No se pudo enviar el c?digo. Pod?s reintentar de inmediato."
+					"No se pudo enviar el código. Tocá «Reenviar código» para intentar de nuevo."
 				),
 				"feedback_ok": false,
 			}, verification_meta)
@@ -283,7 +296,7 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Brevo no configurado. El c?digo est? en la consola del backend (dev_code)."
+					"Brevo no configurado. El código está en los logs de Supabase Edge (dev_code)."
 				),
 				"feedback_ok": true,
 			}, verification_meta)
@@ -293,7 +306,7 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"Servicio de mail no disponible. En desarrollo, revis? la consola del backend."
+					"Servicio de mail no disponible. Contactá al administrador."
 				),
 				"feedback_ok": false,
 			}, verification_meta)
@@ -303,7 +316,7 @@ static func _evaluar_estado_envio_verificacion(
 				"cooldown_seconds": 0,
 				"feedback": _feedback_desde_meta(
 					verification_meta,
-					"No se pudo enviar el c?digo de verificaci?n."
+					"No se pudo enviar el código de verificación."
 				),
 				"feedback_ok": false,
 			}

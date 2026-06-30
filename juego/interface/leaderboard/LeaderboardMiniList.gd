@@ -152,8 +152,8 @@ func _agregar_filas_desde_entradas(
 		var entry := entrada as Dictionary
 		if not LeaderboardFormat.entrada_es_valida(entry):
 			continue
-		var user_id := str(entry.get("user_id", "")).strip_edges()
-		var rank := int(entry.get("rank", 0))
+		var user_id := LeaderboardFormat.id_usuario_entrada(entry)
+		var rank := LeaderboardFormat.entero_desde_json(entry.get("rank", 0))
 		if not user_id.is_empty() and vistos_usuario.has(user_id):
 			continue
 		if rank > 0 and vistos_puesto.has(rank):
@@ -167,8 +167,8 @@ func _agregar_filas_desde_entradas(
 			continue
 		fila.tema_claro = tema_claro
 		var es_propio := _es_fila_propia(entry, id_propio, puesto_propio)
-		fila.poblar(entry, es_propio, scope)
 		add_child(fila)
+		fila.poblar(entry, es_propio, scope)
 		contador += 1
 
 	if animar_fila_propia:
@@ -180,9 +180,9 @@ func _entrada_es_valida(entry: Dictionary) -> bool:
 
 
 func _es_fila_propia(entry: Dictionary, id_propio: String, puesto_propio: int) -> bool:
-	if not id_propio.is_empty() and str(entry.get("user_id", "")) == id_propio:
+	if not id_propio.is_empty() and LeaderboardFormat.id_usuario_entrada(entry) == id_propio:
 		return true
-	if puesto_propio > 0 and int(entry.get("rank", 0)) == puesto_propio:
+	if puesto_propio > 0 and LeaderboardFormat.entero_desde_json(entry.get("rank", 0)) == puesto_propio:
 		return true
 	return false
 

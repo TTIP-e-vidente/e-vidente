@@ -35,13 +35,13 @@ func _draw() -> void:
 
 func poblar(entrada: Dictionary, es_propio: bool = false, scope: String = "global_xp") -> void:
 	_entrada = entrada
-	_id_usuario = str(entrada.get("user_id", ""))
+	_id_usuario = LeaderboardFormat.id_usuario_entrada(entrada)
 	_scope = scope
 	_resaltar_propia = es_propio
 
-	var posicion: int  = int(entrada.get("rank", 0))
-	var puntaje: int   = int(entrada.get("score", 0))
-	var nombre: String = _resolver_nombre(entrada)
+	var posicion: int  = LeaderboardFormat.entero_desde_json(entrada.get("rank", 0))
+	var puntaje: int   = LeaderboardFormat.entero_desde_json(entrada.get("score", 0))
+	var nombre: String = LeaderboardFormat.resolver_nombre_entrada(entrada)
 
 	_label_posicion.text = LeaderboardFormat.texto_posicion(posicion)
 	_label_nombre.text   = nombre
@@ -53,14 +53,6 @@ func poblar(entrada: Dictionary, es_propio: bool = false, scope: String = "globa
 	_aplicar_color_posicion(posicion, es_propio)
 	_aplicar_estilo_propia(es_propio)
 	queue_redraw()
-
-
-func _resolver_nombre(entrada: Dictionary) -> String:
-	var nombre_visible: Variant = entrada.get("display_name", null)
-	if nombre_visible != null and nombre_visible is String and not (nombre_visible as String).is_empty():
-		return nombre_visible as String
-	var nombre_usuario: Variant = entrada.get("username", "")
-	return nombre_usuario as String if nombre_usuario is String else "—"
 
 
 func _aplicar_color_posicion(posicion: int, _es_propio: bool) -> void:

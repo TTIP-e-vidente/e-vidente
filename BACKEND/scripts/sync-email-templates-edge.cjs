@@ -23,6 +23,7 @@ const COPY_FILES = [
   'welcome.template.ts',
   'streak-at-risk.template.ts',
   'streak-lost.template.ts',
+  'mail-changed.template.ts',
 ];
 
 function ensureDir(dir) {

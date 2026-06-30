@@ -6,6 +6,7 @@
 [ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
 [ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
 [ext_resource type="FontFile" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="6_0vpd6"]
+[ext_resource type="Texture2D" path="res://assets-sistema/racha-diaria/racha-diaria-1.png" id="7_streak_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_chip"]
 bg_color = Color(0.780392, 0.839216, 0.658824, 0.62)
@@ -142,6 +143,72 @@ corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.1)
 shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_notifications_card"]
+bg_color = Color(0.985, 0.995, 0.98, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.309804, 0.372549, 0.266667, 0.18)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+content_margin_left = 4
+content_margin_top = 4
+content_margin_right = 4
+content_margin_bottom = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_notifications_card_risk"]
+bg_color = Color(1, 0.97, 0.95, 0.98)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.82, 0.22, 0.18, 0.32)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+content_margin_left = 4
+content_margin_top = 4
+content_margin_right = 4
+content_margin_bottom = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_notifications_icon_badge"]
+bg_color = Color(1, 0.94, 0.92, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.82, 0.22, 0.18, 0.16)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 4
+content_margin_top = 4
+content_margin_right = 4
+content_margin_bottom = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_notifications_risk_badge"]
+bg_color = Color(0.98, 0.9, 0.88, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.82, 0.22, 0.18, 0.2)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 10
+content_margin_top = 8
+content_margin_right = 10
+content_margin_bottom = 8
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_notifications_checkbox"]
 
 [node name="Auth" type="Control" unique_id=121126078]
 layout_mode = 3
@@ -471,18 +538,99 @@ theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
 text = "Te enviamos un código de 6 dígitos a tu casilla. Podés configurarlo cuando quieras."
 
-[node name="EmailNotificationsCheckBox" type="CheckBox" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120337]
+[node name="EmailNotificationsCard" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120336]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_notifications_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="IconPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/HeaderRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_notifications_icon_badge")
+
+[node name="IconTexture" type="TextureRect" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/HeaderRow/IconPanel"]
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+texture = ExtResource("7_streak_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HeaderTexts" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="TitleLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/HeaderRow/HeaderTexts"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
-theme_override_font_sizes/font_size = 13
-text = "Quiero recibir recordatorios de racha por correo"
+theme_override_fonts/font = ExtResource("4_gk68o")
+theme_override_font_sizes/font_size = 14
+text = "Recordatorios de racha"
 
-[node name="EmailNotificationsHintLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=884120342]
+[node name="SubtitleLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/HeaderRow/HeaderTexts"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.82)
+theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.78)
+theme_override_fonts/font = ExtResource("4_gk68o")
 theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
-text = "Activá esta opción solo si querés avisos. Requiere mail verificado."
+text = "Te avisamos por mail si tu racha está en peligro."
+
+[node name="RiskBadgePanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_notifications_risk_badge")
+
+[node name="RiskBadgeLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox/RiskBadgePanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.16, 0.12, 1)
+theme_override_fonts/font = ExtResource("4_gk68o")
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "Tu racha está en riesgo. Activá los avisos para no perderla sin enterarte."
+
+[node name="EmailNotificationsCheckBox" type="CheckBox" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox" unique_id=884120337]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_colors/font_disabled_color = Color(0.45, 0.42, 0.38, 0.72)
+theme_override_colors/font_focus_color = Color(0.180392, 0.164706, 0.121569, 1)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.22, 0.38, 0.3, 1)
+theme_override_colors/font_pressed_color = Color(0.22, 0.38, 0.3, 1)
+theme_override_colors/icon_disabled_color = Color(0.62, 0.6, 0.58, 0.55)
+theme_override_colors/icon_focus_color = Color(0.309804, 0.372549, 0.266667, 1)
+theme_override_colors/icon_hover_color = Color(0.356863, 0.427451, 0.301961, 1)
+theme_override_colors/icon_hover_pressed_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/icon_normal_color = Color(0.55, 0.52, 0.48, 1)
+theme_override_colors/icon_pressed_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_constants/h_separation = 10
+theme_override_fonts/font = ExtResource("4_gk68o")
+theme_override_font_sizes/font_size = 13
+theme_override_styles/focus = SubResource("StyleBoxEmpty_notifications_checkbox")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_notifications_checkbox")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_notifications_checkbox")
+text = "Quiero recibir avisos por correo"
+
+[node name="EmailNotificationsHintLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent/EmailNotificationsCard/MarginContainer/VBox" unique_id=884120342]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.309804, 0.372549, 0.266667, 0.72)
+theme_override_fonts/font = ExtResource("4_gk68o")
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "El aviso se envía cerca de las 18:00 (hora Argentina) si no jugás ese día."
 
 [node name="AvatarLabel" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=2024719766]
 layout_mode = 2

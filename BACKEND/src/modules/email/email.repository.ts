@@ -743,13 +743,23 @@ export async function markMailVerified(
   const result = await client.query(
     `
       UPDATE users
-      SET mail_verified_at = now(), updated_at = now()
+      SET
+        mail = CASE
+          WHEN lower(trim(coalesce(mail, ''))) = $2 THEN mail
+          WHEN trim(coalesce(mail, '')) = '' THEN $3
+          ELSE mail
+        END,
+        mail_verified_at = now(),
+        updated_at = now()
       WHERE id = $1
         AND mail_verified_at IS NULL
-        AND lower(trim(coalesce(mail, ''))) = $2
+        AND (
+          lower(trim(coalesce(mail, ''))) = $2
+          OR trim(coalesce(mail, '')) = ''
+        )
       RETURNING id;
     `,
-    [userId, normalizedMail]
+    [userId, normalizedMail, mail.trim()]
   );
   return (result.rowCount ?? 0) > 0;
 }

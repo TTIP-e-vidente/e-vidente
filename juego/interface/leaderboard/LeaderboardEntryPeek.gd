@@ -24,7 +24,7 @@ func _ready() -> void:
 func mostrar(entrada: Dictionary, scope: String, es_propio: bool) -> void:
 	var posicion: int = int(entrada.get("rank", 0))
 	var puntaje: int = int(entrada.get("score", 0))
-	var nombre := _resolver_nombre(entrada)
+	var nombre := LeaderboardFormat.resolver_nombre_entrada(entrada)
 
 	if is_instance_valid(_avatar_badge):
 		_avatar_badge.mostrar_para_entrada(entrada, es_propio)
@@ -55,10 +55,3 @@ func mostrar(entrada: Dictionary, scope: String, es_propio: bool) -> void:
 		else:
 			_label_puntaje.remove_theme_color_override("font_color")
 
-
-func _resolver_nombre(entrada: Dictionary) -> String:
-	var display: Variant = entrada.get("display_name", null)
-	if display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = entrada.get("username", "")
-	return username as String if username is String else "Jugador"

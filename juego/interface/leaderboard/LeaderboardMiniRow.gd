@@ -41,11 +41,11 @@ func _exit_tree() -> void:
 
 func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 	_entrada = entrada
-	_id_usuario = str(entrada.get("user_id", ""))
+	_id_usuario = LeaderboardFormat.id_usuario_entrada(entrada)
 	_es_propio = es_propio
 
-	var posicion := int(entrada.get("rank", 0))
-	var puntaje := int(entrada.get("score", 0))
+	var posicion := LeaderboardFormat.entero_desde_json(entrada.get("rank", 0))
+	var puntaje := LeaderboardFormat.entero_desde_json(entrada.get("score", 0))
 	if is_instance_valid(_label_posicion):
 		_label_posicion.text = LeaderboardFormat.texto_posicion(posicion)
 		_label_posicion.add_theme_color_override(
@@ -53,7 +53,7 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 			LeaderboardFormat.color_posicion(posicion, es_propio)
 		)
 	if is_instance_valid(_label_nombre):
-		_label_nombre.text = _resolver_nombre(entrada)
+		_label_nombre.text = LeaderboardFormat.resolver_nombre_entrada(entrada)
 		if es_propio and not tema_claro:
 			_label_nombre.add_theme_color_override("font_color", Color.WHITE)
 		elif es_propio:
@@ -123,14 +123,6 @@ func _aplicar_tema_etiquetas(es_propio: bool) -> void:
 		_label_puntaje.add_theme_color_override("font_color", Color(0.278, 0.251, 0.184, 0.75))
 	if is_instance_valid(_label_posicion):
 		_label_posicion.add_theme_color_override("font_color", Color(0.25882354, 0.47058824, 0.36862746, 1))
-
-
-func _resolver_nombre(entrada: Dictionary) -> String:
-	var display: Variant = entrada.get("display_name", null)
-	if display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = entrada.get("username", "")
-	return username as String if username is String else "—"
 
 
 func _al_avatar_cargado(user_id: String, _texture: Texture2D) -> void:

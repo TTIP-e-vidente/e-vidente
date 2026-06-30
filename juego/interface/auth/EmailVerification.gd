@@ -81,6 +81,61 @@ func _inicializar_correo_y_estado() -> void:
 		_aplicar_mail_desde_evaluacion_meta()
 	if _label_email.text.strip_edges().is_empty() or _label_email.text == "tu casilla de correo":
 		_mostrar_email_usuario()
+	await _asegurar_codigo_pendiente_si_hace_falta()
+
+
+func _asegurar_codigo_pendiente_si_hace_falta() -> void:
+	if AuthApi.mail_esta_verificado() or _is_loading or _salida_en_curso:
+		return
+	var res := await AuthApi.obtener_estado_verificacion_email()
+	if not bool(res.get("ok", false)):
+		return
+	var data: Variant = res.get("data", {})
+	if not data is Dictionary:
+		return
+	var payload := data as Dictionary
+	var verification: Variant = payload.get("verification", {})
+	if not verification is Dictionary:
+		return
+	var estado := verification as Dictionary
+	if not bool(estado.get("required", false)):
+		return
+	if bool(estado.get("has_pending_code", false)):
+		return
+	if int(estado.get("cooldown_seconds", 0)) > 0:
+		return
+	var preflight := await ProfileMailSyncHelper.preflight_envio_verificacion()
+	if not bool(preflight.get("ok", false)):
+		_mostrar_mensaje(str(preflight.get("mensaje", "Mail no disponible ahora.")), false)
+		return
+	await _solicitar_codigo_automatico()
+
+
+func _solicitar_codigo_automatico() -> void:
+	if _is_loading or _salida_en_curso:
+		return
+	_establecer_cargando(true)
+	_mostrar_mensaje("Enviando código a tu mail...", true)
+	var mail_esperado := _label_email.text.strip_edges()
+	if mail_esperado == "tu casilla de correo":
+		mail_esperado = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	var res := await AuthApi.solicitar_codigo_verificacion(mail_esperado)
+	_establecer_cargando(false)
+	if res.get("ok", false):
+		await _sincronizar_estado_desde_servidor()
+	var evaluacion := AuthApi.evaluar_respuesta_verificacion(res)
+	var cooldown := int(evaluacion.get("cooldown_seconds", 0))
+	if bool(res.get("ok", false)) and cooldown <= 0:
+		cooldown = AuthApi.cooldown_verificacion(res, 120)
+	if cooldown > 0:
+		_iniciar_cooldown(float(cooldown))
+	if not str(evaluacion.get("feedback", "")).is_empty():
+		_mostrar_mensaje(str(evaluacion.get("feedback", "")), bool(evaluacion.get("feedback_ok", false)))
+	elif not res.get("ok", false):
+		_mostrar_mensaje(
+			AuthApi.mensaje_verificacion(res, "No se pudo enviar el código. Tocá «Reenviar código»."),
+			false
+		)
 
 
 func _aplicar_configuracion_desde_meta() -> void:

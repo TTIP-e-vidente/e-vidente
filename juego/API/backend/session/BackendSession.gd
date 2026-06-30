@@ -109,6 +109,13 @@ func _aplicar_mail_verified_at_en_cache(verified_at: Variant) -> void:
 	_persistir_usuario_en_cache(_usuario_en_cache)
 
 
+func aplicar_email_notifications_en_cache(enabled: bool) -> void:
+	if _usuario_en_cache.is_empty():
+		return
+	_usuario_en_cache["email_notifications_enabled"] = enabled
+	_persistir_usuario_en_cache(_usuario_en_cache)
+
+
 func limpiar_mail_verificado_en_cache() -> void:
 	_aplicar_mail_verified_at_en_cache(null)
 
