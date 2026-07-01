@@ -1,10 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://b6dxr6w1uyfwp"]
 
-[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardPosicionHubCard.gd" id="1_script"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="Script" uid="uid://b2nrd2eb1jrrd" path="res://interface/leaderboard/LeaderboardPosicionHubCard.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card_normal"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 1
 border_width_top = 1
@@ -15,12 +19,12 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-content_margin_left = 12
-content_margin_top = 10
-content_margin_right = 12
-content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card_hover"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
 bg_color = Color(0.975, 0.972, 0.96, 1)
 border_width_left = 1
 border_width_top = 1
@@ -31,23 +35,18 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-content_margin_left = 12
-content_margin_top = 10
-content_margin_right = 12
-content_margin_bottom = 10
 
-[node name="LeaderboardPosicionHubCard" type="Button"]
+[node name="LeaderboardPosicionHubCard" type="Button" unique_id=1554083775]
+clip_contents = true
 custom_minimum_size = Vector2(150, 82)
 size_flags_horizontal = 3
 theme_override_styles/normal = SubResource("StyleBoxFlat_card_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_card_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_card_hover")
-clip_contents = true
+theme_override_styles/hover = SubResource("StyleBoxFlat_card_hover")
 script = ExtResource("1_script")
 
-[node name="VBox" type="VBoxContainer" parent="."]
-layout_mode = 2
-anchors_preset = 15
+[node name="VBox" type="VBoxContainer" parent="." unique_id=799051147]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -56,17 +55,17 @@ mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="EtiquetaScope" type="Label" parent="VBox"]
+[node name="EtiquetaScope" type="Label" parent="VBox" unique_id=1974069819]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.22, 0.38, 0.3, 0.9)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
-text = "XP Global"
+text = "Global"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="PosicionLabel" type="Label" parent="VBox"]
+[node name="PosicionLabel" type="Label" parent="VBox" unique_id=570019061]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -75,7 +74,7 @@ theme_override_font_sizes/font_size = 24
 text = "#1"
 horizontal_alignment = 1
 
-[node name="ScoreLabel" type="Label" parent="VBox"]
+[node name="ScoreLabel" type="Label" parent="VBox" unique_id=1543204728]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3

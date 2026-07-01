@@ -1,9 +1,9 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://ds8kemv74tvnm"]
 
-[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardPodiumSlot.gd" id="1_script"]
-[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardAvatarBadge.gd" id="2_avatar"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_font"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_spray"]
+[ext_resource type="Script" uid="uid://dikkhu8oa713r" path="res://interface/leaderboard/LeaderboardPodiumSlot.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dhnncxq6yphcy" path="res://interface/leaderboard/LeaderboardAvatarBadge.gd" id="2_avatar"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_font"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_spray"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pedestal_oro"]
 bg_color = Color(0.859, 0.753, 0.318, 0.15)
@@ -11,23 +11,21 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.859, 0.753, 0.318, 0.35)
+border_color = Color(0.85882354, 0.75686276, 0.31764707, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
-[node name="LeaderboardPodiumSlot" type="VBoxContainer"]
+[node name="LeaderboardPodiumSlot" type="VBoxContainer" unique_id=1323005733]
 custom_minimum_size = Vector2(88, 0)
 size_flags_horizontal = 3
 size_flags_vertical = 8
 theme_override_constants/separation = 6
 alignment = 2
 script = ExtResource("1_script")
-altura_pedestal = 36
-escala_rank = 1.0
 
-[node name="AvatarBadge" type="Control" parent="."]
+[node name="AvatarBadge" type="Control" parent="." unique_id=354006360]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
@@ -35,7 +33,7 @@ size_flags_horizontal = 4
 script = ExtResource("2_avatar")
 avatar_size = 44
 
-[node name="RankLabel" type="Label" parent="."]
+[node name="RankLabel" type="Label" parent="." unique_id=708645391]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -44,17 +42,17 @@ theme_override_font_sizes/font_size = 22
 text = "#1"
 horizontal_alignment = 1
 
-[node name="NombreLabel" type="Label" parent="."]
+[node name="NombreLabel" type="Label" parent="." unique_id=396559665]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.88)
+theme_override_colors/font_color = Color(0.2784314, 0.2509804, 0.18431373, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 12
 text = "Jugador"
 horizontal_alignment = 1
 text_overrun_behavior = 3
 
-[node name="ScoreLabel" type="Label" parent="."]
+[node name="ScoreLabel" type="Label" parent="." unique_id=1291291850]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -63,7 +61,7 @@ theme_override_font_sizes/font_size = 12
 text = "0"
 horizontal_alignment = 1
 
-[node name="Pedestal" type="PanelContainer" parent="."]
+[node name="Pedestal" type="PanelContainer" parent="." unique_id=1451681395]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
