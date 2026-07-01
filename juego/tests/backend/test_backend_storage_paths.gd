@@ -9,9 +9,9 @@ func test_storage_namespace_no_esta_vacio() -> void:
 
 func test_user_path_se_aisla_por_namespace() -> void:
 	BackendConfig.recargar()
-	var namespace := BackendStoragePaths.obtener_namespace()
+	var espacio_nombres := BackendStoragePaths.obtener_namespace()
 	var resolved := BackendStoragePaths.resolver("user://save_data.json")
 	assert_str(resolved).starts_with("user://")
-	if namespace != BackendStoragePaths.DEFAULT_NAMESPACE:
+	if espacio_nombres != BackendStoragePaths.DEFAULT_NAMESPACE:
 		assert_str(resolved).contains("/save_data.json")
-		assert_str(resolved).contains(namespace)
+		assert_str(resolved).contains(espacio_nombres)

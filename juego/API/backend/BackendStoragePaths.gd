@@ -10,10 +10,10 @@ static func resolver(path: String) -> String:
 	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
 	if not override_dir.is_empty():
 		return override_dir.path_join(path.get_file())
-	var namespace := obtener_namespace()
-	if namespace.is_empty() or namespace == DEFAULT_NAMESPACE:
+	var espacio_nombres := obtener_namespace()
+	if espacio_nombres.is_empty() or espacio_nombres == DEFAULT_NAMESPACE:
 		return path
-	return "user://%s/%s" % [namespace, path.trim_prefix("user://")]
+	return "user://%s/%s" % [espacio_nombres, path.trim_prefix("user://")]
 
 
 static func obtener_namespace() -> String:

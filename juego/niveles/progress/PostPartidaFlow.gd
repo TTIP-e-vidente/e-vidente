@@ -17,12 +17,9 @@ extends RefCounted
 # Toda la lógica compartida vive acá para que sea fácil de leer y testear.
 
 
-const SincronizadorPartidaScript := preload("res://API/backend/sync/SincronizadorPartida.gd")
-
-
 static func resolver_scope_desde_arbol(tree: SceneTree) -> String:
 	return RestrictionCodes.scope_leaderboard_desde_juego(
-		SincronizadorPartidaScript.resolver_restriccion(tree)
+		SincronizadorPartida.resolver_restriccion(tree)
 	)
 
 

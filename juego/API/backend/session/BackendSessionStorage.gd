@@ -1,7 +1,6 @@
 class_name BackendSessionStorage
 extends RefCounted
 
-const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
 const SESSION_PATH := "user://backend_session.json"
 
 
@@ -17,7 +16,7 @@ static func guardar_sesion(
 		"savedAt": Time.get_datetime_string_from_system(false, true),
 	}
 	var path := _ruta_sesion()
-	BackendStoragePathsScript.asegurar_directorio_padre(path)
+	BackendStoragePaths.asegurar_directorio_padre(path)
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_warning("[BackendSessionStorage] No se pudo abrir %s para escritura." % path)
@@ -58,4 +57,4 @@ static func borrar_sesion() -> void:
 
 
 static func _ruta_sesion() -> String:
-	return BackendStoragePathsScript.resolver(SESSION_PATH)
+	return BackendStoragePaths.resolver(SESSION_PATH)
