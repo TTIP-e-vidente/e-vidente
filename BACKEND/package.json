@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev:staging",
-    "dev:local": "ts-node scripts/reject-local-docker-dev.ts dev:local",
+    "dev:local": "npm run dev:local-db",
+    "dev:local-db": "ts-node scripts/dev-local-db.ts",
     "dev:stop": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/stop-dev-server.ts",
     "dev:restart": "npm run dev:stop && npm run dev",
     "dev:restart:local": "npm run dev:stop && npm run dev:local",

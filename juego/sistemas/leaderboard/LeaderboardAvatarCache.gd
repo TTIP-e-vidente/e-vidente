@@ -3,6 +3,7 @@ extends Node
 signal avatar_cargado(user_id: String, texture: Texture2D)
 
 
+const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
 const DIR_CACHE := "user://lb_avatars"
 const MAX_CONCURRENT := 4
 
@@ -14,7 +15,7 @@ var _activos: int = 0
 
 
 func _ready() -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR_CACHE))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_dir_cache()))
 
 
 func obtener_textura(user_id: String, avatar_key: Variant) -> Texture2D:
@@ -35,7 +36,7 @@ func obtener_textura(user_id: String, avatar_key: Variant) -> Texture2D:
 			_memoria[user_id] = tex
 			return tex
 		# Cache corrupto: lo borramos para reintentar en la próxima carga.
-		DirAccess.remove_absolute(path)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 	_encolar_descarga(user_id)
 	return null
@@ -174,4 +175,8 @@ func _cargar_imagen_desde_archivo(path: String) -> Image:
 
 func _ruta_cache(user_id: String) -> String:
 	var safe := user_id.replace("/", "_").replace("\\", "_")
-	return "%s/%s.img" % [DIR_CACHE, safe]
+	return "%s/%s.img" % [_dir_cache(), safe]
+
+
+func _dir_cache() -> String:
+	return BackendStoragePathsScript.resolver(DIR_CACHE)

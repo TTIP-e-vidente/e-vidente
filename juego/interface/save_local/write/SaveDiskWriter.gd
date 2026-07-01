@@ -1,5 +1,7 @@
 extends RefCounted
 
+const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
+
 const SAVE_PATH := "user://save_data.json"
 const TEMP_PATH := "user://save_data.tmp.json"
 const BACKUP_PATH := "user://save_data.backup.json"
@@ -107,14 +109,8 @@ func _falla(error_message: String) -> Dictionary:
 
 
 static func _resolve_save_path(path: String) -> String:
-	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
-	if override_dir.is_empty():
-		return path
-	return override_dir.path_join(path.get_file())
+	return BackendStoragePathsScript.resolver(path)
 
 
 static func _ensure_parent_dir(path: String) -> void:
-	var dir_path: String = path.get_base_dir()
-	if dir_path.is_empty() or dir_path == "user://":
-		return
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
+	BackendStoragePathsScript.asegurar_directorio_padre(path)

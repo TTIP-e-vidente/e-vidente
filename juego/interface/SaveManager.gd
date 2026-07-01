@@ -22,6 +22,7 @@ const SaveResumeStateScript := preload(
 const ImportadorProgresoOnlineScript := preload(
 	"res://API/backend/sync/ImportadorProgresoOnline.gd"
 )
+const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
 const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 
 @warning_ignore("unused_signal")
@@ -247,7 +248,7 @@ func es_ruta_avatar_vinculada(path: String) -> bool:
 	var user_key := obtener_clave_avatar_perfil()
 	if user_key.is_empty():
 		return false
-	return _profile_helper.es_ruta_avatar_gestionada(path, AVATARS_DIR, user_key)
+	return _profile_helper.es_ruta_avatar_gestionada(path, _ruta_usuario(AVATARS_DIR), user_key)
 
 
 func limpiar_avatar_perfil() -> void:
@@ -264,7 +265,7 @@ func vincular_avatar_local_existente_si_hay() -> bool:
 	if user_key.is_empty():
 		return false
 	var existing_path: String = _profile_helper.buscar_avatar_gestionado_existente(
-		AVATARS_DIR, user_key
+		_ruta_usuario(AVATARS_DIR), user_key
 	)
 	if existing_path.is_empty():
 		return false
@@ -284,7 +285,7 @@ func migrar_avatar_gestionado_si_posible(source_path: String) -> bool:
 		profile,
 		clean_source,
 		str(profile.get("avatar_path", "")).strip_edges(),
-		AVATARS_DIR,
+		_ruta_usuario(AVATARS_DIR),
 		user_key
 	)
 	if not bool(migrated.get("ok", false)):
@@ -306,9 +307,9 @@ func guardar_avatar_bytes_vinculado(bytes: PackedByteArray, extension: String) -
 	if ext.is_empty():
 		ext = "png"
 	var path: String = _profile_helper.construir_ruta_avatar_gestionada(
-		AVATARS_DIR, user_key, ext
+		_ruta_usuario(AVATARS_DIR), user_key, ext
 	)
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(AVATARS_DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_ruta_usuario(AVATARS_DIR)))
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return ""
@@ -983,7 +984,7 @@ func _actualizar_avatar_perfil(profile: Dictionary, avatar_source_path: String) 
 		profile,
 		avatar_source_path.strip_edges(),
 		previous_avatar_path,
-		AVATARS_DIR,
+		_ruta_usuario(AVATARS_DIR),
 		_resolver_clave_avatar(profile)
 	)
 
@@ -1060,7 +1061,7 @@ func _escribir_guardado_en_disco(force: bool = false, reason: String = "save") -
 		return true
 
 	var progress: Variant = save_data.get("progress", {})
-	print_debug("[Save] saving path=", ProjectSettings.globalize_path(SAVE_PATH))
+	print_debug("[Save] saving path=", ProjectSettings.globalize_path(_ruta_usuario(SAVE_PATH)))
 	var progress_keys: Array = (progress as Dictionary).keys() if progress is Dictionary else []
 	print_debug("[Save] progress_keys=", progress_keys)
 	print_debug("[Save] node_progress_keys=", obtener_todo_progreso_nodos().keys())
@@ -1312,9 +1313,14 @@ func _aplicar_snapshot_en_memoria(snapshot: Dictionary) -> void:
 	_marcar_guardado_sucio()
 
 
+func _ruta_usuario(path: String) -> String:
+	return BackendStoragePathsScript.resolver(path)
+
+
 func _escribir_snapshot(path: String, data: Dictionary) -> bool:
 	if data.is_empty():
 		return false
+	BackendStoragePathsScript.asegurar_directorio_padre(path)
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_warning("[Save] No se pudo escribir snapshot en ", path)
@@ -1339,7 +1345,7 @@ func _leer_snapshot(path: String) -> Dictionary:
 
 func _ruta_snapshot_online(username: String) -> String:
 	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	return "user://" + SAVE_SNAPSHOT_PREFIX + safe_name + ".json"
+	return _ruta_usuario("user://" + SAVE_SNAPSHOT_PREFIX + safe_name + ".json")
 
 
 func _existe_snapshot_online(username: String) -> bool:
@@ -1350,7 +1356,7 @@ func _respaldar_snapshot_invitado() -> void:
 	var snapshot := _serializar_save_actual()
 	if snapshot.is_empty():
 		return
-	if not _escribir_snapshot(GUEST_SAVE_SNAPSHOT_PATH, snapshot):
+	if not _escribir_snapshot(_ruta_usuario(GUEST_SAVE_SNAPSHOT_PATH), snapshot):
 		push_warning("[Save] No se pudo respaldar snapshot invitado.")
 		return
 	print("[Save] snapshot invitado guardado nodos=", obtener_todo_progreso_nodos().keys())
@@ -1372,7 +1378,7 @@ func _respaldar_snapshot_online(username: String) -> void:
 
 
 func _restaurar_snapshot_invitado() -> bool:
-	var snapshot := _leer_snapshot(GUEST_SAVE_SNAPSHOT_PATH)
+	var snapshot := _leer_snapshot(_ruta_usuario(GUEST_SAVE_SNAPSHOT_PATH))
 	if not snapshot.is_empty():
 		_aplicar_snapshot_en_memoria(snapshot)
 		print("[Save] snapshot invitado restaurado nodos=", obtener_todo_progreso_nodos().keys())
@@ -1593,7 +1599,7 @@ func _save_parece_arrastrar_cuenta_online(racha_actual: Dictionary) -> bool:
 
 
 func _obtener_racha_desde_snapshot_invitado() -> Dictionary:
-	return _extraer_racha_de_save_snapshot(_leer_snapshot(GUEST_SAVE_SNAPSHOT_PATH))
+	return _extraer_racha_de_save_snapshot(_leer_snapshot(_ruta_usuario(GUEST_SAVE_SNAPSHOT_PATH)))
 
 
 func _extraer_racha_de_save_snapshot(snapshot: Dictionary) -> Dictionary:
@@ -1820,7 +1826,7 @@ func _tiene_reset_activo_para_cuenta(username: String = "") -> bool:
 
 func _ruta_reset_pendiente_usuario(username: String) -> String:
 	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	return "user://" + PROGRESS_RESET_MARKER_PREFIX + safe_name + ".json"
+	return _ruta_usuario("user://" + PROGRESS_RESET_MARKER_PREFIX + safe_name + ".json")
 
 
 func _persistir_reset_pendiente_usuario(username: String) -> void:
@@ -2048,7 +2054,8 @@ func _respaldar_node_progress_por_usuario(username: String) -> void:
 	if np.is_empty():
 		return
 	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	var path: String = _ruta_usuario("user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json")
+	BackendStoragePathsScript.asegurar_directorio_padre(path)
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_warning("[Save] No se pudo guardar backup de nodos para ", username)
@@ -2063,7 +2070,7 @@ func _restaurar_node_progress_backup(username: String) -> Dictionary:
 	if username.is_empty():
 		return {}
 	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	var path: String = _ruta_usuario("user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json")
 	if not FileAccess.file_exists(path):
 		return {}
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -2079,7 +2086,7 @@ func _confirmar_eliminacion_backup(username: String) -> void:
 	if username.is_empty():
 		return
 	var safe_name: String = username.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	var path: String = "user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json"
+	var path: String = _ruta_usuario("user://" + NODE_PROGRESS_BACKUP_PREFIX + safe_name + ".json")
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -2114,7 +2121,7 @@ func _escribir_despues_reparacion_carga(
 	_recovered_from = recovered_from
 	var effective_reason: String = reason if not reason.is_empty() else "load_repair"
 	if not _escribir_guardado_en_disco(true, effective_reason):
-		if not recovered_from.is_empty() and FileAccess.file_exists(TEMP_SAVE_PATH):
+		if not recovered_from.is_empty() and FileAccess.file_exists(_ruta_usuario(TEMP_SAVE_PATH)):
 			has_unsaved_changes = false
 			_emitir_estado_guardado("recovered", loaded_from, recovered_from)
 		else:

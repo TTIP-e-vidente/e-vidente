@@ -1,6 +1,7 @@
 class_name LocalSyncQueue
 extends RefCounted
 
+const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
 const QUEUE_PATH := "user://backend_sync_queue.json"
 const QUEUE_BACKUP_PREFIX := "sync_queue_backup_"
 const STATUS_PENDING := "pending"
@@ -173,7 +174,7 @@ static func restaurar_pendientes_de_usuario(owner: String) -> int:
 
 static func _ruta_backup_cola(owner: String) -> String:
 	var safe_name := owner.strip_edges().to_lower().replace("/", "_").replace("\\", "_")
-	return "user://" + QUEUE_BACKUP_PREFIX + safe_name + ".json"
+	return BackendStoragePathsScript.resolver("user://" + QUEUE_BACKUP_PREFIX + safe_name + ".json")
 
 
 static func _leer_backup_cola(owner: String) -> Array:
@@ -189,7 +190,9 @@ static func _leer_backup_cola(owner: String) -> Array:
 
 
 static func _escribir_backup_cola(owner: String, items: Array) -> bool:
-	var file := FileAccess.open(_ruta_backup_cola(owner), FileAccess.WRITE)
+	var path := _ruta_backup_cola(owner)
+	BackendStoragePathsScript.asegurar_directorio_padre(path)
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return false
 	file.store_string(JSON.stringify(items, "\t"))
@@ -285,12 +288,13 @@ static func _cargar_cola() -> Dictionary:
 	if _cache_valid:
 		return _cache
 
-	if not FileAccess.file_exists(QUEUE_PATH):
+	var path := _ruta_cola()
+	if not FileAccess.file_exists(path):
 		_cache = {"items": []}
 		_cache_valid = true
 		return _cache
 
-	var file := FileAccess.open(QUEUE_PATH, FileAccess.READ)
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		_cache = {"items": []}
 		_cache_valid = true
@@ -319,9 +323,11 @@ static func _cargar_cola() -> Dictionary:
 
 
 static func _guardar_cola(queue: Dictionary) -> void:
-	var file := FileAccess.open(QUEUE_PATH, FileAccess.WRITE)
+	var path := _ruta_cola()
+	BackendStoragePathsScript.asegurar_directorio_padre(path)
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		push_warning("[LocalSyncQueue] No se pudo escribir %s — cache NO actualizado" % QUEUE_PATH)
+		push_warning("[LocalSyncQueue] No se pudo escribir %s — cache NO actualizado" % path)
 		return
 	file.store_string(JSON.stringify(queue, "\t"))
 	file.close()
@@ -334,10 +340,17 @@ static func _guardar_cola(queue: Dictionary) -> void:
 
 static func _respaldar_cola_corrupta(raw: String) -> void:
 	var stamp := Time.get_datetime_string_from_system(true).replace(":", "").replace("-", "")
-	var backup_path := "user://backend_sync_queue_corrupt_%s.json" % stamp
+	var backup_path := BackendStoragePathsScript.resolver(
+		"user://backend_sync_queue_corrupt_%s.json" % stamp
+	)
+	BackendStoragePathsScript.asegurar_directorio_padre(backup_path)
 	var file := FileAccess.open(backup_path, FileAccess.WRITE)
 	if file == null:
 		push_warning("[LocalSyncQueue] Cola corrupta; no se pudo crear backup.")
 		return
 	file.store_string(raw)
 	file.close()
+
+
+static func _ruta_cola() -> String:
+	return BackendStoragePathsScript.resolver(QUEUE_PATH)

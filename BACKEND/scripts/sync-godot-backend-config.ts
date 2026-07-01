@@ -9,6 +9,7 @@ import {
 import { loadBackendEnv } from './lib/postgres-env';
 import { isLocalBackendUrl, resolvePublicBackendUrl } from './lib/cloud-backend-url';
 import { resolveSupabaseClientApiKey, resolveSupabaseFunctionsUrl } from './lib/supabase-functions-env';
+import { buildStorageNamespace } from './lib/godot-backend-config';
 
 loadBackendEnv();
 
@@ -50,6 +51,12 @@ const payload = {
   supabase_functions_url: supabaseFunctionsUrl,
   supabase_anon_key: supabaseAnonKey,
   api_mode: apiMode,
+  storage_namespace: buildStorageNamespace({
+    db: isRemotePostgres() ? 'supabase' : 'local',
+    apiMode,
+    envFile,
+    baseUrl,
+  }),
   synced_at: new Date().toISOString(),
 };
 

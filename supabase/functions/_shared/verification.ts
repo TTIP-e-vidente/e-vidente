@@ -8,6 +8,7 @@ import {
 } from './brevo.ts';
 import { generateNumericCode, hashCode, normalizeMail, timingSafeEqual } from './crypto.ts';
 import { findPublicUserById, withDb, withTransaction } from './db.ts';
+import { deliverTrackedEmail, markWelcomeEmailSent } from './delivery.ts';
 
 const VERIFICATION_EXPIRES_MINUTES = 15;
 const RESEND_COOLDOWN_SECONDS = 120;
@@ -426,15 +427,20 @@ export async function confirmVerificationCode(
 
   const user = await withDb(async (db) => findPublicUserById(db, userId));
   if (user?.mail && isEmailDeliveryConfigured()) {
-    try {
-      const welcome = buildWelcomeEmail({ name: user.name, mail: user.mail });
-      await sendTransactionalEmail(welcome, 'welcome');
-    } catch (error) {
-      logWarn('welcome_failed', {
+    const welcome = buildWelcomeEmail({ name: user.name, mail: user.mail });
+    // Tracked: si Brevo falla queda status='failed' y el cron retry lo recupera.
+    await deliverTrackedEmail({
+      userId,
+      templateKey: 'welcome',
+      dedupeKey: 'welcome',
+      message: welcome,
+      afterSent: (db) => markWelcomeEmailSent(db, userId),
+    }).catch((error) => {
+      logWarn('welcome_track_failed', {
         userId,
         error: error instanceof Error ? error.message : String(error),
       });
-    }
+    });
   }
 
   return {

@@ -21,6 +21,7 @@ static var _email_via_supabase: bool = false
 static var _supabase_functions_url: String = ""
 static var _supabase_anon_key: String = ""
 static var _api_mode: String = API_MODE_LOCAL
+static var _storage_namespace: String = ""
 
 
 static func recargar() -> void:
@@ -32,6 +33,7 @@ static func recargar() -> void:
 	_supabase_functions_url = ""
 	_supabase_anon_key = ""
 	_api_mode = API_MODE_LOCAL
+	_storage_namespace = ""
 	_cargar()
 
 
@@ -91,6 +93,12 @@ static func obtener_db_kind() -> String:
 	return _db_kind
 
 
+static func obtener_storage_namespace() -> String:
+	if not _loaded:
+		_cargar()
+	return _storage_namespace
+
+
 static func email_habilitado_en_backend() -> bool:
 	if not _loaded:
 		_cargar()
@@ -137,6 +145,7 @@ static func _cargar() -> void:
 		_db_kind = str(default_parsed.get("db", "supabase")).strip_edges()
 		_email_via_supabase = true
 		_base_url = ""
+		_storage_namespace = _construir_storage_namespace(_db_kind, _api_mode)
 		push_warning(
 			"BackendConfig: falta backend.local.json con URLs — %s"
 			% mensaje_sync_requerido()
@@ -147,6 +156,7 @@ static func _cargar() -> void:
 	_email_enabled = false
 	_email_via_supabase = false
 	_api_mode = API_MODE_LOCAL
+	_storage_namespace = "default"
 
 
 static func _aplicar_config_desde_archivo(config_path: String) -> bool:
@@ -163,6 +173,7 @@ static func _aplicar_config_desde_archivo(config_path: String) -> bool:
 	_db_kind = str(parsed.get("db", "")).strip_edges()
 	_email_enabled = bool(parsed.get("email_enabled", false))
 	_email_via_supabase = bool(parsed.get("email_via_supabase", false))
+	_storage_namespace = str(parsed.get("storage_namespace", "")).strip_edges()
 
 	var raw_url := str(parsed.get("base_url", "")).strip_edges().trim_suffix("/")
 	if raw_url.is_empty() and es_modo_supabase_edge() and not _supabase_functions_url.is_empty():
@@ -183,6 +194,8 @@ static func _aplicar_config_desde_archivo(config_path: String) -> bool:
 
 	if es_modo_supabase_edge():
 		_email_via_supabase = true
+	if _storage_namespace.is_empty():
+		_storage_namespace = _construir_storage_namespace(_db_kind, _api_mode)
 
 	if OS.is_debug_build():
 		var db_label := _db_kind if not _db_kind.is_empty() else "?"
@@ -194,6 +207,16 @@ static func _aplicar_config_desde_archivo(config_path: String) -> bool:
 			% [_base_url, db_label, mail_label, mode_label, verify_label]
 		)
 	return true
+
+
+static func _construir_storage_namespace(db_kind: String, api_mode: String) -> String:
+	var db_label := db_kind.strip_edges().to_lower()
+	if db_label.is_empty() or db_label == "unknown":
+		db_label = "local"
+	var mode_label := api_mode.strip_edges().to_lower()
+	if mode_label.is_empty():
+		mode_label = API_MODE_LOCAL
+	return "%s-%s" % [db_label, mode_label]
 
 
 static func _leer_config_dict(config_path: String) -> Dictionary:
