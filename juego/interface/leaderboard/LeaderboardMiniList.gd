@@ -180,11 +180,11 @@ func _entrada_es_valida(entry: Dictionary) -> bool:
 
 
 func _es_fila_propia(entry: Dictionary, id_propio: String, puesto_propio: int) -> bool:
-	if not id_propio.is_empty() and LeaderboardFormat.id_usuario_entrada(entry) == id_propio:
-		return true
-	if puesto_propio > 0 and LeaderboardFormat.entero_desde_json(entry.get("rank", 0)) == puesto_propio:
-		return true
-	return false
+	if not id_propio.is_empty():
+		return LeaderboardFormat.id_usuario_entrada(entry) == id_propio
+	if puesto_propio <= 0:
+		return false
+	return LeaderboardFormat.entero_desde_json(entry.get("rank", 0)) == puesto_propio
 
 
 func _incluye_usuario(entradas: Array, id_propio: String) -> bool:

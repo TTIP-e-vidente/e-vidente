@@ -450,27 +450,38 @@ export async function getLiveUserRank(
 export async function getNearbyEntries(
   userId: string,
   scope: LeaderboardScope,
-  radius: number = 2
+  radius: number = 2,
+  generation: number | null = null
 ): Promise<LeaderboardEntry[]> {
   const safeRadius = Math.max(0, Math.min(radius, 10));
+
+  // Si se pasa una generación pinneada (misma que usó getUserRankingContext),
+  // se filtra directo por ella en vez de resolver "current_generation" de nuevo:
+  // evita que un refresh en background la cambie entre ambas consultas.
+  const genFilterSql = generation !== null ? 'FROM leaderboard_snapshots s' : SNAPSHOT_CURRENT_GEN_SQL;
+  const genWhereSql = generation !== null ? 'AND s.generation = $4' : '';
+  const params = generation !== null
+    ? [userId, scope, safeRadius, generation]
+    : [userId, scope, safeRadius];
 
   const snapshotResult = await query<LeaderboardSnapshotRow>(
     `
       WITH player AS (
         SELECT s.rank
-        ${SNAPSHOT_CURRENT_GEN_SQL}
-        WHERE s.scope = $2 AND s.user_id = $1 AND s.score > 0
+        ${genFilterSql}
+        WHERE s.scope = $2 AND s.user_id = $1 AND s.score > 0 ${genWhereSql}
         LIMIT 1
       )
       SELECT s.rank, s.user_id, s.username, s.display_name, s.avatar_key, s.score, s.computed_at
-      ${SNAPSHOT_CURRENT_GEN_SQL}
+      ${genFilterSql}
       INNER JOIN player p ON true
       WHERE s.scope = $2
         AND s.score > 0
         AND s.rank BETWEEN p.rank - $3 AND p.rank + $3
+        ${genWhereSql}
       ORDER BY s.rank ASC
     `,
-    [userId, scope, safeRadius]
+    params
   );
 
   if (snapshotResult.rows.length > 0) {
@@ -594,26 +605,35 @@ type RankingContextRow = {
  */
 export async function getUserRankingContext(
   userId: string,
-  scope: LeaderboardScope = 'global_xp'
+  scope: LeaderboardScope = 'global_xp',
+  generation: number | null = null
 ): Promise<{
   current: { rank: number; username: string; displayName: string | null; score: number };
   next: { rank: number; username: string; displayName: string | null; score: number } | null;
   isFromSnapshot: boolean;
 } | null> {
+  // Si se pasa una generación pinneada (misma que usará getNearbyEntries),
+  // se filtra directo por ella en vez de resolver "current_generation" de nuevo:
+  // evita que un refresh en background la cambie entre ambas consultas.
+  const genFilterSql = generation !== null ? 'FROM leaderboard_snapshots s' : SNAPSHOT_CURRENT_GEN_SQL;
+  const genWhereSql = generation !== null ? 'AND s.generation = $3' : '';
+  const params = generation !== null ? [userId, scope, generation] : [userId, scope];
+
   // Intentar desde snapshot primero (rápido, no bloquea DB)
   const snapshotResult = await query<RankingContextRow>(
     `
       WITH player AS (
-        SELECT rank, username, display_name, score
-        FROM leaderboard_snapshots
-        WHERE scope = $2 AND user_id = $1
+        SELECT s.rank, s.username, s.display_name, s.score
+        ${genFilterSql}
+        WHERE s.scope = $2 AND s.user_id = $1 AND s.score > 0 ${genWhereSql}
         LIMIT 1
       ),
       rival AS (
-        SELECT rank, username, display_name, score
-        FROM leaderboard_snapshots
-        WHERE scope = $2
-          AND rank = (SELECT rank FROM player) - 1
+        SELECT s.rank, s.username, s.display_name, s.score
+        ${genFilterSql}
+        WHERE s.scope = $2
+          AND s.rank = (SELECT rank FROM player) - 1
+          ${genWhereSql}
         LIMIT 1
       )
       SELECT
@@ -629,7 +649,7 @@ export async function getUserRankingContext(
       FROM player p
       LEFT JOIN rival r ON true
     `,
-    [userId, scope]
+    params
   );
 
   if (snapshotResult.rows.length > 0) {

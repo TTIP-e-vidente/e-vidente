@@ -237,11 +237,22 @@ export async function getUserRankingSummary(
   scope: LeaderboardScope = 'global_xp',
   nearbyRadius: number = 2
 ): Promise<RankingSummary | null> {
-  const context = await leaderboardRepository.getUserRankingContext(userId, scope);
+  // Se fija la generación del snapshot una sola vez y se reutiliza en ambas
+  // consultas: si un refresh en background corre entre medio, "current" y
+  // "nearbyEntries" igual quedan sobre la misma foto del ranking.
+  const meta = await leaderboardRepository.getMeta(scope);
+  const generation = meta?.currentGeneration ?? null;
+
+  const context = await leaderboardRepository.getUserRankingContext(userId, scope, generation);
   if (!context) return null;
 
   const { current, next, isFromSnapshot } = context;
-  const nearbyEntries = await leaderboardRepository.getNearbyEntries(userId, scope, nearbyRadius);
+  const nearbyEntries = await leaderboardRepository.getNearbyEntries(
+    userId,
+    scope,
+    nearbyRadius,
+    generation
+  );
 
   if (!next) {
     return {
