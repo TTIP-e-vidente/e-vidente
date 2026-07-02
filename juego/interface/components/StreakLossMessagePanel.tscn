@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene format=3 uid="uid://cpehtbr4yv06i"]
 
-[ext_resource type="Script" path="res://interface/components/StreakLossMessagePanel.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_arrow"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_rubik"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="5_italic"]
+[ext_resource type="Script" uid="uid://cgpx3y73h5kfn" path="res://interface/components/StreakLossMessagePanel.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bmq81cjhmsn5o" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="2_arrow"]
+[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_ms4ve"]
+[ext_resource type="FontFile" uid="uid://dwqkcfhoj8sy1" path="res://fonts/RubikMaps-Regular.ttf" id="3_i3001"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_rubik"]
+[ext_resource type="FontFile" uid="uid://b7475bj8317v2" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="5_italic"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 28.0
@@ -27,7 +28,7 @@ shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_continue"]
 
-[node name="StreakLossMessagePanel" type="Control"]
+[node name="StreakLossMessagePanel" type="Control" unique_id=333725866]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -37,17 +38,19 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_script")
 
-[node name="OverlayBackdrop" type="ColorRect" parent="."]
+[node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_ms4ve")]
+layout_mode = 0
+
+[node name="OverlayBackdrop" type="ColorRect" parent="." unique_id=322600353]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
-color = Color(0.08, 0.07, 0.04, 0.45)
+color = Color(0.85882354, 0.6156863, 0.29411766, 0.5686275)
 
-[node name="MessagePanel" type="PanelContainer" parent="."]
+[node name="MessagePanel" type="PanelContainer" parent="." unique_id=1614117902]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -62,54 +65,55 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="MarginContainer" type="MarginContainer" parent="MessagePanel"]
+[node name="MarginContainer" type="MarginContainer" parent="MessagePanel" unique_id=1494946349]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MessagePanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MessagePanel/MarginContainer" unique_id=1009036069]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=819048935]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
-theme_override_fonts/font = ExtResource("4_rubik")
-theme_override_font_sizes/font_size = 28
-text = "Tu racha se cortó"
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("3_i3001")
+theme_override_font_sizes/font_size = 48
+text = "Tu racha se perdió"
 horizontal_alignment = 1
 
-[node name="StreakCountLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="StreakCountLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=236085558]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("3_spray")
-theme_override_font_sizes/font_size = 120
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("3_i3001")
+theme_override_font_sizes/font_size = 143
 text = "0"
 horizontal_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="SubtitleLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=711157034]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
 theme_override_fonts/font = ExtResource("4_rubik")
 theme_override_font_sizes/font_size = 24
 text = "Racha diaria"
 horizontal_alignment = 1
 
-[node name="DetailLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="DetailLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=1756186902]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 0.55)
 theme_override_fonts/font = ExtResource("5_italic")
 theme_override_font_sizes/font_size = 20
-text = "Tenías varios días seguidos. ¡Arrancá de nuevo!"
+text = "Tenías varios días acumulados... 
+¡Arrancá de nuevo!"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="BestLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="BestLabel" type="Label" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=767561210]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 0.45)
 theme_override_fonts/font = ExtResource("4_rubik")
@@ -117,7 +121,7 @@ theme_override_font_sizes/font_size = 18
 text = "Mejor racha: 0 días"
 horizontal_alignment = 1
 
-[node name="ContinueButton" type="Button" parent="MessagePanel/MarginContainer/VBoxContainer"]
+[node name="ContinueButton" type="Button" parent="MessagePanel/MarginContainer/VBoxContainer" unique_id=1321323505]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 4
