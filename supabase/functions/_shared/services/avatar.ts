@@ -12,6 +12,15 @@ import {
 
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_BASE64_LENGTH = 4 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
+
+// Si Storage está configurado pero el upload falla, este flag decide si se
+// persiste el base64 legacy en la tabla images (true, default) o si se
+// devuelve STORAGE_UNAVAILABLE (false).
+function isBase64FallbackEnabled(): boolean {
+  const raw = (Deno.env.get('AVATAR_BASE64_FALLBACK') ?? 'true').trim().toLowerCase();
+  return !['false', '0', 'no'].includes(raw);
+}
 
 async function resolveAvatarPayload(row: imageRepository.ImageRow): Promise<{
   data: string | null;
@@ -51,20 +60,47 @@ export async function uploadAvatar(userId: string, data: unknown, mimeType: unkn
   if (typeof mimeType !== 'string' || !ALLOWED_MIME_TYPES.includes(mimeType)) {
     throw new PlayerError(
       400,
-      'INVALID_BODY',
+      'AVATAR_UNSUPPORTED_MIME',
       `mimeType must be one of: ${ALLOWED_MIME_TYPES.join(', ')}`,
     );
   }
   if (data.length > MAX_BASE64_LENGTH) {
-    throw new PlayerError(413, 'PAYLOAD_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
+    throw new PlayerError(413, 'AVATAR_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
   }
 
   const trimmed = data.trim();
+
+  // Validación sobre los bytes reales (el largo del base64 es aproximado) y
+  // de que el base64 sea decodificable.
+  let bytes: Uint8Array;
+  try {
+    bytes = base64ToBytes(trimmed);
+  } catch {
+    throw new PlayerError(400, 'INVALID_BODY', 'data must be valid base64');
+  }
+  if (bytes.length > MAX_AVATAR_BYTES) {
+    throw new PlayerError(413, 'AVATAR_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
+  }
+
+  // El path canónico ({userId}/avatar.{ext}) lo calcula siempre el backend;
+  // el cliente solo manda base64 + mimeType.
   let storagePath: string | null = null;
 
   if (isAvatarStorageConfigured()) {
-    const bytes = base64ToBytes(trimmed);
-    storagePath = await uploadAvatarBytes(userId, bytes, mimeType);
+    try {
+      storagePath = await uploadAvatarBytes(userId, bytes, mimeType);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[avatar] storage upload failed for user ${userId}: ${msg}`);
+      if (!isBase64FallbackEnabled()) {
+        throw new PlayerError(
+          503,
+          'STORAGE_UNAVAILABLE',
+          'No se pudo guardar el avatar en Storage. Intentá de nuevo en unos minutos.',
+        );
+      }
+      storagePath = null; // fallback: persiste base64 legacy en images.data
+    }
   }
 
   try {
@@ -77,6 +113,8 @@ export async function uploadAvatar(userId: string, data: unknown, mimeType: unkn
       return { updatedAt: row.updated_at };
     });
   } catch (error) {
+    // Upload a Storage OK pero falló la DB: limpiar el objeto subido para no
+    // dejar huérfanos que no coinciden con images.storage_path.
     if (storagePath) {
       await deleteAvatarObject(storagePath);
     }

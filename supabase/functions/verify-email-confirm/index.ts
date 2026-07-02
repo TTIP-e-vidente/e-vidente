@@ -1,6 +1,13 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts';
-import { AuthError, ConfigError, requireAnonKey, verifyExpressAccessToken } from '../_shared/jwt.ts';
+import {
+  AuthError,
+  ConfigError,
+  requireAnonKey,
+  verifyExpressAccessToken,
+  VERIFICATION_TOKEN_SCOPE,
+} from '../_shared/jwt.ts';
 import { findPublicUserById, withDb } from '../_shared/db.ts';
+import { issueAccessTokenForUserId } from '../_shared/auth.ts';
 import {
   confirmVerificationCode,
   getVerificationConfig,
@@ -18,7 +25,10 @@ Deno.serve(async (req) => {
 
   try {
     requireAnonKey(req);
-    const { sub: userId } = await verifyExpressAccessToken(req.headers.get('Authorization'));
+    // Acepta también el token acotado que devuelve auth-login (EMAIL_NOT_VERIFIED).
+    const { sub: userId } = await verifyExpressAccessToken(req.headers.get('Authorization'), {
+      allowScopes: [VERIFICATION_TOKEN_SCOPE],
+    });
 
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const code = typeof body.code === 'string' ? body.code.trim() : '';
@@ -32,10 +42,14 @@ Deno.serve(async (req) => {
 
     if (result.status === 'verified') {
       const user = await withDb(async (db) => findPublicUserById(db, userId));
+      // El cliente pudo llegar acá con el token acotado del login: se le
+      // entrega un access token completo para continuar con sesión plena.
+      const accessToken = await issueAccessTokenForUserId(userId);
       return jsonResponse({
         status: 'verified',
         message: '¡Email verificado correctamente!',
         mail_verified_at: result.mailVerifiedAt ?? user?.mail_verified_at?.toISOString() ?? null,
+        ...(accessToken ? { accessToken } : {}),
       });
     }
 

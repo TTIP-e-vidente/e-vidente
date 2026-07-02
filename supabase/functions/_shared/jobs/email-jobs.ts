@@ -1,5 +1,6 @@
 import type { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts';
 import {
+  buildAccountVerifiedEmail,
   buildStreakAtRiskEmail,
   buildStreakLostEmail,
   buildWelcomeEmail,
@@ -251,6 +252,9 @@ export async function runRetryFailedEmailJob() {
 
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
+    // Claim atómico: SKIP LOCKED evita procesar la misma fila desde dos jobs;
+    // next_attempt_at implementa el backoff (2.º +10 min, 3.º +1 h, 4.º+ +6 h);
+    // los locks viejos (>10 min) se consideran de jobs muertos y se retoman.
     const retries = await db.queryObject<{
       id: string;
       user_id: string;
@@ -259,14 +263,24 @@ export async function runRetryFailedEmailJob() {
       recipient_email: string;
     }>(
       `
-        SELECT id, user_id, template_key, dedupe_key, recipient_email
-        FROM email_deliveries ed
-        WHERE status = 'failed'
-          AND recipient_email IS NOT NULL
-          AND attempt_count < $1
-          AND failed_at >= now() - ($2::text || ' hours')::interval
-        ORDER BY failed_at ASC
-        LIMIT $3;
+        WITH claimed AS (
+          SELECT id
+          FROM email_deliveries
+          WHERE status = 'failed'
+            AND recipient_email IS NOT NULL
+            AND attempt_count < $1
+            AND failed_at >= now() - ($2::text || ' hours')::interval
+            AND (next_attempt_at IS NULL OR next_attempt_at <= now())
+            AND (locked_at IS NULL OR locked_at < now() - INTERVAL '10 minutes')
+          ORDER BY failed_at ASC
+          LIMIT $3
+          FOR UPDATE SKIP LOCKED
+        )
+        UPDATE email_deliveries ed
+        SET locked_at = now(), locked_by = 'edge-retry-job'
+        FROM claimed c
+        WHERE ed.id = c.id
+        RETURNING ed.id, ed.user_id, ed.template_key, ed.dedupe_key, ed.recipient_email;
       `,
       [cfg.retryMaxAttempts, String(cfg.retryMaxAgeHours), cfg.retryBatchLimit],
     );
@@ -287,6 +301,8 @@ export async function runRetryFailedEmailJob() {
       let message: EmailMessage | null = null;
       if (row.template_key === 'welcome') {
         message = buildWelcomeEmail({ name, mail: row.recipient_email });
+      } else if (row.template_key === 'account_verified') {
+        message = buildAccountVerifiedEmail({ name, mail: row.recipient_email });
       } else if (row.template_key === 'streak_at_risk') {
         const streakCount = await findUserStreakCount(db, row.user_id);
         message = buildStreakAtRiskEmail(name, row.recipient_email, streakCount);

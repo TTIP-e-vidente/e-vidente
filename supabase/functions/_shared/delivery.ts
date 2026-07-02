@@ -37,7 +37,8 @@ export async function acquireDeliverySlot(
         UPDATE email_deliveries
         SET status = 'pending', recipient_email = $2, subject = $3,
             provider_message_id = NULL, error_message = NULL,
-            failed_at = NULL, sent_at = NULL, attempt_count = attempt_count + 1
+            failed_at = NULL, sent_at = NULL, attempt_count = attempt_count + 1,
+            last_attempt_at = now(), next_attempt_at = NULL
         WHERE id = $1
         RETURNING id;
       `,
@@ -71,13 +72,15 @@ async function markDeliverySent(
   await db.queryObject(
     `
       UPDATE email_deliveries
-      SET status = 'sent', sent_at = now(), provider_message_id = $2, error_message = NULL
+      SET status = 'sent', sent_at = now(), provider_message_id = $2, error_message = NULL,
+          last_attempt_at = now(), next_attempt_at = NULL, locked_at = NULL, locked_by = NULL
       WHERE id = $1;
     `,
     [deliveryId, providerMessageId],
   );
 }
 
+// Backoff simple entre reintentos: 2.º intento +10 min, 3.º +1 h, 4.º+ +6 h.
 async function markDeliveryFailed(
   db: Client,
   deliveryId: string,
@@ -86,7 +89,15 @@ async function markDeliveryFailed(
   await db.queryObject(
     `
       UPDATE email_deliveries
-      SET status = 'failed', error_message = $2, failed_at = now(), sent_at = NULL
+      SET status = 'failed', error_message = $2, failed_at = now(), sent_at = NULL,
+          last_attempt_at = now(), locked_at = NULL, locked_by = NULL,
+          next_attempt_at = now() + (
+            CASE
+              WHEN attempt_count <= 1 THEN INTERVAL '10 minutes'
+              WHEN attempt_count = 2 THEN INTERVAL '1 hour'
+              ELSE INTERVAL '6 hours'
+            END
+          )
       WHERE id = $1;
     `,
     [deliveryId, errorMessage.slice(0, 1000)],

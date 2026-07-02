@@ -7,13 +7,14 @@ import {
   sendVerificationCode,
   type SendVerificationResult,
 } from './verification.ts';
-import { ConfigError } from './jwt.ts';
+import { ConfigError, VERIFICATION_TOKEN_SCOPE } from './jwt.ts';
 
 export type AuthErrorCode =
   | 'INVALID_BODY'
   | 'INVALID_CREDENTIALS'
   | 'DUPLICATE_USERNAME'
-  | 'DUPLICATE_MAIL';
+  | 'DUPLICATE_MAIL'
+  | 'EMAIL_NOT_VERIFIED';
 
 export interface PublicUser {
   id: string;
@@ -69,6 +70,7 @@ export class AuthServiceError extends Error {
     readonly statusCode: number,
     readonly code: AuthErrorCode,
     message: string,
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'AuthServiceError';
@@ -169,14 +171,14 @@ export function toPublicUser(user: UserRow): PublicUser {
   };
 }
 
-export async function signAccessToken(user: UserRow): Promise<string> {
+export async function signAccessToken(user: UserRow, scope?: string): Promise<string> {
   const secret = Deno.env.get('JWT_SECRET')?.trim();
   if (!secret) {
     throw new ConfigError('JWT_SECRET not configured');
   }
   const key = new TextEncoder().encode(secret);
   const expiresIn = Deno.env.get('JWT_EXPIRES_IN')?.trim() || '1h';
-  return await new jose.SignJWT({ username: user.username })
+  return await new jose.SignJWT({ username: user.username, ...(scope ? { scope } : {}) })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
     .setExpirationTime(expiresIn)
@@ -259,22 +261,49 @@ export async function login(input: Record<string, unknown>): Promise<AuthRespons
     throw new AuthServiceError(400, 'INVALID_BODY', 'usernameOrMail and password are required');
   }
 
-  return await withDb(async (db) => {
-    const user = await findByUsernameOrMail(db, usernameOrMail);
-    if (!user?.password_hash) {
+  const user = await withDb(async (db) => {
+    const row = await findByUsernameOrMail(db, usernameOrMail);
+    if (!row?.password_hash) {
       throw new AuthServiceError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
-    const passwordMatches = bcrypt.compareSync(password, user.password_hash);
+    const passwordMatches = bcrypt.compareSync(password, row.password_hash);
     if (!passwordMatches) {
       throw new AuthServiceError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
-    return {
-      user: toPublicUser(user),
-      accessToken: await signAccessToken(user),
-    };
+    return row;
   });
+
+  if (user.mail && !user.mail_verified_at) {
+    // Password correcta pero mail sin verificar: no se entrega sesión completa.
+    // Se (re)envía el código respetando el cooldown y se devuelve un token
+    // acotado que solo sirve para los endpoints de verificación, así el
+    // usuario nunca queda bloqueado sin poder confirmar su mail.
+    let sendResult: SendVerificationResult = 'send_failed';
+    try {
+      sendResult = await sendVerificationCode(user.id, user.mail, user.name);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[edge:auth] login verification send failed for user ${user.id}: ${msg}`);
+    }
+    const verification = await buildVerificationSendMeta(user.id, sendResult);
+    throw new AuthServiceError(
+      403,
+      'EMAIL_NOT_VERIFIED',
+      'Tenés que verificar tu correo antes de iniciar sesión.',
+      {
+        user: toPublicUser(user),
+        verification,
+        verification_token: await signAccessToken(user, VERIFICATION_TOKEN_SCOPE),
+      },
+    );
+  }
+
+  return {
+    user: toPublicUser(user),
+    accessToken: await signAccessToken(user),
+  };
 }
 
 export async function register(input: Record<string, unknown>): Promise<AuthResponse> {
@@ -357,5 +386,17 @@ export async function getUserFromToken(userId: string): Promise<PublicUser> {
       throw new AuthServiceError(401, 'INVALID_CREDENTIALS', 'Invalid token');
     }
     return toPublicUser(user);
+  });
+}
+
+// Emite un access token completo para un usuario ya validado (p. ej. tras
+// confirmar el código de verificación con el token acotado del login).
+export async function issueAccessTokenForUserId(userId: string): Promise<string | null> {
+  return await withDb(async (db) => {
+    const user = await findById(db, userId);
+    if (!user) {
+      return null;
+    }
+    return await signAccessToken(user);
   });
 }

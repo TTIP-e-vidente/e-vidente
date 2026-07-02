@@ -19,7 +19,10 @@ Deno.serve(async (req) => {
     return jsonResponse(result, 200);
   } catch (error) {
     if (error instanceof AuthServiceError) {
-      return errorResponse(error.statusCode, error.message, { code: error.code });
+      return errorResponse(error.statusCode, error.message, {
+        code: error.code,
+        ...(error.details ?? {}),
+      });
     }
     if (error instanceof AuthError) {
       return errorResponse(401, error.message);

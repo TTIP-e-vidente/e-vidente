@@ -6,6 +6,13 @@ export interface WelcomeTemplateContext {
   leaderboardUrl?: string;
 }
 
+export interface AccountVerifiedTemplateContext {
+  name: string;
+  mail: string;
+  playUrl?: string;
+  leaderboardUrl?: string;
+}
+
 export interface StreakTemplateContext {
   name: string;
   mail: string;

@@ -6,6 +6,7 @@ import { buildStreakAtRiskEmail as buildStreakAtRiskEmailTemplate } from './temp
 import { buildStreakLostEmail as buildStreakLostEmailTemplate } from './templates/streak-lost.template.ts';
 import type { StreakTemplateContext } from './templates/types.ts';
 import { buildWelcomeEmail as buildWelcomeEmailTemplate } from './templates/welcome.template.ts';
+import { buildAccountVerifiedEmail as buildAccountVerifiedEmailTemplate } from './templates/account-verified.template.ts';
 
 function buildStreakMessageContext(
   name: string,
@@ -40,6 +41,19 @@ export function buildWelcomeEmail(input: { name: string; mail: string }): EmailM
   const leaderboardUrl = playUrl ? buildLeaderboardDeepLink(playUrl, 'global_xp') : undefined;
 
   return buildWelcomeEmailTemplate({
+    name: input.name,
+    mail: input.mail,
+    playUrl,
+    leaderboardUrl,
+  });
+}
+
+export function buildAccountVerifiedEmail(input: { name: string; mail: string }): EmailMessage {
+  const { appPlayUrl } = getEmailConfig();
+  const playUrl = appPlayUrl.length > 0 ? appPlayUrl : undefined;
+  const leaderboardUrl = playUrl ? buildLeaderboardDeepLink(playUrl, 'global_xp') : undefined;
+
+  return buildAccountVerifiedEmailTemplate({
     name: input.name,
     mail: input.mail,
     playUrl,

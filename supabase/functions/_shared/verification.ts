@@ -1,13 +1,14 @@
 import type { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts';
 import {
+  buildAccountVerifiedEmail,
   buildVerificationEmail,
-  buildWelcomeEmail,
   isDevelopmentEnvironment,
   isEmailDeliveryConfigured,
   sendTransactionalEmail,
 } from './brevo.ts';
 import { generateNumericCode, hashCode, normalizeMail, timingSafeEqual } from './crypto.ts';
 import { findPublicUserById, withDb, withTransaction } from './db.ts';
+import { deliverTrackedEmail } from './delivery.ts';
 
 const VERIFICATION_EXPIRES_MINUTES = 15;
 const RESEND_COOLDOWN_SECONDS = 120;
@@ -133,7 +134,8 @@ async function acquireDeliverySlot(
         UPDATE email_deliveries
         SET status = 'pending', recipient_email = $2, subject = $3,
             provider_message_id = NULL, error_message = NULL,
-            failed_at = NULL, sent_at = NULL, attempt_count = attempt_count + 1
+            failed_at = NULL, sent_at = NULL, attempt_count = attempt_count + 1,
+            last_attempt_at = now(), next_attempt_at = NULL
         WHERE id = $1
         RETURNING id;
       `,
@@ -167,13 +169,15 @@ async function markDeliverySent(
   await db.queryObject(
     `
       UPDATE email_deliveries
-      SET status = 'sent', sent_at = now(), provider_message_id = $2, error_message = NULL
+      SET status = 'sent', sent_at = now(), provider_message_id = $2, error_message = NULL,
+          last_attempt_at = now(), next_attempt_at = NULL, locked_at = NULL, locked_by = NULL
       WHERE id = $1;
     `,
     [deliveryId, providerMessageId],
   );
 }
 
+// Backoff simple entre reintentos: 2.º intento +10 min, 3.º +1 h, 4.º+ +6 h.
 async function markDeliveryFailed(
   db: Client,
   deliveryId: string,
@@ -182,7 +186,15 @@ async function markDeliveryFailed(
   await db.queryObject(
     `
       UPDATE email_deliveries
-      SET status = 'failed', error_message = $2, failed_at = now(), sent_at = NULL
+      SET status = 'failed', error_message = $2, failed_at = now(), sent_at = NULL,
+          last_attempt_at = now(), locked_at = NULL, locked_by = NULL,
+          next_attempt_at = now() + (
+            CASE
+              WHEN attempt_count <= 1 THEN INTERVAL '10 minutes'
+              WHEN attempt_count = 2 THEN INTERVAL '1 hour'
+              ELSE INTERVAL '6 hours'
+            END
+          )
       WHERE id = $1;
     `,
     [deliveryId, errorMessage.slice(0, 1000)],
@@ -414,13 +426,22 @@ export async function confirmVerificationCode(
 
   logInfo('verified', { userId, mail: active.target_mail });
 
+  // Mail "cuenta verificada": transaccional propio, vía outbox (email_deliveries)
+  // con dedupe account_verified:{userId}. Si Brevo falla, la fila queda failed
+  // y la retoma el job de retry. Nunca bloquea la respuesta de verificación.
   const user = await withDb(async (db) => findPublicUserById(db, userId));
   if (user?.mail && isEmailDeliveryConfigured()) {
     try {
-      const welcome = buildWelcomeEmail({ name: user.name, mail: user.mail });
-      await sendTransactionalEmail(welcome, 'welcome');
+      const message = buildAccountVerifiedEmail({ name: user.name, mail: user.mail });
+      const result = await deliverTrackedEmail({
+        userId,
+        templateKey: 'account_verified',
+        dedupeKey: `account_verified:${userId}`,
+        message,
+      });
+      logInfo('account_verified_delivery', { userId, result });
     } catch (error) {
-      logWarn('welcome_failed', {
+      logWarn('account_verified_failed', {
         userId,
         error: error instanceof Error ? error.message : String(error),
       });

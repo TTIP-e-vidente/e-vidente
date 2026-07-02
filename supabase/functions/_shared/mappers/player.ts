@@ -172,4 +172,6 @@ export interface SaveProgresoRestriccionResponse {
   completedNode: PublicCompletedNode | null;
   mapCompleted: boolean;
   summary: ProgresoRestriccionResponse | null;
+  /** true si el clientRunId ya existía y el run se ignoró (idempotencia). */
+  duplicate?: boolean;
 }

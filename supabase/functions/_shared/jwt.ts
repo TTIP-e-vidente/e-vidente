@@ -3,10 +3,16 @@ import * as jose from 'npm:jose@5';
 export interface AccessTokenPayload {
   sub: string;
   username: string;
+  scope?: string;
 }
+
+// Scope del token acotado que devuelve auth-login cuando el mail no está
+// verificado: solo habilita verify-email-request/confirm y player-email-status.
+export const VERIFICATION_TOKEN_SCOPE = 'email_verification';
 
 export async function verifyExpressAccessToken(
   authorization: string | null,
+  options?: { allowScopes?: string[] },
 ): Promise<AccessTokenPayload> {
   if (!authorization?.startsWith('Bearer ')) {
     throw new AuthError('Invalid token');
@@ -33,7 +39,14 @@ export async function verifyExpressAccessToken(
       throw new AuthError('Invalid token');
     }
 
-    return { sub: payload.sub, username: payload.username };
+    const scope = typeof payload.scope === 'string' ? payload.scope : undefined;
+    // Por defecto los tokens con scope se rechazan: solo los endpoints que
+    // declaran allowScopes explícitamente aceptan el token acotado.
+    if (scope && !(options?.allowScopes ?? []).includes(scope)) {
+      throw new AuthError('Invalid token');
+    }
+
+    return { sub: payload.sub, username: payload.username, ...(scope ? { scope } : {}) };
   } catch (error) {
     if (error instanceof AuthError) {
       throw error;

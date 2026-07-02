@@ -1,5 +1,11 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts';
-import { AuthError, ConfigError, requireAnonKey, verifyExpressAccessToken } from '../_shared/jwt.ts';
+import {
+  AuthError,
+  ConfigError,
+  requireAnonKey,
+  verifyExpressAccessToken,
+  VERIFICATION_TOKEN_SCOPE,
+} from '../_shared/jwt.ts';
 import { findPublicUserById, withDb } from '../_shared/db.ts';
 import { normalizeMail } from '../_shared/crypto.ts';
 import {
@@ -22,7 +28,10 @@ Deno.serve(async (req) => {
 
   try {
     requireAnonKey(req);
-    const { sub: userId } = await verifyExpressAccessToken(req.headers.get('Authorization'));
+    // Acepta también el token acotado que devuelve auth-login (EMAIL_NOT_VERIFIED).
+    const { sub: userId } = await verifyExpressAccessToken(req.headers.get('Authorization'), {
+      allowScopes: [VERIFICATION_TOKEN_SCOPE],
+    });
 
     const user = await withDb(async (db) => findPublicUserById(db, userId));
     if (!user) {

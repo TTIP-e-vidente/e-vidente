@@ -192,6 +192,7 @@ export async function saveAuthenticatedProgress(
           completedNode: null,
           mapCompleted: false,
           summary: duplicateSummary,
+          duplicate: true,
         };
       }
     }
@@ -316,9 +317,21 @@ export async function saveProgressBatch(
   userId: string,
   items: unknown[],
 ): Promise<{
-  results: Array<{ clientRunId: string; ok: boolean; data?: unknown; error?: string }>;
+  synced: boolean;
+  processed: number;
+  createdSessions: number;
+  ignoredDuplicates: number;
+  results: Array<{
+    clientRunId: string;
+    ok: boolean;
+    duplicate?: boolean;
+    data?: unknown;
+    error?: string;
+  }>;
   summary: { total: number; synced: number; failed: number };
   progressSummary: ProgresoRestriccionResponse | null;
+  progress: ProgresoRestriccionResponse['progress'] | null;
+  streak: ProgresoRestriccionResponse['streak'] | null;
 }> {
   if (!Array.isArray(items) || items.length === 0) {
     throw new PlayerError(400, 'INVALID_BODY', 'items debe ser un array no vacío');
@@ -327,9 +340,17 @@ export async function saveProgressBatch(
     throw new PlayerError(400, 'INVALID_BODY', 'máximo 50 ítems por batch');
   }
 
-  const results: Array<{ clientRunId: string; ok: boolean; data?: unknown; error?: string }> = [];
+  const results: Array<{
+    clientRunId: string;
+    ok: boolean;
+    duplicate?: boolean;
+    data?: unknown;
+    error?: string;
+  }> = [];
   let synced = 0;
   let failed = 0;
+  let createdSessions = 0;
+  let ignoredDuplicates = 0;
 
   const ordered = [...items].sort((a, b) => {
     const dateA = typeof (a as Record<string, unknown>)?.finishedAt === 'string'
@@ -343,16 +364,30 @@ export async function saveProgressBatch(
 
   for (const item of ordered) {
     const clientRunId = typeof (item as Record<string, unknown>)?.clientRunId === 'string'
-      ? (item as Record<string, string>).clientRunId
+      ? (item as Record<string, string>).clientRunId.trim()
       : '';
+    // Todo run local debe venir con clientRunId: es la clave de idempotencia
+    // que garantiza que un reintento del mismo batch no duplique EXP/sesiones.
+    if (!clientRunId) {
+      results.push({ clientRunId, ok: false, error: 'clientRunId es requerido' });
+      failed++;
+      continue;
+    }
     try {
       const data = await saveAuthenticatedProgress(
         { ...(item as object), userId },
         { includeSummary: false },
       );
+      const duplicate = data.duplicate === true;
+      if (duplicate) {
+        ignoredDuplicates++;
+      } else {
+        createdSessions++;
+      }
       results.push({
         clientRunId,
         ok: true,
+        ...(duplicate ? { duplicate: true } : {}),
         data: {
           game: data.game,
           completedNode: data.completedNode ?? null,
@@ -369,8 +404,14 @@ export async function saveProgressBatch(
 
   const progressSummary = synced > 0 ? await getProgresoRestriccion(userId) : null;
   return {
+    synced: failed === 0,
+    processed: items.length,
+    createdSessions,
+    ignoredDuplicates,
     results,
     summary: { total: items.length, synced, failed },
     progressSummary,
+    progress: progressSummary?.progress ?? null,
+    streak: progressSummary?.streak ?? null,
   };
 }
