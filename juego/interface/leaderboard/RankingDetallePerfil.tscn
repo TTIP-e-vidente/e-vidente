@@ -92,12 +92,14 @@ layout_mode = 2
 
 [node name="ScopeTabs" parent="Margin/VBox" unique_id=1666781115 instance=ExtResource("4_tabs")]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 tema_claro = true
 diseno_en_filas = true
 
 [node name="ProgresoCard" parent="Margin/VBox" unique_id=1576450043 instance=ExtResource("5_card")]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 
 [node name="EtiquetaLista" type="Label" parent="Margin/VBox" unique_id=87774730]

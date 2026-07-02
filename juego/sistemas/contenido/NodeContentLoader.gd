@@ -196,16 +196,23 @@ static func has_activity(pack_id: String, activity_id: String) -> Dictionary:
 
 
 static func to_runtime_mode(raw_mode: String) -> String:
+	print("TO_RUNTIME_MODE:", raw_mode)
+
 	match raw_mode.strip_edges():
 		"quiz":
 			return "quiz_choice"
+
 		"drag", "drag_food":
 			return "drag_drop"
+
 		"match":
 			return "vinculacion_conceptos"
+
 		"completar_palabra":
 			return "completar_palabra"
+
 		_:
+			print("NO MATCH:", raw_mode)
 			return ""
 
 
@@ -240,69 +247,42 @@ static func obtener_candidatos_actividad(
 	requested_options_count: int = 0
 ) -> Array[String]:
 	var normalizado_type: String = normalizar_random_game_type(requested_type)
+
 	if normalizado_type.is_empty() or requested_difficulty <= 0:
 		return []
+
 	var pack_result: Dictionary = load_pack(track_key)
+
 	if not bool(pack_result.get("ok", false)):
 		return []
+
 	var pack: Dictionary = pack_result.get("data", {})
 	var activity_candidates: Array[String] = []
-	
+
 	for raw_activity in pack.get("activities", []):
 		if not raw_activity is Dictionary:
 			continue
 
-		var activity: Dictionary = raw_activity
-
-		print("--------------------------------")
-		print("ID:", activity.get("id"))
-		print("MODE:", activity.get("mode"))
-		print("DIFF:", activity.get("difficulty"))
-
-		var ok_type := _activity_matches_requested_type(activity, normalizado_type)
-		print("TYPE:", ok_type)
-
-		var ok_diff := int(activity.get("difficulty", 0)) == requested_difficulty
-		print("DIFF:", ok_diff)
-
-		var ok_options := _activity_matches_requested_options_count(
-			activity,
-			normalizado_type,
-			requested_options_count
-		)
-		print("OPTIONS:", ok_options)
-
-		if not ok_type:
-			continue
-
-		if not ok_diff:
-			continue
-
-		if not ok_options:
-			continue
-
-		var activity_id := str(activity.get("id", "")).strip_edges()
-		if activity_id != "":
-			print(">>>> AGREGA:", activity_id)
-			activity_candidates.append(activity_id)
-	
-	for raw_activity in pack.get("activities", []):
-		if not raw_activity is Dictionary:
-			continue
 		var activity: Dictionary = raw_activity as Dictionary
+
 		if not _activity_matches_requested_type(activity, normalizado_type):
 			continue
+
 		if int(activity.get("difficulty", 0)) != requested_difficulty:
 			continue
+
 		if not _activity_matches_requested_options_count(
 			activity,
 			normalizado_type,
 			requested_options_count
 		):
 			continue
+
 		var activity_id: String = str(activity.get("id", "")).strip_edges()
+
 		if not activity_id.is_empty():
 			activity_candidates.append(activity_id)
+
 	return activity_candidates
 
 

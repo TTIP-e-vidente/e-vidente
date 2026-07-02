@@ -236,58 +236,43 @@ static func _select_random_game_entries(
 	rng: RandomNumberGenerator
 ) -> Array[Dictionary]:
 	var selected_game_entries: Array[Dictionary] = []
-	var used_types_in_node: Array[String] = []
-	# Pre-calcular cuántas veces aparece cada tipo en el nodo.
-	# Si un tipo se solicita más de una vez, es intencional (ej: 3 drags seguidos)
-	# y se debe respetar sin filtrar por variedad.
-	var type_request_counts: Dictionary = {}
-	for raw_req in node_data.obtener_solicitudes_juegos_random():
-		if not raw_req is Dictionary:
-			continue
-		var req_type: String = NodeContentLoaderScript.normalizar_random_game_type(
-			str((raw_req as Dictionary).get("type", "")).strip_edges()
-		)
-		if not req_type.is_empty():
-			type_request_counts[req_type] = int(type_request_counts.get(req_type, 0)) + 1
+
 	for raw_request in node_data.obtener_solicitudes_juegos_random():
 		if not raw_request is Dictionary:
 			continue
-		var game_request: Dictionary = raw_request as Dictionary
+
+		var game_request: Dictionary = raw_request
+
 		var requested_type: String = NodeContentLoaderScript.normalizar_random_game_type(
 			str(game_request.get("type", "")).strip_edges()
 		)
+
 		var requested_difficulty: int = int(game_request.get("difficulty", 0))
+
 		var requested_options_count: int = _leer_requested_options_count(
 			game_request,
 			requested_type
 		)
+
 		if requested_type.is_empty() or requested_difficulty <= 0:
 			push_warning(
 				"ArmadorDePartida: game random invalido en %s: %s"
 				% [node_data.node_key, str(game_request)]
 			)
 			continue
-		# Permitir tipo repetido si: el JSON lo indica explícitamente, o si el nodo
-		# solicita ese tipo más de una vez (repetición intencional del diseñador).
-		var allow_repeated_type: bool = (
-			bool(game_request.get("allow_repeated_type", false))
-			or int(type_request_counts.get(requested_type, 1)) > 1
-		)
-		if not allow_repeated_type and used_types_in_node.has(requested_type):
-			print(
-				"[ArmadorDePartida] tipo '%s' ya usado en nodo %s, omitido para variedad."
-				% [requested_type, node_data.node_key]
-			)
-			continue
+
 		var used_activity_ids: Array[String] = _extract_activity_ids_from_game_entries(
 			selected_game_entries
 		)
+
 		var request_key: String = "%s|%d|%d" % [
 			requested_type,
 			requested_difficulty,
 			requested_options_count,
 		]
+
 		var used_history_ids: Array[String] = _leer_used_activity_ids(request_key)
+
 		var candidates_result: Dictionary = _resolve_candidates_with_fallback(
 			pack_id,
 			requested_type,
@@ -296,8 +281,10 @@ static func _select_random_game_entries(
 			used_activity_ids,
 			used_history_ids
 		)
+
 		var available_activity_candidates: Array[String] = candidates_result.get("candidates", [])
 		var fallback_reason: String = str(candidates_result.get("fallback_reason", ""))
+
 		print(
 			"[ArmadorDePartida] total_candidates=%d request=%s used_ids_count=%d available_after_filter=%d"
 			% [
@@ -307,12 +294,16 @@ static func _select_random_game_entries(
 				available_activity_candidates.size(),
 			]
 		)
+
 		var session_used_ids: Array[String] = _leer_session_used_ids(request_key)
+
 		var candidates_avoiding_session: Array[String] = _filter_out_session_used(
 			available_activity_candidates,
 			session_used_ids
 		)
-		var session_avoid_applied: bool = false
+
+		var session_avoid_applied := false
+
 		if not candidates_avoiding_session.is_empty():
 			if candidates_avoiding_session.size() != available_activity_candidates.size():
 				session_avoid_applied = true
@@ -325,38 +316,45 @@ static func _select_random_game_entries(
 						_unir_strings(session_used_ids),
 					]
 				)
+
 			available_activity_candidates = candidates_avoiding_session
+
 		elif not session_used_ids.is_empty() and not available_activity_candidates.is_empty():
 			print(
-				"[RandomAvoidRepeat] no_alternative=true request=%s cand=%d prev=%s"
-				% [
-					request_key,
-					available_activity_candidates.size(),
-					_unir_strings(session_used_ids),
-				]
-			)
+				"[ArmadorDePartida] RESET GLOBAL POOL for request=", request_key)
+			used_history_ids.clear()
+				
+	
+
 		var selected_activity_id: String = _pick_random_activity_id(
 			available_activity_candidates,
 			rng
 		)
+
 		if selected_activity_id.is_empty():
 			print("[ArmadorDePartida] pool_exhausted node_key=%s request=%s" % [
 				node_data.node_key,
 				request_key,
 			])
-		elif used_history_ids.has(selected_activity_id):
+
+		elif used_activity_ids.has(selected_activity_id):
 			push_error(
-				"[ArmadorDePartida] selected_activity_id ya usado: %s" % selected_activity_id
+				"[ArmadorDePartida] selected_activity_id repetido en el mismo nodo: %s"
+				% selected_activity_id
 			)
 			selected_activity_id = ""
+
 		if not selected_activity_id.is_empty():
 			_register_session_used_id(request_key, selected_activity_id)
+
 			if session_avoid_applied:
 				print(
 					"[RandomAvoidRepeat] selected=%s request=%s"
 					% [selected_activity_id, request_key]
 				)
+
 		var selected_game_entry: Dictionary = {}
+
 		if not selected_activity_id.is_empty():
 			selected_game_entry = _build_random_game_entry(
 				node_data,
@@ -364,16 +362,19 @@ static func _select_random_game_entries(
 				selected_activity_id,
 				requested_difficulty
 			)
+
 			if not selected_game_entry.is_empty():
 				selected_game_entry["type"] = requested_type
 				selected_game_entry["request_key"] = request_key
-				selected_game_entry["allow_repeated_type"] = allow_repeated_type
 				_copiar_campos_objetivo(game_request, selected_game_entry)
+
 				print(
 					"[ArmadorDePartida] selected_activity_id=%s request=%s"
 					% [selected_activity_id, request_key]
 				)
+
 		var candidate_summary: String = _unir_strings(available_activity_candidates)
+
 		if not fallback_reason.is_empty() and not selected_game_entry.is_empty():
 			if requested_options_count > 0:
 				print(
@@ -418,16 +419,16 @@ static func _select_random_game_entries(
 						selected_activity_id if not selected_activity_id.is_empty() else "-",
 					]
 				)
+
 		if selected_game_entry.is_empty():
 			push_warning(
 				"ArmadorDePartida: no se pudo resolver game random %s/%d en %s."
 				% [requested_type, requested_difficulty, node_data.node_key]
 			)
 			continue
+
 		selected_game_entries.append(selected_game_entry)
-		var tipo_seleccionado: String = str(selected_game_entry.get("type", "")).strip_edges()
-		if not tipo_seleccionado.is_empty() and not used_types_in_node.has(tipo_seleccionado):
-			used_types_in_node.append(tipo_seleccionado)
+
 	return selected_game_entries
 
 
@@ -814,11 +815,18 @@ static func _resolve_candidates_with_fallback(
 		pack_id, requested_type, requested_difficulty, requested_options_count
 	)
 	total_candidates += raw_candidates.size()
-	var candidates: Array[String] = _filter_unavailable_activity_candidates(
-		raw_candidates,
-		used_activity_ids,
-		used_history_ids
+
+	var candidates: Array[String]  = _filter_unavailable_activity_candidates(
+	raw_candidates,
+	used_activity_ids,
+	[]
 	)
+	candidates = _reset_pool_if_needed(
+	requested_type + "|" + str(requested_difficulty),
+	candidates,
+	used_history_ids
+	)
+	
 	if not candidates.is_empty():
 		return {"candidates": candidates, "fallback_reason": "", "total_candidates": total_candidates}
 	if requested_options_count > 0:
@@ -883,34 +891,40 @@ static func _filter_out_session_used(
 			filtered.append(candidate_id)
 	return filtered
 
-
+func obtener_ids_usados_por_request(request_key: String) -> Array[String]:
+	var _data = {}
+	return _data.get("used_by_request", {}).get(request_key, [])
+	
 static func _leer_used_activity_ids(request_key: String) -> Array[String]:
-	var used_ids: Array[String] = []
 	if _save_manager_ref == null:
-		return used_ids
-	if _save_manager_ref.has_method("obtener_todos_ids_actividades_usadas"):
-		return _merge_activity_ids(
-			used_ids,
-			_save_manager_ref.call("obtener_todos_ids_actividades_usadas")
-		)
-	if _save_manager_ref.has_method("obtener_ids_actividades_jugadas"):
-		used_ids = _merge_activity_ids(
-			used_ids,
-			_save_manager_ref.call("obtener_ids_actividades_jugadas")
-		)
-	if _save_manager_ref.has_method("obtener_todos_ids_actividades_completadas"):
-		used_ids = _merge_activity_ids(
-			used_ids,
-			_save_manager_ref.call("obtener_todos_ids_actividades_completadas")
-		)
+		return []
+
+	var used_ids: Array[String] = []
+
+	# SOLO historial de este request_key (clave)
 	if _save_manager_ref.has_method("obtener_ids_actividades_completadas"):
 		used_ids = _merge_activity_ids(
 			used_ids,
 			_save_manager_ref.call("obtener_ids_actividades_completadas", request_key)
 		)
+
 	return used_ids
 
+static func _reset_pool_if_needed(request_key: String, candidates: Array[String], used_ids: Array[String]) -> Array[String]:
+	if candidates.is_empty():
+		return []
 
+	var remaining: Array[String] = candidates.filter(func(id):
+		return not used_ids.has(id)
+	)
+
+	# si no queda nada → reset
+	if remaining.is_empty():
+		print("[ArmadorDePartida] RESET POOL request=", request_key)
+		return candidates  # <- vuelve a habilitar todo
+
+	return remaining
+	
 static func _merge_activity_ids(current_ids: Array[String], raw_ids: Variant) -> Array[String]:
 	var result: Array[String] = current_ids.duplicate()
 	if not raw_ids is Array:
@@ -1032,6 +1046,14 @@ static func _build_random_game_entry(
 	var resolved_difficulty: int = int(
 		activity_data.get("difficulty", activity_data.get("dificultad", requested_difficulty))
 	)
+	print(
+	"[BuildEntry] id=%s mode_json=%s mode_runtime=%s"
+	% [
+		selected_activity_id,
+		activity_data.get("mode", ""),
+		mode
+	]
+)
 	if resolved_difficulty <= 0:
 		resolved_difficulty = requested_difficulty
 	return {

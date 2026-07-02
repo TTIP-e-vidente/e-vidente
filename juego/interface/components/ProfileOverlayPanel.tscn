@@ -562,3 +562,5 @@ theme_override_colors/font_hover_color = Color(0.95, 0.55, 0.48, 1)
 theme_override_font_sizes/font_size = 12
 text = "Reiniciar progreso"
 flat = true
+
+[connection signal="pressed" from="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow/EditProfileButton" to="." method="_on_edit_profile_button_pressed"]

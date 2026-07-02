@@ -444,3 +444,7 @@ func _on_salida_deslizada_finalizada() -> void:
 
 func _on_guardar_button_pressed() -> void:
 	GameSceneRouter.go_to_mode_selector(get_tree())
+
+
+func _on_edit_profile_button_pressed() -> void:
+	GameSceneRouter.go_to_profile_editor(get_tree())
