@@ -49,7 +49,10 @@ static func _fallo_envio(evaluacion: Dictionary, fallback: String = "") -> Dicti
 
 
 static func _asegurar_servidor_y_sesion() -> Dictionary:
-	if not AuthApi.esta_logueado():
+	# El token acotado del login bloqueado (EMAIL_NOT_VERIFIED) también habilita
+	# el flujo de verificación aunque no haya sesión completa.
+	var hay_pendiente: bool = BackendSession.hay_verificacion_de_login_pendiente()
+	if not AuthApi.esta_logueado() and not hay_pendiente:
 		return {
 			"ok": false,
 			"mensaje": "Iniciá sesión para verificar tu mail.",

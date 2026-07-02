@@ -2,6 +2,7 @@
 extends Node
 
 const BACKGROUND_SYNC_INTERVAL_SECS := 300.0  # 5 minutos
+const AvatarSyncServiceScript := preload("res://API/backend/sync/AvatarSyncService.gd")
 
 signal sync_started()
 signal sync_succeeded(progress: Dictionary)
@@ -30,6 +31,10 @@ var _epoch_carga_en_curso: int = -1
 var _epoch_ultimo_resultado: int = -1
 # Dirty-flag: si llega un trigger mientras el sync corre, lo re-ejecuta al terminar.
 var _reintento_encolado: bool = false
+# Login rechazado con EMAIL_NOT_VERIFIED: guarda el token acotado (scope
+# email_verification), el usuario y la meta de envío del código. No es una
+# sesión completa: solo habilita los endpoints de verificación de mail.
+var _verificacion_login_pendiente: Dictionary = {}
 
 
 func _ready() -> void:
@@ -244,8 +249,9 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
 	_progreso_online_en_cache = datos_progreso
 	_aplicar_progreso_online_al_save_local()
-	# Fire-and-forget: descarga el avatar del backend si no hay uno local.
-	_descargar_avatar_si_falta(epoch)
+	# Fire-and-forget: sube el avatar pendiente (si quedó uno de una falla de
+	# red) o descarga el del backend si no hay uno local, con reintentos.
+	_sincronizar_avatar_post_login(epoch)
 	if LocalSyncQueue.contar_pendientes() > 0 and not _sync.esta_sincronizando():
 		_sync.reintentar_pendientes()
 
@@ -346,9 +352,68 @@ func iniciar_sesion(usuario_o_mail: String, clave: String) -> Dictionary:
 	var listo := await _asegurar_servidor_listo()
 	if not listo.get("ok", false):
 		return listo
+	_verificacion_login_pendiente.clear()
 	var resultado := await _api.iniciar_sesion(usuario_o_mail, clave)
+	if (
+		not bool(resultado.get("ok", false))
+		and str(resultado.get("code", "")) == "EMAIL_NOT_VERIFIED"
+	):
+		_guardar_verificacion_login_pendiente(resultado)
+		return resultado
 	_procesar_resultado_de_auth(resultado)
 	return resultado
+
+
+func _guardar_verificacion_login_pendiente(resultado: Dictionary) -> void:
+	var data: Variant = resultado.get("data", {})
+	if not data is Dictionary:
+		return
+	var token := str((data as Dictionary).get("verification_token", "")).strip_edges()
+	if token.is_empty():
+		return
+	var user: Variant = (data as Dictionary).get("user", {})
+	var verification: Variant = (data as Dictionary).get("verification", {})
+	var user_dict: Dictionary = {}
+	if user is Dictionary:
+		user_dict = user as Dictionary
+	var verification_dict: Dictionary = {}
+	if verification is Dictionary:
+		verification_dict = verification as Dictionary
+	_verificacion_login_pendiente = {
+		"token": token,
+		"user": user_dict,
+		"verification": verification_dict,
+	}
+
+
+func hay_verificacion_de_login_pendiente() -> bool:
+	return not _verificacion_login_pendiente.is_empty()
+
+
+func obtener_usuario_verificacion_pendiente() -> Dictionary:
+	var user: Variant = _verificacion_login_pendiente.get("user", {})
+	if user is Dictionary:
+		return (user as Dictionary).duplicate(true)
+	return {}
+
+
+func obtener_meta_verificacion_pendiente() -> Dictionary:
+	var meta: Variant = _verificacion_login_pendiente.get("verification", {})
+	if meta is Dictionary:
+		return (meta as Dictionary).duplicate(true)
+	return {}
+
+
+func limpiar_verificacion_de_login_pendiente() -> void:
+	_verificacion_login_pendiente.clear()
+
+
+## Token válido para los endpoints de verificación de mail: la sesión completa
+## si existe, o el token acotado del login rechazado por EMAIL_NOT_VERIFIED.
+func _token_para_verificacion() -> String:
+	if _auth.esta_logueado():
+		return _auth.obtener_token()
+	return str(_verificacion_login_pendiente.get("token", ""))
 
 
 func registrar_cuenta(
@@ -380,8 +445,15 @@ func subir_avatar(base64_data: String, mime_type: String) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
+	var usuario := _auth.obtener_usuario()
 	var resultado := await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
 	_verificar_sesion_expirada(resultado, epoch)
+	if bool(resultado.get("ok", false)):
+		AvatarSyncServiceScript.limpiar_subida_pendiente(usuario)
+	elif int(resultado.get("status", 0)) == 0 or int(resultado.get("status", 0)) >= 500:
+		# Falla de red o del servidor: el avatar local queda como pendiente de
+		# subir y se reintenta en el próximo login/carga online.
+		AvatarSyncServiceScript.marcar_subida_pendiente(usuario, mime_type)
 	return resultado
 
 
@@ -474,41 +546,71 @@ func _mail_normalizado(value: String) -> String:
 
 ## Solicita el envío de un código de verificación de 6 dígitos al email configurado.
 ## Retorna status 'sent', 'already_verified' o error (rate_limited, 422, etc.).
+## Acepta también el token acotado del login rechazado por EMAIL_NOT_VERIFIED.
 func solicitar_verificacion_email(mail_esperado: String = "") -> Dictionary:
-	if not _auth.esta_logueado():
+	var token := _token_para_verificacion()
+	if token.is_empty():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
-	var resultado := await _api.solicitar_verificacion_email(
-		_auth.obtener_token(),
-		mail_esperado
-	)
+	var resultado := await _api.solicitar_verificacion_email(token, mail_esperado)
 	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
 
 ## Confirma el código de verificación ingresado por el usuario (6 dígitos numéricos).
 ## Retorna status 'verified' o error (invalid, expired, no_pending).
+## Si el flujo venía de un login bloqueado (token acotado), la respuesta trae
+## un accessToken completo y acá se establece la sesión plena.
 func confirmar_verificacion_email(codigo: String) -> Dictionary:
-	if not _auth.esta_logueado():
+	var token := _token_para_verificacion()
+	if token.is_empty():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
-	var resultado := await _api.confirmar_verificacion_email(_auth.obtener_token(), codigo.strip_edges())
+	var resultado := await _api.confirmar_verificacion_email(token, codigo.strip_edges())
 	_verificar_sesion_expirada(resultado, epoch)
 	# Si se verificó, actualizar el cache de usuario con mail_verified_at
 	if bool(resultado.get("ok", false)):
 		var data: Variant = resultado.get("data", {})
 		if data is Dictionary:
-			_aplicar_mail_verified_at_en_cache((data as Dictionary).get("mail_verified_at", null))
+			var data_dict := data as Dictionary
+			if not _auth.esta_logueado():
+				_establecer_sesion_post_verificacion(data_dict)
+			_aplicar_mail_verified_at_en_cache(data_dict.get("mail_verified_at", null))
 			if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
 				SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
 	return resultado
 
 
+## Cambia el token acotado del login bloqueado por la sesión completa que
+## devuelve verify-email-confirm al verificar.
+func _establecer_sesion_post_verificacion(data: Dictionary) -> void:
+	var access_token := str(data.get("accessToken", "")).strip_edges()
+	if access_token.is_empty() or not hay_verificacion_de_login_pendiente():
+		return
+	var user := obtener_usuario_verificacion_pendiente()
+	var username := str(user.get("username", ""))
+	_usuario_en_cache.clear()
+	_progreso_online_en_cache.clear()
+	_descartar_resultado_carga_online()
+	_auth.establecer_sesion(access_token, username)
+	if not user.is_empty():
+		_persistir_usuario_en_cache(user)
+	limpiar_verificacion_de_login_pendiente()
+	if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
+		SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+	login_succeeded.emit(_usuario_en_cache.duplicate(true))
+	print("[BackendSession] Sesión completa establecida tras verificar el mail: ", username)
+	# En el login normal esto lo dispara iniciar_sesion_completa; acá la sesión
+	# nace en el confirm, así que se carga el progreso online en segundo plano.
+	call_deferred("cargar_datos_online")
+
+
 func obtener_estado_verificacion_email() -> Dictionary:
-	if not _auth.esta_logueado():
+	var token := _token_para_verificacion()
+	if token.is_empty():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
-	var resultado := await _api.obtener_estado_email(_auth.obtener_token())
+	var resultado := await _api.obtener_estado_email(token)
 	_verificar_sesion_expirada(resultado, epoch)
 	return resultado
 
@@ -705,6 +807,7 @@ func cerrar_sesion() -> void:
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
+	_verificacion_login_pendiente.clear()
 	_descartar_resultado_carga_online()
 	logout_completed.emit()
 
@@ -767,6 +870,7 @@ func _al_expirar_sesion() -> void:
 	BackendSessionStorage.borrar_sesion()
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
+	_verificacion_login_pendiente.clear()
 	_descartar_resultado_carga_online()
 	session_expired.emit()
 
@@ -833,6 +937,35 @@ func _aplicar_progreso_online_al_save_local() -> void:
 	SaveManager.sincronizar_con_cuenta_online(_usuario_en_cache, _progreso_online_en_cache)
 
 
+func _sincronizar_avatar_post_login(epoch: int) -> void:
+	if SaveManager == null or not _auth.esta_logueado():
+		return
+	var usuario := _auth.obtener_usuario()
+	if AvatarSyncServiceScript.hay_subida_pendiente(usuario):
+		# El avatar local es más nuevo que el remoto (upload fallido previo):
+		# reintentar la subida en vez de pisar lo local con la descarga.
+		await _reintentar_subida_avatar_pendiente(epoch)
+		return
+	await _descargar_avatar_si_falta(epoch)
+
+
+func _reintentar_subida_avatar_pendiente(epoch: int) -> void:
+	var local_path := SaveManager.obtener_ruta_avatar_usuario_actual()
+	if local_path.is_empty():
+		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_usuario())
+		return
+	var bytes := FileAccess.get_file_as_bytes(local_path)
+	if bytes.is_empty():
+		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_usuario())
+		return
+	if _auth.obtener_epoch() != epoch:
+		return
+	var mime := AvatarSyncServiceScript.mime_desde_ruta(local_path)
+	var resultado := await subir_avatar(Marshalls.raw_to_base64(bytes), mime)
+	if bool(resultado.get("ok", false)):
+		print("[BackendSession] Avatar pendiente subido tras reintento.")
+
+
 func _descargar_avatar_si_falta(epoch: int) -> void:
 	if SaveManager == null or not _auth.esta_logueado():
 		return
@@ -842,25 +975,38 @@ func _descargar_avatar_si_falta(epoch: int) -> void:
 		SaveManager.limpiar_avatar_perfil()
 		local_path = ""
 
-	var resultado := await _api.descargar_avatar(_auth.obtener_token())
-	if _auth.obtener_epoch() != epoch:
-		# Cambió la cuenta mientras se descargaba: no guardar el avatar
-		# de la cuenta anterior bajo la clave de la nueva.
-		return
-	if not bool(resultado.get("ok", false)):
-		return
-	var data: Variant = resultado.get("data", {})
-	if not data is Dictionary:
-		return
-	var raw_b64: Variant = (data as Dictionary).get("data", null)
-	if raw_b64 == null:
-		return
-	var b64 := str(raw_b64)
-	var raw_mime: Variant = (data as Dictionary).get("mimeType", null)
-	var mime := str(raw_mime) if raw_mime != null else "image/png"
-	if b64.is_empty():
-		return
-	_guardar_avatar_descargado(b64, mime)
+	# Reintentos con espera creciente: una falla transitoria de red al loguear
+	# no debe dejar al jugador sin avatar hasta el próximo login.
+	var intentos := 1 + AvatarSyncServiceScript.DELAYS_DESCARGA.size()
+	for intento in range(intentos):
+		if intento > 0:
+			var delay: float = AvatarSyncServiceScript.DELAYS_DESCARGA[intento - 1]
+			await get_tree().create_timer(delay).timeout
+			if _auth.obtener_epoch() != epoch or not _auth.esta_logueado():
+				return
+		var resultado := await _api.descargar_avatar(_auth.obtener_token())
+		if _auth.obtener_epoch() != epoch:
+			# Cambió la cuenta mientras se descargaba: no guardar el avatar
+			# de la cuenta anterior bajo la clave de la nueva.
+			return
+		if bool(resultado.get("ok", false)):
+			var data: Variant = resultado.get("data", {})
+			if not data is Dictionary:
+				return
+			var raw_b64: Variant = (data as Dictionary).get("data", null)
+			if raw_b64 == null:
+				return
+			var b64 := str(raw_b64)
+			var raw_mime: Variant = (data as Dictionary).get("mimeType", null)
+			var mime := str(raw_mime) if raw_mime != null else "image/png"
+			if b64.is_empty():
+				return
+			_guardar_avatar_descargado(b64, mime)
+			return
+		if int(resultado.get("status", 0)) != 0 and int(resultado.get("status", 0)) < 500:
+			# Error definitivo (4xx): reintentar no va a cambiar el resultado.
+			return
+	push_warning("[BackendSession] No se pudo descargar el avatar tras varios intentos.")
 
 
 func _guardar_avatar_descargado(base64_data: String, mime_type: String) -> void:

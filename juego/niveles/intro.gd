@@ -242,7 +242,9 @@ func _on_login_verificacion_escena_solicitada(es_registro: bool, result: Diction
 	if es_registro:
 		EmailVerificationBridge.iniciar_post_registro(result, nav)
 	else:
-		EmailVerificationBridge.iniciar_pendiente(false, nav)
+		# Post-login sin mail verificado: la verificación es obligatoria
+		# (el server rechaza el login completo con EMAIL_NOT_VERIFIED).
+		EmailVerificationBridge.iniciar_pendiente(true, nav)
 
 
 func _procesar_retorno_verificacion_mail() -> void:

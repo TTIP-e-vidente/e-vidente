@@ -173,6 +173,15 @@ func _enviar_formulario() -> void:
 
 	_establecer_cargando(false)
 	if not result.get("ok", false):
+		if bool(result.get("requiere_verificacion", false)):
+			# El servidor bloqueó el login hasta verificar el mail: se abre la
+			# pantalla de código en modo obligatorio (sin sesión completa aún).
+			_establecer_estado(
+				"Tu mail no está verificado. Ingresá el código de 6 dígitos para continuar.",
+				false
+			)
+			verificacion_escena_solicitada.emit(false, result)
+			return
 		_establecer_estado(str(result.get("mensaje", "No se pudo completar la operación.")), true)
 		return
 

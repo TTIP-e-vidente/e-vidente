@@ -5,6 +5,7 @@ const MIN_PASSWORD_LENGTH := 8
 const SaveLocalProfileHelperScript := preload(
 	"res://interface/save_local/profile/SaveLocalProfileHelper.gd"
 )
+const RemoteErrorMapperScript := preload("res://API/backend/RemoteErrorMapper.gd")
 
 
 static func esta_logueado() -> bool:
@@ -24,6 +25,10 @@ static func obtener_usuario_online() -> Dictionary:
 
 
 static func mail_pendiente_verificacion() -> bool:
+	# Login rechazado con EMAIL_NOT_VERIFIED: hay verificación pendiente
+	# aunque todavía no exista sesión completa.
+	if BackendSession.hay_verificacion_de_login_pendiente():
+		return true
 	if not esta_logueado():
 		return false
 	var user := obtener_usuario_online()
@@ -311,7 +316,18 @@ static func _evaluar_estado_envio_verificacion(
 static func iniciar_sesion_completa(usuario_o_mail: String, clave: String) -> Dictionary:
 	var auth := await iniciar_sesion(usuario_o_mail, clave)
 	if not auth.get("ok", false):
-		return _fallo("auth", auth, "No se pudo iniciar sesi?n.")
+		var fallo := _fallo("auth", auth, "No se pudo iniciar sesi?n.")
+		if str(auth.get("code", "")) == "EMAIL_NOT_VERIFIED":
+			# El server bloqueó el login hasta verificar el mail. BackendSession
+			# ya guardó el token acotado; el caller debe abrir la pantalla de
+			# verificación en modo obligatorio.
+			fallo["requiere_verificacion"] = true
+			fallo["mensaje"] = RemoteErrorMapperScript.mensaje(auth)
+			var data: Variant = auth.get("data", {})
+			if data is Dictionary:
+				fallo["verification"] = (data as Dictionary).get("verification", {})
+				fallo["user"] = (data as Dictionary).get("user", {})
+		return fallo
 	var datos := await cargar_datos_online()
 	return _exito(auth, datos)
 
@@ -348,6 +364,10 @@ static func solicitar_codigo_verificacion(mail_esperado: String = "") -> Diction
 	var mail := mail_esperado.strip_edges()
 	if mail.is_empty() and esta_logueado():
 		mail = str(obtener_usuario_online().get("mail", "")).strip_edges()
+	if mail.is_empty() and BackendSession.hay_verificacion_de_login_pendiente():
+		mail = str(
+			BackendSession.obtener_usuario_verificacion_pendiente().get("mail", "")
+		).strip_edges()
 	return await BackendSession.solicitar_verificacion_email(mail)
 
 

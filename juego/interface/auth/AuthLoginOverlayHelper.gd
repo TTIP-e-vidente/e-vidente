@@ -86,7 +86,9 @@ func _al_solicitar_verificacion_mail(es_registro: bool, result: Dictionary) -> v
 	if es_registro:
 		EmailVerificationBridge.iniciar_post_registro(result, navegacion)
 	else:
-		EmailVerificationBridge.iniciar_pendiente(false, navegacion)
+		# Post-login sin mail verificado: la verificación es obligatoria
+		# (el server rechaza el login completo con EMAIL_NOT_VERIFIED).
+		EmailVerificationBridge.iniciar_pendiente(true, navegacion)
 
 	_marcar_formulario_terminado()
 
