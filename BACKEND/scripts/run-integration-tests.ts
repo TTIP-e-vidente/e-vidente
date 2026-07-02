@@ -13,9 +13,15 @@ const integrationTests = [
   'tests/email.jobs.integration.test.ts',
   'tests/email.webhook.integration.test.ts',
   'tests/email.internal.integration.test.ts',
+  'tests/email.account-verified.integration.test.ts',
+  'tests/email.retry-job.integration.test.ts',
   'tests/auth.integration.test.ts',
+  'tests/auth.login-unverified.integration.test.ts',
   'tests/player_authenticated.integration.test.ts',
-  'tests/profile-mail-verification.integration.test.ts'
+  'tests/profile-mail-verification.integration.test.ts',
+  'tests/avatar.integration.test.ts',
+  'tests/progress.batch-idempotency.integration.test.ts',
+  'tests/platform.doctor.test.ts'
 ];
 
 const smokeScripts = [

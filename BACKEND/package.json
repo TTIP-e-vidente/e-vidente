@@ -95,6 +95,8 @@
     "validate:email-flow": "ts-node scripts/validate-email-flow.ts",
     "validate:email-flow:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/validate-email-flow.ts",
     "test:email:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/test-email-send.ts",
+    "platform:doctor": "ts-node scripts/platform-doctor.ts",
+    "platform:doctor:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/platform-doctor.ts",
     "test": "npm run migrate && ts-node scripts/run-integration-tests.ts"
   },
   "dependencies": {
