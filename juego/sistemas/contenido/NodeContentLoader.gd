@@ -247,6 +247,45 @@ static func obtener_candidatos_actividad(
 		return []
 	var pack: Dictionary = pack_result.get("data", {})
 	var activity_candidates: Array[String] = []
+	
+	for raw_activity in pack.get("activities", []):
+		if not raw_activity is Dictionary:
+			continue
+
+		var activity: Dictionary = raw_activity
+
+		print("--------------------------------")
+		print("ID:", activity.get("id"))
+		print("MODE:", activity.get("mode"))
+		print("DIFF:", activity.get("difficulty"))
+
+		var ok_type := _activity_matches_requested_type(activity, normalizado_type)
+		print("TYPE:", ok_type)
+
+		var ok_diff := int(activity.get("difficulty", 0)) == requested_difficulty
+		print("DIFF:", ok_diff)
+
+		var ok_options := _activity_matches_requested_options_count(
+			activity,
+			normalizado_type,
+			requested_options_count
+		)
+		print("OPTIONS:", ok_options)
+
+		if not ok_type:
+			continue
+
+		if not ok_diff:
+			continue
+
+		if not ok_options:
+			continue
+
+		var activity_id := str(activity.get("id", "")).strip_edges()
+		if activity_id != "":
+			print(">>>> AGREGA:", activity_id)
+			activity_candidates.append(activity_id)
+	
 	for raw_activity in pack.get("activities", []):
 		if not raw_activity is Dictionary:
 			continue
