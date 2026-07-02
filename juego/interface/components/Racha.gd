@@ -7,7 +7,7 @@ signal pressed
 const SPRAY_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-diaria-1.png")
 const COUNT_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
 const ACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-activa-1.png")
-const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning.png")
+const WARNING_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-warning-1.png")
 const INACTIVE_TEXTURE := preload("res://assets-sistema/racha-diaria/racha-inactiva-1.png")
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
 
