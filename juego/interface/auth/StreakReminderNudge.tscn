@@ -1,10 +1,15 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://c40m264tybmiv"]
 
-[ext_resource type="Script" path="res://interface/auth/StreakReminderNudge.gd" id="1_script"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
-[ext_resource type="Texture2D" path="res://assets-sistema/racha-diaria/racha-diaria-1.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://cfoxvkw1av8vo" path="res://interface/auth/StreakReminderNudge.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://dwqkcfhoj8sy1" path="res://fonts/RubikMaps-Regular.ttf" id="3_7fbg7"]
+[ext_resource type="Texture2D" uid="uid://cu1x0vfo2ml70" path="res://assets-sistema/racha-diaria/racha-diaria-1.png" id="3_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_popup"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(1, 0.985, 0.98, 0.98)
 border_width_left = 4
 border_width_top = 1
@@ -18,45 +23,12 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0.82, 0.22, 0.18, 0.14)
 shadow_size = 12
 shadow_offset = Vector2(0, 5)
-content_margin_left = 2
-content_margin_top = 2
-content_margin_right = 2
-content_margin_bottom = 2
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton"]
-bg_color = Color(0.82, 0.22, 0.18, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 18
-content_margin_top = 10
-content_margin_right = 18
-content_margin_bottom = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton_hover"]
-bg_color = Color(0.9, 0.32, 0.24, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 18
-content_margin_top = 10
-content_margin_right = 18
-content_margin_bottom = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton_pressed"]
-bg_color = Color(0.68, 0.16, 0.12, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 18
-content_margin_top = 10
-content_margin_right = 18
-content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_icon_bg"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
 bg_color = Color(1, 0.94, 0.92, 1)
 border_width_left = 1
 border_width_top = 1
@@ -67,66 +39,106 @@ corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-content_margin_left = 6
-content_margin_top = 6
-content_margin_right = 6
-content_margin_bottom = 6
 
-[node name="StreakReminderNudge" type="CanvasLayer"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton_pressed"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.68, 0.16, 0.12, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boton_hover"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.9, 0.32, 0.24, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="StreakReminderNudge" type="CanvasLayer" unique_id=1801091747]
 layer = 21
 script = ExtResource("1_script")
 
-[node name="PopupAnchor" type="CenterContainer" parent="."]
+[node name="PopupAnchor" type="CenterContainer" parent="." unique_id=973412655]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -228.0
+offset_top = -163.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="PanelContainer" type="PanelContainer" parent="PopupAnchor"]
+[node name="PanelContainer" type="PanelContainer" parent="PopupAnchor" unique_id=684620031]
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
 
-[node name="MarginContainer" type="MarginContainer" parent="PopupAnchor/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PopupAnchor/PanelContainer" unique_id=865643298]
 layout_mode = 2
-theme_override_constants/margin_left = 16
+theme_override_constants/margin_left = 29
 theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_right = 29
+theme_override_constants/margin_bottom = 16
 
-[node name="HBoxContainer" type="HBoxContainer" parent="PopupAnchor/PanelContainer/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PopupAnchor/PanelContainer/MarginContainer" unique_id=896048692]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 alignment = 1
 
-[node name="IconPanel" type="PanelContainer" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(72, 72)
+[node name="IconPanel" type="PanelContainer" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer" unique_id=551612284]
+custom_minimum_size = Vector2(54.55, 72)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_icon_bg")
 
-[node name="IconTexture" type="TextureRect" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/IconPanel"]
+[node name="IconTexture" type="TextureRect" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/IconPanel" unique_id=699827542]
+visible = false
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 texture = ExtResource("3_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ContentColumn" type="VBoxContainer" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/IconPanel" unique_id=982125712]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("3_7fbg7")
+theme_override_font_sizes/font_size = 50
+text = "!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContentColumn" type="VBoxContainer" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer" unique_id=125641499]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="TituloLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn"]
+[node name="TituloLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn" unique_id=1942797422]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.16, 0.12, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 16
-text = "Racha en riesgo"
+theme_override_colors/font_color = Color(0.85882354, 0.6156863, 0.29411766, 1)
+theme_override_fonts/font = ExtResource("3_7fbg7")
+theme_override_font_sizes/font_size = 31
+text = "Racha en riesgo!"
 
-[node name="CuerpoLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn"]
+[node name="CuerpoLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn" unique_id=592676055]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.2, 0.16, 1)
 theme_override_fonts/font = ExtResource("2_font")
@@ -134,7 +146,7 @@ theme_override_font_sizes/font_size = 13
 text = "Activá recordatorios por mail para no perderla sin aviso."
 autowrap_mode = 3
 
-[node name="HintLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn"]
+[node name="HintLabel" type="Label" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn" unique_id=600064889]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.35, 0.3, 0.85)
 theme_override_fonts/font = ExtResource("2_font")
@@ -142,13 +154,13 @@ theme_override_font_sizes/font_size = 11
 text = "Te avisamos cerca de las 18:00 si no jugás hoy."
 autowrap_mode = 3
 
-[node name="BotonAccion" type="Button" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn"]
+[node name="BotonAccion" type="Button" parent="PopupAnchor/PanelContainer/MarginContainer/HBoxContainer/ContentColumn" unique_id=1760336459]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_boton")
-theme_override_styles/hover = SubResource("StyleBoxFlat_boton_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_boton_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_boton_hover")
 text = "Activar recordatorios por mail"
