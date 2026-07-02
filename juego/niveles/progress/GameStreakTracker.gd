@@ -476,7 +476,18 @@ static func _dia_local_de_actividad(streak_state: Dictionary) -> String:
 	return _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
 
 
+## El signo de Time.get_time_zone_from_system().bias es inconsistente entre
+## plataformas (invertido en Windows respecto a Android/Linux), así que no se
+## usa: el offset local-UTC se calcula comparando el reloj local con el UTC.
+static func _offset_local_menos_utc_segundos() -> int:
+	var utc_unix: float = Time.get_unix_time_from_system()
+	var local_dict: Dictionary = Time.get_datetime_dict_from_system(false)
+	var local_unix_naive: float = Time.get_unix_time_from_datetime_dict(local_dict)
+	return int(round(local_unix_naive - utc_unix))
+
+
 static func _fecha_local_desde_unix(unix_time: int) -> String:
-	var bias_seconds: int = int(Time.get_time_zone_from_system().get("bias", 0)) * 60
-	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(unix_time + bias_seconds)
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(
+		unix_time + _offset_local_menos_utc_segundos()
+	)
 	return "%04d-%02d-%02d" % [int(dt.get("year", 0)), int(dt.get("month", 0)), int(dt.get("day", 0))]
