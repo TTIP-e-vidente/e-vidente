@@ -7,6 +7,7 @@ import { deleteUserAvatar, getImageByUserId, upsertUserAvatar } from './image.re
 
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_BASE64_LENGTH = 4 * 1024 * 1024; // ~3 MB imagen original
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
 
 export async function uploadAvatarController(req: Request, res: Response): Promise<void> {
   try {
@@ -21,12 +22,22 @@ export async function uploadAvatarController(req: Request, res: Response): Promi
     if (typeof mimeType !== 'string' || !ALLOWED_MIME_TYPES.includes(mimeType)) {
       throw new AppError(
         400,
-        'INVALID_BODY',
+        'AVATAR_UNSUPPORTED_MIME',
         `mimeType must be one of: ${ALLOWED_MIME_TYPES.join(', ')}`
       );
     }
     if (data.length > MAX_BASE64_LENGTH) {
-      throw new AppError(413, 'PAYLOAD_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
+      throw new AppError(413, 'AVATAR_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
+    }
+    // Validación sobre los bytes reales (el largo del base64 es aproximado).
+    let decodedBytes: number;
+    try {
+      decodedBytes = Buffer.from(data.trim(), 'base64').length;
+    } catch {
+      throw new AppError(400, 'INVALID_BODY', 'data must be valid base64');
+    }
+    if (decodedBytes > MAX_AVATAR_BYTES) {
+      throw new AppError(413, 'AVATAR_TOO_LARGE', 'Avatar image exceeds maximum allowed size (3 MB)');
     }
 
     const client = await pool.connect();

@@ -74,9 +74,17 @@ export async function postBatchProgresoRestriccionController(
       throw new AppError(400, 'INVALID_BODY', 'máximo 50 ítems por batch');
     }
 
-    const results: Array<{ clientRunId: string; ok: boolean; data?: unknown; error?: string }> = [];
+    const results: Array<{
+      clientRunId: string;
+      ok: boolean;
+      duplicate?: boolean;
+      data?: unknown;
+      error?: string;
+    }> = [];
     let synced = 0;
     let failed = 0;
+    let createdSessions = 0;
+    let ignoredDuplicates = 0;
 
     // Secuencial y ordenado por finishedAt: la racha depende del orden de aplicación
     // (un día viejo procesado después de uno nuevo se descarta). El advisory lock por
@@ -91,17 +99,31 @@ export async function postBatchProgresoRestriccionController(
     for (const item of ordered) {
       const clientRunId =
         typeof (item as any)?.clientRunId === 'string'
-          ? (item as any).clientRunId
+          ? (item as any).clientRunId.trim()
           : '';
+      // Todo run local debe venir con clientRunId: es la clave de idempotencia
+      // que garantiza que un reintento del mismo batch no duplique EXP/sesiones.
+      if (!clientRunId) {
+        results.push({ clientRunId, ok: false, error: 'clientRunId es requerido' });
+        failed++;
+        continue;
+      }
       try {
         // includeSummary: false — el estado consolidado se consulta una sola vez al final.
         const data = await saveAuthenticatedProgress(
           { ...(item as object), userId },
           { includeSummary: false }
         );
+        const duplicate = data.duplicate === true;
+        if (duplicate) {
+          ignoredDuplicates++;
+        } else {
+          createdSessions++;
+        }
         results.push({
           clientRunId,
           ok: true,
+          ...(duplicate ? { duplicate: true } : {}),
           data: {
             game: data.game,
             completedNode: data.completedNode ?? null,
@@ -122,9 +144,15 @@ export async function postBatchProgresoRestriccionController(
     const progressSummary = synced > 0 ? await getProgresoRestriccion(userId) : null;
 
     sendResponse(res, 200, {
+      synced: failed === 0,
+      processed: items.length,
+      createdSessions,
+      ignoredDuplicates,
       results,
       summary: { total: items.length, synced, failed },
       progressSummary,
+      progress: progressSummary?.progress ?? null,
+      streak: progressSummary?.streak ?? null,
     });
   } catch (error) {
     sendError(res, error);

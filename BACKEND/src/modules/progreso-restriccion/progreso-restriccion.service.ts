@@ -223,7 +223,8 @@ export async function saveAuthenticatedProgress(
           game: toPublicGame(existingSession),
           completedNode: null,
           mapCompleted: false,
-          summary: duplicateSummary
+          summary: duplicateSummary,
+          duplicate: true
         };
       }
     }

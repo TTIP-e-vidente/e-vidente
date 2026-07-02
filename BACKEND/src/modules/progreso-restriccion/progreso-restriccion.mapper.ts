@@ -73,4 +73,6 @@ export interface SaveProgresoRestriccionResponse {
   mapCompleted: boolean;
   /** null cuando el caller pide omitirlo (batch: se calcula una sola vez al final) */
   summary: ProgresoRestriccionResponse | null;
+  /** true si el clientRunId ya existía y el run se ignoró (idempotencia). */
+  duplicate?: boolean;
 }
