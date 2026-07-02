@@ -6,6 +6,7 @@ const SaveLocalProfileHelperScript := preload(
 const SaveDataSchemaScript := preload(
 	"res://interface/save_local/data/SaveDataSchema.gd"
 )
+const BackendStoragePathsScript := preload("res://API/backend/BackendStoragePaths.gd")
 
 const SAVE_PATH := "user://save_data.json"
 const TEMP_SAVE_PATH := "user://save_data.tmp.json"
@@ -173,10 +174,7 @@ func _leer_archivo_json(path: String) -> Variant:
 
 
 static func _resolve_save_path(path: String) -> String:
-	var override_dir: String = OS.get_environment("EVIDENTE_SAVE_DIR").strip_edges()
-	if override_dir.is_empty():
-		return path
-	return override_dir.path_join(path.get_file())
+	return BackendStoragePathsScript.resolver(path)
 
 
 func _normalizar_datos_cargados(raw: Dictionary) -> Dictionary:

@@ -9,6 +9,9 @@ const SaveLocalProfileHelperScript := preload(
 const ProfileMailSyncHelperScript := preload(
 	"res://interface/auth/ProfileMailSyncHelper.gd"
 )
+const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
+const COLOR_TITULO_RIESGO := Color(0.72, 0.16, 0.12, 1)
+const COLOR_TITULO_NEUTRO := Color(0.180392, 0.164706, 0.121569, 1)
 
 var profile_name_preview_label: Label
 var profile_email_preview_label: Label
@@ -28,6 +31,11 @@ var avatar_dialog: FileDialog
 var _age_display_label: Label
 var _email_notifications_checkbox: CheckBox
 var _email_notifications_hint_label: Label
+var _email_notifications_card: PanelContainer
+var _email_notifications_title: Label
+var _email_notifications_risk_panel: PanelContainer
+var _notifications_card_style_normal: StyleBoxFlat
+var _notifications_card_style_risk: StyleBoxFlat
 var _mail_verify_status_label: Label
 var _mail_verify_hint_label: Label
 var _button_verify_email: Button
@@ -125,11 +133,19 @@ func _cachear_nodos_ui() -> void:
 	_button_verify_email.pressed.connect(_on_boton_verificar_mail_presionado)
 	_mail_verify_hint_label = form_content.get_node("EmailVerifyHintLabel") as Label
 	_email_notifications_checkbox = form_content.get_node(
-		"EmailNotificationsCheckBox"
+		"EmailNotificationsCard/MarginContainer/VBox/EmailNotificationsCheckBox"
 	) as CheckBox
 	_email_notifications_hint_label = form_content.get_node(
-		"EmailNotificationsHintLabel"
+		"EmailNotificationsCard/MarginContainer/VBox/EmailNotificationsHintLabel"
 	) as Label
+	_email_notifications_card = form_content.get_node("EmailNotificationsCard") as PanelContainer
+	_email_notifications_title = form_content.get_node(
+		"EmailNotificationsCard/MarginContainer/VBox/HeaderRow/HeaderTexts/TitleLabel"
+	) as Label
+	_email_notifications_risk_panel = form_content.get_node(
+		"EmailNotificationsCard/MarginContainer/VBox/RiskBadgePanel"
+	) as PanelContainer
+	_inicializar_estilos_tarjeta_recordatorios()
 	avatar_path_input = form_content.get_node("AvatarRow/AvatarPathEdit") as LineEdit
 	choose_avatar_button = form_content.get_node(
 		"AvatarRow/ChooseAvatarButton"
@@ -821,7 +837,18 @@ func _ejecutar_overlay_verificacion_perfil(evaluacion: Dictionary) -> void:
 
 func _refrescar_tras_verificacion_mail() -> void:
 	await _sincronizar_verificacion_mail_desde_servidor()
-	_establecer_feedback("Mail verificado. Te enviamos un mail de bienvenida.", true)
+	_actualizar_checkbox_notificaciones_habilitado()
+	if (
+		is_instance_valid(_email_notifications_checkbox)
+		and _email_notifications_checkbox.button_pressed
+		and AuthApi.mail_esta_verificado()
+	):
+		await _sincronizar_perfil_al_backend(true, false)
+	EmailVerificationBridge.refrescar_nudge_global()
+	_establecer_feedback(
+		"Mail verificado. Activá recordatorios de racha si querés avisos por correo.",
+		true
+	)
 
 
 func _procesar_retorno_verificacion_mail() -> void:
@@ -862,16 +889,58 @@ func _actualizar_checkbox_notificaciones_habilitado() -> void:
 			)
 		elif not verified:
 			_email_notifications_hint_label.text = (
-				"Verificá tu mail para activar recordatorios de racha."
+				"Verificá tu mail para activar recordatorios de racha (avisos cerca de las 18:00)."
 			)
 		else:
-			_email_notifications_hint_label.text = "Activá o desactivá los avisos cuando quieras."
+			_email_notifications_hint_label.text = (
+				"El aviso se envía cerca de las 18:00 (hora Argentina) si no jugás ese día."
+			)
 	if not mail_ok:
 		_email_notifications_checkbox.tooltip_text = "Completá un mail en tu perfil."
 	elif not verified:
 		_email_notifications_checkbox.tooltip_text = "Verificá tu mail para activar recordatorios."
 	else:
 		_email_notifications_checkbox.tooltip_text = ""
+	_actualizar_tarjeta_recordatorios()
+
+
+func _inicializar_estilos_tarjeta_recordatorios() -> void:
+	if not is_instance_valid(_email_notifications_card):
+		return
+	var base := _email_notifications_card.get_theme_stylebox("panel")
+	if not base is StyleBoxFlat:
+		return
+	_notifications_card_style_normal = (base as StyleBoxFlat).duplicate() as StyleBoxFlat
+	_notifications_card_style_risk = (base as StyleBoxFlat).duplicate() as StyleBoxFlat
+	_notifications_card_style_risk.bg_color = Color(1, 0.96, 0.94, 0.96)
+	_notifications_card_style_risk.border_width_left = 3
+	_notifications_card_style_risk.border_color = Color(0.82, 0.22, 0.18, 0.35)
+
+
+func _actualizar_tarjeta_recordatorios() -> void:
+	if not is_instance_valid(_email_notifications_card):
+		return
+	var puede_destacar := (
+		is_instance_valid(_email_notifications_checkbox)
+		and not _email_notifications_checkbox.disabled
+	)
+	var en_riesgo := (
+		StreakReminderHelperScript.racha_en_riesgo()
+		and puede_destacar
+		and not _email_notifications_checkbox.button_pressed
+	)
+	if is_instance_valid(_email_notifications_risk_panel):
+		_email_notifications_risk_panel.visible = en_riesgo
+	if is_instance_valid(_email_notifications_title):
+		_email_notifications_title.add_theme_color_override(
+			"font_color",
+			COLOR_TITULO_RIESGO if en_riesgo else COLOR_TITULO_NEUTRO
+		)
+	if _notifications_card_style_normal != null and _notifications_card_style_risk != null:
+		var estilo := (
+			_notifications_card_style_risk if en_riesgo else _notifications_card_style_normal
+		)
+		_email_notifications_card.add_theme_stylebox_override("panel", estilo)
 
 
 func _refrescar_controles_avatar() -> void:

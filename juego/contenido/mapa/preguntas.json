@@ -217,7 +217,7 @@
   },
   "quiz_harina_maiz_segura": {
 	"mode": "quiz",
-	"difficulty": 4,
+	"difficulty": 3,
 	"teaching_key": "celiaquia_etiquetas",
 	"prompt": "Qué formato aumenta riesgo de contaminación?",
 	"options": [
@@ -500,7 +500,7 @@
   },
   "quiz_3op_celiaquia_predisposicion_01": {
 	"mode": "quiz",
-	"difficulty": 4,
+	"difficulty": 3,
 	"teaching_key": "celiaquia_diagnostico",
 	"prompt": "Qué indican DQ2 y DQ8?",
 	"options": [

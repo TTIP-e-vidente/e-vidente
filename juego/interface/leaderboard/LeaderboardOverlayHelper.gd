@@ -1,7 +1,6 @@
 class_name LeaderboardOverlayHelper
 extends RefCounted
 
-const SincronizadorPartidaScript := preload("res://API/backend/sync/SincronizadorPartida.gd")
 const LEADERBOARD_SCENE := preload("res://interface/leaderboard/LeaderboardScene.tscn")
 const OVERLAY_NODE_NAME := "LeaderboardSceneOverlay"
 
@@ -9,7 +8,7 @@ const OVERLAY_NODE_NAME := "LeaderboardSceneOverlay"
 static func scope_desde_arbol(arbol: SceneTree) -> String:
 	if arbol == null:
 		return LeaderboardApi.SCOPE_XP_GLOBAL
-	var track := SincronizadorPartidaScript.resolver_restriccion(arbol)
+	var track := SincronizadorPartida.resolver_restriccion(arbol)
 	return RestrictionCodes.scope_leaderboard_desde_juego(track)
 
 

@@ -1,14 +1,18 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene format=3 uid="uid://2ah8ndncc661"]
 
-[ext_resource type="Script" path="res://interface/leaderboard/RankingDetallePerfil.gd" id="1_script"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="Script" uid="uid://bli08bw0t6u7h" path="res://interface/leaderboard/RankingDetallePerfil.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="4_tabs"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ProgresoPuestoCard.tscn" id="5_card"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardMiniList.tscn" id="6_mini"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPosicionesHub.tscn" id="7_hub"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 1
 border_width_top = 1
@@ -22,53 +26,49 @@ corner_radius_bottom_left = 20
 shadow_color = Color(0.08, 0.07, 0.04, 0.06)
 shadow_size = 10
 shadow_offset = Vector2(0, 3)
-content_margin_left = 0
-content_margin_top = 0
-content_margin_right = 0
-content_margin_bottom = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
 bg_color = Color(0.259, 0.471, 0.369, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-content_margin_left = 14
-content_margin_top = 10
-content_margin_right = 14
-content_margin_bottom = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.320, 0.560, 0.440, 1)
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.32, 0.56, 0.44, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-content_margin_left = 14
-content_margin_top = 10
-content_margin_right = 14
-content_margin_bottom = 10
 
-[node name="RankingDetallePerfil" type="PanelContainer"]
+[node name="RankingDetallePerfil" type="PanelContainer" unique_id=155954042]
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 script = ExtResource("1_script")
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1226778739]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 18
 
-[node name="VBox" type="VBoxContainer" parent="Margin"]
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=44357618]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="HeaderRow" type="HBoxContainer" parent="Margin/VBox"]
+[node name="HeaderRow" type="HBoxContainer" parent="Margin/VBox" unique_id=521258464]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Titulo" type="Label" parent="Margin/VBox/HeaderRow"]
+[node name="Titulo" type="Label" parent="Margin/VBox/HeaderRow" unique_id=1728760259]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -76,7 +76,7 @@ theme_override_fonts/font = ExtResource("3_spray")
 theme_override_font_sizes/font_size = 20
 text = "Ranking competitivo"
 
-[node name="LabelInvitado" type="Label" parent="Margin/VBox/HeaderRow"]
+[node name="LabelInvitado" type="Label" parent="Margin/VBox/HeaderRow" unique_id=1414660341]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -86,35 +86,35 @@ theme_override_font_sizes/font_size = 11
 text = "Modo invitado · solo lectura"
 vertical_alignment = 1
 
-[node name="PosicionesHub" parent="Margin/VBox" instance=ExtResource("7_hub")]
+[node name="PosicionesHub" parent="Margin/VBox" unique_id=507948542 instance=ExtResource("7_hub")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ScopeTabs" parent="Margin/VBox" instance=ExtResource("4_tabs")]
+[node name="ScopeTabs" parent="Margin/VBox" unique_id=1666781115 instance=ExtResource("4_tabs")]
 unique_name_in_owner = true
 layout_mode = 2
 tema_claro = true
 diseno_en_filas = true
-columnas_en_filas = 3
 
-[node name="ProgresoCard" parent="Margin/VBox" instance=ExtResource("5_card")]
+[node name="ProgresoCard" parent="Margin/VBox" unique_id=1576450043 instance=ExtResource("5_card")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="EtiquetaLista" type="Label" parent="Margin/VBox"]
+[node name="Label" type="Label" parent="Margin/VBox" unique_id=87774730]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 11
 text = "TABLA — TOP 8"
 
-[node name="MiniList" parent="Margin/VBox" instance=ExtResource("6_mini")]
+[node name="MiniList" parent="Margin/VBox" unique_id=894141945 instance=ExtResource("6_mini")]
 unique_name_in_owner = true
 layout_mode = 2
 max_filas = 8
 tema_claro = true
 
-[node name="BotonTablaCompleta" type="Button" parent="Margin/VBox"]
+[node name="BotonTablaCompleta" type="Button" parent="Margin/VBox" unique_id=1848811323]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
@@ -122,6 +122,6 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 text = "Abrir tabla completa"

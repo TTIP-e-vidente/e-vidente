@@ -409,13 +409,23 @@ export async function confirmVerificationCode(
     const result = await db.queryObject<{ mail_verified_at: Date }>(
       `
         UPDATE users
-        SET mail_verified_at = now(), updated_at = now()
+        SET
+          mail = CASE
+            WHEN lower(trim(coalesce(mail, ''))) = $2 THEN mail
+            WHEN trim(coalesce(mail, '')) = '' THEN $3
+            ELSE mail
+          END,
+          mail_verified_at = now(),
+          updated_at = now()
         WHERE id = $1
           AND mail_verified_at IS NULL
-          AND lower(trim(coalesce(mail, ''))) = $2
+          AND (
+            lower(trim(coalesce(mail, ''))) = $2
+            OR trim(coalesce(mail, '')) = ''
+          )
         RETURNING mail_verified_at;
       `,
-      [userId, normalizedMail],
+      [userId, normalizedMail, active.target_mail.trim()],
     );
     return result.rows[0]?.mail_verified_at ?? null;
   });
@@ -431,6 +441,10 @@ export async function confirmVerificationCode(
   // y la retoma el job de retry. Nunca bloquea la respuesta de verificación.
   const user = await withDb(async (db) => findPublicUserById(db, userId));
   if (user?.mail && isEmailDeliveryConfigured()) {
+    // Se conserva account_verified (contrato Platform V1: template propio,
+    // distinto del welcome, con dedupe por usuario y retry vía outbox); la
+    // variante welcome-tracked del merge quedó descartada para no enviar dos
+    // mails ni duplicar semántica.
     try {
       const message = buildAccountVerifiedEmail({ name: user.name, mail: user.mail });
       const result = await deliverTrackedEmail({
@@ -488,7 +502,13 @@ export async function buildVerificationSendMeta(
   expires_minutes: number;
 }> {
   const config = getVerificationConfig();
-  const message = verificationStatusMessage(sendResult, config.expiresMinutes);
+  let message = verificationStatusMessage(sendResult, config.expiresMinutes);
+  if (sendResult === 'send_failed') {
+    const detail = await getLatestDeliveryError(userId);
+    if (detail) {
+      message = `${message} (${detail})`;
+    }
+  }
   if (sendResult === 'sent' || sendResult === 'dev_console') {
     return {
       code_send_status: sendResult,

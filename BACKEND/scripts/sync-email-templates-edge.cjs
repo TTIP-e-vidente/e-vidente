@@ -24,6 +24,7 @@ const COPY_FILES = [
   'account-verified.template.ts',
   'streak-at-risk.template.ts',
   'streak-lost.template.ts',
+  'mail-changed.template.ts',
 ];
 
 function ensureDir(dir) {

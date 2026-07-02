@@ -327,13 +327,10 @@ func _nombre_rival(siguiente: Variant) -> String:
 	if not siguiente is Dictionary:
 		return "el jugador anterior"
 	var sig := siguiente as Dictionary
-	var display: Variant = sig.get("display_name", null)
-	if display != null and display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = sig.get("username", "")
-	if username is String and not (username as String).is_empty():
-		return username as String
-	var puesto: int = int(sig.get("rank", 0))
+	var nombre := LeaderboardFormat.resolver_nombre_entrada(sig)
+	if nombre != "—":
+		return nombre
+	var puesto := LeaderboardFormat.entero_desde_json(sig.get("rank", 0))
 	return "puesto #%d" % puesto if puesto > 0 else "el jugador anterior"
 
 

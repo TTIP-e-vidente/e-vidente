@@ -1,16 +1,18 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene format=3 uid="uid://cbduql37qbsrd"]
 
-[ext_resource type="Script" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
+[ext_resource type="Script" uid="uid://sqqbiq803bft" path="res://interface/leaderboard/LeaderboardScene.gd" id="1_scene"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/ScopeTabs.tscn" id="2_tabs"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardList.tscn" id="3_list"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/OwnPositionCard.tscn" id="4_card"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardSkeleton.tscn" id="5_skeleton"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEmpty.tscn" id="6_empty"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardEntryPeek.tscn" id="7_peek"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="8_font"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="9_spray"]
-
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="8_font"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="9_spray"]
 [ext_resource type="PackedScene" path="res://interface/leaderboard/LeaderboardPodium.tscn" id="10_podium"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.18, 0.2, 0.22, 0.35)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(1, 1, 1, 1)
@@ -35,6 +37,10 @@ corner_radius_top_left = 18
 corner_radius_top_right = 18
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reintentar_normal"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 bg_color = Color(0.259, 0.471, 0.369, 0.08)
 border_width_left = 1
 border_width_top = 1
@@ -45,12 +51,12 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-content_margin_left = 16
-content_margin_top = 8
-content_margin_right = 16
-content_margin_bottom = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reintentar_hover"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 bg_color = Color(0.259, 0.471, 0.369, 0.16)
 border_width_left = 1
 border_width_top = 1
@@ -61,31 +67,21 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-content_margin_left = 16
-content_margin_top = 8
-content_margin_right = 16
-content_margin_bottom = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
-bg_color = Color(0.18, 0.20, 0.22, 0.35)
-
-[node name="LeaderboardScene" type="CanvasLayer"]
-script = ExtResource("1_scene")
+[node name="LeaderboardScene" type="CanvasLayer" unique_id=2092242793]
 layer = 80
+script = ExtResource("1_scene")
 
-[node name="Fondo" type="PanelContainer" parent="."]
-layout_mode = 1
+[node name="Fondo" type="PanelContainer" parent="." unique_id=1094653935]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
 
-[node name="PanelCentral" type="PanelContainer" parent="."]
+[node name="PanelCentral" type="PanelContainer" parent="." unique_id=37100659]
 unique_name_in_owner = true
-layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -99,28 +95,28 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxPrincipal" type="VBoxContainer" parent="PanelCentral"]
+[node name="VBoxPrincipal" type="VBoxContainer" parent="PanelCentral" unique_id=619278314]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HeaderBar" type="PanelContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="HeaderBar" type="PanelContainer" parent="PanelCentral/VBoxPrincipal" unique_id=1402843580]
 unique_name_in_owner = true
-layout_mode = 2
 custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_header")
 
-[node name="MarginHeader" type="MarginContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar"]
+[node name="MarginHeader" type="MarginContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar" unique_id=800346936]
 layout_mode = 2
 theme_override_constants/margin_left = 18
-theme_override_constants/margin_right = 10
 theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="Header" type="HBoxContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader"]
+[node name="Header" type="HBoxContainer" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader" unique_id=35720672]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="IconoTitulo" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
+[node name="IconoTitulo" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header" unique_id=1927476227]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
 theme_override_fonts/font = ExtResource("9_spray")
@@ -128,7 +124,7 @@ theme_override_font_sizes/font_size = 22
 text = "#1"
 vertical_alignment = 1
 
-[node name="TituloLabel" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
+[node name="TituloLabel" type="Label" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header" unique_id=1882130285]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -138,109 +134,105 @@ theme_override_font_sizes/font_size = 22
 text = "Tabla de posiciones"
 vertical_alignment = 1
 
-[node name="BotonCerrar" type="Button" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header"]
+[node name="BotonCerrar" type="Button" parent="PanelCentral/VBoxPrincipal/HeaderBar/MarginHeader/Header" unique_id=1639797098]
 unique_name_in_owner = true
-layout_mode = 2
 custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
 theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("8_font")
 theme_override_font_sizes/font_size = 18
-flat = true
 text = "X"
+flat = true
 
-[node name="Contenido" type="MarginContainer" parent="PanelCentral/VBoxPrincipal"]
+[node name="Contenido" type="MarginContainer" parent="PanelCentral/VBoxPrincipal" unique_id=1298880734]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 14
-theme_override_constants/margin_right = 14
 theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 14
 
-[node name="VBoxContenido" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido"]
+[node name="VBoxContenido" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido" unique_id=2105060679]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="ScopeTabs" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" instance=ExtResource("2_tabs")]
+[node name="ScopeTabs" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=476334887 instance=ExtResource("2_tabs")]
 unique_name_in_owner = true
 layout_mode = 2
 tema_claro = true
 diseno_en_filas = true
-columnas_en_filas = 3
 
-[node name="LabelMeta" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
+[node name="LabelMeta" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=350704532]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.55)
 theme_override_fonts/font = ExtResource("8_font")
 theme_override_font_sizes/font_size = 12
-text = ""
 horizontal_alignment = 1
 
-[node name="ContenedorCarga" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
+[node name="ContenedorCarga" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=1253749993]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-visible = true
 
-[node name="LeaderboardSkeleton" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorCarga" instance=ExtResource("5_skeleton")]
+[node name="LeaderboardSkeleton" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorCarga" unique_id=1116385103 instance=ExtResource("5_skeleton")]
 layout_mode = 2
 
-[node name="ContenedorDatos" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
+[node name="ContenedorDatos" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=300093606]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
 visible = false
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LeaderboardPodium" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("10_podium")]
+[node name="LeaderboardPodium" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" unique_id=1009772104 instance=ExtResource("10_podium")]
+unique_name_in_owner = true
+
+[node name="LeaderboardList" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" unique_id=699668460 instance=ExtResource("3_list")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LeaderboardList" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("3_list")]
+[node name="EntryPeek" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" unique_id=2042356487 instance=ExtResource("7_peek")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="EntryPeek" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorDatos" instance=ExtResource("7_peek")]
+[node name="ContenedorVacio" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=1294235308]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="ContenedorVacio" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
-unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
-visible = false
 
-[node name="LeaderboardEmpty" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorVacio" instance=ExtResource("6_empty")]
+[node name="LeaderboardEmpty" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorVacio" unique_id=1212135080 instance=ExtResource("6_empty")]
 layout_mode = 2
 
-[node name="ContenedorError" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido"]
+[node name="ContenedorError" type="VBoxContainer" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido" unique_id=967443022]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
-visible = false
-alignment = 1
 theme_override_constants/separation = 14
+alignment = 1
 
-[node name="IconoError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
+[node name="IconoError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError" unique_id=241301945]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.40, 0.38, 1)
+theme_override_colors/font_color = Color(0.75, 0.4, 0.38, 1)
 theme_override_fonts/font = ExtResource("9_spray")
 theme_override_font_sizes/font_size = 32
 text = "!"
 horizontal_alignment = 1
 
-[node name="LabelError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
+[node name="LabelError" type="Label" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError" unique_id=1438989747]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.40, 0.38, 1)
+theme_override_colors/font_color = Color(0.75, 0.4, 0.38, 1)
 theme_override_fonts/font = ExtResource("8_font")
 theme_override_font_sizes/font_size = 14
 text = "No se pudo cargar el leaderboard."
 horizontal_alignment = 1
 
-[node name="BotonReintentar" type="Button" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError"]
+[node name="BotonReintentar" type="Button" parent="PanelCentral/VBoxPrincipal/Contenido/VBoxContenido/ContenedorError" unique_id=1831260388]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
@@ -250,6 +242,6 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_reintentar_normal")
 theme_override_styles/hover = SubResource("StyleBoxFlat_reintentar_hover")
 text = "Reintentar"
 
-[node name="OwnPositionCard" parent="PanelCentral/VBoxPrincipal" instance=ExtResource("4_card")]
+[node name="OwnPositionCard" parent="PanelCentral/VBoxPrincipal" unique_id=1152490072 instance=ExtResource("4_card")]
 unique_name_in_owner = true
 layout_mode = 2

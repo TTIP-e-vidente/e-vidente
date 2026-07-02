@@ -58,6 +58,39 @@ static func texto_posicion(posicion: int) -> String:
 	return "#%d" % posicion
 
 
+static func id_usuario_entrada(entrada: Dictionary) -> String:
+	var user_id: Variant = entrada.get("user_id", entrada.get("userId", ""))
+	return str(user_id).strip_edges()
+
+
+static func resolver_nombre_entrada(entrada: Dictionary) -> String:
+	var display: Variant = entrada.get("display_name", entrada.get("displayName", null))
+	if display is String:
+		var texto_display := (display as String).strip_edges()
+		if not texto_display.is_empty():
+			return texto_display
+
+	var nombre: Variant = entrada.get("nombre", entrada.get("name", null))
+	var apellido: Variant = entrada.get(
+		"apellido",
+		entrada.get("last_name", entrada.get("surname", null))
+	)
+	var partes: PackedStringArray = PackedStringArray()
+	if nombre is String and not (nombre as String).strip_edges().is_empty():
+		partes.append((nombre as String).strip_edges())
+	if apellido is String and not (apellido as String).strip_edges().is_empty():
+		partes.append((apellido as String).strip_edges())
+	if not partes.is_empty():
+		return " ".join(partes)
+
+	var username: Variant = entrada.get("username", "")
+	if username is String:
+		var texto_user := (username as String).strip_edges()
+		if not texto_user.is_empty():
+			return texto_user
+	return "—"
+
+
 static func entradas_cercanas(entradas: Array, puesto_centro: int, radio: int = 2) -> Array:
 	if puesto_centro <= 0 or radio < 0:
 		return []
@@ -81,7 +114,7 @@ static func entradas_cercanas(entradas: Array, puesto_centro: int, radio: int = 
 
 
 static func entrada_es_valida(entry: Dictionary) -> bool:
-	var user_id := str(entry.get("user_id", "")).strip_edges()
+	var user_id := id_usuario_entrada(entry)
 	if user_id.is_empty():
 		return false
 	var rank := entero_desde_json(entry.get("rank", 0))
@@ -101,7 +134,7 @@ static func filtrar_entradas_validas(entradas: Array) -> Array:
 		var entry := entrada as Dictionary
 		if not entrada_es_valida(entry):
 			continue
-		var user_id := str(entry.get("user_id", "")).strip_edges()
+		var user_id := id_usuario_entrada(entry)
 		var rank := entero_desde_json(entry.get("rank", 0))
 		if vistos_usuario.has(user_id) or vistos_puesto.has(rank):
 			continue
@@ -126,10 +159,10 @@ static func preparar_datos_listado(datos: Dictionary, id_propio: String = "") ->
 	var own: Variant = salida.get("own_position", null)
 	if own is Dictionary and entrada_es_valida(own as Dictionary):
 		var own_dict := own as Dictionary
-		var uid := str(own_dict.get("user_id", "")).strip_edges()
+		var uid := id_usuario_entrada(own_dict)
 		var incluye := false
 		for entrada in filtradas:
-			if entrada is Dictionary and str((entrada as Dictionary).get("user_id", "")) == uid:
+			if entrada is Dictionary and id_usuario_entrada(entrada as Dictionary) == uid:
 				incluye = true
 				break
 		if not incluye and (id_propio.is_empty() or uid == id_propio):

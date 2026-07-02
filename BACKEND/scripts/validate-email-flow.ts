@@ -117,9 +117,10 @@ async function upsertValidationUser(client: PoolClient, passwordHash: string): P
         display_name,
         mail,
         password_hash,
-        email_notifications_enabled
+        email_notifications_enabled,
+        mail_verified_at
       )
-      VALUES ($1, $2, $2, $3, $4, true)
+      VALUES ($1, $2, $2, $3, $4, true, now())
       ON CONFLICT (username)
       DO UPDATE SET
         name = EXCLUDED.name,
@@ -127,6 +128,7 @@ async function upsertValidationUser(client: PoolClient, passwordHash: string): P
         mail = EXCLUDED.mail,
         password_hash = EXCLUDED.password_hash,
         email_notifications_enabled = true,
+        mail_verified_at = COALESCE(users.mail_verified_at, now()),
         updated_at = now()
       RETURNING id;
     `,
@@ -213,9 +215,10 @@ async function seedStreakLostCandidate(): Promise<boolean> {
           display_name,
           mail,
           password_hash,
-          email_notifications_enabled
+          email_notifications_enabled,
+          mail_verified_at
         )
-        VALUES ($1, $2, $2, $3, $4, true)
+        VALUES ($1, $2, $2, $3, $4, true, now())
         ON CONFLICT (username)
         DO UPDATE SET
           name = EXCLUDED.name,
@@ -223,6 +226,7 @@ async function seedStreakLostCandidate(): Promise<boolean> {
           mail = EXCLUDED.mail,
           password_hash = EXCLUDED.password_hash,
           email_notifications_enabled = true,
+          mail_verified_at = COALESCE(users.mail_verified_at, now()),
           updated_at = now()
         RETURNING id;
       `,
@@ -309,7 +313,9 @@ async function checkWelcomeOutbox(): Promise<void> {
     await pool.query(
       `
         UPDATE users
-        SET welcome_email_sent_at = NULL, updated_at = now()
+        SET welcome_email_sent_at = NULL,
+            mail_verified_at = COALESCE(mail_verified_at, now()),
+            updated_at = now()
         WHERE id = $1;
       `,
       [userId]

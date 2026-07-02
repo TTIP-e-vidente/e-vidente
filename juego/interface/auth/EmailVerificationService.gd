@@ -228,4 +228,12 @@ static func ejecutar_desde_perfil(contexto: Node, evaluacion: Dictionary) -> Dic
 		return await ejecutar_pendiente(contexto, false, nav)
 	if not bool(evaluacion.get("show_overlay", false)):
 		return _fallo_envio(evaluacion)
+	if not bool(evaluacion.get("feedback_ok", true)):
+		var preflight := await _asegurar_servidor_y_sesion()
+		if not bool(preflight.get("ok", false)):
+			return preflight
+		var res := await AuthApi.solicitar_codigo_verificacion()
+		evaluacion = preparar_evaluacion_tras_solicitud(res)
+		if not bool(evaluacion.get("show_overlay", false)):
+			return _fallo_envio(evaluacion)
 	return await mostrar_escena(contexto, evaluacion, false, nav)

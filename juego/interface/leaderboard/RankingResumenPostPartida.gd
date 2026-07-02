@@ -364,12 +364,8 @@ func _restaurar_estilo_panel() -> void:
 func _nombre_rival(siguiente: Variant) -> String:
 	if not siguiente is Dictionary:
 		return "el anterior"
-	var sig := siguiente as Dictionary
-	var display: Variant = sig.get("display_name", null)
-	if display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = sig.get("username", "")
-	if username is String and not (username as String).is_empty():
-		return username as String
-	var puesto := int(sig.get("rank", 0))
+	var nombre := LeaderboardFormat.resolver_nombre_entrada(siguiente as Dictionary)
+	if nombre != "—":
+		return nombre
+	var puesto := LeaderboardFormat.entero_desde_json((siguiente as Dictionary).get("rank", 0))
 	return "puesto #%d" % puesto if puesto > 0 else "el anterior"

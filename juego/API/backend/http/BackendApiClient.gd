@@ -9,11 +9,11 @@ const AVATAR_UPLOAD_TIMEOUT := 30.0
 var base_url: String = ""
 var _supabase: SupabaseVerifyClient = null
 var _edge: SupabaseEdgeClient = null
+var _pool: Array[HTTPRequest] = []
 
 
 func _init() -> void:
 	base_url = BackendConfig.obtener_base_url()
-var _pool: Array[HTTPRequest] = []
 
 
 func _adquirir_http() -> HTTPRequest:

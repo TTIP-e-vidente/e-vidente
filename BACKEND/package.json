@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node scripts/dev-local.ts",
     "dev:local": "ts-node scripts/dev-local.ts",
+    "dev:local-db": "ts-node scripts/dev-local-db.ts",
     "dev:stop": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/stop-dev-server.ts",
     "dev:restart": "npm run dev:stop && npm run dev",
     "dev:restart:local": "npm run dev:stop && npm run dev:local",

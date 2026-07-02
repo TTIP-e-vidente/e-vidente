@@ -109,11 +109,7 @@ func _mostrar_inicial(nombre: String, user_id: String) -> void:
 
 
 func _resolver_nombre(entrada: Dictionary) -> String:
-	var display: Variant = entrada.get("display_name", null)
-	if display is String and not (display as String).is_empty():
-		return display as String
-	var username: Variant = entrada.get("username", "")
-	return username as String if username is String else "?"
+	return LeaderboardFormat.resolver_nombre_entrada(entrada)
 
 
 func _extraer_inicial(nombre: String) -> String:

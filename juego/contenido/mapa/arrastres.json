@@ -11,7 +11,7 @@
 	"difficulty": 3,
 	"meal": "desayuno",
 	"teaching_key": "celiaquia_desayuno",
-	"pick": { "correct": 3, "incorrect": 3 }
+	"pick": { "correct": 2, "incorrect": 3 }
   },
   "drag_desayuno_normal": {
 	"mode": "drag_food",
@@ -32,7 +32,7 @@
 	"difficulty": 3,
 	"meal": "desayuno",
 	"teaching_key": "celiaquia_desayuno",
-	"pick": { "correct": 4, "incorrect": 3 }
+	"pick": { "correct": 2, "incorrect": 4 }
   },
   "drag_colacion_facil": {
 	"mode": "drag_food",
@@ -67,7 +67,7 @@
 	"difficulty": 3,
 	"meal": "colacion",
 	"teaching_key": "celiaquia_colacion",
-	"pick": { "correct": 4, "incorrect": 3 }
+	"pick": { "correct": 1, "incorrect": 5 }
   },
   "drag_merienda_facil": {
 	"mode": "drag_food",
@@ -102,7 +102,7 @@
 	"difficulty": 3,
 	"meal": "merienda",
 	"teaching_key": "celiaquia_merienda",
-	"pick": { "correct": 4, "incorrect": 3 }
+	"pick": { "correct": 2, "incorrect": 4 }
   },
   "drag_almuerzo_facil": {
 	"mode": "drag_food",
@@ -137,14 +137,14 @@
 	"difficulty": 3,
 	"meal": "almuerzo",
 	"teaching_key": "celiaquia_almuerzo",
-	"pick": { "correct": 3, "incorrect": 4 }
+	"pick": { "correct": 2, "incorrect": 4 }
   },
   "drag_cena_facil": {
 	"mode": "drag_food",
 	"difficulty": 1,
 	"meal": "cena",
 	"teaching_key": "celiaquia_cena",
-	"pick": { "correct": 2, "incorrect": 1 }
+	"pick": { "correct": 2, "incorrect": 2 }
   },
   "drag_cena_normal": {
 	"mode": "drag_food",
@@ -158,7 +158,7 @@
 	"difficulty": 2,
 	"meal": "cena",
 	"teaching_key": "celiaquia_cena",
-	"pick": { "correct": 3, "incorrect": 2 }
+	"pick": { "correct": 3, "incorrect": 1 }
   },
   "drag_cena_dificil": {
 	"mode": "drag_food",
@@ -172,7 +172,7 @@
 	"difficulty": 3,
 	"meal": "cena",
 	"teaching_key": "celiaquia_cena",
-	"pick": { "correct": 4, "incorrect": 3 }
+	"pick": { "correct": 1, "incorrect": 5 }
   },
   "drag_bebida_facil": {
 	"mode": "drag_food",
@@ -186,6 +186,6 @@
 	"difficulty": 2,
 	"meal": "bebida",
 	"teaching_key": "celiaquia_bebida",
-	"pick": { "correct": 2, "incorrect": 1 }
+	"pick": { "correct": 3, "incorrect": 2 }
   }
 }

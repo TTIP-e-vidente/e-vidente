@@ -3,6 +3,8 @@ extends Node
 const Service := preload("res://interface/auth/EmailVerificationService.gd")
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
 const MailVerifyNudgeHelperScript := preload("res://interface/auth/MailVerifyNudgeHelper.gd")
+const StreakReminderNudgeHelperScript := preload("res://interface/auth/StreakReminderNudgeHelper.gd")
+const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
 
 const ESCENAS_SIN_AVISO_MAIL := [
 	"res://interface/evidente.tscn",
@@ -15,6 +17,7 @@ const ESCENAS_SIN_AVISO_MAIL := [
 signal aviso_verificacion(mensaje: String, es_ok: bool)
 
 var _nudge_global: CanvasLayer = null
+var _streak_nudge_global: CanvasLayer = null
 var _aviso_mail_activo_en_sesion := false
 
 
@@ -37,6 +40,10 @@ func _ready() -> void:
 		self,
 		Callable(self, "_on_nudge_verificar_ahora")
 	)
+	_streak_nudge_global = StreakReminderNudgeHelperScript.instalar_en(
+		self,
+		Callable(self, "_on_streak_nudge_accion")
+	)
 	if BackendSession.has_signal("session_restored"):
 		BackendSession.session_restored.connect(_on_sesion_restaurada)
 	if BackendSession.has_signal("login_succeeded"):
@@ -51,7 +58,7 @@ func _ready() -> void:
 
 
 func refrescar_nudge_global() -> void:
-	call_deferred("_refrescar_nudge_global")
+	call_deferred("_refrescar_nudges_global")
 
 
 func _on_sesion_restaurada(_user: Dictionary) -> void:
@@ -75,14 +82,20 @@ func _on_arbol_cambiado(_node: Node) -> void:
 	refrescar_nudge_global()
 
 
-func _refrescar_nudge_global() -> void:
-	if not is_instance_valid(_nudge_global):
-		return
-	var ocultar := (
-		_escena_actual_sin_aviso_mail()
-		or not _aviso_mail_activo_en_sesion
-	)
-	MailVerifyNudgeHelperScript.refrescar(_nudge_global, ocultar)
+func _refrescar_nudges_global() -> void:
+	if is_instance_valid(_nudge_global):
+		var ocultar_mail := (
+			_escena_actual_sin_aviso_mail()
+			or not _aviso_mail_activo_en_sesion
+		)
+		MailVerifyNudgeHelperScript.refrescar(_nudge_global, ocultar_mail)
+	if is_instance_valid(_streak_nudge_global):
+		var ocultar_racha := (
+			_escena_actual_sin_aviso_mail()
+			or not _aviso_mail_activo_en_sesion
+			or AuthApi.mail_pendiente_verificacion()
+		)
+		StreakReminderNudgeHelperScript.refrescar(_streak_nudge_global, ocultar_racha)
 
 
 func _escena_actual_sin_aviso_mail() -> bool:
@@ -101,6 +114,48 @@ func _on_nudge_verificar_ahora() -> void:
 		if not path.is_empty():
 			return_scene = path
 	iniciar_pendiente(false, {"return_scene": return_scene, "after_success": "none"})
+
+
+func _on_streak_nudge_accion(accion: int) -> void:
+	match accion:
+		StreakReminderHelperScript.AccionNudge.VERIFICAR_MAIL:
+			_on_nudge_verificar_ahora()
+		StreakReminderHelperScript.AccionNudge.ACTIVAR_RECORDATORIOS:
+			_activar_recordatorios_desde_nudge()
+		StreakReminderHelperScript.AccionNudge.ABRIR_PERFIL:
+			GameSceneRouter.go_to_profile_editor(get_tree())
+
+
+func _activar_recordatorios_desde_nudge() -> void:
+	call_deferred("_activar_recordatorios_desde_nudge_async")
+
+
+func _activar_recordatorios_desde_nudge_async() -> void:
+	if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("set_procesando"):
+		_streak_nudge_global.call("set_procesando", true)
+	var resultado: Dictionary = await StreakReminderHelperScript.activar_recordatorios_en_servidor()
+	if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("set_procesando"):
+		_streak_nudge_global.call("set_procesando", false)
+	var mensaje := str(resultado.get("error", "")).strip_edges()
+	if bool(resultado.get("ok", false)):
+		mensaje = "Recordatorios de racha activados. Te avisamos por mail cerca de las 18:00."
+		aviso_verificacion.emit(mensaje, true)
+		if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("ocultar"):
+			_streak_nudge_global.call("ocultar")
+		else:
+			refrescar_nudge_global()
+		call_deferred("_sincronizar_guardado_tras_activar_recordatorios")
+		return
+	if mensaje.is_empty():
+		mensaje = "No se pudieron activar los recordatorios. Probá desde tu perfil."
+	aviso_verificacion.emit(mensaje, false)
+	if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("mostrar_aviso"):
+		_streak_nudge_global.call("mostrar_aviso", mensaje, false)
+
+
+func _sincronizar_guardado_tras_activar_recordatorios() -> void:
+	if AuthApi.esta_logueado():
+		AuthApi.aplicar_progreso_online_a_guardado_local()
 
 
 func iniciar_post_registro(result: Dictionary, navegacion: Dictionary = {}) -> void:
@@ -148,8 +203,21 @@ func procesar_retorno_escena(nodo_escena: Node) -> Dictionary:
 				nodo_escena.call("_mostrar_perfil")
 		"profile_refresh":
 			_refrescar_perfil_tras_verificacion(nodo_escena)
+	call_deferred("_ofrecer_recordatorios_tras_verificacion", retorno)
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(nodo_escena)
 	return retorno
+
+
+func _ofrecer_recordatorios_tras_verificacion(retorno: Dictionary) -> void:
+	if str(retorno.get("outcome", "")) != "completado":
+		return
+	if not StreakReminderHelperScript.racha_en_riesgo():
+		refrescar_nudge_global()
+		return
+	if StreakReminderHelperScript.notificaciones_activas_en_servidor():
+		refrescar_nudge_global()
+		return
+	refrescar_nudge_global()
 
 
 func _refrescar_perfil_tras_verificacion(nodo_escena: Node) -> void:
@@ -180,6 +248,10 @@ func _run_job(job: Callable) -> void:
 
 func _procesar_resultado_verificacion(result: Dictionary) -> void:
 	refrescar_nudge_global()
+	if bool(result.get("ok", false)) and StreakReminderHelperScript.racha_en_riesgo():
+		if not StreakReminderHelperScript.notificaciones_activas_en_servidor():
+			if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("refrescar"):
+				_streak_nudge_global.call("refrescar")
 	var mensaje: String = str(result.get("mensaje", "")).strip_edges()
 	if mensaje.is_empty():
 		return

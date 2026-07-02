@@ -7,6 +7,7 @@ const PostGameFlowControllerScript := preload(
 	"res://niveles/progress/PostGameFlowController.gd"
 )
 const ContextoSesionDeJuegoScript := preload("res://niveles/progress/ContextoSesionDeJuego.gd")
+const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
 
 const DEFAULT_RETURN_TO := "res://mapas/MapScene.tscn"
 const STREAK_FEEDBACK_META := "streak_feedback"
@@ -193,6 +194,9 @@ func _refrescar_ui() -> void:
 
 func _resolver_texto_detalle() -> String:
 	if _streak_state == "warning":
+		var detalle := StreakReminderHelperScript.mensaje_detalle_pantalla_racha()
+		if not detalle.is_empty():
+			return detalle
 		return "Jugá hoy para mantener la racha"
 		
 	if not _status_detail.is_empty():

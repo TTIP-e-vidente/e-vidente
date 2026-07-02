@@ -7,6 +7,7 @@ import { buildStreakLostEmail as buildStreakLostEmailTemplate } from './template
 import type { StreakTemplateContext } from './templates/types.ts';
 import { buildWelcomeEmail as buildWelcomeEmailTemplate } from './templates/welcome.template.ts';
 import { buildAccountVerifiedEmail as buildAccountVerifiedEmailTemplate } from './templates/account-verified.template.ts';
+import { buildMailChangedEmail as buildMailChangedEmailTemplate } from './templates/mail-changed.template.ts';
 
 function buildStreakMessageContext(
   name: string,
@@ -79,4 +80,16 @@ export function buildStreakLostEmail(
   return buildStreakLostEmailTemplate(
     buildStreakMessageContext(name, mail, streakCount),
   );
+}
+
+export function buildMailChangedEmail(input: {
+  name: string;
+  oldMail: string;
+  newMail: string;
+}): EmailMessage {
+  return buildMailChangedEmailTemplate({
+    name: input.name,
+    oldMail: input.oldMail,
+    newMail: input.newMail,
+  });
 }
