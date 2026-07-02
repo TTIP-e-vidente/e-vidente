@@ -82,7 +82,8 @@ body.canvas-page.canvas-dominio .nav { position: fixed; left: 0; right: 0; top: 
   <a href="mer.html">Hub MER</a>
   <a href="mer-dominio.html" class="on">Dominio <span class="badge badge-e1">E1·E2</span></a>
   <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
-  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3</span></a>
+  <a href="mer-persistencia-e4.html">Email <span class="badge badge-e4">E4</span></a>
+  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3·E4</span></a>
   <span class="nav-spacer"></span>
 </nav>
 
@@ -116,6 +117,15 @@ body.canvas-page.canvas-dominio .nav { position: fixed; left: 0; right: 0; top: 
     </div>
   </div>
 
+  <div class="panel-section ps-e3">
+    <div class="ps-label">Qué agregó Entrega 4</div>
+    <div class="delta" style="background:rgba(255,159,66,0.08);border-color:rgba(255,159,66,0.15)">
+      <div class="delta-title" style="color:rgba(255,200,120,0.9)">Canal email (sin nuevo dominio)</div>
+      OTP, bienvenida y recordatorios sobre las mismas entidades Jugador/Perfil/Racha.
+      Tablas <code style="font-size:9px">email_*</code> en Postgres; Godot habla con Edge.
+    </div>
+  </div>
+
   <div class="panel-section ps-info">
     <div class="ps-label">Persistencia local (E1–E3)</div>
     <div class="item"><code style="font-size:9px;background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px">SaveDataSchema.gd</code> v4</div>
@@ -123,7 +133,8 @@ body.canvas-page.canvas-dominio .nav { position: fixed; left: 0; right: 0; top: 
     <div class="item">Cola de sync si hay conexión</div>
   </div>
 
-  <a class="panel-link panel-link-green" href="mer-persistencia-e3.html">Ver esquema completo E3 →</a>
+  <a class="panel-link panel-link-green" href="mer-persistencia-e3.html">Ver esquema E3 →</a>
+  <a class="panel-link panel-link-green" href="mer-persistencia-e4.html" style="color:rgba(255,200,120,0.9)">Ver extensión E4 email →</a>
   <a class="panel-link panel-link-blue" href="MER">Documentación técnica →</a>
 </div>
 

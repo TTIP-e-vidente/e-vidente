@@ -4,6 +4,55 @@ Diario de la entrega de **emails transaccionales, verificación OTP y recordator
 
 ---
 
+### `2026-07-02` — MER persistencia E4 mejorado
+<kbd>Docs</kbd> <kbd>MER</kbd>
+
+`mer-persistencia-e4.html` reescrito al nivel de E3: toggles por capa, tablas completas según migraciones, `streaks`↔jobs, ciclo `email_deliveries`, equivalencia local↔remoto, strip de migraciones.
+
+**Impacto**
+- Diagrama usable para defensa TTIP sin abrir SQL ni Flujo-Completo.
+- `Mer-Persistencia-E4.md` ampliado con tablas de columnas.
+- `mer-persistencia-e3.html`: card `users` enlaza a E4.
+
+---
+
+### `2026-07-02` — Entrega 4 compacta (estilo E2/E3)
+<kbd>Docs</kbd> <kbd>TTIP</kbd>
+
+`Entrega-4.md` reescrito como página principal: resumen, bullets, desafíos, alcance, Jira — igual que E2/E3. Flujo-Completo pasa a profundización.
+
+**Impacto**
+- Una entrada clara para defensa TTIP; sin duplicar narrativa en 4 archivos.
+
+---
+<kbd>Docs</kbd> <kbd>MER</kbd>
+
+Diagrama interactivo `mer-persistencia-e4.html`, hub MER actualizado E3→E4, mapeo dominio→local→Postgres con entidades de mail.
+
+**Qué se documentó**
+- Tablas `email_deliveries`, `email_verification_codes`, columnas `users`
+- Dual Godot: `backend.local.json`, api_mode, cache sesión
+- `MER.md` + `Vistas-Interactivas.md` + navegación MER
+
+---
+<kbd>Docs</kbd> <kbd>Jira</kbd> <kbd>Supabase</kbd>
+
+Se consolidó el flujo completo de Entrega 4 en un documento humano que cruza tickets Jira, stack Supabase Edge, Brevo y desafíos resueltos. Consulta directa a Jira (UNQ-64, UNQ-177, UNQ-190, UNQ-149, etc.).
+
+**Qué se agregó**
+- `Entrega-4-Flujo-Completo.md` — narrativa de punta a punta
+- Trazabilidad ticket → US → implementación en `Entrega-4.md`
+- Índices `Entregas.md` y `_Sidebar.md` actualizados con E4
+
+**Impacto**
+- Revisor TTIP puede leer una sola página y entender todo el circuito sin Express ni código.
+
+**Evidencia técnica**
+- `wiki/Entrega-4-Flujo-Completo.md`
+- Tickets: [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64), [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177)
+
+---
+
 ### `2026-06-25` — Documentación E4 nivel producción
 <kbd>Docs</kbd> <kbd>TTIP</kbd>
 

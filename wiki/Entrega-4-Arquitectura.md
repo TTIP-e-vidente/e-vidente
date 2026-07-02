@@ -1,6 +1,8 @@
 # Arquitectura — Entrega 4 (emails)
 
-Índice: [Resumen](Entrega-4) · [Guía rápida](Entrega-4-Guia-Rapida) · [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Mails](Entrega-4-Mails)
+> **Stack productivo:** Supabase Edge Functions + Postgres + `pg_cron` → Brevo. Express solo para tests legacy — [EXPRESS_LEGACY](../BACKEND/docs/EXPRESS_LEGACY.md).
+
+Índice: [Resumen](Entrega-4) · [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Mails](Entrega-4-Mails)
 
 ---
 
@@ -13,39 +15,44 @@ Entrega 3 dejó backend, racha en PostgreSQL y el flag `email_notifications_enab
 - Recordatorios de racha con consentimiento y dedupe.
 - Auditoría en `email_deliveries` con retry y jobs programados.
 
-**Regla de oro:** Godot nunca habla con Brevo. Solo persiste preferencias y dispara eventos HTTP; el backend orquesta el envío.
+**Regla de oro:** Godot nunca habla con Brevo. Solo persiste preferencias y dispara eventos HTTP a Edge Functions; el servidor orquesta el envío.
 
 ---
 
-## Vista general
+## Vista general (Supabase Edge)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           CLIENTE (Godot)                                │
 │  Login / auth.gd        → accept_email_notifications                     │
-│  EmailVerification.*    → OTP request / confirm                          │
+│  EmailVerification.*    → verify-email-request / confirm (Edge)            │
 │  Perfil                 → PATCH email_notifications_enabled              │
 │  HUD / StreakLoss       → feedback in-game (paralelo al mail)            │
 └───────────────────────────────┬──────────────────────────────────────────┘
-                                │ HTTP (AuthApi, BackendSession)
+                                │ HTTP (api_mode=supabase_edge)
                                 ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                        BACKEND (Node / Express)                          │
-│  auth.service              → registro, login                             │
-│  email.verification.*      → OTP, mail_changed, queueWelcomeEmail        │
-│  email.service             → deliverTrackedEmail(), jobs de racha        │
-│  email.repository          → candidatos SQL, acquireDeliverySlot, dedupe │
-│  email.client              → POST api.brevo.com/v3/smtp/email            │
-│  email.jobs.routes         → POST /internal/jobs/*                       │
-│  email.routes (dev)        → preview, deliveries, catálogo templates     │
+│                    SUPABASE EDGE FUNCTIONS                               │
+│  auth-register / auth-login    → registro, login                         │
+│  verify-email-*                → OTP, mail_changed, queueWelcomeEmail      │
+│  _shared/delivery.ts           → deliverTrackedEmail(), dedupe           │
+│  _shared/jobs/email-jobs.ts    → candidatos SQL, reconcile               │
+│  internal-job                  → POST con X-Job-Secret (pg_cron)           │
+│  brevo-webhook                 → bounce / unsubscribe                    │
 └───────────────┬──────────────────────────────┬───────────────────────────┘
                 │                              │
                 ▼                              ▼
-         PostgreSQL                      Brevo (SMTP API)
+         PostgreSQL (Supabase)           Brevo (SMTP API)
    users, streaks,                  remitente verificado
    email_deliveries,                messageId transaccional
    email_verification_codes
+
+pg_cron ──► internal-job (18:00 / 00:00 / 08:00 / 20:00 ART)
 ```
+
+### Vista legacy (Express — solo tests locales)
+
+Ver `BACKEND/src/modules/email/` — usado en `npm run test` y desarrollo sin Supabase.
 
 ---
 

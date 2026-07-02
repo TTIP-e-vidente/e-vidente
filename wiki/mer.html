@@ -152,29 +152,31 @@
   <a href="mer.html" class="on">Hub MER</a>
   <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
   <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
-  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3</span></a>
+  <a href="mer-persistencia-e4.html">Email <span class="badge badge-e4">E4</span></a>
+  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3·E4</span></a>
   <span class="nav-spacer"></span>
 </nav>
 
 <div class="hub-strip">
-  <span class="hub-strip-label">Recorrido E3</span>
+  <span class="hub-strip-label">Recorrido MER</span>
   <a class="hub-pill on" data-page="mer.html" href="mer.html"><span class="dot hub"></span> Hub MER</a>
   <a class="hub-pill" data-page="mer-flujo.html" href="mer-flujo.html"><span class="dot flujo"></span> Flujo</a>
-  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> Persistencia</a>
+  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> E3</a>
+  <a class="hub-pill" data-page="mer-persistencia-e4.html" href="mer-persistencia-e4.html"><span class="dot" style="background:#ff9f42"></span> E4</a>
 </div>
 
 <div class="page">
   <p class="eyebrow">Modelo de Entidades y Relaciones</p>
   <h1>MER — E-VIDENTE</h1>
   <p class="lead">
-    Tres capas porque mezclarlas confunde. El dominio del juego (E1/E2) no cambió en E3 —
-    lo que cambió es <em>dónde guardamos el progreso del jugador</em>.
+    Cuatro capas porque mezclarlas confunde. El dominio del juego (E1/E2) no cambió en E3 ni E4 —
+    lo que evolucionó es <em>dónde y cómo persistimos el estado del jugador</em> y, en E4, el canal de mails.
   </p>
 
   <div class="glance mb-48">
     <div class="glance-item"><div class="glance-icon local">💾</div><div><h4>Local primero</h4><p><code>save_data.json</code> manda. Sin red, el juego corre igual.</p></div></div>
-    <div class="glance-item"><div class="glance-icon sync">↔</div><div><h4>Sync opcional</h4><p>Cola offline, merge al login, idempotencia por <code>clientRunId</code>.</p></div></div>
-    <div class="glance-item"><div class="glance-icon pg">🐘</div><div><h4>PostgreSQL E3</h4><p>8 tablas alineadas al dominio Excalidraw. Solo estado del jugador.</p></div></div>
+    <div class="glance-item"><div class="glance-icon sync">↔</div><div><h4>Sync + Edge</h4><p>Cola offline, merge al login, Supabase Edge en staging.</p></div></div>
+    <div class="glance-item"><div class="glance-icon pg">🐘</div><div><h4>PostgreSQL</h4><p>10 tablas jugador + 2 de email (E4). Contenido sigue en JSON.</p></div></div>
   </div>
 
   <!-- Cards -->
@@ -191,11 +193,17 @@
       <h2>Persistencia dual</h2>
       <p><code>user://save_data.json</code> + PostgreSQL con la cadena completa de tablas y la capa de sync.</p>
     </a>
+    <a class="card" href="mer-persistencia-e4.html">
+      <span class="card-tag" style="background:rgba(255,159,66,0.14);color:rgba(255,200,120,0.9)">E4</span>
+      <span class="card-arr">→</span>
+      <h2>Email + Supabase</h2>
+      <p>Extensión E4: <code>email_deliveries</code>, OTP, columnas en <code>users</code>, Edge + pg_cron.</p>
+    </a>
     <a class="card" href="mer-flujo.html">
-      <span class="card-tag" style="background:rgba(255,200,70,0.14);color:rgba(255,210,100,0.85)">E1 → E3</span>
+      <span class="card-tag" style="background:rgba(255,200,70,0.14);color:rgba(255,210,100,0.85)">E1 → E4</span>
       <span class="card-arr">→</span>
       <h2>Flujo de datos</h2>
-      <p>Evolución por entrega (E1 local → E3 sync) y swimlanes: partida completada + login/merge.</p>
+      <p>Evolución por entrega (E1 local → E4 mails) y swimlanes: partida, login y OTP.</p>
     </a>
     <a class="card" href="MER">
       <span class="card-tag tag-doc">Docs</span>
@@ -239,34 +247,47 @@
       </div>
     </div>
 
-    <!-- RIGHT: E3 additions -->
+    <!-- RIGHT: E3 + E4 additions -->
     <div class="evo-side evo-e3">
       <div class="evo-header">
-        <h3>Entrega 3</h3>
-        <span>Dominio + Persistencia dual</span>
+        <h3>Entrega 3 → 4</h3>
+        <span>Dominio + Persistencia + Email</span>
       </div>
 
       <div class="add-item">
         <span class="add-dot add-dot-green"></span>
         <div>
-          <div class="add-title">PostgreSQL (nuevo)</div>
+          <div class="add-title">PostgreSQL E3 (base)</div>
           <div class="add-desc">
             8 tablas alineadas al MER Excalidraw:<br>
             <code>users → profiles → progress_restrictions → history_games → games</code><br>
             + <code>streaks · images · restriction_node_config</code>
           </div>
-          <a class="add-link" href="mer-flujo.html#evolucion">Ver evolución E1→E3 →</a>
+          <a class="add-link" href="mer-persistencia-e3.html">Diagrama E3 completo →</a>
+        </div>
+      </div>
+
+      <div class="add-item">
+        <span class="add-dot" style="background:rgba(255,159,66,0.75)"></span>
+        <div>
+          <div class="add-title">PostgreSQL E4 — email (nuevo)</div>
+          <div class="add-desc">
+            <code>email_deliveries</code> (auditoría, dedupe, retry)<br>
+            <code>email_verification_codes</code> (OTP)<br>
+            <code>users</code> + mail_verified_at, email_notifications_enabled
+          </div>
+          <a class="add-link" href="mer-persistencia-e4.html">Diagrama E3+E4 →</a>
         </div>
       </div>
 
       <div class="add-item">
         <span class="add-dot add-dot-blue"></span>
         <div>
-          <div class="add-title">Save local evolucionado</div>
+          <div class="add-title">Save local + config Godot</div>
           <div class="add-desc">
-            <code>save_data.json</code> sigue siendo la fuente primaria.
-            Se agrega <code>backend_sync_queue.json</code> para cola offline
-            y <code>backend_session.json</code> para JWT entre sesiones.
+            <code>save_data.json</code> v4 sin tablas SQL de mail.<br>
+            <code>backend.local.json</code>: api_mode supabase_edge / auto.<br>
+            Sesión cachea flags de mail para UI.
           </div>
         </div>
       </div>
@@ -274,11 +295,12 @@
       <div class="add-item">
         <span class="add-dot add-dot-amber"></span>
         <div>
-          <div class="add-title">Capa de sincronización</div>
+          <div class="add-title">Supabase Edge + pg_cron</div>
           <div class="add-desc">
-            <code>SincronizadorPartida</code> → <code>ProgressSyncService</code> → batch POST.
-            Idempotente por <code>clientRunId</code>. Merge con <code>ImportadorProgresoOnline</code> al hacer login.
+            verify-email-* · internal-job → Brevo.<br>
+            Jobs 18:00 / 00:00 ART para rachas. Godot nunca ve API key.
           </div>
+          <a class="add-link" href="Entrega-4">Resumen E4 →</a>
         </div>
       </div>
 
@@ -288,8 +310,7 @@
           <div class="add-title">Dominio sin cambios</div>
           <div class="add-desc">
             Las entidades conceptuales de E1/E2 siguen vigentes.
-            Solo se agregó Completar Palabra en E2.
-            El dominio no persiste — lo que persiste es el <em>estado del jugador</em>.
+            E4 agrega canal transversal de comunicación, no nuevas entidades de juego.
           </div>
         </div>
       </div>
@@ -322,10 +343,20 @@
         Autenticación JWT, perfil de jugador, rachas y resumen de partida remoto.
       </span>
     </div>
+    <div class="tl-row">
+      <span class="tl-e">Entrega 4</span>
+      <span class="tl-d">
+        <strong>Extensión transversal:</strong> 2 tablas email + columnas en <code>users</code>.
+        Supabase Edge Functions reemplazan Express en staging (<code>api_mode=supabase_edge</code>).
+        OTP, bienvenida, recordatorios de racha con opt-in. <code>pg_cron</code> dispara jobs sin GitHub Actions.
+        El dominio E1/E2 y el save local v4 no cambian de esquema.
+      </span>
+    </div>
   </div>
 
-  <a class="link-doc" href="mer-flujo.html#evolucion">↗ Flujo de datos — evolución por entrega</a>
-  <a class="link-doc" href="Sync-Godot-Postgres" style="margin-left:20px">↗ Sync Godot ↔ Postgres — detalle operativo</a>
+  <a class="link-doc" href="mer-persistencia-e4.html">↗ Persistencia E3+E4 — diagrama interactivo</a>
+  <a class="link-doc" href="mer-flujo.html#evolucion" style="margin-left:20px">↗ Flujo de datos — evolución por entrega</a>
+  <a class="link-doc" href="Sync-Godot-Postgres" style="margin-left:20px">↗ Sync Godot ↔ Postgres</a>
 
   <!-- ── DESIGN DECISIONS ── -->
   <p class="hub-section-title" style="margin-top:60px">Decisiones de diseño</p>
@@ -481,6 +512,26 @@
         <td class="col-dom">Avatar</td>
         <td class="col-loc">profile.avatar_path + archivo en avatars/</td>
         <td class="col-pg">images (base64)<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">users.avatar_image_id FK</span></td>
+      </tr>
+      <tr>
+        <td class="col-dom">Mail verificado (E4)</td>
+        <td class="col-loc">backend_session cache<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">mail_verified_at en sesión</span></td>
+        <td class="col-pg">users.mail_verified_at<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">email_verification_codes</span></td>
+      </tr>
+      <tr>
+        <td class="col-dom">Notificaciones mail (E4)</td>
+        <td class="col-loc">profile.email_notifications_enabled<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">cache UI + auth.gd</span></td>
+        <td class="col-pg">users.email_notifications_enabled</td>
+      </tr>
+      <tr>
+        <td class="col-dom">Envío de correo (E4)</td>
+        <td class="col-dim">no persiste — solo UI OTP</td>
+        <td class="col-pg">email_deliveries<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">template_key · dedupe_key · status</span></td>
+      </tr>
+      <tr>
+        <td class="col-dom">Config backend (E4)</td>
+        <td class="col-loc">backend.local.json<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">api_mode · supabase_functions_url</span></td>
+        <td class="col-dim">Supabase Edge + pg_cron (ops)</td>
       </tr>
       <tr>
         <td class="col-dom">Mapa · Partida · Modalidades</td>

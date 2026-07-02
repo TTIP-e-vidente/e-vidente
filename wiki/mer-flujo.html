@@ -11,6 +11,7 @@
 .tag-e1 { background: var(--local-bg); color: var(--local-text); }
 .tag-e2 { background: rgba(99,120,255,0.1); color: rgba(140,160,255,0.65); }
 .tag-e3 { background: var(--sync-bg); color: var(--sync-text); }
+.tag-e4 { background: rgba(255,159,66,0.12); color: rgba(255,200,120,0.85); }
 </style>
 </head>
 <body>
@@ -20,7 +21,8 @@
   <a href="mer.html">Hub MER</a>
   <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
   <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
-  <a href="mer-flujo.html" class="on on-flow">Flujo <span class="badge badge-flow">E3</span></a>
+  <a href="mer-persistencia-e4.html">Email <span class="badge badge-e4">E4</span></a>
+  <a href="mer-flujo.html" class="on on-flow">Flujo <span class="badge badge-flow">E3·E4</span></a>
   <span class="nav-spacer"></span>
 </nav>
 
@@ -119,7 +121,7 @@
       </article>
 
       <!-- E3 -->
-      <article class="evo-card active-e3">
+      <article class="evo-card">
         <div class="evo-top">
           <h3>Entrega 3</h3>
           <span class="evo-tag tag-e3">Local + nube</span>
@@ -149,9 +151,41 @@
           <strong>Nuevo:</strong> JWT, cola, merge, 8 tablas PG. <strong>Contenido JSON</strong> sigue fuera de la DB.
         </div>
       </article>
+
+      <!-- E4 -->
+      <article class="evo-card active-e3">
+        <div class="evo-top">
+          <h3>Entrega 4</h3>
+          <span class="evo-tag tag-e4">+ Email</span>
+        </div>
+        <div class="evo-flow">
+          <div class="evo-step">
+            <span class="evo-dot blue">1</span>
+            <span>Registro → OTP por mail → verificar en Godot</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot" style="background:rgba(255,159,66,0.7)">2</span>
+            <span>Edge + Brevo · auditoría en <code>email_deliveries</code></span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot green">3</span>
+            <span>Racha en PG (E3) → jobs pg_cron si opt-in</span>
+          </div>
+          <div class="evo-arrow-down">↓</div>
+          <div class="evo-step">
+            <span class="evo-dot muted">✓</span>
+            <span>Gameplay offline igual — mails son best-effort</span>
+          </div>
+        </div>
+        <div class="evo-foot">
+          <strong>Nuevo:</strong> 2 tablas email, Supabase Edge, <code>api_mode</code>. <strong>Save local v4</strong> sin cambio de versión.
+        </div>
+      </article>
     </div>
 
-    <div class="evo-connector">El resto de esta página detalla solo Entrega 3</div>
+    <div class="evo-connector">Las secciones siguientes detallan E3 (partida/login). Para mails: <a href="mer-persistencia-e4.html" style="color:rgba(255,200,120,0.8)">diagrama E4</a></div>
   </section>
 
   <!-- ═══ SECCIÓN 2: FLUJO PARTIDA ═══ -->
@@ -349,6 +383,7 @@
         <div class="src-label">Diagramas MER</div>
         <a href="mer.html">Hub MER — evolución completa</a>
         <a href="mer-persistencia-e3.html">Persistencia dual (tablas + archivos)</a>
+        <a href="mer-persistencia-e4.html">Persistencia E4 (email + Supabase)</a>
         <a href="mer-dominio.html">Dominio E1/E2 (Excalidraw)</a>
       </div>
       <div class="src">

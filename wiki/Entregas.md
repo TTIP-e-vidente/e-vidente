@@ -42,29 +42,29 @@ Setup: [Como-Empezar](Como-Empezar) · [SUPABASE_QUICKSTART](../BACKEND/docs/SUP
 | [Arquitectura](Entrega-3-Arquitectura) | Backend, sync, auth y CI |
 | [Decisiones](Entrega-3-Decisiones) | ADRs y decisiones tomadas |
 | [Evidencia](Entrega-3-Evidencia) | Evidencia de lo entregado |
-| [Hub MER](Mer-Hub) | Índice visual de diagramas E3 |
-| [Flujo E1→E3](Mer-Flujo) | Evolución de persistencia |
+| [Hub MER](Mer-Hub) | Índice visual de diagramas |
 | [MER persistencia E3](Mer-Persistencia-E3) | Diagrama dual local + PostgreSQL |
+| [Flujo E1→E4](Mer-Flujo) | Evolución de persistencia |
 | [Bitácora E3](Bitacora-Entrega-3) | Cambios cronológicos |
 
 ---
 
-## Entrega 4 (lista para revisión)
+## Entrega 4
 
-Circuito completo de **mails transaccionales**: OTP, bienvenida, recordatorios de racha, auditoría PostgreSQL.
-
-**Empezá acá:** [Guía rápida E4 (5 min)](Entrega-4-Guia-Rapida)
+Circuito de **mails transaccionales**: OTP, bienvenida, recordatorios de racha, Supabase Edge + Brevo.
 
 | Página | Descripción |
 |--------|-------------|
-| [Guía rápida](Entrega-4-Guia-Rapida) | Validación express para revisores TTIP |
-| [Resumen ejecutivo](Entrega-4) | Alcance, diagramas, comandos npm |
-| [User Stories](Entrega-4-User-Stories) | 7 historias con criterios de aceptación |
-| [Arquitectura](Entrega-4-Arquitectura) | Endpoints, modelo DB, cron, secuencias |
-| [Flujo E3→E4](Entrega-4-Flujo-E3-E4) | Evolución desde backend y rachas E3 |
-| [Mails](Entrega-4-Mails) | Copy aprobado de los 5 correos |
-| [Decisiones](Entrega-4-Decisiones) | ADR-01 … ADR-10 |
-| [Evidencia](Entrega-4-Evidencia) | Demo TTIP, curl, SQL, checklist |
-| [Bitácora E4](Bitacora-Entrega-4) | Cronología de implementación |
+| [Resumen ejecutivo](Entrega-4) | Qué se hizo, desafíos, alcance, trazabilidad Jira |
+| [User Stories](Entrega-4-User-Stories) | Historias de usuario de la entrega |
+| [Arquitectura](Entrega-4-Arquitectura) | Edge, endpoints, modelo DB, cron |
+| [Decisiones](Entrega-4-Decisiones) | ADRs y decisiones tomadas |
+| [Evidencia](Entrega-4-Evidencia) | Demo TTIP, tests, checklist |
+| [Mails](Entrega-4-Mails) | Copy de los 5 correos |
+| [Flujo E3→E4](Entrega-4-Flujo-E3-E4) | Evolución desde backend E3 |
+| [MER persistencia E4](Mer-Persistencia-E4) | Tablas email + dual Godot/Supabase |
+| [Bitácora E4](Bitacora-Entrega-4) | Cambios cronológicos |
+
+Complementos: [Guía rápida 5 min](Entrega-4-Guia-Rapida) · [Flujo completo (profundización)](Entrega-4-Flujo-Completo)
 
 Bitácora completa: [índice](Bitacora) · [E4](Bitacora-Entrega-4) · [E3](Bitacora-Entrega-3) · [E2](Bitacora-Entrega-2) · [E1](Bitacora-Entrega-1) · [POC](Bitacora-POC) · [Pre-POC](Bitacora-Pre-POC).

@@ -65,7 +65,9 @@ async function main(): Promise<void> {
   if (authHealth.status === 200 && authHealth.body.status === 'ok') {
     const migrations = authHealth.body.migrations as JsonObject | undefined;
     const migrationsHealthy = migrations?.healthy === true;
-    const expectedOk = migrations?.expected === 36;
+    const expectedOk = typeof migrations?.applied === 'number'
+      && typeof migrations?.expected === 'number'
+      && migrations.applied === migrations.expected;
     if (migrationsHealthy && expectedOk) {
       console.log('OK  auth-health');
       console.log(`    migrations=${migrations?.applied}/${migrations?.expected}`);

@@ -4,7 +4,7 @@ Puzzle educativo sobre restricciones alimentarias (celiaquía, veganismo, etc.).
 
 Público: 10–60 años. Single-player. Estilo cuaderno a mano.
 
-**Setup y verificación:** [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md) · **Entrega actual:** [wiki/Entrega-4-Guia-Rapida.md](wiki/Entrega-4-Guia-Rapida.md)
+**Setup y verificación:** [BACKEND/docs/SUPABASE_QUICKSTART.md](BACKEND/docs/SUPABASE_QUICKSTART.md) · **Entrega actual:** [wiki/Entrega-4.md](wiki/Entrega-4.md)
 
 ## Stack
 
@@ -41,7 +41,7 @@ Flujo de runtime congelado para la demo: [juego/README.md](juego/README.md).
 
 ## Documentación TTIP
 
-Entregas del proyecto: [wiki/Entregas.md](wiki/Entregas.md) · **E4 (emails):** [Guía rápida](wiki/Entrega-4-Guia-Rapida.md)
+Entregas del proyecto: [wiki/Entregas.md](wiki/Entregas.md) · **E4 (emails):** [Resumen](wiki/Entrega-4.md)
 
 ## Equipo
 

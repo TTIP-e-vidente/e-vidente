@@ -154,7 +154,8 @@ body.canvas-page .hub-strip { position: fixed; top: calc(var(--nav-h) + var(--wi
   <a href="mer.html">Hub MER</a>
   <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
   <a href="mer-persistencia-e3.html" class="on on-pg">Persistencia <span class="badge badge-e3">E3</span></a>
-  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3</span></a>
+  <a href="mer-persistencia-e4.html">Email <span class="badge badge-e4">E4</span></a>
+  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3·E4</span></a>
   <span class="nav-spacer"></span>
 </nav>
 
@@ -214,6 +215,7 @@ body.canvas-page .hub-strip { position: fixed; top: calc(var(--nav-h) + var(--wi
 
   <a class="panel-link pl-gold" href="mer-flujo.html">Flujo paso a paso <span>→</span></a>
   <a class="panel-link pl-green" href="MER">Esquema canónico <span>→</span></a>
+  <a class="panel-link pl-green" href="mer-persistencia-e4.html" style="color:rgba(255,200,120,0.9)">Extensión E4 email <span>→</span></a>
   <a class="panel-link pl-blue" href="Entrega-3-Arquitectura">Arquitectura E3 <span>→</span></a>
 </aside>
 
@@ -407,10 +409,10 @@ body.canvas-page .hub-strip { position: fixed; top: calc(var(--nav-h) + var(--wi
 
 <!-- users -->
 <g filter="url(#cardShadow)">
-<rect x="820" y="138" width="248" height="132" rx="10" fill="#0d1621" stroke="rgba(45,185,120,0.28)" stroke-width="1"/>
+<rect x="820" y="138" width="248" height="152" rx="10" fill="#0d1621" stroke="rgba(45,185,120,0.28)" stroke-width="1"/>
 <rect x="820" y="138" width="248" height="36" rx="10" fill="rgba(45,185,120,0.12)"/>
 <rect x="820" y="162" width="248" height="12" fill="rgba(45,185,120,0.12)"/>
-<rect x="820" y="138" width="4" height="132" rx="2" fill="rgba(45,185,120,0.7)"/>
+<rect x="820" y="138" width="4" height="152" rx="2" fill="rgba(45,185,120,0.7)"/>
 <text x="844" y="161" font-size="11" font-weight="700" fill="rgba(80,220,160,0.95)">users</text>
 <text x="1052" y="161" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)">auth · JWT</text>
 <line x1="832" y1="174" x2="1060" y2="174" stroke="rgba(45,185,120,0.1)"/>
@@ -420,10 +422,13 @@ body.canvas-page .hub-strip { position: fixed; top: calc(var(--nav-h) + var(--wi
 <text x="836" y="218" font-size="8" fill="rgba(255,255,255,0.42)">   birth_date · DATE</text>
 <text x="836" y="232" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.7)">FK</text>
 <text x="855" y="232" font-size="8" fill="rgba(255,255,255,0.42)">avatar_image_id → images</text>
+<text x="836" y="250" font-size="7.5" font-weight="700" fill="rgba(255,159,66,0.75)">+E4</text>
+<text x="860" y="250" font-size="7.5" fill="rgba(255,200,120,0.6)">mail_verified_at · notif. · welcome →</text>
+<a href="mer-persistencia-e4.html"><text x="836" y="272" font-size="7.5" fill="rgba(255,159,66,0.55)">ver MER E4 email</text></a>
 </g>
 
-<line x1="944" y1="270" x2="944" y2="298" stroke="rgba(45,185,120,0.5)" stroke-width="1.6" marker-end="url(#fk)"/>
-<text x="958" y="286" font-size="7.5" fill="rgba(45,185,120,0.6)" font-weight="600">1:1</text>
+<line x1="944" y1="290" x2="944" y2="318" stroke="rgba(45,185,120,0.5)" stroke-width="1.6" marker-end="url(#fk)"/>
+<text x="958" y="306" font-size="7.5" fill="rgba(45,185,120,0.6)" font-weight="600">1:1</text>
 
 <!-- profiles -->
 <g filter="url(#cardShadow)">

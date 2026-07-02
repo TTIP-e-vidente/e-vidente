@@ -1,166 +1,106 @@
 # Entrega 4 — E-VIDENTE
 
-> **Resumen en una línea:** el juego puede hablar con el jugador fuera de la pantalla — con mails transaccionales auditados, verificación OTP y recordatorios de racha que respetan el consentimiento.
-
-**¿Primera vez acá?** → [Guía rápida (5 min)](Entrega-4-Guia-Rapida) · Setup: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) · Índice: [Entregas](Entregas)
-
----
-
-## Para el revisor TTIP
-
-| Pregunta | Respuesta en 1 click |
-|----------|---------------------|
-| ¿Qué entregamos? | 5 correos + OTP + jobs + auditoría (tabla abajo) |
-| ¿Cómo lo pruebo rápido? | [Guía rápida — validación express](Entrega-4-Guia-Rapida#validación-express-elige-una) |
-| ¿Dónde está la evidencia? | [Evidencia E4](Entrega-4-Evidencia) |
-| ¿Qué cambió vs E3? | [Flujo E3→E4](Entrega-4-Flujo-E3-E4) |
-| ¿Por qué estas decisiones? | [Decisiones](Entrega-4-Decisiones) |
-
----
+> Stack actual: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) · Setup Godot: `npm run sync:godot-config:staging`
 
 ## Resumen ejecutivo
 
-Entrega 3 dejó backend, racha en PostgreSQL y flags de notificación, pero **sin correos reales**. Entrega 4 cierra el circuito:
-
-1. **Verificación OTP** — `email_verification` al registrarse o cambiar mail.
-2. **Bienvenida** — `welcome` solo tras confirmar el código.
-3. **Recordatorios de racha** — `streak_at_risk` y `streak_lost` con opt-in.
-4. **Seguridad** — `mail_changed` al mail anterior si cambian la cuenta.
-5. **Auditoría** — `email_deliveries` con dedupe, retry y cron programado.
-
-**Regla de oro:** Godot nunca habla con Brevo. Solo HTTP al backend; el servidor orquesta Brevo y Postgres.
-
-```mermaid
-flowchart LR
-  subgraph Cliente["Godot"]
-    R[Registro / Perfil]
-    V[Verificación OTP]
-    H[HUD racha]
-  end
-  subgraph Backend["Node + Postgres"]
-    A[Auth / Profile]
-    E[Módulo email]
-    J[Jobs cron]
-  end
-  B[Brevo API]
-  R --> A
-  V --> A
-  A --> E
-  J --> E
-  E --> B
-  E --> DB[(email_deliveries)]
-```
-
----
+En Entrega 3 el jugador tenía cuenta, racha en PostgreSQL y un checkbox de notificaciones, pero **nunca llegaba un correo**. Entrega 4 cierra ese circuito: mails transaccionales con Brevo, verificación OTP, recordatorios de racha con consentimiento y auditoría en base de datos. El stack productivo corre en **Supabase Edge Functions + Postgres + pg_cron**; Godot solo habla HTTP con el backend y **nunca ve la API key de Brevo**. El save local, el sync de progreso y el dominio del juego (E1/E2) siguen igual — E4 es una capa transversal de comunicación sobre la infraestructura E3.
 
 ## Qué se agregó o modificó
 
-| Área | Entregable | Archivos clave |
-|------|------------|----------------|
-| **Proveedor** | Brevo API + `EMAIL_ENABLED` | `email.client.ts`, `email.config.ts` |
-| **Templates** | 5 correos TS + preview + tests | `templates/*.ts` |
-| **Verificación** | OTP 6 dígitos + UI Godot | `email.verification.*`, `EmailVerification.*` |
-| **Consentimiento** | Registro + perfil | `auth.gd`, `PATCH /player/me` |
-| **Rachas** | Job 19:00 ART, dedupe, reconcile | `email.jobs.routes.ts`, `send-streak-emails.ts` |
-| **Operación** | Supabase pg_cron → Edge | `npm run setup:supabase:cron`, `smoke:cron:staging` |
-| **Diseño** | Rubik, verde/crema, íconos CID | `templates/layout.ts`, `assets/` |
-| **In-game** | Badge riesgo + panel pérdida | `StreakLossMessagePanel`, HUD |
+- **Proveedor de mail** — integración Brevo (API transaccional), templates HTML versionados en código, interruptor `EMAIL_ENABLED` para dev/CI.
+- **Verificación OTP** — código de 6 dígitos al registrarse o cambiar mail; UI en Godot (`EmailVerification`); `mail_verified_at` en Postgres antes de bienvenida o recordatorios.
+- **Cinco correos** — `email_verification`, `welcome` (post-OTP), `streak_at_risk`, `streak_lost`, `mail_changed` (aviso al mail anterior).
+- **Consentimiento** — opt-in en registro y toggle en perfil (`email_notifications_enabled`); rachas por mail solo con flag activo y mail verificado.
+- **Jobs programados** — `pg_cron` en Supabase dispara Edge `internal-job`: racha en riesgo (18:00 ART), racha perdida (00:00 ART), reintentos (08:00 / 20:00 ART).
+- **Auditoría** — tabla `email_deliveries` con dedupe, estados, retry y `provider_message_id` de Brevo.
+- **Supabase Edge** — `verify-email-request/confirm`, módulo email compartido, secrets Brevo en Edge; reemplaza Express en staging (`api_mode=supabase_edge`).
+- **Godot dual local/cloud** — `backend.local.json` con `api_mode` (`supabase_edge` / `auto` / `local`); cache de sesión para flags de mail; `save_data.json` v4 sin cambio de esquema.
+- **MER y persistencia** — 2 tablas nuevas (`email_deliveries`, `email_verification_codes`) + columnas en `users`; diagrama en [Mer-Persistencia-E4](Mer-Persistencia-E4).
+- **In-game** — badge de racha en riesgo en HUD, panel `StreakLossMessagePanel` al perder racha (complemento al mail).
+- **Tests y operación** — smokes Edge, `verify:integration:full`, runbook de mails, seed demo de rachas.
 
----
+## Desafíos técnicos
 
-## Desafíos técnicos resueltos
+- Evitar mails duplicados si el cron o el retry corre dos veces (`dedupe_key` + estado `pending` en `email_deliveries`).
+- Separar transaccional (OTP, bienvenida, seguridad) de recordatorios de hábito (requieren opt-in explícito).
+- No bloquear registro ni gameplay si Brevo falla — outbox async y reconcile de racha independiente del envío.
+- Impedir mails a direcciones typo o falsas — OTP obligatorio antes de recordatorios.
+- Mantener Godot desacoplado de Brevo y de SQL de mail — solo REST a Edge; auditoría centralizada en servidor.
+- Convivir Express (tests locales) y Supabase Edge (staging/juego online) sin duplicar lógica de negocio.
+- Zona horaria única ART para candidatos de racha (`EMAIL_TIMEZONE`).
 
-| Desafío | Solución | Validación |
-|---------|----------|------------|
-| Duplicados (cron/retry) | `dedupe_key` + estado `pending` | `email.jobs.integration.test.ts` |
-| Transaccional vs marketing | OTP/welcome sin opt-in; rachas con flag | SQL candidatos |
-| Zona horaria racha | `EMAIL_TIMEZONE` ART | Job + seed demo |
-| Envíos en CI/dev | `EMAIL_ENABLED=false` default | `npm run test` |
-| Brevo caído, racha expirada | Reconcile independiente del mail | Test integración |
-| Mail falso / typo | OTP obligatorio antes de recordatorios | UI + `mail_verified_at` |
+## Continuidad con Entrega 3
 
----
+| De E3 (reutilizado) | Qué agrega E4 |
+|---------------------|---------------|
+| `users`, `streaks`, sync, auth JWT | Columnas mail + tablas `email_*` |
+| `email_notifications_enabled` (flag sin efecto) | Jobs que lo respetan + UI funcional |
+| Rachas en servidor al jugar online | Candidatos SQL + mails `streak_*` |
+| Save local + cola offline | Sin cambios — gameplay offline intacto |
+| Express / Docker (dev) | Edge + pg_cron en Supabase (staging) |
+
+Detalle técnico: [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Sync Godot↔Postgres](Sync-Godot-Postgres)
+
+## Trazabilidad ticket → entregable
+
+| Ticket | Resumen | Bloque |
+|--------|---------|--------|
+| [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) | Notificaciones email racha | Jobs, dedupe, `streak_at_risk` / `streak_lost` |
+| [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177) | Mail de bienvenida | `welcome` post-OTP |
+| [UNQ-190](https://tip-unq.atlassian.net/browse/UNQ-190) | Configurar Brevo | Proveedor + secrets Edge |
+| [UNQ-149](https://tip-unq.atlassian.net/browse/UNQ-149) | Mensaje pérdida racha in-game | `StreakLossMessagePanel` |
+| [UNQ-90](https://tip-unq.atlassian.net/browse/UNQ-90) | Registro de usuario | OTP al alta, opt-in |
+| [UNQ-27](https://tip-unq.atlassian.net/browse/UNQ-27) | Perfil de usuario | Toggle notificaciones, `mail_changed` |
+| [UNQ-83](https://tip-unq.atlassian.net/browse/UNQ-83) | Indicador visual racha | Badge HUD (complemento) |
+
+Fuera de alcance Jira: [UNQ-69](https://tip-unq.atlassian.net/browse/UNQ-69) recuperación contraseña → candidato E5.
 
 ## Alcance de Entrega 4
 
 | Bloque | Resultado | Estado |
 |--------|-----------|--------|
-| Módulo email (Brevo) | Cliente, service, repository, 5 templates | ✅ Listo |
-| Verificación OTP | Request/confirm + UI Godot | ✅ Listo |
-| Mail de bienvenida | Post-verificación, outbox async | ✅ Listo |
-| Aviso cambio de mail | Notificación al mail anterior | ✅ Listo |
-| Racha en riesgo | Cron 19:00 ART + SQL | ✅ Listo |
-| Racha perdida | Mail + reconcile | ✅ Listo |
-| Reintento fallidos | Job 08:00 y 20:00 ART | ✅ Listo |
-| Consentimiento UI | Login + perfil | ✅ Listo |
-| Auditoría | `email_deliveries` + dev API | ✅ Listo |
-| Copy editorial | Wiki + assets | ✅ Listo |
-| Tests integración | Jobs, dedupe, webhook | ✅ Listo |
-| Validación E2E | `validate:email-flow` | ✅ Jun 2026 |
-| Activación producción | Dominio + secrets GH | ⏳ Deploy |
+| Módulo email (Brevo) | Cliente, service, 5 templates, tests | Listo |
+| Verificación OTP | Edge + UI Godot + límites de intento | Listo |
+| Mail de bienvenida | Post-verificación, outbox async | Listo |
+| Aviso cambio de mail | Notificación al mail anterior | Listo |
+| Racha en riesgo | Cron 18:00 ART + SQL candidatos | Listo |
+| Racha perdida | Cron 00:00 ART + reconcile en DB | Listo |
+| Reintento fallidos | Jobs 08:00 / 20:00 ART | Listo |
+| Consentimiento UI | Registro + perfil | Listo |
+| Auditoría Postgres | `email_deliveries` + observabilidad | Listo |
+| Supabase Edge + pg_cron | Staging integrado, smokes | Listo |
+| MER E3+E4 | Diagrama persistencia email | Listo |
+| Tests integración / E2E | Jobs, dedupe, `verify:integration:full` | Listo |
+| Activación producción | Dominio propio SPF/DKIM | Pendiente |
 
 ### Fuera de alcance
 
-Recuperación de contraseña por mail · Newsletters · Push nativas · Editor visual templates.
+Recuperación de contraseña por mail, newsletters, push nativas, editor visual de templates en Brevo, zonas horarias por jugador.
 
-Ver [Bitácora E4](Bitacora-Entrega-4) para la iteración siguiente.
+## Cómo probar (rápido)
 
----
+Desde `BACKEND/`:
 
-## Comandos npm (referencia)
+```bash
+npm run verify:integration:full    # integral staging (~3 min)
+npm run smoke:verify-email-edge    # OTP end-to-end
+npm run platform:doctor:staging    # diagnóstico "no llegan mails"
+```
 
-| Comando | Qué hace | Cuándo usarlo |
-|---------|----------|---------------|
-| `npm run test:email` | Unitarios + envío opcional 5 templates | Validación rápida |
-| `npm run test` | Suite completa backend | CI / pre-PR |
-| `npm run validate:email-flow` | E2E local con Brevo | Demo / defensa |
-| `npm run smoke:email` | Config + previews + deliveries | Smoke operativo |
-| `npm run smoke:email-verification` | Flujo OTP HTTP | Regresión auth |
-| `npm run email:streaks` | Job rachas manual | Demo streak |
-| `npm run seed:streak-email-demo` | Usuario demo + racha ayer | Preparar demo |
-| `npm run email:retry-failed` | Reintento fallidos | Ops |
-
-Todos desde `BACKEND/`. Detalle: [Evidencia](Entrega-4-Evidencia).
-
----
-
-## Trazabilidad commit → entregable
-
-| Commit | Descripción | Bloque |
-|--------|-------------|--------|
-| `60a3694` | Integración inicial mails | Módulo Brevo |
-| `f13fb6f` | Cron y jobs internos | Operación |
-| `911d334` | Rachas perdidas + tests | Jobs |
-| `84ea2dc` | Wiki E4 inicial | Docs |
-| `0c8e813` | Mail verificado en auth | OTP |
-| `8647176` | Verificación backend | OTP |
-| `8c5cf75` | Verificación Godot | OTP UI |
-| `e5acdfe` | Auditoría verificación | OTP |
-| `c40f99e` | Assets visuales templates | Diseño |
-
----
+En Godot: F5 → registro → verificar OTP → jugar con cuenta online. Más opciones: [Guía rápida E4](Entrega-4-Guia-Rapida) · [Evidencia](Entrega-4-Evidencia).
 
 ## Documentación
 
-| Página | Contenido |
-|--------|-----------|
-| [Guía rápida](Entrega-4-Guia-Rapida) | **Empezá acá** — 5 min para revisores |
-| [User Stories](Entrega-4-User-Stories) | 7 US con criterios de aceptación |
-| [Arquitectura](Entrega-4-Arquitectura) | Diagramas, endpoints, SQL, cron |
-| [Flujo E3→E4](Entrega-4-Flujo-E3-E4) | Evolución desde backend E3 |
-| [Mails](Entrega-4-Mails) | Copy aprobado de los 5 correos |
-| [Decisiones](Entrega-4-Decisiones) | ADRs y alternativas descartadas |
-| [Evidencia](Entrega-4-Evidencia) | Demo TTIP, tests, checklist |
-| [Bitácora E4](Bitacora-Entrega-4) | Cronología |
+- [User Stories](Entrega-4-User-Stories)
+- [Arquitectura](Entrega-4-Arquitectura)
+- [Decisiones](Entrega-4-Decisiones)
+- [Evidencia](Entrega-4-Evidencia)
+- [Mails (copy)](Entrega-4-Mails)
+- [Flujo E3→E4](Entrega-4-Flujo-E3-E4)
+- [MER persistencia E4](Mer-Persistencia-E4) · [Hub MER](Mer-Hub)
+- [Bitácora E4](Bitacora-Entrega-4)
 
-### Referencia en código
+**Profundización** (Jira, secuencias, runbook): [Flujo completo E4](Entrega-4-Flujo-Completo) · [Guía rápida 5 min](Entrega-4-Guia-Rapida)
 
-- `BACKEND/src/modules/email/README.md`
-- `BACKEND/docs/BREVO_SETUP.md`
-- `juego/niveles/progress/README.md`
-
----
-
-## Continuidad con Entrega 3
-
-E4 **extiende** E3 sin reemplazar sync ni save local. Detalle: [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Entrega 3](Entrega-3)
+**Entrega anterior:** [Entrega 3](Entrega-3)

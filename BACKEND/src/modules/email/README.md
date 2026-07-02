@@ -2,7 +2,7 @@
 
 Envío transaccional con auditoría en PostgreSQL. Los templates viven en `templates/` y se versionan en git.
 
-**Documentación TTIP:** [Guía rápida](../../../../wiki/Entrega-4-Guia-Rapida.md) · [Arquitectura](../../../../wiki/Entrega-4-Arquitectura.md) · [Copy](../../../../wiki/Entrega-4-Mails.md)
+**Documentación TTIP:** [Entrega 4](../../wiki/Entrega-4.md) · [Arquitectura](../../wiki/Entrega-4-Arquitectura.md) · [Copy](../../wiki/Entrega-4-Mails.md)
 
 ## Estructura
 

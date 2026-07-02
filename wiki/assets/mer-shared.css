@@ -83,6 +83,7 @@ body {
 }
 .badge-e1 { background: var(--local-bg); color: var(--local-text); }
 .badge-e3 { background: var(--pg-bg); color: var(--pg-text); }
+.badge-e4 { background: rgba(255,159,66,0.14); color: rgba(255,180,100,0.9); }
 .badge-flow { background: var(--sync-bg); color: var(--sync-text); }
 
 /* ── Hub strip (navegación rápida entre las 4 páginas) ── */

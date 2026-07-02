@@ -112,7 +112,7 @@ Refresh tokens, admin panel, Supabase Auth nativo (Fase 7 opcional).
 
 ## Emails (Brevo vía Edge)
 
-Documentación: [wiki/Entrega-4-Guia-Rapida.md](../wiki/Entrega-4-Guia-Rapida.md) · [docs/BREVO_SETUP.md](docs/BREVO_SETUP.md) · [docs/SUPABASE_EDGE_FUNCTIONS.md](docs/SUPABASE_EDGE_FUNCTIONS.md)
+Documentación: [wiki/Entrega-4.md](../wiki/Entrega-4.md) · [docs/BREVO_SETUP.md](docs/BREVO_SETUP.md) · [docs/SUPABASE_EDGE_FUNCTIONS.md](docs/SUPABASE_EDGE_FUNCTIONS.md)
 
 En staging/producción los mails salen desde **Edge Functions** + secrets Supabase (no Express).
 

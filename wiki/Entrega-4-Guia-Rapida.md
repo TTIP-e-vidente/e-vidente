@@ -1,8 +1,6 @@
 # Guía rápida — Entrega 4 (5 minutos)
 
-> **Para el revisor TTIP:** esta página resume qué entregamos, por qué importa y cómo validarlo sin leer 200 páginas.
-
-[Resumen completo](Entrega-4) · [Evidencia y demo](Entrega-4-Evidencia) · [User Stories](Entrega-4-User-Stories)
+> Validación express para revisores TTIP. Resumen de entrega: [Entrega-4](Entrega-4) · Evidencia: [Entrega-4-Evidencia](Entrega-4-Evidencia)
 
 ---
 
@@ -25,8 +23,8 @@ En Entrega 3 el jugador tenía cuenta, racha en servidor y un checkbox de “avi
 |-------|------|--------|----------------|
 | 1 | Verificación OTP | Registro o cambio de mail | No (transaccional) |
 | 2 | Bienvenida | Tras confirmar OTP | No |
-| 3 | Racha en riesgo | Job 19:00 ART, jugó ayer | Sí (opt-in) |
-| 4 | Racha perdida | Job, 2+ días sin jugar | Sí |
+| 3 | Racha en riesgo | Job 18:00 ART, jugó ayer | Sí (opt-in) |
+| 4 | Racha perdida | Job 00:00 ART, 2+ días sin jugar | Sí |
 | 5 | Mail cambiado | Aviso al mail **anterior** | No (seguridad) |
 
 Copy aprobado: [Entrega-4-Mails](Entrega-4-Mails)

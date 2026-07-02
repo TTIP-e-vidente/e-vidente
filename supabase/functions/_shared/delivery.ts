@@ -64,7 +64,7 @@ export async function acquireDeliverySlot(
   return created.rows[0]?.id ?? null;
 }
 
-async function markDeliverySent(
+export async function markDeliverySent(
   db: Client,
   deliveryId: string,
   providerMessageId: string | null,
@@ -81,7 +81,7 @@ async function markDeliverySent(
 }
 
 // Backoff simple entre reintentos: 2.º intento +10 min, 3.º +1 h, 4.º+ +6 h.
-async function markDeliveryFailed(
+export async function markDeliveryFailed(
   db: Client,
   deliveryId: string,
   errorMessage: string,

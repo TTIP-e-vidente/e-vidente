@@ -11,11 +11,14 @@ import {
   deliverTrackedEmail,
   expireStalePendingDeliveries,
   getTodayInTimezone,
+  markDeliveryFailed,
+  markDeliverySent,
   markWelcomeEmailSent,
   type DeliveryBatchStats,
 } from '../delivery.ts';
 import { withDb } from '../db.ts';
 import { refreshAllLeaderboards } from '../services/leaderboard-refresh.ts';
+import { sendVerificationCode } from '../verification.ts';
 
 interface StreakCandidate {
   userId: string;
@@ -298,6 +301,21 @@ export async function runRetryFailedEmailJob() {
         [row.user_id],
       );
       const name = user.rows[0]?.name ?? 'Jugador';
+
+      if (row.template_key === 'email_verification') {
+        // El código original solo se guarda hasheado: no se puede reenviar el
+        // mismo mensaje, hay que emitir uno nuevo (invalida el anterior).
+        const sendResult = await sendVerificationCode(row.user_id, row.recipient_email, name);
+        if (sendResult === 'sent' || sendResult === 'dev_console') {
+          await markDeliverySent(db, row.id, null);
+          stats.sent += 1;
+        } else {
+          await markDeliveryFailed(db, row.id, `retry_${sendResult}`);
+          stats.failed += 1;
+        }
+        continue;
+      }
+
       let message: EmailMessage | null = null;
       if (row.template_key === 'welcome') {
         message = buildWelcomeEmail({ name, mail: row.recipient_email });

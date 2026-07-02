@@ -7,7 +7,7 @@
 | Capa | Qué modela | Vista interactiva |
 |------|------------|-------------------|
 | **Dominio** | Conceptos del juego (jugador, mapa, partida, modalidades, ítems) | [Mer-Dominio](Mer-Dominio) |
-| **Persistencia** | Dónde se guarda el estado del jugador (local + PostgreSQL) | [Mer-Persistencia-E3](Mer-Persistencia-E3) |
+| **Persistencia** | Dónde se guarda el estado del jugador (local + PostgreSQL + email E4) | [Mer-Persistencia-E3](Mer-Persistencia-E3) · [Mer-Persistencia-E4](Mer-Persistencia-E4) |
 | **Contenido** | Preguntas, mapas, ítems — archivos JSON en `juego/contenido/` | No es base de datos; ver [contenido/README](../juego/contenido/README.md) |
 
 Hub visual: [Mer-Hub](Mer-Hub) · Evolución y flujos: [Mer-Flujo](Mer-Flujo) · Detalle sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)
@@ -45,9 +45,20 @@ Se agregó **persistencia remota** en PostgreSQL (`BACKEND/migrations/`) alinead
 - Diagrama dual: [Mer-Persistencia-E3](Mer-Persistencia-E3)
 - Arquitectura: [Entrega-3-Arquitectura](Entrega-3-Arquitectura)
 
+### Entrega 4
+
+Se **extendió** el esquema E3 sin romper local-first ni el dominio conceptual. Se agregó el canal transaccional de mails sobre Supabase:
+
+1. **PostgreSQL** — 2 tablas nuevas (`email_deliveries`, `email_verification_codes`) + 3 columnas en `users`.
+2. **Supabase Edge** — `verify-email-*`, `internal-job`, secrets Brevo; `pg_cron` para jobs de racha.
+3. **Godot** — `backend.local.json` con `api_mode=supabase_edge` (o `auto`); cache de `mail_verified_at` y opt-in en sesión/perfil. `save_data.json` sigue en v4.
+
+- Diagrama E3+E4: [Mer-Persistencia-E4](Mer-Persistencia-E4)
+- Narrativa: [Entrega-4](Entrega-4) · [Flujo E3→E4](Entrega-4-Flujo-E3-E4)
+
 ---
 
-## PostgreSQL — esquema canónico (código)
+## PostgreSQL — esquema canónico E3 (código)
 
 Fuente: migraciones `002`, `008`, `009`, `010`, `011`, `015`, `016`. Tablas legacy (`player_*`, `game_sessions`, `completed_nodes`, `unlocked_content`) eliminadas en `008`.
 
@@ -77,6 +88,33 @@ Servicio: `BACKEND/src/modules/progreso-restriccion/progreso-restriccion.service
 
 ---
 
+## PostgreSQL — extensión E4 (email)
+
+Fuente: migraciones `021`, `022`, `023`, `028`, `037`. Implementación productiva en `supabase/functions/_shared/delivery.ts`.
+
+```
+users (columnas E4)
+  ├── mail_verified_at
+  ├── email_notifications_enabled
+  └── welcome_email_sent_at
+  ├── email_deliveries (1:N) — auditoría Brevo
+  │     template_key · dedupe_key · status · provider_message_id
+  └── email_verification_codes (1:N) — OTP
+        code_hash · target_mail · expires_at · failed_attempt_count
+```
+
+| Tabla / columna | Rol |
+|-----------------|-----|
+| `users.mail_verified_at` | Mail confiable antes de welcome y recordatorios |
+| `users.email_notifications_enabled` | Opt-in recordatorios de racha |
+| `users.welcome_email_sent_at` | Marca post-envío welcome |
+| `email_deliveries` | Outbox + dedupe + retry (`pending`→`sent`/`failed`/`skipped`) |
+| `email_verification_codes` | OTP de 6 dígitos (hash, no plaintext) |
+
+Jobs: `pg_cron` → Edge `internal-job` (`streak-at-risk-emails`, `streak-lost-emails`, `retry-failed-emails`).
+
+---
+
 ## Save local — esquema canónico (código)
 
 Fuente: `SaveDataSchema.gd` (versión 4), `SaveManager.gd`, `ImportadorProgresoOnline.gd`.
@@ -97,7 +135,8 @@ Archivos adicionales en `user://`:
 | Archivo | Rol |
 |---------|-----|
 | `backend_sync_queue.json` | Cola de `RunSummary` pendientes (`LocalSyncQueue.gd`) |
-| `backend_session.json` | JWT entre sesiones (`BackendSession.gd`) |
+| `backend_session.json` | JWT + cache usuario (`mail_verified_at`, notificaciones) |
+| `backend.local.json` | `api_mode`, URL Edge, `db=supabase` (gitignored, sync desde BACKEND) |
 | `avatars/{username}.ext` | Avatar por cuenta online |
 
 ---
@@ -113,6 +152,9 @@ Archivos adicionales en `user://`:
 | Nodo del mapa completado | `node_progress[node_id]` | `history_games` |
 | Intento de partida | payload en cola sync | `games` |
 | Avatar | `profile.avatar_path` + archivo | `images` + `users.avatar_image_id` |
+| Mail verificado (E4) | cache en `backend_session` | `users.mail_verified_at` + `email_verification_codes` |
+| Opt-in notificaciones (E4) | `profile.email_notifications_enabled` | `users.email_notifications_enabled` |
+| Auditoría mail (E4) | — (no local) | `email_deliveries` |
 | Mapa / Partida / Modalidades | `juego/contenido/mapa/*.json` | **No persistido** (solo estado del jugador) |
 | Item / Condición alimentaria | `items_celiaquia.json` + `.tres` | **No persistido** |
 

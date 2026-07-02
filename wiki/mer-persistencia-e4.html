@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MER Persistencia E4 — E-VIDENTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/mer-shared.css">
+<style>
+#wrap { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+text { font-family: var(--font); user-select: none; }
+
+.title-ov {
+  position: fixed; left: 22px; z-index: 200; pointer-events: none; max-width: 420px;
+}
+.title-ov h1 {
+  font-size: 22px; font-weight: 800; letter-spacing: -.03em;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,200,140,0.9) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.title-ov p { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+.title-ov .stamp {
+  display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 6px;
+  font-size: 9px; font-weight: 700; letter-spacing: .04em;
+  color: rgba(255,180,100,0.9); background: rgba(255,159,66,0.1);
+  border: 1px solid rgba(255,159,66,0.22);
+}
+
+.panel {
+  position: fixed; right: 18px; z-index: 200; width: 300px;
+  max-height: calc(100vh - 120px); overflow-y: auto;
+  background: rgba(8,12,20,0.94); border: 1px solid var(--border);
+  border-radius: var(--radius); backdrop-filter: blur(16px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  transition: transform .25s, opacity .25s;
+}
+.panel.collapsed { transform: translateX(calc(100% + 24px)); opacity: 0; pointer-events: none; }
+.panel-toggle {
+  position: fixed; right: 18px; z-index: 201;
+  width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: rgba(8,12,20,0.94); color: rgba(255,255,255,0.5); cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.panel-toggle:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+.panel-section { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.panel-section:last-child { border-bottom: none; }
+.ps-label {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--muted-soft); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.ps-label::before { content: ''; width: 8px; height: 8px; border-radius: 50%; }
+.ps-e4 .ps-label::before { background: #ff9f42; }
+.ps-local .ps-label::before { background: var(--local); }
+.ps-edge .ps-label::before { background: var(--sync); }
+.ps-pg .ps-label::before { background: var(--pg); }
+.ps-map .ps-label::before { background: var(--auth); }
+
+.zone-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 10px; margin-bottom: 4px; border-radius: var(--radius-sm);
+  border: 1px solid transparent; background: rgba(255,255,255,0.02);
+  color: rgba(255,255,255,0.55); font-size: 11px; text-align: left;
+  cursor: pointer; transition: .15s; font-family: inherit;
+}
+.zone-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.zone-btn.active { border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+.zone-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.zone-dot.local { background: rgba(99,120,255,0.75); }
+.zone-dot.edge { background: rgba(255,200,70,0.8); }
+.zone-dot.pg { background: rgba(45,185,120,0.8); }
+.zone-dot.meta { background: rgba(255,159,66,0.85); }
+
+.item { font-size: 10.5px; color: var(--muted); line-height: 1.55; margin-bottom: 4px; padding-left: 10px; position: relative; }
+.item::before { content: ''; position: absolute; left: 0; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+.item strong { color: rgba(255,255,255,0.65); font-weight: 600; }
+
+.map-row {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 4px 6px;
+  font-size: 9.5px; color: var(--muted); margin-bottom: 3px; align-items: center;
+}
+.map-row .arr { color: rgba(255,255,255,0.2); text-align: center; }
+.map-row .loc { color: rgba(130,150,255,0.75); }
+.map-row .rem { color: rgba(80,210,150,0.75); }
+
+.panel-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 12px 16px; text-decoration: none; font-size: 11px; font-weight: 600; transition: background .15s;
+}
+.panel-link span { opacity: .5; font-weight: 400; }
+.pl-amber { color: rgba(255,200,120,0.9); background: rgba(255,159,66,0.06); border-top: 1px solid rgba(255,159,66,0.12); }
+.pl-amber:hover { background: rgba(255,159,66,0.12); }
+.pl-green { color: rgba(80,210,150,0.9); background: rgba(45,185,120,0.06); border-top: 1px solid rgba(45,185,120,0.1); }
+.pl-green:hover { background: rgba(45,185,120,0.12); }
+
+.foot {
+  position: fixed; bottom: 18px; right: 18px; z-index: 200;
+  display: flex; align-items: center; gap: 3px;
+  background: rgba(8,12,20,0.94); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 8px;
+}
+.fc { border: none; background: none; color: rgba(255,255,255,0.45); cursor: pointer;
+  width: 28px; height: 28px; border-radius: 6px; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.fc:hover { color: #fff; background: rgba(255,255,255,0.08); }
+#zl { font-size: 10px; color: var(--muted-soft); min-width: 36px; text-align: center; font-variant-numeric: tabular-nums; }
+.foot-div { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+
+.legend-bar {
+  position: fixed; bottom: 18px; left: 18px; z-index: 200;
+  display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center;
+  padding: 10px 16px; border-radius: var(--radius-sm);
+  background: rgba(8,12,20,0.92); border: 1px solid var(--border);
+  max-width: calc(100vw - 380px);
+}
+.leg-row { display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: var(--muted); margin: 0; }
+.leg-line { width: 28px; height: 0; flex-shrink: 0; }
+.leg-line.fk { border-top: 2px solid rgba(45,185,120,0.65); }
+.leg-line.email { border-top: 2px solid rgba(255,159,66,0.65); }
+.leg-line.cron { border-top: 2px dashed rgba(255,159,66,0.45); }
+.leg-line.job { border-top: 2px dotted rgba(255,200,70,0.55); }
+.legend-bar .hint { font-size: 9.5px; color: rgba(255,255,255,0.22); border-left: 1px solid var(--border); padding-left: 14px; }
+
+body.canvas-page .nav { position: fixed; left: 0; right: 0; top: var(--wiki-bar-h); z-index: 300; }
+body.canvas-page .hub-strip { position: fixed; top: calc(var(--nav-h) + var(--wiki-bar-h)); left: 0; right: 0; z-index: 290; }
+
+@media (max-width: 900px) { .panel { width: 260px; } .title-ov h1 { font-size: 18px; } }
+@media (max-width: 640px) {
+  .panel, .panel-toggle { display: none; }
+  .title-ov { max-width: 220px; }
+  .legend-bar { max-width: calc(100vw - 36px); }
+}
+</style>
+</head>
+<body class="canvas-page">
+
+<nav class="nav">
+  <a class="nav-brand" href="mer.html">E-VIDENTE</a>
+  <a href="mer.html">Hub MER</a>
+  <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
+  <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
+  <a href="mer-persistencia-e4.html" class="on on-pg">Email <span class="badge badge-e4">E4</span></a>
+  <a href="mer-flujo.html">Flujo <span class="badge badge-flow">E3·E4</span></a>
+  <span class="nav-spacer"></span>
+</nav>
+
+<div class="hub-strip">
+  <span class="hub-strip-label">Recorrido MER</span>
+  <a class="hub-pill" data-page="mer.html" href="mer.html"><span class="dot hub"></span> Hub</a>
+  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> E3 base</a>
+  <a class="hub-pill on" data-page="mer-persistencia-e4.html" href="mer-persistencia-e4.html"><span class="dot" style="background:#ff9f42"></span> E4 email</a>
+  <a class="hub-pill" data-page="mer-flujo.html" href="mer-flujo.html"><span class="dot flujo"></span> Flujo</a>
+</div>
+
+<div class="title-ov">
+  <h1>E3 + E4 — mails y Supabase</h1>
+  <p>Extensión de persistencia sin romper local-first. Naranja = nuevo en E4. Centro = esquema relacional email.</p>
+  <span class="stamp">↔ migr. 021 · 022 · 023 · 024 · 028 · 037 · api_mode supabase_edge</span>
+</div>
+
+<button class="panel-toggle" id="btn-panel" title="Panel (P)">☰</button>
+
+<aside class="panel collapsed" id="panel">
+  <div class="panel-section ps-e4">
+    <div class="ps-label">Capas del diagrama</div>
+    <button type="button" class="zone-btn active" data-zone="zone-local">
+      <span class="zone-dot local"></span> Godot local <code style="font-size:9px;opacity:.6">user://</code>
+    </button>
+    <button type="button" class="zone-btn active" data-zone="zone-edge">
+      <span class="zone-dot edge"></span> Supabase Edge + Brevo
+    </button>
+    <button type="button" class="zone-btn active" data-zone="zone-pg">
+      <span class="zone-dot pg"></span> PostgreSQL (E3 + email)
+    </button>
+    <button type="button" class="zone-btn active" data-zone="zone-meta">
+      <span class="zone-dot meta"></span> Relaciones y reglas E4
+    </button>
+  </div>
+
+  <div class="panel-section ps-map">
+    <div class="ps-label">Equivalencia local ↔ remoto</div>
+    <div class="map-row"><span class="loc">backend_session</span><span class="arr">→</span><span class="rem">users.mail_verified_at</span></div>
+    <div class="map-row"><span class="loc">profile.email_notif.</span><span class="arr">→</span><span class="rem">users.email_notif.</span></div>
+    <div class="map-row"><span class="loc">save_data v4</span><span class="arr">—</span><span class="rem">sin OTP ni outbox</span></div>
+    <div class="map-row"><span class="loc">streak (local)</span><span class="arr">→</span><span class="rem">streaks (E3)</span></div>
+  </div>
+
+  <div class="panel-section ps-edge">
+    <div class="ps-label">Cron ART (staging)</div>
+    <div class="item"><strong>18:00</strong> streak-at-risk-emails</div>
+    <div class="item"><strong>00:00</strong> streak-lost-emails</div>
+    <div class="item"><strong>08:00 / 20:00</strong> retry-failed-emails</div>
+  </div>
+
+  <div class="panel-section ps-pg">
+    <div class="ps-label">Regla de oro E4</div>
+    <div class="item">Godot <strong>nunca</strong> habla con Brevo</div>
+    <div class="item">OTP y outbox solo en Postgres</div>
+    <div class="item">Dedupe: UNIQUE(user, template, dedupe_key)</div>
+  </div>
+
+  <a class="panel-link pl-green" href="mer-persistencia-e3.html">Esquema base E3 <span>→</span></a>
+  <a class="panel-link pl-amber" href="Entrega-4">Resumen E4 <span>→</span></a>
+</aside>
+
+<div id="cv"><div id="wrap">
+<svg width="1920" height="1000" viewBox="0 0 1920 1000" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="dot" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx=".5" cy=".5" r=".5" fill="rgba(255,255,255,0.033)"/></pattern>
+  <linearGradient id="bgGrad" x1="0" y1="0" x2="1920" y2="1000" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="#0b0f1a"/><stop offset="100%" stop-color="#0a0e18"/>
+  </linearGradient>
+  <filter id="cardShadow"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.35"/></filter>
+  <marker id="fk" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(45,185,120,0.65)" stroke-width="1.3"/></marker>
+  <marker id="em" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(255,159,66,0.65)" stroke-width="1.3"/></marker>
+  <marker id="job" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <path d="M0 0 L8 3.5 L0 7" fill="none" stroke="rgba(255,200,70,0.55)" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1920" height="1000" fill="url(#bgGrad)"/><rect width="1920" height="1000" fill="url(#dot)"/>
+
+<!-- Header -->
+<rect x="40" y="20" width="1840" height="52" rx="10" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)"/>
+<text x="56" y="44" font-size="13" font-weight="700" fill="rgba(255,255,255,0.75)">MER persistencia E4 — extensión email sobre E3</text>
+<text x="56" y="60" font-size="9" fill="rgba(255,255,255,0.28)" letter-spacing="1.2">GODOT LOCAL  ·  EDGE + pg_cron  ·  POSTGRES (users · streaks · email_*)  ·  BREVO</text>
+
+<!-- ═══ ZONE: Godot local ═══ -->
+<g id="zone-local" class="diagram-zone" opacity="1">
+<rect x="40" y="88" width="400" height="820" rx="14" fill="rgba(99,120,255,0.025)" stroke="rgba(99,120,255,0.14)" stroke-width="1.5"/>
+<rect x="52" y="96" width="168" height="22" rx="6" fill="rgba(99,120,255,0.12)"/>
+<text x="64" y="111" font-size="9" font-weight="700" fill="rgba(130,150,255,0.85)" letter-spacing="1.6">GODOT LOCAL</text>
+<text x="228" y="111" font-size="8" fill="rgba(99,120,255,0.45)">sin tablas SQL de mail</text>
+
+<g filter="url(#cardShadow)">
+<rect x="58" y="128" width="364" height="118" rx="10" fill="#101828" stroke="rgba(99,120,255,0.28)" stroke-width="1"/>
+<rect x="58" y="128" width="364" height="34" rx="10" fill="rgba(99,120,255,0.12)"/>
+<rect x="58" y="150" width="364" height="12" fill="rgba(99,120,255,0.12)"/>
+<rect x="58" y="128" width="4" height="118" rx="2" fill="#7088ff"/>
+<text x="82" y="151" font-size="11" font-weight="700" fill="rgba(150,170,255,0.95)">backend.local.json</text>
+<text x="400" y="151" text-anchor="end" font-size="7.5" fill="rgba(99,120,255,0.5)">gitignored</text>
+<line x1="70" y1="162" x2="414" y2="162" stroke="rgba(99,120,255,0.1)"/>
+<text x="76" y="180" font-size="8.5" fill="rgba(255,255,255,0.52)">api_mode: supabase_edge | auto | local</text>
+<text x="76" y="196" font-size="8.5" fill="rgba(255,255,255,0.46)">supabase_functions_url · db: supabase</text>
+<text x="76" y="212" font-size="8.5" fill="rgba(255,255,255,0.42)">email_via_supabase: true</text>
+<text x="76" y="234" font-size="7.5" fill="rgba(99,120,255,0.55)">BackendConfig.gd · sync:godot-config:staging</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="58" y="262" width="364" height="108" rx="10" fill="#101828" stroke="rgba(99,120,255,0.25)" stroke-width="1"/>
+<rect x="58" y="262" width="364" height="34" rx="10" fill="rgba(99,120,255,0.1)"/>
+<rect x="58" y="284" width="364" height="12" fill="rgba(99,120,255,0.1)"/>
+<rect x="58" y="262" width="4" height="108" rx="2" fill="#7088ff"/>
+<text x="82" y="285" font-size="11" font-weight="700" fill="rgba(150,170,255,0.95)">save_data.json</text>
+<text x="400" y="285" text-anchor="end" font-size="7.5" fill="rgba(99,120,255,0.5)">v4 · E3</text>
+<line x1="70" y1="296" x2="414" y2="296" stroke="rgba(99,120,255,0.1)"/>
+<text x="76" y="314" font-size="8.5" fill="rgba(255,255,255,0.48)">profile · node_progress · streak local</text>
+<text x="76" y="330" font-size="8.5" fill="rgba(255,159,66,0.7)">profile.email_notifications_enabled (cache UI)</text>
+<text x="76" y="356" font-size="7.5" fill="rgba(99,120,255,0.5)">SaveManager · SaveLocalProfileHelper</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="58" y="386" width="364" height="96" rx="10" fill="#101828" stroke="rgba(99,120,255,0.22)" stroke-width="1"/>
+<rect x="58" y="386" width="364" height="34" rx="10" fill="rgba(99,120,255,0.1)"/>
+<rect x="58" y="408" width="364" height="12" fill="rgba(99,120,255,0.1)"/>
+<rect x="58" y="386" width="4" height="96" rx="2" fill="#7088ff"/>
+<text x="82" y="409" font-size="10.5" font-weight="700" fill="rgba(150,170,255,0.92)">backend_session.json</text>
+<line x1="70" y1="420" x2="414" y2="420" stroke="rgba(99,120,255,0.1)"/>
+<text x="76" y="438" font-size="8.5" fill="rgba(255,255,255,0.48)">JWT · datos usuario online</text>
+<text x="76" y="454" font-size="8.5" fill="rgba(255,159,66,0.78)">mail_verified_at · email_notifications_enabled</text>
+<text x="76" y="472" font-size="7.5" fill="rgba(99,120,255,0.5)">BackendSession.gd · AuthApi.gd</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="58" y="498" width="364" height="80" rx="10" fill="#101828" stroke="rgba(255,159,66,0.38)" stroke-width="1"/>
+<rect x="58" y="498" width="4" height="80" rx="2" fill="#ff9f42"/>
+<text x="82" y="520" font-size="10.5" font-weight="700" fill="rgba(255,200,120,0.95)">EmailVerification.tscn</text>
+<text x="76" y="538" font-size="8.5" fill="rgba(255,255,255,0.48)">POST verify-email-request / confirm → Edge</text>
+<text x="76" y="556" font-size="7.5" fill="rgba(255,159,66,0.55)">auth.gd · ProfileOverlayPanel</text>
+</g>
+
+<rect x="58" y="596" width="364" height="56" rx="9" fill="rgba(99,120,255,0.07)" stroke="rgba(99,120,255,0.18)"/>
+<text x="76" y="618" font-size="9" font-weight="700" fill="rgba(140,160,255,0.8)">Local-first intacto</text>
+<text x="76" y="634" font-size="8" fill="rgba(130,150,255,0.45)">Gameplay offline igual. Mail requiere red + sesión.</text>
+
+<rect x="58" y="668" width="364" height="72" rx="9" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)"/>
+<text x="76" y="690" font-size="8.5" font-weight="600" fill="rgba(255,255,255,0.5)">api_mode en práctica</text>
+<text x="76" y="708" font-size="8" fill="rgba(255,255,255,0.38)">staging → supabase_edge · CI local → Express</text>
+<text x="76" y="724" font-size="8" fill="rgba(255,255,255,0.35)">auto → sondea Express; fallback Edge</text>
+</g>
+
+<!-- ═══ ZONE: Edge ═══ -->
+<g id="zone-edge" class="diagram-zone" opacity="1">
+<rect x="460" y="88" width="300" height="820" rx="14" fill="rgba(255,200,70,0.025)" stroke="rgba(255,200,70,0.14)" stroke-width="1.5"/>
+<text x="476" y="111" font-size="9" font-weight="700" fill="rgba(255,210,100,0.85)" letter-spacing="1.6">SUPABASE EDGE</text>
+
+<g filter="url(#cardShadow)">
+<rect x="478" y="128" width="264" height="58" rx="10" fill="#101828" stroke="rgba(255,200,70,0.28)" stroke-width="1"/>
+<text x="496" y="150" font-size="9.5" font-weight="700" fill="rgba(255,220,120,0.92)">auth-register / auth-login</text>
+<text x="496" y="168" font-size="8" fill="rgba(255,255,255,0.4)">E3 — contrato base sin cambios</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="478" y="200" width="264" height="88" rx="10" fill="#101828" stroke="rgba(255,159,66,0.42)" stroke-width="1"/>
+<rect x="478" y="200" width="4" height="88" rx="2" fill="#ff9f42"/>
+<text x="496" y="222" font-size="9.5" font-weight="700" fill="rgba(255,200,120,0.95)">verify-email-request</text>
+<text x="496" y="240" font-size="9.5" font-weight="700" fill="rgba(255,200,120,0.95)">verify-email-confirm</text>
+<text x="496" y="258" font-size="8" fill="rgba(255,255,255,0.42)">hash OTP · mail_verified_at</text>
+<text x="496" y="274" font-size="8" fill="rgba(255,255,255,0.38)">encola welcome si corresponde</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="478" y="302" width="264" height="88" rx="10" fill="#101828" stroke="rgba(255,159,66,0.42)" stroke-width="1"/>
+<rect x="478" y="302" width="4" height="88" rx="2" fill="#ff9f42"/>
+<text x="496" y="324" font-size="9.5" font-weight="700" fill="rgba(255,200,120,0.95)">internal-job</text>
+<text x="496" y="342" font-size="8" fill="rgba(255,255,255,0.44)">streak-at-risk · streak-lost · retry</text>
+<text x="496" y="358" font-size="8" fill="rgba(255,255,255,0.4)">lee users + streaks + email_deliveries</text>
+<text x="496" y="378" font-size="7.5" fill="rgba(255,200,70,0.45)">X-Job-Secret · _shared/delivery.ts</text>
+</g>
+
+<g filter="url(#cardShadow)">
+<rect x="478" y="404" width="264" height="54" rx="10" fill="#101828" stroke="rgba(255,200,70,0.25)" stroke-width="1"/>
+<text x="496" y="426" font-size="9" font-weight="700" fill="rgba(255,220,120,0.9)">player-me · progress-save</text>
+<text x="496" y="444" font-size="8" fill="rgba(255,255,255,0.4)">E3 sync — actualiza streaks</text>
+</g>
+
+<rect x="478" y="474" width="264" height="70" rx="9" fill="rgba(255,159,66,0.08)" stroke="rgba(255,159,66,0.22)" stroke-dasharray="4 3"/>
+<text x="496" y="496" font-size="8.5" font-weight="600" fill="rgba(255,180,100,0.75)">pg_cron → internal-job</text>
+<text x="496" y="514" font-size="8" fill="rgba(255,159,66,0.48)">18:00 at_risk · 00:00 lost</text>
+<text x="496" y="530" font-size="8" fill="rgba(255,159,66,0.42)">08:00 / 20:00 retry failed</text>
+
+<g filter="url(#cardShadow)">
+<rect x="478" y="560" width="264" height="68" rx="10" fill="#101828" stroke="rgba(255,159,66,0.35)" stroke-width="1"/>
+<text x="496" y="582" font-size="10" font-weight="700" fill="rgba(255,200,120,0.9)">Brevo API</text>
+<text x="496" y="600" font-size="8" fill="rgba(255,255,255,0.42)">5 templates · provider_message_id</text>
+<text x="496" y="616" font-size="7.5" fill="rgba(255,159,66,0.45)">secret solo en Edge — Godot nunca</text>
+</g>
+
+<!-- Template list -->
+<rect x="478" y="646" width="264" height="118" rx="9" fill="rgba(255,255,255,0.02)" stroke="rgba(255,159,66,0.12)"/>
+<text x="496" y="668" font-size="8.5" font-weight="700" fill="rgba(255,200,120,0.65)">template_key (5)</text>
+<text x="496" y="686" font-size="8" fill="rgba(255,159,66,0.55)">email_verification · welcome</text>
+<text x="496" y="702" font-size="8" fill="rgba(255,159,66,0.5)">streak_at_risk · streak_lost</text>
+<text x="496" y="718" font-size="8" fill="rgba(255,159,66,0.48)">mail_changed</text>
+<text x="496" y="748" font-size="7.5" fill="rgba(255,255,255,0.3)">cada fila en email_deliveries</text>
+</g>
+
+<!-- ═══ ZONE: Postgres ═══ -->
+<g id="zone-pg" class="diagram-zone" opacity="1">
+<rect x="780" y="88" width="720" height="820" rx="14" fill="rgba(45,185,120,0.025)" stroke="rgba(45,185,120,0.14)" stroke-width="1.5"/>
+<text x="796" y="111" font-size="9" font-weight="700" fill="rgba(80,210,150,0.85)" letter-spacing="1.6">POSTGRESQL</text>
+<text x="920" y="111" font-size="8" fill="rgba(45,185,120,0.45)">E3 base + extensión email E4</text>
+
+<!-- users full -->
+<g filter="url(#cardShadow)">
+<rect x="800" y="128" width="320" height="228" rx="10" fill="#0d1621" stroke="rgba(45,185,120,0.28)" stroke-width="1"/>
+<rect x="800" y="128" width="320" height="36" rx="10" fill="rgba(45,185,120,0.12)"/>
+<rect x="800" y="152" width="320" height="12" fill="rgba(45,185,120,0.12)"/>
+<rect x="800" y="128" width="4" height="228" rx="2" fill="rgba(45,185,120,0.7)"/>
+<text x="824" y="151" font-size="11.5" font-weight="700" fill="rgba(80,220,160,0.95)">users</text>
+<text x="1104" y="151" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.5)">hub auth</text>
+<line x1="812" y1="164" x2="1112" y2="164" stroke="rgba(45,185,120,0.1)"/>
+<text x="816" y="182" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text>
+<text x="836" y="182" font-size="8" fill="rgba(255,255,255,0.58)">id UUID</text>
+<text x="816" y="198" font-size="8" fill="rgba(255,255,255,0.44)">   username · mail · password_hash</text>
+<text x="816" y="214" font-size="8" fill="rgba(255,255,255,0.42)">   birth_date · avatar_image_id → images</text>
+<line x1="812" y1="224" x2="1112" y2="224" stroke="rgba(255,159,66,0.15)"/>
+<text x="816" y="240" font-size="7.5" font-weight="700" fill="rgba(255,159,66,0.8)">E4</text>
+<text x="836" y="240" font-size="8" fill="rgba(255,200,120,0.75)">mail_verified_at TIMESTAMPTZ</text>
+<text x="836" y="256" font-size="8" fill="rgba(255,200,120,0.72)">email_notifications_enabled BOOL</text>
+<text x="836" y="272" font-size="8" fill="rgba(255,200,120,0.68)">welcome_email_sent_at TIMESTAMPTZ</text>
+<text x="816" y="292" font-size="7.5" fill="rgba(255,159,66,0.45)">021 · 024</text>
+</g>
+
+<!-- streaks -->
+<g filter="url(#cardShadow)">
+<rect x="1148" y="128" width="220" height="108" rx="10" fill="#0d1621" stroke="rgba(45,185,120,0.22)" stroke-width="1"/>
+<rect x="1148" y="128" width="220" height="36" rx="10" fill="rgba(45,185,120,0.08)"/>
+<rect x="1148" y="152" width="220" height="12" fill="rgba(45,185,120,0.08)"/>
+<rect x="1148" y="128" width="4" height="108" rx="2" fill="rgba(45,185,120,0.5)"/>
+<text x="1172" y="151" font-size="10.5" font-weight="700" fill="rgba(80,210,150,0.88)">streaks</text>
+<text x="1352" y="151" text-anchor="end" font-size="7.5" fill="rgba(45,185,120,0.42)">E3</text>
+<line x1="1160" y1="164" x2="1360" y2="164" stroke="rgba(45,185,120,0.08)"/>
+<text x="1164" y="182" font-size="8" fill="rgba(255,255,255,0.44)">current_count · best_count</text>
+<text x="1164" y="198" font-size="8" fill="rgba(255,255,255,0.42)">last_activity_day DATE</text>
+<text x="1164" y="218" font-size="7.5" fill="rgba(255,200,70,0.55)">← jobs E4 leen para at_risk / lost</text>
+</g>
+
+<line x1="1120" y1="182" x2="1148" y2="182" stroke="rgba(45,185,120,0.45)" stroke-width="1.5" marker-end="url(#fk)"/>
+<text x="1128" y="174" font-size="7" fill="rgba(45,185,120,0.5)">profiles</text>
+
+<!-- profiles compact -->
+<g filter="url(#cardShadow)">
+<rect x="1148" y="252" width="220" height="72" rx="10" fill="#0d1621" stroke="rgba(45,185,120,0.18)" stroke-width="1"/>
+<text x="1172" y="276" font-size="9.5" font-weight="700" fill="rgba(80,210,150,0.85)">profiles</text>
+<text x="1164" y="294" font-size="8" fill="rgba(255,255,255,0.4)">user_id · streak_id · exp_count</text>
+<text x="1164" y="310" font-size="7.5" fill="rgba(45,185,120,0.4)">1:1 users · FK streaks</text>
+</g>
+
+<line x1="960" y1="356" x2="960" y2="388" stroke="rgba(255,159,66,0.55)" stroke-width="1.6" marker-end="url(#em)"/>
+<text x="974" y="376" font-size="7.5" fill="rgba(255,159,66,0.65)" font-weight="600">1:N</text>
+<line x1="1040" y1="356" x2="1040" y2="388" stroke="rgba(255,159,66,0.55)" stroke-width="1.6" marker-end="url(#em)"/>
+
+<!-- email_verification_codes -->
+<g filter="url(#cardShadow)">
+<rect x="800" y="388" width="300" height="196" rx="10" fill="#0d1621" stroke="rgba(255,159,66,0.35)" stroke-width="1"/>
+<rect x="800" y="388" width="300" height="36" rx="10" fill="rgba(255,159,66,0.1)"/>
+<rect x="800" y="412" width="300" height="12" fill="rgba(255,159,66,0.1)"/>
+<rect x="800" y="388" width="4" height="196" rx="2" fill="#ff9f42"/>
+<text x="824" y="411" font-size="10.5" font-weight="700" fill="rgba(255,200,120,0.92)">email_verification_codes</text>
+<text x="1084" y="411" text-anchor="end" font-size="7.5" fill="rgba(255,159,66,0.5)">OTP</text>
+<line x1="812" y1="424" x2="1092" y2="424" stroke="rgba(255,159,66,0.1)"/>
+<text x="816" y="442" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text><text x="836" y="442" font-size="8" fill="rgba(255,255,255,0.55)">id UUID</text>
+<text x="816" y="458" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.7)">FK</text><text x="836" y="458" font-size="8" fill="rgba(255,255,255,0.48)">user_id → users ON DELETE CASCADE</text>
+<text x="816" y="474" font-size="8" fill="rgba(255,255,255,0.44)">code_hash · target_mail</text>
+<text x="816" y="490" font-size="8" fill="rgba(255,255,255,0.42)">expires_at · used_at · created_at</text>
+<text x="816" y="506" font-size="8" fill="rgba(255,255,255,0.4)">failed_attempt_count (028)</text>
+<text x="816" y="530" font-size="7.5" fill="rgba(255,159,66,0.48)">IDX activo: user_id + expires_at WHERE used_at IS NULL</text>
+<text x="816" y="568" font-size="7.5" fill="rgba(255,159,66,0.42)">024 · 028</text>
+</g>
+
+<!-- email_deliveries -->
+<g filter="url(#cardShadow)">
+<rect x="1120" y="388" width="360" height="280" rx="10" fill="#0d1621" stroke="rgba(255,159,66,0.35)" stroke-width="1"/>
+<rect x="1120" y="388" width="360" height="36" rx="10" fill="rgba(255,159,66,0.1)"/>
+<rect x="1120" y="412" width="360" height="12" fill="rgba(255,159,66,0.1)"/>
+<rect x="1120" y="388" width="4" height="280" rx="2" fill="#ff9f42"/>
+<text x="1144" y="411" font-size="10.5" font-weight="700" fill="rgba(255,200,120,0.92)">email_deliveries</text>
+<text x="1464" y="411" text-anchor="end" font-size="7.5" fill="rgba(255,159,66,0.5)">outbox</text>
+<line x1="1132" y1="424" x2="1472" y2="424" stroke="rgba(255,159,66,0.1)"/>
+<text x="1136" y="442" font-size="7.5" font-weight="700" fill="rgba(255,200,60,0.75)">PK</text><text x="1156" y="442" font-size="8" fill="rgba(255,255,255,0.55)">id UUID</text>
+<text x="1136" y="458" font-size="7.5" font-weight="700" fill="rgba(99,150,255,0.7)">FK</text><text x="1156" y="458" font-size="8" fill="rgba(255,255,255,0.48)">user_id → users ON DELETE CASCADE</text>
+<text x="1136" y="474" font-size="8" fill="rgba(255,255,255,0.44)">template_key · dedupe_key</text>
+<text x="1136" y="490" font-size="8" fill="rgba(255,255,255,0.42)">UNIQUE(user_id, template_key, dedupe_key)</text>
+<text x="1136" y="506" font-size="8" fill="rgba(255,255,255,0.4)">status: pending | sent | failed | skipped</text>
+<text x="1136" y="522" font-size="8" fill="rgba(255,255,255,0.38)">recipient_email · subject · provider_message_id</text>
+<text x="1136" y="538" font-size="8" fill="rgba(255,255,255,0.36)">error_message · attempt_count · sent_at</text>
+<text x="1136" y="554" font-size="8" fill="rgba(255,255,255,0.34)">failed_at · created_at</text>
+<text x="1136" y="570" font-size="8" fill="rgba(255,200,120,0.65)">next_attempt_at · last_attempt_at (037)</text>
+<text x="1136" y="586" font-size="8" fill="rgba(255,200,120,0.62)">locked_at · locked_by — claim cooperativo</text>
+<text x="1136" y="610" font-size="7.5" fill="rgba(255,159,66,0.48)">IDX retry: status=failed + next_attempt_at</text>
+<text x="1136" y="648" font-size="7.5" fill="rgba(255,159,66,0.42)">021 · 022 · 023 · 037</text>
+</g>
+
+<!-- Status flow -->
+<rect x="800" y="696" width="680" height="56" rx="9" fill="rgba(255,159,66,0.05)" stroke="rgba(255,159,66,0.12)"/>
+<text x="818" y="718" font-size="8.5" font-weight="700" fill="rgba(255,200,120,0.65)">Ciclo email_deliveries</text>
+<text x="818" y="736" font-size="8" fill="rgba(255,255,255,0.42)">pending → sent | failed (backoff 10m·1h·6h) → retry job | skipped (dedupe / sin opt-in)</text>
+
+<a href="mer-persistencia-e3.html"><rect x="800" y="768" width="680" height="36" rx="8" fill="rgba(45,185,120,0.06)" stroke="rgba(45,185,120,0.15)"/>
+<text x="1140" y="790" text-anchor="middle" font-size="8.5" fill="rgba(80,210,150,0.65)">Ver diagrama completo E3 (progress, games, history) →</text></a>
+</g>
+
+<!-- ═══ ZONE: Meta / relaciones ═══ -->
+<g id="zone-meta" class="diagram-zone" opacity="1">
+<rect x="1520" y="88" width="360" height="820" rx="14" fill="rgba(255,159,66,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<text x="1536" y="111" font-size="9" font-weight="700" fill="rgba(255,255,255,0.45)" letter-spacing="1.6">REGLAS E4</text>
+
+<text x="1544" y="144" font-size="10" font-weight="600" fill="rgba(255,255,255,0.6)">FK email</text>
+<text x="1544" y="162" font-size="8.5" fill="rgba(255,255,255,0.35)">users 1 — N email_deliveries</text>
+<text x="1544" y="178" font-size="8.5" fill="rgba(255,255,255,0.32)">users 1 — N email_verification_codes</text>
+
+<text x="1544" y="210" font-size="10" font-weight="600" fill="rgba(255,255,255,0.6)">Filtro jobs racha</text>
+<text x="1544" y="228" font-size="8.5" fill="rgba(255,255,255,0.35)">mail_verified_at IS NOT NULL</text>
+<text x="1544" y="244" font-size="8.5" fill="rgba(255,255,255,0.32)">email_notifications_enabled = true</text>
+<text x="1544" y="260" font-size="8.5" fill="rgba(255,255,255,0.3)">streaks: jugó ayer, hoy no, count &gt; 0</text>
+
+<rect x="1532" y="280" width="336" height="130" rx="10" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)"/>
+<text x="1548" y="302" font-size="9" font-weight="700" fill="rgba(255,255,255,0.55)">Qué NO va al save local</text>
+<text x="1548" y="322" font-size="8.5" fill="rgba(255,255,255,0.38)">OTP, outbox, auditoría Brevo</text>
+<text x="1548" y="338" font-size="8.5" fill="rgba(255,255,255,0.35)">Godot cachea flags de sesión para UI</text>
+<text x="1548" y="354" font-size="8.5" fill="rgba(255,255,255,0.32)">Transaccional en servidor; gameplay local</text>
+<text x="1548" y="378" font-size="8" fill="rgba(255,159,66,0.4)">Principio heredado de E3</text>
+
+<rect x="1532" y="426" width="336" height="110" rx="10" fill="rgba(99,120,255,0.04)" stroke="rgba(99,120,255,0.1)"/>
+<text x="1548" y="448" font-size="9" font-weight="700" fill="rgba(140,160,255,0.7)">Dual local / Supabase</text>
+<text x="1548" y="468" font-size="8.5" fill="rgba(255,255,255,0.38)">local + Express → mails Node (CI)</text>
+<text x="1548" y="484" font-size="8.5" fill="rgba(255,255,255,0.38)">supabase_edge → OTP + jobs + pg_cron</text>
+<text x="1548" y="500" font-size="8.5" fill="rgba(255,255,255,0.35)">auto → fallback Edge (staging)</text>
+<text x="1548" y="520" font-size="8" fill="rgba(130,150,255,0.42)">sufijo cuenta: "" Supabase · "@local" Docker</text>
+
+<rect x="1532" y="552" width="336" height="100" rx="10" fill="rgba(45,185,120,0.04)" stroke="rgba(45,185,120,0.1)"/>
+<text x="1548" y="574" font-size="9" font-weight="700" fill="rgba(80,210,150,0.7)">Dominio E1/E2</text>
+<text x="1548" y="594" font-size="8.5" fill="rgba(255,255,255,0.38)">Sin entidades nuevas de juego</text>
+<text x="1548" y="610" font-size="8.5" fill="rgba(255,255,255,0.35)">Mail = canal transversal sobre jugador E3</text>
+<text x="1548" y="634" font-size="8" fill="rgba(45,185,120,0.4)">MER dominio sin cambios</text>
+
+<rect x="1532" y="668" width="336" height="88" rx="10" fill="rgba(255,159,66,0.06)" stroke="rgba(255,159,66,0.12)"/>
+<text x="1548" y="690" font-size="8.5" font-weight="700" fill="rgba(255,200,120,0.65)">Migraciones E4</text>
+<text x="1548" y="708" font-size="8" fill="rgba(255,255,255,0.38)">021 notif · 022 audit · 023 retry idx</text>
+<text x="1548" y="724" font-size="8" fill="rgba(255,255,255,0.35)">024 OTP · 028 intentos · 037 backoff/lock</text>
+<text x="1548" y="744" font-size="7.5" fill="rgba(255,159,66,0.4)">BACKEND/migrations/</text>
+</g>
+
+<!-- ═══ ARROWS cross-zone ═══ -->
+<path d="M 422 538 Q 450 538 478 244" stroke="rgba(255,159,66,0.42)" stroke-width="1.4" fill="none" marker-end="url(#em)"/>
+<text x="440" y="400" font-size="7.5" fill="rgba(255,159,66,0.5)" transform="rotate(-68 440 400)">OTP</text>
+
+<path d="M 742 346 L 800 500" stroke="rgba(255,159,66,0.38)" stroke-width="1.3" fill="none" marker-end="url(#em)"/>
+<path d="M 742 360 L 1120 480" stroke="rgba(255,159,66,0.38)" stroke-width="1.3" fill="none" marker-end="url(#em)"/>
+<text x="900" y="420" font-size="7.5" fill="rgba(255,159,66,0.45)">delivery.ts</text>
+
+<path d="M 610 520 Q 880 580 1148 182" stroke="rgba(255,200,70,0.35)" stroke-width="1.2" stroke-dasharray="5 4" fill="none" marker-end="url(#job)"/>
+<text x="820" y="560" font-size="7" fill="rgba(255,200,70,0.45)">internal-job lee streaks</text>
+
+<path d="M 610 496 Q 700 460 780 280" stroke="rgba(255,159,66,0.28)" stroke-width="1.2" stroke-dasharray="5 4" fill="none" marker-end="url(#em)"/>
+<text x="680" y="470" font-size="7" fill="rgba(255,159,66,0.4)">pg_cron</text>
+
+<path d="M 422 454 Q 600 380 800 240" stroke="rgba(99,120,255,0.22)" stroke-width="1" stroke-dasharray="4 4" fill="none"/>
+<text x="580" y="360" font-size="7" fill="rgba(130,150,255,0.4)">cache sesión ↔ users</text>
+
+<!-- Migration strip -->
+<rect x="40" y="928" width="1840" height="44" rx="10" fill="rgba(255,159,66,0.04)" stroke="rgba(255,159,66,0.1)"/>
+<text x="58" y="948" font-size="8.5" font-weight="700" fill="rgba(255,200,120,0.55)" letter-spacing="1.2">EVOLUCIÓN E4</text>
+<text x="58" y="962" font-size="8" fill="rgba(255,255,255,0.32)">021 users+deliveries → 022 audit status → 023 retry indexes → 024 OTP+mail_verified → 028 failed_attempts → 037 backoff+locking</text>
+
+</svg>
+</div></div>
+
+<div class="legend-bar">
+  <div class="leg-row"><span class="leg-line fk"></span> FK E3</div>
+  <div class="leg-row"><span class="leg-line email"></span> Email E4</div>
+  <div class="leg-row"><span class="leg-line cron"></span> pg_cron</div>
+  <div class="leg-row"><span class="leg-line job"></span> job → streaks</div>
+  <span class="hint">Scroll zoom · Drag · ⊡ ajustar · P panel · 0 reset</span>
+</div>
+
+<div class="foot">
+  <button class="fc" id="btn-out" title="Alejar">−</button>
+  <span id="zl">—</span>
+  <button class="fc" id="btn-in" title="Acercar">+</button>
+  <div class="foot-div"></div>
+  <button class="fc" id="btn-fit" title="Ajustar">⊡</button>
+</div>
+
+<script>
+const SVG_W = 1920, SVG_H = 1000;
+let scale = 0.62, ox = 0, oy = 0, panning = false, lx = 0, ly = 0;
+const cv = document.getElementById('cv'), wrap = document.getElementById('wrap'), zl = document.getElementById('zl');
+const panel = document.getElementById('panel'), btnPanel = document.getElementById('btn-panel');
+
+function render() { wrap.style.transform = `translate(${ox|0}px,${oy|0}px) scale(${scale})`; zl.textContent = Math.round(scale*100)+'%'; }
+function zoomAt(cx,cy,f) { const ns=Math.max(0.15,Math.min(6,scale*f)), r=ns/scale; ox=cx-r*(cx-ox); oy=cy-r*(cy-oy); scale=ns; render(); }
+function fitView() {
+  const cw=cv.clientWidth, ch=cv.clientHeight;
+  const panelOpen = panel && !panel.classList.contains('collapsed');
+  const padX = window.innerWidth < 900 ? 16 : (panelOpen ? 220 : 24);
+  scale=Math.min((cw-padX)/SVG_W,(ch-48)/SVG_H,1.05);
+  ox=Math.max(8,(cw-padX-SVG_W*scale)/2); oy=Math.max(6,(ch-SVG_H*scale)/2); render();
+}
+
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();let dy=e.deltaY;
+  if(e.deltaMode===1)dy*=16; if(e.deltaMode===2)dy*=320;
+  const c=Math.max(-150,Math.min(150,dy)), p=Math.abs(c)/100*0.1;
+  zoomAt(e.clientX-r.left,e.clientY-r.top,c<0?1+p:1/(1+p));},{passive:false});
+cv.addEventListener('mousedown',e=>{if(e.button!==0)return;panning=true;lx=e.clientX;ly=e.clientY;cv.classList.add('drag');});
+cv.addEventListener('dblclick',fitView);
+window.addEventListener('mousemove',e=>{if(!panning)return;ox+=e.clientX-lx;oy+=e.clientY-ly;lx=e.clientX;ly=e.clientY;render();});
+window.addEventListener('mouseup',()=>{panning=false;cv.classList.remove('drag');});
+document.getElementById('btn-in').onclick=()=>zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.18);
+document.getElementById('btn-out').onclick=()=>zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.18);
+document.getElementById('btn-fit').onclick=fitView;
+
+window.addEventListener('keydown', e => {
+  if (e.key === '+' || e.key === '=') zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.15);
+  if (e.key === '-') zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.15);
+  if (e.key === '0') fitView();
+  if (e.key === 'p') { panel.classList.toggle('collapsed'); fitView(); }
+});
+
+btnPanel.addEventListener('click', () => { panel.classList.toggle('collapsed'); fitView(); });
+
+document.querySelectorAll('.zone-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const zoneEl = document.getElementById(btn.dataset.zone);
+    if (!zoneEl) return;
+    btn.classList.toggle('active');
+    zoneEl.style.opacity = btn.classList.contains('active') ? '1' : '0.12';
+    zoneEl.style.transition = 'opacity .25s';
+  });
+});
+
+window.addEventListener('resize', fitView);
+fitView();
+</script>
+<script src="assets/mer-shared.js"></script>
+<script src="assets/mer-wiki-links.js"></script>
+</body>
+</html>
