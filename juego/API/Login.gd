@@ -162,7 +162,10 @@ func _enviar_formulario() -> void:
 			_input_register_mail.text.strip_edges(),
 			_input_register_name.text.strip_edges(),
 			_input_register_birth_date.text.strip_edges(),
-			false,
+			# Recordatorios de racha activados por defecto (se pueden apagar
+			# desde el perfil). Con false, el job de rachas excluía a todos
+			# los usuarios nuevos y nunca llegaba ningún mail de racha.
+			true,
 			true
 		)
 	else:
