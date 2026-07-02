@@ -12,7 +12,7 @@ signal ver_tabla_completa_solicitada(scope: String)
 @onready var _pestanias: ScopeTabs = %ScopeTabs
 @onready var _card: ProgresoPuestoCard = %ProgresoCard
 @onready var _mini_list: LeaderboardMiniList = %MiniList
-@onready var _etiqueta_lista: Label = $Margin/VBox/EtiquetaLista
+@onready var _etiqueta_lista: Label = %EtiquetaLista
 @onready var _boton_tabla: Button = %BotonTablaCompleta
 
 var _scope_activo: String = LeaderboardApi.SCOPE_XP_GLOBAL
