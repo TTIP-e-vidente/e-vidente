@@ -89,16 +89,21 @@ func _refrescar_textura_avatar() -> void:
 func _distribuir_nodos_visuales() -> void:
 	if not is_node_ready() or _background_sprite == null or _background_sprite.texture == null:
 		return
+
 	var texture_size: Vector2 = _background_sprite.texture.get_size()
 	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
 		return
+
 	var available_width: float = maxf(1.0, size.x - BACKGROUND_MARGIN)
 	var available_height: float = maxf(1.0, size.y - BACKGROUND_MARGIN)
+
 	var scale_factor: float = minf(
 		available_width / texture_size.x,
 		available_height / texture_size.y
 	)
+
 	var scaled_size: Vector2 = texture_size * scale_factor
+
 	_background_sprite.scale = Vector2.ONE * scale_factor
 	_background_sprite.position = Vector2(
 		size.x - BACKGROUND_MARGIN - scaled_size.x * 0.5,
@@ -107,18 +112,36 @@ func _distribuir_nodos_visuales() -> void:
 
 	if _avatar_sprite == null or not _avatar_sprite.visible or _avatar_sprite.texture == null:
 		return
+
 	var avatar_texture_size: Vector2 = _avatar_sprite.texture.get_size()
 	if avatar_texture_size.x <= 0.0 or avatar_texture_size.y <= 0.0:
 		return
 
-	var left_tile_size: float = scaled_size.y
-	var avatar_target_size: float = left_tile_size * AVATAR_SCALE_IN_LEFT_TILE
-	var avatar_scale: float = minf(
-		avatar_target_size / avatar_texture_size.x,
-		avatar_target_size / avatar_texture_size.y
+	# -------------------------------------------------------
+	# Recorte cuadrado centrado del avatar
+	# -------------------------------------------------------
+	var side := minf(avatar_texture_size.x, avatar_texture_size.y)
+
+	_avatar_sprite.region_enabled = true
+	_avatar_sprite.region_rect = Rect2(
+		(avatar_texture_size.x - side) * 0.5,
+		(avatar_texture_size.y - side) * 0.5,
+		side,
+		side
 	)
-	var background_top_left: Vector2 = _background_sprite.position - scaled_size * 0.5
+
+	# -------------------------------------------------------
+	# Escala del cuadrado del avatar
+	# -------------------------------------------------------
+	var left_tile_size: float = scaled_size.y
+	var avatar_target_size: float = left_tile_size * AVATAR_SCALE_IN_LEFT_TILE + 6.0
+
+	var avatar_scale: float = avatar_target_size / side
+
 	_avatar_sprite.scale = Vector2.ONE * avatar_scale
+
+	var background_top_left: Vector2 = _background_sprite.position - scaled_size * 0.5
+
 	_avatar_sprite.position = background_top_left + Vector2(
 		left_tile_size * 0.5,
 		scaled_size.y * 0.5

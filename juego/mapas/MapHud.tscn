@@ -1,14 +1,14 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://ehxvn01ut878"]
 
-[ext_resource type="Script" path="res://mapas/MapHud.gd" id="1_maphud"]
+[ext_resource type="Script" uid="uid://cey4kx0gvqukp" path="res://mapas/MapHud.gd" id="1_maphud"]
 [ext_resource type="PackedScene" path="res://interface/components/Racha.tscn" id="2_racha"]
-[ext_resource type="Script" path="res://interface/components/ProfileProgressButton.gd" id="3_profile"]
-[ext_resource type="Texture2D" path="res://assets-sistema/perfil/perfil-menu.png" id="4_c1si2"]
-[ext_resource type="PackedScene" path="res://interface/components/ProfileOverlayPanel.tscn" id="4_overlay"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="5_back"]
-[ext_resource type="Font" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_rubik"]
+[ext_resource type="Script" uid="uid://c0i1s6mt4a8qw" path="res://interface/components/ProfileProgressButton.gd" id="3_profile"]
+[ext_resource type="Texture2D" uid="uid://be1j261mic600" path="res://assets-sistema/perfil/perfil-menu.png" id="4_c1si2"]
+[ext_resource type="PackedScene" uid="uid://b4inwbpf54ke5" path="res://interface/components/ProfileOverlayPanel.tscn" id="4_overlay"]
+[ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="5_back"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="6_rubik"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_c1si2"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w2v2o"]
 
 [node name="MapHud" type="CanvasLayer" unique_id=852306528]
 layer = 75
@@ -52,11 +52,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_default_cursor_shape = 2
-theme_override_styles/normal = SubResource("StyleBoxEmpty_c1si2")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_c1si2")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_c1si2")
-theme_override_styles/disabled = SubResource("StyleBoxEmpty_c1si2")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_c1si2")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_w2v2o")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_w2v2o")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_w2v2o")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_w2v2o")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_w2v2o")
 flat = true
 script = ExtResource("3_profile")
 
@@ -87,7 +87,6 @@ offset_right = -26.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
-tooltip_text = ""
 focus_mode = 0
 icon = ExtResource("5_back")
 flat = true
@@ -129,36 +128,33 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-alignment = 1
-theme_override_constants/separation = 5
 mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 1
 
 [node name="ExpTitle" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456783]
 layout_mode = 2
-vertical_alignment = 1
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
 theme_override_fonts/font = ExtResource("6_rubik")
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
 text = "EXP"
+vertical_alignment = 1
 
 [node name="ExpNumero" type="Label" parent="HudRoot/ExpMapaAnchor/VBox" unique_id=2123456784]
 layout_mode = 2
-vertical_alignment = 1
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
 theme_override_fonts/font = ExtResource("6_rubik")
 theme_override_font_sizes/font_size = 22
-theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
 text = "0"
+vertical_alignment = 1
 
 [node name="ProfileOverlayPanel" parent="." unique_id=779278941 instance=ExtResource("4_overlay")]
-layout_mode = 3
-grow_horizontal = 2
-grow_vertical = 2
 
 [connection signal="pressed" from="HudRoot/TopRightAnchor/ProfileButton" to="." method="_on_boton_perfil_presionado"]
 [connection signal="pressed" from="HudRoot/BackAnchor/BackButton" to="." method="_on_boton_atras_presionado"]
 [connection signal="close_requested" from="ProfileOverlayPanel" to="." method="_on_superposicion_cerrar_solicitado"]
 [connection signal="edit_profile_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_edit_perfil_presionado"]
+[connection signal="logout_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_logout_presionado"]
 [connection signal="reestablecer_progreso_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reiniciar_presionado"]
 [connection signal="resume_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_reanudar_presionado"]
-[connection signal="logout_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_logout_presionado"]
 [connection signal="save_pressed" from="ProfileOverlayPanel" to="." method="_on_superposicion_guardar_presionado"]
