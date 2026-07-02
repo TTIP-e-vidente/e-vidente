@@ -25,10 +25,45 @@ const emailEnabled = ['true', '1', 'yes'].includes(
 
 const localExpressUrl = `http://${(process.env.BACKEND_HOST ?? 'localhost').trim()}:${process.env.BACKEND_PORT ?? '3010'}`;
 
-let apiMode: 'local' | 'cloud' | 'supabase_edge';
+const targetPath = path.resolve(__dirname, '../../juego/config/backend.local.json');
+
+// Config previa: si el env actual no tiene los datos de Supabase (p. ej.
+// corriendo con .env local), se preservan del archivo anterior para que el
+// modo auto pueda caer a Supabase Edge cuando el Express local no esté.
+function readPreviousConfig(): Record<string, unknown> {
+  try {
+    const raw = fs.readFileSync(targetPath, 'utf8');
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+const previous = readPreviousConfig();
+
+const effectiveSupabaseFunctionsUrl =
+  supabaseFunctionsUrl || String(previous.supabase_functions_url ?? '').trim();
+const effectiveSupabaseAnonKey =
+  supabaseAnonKey || String(previous.supabase_anon_key ?? '').trim();
+
+// Modo auto: Godot sondea el Express local al arrancar; si responde lo usa,
+// si no cae a Supabase Edge. GODOT_API_MODE permite pinear un modo fijo
+// (local | cloud | supabase_edge) para debug.
+const pinnedMode = (process.env.GODOT_API_MODE ?? '').trim();
+let apiMode: 'auto' | 'local' | 'cloud' | 'supabase_edge';
 let baseUrl: string;
 
-if (apiEdgeMode) {
+if (pinnedMode === 'local' || pinnedMode === 'cloud' || pinnedMode === 'supabase_edge') {
+  apiMode = pinnedMode;
+  baseUrl = pinnedMode === 'supabase_edge'
+    ? effectiveSupabaseFunctionsUrl
+    : pinnedMode === 'cloud'
+      ? publicUrl
+      : localExpressUrl;
+} else if (effectiveSupabaseFunctionsUrl) {
+  apiMode = 'auto';
+  baseUrl = effectiveSupabaseFunctionsUrl;
+} else if (apiEdgeMode) {
   apiMode = 'supabase_edge';
   baseUrl = supabaseFunctionsUrl;
 } else if (useCloudApi) {
@@ -39,16 +74,15 @@ if (apiEdgeMode) {
   baseUrl = localExpressUrl;
 }
 
-const targetPath = path.resolve(__dirname, '../../juego/config/backend.local.json');
-
 const payload = {
   base_url: baseUrl,
+  local_base_url: localExpressUrl,
   env_file: envFile,
   db: isRemotePostgres() ? 'supabase' : 'local',
   email_enabled: emailEnabled,
-  email_via_supabase: emailViaSupabase,
-  supabase_functions_url: supabaseFunctionsUrl,
-  supabase_anon_key: supabaseAnonKey,
+  email_via_supabase: emailViaSupabase || apiMode === 'auto',
+  supabase_functions_url: effectiveSupabaseFunctionsUrl,
+  supabase_anon_key: effectiveSupabaseAnonKey,
   api_mode: apiMode,
   synced_at: new Date().toISOString(),
 };
@@ -56,11 +90,13 @@ const payload = {
 fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 fs.writeFileSync(targetPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 
-const modeLabel = apiEdgeMode
-  ? 'supabase_edge (sin Express)'
-  : useCloudApi
-    ? 'cloud (sin terminal local)'
-    : 'local';
+const modeLabel = apiMode === 'auto'
+  ? 'auto (Express local si responde; si no, Supabase Edge)'
+  : apiEdgeMode
+    ? 'supabase_edge (sin Express)'
+    : useCloudApi
+      ? 'cloud (sin terminal local)'
+      : 'local';
 const verifyLabel = emailViaSupabase
   ? canReachSupabaseEmailEdge()
     ? ' · verify→supabase'

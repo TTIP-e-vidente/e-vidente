@@ -14,9 +14,18 @@ Verificación: npm run integrate:status
 Guía: docs/SUPABASE_QUICKSTART.md
 `;
 
-/** Bloquea flujos dev que dependían de Postgres Docker (.env con POSTGRES_SSL=false). */
+/**
+ * Bloquea flujos dev que dependían de Postgres Docker (.env con POSTGRES_SSL=false).
+ * Excepción: el stack local-first (npm run dev / scripts/dev-local.ts) opta
+ * explícitamente con ALLOW_LOCAL_POSTGRES_DEV=true — el juego separa esos
+ * datos de Supabase (cuentas @local) y cae solo a Edge si el stack no está.
+ */
 export function assertSupabaseOnlyDev(entrypoint: string): void {
   if (isRemotePostgres()) {
+    return;
+  }
+  const allowLocal = (process.env.ALLOW_LOCAL_POSTGRES_DEV ?? '').trim().toLowerCase();
+  if (['true', '1', 'yes'].includes(allowLocal)) {
     return;
   }
 
