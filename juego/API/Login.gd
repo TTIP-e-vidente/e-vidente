@@ -98,7 +98,7 @@ func _on_boton_reintentar_conexion_presionado() -> void:
 	await _verificar_conexion(true)
 
 
-func _verificar_conexion(es_reintento: bool) -> void:
+func _verificar_conexion(_es_reintento: bool) -> void:
 	if _is_loading or AuthApi.esta_logueado():
 		return
 
@@ -195,15 +195,15 @@ func _enviar_formulario() -> void:
 			return
 		verificacion_escena_solicitada.emit(true, result)
 		return
-	else:
-		if AuthApi.mail_pendiente_verificacion():
-			_establecer_estado(
-				"Tu mail no está verificado. Te vamos a pedir el código de 6 dígitos.",
-				false
-			)
-			verificacion_escena_solicitada.emit(false, {})
-			return
-		_establecer_estado(MSG_LISTO_JUGAR)
+
+	if AuthApi.mail_pendiente_verificacion():
+		_establecer_estado(
+			"Tu mail no está verificado. Te vamos a pedir el código de 6 dígitos.",
+			false
+		)
+		verificacion_escena_solicitada.emit(false, {})
+		return
+	_establecer_estado(MSG_LISTO_JUGAR)
 
 	login_completed.emit()
 

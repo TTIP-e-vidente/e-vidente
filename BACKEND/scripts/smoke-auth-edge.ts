@@ -115,7 +115,8 @@ async function main(): Promise<void> {
 
   // Verificar el mail directo en la DB (el OTP real viaja por Brevo) y
   // comprobar que el login queda desbloqueado.
-  const { pool } = await import('../src/config/database');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { pool } = require('../src/config/database') as typeof import('../src/config/database');
   await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [username]);
 
   const login = await requestJson(`${baseUrl}/auth-login`, {

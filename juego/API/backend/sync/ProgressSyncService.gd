@@ -83,8 +83,8 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 	var usuario_actual := _auth_session.obtener_clave_cuenta().strip_edges()
 	for i in range(limit):
 		var item: Dictionary = pending[i]
-		var owner := str(item.get("owner", "")).strip_edges()
-		if not owner.is_empty() and owner != usuario_actual:
+		var duenio := str(item.get("owner", "")).strip_edges()
+		if not duenio.is_empty() and duenio != usuario_actual:
 			# Partida de otra cuenta: queda en cola hasta que su dueño vuelva.
 			continue
 		var cid := str(item.get("clientRunId", "")).strip_edges()

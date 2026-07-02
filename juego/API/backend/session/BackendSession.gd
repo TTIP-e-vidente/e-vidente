@@ -221,7 +221,11 @@ func limpiar_cache_progreso_online() -> void:
 	var progress_rows: Variant = _progreso_online_en_cache.get("progress", [])
 	if progress_rows is Array:
 		for row in progress_rows as Array:
-			if row is Dictionary and str((row as Dictionary).get("restriction_type", "")) == "CELIAQUIA":
+			var es_celiaquia := (
+				row is Dictionary
+				and str((row as Dictionary).get("restriction_type", "")) == "CELIAQUIA"
+			)
+			if es_celiaquia:
 				(row as Dictionary)["total_exp"] = 0
 				(row as Dictionary)["completed_nodes_count"] = 0
 				(row as Dictionary)["completed_games_count"] = 0
@@ -384,7 +388,8 @@ func verificar_stack_completo() -> Dictionary:
 
 	if not BackendConfig.es_supabase() and not BackendConfig.es_modo_supabase_edge():
 		push_warning(
-			"[BackendSession] backend.local.json no marca db=supabase — corré npm run sync:godot-config:staging"
+			"[BackendSession] backend.local.json no marca db=supabase — "
+			+ "corré npm run sync:godot-config:staging"
 		)
 
 	var migrations: Dictionary = {}
@@ -564,12 +569,20 @@ func actualizar_perfil_online(
 	if forzar_sincronizar_mail and not clean_mail.is_empty():
 		payload["mail"] = clean_mail
 	elif _mail_normalizado(clean_mail) != _mail_normalizado(cached_mail):
-		payload["mail"] = clean_mail if not clean_mail.is_empty() else null
+		# null borra el mail en el server; el ternario String/null dispara
+		# INCOMPATIBLE_TERNARY, por eso el if explícito.
+		if clean_mail.is_empty():
+			payload["mail"] = null
+		else:
+			payload["mail"] = clean_mail
 
 	var clean_birth := fecha_nacimiento.strip_edges()
 	var cached_birth := str(cached.get("birth_date", "")).strip_edges()
 	if clean_birth != cached_birth:
-		payload["birth_date"] = clean_birth if not clean_birth.is_empty() else null
+		if clean_birth.is_empty():
+			payload["birth_date"] = null
+		else:
+			payload["birth_date"] = clean_birth
 
 	if notificaciones_mail is bool:
 		var cached_notifications := bool(cached.get("email_notifications_enabled", false))
@@ -854,7 +867,9 @@ func _esperar_sync_con_timeout(timeout_s: float) -> void:
 	while not timeout_state["expired"] and _sync.esta_sincronizando():
 		await get_tree().process_frame
 	if timeout_state["expired"]:
-		push_warning("[BackendSession] esperar_drenaje_sync_pendiente: timeout tras %.0fs" % timeout_s)
+		push_warning(
+			"[BackendSession] esperar_drenaje_sync_pendiente: timeout tras %.0fs" % timeout_s
+		)
 
 
 func _limpiar_cola_inicial() -> void:
@@ -1106,7 +1121,9 @@ func _guardar_avatar_descargado(base64_data: String, mime_type: String) -> void:
 		return
 	var bytes := Marshalls.base64_to_raw(clean_b64)
 	if bytes.is_empty():
-		push_warning("[BackendSession] No se pudo decodificar avatar base64 (len=%d)" % clean_b64.length())
+		push_warning(
+			"[BackendSession] No se pudo decodificar avatar base64 (len=%d)" % clean_b64.length()
+		)
 		return
 	var ext := "png"
 	if "jpeg" in mime_type or "jpg" in mime_type:
