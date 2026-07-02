@@ -5,7 +5,8 @@ export function sendError(response: Response, error: unknown): void {
   if (error instanceof AppError) {
     response.status(error.statusCode).json({
       error: error.message,
-      code: error.code
+      code: error.code,
+      ...(error.details ?? {})
     });
     return;
   }

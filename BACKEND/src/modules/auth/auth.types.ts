@@ -2,7 +2,8 @@ export type AuthErrorCode =
   | 'INVALID_BODY'
   | 'INVALID_CREDENTIALS'
   | 'DUPLICATE_USERNAME'
-  | 'DUPLICATE_MAIL';
+  | 'DUPLICATE_MAIL'
+  | 'EMAIL_NOT_VERIFIED';
 
 export interface PublicUser {
   id: string;

@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { sendError } from '../../shared/http/send-error';
 import { sendResponse } from '../../shared/http/send-response';
 import * as userRepository from '../user/user.repository';
-import { queueWelcomeEmail } from './email.service';
+import { issueAccessTokenForUserId } from '../auth/auth.service';
+import { queueAccountVerifiedEmail } from './email.service';
 import {
   confirmVerificationCode,
   getEmailVerificationStatus,
@@ -209,16 +210,22 @@ export async function confirmVerificationController(
     if (result.status === 'verified') {
       const user = await userRepository.findPublicUserById(userId);
       if (user?.mail) {
-        queueWelcomeEmail({
+        // Mail "cuenta verificada": no bloquea la respuesta; si falla queda
+        // en email_deliveries para el job de retry.
+        queueAccountVerifiedEmail({
           userId,
           mail: user.mail,
           name: user.name
         });
       }
+      // El cliente puede haber llegado acá con el token acotado del login
+      // (scope email_verification): se le entrega un access token completo.
+      const accessToken = await issueAccessTokenForUserId(userId);
       sendResponse(response, 200, {
         status: 'verified',
         message: '¡Email verificado correctamente!',
-        mail_verified_at: user?.mail_verified_at ?? null
+        mail_verified_at: user?.mail_verified_at ?? null,
+        ...(accessToken ? { accessToken } : {})
       });
       return;
     }

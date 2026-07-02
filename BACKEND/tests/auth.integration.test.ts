@@ -124,6 +124,20 @@ async function run(): Promise<void> {
     });
     assert.equal(duplicateResponse.status, 409);
 
+    // Con mail sin verificar el login queda bloqueado (403 EMAIL_NOT_VERIFIED)
+    // y entrega un token acotado que solo sirve para verificar.
+    const unverifiedLoginResponse = await requestJson(baseUrl, '/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ usernameOrMail: username, password })
+    });
+    assert.equal(unverifiedLoginResponse.status, 403);
+    assert.equal(unverifiedLoginResponse.body.code, 'EMAIL_NOT_VERIFIED');
+    assert.equal(typeof unverifiedLoginResponse.body.verification_token, 'string');
+
+    await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [
+      username
+    ]);
+
     const loginWithUsernameResponse = await requestJson(baseUrl, '/auth/login', {
       method: 'POST',
       body: JSON.stringify({ usernameOrMail: username, password })

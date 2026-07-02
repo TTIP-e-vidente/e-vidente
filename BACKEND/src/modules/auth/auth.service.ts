@@ -20,8 +20,13 @@ import {
 } from './auth.types';
 
 export class AuthError extends AppError {
-  constructor(statusCode: number, code: AuthErrorCode, message: string) {
-    super(statusCode, code, message);
+  constructor(
+    statusCode: number,
+    code: AuthErrorCode,
+    message: string,
+    details?: Record<string, unknown>
+  ) {
+    super(statusCode, code, message, details);
   }
 }
 
@@ -33,20 +38,29 @@ function getBcryptSaltRounds(): number {
   return Number.isNaN(authConfig.bcryptSaltRounds) ? 10 : authConfig.bcryptSaltRounds;
 }
 
-function signAccessToken(user: UserRow): string {
+// Token acotado: solo sirve para pedir/confirmar el código de verificación de mail.
+export const VERIFICATION_TOKEN_SCOPE = 'email_verification';
+
+function signAccessToken(user: UserRow, scope?: string): string {
   assertAuthConfig();
 
   const options: SignOptions = {
     expiresIn: authConfig.jwtExpiresIn as SignOptions['expiresIn']
   };
 
-  return jwt.sign({ username: user.username }, authConfig.jwtSecret, {
-    ...options,
-    subject: user.id
-  });
+  return jwt.sign(
+    { username: user.username, ...(scope ? { scope } : {}) },
+    authConfig.jwtSecret,
+    {
+      ...options,
+      subject: user.id
+    }
+  );
 }
 
-export function verifyAccessToken(token: string): { sub: string; username: string } {
+export function verifyAccessToken(
+  token: string
+): { sub: string; username: string; scope?: string } {
   assertAuthConfig();
 
   const payload = jwt.verify(token, authConfig.jwtSecret);
@@ -59,7 +73,8 @@ export function verifyAccessToken(token: string): { sub: string; username: strin
     throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid token');
   }
 
-  return { sub: payload.sub, username: payload.username };
+  const scope = typeof payload.scope === 'string' ? payload.scope : undefined;
+  return { sub: payload.sub, username: payload.username, ...(scope ? { scope } : {}) };
 }
 
 function parseBooleanPreference(value: unknown, defaultValue: boolean): boolean {
@@ -175,14 +190,63 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
     throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
   }
 
+  if (user.mail && !user.mail_verified_at) {
+    // Password correcta pero mail sin verificar: no se entrega sesión completa.
+    // El token acotado solo habilita verify-email/request|confirm y email-status;
+    // el código se (re)envía acá respetando el cooldown para que el usuario
+    // aterrice en la pantalla de verificación con un OTP vigente.
+    let sendResult: Awaited<ReturnType<typeof sendVerificationCode>> = 'send_failed';
+    try {
+      sendResult = await sendVerificationCode(user.id, user.mail, user.name);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[email:verify] login send failed for user ${user.id}: ${msg}`);
+    }
+    const verification = await buildVerificationSendMeta(user.id, sendResult);
+    throw new AuthError(403, 'EMAIL_NOT_VERIFIED', 'Email must be verified before login', {
+      user: toPublicUser(user),
+      verification,
+      verification_token: signAccessToken(user, VERIFICATION_TOKEN_SCOPE)
+    });
+  }
+
   return {
     user: toPublicUser(user),
     accessToken: signAccessToken(user)
   };
 }
 
+// Emite un access token completo para un usuario ya validado (p. ej. tras
+// confirmar el código de verificación con un token acotado).
+export async function issueAccessTokenForUserId(userId: string): Promise<string | null> {
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    return null;
+  }
+  return signAccessToken(user);
+}
+
 export async function getUserFromToken(token: string): Promise<PublicUser> {
   const payload = verifyAccessToken(token);
+  if (payload.scope) {
+    // Un token acotado (p. ej. email_verification) no habilita el resto de la API.
+    throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid token');
+  }
+  const user = await authRepository.findById(payload.sub);
+
+  if (!user) {
+    throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid token');
+  }
+
+  return toPublicUser(user);
+}
+
+// Acepta tanto un access token completo como el token acotado de verificación.
+export async function getUserFromVerificationCapableToken(token: string): Promise<PublicUser> {
+  const payload = verifyAccessToken(token);
+  if (payload.scope && payload.scope !== VERIFICATION_TOKEN_SCOPE) {
+    throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid token');
+  }
   const user = await authRepository.findById(payload.sub);
 
   if (!user) {
