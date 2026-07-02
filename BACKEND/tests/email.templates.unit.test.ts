@@ -54,11 +54,29 @@ function runTemplateTests(): void {
   assert.match(lost.textContent, /volvió a cero/i);
 
   const metadata = listEmailTemplateMetadata();
-  assert.equal(metadata.length, 5);
+  assert.equal(metadata.length, 6);
   assert.deepEqual(
     metadata.map((item) => item.key).sort(),
-    ['email_verification', 'mail_changed', 'streak_at_risk', 'streak_lost', 'welcome']
+    [
+      'account_verified',
+      'email_verification',
+      'mail_changed',
+      'streak_at_risk',
+      'streak_lost',
+      'welcome'
+    ]
   );
+
+  // Mail "cuenta verificada": transaccional propio, distinto del welcome.
+  const accountVerified = buildEmailMessage('account_verified', {
+    name: 'Agus',
+    mail: 'agus@example.com'
+  });
+  assert.equal(accountVerified.subject, 'Tu correo fue verificado');
+  assert.notEqual(accountVerified.subject, welcome.subject);
+  assert.match(accountVerified.textContent, /Tu correo fue verificado/);
+  assert.match(accountVerified.textContent, /activa/i);
+  assert.doesNotMatch(accountVerified.htmlContent, /<script/i);
 
   const verify = buildEmailMessage('email_verification', {
     name: 'Agus',

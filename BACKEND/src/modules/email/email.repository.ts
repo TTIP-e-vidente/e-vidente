@@ -94,7 +94,9 @@ export async function acquireDeliverySlot(
           error_message = NULL,
           failed_at = NULL,
           sent_at = NULL,
-          attempt_count = attempt_count + 1
+          attempt_count = attempt_count + 1,
+          last_attempt_at = now(),
+          next_attempt_at = NULL
         WHERE id = $1
         RETURNING id;
       `,
@@ -160,7 +162,11 @@ export async function markDeliverySent(
         provider_message_id = $2,
         error_message = NULL,
         failed_at = NULL,
-        sent_at = now()
+        sent_at = now(),
+        last_attempt_at = now(),
+        next_attempt_at = NULL,
+        locked_at = NULL,
+        locked_by = NULL
       WHERE id = $1;
     `,
     [deliveryId, providerMessageId]
@@ -171,6 +177,7 @@ export async function markDeliveryFailed(
   deliveryId: string,
   errorMessage: string
 ): Promise<void> {
+  // Backoff simple entre reintentos: 2.º intento +10 min, 3.º +1 h, 4.º+ +6 h.
   await query(
     `
       UPDATE email_deliveries
@@ -178,7 +185,17 @@ export async function markDeliveryFailed(
         status = 'failed',
         error_message = $2,
         failed_at = now(),
-        sent_at = NULL
+        sent_at = NULL,
+        last_attempt_at = now(),
+        locked_at = NULL,
+        locked_by = NULL,
+        next_attempt_at = now() + (
+          CASE
+            WHEN attempt_count <= 1 THEN INTERVAL '10 minutes'
+            WHEN attempt_count = 2 THEN INTERVAL '1 hour'
+            ELSE INTERVAL '6 hours'
+          END
+        )
       WHERE id = $1;
     `,
     [deliveryId, errorMessage.slice(0, 1000)]
@@ -544,39 +561,54 @@ export async function findRetryableFailedDeliveries(input: {
   limit: number;
   maxAttempts: number;
   maxAgeHours: number;
+  lockedBy?: string;
 }): Promise<FailedDeliveryRetryCandidate[]> {
   const safeLimit = Math.max(1, Math.min(input.limit, 200));
   const safeMaxAttempts = Math.max(1, input.maxAttempts);
   const safeMaxAgeHours = Math.max(1, input.maxAgeHours);
+  const lockedBy = input.lockedBy?.trim() || 'express-retry-job';
 
+  // Claim atómico: FOR UPDATE SKIP LOCKED evita que dos jobs concurrentes
+  // (Express legacy y Edge internal-job) tomen la misma fila; locked_at/locked_by
+  // dejan registro del claim y expiran a los 10 minutos si el job murió.
+  // next_attempt_at implementa el backoff (attempt 2 +10 min, 3 +1 h, 4+ +6 h).
   const result = await query<FailedDeliveryRetryCandidate>(
     `
-      SELECT
-        id,
-        user_id AS "userId",
-        template_key AS "templateKey",
-        dedupe_key AS "dedupeKey",
-        recipient_email AS "recipientEmail",
-        attempt_count AS "attemptCount"
-      FROM email_deliveries ed
-      WHERE status = 'failed'
-        AND recipient_email IS NOT NULL
-        AND attempt_count < $1
-        AND failed_at >= now() - ($2::text || ' hours')::interval
-        AND (
-          ed.template_key = 'welcome'
-          OR ed.template_key = 'mail_changed'
-          OR EXISTS (
-            SELECT 1
-            FROM users u
-            WHERE u.id = ed.user_id
-              AND u.email_notifications_enabled = true
+      WITH claimed AS (
+        SELECT ed.id
+        FROM email_deliveries ed
+        WHERE ed.status = 'failed'
+          AND ed.recipient_email IS NOT NULL
+          AND ed.attempt_count < $1
+          AND ed.failed_at >= now() - ($2::text || ' hours')::interval
+          AND (ed.next_attempt_at IS NULL OR ed.next_attempt_at <= now())
+          AND (ed.locked_at IS NULL OR ed.locked_at < now() - INTERVAL '10 minutes')
+          AND (
+            ed.template_key IN ('welcome', 'account_verified', 'mail_changed')
+            OR EXISTS (
+              SELECT 1
+              FROM users u
+              WHERE u.id = ed.user_id
+                AND u.email_notifications_enabled = true
+            )
           )
-        )
-      ORDER BY failed_at ASC
-      LIMIT $3;
+        ORDER BY ed.failed_at ASC
+        LIMIT $3
+        FOR UPDATE SKIP LOCKED
+      )
+      UPDATE email_deliveries ed
+      SET locked_at = now(), locked_by = $4
+      FROM claimed c
+      WHERE ed.id = c.id
+      RETURNING
+        ed.id,
+        ed.user_id AS "userId",
+        ed.template_key AS "templateKey",
+        ed.dedupe_key AS "dedupeKey",
+        ed.recipient_email AS "recipientEmail",
+        ed.attempt_count AS "attemptCount";
     `,
-    [safeMaxAttempts, String(safeMaxAgeHours), safeLimit]
+    [safeMaxAttempts, String(safeMaxAgeHours), safeLimit, lockedBy]
   );
 
   return result.rows;

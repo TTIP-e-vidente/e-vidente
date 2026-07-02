@@ -1,4 +1,5 @@
 import { EmailMessage, EmailTemplateKey } from '../email.types';
+import { buildAccountVerifiedEmail } from './account-verified.template';
 import { buildEmailVerificationEmail } from './email-verification.template';
 import { buildMailChangedEmail } from './mail-changed.template';
 import { buildStreakAtRiskEmail } from './streak-at-risk.template';
@@ -23,6 +24,16 @@ export const EMAIL_TEMPLATE_DEFINITIONS: {
       mail: 'jugador@example.com'
     }),
     build: buildWelcomeEmail
+  },
+  account_verified: {
+    key: 'account_verified',
+    title: 'Cuenta verificada',
+    description: 'Confirmación post-OTP: el correo quedó verificado y la cuenta activa.',
+    sampleContext: () => ({
+      name: 'Jugador',
+      mail: 'jugador@example.com'
+    }),
+    build: buildAccountVerifiedEmail
   },
   streak_at_risk: {
     key: 'streak_at_risk',
@@ -93,9 +104,9 @@ export function previewEmailTemplate(
   templateKey: EmailTemplateKey,
   params: EmailTemplatePreviewParams = {}
 ): EmailMessage {
-  if (templateKey === 'welcome') {
-    const sample = EMAIL_TEMPLATE_DEFINITIONS.welcome.sampleContext();
-    return EMAIL_TEMPLATE_DEFINITIONS.welcome.build({
+  if (templateKey === 'welcome' || templateKey === 'account_verified') {
+    const sample = EMAIL_TEMPLATE_DEFINITIONS[templateKey].sampleContext();
+    return EMAIL_TEMPLATE_DEFINITIONS[templateKey].build({
       name: params.name?.trim() || sample.name,
       mail: params.mail?.trim() || sample.mail
     });

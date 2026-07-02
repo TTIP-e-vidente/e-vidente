@@ -10,6 +10,14 @@ export interface WelcomeTemplateContext {
   leaderboardUrl?: string;
 }
 
+export interface AccountVerifiedTemplateContext {
+  name: string;
+  mail: string;
+  playUrl?: string;
+  /** Enlace directo al ranking dentro del juego. */
+  leaderboardUrl?: string;
+}
+
 export interface StreakTemplateContext {
   name: string;
   mail: string;
@@ -22,6 +30,7 @@ export interface StreakTemplateContext {
 
 export type TemplateContextByKey = {
   welcome: WelcomeTemplateContext;
+  account_verified: AccountVerifiedTemplateContext;
   streak_at_risk: StreakTemplateContext;
   streak_lost: StreakTemplateContext;
   email_verification: EmailVerificationTemplateContext;

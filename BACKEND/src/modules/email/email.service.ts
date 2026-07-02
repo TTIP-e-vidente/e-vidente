@@ -360,6 +360,49 @@ export function queueWelcomeEmail(recipient: EmailRecipient): void {
   });
 }
 
+// Mail "cuenta verificada": transaccional propio, distinto del welcome.
+// dedupe_key account_verified:{userId} garantiza un solo envío por usuario;
+// si Brevo falla, la fila queda en email_deliveries con status=failed y la
+// retoma el job de retry. Nunca bloquea la respuesta de verify-email-confirm.
+export async function sendAccountVerifiedEmail(
+  recipient: EmailRecipient
+): Promise<'sent' | 'skipped' | 'failed'> {
+  if (!recipient.mail) {
+    return 'skipped';
+  }
+  if (!isEmailDeliveryConfigured()) {
+    console.warn('[email] account_verified skipped: EMAIL_ENABLED=false or missing Brevo config');
+    return 'skipped';
+  }
+
+  const message = buildEmailMessage(
+    'account_verified',
+    buildWelcomeMessageContext(recipient.name, recipient.mail)
+  );
+
+  try {
+    const result = await deliverTrackedEmail({
+      userId: recipient.userId,
+      templateKey: 'account_verified',
+      dedupeKey: `account_verified:${recipient.userId}`,
+      message
+    });
+    if (result === 'sent') {
+      logEmailInfo('account_verified_sent', { userId: recipient.userId, mail: recipient.mail });
+    }
+    return result;
+  } catch (error) {
+    logEmailFailure(`account_verified failed for user ${recipient.userId}`, error);
+    return 'failed';
+  }
+}
+
+export function queueAccountVerifiedEmail(recipient: EmailRecipient): void {
+  void sendAccountVerifiedEmail(recipient).catch((error) => {
+    logEmailFailure(`account_verified failed for user ${recipient.userId}`, error);
+  });
+}
+
 export async function sendStreakAtRiskEmailsForDate(
   today: string,
   options: { cleanupStale?: boolean } = {}
@@ -560,6 +603,8 @@ async function buildRetryMessage(
   switch (candidate.templateKey) {
     case 'welcome':
       return buildEmailMessage('welcome', buildWelcomeMessageContext(userName, mail));
+    case 'account_verified':
+      return buildEmailMessage('account_verified', buildWelcomeMessageContext(userName, mail));
     case 'streak_at_risk':
     case 'streak_lost': {
       const streak = await emailRepository.findUserStreakContext(candidate.userId);
@@ -766,6 +811,7 @@ export function parseTemplateKey(value: unknown): EmailTemplateKey | undefined {
   const normalized = value.trim().toLowerCase();
   if (
     normalized === 'welcome' ||
+    normalized === 'account_verified' ||
     normalized === 'streak_at_risk' ||
     normalized === 'streak_lost' ||
     normalized === 'email_verification' ||

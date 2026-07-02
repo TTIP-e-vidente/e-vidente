@@ -21,6 +21,7 @@ const COPY_FILES = [
   'email-logo.ts',
   'email-verification.template.ts',
   'welcome.template.ts',
+  'account-verified.template.ts',
   'streak-at-risk.template.ts',
   'streak-lost.template.ts',
 ];
@@ -32,6 +33,13 @@ function ensureDir(dir) {
 function writeTemplateTypes() {
   const content = `/** Generado por sync-email-templates-edge.cjs */
 export interface WelcomeTemplateContext {
+  name: string;
+  mail: string;
+  playUrl?: string;
+  leaderboardUrl?: string;
+}
+
+export interface AccountVerifiedTemplateContext {
   name: string;
   mail: string;
   playUrl?: string;

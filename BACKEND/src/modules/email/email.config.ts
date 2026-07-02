@@ -57,7 +57,7 @@ export const emailConfig = {
   ),
   retryMaxAttempts: Math.max(
     1,
-    Number.parseInt(process.env.EMAIL_RETRY_MAX_ATTEMPTS ?? '3', 10) || 3
+    Number.parseInt(process.env.EMAIL_RETRY_MAX_ATTEMPTS ?? '4', 10) || 4
   ),
   retryMaxAgeHours: Math.max(
     1,

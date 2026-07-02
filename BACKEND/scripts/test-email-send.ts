@@ -90,6 +90,8 @@ function buildTestMessage(templateKey: EmailTemplateKey, recipient: TestRecipien
   switch (templateKey) {
     case 'welcome':
       return buildEmailMessage('welcome', { name, mail });
+    case 'account_verified':
+      return buildEmailMessage('account_verified', { name, mail });
     case 'email_verification':
       return buildEmailMessage('email_verification', {
         name,
@@ -125,6 +127,7 @@ async function sendAllTemplates(recipient: TestRecipient): Promise<void> {
   const templates: EmailTemplateKey[] = [
     'email_verification',
     'welcome',
+    'account_verified',
     'streak_at_risk',
     'streak_lost',
     'mail_changed'
