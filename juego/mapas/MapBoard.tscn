@@ -12,8 +12,14 @@
 [ext_resource type="Texture2D" uid="uid://cuunyj5psa4sm" path="res://assets-sistema/mapa/desafio-mapa-1 .png" id="11_gaknv"]
 [ext_resource type="Texture2D" uid="uid://d0a6m755p486x" path="res://assets-sistema/mapa/desafio-mapa-7.png" id="11_oop13"]
 [ext_resource type="Texture2D" uid="uid://d4m68o00e7at8" path="res://assets-sistema/mapa/desafio-mapa-6.png" id="12_h6wjv"]
+[ext_resource type="Texture2D" uid="uid://c7svelsbvqx8n" path="res://assets-sistema/mapa/personaje-pensamiento.png" id="13_f73wx"]
 [ext_resource type="Texture2D" uid="uid://cpsl4rd8ftu6o" path="res://assets-sistema/interfaz/cuadrado-8x2_1.png" id="13_gaknv"]
+[ext_resource type="Script" uid="uid://dpd28doon1wef" path="res://mapas/personaje_mapa.gd" id="13_h6wjv"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="14_h6wjv"]
+[ext_resource type="Texture2D" uid="uid://djsddtghcgmor" path="res://assets-sistema/mapa/personaje-mapa.png" id="15_l0pto"]
+[ext_resource type="Texture2D" uid="uid://cvsnq54end2w4" path="res://assets-sistema/mapa/personaje-comida.png" id="16_41je6"]
+[ext_resource type="Texture2D" uid="uid://be1qw36wxo3m1" path="res://assets-sistema/mapa/personaje-cocinero.png" id="17_eepdk"]
+[ext_resource type="Texture2D" uid="uid://c70twsax003c6" path="res://assets-sistema/mapa/personaje-banquete.png" id="18_eyll8"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_scroll"]
 shader = ExtResource("11_fade_shader")
@@ -51,14 +57,14 @@ material = SubResource("ShaderMaterial_scroll")
 offset_left = 57.0
 offset_top = 140.21
 offset_right = 1157.0
-offset_bottom = 10140.21
+offset_bottom = 2505.4565
 scale = Vector2(1, 1.0061487)
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 3
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")
-custom_minimum_size = Vector2(1100, 4200)
+custom_minimum_size = Vector2(1100, 2400)
 layout_mode = 2
 
 [node name="curva" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=1066622270]
@@ -323,6 +329,36 @@ nivel_id = 30
 question_number = 24
 label_text = "Pregunta 24"
 icon_texture = ExtResource("10_icon4")
+
+[node name="personajeMapa" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=396393273]
+position = Vector2(327.00003, 1347.5045)
+scale = Vector2(0.5534317, 0.5534317)
+texture = ExtResource("13_f73wx")
+script = ExtResource("13_h6wjv")
+
+[node name="personajeMapa2" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=473654368]
+position = Vector2(175.00006, 552.39343)
+scale = Vector2(0.5534317, 0.5534317)
+texture = ExtResource("15_l0pto")
+script = ExtResource("13_h6wjv")
+
+[node name="personajeMapa3" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=341450233]
+position = Vector2(727.00006, 1053.3135)
+scale = Vector2(0.5534317, 0.5534317)
+texture = ExtResource("16_41je6")
+script = ExtResource("13_h6wjv")
+
+[node name="personajeMapa4" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=527180464]
+position = Vector2(647, 1609.891)
+scale = Vector2(0.5534317, 0.5534317)
+texture = ExtResource("17_eepdk")
+script = ExtResource("13_h6wjv")
+
+[node name="personajeMapa5" type="Sprite2D" parent="ScrollContainer/Contenido" unique_id=15993945]
+position = Vector2(231.00003, 2190.322)
+scale = Vector2(0.5534317, 0.5534317)
+texture = ExtResource("18_eyll8")
+script = ExtResource("13_h6wjv")
 
 [node name="Label" type="Label" parent="." unique_id=946760440]
 z_index = 1857
