@@ -73,6 +73,16 @@ function checkBrevo(): void {
     );
     return;
   }
+  const sender = emailConfig.senderEmail.toLowerCase();
+  if (/@(gmail|hotmail|outlook|yahoo)\./.test(sender)) {
+    report(
+      'email',
+      'WARN',
+      `Sender ${emailConfig.senderEmail}: enviar como ${sender.split('@')[1]} vía Brevo ` +
+        'suele caer en spam (SPF/DKIM desalineados). Verificá un dominio propio en Brevo.'
+    );
+    return;
+  }
   report('email', 'OK', `Brevo configurado (sender: ${emailConfig.senderEmail})`);
 }
 

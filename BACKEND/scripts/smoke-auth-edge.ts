@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   assert.equal(health.body.remote, true);
   const migrations = health.body.migrations as JsonObject;
   assert.equal(migrations?.healthy, true, 'auth-health migrations no healthy');
-  assert.equal(migrations?.expected, 36, 'auth-health expected migration count');
+  assert.equal(migrations?.expected, 37, 'auth-health expected migration count');
   console.log('[smoke:auth-edge] OK auth-health', {
     migrations,
   });
@@ -77,6 +77,47 @@ async function main(): Promise<void> {
   assert.equal((register.body.user as JsonObject)?.username, username);
   console.log('[smoke:auth-edge] OK register');
 
+  // Con mail sin verificar el login queda bloqueado y entrega un token acotado
+  // que solo sirve para los endpoints de verificación.
+  const blockedLogin = await requestJson(`${baseUrl}/auth-login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      usernameOrMail: username,
+      password: 'Password123',
+    }),
+  });
+  assert.equal(blockedLogin.status, 403, `login sin verificar HTTP ${blockedLogin.status}`);
+  assert.equal(blockedLogin.body.code, 'EMAIL_NOT_VERIFIED');
+  const verificationToken = blockedLogin.body.verification_token as string;
+  assert.equal(typeof verificationToken, 'string');
+  console.log('[smoke:auth-edge] OK login bloqueado sin verificar (EMAIL_NOT_VERIFIED)');
+
+  const statusWithScoped = await requestJson(`${baseUrl}/player-email-status`, {
+    method: 'GET',
+    headers: {
+      ...headers,
+      Authorization: `Bearer ${verificationToken}`,
+    },
+  });
+  assert.equal(statusWithScoped.status, 200, `email-status con token acotado HTTP ${statusWithScoped.status}`);
+  console.log('[smoke:auth-edge] OK token acotado habilita email-status');
+
+  const meWithScoped = await requestJson(`${baseUrl}/auth-me`, {
+    method: 'GET',
+    headers: {
+      ...headers,
+      Authorization: `Bearer ${verificationToken}`,
+    },
+  });
+  assert.equal(meWithScoped.status, 401, 'el token acotado no debe habilitar auth-me');
+  console.log('[smoke:auth-edge] OK token acotado rechazado en auth-me');
+
+  // Verificar el mail directo en la DB (el OTP real viaja por Brevo) y
+  // comprobar que el login queda desbloqueado.
+  const { pool } = await import('../src/config/database');
+  await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [username]);
+
   const login = await requestJson(`${baseUrl}/auth-login`, {
     method: 'POST',
     headers,
@@ -88,7 +129,8 @@ async function main(): Promise<void> {
   assert.equal(login.status, 200, `login HTTP ${login.status}`);
   const token = login.body.accessToken as string;
   assert.equal(typeof token, 'string');
-  console.log('[smoke:auth-edge] OK login');
+  console.log('[smoke:auth-edge] OK login con mail verificado');
+  await pool.end();
 
   const me = await requestJson(`${baseUrl}/auth-me`, {
     method: 'GET',
