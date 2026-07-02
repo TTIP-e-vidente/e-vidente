@@ -77,7 +77,9 @@ static func sincronizar_post_partida(
 		score, accuracy, correct_answers, wrong_answers,
 		exp_to_add, completed, duration_seconds
 	)
-	LocalSyncQueue.encolar_resumen_partida(summary, AuthApi.obtener_usuario())
+	# Owner = clave de cuenta (username + entorno): las partidas offline no se
+	# mezclan entre el backend local y Supabase para el mismo username.
+	LocalSyncQueue.encolar_resumen_partida(summary, AuthApi.obtener_clave_cuenta())
 
 	print(
 		LOG_PREFIX,

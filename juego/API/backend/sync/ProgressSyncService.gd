@@ -78,7 +78,9 @@ func reintentar_pendientes(max_items: int = 10) -> void:
 
 	var tareas: Array[Dictionary] = []
 	var failed_count := 0
-	var usuario_actual := _auth_session.obtener_usuario().strip_edges()
+	# Clave de cuenta (username + entorno): solo se sincronizan las partidas
+	# encoladas para esta cuenta EN este entorno de datos.
+	var usuario_actual := _auth_session.obtener_clave_cuenta().strip_edges()
 	for i in range(limit):
 		var item: Dictionary = pending[i]
 		var owner := str(item.get("owner", "")).strip_edges()

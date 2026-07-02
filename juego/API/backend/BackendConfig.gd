@@ -12,6 +12,15 @@ const FALLBACK_BASE_URL := "http://localhost:3010"
 const API_MODE_LOCAL := "local"
 const API_MODE_CLOUD := "cloud"
 const API_MODE_SUPABASE_EDGE := "supabase_edge"
+## Modo auto: si el Express local responde, se usa; si no, Supabase Edge.
+## La sonda la ejecuta BackendSession (necesita el árbol) y fija el resultado
+## con aplicar_resolucion_auto().
+const API_MODE_AUTO := "auto"
+
+## Espacio de datos efectivo: "supabase" (canónico, sin sufijo de cuenta) o
+## "local" (Postgres local — las cuentas se separan con @local).
+const ENTORNO_SUPABASE := "supabase"
+const ENTORNO_LOCAL := "local"
 
 static var _base_url: String = ""
 static var _loaded: bool = false
@@ -21,6 +30,11 @@ static var _email_via_supabase: bool = false
 static var _supabase_functions_url: String = ""
 static var _supabase_anon_key: String = ""
 static var _api_mode: String = API_MODE_LOCAL
+static var _local_base_url: String = FALLBACK_BASE_URL
+# Resolución del modo auto (la fija BackendSession tras sondear localhost).
+static var _auto_resuelto: bool = false
+static var _modo_efectivo: String = ""
+static var _entorno_datos: String = ENTORNO_SUPABASE
 
 
 static func recargar() -> void:
@@ -32,6 +46,10 @@ static func recargar() -> void:
 	_supabase_functions_url = ""
 	_supabase_anon_key = ""
 	_api_mode = API_MODE_LOCAL
+	_local_base_url = FALLBACK_BASE_URL
+	_auto_resuelto = false
+	_modo_efectivo = ""
+	_entorno_datos = ENTORNO_SUPABASE
 	_cargar()
 
 
@@ -44,7 +62,77 @@ static func es_supabase() -> bool:
 static func es_modo_supabase_edge() -> bool:
 	if not _loaded:
 		_cargar()
-	return _api_mode == API_MODE_SUPABASE_EDGE
+	return obtener_modo_efectivo() == API_MODE_SUPABASE_EDGE
+
+
+static func es_modo_auto() -> bool:
+	if not _loaded:
+		_cargar()
+	return _api_mode == API_MODE_AUTO
+
+
+static func auto_esta_resuelto() -> bool:
+	if not _loaded:
+		_cargar()
+	return _auto_resuelto
+
+
+## Modo real de transporte. En auto: supabase_edge hasta que la sonda de
+## BackendSession confirme que el Express local está arriba.
+static func obtener_modo_efectivo() -> String:
+	if not _loaded:
+		_cargar()
+	if _api_mode != API_MODE_AUTO:
+		return _api_mode
+	if _auto_resuelto:
+		return _modo_efectivo
+	return API_MODE_SUPABASE_EDGE
+
+
+## Fija el resultado de la sonda del modo auto.
+## local_disponible: el Express local respondió /health.
+## db_remota: /health/db reportó remote=true (Express conectado a Supabase).
+static func aplicar_resolucion_auto(local_disponible: bool, db_remota: bool) -> void:
+	if not _loaded:
+		_cargar()
+	_auto_resuelto = true
+	if local_disponible:
+		_modo_efectivo = API_MODE_LOCAL
+		_base_url = _local_base_url
+		_email_via_supabase = false
+		_entorno_datos = ENTORNO_SUPABASE if db_remota else ENTORNO_LOCAL
+		_db_kind = "supabase" if db_remota else "local"
+	else:
+		_modo_efectivo = API_MODE_SUPABASE_EDGE
+		_base_url = _supabase_functions_url
+		_email_via_supabase = true
+		_entorno_datos = ENTORNO_SUPABASE
+		_db_kind = "supabase"
+	if OS.is_debug_build():
+		print(
+			"[BackendConfig] auto resuelto → %s · datos=%s · %s"
+			% [_modo_efectivo, _entorno_datos, _base_url]
+		)
+
+
+## Espacio de datos efectivo ("supabase" | "local"). Define la separación de
+## cuentas/saves locales para no mezclar progreso entre entornos.
+static func obtener_entorno_datos() -> String:
+	if not _loaded:
+		_cargar()
+	return _entorno_datos
+
+
+## Sufijo para la clave de cuenta local. Vacío en Supabase (compat con saves
+## existentes); "@local" cuando los datos viven en el Postgres local.
+static func obtener_sufijo_cuenta() -> String:
+	return "" if obtener_entorno_datos() == ENTORNO_SUPABASE else "@" + obtener_entorno_datos()
+
+
+static func obtener_local_base_url() -> String:
+	if not _loaded:
+		_cargar()
+	return _local_base_url
 
 
 static func email_via_supabase() -> bool:
@@ -163,9 +251,19 @@ static func _aplicar_config_desde_archivo(config_path: String) -> bool:
 	_db_kind = str(parsed.get("db", "")).strip_edges()
 	_email_enabled = bool(parsed.get("email_enabled", false))
 	_email_via_supabase = bool(parsed.get("email_via_supabase", false))
+	var raw_local := str(parsed.get("local_base_url", "")).strip_edges().trim_suffix("/")
+	if not raw_local.is_empty():
+		_local_base_url = raw_local
 
 	var raw_url := str(parsed.get("base_url", "")).strip_edges().trim_suffix("/")
-	if raw_url.is_empty() and es_modo_supabase_edge() and not _supabase_functions_url.is_empty():
+	if _api_mode == API_MODE_AUTO:
+		# En auto arranca apuntando a Supabase (default seguro); la sonda de
+		# BackendSession puede cambiarlo a local si el Express responde.
+		if _supabase_functions_url.is_empty() and raw_url.is_empty():
+			return false
+		_base_url = _supabase_functions_url if not _supabase_functions_url.is_empty() else raw_url
+		_email_via_supabase = true
+	elif raw_url.is_empty() and es_modo_supabase_edge() and not _supabase_functions_url.is_empty():
 		_base_url = _supabase_functions_url
 	elif raw_url.is_empty():
 		return false

@@ -35,6 +35,71 @@ var _reintento_encolado: bool = false
 # email_verification), el usuario y la meta de envío del código. No es una
 # sesión completa: solo habilita los endpoints de verificación de mail.
 var _verificacion_login_pendiente: Dictionary = {}
+# Evita sondas concurrentes del modo auto.
+var _sonda_modo_en_curso: bool = false
+
+
+## En api_mode=auto: sondea el Express local (timeout corto). Si responde,
+## el juego usa el backend local; si no, Supabase Edge. También determina el
+## espacio de datos (local vs supabase) para no mezclar saves entre entornos.
+## Se re-ejecuta tras BackendConfig.recargar() (p. ej. botón Reintentar).
+func _asegurar_modo_backend_resuelto() -> void:
+	if not BackendConfig.es_modo_auto() or BackendConfig.auto_esta_resuelto():
+		return
+	if _sonda_modo_en_curso:
+		while _sonda_modo_en_curso:
+			await get_tree().process_frame
+		return
+	_sonda_modo_en_curso = true
+
+	var local_url := BackendConfig.obtener_local_base_url()
+	var salud := await _sondear_url_local(local_url + "/health")
+	var db_remota := false
+	if salud:
+		var db := await _sondear_json_local(local_url + "/health/db")
+		db_remota = bool(db.get("remote", false))
+	BackendConfig.aplicar_resolucion_auto(salud, db_remota)
+	# El cliente HTTP cachea base_url en _init: refrescarla tras resolver.
+	_api.base_url = BackendConfig.obtener_base_url()
+	_sonda_modo_en_curso = false
+
+
+func _sondear_url_local(url: String) -> bool:
+	var resultado := await _sondear_json_local(url)
+	return not resultado.is_empty()
+
+
+## GET con timeout corto contra el Express local. Devuelve el JSON del body
+## o {} si no respondió / no es JSON válido.
+func _sondear_json_local(url: String) -> Dictionary:
+	var http := HTTPRequest.new()
+	http.timeout = 1.5
+	add_child(http)
+	var start_error := http.request(url)
+	if start_error != OK:
+		http.queue_free()
+		return {}
+	var result: Array = await http.request_completed
+	http.queue_free()
+	if int(result[0]) != HTTPRequest.RESULT_SUCCESS or int(result[1]) != 200:
+		return {}
+	var parsed: Variant = JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+	if parsed is Dictionary:
+		return parsed as Dictionary
+	return {}
+
+
+## Clave que separa los datos locales (save vinculado, cola de sync, avatar
+## pendiente) por entorno: "agus" en Supabase, "agus@local" en Postgres local.
+func _componer_clave_cuenta(username: String) -> String:
+	var clean := username.strip_edges()
+	if clean.is_empty():
+		return ""
+	return clean + BackendConfig.obtener_sufijo_cuenta()
+
+
+func obtener_clave_cuenta() -> String:
+	return _auth.obtener_clave_cuenta()
 
 
 func _ready() -> void:
@@ -100,7 +165,8 @@ func _persistir_usuario_en_cache(user: Dictionary) -> void:
 	BackendSessionStorage.guardar_sesion(
 		_auth.obtener_token(),
 		_auth.obtener_usuario(),
-		_usuario_en_cache
+		_usuario_en_cache,
+		BackendConfig.obtener_entorno_datos()
 	)
 
 
@@ -208,7 +274,8 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 
 	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
 	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
-	var username_sync := str(_auth.obtener_usuario()).strip_edges()
+	# Clave de cuenta (username + entorno): separa el save local por entorno.
+	var username_sync := str(_auth.obtener_clave_cuenta()).strip_edges()
 
 	var resultado_progreso: Dictionary = await obtener_progreso_del_servidor()
 	if not resultado_progreso.get("ok", false):
@@ -266,6 +333,7 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 
 
 func verificar_estado_del_servidor() -> Dictionary:
+	await _asegurar_modo_backend_resuelto()
 	var salud_api := await _api.verificar_salud_api()
 	if not salud_api.get("ok", false):
 		return {"ok": false, "phase": "api", "result": salud_api}
@@ -288,6 +356,7 @@ func verificar_estado_del_servidor() -> Dictionary:
 
 
 func verificar_stack_completo() -> Dictionary:
+	await _asegurar_modo_backend_resuelto()
 	var salud_api := await _api.verificar_salud_api()
 	if not salud_api.get("ok", false):
 		return {"ok": false, "phase": "api", "result": salud_api}
@@ -445,15 +514,15 @@ func subir_avatar(base64_data: String, mime_type: String) -> Dictionary:
 	if not _auth.esta_logueado():
 		return {"ok": false, "error": "No active session"}
 	var epoch := _auth.obtener_epoch()
-	var usuario := _auth.obtener_usuario()
+	var clave_cuenta := _auth.obtener_clave_cuenta()
 	var resultado := await _api.subir_avatar(_auth.obtener_token(), base64_data, mime_type)
 	_verificar_sesion_expirada(resultado, epoch)
 	if bool(resultado.get("ok", false)):
-		AvatarSyncServiceScript.limpiar_subida_pendiente(usuario)
+		AvatarSyncServiceScript.limpiar_subida_pendiente(clave_cuenta)
 	elif int(resultado.get("status", 0)) == 0 or int(resultado.get("status", 0)) >= 500:
 		# Falla de red o del servidor: el avatar local queda como pendiente de
 		# subir y se reintenta en el próximo login/carga online.
-		AvatarSyncServiceScript.marcar_subida_pendiente(usuario, mime_type)
+		AvatarSyncServiceScript.marcar_subida_pendiente(clave_cuenta, mime_type)
 	return resultado
 
 
@@ -592,12 +661,12 @@ func _establecer_sesion_post_verificacion(data: Dictionary) -> void:
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
 	_descartar_resultado_carga_online()
-	_auth.establecer_sesion(access_token, username)
+	_auth.establecer_sesion(access_token, username, _componer_clave_cuenta(username))
 	if not user.is_empty():
 		_persistir_usuario_en_cache(user)
 	limpiar_verificacion_de_login_pendiente()
 	if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
-		SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+		SaveManager.call("preparar_cuenta_online", _usuario_en_cache, obtener_clave_cuenta())
 	login_succeeded.emit(_usuario_en_cache.duplicate(true))
 	print("[BackendSession] Sesión completa establecida tras verificar el mail: ", username)
 	# En el login normal esto lo dispara iniciar_sesion_completa; acá la sesión
@@ -818,6 +887,7 @@ func _descartar_resultado_carga_online() -> void:
 
 
 func _asegurar_servidor_listo() -> Dictionary:
+	await _asegurar_modo_backend_resuelto()
 	var salud_api := await _api.verificar_salud_api()
 	if not salud_api.get("ok", false):
 		var resultado: Dictionary = salud_api.duplicate()
@@ -852,11 +922,11 @@ func _procesar_resultado_de_auth(resultado: Dictionary) -> void:
 	_usuario_en_cache.clear()
 	_progreso_online_en_cache.clear()
 	_descartar_resultado_carga_online()
-	_auth.establecer_sesion(access_token, username)
+	_auth.establecer_sesion(access_token, username, _componer_clave_cuenta(username))
 	if not user.is_empty():
 		_persistir_usuario_en_cache(user.duplicate(true))
 	if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
-		SaveManager.call("preparar_cuenta_online", _usuario_en_cache)
+		SaveManager.call("preparar_cuenta_online", _usuario_en_cache, obtener_clave_cuenta())
 	login_succeeded.emit(_usuario_en_cache.duplicate(true))
 
 
@@ -886,7 +956,18 @@ func _restaurar_sesion_guardada() -> void:
 		BackendSessionStorage.borrar_sesion()
 		return
 
-	_auth.establecer_sesion(token, username)
+	# Resolver el modo (auto: ¿Express local o Supabase?) ANTES de restaurar:
+	# un token de un entorno no debe usarse contra el otro ni mezclar saves.
+	await _asegurar_modo_backend_resuelto()
+	var entorno_guardado := str(guardado.get("entorno", BackendConfig.ENTORNO_SUPABASE))
+	if entorno_guardado != BackendConfig.obtener_entorno_datos():
+		print(
+			"[BackendSession] Sesión guardada de otro entorno (%s ≠ %s) — no se restaura."
+			% [entorno_guardado, BackendConfig.obtener_entorno_datos()]
+		)
+		return
+
+	_auth.establecer_sesion(token, username, _componer_clave_cuenta(username))
 	var epoch := _auth.obtener_epoch()
 
 	var resultado := await obtener_usuario_del_servidor()
@@ -898,9 +979,9 @@ func _restaurar_sesion_guardada() -> void:
 		var data: Dictionary = resultado.get("data", {})
 		var user: Dictionary = data.get("user", data)
 		var username_fresco: String = user.get("username", username)
-		_auth.establecer_sesion(token, username_fresco)
+		_auth.establecer_sesion(token, username_fresco, _componer_clave_cuenta(username_fresco))
 		if SaveManager != null and SaveManager.has_method("preparar_cuenta_online"):
-			SaveManager.call("preparar_cuenta_online", user)
+			SaveManager.call("preparar_cuenta_online", user, obtener_clave_cuenta())
 		print("[BackendSession] Sesión restaurada: ", username_fresco)
 		session_restored.emit(user)
 		await cargar_datos_online()
@@ -934,13 +1015,17 @@ func _aplicar_progreso_online_al_save_local() -> void:
 		" streak=",
 		_progreso_online_en_cache.get("streak", {})
 	)
-	SaveManager.sincronizar_con_cuenta_online(_usuario_en_cache, _progreso_online_en_cache)
+	SaveManager.sincronizar_con_cuenta_online(
+		_usuario_en_cache,
+		_progreso_online_en_cache,
+		obtener_clave_cuenta()
+	)
 
 
 func _sincronizar_avatar_post_login(epoch: int) -> void:
 	if SaveManager == null or not _auth.esta_logueado():
 		return
-	var usuario := _auth.obtener_usuario()
+	var usuario := _auth.obtener_clave_cuenta()
 	if AvatarSyncServiceScript.hay_subida_pendiente(usuario):
 		# El avatar local es más nuevo que el remoto (upload fallido previo):
 		# reintentar la subida en vez de pisar lo local con la descarga.
@@ -952,11 +1037,11 @@ func _sincronizar_avatar_post_login(epoch: int) -> void:
 func _reintentar_subida_avatar_pendiente(epoch: int) -> void:
 	var local_path := SaveManager.obtener_ruta_avatar_usuario_actual()
 	if local_path.is_empty():
-		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_usuario())
+		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_clave_cuenta())
 		return
 	var bytes := FileAccess.get_file_as_bytes(local_path)
 	if bytes.is_empty():
-		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_usuario())
+		AvatarSyncServiceScript.limpiar_subida_pendiente(_auth.obtener_clave_cuenta())
 		return
 	if _auth.obtener_epoch() != epoch:
 		return

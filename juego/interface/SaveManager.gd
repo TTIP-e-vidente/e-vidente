@@ -648,8 +648,14 @@ func obtener_cuenta_online_vinculada() -> String:
 	return str(_obtener_meta_guardado().get("linked_online_username", "")).strip_edges()
 
 
-func preparar_cuenta_online(usuario: Dictionary) -> void:
-	var username := str(usuario.get("username", "")).strip_edges()
+## clave_cuenta: identidad local de la cuenta (username + sufijo de entorno,
+## p. ej. "agus@local" con Postgres local). Si viene vacía se usa el username
+## a secas (compat con Supabase y saves existentes). Separa snapshots, cola de
+## sync y vínculo del save entre entornos para no mezclar progreso.
+func preparar_cuenta_online(usuario: Dictionary, clave_cuenta: String = "") -> void:
+	var username := clave_cuenta.strip_edges()
+	if username.is_empty():
+		username = str(usuario.get("username", "")).strip_edges()
 	if username.is_empty():
 		return
 
@@ -715,14 +721,21 @@ func debe_forzar_reset_remoto_antes_de_sync(username: String = "") -> bool:
 	return _debe_reiniciar_save_por_reset_pendiente(username)
 
 
-func sincronizar_con_cuenta_online(usuario: Dictionary, progreso_online: Dictionary) -> void:
-	var username := str(usuario.get("username", "")).strip_edges()
+## clave_cuenta: ver preparar_cuenta_online (separación por entorno).
+func sincronizar_con_cuenta_online(
+	usuario: Dictionary,
+	progreso_online: Dictionary,
+	clave_cuenta: String = ""
+) -> void:
+	var username := clave_cuenta.strip_edges()
+	if username.is_empty():
+		username = str(usuario.get("username", "")).strip_edges()
 	if username.is_empty():
 		return
 
 	var linked := obtener_cuenta_online_vinculada()
 	if linked != username:
-		preparar_cuenta_online(usuario)
+		preparar_cuenta_online(usuario, username)
 
 	_importar_progreso_online(progreso_online, username)
 	_aplicar_parche_perfil_online(usuario)

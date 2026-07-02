@@ -20,6 +20,12 @@ static func obtener_usuario() -> String:
 	return BackendSession.obtener_usuario()
 
 
+## Clave de cuenta local (username + sufijo de entorno). Usar para todo lo que
+## persista datos por cuenta (cola de sync, snapshots) — no para mostrar en UI.
+static func obtener_clave_cuenta() -> String:
+	return BackendSession.obtener_clave_cuenta()
+
+
 static func obtener_usuario_online() -> Dictionary:
 	return BackendSession.obtener_usuario_en_cache()
 
@@ -391,7 +397,8 @@ static func aplicar_progreso_online_a_guardado_local() -> void:
 		return
 	SaveManager.sincronizar_con_cuenta_online(
 		obtener_usuario_online(),
-		obtener_progreso_online()
+		obtener_progreso_online(),
+		obtener_clave_cuenta()
 	)
 
 

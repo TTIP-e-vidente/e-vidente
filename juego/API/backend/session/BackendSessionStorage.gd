@@ -7,12 +7,16 @@ const SESSION_PATH := "user://backend_session.json"
 static func guardar_sesion(
 	token: String,
 	username: String = "",
-	user: Dictionary = {}
+	user: Dictionary = {},
+	entorno: String = ""
 ) -> void:
 	var payload := {
 		"token": token,
 		"username": username,
 		"user": user,
+		# Espacio de datos del token ("supabase" | "local"): al restaurar,
+		# una sesión de otro entorno se ignora para no mezclar datos.
+		"entorno": entorno if not entorno.is_empty() else "supabase",
 		"savedAt": Time.get_datetime_string_from_system(false, true),
 	}
 	var file := FileAccess.open(SESSION_PATH, FileAccess.WRITE)
