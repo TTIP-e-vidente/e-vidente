@@ -167,7 +167,7 @@ func mostrar_estado_carga() -> void:
 
 func _actualizar_meta(datos: Dictionary, etiqueta_scope: String) -> void:
 	if bool(datos.get("is_first_place", false)):
-		_label_meta.text = "¡Primero en %s!" % etiqueta_scope
+		_label_meta.text = "¡Estás en el primer puesto en %s!" % etiqueta_scope
 		return
 
 	var siguiente: Variant = datos.get("next", {})

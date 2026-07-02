@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dgs75hpxwfhdk" path="res://interface/components/ProfileOverlayPanel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="2_c2ncf"]
-[ext_resource type="PackedScene" path="res://interface/leaderboard/RankingDetallePerfil.tscn" id="2_ranking_detalle"]
+[ext_resource type="PackedScene" uid="uid://2ah8ndncc661" path="res://interface/leaderboard/RankingDetallePerfil.tscn" id="2_ranking_detalle"]
 [ext_resource type="PackedScene" path="res://interface/components/WeeklyLearningSummary.tscn" id="2_weekly_summary"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_c2ncf"]
 
@@ -248,6 +248,7 @@ corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [node name="ProfileOverlayPanel" type="Control" unique_id=136278916]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

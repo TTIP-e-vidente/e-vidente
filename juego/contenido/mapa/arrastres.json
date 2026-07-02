@@ -186,6 +186,6 @@
 	"difficulty": 2,
 	"meal": "bebida",
 	"teaching_key": "celiaquia_bebida",
-	"pick": { "correct": 3, "incorrect": 2 }
+	"pick": { "correct": 3, "incorrect": 1 }
   }
 }
