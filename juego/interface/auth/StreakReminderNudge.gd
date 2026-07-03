@@ -4,11 +4,6 @@ signal accion_solicitada(accion: int)
 
 const HelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
 
-const COLOR_TITULO_BASE := Color(0.72, 0.16, 0.12, 1)
-const COLOR_CUERPO_BASE := Color(0.45, 0.2, 0.16, 1)
-const COLOR_HINT_BASE := Color(0.55, 0.35, 0.3, 0.85)
-const COLOR_TEXTO_OK := Color(0.18, 0.34, 0.26, 1)
-const COLOR_TEXTO_ERROR := Color(0.82, 0.22, 0.18, 1)
 const DURACION_AVISO_ERROR := 4.0
 
 @onready var _icon_panel: PanelContainer = (
@@ -88,13 +83,11 @@ func refrescar() -> void:
 	_icon_panel.visible = true
 	_titulo.visible = true
 	_titulo.text = str(datos.get("titulo", "Racha en riesgo"))
-	_aplicar_color_label(_titulo, COLOR_TITULO_BASE)
+	_cuerpo.visible = true
 	_cuerpo.text = str(datos.get("cuerpo", datos.get("mensaje", "")))
-	_aplicar_color_label(_cuerpo, COLOR_CUERPO_BASE)
 	var hint := str(datos.get("hint", "")).strip_edges()
 	_hint.text = hint
 	_hint.visible = not hint.is_empty()
-	_aplicar_color_label(_hint, COLOR_HINT_BASE)
 	_texto_boton_original = str(datos.get("boton", "Continuar"))
 	_boton.text = _texto_boton_resuelto()
 	_boton.disabled = false
@@ -107,8 +100,8 @@ func _mostrar_solo_mensaje_temporal() -> void:
 	_icon_panel.visible = false
 	_titulo.visible = false
 	_hint.visible = false
+	_cuerpo.visible = true
 	_cuerpo.text = _mensaje_temporal
-	_aplicar_color_label(_cuerpo, COLOR_TEXTO_OK if _mensaje_es_ok else COLOR_TEXTO_ERROR)
 	_boton.visible = false
 	_boton.disabled = false
 	visible = true
@@ -148,8 +141,3 @@ func _al_presionar_boton() -> void:
 		return
 	if _accion_actual != HelperScript.AccionNudge.NINGUNA:
 		accion_solicitada.emit(_accion_actual)
-
-
-func _aplicar_color_label(label: Label, color: Color) -> void:
-	label.add_theme_color_override("font_color", color)
-	label.modulate = Color.WHITE

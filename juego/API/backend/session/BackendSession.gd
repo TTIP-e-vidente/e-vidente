@@ -284,8 +284,8 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 		return _resultado_sesion_cambiada()
 
 	var datos_usuario: Dictionary = resultado_usuario.get("data", {})
-	_usuario_en_cache = datos_usuario.get("user", datos_usuario)
-	# Clave de cuenta (username + entorno): separa el save local por entorno.
+	var usuario_raw: Dictionary = datos_usuario.get("user", datos_usuario)
+	_persistir_usuario_en_cache(usuario_raw)
 	var username_sync := str(_auth.obtener_clave_cuenta()).strip_edges()
 
 	var resultado_progreso: Dictionary = await obtener_progreso_del_servidor()

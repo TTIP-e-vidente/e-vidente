@@ -224,8 +224,9 @@ func refrescar() -> void:
 		email_line = "Progreso local en este dispositivo."
 	elif AuthApi.esta_logueado() and not email.is_empty():
 		var user_online := AuthApi.obtener_usuario_online()
-		var verified_at := str(user_online.get("mail_verified_at", "")).strip_edges()
-		var verified := not verified_at.is_empty()
+		# str(null) en GDScript da "<null>" (no vacío) — hay que usar el
+		# validador compartido, no reimplementar el chequeo con str().
+		var verified := AuthApi.mail_verified_at_valido(user_online.get("mail_verified_at", null))
 		email_line += "\nVerificación: %s" % ("verificado" if verified else "pendiente")
 		var notifications_on := bool(user_online.get("email_notifications_enabled", false))
 		var recordatorios := "Sí" if notifications_on else "No"
