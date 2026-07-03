@@ -207,6 +207,26 @@ func guardar_preferencia_notificaciones_mail_local(enabled: bool) -> void:
 	_guardar_estado_actual("profile_notifications_pref", "", {}, false)
 
 
+const SETTINGS_KEY_RACHA_PERDIDA_RECONOCIDA := "racha_perdida_reconocida_para_dia"
+
+
+func racha_perdida_ya_reconocida_para_dia(dia: String) -> bool:
+	if dia.is_empty():
+		return true
+	var reconocida := str(
+		_obtener_settings_guardado_actual().get(SETTINGS_KEY_RACHA_PERDIDA_RECONOCIDA, "")
+	).strip_edges()
+	return reconocida == dia
+
+
+func marcar_racha_perdida_reconocida(dia: String) -> void:
+	var settings: Dictionary = _obtener_settings_guardado_actual()
+	settings[SETTINGS_KEY_RACHA_PERDIDA_RECONOCIDA] = dia
+	save_data["settings"] = settings
+	_marcar_guardado_sucio()
+	_guardar_estado_actual("settings_racha_perdida_pref", "", {}, false)
+
+
 const SETTINGS_KEY_OMITIR_RANKING_POST_PARTIDA := "omitir_ranking_post_partida_invitado"
 
 

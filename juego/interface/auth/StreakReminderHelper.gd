@@ -8,6 +8,7 @@ enum AccionNudge {
 	VERIFICAR_MAIL,
 	ACTIVAR_RECORDATORIOS,
 	ABRIR_PERFIL,
+	RECONOCER_PERDIDA,
 }
 
 
@@ -17,6 +18,34 @@ static func racha_en_riesgo() -> bool:
 	var modelo := _obtener_modelo_vista_racha()
 	var streak_state := str(modelo.get("streak_state", ""))
 	return streak_state == "warning" or streak_state == "critical"
+
+
+## Racha cortada (vencida) todavia no reconocida por el jugador en este
+## dispositivo. Se identifica por last_activity_day: mientras no vuelva a
+## jugar, ese dia no cambia, asi que sirve como clave estable para no repetir
+## el aviso una vez que el jugador ya lo vio.
+static func racha_perdida_pendiente_de_aviso() -> bool:
+	if not AuthApi.esta_logueado():
+		return false
+	var modelo := _obtener_modelo_vista_racha()
+	if str(modelo.get("status_key", "")) != "expired":
+		return false
+	var dia := _dia_de_racha_perdida()
+	if dia.is_empty():
+		return false
+	return not SaveManager.racha_perdida_ya_reconocida_para_dia(dia)
+
+
+static func reconocer_racha_perdida() -> void:
+	var dia := _dia_de_racha_perdida()
+	if dia.is_empty():
+		return
+	SaveManager.marcar_racha_perdida_reconocida(dia)
+
+
+static func _dia_de_racha_perdida() -> String:
+	var estado := _obtener_estado_racha()
+	return str(estado.get("last_activity_day", "")).strip_edges()
 
 
 static func notificaciones_activas_en_servidor() -> bool:
@@ -32,18 +61,37 @@ static func mail_verificado() -> bool:
 static func debe_mostrar_nudge() -> bool:
 	if not AuthApi.esta_logueado():
 		return false
-	return racha_en_riesgo()
+	return racha_en_riesgo() or racha_perdida_pendiente_de_aviso()
 
 
 static func resolver_nudge() -> Dictionary:
 	if not debe_mostrar_nudge():
 		return {"visible": false}
 
+	if racha_perdida_pendiente_de_aviso():
+		var modelo := _obtener_modelo_vista_racha()
+		var previous: int = max(1, int(modelo.get("previous_count", 0)))
+		var dia_label := "día" if previous == 1 else "días"
+		return {
+			"visible": true,
+			"titulo": "Has perdido la racha",
+			"cuerpo": (
+				"Tu racha de %d %s se cortó. Volvé pronto para seguir con tu progreso."
+				% [previous, dia_label]
+			),
+			"hint": "",
+			"boton": "Entendido",
+			"accion": AccionNudge.RECONOCER_PERDIDA,
+		}
+
 	if not mail_verificado():
 		return {
 			"visible": true,
 			"titulo": "Racha en riesgo",
-			"cuerpo": "Verificá tu mail para poder recibir recordatorios cuando la racha esté en peligro.",
+			"cuerpo": (
+				"Verificá tu mail para poder recibir recordatorios "
+				+ "cuando la racha esté en peligro."
+			),
 			"hint": "",
 			"boton": "Verificar mail",
 			"accion": AccionNudge.VERIFICAR_MAIL,
@@ -116,6 +164,15 @@ static func _obtener_modelo_vista_racha() -> Dictionary:
 	var global_node := ContextoSesionDeJuegoScript.obtener_global()
 	if global_node != null and global_node.has_method("obtener_modelo_vista_racha"):
 		var raw: Variant = global_node.call("obtener_modelo_vista_racha")
+		if raw is Dictionary:
+			return raw as Dictionary
+	return {}
+
+
+static func _obtener_estado_racha() -> Dictionary:
+	var global_node := ContextoSesionDeJuegoScript.obtener_global()
+	if global_node != null and global_node.has_method("obtener_estado_racha"):
+		var raw: Variant = global_node.call("obtener_estado_racha")
 		if raw is Dictionary:
 			return raw as Dictionary
 	return {}

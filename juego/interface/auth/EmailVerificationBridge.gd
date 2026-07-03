@@ -138,6 +138,16 @@ func _on_streak_nudge_accion(accion: int) -> void:
 			_activar_recordatorios_desde_nudge()
 		StreakReminderHelperScript.AccionNudge.ABRIR_PERFIL:
 			GameSceneRouter.go_to_profile_editor(get_tree())
+		StreakReminderHelperScript.AccionNudge.RECONOCER_PERDIDA:
+			_reconocer_racha_perdida_desde_nudge()
+
+
+func _reconocer_racha_perdida_desde_nudge() -> void:
+	StreakReminderHelperScript.reconocer_racha_perdida()
+	if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("ocultar"):
+		_streak_nudge_global.call("ocultar")
+	else:
+		refrescar_nudge_global()
 
 
 func _activar_recordatorios_desde_nudge() -> void:
