@@ -421,7 +421,7 @@ theme_override_constants/margin_bottom = 45
 [node name="FormContent" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer" unique_id=1866968136]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 9
 
 [node name="FormTitle" type="Label" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=1331612482]
 layout_mode = 2

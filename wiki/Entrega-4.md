@@ -1,10 +1,8 @@
 # Entrega 4 — E-VIDENTE
 
-> Stack actual: [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) · Setup Godot: `npm run sync:godot-config:staging`
-
 ## Resumen ejecutivo
 
-En Entrega 3 el jugador tenía cuenta, racha en PostgreSQL y un checkbox de notificaciones, pero **nunca llegaba un correo**. Entrega 4 cierra ese circuito: mails transaccionales con Brevo, verificación OTP, recordatorios de racha con consentimiento y auditoría en base de datos. El stack productivo corre en **Supabase Edge Functions + Postgres + pg_cron**; Godot solo habla HTTP con el backend y **nunca ve la API key de Brevo**. El save local, el sync de progreso y el dominio del juego (E1/E2) siguen igual — E4 es una capa transversal de comunicación sobre la infraestructura E3.
+Mails transaccionales con Brevo, verificación OTP, recordatorios de racha con consentimiento y auditoría en base de datos. El stack productivo corre en **Supabase Edge Functions + Postgres + pg_cron**; Godot solo habla HTTP con el backend y **nunca ve la API key de Brevo**. El save local, el sync de progreso y el dominio del juego (E1/E2) siguen igual — E4 es una capa transversal de comunicación sobre la infraestructura E3.
 
 ## Qué se agregó o modificó
 
@@ -16,9 +14,8 @@ En Entrega 3 el jugador tenía cuenta, racha en PostgreSQL y un checkbox de noti
 - **Auditoría** — tabla `email_deliveries` con dedupe, estados, retry y `provider_message_id` de Brevo.
 - **Supabase Edge** — `verify-email-request/confirm`, módulo email compartido, secrets Brevo en Edge; reemplaza Express en staging (`api_mode=supabase_edge`).
 - **Godot dual local/cloud** — `backend.local.json` con `api_mode` (`supabase_edge` / `auto` / `local`); cache de sesión para flags de mail; `save_data.json` v4 sin cambio de esquema.
-- **MER y persistencia** — 2 tablas nuevas (`email_deliveries`, `email_verification_codes`) + columnas en `users`; diagrama en [Mer-Persistencia-E4](Mer-Persistencia-E4).
+- **MER y persistencia** — 2 tablas nuevas (`email_deliveries`, `email_verification_codes`) + columnas en `users`.
 - **In-game** — badge de racha en riesgo en HUD, panel `StreakLossMessagePanel` al perder racha (complemento al mail).
-- **Tests y operación** — smokes Edge, `verify:integration:full`, runbook de mails, seed demo de rachas.
 
 ## Desafíos técnicos
 
@@ -30,77 +27,33 @@ En Entrega 3 el jugador tenía cuenta, racha en PostgreSQL y un checkbox de noti
 - Convivir Express (tests locales) y Supabase Edge (staging/juego online) sin duplicar lógica de negocio.
 - Zona horaria única ART para candidatos de racha (`EMAIL_TIMEZONE`).
 
-## Continuidad con Entrega 3
+-- 
 
-| De E3 (reutilizado) | Qué agrega E4 |
-|---------------------|---------------|
-| `users`, `streaks`, sync, auth JWT | Columnas mail + tablas `email_*` |
-| `email_notifications_enabled` (flag sin efecto) | Jobs que lo respetan + UI funcional |
-| Rachas en servidor al jugar online | Candidatos SQL + mails `streak_*` |
-| Save local + cola offline | Sin cambios — gameplay offline intacto |
-| Express / Docker (dev) | Edge + pg_cron en Supabase (staging) |
+## Evidencia 
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/0abdaa66-4a29-484a-ab49-d183713c81cc" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/e4f4e8fd-f062-470a-9713-c604f0bbd955" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/6d402a73-416c-4229-9deb-f24782080c81" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/d72f24da-16df-4801-9d25-3f995dc34cb1" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/533097f3-d544-4f00-a7c5-2f4e45d70d41" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/21417d56-d4c5-40c3-b432-10f2fd5bd569" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/47feeaa6-5266-47e1-a492-a5e4173fe467" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/1ddb7746-37f9-4df4-a0b2-bf413271008c" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/e5e93c27-b1d9-421e-a47c-418d0dffe789" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/85c0cfa1-e74f-4484-93dc-90737a360f7e" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/2632f8f1-7a37-4258-86dc-4c149161bad7" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/1e38eccd-c96f-4937-a412-0323735fb8a7" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/7dec1b98-6e18-4911-82cd-d5a596f8a3d2" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/50d7ea6a-e5da-490b-94dc-29d2c9d694f2" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/b8b5ee4a-1d49-4dc6-bae4-dd9d83e7a92a" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/cb9614eb-5ffc-4432-83f3-b90d67a3e1ed" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/38185309-edf7-46d7-8d57-4d8ae4b24a8c" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/c4782556-9d3c-4057-8f21-b31c13b53251" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/351d713a-d58b-499a-a524-496765cbbe88" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/65a6dcec-8175-4cd8-b49c-e20695d436a5" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/9eca7a0b-f029-4ebb-9c6d-ba328780a606" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/103ae9e7-945b-4887-8ad8-5666029d1c0b" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/1b4dc093-5223-4764-9f13-83af09ffdf4a" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/2d2281e2-209a-4be2-b996-05170261d691" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/ab03c394-53ed-4d4b-8b65-7d2dcc665a14" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/416912a7-8c34-4263-8b2a-c3d6c01ced21" />
 
-Detalle técnico: [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Sync Godot↔Postgres](Sync-Godot-Postgres)
-
-## Trazabilidad ticket → entregable
-
-| Ticket | Resumen | Bloque |
-|--------|---------|--------|
-| [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) | Notificaciones email racha | Jobs, dedupe, `streak_at_risk` / `streak_lost` |
-| [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177) | Mail de bienvenida | `welcome` post-OTP |
-| [UNQ-190](https://tip-unq.atlassian.net/browse/UNQ-190) | Configurar Brevo | Proveedor + secrets Edge |
-| [UNQ-149](https://tip-unq.atlassian.net/browse/UNQ-149) | Mensaje pérdida racha in-game | `StreakLossMessagePanel` |
-| [UNQ-90](https://tip-unq.atlassian.net/browse/UNQ-90) | Registro de usuario | OTP al alta, opt-in |
-| [UNQ-27](https://tip-unq.atlassian.net/browse/UNQ-27) | Perfil de usuario | Toggle notificaciones, `mail_changed` |
-| [UNQ-83](https://tip-unq.atlassian.net/browse/UNQ-83) | Indicador visual racha | Badge HUD (complemento) |
-
-Fuera de alcance Jira: [UNQ-69](https://tip-unq.atlassian.net/browse/UNQ-69) recuperación contraseña → candidato E5.
-
-## Alcance de Entrega 4
-
-| Bloque | Resultado | Estado |
-|--------|-----------|--------|
-| Módulo email (Brevo) | Cliente, service, 5 templates, tests | Listo |
-| Verificación OTP | Edge + UI Godot + límites de intento | Listo |
-| Mail de bienvenida | Post-verificación, outbox async | Listo |
-| Aviso cambio de mail | Notificación al mail anterior | Listo |
-| Racha en riesgo | Cron 18:00 ART + SQL candidatos | Listo |
-| Racha perdida | Cron 00:00 ART + reconcile en DB | Listo |
-| Reintento fallidos | Jobs 08:00 / 20:00 ART | Listo |
-| Consentimiento UI | Registro + perfil | Listo |
-| Auditoría Postgres | `email_deliveries` + observabilidad | Listo |
-| Supabase Edge + pg_cron | Staging integrado, smokes | Listo |
-| MER E3+E4 | Diagrama persistencia email | Listo |
-| Tests integración / E2E | Jobs, dedupe, `verify:integration:full` | Listo |
-| Activación producción | Dominio propio SPF/DKIM | Pendiente |
-
-### Fuera de alcance
-
-Recuperación de contraseña por mail, newsletters, push nativas, editor visual de templates en Brevo, zonas horarias por jugador.
-
-## Cómo probar (rápido)
-
-Desde `BACKEND/`:
-
-```bash
-npm run verify:integration:full    # integral staging (~3 min)
-npm run smoke:verify-email-edge    # OTP end-to-end
-npm run platform:doctor:staging    # diagnóstico "no llegan mails"
-```
-
-En Godot: F5 → registro → verificar OTP → jugar con cuenta online. Más opciones: [Guía rápida E4](Entrega-4-Guia-Rapida) · [Evidencia](Entrega-4-Evidencia).
-
-## Documentación
-
-- [User Stories](Entrega-4-User-Stories)
-- [Arquitectura](Entrega-4-Arquitectura)
-- [Decisiones](Entrega-4-Decisiones)
-- [Evidencia](Entrega-4-Evidencia)
-- [Mails (copy)](Entrega-4-Mails)
-- [Flujo E3→E4](Entrega-4-Flujo-E3-E4)
-- [MER persistencia E4](Mer-Persistencia-E4) · [Hub MER](Mer-Hub)
-- [Bitácora E4](Bitacora-Entrega-4)
-
-**Profundización** (Jira, secuencias, runbook): [Flujo completo E4](Entrega-4-Flujo-Completo) · [Guía rápida 5 min](Entrega-4-Guia-Rapida)
-
-**Entrega anterior:** [Entrega 3](Entrega-3)

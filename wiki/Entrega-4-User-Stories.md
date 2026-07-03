@@ -1,9 +1,5 @@
 # User Stories — Entrega 4
 
-Historias de usuario: **verificación OTP, bienvenida, consentimiento, rachas y operación**.
-
-[Guía rápida](Entrega-4-Guia-Rapida) · [Resumen](Entrega-4) · [Evidencia](Entrega-4-Evidencia) · [Mails](Entrega-4-Mails)
-
 ---
 
 ## Resumen
@@ -60,7 +56,7 @@ Historias de usuario: **verificación OTP, bienvenida, consentimiento, rachas y 
 - UNQ-64 (circuito mails)
 - UNQ-90 — Registro
 
-**Cómo se valida:** verificar OTP → `email_deliveries` con `template_key=welcome` y `status=sent` · preview dev · copy en [Entrega-4-Mails](Entrega-4-Mails).
+**Cómo se valida:** verificar OTP → `email_deliveries` con `template_key=welcome` y `status=sent` · 
 
 ---
 
@@ -96,11 +92,6 @@ Historias de usuario: **verificación OTP, bienvenida, consentimiento, rachas y 
 - Dado que el jugador juega después del mail, cuando corre el cron del día siguiente, entonces no recibe otro “en riesgo” por el mismo día.
 - Dado mail inválido o fallo de Brevo, cuando falla el envío, entonces queda `failed` y puede reintentarse según política de retry.
 - Dado segundo run del job el mismo día, entonces dedupe → `skipped` (sin segundo mail).
-
-### Tickets relacionados
-
-- [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) — Notificaciones email racha en riesgo
-- UNQ-83 — Indicador visual de racha (complemento in-game)
 
 ---
 
@@ -154,4 +145,4 @@ Historias de usuario: **verificación OTP, bienvenida, consentimiento, rachas y 
 - Dado filas `failed` recientes, cuando corre `retry-failed-emails`, entonces reintenta dentro de `EMAIL_RETRY_MAX_ATTEMPTS`.
 - Dado `npm run validate:email-flow`, cuando corre con Brevo real, entonces valida el circuito completo en un solo comando.
 
-**Cómo se valida:** `npm run smoke:cron:staging` · `npm run verify:integration:full` · `GET /dev/email/deliveries` · [Evidencia](Entrega-4-Evidencia).
+**Cómo se valida:** `npm run smoke:cron:staging` · `npm run verify:integration:full` · `GET /dev/email/deliveries` · 

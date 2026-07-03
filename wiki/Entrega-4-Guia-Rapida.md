@@ -1,12 +1,8 @@
-# Guía rápida — Entrega 4 (5 minutos)
-
-> Validación express para revisores TTIP. Resumen de entrega: [Entrega-4](Entrega-4) · Evidencia: [Entrega-4-Evidencia](Entrega-4-Evidencia)
+# Guía rápida — Entrega 4 
 
 ---
 
 ## Qué problema resolvimos
-
-En Entrega 3 el jugador tenía cuenta, racha en servidor y un checkbox de “avisame por mail”, pero **nunca llegaba un correo**. Entrega 4 cierra ese circuito con un sistema production-ready:
 
 | Antes (E3) | Ahora (E4) |
 |------------|------------|
@@ -27,8 +23,6 @@ En Entrega 3 el jugador tenía cuenta, racha en servidor y un checkbox de “avi
 | 4 | Racha perdida | Job 00:00 ART, 2+ días sin jugar | Sí |
 | 5 | Mail cambiado | Aviso al mail **anterior** | No (seguridad) |
 
-Copy aprobado: [Entrega-4-Mails](Entrega-4-Mails)
-
 ---
 
 ## Arquitectura en 10 segundos
@@ -39,11 +33,9 @@ Godot  ──HTTP──►  Backend  ──►  Brevo
                     └──►  PostgreSQL (auditoría + rachas)
 ```
 
-**Godot nunca ve la API key de Brevo.** Solo habla REST con nuestro backend.
-
 ---
 
-## Validación express (elige una)
+## Validación express 
 
 ### Opción A — Solo templates (30 s, sin Docker)
 
@@ -82,8 +74,6 @@ Un comando valida DB + templates + seed rachas + outbox + auditoría.
 3. Confirmar en pantalla de verificación → llega bienvenida.
 4. (Opcional) `npm run seed:streak-email-demo -- --run-job` → mail de racha.
 
-Guía paso a paso: [Evidencia — Demo TTIP](Entrega-4-Evidencia#demo-ttip-15-minutos)
-
 ---
 
 ## Previews HTML (sin enviar)
@@ -97,29 +87,3 @@ Con `npm run dev` en `BACKEND/`:
 | Racha riesgo | `/dev/email/preview?template_key=streak_at_risk&name=Revisor&streak_count=7` |
 | Racha perdida | `/dev/email/preview?template_key=streak_lost&name=Revisor&streak_count=12` |
 | Mail cambiado | `/dev/email/preview?template_key=mail_changed&name=Revisor` |
-
-Prefijo: `http://localhost:3000` (o el puerto de tu `.env`).
-
----
-
-## Mapa de documentación
-
-| Si querés… | Leé… |
-|------------|------|
-| Entender el alcance y commits | [Entrega-4](Entrega-4) |
-| Criterios de aceptación | [User Stories](Entrega-4-User-Stories) |
-| Diagramas, SQL, endpoints | [Arquitectura](Entrega-4-Arquitectura) |
-| Copy de cada mail | [Mails](Entrega-4-Mails) |
-| Por qué Brevo, OTP, dedupe | [Decisiones](Entrega-4-Decisiones) |
-| Demo, tests, capturas | [Evidencia](Entrega-4-Evidencia) |
-| Evolución E3 → E4 | [Flujo E3→E4](Entrega-4-Flujo-E3-E4) |
-| Qué sigue después | [Bitácora E4](Bitacora-Entrega-4) |
-| Cronología de implementación | [Bitácora E4](Bitacora-Entrega-4) |
-
----
-
-## Pendiente consciente (no bloquea la entrega)
-
-- Activación en servidor productivo (`EMAIL_ENABLED` + dominio SPF/DKIM).
-- Capturas de bandeja en [Evidencia](Entrega-4-Evidencia) (placeholders listos).
-- Recuperación de contraseña por mail → Entrega futura.
