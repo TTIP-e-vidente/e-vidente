@@ -610,16 +610,21 @@ export async function getUserRankingContext(
   const snapshotRows = await queryRows<RankingContextRow>(
     `
       WITH player AS (
-        SELECT rank, username, display_name, score
-        FROM leaderboard_snapshots
-        WHERE scope = $2 AND user_id = $1
+        SELECT s.rank, s.username, s.display_name, s.score
+        ${SNAPSHOT_CURRENT_GEN_SQL}
+        WHERE s.scope = $2 AND s.user_id = $1 AND s.score > 0
         LIMIT 1
       ),
       rival AS (
-        SELECT rank, username, display_name, score
-        FROM leaderboard_snapshots
-        WHERE scope = $2
-          AND rank = (SELECT rank FROM player) - 1
+        -- No usar rank = player.rank - 1: RANK() deja huecos en la secuencia
+        -- cuando hay empates, así que el rango inmediatamente anterior puede
+        -- no existir aunque sí haya alguien con más puntaje. Se busca el
+        -- puntaje inmediato superior en vez del número de rango contiguo.
+        SELECT s.rank, s.username, s.display_name, s.score
+        ${SNAPSHOT_CURRENT_GEN_SQL}
+        WHERE s.scope = $2
+          AND s.score > (SELECT score FROM player)
+        ORDER BY s.score ASC, s.rank ASC
         LIMIT 1
       )
       SELECT
@@ -691,7 +696,12 @@ async function queryLiveRankingContext(
         SELECT * FROM ranked WHERE user_id = $1 LIMIT 1
       ),
       rival AS (
-        SELECT * FROM ranked WHERE rank = (SELECT rank FROM player) - 1 LIMIT 1
+        -- Mismo criterio que en getUserRankingContext: buscar por puntaje
+        -- inmediato superior, no por rank - 1 (RANK() deja huecos con empates).
+        SELECT * FROM ranked
+        WHERE score > (SELECT score FROM player)
+        ORDER BY score ASC, rank ASC
+        LIMIT 1
       )
       SELECT
         pl.rank          AS current_rank,
@@ -724,7 +734,12 @@ async function queryLiveRankingContext(
         SELECT * FROM ranked WHERE user_id = $1 LIMIT 1
       ),
       rival AS (
-        SELECT * FROM ranked WHERE rank = (SELECT rank FROM player) - 1 LIMIT 1
+        -- Mismo criterio que en getUserRankingContext: buscar por puntaje
+        -- inmediato superior, no por rank - 1 (RANK() deja huecos con empates).
+        SELECT * FROM ranked
+        WHERE score > (SELECT score FROM player)
+        ORDER BY score ASC, rank ASC
+        LIMIT 1
       )
       SELECT
         pl.rank          AS current_rank,
@@ -758,7 +773,12 @@ async function queryLiveRankingContext(
         SELECT * FROM ranked WHERE user_id = $1 LIMIT 1
       ),
       rival AS (
-        SELECT * FROM ranked WHERE rank = (SELECT rank FROM player) - 1 LIMIT 1
+        -- Mismo criterio que en getUserRankingContext: buscar por puntaje
+        -- inmediato superior, no por rank - 1 (RANK() deja huecos con empates).
+        SELECT * FROM ranked
+        WHERE score > (SELECT score FROM player)
+        ORDER BY score ASC, rank ASC
+        LIMIT 1
       )
       SELECT
         pl.rank          AS current_rank,
