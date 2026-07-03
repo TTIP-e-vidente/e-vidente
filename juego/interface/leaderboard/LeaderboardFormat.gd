@@ -126,7 +126,6 @@ static func entrada_es_valida(entry: Dictionary) -> bool:
 static func filtrar_entradas_validas(entradas: Array) -> Array:
 	var salida: Array = []
 	var vistos_usuario: Dictionary = {}
-	var vistos_puesto: Dictionary = {}
 
 	for entrada in entradas:
 		if not entrada is Dictionary:
@@ -135,11 +134,13 @@ static func filtrar_entradas_validas(entradas: Array) -> Array:
 		if not entrada_es_valida(entry):
 			continue
 		var user_id := id_usuario_entrada(entry)
-		var rank := entero_desde_json(entry.get("rank", 0))
-		if vistos_usuario.has(user_id) or vistos_puesto.has(rank):
+		# Dedupe SOLO por usuario. NO por puesto: el backend usa RANK(), que asigna
+		# el mismo puesto a jugadores empatados (ver dedupeEntries en
+		# leaderboard.repository.ts) — filtrar por puesto repetido escondía a todos
+		# los empatados menos uno (ej. dos rachas empatadas en 1er puesto).
+		if vistos_usuario.has(user_id):
 			continue
 		vistos_usuario[user_id] = true
-		vistos_puesto[rank] = true
 		salida.append(entry)
 
 	salida.sort_custom(

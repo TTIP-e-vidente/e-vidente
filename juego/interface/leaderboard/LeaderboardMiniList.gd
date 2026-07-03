@@ -143,7 +143,6 @@ func _agregar_filas_desde_entradas(
 ) -> void:
 	var contador := 0
 	var vistos_usuario: Dictionary = {}
-	var vistos_puesto: Dictionary = {}
 	for entrada in entradas:
 		if contador >= maximo:
 			break
@@ -153,15 +152,13 @@ func _agregar_filas_desde_entradas(
 		if not LeaderboardFormat.entrada_es_valida(entry):
 			continue
 		var user_id := LeaderboardFormat.id_usuario_entrada(entry)
-		var rank := LeaderboardFormat.entero_desde_json(entry.get("rank", 0))
+		# Dedupe SOLO por usuario. NO por puesto: RANK() asigna el mismo puesto a
+		# empates (ver LeaderboardFormat.filtrar_entradas_validas), filtrar por
+		# puesto repetido escondía a jugadores empatados.
 		if not user_id.is_empty() and vistos_usuario.has(user_id):
-			continue
-		if rank > 0 and vistos_puesto.has(rank):
 			continue
 		if not user_id.is_empty():
 			vistos_usuario[user_id] = true
-		if rank > 0:
-			vistos_puesto[rank] = true
 		var fila := ROW_SCENE.instantiate() as LeaderboardMiniRow
 		if fila == null:
 			continue

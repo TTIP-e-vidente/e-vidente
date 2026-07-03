@@ -39,12 +39,14 @@ async function run(): Promise<void> {
   const baseUrl = `http://127.0.0.1:${address.port}`;
   const suffix = Date.now();
   const username = `auth_user_${suffix}`;
+  const usernameSameMail = `auth_user_same_mail_${suffix}`;
   const mail = `auth_user_${suffix}@test.com`;
   const password = 'Password123';
+  const sameMailPassword = 'Password456';
 
   try {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2;', [
-      username,
+    await pool.query('DELETE FROM users WHERE username = ANY($1) OR mail = $2;', [
+      [username, usernameSameMail],
       mail
     ]);
 
@@ -124,6 +126,19 @@ async function run(): Promise<void> {
     });
     assert.equal(duplicateResponse.status, 409);
 
+    const sameMailRegisterResponse = await requestJson(baseUrl, '/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: usernameSameMail,
+        name: 'Auth Same Mail',
+        mail,
+        password: sameMailPassword,
+        birth_date: '2000-06-15'
+      })
+    });
+    assert.equal(sameMailRegisterResponse.status, 201);
+    assert.equal((sameMailRegisterResponse.body.user as JsonObject).mail, mail);
+
     // Con mail sin verificar el login queda bloqueado (403 EMAIL_NOT_VERIFIED)
     // y entrega un token acotado que solo sirve para verificar.
     const unverifiedLoginResponse = await requestJson(baseUrl, '/auth/login', {
@@ -136,6 +151,9 @@ async function run(): Promise<void> {
 
     await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [
       username
+    ]);
+    await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [
+      usernameSameMail
     ]);
 
     const loginWithUsernameResponse = await requestJson(baseUrl, '/auth/login', {
@@ -151,6 +169,17 @@ async function run(): Promise<void> {
       body: JSON.stringify({ usernameOrMail: mail, password })
     });
     assert.equal(loginWithMailResponse.status, 200);
+    assert.equal((loginWithMailResponse.body.user as JsonObject).username, username);
+
+    const loginSameMailSecondAccountResponse = await requestJson(baseUrl, '/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ usernameOrMail: mail, password: sameMailPassword })
+    });
+    assert.equal(loginSameMailSecondAccountResponse.status, 200);
+    assert.equal(
+      (loginSameMailSecondAccountResponse.body.user as JsonObject).username,
+      usernameSameMail
+    );
 
     const failedLoginResponse = await requestJson(baseUrl, '/auth/login', {
       method: 'POST',
@@ -193,8 +222,8 @@ async function run(): Promise<void> {
 
     console.log('auth integration test passed');
   } finally {
-    await pool.query('DELETE FROM users WHERE username = $1 OR mail = $2;', [
-      username,
+    await pool.query('DELETE FROM users WHERE username = ANY($1) OR mail = $2;', [
+      [username, usernameSameMail],
       mail
     ]);
     await new Promise<void>((resolve, reject) => {

@@ -200,10 +200,7 @@ static func _mensaje_sin_conexion(
 static func _mensaje_por_codigo(code: String) -> String:
 	match code:
 		"INVALID_CREDENTIALS":
-			var msg := "Usuario o contraseña incorrectos."
-			if OS.is_debug_build():
-				msg += "\nDev: usuario agus, contraseña 123."
-			return msg
+			return "Usuario o contraseña incorrectos."
 		"DUPLICATE_USERNAME":
 			return "Ese nombre de usuario ya existe. Elegí otro."
 		"DUPLICATE_MAIL":

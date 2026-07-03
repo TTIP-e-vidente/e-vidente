@@ -54,6 +54,20 @@ export async function findByMailOrEmail(mail: string): Promise<UserRow | null> {
   return result.rows[0] ?? null;
 }
 
+export async function findByMail(mail: string): Promise<UserRow[]> {
+  const result = await query<UserRow>(
+    `
+      SELECT ${userColumns}
+      FROM users
+      WHERE mail = $1
+      ORDER BY created_at ASC;
+    `,
+    [mail]
+  );
+
+  return result.rows;
+}
+
 export async function findByUsernameOrMail(value: string): Promise<UserRow | null> {
   const result = await query<UserRow>(
     `

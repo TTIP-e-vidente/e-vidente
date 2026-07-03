@@ -193,7 +193,7 @@ func _refrescar_ui() -> void:
 
 
 func _resolver_texto_detalle() -> String:
-	if _streak_state == "warning":
+	if _streak_state == "warning" or _streak_state == "critical":
 		var detalle := StreakReminderHelperScript.mensaje_detalle_pantalla_racha()
 		if not detalle.is_empty():
 			return detalle

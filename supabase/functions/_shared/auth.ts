@@ -201,12 +201,12 @@ async function findByUsername(db: Client, username: string): Promise<UserRow | n
   return result.rows[0] ?? null;
 }
 
-async function findByMail(db: Client, mail: string): Promise<UserRow | null> {
+async function findByMail(db: Client, mail: string): Promise<UserRow[]> {
   const result = await db.queryObject<UserRow>(
-    `SELECT ${USER_COLUMNS} FROM users WHERE mail = $1;`,
+    `SELECT ${USER_COLUMNS} FROM users WHERE mail = $1 ORDER BY created_at ASC;`,
     [mail],
   );
-  return result.rows[0] ?? null;
+  return result.rows;
 }
 
 async function findByUsernameOrMail(db: Client, value: string): Promise<UserRow | null> {
@@ -262,13 +262,8 @@ export async function login(input: Record<string, unknown>): Promise<AuthRespons
   }
 
   const user = await withDb(async (db) => {
-    const row = await findByUsernameOrMail(db, usernameOrMail);
+    const row = await findLoginUser(db, usernameOrMail, password);
     if (!row?.password_hash) {
-      throw new AuthServiceError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
-    }
-
-    const passwordMatches = bcrypt.compareSync(password, row.password_hash);
-    if (!passwordMatches) {
       throw new AuthServiceError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
@@ -306,6 +301,29 @@ export async function login(input: Record<string, unknown>): Promise<AuthRespons
   };
 }
 
+async function findLoginUser(
+  db: Client,
+  usernameOrMail: string,
+  password: string,
+): Promise<UserRow | null> {
+  const usernameMatch = await findByUsername(db, usernameOrMail);
+  if (usernameMatch?.password_hash && bcrypt.compareSync(password, usernameMatch.password_hash)) {
+    return usernameMatch;
+  }
+
+  const mailMatches = await findByMail(db, usernameOrMail);
+  for (const candidate of mailMatches) {
+    if (!candidate.password_hash) {
+      continue;
+    }
+    if (bcrypt.compareSync(password, candidate.password_hash)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 export async function register(input: Record<string, unknown>): Promise<AuthResponse> {
   const username = asTrimmedString(input.username);
   const name = asTrimmedString(input.name);
@@ -339,13 +357,6 @@ export async function register(input: Record<string, unknown>): Promise<AuthResp
     const existingUsername = await findByUsername(db, validUsername);
     if (existingUsername) {
       throw new AuthServiceError(409, 'DUPLICATE_USERNAME', 'username already exists');
-    }
-
-    if (mail) {
-      const existingMail = await findByMail(db, mail);
-      if (existingMail) {
-        throw new AuthServiceError(409, 'DUPLICATE_MAIL', 'mail already exists');
-      }
     }
 
     const passwordHash = bcrypt.hashSync(password, getBcryptSaltRounds());

@@ -690,13 +690,14 @@ async function run(): Promise<void> {
     });
     assert.equal(otherRegisterResponse.status, 201);
 
-    const duplicateMailResponse = await requestJson(baseUrl, '/player/me', {
+    const sharedMailPatchResponse = await requestJson(baseUrl, '/player/me', {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ mail: otherMail })
     });
-    assert.equal(duplicateMailResponse.status, 409);
-    assert.equal(duplicateMailResponse.body.code, 'DUPLICATE_MAIL');
+    assert.equal(sharedMailPatchResponse.status, 200);
+    assert.equal((sharedMailPatchResponse.body.user as JsonObject).mail, otherMail);
+    assert.ok(sharedMailPatchResponse.body.verification);
 
     const emptyPatchResponse = await requestJson(baseUrl, '/player/me', {
       method: 'PATCH',

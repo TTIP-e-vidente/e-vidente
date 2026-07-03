@@ -200,16 +200,6 @@ export async function updatePlayerMe(
 
   await withTransaction(async (client) => {
     if (validatedMail !== undefined) {
-      if (validatedMail !== null) {
-        const existingMail = await userRepository.findByMailExcludingUserId(
-          client,
-          validatedMail,
-          userId,
-        );
-        if (existingMail) {
-          throw new PlayerError(409, 'DUPLICATE_MAIL', 'mail already exists');
-        }
-      }
       updates.mail = validatedMail;
       await client.queryObject(
         `
