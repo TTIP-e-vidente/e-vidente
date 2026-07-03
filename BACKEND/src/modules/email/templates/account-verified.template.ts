@@ -38,7 +38,6 @@ export function buildAccountVerifiedEmail(context: AccountVerifiedTemplateContex
     headline: 'Correo verificado',
     subtitle: 'Tu cuenta ya está activa',
     preheader: `${name}, tu correo quedó verificado y tu cuenta en E-VIDENTE ya está activa.`,
-    headerIcon: 'shield_check',
     bodyHtml: [
       bodyParagraph(
         `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>! Confirmamos tu correo correctamente.`

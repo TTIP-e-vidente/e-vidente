@@ -8,6 +8,8 @@ const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
 const EMAIL_CHIP_PADDING_X := 28.0
+const MAIL_PLACEHOLDER_RUNTIME := "tu casilla de correo"
+const MAIL_PLACEHOLDER_ESCENA := "tu_mail@ejemplo.com"
 const AYUDA_MAIL_TEXTO := (
 	"• Buscá un mail con asunto «Código E-VIDENTE: ######» (no el de bienvenida).\n"
 	+ "• Copiá los 6 números del asunto o del bloque dorado del mail.\n"
@@ -66,6 +68,15 @@ func _ready() -> void:
 	call_deferred("_enfocar_codigo")
 
 
+static func _es_mail_placeholder(texto: String) -> bool:
+	var limpio := texto.strip_edges()
+	return (
+		limpio.is_empty()
+		or limpio == MAIL_PLACEHOLDER_RUNTIME
+		or limpio == MAIL_PLACEHOLDER_ESCENA
+	)
+
+
 func _inicializar_correo_y_estado() -> void:
 	var refresh := await ProfileMailSyncHelper.refrescar_perfil_servidor()
 	if AuthApi.esta_logueado() and not bool(refresh.get("ok", false)):
@@ -76,10 +87,9 @@ func _inicializar_correo_y_estado() -> void:
 			false
 		)
 	await _sincronizar_estado_desde_servidor()
-	var mail_ui := _label_email.text.strip_edges()
-	if mail_ui.is_empty() or mail_ui == "tu casilla de correo":
+	if _es_mail_placeholder(_label_email.text):
 		_aplicar_mail_desde_evaluacion_meta()
-	if _label_email.text.strip_edges().is_empty() or _label_email.text == "tu casilla de correo":
+	if _es_mail_placeholder(_label_email.text):
 		_mostrar_email_usuario()
 	await _asegurar_codigo_pendiente_si_hace_falta()
 
@@ -117,7 +127,7 @@ func _solicitar_codigo_automatico() -> void:
 	_establecer_cargando(true)
 	_mostrar_mensaje("Enviando código a tu mail...", true)
 	var mail_esperado := _label_email.text.strip_edges()
-	if mail_esperado == "tu casilla de correo":
+	if _es_mail_placeholder(mail_esperado):
 		mail_esperado = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
 	var res := await AuthApi.solicitar_codigo_verificacion(mail_esperado)
 	_establecer_cargando(false)
@@ -179,8 +189,7 @@ func _aplicar_mail_desde_evaluacion_meta() -> void:
 
 	var actual_ui := _label_email.text.strip_edges()
 	if (
-		not actual_ui.is_empty()
-		and actual_ui != "tu casilla de correo"
+		not _es_mail_placeholder(actual_ui)
 		and not ProfileMailSyncHelper.mails_coinciden(actual_ui, target)
 	):
 		return
@@ -369,7 +378,7 @@ func _process(delta: float) -> void:
 func _mostrar_email_usuario() -> void:
 	var mail := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
 	if mail.is_empty():
-		_label_email.text = "tu casilla de correo"
+		_label_email.text = MAIL_PLACEHOLDER_RUNTIME
 		call_deferred("_ajustar_chip_mail")
 	else:
 		_establecer_mail_en_ui(mail)
@@ -488,7 +497,7 @@ func _on_reenviar_presionado() -> void:
 	_mostrar_mensaje("Solicitando nuevo código...", true)
 
 	var mail_esperado := _label_email.text.strip_edges()
-	if mail_esperado == "tu casilla de correo":
+	if _es_mail_placeholder(mail_esperado):
 		mail_esperado = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
 	var res := await AuthApi.solicitar_codigo_verificacion(mail_esperado)
 	_establecer_cargando(false)

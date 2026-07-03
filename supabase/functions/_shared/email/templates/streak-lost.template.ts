@@ -39,7 +39,6 @@ export function buildStreakLostEmail(context: StreakTemplateContext): EmailMessa
     headline: 'Tu racha se reinició',
     subtitle: 'Siempre podés volver a empezar',
     preheader: `${name}, tu racha volvió a cero. Hoy podés arrancar una nueva desde el juego.`,
-    headerIcon: 'streak',
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(
