@@ -1,55 +1,22 @@
-# Entrega 4 — Flujo completo (profundización)
-
-> **Resumen compacto (como E2/E3):** [Entrega-4](Entrega-4) · **5 min revisor:** [Guía rápida](Entrega-4-Guia-Rapida) · **Setup:** [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md)
-
-Documento de **profundización**: Jira, secuencias técnicas, runbook y diagramas detallados. Para la defensa TTIP alcanza con [Entrega-4](Entrega-4) + [Evidencia](Entrega-4-Evidencia).
-
----
-
-## En una frase
-
-La Entrega 3 dejó cuenta, racha en PostgreSQL y un checkbox de “avisame por mail” que no hacía nada. La Entrega 4 **cierra ese circuito**: el juego puede hablar con el jugador fuera de la pantalla — con mails transaccionales auditados, verificación OTP y recordatorios de racha que respetan el consentimiento.
-
----
-
-## De dónde salió esto (Jira)
-
-Los tickets de Jira definen el *qué*; el código y la wiki documentan el *cómo*. Esta es la trazabilidad que usamos en la defensa:
+# Entrega 4 — Flujo completo
 
 | Ticket | Resumen | Estado Jira | Qué cubre en E4 |
 |--------|---------|-------------|-----------------|
-| [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) | Notificaciones email racha en riesgo | Revisión | Jobs diarios, `streak_at_risk`, dedupe, consentimiento |
-| [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177) | Mail de bienvenida al registrarse | Revisión | Template `welcome` post-OTP (no al registro crudo) |
-| [UNQ-190](https://tip-unq.atlassian.net/browse/UNQ-190) | Configurar Brevo con mail de evidente | Revisión | Proveedor, remitente, secrets en Edge |
-| [UNQ-149](https://tip-unq.atlassian.net/browse/UNQ-149) | Mensaje de pérdida de racha in-game | Revisión | `StreakLossMessagePanel` + mail `streak_lost` |
+| [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) | Notificaciones email racha en riesgo | Terminado | Jobs diarios, `streak_at_risk`, dedupe, consentimiento |
+| [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177) | Mail de bienvenida al registrarse | Terminado | Template `welcome` post-OTP (no al registro crudo) |
+| [UNQ-190](https://tip-unq.atlassian.net/browse/UNQ-190) | Configurar Brevo con mail de evidente | Terminado | Proveedor, remitente, secrets en Edge |
+| [UNQ-149](https://tip-unq.atlassian.net/browse/UNQ-149) | Mensaje de pérdida de racha in-game | Terminado | `StreakLossMessagePanel` + mail `streak_lost` |
 | [UNQ-148](https://tip-unq.atlassian.net/browse/UNQ-148) | Diseño mensaje pérdida de racha | Terminado | Base visual del panel de pérdida |
-| [UNQ-90](https://tip-unq.atlassian.net/browse/UNQ-90) | Registro de usuario | — | Flujo OTP al alta, opt-in notificaciones |
+| [UNQ-90](https://tip-unq.atlassian.net/browse/UNQ-90) | Registro de usuario | Terminado | Flujo OTP al alta, opt-in notificaciones |
 | [UNQ-27](https://tip-unq.atlassian.net/browse/UNQ-27) | Perfil de usuario | Terminado | Toggle notificaciones, cambio de mail, `mail_changed` |
 | [UNQ-83](https://tip-unq.atlassian.net/browse/UNQ-83) | Indicador visual de racha | Terminado | Badge de riesgo en HUD (complemento al mail) |
-| [UNQ-178](https://tip-unq.atlassian.net/browse/UNQ-178) | Preferencias notificaciones en perfil | Por hacer* | Implementado en código; ticket sin cerrar en Jira |
-| [UNQ-69](https://tip-unq.atlassian.net/browse/UNQ-69) | Recuperar contraseña por mail | Por hacer | **Fuera de alcance E4** — candidato E5 |
-
-\* El toggle de notificaciones funciona en registro y perfil; el ticket UNQ-178 quedó pendiente de cierre administrativo en Jira.
-
-### User Stories ↔ Tickets
-
-| US | Historia | Tickets Jira |
-|----|----------|--------------|
-| US-01 | Verificar mail OTP | UNQ-90, UNQ-27 |
-| US-02 | Bienvenida post-OTP | UNQ-177, UNQ-64 |
-| US-03 | Opt-in recordatorios | UNQ-64, UNQ-27, UNQ-178 |
-| US-04 | Racha en riesgo | UNQ-64, UNQ-83 |
-| US-05 | Racha perdida | UNQ-64, UNQ-149 |
-| US-06 | Aviso cambio de mail | UNQ-27 |
-| US-07 | Ops y auditoría | UNQ-190 |
-
-Detalle de criterios: [User Stories E4](Entrega-4-User-Stories)
+| [UNQ-178](https://tip-unq.atlassian.net/browse/UNQ-178) | Preferencias notificaciones en perfil | Terminado | Implementado en código |
 
 ---
 
-## La historia en orden (cómo lo vivió el jugador)
+## La historia en orden
 
-Imaginá a alguien que se registra hoy en E-VIDENTE:
+Registro hoy en E-VIDENTE:
 
 1. **Se registra** en Godot → la cuenta queda en Postgres (Supabase), con racha en cero y el checkbox de recordatorios.
 2. **Recibe un mail con código OTP** de 6 dígitos → no es marketing, es transaccional: necesitamos saber que el mail es real.
@@ -58,8 +25,6 @@ Imaginá a alguien que se registra hoy en E-VIDENTE:
 5. **Juega varios días** → la racha sube en servidor cada vez que termina una partida online.
 6. **Un día juega a la mañana pero no a la tarde** → a las 18:00 ART el cron detecta “jugó ayer, hoy no” y manda `streak_at_risk` — *solo si* tiene notificaciones activas y mail verificado.
 7. **Si pasan 2+ días sin jugar** → a medianoche ART el job manda `streak_lost`, resetea la racha en DB, y al volver al juego ve el panel empático de pérdida.
-
-Si alguien cambia el mail de la cuenta, el **mail anterior** recibe un aviso de seguridad (`mail_changed`). Eso no depende del opt-in: es protección de cuenta.
 
 ---
 
@@ -90,8 +55,6 @@ pg_cron (dentro de Supabase)
 ```
 
 **Regla de oro:** Godot nunca ve la API key de Brevo. Solo habla HTTP con nuestras Edge Functions; el servidor orquesta Brevo y Postgres.
-
-Express queda para tests Node legacy en local — ver [EXPRESS_LEGACY](../BACKEND/docs/EXPRESS_LEGACY.md).
 
 ```mermaid
 flowchart TB
@@ -130,7 +93,6 @@ flowchart TB
 | 4 | `streak_lost` | Cron 00:00 ART | Sí | `lost:YYYY-MM-DD` |
 | 5 | `mail_changed` | Cambio de mail confirmado | No | Por evento |
 
-Copy aprobado: [Entrega-4-Mails](Entrega-4-Mails)
 
 ---
 
@@ -155,8 +117,6 @@ sequenceDiagram
   E->>DB: encolar welcome (pending)
   Note over E,B: Welcome se procesa async (outbound job)
 ```
-
-**Por qué OTP y no link mágico:** Godot no es un browser. Un código de 6 dígitos se copia fácil desde el celular. Ver [ADR-04](Entrega-4-Decisiones#adr-04--otp-antes-de-bienvenida-y-recordatorios).
 
 **Archivos clave:**
 - Edge: `supabase/functions/verify-email-request/`, `verify-email-confirm/`
@@ -209,8 +169,6 @@ Estados en `email_deliveries`: `pending` → `sent` | `failed` | `skipped`.
 
 **Criterio:** última actividad hace **2 o más días**.
 
-**Lo importante:** aunque Brevo esté caído, `reconcileExpiredStreaksInDatabase` pone `current_count = 0`. La consistencia del servidor importa más que la entrega del mail. Ver [ADR-07](Entrega-4-Decisiones#adr-07--reconcile-de-racha-independiente-del-mail).
-
 **Horario:** 00:00 ART → `streak-lost-emails`.
 
 ### Tabla de crons
@@ -245,7 +203,7 @@ Comando todo-en-uno: `npm run integrate:staging`
 | Pieza | Ubicación |
 |-------|-----------|
 | Cliente Brevo | `_shared/brevo.ts` (Edge) · `email.client.ts` (Express) |
-| Templates HTML | `_shared/email/templates/*.ts` (5 correos, Rubik, paleta verde/crema) |
+| Templates HTML | `_shared/email/templates/*.ts` |
 | Jobs de racha | `_shared/jobs/email-jobs.ts` |
 | Webhook bounce | `brevo-webhook` Edge function |
 | Auditoría | `email_deliveries` + `delivery.ts` |
@@ -270,8 +228,6 @@ Comando todo-en-uno: `npm run integrate:staging`
 | `npm run smoke:brevo-edge` | Brevo accesible desde Edge |
 | `npm run smoke:cron:staging` | Simula un cron manual |
 
-Runbook operativo: [EMAILS_RUNBOOK](../BACKEND/docs/EMAILS_RUNBOOK.md)
-
 ---
 
 ## Desafíos que encontramos y cómo los resolvimos
@@ -287,89 +243,3 @@ Runbook operativo: [EMAILS_RUNBOOK](../BACKEND/docs/EMAILS_RUNBOOK.md)
 | Mails en spam | Sender Gmail sin dominio propio | Documentado; dominio propio pendiente prod |
 | Express vs Supabase | Dos stacks, confusión | Express = legacy tests; staging = Edge |
 | Cron en GitHub | Dependencia externa, secrets | Migrado a `pg_cron` nativo en Supabase |
-
----
-
-## Continuidad con Entrega 3
-
-E4 **extiende** E3 sin romper nada:
-
-| De E3 | Cómo lo usa E4 |
-|-------|----------------|
-| Tabla `users` + `mail` | Destino de OTP y recordatorios |
-| `email_notifications_enabled` | Filtro SQL en jobs |
-| Tabla `streaks` | Candidatos at_risk / lost |
-| `AuthApi` / sync | Registro envía opt-in; partidas actualizan racha |
-| Save local offline | Sin cambios — sigue siendo fuente sin login |
-
-Detalle: [Flujo E3→E4](Entrega-4-Flujo-E3-E4)
-
----
-
-## Cómo validar (checklist rápido)
-
-| # | Qué probar | Comando / acción |
-|---|------------|------------------|
-| 1 | Templates HTML | `npm run test:email` |
-| 2 | OTP Edge | `npm run smoke:verify-email-edge` |
-| 3 | Brevo desde Edge | `npm run smoke:brevo-edge` |
-| 4 | Cron manual | `npm run smoke:cron:staging -- streak-at-risk-emails` |
-| 5 | Integración completa | `npm run verify:integration:full` |
-| 6 | Flujo en Godot | F5 → registro → OTP → jugar |
-| 7 | Auditoría | `SELECT * FROM email_deliveries ORDER BY created_at DESC LIMIT 10` |
-
-Demo TTIP paso a paso: [Evidencia E4](Entrega-4-Evidencia#demo-ttip-15-minutos)
-
----
-
-## Alcance y pendientes conscientes
-
-### Dentro de E4 ✅
-
-- 5 templates transaccionales con diseño coherente al juego
-- OTP + UI Godot + mail verificado
-- Bienvenida post-verificación (async)
-- Recordatorios de racha con opt-in
-- Aviso de cambio de mail
-- Auditoría `email_deliveries` + retry + crons Supabase
-- Tests integración + smokes Edge
-- Documentación wiki completa
-
-### Fuera de alcance (decisión explícita)
-
-- Recuperación de contraseña por mail ([UNQ-69](https://tip-unq.atlassian.net/browse/UNQ-69)) → candidato E5
-- Newsletters / push nativas
-- Editor visual de templates en Brevo
-- Dominio propio SPF/DKIM en producción → pendiente deploy prod
-
----
-
-## Mapa de documentación
-
-| Si querés… | Leé… |
-|------------|------|
-| Resumen ejecutivo | [Entrega-4](Entrega-4) |
-| 5 min para revisores | [Guía rápida](Entrega-4-Guia-Rapida) |
-| Criterios de aceptación | [User Stories](Entrega-4-User-Stories) |
-| Diagramas y endpoints | [Arquitectura](Entrega-4-Arquitectura) |
-| Por qué estas decisiones | [Decisiones ADR-01…10](Entrega-4-Decisiones) |
-| Copy de cada mail | [Mails](Entrega-4-Mails) |
-| Demo y evidencia | [Evidencia](Entrega-4-Evidencia) |
-| Cronología de implementación | [Bitácora E4](Bitacora-Entrega-4) |
-| MER interactivo E3+E4 | [Mer-Persistencia-E4](Mer-Persistencia-E4) |
-| Setup Supabase | [SUPABASE_QUICKSTART](../BACKEND/docs/SUPABASE_QUICKSTART.md) |
-| Edge + crons | [SUPABASE_EDGE_FUNCTIONS](../BACKEND/docs/SUPABASE_EDGE_FUNCTIONS.md) |
-
----
-
-## Fuentes
-
-**Jira (consultado jul 2026):**
-- [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) · [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177) · [UNQ-190](https://tip-unq.atlassian.net/browse/UNQ-190)
-- [UNQ-149](https://tip-unq.atlassian.net/browse/UNQ-149) · [UNQ-148](https://tip-unq.atlassian.net/browse/UNQ-148)
-- [UNQ-90](https://tip-unq.atlassian.net/browse/UNQ-90) · [UNQ-27](https://tip-unq.atlassian.net/browse/UNQ-27) · [UNQ-83](https://tip-unq.atlassian.net/browse/UNQ-83)
-
-**Código:**
-- `supabase/functions/` — Edge Functions productivas
-- `BACKEND/src/modules/email/` — módulo Express (tests legacy)
-- `juego/interface/auth/` — UI OTP y consentimiento
