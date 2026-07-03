@@ -180,7 +180,10 @@ static func ejecutar_post_registro(
 		return ya_verificado
 	if not bool(evaluacion.get("show_overlay", false)):
 		return _fallo_envio(evaluacion)
-	return await mostrar_escena(contexto, evaluacion, true, nav)
+	# No obligatorio: recién registrado ya tiene sesión válida, así que puede
+	# posponer la verificación y seguir jugando (a diferencia del login
+	# bloqueado por EMAIL_NOT_VERIFIED, que sí exige verificar en el momento).
+	return await mostrar_escena(contexto, evaluacion, false, nav)
 
 
 static func ejecutar_pendiente(

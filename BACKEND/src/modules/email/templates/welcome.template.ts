@@ -39,7 +39,6 @@ export function buildWelcomeEmail(context: WelcomeTemplateContext): EmailMessage
     headline: 'Mail verificado',
     subtitle: 'Tu cuenta está lista',
     preheader: `${name}, tu cuenta en E-VIDENTE ya está activa. Entrá al juego y compite en el ranking.`,
-    headerIcon: 'welcome',
     bodyHtml: [
       bodyParagraph(
         `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>! Gracias por confirmar tu mail.`

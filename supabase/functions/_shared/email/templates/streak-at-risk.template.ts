@@ -40,7 +40,6 @@ export function buildStreakAtRiskEmail(context: StreakTemplateContext): EmailMes
     headline: 'Tu racha está en riesgo',
     subtitle: `${streakCount} ${dayLabel} · jugá hoy para mantenerla`,
     preheader: `${name}, tu racha de ${streakCount} ${dayLabel} puede perderse si no jugás hoy.`,
-    headerIcon: 'streak',
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(

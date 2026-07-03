@@ -53,7 +53,6 @@ export function buildEmailVerificationEmail(
     headline: 'Verificá tu email',
     subtitle: `Código válido por ${expiresMinutes} minutos`,
     preheader: `Tu código es ${digitsOnly}. Copialo del mail o del asunto y pegalo en el juego.`,
-    headerIcon: 'mail',
     bodyHtml: [
       bodyParagraph(
         `Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>,`

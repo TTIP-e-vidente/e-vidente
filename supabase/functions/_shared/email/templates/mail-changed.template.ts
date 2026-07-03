@@ -41,7 +41,6 @@ export function buildMailChangedEmail(context: MailChangedTemplateContext): Emai
     headline: 'Tu email fue cambiado',
     subtitle: 'Aviso de seguridad de cuenta',
     preheader: `Se actualizó el email de tu cuenta E-VIDENTE a ${newMail}. Si no fuiste vos, revisá esto.`,
-    headerIcon: 'security',
     bodyHtml: [
       bodyParagraph(
         `Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>,`

@@ -16,9 +16,12 @@ const ESCENAS_SIN_AVISO_MAIL := [
 
 signal aviso_verificacion(mensaje: String, es_ok: bool)
 
+const NUDGE_REFRESH_INTERVAL_SECONDS := 60.0
+
 var _nudge_global: CanvasLayer = null
 var _streak_nudge_global: CanvasLayer = null
 var _aviso_mail_activo_en_sesion := false
+var _timer_refresco_nudges: Timer = null
 
 
 func aviso_mail_habilitado() -> bool:
@@ -54,6 +57,15 @@ func _ready() -> void:
 		BackendSession.session_expired.connect(_on_logout_completado)
 	if get_tree() != null:
 		get_tree().node_added.connect(_on_arbol_cambiado)
+	# El estado de racha ("warning" a las 18:00, "critical" a las 22:00) es
+	# una función del reloj, no solo de datos: sin este timer, una sesión
+	# quieta (sin abrir escenas ni pantallas nuevas) nunca vuelve a preguntar
+	# y el aviso jamás aparece aunque cambie la hora.
+	_timer_refresco_nudges = Timer.new()
+	_timer_refresco_nudges.wait_time = NUDGE_REFRESH_INTERVAL_SECONDS
+	_timer_refresco_nudges.autostart = true
+	_timer_refresco_nudges.timeout.connect(refrescar_nudge_global)
+	add_child(_timer_refresco_nudges)
 	call_deferred("refrescar_nudge_global")
 
 
@@ -90,10 +102,12 @@ func _refrescar_nudges_global() -> void:
 		)
 		MailVerifyNudgeHelperScript.refrescar(_nudge_global, ocultar_mail)
 	if is_instance_valid(_streak_nudge_global):
+		# No se fuerza a ocultar por mail sin verificar: StreakReminderHelper
+		# .resolver_nudge() ya arma la variante "Verificá tu mail" para ese
+		# caso — ocultarla acá la dejaba sin mostrarse nunca.
 		var ocultar_racha := (
 			_escena_actual_sin_aviso_mail()
 			or not _aviso_mail_activo_en_sesion
-			or AuthApi.mail_pendiente_verificacion()
 		)
 		StreakReminderNudgeHelperScript.refrescar(_streak_nudge_global, ocultar_racha)
 
