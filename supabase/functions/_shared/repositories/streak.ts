@@ -167,16 +167,42 @@ export async function registerStreakActivity(
       lastActivityAt = row.last_at;
     }
   }
-  let newCount = 1;
+  let gamesCount = 1;
   for (let i = 1; i < days.length; i++) {
     if (daysBetween(days[i - 1], days[i]) === 1) {
-      newCount++;
+      gamesCount++;
     } else {
       break;
     }
   }
 
-  const newBest = Math.max(existing.best_count, newCount);
+  // El historial de `games`/`history_games` se borra al resetear el progreso
+  // de un jugador (ver resetProgressCounters + deleteNodeHistoryByProgressId,
+  // que hace cascade sobre games.history_id). La racha diaria es un hábito
+  // independiente del avance de mapa y no debería perderse por eso: si el
+  // estado ya persistido en `streaks` describe una racha viva y más larga que
+  // la reconstruible desde `games` (podado por un reset), se preserva/extiende
+  // ese estado en vez de recalcularlo desde cero.
+  const existingDay = toDateOnly(existing.last_activity_day);
+  let finalCount = gamesCount;
+  let finalDay = lastActivityDay;
+  if (existingDay) {
+    if (existingDay === lastActivityDay) {
+      finalCount = Math.max(gamesCount, existing.current_count);
+    } else if (existingDay < lastActivityDay && daysBetween(existingDay, lastActivityDay) === 1) {
+      finalCount = Math.max(gamesCount, existing.current_count + 1);
+    } else if (existingDay > lastActivityDay) {
+      // El estado persistido ya es más reciente que lo reconstruible desde
+      // games (no debería pasar en el flujo normal); no hay que retroceder.
+      finalCount = existing.current_count;
+      finalDay = existingDay;
+    }
+    // Si el hueco es mayor a 1 día y existingDay < lastActivityDay, la racha
+    // vieja ya había expirado: no hay nada que preservar, gana el cálculo
+    // desde games (reconcileExpiredStreaks se ocupa del aviso de pérdida).
+  }
+
+  const newBest = Math.max(existing.best_count, finalCount);
   const updated = await client.queryObject<{
     id: string;
     current_count: number;
@@ -196,7 +222,7 @@ export async function registerStreakActivity(
       WHERE id = $1
       RETURNING id, current_count, best_count, last_activity_day, last_activity_at, updated_at;
     `,
-    [existing.id, newCount, newBest, lastActivityDay, lastActivityAt]
+    [existing.id, finalCount, newBest, finalDay, lastActivityAt]
   );
 
   const row = updated.rows[0];
