@@ -1,42 +1,41 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dy80fyawpliun"]
 
-[ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
+[ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
 [ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_6vg4q"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo-veganismo.png" id="3_gaj1j"]
-[ext_resource type="Script" path="res://niveles/Menú.gd" id="6_0a2dw"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/menu-fondo.png" id="6_w25c5"]
+[ext_resource type="Texture2D" uid="uid://cdk1ovbi4kqyk" path="res://assets-sistema/interfaz/cuadrado-6x1_2.png" id="4_6vg4q"]
+[ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_0a2dw"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="7_wtr41"]
-[ext_resource type="Script" path="res://niveles/Lupa.gd" id="8_5ahs6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/lupa.png" id="9_busdo"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/info-lupa.png" id="10_rbgcf"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/globito-celiaquia.png" id="11_tc4hd"]
-[ext_resource type="Script" path="res://niveles/PlayerCambianteVegan.gd" id="12_xwbtl"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/tengo hambre.png" id="13_dqdvd"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-idle-1.png" id="14_2es25"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-idle-2.png" id="15_v7d7a"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-idle-3.png" id="16_duo2e"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-mal-mal--malito-1.png" id="17_0sym2"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-mal-mal--malito-2.png" id="18_whntx"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-mal-malito-1.png" id="19_grw6e"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-mal-malito-2.png" id="20_mw7k0"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-malito-1.png" id="21_pnld7"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-malito-2.png" id="22_ote5h"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-malisisisimo-1.png" id="23_4uxoi"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-malisisisimo-2.png" id="24_4lo60"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-1.png" id="25_n86g6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-2.png" id="26_p8sla"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-3.png" id="27_pbubt"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-1.png" id="28_02kvd"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-2.png" id="29_ttora"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-3.png" id="30_6ys1w"]
-[ext_resource type="Script" path="res://assets-sistema/player/AbstractState.gd" id="31_xkl8d"]
-[ext_resource type="Script" path="res://assets-sistema/player/SentirHambre.gd" id="32_j4rl2"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_fecjc"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_spc0y"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="36_bel8i"]
-[ext_resource type="Script" path="res://niveles/manager_level.gd" id="36_klwte"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_0lh3u"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_c7a2m"]
+[ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="8_5ahs6"]
+[ext_resource type="Texture2D" uid="uid://nbvk0y8gfabp" path="res://assets-sistema/interfaz/lupa.png" id="9_busdo"]
+[ext_resource type="Texture2D" uid="uid://8imyk8l0hueg" path="res://assets-sistema/interfaz/info-lupa.png" id="10_rbgcf"]
+[ext_resource type="Script" uid="uid://bpbw277wfv6a3" path="res://niveles/PlayerCambianteVegan.gd" id="12_xwbtl"]
+[ext_resource type="Texture2D" uid="uid://vkt4rmn8l3wn" path="res://assets-sistema/interfaz/tengo hambre.png" id="13_dqdvd"]
+[ext_resource type="Texture2D" uid="uid://baowhju74a50e" path="res://assets-sistema/player/player - vegan/personaje-idle-1.png" id="14_2es25"]
+[ext_resource type="Texture2D" uid="uid://b5fubj25rtske" path="res://assets-sistema/player/player - vegan/personaje-idle-2.png" id="15_v7d7a"]
+[ext_resource type="Texture2D" uid="uid://o2f77bvarn0u" path="res://assets-sistema/player/player - vegan/personaje-idle-3.png" id="16_duo2e"]
+[ext_resource type="Texture2D" uid="uid://bka0v47iuvl4p" path="res://assets-sistema/player/player - vegan/personaje-mal-mal--malito-1.png" id="17_0sym2"]
+[ext_resource type="Texture2D" uid="uid://b4rrkx52ljvj5" path="res://assets-sistema/player/player - vegan/personaje-mal-mal--malito-2.png" id="18_whntx"]
+[ext_resource type="Texture2D" uid="uid://3hyd1juo42pd" path="res://assets-sistema/player/player - vegan/personaje-mal-malito-1.png" id="19_grw6e"]
+[ext_resource type="Texture2D" uid="uid://d1tuarj5volkp" path="res://assets-sistema/player/player - vegan/personaje-mal-malito-2.png" id="20_mw7k0"]
+[ext_resource type="Texture2D" uid="uid://c7cpt65fqe8lg" path="res://assets-sistema/player/player - vegan/personaje-malito-1.png" id="21_pnld7"]
+[ext_resource type="Texture2D" uid="uid://bq304ppjn8p2e" path="res://assets-sistema/player/player - vegan/personaje-malito-2.png" id="22_ote5h"]
+[ext_resource type="Texture2D" uid="uid://buxxqgjq1t34w" path="res://assets-sistema/player/player - vegan/personaje-malisisisimo-1.png" id="23_4uxoi"]
+[ext_resource type="Texture2D" uid="uid://dkmfv8spcwsim" path="res://assets-sistema/player/player - vegan/personaje-malisisisimo-2.png" id="24_4lo60"]
+[ext_resource type="Texture2D" uid="uid://dexqppdoqa6vv" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-1.png" id="25_n86g6"]
+[ext_resource type="Texture2D" uid="uid://xjmhxou4rjww" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-2.png" id="26_p8sla"]
+[ext_resource type="Texture2D" uid="uid://48xa30g8fwlq" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-bien-3.png" id="27_pbubt"]
+[ext_resource type="Texture2D" uid="uid://dgytluwugvf7s" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-1.png" id="28_02kvd"]
+[ext_resource type="Texture2D" uid="uid://c16kjlhfm2o4o" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-2.png" id="29_ttora"]
+[ext_resource type="Texture2D" uid="uid://dw07heriol5hh" path="res://assets-sistema/player/player - vegan/personaje-sintiendose-mal-3.png" id="30_6ys1w"]
+[ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="31_xkl8d"]
+[ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="32_j4rl2"]
+[ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_fecjc"]
+[ext_resource type="Texture2D" uid="uid://bmq81cjhmsn5o" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_spc0y"]
+[ext_resource type="Texture2D" uid="uid://dniag8c157u7x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="36_bel8i"]
+[ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="36_klwte"]
+[ext_resource type="Texture2D" uid="uid://dnyphl17a8v80" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="37_0lh3u"]
+[ext_resource type="PackedScene" path="res://niveles/nivel_1/titulo_nivel.tscn" id="37_656fw"]
+[ext_resource type="Texture2D" uid="uid://b1lkdj3dfchi0" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="38_c7a2m"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="39_cjuego"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dgfld"]
@@ -167,16 +166,13 @@ script = ExtResource("1_64ycw")
 track_key_override = "veganismo"
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_6vg4q")]
-offset_left = 3.0
 offset_top = -1.0
-offset_right = 1156.0
 offset_bottom = 798.0
 
 [node name="TituloNivel" type="Sprite2D" parent="." unique_id=2016267154]
 z_index = 1
 position = Vector2(233, 109)
 scale = Vector2(0.6068007, 0.6068007)
-texture = ExtResource("3_gaj1j")
 
 [node name="Menú" type="Area2D" parent="." unique_id=86445257 groups=["droppable"]]
 light_mask = 8
@@ -193,9 +189,9 @@ script = ExtResource("6_0a2dw")
 shape = SubResource("RectangleShape2D_dgfld")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=1344981992]
-position = Vector2(3.61649, -2.63898)
-scale = Vector2(0.6667521, 0.91042554)
-texture = ExtResource("6_w25c5")
+position = Vector2(10.447625, 2.9563904e-05)
+scale = Vector2(1.253042, 1.2065974)
+texture = ExtResource("4_6vg4q")
 
 [node name="Plato" parent="." unique_id=505056236 instance=ExtResource("7_wtr41")]
 unique_name_in_owner = true
@@ -239,7 +235,6 @@ shape = SubResource("CircleShape2D_wvg7e")
 [node name="Globo texto" type="Sprite2D" parent="." unique_id=1753066151]
 position = Vector2(206, 253)
 scale = Vector2(0.638614, 0.638614)
-texture = ExtResource("11_tc4hd")
 
 [node name="Meal" type="Sprite2D" parent="Globo texto" unique_id=1957438343]
 position = Vector2(6.2636, -3.13165)
@@ -355,7 +350,6 @@ offset_left = 1023.0
 offset_top = 18.0
 offset_right = 1111.0
 offset_bottom = 106.0
-tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=548457484]
@@ -412,7 +406,12 @@ level_resource_path = "res://niveles/nivel_2/level_2.tres"
 volume_db = -4.962
 attenuation = 2.07053
 
-[node name="ContinuarJuego" parent="." instance=ExtResource("39_cjuego")]
+[node name="ContinuarJuego" parent="." unique_id=1061083589 instance=ExtResource("39_cjuego")]
+layout_mode = 3
+
+[node name="TituloNivel2" parent="." unique_id=74001118 instance=ExtResource("37_656fw")]
+position = Vector2(194, 129)
+scale = Vector2(0.46313453, 0.43216306)
 
 [connection signal="input_event" from="Menú" to="Menú" method="_on_evento_entrada"]
 [connection signal="mouse_entered" from="Menú" to="." method="_on_menú_mouse_entered"]
