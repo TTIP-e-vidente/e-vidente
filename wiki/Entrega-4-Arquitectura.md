@@ -2,8 +2,6 @@
 
 > **Stack productivo:** Supabase Edge Functions + Postgres + `pg_cron` → Brevo. Express solo para tests legacy — [EXPRESS_LEGACY](../BACKEND/docs/EXPRESS_LEGACY.md).
 
-Índice: [Resumen](Entrega-4) · [Flujo E3→E4](Entrega-4-Flujo-E3-E4) · [Mails](Entrega-4-Mails)
-
 ---
 
 ## Qué cambió respecto a Entrega 3
@@ -25,7 +23,7 @@ Entrega 3 dejó backend, racha en PostgreSQL y el flag `email_notifications_enab
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           CLIENTE (Godot)                                │
 │  Login / auth.gd        → accept_email_notifications                     │
-│  EmailVerification.*    → verify-email-request / confirm (Edge)            │
+│  EmailVerification.*    → verify-email-request / confirm (Edge)          │
 │  Perfil                 → PATCH email_notifications_enabled              │
 │  HUD / StreakLoss       → feedback in-game (paralelo al mail)            │
 └───────────────────────────────┬──────────────────────────────────────────┘
@@ -34,10 +32,10 @@ Entrega 3 dejó backend, racha en PostgreSQL y el flag `email_notifications_enab
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                    SUPABASE EDGE FUNCTIONS                               │
 │  auth-register / auth-login    → registro, login                         │
-│  verify-email-*                → OTP, mail_changed, queueWelcomeEmail      │
+│  verify-email-*                → OTP, mail_changed, queueWelcomeEmail    │
 │  _shared/delivery.ts           → deliverTrackedEmail(), dedupe           │
 │  _shared/jobs/email-jobs.ts    → candidatos SQL, reconcile               │
-│  internal-job                  → POST con X-Job-Secret (pg_cron)           │
+│  internal-job                  → POST con X-Job-Secret (pg_cron)         │
 │  brevo-webhook                 → bounce / unsubscribe                    │
 └───────────────┬──────────────────────────────┬───────────────────────────┘
                 │                              │
@@ -49,11 +47,6 @@ Entrega 3 dejó backend, racha en PostgreSQL y el flag `email_notifications_enab
 
 pg_cron ──► internal-job (18:00 / 00:00 / 08:00 / 20:00 ART)
 ```
-
-### Vista legacy (Express — solo tests locales)
-
-Ver `BACKEND/src/modules/email/` — usado en `npm run test` y desarrollo sin Supabase.
-
 ---
 
 ## Flujo de verificación y bienvenida
@@ -244,22 +237,3 @@ Ver `BACKEND/.env.example` y `BACKEND/docs/BREVO_SETUP.md`.
 | `EMAIL_BATCH_CONCURRENCY` | Paralelismo de envío (default 5) |
 | `EMAIL_APP_PLAY_URL` | CTA “Jugar” en bienvenida |
 
----
-
-## Cómo extender (nuevo template)
-
-1. Crear `templates/mi-template.template.ts` con `buildMiTemplate(context)`.
-2. Registrar en `templates/index.ts` (metadata + sample).
-3. Agregar disparador en `email.service.ts` (o job dedicado).
-4. Migración solo si hace falta nuevo índice o columna.
-5. Preview: `GET /dev/email/preview?template_key=...`
-6. Test: `npm run test:email`
-7. Documentar copy en [Entrega-4-Mails](Entrega-4-Mails).
-
----
-
-## Lo que queda para después
-
-- Deploy productivo con dominio propio (SPF/DKIM/DMARC).
-- Mail de recuperación de contraseña (entrega futura).
-- Zonas horarias por jugador (hoy: una sola `EMAIL_TIMEZONE`).
