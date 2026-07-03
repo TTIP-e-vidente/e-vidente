@@ -67,7 +67,7 @@ static func registrar(
 static func _resolver_estado_visual(
 	streak_state: Dictionary,
 	current_date: String = "",
-	_current_hour: int = -1
+	current_hour: int = -1
 ) -> String:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	if current_count <= 0:
@@ -80,6 +80,11 @@ static func _resolver_estado_visual(
 	if last_day == today:
 		return "active"
 	if _days_between(last_day, today) == 1:
+		var hour := _resolver_hora_local(current_hour)
+		if hour < 18:
+			return "inactive"
+		if hour >= 20:
+			return "critical"
 		return "warning"
 	return "inactive"
 
@@ -87,13 +92,13 @@ static func _resolver_estado_visual(
 static func modelo_vista(
 	streak_state: Dictionary,
 	current_date: String = "",
-	_current_hour: int = -1
+	current_hour: int = -1
 ) -> Dictionary:
 	var current_count: int = int(streak_state.get("current_count", 0))
 	var best_count: int = int(streak_state.get("best_count", 0))
 	var last_day: String = _dia_local_de_actividad(streak_state)
 	var today: String = _resolver_fecha_local(current_date)
-	var visual_state: String = _resolver_estado_visual(streak_state, today, _current_hour)
+	var visual_state: String = _resolver_estado_visual(streak_state, today, current_hour)
 
 	if current_count <= 0:
 		return {
@@ -462,6 +467,12 @@ static func _resolver_fecha_local(current_date: String = "") -> String:
 	if not clean_date.is_empty():
 		return clean_date
 	return Time.get_date_string_from_system(false)
+
+
+static func _resolver_hora_local(current_hour: int = -1) -> int:
+	if current_hour >= 0 and current_hour <= 23:
+		return current_hour
+	return int(Time.get_datetime_dict_from_system(false).get("hour", 0))
 
 
 static func _dia_local_de_actividad(streak_state: Dictionary) -> String:

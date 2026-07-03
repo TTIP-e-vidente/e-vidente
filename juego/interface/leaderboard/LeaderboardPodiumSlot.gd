@@ -18,9 +18,12 @@ extends VBoxContainer
 @onready var _pedestal: PanelContainer = %Pedestal
 
 
-var _entrada: Dictionary = {}
+const AVATAR_SIZE_EMPATE := 22
+
+var _entradas: Array = []
 var _scope: String = "global_xp"
 var _es_propio: bool = false
+var _fila_avatares_empate: HBoxContainer = null
 
 
 func _enter_tree() -> void:
@@ -37,7 +40,7 @@ func _ready() -> void:
 
 
 func limpiar() -> void:
-	_entrada = {}
+	_entradas = []
 	visible = false
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = ""
@@ -45,21 +48,26 @@ func limpiar() -> void:
 		_label_puntaje.text = ""
 	if is_instance_valid(_label_rank):
 		_label_rank.text = ""
+	_limpiar_fila_avatares_empate()
 
 
-func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
-	if entrada.is_empty():
+## entradas: una o más filas empatadas en el mismo puesto (RANK() les da el mismo
+## número). Si hay más de una, se muestran todos los nombres y un avatar chico
+## por cada empatado extra, en vez de quedarse solo con el primero.
+func poblar(entradas: Array, id_propio: String, scope: String) -> void:
+	if entradas.is_empty():
 		limpiar()
 		return
 
-	_entrada = entrada
+	_entradas = entradas
 	_scope = scope
-	_es_propio = es_propio
+	var primera: Dictionary = entradas[0] as Dictionary
+	_es_propio = _alguno_es_propio(entradas, id_propio)
 	visible = true
 
-	var posicion := int(entrada.get("rank", 0))
-	var puntaje := int(entrada.get("score", 0))
-	var nombre := LeaderboardFormat.resolver_nombre_entrada(entrada)
+	var posicion := int(primera.get("rank", 0))
+	var puntaje := int(primera.get("score", 0))
+	var nombre := _nombre_combinado(entradas)
 
 	if is_instance_valid(_label_rank):
 		_label_rank.text = LeaderboardFormat.texto_posicion(posicion)
@@ -69,7 +77,7 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 		)
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = nombre
-		if es_propio:
+		if _es_propio:
 			_label_nombre.add_theme_color_override(
 				"font_color",
 				Color(0.22, 0.38, 0.30, 1)
@@ -78,7 +86,7 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 			_label_nombre.remove_theme_color_override("font_color")
 	if is_instance_valid(_label_puntaje):
 		_label_puntaje.text = LeaderboardFormat.formatear_score(puntaje, scope)
-		if es_propio:
+		if _es_propio:
 			_label_puntaje.add_theme_color_override(
 				"font_color",
 				Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -86,19 +94,92 @@ func poblar(entrada: Dictionary, es_propio: bool, scope: String) -> void:
 		else:
 			_label_puntaje.remove_theme_color_override("font_color")
 	if is_instance_valid(_avatar):
-		_avatar.mostrar_para_entrada(entrada, es_propio)
+		_avatar.mostrar_para_entrada(primera, _es_propio_entrada(primera, id_propio))
+	_poblar_fila_avatares_empate(entradas, id_propio)
 	_aplicar_estilo_pedestal()
 
 
 func obtener_entrada() -> Dictionary:
-	return _entrada
+	return _entradas[0] as Dictionary if not _entradas.is_empty() else {}
+
+
+func obtener_entradas() -> Array:
+	return _entradas
 
 
 func refrescar_avatar_si_coincide(user_id: String) -> void:
-	if user_id.is_empty() or user_id != str(_entrada.get("user_id", "")):
+	if user_id.is_empty():
 		return
-	if is_instance_valid(_avatar):
-		_avatar.mostrar_para_entrada(_entrada, _es_propio)
+	for i in _entradas.size():
+		var entrada := _entradas[i] as Dictionary
+		if user_id != str(entrada.get("user_id", "")):
+			continue
+		if i == 0 and is_instance_valid(_avatar):
+			_avatar.mostrar_para_entrada(entrada, _es_propio)
+		elif is_instance_valid(_fila_avatares_empate):
+			var idx_extra := i - 1
+			if idx_extra >= 0 and idx_extra < _fila_avatares_empate.get_child_count():
+				var badge := _fila_avatares_empate.get_child(idx_extra) as LeaderboardAvatarBadge
+				if is_instance_valid(badge):
+					badge.mostrar_para_entrada(entrada, false)
+		return
+
+
+func _nombre_combinado(entradas: Array) -> String:
+	var nombres: Array[String] = []
+	for entrada in entradas:
+		var nombre := LeaderboardFormat.resolver_nombre_entrada(entrada as Dictionary)
+		if not nombre.is_empty() and nombre != "—":
+			nombres.append(nombre)
+	if nombres.is_empty():
+		return "—"
+	if nombres.size() == 1:
+		return nombres[0]
+	if nombres.size() == 2:
+		return "%s y %s" % [nombres[0], nombres[1]]
+	var todos_menos_ultimo := nombres.slice(0, nombres.size() - 1)
+	return "%s y %s" % [", ".join(todos_menos_ultimo), nombres[nombres.size() - 1]]
+
+
+func _alguno_es_propio(entradas: Array, id_propio: String) -> bool:
+	if id_propio.is_empty():
+		return false
+	for entrada in entradas:
+		if _es_propio_entrada(entrada as Dictionary, id_propio):
+			return true
+	return false
+
+
+func _es_propio_entrada(entrada: Dictionary, id_propio: String) -> bool:
+	return not id_propio.is_empty() and str(entrada.get("user_id", "")) == id_propio
+
+
+func _poblar_fila_avatares_empate(entradas: Array, id_propio: String) -> void:
+	_limpiar_fila_avatares_empate()
+	if entradas.size() <= 1 or not is_instance_valid(_avatar):
+		return
+
+	_fila_avatares_empate = HBoxContainer.new()
+	_fila_avatares_empate.alignment = BoxContainer.ALIGNMENT_CENTER
+	_fila_avatares_empate.add_theme_constant_override("separation", 2)
+	add_child(_fila_avatares_empate)
+	move_child(_fila_avatares_empate, _avatar.get_index() + 1)
+
+	for i in range(1, entradas.size()):
+		var entrada := entradas[i] as Dictionary
+		var badge := LeaderboardAvatarBadge.new()
+		badge.avatar_size = AVATAR_SIZE_EMPATE
+		# avatar_size debe quedar seteado ANTES de add_child(): _ready() lo lee
+		# para construir el nodo del tamaño correcto y add_child() en un padre ya
+		# dentro del árbol dispara _ready() de forma síncrona.
+		_fila_avatares_empate.add_child(badge)
+		badge.mostrar_para_entrada(entrada, _es_propio_entrada(entrada, id_propio))
+
+
+func _limpiar_fila_avatares_empate() -> void:
+	if is_instance_valid(_fila_avatares_empate):
+		_fila_avatares_empate.queue_free()
+	_fila_avatares_empate = null
 
 
 func _aplicar_estilo_pedestal() -> void:

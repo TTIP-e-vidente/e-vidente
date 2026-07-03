@@ -15,7 +15,8 @@ static func racha_en_riesgo() -> bool:
 	if not AuthApi.esta_logueado():
 		return false
 	var modelo := _obtener_modelo_vista_racha()
-	return str(modelo.get("streak_state", "")) == "warning"
+	var streak_state := str(modelo.get("streak_state", ""))
+	return streak_state == "warning" or streak_state == "critical"
 
 
 static func notificaciones_activas_en_servidor() -> bool:

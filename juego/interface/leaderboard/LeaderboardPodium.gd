@@ -29,12 +29,17 @@ func limpiar() -> void:
 	visible = false
 
 
+## Agrupa por puesto (no solo la última entrada de cada rank): RANK() les da el
+## mismo número a los jugadores empatados, y antes acá se pisaban entre sí.
 func poblar(entradas: Array, scope: String, id_propio: String) -> void:
 	var por_rank: Dictionary = {}
 	for entrada in LeaderboardFormat.filtrar_entradas_validas(entradas):
 		var rank := int((entrada as Dictionary).get("rank", 0))
-		if rank >= 1 and rank <= 3:
-			por_rank[rank] = entrada
+		if rank < 1 or rank > 3:
+			continue
+		var grupo: Array = por_rank.get(rank, [])
+		grupo.append(entrada)
+		por_rank[rank] = grupo
 
 	visible = not por_rank.is_empty()
 	if not visible:
@@ -43,25 +48,19 @@ func poblar(entradas: Array, scope: String, id_propio: String) -> void:
 
 	if is_instance_valid(_slot_segundo):
 		if por_rank.has(2):
-			_slot_segundo.poblar(por_rank[2], _es_propio(por_rank[2], id_propio), scope)
+			_slot_segundo.poblar(por_rank[2], id_propio, scope)
 		else:
 			_slot_segundo.limpiar()
 	if is_instance_valid(_slot_primero):
 		if por_rank.has(1):
-			_slot_primero.poblar(por_rank[1], _es_propio(por_rank[1], id_propio), scope)
+			_slot_primero.poblar(por_rank[1], id_propio, scope)
 		else:
 			_slot_primero.limpiar()
 	if is_instance_valid(_slot_tercero):
 		if por_rank.has(3):
-			_slot_tercero.poblar(por_rank[3], _es_propio(por_rank[3], id_propio), scope)
+			_slot_tercero.poblar(por_rank[3], id_propio, scope)
 		else:
 			_slot_tercero.limpiar()
-
-
-func _es_propio(entrada: Dictionary, id_propio: String) -> bool:
-	if id_propio.is_empty():
-		return false
-	return str(entrada.get("user_id", "")) == id_propio
 
 
 func refrescar_avatar_si_coincide(user_id: String) -> void:

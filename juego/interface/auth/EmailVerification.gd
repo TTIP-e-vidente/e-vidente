@@ -245,6 +245,7 @@ func _configurar_entrada_codigo() -> void:
 func _enfocar_codigo() -> void:
 	_intentar_pegar_desde_portapapeles()
 	if is_instance_valid(_line_edit_codigo):
+		_line_edit_codigo.editable = not _is_loading
 		_line_edit_codigo.grab_focus()
 
 
@@ -275,6 +276,39 @@ func _on_digitos_gui_input(event: InputEvent) -> void:
 		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
 			call_deferred("_enfocar_codigo")
 			_line_edit_codigo.accept_event()
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if _is_loading or _salida_en_curso:
+		return
+	if not is_instance_valid(_line_edit_codigo) or not _line_edit_codigo.editable:
+		return
+	if not event is InputEventKey:
+		return
+
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+
+	if key_event.ctrl_pressed and key_event.keycode == KEY_V:
+		_intentar_pegar_desde_portapapeles()
+		get_viewport().set_input_as_handled()
+		return
+
+	if key_event.keycode == KEY_BACKSPACE:
+		_reemplazar_codigo(_line_edit_codigo.text.substr(0, max(0, _line_edit_codigo.text.length() - 1)))
+		get_viewport().set_input_as_handled()
+		return
+
+	if key_event.keycode == KEY_DELETE:
+		_reemplazar_codigo("")
+		get_viewport().set_input_as_handled()
+		return
+
+	var digito := _digito_desde_evento_tecla(key_event)
+	if not digito.is_empty():
+		_reemplazar_codigo(_line_edit_codigo.text + digito)
+		get_viewport().set_input_as_handled()
 
 
 func establecer_mensaje_inicial(texto: String, es_info: bool = true) -> void:
@@ -378,6 +412,22 @@ func _on_codigo_text_changed(new_text: String) -> void:
 		_line_edit_codigo.text = digits
 		_line_edit_codigo.caret_position = digits.length()
 	_actualizar_casillas_digitos(digits)
+
+
+func _reemplazar_codigo(texto: String) -> void:
+	var digits := _extraer_digitos_codigo(texto)
+	_line_edit_codigo.text = digits
+	_line_edit_codigo.caret_position = digits.length()
+	_actualizar_casillas_digitos(digits)
+
+
+static func _digito_desde_evento_tecla(event: InputEventKey) -> String:
+	if event.unicode <= 0:
+		return ""
+	var caracter := String.chr(event.unicode)
+	if caracter >= "0" and caracter <= "9":
+		return caracter
+	return ""
 
 
 func _actualizar_casillas_digitos(digits: String) -> void:

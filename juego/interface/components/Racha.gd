@@ -137,6 +137,9 @@ func _aplicar_estado_visual() -> void:
 		"warning":
 			_estado_warning()
 
+		"critical":
+			_estado_critico()
+
 		"inactive":
 			_estado_inactivo()
 
@@ -164,6 +167,11 @@ func _estado_activo() -> void:
 func _estado_warning() -> void:
 	background.texture = WARNING_TEXTURE
 	modulate = Color.WHITE
+
+
+func _estado_critico() -> void:
+	background.texture = WARNING_TEXTURE
+	modulate = Color(1.0, 0.35, 0.35, 1.0)
 
 
 func _estado_inactivo() -> void:

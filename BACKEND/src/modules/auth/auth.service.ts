@@ -132,13 +132,6 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     throw new AuthError(409, 'DUPLICATE_USERNAME', 'username already exists');
   }
 
-  if (mail) {
-    const existingMail = await authRepository.findByMailOrEmail(mail);
-    if (existingMail) {
-      throw new AuthError(409, 'DUPLICATE_MAIL', 'mail already exists');
-    }
-  }
-
   const passwordHash = await bcrypt.hash(password, getBcryptSaltRounds());
   const emailNotificationsEnabled = parseEmailNotificationsPreference(
     input.accept_email_notifications
@@ -180,13 +173,8 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
     throw new AuthError(400, 'INVALID_BODY', 'usernameOrMail and password are required');
   }
 
-  const user = await authRepository.findByUsernameOrMail(usernameOrMail);
+  const user = await findLoginUser(usernameOrMail, password);
   if (!user?.password_hash) {
-    throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
-  }
-
-  const passwordMatches = await bcrypt.compare(password, user.password_hash);
-  if (!passwordMatches) {
     throw new AuthError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
   }
 
@@ -214,6 +202,25 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
     user: toPublicUser(user),
     accessToken: signAccessToken(user)
   };
+}
+
+async function findLoginUser(usernameOrMail: string, password: string): Promise<UserRow | null> {
+  const usernameMatch = await authRepository.findByUsername(usernameOrMail);
+  if (usernameMatch?.password_hash) {
+    const passwordMatches = await bcrypt.compare(password, usernameMatch.password_hash);
+    return passwordMatches ? usernameMatch : null;
+  }
+
+  const mailMatches = await authRepository.findByMail(usernameOrMail);
+  for (const candidate of mailMatches) {
+    if (!candidate.password_hash) {
+      continue;
+    }
+    if (await bcrypt.compare(password, candidate.password_hash)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 // Emite un access token completo para un usuario ya validado (p. ej. tras
