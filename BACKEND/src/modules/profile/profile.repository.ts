@@ -45,6 +45,34 @@ export async function addProfileExp(
   return result.rows[0];
 }
 
+// Recalcula profiles.exp_count desde la fuente de verdad (la suma de total_exp de
+// todas las restricciones del usuario). exp_count es un contador acumulado que
+// addProfileExp() solo incrementa; sin este recálculo, un reset de progreso baja
+// progress_restrictions.total_exp pero deja exp_count intacto, y el perfil y el
+// leaderboard (que leen exp_count) seguirían mostrando el XP viejo.
+export async function recomputeProfileExpFromRestrictions(
+  client: PoolClient,
+  userId: string
+): Promise<ProfileRow | null> {
+  const result = await client.query<ProfileRow>(
+    `
+      UPDATE profiles
+      SET
+        exp_count = COALESCE((
+          SELECT SUM(total_exp)
+          FROM progress_restrictions
+          WHERE user_id = $1
+        ), 0),
+        updated_at = now()
+      WHERE user_id = $1
+      RETURNING id, user_id, streak_id, exp_count, current_restriction, created_at, updated_at;
+    `,
+    [userId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
 export async function getProfileByUserId(
   client: PoolClient,
   userId: string

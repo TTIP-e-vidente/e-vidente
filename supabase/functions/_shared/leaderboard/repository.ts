@@ -26,15 +26,15 @@ function rowToEntry(row: LeaderboardSnapshotRow): LeaderboardEntry {
 /** Evita filas duplicadas o basura (snapshots viejos, score 0 de tests). */
 function dedupeEntries(entries: LeaderboardEntry[]): LeaderboardEntry[] {
   const seenUsers = new Set<string>();
-  const seenRanks = new Set<number>();
   const result: LeaderboardEntry[] = [];
   for (const entry of entries) {
     if (!entry.userId?.trim()) continue;
     if (entry.score <= 0) continue;
+    // Dedupe SOLO por usuario. NO deduplicamos por rank: RANK() asigna el mismo rank
+    // a jugadores empatados en score, así que filtrar por rank repetido escondería
+    // a todos los empatados menos uno (bug que dejaba el leaderboard con una sola fila).
     if (seenUsers.has(entry.userId)) continue;
-    if (entry.rank > 0 && seenRanks.has(entry.rank)) continue;
     seenUsers.add(entry.userId);
-    if (entry.rank > 0) seenRanks.add(entry.rank);
     result.push(entry);
   }
   return result.sort((a, b) => a.rank - b.rank);

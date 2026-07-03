@@ -753,7 +753,7 @@ func _mostrar_cierre_del_quiz(cantidad_preguntas: int) -> void:
 	_mostrar_cierre_post_ensenanza(cantidad_preguntas)
 
 
-func _intentar_mostrar_ensenanza_esc(cantidad_preguntas: int) -> bool:
+func _intentar_mostrar_ensenanza_esc(_cantidad_preguntas: int) -> bool:
 	if _teaching_key.is_empty():
 		return false
 	var mostrado: bool = PresentadorEnsenanzasScript.mostrar_en_host(

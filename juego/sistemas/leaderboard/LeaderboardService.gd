@@ -222,7 +222,7 @@ func esta_cargando(scope: String) -> bool:
 	return _cargando_scope.get(scope, false)
 
 
-static func calcular_offset_para_rank(rank: int, limite: int = LIMITE_POR_PAGINA) -> int:
+func calcular_offset_para_rank(rank: int, limite: int = LIMITE_POR_PAGINA) -> int:
 	if rank <= 1:
 		return 0
 	var pagina := int(floor(float(rank - 1) / float(limite)))

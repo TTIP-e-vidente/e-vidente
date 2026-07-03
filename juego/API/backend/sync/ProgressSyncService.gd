@@ -199,6 +199,9 @@ func _aplicar_summary_batch(summary: Dictionary) -> void:
 	var profile: Variant = summary.get("profile", {})
 	if profile is Dictionary:
 		var server_exp := int((profile as Dictionary).get("exp_count", 0))
-		if server_exp > SaveManager.obtener_exp_total():
+		# Backend autoritativo: el XP del servidor manda (sube o baja), no solo sube.
+		# Solo evitamos pisar el local cuando el server aun no reporta XP
+		# (server_exp == 0), para no borrar progreso offline sin sincronizar.
+		if server_exp > 0 and server_exp != SaveManager.obtener_exp_total():
 			SaveManager.save_data["total_exp"] = server_exp
 			SaveManager.guardar_progreso_en_disco()

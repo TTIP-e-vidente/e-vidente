@@ -154,7 +154,7 @@ func _cachear_nodos_ui() -> void:
 		"AvatarRow/ClearAvatarButton"
 	) as Button
 	feedback_label = form_content.get_node("RegisterMessage") as Label
-	_button_save_profile = $RegisterButton as Button
+	_button_save_profile = form_content.get_node("RegisterButton") as Button
 	if not _button_save_profile.pressed.is_connected(_on_boton_guardar_perfil_presionado):
 		_button_save_profile.pressed.connect(_on_boton_guardar_perfil_presionado)
 	_form_hint_label = form_content.get_node("FormHint") as Label

@@ -307,8 +307,16 @@ export async function resetAuthenticatedProgress(
     if (progressRow) {
       await historyGameRepository.deleteNodeHistoryByProgressId(client, progressRow.id);
       await progressRepository.resetProgressCounters(client, progressRow.id);
+      // El leaderboard y el perfil leen profiles.exp_count (contador acumulado), no
+      // progress_restrictions.total_exp. Tras poner total_exp en 0 hay que recalcular
+      // exp_count desde las restricciones, o el XP viejo persistiría en ambos.
+      await profileRepository.recomputeProfileExpFromRestrictions(client, userId);
     }
   });
+
+  // Refrescamos el snapshot del leaderboard (global_xp + la restricción reseteada)
+  // para que el ranking no siga mostrando el XP previo al reset.
+  triggerLeaderboardRefreshAfterProgress(restriction, false);
 
   return getProgresoRestriccion(userId);
 }

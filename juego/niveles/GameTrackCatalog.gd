@@ -84,8 +84,8 @@ const TRACK_DEFINITIONS := {
 		"teaching_key_prefixes": ["keto_"],
 		"book_scene_path": "res://interface/Libro-Keto.tscn",
 		"level_scene_path": "res://niveles/nivel_4/Level-Keto.tscn",
-		"item_pool_strategy": ITEM_POOL_STRATEGY_LEGACY,
-		"blocked_conditions": [],
+		"item_pool_strategy": ITEM_POOL_STRATEGY_CONDITIONS,
+		"blocked_conditions": [LevelItemScript.Condicion.KETO],
 		"level_count": DEFAULT_LEVEL_COUNT
 	}
 }

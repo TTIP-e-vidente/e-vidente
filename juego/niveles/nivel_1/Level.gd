@@ -135,7 +135,10 @@ var _teaching_card_base_scale := Vector2.ONE
 @onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
 @onready var _progress_bar = get_node_or_null("ProgressBar")
 @onready var _continuar_juego = $ContinuarJuego
-@onready var titulo_nivel: Label = $TituloNivel/Label
+# Solo el nivel de celiaquía (nivel_1) tiene TituloNivel como instancia con Label.
+# En veganismo/veg-gf/keto (nivel_2/3/4) el título es un Sprite2D (imagen), sin Label,
+# por eso resolvemos con get_node_or_null y guardamos el acceso en _ready().
+@onready var titulo_nivel: Label = get_node_or_null("TituloNivel/Label")
 
 var _activity_started_msec: int = 0
 
@@ -143,7 +146,8 @@ var _activity_started_msec: int = 0
 func _ready() -> void:
 	_activity_started_msec = Time.get_ticks_msec()
 	print("[TimeTracker] started activity_id=", str(_nodo_actual))
-	titulo_nivel.text = "Celiaquía"
+	if is_instance_valid(titulo_nivel):
+		titulo_nivel.text = "Celiaquía"
 	_cargar_recursos_runtime()
 	if is_instance_valid(teaching_sprite):
 		_teaching_sprite_base_scale = teaching_sprite.scale

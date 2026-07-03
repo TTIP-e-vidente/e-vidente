@@ -33,7 +33,13 @@ func _ready() -> void:
 func cargar(scope: String = "", forzar: bool = false) -> void:
 	var scope_final := scope.strip_edges()
 	if scope_final.is_empty():
-		scope_final = LeaderboardOverlayHelper.scope_desde_arbol(get_tree())
+		# cargar() puede llegar (vía call_deferred) cuando el nodo todavía no está en el
+		# árbol: get_tree() sería null y scope_desde_arbol crashea. Caemos al scope global.
+		var arbol := get_tree()
+		if arbol != null:
+			scope_final = LeaderboardOverlayHelper.scope_desde_arbol(arbol)
+		else:
+			scope_final = LeaderboardApi.SCOPE_XP_GLOBAL
 	if not LeaderboardScopeCatalog.scope_disponible(scope_final):
 		scope_final = LeaderboardApi.SCOPE_XP_GLOBAL
 

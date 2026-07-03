@@ -235,7 +235,9 @@ static func _registrar_exp_finalizacion(
 	var best_accuracy: int = maxi(prev_best, precision_percent)
 
 	var total_exp_nuevo: int = 0
-	if save_manager.has_method("sumar_exp"):
+	if not node_key.is_empty() and save_manager.has_method("registrar_exp_nodo"):
+		total_exp_nuevo = save_manager.call("registrar_exp_nodo", node_key, exp_ganada)
+	elif save_manager.has_method("sumar_exp"):
 		total_exp_nuevo = save_manager.call("sumar_exp", exp_ganada)
 	print(
 		"%s exp_base=%d precision=%d%% exp_ganada=%d total_exp=%d aciertos=%d errores=%d intentos=%d"

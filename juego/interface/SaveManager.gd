@@ -526,6 +526,36 @@ func sumar_exp(amount: int) -> int:
 	return nuevo_total
 
 
+## Suma XP al total local con la MISMA semantica que el backend: solo cuenta el
+## mejor intento por nodo (no re-suma las rejugadas). Guarda best_exp en
+## node_progress y agrega unicamente el delta sobre el mejor previo.
+## Devuelve el nuevo total. Si no hay node_id valido, cae a sumar_exp.
+func registrar_exp_nodo(node_id: String, exp_ganada: int) -> int:
+	var clean_id: String = node_id.strip_edges()
+	if clean_id.is_empty():
+		return sumar_exp(exp_ganada)
+	if exp_ganada <= 0:
+		return obtener_exp_total()
+	var stored: Variant = save_data.get("node_progress", {})
+	var node_progress: Dictionary = stored if stored is Dictionary else {}
+	var entry: Dictionary = {}
+	if node_progress.has(clean_id):
+		var prev: Variant = node_progress[clean_id]
+		if prev is Dictionary:
+			entry = (prev as Dictionary).duplicate(true)
+	var prev_best_exp: int = int(entry.get("best_exp", 0))
+	if exp_ganada <= prev_best_exp:
+		return obtener_exp_total()
+	var delta: int = exp_ganada - prev_best_exp
+	entry["best_exp"] = exp_ganada
+	node_progress[clean_id] = entry
+	save_data["node_progress"] = node_progress
+	save_data["total_exp"] = max(0, obtener_exp_total() + delta)
+	_marcar_guardado_sucio()
+	guardar_progreso_en_disco()
+	return obtener_exp_total()
+
+
 func obtener_posicion_ranking() -> int:
 	return _calcular_ranking(obtener_exp_total())
 
@@ -837,17 +867,34 @@ func reiniciar_todo_progreso() -> Dictionary:
 		var remote_result: Dictionary = await SyncApi.reiniciar_progreso_online("CELIAQUIA")
 		remote_ok = bool(remote_result.get("ok", false))
 		if not remote_ok:
+			# Reset estricto: si estás logueado y el servidor no confirma el reset, NO tocamos
+			# el progreso local. De lo contrario el local quedaría en 0 mientras el server
+			# conserva el exp_count viejo, y la próxima reconciliación re-inflaría el local
+			# ("deshaciendo" el reset) y desincronizando el leaderboard. Abortamos y avisamos.
 			remote_warning = AuthApi.mensaje_error(
 				remote_result,
 				"No se pudo reiniciar el progreso en el servidor."
 			)
-			push_warning("[Save] Reset remoto falló, se continúa con reset local: ", remote_warning)
+			push_warning("[Save] Reset remoto falló, se aborta el reset local: ", remote_warning)
+			return {
+				"ok": false,
+				"remote_ok": false,
+				"message": (
+					remote_warning
+					+ " Revisá tu conexión e intentá de nuevo."
+				),
+			}
 
 	LocalSyncQueue.descartar_pendientes("progress_reset")
 	if not linked_username.is_empty():
 		_limpiar_backups_y_snapshots_de_reset(linked_username)
 		LocalSyncQueue.descartar_backup_de_usuario(linked_username)
 	BackendSession.limpiar_cache_progreso_online()
+	# El leaderboard muestra el exp_count del servidor cacheado en LeaderboardService.
+	# Si no lo invalidamos, tras el reset el rank/score sigue mostrando el XP viejo y
+	# deja de coincidir con el EXP local (que ya está en 0). Forzamos refetch fresco.
+	if is_instance_valid(LeaderboardService):
+		LeaderboardService.invalidar_cache()
 
 	_reiniciar_datos_guardado_actual(current_profile, true)
 	var meta: Dictionary = _obtener_meta_guardado()
@@ -865,13 +912,12 @@ func reiniciar_todo_progreso() -> Dictionary:
 		return {"ok": false, "message": "No se pudo reiniciar el progreso local en disco."}
 	progress_loaded.emit(current_profile)
 	progress_saved.emit(current_profile)
-	var message := "Se reinició el progreso del mapa. Tu racha diaria se mantiene."
-	if not remote_warning.is_empty():
-		message += " " + remote_warning
+	# Si llegamos acá el reset remoto ya fue confirmado (o el usuario no está logueado),
+	# así que remote_ok siempre es true y no hay warning que anexar.
 	return {
 		"ok": true,
 		"remote_ok": remote_ok,
-		"message": message,
+		"message": "Se reinició el progreso del mapa. Tu racha diaria se mantiene.",
 		"profile": current_profile,
 	}
 
@@ -1694,11 +1740,16 @@ func _importar_progreso_online(progreso_online: Dictionary, username: String = "
 	)
 	var local_exp: int = int(save_data.get("total_exp", 0))
 	var online_exp: int = int(snapshot.get("total_exp", 0))
-	save_data["total_exp"] = (
-		local_exp
-		if _tiene_reset_activo_para_cuenta(username)
-		else maxi(local_exp, online_exp)
-	)
+	# Backend autoritativo: si el snapshot online trae XP real (online_exp > 0),
+	# manda el del servidor aunque sea menor que el local inflado. Con reset activo
+	# se conserva el local; si el server aun no reporta XP se conserva el local para
+	# no perder progreso offline sin sincronizar.
+	if _tiene_reset_activo_para_cuenta(username):
+		save_data["total_exp"] = local_exp
+	elif online_exp > 0:
+		save_data["total_exp"] = online_exp
+	else:
+		save_data["total_exp"] = local_exp
 	# Leer antes de sobreescribir progress con el snapshot del servidor.
 	# El runtime puede tener una actividad local de hoy que todavia no llego al disco.
 	var local_streak: Dictionary = _obtener_racha_local_para_merge()

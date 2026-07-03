@@ -206,8 +206,15 @@ func _ocultar_mensaje_celebracion() -> void:
 func _animar_celebracion_subida_ranking(puestos_ganados: int, es_primera_aparicion: bool) -> void:
 	if not is_instance_valid(_label_celebracion):
 		return
+	# La celebración puede dispararse cuando la card todavía no entró (o ya salió) del
+	# árbol: sin este guard, get_tree() es null y crashea al acceder .process_frame.
+	if not is_inside_tree():
+		return
 
 	await get_tree().process_frame
+	# Pudo salir del árbol durante el await (overlay cerrado): re-verificamos.
+	if not is_inside_tree():
+		return
 	_detener_animacion_borde_celebracion()
 
 	var intensidad := 1

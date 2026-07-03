@@ -440,11 +440,3 @@ func _on_salida_deslizada_finalizada() -> void:
 	_session_panel.offset_left = -646.0
 	_session_panel.offset_right = -16.0
 	_session_panel.modulate.a = 1.0
-
-
-func _on_guardar_button_pressed() -> void:
-	GameSceneRouter.go_to_mode_selector(get_tree())
-
-
-func _on_edit_profile_button_pressed() -> void:
-	GameSceneRouter.go_to_profile_editor(get_tree())
