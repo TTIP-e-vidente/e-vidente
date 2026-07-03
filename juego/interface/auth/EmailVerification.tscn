@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c82rgqmf5fnwg"]
 
 [ext_resource type="Script" uid="uid://cduguy67o42tm" path="res://interface/auth/EmailVerification.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_fondo"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_fondo"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="3_font"]
 [ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_spray"]
 [ext_resource type="PackedScene" path="res://interface/auth/CodigoDigitSlot.tscn" id="5_digit"]
@@ -117,6 +117,21 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.94, 0.97, 0.95, 0.72)
+
+[node name="BotonVolver" type="Button" parent="." unique_id=1574992806]
+unique_name_in_owner = true
+z_index = 2
+layout_mode = 0
+offset_left = 57.0
+offset_top = 724.0
+offset_right = 127.0
+offset_bottom = 755.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_fonts/font = ExtResource("3_font")
+text = "← Volver"
+flat = true
 
 [node name="MarginRoot" type="MarginContainer" parent="." unique_id=726470208]
 layout_mode = 1
@@ -373,14 +388,4 @@ theme_override_font_sizes/font_size = 14
 text = "Verificar más tarde"
 flat = true
 
-[node name="BotonVolver" type="Button" parent="MarginRoot" unique_id=1574992806]
-unique_name_in_owner = true
-visible = false
-z_index = 2
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
-theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
-theme_override_fonts/font = ExtResource("3_font")
-text = "← Volver"
-flat = true
+[connection signal="pressed" from="BotonVolver" to="." method="_on_boton_volver_pressed"]
