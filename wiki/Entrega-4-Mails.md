@@ -1,8 +1,4 @@
-# Mails — redacción y operación (Entrega 4)
-
-Guía editorial para los **5 correos transaccionales** de E-VIDENTE. Fuente de verdad antes de tocar TypeScript.
-
-**Revisor TTIP:** [Guía rápida 5 min](Entrega-4-Guia-Rapida) · [Resumen](Entrega-4) · [Arquitectura](Entrega-4-Arquitectura) · [Evidencia](Entrega-4-Evidencia)
+# Mails — redacción y operación
 
 ---
 
@@ -46,7 +42,7 @@ flowchart TD
 
 ## Anatomía de cada mail
 
-1. **Asunto** — decide si abren (~50 caracteres ideal).
+1. **Asunto** — decide si abren (~50 caracteres).
 2. **Headline** — titular del bloque verde (HTML).
 3. **Subtitle** — contexto bajo el titular.
 4. **Cuerpo** — saludo + mensaje + (opcional) opt-out.
@@ -80,8 +76,6 @@ Siempre: versión **texto plano** y **HTML** con el mismo significado.
 > 3. Listo — tu cuenta quedará confirmada
 >
 > Si no lo pediste vos, ignorá este mensaje.
-
-**Tono:** instructivo, sin alarmismo. El código va también en el **asunto** para copiar rápido desde la bandeja.
 
 ---
 
@@ -149,7 +143,6 @@ Siempre: versión **texto plano** y **HTML** con el mismo significado.
 >
 > Podés desactivar los recordatorios de racha desde tu cuenta en el juego.
 
-**Tono:** empático. Alineado a `StreakLossMessagePanel`.
 
 ---
 
@@ -190,12 +183,6 @@ Siempre: versión **texto plano** y **HTML** con el mismo significado.
 
 ---
 
-## Cómo implementar un cambio (paso a paso)
-
-### 1. Editar en wiki primero
-
-Acordar copy acá → después TypeScript. Evita sorpresas de producto.
-
 ### 2. Actualizar template TypeScript
 
 | Template | Archivo |
@@ -205,16 +192,6 @@ Acordar copy acá → después TypeScript. Evita sorpresas de producto.
 | Racha riesgo | `streak-at-risk.template.ts` |
 | Racha perdida | `streak-lost.template.ts` |
 | Mail cambiado | `mail-changed.template.ts` |
-
-Registrar metadata en `templates/index.ts`.
-
-### 3. Verificar sin enviar
-
-```bash
-cd BACKEND && npm run dev
-```
-
-Previews (reemplazá `localhost:3000` si usás otro puerto):
 
 ```
 /dev/email/preview?template_key=email_verification&name=Agus&mail=test@example.com
@@ -277,11 +254,3 @@ Tipografía: **Rubik** (Google Fonts). Íconos en `assets/icons/` (welcome, mail
 3. `npm run email:streaks`.
 4. Bandeja + `email_deliveries` con `status=sent`.
 
----
-
-## Próximos mails (fuera de E4)
-
-| Mail | Notas |
-|------|-------|
-| Recuperación de contraseña | Link firmado con TTL |
-| Resumen semanal | Job nuevo + consentimiento distinto |
