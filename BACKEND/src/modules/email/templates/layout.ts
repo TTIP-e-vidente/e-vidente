@@ -202,7 +202,7 @@ export function buildWelcomeEmailCtas(playUrl?: string, leaderboardUrl?: string)
   return [boton_jugar, boton_ranking].filter((bloque) => bloque.length > 0).join('');
 }
 
-export function streakHero(count: number, variant: 'active' | 'at_risk' | 'lost'): string {
+export function streakHero(count: number, variant: 'active' | 'at_risk' | 'last_chance' | 'lost'): string {
   const t = GAME_EMAIL_THEME;
   const label = formatDayLabel(count);
   const icon = emailIconInline('streak', 24);
@@ -219,6 +219,12 @@ export function streakHero(count: number, variant: 'active' | 'at_risk' | 'lost'
       border: t.panelWarmBorder,
       numberColor: '#6b4f00',
       label: 'Racha en riesgo'
+    },
+    last_chance: {
+      bg: t.panelWarm,
+      border: t.panelWarmBorder,
+      numberColor: '#6b4f00',
+      label: 'Última hora'
     },
     lost: {
       bg: t.badgeMuted,

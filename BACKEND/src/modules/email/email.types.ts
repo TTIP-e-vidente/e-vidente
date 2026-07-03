@@ -2,6 +2,7 @@ export type EmailTemplateKey =
   | 'welcome'
   | 'account_verified'
   | 'streak_at_risk'
+  | 'streak_last_chance'
   | 'streak_lost'
   | 'email_verification'
   | 'mail_changed';

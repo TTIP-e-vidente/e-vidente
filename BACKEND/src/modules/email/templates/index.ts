@@ -3,6 +3,7 @@ import { buildAccountVerifiedEmail } from './account-verified.template';
 import { buildEmailVerificationEmail } from './email-verification.template';
 import { buildMailChangedEmail } from './mail-changed.template';
 import { buildStreakAtRiskEmail } from './streak-at-risk.template';
+import { buildStreakLastChanceEmail } from './streak-last-chance.template';
 import { buildStreakLostEmail } from './streak-lost.template';
 import {
   EmailTemplateDefinition,
@@ -45,6 +46,17 @@ export const EMAIL_TEMPLATE_DEFINITIONS: {
       streakCount: 5
     }),
     build: buildStreakAtRiskEmail
+  },
+  streak_last_chance: {
+    key: 'streak_last_chance',
+    title: 'Última hora de racha',
+    description: 'Aviso urgente 1 hora antes de la medianoche: todavía no jugó hoy.',
+    sampleContext: () => ({
+      name: 'Jugador',
+      mail: 'jugador@example.com',
+      streakCount: 5
+    }),
+    build: buildStreakLastChanceEmail
   },
   streak_lost: {
     key: 'streak_lost',
@@ -131,7 +143,9 @@ export function previewEmailTemplate(
     });
   }
 
-  const sample = EMAIL_TEMPLATE_DEFINITIONS[templateKey as 'streak_at_risk' | 'streak_lost'].sampleContext();
+  const sample = EMAIL_TEMPLATE_DEFINITIONS[
+    templateKey as 'streak_at_risk' | 'streak_last_chance' | 'streak_lost'
+  ].sampleContext();
   const streakCount = Number.isFinite(params.streak_count)
     ? Math.max(1, Number(params.streak_count))
     : (sample as { streakCount: number }).streakCount;
@@ -144,6 +158,10 @@ export function previewEmailTemplate(
 
   if (templateKey === 'streak_at_risk') {
     return EMAIL_TEMPLATE_DEFINITIONS.streak_at_risk.build(context);
+  }
+
+  if (templateKey === 'streak_last_chance') {
+    return EMAIL_TEMPLATE_DEFINITIONS.streak_last_chance.build(context);
   }
 
   return EMAIL_TEMPLATE_DEFINITIONS.streak_lost.build(context);

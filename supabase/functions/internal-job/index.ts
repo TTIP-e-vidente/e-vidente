@@ -5,12 +5,14 @@ import {
   runRetryFailedEmailJob,
   runStreakAtRiskEmailJob,
   runStreakEmailJob,
+  runStreakLastChanceEmailJob,
   runStreakLostEmailJob,
 } from '../_shared/jobs/email-jobs.ts';
 
 const ALLOWED_JOBS = new Set([
   'streak-emails',
   'streak-at-risk-emails',
+  'streak-last-chance-emails',
   'streak-lost-emails',
   'retry-failed-emails',
   'outbound-emails',
@@ -62,6 +64,12 @@ Deno.serve(async (req) => {
       return jsonResponse(result);
     }
 
+    if (job === 'streak-last-chance-emails') {
+      const result = await runStreakLastChanceEmailJob();
+      console.log(`[internal-job] done ${job}`, JSON.stringify(result));
+      return jsonResponse(result);
+    }
+
     if (job === 'streak-lost-emails') {
       const result = await runStreakLostEmailJob();
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
@@ -77,9 +85,10 @@ Deno.serve(async (req) => {
     if (job === 'outbound-emails') {
       const welcome = await runPendingWelcomeJob();
       const atRisk = await runStreakAtRiskEmailJob();
+      const lastChance = await runStreakLastChanceEmailJob();
       const lost = await runStreakLostEmailJob();
       const retry = await runRetryFailedEmailJob();
-      const result = { welcome, atRisk, lost, retry };
+      const result = { welcome, atRisk, lastChance, lost, retry };
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }

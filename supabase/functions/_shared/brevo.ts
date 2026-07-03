@@ -2,6 +2,7 @@ export type { EmailMessage } from './email/email-types.ts';
 export {
   buildAccountVerifiedEmail,
   buildStreakAtRiskEmail,
+  buildStreakLastChanceEmail,
   buildStreakLostEmail,
   buildVerificationEmail,
   buildWelcomeEmail,

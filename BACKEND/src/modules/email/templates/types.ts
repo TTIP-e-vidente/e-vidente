@@ -32,6 +32,7 @@ export type TemplateContextByKey = {
   welcome: WelcomeTemplateContext;
   account_verified: AccountVerifiedTemplateContext;
   streak_at_risk: StreakTemplateContext;
+  streak_last_chance: StreakTemplateContext;
   streak_lost: StreakTemplateContext;
   email_verification: EmailVerificationTemplateContext;
   mail_changed: MailChangedTemplateContext;

@@ -3,6 +3,7 @@ import { getEmailConfig } from './email-config.ts';
 import { buildLeaderboardDeepLink } from './templates/app-deep-links.ts';
 import { buildEmailVerificationEmail } from './templates/email-verification.template.ts';
 import { buildStreakAtRiskEmail as buildStreakAtRiskEmailTemplate } from './templates/streak-at-risk.template.ts';
+import { buildStreakLastChanceEmail as buildStreakLastChanceEmailTemplate } from './templates/streak-last-chance.template.ts';
 import { buildStreakLostEmail as buildStreakLostEmailTemplate } from './templates/streak-lost.template.ts';
 import type { StreakTemplateContext } from './templates/types.ts';
 import { buildWelcomeEmail as buildWelcomeEmailTemplate } from './templates/welcome.template.ts';
@@ -68,6 +69,16 @@ export function buildStreakAtRiskEmail(
   streakCount: number,
 ): EmailMessage {
   return buildStreakAtRiskEmailTemplate(
+    buildStreakMessageContext(name, mail, streakCount),
+  );
+}
+
+export function buildStreakLastChanceEmail(
+  name: string,
+  mail: string,
+  streakCount: number,
+): EmailMessage {
+  return buildStreakLastChanceEmailTemplate(
     buildStreakMessageContext(name, mail, streakCount),
   );
 }

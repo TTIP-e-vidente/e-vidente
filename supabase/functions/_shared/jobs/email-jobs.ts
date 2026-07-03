@@ -2,6 +2,7 @@ import type { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts';
 import {
   buildAccountVerifiedEmail,
   buildStreakAtRiskEmail,
+  buildStreakLastChanceEmail,
   buildStreakLostEmail,
   buildWelcomeEmail,
   isEmailDeliveryConfigured,
@@ -76,6 +77,43 @@ async function findStreakAtRisk(db: Client, today: string): Promise<StreakCandid
           WHERE ed.user_id = u.id
             AND ed.template_key = 'streak_at_risk'
             AND ed.dedupe_key = 'at_risk:' || $1
+            AND ed.status IN ('sent', 'pending')
+        );
+    `,
+    [today],
+  );
+  return result.rows.map((r) => ({
+    userId: r.user_id,
+    mail: r.mail,
+    name: r.name,
+    streakId: r.streak_id,
+    currentCount: r.current_count,
+  }));
+}
+
+async function findStreakLastChance(db: Client, today: string): Promise<StreakCandidate[]> {
+  const result = await db.queryObject<{
+    user_id: string;
+    mail: string;
+    name: string;
+    streak_id: string;
+    current_count: number;
+  }>(
+    `
+      SELECT u.id AS user_id, u.mail, u.name, s.id AS streak_id, s.current_count
+      FROM users u
+      JOIN profiles p ON p.user_id = u.id
+      JOIN streaks s ON s.id = p.streak_id
+      WHERE u.mail IS NOT NULL
+        AND u.mail_verified_at IS NOT NULL
+        AND u.email_notifications_enabled = true
+        AND s.current_count > 0
+        AND s.last_activity_day = ($1::date - INTERVAL '1 day')::date
+        AND NOT EXISTS (
+          SELECT 1 FROM email_deliveries ed
+          WHERE ed.user_id = u.id
+            AND ed.template_key = 'streak_last_chance'
+            AND ed.dedupe_key = 'last_chance:' || $1
             AND ed.status IN ('sent', 'pending')
         );
     `,
@@ -202,6 +240,30 @@ export async function runStreakAtRiskEmailJob(referenceDate?: string) {
   });
 }
 
+export async function runStreakLastChanceEmailJob(referenceDate?: string) {
+  if (!isEmailDeliveryConfigured()) {
+    return { skipped: true, reason: 'brevo_not_configured' };
+  }
+  const cfg = emailConfig();
+  const today = referenceDate ?? getTodayInTimezone(cfg.timezone);
+
+  return withDb(async (db) => {
+    const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
+    const lastChanceRows = await findStreakLastChance(db, today);
+    const lastChance = await batchDeliver(
+      lastChanceRows.map((c) => ({
+        userId: c.userId,
+        mail: c.mail,
+        name: c.name,
+        templateKey: 'streak_last_chance',
+        dedupeKey: `last_chance:${today}`,
+        message: buildStreakLastChanceEmail(c.name, c.mail, c.currentCount),
+      })),
+    );
+    return { today, expiredPending, lastChance };
+  });
+}
+
 export async function runStreakLostEmailJob(referenceDate?: string) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
@@ -324,6 +386,9 @@ export async function runRetryFailedEmailJob() {
       } else if (row.template_key === 'streak_at_risk') {
         const streakCount = await findUserStreakCount(db, row.user_id);
         message = buildStreakAtRiskEmail(name, row.recipient_email, streakCount);
+      } else if (row.template_key === 'streak_last_chance') {
+        const streakCount = await findUserStreakCount(db, row.user_id);
+        message = buildStreakLastChanceEmail(name, row.recipient_email, streakCount);
       } else if (row.template_key === 'streak_lost') {
         const streakCount = await findUserStreakCount(db, row.user_id);
         message = buildStreakLostEmail(name, row.recipient_email, streakCount);

@@ -3,6 +3,7 @@ import {
   bodyDivider,
   bodyHighlight,
   bodyParagraph,
+  bodyWarmPanel,
   buildStreakEmailCtas,
   buildTextLines,
   emailSignOff,
@@ -15,18 +16,18 @@ import {
 } from './layout.ts';
 import { StreakTemplateContext } from './types.ts';
 
-export function buildStreakLostEmail(context: StreakTemplateContext): EmailMessage {
+export function buildStreakLastChanceEmail(context: StreakTemplateContext): EmailMessage {
   const { name, mail, streakCount, playUrl, leaderboardUrl } = context;
   const safeName = escapeHtml(name);
   const dayLabel = formatDayLabel(streakCount);
   const t = GAME_EMAIL_THEME;
-  const subject = 'Has perdido la racha — volvé pronto para seguir con tu progreso';
+  const subject = `Estás a 1 hora de perder tu racha de ${streakCount} ${dayLabel}`;
 
   const textContent = buildTextLines([
-    `Hola ${name},`,
+    `¡Hola ${name}!`,
     '',
-    `Has perdido la racha: pasaron varios días sin actividad y tu racha de ${streakCount} ${dayLabel} volvió a cero.`,
-    'Volvé pronto para seguir con tu progreso.',
+    `Estás a 1 hora de perder tu racha de ${streakCount} ${dayLabel}. Por favor, volvé a jugar.`,
+    'Una partida corta alcanza para mantenerla viva hasta mañana.',
     ...(playUrl ? ['', `Jugar: ${playUrl}`] : []),
     ...(leaderboardUrl ? [`Ver ranking: ${leaderboardUrl}`] : []),
     '',
@@ -36,20 +37,21 @@ export function buildStreakLostEmail(context: StreakTemplateContext): EmailMessa
   ]);
 
   const htmlContent = wrapHtml({
-    headline: 'Has perdido la racha',
-    subtitle: 'Volvé pronto para seguir con tu progreso',
-    preheader: `${name}, has perdido la racha. Volvé pronto para seguir con tu progreso.`,
+    headline: 'Estás a 1 hora de perder tu racha',
+    subtitle: `${streakCount} ${dayLabel} · por favor, volvé`,
+    preheader: `${name}, en 1 hora se pierde tu racha de ${streakCount} ${dayLabel} si no jugás.`,
     includeNotificationOptOut: true,
     bodyHtml: [
       bodyParagraph(
-        `Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>,`
+        `¡Hola <strong style="color: ${t.primaryGreen};">${safeName}</strong>!`
       ),
-      streakHero(streakCount, 'lost'),
+      streakHero(streakCount, 'last_chance'),
+      bodyWarmPanel(
+        'Última hora',
+        `Estás a 1 hora de perder tu racha de <strong>${streakCount} ${dayLabel}</strong>. Por favor, volvé a jugar antes de que termine el día.`
+      ),
       bodyHighlight(
-        `Has perdido la racha: pasaron varios días sin actividad y tu racha de <strong>${streakCount} ${dayLabel}</strong> volvió a cero.`
-      ),
-      bodyParagraph(
-        'Volvé pronto para seguir con tu progreso: cada partida suma experiencia y aprendizaje.'
+        'Una partida corta alcanza. Entrá ahora y mantené viva tu progreso diario.'
       ),
       bodyDivider(),
       buildStreakEmailCtas(playUrl, leaderboardUrl),
