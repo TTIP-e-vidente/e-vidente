@@ -330,17 +330,13 @@ func establecer_cooldown_inicial(segundos: float) -> void:
 func configurar(requiere_verificacion: bool = false) -> void:
 	_requiere_verificacion = requiere_verificacion
 	_boton_omitir.visible = not _requiere_verificacion
-	_boton_volver.visible = not _requiere_verificacion
 	if _requiere_verificacion:
 		_boton_omitir.disabled = true
-		_boton_volver.disabled = true
 	else:
 		_configurar_boton_volver()
 
 
 func _configurar_boton_volver() -> void:
-	if not is_instance_valid(_boton_volver):
-		return
 	_boton_volver.text = ""
 	_boton_volver.tooltip_text = "Volver"
 	_boton_volver.icon = FLECHA_ATRAS
@@ -567,3 +563,7 @@ func _mostrar_mensaje(texto: String, es_info: bool) -> void:
 		_label_mensaje.modulate = MiPaleta.FEEDBACK_OK
 	else:
 		_label_mensaje.modulate = MiPaleta.FEEDBACK_ERROR
+
+
+func _on_boton_volver_pressed() -> void:
+	GameSceneRouter.MAIN_MENU_SCENE_PATH
