@@ -76,6 +76,21 @@ async function run(): Promise<void> {
     assert.ok(playerMeResponse.body.profile);
     assert.ok(playerMeResponse.body.streak);
 
+    await pool.query('UPDATE users SET mail_verified_at = now() WHERE username = $1;', [username]);
+    const sameMailPatchResponse = await requestJson(baseUrl, '/player/me', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ mail })
+    });
+    assert.equal(sameMailPatchResponse.status, 200);
+    assert.equal((sameMailPatchResponse.body.user as JsonObject).mail, mail);
+    assert.equal(
+      typeof (sameMailPatchResponse.body.user as JsonObject).mail_verified_at,
+      'string',
+      'saving the same mail must preserve mail_verified_at'
+    );
+    assert.equal('verification' in sameMailPatchResponse.body, false);
+
     const missingTokenResponse = await requestJson(baseUrl, '/player/me', { method: 'GET' });
     assert.equal(missingTokenResponse.status, 401);
 

@@ -4,6 +4,7 @@ import {
   headerIconBadge,
   emailIconInline
 } from './email-icons.ts';
+import { emailLogoBlock } from './email-logo.ts';
 import { escapeHtml } from './html-utils.ts';
 
 export const GAME_EMAIL_THEME = {
@@ -294,6 +295,7 @@ export function wrapHtml(options: WrapHtmlOptions): string {
 
             <tr>
               <td style="background: ${headerGradient}; padding: 28px 36px 26px; text-align: center;">
+                ${emailLogoBlock(72)}
                 ${iconBlock}
                 <h1 style="margin: 0; font-family: 'Rubik', Arial, Helvetica, sans-serif;
                            font-size: 26px; font-weight: 900; line-height: 1.25; color: #ffffff;

@@ -118,11 +118,26 @@ export function loadIconDataUri(icon: EmailIconKey, variant: EmailIconVariant = 
   return loadDataUri(iconAssetPath(icon, variant));
 }
 
+/**
+ * A diferencia de los íconos (que degradan a texto si no hay CDN configurado),
+ * el logo es un único asset chico y crítico para la marca, así que 'embed' hace
+ * el fallback completo acá mismo: URL explícita > CDN configurado > base64 local.
+ * CID no se usa para envíos reales (Brevo no lo renderiza inline, ver
+ * buildInlineEmailAttachments); solo queda como opción explícita.
+ */
 export function resolveLogoSrc(mode: 'cid' | 'embed'): string {
   if (mode === 'cid') {
     return `cid:${EMAIL_LOGO_CID}`;
   }
-  return loadLogoDataUri();
+  const configuredUrl = emailConfig.logoUrl.trim();
+  if (configuredUrl.length > 0) {
+    return configuredUrl;
+  }
+  if (canUsePublicEmailAssetUrls()) {
+    const base = emailConfig.assetsBaseUrl.trim().replace(/\/+$/, '');
+    return `${base}/logo.png`;
+  }
+  return loadDataUri('logo.png');
 }
 
 export function resolveIconSrc(

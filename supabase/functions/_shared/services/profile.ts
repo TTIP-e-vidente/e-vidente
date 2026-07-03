@@ -197,9 +197,11 @@ export async function updatePlayerMe(
       );
     }
   }
+  const mailChanged = validatedMail !== undefined &&
+    normalizeMail(validatedMail) !== previousMail;
 
   await withTransaction(async (client) => {
-    if (validatedMail !== undefined) {
+    if (mailChanged) {
       updates.mail = validatedMail;
       await client.queryObject(
         `
@@ -216,9 +218,6 @@ export async function updatePlayerMe(
       throw new PlayerError(401, 'INVALID_TOKEN', 'Invalid token');
     }
   });
-
-  const mailChanged = validatedMail !== undefined &&
-    normalizeMail(validatedMail) !== previousMail;
 
   let verification: ProfileVerificationMeta | undefined;
   if (mailChanged && validatedMail) {

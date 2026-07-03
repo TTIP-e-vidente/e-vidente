@@ -142,7 +142,37 @@ func test_modelo_vista_racha_de_ayer_desde_18_es_warning() -> void:
 	assert_int(int(vista.get("current_count", 0))).is_equal(3)
 
 
-func test_modelo_vista_racha_de_ayer_despues_de_20_es_critica() -> void:
+func test_modelo_vista_racha_de_ayer_despues_de_22_es_critica() -> void:
+	var today := Time.get_date_string_from_system(false)
+	var streak := {
+		"current_count": 3,
+		"best_count": 5,
+		"last_activity_day": _dia_anterior(today),
+	}
+
+	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 23)
+
+	assert_str(str(vista.get("status_key", ""))).is_equal("pending_today")
+	assert_str(str(vista.get("streak_state", ""))).is_equal("critical")
+	assert_int(int(vista.get("current_count", 0))).is_equal(3)
+
+
+func test_modelo_vista_racha_de_ayer_a_las_22_es_critica() -> void:
+	var today := Time.get_date_string_from_system(false)
+	var streak := {
+		"current_count": 3,
+		"best_count": 5,
+		"last_activity_day": _dia_anterior(today),
+	}
+
+	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 22)
+
+	assert_str(str(vista.get("status_key", ""))).is_equal("pending_today")
+	assert_str(str(vista.get("streak_state", ""))).is_equal("critical")
+	assert_int(int(vista.get("current_count", 0))).is_equal(3)
+
+
+func test_modelo_vista_racha_de_ayer_a_las_21_sigue_warning() -> void:
 	var today := Time.get_date_string_from_system(false)
 	var streak := {
 		"current_count": 3,
@@ -153,22 +183,7 @@ func test_modelo_vista_racha_de_ayer_despues_de_20_es_critica() -> void:
 	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 21)
 
 	assert_str(str(vista.get("status_key", ""))).is_equal("pending_today")
-	assert_str(str(vista.get("streak_state", ""))).is_equal("critical")
-	assert_int(int(vista.get("current_count", 0))).is_equal(3)
-
-
-func test_modelo_vista_racha_de_ayer_a_las_20_es_critica() -> void:
-	var today := Time.get_date_string_from_system(false)
-	var streak := {
-		"current_count": 3,
-		"best_count": 5,
-		"last_activity_day": _dia_anterior(today),
-	}
-
-	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 20)
-
-	assert_str(str(vista.get("status_key", ""))).is_equal("pending_today")
-	assert_str(str(vista.get("streak_state", ""))).is_equal("critical")
+	assert_str(str(vista.get("streak_state", ""))).is_equal("warning")
 	assert_int(int(vista.get("current_count", 0))).is_equal(3)
 
 

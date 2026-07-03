@@ -223,13 +223,16 @@ export async function updatePlayerMe(
       oldMail = userBeforeUpdate.mail?.trim() ?? null;
     }
   }
+  const mailChanged =
+    validatedMail !== undefined &&
+    normalizeMail(validatedMail) !== previousMail;
 
   const client = await pool.connect();
   let updatedUserRow: Awaited<ReturnType<typeof userRepository.updateUserProfile>> = null;
   try {
     await client.query('BEGIN');
 
-    if (validatedMail !== undefined) {
+    if (mailChanged) {
       updates.mail = validatedMail;
       await emailRepository.invalidatePreviousVerificationCodes(client, userId);
     }
@@ -250,10 +253,6 @@ export async function updatePlayerMe(
   } finally {
     client.release();
   }
-
-  const mailChanged =
-    validatedMail !== undefined &&
-    normalizeMail(validatedMail) !== previousMail;
 
   let verification: ProfileVerificationMeta | undefined;
 

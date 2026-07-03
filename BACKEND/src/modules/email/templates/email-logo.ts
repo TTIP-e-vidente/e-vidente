@@ -1,7 +1,7 @@
 import { resolveLogoSrc } from './email-assets';
 
-export function emailLogoBlock(width = 128): string {
-  const src = resolveLogoSrc('cid');
+export function emailLogoBlock(width = 96): string {
+  const src = resolveLogoSrc('embed');
   if (!src) {
     return `<p style="margin:0 0 14px;font-family:'Rubik',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#c7d6a8;">E-VIDENTE</p>`;
   }

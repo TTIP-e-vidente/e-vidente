@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(cd .. && grep -n \"\\\\\"deploy\" BACKEND/package.json *)",
+      "Read(//c/Users/agusd/OneDrive/Escritorio/Hobbie/**)"
+    ]
+  }
+}

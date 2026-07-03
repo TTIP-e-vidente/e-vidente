@@ -121,10 +121,19 @@ export async function updateUserProfile(
   }
 
   if (input.mail !== undefined) {
-    sets.push(`mail = $${paramIndex++}`);
+    const mailParamIndex = paramIndex++;
+    const mailCompareParamIndex = paramIndex++;
+    sets.push(`mail = $${mailParamIndex}`);
+    params.push(input.mail);
     params.push(input.mail);
     // Al cambiar el mail, se resetea la verificación automáticamente
-    sets.push('mail_verified_at = NULL');
+    sets.push(
+      `mail_verified_at = CASE
+        WHEN lower(coalesce(mail::text, '')) = lower(coalesce($${mailCompareParamIndex}::text, ''))
+          THEN mail_verified_at
+        ELSE NULL
+      END`
+    );
   }
 
   if (input.birth_date !== undefined) {

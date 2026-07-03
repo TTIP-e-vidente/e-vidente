@@ -83,7 +83,7 @@ static func _resolver_estado_visual(
 		var hour := _resolver_hora_local(current_hour)
 		if hour < 18:
 			return "inactive"
-		if hour >= 20:
+		if hour >= 22:
 			return "critical"
 		return "warning"
 	return "inactive"
