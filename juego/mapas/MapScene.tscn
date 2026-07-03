@@ -1,8 +1,8 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dnlry07ty3pcm"]
 
-[ext_resource type="Script" path="res://mapas/MapScene.gd" id="1_xmpkx"]
-[ext_resource type="PackedScene" path="res://mapas/MapBoard.tscn" id="2_mapboard"]
-[ext_resource type="PackedScene" path="res://mapas/MapHud.tscn" id="3_maphud"]
+[ext_resource type="Script" uid="uid://crrhyx3f4rp2e" path="res://mapas/MapScene.gd" id="1_xmpkx"]
+[ext_resource type="PackedScene" uid="uid://c6i8b22551ttd" path="res://mapas/MapBoard.tscn" id="2_mapboard"]
+[ext_resource type="PackedScene" uid="uid://ehxvn01ut878" path="res://mapas/MapHud.tscn" id="3_maphud"]
 
 [node name="MapScene" type="Node2D" unique_id=971913902]
 scale = Vector2(1, 1.016767)

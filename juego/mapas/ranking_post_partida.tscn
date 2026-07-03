@@ -1,45 +1,45 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://drammnsdkjsrh"]
 
-[ext_resource type="Script" path="res://mapas/ranking_post_partida.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_fondo"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_font"]
-[ext_resource type="PackedScene" path="res://interface/leaderboard/RankingResumenPostPartida.tscn" id="6_ranking"]
+[ext_resource type="Script" uid="uid://b1wjhid1xweab" path="res://mapas/ranking_post_partida.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_fondo"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_spray"]
+[ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_font"]
+[ext_resource type="PackedScene" uid="uid://bhu53fj5vgl6g" path="res://interface/leaderboard/RankingResumenPostPartida.tscn" id="6_ranking"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_continuar"]
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
 bg_color = Color(0.259, 0.471, 0.369, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-content_margin_left = 24
-content_margin_top = 14
-content_margin_right = 24
-content_margin_bottom = 14
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_continuar_hover"]
-bg_color = Color(0.320, 0.560, 0.440, 1)
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
+bg_color = Color(0.32, 0.56, 0.44, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-content_margin_left = 24
-content_margin_top = 14
-content_margin_right = 24
-content_margin_bottom = 14
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_checkbox_hover"]
 
-[node name="RankingPostPartida" type="Node2D"]
+[node name="RankingPostPartida" type="Node2D" unique_id=1811001421]
 script = ExtResource("1_script")
 
-[node name="FondoFicha" parent="." instance=ExtResource("2_fondo")]
+[node name="FondoFicha" parent="." unique_id=2065363886 instance=ExtResource("2_fondo")]
 offset_left = -1.0
 offset_top = -1.0
 offset_right = 1152.0
 offset_bottom = 798.0
 
-[node name="Titulo" type="Label" parent="."]
+[node name="Titulo" type="Label" parent="." unique_id=384344634]
 offset_left = 120.0
 offset_top = 72.0
 offset_right = 1032.0
@@ -51,7 +51,7 @@ text = "Ranking"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Subtitulo" type="Label" parent="."]
+[node name="Subtitulo" type="Label" parent="." unique_id=2141582455]
 offset_left = 160.0
 offset_top = 132.0
 offset_right = 992.0
@@ -63,7 +63,7 @@ text = "Podés ver el ranking. Tu progreso no suma puntos hasta iniciar sesión.
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="UiAnchor" type="Control" parent="."]
+[node name="UiAnchor" type="Control" parent="." unique_id=263301260]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -74,7 +74,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="RankingContainer" type="Control" parent="UiAnchor"]
+[node name="RankingContainer" type="Control" parent="UiAnchor" unique_id=1560698408]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -88,15 +88,17 @@ offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="RankingResumenPostPartida" parent="UiAnchor/RankingContainer" instance=ExtResource("6_ranking")]
+[node name="RankingResumenPostPartida" parent="UiAnchor/RankingContainer" unique_id=701358075 instance=ExtResource("6_ranking")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 25.0
+offset_bottom = 47.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Continuar" type="Button" parent="UiAnchor"]
+[node name="Continuar" type="Button" parent="UiAnchor" unique_id=1094704770]
 unique_name_in_owner = true
 z_index = 10
 layout_mode = 1
@@ -115,11 +117,11 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_continuar")
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_continuar_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_continuar_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_continuar_hover")
 text = "Continuar al mapa"
 
-[node name="FooterOpciones" type="VBoxContainer" parent="UiAnchor"]
+[node name="FooterOpciones" type="VBoxContainer" parent="UiAnchor" unique_id=1522384490]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -134,33 +136,32 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 12
 
-[node name="CheckboxOmitirRanking" type="CheckBox" parent="UiAnchor/FooterOpciones"]
+[node name="CheckboxOmitirRanking" type="CheckBox" parent="UiAnchor/FooterOpciones" unique_id=680831991]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.88)
-theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
-theme_override_colors/font_pressed_color = Color(0.22, 0.38, 0.3, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_colors/font_focus_color = Color(0.278, 0.251, 0.184, 0.88)
+theme_override_colors/font_pressed_color = Color(0.22, 0.38, 0.3, 1)
+theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.259, 0.471, 0.369, 1)
+theme_override_constants/h_separation = 10
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 15
-theme_override_constants/h_separation = 10
 theme_override_styles/hover = SubResource("StyleBoxEmpty_checkbox_hover")
 theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_checkbox_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_checkbox_hover")
 text = "Omitir ranking la próxima vez"
 alignment = 1
 
-[node name="IniciarSesionCompetir" type="LinkButton" parent="UiAnchor/FooterOpciones"]
+[node name="IniciarSesionCompetir" type="LinkButton" parent="UiAnchor/FooterOpciones" unique_id=81766800]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
-theme_override_colors/font_hover_color = Color(0.320, 0.560, 0.440, 1)
-theme_override_colors/font_pressed_color = Color(0.22, 0.40, 0.31, 1)
+theme_override_colors/font_pressed_color = Color(0.22, 0.4, 0.31, 1)
+theme_override_colors/font_hover_color = Color(0.32, 0.56, 0.44, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 15
 text = "Iniciá sesión"
 underline = 1
-horizontal_alignment = 1
 
 [connection signal="pressed" from="UiAnchor/Continuar" to="." method="_on_continuar_presionado"]
