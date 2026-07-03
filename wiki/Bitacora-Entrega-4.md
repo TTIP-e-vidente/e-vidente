@@ -1,7 +1,6 @@
 # Bitácora — Entrega 4
 
-Diario de la entrega de **emails transaccionales, verificación OTP y recordatorios de racha**. Entradas **más nuevas arriba**.
-
+**emails transaccionales, verificación OTP y recordatorios de racha**.
 ---
 
 ### `2026-07-02` — MER persistencia E4 mejorado
@@ -10,83 +9,18 @@ Diario de la entrega de **emails transaccionales, verificación OTP y recordator
 `mer-persistencia-e4.html` reescrito al nivel de E3: toggles por capa, tablas completas según migraciones, `streaks`↔jobs, ciclo `email_deliveries`, equivalencia local↔remoto, strip de migraciones.
 
 **Impacto**
-- Diagrama usable para defensa TTIP sin abrir SQL ni Flujo-Completo.
 - `Mer-Persistencia-E4.md` ampliado con tablas de columnas.
-- `mer-persistencia-e3.html`: card `users` enlaza a E4.
-
----
-
-### `2026-07-02` — Entrega 4 compacta (estilo E2/E3)
-<kbd>Docs</kbd> <kbd>TTIP</kbd>
-
-`Entrega-4.md` reescrito como página principal: resumen, bullets, desafíos, alcance, Jira — igual que E2/E3. Flujo-Completo pasa a profundización.
-
-**Impacto**
-- Una entrada clara para defensa TTIP; sin duplicar narrativa en 4 archivos.
-
----
-<kbd>Docs</kbd> <kbd>MER</kbd>
-
-Diagrama interactivo `mer-persistencia-e4.html`, hub MER actualizado E3→E4, mapeo dominio→local→Postgres con entidades de mail.
-
-**Qué se documentó**
-- Tablas `email_deliveries`, `email_verification_codes`, columnas `users`
-- Dual Godot: `backend.local.json`, api_mode, cache sesión
-- `MER.md` + `Vistas-Interactivas.md` + navegación MER
 
 ---
 <kbd>Docs</kbd> <kbd>Jira</kbd> <kbd>Supabase</kbd>
 
-Se consolidó el flujo completo de Entrega 4 en un documento humano que cruza tickets Jira, stack Supabase Edge, Brevo y desafíos resueltos. Consulta directa a Jira (UNQ-64, UNQ-177, UNQ-190, UNQ-149, etc.).
+stack Supabase Edge, Brevo y desafíos resueltos. 
 
 **Qué se agregó**
 - `Entrega-4-Flujo-Completo.md` — narrativa de punta a punta
 - Trazabilidad ticket → US → implementación en `Entrega-4.md`
 - Índices `Entregas.md` y `_Sidebar.md` actualizados con E4
 
-**Impacto**
-- Revisor TTIP puede leer una sola página y entender todo el circuito sin Express ni código.
-
-**Evidencia técnica**
-- `wiki/Entrega-4-Flujo-Completo.md`
-- Tickets: [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64), [UNQ-177](https://tip-unq.atlassian.net/browse/UNQ-177)
-
----
-
-### `2026-06-25` — Documentación E4 nivel producción
-<kbd>Docs</kbd> <kbd>TTIP</kbd>
-
-Segunda pasada de documentación: guía rápida para revisores, flujo E3→E4, ADRs numerados, endpoints API, evidencia con resultados de `test:email` y próximos pasos post-E4.
-
-**Qué se agregó**
-- `Entrega-4-Guia-Rapida.md`, `Entrega-4-Flujo-E3-E4.md`
-- Tablas npm, curl, SQL y cron en Arquitectura/Evidencia
-- Enlaces desde README raíz, Entrega 3 y `BACKEND/email/README`
-
-**Impacto**
-- Revisor TTIP puede validar en 5 min sin leer todo el repo.
-
-**Evidencia técnica**
-- `wiki/Entrega-4*.md`, `wiki/Entregas.md`
-
----
-
-### `2026-06-25` — Cierre documental Entrega 4
-<kbd>Docs</kbd> <kbd>TTIP</kbd>
-
-Se consolidó la wiki E4: alcance actualizado (5 templates), bitácora propia, evidencia por US y alineación entre código, copy y flujos Godot.
-
-**Qué se documentó**
-- Verificación OTP + bienvenida post-confirmación (no al registro).
-- Tabla US ↔ tickets ↔ comandos de validación.
-- Índices `Entregas.md` y `Bitacora.md` apuntando a E4.
-
-**Impacto para el equipo**
-- Una sola fuente de verdad para demo TTIP y defensa.
-- Sin contradicciones entre User Stories y `Entrega-4-Mails.md`.
-
-**Evidencia técnica**
-- `wiki/Entrega-4*.md`, `wiki/Bitacora-Entrega-4.md`
 
 ---
 
@@ -102,10 +36,6 @@ Se publicaron íconos y logo embebidos en HTML de mails (Rubik, paleta verde/cre
 
 **Impacto para el jugador**
 - Mails legibles en Gmail y móvil, coherentes con la identidad visual del juego.
-
-**Evidencia técnica**
-- Commit `c40f99e` — Publica assets de emails
-- `templates/layout.ts`, `templates/email-icons.ts`
 
 ---
 
@@ -125,11 +55,6 @@ Se cerró el circuito de mail verificado: OTP al registrarse o cambiar mail, bie
 - Confianza en la cuenta; recordatorios de racha solo con mail válido.
 - Flujo claro: código → verificar → bienvenida.
 
-**Evidencia técnica**
-- Commits `8647176`, `8c5cf75`, `e5acdfe`, `0c8e813`
-- `migrations/024_email_verification.sql`, `028_email_verification_attempts.sql`
-- `juego/interface/auth/EmailVerification*.gd`
-
 ---
 
 ### `2026-06-20` — Rachas perdidas, reconcile y tests de integración
@@ -141,16 +66,10 @@ El job diario no solo avisa: reconcilia rachas expiradas en Postgres aunque fall
 - `streak_lost` + `reconcileExpiredStreaksInDatabase`
 - Dedupe `at_risk:YYYY-MM-DD` / `lost:YYYY-MM-DD`
 - `tests/email.jobs.integration.test.ts`
-- `npm run validate:email-flow` (circuito completo local)
 
 **Impacto para el jugador**
 - Mail empático al perder racha; servidor y juego alineados al loguear.
 - Sin mails duplicados si el cron corre dos veces.
-
-**Evidencia técnica**
-- Commit `911d334`
-- `scripts/validate-email-flow.ts`, `scripts/seed-streak-email-demo.ts`
-
 ---
 
 ### `2026-06-18` — Cron, retry y operación local/cloud
@@ -168,28 +87,4 @@ Jobs programados para rachas (19:00 ART) y reintentos (08:00 / 20:00 ART).
 - Mismo contrato en dev, local y producción.
 - Cero envíos accidentales en CI.
 
-**Evidencia técnica**
-- Commits `f13fb6f`, `7950cd1`
-- `migrations/021_email_notifications.sql`, `022_email_deliveries_audit.sql`, `023_*`
 
----
-
-### `2026-06-15` — Módulo email Brevo y consentimiento Godot
-<kbd>Email</kbd> <kbd>Godot</kbd>
-
-Primera integración transaccional: bienvenida, racha en riesgo, opt-in en registro y perfil.
-
-**Qué se implementó**
-- Módulo `BACKEND/src/modules/email/` (client, service, repository, templates)
-- `accept_email_notifications` en registro; toggle en `auth.gd`
-- Templates `welcome`, `streak_at_risk`, `streak_lost`
-- Wiki inicial: `Entrega-4.md`, `Entrega-4-Mails.md`
-
-**Impacto para el jugador**
-- Puede elegir recordatorios de racha sin spam obligatorio.
-- Bienvenida transaccional separada de marketing de hábito.
-
-**Evidencia técnica**
-- Commits `60a3694`, `84ea2dc`, `a7c9d0a`
-- `BACKEND/docs/BREVO_SETUP.md`
-- `juego/interface/auth.gd`, `juego/API/Login.tscn`
