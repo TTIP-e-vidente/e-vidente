@@ -132,14 +132,11 @@ static func preflight_envio_verificacion() -> Dictionary:
 static func _preflight_supabase_verificacion() -> Dictionary:
 	var health := await AuthApi.verificar_salud_email()
 	if int(health.get("status", 0)) == 0:
-		return {
-			"ok": false,
-			"mensaje": AuthApi.mensaje_check_conexion(
-				health,
-				BackendConfig.mensaje_sin_conexion_edge()
-			),
-			"code": "SUPABASE_OFFLINE",
-		}
+		# Un fallo de transporte puntual en este chequeo secundario no debe
+		# bloquear el flujo entero: dejamos que la request real (solicitar
+		# código) sea la que confirme si Supabase Edge está de verdad
+		# inalcanzable, en vez de cortar acá por un blip de red.
+		return {"ok": true, "mensaje": "", "code": ""}
 
 	var data: Variant = health.get("data", {})
 	if not data is Dictionary:

@@ -32,11 +32,7 @@ static func mail_verificado() -> bool:
 static func debe_mostrar_nudge() -> bool:
 	if not AuthApi.esta_logueado():
 		return false
-	if not racha_en_riesgo():
-		return false
-	if not mail_verificado():
-		return true
-	return not notificaciones_activas_en_servidor()
+	return racha_en_riesgo()
 
 
 static func resolver_nudge() -> Dictionary:
@@ -63,7 +59,20 @@ static func resolver_nudge() -> Dictionary:
 			"accion": AccionNudge.ACTIVAR_RECORDATORIOS,
 		}
 
-	return {"visible": false}
+	# Ya está todo activado del lado del usuario (mail verificado y
+	# recordatorios encendidos): igual mostramos el aviso in-game como
+	# refuerzo visual, ya que el mail de las 18:00 puede tardar en llegar.
+	return {
+		"visible": true,
+		"titulo": "Racha en riesgo",
+		"cuerpo": (
+			"Jugá hoy para no perder la racha. "
+			+ "Si no jugás, te avisamos por mail cerca de las 18:00."
+		),
+		"hint": "",
+		"boton": "",
+		"accion": AccionNudge.NINGUNA,
+	}
 
 
 static func mensaje_detalle_pantalla_racha() -> String:

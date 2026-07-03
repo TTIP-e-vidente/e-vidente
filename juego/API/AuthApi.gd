@@ -40,7 +40,11 @@ static func mail_pendiente_verificacion() -> bool:
 	var user := obtener_usuario_online()
 	var mail := str(user.get("mail", "")).strip_edges()
 	if mail.is_empty():
-		return false
+		# Toda cuenta requiere mail al registrarse: si está vacío acá es que
+		# el cache local todavía no trajo el perfil completo del servidor,
+		# no que no haga falta verificar. Tratarlo como "no verificado" evita
+		# que el perfil muestre "Mail verificado" apenas creada la cuenta.
+		return true
 	return not mail_verified_at_valido(user.get("mail_verified_at", null))
 
 

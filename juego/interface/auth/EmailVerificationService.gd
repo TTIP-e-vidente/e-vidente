@@ -48,6 +48,19 @@ static func _fallo_envio(evaluacion: Dictionary, fallback: String = "") -> Dicti
 	}
 
 
+## Distingue "no se pudo ni conectar" (transporte, status 0 — puede ser un
+## blip de red puntual) de un error real del servidor (4xx/5xx con código,
+## p. ej. NOT_SUPABASE). Solo lo primero se trata como no bloqueante.
+static func _es_fallo_transitorio_conexion(check: Dictionary) -> bool:
+	var payload: Dictionary = {}
+	var raw: Variant = check.get("result", null)
+	if raw is Dictionary:
+		payload = raw as Dictionary
+	else:
+		payload = check
+	return int(payload.get("status", -1)) == 0
+
+
 static func _asegurar_servidor_y_sesion() -> Dictionary:
 	# El token acotado del login bloqueado (EMAIL_NOT_VERIFIED) también habilita
 	# el flujo de verificación aunque no haya sesión completa.
@@ -66,7 +79,7 @@ static func _asegurar_servidor_y_sesion() -> Dictionary:
 				"mensaje": str(mail_ready.get("mensaje", "Supabase Edge no disponible para verify.")),
 			}
 		var api := await AuthApi.verificar_servidor()
-		if not bool(api.get("ok", false)):
+		if not bool(api.get("ok", false)) and not _es_fallo_transitorio_conexion(api):
 			return {
 				"ok": false,
 				"mensaje": AuthApi.mensaje_check_conexion(
