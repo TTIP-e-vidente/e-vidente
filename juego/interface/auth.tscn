@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d3lqwldvjuvio"]
 
 [ext_resource type="Script" uid="uid://ckcb6asdec3cm" path="res://interface/auth.gd" id="1_auth"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
 [ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
 [ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
@@ -186,7 +186,7 @@ shadow_color = Color(0.101961, 0.0862745, 0.0588235, 0.12)
 shadow_size = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_button_hover"]
-bg_color = Color(0.356863, 0.427451, 0.301961, 1)
+bg_color = Color(0.11880813, 0.24207336, 0.18312275, 1)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
 corner_radius_bottom_right = 18
