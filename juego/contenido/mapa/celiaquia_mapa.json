@@ -652,7 +652,17 @@
 				{
 					"type": "match",
 					"difficulty": 3
-				}
+				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
 			]
 		},
 		"25": {
@@ -681,6 +691,16 @@
 				{
 					"type": "completar_palabra",
 					"difficulty": 3
+				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
 				}
 			]
 		},
@@ -706,6 +726,16 @@
 				{
 					"type": "match",
 					"difficulty": 3
+				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
 				}
 			]
 		},
@@ -716,6 +746,16 @@
 				{
 					"type": "match",
 					"difficulty": 3
+				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
 				},
 				{
 					"type": "completar_palabra",
@@ -744,7 +784,7 @@
 			"games": [
 				{
 					"type": "drag",
-					"difficulty": 2,
+					"difficulty": 3,
 					"objective": {
 						"action": "Prepará",
 						"meal": "un plato sin TACC",
@@ -761,6 +801,16 @@
 					"type": "match",
 					"difficulty": 3
 				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
+				},
 				{
 					"type": "completar_palabra",
 					"difficulty": 3
@@ -775,6 +825,16 @@
 					"type": "quiz",
 					"difficulty": 3,
 					"options_count": 4
+				},
+					{
+					"type": "drag",
+					"difficulty": 3,
+					"objective": {
+						"action": "Prepará",
+						"meal": "un plato sin TACC",
+						"connector": "para tu amigue",
+						"restriction": "con celiaquía"
+					}
 				},
 				{
 					"type": "match",

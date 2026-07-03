@@ -1,41 +1,40 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cwwyigbffvwec"]
 
-[ext_resource type="Script" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_a58t6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/titulo_keto.png" id="2_pfc42"]
-[ext_resource type="Script" path="res://niveles/Menú.gd" id="6_qkth7"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/menu-fondo.png" id="7_a14q0"]
+[ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_8lr8v"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_a58t6"]
+[ext_resource type="Texture2D" uid="uid://cdk1ovbi4kqyk" path="res://assets-sistema/interfaz/cuadrado-6x1_2.png" id="4_a58t6"]
+[ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_qkth7"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="8_jarw3"]
-[ext_resource type="Script" path="res://niveles/Lupa.gd" id="9_oy80u"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/lupa.png" id="10_k5t4g"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/info-lupa.png" id="11_x7j03"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/globito-celiaquia.png" id="12_y8ovv"]
-[ext_resource type="Script" path="res://niveles/PlayerCambiante.gd" id="13_1guv8"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/tengo hambre.png" id="14_6t1wi"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-idle-1.png" id="15_pfc42"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-idle-2.png" id="16_0m5ih"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-idle-3.png" id="17_kc0lr"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-mal-mal--malito-1.png" id="18_d16r4"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-mal-mal--malito-2.png" id="19_hq5mc"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-mal-malito-1.png" id="20_kcg4u"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-mal-malito-2.png" id="21_n5r3m"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-malito-1.png" id="22_p2n04"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-malito-2.png" id="23_blx5r"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-malisisisimo-1.png" id="24_0mrf7"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-malisisisimo-2.png" id="25_idjay"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-sintiendose-bien-1.png" id="26_7686m"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-sintiendose-bien-3.png" id="27_8uyx8"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-1.png" id="28_ird7y"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-2.png" id="29_t7iym"]
-[ext_resource type="Texture2D" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-3.png" id="30_t64ps"]
-[ext_resource type="Script" path="res://assets-sistema/player/AbstractState.gd" id="31_c1ufg"]
-[ext_resource type="Script" path="res://assets-sistema/player/SentirHambre.gd" id="32_hxfx2"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_tpxw6"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_oaafq"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="35_618ys"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_pfc42"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_0m5ih"]
-[ext_resource type="Script" path="res://niveles/manager_level.gd" id="37_m1vf8"]
+[ext_resource type="Script" uid="uid://qrkj8ip6jbmn" path="res://niveles/Lupa.gd" id="9_oy80u"]
+[ext_resource type="Texture2D" uid="uid://nbvk0y8gfabp" path="res://assets-sistema/interfaz/lupa.png" id="10_k5t4g"]
+[ext_resource type="Texture2D" uid="uid://8imyk8l0hueg" path="res://assets-sistema/interfaz/info-lupa.png" id="11_x7j03"]
+[ext_resource type="Script" uid="uid://bccc2e1y2dp3j" path="res://niveles/PlayerCambiante.gd" id="13_1guv8"]
+[ext_resource type="Texture2D" uid="uid://vkt4rmn8l3wn" path="res://assets-sistema/interfaz/tengo hambre.png" id="14_6t1wi"]
+[ext_resource type="Texture2D" uid="uid://cuof2obsleuxx" path="res://assets-sistema/player/player-keto/personaje-idle-1.png" id="15_pfc42"]
+[ext_resource type="Texture2D" uid="uid://nargv3qa4qx" path="res://assets-sistema/player/player-keto/personaje-idle-2.png" id="16_0m5ih"]
+[ext_resource type="Texture2D" uid="uid://yr0q35u86meb" path="res://assets-sistema/player/player-keto/personaje-idle-3.png" id="17_kc0lr"]
+[ext_resource type="Texture2D" uid="uid://ds4cmervuilky" path="res://assets-sistema/player/player-keto/personaje-mal-mal--malito-1.png" id="18_d16r4"]
+[ext_resource type="Texture2D" uid="uid://1iaerorbf55y" path="res://assets-sistema/player/player-keto/personaje-mal-mal--malito-2.png" id="19_hq5mc"]
+[ext_resource type="Texture2D" uid="uid://6teavubife48" path="res://assets-sistema/player/player-keto/personaje-mal-malito-1.png" id="20_kcg4u"]
+[ext_resource type="Texture2D" uid="uid://buck6jsjultic" path="res://assets-sistema/player/player-keto/personaje-mal-malito-2.png" id="21_n5r3m"]
+[ext_resource type="Texture2D" uid="uid://bdqa5jpvxypeu" path="res://assets-sistema/player/player-keto/personaje-malito-1.png" id="22_p2n04"]
+[ext_resource type="Texture2D" uid="uid://b0kew7tsld0om" path="res://assets-sistema/player/player-keto/personaje-malito-2.png" id="23_blx5r"]
+[ext_resource type="Texture2D" uid="uid://dmj3asc30rwhm" path="res://assets-sistema/player/player-keto/personaje-malisisisimo-1.png" id="24_0mrf7"]
+[ext_resource type="Texture2D" uid="uid://1ck2lr0ulr2k" path="res://assets-sistema/player/player-keto/personaje-malisisisimo-2.png" id="25_idjay"]
+[ext_resource type="Texture2D" uid="uid://ne34ofu5r8qk" path="res://assets-sistema/player/player-keto/personaje-sintiendose-bien-1.png" id="26_7686m"]
+[ext_resource type="Texture2D" uid="uid://dtu31qnh1ndlr" path="res://assets-sistema/player/player-keto/personaje-sintiendose-bien-3.png" id="27_8uyx8"]
+[ext_resource type="Texture2D" uid="uid://052ysq4w1eh2" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-1.png" id="28_ird7y"]
+[ext_resource type="Texture2D" uid="uid://chuc880s5161s" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-2.png" id="29_t7iym"]
+[ext_resource type="Texture2D" uid="uid://d2ivqkhylnu13" path="res://assets-sistema/player/player-keto/personaje-sintiendose-mal-3.png" id="30_t64ps"]
+[ext_resource type="Script" uid="uid://b32ltwq30mw40" path="res://assets-sistema/player/AbstractState.gd" id="31_c1ufg"]
+[ext_resource type="Script" uid="uid://crqonae1owqnb" path="res://assets-sistema/player/SentirHambre.gd" id="32_hxfx2"]
+[ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="33_tpxw6"]
+[ext_resource type="Texture2D" uid="uid://bmq81cjhmsn5o" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias.png" id="34_oaafq"]
+[ext_resource type="Texture2D" uid="uid://dniag8c157u7x" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-1.png" id="35_618ys"]
+[ext_resource type="PackedScene" path="res://niveles/nivel_1/titulo_nivel.tscn" id="36_10g8g"]
+[ext_resource type="Texture2D" uid="uid://dnyphl17a8v80" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-2.png" id="36_pfc42"]
+[ext_resource type="Texture2D" uid="uid://b1lkdj3dfchi0" path="res://assets-sistema/interfaz/flecha-ir-para-adelante-desbloqueada-historias-3.png" id="37_0m5ih"]
+[ext_resource type="Script" uid="uid://bjxtthdjmchah" path="res://niveles/manager_level.gd" id="37_m1vf8"]
 [ext_resource type="PackedScene" path="res://interface/components/ContinuarJuego/ContinuarJuego.tscn" id="38_cjuego"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bbluw"]
@@ -166,7 +165,6 @@ scale = Vector2(0.99785787, 1)
 z_index = 1
 position = Vector2(218.99998, 112)
 scale = Vector2(0.36439705, 0.36439705)
-texture = ExtResource("2_pfc42")
 
 [node name="Menú" type="Area2D" parent="." unique_id=881342712 groups=["droppable"]]
 light_mask = 8
@@ -184,9 +182,9 @@ scale = Vector2(1, 1.3888855)
 shape = SubResource("RectangleShape2D_bbluw")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=1636032260]
-position = Vector2(0.18774223, 5.555523)
-scale = Vector2(0.64084595, 0.93667847)
-texture = ExtResource("7_a14q0")
+position = Vector2(5.625679, 6.9444275)
+scale = Vector2(1.2208343, 1.423611)
+texture = ExtResource("4_a58t6")
 
 [node name="Plato" parent="." unique_id=2125072684 instance=ExtResource("8_jarw3")]
 unique_name_in_owner = true
@@ -230,7 +228,6 @@ shape = SubResource("CircleShape2D_l1npu")
 [node name="Globo texto" type="Sprite2D" parent="." unique_id=1397184551]
 position = Vector2(206, 253)
 scale = Vector2(0.638614, 0.638614)
-texture = ExtResource("12_y8ovv")
 
 [node name="Meal" type="Sprite2D" parent="Globo texto" unique_id=694049438]
 position = Vector2(-6.2636, -1.5659)
@@ -347,7 +344,6 @@ offset_left = 1023.0
 offset_top = 141.0
 offset_right = 1127.0
 offset_bottom = 245.0
-tooltip_text = ""
 flat = true
 
 [node name="SaveFeedbackBackdrop" type="PanelContainer" parent="." unique_id=2035953237]
@@ -408,7 +404,12 @@ level_resource_path = "res://niveles/nivel_4/level_4.tres"
 volume_db = -4.962
 attenuation = 2.07053
 
-[node name="ContinuarJuego" parent="." instance=ExtResource("38_cjuego")]
+[node name="ContinuarJuego" parent="." unique_id=2002484252 instance=ExtResource("38_cjuego")]
+layout_mode = 3
+
+[node name="TituloNivel2" parent="." unique_id=74001118 instance=ExtResource("36_10g8g")]
+position = Vector2(179, 102)
+scale = Vector2(0.37341487, 0.36239564)
 
 [connection signal="input_event" from="Menú" to="Menú" method="_on_evento_entrada"]
 [connection signal="area_entered" from="Lupa" to="Lupa" method="_on_area_entrado"]
