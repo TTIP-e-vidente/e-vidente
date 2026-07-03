@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dy80fyawpliun"]
 
 [ext_resource type="Script" uid="uid://ce5rn56ih3006" path="res://niveles/nivel_1/Level.gd" id="1_64ycw"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_6vg4q"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_6vg4q"]
 [ext_resource type="Texture2D" uid="uid://cdk1ovbi4kqyk" path="res://assets-sistema/interfaz/cuadrado-6x1_2.png" id="4_6vg4q"]
 [ext_resource type="Script" uid="uid://fw6kxm3q1eni" path="res://niveles/Menú.gd" id="6_0a2dw"]
 [ext_resource type="PackedScene" path="res://items/plato.tscn" id="7_wtr41"]
@@ -189,8 +189,8 @@ script = ExtResource("6_0a2dw")
 shape = SubResource("RectangleShape2D_dgfld")
 
 [node name="Sprite2D" type="Sprite2D" parent="Menú" unique_id=1344981992]
-position = Vector2(10.447625, 2.9563904e-05)
-scale = Vector2(1.253042, 1.2065974)
+position = Vector2(10.447625, 2.777793)
+scale = Vector2(1.253042, 1.3671879)
 texture = ExtResource("4_6vg4q")
 
 [node name="Plato" parent="." unique_id=505056236 instance=ExtResource("7_wtr41")]
