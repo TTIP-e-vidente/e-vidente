@@ -593,7 +593,11 @@ func _mostrar_ensenanza_cierre_de_nodo(track_key: String, level_number: int) -> 
 	construir_flujo_post_game(level_number, previous_streak, updated_streak)
 	if _usa_flujo_mapa and PostGameFlowControllerScript.es_cierre_de_nodo_mapa(get_tree()):
 		_bloquear_completado_partida()
-		NodoRuntimeScript.finalizar_mini_juego(get_tree(), Callable(), Callable())
+		NodoRuntimeScript.finalizar_mini_juego(
+			get_tree(),
+			Callable(),
+			Callable(self, "_limpiar_estado_local_de_partida_en_nivel")
+		)
 		_encolar_sync_partida_mapa()
 	_mostrar_ensenanza_del_nivel()
 

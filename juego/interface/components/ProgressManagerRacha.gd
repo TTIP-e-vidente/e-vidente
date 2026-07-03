@@ -95,7 +95,11 @@ func _mostrar_feedback(feedback: Dictionary) -> void:
 		int(feedback.get("best_count", base_best_count))
 	)
 
-	_status_detail = _construir_mensaje_racha(_current_count)
+	_status_detail = ""
+	if str(feedback.get("feedback_key", "")).strip_edges() == "activated":
+		_status_detail = str(feedback.get("title", "")).strip_edges()
+	if _status_detail.is_empty():
+		_status_detail = _construir_mensaje_racha(_current_count)
 	if _status_detail.is_empty():
 		_status_detail = str(feedback.get("message", feedback_default_message)).strip_edges()
 

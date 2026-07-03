@@ -476,6 +476,15 @@ static func _resolver_hora_local(current_hour: int = -1) -> int:
 
 
 static func _dia_local_de_actividad(streak_state: Dictionary) -> String:
+	# last_activity_day ya es el día calendario LOCAL del dispositivo que registró
+	# la actividad (el backend lo guarda a partir de games.local_day). Recalcularlo
+	# desde last_activity_at con el huso del dispositivo ACTUAL solo tiene sentido
+	# como respaldo: si el merge ocurre en un dispositivo con otro huso horario,
+	# esa reconversión puede correr el día ±1 y romper la comparación de rachas.
+	var stored_day := _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	if _is_valid_date(stored_day):
+		return stored_day
+
 	var last_at := str(streak_state.get("last_activity_at", "")).strip_edges()
 	if not last_at.is_empty():
 		var unix_at := int(Time.get_unix_time_from_datetime_string(last_at))
@@ -484,7 +493,7 @@ static func _dia_local_de_actividad(streak_state: Dictionary) -> String:
 			if _is_valid_date(local_day):
 				return local_day
 
-	return _normalizar_dia_actividad(streak_state.get("last_activity_day", ""))
+	return ""
 
 
 ## El signo de Time.get_time_zone_from_system().bias es inconsistente entre

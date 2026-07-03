@@ -81,6 +81,43 @@ func test_merge_online_de_hoy_no_pisa_racha_local_viva_de_ayer() -> void:
 	assert_str(str(merged.get("last_activity_day", ""))).is_equal(today)
 
 
+func test_merge_prioriza_last_activity_day_del_servidor_sobre_timestamp_recalculado() -> void:
+	# Bug reportado: cuenta "agus" con racha 4 en Supabase (last_activity_day =
+	# ayer) mostraba 1 al loguearse desde un dispositivo distinto que ya tenía
+	# una racha local de hoy (ej: actividad de invitado antes de loguearse). La
+	# causa: _dia_local_de_actividad recalculaba el día "online" a partir de
+	# last_activity_at usando el huso del dispositivo ACTUAL en vez de confiar
+	# en last_activity_day (ya calculado en el huso correcto por el backend), y
+	# ese recálculo podía correr el día, haciendo que el merge no reconociera
+	# "ayer" y descartara la racha real del servidor.
+	var today := Time.get_date_string_from_system(false)
+	var yesterday := _dia_anterior(today)
+	var hace_tres_dias := _dia_anterior(_dia_anterior(yesterday))
+	var local_hoy := {
+		"current_count": 1,
+		"best_count": 1,
+		"last_activity_day": today,
+	}
+	# last_activity_at deliberadamente desalineado con last_activity_day: si se
+	# usara para recalcular el día "online" en vez de confiar en el campo ya
+	# calculado, daría un día muy distinto a "ayer".
+	var online_con_timestamp_ambiguo := {
+		"current_count": 4,
+		"best_count": 4,
+		"last_activity_day": yesterday,
+		"last_activity_at": hace_tres_dias + "T12:00:00Z",
+	}
+
+	var merged: Dictionary = GameStreakTracker.fusionar_con_remoto(
+		local_hoy,
+		online_con_timestamp_ambiguo
+	)
+
+	assert_int(int(merged.get("current_count", 0))).is_equal(5)
+	assert_int(int(merged.get("best_count", 0))).is_equal(5)
+	assert_str(str(merged.get("last_activity_day", ""))).is_equal(today)
+
+
 func test_merge_conserva_ultima_interaccion_mas_reciente() -> void:
 	var today := Time.get_date_string_from_system(false)
 	var local_state := {
