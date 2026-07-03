@@ -1,9 +1,9 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cbm82rvmcvk4f"]
 
-[ext_resource type="Script" path="res://API/Login.gd" id="1_login"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_t7b56"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_r0oxj"]
-[ext_resource type="FontFile" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="4_8a7lh"]
+[ext_resource type="Script" uid="uid://b3nlgctfwsqjs" path="res://API/Login.gd" id="1_login"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_t7b56"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_r0oxj"]
+[ext_resource type="FontFile" uid="uid://b7475bj8317v2" path="res://fonts/Rubik-Italic-VariableFont_wght.ttf" id="4_8a7lh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
 bg_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -35,17 +35,22 @@ script = ExtResource("1_login")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_t7b56")]
 layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1153.0
+offset_bottom = 799.0
 color = Color(1, 1, 0.99607843, 1)
 metadata/_edit_lock_ = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=882644072]
 layout_mode = 0
 offset_left = 328.0
-offset_top = 160.0
+offset_top = 63.0
 offset_right = 696.0
-offset_bottom = 680.0
+offset_bottom = 583.0
 scale = Vector2(1.3976779, 1.3976779)
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
+alignment = 1
 
 [node name="LabelTitle" type="Label" parent="VBoxContainer" unique_id=2097776669]
 layout_mode = 2
