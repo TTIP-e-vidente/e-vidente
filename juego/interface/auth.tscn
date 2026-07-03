@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d3lqwldvjuvio"]
 
 [ext_resource type="Script" uid="uid://ckcb6asdec3cm" path="res://interface/auth.gd" id="1_auth"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_l8ewg"]
 [ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="3_back"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_gk68o"]
 [ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="4_nuujq"]
