@@ -1,12 +1,6 @@
 # Decisiones — Entrega 4
 
-Architecture Decision Records (ADRs) del circuito de mails. [Resumen](Entrega-4) · [Arquitectura](Entrega-4-Arquitectura)
-
----
-
-## Contexto
-
-Cerrar [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) sin acoplar Godot a Brevo, con mail verificado, consentimiento explícito y trazabilidad en Postgres.
+Architecture Decision Records (ADRs) del circuito de mails.
 
 ---
 
@@ -131,7 +125,3 @@ Cerrar [UNQ-64](https://tip-unq.atlassian.net/browse/UNQ-64) sin acoplar Godot a
 | 3 | OTP + Godot | ✅ Hecho |
 | 4 | Tests integración | ✅ Hecho |
 | 5 | E2E `validate:email-flow` | ✅ Hecho |
-| 6 | Producción + dominio | ⏳ Pendiente |
-| 7 | Recuperación contraseña por mail | 🔜 E5 candidato |
-
-Ver [Bitácora E4](Bitacora-Entrega-4).
