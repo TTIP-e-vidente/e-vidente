@@ -4,6 +4,7 @@
  *
  * Uso: node scripts/sync-email-templates-edge.cjs
  */
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
@@ -104,6 +105,14 @@ function toDataUri(filePath) {
   return `data:image/png;base64,${bytes.toString('base64')}`;
 }
 
+function toVersion(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return '';
+  }
+  const bytes = fs.readFileSync(filePath);
+  return crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 8);
+}
+
 function writeEmailAssets() {
   const iconKeys = [
     'mail',
@@ -118,13 +127,14 @@ function writeEmailAssets() {
     'alert',
   ];
 
+  const relPaths = ['logo.png', 'icons/streak-header.png', ...iconKeys.map((icon) => `icons/${icon}.png`)];
+
   const embedded = {};
-  embedded['logo.png'] = toDataUri(path.join(SRC_ASSETS, 'logo.png'));
-  embedded['icons/streak-header.png'] = toDataUri(
-    path.join(SRC_ASSETS, 'icons', 'streak-header.png'),
-  );
-  for (const icon of iconKeys) {
-    embedded[`icons/${icon}.png`] = toDataUri(path.join(SRC_ASSETS, 'icons', `${icon}.png`));
+  const versions = {};
+  for (const rel of relPaths) {
+    const filePath = rel === 'logo.png' ? path.join(SRC_ASSETS, 'logo.png') : path.join(SRC_ASSETS, ...rel.split('/'));
+    embedded[rel] = toDataUri(filePath);
+    versions[rel] = toVersion(filePath);
   }
 
   const content = `/** Generado por sync-email-templates-edge.cjs — assets embebidos para Brevo/Edge. */
@@ -133,6 +143,22 @@ import type { EmailIconKey } from './templates/email-icons.ts';
 export type EmailIconVariant = 'default' | 'header';
 
 const EMBEDDED_ASSETS: Record<string, string> = ${JSON.stringify(embedded, null, 2)};
+
+// Hash corto del contenido de cada asset: se agrega como ?v= a las URLs
+// públicas para invalidar el cache de imágenes de los clientes de mail
+// (Gmail entre otros cachea agresivamente por URL — sin esto, actualizar
+// logo.png/íconos no se refleja para destinatarios que ya recibieron un
+// mail con la misma URL).
+const ASSET_VERSIONS: Record<string, string> = ${JSON.stringify(versions, null, 2)};
+
+function withCacheBustVersion(url: string, rel: string): string {
+  const version = ASSET_VERSIONS[rel];
+  if (!version) {
+    return url;
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  return \`\${url}\${separator}v=\${version}\`;
+}
 
 function iconAssetPath(icon: EmailIconKey, variant: EmailIconVariant = 'default'): string {
   if (icon === 'streak' && variant === 'header') {
@@ -160,7 +186,7 @@ export function resolveIconPublicUrl(
   const external = externalAssetsBase();
   const rel = iconAssetPath(icon, variant);
   if (external.length > 0) {
-    return \`\${external}/\${rel}\`;
+    return withCacheBustVersion(\`\${external}/\${rel}\`, rel);
   }
   return EMBEDDED_ASSETS[rel] ?? '';
 }
@@ -168,11 +194,11 @@ export function resolveIconPublicUrl(
 export function resolveLogoSrc(_mode: 'cid' | 'embed'): string {
   const logoUrl = (Deno.env.get('EMAIL_LOGO_URL') ?? '').trim();
   if (logoUrl.length > 0) {
-    return logoUrl;
+    return withCacheBustVersion(logoUrl, 'logo.png');
   }
   const external = externalAssetsBase();
   if (external.length > 0) {
-    return \`\${external}/logo.png\`;
+    return withCacheBustVersion(\`\${external}/logo.png\`, 'logo.png');
   }
   return EMBEDDED_ASSETS['logo.png'] ?? '';
 }

@@ -62,7 +62,36 @@ ORDER BY created_at DESC;
 - No hay fila → el envío nunca se intentó: usuario filtrado (punto 2) o
   EMAIL_ENABLED off.
 
-## 5. Validación end-to-end (después de cambios)
+## 5. El mail llega pero sin logo / sin íconos
+
+Causa: `resolveLogoSrc()`/`resolveIconSrc()` en
+`supabase/functions/_shared/email/email-assets.ts` mandan las imágenes en
+`data:image/png;base64,...` embebido en el HTML cuando no hay
+`EMAIL_LOGO_URL`/`EMAIL_ASSETS_BASE_URL` configurados. Ese fallback existe
+solo para previews locales — **Brevo y la mayoría de los clientes de mail
+(Gmail incluido) no renderizan imágenes base64 inline**, así que el mail
+llega pero con el logo y los íconos vacíos/rotos.
+
+Fix (fuente de verdad: bucket público `email-assets` en Supabase Storage):
+
+```bash
+cd BACKEND
+npm run sync:email-assets:storage   # sube logo.png + icons/*.png al bucket
+npm run supabase:functions:deploy   # ya corre el sync de arriba + empuja los secrets
+```
+
+- `EMAIL_LOGO_URL` y `EMAIL_ASSETS_BASE_URL` viven en `BACKEND/.env.staging`
+  (fuente de verdad) y se empujan como secrets de Edge Functions vía
+  `setup-supabase-functions.ts`. Si cambiás `logo.png` o cualquier ícono en
+  `BACKEND/src/modules/email/assets/`, corré `sync:email-assets:storage` — si
+  no, el bucket queda desactualizado sin ningún error visible.
+- `npm run check:deploy:staging` (o `:production`) ahora falla si faltan esas
+  variables o si la URL del logo no responde 200.
+- `validateEdgeFunctionSecrets()` en `scripts/lib/supabase-edge-secrets.ts`
+  las exige cuando `EMAIL_ENABLED=true`, así que
+  `npm run supabase:functions:deploy` no deja pushear secrets incompletos.
+
+## 6. Validación end-to-end (después de cambios)
 
 ```bash
 npm test                              # suite completa local

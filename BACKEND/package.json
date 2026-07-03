@@ -12,6 +12,7 @@
     "build": "tsc && node scripts/copy-email-assets.cjs",
     "sync:email-templates:edge": "node scripts/sync-email-templates-edge.cjs",
     "check:email-templates:edge": "node scripts/check-email-templates-edge.cjs",
+    "sync:email-assets:storage": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/sync-email-assets-storage.ts",
     "start": "node dist/server.js",
     "migrate": "ts-node scripts/run-migrations.ts",
     "smoke:api": "ts-node scripts/smoke-auth-player.ts",

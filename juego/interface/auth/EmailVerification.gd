@@ -243,7 +243,6 @@ func _configurar_entrada_codigo() -> void:
 
 
 func _enfocar_codigo() -> void:
-	_intentar_pegar_desde_portapapeles()
 	if is_instance_valid(_line_edit_codigo):
 		_line_edit_codigo.editable = not _is_loading
 		_line_edit_codigo.grab_focus()

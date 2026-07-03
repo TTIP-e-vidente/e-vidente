@@ -41,21 +41,28 @@ export function validateEdgeFunctionSecrets(secrets: Record<string, string>): st
     'BREVO_WEBHOOK_SECRET',
     'EMAIL_TIMEZONE',
     'EMAIL_APP_PLAY_URL',
-    'EMAIL_ASSETS_BASE_URL',
-    'EMAIL_LOGO_URL',
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'GAME_CLIENT_API_KEYS',
   ]);
 
+  // Solo obligatorios si el envío de mails está prendido: sin esto, el logo y
+  // los íconos se mandan en base64 inline, que Brevo/los clientes de mail no
+  // renderizan de forma confiable (ver BACKEND/docs/EMAILS_RUNBOOK.md §6).
   const emailDisabled = secrets.EMAIL_ENABLED === 'false';
+  const requiredOnlyWhenEmailEnabled = new Set([
+    'BREVO_API_KEY',
+    'BREVO_SENDER_EMAIL',
+    'EMAIL_LOGO_URL',
+    'EMAIL_ASSETS_BASE_URL',
+  ]);
 
   return Object.entries(secrets)
     .filter(([key, value]) => {
       if (optional.has(key)) {
         return false;
       }
-      if (emailDisabled && (key === 'BREVO_API_KEY' || key === 'BREVO_SENDER_EMAIL')) {
+      if (emailDisabled && requiredOnlyWhenEmailEnabled.has(key)) {
         return false;
       }
       return value.length === 0;

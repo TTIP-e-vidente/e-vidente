@@ -101,6 +101,39 @@ async function main(): Promise<void> {
     console.log('  warn: EMAIL_ENABLED=true pero Brevo incompleto');
   }
 
+  if (emailConfig.enabled) {
+    const logoUrl = process.env.EMAIL_LOGO_URL?.trim();
+    const assetsBaseUrl = process.env.EMAIL_ASSETS_BASE_URL?.trim();
+
+    if (!logoUrl || !assetsBaseUrl) {
+      console.log(
+        '  warn: falta EMAIL_LOGO_URL/EMAIL_ASSETS_BASE_URL — el logo y los íconos se ' +
+          'mandan en base64 inline y no se ven en la mayoría de los clientes de mail. ' +
+          'Corré: npm run sync:email-assets:storage'
+      );
+      if (production) {
+        process.exit(1);
+      }
+    } else {
+      try {
+        const res = await fetch(logoUrl, { method: 'HEAD' });
+        if (!res.ok) {
+          console.log(`  FAIL: EMAIL_LOGO_URL no responde 200 (${res.status}) → ${logoUrl}`);
+          if (production) {
+            process.exit(1);
+          }
+        } else {
+          console.log(`  logo assets: OK (${logoUrl})`);
+        }
+      } catch (error) {
+        console.log(`  FAIL: no se pudo alcanzar EMAIL_LOGO_URL — ${(error as Error).message}`);
+        if (production) {
+          process.exit(1);
+        }
+      }
+    }
+  }
+
   const publicUrl = process.env.BACKEND_BASE_URL?.trim();
   if (testCron) {
     console.log('\nCron smoke (Edge internal-job):');

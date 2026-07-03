@@ -23,6 +23,7 @@ import {
   buildEdgeFunctionSecrets,
   validateEdgeFunctionSecrets,
 } from './lib/supabase-edge-secrets';
+import { syncEmailAssetsToStorage } from './sync-email-assets-storage';
 import {
   linkSupabaseProject,
   printCliAccessHint,
@@ -157,6 +158,7 @@ async function main(): Promise<void> {
     console.warn('  Agregá SUPABASE_ANON_KEY=... en BACKEND/.env.staging\n');
   }
 
+  await syncEmailAssetsToStorage();
   setSecrets(projectRef);
 
   if (!secretsOnly) {

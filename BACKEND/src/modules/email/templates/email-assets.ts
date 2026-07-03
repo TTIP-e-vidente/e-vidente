@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { emailConfig } from '../email.config';
@@ -74,7 +75,7 @@ export function resolveIconPublicUrl(
     return '';
   }
   const rel = iconAssetPath(icon, variant).replace(/\\/g, '/');
-  return `${base}/${rel}`;
+  return withCacheBustVersion(`${base}/${rel}`, rel);
 }
 
 function readAssetBytes(relPath: string): Buffer | null {
@@ -87,6 +88,34 @@ function readAssetBytes(relPath: string): Buffer | null {
   } catch {
     return null;
   }
+}
+
+const cachedVersions = new Map<string, string>();
+
+/**
+ * Hash corto del contenido del asset, para invalidar el cache de imágenes de
+ * los clientes de mail (Gmail entre otros cachea agresivamente por URL: sin
+ * esto, actualizar logo.png/íconos no se refleja para destinatarios que ya
+ * recibieron un mail con la misma URL).
+ */
+function assetVersion(relPath: string): string {
+  const cached = cachedVersions.get(relPath);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const bytes = readAssetBytes(relPath);
+  const version = bytes ? crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 8) : '';
+  cachedVersions.set(relPath, version);
+  return version;
+}
+
+function withCacheBustVersion(url: string, relPath: string): string {
+  const version = assetVersion(relPath);
+  if (!version) {
+    return url;
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}v=${version}`;
 }
 
 const cachedDataUris = new Map<string, string>();
@@ -131,11 +160,11 @@ export function resolveLogoSrc(mode: 'cid' | 'embed'): string {
   }
   const configuredUrl = emailConfig.logoUrl.trim();
   if (configuredUrl.length > 0) {
-    return configuredUrl;
+    return withCacheBustVersion(configuredUrl, 'logo.png');
   }
   if (canUsePublicEmailAssetUrls()) {
     const base = emailConfig.assetsBaseUrl.trim().replace(/\/+$/, '');
-    return `${base}/logo.png`;
+    return withCacheBustVersion(`${base}/logo.png`, 'logo.png');
   }
   return loadDataUri('logo.png');
 }
