@@ -930,12 +930,22 @@ func _on_flecha_derecha_pressed() -> void:
 	_al_presionar_continuar()
 
 
-func _on_teaching_finished(_timer_finished: bool) -> void:
-	_continuar_despues_de_ensenanza(_timer_finished)
+func _on_teaching_finished(timer_finished: bool) -> void:
+	_continuar_despues_de_ensenanza(timer_finished)
 
 
-func _continuar_despues_de_ensenanza(_timer_finished: bool) -> void:
-	_volver_a_escena_mapa()
+func _continuar_despues_de_ensenanza(temporizador_finalizado: bool) -> void:
+	if _continuar_partida_de_nodo_si_corresponde():
+		return
+	if not _tiene_estado_flujo_post_juego():
+		_volver_a_escena_mapa()
+		return
+	PostGameFlowControllerScript.navegar_despues_ensenanza(
+		get_tree(),
+		_tomar_estado_flujo_post_juego(),
+		_take_post_game_streak_feedback(),
+		temporizador_finalizado
+	)
 
 
 func _tiene_estado_flujo_post_juego() -> bool:
