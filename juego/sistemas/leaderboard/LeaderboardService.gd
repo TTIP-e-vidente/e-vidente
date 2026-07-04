@@ -96,14 +96,19 @@ func prefetch_resumen_competitivo(scope: String = "global_xp") -> void:
 
 
 func cargar_mas(scope: String, desplazamiento: int) -> void:
+	var clave := "%s@o%d" % [scope, desplazamiento]
+	if _cargando_scope.get(clave, false):
+		return
+	_cargando_scope[clave] = true
 	var resultado := await LeaderboardApi.obtener_leaderboard(
 		scope, LIMITE_POR_PAGINA, desplazamiento, false
 	)
+	_cargando_scope[clave] = false
 	if resultado.get("ok", false):
 		var datos: Variant = resultado.get("data", {})
 		leaderboard_cargado.emit(scope + ":mas", datos as Dictionary if datos is Dictionary else {})
 	else:
-		leaderboard_fallido.emit(scope, LeaderboardApi.mensaje_error(resultado))
+		leaderboard_fallido.emit(scope + ":mas", LeaderboardApi.mensaje_error(resultado))
 
 
 func cargar_posicion_propia(forzar: bool = false) -> void:

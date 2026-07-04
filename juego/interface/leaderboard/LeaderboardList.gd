@@ -240,12 +240,21 @@ func _actualizar_paginacion(datos: Dictionary) -> void:
 func _mostrar_boton_ver_mas(hay_mas: bool) -> void:
 	if is_instance_valid(_boton_ver_mas):
 		_boton_ver_mas.visible = mostrar_boton_ver_mas and hay_mas
+		_boton_ver_mas.disabled = false
 
 
 # ── Callbacks ──────────────────────────────────────────────────────────────────
 
 func _al_presionar_ver_mas() -> void:
+	if is_instance_valid(_boton_ver_mas):
+		_boton_ver_mas.disabled = true
 	cargar_mas_solicitado.emit(_scope_actual, _desplazamiento)
+
+
+# Reactiva el botón "Ver más" si la carga de la página siguiente falló.
+func restablecer_boton_ver_mas() -> void:
+	if is_instance_valid(_boton_ver_mas):
+		_boton_ver_mas.disabled = false
 
 
 func _al_avatar_cargado(user_id: String, _texture: Texture2D) -> void:

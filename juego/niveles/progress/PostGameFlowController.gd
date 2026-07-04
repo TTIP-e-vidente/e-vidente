@@ -4,7 +4,7 @@ const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTrack
 
 const POST_GAME_FLOW_STATE_META := "post_game_flow_state"
 const LOG_PREFIX := "[POST_GAME]"
-const DEBUG_FLOW_LOGS := false
+const DEBUG_FLOW_LOGS := true
 const TARGET_TYPE_STREAK := "streak"
 const STEP_STREAK := "streak"
 const STEP_NEXT := "next"
@@ -55,11 +55,16 @@ static func finalizar_actividad(tree: SceneTree, resultado_bruto: Dictionary) ->
 		return
 
 	var NodoRuntimeScript = load("res://sistemas/NodoRuntime.gd")
+	var partida_activa_al_entrar: bool = _tiene_partida_de_nodo_activa(tree)
 	var hay_mas_juegos := false
-	if _tiene_partida_de_nodo_activa(tree):
+	if partida_activa_al_entrar:
 		# Evita doble finalización: si la modalidad ya cerró el nodo, los stats
 		# fueron limpiados y un segundo cierre forzaría precisión al 100%.
 		hay_mas_juegos = bool(NodoRuntimeScript.finalizar_mini_juego(tree))
+	print(
+		"%s finalizar_actividad node_key=%s activity_id=%s partida_activa_al_entrar=%s hay_mas_juegos=%s"
+		% [LOG_PREFIX, node_key, _activity_id, partida_activa_al_entrar, hay_mas_juegos]
+	)
 
 	if hay_mas_juegos:
 		return
@@ -114,9 +119,29 @@ static func _tiene_partida_de_nodo_activa(tree: SceneTree) -> bool:
 
 static func es_cierre_de_nodo_mapa(tree: SceneTree) -> bool:
 	if not _tiene_partida_de_nodo_activa(tree):
+		print("%s es_cierre_de_nodo_mapa=false razon=sin_partida_activa" % LOG_PREFIX)
 		return false
 	var NodoRuntimeScript = load("res://sistemas/NodoRuntime.gd")
-	return not bool(NodoRuntimeScript.hay_siguiente_mini_juego(tree))
+	var hay_siguiente: bool = bool(NodoRuntimeScript.hay_siguiente_mini_juego(tree))
+	var partida: Dictionary = {}
+	var juego_actual: Dictionary = {}
+	if tree != null and tree.root != null:
+		var global_state: Node = tree.root.get_node_or_null("/root/Global")
+		if global_state != null and global_state.has_method("obtener_partida_de_nodo_actual"):
+			partida = global_state.call("obtener_partida_de_nodo_actual")
+		if global_state != null and global_state.has_method("obtener_juego_actual_de_partida"):
+			juego_actual = global_state.call("obtener_juego_actual_de_partida")
+	print(
+		"%s es_cierre_de_nodo_mapa=%s mode=%s indice_actual=%d total=%d"
+		% [
+			LOG_PREFIX,
+			not hay_siguiente,
+			str(juego_actual.get("mode", "")),
+			int(partida.get("indice_juego_actual", -1)),
+			int(partida.get("total_juegos", -1)),
+		]
+	)
+	return not hay_siguiente
 
 
 static func construir_estado_flujo_post_juego(

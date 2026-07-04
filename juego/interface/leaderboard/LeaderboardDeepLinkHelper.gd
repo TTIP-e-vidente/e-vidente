@@ -70,7 +70,7 @@ static func _extraer_parametros_desde_texto(texto: String) -> Dictionary:
 	if texto_limpio.begins_with("--"):
 		parte_consulta = texto_limpio.substr(2)
 	elif "?" in texto_limpio:
-		parte_consulta = texto_limpio.split("?", 2)[1]
+		parte_consulta = texto_limpio.split("?", true, 1)[1]
 
 	var parametros: Dictionary = {}
 	for par in parte_consulta.split("&"):

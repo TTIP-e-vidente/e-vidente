@@ -149,7 +149,9 @@ func test_registrar_persiste_momento_de_ultima_interaccion() -> void:
 	)
 
 
-func test_modelo_vista_racha_de_ayer_antes_de_18_queda_inactiva() -> void:
+func test_modelo_vista_racha_de_ayer_antes_de_18_ya_es_warning() -> void:
+	# El aviso de racha pendiente se muestra todo el dia (no recien a la
+	# tarde): jugo ayer y no jugo hoy debe verse en naranja desde temprano.
 	var today := Time.get_date_string_from_system(false)
 	var streak := {
 		"current_count": 3,
@@ -157,10 +159,10 @@ func test_modelo_vista_racha_de_ayer_antes_de_18_queda_inactiva() -> void:
 		"last_activity_day": _dia_anterior(today),
 	}
 
-	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 17)
+	var vista: Dictionary = GameStreakTracker.modelo_vista(streak, today, 8)
 
 	assert_str(str(vista.get("status_key", ""))).is_equal("pending_today")
-	assert_str(str(vista.get("streak_state", ""))).is_equal("inactive")
+	assert_str(str(vista.get("streak_state", ""))).is_equal("warning")
 	assert_int(int(vista.get("current_count", 0))).is_equal(3)
 
 
