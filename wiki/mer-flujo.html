@@ -5,19 +5,454 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flujo de datos — E-VIDENTE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/mer-shared.css">
 <style>
-.tag-e1 { background: var(--local-bg); color: var(--local-text); }
-.tag-e2 { background: rgba(99,120,255,0.1); color: rgba(140,160,255,0.65); }
-.tag-e3 { background: var(--sync-bg); color: var(--sync-text); }
+/* ── Flujo E3·E4 — minimal luxe ── */
+.page-flow { max-width: 960px; }
+.page-flow .lead { max-width: 640px; font-size: 13px; }
+.page-flow .eyebrow { color: rgba(255,200,120,0.55); letter-spacing: 3px; }
+
+.flow-glance {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 28px;
+}
+@media (max-width: 760px) { .flow-glance { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 420px) { .flow-glance { grid-template-columns: 1fr; } }
+
+/* Timeline evolución producto */
+.flow-timeline {
+  display: grid; gap: 10px; margin-bottom: 8px;
+}
+.flow-milestone {
+  display: grid; grid-template-columns: 72px 1fr; gap: 14px; align-items: start;
+  padding: 14px 16px; border-radius: 13px;
+  border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.018);
+  position: relative;
+}
+@media (max-width: 560px) { .flow-milestone { grid-template-columns: 1fr; } }
+.flow-milestone::before {
+  content: ''; position: absolute; left: 35px; top: 100%; width: 1px; height: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent);
+}
+.flow-milestone:last-child::before { display: none; }
+.flow-ms-tag {
+  font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 8px; border-radius: 8px; text-align: center; line-height: 1.3;
+}
+.flow-ms-tag.e1 { color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.05); }
+.flow-ms-tag.e2 { color: rgba(180,195,255,0.85); background: rgba(99,120,255,0.1); }
+.flow-ms-tag.e3 { color: rgba(90,220,165,0.9); background: rgba(45,185,120,0.1); }
+.flow-ms-tag.e4 { color: rgba(255,200,120,0.9); background: rgba(255,159,66,0.1); }
+.flow-ms-tag.core { color: rgba(255,220,120,0.85); background: rgba(255,200,70,0.08); }
+.flow-ms-body h3 { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.82); margin-bottom: 6px; }
+.flow-ms-body p { font-size: 10.5px; color: rgba(255,255,255,0.36); line-height: 1.6; margin-bottom: 8px; }
+.flow-ms-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.flow-ms-pills span {
+  font-size: 8.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.025);
+}
+.flow-ms-pills span.accent { color: rgba(90,220,165,0.85); border-color: rgba(45,185,120,0.2); }
+.flow-ms-pills span.mail { color: rgba(255,200,120,0.85); border-color: rgba(255,159,66,0.2); }
+
+/* Bloque técnico mapa / algoritmo */
+.flow-tech-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+@media (max-width: 680px) { .flow-tech-grid { grid-template-columns: 1fr; } }
+.flow-tech-card {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02);
+}
+.flow-tech-card h4 {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.75); margin-bottom: 8px;
+}
+.flow-tech-card p, .flow-tech-card li {
+  font-size: 10px; color: rgba(255,255,255,0.36); line-height: 1.55;
+}
+.flow-tech-card ul { list-style: none; }
+.flow-tech-card li {
+  padding-left: 11px; position: relative; margin-bottom: 5px;
+}
+.flow-tech-card li::before {
+  content: ''; position: absolute; left: 0; top: 7px; width: 4px; height: 4px;
+  border-radius: 50%; background: rgba(255,200,70,0.45);
+}
+.flow-tech-card code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8.5px;
+  color: rgba(255,200,120,0.75); background: rgba(255,255,255,0.04);
+  padding: 1px 4px; border-radius: 4px;
+}
+.flow-algo {
+  margin-top: 10px; padding: 12px 14px; border-radius: 10px;
+  border: 1px dashed rgba(99,120,255,0.22); background: rgba(99,120,255,0.04);
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8.5px;
+  color: rgba(180,195,255,0.75); line-height: 1.65; overflow-x: auto;
+}
+
+/* Mock curva Path2D + algoritmo layout */
+.flow-curve-block {
+  margin-top: 14px; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(99,120,255,0.16);
+  background: linear-gradient(165deg, rgba(99,120,255,0.07) 0%, rgba(8,12,20,0.55) 50%);
+}
+.flow-curve-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.18);
+}
+.flow-curve-head span {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: rgba(180,195,255,0.55);
+}
+.flow-curve-head code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8.5px;
+  color: rgba(255,200,120,0.8); background: rgba(255,255,255,0.04);
+  padding: 3px 7px; border-radius: 5px;
+}
+.flow-curve-layout {
+  display: grid; grid-template-columns: 1fr 280px; gap: 0;
+}
+@media (max-width: 720px) { .flow-curve-layout { grid-template-columns: 1fr; } }
+.flow-curve-viz { padding: 14px 10px 6px; min-width: 0; }
+.flow-curve-viz svg { width: 100%; height: auto; display: block; }
+.flow-curve-legend {
+  padding: 14px 16px; border-left: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.12);
+}
+@media (max-width: 720px) {
+  .flow-curve-legend { border-left: none; border-top: 1px solid rgba(255,255,255,0.06); }
+}
+.flow-curve-legend h5 {
+  font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.38); margin-bottom: 12px;
+}
+.flow-curve-step {
+  display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start;
+  margin-bottom: 10px;
+}
+.flow-curve-step:last-child { margin-bottom: 0; }
+.flow-curve-step .cs-n {
+  width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 800; color: rgba(180,195,255,0.9);
+  background: rgba(99,120,255,0.15); border: 1px solid rgba(99,120,255,0.25);
+}
+.flow-curve-step p { font-size: 9.5px; color: rgba(255,255,255,0.42); line-height: 1.5; }
+.flow-curve-step code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8px;
+  color: rgba(255,200,120,0.75);
+}
+.flow-curve-modes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+@media (max-width: 560px) { .flow-curve-modes { grid-template-columns: 1fr; } }
+.flow-curve-mode {
+  padding: 12px 14px 14px; border-right: 1px solid rgba(255,255,255,0.05);
+}
+.flow-curve-mode:last-child { border-right: none; }
+@media (max-width: 560px) {
+  .flow-curve-mode { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .flow-curve-mode:last-child { border-bottom: none; }
+}
+.flow-curve-mode h6 {
+  font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.flow-curve-mode h6 .pill {
+  font-size: 7.5px; padding: 2px 6px; border-radius: 999px; font-weight: 700;
+}
+.flow-curve-mode.anchors h6 { color: rgba(255,120,120,0.85); }
+.flow-curve-mode.anchors h6 .pill {
+  color: rgba(255,120,120,0.9); background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2);
+}
+.flow-curve-mode.curve h6 { color: rgba(90,220,165,0.85); }
+.flow-curve-mode.curve h6 .pill {
+  color: rgba(90,220,165,0.9); background: rgba(45,185,120,0.1); border: 1px solid rgba(45,185,120,0.2);
+}
+.flow-curve-mode p { font-size: 9px; color: rgba(255,255,255,0.34); line-height: 1.55; margin-bottom: 8px; }
+.flow-curve-mode svg { width: 100%; height: auto; display: block; border-radius: 8px; }
+.flow-curve-foot {
+  padding: 10px 14px; font-size: 9px; color: rgba(255,255,255,0.38);
+  border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.22);
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+}
+.flow-curve-foot .lg {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 8px 4px 5px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);
+}
+.flow-curve-foot .lg sub { font-size: 0.85em; opacity: 0.85; }
+.flow-curve-foot .lg-sw {
+  flex-shrink: 0; display: block;
+}
+.flow-curve-foot .lg-note {
+  margin-left: auto; opacity: .65; font-size: 8.5px;
+}
+.flow-curve-foot .lg-note code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8px;
+  color: rgba(255,200,120,0.75); background: rgba(255,255,255,0.04);
+  padding: 2px 5px; border-radius: 4px;
+}
+@media (max-width: 640px) {
+  .flow-curve-foot .lg-note { margin-left: 0; width: 100%; }
+}
+
+.flow-supabase-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  padding: 12px 14px; border-radius: 11px; margin-top: 12px;
+  border: 1px solid rgba(45,185,120,0.18); background: rgba(45,185,120,0.04);
+  font-size: 9.5px; color: rgba(255,255,255,0.4);
+}
+.flow-supabase-strip .chip {
+  padding: 4px 9px; border-radius: 999px; font-weight: 700; font-size: 9px;
+  color: rgba(90,220,165,0.9); background: rgba(45,185,120,0.1);
+  border: 1px solid rgba(45,185,120,0.18);
+}
+.flow-g {
+  padding: 12px 14px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+  position: relative; overflow: hidden;
+}
+.flow-g::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: .7;
+}
+.flow-g.g-e3::before { background: linear-gradient(90deg, var(--pg), transparent); }
+.flow-g.g-e4::before { background: linear-gradient(90deg, #ff9f42, transparent); }
+.flow-g-k { font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.flow-g.g-e3 .flow-g-k { color: rgba(90,220,165,0.65); }
+.flow-g.g-e4 .flow-g-k { color: rgba(255,200,120,0.65); }
+.flow-g strong { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.82); margin-bottom: 3px; }
+.flow-g span { font-size: 9.5px; color: rgba(255,255,255,0.32); line-height: 1.45; }
+
+.flow-subnav {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 36px;
+  padding: 4px; border-radius: 12px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+  position: sticky; top: calc(var(--nav-h) + var(--strip-h)); z-index: 100;
+}
+.flow-subnav a {
+  padding: 7px 13px; border-radius: 8px; font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,0.38); text-decoration: none; transition: .15s;
+  letter-spacing: .02em;
+}
+.flow-subnav a:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.04); }
+.flow-subnav a.on { color: rgba(255,235,200,0.95); background: rgba(255,159,66,0.1); border: 1px solid rgba(255,159,66,0.18); }
+.flow-subnav a.on-e3 { color: rgba(180,240,210,0.95); background: rgba(45,185,120,0.08); border: 1px solid rgba(45,185,120,0.18); }
+
+.flow-sec { scroll-margin-top: calc(var(--nav-h) + var(--strip-h) + 56px); margin-bottom: 56px; }
+.flow-sec-head { margin-bottom: 20px; }
+.flow-sec-head .kicker {
+  font-size: 8px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 8px; display: inline-block; padding: 3px 8px; border-radius: 4px;
+}
+.flow-sec-head .kicker.k-e3 { color: rgba(90,220,165,0.75); background: rgba(45,185,120,0.08); }
+.flow-sec-head .kicker.k-e4 { color: rgba(255,200,120,0.75); background: rgba(255,159,66,0.08); }
+.flow-sec-head h2 { font-size: clamp(18px, 3vw, 22px); font-weight: 800; letter-spacing: -.03em; margin-bottom: 8px; }
+.flow-sec-head p { font-size: 11.5px; color: rgba(255,255,255,0.36); line-height: 1.65; max-width: 600px; }
+
+/* Panorama E1→E4 */
+.flow-river {
+  display: flex; align-items: stretch; gap: 0; margin-bottom: 12px;
+  border-radius: 14px; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.015); overflow: hidden;
+}
+@media (max-width: 720px) { .flow-river { flex-direction: column; } }
+.fr-col {
+  flex: 1; padding: 14px 16px; border-right: 1px solid rgba(255,255,255,0.04);
+  min-width: 0;
+}
+.fr-col:last-child { border-right: none; }
+.fr-col.fr-hero { flex: 1.15; background: rgba(45,185,120,0.03); }
+.fr-col.fr-e4 { background: rgba(255,159,66,0.03); }
+.fr-tag { font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.fr-col.fr-muted .fr-tag { color: rgba(255,255,255,0.28); }
+.fr-col.fr-hero .fr-tag { color: rgba(90,220,165,0.7); }
+.fr-col.fr-e4 .fr-tag { color: rgba(255,200,120,0.75); }
+.fr-col h3 { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
+.fr-steps { list-style: none; }
+.fr-steps li {
+  font-size: 9.5px; color: rgba(255,255,255,0.34); line-height: 1.5;
+  padding-left: 10px; position: relative; margin-bottom: 4px;
+}
+.fr-steps li::before { content: ''; position: absolute; left: 0; top: 6px; width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+.fr-col.fr-hero .fr-steps li::before { background: var(--pg); }
+.fr-col.fr-e4 .fr-steps li::before { background: #ff9f42; }
+
+/* Lane minimal override */
+.flow-lane {
+  border-radius: 13px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.012);
+}
+.flow-lane .lane-header {
+  padding: 10px 16px; background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.flow-lane .lane-header h3 { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,0.5); }
+.flow-lane .swimlane { min-height: 64px; }
+.flow-lane .lane-label { font-size: 8px; padding: 10px 8px; }
+.flow-lane .node { font-size: 10px; padding: 7px 11px; border-radius: 8px; max-width: 200px; }
+.flow-lane .node small { font-size: 8.5px; }
+
+/* E4 flow steps */
+.e4-path {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+}
+@media (max-width: 640px) { .e4-path { grid-template-columns: 1fr; } }
+.e4-panel {
+  border-radius: 13px; padding: 16px 18px;
+  border: 1px solid rgba(255,159,66,0.14); background: rgba(255,159,66,0.03);
+}
+.e4-panel h3 { font-size: 12px; font-weight: 700; color: rgba(255,220,170,0.9); margin-bottom: 12px; }
+.e4-step {
+  display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;
+  padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.e4-step:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.e4-n {
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: rgba(255,220,170,0.9);
+  background: rgba(255,159,66,0.15); border: 1px solid rgba(255,159,66,0.22);
+}
+.e4-step strong { display: block; font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.78); margin-bottom: 2px; }
+.e4-step span { font-size: 9.5px; color: rgba(255,255,255,0.34); line-height: 1.5; }
+.e4-step span code { font-size: 8.5px; font-family: 'JetBrains Mono', var(--mono); background: rgba(255,255,255,0.05); }
+
+.e4-cron-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  padding: 12px 16px; border-radius: 11px; margin-top: 10px;
+  border: 1px dashed rgba(255,159,66,0.2); background: rgba(255,255,255,0.015);
+  font-size: 9.5px; color: rgba(255,255,255,0.38);
+}
+.e4-cron-strip .chip {
+  padding: 4px 9px; border-radius: 999px; font-weight: 700; font-size: 9px;
+  color: rgba(255,200,120,0.85); background: rgba(255,159,66,0.1);
+  border: 1px solid rgba(255,159,66,0.18);
+}
+
+.flow-callout {
+  margin-top: 14px; padding: 14px 16px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+  font-size: 10.5px; color: rgba(255,255,255,0.38); line-height: 1.6;
+}
+.flow-callout strong { color: rgba(255,255,255,0.65); }
+.flow-callout a { color: rgba(255,200,120,0.8); text-decoration: none; font-weight: 600; }
+.flow-callout a:hover { text-decoration: underline; }
+
+.flow-details summary {
+  cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  color: rgba(255,255,255,0.38); padding: 10px 0; list-style: none;
+}
+.flow-details summary::-webkit-details-marker { display: none; }
+.flow-details[open] summary { color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+
+.flow-links {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
+}
+.flow-link-card {
+  padding: 12px 14px; border-radius: 10px; text-decoration: none; color: inherit;
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+  transition: .15s;
+}
+.flow-link-card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.035); }
+.flow-link-card .fl-k { font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 5px; }
+.flow-link-card strong { font-size: 11px; color: rgba(255,255,255,0.75); }
+
+/* Relacionado — navegación enriquecida */
+.flow-rel-featured {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;
+}
+@media (max-width: 720px) { .flow-rel-featured { grid-template-columns: 1fr; } }
+.flow-rel-hero {
+  display: block; padding: 16px 18px; border-radius: 13px; text-decoration: none; color: inherit;
+  border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02);
+  position: relative; overflow: hidden; transition: .15s;
+}
+.flow-rel-hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; opacity: .85;
+}
+.flow-rel-hero:hover {
+  border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.04);
+  transform: translateY(-1px);
+}
+.flow-rel-hero.r-hub::before { background: linear-gradient(90deg, #6368ff, transparent); }
+.flow-rel-hero.r-e3::before { background: linear-gradient(90deg, var(--pg), transparent); }
+.flow-rel-hero.r-e4::before { background: linear-gradient(90deg, #ff9f42, transparent); }
+.flow-rel-hero-top {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.flow-rel-hero-tag {
+  font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+}
+.flow-rel-hero.r-hub .flow-rel-hero-tag { color: rgba(180,195,255,0.85); background: rgba(99,120,255,0.1); }
+.flow-rel-hero.r-e3 .flow-rel-hero-tag { color: rgba(90,220,165,0.9); background: rgba(45,185,120,0.1); }
+.flow-rel-hero.r-e4 .flow-rel-hero-tag { color: rgba(255,200,120,0.9); background: rgba(255,159,66,0.1); }
+.flow-rel-hero-arrow { font-size: 14px; color: rgba(255,255,255,0.2); transition: .15s; }
+.flow-rel-hero:hover .flow-rel-hero-arrow { color: rgba(255,255,255,0.5); transform: translateX(3px); }
+.flow-rel-hero h3 { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.85); margin-bottom: 6px; letter-spacing: -.02em; }
+.flow-rel-hero p { font-size: 10px; color: rgba(255,255,255,0.34); line-height: 1.55; }
+.flow-rel-hero p code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8.5px;
+  color: rgba(255,200,120,0.75); background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px;
+}
+
+.flow-rel-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+@media (max-width: 680px) { .flow-rel-grid { grid-template-columns: 1fr; } }
+.flow-rel-group {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);
+}
+.flow-rel-group h4 {
+  font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.32); margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.flow-rel-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.flow-rel-list a {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  padding: 8px 10px; border-radius: 8px; text-decoration: none; color: inherit;
+  border: 1px solid transparent; transition: .12s;
+}
+.flow-rel-list a:hover {
+  background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.06);
+}
+.flow-rel-list a.is-internal { border-style: dashed; border-color: rgba(255,255,255,0.04); }
+.flow-rel-list a.is-internal:hover { border-color: rgba(99,120,255,0.2); background: rgba(99,120,255,0.04); }
+.flow-rel-list strong {
+  display: block; font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.72); margin-bottom: 2px;
+}
+.flow-rel-list span {
+  display: block; font-size: 9px; color: rgba(255,255,255,0.28); line-height: 1.45;
+}
+.flow-rel-list .rl-arrow { font-size: 11px; color: rgba(255,255,255,0.18); }
+.flow-rel-list a:hover .rl-arrow { color: rgba(255,255,255,0.45); }
+.flow-rel-list code {
+  font-family: 'JetBrains Mono', var(--mono); font-size: 8px;
+  color: rgba(255,200,120,0.65);
+}
+.flow-rel-foot {
+  margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+  border: 1px dashed rgba(255,255,255,0.08); background: rgba(255,255,255,0.015);
+  font-size: 9.5px; color: rgba(255,255,255,0.3); line-height: 1.55;
+}
+.flow-rel-foot a { color: rgba(255,200,120,0.8); text-decoration: none; font-weight: 600; }
+.flow-rel-foot a:hover { text-decoration: underline; }
+
 .tag-e4 { background: rgba(255,159,66,0.12); color: rgba(255,200,120,0.85); }
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a class="nav-brand" href="mer.html">E-VIDENTE</a>
+  <a class="nav-brand" href="mer.html">
+    <img class="nav-logo" src="../juego/assets-sistema/avatars/evidente.png" alt="" width="28" height="28">
+    <span class="nav-brand-text">E-VIDENTE</span>
+  </a>
   <a href="mer.html">Hub MER</a>
   <a href="mer-dominio.html">Dominio <span class="badge badge-e1">E1·E2</span></a>
   <a href="mer-persistencia-e3.html">Persistencia <span class="badge badge-e3">E3</span></a>
@@ -27,385 +462,715 @@
 </nav>
 
 <div class="hub-strip">
-  <span class="hub-strip-label">Recorrido E3</span>
-  <a class="hub-pill" data-page="mer.html" href="mer.html"><span class="dot hub"></span> Hub MER</a>
+  <span class="hub-strip-label">Recorrido MER</span>
+  <a class="hub-pill" data-page="mer.html" href="mer.html"><span class="dot hub"></span> Hub</a>
   <a class="hub-pill on" data-page="mer-flujo.html" href="mer-flujo.html"><span class="dot flujo"></span> Flujo</a>
-  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> Persistencia</a>
+  <a class="hub-pill" data-page="mer-persistencia-e3.html" href="mer-persistencia-e3.html"><span class="dot persist"></span> E3</a>
+  <a class="hub-pill" data-page="mer-persistencia-e4.html" href="mer-persistencia-e4.html"><span class="dot" style="background:#ff9f42"></span> E4</a>
 </div>
 
-<div class="page">
-  <p class="eyebrow">Arquitectura de datos · Entrega 3</p>
+<div class="page page-flow">
+  <p class="eyebrow">Arquitectura de datos · E3 · E4</p>
   <h1>Flujo de datos</h1>
   <p class="lead">
-    Una pregunta simple: <strong style="color:rgba(255,255,255,0.72)">¿qué pasa con los datos del jugador en cada entrega?</strong>
-    Primero la evolución E1→E3; después dos historias concretas — terminar una partida e iniciar sesión.
+    Qué le pasa a los datos del jugador en cada entrega — y qué fuimos integrando en el camino:
+    lecciones en JSON, animaciones, partidas compuestas, layout automático del mapa,
+    migración a <strong>Supabase</strong> y mails transaccionales (E4) sin romper el <em>local-first</em>.
   </p>
 
-  <div class="glance mb-48">
-    <div class="glance-item"><div class="glance-icon local">1</div><div><h4>Partida</h4><p>Save local al instante. Sync solo si hay cuenta.</p></div></div>
-    <div class="glance-item"><div class="glance-icon sync">2</div><div><h4>Login</h4><p>Merge local + remoto. Cola offline se vacía.</p></div></div>
-    <div class="glance-item"><div class="glance-icon pg">3</div><div><h4>Regla</h4><p>Sin backend → se juega igual. Postgres nunca bloquea.</p></div></div>
+  <div class="flow-glance">
+    <div class="flow-g g-e3"><div class="flow-g-k">E1·E2</div><strong>Lecciones JSON</strong><span>Contenido desacoplado del código</span></div>
+    <div class="flow-g g-e3"><div class="flow-g-k">E2</div><strong>Animaciones</strong><span>Typewriter · transiciones · estrellas</span></div>
+    <div class="flow-g g-e3"><div class="flow-g-k">E3</div><strong>Partida compuesta</strong><span>Varios minijuegos por nodo</span></div>
+    <div class="flow-g g-e3"><div class="flow-g-k">E3</div><strong>Mapa auto</strong><span>Path2D + algoritmo anchors/curve</span></div>
+    <div class="flow-g g-e3"><div class="flow-g-k">E3</div><strong>Supabase</strong><span>PG remoto + Edge + sync</span></div>
+    <div class="flow-g g-e3"><div class="flow-g-k">E3</div><strong>Login / sync</strong><span>Cola offline · merge</span></div>
+    <div class="flow-g g-e4"><div class="flow-g-k">E4</div><strong>OTP + welcome</strong><span>Verificación de mail</span></div>
+    <div class="flow-g g-e4"><div class="flow-g-k">E4</div><strong>Cron</strong><span>pg_cron → Edge → Brevo</span></div>
   </div>
 
-  <nav class="subnav" data-spy>
-    <a href="#evolucion" class="on">Evolución E1→E3</a>
-    <a href="#flujo-partida">Flujo partida</a>
-    <a href="#flujo-login">Flujo login</a>
-    <a href="#fuentes">Código fuente</a>
+  <nav class="flow-subnav subnav" data-spy>
+    <a href="#evolucion" class="on">Evolución</a>
+    <a href="#panorama">Panorama</a>
+    <a href="#contenido-mapa" class="on-e3">Mapa · lecciones</a>
+    <a href="#supabase" class="on-e3">Supabase</a>
+    <a href="#e3-partida" class="on-e3">E3 · Partida</a>
+    <a href="#e3-login" class="on-e3">E3 · Login</a>
+    <a href="#e4-flujo">E4 · Email</a>
+    <a href="#relacionado">Relacionado</a>
   </nav>
 
-  <!-- ═══ SECCIÓN 1: EVOLUCIÓN ═══ -->
-  <section class="section" id="evolucion">
-    <div class="section-head">
-      <h2>Cómo evolucionó el flujo por entrega</h2>
-      <p>
-        En E1 y E2 el camino era corto: partida → save local → listo.
-        En E3 sumamos cuenta y PostgreSQL, pero el juego sigue pudiendo correr sin red —
-        esa es la idea central del sprint.
-      </p>
+  <!-- Evolución integraciones -->
+  <section class="flow-sec" id="evolucion">
+    <div class="flow-sec-head">
+      <span class="kicker">Producto · E1 → E4</span>
+      <h2>Qué fuimos integrando (en orden)</h2>
+      <p>No fue solo “conectar una DB”: cada entrega sumó capas de experiencia y de infraestructura sin reescribir el núcleo del juego.</p>
     </div>
 
-    <div class="evo-grid">
-      <!-- E1 -->
-      <article class="evo-card">
-        <div class="evo-top">
-          <h3>Entrega 1</h3>
-          <span class="evo-tag tag-e1">Solo local</span>
-        </div>
-        <div class="evo-flow">
-          <div class="evo-step">
-            <span class="evo-dot blue">1</span>
-            <span>Jugador completa nodo / partida</span>
+    <div class="flow-timeline">
+      <article class="flow-milestone">
+        <div class="flow-ms-tag e1">E1</div>
+        <div class="flow-ms-body">
+          <h3>Mapa, lecciones y progreso local</h3>
+          <p>Nodos jugables, pantalla de lección terminada, racha en HUD y <code>save_data.json</code>. El contenido educativo vive en JSON — no en escenas hardcodeadas.</p>
+          <div class="flow-ms-pills">
+            <span>celiaquia_mapa.json</span>
+            <span>rejugar lecciones</span>
+            <span>dificultad progresiva</span>
           </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot blue">2</span>
-            <span><code>SaveManager</code> escribe <code>save_data.json</code></span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot muted">✓</span>
-            <span>Fin — progreso en disco del dispositivo</span>
-          </div>
-        </div>
-        <div class="evo-foot">
-          <strong>MER:</strong> dominio conceptual (Excalidraw). Sin backend, sin cola, sin login.
         </div>
       </article>
 
-      <!-- E2 -->
-      <article class="evo-card">
-        <div class="evo-top">
-          <h3>Entrega 2</h3>
-          <span class="evo-tag tag-e2">Igual que E1</span>
-        </div>
-        <div class="evo-flow">
-          <div class="evo-step">
-            <span class="evo-dot blue">1</span>
-            <span>Mismas modalidades + Completar Palabra</span>
+      <article class="flow-milestone">
+        <div class="flow-ms-tag e2">E2</div>
+        <div class="flow-ms-body">
+          <h3>Animaciones y polish de partida</h3>
+          <p>Transiciones con <code>GameSceneRouter</code>, typewriter en preguntas y arrastre, estrellas al perfecto, modalidad Completar Palabra y fondo animado. Mejor lectura sin bloquear inputs.</p>
+          <div class="flow-ms-pills">
+            <span>TypewriterEffect</span>
+            <span>DragObjectiveText</span>
+            <span>GdUnit4 tests</span>
           </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot blue">2</span>
-            <span>Mismo save local (<code>save_data.json</code>)</span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot muted">✓</span>
-            <span>Fin — polish visual, cero infraestructura nueva</span>
-          </div>
-        </div>
-        <div class="evo-foot">
-          <strong>Cambio de dominio:</strong> +Completar Palabra. <strong>Persistencia:</strong> sin cambios.
         </div>
       </article>
 
-      <!-- E3 -->
-      <article class="evo-card">
-        <div class="evo-top">
-          <h3>Entrega 3</h3>
-          <span class="evo-tag tag-e3">Local + nube</span>
-        </div>
-        <div class="evo-flow">
-          <div class="evo-step">
-            <span class="evo-dot blue">1</span>
-            <span>Partida → save local <strong style="color:rgba(130,150,255,0.9)">(siempre primero)</strong></span>
+      <article class="flow-milestone">
+        <div class="flow-ms-tag core">Mapa</div>
+        <div class="flow-ms-body">
+          <h3>Layout automático de nodos</h3>
+          <p>Los nodos visuales se colocan solos sobre una curva <code>Path2D</code> según el JSON del mapa — sin posicionar a mano cada instancia en runtime.</p>
+          <div class="flow-ms-pills">
+            <span>MapPathLayout</span>
+            <span>anchors · curve</span>
+            <span>route_id</span>
           </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot gold">2</span>
-            <span>Si hay cuenta → cola offline → batch sync</span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot green">3</span>
-            <span>PostgreSQL guarda nodo + partida</span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot gold">4</span>
-            <span>Login en otro dispositivo → merge → recuperás todo</span>
-          </div>
-        </div>
-        <div class="evo-foot">
-          <strong>Nuevo:</strong> JWT, cola, merge, 8 tablas PG. <strong>Contenido JSON</strong> sigue fuera de la DB.
         </div>
       </article>
 
-      <!-- E4 -->
-      <article class="evo-card active-e3">
-        <div class="evo-top">
-          <h3>Entrega 4</h3>
-          <span class="evo-tag tag-e4">+ Email</span>
-        </div>
-        <div class="evo-flow">
-          <div class="evo-step">
-            <span class="evo-dot blue">1</span>
-            <span>Registro → OTP por mail → verificar en Godot</span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot" style="background:rgba(255,159,66,0.7)">2</span>
-            <span>Edge + Brevo · auditoría en <code>email_deliveries</code></span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot green">3</span>
-            <span>Racha en PG (E3) → jobs pg_cron si opt-in</span>
-          </div>
-          <div class="evo-arrow-down">↓</div>
-          <div class="evo-step">
-            <span class="evo-dot muted">✓</span>
-            <span>Gameplay offline igual — mails son best-effort</span>
+      <article class="flow-milestone">
+        <div class="flow-ms-tag e3">E3</div>
+        <div class="flow-ms-body">
+          <h3>Partidas compuestas por nodo</h3>
+          <p><code>ArmadorDePartida</code> arma una secuencia de minijuegos (hasta 5) con dificultad progresiva. En JSON podés declarar <code>games[]</code> fijos o random — varios nodos usan 3–4 actividades seguidas antes de cerrar la lección.</p>
+          <div class="flow-ms-pills">
+            <span>drag · quiz · vincular · completar</span>
+            <span>clientRunId</span>
+            <span class="accent">local-first siempre</span>
           </div>
         </div>
-        <div class="evo-foot">
-          <strong>Nuevo:</strong> 2 tablas email, Supabase Edge, <code>api_mode</code>. <strong>Save local v4</strong> sin cambio de versión.
+      </article>
+
+      <article class="flow-milestone">
+        <div class="flow-ms-tag e3">E3</div>
+        <div class="flow-ms-body">
+          <h3>Migración a Supabase (PostgreSQL + Edge)</h3>
+          <p>Save local sigue siendo primero. Postgres remoto recibe sync batch, login y ranking. Staging usa <code>api_mode=supabase_edge</code> contra Edge Functions en lugar de Express.</p>
+          <div class="flow-ms-pills">
+            <span>migrate:supabase</span>
+            <span>8 tablas PG</span>
+            <span>integrate:staging</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="flow-milestone">
+        <div class="flow-ms-tag e4">E4</div>
+        <div class="flow-ms-body">
+          <h3>Canal de mail transaccional</h3>
+          <p>OTP, welcome, rachas y retry — todo server-side con outbox <code>email_deliveries</code> y jobs <code>pg_cron</code>. Godot nunca ve Brevo.</p>
+          <div class="flow-ms-pills">
+            <span class="mail">internal-job</span>
+            <span class="mail">dedupe_key</span>
+            <span class="mail">EMAIL_TIMEZONE ART</span>
+          </div>
         </div>
       </article>
     </div>
-
-    <div class="evo-connector">Las secciones siguientes detallan E3 (partida/login). Para mails: <a href="mer-persistencia-e4.html" style="color:rgba(255,200,120,0.8)">diagrama E4</a></div>
   </section>
 
-  <!-- ═══ SECCIÓN 2: FLUJO PARTIDA ═══ -->
-  <section class="section" id="flujo-partida">
-    <div class="section-head">
-      <h2>Flujo E3 — Terminar una partida</h2>
-      <p>Una sola lectura de izquierda a derecha por carril. Lo importante: el paso 3 ocurre <em>siempre</em>, aunque no haya internet.</p>
+  <!-- Panorama -->
+  <section class="flow-sec" id="panorama">
+    <div class="flow-sec-head">
+      <span class="kicker">E1 → E4</span>
+      <h2>Panorama — evolución del flujo</h2>
+      <p>De lecciones JSON y animaciones locales a Supabase + mails. El dominio del juego no cambió: siempre <em>local-first</em>.</p>
     </div>
 
-    <div class="lane-wrap">
+    <div class="flow-river">
+      <div class="fr-col fr-muted">
+        <div class="fr-tag">E1 · E2</div>
+        <h3>Local + contenido</h3>
+        <ul class="fr-steps">
+          <li>Partida → <code>save_data.json</code></li>
+          <li>Lecciones y mapa desde JSON</li>
+          <li>E2: typewriter · transiciones · estrellas</li>
+        </ul>
+      </div>
+      <div class="fr-col fr-hero">
+        <div class="fr-tag">E3 · Persistencia</div>
+        <h3>Local + PostgreSQL</h3>
+        <ul class="fr-steps">
+          <li>Save local <strong>siempre primero</strong></li>
+          <li>Partidas compuestas · layout mapa auto</li>
+          <li>Cola offline → batch sync con JWT</li>
+          <li>Supabase PG + Edge · 8 tablas</li>
+        </ul>
+      </div>
+      <div class="fr-col fr-e4">
+        <div class="fr-tag">E4 · Email</div>
+        <h3>Canal transversal</h3>
+        <ul class="fr-steps">
+          <li>Registro → OTP → <code>mail_verified_at</code></li>
+          <li>Outbox <code>email_deliveries</code> + Brevo</li>
+          <li>Racha: pg_cron si opt-in verificado</li>
+          <li>Gameplay offline igual · mails best-effort</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="flow-callout">
+      Las secciones siguientes detallan <strong>mapa/lecciones</strong>, <strong>Supabase</strong>,
+      <strong>E3</strong> (partida y login) y <strong>E4</strong> (OTP y cron).
+      Diagramas: <a href="mer-persistencia-e3.html">persistencia E3</a> ·
+      <a href="mer-persistencia-e4.html">email E4</a>
+    </p>
+  </section>
+
+  <!-- Mapa, lecciones, algoritmo -->
+  <section class="flow-sec" id="contenido-mapa">
+    <div class="flow-sec-head">
+      <span class="kicker k-e3">Contenido · Mapa</span>
+      <h2>Lecciones, JSON y colocación automática de nodos</h2>
+      <p>El mapa es data-driven: cada nodo apunta a actividades en JSON; el board las posiciona con un algoritmo sobre la curva del nivel.</p>
+    </div>
+
+    <div class="flow-tech-grid">
+      <div class="flow-tech-card">
+        <h4>Lecciones desacopladas (E1 → E2)</h4>
+        <ul>
+          <li>Mapa: <code>contenido/mapa/*_mapa.json</code> define nodos y <code>games[]</code></li>
+          <li>Actividades: packs JSON por modalidad (drag, quiz, vincular, completar palabra)</li>
+          <li>Rejugar lecciones completadas — progreso visible sin bloquear repaso</li>
+          <li>Pantalla “lección terminada” cierra el ciclo con feedback y sonido</li>
+        </ul>
+      </div>
+      <div class="flow-tech-card">
+        <h4>Partida compuesta por nodo (E3)</h4>
+        <ul>
+          <li><code>ArmadorDePartida</code> construye el plan: N minijuegos en secuencia</li>
+          <li>Patrón de dificultad según índice del nodo (fácil → medio → difícil)</li>
+          <li>JSON con 3–4 <code>games</code> explícitos o pool random por tipo</li>
+          <li>Cada minijuego sync opcional → <code>games</code> + <code>history_games</code> en PG</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-tech-card" style="margin-top:10px">
+      <h4>Algoritmo de layout — nodos sobre Path2D</h4>
+      <p style="margin-bottom:10px">
+        En <code>MapBoard</code>, al cargar el mapa se lee <code>layout</code> del JSON y se resuelven posiciones
+        sin editar cada nodo a mano en runtime.
+      </p>
+      <div class="flow-algo">celiaquia_mapa.json → layout.route_id + placement_mode
+        ↓
+MapRouteRegistry → NodesContainer/Rutas/&lt;route_id&gt;
+        ↓
+MapPathLayout.resolve → anchors (1 punto = 1 nodo) | curve (reparto por largo)
+        ↓
+MapBoard → visual.position = posiciones[i]</div>
+
+      <!-- Mock visual: curva Path2D + algoritmo -->
+      <div class="flow-curve-block">
+        <div class="flow-curve-head">
+          <span>MapBoard.tscn · layout automático</span>
+          <code>Rutas/RutaCeliaquia1 · placement_mode</code>
+        </div>
+
+        <div class="flow-curve-layout">
+          <div class="flow-curve-viz">
+            <svg viewBox="0 0 520 210" xmlns="http://www.w3.org/2000/svg" aria-label="Curva Path2D con nodos resueltos por MapPathLayout">
+              <defs>
+                <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#6368ff" stop-opacity="0.15"/>
+                  <stop offset="50%" stop-color="#6368ff" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#6368ff" stop-opacity="0.15"/>
+                </linearGradient>
+                <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <!-- fondo grid sutil -->
+              <g opacity="0.12" stroke="rgba(255,255,255,0.25)" stroke-width="0.5">
+                <line x1="0" y1="52" x2="520" y2="52"/><line x1="0" y1="105" x2="520" y2="105"/><line x1="0" y1="158" x2="520" y2="158"/>
+                <line x1="104" y1="0" x2="104" y2="210"/><line x1="208" y1="0" x2="208" y2="210"/><line x1="312" y1="0" x2="312" y2="210"/><line x1="416" y1="0" x2="416" y2="210"/>
+              </g>
+              <!-- Path2D curva (editor Godot) -->
+              <path id="mapCurve" d="M 36 168 C 72 48, 128 32, 168 88 S 248 152, 312 72 S 392 28, 484 148"
+                    fill="none" stroke="url(#pathGrad)" stroke-width="3" stroke-linecap="round"/>
+              <path d="M 36 168 C 72 48, 128 32, 168 88 S 248 152, 312 72 S 392 28, 484 148"
+                    fill="none" stroke="#6368ff" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.55"/>
+              <!-- handles de curva (tangentes del editor) -->
+              <g opacity="0.35" stroke="#6368ff" stroke-width="0.8">
+                <line x1="36" y1="168" x2="72" y2="48"/><line x1="168" y1="88" x2="208" y2="120"/>
+                <line x1="312" y1="72" x2="352" y2="50"/><line x1="484" y1="148" x2="452" y2="28"/>
+              </g>
+              <!-- anchors P0..P5 (puntos del Curve2D) -->
+              <g>
+                <circle cx="36" cy="168" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <circle cx="128" cy="38" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <circle cx="168" cy="88" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <circle cx="280" cy="132" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <circle cx="312" cy="72" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <circle cx="484" cy="148" r="4.5" fill="#ff5a5a" opacity="0.9"/>
+                <text x="36" y="184" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P0</text>
+                <text x="128" y="28" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P1</text>
+                <text x="168" y="78" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P2</text>
+                <text x="280" y="148" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P3</text>
+                <text x="312" y="62" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P4</text>
+                <text x="484" y="164" text-anchor="middle" fill="rgba(255,90,90,0.7)" font-size="7" font-family="JetBrains Mono, monospace">P5</text>
+              </g>
+              <!-- nodos resueltos N1..N6 (LevelNode) -->
+              <g filter="url(#nodeGlow)">
+                <circle cx="36" cy="168" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="36" y="172" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">1</text>
+                <circle cx="128" cy="38" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="128" y="42" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">2</text>
+                <circle cx="168" cy="88" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="168" y="92" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">3</text>
+                <circle cx="280" cy="132" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="280" y="136" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">4</text>
+                <circle cx="312" cy="72" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="312" y="76" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">5</text>
+                <circle cx="484" cy="148" r="13" fill="rgba(255,200,70,0.15)" stroke="#ffc846" stroke-width="2"/>
+                <text x="484" y="152" text-anchor="middle" fill="#ffc846" font-size="9" font-weight="700" font-family="system-ui,sans-serif">6</text>
+              </g>
+              <!-- flecha resultado -->
+              <text x="260" y="200" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="8" font-family="JetBrains Mono, monospace">MapPathLayout → positions[i] → LevelNode.position</text>
+            </svg>
+          </div>
+
+          <aside class="flow-curve-legend">
+            <h5>Cómo se aplica</h5>
+            <div class="flow-curve-step">
+              <div class="cs-n">1</div>
+              <p>El JSON trae <code>layout.route_id</code> → Godot busca el <code>Path2D</code> en <code>NodesContainer/Rutas/</code>.</p>
+            </div>
+            <div class="flow-curve-step">
+              <div class="cs-n">2</div>
+              <p>En el editor trazás la curva: cada punto <strong>P<i>n</i></strong> del <code>Curve2D</code> es un anchor del mapa.</p>
+            </div>
+            <div class="flow-curve-step">
+              <div class="cs-n">3</div>
+              <p><code>MapPathLayout.resolver()</code> calcula un <code>Array[Vector2]</code> con una posición por nodo del JSON.</p>
+            </div>
+            <div class="flow-curve-step">
+              <div class="cs-n">4</div>
+              <p><code>MapBoard</code> asigna <code>visual.position = posiciones[i]</code> — sin mover nodos a mano en runtime.</p>
+            </div>
+            <div class="flow-curve-step">
+              <div class="cs-n">5</div>
+              <p>Con <code>debug_layout=true</code> ves círculos rojos con índices (mismo criterio que P0…P5).</p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="flow-curve-modes">
+          <div class="flow-curve-mode anchors">
+            <h6><span class="pill">anchors</span> 1 punto = 1 nodo</h6>
+            <p><code>calcular_por_anchors()</code> — posición <strong>i</strong> = <code>curve.get_point_position(i)</code>. Ideal cuando editás la curva nodo a nodo en Godot.</p>
+            <svg viewBox="0 0 240 72" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 8 56 C 40 12, 80 8, 120 36 S 180 60, 232 20" fill="none" stroke="#6368ff" stroke-width="1.5" opacity="0.5"/>
+              <circle cx="8" cy="56" r="3" fill="#ff5a5a"/><circle cx="56" cy="18" r="3" fill="#ff5a5a"/>
+              <circle cx="120" cy="36" r="3" fill="#ff5a5a"/><circle cx="180" cy="52" r="3" fill="#ff5a5a"/><circle cx="232" cy="20" r="3" fill="#ff5a5a"/>
+              <circle cx="8" cy="56" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="56" cy="18" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="120" cy="36" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="180" cy="52" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="232" cy="20" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <text x="120" y="68" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="6.5" font-family="JetBrains Mono, monospace">Pi ≡ Ni — mismo índice</text>
+            </svg>
+          </div>
+          <div class="flow-curve-mode curve">
+            <h6><span class="pill">curve</span> reparto por largo</h6>
+            <p><code>calcular_por_curva()</code> — reparte N nodos entre <code>start_margin</code> y <code>end_margin</code> sobre <code>get_baked_length()</code>, aunque haya más nodos que puntos.</p>
+            <svg viewBox="0 0 240 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0" y="8" width="22" height="56" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="3 2"/>
+              <rect x="218" y="8" width="22" height="56" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="3 2"/>
+              <path d="M 8 56 C 40 12, 80 8, 120 36 S 180 60, 232 20" fill="none" stroke="#6368ff" stroke-width="1.5" opacity="0.5"/>
+              <circle cx="22" cy="48" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="72" cy="22" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="120" cy="36" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="168" cy="48" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <circle cx="218" cy="28" r="8" fill="none" stroke="#ffc846" stroke-width="1.5"/>
+              <text x="11" y="38" fill="rgba(255,255,255,0.25)" font-size="5" font-family="JetBrains Mono, monospace" transform="rotate(-90 11 38)">margin</text>
+              <text x="229" y="38" fill="rgba(255,255,255,0.25)" font-size="5" font-family="JetBrains Mono, monospace" transform="rotate(-90 229 38)">margin</text>
+              <text x="120" y="68" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="6.5" font-family="JetBrains Mono, monospace">lerp(t_start, t_end, i/(N-1))</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="flow-curve-foot">
+          <span class="lg">
+            <svg class="lg-sw" viewBox="0 0 22 8" width="22" height="8" aria-hidden="true">
+              <path d="M1 4 H21" fill="none" stroke="#6368ff" stroke-width="2" stroke-dasharray="5 3" stroke-linecap="round" opacity="0.75"/>
+            </svg>
+            Path2D / Curve2D
+          </span>
+          <span class="lg">
+            <svg class="lg-sw" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+              <circle cx="6" cy="6" r="4.5" fill="#ff5a5a" opacity="0.92"/>
+              <circle cx="6" cy="6" r="6" fill="none" stroke="rgba(255,90,90,0.25)" stroke-width="1"/>
+            </svg>
+            Anchor P<sub>n</sub> (punto editor)
+          </span>
+          <span class="lg">
+            <svg class="lg-sw" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+              <circle cx="10" cy="10" r="9" fill="rgba(255,200,70,0.08)"/>
+              <circle cx="10" cy="10" r="7.5" fill="rgba(255,200,70,0.14)" stroke="#ffc846" stroke-width="2"/>
+              <text x="10" y="13.5" text-anchor="middle" fill="#ffc846" font-size="8.5" font-weight="700" font-family="Inter, system-ui, sans-serif">n</text>
+            </svg>
+            Nodo N<sub>n</sub> (nivel_id)
+          </span>
+          <span class="lg">
+            <svg class="lg-sw" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">
+              <rect x="1" y="1" width="12" height="12" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="3 2"/>
+            </svg>
+            Margen (solo curve)
+          </span>
+          <span class="lg-note">Celiaquía usa <code>placement_mode: "anchors"</code></span>
+        </div>
+      </div>
+
+      <p style="margin-top:10px;font-size:9.5px">
+        Modos: <code>anchors</code> alinea cada nodo a un punto de la curva;
+        <code>curve</code> reparte equidistante con márgenes.
+        Ver <a href="../juego/mapas/README.md" style="color:rgba(255,200,120,0.8);text-decoration:none;font-weight:600">juego/mapas/README.md</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- Supabase -->
+  <section class="flow-sec" id="supabase">
+    <div class="flow-sec-head">
+      <span class="kicker k-e3">Infra · E3 → E4</span>
+      <h2>Migración e integración con Supabase</h2>
+      <p>Express sigue para CI local; staging/producción apuntan a Postgres managed + Edge Functions. El flujo de partida no cambia: primero save, después sync.</p>
+    </div>
+
+    <div class="flow-tech-grid">
+      <div class="flow-tech-card">
+        <h4>Qué migramos</h4>
+        <ul>
+          <li>Esquema MER → migraciones <code>BACKEND/migrations/</code></li>
+          <li>Auth, progreso, games, streaks, leaderboard → tablas PG</li>
+          <li>Contenido educativo <strong>fuera</strong> de la DB (sigue en JSON en Godot)</li>
+          <li>Setup: <code>npm run setup:supabase</code> · <code>migrate:supabase</code></li>
+        </ul>
+      </div>
+      <div class="flow-tech-card">
+        <h4>Cómo juega Godot</h4>
+        <ul>
+          <li><code>backend.local.json</code> → <code>api_mode: supabase_edge</code></li>
+          <li>Edge: <code>auth-login</code>, <code>progress-save</code>, <code>player-me</code></li>
+          <li>E4 suma: <code>verify-email-*</code>, <code>internal-job</code> (cron)</li>
+          <li>Sin red: save + cola <code>backend_sync_queue.json</code> intactos</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-supabase-strip">
+      <span style="font-weight:700;color:rgba(90,220,165,0.7)">Pipeline staging</span>
+      <span class="chip">integrate:staging</span>
+      <span class="chip">supabase:functions:deploy</span>
+      <span class="chip">setup:supabase:cron</span>
+      <span class="chip">sync:godot-config:staging</span>
+      <span style="opacity:.55">· local-first no se negocia</span>
+    </div>
+
+    <p class="flow-callout">
+      Diagrama MER cloud: <a href="mer-persistencia-e3.html">E3 persistencia</a> ·
+      crons y mails: <a href="mer-persistencia-e4.html">E4 integración</a> ·
+      guía: <a href="Sync-Godot-Postgres">Sync Godot ↔ Postgres</a>
+    </p>
+  </section>
+
+  <!-- E3 Partida -->
+  <section class="flow-sec" id="e3-partida">
+    <div class="flow-sec-head">
+      <span class="kicker k-e3">Entrega 3</span>
+      <h2>Terminar una partida</h2>
+      <p>El paso 3 ocurre siempre, con o sin internet. La sync es opcional y nunca bloquea.</p>
+    </div>
+
+    <div class="flow-lane lane-wrap">
       <div class="lane-header">
-        <h3>Swimlane — partida completada</h3>
+        <h3>Swimlane · partida completada</h3>
         <div class="lane-legend">
           <span><i class="ll" style="background:rgba(99,120,255,0.7)"></i> Local</span>
           <span><i class="ll" style="background:rgba(255,200,70,0.7)"></i> Sync</span>
-          <span><i class="ll" style="background:rgba(45,185,120,0.7)"></i> PostgreSQL</span>
+          <span><i class="ll" style="background:rgba(45,185,120,0.7)"></i> PG</span>
         </div>
       </div>
-
       <div class="swimlane">
         <div class="lane-label player">Jugador</div>
-        <div class="lane-track">
-          <div class="node player">Termina nodo<small>score · accuracy · respuestas</small></div>
-        </div>
+        <div class="lane-track"><div class="node player">Termina nodo<small>score · accuracy</small></div></div>
       </div>
-
       <div class="swimlane">
-        <div class="lane-label local">Godot<br>local</div>
+        <div class="lane-label local">Local</div>
         <div class="lane-track">
-          <div class="node local">RunSummary<small>SincronizadorPartida + clientRunId</small></div>
+          <div class="node local">RunSummary<small>clientRunId</small></div>
           <span class="flow-arrow">→</span>
-          <div class="node local">save_data.json<small>SaveManager — inmediato</small></div>
+          <div class="node local">save_data.json</div>
           <span class="flow-arrow">→</span>
-          <div class="node guarantee">LOCAL-FIRST ✓</div>
+          <div class="node guarantee">LOCAL-FIRST</div>
         </div>
       </div>
-
-      <div class="swimlane">
-        <div class="lane-label sync">Sync<br>(opcional)</div>
-        <div class="lane-track">
-          <div class="decision-row">
-            <div class="decision dec-if">¿Cuenta vinculada?</div>
-            <div class="decision dec-no">No → fin (solo local)</div>
-            <div class="decision dec-yes">Sí → continúa ↓</div>
-          </div>
-        </div>
-      </div>
-
       <div class="swimlane">
         <div class="lane-label sync">Sync</div>
         <div class="lane-track">
-          <div class="node sync">backend_sync_queue.json<small>status: pending</small></div>
-          <span class="flow-arrow gold">→</span>
-          <div class="node sync">ProgressSyncService<small>POST /player/me/progress/batch</small></div>
-          <span class="flow-arrow gold">→</span>
-          <div class="node sync">Cola synced<small>reintento si falla red</small></div>
+          <div class="decision-row">
+            <div class="decision dec-if">¿Cuenta?</div>
+            <div class="decision dec-no">No → fin</div>
+            <div class="decision dec-yes">Sí ↓</div>
+          </div>
         </div>
       </div>
-
+      <div class="swimlane">
+        <div class="lane-label sync">Sync</div>
+        <div class="lane-track">
+          <div class="node sync">sync_queue<small>pending</small></div>
+          <span class="flow-arrow gold">→</span>
+          <div class="node sync">POST /progress/batch</div>
+        </div>
+      </div>
       <div class="swimlane">
         <div class="lane-label pg">PostgreSQL</div>
         <div class="lane-track">
-          <div class="node pg">history_games<small>estado del nodo (UPSERT)</small></div>
+          <div class="node pg">history_games</div>
           <span class="flow-arrow green">→</span>
-          <div class="node pg">games<small>partida · idempotente por client_run_id</small></div>
+          <div class="node pg">games</div>
           <span class="flow-arrow green">→</span>
-          <div class="node pg">streaks<small>si completed=true</small></div>
+          <div class="node pg">streaks</div>
         </div>
       </div>
     </div>
 
-    <details class="steps-compact" style="margin-top:20px">
-      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);padding:8px 0">
-        Ver detalle paso a paso (técnico)
-      </summary>
-      <div class="step-row"><div class="step-n local">1</div><div class="step-body"><h4>RunSummary</h4><p><code>SincronizadorPartida</code> arma el payload con <code>clientRunId</code>, <code>node_id</code>, score y accuracy.</p></div></div>
-      <div class="step-row"><div class="step-n local">2</div><div class="step-body"><h4>Guardado local garantizado</h4><p><code>SaveManager</code> persiste antes de cualquier HTTP. Sin red = juego usable igual.</p></div></div>
-      <div class="step-row"><div class="step-n sync">3</div><div class="step-body"><h4>Encolado</h4><p><code>LocalSyncQueue</code> agrega el item a <code>backend_sync_queue.json</code>.</p></div></div>
-      <div class="step-row"><div class="step-n sync">4</div><div class="step-body"><h4>Batch sync</h4><p><code>ProgressSyncService</code> drena la cola. Mismo <code>clientRunId</code> = sin duplicados al reintentar.</p></div></div>
-      <div class="step-row"><div class="step-n pg">5</div><div class="step-body"><h4>Persistencia remota</h4><p><code>saveAuthenticatedProgress()</code> actualiza nodos y registra la partida en PostgreSQL.</p></div></div>
+    <details class="flow-details">
+      <summary>Detalle técnico E3 partida</summary>
+      <div class="step-row"><div class="step-n local">1</div><div class="step-body"><h4>Plan de partida</h4><p><code>ArmadorDePartida.construir_plan_de_partida</code> — secuencia de minijuegos desde JSON del nodo.</p></div></div>
+      <div class="step-row"><div class="step-n local">2</div><div class="step-body"><h4>RunSummary</h4><p><code>SincronizadorPartida</code> arma payload con <code>clientRunId</code> por cada juego del plan.</p></div></div>
+      <div class="step-row"><div class="step-n local">3</div><div class="step-body"><h4>Save garantizado</h4><p><code>SaveManager</code> persiste antes de cualquier HTTP.</p></div></div>
+      <div class="step-row"><div class="step-n sync">4</div><div class="step-body"><h4>Cola</h4><p><code>LocalSyncQueue</code> → <code>backend_sync_queue.json</code>.</p></div></div>
+      <div class="step-row"><div class="step-n sync">5</div><div class="step-body"><h4>Batch</h4><p><code>ProgressSyncService</code> — idempotencia por <code>clientRunId</code>.</p></div></div>
+      <div class="step-row"><div class="step-n pg">6</div><div class="step-body"><h4>Remoto</h4><p>UPSERT en <code>history_games</code>, <code>games</code>, actualiza <code>streaks</code>.</p></div></div>
     </details>
   </section>
 
-  <!-- ═══ SECCIÓN 3: FLUJO LOGIN ═══ -->
-  <section class="section" id="flujo-login">
-    <div class="section-head">
-      <h2>Flujo E3 — Iniciar sesión y recuperar progreso</h2>
-      <p>Cuando el jugador abre el juego en otro dispositivo (o reconecta después de jugar offline), este es el camino.</p>
+  <!-- E3 Login -->
+  <section class="flow-sec" id="e3-login">
+    <div class="flow-sec-head">
+      <span class="kicker k-e3">Entrega 3</span>
+      <h2>Iniciar sesión y recuperar progreso</h2>
+      <p>Otro dispositivo o reconexión después de jugar offline — merge sin perder récords.</p>
     </div>
 
-    <div class="tabs" role="tablist">
-      <button type="button" class="tab-btn on" data-tab="login-diagram">Diagrama</button>
-      <button type="button" class="tab-btn" data-tab="login-offline">Caso offline</button>
-    </div>
-
-    <div class="tab-panel on" id="login-diagram">
-      <div class="lane-wrap">
-        <div class="lane-header">
-          <h3>Swimlane — login + merge</h3>
-        </div>
-
-        <div class="swimlane">
-          <div class="lane-label player">Jugador</div>
-          <div class="lane-track">
-            <div class="node player">Login en Intro<small>username + password</small></div>
-            <span class="flow-arrow">→</span>
-            <div class="node player">Ve mapa actualizado</div>
-          </div>
-        </div>
-
-        <div class="swimlane">
-          <div class="lane-label auth">Auth</div>
-          <div class="lane-track">
-            <div class="node auth">POST /auth/login</div>
-            <span class="flow-arrow">→</span>
-            <div class="node auth">backend_session.json<small>JWT persistido</small></div>
-          </div>
-        </div>
-
-        <div class="swimlane">
-          <div class="lane-label pg">PostgreSQL</div>
-          <div class="lane-track">
-            <div class="node pg">GET /player/me/progress</div>
-            <span class="flow-arrow green">→</span>
-            <div class="node pg">profiles · history_games · streaks</div>
-          </div>
-        </div>
-
-        <div class="swimlane">
-          <div class="lane-label local">Godot<br>local</div>
-          <div class="lane-track">
-            <div class="node local">ImportadorProgresoOnline<small>merge remoto + save local</small></div>
-            <span class="flow-arrow">→</span>
-            <div class="node local">save_data.json actualizado</div>
-            <span class="flow-arrow gold">→</span>
-            <div class="node sync">Drenar cola pendiente<small>partidas offline previas</small></div>
-          </div>
+    <div class="flow-lane lane-wrap">
+      <div class="lane-header"><h3>Swimlane · login + merge</h3></div>
+      <div class="swimlane">
+        <div class="lane-label player">Jugador</div>
+        <div class="lane-track">
+          <div class="node player">Login</div>
+          <span class="flow-arrow">→</span>
+          <div class="node player">Mapa actualizado</div>
         </div>
       </div>
-
-      <details class="steps-compact" style="margin-top:20px">
-        <summary style="cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);padding:8px 0">
-          Ver detalle paso a paso (técnico)
-        </summary>
-        <div class="step-row"><div class="step-n auth">A</div><div class="step-body"><h4>Autenticación</h4><p><code>AuthApi.login()</code> obtiene JWT y lo guarda vía <code>BackendSession</code>.</p></div></div>
-        <div class="step-row"><div class="step-n pg">B</div><div class="step-body"><h4>Pull remoto</h4><p>Se trae el snapshot completo del jugador desde PostgreSQL.</p></div></div>
-        <div class="step-row"><div class="step-n local">C</div><div class="step-body"><h4>Merge inteligente</h4><p><code>construir_snapshot_local()</code>: gana el mejor <code>best_accuracy</code>, fusiona racha y nodos.</p></div></div>
-        <div class="step-row"><div class="step-n sync">D</div><div class="step-body"><h4>Sync de cola</h4><p>Si había partidas offline en la cola, se envían ahora con sesión activa.</p></div></div>
-      </details>
-    </div>
-
-    <div class="tab-panel" id="login-offline">
-      <div class="callout">
-        <h4>Jugó offline entre sesiones — ¿se pierde algo?</h4>
-        <p>
-          <strong>No.</strong> El progreso quedó en <code>save_data.json</code> y las partidas pendientes en
-          <code>backend_sync_queue.json</code>. Al loguearse, el merge combina local + remoto (mejor de ambos)
-          y después la cola se sincroniza. Es la continuación natural del flujo de partida.
-        </p>
-      </div>
-      <div class="lane-wrap" style="margin-top:20px">
-        <div class="lane-header"><h3>Secuencia resumida offline → online</h3></div>
-        <div class="swimlane">
-          <div class="lane-label local">Offline</div>
-          <div class="lane-track">
-            <div class="node local">Jugó sin red</div>
-            <span class="flow-arrow">→</span>
-            <div class="node local">save + cola pending</div>
-          </div>
+      <div class="swimlane">
+        <div class="lane-label auth">Auth</div>
+        <div class="lane-track">
+          <div class="node auth">POST /auth/login</div>
+          <span class="flow-arrow">→</span>
+          <div class="node auth">backend_session<small>JWT</small></div>
         </div>
-        <div class="swimlane">
-          <div class="lane-label auth">Online</div>
-          <div class="lane-track">
-            <div class="node auth">Login</div>
-            <span class="flow-arrow">→</span>
-            <div class="node local">Merge</div>
-            <span class="flow-arrow gold">→</span>
-            <div class="node sync">Batch envía cola</div>
-            <span class="flow-arrow green">→</span>
-            <div class="node pg">PG al día</div>
-          </div>
+      </div>
+      <div class="swimlane">
+        <div class="lane-label pg">PostgreSQL</div>
+        <div class="lane-track">
+          <div class="node pg">GET /player/me/progress</div>
+          <span class="flow-arrow green">→</span>
+          <div class="node pg">profiles · streaks · history</div>
+        </div>
+      </div>
+      <div class="swimlane">
+        <div class="lane-label local">Local</div>
+        <div class="lane-track">
+          <div class="node local">ImportadorProgresoOnline<small>merge</small></div>
+          <span class="flow-arrow">→</span>
+          <div class="node local">save_data.json</div>
+          <span class="flow-arrow gold">→</span>
+          <div class="node sync">Drenar cola offline</div>
         </div>
       </div>
     </div>
+
+    <p class="flow-callout">
+      <strong>Offline entre sesiones:</strong> el progreso quedó en save + cola pending.
+      Al login, merge combina local + remoto (mejor <code>best_accuracy</code>) y la cola se sincroniza.
+    </p>
   </section>
 
-  <!-- ═══ FUENTES ═══ -->
-  <section class="section" id="fuentes">
-    <div class="section-head">
+  <!-- E4 -->
+  <section class="flow-sec" id="e4-flujo">
+    <div class="flow-sec-head">
+      <span class="kicker k-e4">Entrega 4</span>
+      <h2>Flujo de email — lo que se integró</h2>
+      <p>Godot nunca habla con Brevo. OTP y outbox viven en Postgres; los jobs los dispara pg_cron.</p>
+    </div>
+
+    <div class="e4-path">
+      <div class="e4-panel">
+        <h3>Jugador · onboarding mail</h3>
+        <div class="e4-step">
+          <span class="e4-n">1</span>
+          <div><strong>Registro con mail</strong><span>Godot → <code>verify-email-request</code> → Edge hashea OTP en PG</span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">2</span>
+          <div><strong>Brevo envía código</strong><span>Fila en <code>email_verification_codes</code> · template <code>email_verification</code></span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">3</span>
+          <div><strong>Confirma en Godot</strong><span><code>verify-email-confirm</code> → <code>mail_verified_at</code></span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">4</span>
+          <div><strong>Welcome async</strong><span>Encola en <code>email_deliveries</code> · dedupe · status pending→sent</span></div>
+        </div>
+      </div>
+
+      <div class="e4-panel">
+        <h3>Racha · cron automático</h3>
+        <div class="e4-step">
+          <span class="e4-n">1</span>
+          <div><strong>Jugador con opt-in</strong><span><code>email_notifications_enabled</code> + mail verificado</span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">2</span>
+          <div><strong>Partida actualiza streaks</strong><span>Flujo E3 — <code>streaks.last_activity_day</code> en PG</span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">3</span>
+          <div><strong>pg_cron dispara job</strong><span><code>internal-job</code> lee users + streaks + filtros ART</span></div>
+        </div>
+        <div class="e4-step">
+          <span class="e4-n">4</span>
+          <div><strong>Outbox + Brevo</strong><span><code>streak_at_risk</code> / <code>streak_lost</code> · retry si falla</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="e4-cron-strip">
+      <span style="font-weight:700;color:rgba(255,200,120,0.6)">Horarios ART</span>
+      <span class="chip">18:00 at_risk</span>
+      <span class="chip">23:00 last_chance</span>
+      <span class="chip">00:00 lost</span>
+      <span class="chip">08:00 / 20:00 retry</span>
+      <span style="opacity:.5">· pipeline: pg_cron → pg_net → Edge → delivery.ts → Brevo</span>
+    </div>
+
+    <p class="flow-callout" style="margin-top:14px">
+      Integración completa, tablas y pipeline:
+      <a href="mer-persistencia-e4.html#integration">vista Integración E4</a> ·
+      <a href="Entrega-4-Mails">catálogo de mails</a>
+    </p>
+  </section>
+
+  <!-- Relacionado -->
+  <section class="flow-sec" id="relacionado">
+    <div class="flow-sec-head">
+      <span class="kicker">Navegación</span>
       <h2>Relacionado</h2>
-      <p>Diagrama de tablas, hub MER y documentación operativa.</p>
+      <p>Diagramas MER, entregas, código fuente y guías — organizados por lo que cubre cada sección de esta página.</p>
     </div>
-    <div class="sources">
-      <div class="src">
-        <div class="src-label">Diagramas MER</div>
-        <a href="mer.html">Hub MER — evolución completa</a>
-        <a href="mer-persistencia-e3.html">Persistencia dual (tablas + archivos)</a>
-        <a href="mer-persistencia-e4.html">Persistencia E4 (email + Supabase)</a>
-        <a href="mer-dominio.html">Dominio E1/E2 (Excalidraw)</a>
+
+    <div class="flow-rel-featured">
+      <a class="flow-rel-hero r-hub" href="mer.html">
+        <div class="flow-rel-hero-top">
+          <span class="flow-rel-hero-tag">Hub</span>
+          <span class="flow-rel-hero-arrow">→</span>
+        </div>
+        <h3>MER — índice</h3>
+        <p>Punto de entrada: dominio E1·E2, persistencia E3, email E4 y evolución del stack.</p>
+      </a>
+      <a class="flow-rel-hero r-e3" href="mer-persistencia-e3.html">
+        <div class="flow-rel-hero-top">
+          <span class="flow-rel-hero-tag">E3</span>
+          <span class="flow-rel-hero-arrow">→</span>
+        </div>
+        <h3>Persistencia dual</h3>
+        <p><code>save_data.json</code> + 8 tablas PG · cola offline · merge al login.</p>
+      </a>
+      <a class="flow-rel-hero r-e4" href="mer-persistencia-e4.html">
+        <div class="flow-rel-hero-top">
+          <span class="flow-rel-hero-tag">E4</span>
+          <span class="flow-rel-hero-arrow">→</span>
+        </div>
+        <h3>Email + Supabase</h3>
+        <p>OTP, outbox, <code>pg_cron</code> → <code>internal-job</code> · vista integración.</p>
+      </a>
+    </div>
+
+    <div class="flow-rel-grid">
+      <div class="flow-rel-group">
+        <h4>En esta página</h4>
+        <ul class="flow-rel-list">
+          <li><a class="is-internal" href="#evolucion"><div><strong>Timeline E1 → E4</strong><span>Lecciones, animaciones, Supabase, cron</span></div><span class="rl-arrow">↗</span></a></li>
+          <li><a class="is-internal" href="#contenido-mapa"><div><strong>Mapa · lecciones · curva</strong><span>JSON, <code>ArmadorDePartida</code>, mock Path2D</span></div><span class="rl-arrow">↗</span></a></li>
+          <li><a class="is-internal" href="#supabase"><div><strong>Migración Supabase</strong><span>Edge, staging, local-first intacto</span></div><span class="rl-arrow">↗</span></a></li>
+          <li><a class="is-internal" href="#e3-partida"><div><strong>Flujo partida E3</strong><span>Save → cola → batch sync</span></div><span class="rl-arrow">↗</span></a></li>
+          <li><a class="is-internal" href="#e4-flujo"><div><strong>Flujo email E4</strong><span>OTP, welcome, rachas por cron</span></div><span class="rl-arrow">↗</span></a></li>
+        </ul>
       </div>
-      <div class="src">
-        <div class="src-label">Godot — sync</div>
-        <a href="../juego/API/backend/sync/SincronizadorPartida.gd">SincronizadorPartida.gd</a>
-        <a href="../juego/API/backend/sync/ProgressSyncService.gd">ProgressSyncService.gd</a>
-        <a href="../juego/API/backend/sync/LocalSyncQueue.gd">LocalSyncQueue.gd</a>
-        <a href="../juego/API/backend/sync/ImportadorProgresoOnline.gd">ImportadorProgresoOnline.gd</a>
+
+      <div class="flow-rel-group">
+        <h4>Entregas y docs</h4>
+        <ul class="flow-rel-list">
+          <li><a href="mer-dominio.html"><div><strong>Dominio E1 · E2</strong><span>MER Excalidraw — jugador, mapa, partida</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="Entrega-2"><div><strong>Entrega 2</strong><span>Typewriter, transiciones, Completar Palabra</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="Entrega-4-Flujo-E3-E4"><div><strong>Evolución E3→E4</strong><span>Resumen markdown del salto a email</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="Sync-Godot-Postgres"><div><strong>Sync Godot ↔ Postgres</strong><span>Guía operativa de integración</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="mer-persistencia-e4.html#integration"><div><strong>Vista integración E4</strong><span>Pipeline cron + mock Supabase Dashboard</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../BACKEND/docs/SUPABASE_QUICKSTART.md"><div><strong>Supabase quickstart</strong><span>Setup, migrate, deploy functions</span></div><span class="rl-arrow">→</span></a></li>
+        </ul>
       </div>
-      <div class="src">
-        <div class="src-label">Godot — local</div>
-        <a href="../juego/interface/SaveManager.gd">SaveManager.gd</a>
-        <a href="../juego/API/SyncApi.gd">SyncApi.gd</a>
-        <a href="../juego/API/AuthApi.gd">AuthApi.gd</a>
+
+      <div class="flow-rel-group">
+        <h4>Código Godot</h4>
+        <ul class="flow-rel-list">
+          <li><a href="../juego/API/backend/sync/SincronizadorPartida.gd"><div><strong>SincronizadorPartida.gd</strong><span>RunSummary → cola de sync</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../juego/mapas/logica/ArmadorDePartida.gd"><div><strong>ArmadorDePartida.gd</strong><span>Plan de minijuegos por nodo</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../juego/mapas/layout/MapPathLayout.gd"><div><strong>MapPathLayout.gd</strong><span><code>anchors</code> · <code>curve</code> sobre Path2D</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../juego/mapas/README.md"><div><strong>mapas/README.md</strong><span>Layout, games[], shuffle_games</span></div><span class="rl-arrow">→</span></a></li>
+        </ul>
       </div>
-      <div class="src">
-        <div class="src-label">Docs</div>
-        <a href="Sync-Godot-Postgres">Sync-Godot-Postgres</a>
-        <a href="MER">MER — esquema canónico</a>
-        <a href="Entrega-3-Arquitectura">Entrega-3-Arquitectura</a>
+
+      <div class="flow-rel-group">
+        <h4>Backend · Edge</h4>
+        <ul class="flow-rel-list">
+          <li><a href="../supabase/functions/internal-job/index.ts"><div><strong>internal-job</strong><span>Cron: rachas, retry, leaderboard</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../supabase/functions/player-progress-batch/index.ts"><div><strong>player-progress-batch</strong><span>Batch sync desde Godot</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../supabase/functions/verify-email-request/index.ts"><div><strong>verify-email-request</strong><span>OTP al registrarse</span></div><span class="rl-arrow">→</span></a></li>
+          <li><a href="../BACKEND/scripts/cron-dispatch-for-mail.ts"><div><strong>cron-dispatch-for-mail.ts</strong><span>Disparo manual de jobs en staging</span></div><span class="rl-arrow">→</span></a></li>
+        </ul>
       </div>
     </div>
+
+    <p class="flow-rel-foot">
+      ¿Volvés al recorrido completo? Usá la barra <strong>Recorrido MER</strong> arriba o el
+      <a href="mer.html">hub principal</a>. Para probar mails en staging:
+      <code style="font-size:8.5px;color:rgba(255,200,120,0.7)">npm run cron:dispatch:staging</code> en <code style="font-size:8.5px">BACKEND/</code>.
+    </p>
   </section>
 </div>
 

@@ -1,4 +1,5 @@
 import assert from 'assert/strict';
+import { EXPECTED_MIGRATION_COUNT } from '../src/config/migrations-meta';
 import { loadStagingWithKeys } from './lib/supabase-keys-local';
 import {
   canUseSupabaseEmailFunctions,
@@ -51,7 +52,7 @@ async function main(): Promise<void> {
   assert.equal(health.body.remote, true);
   const migrations = health.body.migrations as JsonObject;
   assert.equal(migrations?.healthy, true, 'auth-health migrations no healthy');
-  assert.equal(migrations?.expected, 37, 'auth-health expected migration count');
+  assert.equal(migrations?.expected, EXPECTED_MIGRATION_COUNT, 'auth-health expected migration count');
   console.log('[smoke:auth-edge] OK auth-health', {
     migrations,
   });

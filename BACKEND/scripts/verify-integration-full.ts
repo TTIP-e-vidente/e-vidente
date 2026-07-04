@@ -9,12 +9,11 @@ import path from 'path';
 const BACKEND_ROOT = path.resolve(__dirname, '..');
 
 const CRON_JOBS = [
-  'outbound-emails',
   'streak-at-risk-emails',
+  'streak-last-chance-emails',
   'streak-lost-emails',
   'retry-failed-emails',
   'refresh-leaderboard',
-  'streak-emails',
 ] as const;
 
 function run(label: string, command: string): void {

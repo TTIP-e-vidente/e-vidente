@@ -49,6 +49,7 @@
     "start:prod": "node dist/scripts/deploy-migrate.js && node dist/server.js",
     "smoke:api:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/smoke-auth-player.ts",
     "smoke:cron:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/smoke-cron.ts",
+    "cron:dispatch:staging": "ts-node scripts/with-env-file.ts .env.staging npx ts-node scripts/cron-dispatch-for-mail.ts",
     "smoke:staging": "npm run smoke:api:staging",
     "staging:verify": "ts-node scripts/staging-verify.ts",
     "staging:verify:email": "ts-node scripts/staging-verify.ts --email",

@@ -41,6 +41,16 @@ function run(command: string, cwd = REPO_ROOT): void {
   runSupabaseCli(command, cwd);
 }
 
+function persistEnvVars(envPath: string, vars: Record<string, string>): void {
+  let content = fs.readFileSync(envPath, 'utf8');
+  for (const [key, value] of Object.entries(vars)) {
+    const line = `${key}=${value}`;
+    const regex = new RegExp(`^${key}=.*$`, 'm');
+    content = regex.test(content) ? content.replace(regex, line) : `${content.trimEnd()}\n${line}`;
+  }
+  fs.writeFileSync(envPath, content.endsWith('\n') ? content : `${content}\n`, 'utf8');
+}
+
 function setSecrets(projectRef: string): void {
   const secrets = buildEdgeFunctionSecrets();
   const missing = validateEdgeFunctionSecrets(secrets);
@@ -158,7 +168,16 @@ async function main(): Promise<void> {
     console.warn('  Agregá SUPABASE_ANON_KEY=... en BACKEND/.env.staging\n');
   }
 
-  await syncEmailAssetsToStorage();
+  await syncEmailAssetsToStorage().then((assetUrls) => {
+    process.env.EMAIL_LOGO_URL = assetUrls.logoUrl;
+    process.env.EMAIL_ASSETS_BASE_URL = assetUrls.publicBase;
+    const envPath = path.resolve(BACKEND_ROOT, loaded.envFile);
+    persistEnvVars(envPath, {
+      EMAIL_LOGO_URL: assetUrls.logoUrl,
+      EMAIL_ASSETS_BASE_URL: assetUrls.publicBase,
+    });
+    console.log('  ✓ EMAIL_LOGO_URL / EMAIL_ASSETS_BASE_URL →', loaded.envFile);
+  });
   setSecrets(projectRef);
 
   if (!secretsOnly) {
