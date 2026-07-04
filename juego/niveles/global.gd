@@ -39,6 +39,7 @@ var _partida_de_nodo_activa: Dictionary = {}
 var _juego_de_nodo_actual: Dictionary = {}
 var _nodo_a_continuar: String = ""
 var _ultima_finalizacion: Dictionary = {}
+var _snapshot_racha_inicio_partida: Dictionary = {}
 var _inicio_nodo_msec: int = 0  # Timestamp para calcular tiempo transcurrido de partida
 var _stats_nodo_actual: Dictionary = {}  # Acumulador de aciertos/errores/intentos del nodo
 # GameSessionData de la partida activa; se lee al finalizar el nodo para mostrar resultados.
@@ -554,6 +555,24 @@ func hay_ultima_finalizacion() -> bool:
 	## Devuelve true si existe una finalizacion de nodo pendiente de mostrar.
 	## No limpia los datos — la pantalla de finalización los lee y limpia en su _ready().
 	return not _ultima_finalizacion.is_empty()
+
+
+# --- Snapshot de racha al iniciar partida ----------------------------------
+# Algunas modalidades registran actividad de racha a mitad de partida (no solo
+# en la ultima), asi que comparar "antes/despues" recien al terminar la
+# partida puede perderse la transicion real inactiva->activa si ya paso en un
+# mini juego intermedio. Guardar el estado de racha ANTES de que arranque
+# cualquier mini juego permite comparar correctamente al final del flujo
+# post-partida (despues del leaderboard), sin importar cuando se registro.
+
+func establecer_snapshot_racha_inicio_partida(streak_state: Dictionary) -> void:
+	_snapshot_racha_inicio_partida = streak_state.duplicate(true)
+
+
+func obtener_y_limpiar_snapshot_racha_inicio_partida() -> Dictionary:
+	var datos: Dictionary = _snapshot_racha_inicio_partida.duplicate(true)
+	_snapshot_racha_inicio_partida = {}
+	return datos
 
 
 func obtener_tiempo_nodo_formato() -> String:

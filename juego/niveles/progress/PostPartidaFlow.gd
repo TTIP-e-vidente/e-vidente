@@ -6,15 +6,19 @@ extends RefCounted
 # Secuencia:
 #   1. finalizacion_partida  → solo stats (EXP, precisión, tiempo) + Continuar
 #   2. ranking_post_partida  → ranking, preferencia invitado y "Continuar al mapa"
-#   3. MapScene              → el jugador sigue explorando
+#   3. racha (opcional)      → solo si la racha estaba inactiva y se activo en esta partida
+#   4. MapScene              → el jugador sigue explorando
 #
 # Reglas de negocio:
 #   - Invitado: puede ver ranking en solo lectura; no suma puntos.
 #   - Logueado: ve su puesto y progreso competitivo.
-#   - Invitado con preferencia activa: salta la escena 2 y va directo al mapa.
+#   - Invitado con preferencia activa: salta la escena 2 y va directo al mapa
+#     (pero igual puede pasar por la escena 3 si corresponde).
 #
 # Las escenas (.gd de mapas/) solo conectan botones y dibujan UI.
 # Toda la lógica compartida vive acá para que sea fácil de leer y testear.
+
+const GameStreakTrackerScript := preload("res://niveles/progress/GameStreakTracker.gd")
 
 
 static func resolver_scope_desde_arbol(tree: SceneTree) -> String:
@@ -60,7 +64,41 @@ static func ir_a_ranking(tree: SceneTree) -> void:
 
 static func finalizar_flujo_y_ir_al_mapa(tree: SceneTree) -> void:
 	Global.obtener_y_limpiar_ultima_finalizacion()
+	var feedback_racha: Dictionary = _resolver_feedback_racha_activada()
+	if not feedback_racha.is_empty():
+		GameSceneRouter.ir_a_racha(tree, GameSceneRouter.MAP_SCENE_PATH, feedback_racha)
+		return
 	GameSceneRouter.ir_al_mapa(tree)
+
+
+## Compara la racha de ANTES de iniciar esta partida (snapshot tomado en
+## NodoRuntime.iniciar) contra la racha actual: si estaba inactiva (sin
+## importar el motivo — nunca jugo, se vencio, o seguia viva pero pendiente
+## de hoy) y ahora quedo activa por esta partida, arma el feedback para
+## mostrar "tu racha se activo" en la pantalla de racha, despues del
+## leaderboard y antes de volver al mapa.
+static func _resolver_feedback_racha_activada() -> Dictionary:
+	var previous_streak: Dictionary = Global.obtener_y_limpiar_snapshot_racha_inicio_partida()
+	if previous_streak.is_empty():
+		return {}
+
+	var previous_vista: Dictionary = GameStreakTrackerScript.modelo_vista(previous_streak)
+	if str(previous_vista.get("status_key", "")) == "active_today":
+		return {}
+
+	var updated_streak: Dictionary = Global.obtener_estado_racha()
+	var updated_vista: Dictionary = GameStreakTrackerScript.modelo_vista(updated_streak)
+	if str(updated_vista.get("status_key", "")) != "active_today":
+		return {}
+
+	var feedback: Dictionary = GameStreakTrackerScript.construir_feedback(
+		previous_streak,
+		updated_streak,
+		false
+	)
+	if not bool(feedback.get("should_show", false)):
+		return {}
+	return feedback
 
 
 static func cargar_ranking_en_card(

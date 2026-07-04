@@ -58,6 +58,12 @@ static func continuar_o_finalizar_partida(
 	_registrar_exp_finalizacion(tree, estado_global, partida_actual)
 	# Debe ir antes de finalizar: Global limpia los stats ahí.
 	_guardar_precision_nodo(tree, partida_actual)
+	# Punto unico de registro de racha para las 4 modalidades: antes, cada
+	# modalidad registraba por su cuenta (algunas en cada mini juego, no solo
+	# en el ultimo; pregunta.gd directamente no registraba si no habia
+	# tarjeta de ensenanza). Centralizarlo aca garantiza que se registre
+	# exactamente una vez, al terminar de verdad la partida del nodo.
+	_registrar_actividad_racha_finalizacion(estado_global, partida_actual)
 
 	estado_global.call("finalizar_partida_de_nodo")
 	if al_finalizar_partida.is_valid():
@@ -181,6 +187,25 @@ static func _guardar_precision_nodo(tree: SceneTree, partida_actual: Dictionary)
 	)
 	save_manager.call("guardar_precision_nodo", node_key, float(precision), completed_games, total_games)
 	print("%s accuracy=%d node=%s" % [LOG_PREFIX_NODE_COMPLETE, precision, node_key])
+
+
+static func _registrar_actividad_racha_finalizacion(
+	estado_global: Node,
+	partida_actual: Dictionary
+) -> void:
+	if estado_global == null or not estado_global.has_method("registrar_actividad_racha"):
+		return
+	var node_key: String = str(partida_actual.get("clave_nodo", "")).strip_edges()
+	var track_key: String = str(partida_actual.get("clave_pista", "")).strip_edges()
+	estado_global.call(
+		"registrar_actividad_racha",
+		"map_node_completed",
+		{
+			"track_key": track_key,
+			"level_number": int(partida_actual.get("numero_nivel", 0)),
+			"node_key": node_key,
+		}
+	)
 
 
 static func _obtener_save_manager(tree: SceneTree) -> Node:

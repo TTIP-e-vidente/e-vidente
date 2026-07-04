@@ -176,6 +176,7 @@ static func construir_estado_flujo_post_juego(
 			"track_key": _leer_completion_track_key(completion_context),
 			"created_by": _leer_completion_created_by(completion_context),
 			"streak_is_active_now": _esta_activa_hoy(updated_streak),
+			"came_from_map": _completion_came_from_map(completion_context),
 		},
 	}
 
@@ -262,7 +263,16 @@ static func resolve_post_teaching_target(
 static func should_show_streak(flow_state: Dictionary) -> bool:
 	if flow_state.is_empty():
 		return false
+	# Las partidas de nodo (mapa) muestran el aviso de racha activada recien
+	# despues del leaderboard (ver PostPartidaFlow.finalizar_flujo_y_ir_al_mapa),
+	# no aca antes de llegar al leaderboard.
+	if _vino_del_mapa(flow_state):
+		return false
 	return _was_streak_inactive_before_game(flow_state)
+
+
+static func _vino_del_mapa(flow_state: Dictionary) -> bool:
+	return bool(_get_debug_section(flow_state).get("came_from_map", false))
 
 
 static func should_ir_a_next_target(flow_state: Dictionary) -> bool:

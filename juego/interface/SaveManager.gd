@@ -392,14 +392,24 @@ func registrar_nivel_completado(track_key: String, level_number: int) -> void:
 	)
 
 
-func registrar_sesion_preguntas_completada(question_count: int, score: int) -> void:
+func registrar_sesion_preguntas_completada(
+	question_count: int,
+	score: int,
+	registrar_racha: bool = true
+) -> void:
 	if question_count < 1:
 		return
 
-	_global_registrar_actividad_racha(
-		"question_session_completed",
-		{"question_count": question_count, "score": score}
-	)
+	# Si es parte de una partida de nodo (varias modalidades), el registro de
+	# racha lo hace una sola vez ContinuidadDePartidaDeNodo al terminar de
+	# verdad la partida — registrarlo tambien aca duplicaba el aviso a mitad
+	# de partida (y no se registraba nunca si esa modalidad no tenia tarjeta
+	# de ensenanza). El resto de esta funcion (log de actividad) sigue igual.
+	if registrar_racha:
+		_global_registrar_actividad_racha(
+			"question_session_completed",
+			{"question_count": question_count, "score": score}
+		)
 	_guardar_estado_actual(
 		"question_session_completed",
 		"Sesion de preguntas completada (%d/%d)" % [score, question_count],
@@ -1577,15 +1587,26 @@ func evaluar_perdida_racha_pendiente() -> Dictionary:
 	var updated_state: Dictionary = resultado.get("updated_state", {}) as Dictionary
 	_global_establecer_racha(updated_state)
 	_persistir_racha_en_save(updated_state)
+	_escribir_guardado_en_disco(false, "streak_loss")
 
-	if bool(resultado.get("should_show", false)):
-		var notify_day: String = str(resultado.get("notify_day", "")).strip_edges()
-		if not notify_day.is_empty():
-			streak_meta["last_loss_notified_for_day"] = notify_day
-			_persistir_meta_racha(streak_meta)
-		_escribir_guardado_en_disco(false, "streak_loss")
-
+	# OJO: a proposito NO se marca "last_loss_notified_for_day" aca todavia.
+	# Si se marcara en cuanto should_show=true, cualquier corte de la escena
+	# (transicion, host invalido) entre este punto y que el jugador realmente
+	# vea el panel dejaria la perdida marcada como "ya avisada" sin que nadie
+	# la haya visto. El llamador (StreakLossFlow) tiene que invocar
+	# marcar_perdida_racha_notificada() recien despues de que el panel se
+	# muestre y el jugador lo cierre.
 	return resultado
+
+
+func marcar_perdida_racha_notificada(notify_day: String) -> void:
+	var dia: String = notify_day.strip_edges()
+	if dia.is_empty():
+		return
+	var streak_meta: Dictionary = _obtener_meta_racha()
+	streak_meta["last_loss_notified_for_day"] = dia
+	_persistir_meta_racha(streak_meta)
+	_escribir_guardado_en_disco(false, "streak_loss_notified")
 
 
 func _obtener_meta_racha() -> Dictionary:

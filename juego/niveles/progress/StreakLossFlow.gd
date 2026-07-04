@@ -24,6 +24,13 @@ static func mostrar_si_corresponde(host: Node) -> void:
 
 	await presentar_feedback(host, feedback as Dictionary)
 
+	# Recien aca, con el panel ya mostrado y cerrado por el jugador, se marca
+	# como notificado. Si se marcara antes de este punto, un corte de escena
+	# a mitad de camino perderia el aviso para siempre sin que nadie lo viera.
+	var notify_day: String = str(resultado.get("notify_day", "")).strip_edges()
+	if not notify_day.is_empty() and SaveManager.has_method("marcar_perdida_racha_notificada"):
+		SaveManager.marcar_perdida_racha_notificada(notify_day)
+
 
 static func presentar_feedback(host: Node, feedback: Dictionary) -> void:
 	if host == null or not is_instance_valid(host) or feedback.is_empty():

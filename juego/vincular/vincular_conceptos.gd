@@ -1300,15 +1300,21 @@ func _finalizar_vinculacion() -> void:
 func _guardar_progreso_de_vinculacion() -> void:
 	if _tiene_sesion_de_mapa:
 		Global.marcar_nodo_jugable_completado(clave_pista, _nodo_actual)
-		Global.registrar_actividad_racha(
-			"map_node_completed",
-			{
-				"track_key": clave_pista,
-				"level_number": nivel_id,
-				"node_key": _nodo_actual,
-				"mode": NodeContentLoaderScript.MODE_VINCULACION_CONCEPTOS,
-			}
-		)
+		# Si es parte de una partida de nodo (varias modalidades), el registro
+		# de racha lo hace una sola vez ContinuidadDePartidaDeNodo al terminar
+		# de verdad la partida — registrarlo tambien aca duplicaba el aviso a
+		# mitad de partida. Para un nodo suelto de mapa (sin partida) si hace
+		# falta registrar aca, porque no hay otro punto de cierre.
+		if not _pertenece_a_partida_de_nodo:
+			Global.registrar_actividad_racha(
+				"map_node_completed",
+				{
+					"track_key": clave_pista,
+					"level_number": nivel_id,
+					"node_key": _nodo_actual,
+					"mode": NodeContentLoaderScript.MODE_VINCULACION_CONCEPTOS,
+				}
+			)
 		SaveManager.guardar_progreso_en_disco()
 		return
 

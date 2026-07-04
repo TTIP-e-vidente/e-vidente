@@ -612,7 +612,12 @@ func _calcular_elapsed_seconds() -> float:
 	return elapsed
 
 func _finalizar_actividad(success: bool) -> void:
-	if success:
+	# Si es parte de una partida de nodo (varias modalidades), el registro de
+	# racha lo hace una sola vez ContinuidadDePartidaDeNodo al terminar de
+	# verdad la partida — registrarlo tambien aca duplicaba el aviso a mitad
+	# de partida. Para una actividad suelta (sin partida activa) si hace
+	# falta registrar aca, porque no hay otro punto de cierre.
+	if success and Global.obtener_partida_de_nodo_actual().is_empty():
 		Global.registrar_actividad_racha("completar_palabra_completed", {})
 	var actividad: Dictionary = NODO_RUNTIME.obtener_actividad_actual(get_tree())
 	var precision_real: int = NODO_RUNTIME.calcular_precision(get_tree())

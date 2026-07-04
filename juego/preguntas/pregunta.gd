@@ -732,7 +732,12 @@ func _finalizar_pregunta_normal(cantidad_preguntas: int) -> void:
 			save_manager.call("registrar_nivel_completado", track_key, nivel_id)
 
 	if save_manager != null and save_manager.has_method("registrar_sesion_preguntas_completada"):
-		save_manager.call("registrar_sesion_preguntas_completada", cantidad_preguntas, puntaje)
+		save_manager.call(
+			"registrar_sesion_preguntas_completada",
+			cantidad_preguntas,
+			puntaje,
+			not _es_juego_de_partida_de_nodo()
+		)
 	var updated_streak: Dictionary = _obtener_estado_racha_global()
 	_on_questions_finished(previous_streak, updated_streak)
 

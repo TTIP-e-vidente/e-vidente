@@ -718,14 +718,19 @@ func guardar_progreso_de_finalizacion(track_key: String, level_number: int) -> v
 	)
 	if _usa_flujo_mapa:
 		_guardar_progreso_de_mapa()
-		Global.registrar_actividad_racha(
-			"map_node_completed",
-			{
-				"track_key": track_key,
-				"level_number": level_number,
-				"node_key": _nodo_actual,
-			}
-		)
+		# Si es parte de una partida de nodo (varias modalidades), el registro
+		# de racha lo hace una sola vez ContinuidadDePartidaDeNodo al terminar
+		# de verdad la partida — registrarlo tambien aca duplicaba el registro
+		# (aunque sin efecto visible, porque ya estaba activo "hoy").
+		if not _pertenece_a_partida_de_nodo:
+			Global.registrar_actividad_racha(
+				"map_node_completed",
+				{
+					"track_key": track_key,
+					"level_number": level_number,
+					"node_key": _nodo_actual,
+				}
+			)
 		SaveManager.guardar_progreso_en_disco()
 		_encolar_sync_partida_mapa()
 		return

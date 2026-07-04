@@ -33,6 +33,18 @@ static func iniciar(
 	plan["escena_de_retorno"] = return_to_safe
 	var sesion: Dictionary = _construir_sesion(node_data, return_to_safe)
 
+	# Snapshot de racha ANTES de que arranque el primer mini juego: algunas
+	# modalidades registran actividad a mitad de partida, asi que el flujo
+	# post-leaderboard necesita el estado "de verdad anterior" para detectar
+	# si la racha se activo durante esta partida (ver PostPartidaFlow).
+	if global_state.has_method("obtener_estado_racha") and global_state.has_method(
+		"establecer_snapshot_racha_inicio_partida"
+	):
+		global_state.call(
+			"establecer_snapshot_racha_inicio_partida",
+			global_state.call("obtener_estado_racha")
+		)
+
 	_limpiar(global_state)
 	global_state.call("establecer_sesion_nodo_jugable_activo", sesion)
 	global_state.call("iniciar_partida_de_nodo", plan)
