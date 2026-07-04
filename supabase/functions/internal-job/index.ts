@@ -45,49 +45,56 @@ Deno.serve(async (req) => {
   try {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const job = typeof body.job === 'string' ? body.job.trim() : '';
+    const onlyUserId = typeof body.onlyUserId === 'string' ? body.onlyUserId.trim() : undefined;
+    const retryBatchLimit = typeof body.retryBatchLimit === 'number' && body.retryBatchLimit > 0
+      ? Math.floor(body.retryBatchLimit)
+      : undefined;
+    const scope = onlyUserId || retryBatchLimit
+      ? { onlyUserId, retryBatchLimit }
+      : undefined;
 
     if (!ALLOWED_JOBS.has(job)) {
       return errorResponse(400, `Unknown job: ${job || '(empty)'}`);
     }
 
-    console.log(`[internal-job] start ${job}`);
+    console.log(`[internal-job] start ${job}${onlyUserId ? ` onlyUserId=${onlyUserId}` : ''}`);
 
     if (job === 'streak-emails') {
-      const result = await runStreakEmailJob();
+      const result = await runStreakEmailJob(undefined, scope);
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
     if (job === 'streak-at-risk-emails') {
-      const result = await runStreakAtRiskEmailJob();
+      const result = await runStreakAtRiskEmailJob(undefined, scope);
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
     if (job === 'streak-last-chance-emails') {
-      const result = await runStreakLastChanceEmailJob();
+      const result = await runStreakLastChanceEmailJob(undefined, scope);
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
     if (job === 'streak-lost-emails') {
-      const result = await runStreakLostEmailJob();
+      const result = await runStreakLostEmailJob(undefined, scope);
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
     if (job === 'retry-failed-emails') {
-      const result = await runRetryFailedEmailJob();
+      const result = await runRetryFailedEmailJob(scope);
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);
     }
 
     if (job === 'outbound-emails') {
       const welcome = await runPendingWelcomeJob();
-      const atRisk = await runStreakAtRiskEmailJob();
-      const lastChance = await runStreakLastChanceEmailJob();
-      const lost = await runStreakLostEmailJob();
-      const retry = await runRetryFailedEmailJob();
+      const atRisk = await runStreakAtRiskEmailJob(undefined, scope);
+      const lastChance = await runStreakLastChanceEmailJob(undefined, scope);
+      const lost = await runStreakLostEmailJob(undefined, scope);
+      const retry = await runRetryFailedEmailJob(scope);
       const result = { welcome, atRisk, lastChance, lost, retry };
       console.log(`[internal-job] done ${job}`, JSON.stringify(result));
       return jsonResponse(result);

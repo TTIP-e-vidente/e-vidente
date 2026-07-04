@@ -49,18 +49,31 @@ body {
 /* ── Nav principal ── */
 .nav {
   position: sticky; top: 0; z-index: 300; height: var(--nav-h);
-  display: flex; align-items: center; gap: 3px; padding: 0 18px;
-  background: rgba(8,12,20,0.94); backdrop-filter: blur(14px);
+  display: flex; align-items: center; gap: 4px; padding: 0 16px 0 12px;
+  background: linear-gradient(180deg, rgba(10,14,22,0.97) 0%, rgba(8,12,20,0.94) 100%);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03);
 }
 .nav-brand {
-  font-size: 11px; font-weight: 800; letter-spacing: .07em;
-  color: rgba(255,255,255,0.72); padding-right: 14px;
-  border-right: 1px solid var(--border); margin-right: 4px;
-  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  color: rgba(255,255,255,0.88); padding: 4px 14px 4px 6px;
+  border-right: 1px solid var(--border); margin-right: 6px;
+  text-decoration: none; border-radius: 10px;
+  transition: background .15s, color .15s;
 }
-.nav-brand:hover { color: #fff; }
-.nav a, .nav-doc {
+.nav-brand:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.nav-logo {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 8px; object-fit: contain;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.nav-brand-text { line-height: 1; }
+.nav a:not(.nav-brand), .nav-doc {
   color: rgba(255,255,255,0.4); text-decoration: none;
   font-size: 11px; font-weight: 600; padding: 5px 10px;
   border-radius: 6px; transition: .15s; white-space: nowrap;
@@ -70,6 +83,11 @@ body {
 .nav a.on-accent { color: #fff; background: var(--accent-dim); }
 .nav a.on-flow { color: #fff; background: var(--sync-bg); }
 .nav a.on-pg { color: #fff; background: var(--pg-bg); }
+.nav a.on-e4 {
+  color: #fff;
+  background: rgba(255,159,66,0.14);
+  box-shadow: inset 0 0 0 1px rgba(255,159,66,0.22);
+}
 .nav-spacer, .nav .spacer { flex: 1; }
 .nav-cta {
   color: var(--accent) !important; font-weight: 700 !important;

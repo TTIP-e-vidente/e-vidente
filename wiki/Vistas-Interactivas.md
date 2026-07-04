@@ -10,7 +10,7 @@ Las páginas HTML de diagramas **se abren desde la wiki con un clic**. No hace f
 
 | Vista | Para qué | Abrir |
 |-------|----------|-------|
-| **Persistencia E3+E4** | Tablas email, Supabase Edge, dual Godot | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-persistencia-e4.html?v=1) · [Índice wiki](Mer-Persistencia-E4) |
+| **Persistencia E3+E4** | Tablas email, Supabase Edge, dual Godot | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-persistencia-e4.html?v=5) · [Índice wiki](Mer-Persistencia-E4) |
 
 Documentación: [Entrega-4](Entrega-4) · [Evidencia](Entrega-4-Evidencia)
 
@@ -35,7 +35,7 @@ Documentación en markdown: [Resumen E3](Entrega-3) · [Evidencia](Entrega-3-Evi
 | [Hub MER](Mer-Hub) | Índice visual E1→E3 | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer.html?v=4) |
 | [Dominio E1/E2](Mer-Dominio) | Excalidraw conceptual | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-dominio.html?v=4) |
 | [Persistencia E3](Mer-Persistencia-E3) | Tablas + archivos | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-persistencia-e3.html?v=4) |
-| [Persistencia E4](Mer-Persistencia-E4) | Email + Supabase sobre E3 | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-persistencia-e4.html?v=1) |
+| [Persistencia E4](Mer-Persistencia-E4) | Email + Supabase sobre E3 | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-persistencia-e4.html?v=5) |
 | [Flujo de datos](Mer-Flujo) | Swimlanes sync | [▶ Abrir](https://raw.githack.com/TTIP-e-vidente/e-vidente/dev/wiki/mer-flujo.html?v=4) |
 
 Esquema canónico en texto: [MER](MER) · Sync: [Sync-Godot-Postgres](Sync-Godot-Postgres)

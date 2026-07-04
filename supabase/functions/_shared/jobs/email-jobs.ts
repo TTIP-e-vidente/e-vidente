@@ -29,6 +29,11 @@ interface StreakCandidate {
   currentCount: number;
 }
 
+export interface EmailJobScope {
+  onlyUserId?: string;
+  retryBatchLimit?: number;
+}
+
 function emailConfig() {
   return {
     timezone: Deno.env.get('EMAIL_TIMEZONE')?.trim() || 'America/Argentina/Buenos_Aires',
@@ -54,7 +59,18 @@ async function findUserStreakCount(db: Client, userId: string): Promise<number> 
   return Math.max(1, result.rows[0]?.current_count ?? 1);
 }
 
-async function findStreakAtRisk(db: Client, today: string): Promise<StreakCandidate[]> {
+async function findStreakAtRisk(
+  db: Client,
+  today: string,
+  scope?: EmailJobScope,
+): Promise<StreakCandidate[]> {
+  const params: unknown[] = [today];
+  let userFilter = '';
+  if (scope?.onlyUserId) {
+    params.push(scope.onlyUserId);
+    userFilter = ` AND u.id = $${params.length}`;
+  }
+
   const result = await db.queryObject<{
     user_id: string;
     mail: string;
@@ -78,9 +94,9 @@ async function findStreakAtRisk(db: Client, today: string): Promise<StreakCandid
             AND ed.template_key = 'streak_at_risk'
             AND ed.dedupe_key = 'at_risk:' || $1
             AND ed.status IN ('sent', 'pending')
-        );
+        )${userFilter};
     `,
-    [today],
+    params,
   );
   return result.rows.map((r) => ({
     userId: r.user_id,
@@ -91,7 +107,18 @@ async function findStreakAtRisk(db: Client, today: string): Promise<StreakCandid
   }));
 }
 
-async function findStreakLastChance(db: Client, today: string): Promise<StreakCandidate[]> {
+async function findStreakLastChance(
+  db: Client,
+  today: string,
+  scope?: EmailJobScope,
+): Promise<StreakCandidate[]> {
+  const params: unknown[] = [today];
+  let userFilter = '';
+  if (scope?.onlyUserId) {
+    params.push(scope.onlyUserId);
+    userFilter = ` AND u.id = $${params.length}`;
+  }
+
   const result = await db.queryObject<{
     user_id: string;
     mail: string;
@@ -115,9 +142,9 @@ async function findStreakLastChance(db: Client, today: string): Promise<StreakCa
             AND ed.template_key = 'streak_last_chance'
             AND ed.dedupe_key = 'last_chance:' || $1
             AND ed.status IN ('sent', 'pending')
-        );
+        )${userFilter};
     `,
-    [today],
+    params,
   );
   return result.rows.map((r) => ({
     userId: r.user_id,
@@ -128,7 +155,18 @@ async function findStreakLastChance(db: Client, today: string): Promise<StreakCa
   }));
 }
 
-async function findStreakLost(db: Client, today: string): Promise<StreakCandidate[]> {
+async function findStreakLost(
+  db: Client,
+  today: string,
+  scope?: EmailJobScope,
+): Promise<StreakCandidate[]> {
+  const params: unknown[] = [today];
+  let userFilter = '';
+  if (scope?.onlyUserId) {
+    params.push(scope.onlyUserId);
+    userFilter = ` AND u.id = $${params.length}`;
+  }
+
   const result = await db.queryObject<{
     user_id: string;
     mail: string;
@@ -154,9 +192,9 @@ async function findStreakLost(db: Client, today: string): Promise<StreakCandidat
             AND ed.template_key = 'streak_lost'
             AND ed.dedupe_key = 'lost:' || to_char(s.last_activity_day, 'YYYY-MM-DD')
             AND ed.status IN ('sent', 'pending')
-        );
+        )${userFilter};
     `,
-    [today],
+    params,
   );
   return result.rows.map((r) => ({
     userId: r.user_id,
@@ -216,7 +254,7 @@ async function batchDeliver(
   return stats;
 }
 
-export async function runStreakAtRiskEmailJob(referenceDate?: string) {
+export async function runStreakAtRiskEmailJob(referenceDate?: string, scope?: EmailJobScope) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
   }
@@ -225,7 +263,7 @@ export async function runStreakAtRiskEmailJob(referenceDate?: string) {
 
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
-    const atRiskRows = await findStreakAtRisk(db, today);
+    const atRiskRows = await findStreakAtRisk(db, today, scope);
     const atRisk = await batchDeliver(
       atRiskRows.map((c) => ({
         userId: c.userId,
@@ -240,7 +278,7 @@ export async function runStreakAtRiskEmailJob(referenceDate?: string) {
   });
 }
 
-export async function runStreakLastChanceEmailJob(referenceDate?: string) {
+export async function runStreakLastChanceEmailJob(referenceDate?: string, scope?: EmailJobScope) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
   }
@@ -249,7 +287,7 @@ export async function runStreakLastChanceEmailJob(referenceDate?: string) {
 
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
-    const lastChanceRows = await findStreakLastChance(db, today);
+    const lastChanceRows = await findStreakLastChance(db, today, scope);
     const lastChance = await batchDeliver(
       lastChanceRows.map((c) => ({
         userId: c.userId,
@@ -264,7 +302,7 @@ export async function runStreakLastChanceEmailJob(referenceDate?: string) {
   });
 }
 
-export async function runStreakLostEmailJob(referenceDate?: string) {
+export async function runStreakLostEmailJob(referenceDate?: string, scope?: EmailJobScope) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
   }
@@ -273,7 +311,7 @@ export async function runStreakLostEmailJob(referenceDate?: string) {
 
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
-    const lostRows = await findStreakLost(db, today);
+    const lostRows = await findStreakLost(db, today, scope);
     const lost = await batchDeliver(
       lostRows.map((c) => ({
         userId: c.userId,
@@ -289,9 +327,9 @@ export async function runStreakLostEmailJob(referenceDate?: string) {
   });
 }
 
-export async function runStreakEmailJob(referenceDate?: string) {
-  const atRisk = await runStreakAtRiskEmailJob(referenceDate);
-  const lost = await runStreakLostEmailJob(referenceDate);
+export async function runStreakEmailJob(referenceDate?: string, scope?: EmailJobScope) {
+  const atRisk = await runStreakAtRiskEmailJob(referenceDate, scope);
+  const lost = await runStreakLostEmailJob(referenceDate, scope);
   if ('skipped' in atRisk && atRisk.skipped) {
     return atRisk;
   }
@@ -309,14 +347,26 @@ export async function runStreakEmailJob(referenceDate?: string) {
   };
 }
 
-export async function runRetryFailedEmailJob() {
+export async function runRetryFailedEmailJob(scope?: EmailJobScope) {
   if (!isEmailDeliveryConfigured()) {
     return { skipped: true, reason: 'brevo_not_configured' };
   }
   const cfg = emailConfig();
+  const batchLimit = scope?.retryBatchLimit ?? cfg.retryBatchLimit;
 
   return withDb(async (db) => {
     const expiredPending = await expireStalePendingDeliveries(db, cfg.staleMinutes);
+    const params: unknown[] = [
+      cfg.retryMaxAttempts,
+      String(cfg.retryMaxAgeHours),
+      batchLimit,
+    ];
+    let userFilter = '';
+    if (scope?.onlyUserId) {
+      params.push(scope.onlyUserId);
+      userFilter = ` AND user_id = $${params.length}`;
+    }
+
     // Claim atómico: SKIP LOCKED evita procesar la misma fila desde dos jobs;
     // next_attempt_at implementa el backoff (2.º +10 min, 3.º +1 h, 4.º+ +6 h);
     // los locks viejos (>10 min) se consideran de jobs muertos y se retoman.
@@ -337,6 +387,7 @@ export async function runRetryFailedEmailJob() {
             AND failed_at >= now() - ($2::text || ' hours')::interval
             AND (next_attempt_at IS NULL OR next_attempt_at <= now())
             AND (locked_at IS NULL OR locked_at < now() - INTERVAL '10 minutes')
+            AND template_key <> 'email_verification'${userFilter}
           ORDER BY failed_at ASC
           LIMIT $3
           FOR UPDATE SKIP LOCKED
@@ -347,7 +398,7 @@ export async function runRetryFailedEmailJob() {
         WHERE ed.id = c.id
         RETURNING ed.id, ed.user_id, ed.template_key, ed.dedupe_key, ed.recipient_email;
       `,
-      [cfg.retryMaxAttempts, String(cfg.retryMaxAgeHours), cfg.retryBatchLimit],
+      params,
     );
 
     const stats: DeliveryBatchStats = {
