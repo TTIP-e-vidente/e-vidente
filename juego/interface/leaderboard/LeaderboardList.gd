@@ -151,6 +151,9 @@ func _ejecutar_scroll_animado(control: Control) -> void:
 
 	await get_tree().process_frame
 
+	if not is_instance_valid(control):
+		return
+
 	var barra := get_v_scroll_bar()
 	var max_scroll := int(barra.max_value) if barra != null else 0
 	var objetivo := _calcular_scroll_para_centrar(control, max_scroll)
