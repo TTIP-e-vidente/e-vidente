@@ -56,4 +56,9 @@ Mails transaccionales con Brevo, verificación OTP, recordatorios de racha con c
 <img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/2d2281e2-209a-4be2-b996-05170261d691" />
 <img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/ab03c394-53ed-4d4b-8b65-7d2dcc665a14" />
 <img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/416912a7-8c34-4263-8b2a-c3d6c01ced21" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/ee20f102-ab5c-445d-83a9-f1b27de00883" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/4f5969b2-fc59-447b-a0e2-00bde3264d67" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/7c8aac74-8df1-4f1a-9d55-81e88260a08c" />
+<img width="460" height="318" alt="image" src="https://github.com/user-attachments/assets/b32fc618-16c8-4436-9180-55479117a8ae" />
+
 
