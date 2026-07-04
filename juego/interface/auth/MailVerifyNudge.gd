@@ -36,7 +36,10 @@ func refrescar() -> void:
 		return
 	var user: Dictionary = AuthApi.obtener_usuario_online()
 	var mail: String = str(user.get("mail", "")).strip_edges()
-	if mail.is_empty():
+	# Si no hay mail cargado pero tenemos un aviso pendiente (p. ej. el 422 de
+	# "no tenés un email configurado"), hay que mostrarlo igual: ocultar acá
+	# directamente hacía que tocar «Verificar ahora» pareciera no hacer nada.
+	if mail.is_empty() and _aviso_temporal.is_empty():
 		visible = false
 		return
 	var verified_at: Variant = user.get("mail_verified_at", null)
@@ -50,6 +53,9 @@ func refrescar() -> void:
 	if not _aviso_temporal.is_empty():
 		_label.text = _aviso_temporal
 		_aplicar_color_mensaje(COLOR_TEXTO_OK if _aviso_es_ok else COLOR_TEXTO_ERROR)
+	elif mail.is_empty():
+		visible = false
+		return
 	else:
 		_label.text = mensaje_base
 		_aplicar_color_mensaje(COLOR_TEXTO_BASE)

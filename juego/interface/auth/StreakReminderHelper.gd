@@ -58,6 +58,16 @@ static func mail_verificado() -> bool:
 	return AuthApi.esta_logueado() and AuthApi.mail_esta_verificado()
 
 
+## Distingue "no hay mail cargado en la cuenta" de "hay mail pero no está
+## verificado": ofrecerle "Verificar mail" a quien no tiene mail configurado
+## termina siempre en un 422 del servidor, así que ese caso necesita otro
+## texto y otra acción (ir al perfil a cargar un mail).
+static func cuenta_sin_mail() -> bool:
+	if not AuthApi.esta_logueado():
+		return false
+	return str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges().is_empty()
+
+
 static func debe_mostrar_nudge() -> bool:
 	if not AuthApi.esta_logueado():
 		return false
@@ -82,6 +92,19 @@ static func resolver_nudge() -> Dictionary:
 			"hint": "",
 			"boton": "Entendido",
 			"accion": AccionNudge.RECONOCER_PERDIDA,
+		}
+
+	if cuenta_sin_mail():
+		return {
+			"visible": true,
+			"titulo": "Racha en riesgo",
+			"cuerpo": (
+				"Agregá un mail en tu perfil para poder recibir recordatorios "
+				+ "cuando la racha esté en peligro."
+			),
+			"hint": "",
+			"boton": "Agregar mail",
+			"accion": AccionNudge.ABRIR_PERFIL,
 		}
 
 	if not mail_verificado():

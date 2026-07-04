@@ -283,3 +283,7 @@ func _procesar_resultado_verificacion(result: Dictionary) -> void:
 	aviso_verificacion.emit(mensaje, es_ok)
 	if is_instance_valid(_nudge_global) and _nudge_global.has_method("mostrar_aviso"):
 		_nudge_global.call("mostrar_aviso", mensaje, es_ok)
+	# También al nudge de racha: si "Verificar mail" se tocó desde ahí, el
+	# resultado tiene que verse ahí, no solo en el aviso global de mail.
+	if is_instance_valid(_streak_nudge_global) and _streak_nudge_global.has_method("mostrar_aviso"):
+		_streak_nudge_global.call("mostrar_aviso", mensaje, es_ok)

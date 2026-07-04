@@ -68,17 +68,21 @@ func refrescar() -> void:
 		visible = true
 		return
 
-	var datos: Dictionary = HelperScript.resolver_nudge()
-	if not bool(datos.get("visible", false)):
-		if _mensaje_temporal.is_empty():
-			ocultar()
-			return
+	# Un aviso temporal (p. ej. el error de una verificación fallida) tiene
+	# prioridad sobre el contenido normal del nudge: si no, en cuanto la racha
+	# sigue en riesgo (el caso más común) el bloque de abajo lo pisaba antes
+	# de que el jugador llegara a verlo, y tocar el botón parecía no hacer nada.
+	if not _mensaje_temporal.is_empty():
 		_mostrar_solo_mensaje_temporal()
 		_programar_ocultar_si_error()
 		return
 
+	var datos: Dictionary = HelperScript.resolver_nudge()
+	if not bool(datos.get("visible", false)):
+		ocultar()
+		return
+
 	_cancelar_timer_ocultar()
-	_mensaje_temporal = ""
 	_accion_actual = int(datos.get("accion", HelperScript.AccionNudge.NINGUNA))
 	_icon_panel.visible = true
 	_titulo.visible = true
