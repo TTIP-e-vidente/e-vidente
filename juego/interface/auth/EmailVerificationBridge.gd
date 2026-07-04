@@ -21,6 +21,7 @@ const NUDGE_REFRESH_INTERVAL_SECONDS := 60.0
 var _nudge_global: CanvasLayer = null
 var _streak_nudge_global: CanvasLayer = null
 var _aviso_mail_activo_en_sesion := false
+var _aviso_racha_activo_en_sesion := false
 var _timer_refresco_nudges: Timer = null
 
 
@@ -30,11 +31,23 @@ func aviso_mail_habilitado() -> bool:
 
 func habilitar_aviso_mail() -> void:
 	_aviso_mail_activo_en_sesion = true
+	_aviso_racha_activo_en_sesion = true
 	refrescar_nudge_global()
 
 
 func deshabilitar_aviso_mail() -> void:
 	_aviso_mail_activo_en_sesion = false
+	_aviso_racha_activo_en_sesion = false
+	refrescar_nudge_global()
+
+
+## A diferencia del aviso de mail (que solo se activa tras un login explicito
+## para no molestar apenas se restaura la sesion en silencio), el aviso de
+## racha en riesgo/perdida es informativo y depende del reloj, no del login:
+## debe poder mostrarse tambien cuando la sesion se restaura sola al abrir
+## la app, que es el caso mas comun para un usuario que vuelve a jugar.
+func habilitar_aviso_racha() -> void:
+	_aviso_racha_activo_en_sesion = true
 	refrescar_nudge_global()
 
 
@@ -74,7 +87,10 @@ func refrescar_nudge_global() -> void:
 
 
 func _on_sesion_restaurada(_user: Dictionary) -> void:
-	# Restaurar cache en silencio: no mostrar avisos hasta login/Jugar exitoso.
+	# Restaurar cache en silencio: no mostrar el aviso de mail hasta login/Jugar
+	# exitoso. El aviso de racha si se habilita: es informativo (racha en
+	# riesgo o perdida) y no depende de que el login haya sido recien ahora.
+	habilitar_aviso_racha()
 	_ejecutar_en_segundo_plano(
 		func() -> Dictionary:
 			await BackendSession.refrescar_usuario_en_cache()
@@ -107,7 +123,7 @@ func _refrescar_nudges_global() -> void:
 		# caso — ocultarla acá la dejaba sin mostrarse nunca.
 		var ocultar_racha := (
 			_escena_actual_sin_aviso_mail()
-			or not _aviso_mail_activo_en_sesion
+			or not _aviso_racha_activo_en_sesion
 		)
 		StreakReminderNudgeHelperScript.refrescar(_streak_nudge_global, ocultar_racha)
 

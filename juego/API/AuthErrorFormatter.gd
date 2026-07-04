@@ -20,7 +20,7 @@ static func mensaje_auth(result: Dictionary, fallback: String = "") -> String:
 	return _mensaje_auth_generico(result, fallback)
 
 
-static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> String:
+static func mensaje_verificacion(result: Dictionary, _fallback: String = "") -> String:
 	var code := str(result.get("code", "")).strip_edges()
 	var data: Dictionary = {}
 	var raw_data: Variant = result.get("data", {})
@@ -74,8 +74,6 @@ static func mensaje_verificacion(result: Dictionary, fallback: String = "") -> S
 				+ "Guardá el perfil e intentá de nuevo."
 			)
 
-	if not fallback.is_empty():
-		return fallback
 	return ""
 
 

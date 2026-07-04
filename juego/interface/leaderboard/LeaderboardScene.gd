@@ -315,6 +315,13 @@ func _al_leaderboard_cargado(scope: String, datos: Dictionary) -> void:
 
 func _al_leaderboard_fallido(scope: String, mensaje: String) -> void:
 	var scope_base := scope
+	if scope.ends_with(":mas"):
+		scope_base = scope.trim_suffix(":mas")
+		if scope_base != _scope_activo:
+			return
+		if is_instance_valid(_lista):
+			_lista.restablecer_boton_ver_mas()
+		return
 	if scope.ends_with(":pagina"):
 		scope_base = scope.trim_suffix(":pagina")
 	if scope_base != _scope_activo:

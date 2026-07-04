@@ -343,14 +343,35 @@ func _cargar_datos_online_interno(epoch: int) -> Dictionary:
 	return resultado_sync
 
 
-func verificar_estado_del_servidor() -> Dictionary:
-	await _asegurar_modo_backend_resuelto()
+# En modo Supabase Edge, verificar_salud_api() y verificar_salud_db() pegan
+# al mismo endpoint ("auth-health"): pedirlas por separado duplica la
+# conexión a la base por cada chequeo (login, "Verificar ahora", etc.) y, si
+# el pooler de Supabase tarda o tiene poco margen, la segunda pegada de las
+# dos puede fallar de pura mala suerte aunque Supabase esté perfectamente
+# arriba — se veía como "Supabase Edge no responde correctamente" en el acto.
+func _verificar_salud_api_y_db() -> Dictionary:
+	if BackendConfig.es_modo_supabase_edge():
+		var salud := await _api.verificar_salud_db()
+		if not salud.get("ok", false):
+			return {"ok": false, "phase": "db", "salud_db": salud}
+		return {"ok": true, "salud_db": salud}
 	var salud_api := await _api.verificar_salud_api()
 	if not salud_api.get("ok", false):
-		return {"ok": false, "phase": "api", "result": salud_api}
+		return {"ok": false, "phase": "api", "salud_api": salud_api}
 	var salud_db := await _api.verificar_salud_db()
 	if not salud_db.get("ok", false):
-		return {"ok": false, "phase": "db", "result": salud_db}
+		return {"ok": false, "phase": "db", "salud_db": salud_db}
+	return {"ok": true, "salud_api": salud_api, "salud_db": salud_db}
+
+
+func verificar_estado_del_servidor() -> Dictionary:
+	await _asegurar_modo_backend_resuelto()
+	var chequeo := await _verificar_salud_api_y_db()
+	if not bool(chequeo.get("ok", false)):
+		var fase: String = str(chequeo.get("phase", "api"))
+		var salud_fallida: Dictionary = chequeo.get("salud_db", chequeo.get("salud_api", {}))
+		return {"ok": false, "phase": fase, "result": salud_fallida}
+	var salud_db: Dictionary = chequeo.get("salud_db", {})
 	var raw_db: Variant = salud_db.get("data", {})
 	if raw_db is Dictionary and not bool((raw_db as Dictionary).get("remote", false)):
 		return {
@@ -368,13 +389,12 @@ func verificar_estado_del_servidor() -> Dictionary:
 
 func verificar_stack_completo() -> Dictionary:
 	await _asegurar_modo_backend_resuelto()
-	var salud_api := await _api.verificar_salud_api()
-	if not salud_api.get("ok", false):
-		return {"ok": false, "phase": "api", "result": salud_api}
-
-	var salud_db := await _api.verificar_salud_db()
-	if not salud_db.get("ok", false):
-		return {"ok": false, "phase": "db", "result": salud_db}
+	var chequeo := await _verificar_salud_api_y_db()
+	if not bool(chequeo.get("ok", false)):
+		var fase: String = str(chequeo.get("phase", "api"))
+		var salud_fallida: Dictionary = chequeo.get("salud_db", chequeo.get("salud_api", {}))
+		return {"ok": false, "phase": fase, "result": salud_fallida}
+	var salud_db: Dictionary = chequeo.get("salud_db", {})
 
 	var db_data: Dictionary = {}
 	var raw_db: Variant = salud_db.get("data", {})
@@ -910,15 +930,11 @@ func _descartar_resultado_carga_online() -> void:
 
 func _asegurar_servidor_listo() -> Dictionary:
 	await _asegurar_modo_backend_resuelto()
-	var salud_api := await _api.verificar_salud_api()
-	if not salud_api.get("ok", false):
-		var resultado: Dictionary = salud_api.duplicate()
-		resultado["phase"] = "api"
-		return resultado
-	var salud_db := await _api.verificar_salud_db()
-	if not salud_db.get("ok", false):
-		var resultado: Dictionary = salud_db.duplicate()
-		resultado["phase"] = "db"
+	var chequeo := await _verificar_salud_api_y_db()
+	if not bool(chequeo.get("ok", false)):
+		var salud_fallida: Dictionary = chequeo.get("salud_db", chequeo.get("salud_api", {}))
+		var resultado: Dictionary = salud_fallida.duplicate()
+		resultado["phase"] = str(chequeo.get("phase", "api"))
 		return resultado
 	return {"ok": true}
 

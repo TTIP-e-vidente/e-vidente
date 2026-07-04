@@ -80,9 +80,9 @@ static func _resolver_estado_visual(
 	if last_day == today:
 		return "active"
 	if _days_between(last_day, today) == 1:
+		# Racha viva pero pendiente hoy: avisar todo el dia (no recien a la tarde),
+		# escalando a critico cerca de perderla.
 		var hour := _resolver_hora_local(current_hour)
-		if hour < 18:
-			return "inactive"
 		if hour >= 22:
 			return "critical"
 		return "warning"

@@ -9,7 +9,7 @@ const LOG_PREFIX_ENSENANZA := "[ENSENANZA]"
 const LOG_PREFIX_POST_GAME := "[POST_GAME]"
 const LOG_PREFIX_TEACHING := "[Teaching]"
 const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
-const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste alimentos aptos sin TACC."
+const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste opciones aptas para tu objetivo."
 const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 
 ## --- Configuración ---

@@ -301,6 +301,8 @@ func _animar_celebracion(puestos_ganados: int, es_primera: bool) -> void:
 		return
 
 	await get_tree().process_frame
+	if not is_instance_valid(_label_celebracion):
+		return
 	_detener_animacion_borde()
 
 	var intensidad := 1
