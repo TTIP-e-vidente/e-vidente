@@ -138,14 +138,14 @@ func mostrar_desde_datos(
 	if es_primero:
 		_label_meta.text = "¡Primero en %s!" % etiqueta_scope
 	else:
-		var siguiente: Variant = datos.get("next", {})
-		var nombre_rival := _nombre_rival(siguiente)
-		var faltante := LeaderboardFormat.formatear_score(exp_faltante, _scope_preferido)
-		_label_meta.text = "En %s: faltan %s para superar a %s" % [
-			etiqueta_scope,
-			faltante,
-			nombre_rival,
-		]
+		var progreso_texto := LeaderboardFormat.texto_progreso_siguiente_puesto(
+			datos, _scope_preferido, etiqueta_scope
+		)
+		_label_meta.text = (
+			"En %s: %s" % [etiqueta_scope, progreso_texto]
+			if not progreso_texto.is_empty()
+			else ""
+		)
 
 	_animar_valores(exp_actual, progreso)
 	if is_instance_valid(_barra_progreso):
@@ -328,17 +328,6 @@ func mostrar_scope_sin_progreso(scope: String, datos: Dictionary = {}) -> void:
 
 func _al_presionar_boton_inferior() -> void:
 	ver_ranking_solicitado.emit(_scope_preferido)
-
-
-func _nombre_rival(siguiente: Variant) -> String:
-	if not siguiente is Dictionary:
-		return "el jugador anterior"
-	var sig := siguiente as Dictionary
-	var nombre := LeaderboardFormat.resolver_nombre_entrada(sig)
-	if nombre != "—":
-		return nombre
-	var puesto := LeaderboardFormat.entero_desde_json(sig.get("rank", 0))
-	return "puesto #%d" % puesto if puesto > 0 else "el jugador anterior"
 
 
 func _pulso_borde_celebracion(intensidad: int) -> void:

@@ -20,6 +20,15 @@ extends VBoxContainer
 
 const AVATAR_SIZE_EMPATE := 22
 
+# Colores por defecto (no-propio), calcados de los que trae LeaderboardPodiumSlot.tscn.
+# "remove_theme_color_override" borraba el override cargado desde la escena y
+# dejaba el label con el color por defecto del Theme global (ilegible sobre el
+# fondo claro): reaplicar estos valores explícitos es lo que evita ese vacío.
+const COLOR_NOMBRE_DEFECTO := Color(0.2784314, 0.2509804, 0.18431373, 1)
+const COLOR_PUNTAJE_DEFECTO := Color(0.25882354, 0.47058824, 0.36862746, 1)
+const COLOR_NOMBRE_PROPIO := Color(0.22, 0.38, 0.30, 1)
+const COLOR_PUNTAJE_PROPIO := Color(0.25882354, 0.47058824, 0.36862746, 1)
+
 var _entradas: Array = []
 var _scope: String = "global_xp"
 var _es_propio: bool = false
@@ -77,22 +86,16 @@ func poblar(entradas: Array, id_propio: String, scope: String) -> void:
 		)
 	if is_instance_valid(_label_nombre):
 		_label_nombre.text = nombre
-		if _es_propio:
-			_label_nombre.add_theme_color_override(
-				"font_color",
-				Color(0.22, 0.38, 0.30, 1)
-			)
-		else:
-			_label_nombre.remove_theme_color_override("font_color")
+		_label_nombre.add_theme_color_override(
+			"font_color",
+			COLOR_NOMBRE_PROPIO if _es_propio else COLOR_NOMBRE_DEFECTO
+		)
 	if is_instance_valid(_label_puntaje):
 		_label_puntaje.text = LeaderboardFormat.formatear_score(puntaje, scope)
-		if _es_propio:
-			_label_puntaje.add_theme_color_override(
-				"font_color",
-				Color(0.25882354, 0.47058824, 0.36862746, 1)
-			)
-		else:
-			_label_puntaje.remove_theme_color_override("font_color")
+		_label_puntaje.add_theme_color_override(
+			"font_color",
+			COLOR_PUNTAJE_PROPIO if _es_propio else COLOR_PUNTAJE_DEFECTO
+		)
 	if is_instance_valid(_avatar):
 		_avatar.mostrar_para_entrada(primera, _es_propio_entrada(primera, id_propio))
 	_poblar_fila_avatares_empate(entradas, id_propio)

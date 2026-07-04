@@ -102,6 +102,8 @@ func abrir(scope: String = "") -> void:
 func _conectar_servicio() -> void:
 	LeaderboardService.leaderboard_cargado.connect(_al_leaderboard_cargado)
 	LeaderboardService.leaderboard_fallido.connect(_al_leaderboard_fallido)
+	LeaderboardService.resumen_competitivo_cargado.connect(_al_resumen_competitivo_cargado)
+	LeaderboardService.resumen_competitivo_fallido.connect(_al_resumen_competitivo_fallido)
 
 
 func _desconectar_servicio() -> void:
@@ -109,6 +111,10 @@ func _desconectar_servicio() -> void:
 		LeaderboardService.leaderboard_cargado.disconnect(_al_leaderboard_cargado)
 	if LeaderboardService.leaderboard_fallido.is_connected(_al_leaderboard_fallido):
 		LeaderboardService.leaderboard_fallido.disconnect(_al_leaderboard_fallido)
+	if LeaderboardService.resumen_competitivo_cargado.is_connected(_al_resumen_competitivo_cargado):
+		LeaderboardService.resumen_competitivo_cargado.disconnect(_al_resumen_competitivo_cargado)
+	if LeaderboardService.resumen_competitivo_fallido.is_connected(_al_resumen_competitivo_fallido):
+		LeaderboardService.resumen_competitivo_fallido.disconnect(_al_resumen_competitivo_fallido)
 
 
 func _conectar_componentes() -> void:
@@ -149,6 +155,8 @@ func _cargar_scope(scope: String, forzar: bool = false) -> void:
 	if forzar:
 		LeaderboardService.invalidar_cache(scope)
 	LeaderboardService.cargar(scope, forzar)
+	if AuthApi.esta_logueado():
+		LeaderboardService.cargar_resumen_competitivo(forzar, scope)
 	if is_instance_valid(_label_meta):
 		_label_meta.text = ""
 		_label_meta.visible = false
@@ -323,6 +331,21 @@ func _al_leaderboard_fallido(scope: String, mensaje: String) -> void:
 			texto += "\n%s" % LeaderboardFormat.mensaje_progreso_no_suma()
 		_etiqueta_error.text = texto
 	_cambiar_estado(EstadoUi.ERROR)
+
+
+func _al_resumen_competitivo_cargado(datos: Dictionary) -> void:
+	var scope_datos := str(datos.get("scope", "")).strip_edges()
+	if not scope_datos.is_empty() and scope_datos != _scope_activo:
+		return
+	if is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.mostrar_progreso_a_siguiente_puesto(_scope_activo, datos)
+
+
+func _al_resumen_competitivo_fallido(_mensaje: String) -> void:
+	# No bloqueante: si falla el resumen de progreso, el resto del modal
+	# (podio, lista, posición propia) ya se mostró igual con el listado normal.
+	if is_instance_valid(_card_posicion_propia):
+		_card_posicion_propia.ocultar_progreso_a_siguiente_puesto()
 
 
 func _al_presionar_reintentar() -> void:

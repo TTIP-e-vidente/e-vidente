@@ -376,3 +376,34 @@ static func texto_continuar_dashboard() -> String:
 
 static func texto_iniciar_sesion_para_competir() -> String:
 	return "Iniciá sesión"
+
+
+## Nombre del rival a superar para subir de puesto, usado tanto en la card de
+## perfil (ProgresoPuestoCard) como en la barra de posición propia del listado
+## completo (OwnPositionCard).
+static func nombre_rival(siguiente: Variant) -> String:
+	if not siguiente is Dictionary:
+		return "el jugador anterior"
+	var sig := siguiente as Dictionary
+	var nombre := resolver_nombre_entrada(sig)
+	if nombre != "—":
+		return nombre
+	var puesto := entero_desde_json(sig.get("rank", 0))
+	return "puesto #%d" % puesto if puesto > 0 else "el jugador anterior"
+
+
+## Texto "faltan X para superar a Y" / "¡Primero en Z!" compartido entre las
+## distintas cards que muestran el progreso competitivo hacia el próximo puesto.
+static func texto_progreso_siguiente_puesto(
+	datos: Dictionary,
+	scope: String,
+	etiqueta_scope: String
+) -> String:
+	if bool(datos.get("is_first_place", false)):
+		return "¡Primero en %s!" % etiqueta_scope
+	var exp_faltante := entero_desde_json(datos.get("exp_to_next_rank", 0))
+	if exp_faltante <= 0:
+		return ""
+	var faltante := formatear_score(exp_faltante, scope)
+	var rival := nombre_rival(datos.get("next", {}))
+	return "Faltan %s para superar a %s" % [faltante, rival]

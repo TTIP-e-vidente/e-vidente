@@ -9,11 +9,12 @@ signal ir_a_posicion_solicitada(rank: int)
 signal volver_al_top_solicitado
 
 
-@onready var _label_posicion: Label = $MarginContainer/HBox/RankLabel
-@onready var _label_puntaje:  Label = $MarginContainer/HBox/ScoreLabel
-@onready var _label_texto:    Label = $MarginContainer/HBox/TextoLabel
+@onready var _label_posicion: Label = $MarginContainer/VBox/HBox/RankLabel
+@onready var _label_puntaje:  Label = $MarginContainer/VBox/HBox/ScoreLabel
+@onready var _label_texto:    Label = $MarginContainer/VBox/HBox/TextoLabel
+@onready var _label_meta:     Label = %MetaLabel
 @onready var _nav_botones:    HBoxContainer = %NavBotones
-@onready var _boton_iniciar_sesion: Button = $MarginContainer/HBox/BotonIniciarSesion
+@onready var _boton_iniciar_sesion: Button = $MarginContainer/VBox/HBox/BotonIniciarSesion
 @onready var _boton_ir_posicion: Button = %BotonIrPosicion
 @onready var _boton_volver_top: Button = %BotonVolverTop
 
@@ -114,6 +115,36 @@ func mostrar_modo_solo_lectura() -> void:
 	_label_texto.text = LeaderboardFormat.texto_tarjeta_modo_invitado()
 	_label_posicion.remove_theme_color_override("font_color")
 	_ocultar_boton_iniciar_sesion()
+	ocultar_progreso_a_siguiente_puesto()
+
+
+## Datos de LeaderboardService.cargar_resumen_competitivo() para el scope activo:
+## reemplaza la etiqueta "Tu posición" de la fila superior por una sola línea
+## "Tu posición · Faltan X para superar a Y", en vez de dos líneas sueltas y
+## desalineadas entre sí (la etiqueta a la derecha arriba, el dato suelto abajo).
+func mostrar_progreso_a_siguiente_puesto(scope: String, datos: Dictionary) -> void:
+	if not is_instance_valid(_label_meta):
+		return
+	if not bool(datos.get("available", true)):
+		ocultar_progreso_a_siguiente_puesto()
+		return
+	var etiqueta := str(datos.get("scope_label", RestrictionCodes.etiqueta_scope(scope)))
+	var texto := LeaderboardFormat.texto_progreso_siguiente_puesto(datos, scope, etiqueta)
+	if texto.is_empty():
+		ocultar_progreso_a_siguiente_puesto()
+		return
+	_label_meta.text = "Tu posición · %s" % texto
+	_label_meta.visible = true
+	if is_instance_valid(_label_texto):
+		_label_texto.visible = false
+
+
+func ocultar_progreso_a_siguiente_puesto() -> void:
+	if is_instance_valid(_label_meta):
+		_label_meta.visible = false
+		_label_meta.text = ""
+	if is_instance_valid(_label_texto):
+		_label_texto.visible = true
 
 
 func mostrar_invitacion_login() -> void:
@@ -127,6 +158,8 @@ func mostrar_desde_respuesta_leaderboard(scope: String, datos: Dictionary) -> vo
 
 	_ocultar_boton_iniciar_sesion()
 
+	if scope != _scope_pendiente:
+		ocultar_progreso_a_siguiente_puesto()
 	_scope_pendiente = scope
 	var own: Variant = datos.get("own_position", null)
 	if own is Dictionary:
@@ -195,6 +228,7 @@ func _mostrar_sin_rankear() -> void:
 	_label_puntaje.text  = ""
 	_label_texto.text    = "Jugá para aparecer en el ranking"
 	_label_posicion.remove_theme_color_override("font_color")
+	ocultar_progreso_a_siguiente_puesto()
 
 
 func _buscar_posicion_para_scope(scope: String, posiciones: Array) -> Dictionary:

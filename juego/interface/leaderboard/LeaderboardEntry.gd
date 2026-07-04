@@ -9,6 +9,15 @@ signal entrada_presionada(id_usuario: String, entrada: Dictionary)
 
 @export var color_fila_propia: Color = Color(MiPaleta.VERDE_BOSQUE.r, MiPaleta.VERDE_BOSQUE.g, MiPaleta.VERDE_BOSQUE.b, 0.14)
 
+# Colores por defecto (no-propio), calcados de los que trae LeaderboardEntry.tscn.
+# "remove_theme_color_override" borraba el override cargado desde la escena y
+# dejaba el label con el color por defecto del Theme global (ilegible sobre el
+# fondo claro): reaplicar estos valores explícitos es lo que evita ese vacío.
+const COLOR_NOMBRE_DEFECTO := Color(0.278, 0.251, 0.184, 0.88)
+const COLOR_PUNTAJE_DEFECTO := Color(0.25882354, 0.47058824, 0.36862746, 1)
+const COLOR_NOMBRE_PROPIO := Color(0.22, 0.38, 0.30, 1)
+const COLOR_PUNTAJE_PROPIO := Color(0.25882354, 0.47058824, 0.36862746, 1)
+
 
 @onready var _avatar_badge: LeaderboardAvatarBadge = $AvatarBadge
 @onready var _label_posicion: Label           = $RankLabel
@@ -65,22 +74,16 @@ func _aplicar_color_posicion(posicion: int, _es_propio: bool) -> void:
 
 
 func _aplicar_estilo_propia(es_propio: bool) -> void:
-	if es_propio:
-		if is_instance_valid(_label_nombre):
-			_label_nombre.add_theme_color_override(
-				"font_color",
-				Color(0.22, 0.38, 0.30, 1)
-			)
-		if is_instance_valid(_label_puntaje):
-			_label_puntaje.add_theme_color_override(
-				"font_color",
-				Color(0.25882354, 0.47058824, 0.36862746, 1)
-			)
-	else:
-		if is_instance_valid(_label_nombre):
-			_label_nombre.remove_theme_color_override("font_color")
-		if is_instance_valid(_label_puntaje):
-			_label_puntaje.remove_theme_color_override("font_color")
+	if is_instance_valid(_label_nombre):
+		_label_nombre.add_theme_color_override(
+			"font_color",
+			COLOR_NOMBRE_PROPIO if es_propio else COLOR_NOMBRE_DEFECTO
+		)
+	if is_instance_valid(_label_puntaje):
+		_label_puntaje.add_theme_color_override(
+			"font_color",
+			COLOR_PUNTAJE_PROPIO if es_propio else COLOR_PUNTAJE_DEFECTO
+		)
 
 
 func refrescar_avatar_si_coincide(user_id: String) -> void:
