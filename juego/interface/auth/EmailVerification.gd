@@ -61,9 +61,9 @@ func _ready() -> void:
 	_boton_volver.pressed.connect(_on_volver_presionado)
 	_line_edit_codigo.text_submitted.connect(func(_texto: String) -> void: _on_verificar_presionado())
 	_line_edit_codigo.text_changed.connect(_on_codigo_text_changed)
-	_line_edit_codigo.gui_input.connect(_on_digitos_gui_input)
 	if is_instance_valid(_codigo_input_wrap):
-		_codigo_input_wrap.gui_input.connect(_on_digitos_gui_input)
+		_codigo_input_wrap.mouse_filter = Control.MOUSE_FILTER_STOP
+		_codigo_input_wrap.gui_input.connect(_on_area_codigo_gui_input)
 
 	_configurar_entrada_codigo()
 	_label_ayuda_mail.visible = false
@@ -100,6 +100,7 @@ func _inicializar_correo_y_estado() -> void:
 	if _es_mail_placeholder(_label_email.text):
 		_mostrar_email_usuario()
 	await _asegurar_codigo_pendiente_si_hace_falta()
+	call_deferred("_enfocar_codigo")
 
 
 func _asegurar_codigo_pendiente_si_hace_falta() -> void:
@@ -255,6 +256,7 @@ func _configurar_entrada_codigo() -> void:
 	_line_edit_codigo.placeholder_text = ""
 	_line_edit_codigo.context_menu_enabled = false
 	_line_edit_codigo.flat = true
+	_line_edit_codigo.z_index = 2
 	WebLineEditHelperScript.configurar(_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER)
 
 
@@ -267,12 +269,17 @@ func _ajustar_layout_movil() -> void:
 	MobileUiLayoutHelperScript.aplicar_margenes_uniformes(_margin_inner, estrecho, 20, 12)
 	if is_instance_valid(_center_root) and is_instance_valid(_scroll_root):
 		_center_root.custom_minimum_size = _scroll_root.size
+	if is_instance_valid(_codigo_input_wrap):
+		var alto_tactil := 56.0 if estrecho else 54.0
+		_codigo_input_wrap.custom_minimum_size.y = alto_tactil
+	if is_instance_valid(_line_edit_codigo):
+		MobileUiLayoutHelperScript.asegurar_minimo_tactil(_line_edit_codigo)
 
 
 func _enfocar_codigo() -> void:
 	if is_instance_valid(_line_edit_codigo):
 		_line_edit_codigo.editable = not _is_loading
-		_line_edit_codigo.grab_focus()
+	WebLineEditHelperScript.enfocar(_line_edit_codigo)
 
 
 func _intentar_pegar_desde_portapapeles() -> void:
@@ -296,15 +303,19 @@ func _intentar_pegar_desde_portapapeles() -> void:
 	_actualizar_casillas_digitos(digits)
 
 
-func _on_digitos_gui_input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
-		call_deferred("_enfocar_codigo")
-		_line_edit_codigo.accept_event()
+func _on_area_codigo_gui_input(event: InputEvent) -> void:
+	if _is_loading:
+		return
+	var debe_enfocar := false
+	if event is InputEventScreenTouch:
+		debe_enfocar = (event as InputEventScreenTouch).pressed
 	elif event is InputEventMouseButton:
 		var click := event as InputEventMouseButton
-		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
-			call_deferred("_enfocar_codigo")
-			_line_edit_codigo.accept_event()
+		debe_enfocar = click.pressed and click.button_index == MOUSE_BUTTON_LEFT
+	if debe_enfocar:
+		call_deferred("_enfocar_codigo")
+		if is_instance_valid(_codigo_input_wrap):
+			_codigo_input_wrap.accept_event()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -576,6 +587,8 @@ func _establecer_cargando(cargando: bool) -> void:
 	_boton_omitir.disabled = cargando or _requiere_verificacion
 	_boton_volver.disabled = cargando or _requiere_verificacion
 	_line_edit_codigo.editable = not cargando
+	if not cargando:
+		call_deferred("_enfocar_codigo")
 
 
 func _mostrar_mensaje(texto: String, es_info: bool) -> void:

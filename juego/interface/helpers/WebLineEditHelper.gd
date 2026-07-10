@@ -13,6 +13,7 @@ static func configurar(
 	if not is_instance_valid(line_edit):
 		return
 	line_edit.virtual_keyboard_enabled = true
+	line_edit.virtual_keyboard_show_on_focus = true
 	line_edit.virtual_keyboard_type = keyboard_type
 	line_edit.focus_mode = Control.FOCUS_ALL
 	line_edit.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -22,6 +23,14 @@ static func configurar(
 	line_edit.gui_input.connect(
 		func(event: InputEvent) -> void: _enfocar_si_toque(event, line_edit)
 	)
+
+
+static func enfocar(line_edit: LineEdit) -> void:
+	if not is_instance_valid(line_edit) or not line_edit.editable:
+		return
+	line_edit.grab_focus()
+	if line_edit.has_method("edit"):
+		line_edit.edit()
 
 
 static func configurar_varios(
@@ -44,4 +53,6 @@ static func _enfocar_si_toque(event: InputEvent, line_edit: LineEdit) -> void:
 		debe_enfocar = click.pressed and click.button_index == MOUSE_BUTTON_LEFT
 	if debe_enfocar:
 		line_edit.call_deferred("grab_focus")
+		if line_edit.has_method("edit"):
+			line_edit.call_deferred("edit")
 		line_edit.accept_event()
