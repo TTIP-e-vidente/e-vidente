@@ -8,8 +8,9 @@ const LeaderboardOverlayHelperScript := preload("res://interface/leaderboard/Lea
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
 const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
-const MENU_ANCHO_BASE := 372.0
+const MENU_ANCHO_BASE := 515.5
 const MENU_ESCALA_BASE := 1.4623657
+const MENU_VBOX_ESCALA := 0.6800678
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
 const CANDADO_SELECTOR_PATH := "res://assets-sistema/selector/candado-selector.png"
@@ -61,7 +62,9 @@ const TRACK_CETOGENICA := "cetogenica"
 
 @onready var btn_atras: Button = $"Atrás"
 @onready var _menu_bar: MenuBar = $MenuBar
+@onready var _menu_vbox: VBoxContainer = $MenuBar/VBoxContainer
 @onready var _titulo_label: Label = $"Aprender-hoy"
+@onready var _fondo_ficha: Control = $FondoFicha
 
 
 var _profile_overlay: ProfileOverlayPanel
@@ -87,6 +90,7 @@ func _ready() -> void:
 	_reproducir_musica_fondo()
 	_establecer_reanudar_superposicion_visible(false)
 	_configurar_botones()
+	MobileUiLayoutHelperScript.configurar_boton_volver(btn_atras)
 	_construir_hud()
 	if not BackendSession.online_progress_synced.is_connected(_on_progreso_online_sincronizado):
 		BackendSession.online_progress_synced.connect(_on_progreso_online_sincronizado)
@@ -174,6 +178,11 @@ func _on_reproducir_fondo_gui_entrada(event: InputEvent) -> void:
 
 func _ajustar_layout_movil() -> void:
 	var viewport := get_viewport_rect().size
+	position = Vector2.ZERO
+	if is_instance_valid(_fondo_ficha):
+		_fondo_ficha.position = Vector2.ZERO
+		_fondo_ficha.scale = Vector2.ONE
+		MobileUiLayoutHelperScript.aplicar_rect_completo(_fondo_ficha, viewport)
 	MobileUiLayoutHelperScript.aplicar_rect_completo(resume_backdrop, viewport)
 	var ancho_panel := MobileUiLayoutHelperScript.clamp_ancho_contenido(viewport.x, 32.0, 280.0, 446.0)
 	var alto_panel := clampf(viewport.y - 120.0, 240.0, 360.0)
@@ -182,16 +191,21 @@ func _ajustar_layout_movil() -> void:
 		clampf(viewport.y * 0.12, 32.0, viewport.y - alto_panel - 24.0)
 	)
 	resume_panel.size = Vector2(ancho_panel, alto_panel)
+	if is_instance_valid(_menu_vbox):
+		_menu_vbox.position = Vector2.ZERO
+		_menu_vbox.scale = Vector2(MENU_VBOX_ESCALA, MENU_VBOX_ESCALA)
+	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha_viewport(viewport.x)
+	var posicion_y_menu := 120.0 if not estrecho else 128.0
 	MobileUiLayoutHelperScript.centrar_control_escalado(
 		_menu_bar,
 		viewport,
 		MENU_ANCHO_BASE,
 		MENU_ESCALA_BASE,
-		92.0
+		posicion_y_menu
 	)
 	if is_instance_valid(_titulo_label):
-		_titulo_label.position.x = (viewport.x - _titulo_label.size.x) * 0.5
-		_titulo_label.position.y = 72.0 * (viewport.y / MobileUiLayoutHelperScript.DISENO_ALTO)
+		var posicion_y_titulo := 72.0 * (viewport.y / MobileUiLayoutHelperScript.DISENO_ALTO)
+		MobileUiLayoutHelperScript.centrar_label_horizontal(_titulo_label, viewport, posicion_y_titulo)
 	MobileUiLayoutHelperScript.posicionar_boton_esquina_inferior_izquierda(btn_atras, viewport)
 
 

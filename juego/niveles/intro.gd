@@ -19,6 +19,7 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 @onready var mi_progresoi: Sprite2D = $MenuBar/MiProgreso/imagen
 @onready var saliri: Sprite2D = $MenuBar/Salir/imagen
 @onready var _menu_bar: MenuBar = $MenuBar
+@onready var _fondo_ficha: Control = $FondoFicha
 
 const COMO_JUGAR_PATH := "res://assets-sistema/intro/como-jugar-intro-1.png"
 const JUGAR_PATH := "res://assets-sistema/intro/play-intro-1.png"
@@ -36,6 +37,7 @@ const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLay
 
 const MENU_ANCHO_BASE := 544.0
 const MENU_ESCALA_BASE := 0.6358162
+const LOGO_ESCALA_BASE := Vector2(0.46359944, 0.45880553)
 
 
 
@@ -81,12 +83,31 @@ func _procesar_deep_link_leaderboard() -> void:
 
 func _ajustar_layout_movil() -> void:
 	var viewport := get_viewport_rect().size
+	position = Vector2.ZERO
+	if is_instance_valid(_fondo_ficha):
+		_fondo_ficha.position = Vector2.ZERO
+		_fondo_ficha.scale = Vector2.ONE
+		MobileUiLayoutHelperScript.aplicar_rect_completo(_fondo_ficha, viewport)
+	_ajustar_logo(viewport)
+	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha_viewport(viewport.x)
+	var posicion_y_menu := 304.0 if estrecho else 200.0
 	MobileUiLayoutHelperScript.centrar_control_escalado(
 		_menu_bar,
 		viewport,
 		MENU_ANCHO_BASE,
 		MENU_ESCALA_BASE,
-		200.0
+		posicion_y_menu
+	)
+
+
+func _ajustar_logo(viewport: Vector2) -> void:
+	if not is_instance_valid(animated_sprite_2d):
+		return
+	var factor_ancho := clampf(viewport.x / MobileUiLayoutHelperScript.DISENO_ANCHO, 0.48, 1.0)
+	animated_sprite_2d.scale = LOGO_ESCALA_BASE * factor_ancho
+	animated_sprite_2d.position = Vector2(
+		viewport.x * 0.5,
+		maxf(36.0, viewport.y * 0.11)
 	)
 
 

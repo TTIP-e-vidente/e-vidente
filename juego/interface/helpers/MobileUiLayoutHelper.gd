@@ -8,6 +8,13 @@ const MARGEN_PANTALLA := 16.0
 const MIN_TOUCH := 44.0
 const DISENO_ANCHO := 1152.0
 const DISENO_ALTO := 800.0
+const TAMANO_BOTON_VOLVER := 48.0
+const ANCHO_SCROLL_DISCRETO := 5.0
+
+static var _scroll_styles_ready := false
+static var _scroll_style_bg: StyleBoxFlat
+static var _scroll_style_grabber: StyleBoxFlat
+static var _scroll_style_grabber_hover: StyleBoxFlat
 
 
 static func es_pantalla_estrecha(control: Control, umbral: float = BREAKPOINT_ESTRECHO) -> bool:
@@ -109,16 +116,74 @@ static func centrar_control_escalado(
 ) -> void:
 	if not is_instance_valid(control):
 		return
+	control.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	control.set_offsets_preset(Control.PRESET_TOP_LEFT)
 	var estrecho := es_pantalla_estrecha_viewport(viewport.x)
 	var escala := escala_base
 	if estrecho:
-		escala = clampf((viewport.x - margen * 2.0) / ancho_base, 0.48, escala_base)
+		escala = clampf((viewport.x - margen * 2.0) / ancho_base, 0.42, escala_base)
 	control.scale = Vector2(escala, escala)
 	var ancho_visual := ancho_base * escala
-	control.position = Vector2(
-		(viewport.x - ancho_visual) * 0.5,
-		posicion_y_base * (viewport.y / DISENO_ALTO)
-	)
+	var posicion_x := maxf(margen, (viewport.x - ancho_visual) * 0.5)
+	var posicion_y := posicion_y_base * (viewport.y / DISENO_ALTO)
+	control.position = Vector2(posicion_x, posicion_y)
+	control.size = Vector2(ancho_base, control.size.y if control.size.y > 0.0 else ancho_base)
+
+
+static func centrar_label_horizontal(label: Label, viewport: Vector2, posicion_y: float) -> void:
+	if not is_instance_valid(label):
+		return
+	var ancho_texto := label.get_minimum_size().x
+	if ancho_texto <= 0.0:
+		ancho_texto = label.size.x
+	label.position.x = maxf(MARGEN_PANTALLA, (viewport.x - ancho_texto) * 0.5)
+	label.position.y = posicion_y
+
+
+static func configurar_boton_volver(boton: BaseButton, tamano: float = TAMANO_BOTON_VOLVER) -> void:
+	if not is_instance_valid(boton):
+		return
+	boton.scale = Vector2.ONE
+	boton.custom_minimum_size = Vector2(tamano, tamano)
+	boton.size = Vector2(tamano, tamano)
+	boton.expand_icon = true
+	boton.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boton.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	boton.clip_contents = true
+	boton.focus_mode = Control.FOCUS_NONE
+
+
+static func _asegurar_estilos_scroll() -> void:
+	if _scroll_styles_ready:
+		return
+	_scroll_style_bg = StyleBoxFlat.new()
+	_scroll_style_bg.bg_color = Color(0.12, 0.13, 0.12, 0.05)
+	_scroll_style_bg.set_corner_radius_all(4)
+
+	_scroll_style_grabber = StyleBoxFlat.new()
+	_scroll_style_grabber.bg_color = Color(0.22, 0.24, 0.22, 0.22)
+	_scroll_style_grabber.set_corner_radius_all(4)
+
+	_scroll_style_grabber_hover = _scroll_style_grabber.duplicate() as StyleBoxFlat
+	_scroll_style_grabber_hover.bg_color = Color(0.22, 0.24, 0.22, 0.38)
+	_scroll_styles_ready = true
+
+
+static func estilizar_scroll_discreto(scroll: ScrollContainer) -> void:
+	if not is_instance_valid(scroll):
+		return
+	_asegurar_estilos_scroll()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	if scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED:
+		return
+	var barra := scroll.get_v_scroll_bar()
+	if barra == null:
+		return
+	barra.custom_minimum_size.x = ANCHO_SCROLL_DISCRETO
+	barra.add_theme_stylebox_override("scroll", _scroll_style_bg)
+	barra.add_theme_stylebox_override("grabber", _scroll_style_grabber)
+	barra.add_theme_stylebox_override("grabber_highlight", _scroll_style_grabber_hover)
+	barra.add_theme_stylebox_override("grabber_pressed", _scroll_style_grabber_hover)
 
 
 static func asegurar_minimo_tactil(control: Control, min_size: float = MIN_TOUCH) -> void:
@@ -133,13 +198,17 @@ static func asegurar_minimo_tactil(control: Control, min_size: float = MIN_TOUCH
 static func posicionar_boton_esquina_inferior_izquierda(
 	boton: Control,
 	viewport: Vector2,
-	tamano: float = MIN_TOUCH,
+	tamano: float = TAMANO_BOTON_VOLVER,
 	margen: float = MARGEN_PANTALLA
 ) -> void:
 	if not is_instance_valid(boton):
 		return
-	boton.scale = Vector2.ONE
-	boton.size = Vector2(tamano, tamano)
+	if boton is BaseButton:
+		configurar_boton_volver(boton as BaseButton, tamano)
+	else:
+		boton.scale = Vector2.ONE
+		boton.custom_minimum_size = Vector2(tamano, tamano)
+		boton.size = Vector2(tamano, tamano)
 	boton.position = Vector2(margen, viewport.y - tamano - margen)
 
 

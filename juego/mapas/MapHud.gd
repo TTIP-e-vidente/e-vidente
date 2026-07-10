@@ -58,7 +58,7 @@ func _ajustar_layout_movil() -> void:
 		_back_button.offset_top = 0.0
 		_back_button.offset_right = 0.0
 		_back_button.offset_bottom = 0.0
-		MobileUiLayoutHelperScript.asegurar_minimo_tactil(_back_button)
+		MobileUiLayoutHelperScript.configurar_boton_volver(_back_button)
 	if is_instance_valid(_top_right_anchor):
 		_top_right_anchor.offset_left = -220.0 if not estrecho else -180.0
 		_top_right_anchor.offset_top = margen

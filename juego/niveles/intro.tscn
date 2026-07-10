@@ -71,7 +71,6 @@ animations = [{
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
-position = Vector2(4, 0)
 script = ExtResource("1_1l6ju")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_7djtf")]
@@ -87,15 +86,10 @@ speed_scale = 2.0
 
 [node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
 layout_direction = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 388.0
+offset_left = 0.0
 offset_top = 200.0
-offset_right = 388.0
-offset_bottom = 200.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 544.0
+offset_bottom = 620.0
 scale = Vector2(0.6358162, 0.6358162)
 theme_override_constants/h_separation = 414
 flat = true

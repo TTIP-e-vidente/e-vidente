@@ -17,6 +17,7 @@ signal login_pressed
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
+@onready var _scroll_root: ScrollContainer = $SessionPanel/ScrollContainer
 @onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
 @onready var _avatar_bg: Control = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg
 @onready var _avatar_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarLabel
@@ -414,6 +415,8 @@ func _ajustar_layout_movil() -> void:
 	if not is_instance_valid(_session_panel):
 		return
 	MobileUiLayoutHelperScript.aplicar_panel_lateral(_session_panel, size.x)
+	if is_instance_valid(_scroll_root):
+		MobileUiLayoutHelperScript.estilizar_scroll_discreto(_scroll_root)
 	var margen := 16 if MobileUiLayoutHelperScript.es_pantalla_estrecha(self) else 26
 	var margin_container := _session_panel.get_node_or_null("ScrollContainer/MarginContainer")
 	if margin_container is MarginContainer:

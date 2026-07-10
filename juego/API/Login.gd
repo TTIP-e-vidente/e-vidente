@@ -1,6 +1,7 @@
 extends Control
 
 const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
 enum AuthMode { LOGIN, REGISTER }
 
@@ -75,6 +76,7 @@ func _configurar_inputs_touch() -> void:
 func _ajustar_layout_movil() -> void:
 	if not is_instance_valid(_form_scroll) or not is_instance_valid(_form_center) or not is_instance_valid(_form_vbox):
 		return
+	MobileUiLayoutHelperScript.estilizar_scroll_discreto(_form_scroll)
 	var area := _form_scroll.size
 	_form_center.custom_minimum_size = area
 	var ancho_objetivo := clampf(
