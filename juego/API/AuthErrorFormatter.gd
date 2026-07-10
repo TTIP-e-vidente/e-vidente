@@ -171,9 +171,6 @@ static func _mensaje_sin_conexion(
 			)
 		return (
 			"No hay servidor en %s.\n" % base_url
-			+ "1) cd BACKEND\n"
-			+ "2) npm run dev:staging\n"
-			+ "3) Volvé a Godot (F5)"
 		)
 	if result_code == HTTPRequest.RESULT_TIMEOUT:
 		var hint := "¿Está npm run dev:staging corriendo en BACKEND?"
