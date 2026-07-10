@@ -1,11 +1,11 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cqlnif02nq326"]
 
-[ext_resource type="Script" path="res://niveles/selector.gd" id="1_g0ff0"]
-[ext_resource type="PackedScene" path="res://interface/fondo_juego.tscn" id="2_fsij2"]
-[ext_resource type="FontFile" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_6uvpc"]
+[ext_resource type="Script" uid="uid://ddawd8g7crwlx" path="res://niveles/selector.gd" id="1_g0ff0"]
+[ext_resource type="PackedScene" uid="uid://cihh3u63lo8xg" path="res://interface/fondo_juego.tscn" id="2_fsij2"]
+[ext_resource type="FontFile" uid="uid://dd82rutkseq68" path="res://fonts/RubikSprayPaint-Regular.ttf" id="3_6uvpc"]
 [ext_resource type="PackedScene" path="res://niveles/botones_con_movimiento.tscn" id="3_fsij2"]
-[ext_resource type="AudioStream" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
-[ext_resource type="Texture2D" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
+[ext_resource type="AudioStream" uid="uid://ch0hnc4gmwoxe" path="res://assets-sistema/sonidos/dark-loops-000-piano-efect-80-bpm-6329.mp3" id="7_5qkxe"]
+[ext_resource type="Texture2D" uid="uid://dua7x2lte1juu" path="res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png" id="8_fsij2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_play_panel"]
 content_margin_left = 4.0

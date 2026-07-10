@@ -213,10 +213,7 @@ static func mensaje_sync_requerido() -> String:
 
 static func mensaje_sin_conexion_edge() -> String:
 	return (
-		"No hay conexión con Supabase Edge.\n"
-		+ "1) cd BACKEND\n"
-		+ "2) npm run integrate:status\n"
-		+ "3) Verificá internet y volvé a Godot (F5)"
+		"Verificá tu mail más tarde."
 	)
 
 
