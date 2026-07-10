@@ -103,14 +103,22 @@ func _permitir_scroll_tactil_recursivo(nodo: Node) -> void:
 	for hijo in nodo.get_children():
 		if hijo is Control:
 			var control := hijo as Control
-			var es_interactivo := (
-				control is BaseButton
-				or control is LineEdit
+			if control is BaseButton:
+				# STOP por default hace que un swipe que arranca sobre un
+				# botón/checkbox se lo "coma" entero y el drawer no scrollee
+				# desde ahí. PASS deja que el botón siga funcionando al toque
+				# normal, pero también deja subir el gesto al ScrollContainer
+				# padre para que el scroll no quede trabado según de dónde
+				# arranque el dedo.
+				control.mouse_filter = Control.MOUSE_FILTER_PASS
+			elif (
+				control is LineEdit
 				or control is TextEdit
 				or control is ScrollBar
 				or control is ScrollContainer
-			)
-			if not es_interactivo:
+			):
+				pass
+			else:
 				control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_permitir_scroll_tactil_recursivo(hijo)
 
