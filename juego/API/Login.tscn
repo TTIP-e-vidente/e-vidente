@@ -73,34 +73,34 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 5
 alignment = 1
 
-[node name="LabelTitle" type="Label" parent="VBoxContainer" unique_id=2097776669]
+[node name="LabelTitle" type="Label" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=2097776669]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3019608, 0.32156864, 0.36078432, 1)
 theme_override_fonts/font = ExtResource("3_r0oxj")
 theme_override_font_sizes/font_size = 24
 text = "Cargá tus datos"
 
-[node name="LineEditUsernameOrMail" type="LineEdit" parent="VBoxContainer" unique_id=587657856]
+[node name="LineEditUsernameOrMail" type="LineEdit" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=587657856]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Usuario o mail"
 
-[node name="LineEditRegisterName" type="LineEdit" parent="VBoxContainer" unique_id=428060678]
+[node name="LineEditRegisterName" type="LineEdit" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=428060678]
 visible = false
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Nombre"
 
-[node name="LineEditRegisterMail" type="LineEdit" parent="VBoxContainer" unique_id=1943296517]
+[node name="LineEditRegisterMail" type="LineEdit" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=1943296517]
 visible = false
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Mail"
 
-[node name="LabelRegisterMailHint" type="Label" parent="VBoxContainer" unique_id=1943296518]
+[node name="LabelRegisterMailHint" type="Label" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=1943296518]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4392157, 0.27058825, 0.19607843, 0.9)
@@ -109,14 +109,14 @@ theme_override_font_sizes/font_size = 11
 text = "Te pediremos el código de 6 dígitos. Te enviaremos recordatorios de racha (podés apagarlos en tu perfil)."
 autowrap_mode = 3
 
-[node name="LineEditRegisterBirthDate" type="LineEdit" parent="VBoxContainer" unique_id=1943296520]
+[node name="LineEditRegisterBirthDate" type="LineEdit" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=1943296520]
 visible = false
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Fecha de nacimiento (AAAA-MM-DD)"
 
-[node name="LabelRegisterBirthHint" type="Label" parent="VBoxContainer" unique_id=1943296521]
+[node name="LabelRegisterBirthHint" type="Label" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=1943296521]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4392157, 0.27058825, 0.19607843, 0.75)
@@ -125,14 +125,14 @@ theme_override_font_sizes/font_size = 11
 text = "Usamos la fecha solo para personalizar la experiencia."
 autowrap_mode = 3
 
-[node name="LineEditPassword" type="LineEdit" parent="VBoxContainer" unique_id=637097097]
+[node name="LineEditPassword" type="LineEdit" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=637097097]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_8a7lh")
 placeholder_text = "Contraseña (mín. 8 caracteres)"
 secret = true
 
-[node name="ButtonSubmit" type="Button" parent="VBoxContainer" unique_id=347787921]
+[node name="ButtonSubmit" type="Button" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=347787921]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9939104, 0.9972629, 0.9978296, 1)
@@ -140,7 +140,7 @@ theme_override_fonts/font = ExtResource("3_r0oxj")
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 text = "Empezar a Jugar"
 
-[node name="ButtonSwitchMode" type="Button" parent="VBoxContainer" unique_id=538654203]
+[node name="ButtonSwitchMode" type="Button" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=538654203]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -149,7 +149,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_button_secondary")
 text = "Crear cuenta"
 flat = true
 
-[node name="ButtonPlayOffline" type="Button" parent="VBoxContainer" unique_id=184326414]
+[node name="ButtonPlayOffline" type="Button" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=184326414]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25882354, 0.47058824, 0.36862746, 1)
@@ -158,7 +158,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_button_secondary")
 text = "Jugar sin iniciar sesión"
 flat = true
 
-[node name="ButtonRetryConnection" type="Button" parent="VBoxContainer" unique_id=284326415]
+[node name="ButtonRetryConnection" type="Button" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=284326415]
 visible = false
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
@@ -168,7 +168,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_button_secondary")
 text = "Reintentar"
 flat = true
 
-[node name="LabelStatus" type="Label" parent="VBoxContainer" unique_id=673412557]
+[node name="LabelStatus" type="Label" parent="FormScroll/FormCenter/FormMargin/VBoxContainer" unique_id=673412557]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4392157, 0.27058825, 0.19607843, 1)
 theme_override_fonts/font = ExtResource("4_8a7lh")

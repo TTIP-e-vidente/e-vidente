@@ -8,6 +8,8 @@ Guía de referencia. Documentación de defensa: [`docs-local/onboarding-jugabili
 
 | Capa | Archivo | Framework | Qué protege |
 |---|---|---|---|
+| Login escena | `auth/test_login_scene_nodes.gd` | Godot headless | Que `Login.tscn` instancie todos los nodos del formulario |
+| Login overlay | `auth/test_intro_login_overlay.gd` | Godot headless | Menú → Jugar → overlay con botones visibles |
 | Smoke CI | `vertical_slice_smoke_test.gd` | Godot headless | Flujo completo Intro → mapa → partida → cierre |
 | Racha / sync | `progress/test_racha_sync.gd` | GdUnit4 | Merge online, modelo vista, vencimiento |
 | Pérdida racha UI | `progress/test_streak_loss_flow.gd` | GdUnit4 | Overlay in-game, flujo y SaveManager |
@@ -23,6 +25,13 @@ godot --headless --path juego -s res://tests/vertical_slice_smoke_test.gd
 ```
 
 O: `sh scripts/run-godot-validation.sh --run smoke godot`
+
+Login (regresión de rutas de nodos en `Login.tscn`):
+
+```bash
+godot --headless --path juego -s res://tests/auth/test_login_scene_nodes.gd
+godot --headless --path juego -s res://tests/auth/test_intro_login_overlay.gd
+```
 
 Corre en cada PR.
 
@@ -87,6 +96,8 @@ Simula el click con `boton.pressed.emit()`.
 
 | Archivo | Tipo | Descripción |
 |---|---|---|
+| `auth/test_login_scene_nodes.gd` | Smoke CI | Contrato de nodos de Login.tscn |
+| `auth/test_intro_login_overlay.gd` | Smoke CI | Menú → overlay login con botones |
 | `vertical_slice_smoke_test.gd` | Smoke CI | Flujo principal headless |
 | `progress/test_racha_sync.gd` | GdUnit4 | Merge y vencimiento de racha |
 | `progress/test_streak_loss_flow.gd` | GdUnit4 | Overlay pérdida de racha (5 tests) |
