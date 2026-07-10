@@ -8,7 +8,7 @@ const META_TOUCH_READY := "web_line_edit_touch_ready"
 
 static func configurar(
 	line_edit: LineEdit,
-	keyboard_type: LineEdit.KeyboardType = LineEdit.KEYBOARD_TYPE_DEFAULT
+	keyboard_type: LineEdit.VirtualKeyboardType = LineEdit.KEYBOARD_TYPE_DEFAULT
 ) -> void:
 	if not is_instance_valid(line_edit):
 		return
@@ -26,7 +26,7 @@ static func configurar(
 
 static func configurar_varios(
 	line_edits: Array,
-	keyboard_type: LineEdit.KeyboardType = LineEdit.KEYBOARD_TYPE_DEFAULT
+	keyboard_type: LineEdit.VirtualKeyboardType = LineEdit.KEYBOARD_TYPE_DEFAULT
 ) -> void:
 	for node in line_edits:
 		if node is LineEdit:
