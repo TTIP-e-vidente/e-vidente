@@ -76,6 +76,12 @@ func _configurar_campo_tactil(
 	campo.gui_input.connect(
 		func(event: InputEvent) -> void: _enfocar_campo_si_toque(event, campo)
 	)
+	# En Web (itch.io), grab_focus() del motor nunca alcanza a Safari/iOS: pasa
+	# por el bucle de Godot (requestAnimationFrame) y llega tarde para contar
+	# como gesto de usuario. WebTextFieldBridge superpone un <input> HTML real
+	# e invisible que el navegador enfoca solo, sin ese salto. No hace nada
+	# fuera de Web.
+	WebTextFieldBridge.adjuntar(campo, tipo_teclado)
 
 
 func _enfocar_campo_si_toque(event: InputEvent, campo: LineEdit) -> void:
@@ -88,9 +94,13 @@ func _enfocar_campo_si_toque(event: InputEvent, campo: LineEdit) -> void:
 		var click := event as InputEventMouseButton
 		debe_enfocar = click.pressed and click.button_index == MOUSE_BUTTON_LEFT
 	if debe_enfocar:
-		campo.call_deferred("grab_focus")
+		# Enfocar sin call_deferred: en el export Web, abrir el teclado táctil
+		# del sistema requiere que grab_focus()/edit() corran en la misma
+		# respuesta al toque. Diferirlo un frame rompe el gesto de usuario y,
+		# dentro del iframe de itch.io, el navegador ya no habilita el teclado.
+		campo.grab_focus()
 		if campo.has_method("edit"):
-			campo.call_deferred("edit")
+			campo.edit()
 
 
 func _establecer_modo(mode: AuthMode) -> void:

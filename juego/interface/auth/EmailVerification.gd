@@ -251,6 +251,13 @@ func _configurar_entrada_codigo() -> void:
 	_line_edit_codigo.flat = true
 	_line_edit_codigo.mouse_filter = Control.MOUSE_FILTER_STOP
 	_line_edit_codigo.focus_mode = Control.FOCUS_ALL
+	# Puente Web: ver comentario en Login._configurar_campo_tactil. Se usa
+	# _codigo_input_wrap como fuente del rect porque es la fila completa de
+	# casillas visibles; _line_edit_codigo es un control invisible superpuesto.
+	var rect_source: Control = (
+		_codigo_input_wrap if is_instance_valid(_codigo_input_wrap) else _line_edit_codigo
+	)
+	WebTextFieldBridge.adjuntar(_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER, rect_source)
 
 
 func _enfocar_codigo() -> void:
@@ -299,7 +306,11 @@ func _on_digitos_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var click := event as InputEventMouseButton
 		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
-			call_deferred("_enfocar_codigo")
+			# Enfocar sin call_deferred: en el export Web el teclado táctil del
+			# sistema solo abre si grab_focus() corre en la misma respuesta al
+			# toque; diferirlo rompe el gesto de usuario dentro del iframe de
+			# itch.io.
+			_enfocar_codigo()
 			_line_edit_codigo.accept_event()
 
 
