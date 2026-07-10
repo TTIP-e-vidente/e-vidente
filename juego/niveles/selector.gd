@@ -11,6 +11,7 @@ const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLay
 const MENU_ANCHO_BASE := 515.5
 const MENU_ESCALA_BASE := 1.4623657
 const MENU_VBOX_ESCALA := 0.6800678
+const CONTENIDO_DESPLAZAMIENTO_VERTICAL_BASE := 90.0
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
 const CANDADO_SELECTOR_PATH := "res://assets-sistema/selector/candado-selector.png"
@@ -195,7 +196,9 @@ func _ajustar_layout_movil() -> void:
 		_menu_vbox.position = Vector2.ZERO
 		_menu_vbox.scale = Vector2(MENU_VBOX_ESCALA, MENU_VBOX_ESCALA)
 	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha_viewport(viewport.x)
-	var posicion_y_menu := 120.0 if not estrecho else 128.0
+	var posicion_y_menu := (
+		(120.0 if not estrecho else 128.0) + CONTENIDO_DESPLAZAMIENTO_VERTICAL_BASE
+	)
 	MobileUiLayoutHelperScript.centrar_control_escalado(
 		_menu_bar,
 		viewport,
@@ -204,7 +207,10 @@ func _ajustar_layout_movil() -> void:
 		posicion_y_menu
 	)
 	if is_instance_valid(_titulo_label):
-		var posicion_y_titulo := 72.0 * (viewport.y / MobileUiLayoutHelperScript.DISENO_ALTO)
+		var posicion_y_titulo := (
+			(72.0 + CONTENIDO_DESPLAZAMIENTO_VERTICAL_BASE)
+			* (viewport.y / MobileUiLayoutHelperScript.DISENO_ALTO)
+		)
 		MobileUiLayoutHelperScript.centrar_label_horizontal(_titulo_label, viewport, posicion_y_titulo)
 	MobileUiLayoutHelperScript.posicionar_boton_esquina_inferior_izquierda(btn_atras, viewport)
 

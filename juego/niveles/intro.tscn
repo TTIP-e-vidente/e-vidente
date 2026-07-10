@@ -110,6 +110,8 @@ scale = Vector2(1.145724, 1.1621135)
 [node name="Opciones" parent="MenuBar" unique_id=1594801136 instance=ExtResource("4_uu8qn")]
 visible = false
 layout_mode = 1
+anchor_top = 0.0
+anchor_bottom = 0.0
 offset_left = 19.736572
 offset_top = 163.87448
 offset_right = 562.7366
@@ -119,6 +121,8 @@ scale = Vector2(1.145724, 1.1621135)
 [node name="MiProgreso" parent="MenuBar" unique_id=1208565524 instance=ExtResource("4_uu8qn")]
 visible = false
 layout_mode = 1
+anchor_top = 0.0
+anchor_bottom = 0.0
 offset_left = 19.736572
 offset_top = 443.0
 offset_right = 562.7366
@@ -127,6 +131,8 @@ scale = Vector2(1.145724, 1.1621135)
 
 [node name="Salir" parent="MenuBar" unique_id=600866338 instance=ExtResource("4_uu8qn")]
 layout_mode = 1
+anchor_top = 0.0
+anchor_bottom = 0.0
 offset_left = 17.712952
 offset_top = 470.25183
 offset_right = 560.71295

@@ -8,7 +8,7 @@ const MARGEN_PANTALLA := 16.0
 const MIN_TOUCH := 44.0
 const DISENO_ANCHO := 1152.0
 const DISENO_ALTO := 800.0
-const TAMANO_BOTON_VOLVER := 48.0
+const TAMANO_BOTON_VOLVER := 64.0
 const ANCHO_SCROLL_DISCRETO := 5.0
 
 static var _scroll_styles_ready := false
