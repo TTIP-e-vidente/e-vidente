@@ -48,8 +48,49 @@ func _ready() -> void:
 	_establecer_modo(AuthMode.LOGIN)
 	_actualizar_estado_sesion()
 	_actualizar_ui_conexion()
+	_configurar_campos_para_tactil()
 	_input_username.grab_focus()
 	call_deferred("_verificar_conexion_al_inicio")
+
+
+func _configurar_campos_para_tactil() -> void:
+	_configurar_campo_tactil(_input_username, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	_configurar_campo_tactil(_input_password, LineEdit.KEYBOARD_TYPE_PASSWORD)
+	_configurar_campo_tactil(_input_register_name, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	_configurar_campo_tactil(_input_register_mail, LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS)
+	_configurar_campo_tactil(_input_register_birth_date, LineEdit.KEYBOARD_TYPE_DEFAULT)
+
+
+# Sin esto, en mobile/web (itch.io) el toque no siempre dispara el foco ni
+# el teclado virtual del sistema: Godot necesita que se lo pidamos explícito.
+func _configurar_campo_tactil(
+	campo: LineEdit, tipo_teclado: LineEdit.VirtualKeyboardType
+) -> void:
+	if not is_instance_valid(campo):
+		return
+	campo.virtual_keyboard_enabled = true
+	campo.virtual_keyboard_show_on_focus = true
+	campo.virtual_keyboard_type = tipo_teclado
+	campo.focus_mode = Control.FOCUS_ALL
+	campo.mouse_filter = Control.MOUSE_FILTER_STOP
+	campo.gui_input.connect(
+		func(event: InputEvent) -> void: _enfocar_campo_si_toque(event, campo)
+	)
+
+
+func _enfocar_campo_si_toque(event: InputEvent, campo: LineEdit) -> void:
+	if not is_instance_valid(campo):
+		return
+	var debe_enfocar := false
+	if event is InputEventScreenTouch:
+		debe_enfocar = (event as InputEventScreenTouch).pressed
+	elif event is InputEventMouseButton:
+		var click := event as InputEventMouseButton
+		debe_enfocar = click.pressed and click.button_index == MOUSE_BUTTON_LEFT
+	if debe_enfocar:
+		campo.call_deferred("grab_focus")
+		if campo.has_method("edit"):
+			campo.call_deferred("edit")
 
 
 func _establecer_modo(mode: AuthMode) -> void:

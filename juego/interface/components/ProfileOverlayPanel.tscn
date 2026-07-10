@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://2ah8ndncc661" path="res://interface/leaderboard/RankingDetallePerfil.tscn" id="2_ranking_detalle"]
 [ext_resource type="PackedScene" path="res://interface/components/WeeklyLearningSummary.tscn" id="2_weekly_summary"]
 [ext_resource type="FontFile" uid="uid://cpprt3vh4t71n" path="res://fonts/Rubik-VariableFont_wght.ttf" id="4_c2ncf"]
+[ext_resource type="Script" path="res://interface/components/CloseCrossButton.gd" id="5_close_cross"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_session_panel"]
 bg_color = Color(0.995, 0.993, 0.985, 1)
@@ -332,8 +333,8 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
 theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_font_sizes/font_size = 22
-text = "✕"
 flat = true
+script = ExtResource("5_close_cross")
 
 [node name="TitleLabel" type="Label" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=937752854]
 visible = false

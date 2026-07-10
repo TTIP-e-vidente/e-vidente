@@ -16,6 +16,7 @@ signal login_pressed
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
+@onready var _scroll_root: ScrollContainer = $SessionPanel/ScrollContainer
 @onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
 @onready var _avatar_bg: Control = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg
 @onready var _avatar_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarLabel
@@ -76,6 +77,7 @@ func _ready() -> void:
 		_checkbox_omitir_ranking.toggled.connect(_al_cambiar_preferencia_omitir_ranking)
 	_aplicar_fuentes()
 	_configurar_avatar_display()
+	_permitir_scroll_tactil_en_contenido()
 
 
 func _configurar_avatar_display() -> void:
@@ -84,6 +86,33 @@ func _configurar_avatar_display() -> void:
 		_avatar_preview.custom_minimum_size = Vector2(56, 56)
 	if is_instance_valid(_avatar_bg):
 		_avatar_bg.clip_contents = true
+
+
+# Los contenedores/labels dentro del ScrollContainer tienen mouse_filter
+# STOP por default en Godot, así que un arrastre táctil que empiece sobre
+# ellos nunca le llega al ScrollContainer y el drawer no scrollea al tacto.
+# Los dejamos "transparentes" al mouse/touch salvo los controles que de
+# verdad necesitan recibir el toque (botones, checkbox, campos de texto).
+func _permitir_scroll_tactil_en_contenido() -> void:
+	if not is_instance_valid(_scroll_root):
+		return
+	_permitir_scroll_tactil_recursivo(_scroll_root)
+
+
+func _permitir_scroll_tactil_recursivo(nodo: Node) -> void:
+	for hijo in nodo.get_children():
+		if hijo is Control:
+			var control := hijo as Control
+			var es_interactivo := (
+				control is BaseButton
+				or control is LineEdit
+				or control is TextEdit
+				or control is ScrollBar
+				or control is ScrollContainer
+			)
+			if not es_interactivo:
+				control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_permitir_scroll_tactil_recursivo(hijo)
 
 
 func _aplicar_fuentes() -> void:

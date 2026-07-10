@@ -260,22 +260,16 @@ func _enfocar_codigo() -> void:
 func _intentar_pegar_desde_portapapeles() -> void:
 	if not is_instance_valid(_line_edit_codigo):
 		return
-	if not _line_edit_codigo.text.strip_edges().is_empty():
-		return
 	var clip := DisplayServer.clipboard_get().strip_edges()
 	if clip.is_empty():
 		return
-	var digits := ""
-	for i in clip.length():
-		var ch := clip[i]
-		if ch >= "0" and ch <= "9":
-			digits += ch
-		if digits.length() >= 6:
-			break
-	if digits.length() != 6:
+	var digits := _extraer_digitos_codigo(clip)
+	if digits.is_empty():
+		_mostrar_mensaje(
+			"El portapapeles no tiene números. Copiá los 6 dígitos del mail.", false
+		)
 		return
-	_line_edit_codigo.text = digits
-	_actualizar_casillas_digitos(digits)
+	_reemplazar_codigo(digits)
 
 
 func _on_digitos_gui_input(event: InputEvent) -> void:
