@@ -6,8 +6,10 @@ signal continue_pressed
 const RUBIK_SPRAY_FONT_PATH := "res://fonts/RubikSprayPaint-Regular.ttf"
 const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 const RUBIK_ITALIC_FONT_PATH := "res://fonts/Rubik-Italic-VariableFont_wght.ttf"
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
+@onready var _message_panel: PanelContainer = $MessagePanel
 @onready var _title_label: Label = (
 	$MessagePanel/MarginContainer/VBoxContainer/TitleLabel
 )
@@ -22,6 +24,7 @@ func _ready() -> void:
 	_overlay_backdrop.gui_input.connect(_on_entrada_fondo)
 	_continue_button.pressed.connect(_on_boton_continuar_presionado)
 	_aplicar_fuentes()
+	get_viewport().size_changed.connect(_ajustar_layout_movil)
 
 
 func mostrar(feedback: Dictionary) -> void:
@@ -44,6 +47,7 @@ func mostrar(feedback: Dictionary) -> void:
 		else ""
 	)
 	_best_label.visible = best_count > 0
+	_ajustar_layout_movil()
 	visible = true
 
 
@@ -66,11 +70,19 @@ func _aplicar_fuentes() -> void:
 		_detail_label.add_theme_font_override("font", rubik_italic_font)
 
 
+func _ajustar_layout_movil() -> void:
+	if not is_instance_valid(_message_panel):
+		return
+	var viewport := get_viewport().get_visible_rect().size
+	MobileUiLayoutHelperScript.aplicar_modal_centrado(_message_panel, viewport, 640.0, 440.0)
+	MobileUiLayoutHelperScript.asegurar_minimo_tactil(_continue_button)
+
+
 func _on_boton_continuar_presionado() -> void:
 	ocultar()
 	continue_pressed.emit()
 
 
 func _on_entrada_fondo(event: InputEvent) -> void:
-	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+	if MobileUiLayoutHelperScript.cerrar_si_toque_fondo(event):
 		_on_boton_continuar_presionado()

@@ -3,6 +3,7 @@ class_name EvidenteSplash
 
 const INTRO_ANIMATION := "intro"
 const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-60828.mp3"
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
 @onready var splash_animation: AnimatedSprite2D = $"e-vidente/AnimatedSprite2D"
 @onready var go: Button = $go
@@ -16,6 +17,21 @@ func _ready() -> void:
 	animar_rebote_boton(go)
 	await get_tree().create_timer(0.5).timeout
 	animar_rebote_boton(go)
+	get_viewport().size_changed.connect(_ajustar_layout_movil)
+	call_deferred("_ajustar_layout_movil")
+
+
+func _ajustar_layout_movil() -> void:
+	var viewport := get_viewport_rect().size
+	var ancho := clampf(viewport.x * 0.55, 220.0, 316.0)
+	var alto := clampf(viewport.y * 0.28, 160.0, 283.0)
+	go.scale = Vector2.ONE
+	go.size = Vector2(ancho, alto)
+	go.position = Vector2(
+		(viewport.x - ancho) * 0.5,
+		viewport.y - alto - maxf(48.0, viewport.y * 0.08)
+	)
+	MobileUiLayoutHelperScript.asegurar_minimo_tactil(go, 180.0)
 	
 func animar_rebote_boton(button: Control):
 	var tween = create_tween()

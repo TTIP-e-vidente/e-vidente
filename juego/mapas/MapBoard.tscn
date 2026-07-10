@@ -61,6 +61,7 @@ offset_bottom = 2505.4565
 scale = Vector2(1, 1.0061487)
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 3
+follow_focus = true
 
 [node name="Contenido" type="Control" parent="ScrollContainer" unique_id=1990890053]
 material = SubResource("ShaderMaterial_content")

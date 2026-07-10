@@ -283,6 +283,7 @@ layout_mode = 2
 size_flags_vertical = 3
 follow_focus = true
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="SessionPanel/ScrollContainer" unique_id=1724842708]
 layout_mode = 2
@@ -327,7 +328,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="CloseButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/HeaderRow" unique_id=105154766]
-custom_minimum_size = Vector2(36, 36)
+custom_minimum_size = Vector2(36, 44)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.45)
 theme_override_colors/font_hover_color = Color(0.259, 0.471, 0.369, 1)
@@ -414,10 +415,11 @@ theme_override_colors/font_color = Color(0.278, 0.251, 0.184, 0.78)
 theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
-[node name="StatusRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1297004140]
+[node name="StatusRow" type="FlowContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1297004140]
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 
 [node name="SaveCard" type="PanelContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow" unique_id=1127027224]
 layout_mode = 2
@@ -442,6 +444,7 @@ autowrap_mode = 3
 
 [node name="ResumeCard" type="PanelContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/StatusRow" unique_id=393234328]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_status_card_resume")
 
@@ -498,9 +501,10 @@ theme_override_font_sizes/font_size = 11
 text = "Podés cambiarlo acá o al terminar una partida."
 autowrap_mode = 3
 
-[node name="ActionsRow" type="HBoxContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1118333200]
+[node name="ActionsRow" type="FlowContainer" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1118333200]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 
 [node name="GuardarButton" type="Button" parent="SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/ActionsRow" unique_id=595949393]
 custom_minimum_size = Vector2(0, 46)

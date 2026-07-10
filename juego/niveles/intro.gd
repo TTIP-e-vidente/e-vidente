@@ -18,6 +18,7 @@ const MUSICA_FONDO := "res://assets-sistema/sonidos/simple-relaxing-guitar-loop-
 @onready var opcionesi:Sprite2D = $MenuBar/Opciones/imagen
 @onready var mi_progresoi: Sprite2D = $MenuBar/MiProgreso/imagen
 @onready var saliri: Sprite2D = $MenuBar/Salir/imagen
+@onready var _menu_bar: MenuBar = $MenuBar
 
 const COMO_JUGAR_PATH := "res://assets-sistema/intro/como-jugar-intro-1.png"
 const JUGAR_PATH := "res://assets-sistema/intro/play-intro-1.png"
@@ -31,6 +32,10 @@ const OPTIONS_SCENE_PATH := "res://interface/opciones.tscn"
 const LOGIN_FLOW_GAME := "game"
 const LOGIN_FLOW_PROFILE := "profile"
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
+
+const MENU_ANCHO_BASE := 544.0
+const MENU_ESCALA_BASE := 0.6358162
 
 
 
@@ -67,9 +72,22 @@ func _ready() -> void:
 	call_deferred("_procesar_retorno_verificacion_mail")
 	call_deferred("_procesar_deep_link_leaderboard")
 	animated_sprite_2d.play("intro")
+	get_viewport().size_changed.connect(_ajustar_layout_movil)
+	call_deferred("_ajustar_layout_movil")
 
 func _procesar_deep_link_leaderboard() -> void:
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
+
+
+func _ajustar_layout_movil() -> void:
+	var viewport := get_viewport_rect().size
+	MobileUiLayoutHelperScript.centrar_control_escalado(
+		_menu_bar,
+		viewport,
+		MENU_ANCHO_BASE,
+		MENU_ESCALA_BASE,
+		200.0
+	)
 
 
 func _on_jugar_presionado() -> void:

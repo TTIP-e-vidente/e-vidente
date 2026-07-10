@@ -205,20 +205,24 @@ script = ExtResource("1_auth")
 metadata/_edit_horizontal_guides_ = [-93.0]
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_l8ewg")]
-layout_mode = 0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 1153.0
-offset_bottom = 799.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="BackButton" type="Button" parent="." unique_id=1957216421]
 layout_mode = 1
-anchors_preset = 2
+anchors_preset = 3
+anchor_left = 0.0
 anchor_top = 1.0
+anchor_right = 0.0
 anchor_bottom = 1.0
-offset_left = 95.0
-offset_top = -92.0
-offset_right = 187.0
+offset_left = 16.0
+offset_top = -72.0
+offset_right = 88.0
+offset_bottom = -16.0
 grow_vertical = 0
 icon = ExtResource("3_back")
 flat = true
@@ -230,15 +234,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 102.0
-offset_top = 32.0
-offset_right = -88.0
-offset_bottom = -53.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -88.0
 grow_horizontal = 2
 grow_vertical = 2
 follow_focus = true
 horizontal_scroll_mode = 0
-vertical_scroll_mode = 0
+vertical_scroll_mode = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="Card" unique_id=1864612542]
 layout_mode = 2
@@ -288,14 +292,16 @@ text = "Perfil "
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MainRow" type="HBoxContainer" parent="Card/MarginContainer/Content" unique_id=575082325]
+[node name="MainRow" type="FlowContainer" parent="Card/MarginContainer/Content" unique_id=575082325]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
 
 [node name="SummaryPanel" type="PanelContainer" parent="Card/MarginContainer/Content/MainRow" unique_id=1230226376]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_summary_panel")
 
@@ -439,7 +445,7 @@ theme_override_font_sizes/font_size = 14
 text = "Los cambios se ven en tiempo real. Guarda cuando estes listo."
 autowrap_mode = 3
 
-[node name="PrimaryFieldsRow" type="HBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=567646248]
+[node name="PrimaryFieldsRow" type="VBoxContainer" parent="Card/MarginContainer/Content/MainRow/FormPanel/MarginContainer/FormContent" unique_id=567646248]
 layout_mode = 2
 theme_override_constants/separation = 12
 

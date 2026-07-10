@@ -191,7 +191,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="CloseButton" type="Button" parent="PlayPanel/MarginContainer/Content/HeaderRow" unique_id=2088248950]
-custom_minimum_size = Vector2(92, 38)
+custom_minimum_size = Vector2(92, 44)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.278431, 0.25098, 0.184314, 0.92)
 theme_override_font_sizes/font_size = 15

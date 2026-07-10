@@ -121,11 +121,16 @@ color = Color(0.94, 0.97, 0.95, 0.72)
 [node name="BotonVolver" type="Button" parent="." unique_id=1574992806]
 unique_name_in_owner = true
 z_index = 2
-layout_mode = 0
-offset_left = 57.0
-offset_top = 724.0
-offset_right = 127.0
-offset_bottom = 755.0
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -56.0
+offset_right = 120.0
+offset_bottom = -16.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
@@ -133,54 +138,63 @@ theme_override_fonts/font = ExtResource("3_font")
 text = "← Volver"
 flat = true
 
-[node name="MarginRoot" type="MarginContainer" parent="." unique_id=726470208]
+[node name="MarginRoot" type="ScrollContainer" parent="." unique_id=726470208]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -72.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+follow_focus = true
+
+[node name="MarginInner" type="MarginContainer" parent="MarginRoot" unique_id=726470209]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="CenterContainer" type="CenterContainer" parent="MarginRoot" unique_id=25135398]
+[node name="CenterContainer" type="CenterContainer" parent="MarginRoot/MarginInner" unique_id=25135398]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PanelCentral" type="PanelContainer" parent="MarginRoot/CenterContainer" unique_id=1481448051]
+[node name="PanelCentral" type="PanelContainer" parent="MarginRoot/MarginInner/CenterContainer" unique_id=1481448051]
 custom_minimum_size = Vector2(460, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxPanel" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral" unique_id=79296129]
+[node name="VBoxPanel" type="VBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral" unique_id=79296129]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HeaderBar" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel" unique_id=680017626]
+[node name="HeaderBar" type="PanelContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel" unique_id=680017626]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_header")
 
-[node name="MarginHeader" type="MarginContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar" unique_id=1904630178]
+[node name="MarginHeader" type="MarginContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar" unique_id=1904630178]
 layout_mode = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 14
 
-[node name="HBoxHeader" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader" unique_id=1323785759]
+[node name="HBoxHeader" type="HBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader" unique_id=1323785759]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="BadgeMail" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader" unique_id=1520745628]
+[node name="BadgeMail" type="PanelContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader" unique_id=1520745628]
 custom_minimum_size = Vector2(52, 52)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
 
-[node name="BadgeLabel" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/BadgeMail" unique_id=1785100370]
+[node name="BadgeLabel" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/BadgeMail" unique_id=1785100370]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
 theme_override_fonts/font = ExtResource("3_font")
@@ -189,20 +203,20 @@ text = "@"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="VBoxTitulos" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader" unique_id=2111870326]
+[node name="VBoxTitulos" type="VBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader" unique_id=2111870326]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="Titulo" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos" unique_id=1705651338]
+[node name="Titulo" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos" unique_id=1705651338]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.34, 0.26, 1)
 theme_override_fonts/font = ExtResource("4_spray")
 theme_override_font_sizes/font_size = 26
 text = "Verificá tu correo"
 
-[node name="SubtituloHeader" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos" unique_id=1499442766]
+[node name="SubtituloHeader" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/HeaderBar/MarginHeader/HBoxHeader/VBoxTitulos" unique_id=1499442766]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.75)
@@ -210,18 +224,18 @@ theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 13
 text = "Código de 6 dígitos en tu casilla"
 
-[node name="MarginBody" type="MarginContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel" unique_id=323978224]
+[node name="MarginBody" type="MarginContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel" unique_id=323978224]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody" unique_id=1847881877]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody" unique_id=1847881877]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Descripcion" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1689079462]
+[node name="Descripcion" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1689079462]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.85)
 theme_override_fonts/font = ExtResource("3_font")
@@ -229,15 +243,15 @@ theme_override_font_sizes/font_size = 14
 text = "Te enviamos el código a:"
 horizontal_alignment = 1
 
-[node name="EmailRow" type="CenterContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1383700287]
+[node name="EmailRow" type="CenterContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1383700287]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="EmailChip" type="PanelContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow" unique_id=1837525633]
+[node name="EmailChip" type="PanelContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow" unique_id=1837525633]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_email")
 
-[node name="LabelEmail" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow/EmailChip" unique_id=109422630]
+[node name="LabelEmail" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/EmailRow/EmailChip" unique_id=109422630]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 1)
@@ -247,17 +261,17 @@ text = "tu_mail@ejemplo.com"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Espaciador1" type="Control" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=780282384]
+[node name="Espaciador1" type="Control" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=780282384]
 custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 
-[node name="CodigoInputWrap" type="Control" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1720521135]
+[node name="CodigoInputWrap" type="Control" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1720521135]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 4
 
-[node name="HBoxDigitos" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap" unique_id=324507783]
+[node name="HBoxDigitos" type="HBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap" unique_id=324507783]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -269,31 +283,31 @@ mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="DigitSlot0" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=933501911 instance=ExtResource("5_digit")]
+[node name="DigitSlot0" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=933501911 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot1" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1949378871 instance=ExtResource("5_digit")]
+[node name="DigitSlot1" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1949378871 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot2" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1700583502 instance=ExtResource("5_digit")]
+[node name="DigitSlot2" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1700583502 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot3" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1109682082 instance=ExtResource("5_digit")]
+[node name="DigitSlot3" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1109682082 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot4" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=813702298 instance=ExtResource("5_digit")]
+[node name="DigitSlot4" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=813702298 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DigitSlot5" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1209025957 instance=ExtResource("5_digit")]
+[node name="DigitSlot5" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap/HBoxDigitos" unique_id=1209025957 instance=ExtResource("5_digit")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LineEditCodigo" type="LineEdit" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap" unique_id=863596896]
+[node name="LineEditCodigo" type="LineEdit" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/CodigoInputWrap" unique_id=863596896]
 unique_name_in_owner = true
 z_index = 1
 layout_mode = 1
@@ -316,7 +330,7 @@ max_length = 6
 context_menu_enabled = false
 flat = true
 
-[node name="LabelMensaje" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1661840638]
+[node name="LabelMensaje" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1661840638]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
@@ -327,7 +341,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="BotonVerificar" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=882217665]
+[node name="BotonVerificar" type="Button" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=882217665]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -339,7 +353,7 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_boton_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_boton_hover")
 text = "Verificar código"
 
-[node name="BotonAyudaMail" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=187040577]
+[node name="BotonAyudaMail" type="Button" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=187040577]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.9)
@@ -348,7 +362,7 @@ theme_override_font_sizes/font_size = 13
 text = "¿No llegó el mail?"
 flat = true
 
-[node name="LabelAyudaMail" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=432262708]
+[node name="LabelAyudaMail" type="Label" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=432262708]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -358,17 +372,17 @@ theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="SeparadorSecundario" type="ColorRect" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=138321924]
+[node name="SeparadorSecundario" type="ColorRect" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=138321924]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 color = Color(0.259, 0.471, 0.369, 0.12)
 
-[node name="HBoxBotonesSecundarios" type="HBoxContainer" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=430964694]
+[node name="HBoxBotonesSecundarios" type="HBoxContainer" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=430964694]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="BotonReenviar" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios" unique_id=1186425052]
+[node name="BotonReenviar" type="Button" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios" unique_id=1186425052]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -378,7 +392,7 @@ theme_override_font_sizes/font_size = 14
 text = "Reenviar código"
 flat = true
 
-[node name="BotonOmitir" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios" unique_id=1195149535]
+[node name="BotonOmitir" type="Button" parent="MarginRoot/MarginInner/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer/HBoxBotonesSecundarios" unique_id=1195149535]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

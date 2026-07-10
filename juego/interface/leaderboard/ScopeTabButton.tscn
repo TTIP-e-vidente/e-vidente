@@ -52,7 +52,7 @@ content_margin_right = 12
 content_margin_bottom = 7
 
 [node name="ScopeTabButton" type="Button"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 44)
 theme_override_colors/font_color = Color(0.65, 0.70, 0.67, 1)
 theme_override_colors/font_hover_color = Color(0.859, 0.753, 0.318, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)

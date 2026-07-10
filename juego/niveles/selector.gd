@@ -6,6 +6,10 @@ const PROFILE_BUTTON_SCRIPT := preload("res://interface/components/ProfileProgre
 const PROFILE_OVERLAY_SCENE_PATH := "res://interface/components/ProfileOverlayPanel.tscn"
 const LeaderboardOverlayHelperScript := preload("res://interface/leaderboard/LeaderboardOverlayHelper.gd")
 const StreakLossFlowScript := preload("res://niveles/progress/StreakLossFlow.gd")
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
+
+const MENU_ANCHO_BASE := 372.0
+const MENU_ESCALA_BASE := 1.4623657
 
 const AUTISMO_SELECTOR_PATH := "res://assets-sistema/selector/autismo-selector.png"
 const CANDADO_SELECTOR_PATH := "res://assets-sistema/selector/candado-selector.png"
@@ -56,6 +60,8 @@ const TRACK_CETOGENICA := "cetogenica"
 @onready var resume_panel: PanelContainer = $PlayPanel
 
 @onready var btn_atras: Button = $"Atrás"
+@onready var _menu_bar: MenuBar = $MenuBar
+@onready var _titulo_label: Label = $"Aprender-hoy"
 
 
 var _profile_overlay: ProfileOverlayPanel
@@ -86,6 +92,8 @@ func _ready() -> void:
 		BackendSession.online_progress_synced.connect(_on_progreso_online_sincronizado)
 	call_deferred("_mostrar_perdida_racha_si_corresponde")
 	call_deferred("_procesar_deep_link_leaderboard")
+	get_viewport().size_changed.connect(_ajustar_layout_movil)
+	call_deferred("_ajustar_layout_movil")
 
 
 func _procesar_deep_link_leaderboard() -> void:
@@ -160,8 +168,31 @@ func _on_continuar_presionado() -> void:
 
 
 func _on_reproducir_fondo_gui_entrada(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if MobileUiLayoutHelperScript.cerrar_si_toque_fondo(event):
 		_establecer_reanudar_superposicion_visible(false)
+
+
+func _ajustar_layout_movil() -> void:
+	var viewport := get_viewport_rect().size
+	MobileUiLayoutHelperScript.aplicar_rect_completo(resume_backdrop, viewport)
+	var ancho_panel := MobileUiLayoutHelperScript.clamp_ancho_contenido(viewport.x, 32.0, 280.0, 446.0)
+	var alto_panel := clampf(viewport.y - 120.0, 240.0, 360.0)
+	resume_panel.position = Vector2(
+		(viewport.x - ancho_panel) * 0.5,
+		clampf(viewport.y * 0.12, 32.0, viewport.y - alto_panel - 24.0)
+	)
+	resume_panel.size = Vector2(ancho_panel, alto_panel)
+	MobileUiLayoutHelperScript.centrar_control_escalado(
+		_menu_bar,
+		viewport,
+		MENU_ANCHO_BASE,
+		MENU_ESCALA_BASE,
+		92.0
+	)
+	if is_instance_valid(_titulo_label):
+		_titulo_label.position.x = (viewport.x - _titulo_label.size.x) * 0.5
+		_titulo_label.position.y = 72.0 * (viewport.y / MobileUiLayoutHelperScript.DISENO_ALTO)
+	MobileUiLayoutHelperScript.posicionar_boton_esquina_inferior_izquierda(btn_atras, viewport)
 
 
 func _on_reproducir_cerrar_presionado() -> void:

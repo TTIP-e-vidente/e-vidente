@@ -5,6 +5,7 @@ signal verificacion_omitida()
 
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
 const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
+const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
@@ -33,6 +34,10 @@ const AYUDA_MAIL_TEXTO := (
 @onready var _label_ayuda_mail: Label = %LabelAyudaMail
 @onready var _label_mensaje: Label = %LabelMensaje
 @onready var _label_email: Label = %LabelEmail
+@onready var _panel_central: PanelContainer = $MarginRoot/MarginInner/CenterContainer/PanelCentral
+@onready var _center_root: CenterContainer = $MarginRoot/MarginInner/CenterContainer
+@onready var _margin_inner: MarginContainer = $MarginRoot/MarginInner
+@onready var _scroll_root: ScrollContainer = $MarginRoot
 
 var _digit_slots: Array[PanelContainer] = []
 var _email_chip: PanelContainer
@@ -65,6 +70,8 @@ func _ready() -> void:
 	_actualizar_casillas_digitos("")
 	_configurar_boton_volver()
 	_aplicar_configuracion_desde_meta()
+	resized.connect(_ajustar_layout_movil)
+	call_deferred("_ajustar_layout_movil")
 	call_deferred("_inicializar_correo_y_estado")
 	call_deferred("_enfocar_codigo")
 
@@ -249,6 +256,17 @@ func _configurar_entrada_codigo() -> void:
 	_line_edit_codigo.context_menu_enabled = false
 	_line_edit_codigo.flat = true
 	WebLineEditHelperScript.configurar(_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER)
+
+
+func _ajustar_layout_movil() -> void:
+	if not is_instance_valid(_panel_central):
+		return
+	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha(self)
+	var ancho_panel := MobileUiLayoutHelperScript.clamp_ancho_contenido(size.x, 40.0, 280.0, 460.0)
+	_panel_central.custom_minimum_size.x = ancho_panel
+	MobileUiLayoutHelperScript.aplicar_margenes_uniformes(_margin_inner, estrecho, 20, 12)
+	if is_instance_valid(_center_root) and is_instance_valid(_scroll_root):
+		_center_root.custom_minimum_size = _scroll_root.size
 
 
 func _enfocar_codigo() -> void:
