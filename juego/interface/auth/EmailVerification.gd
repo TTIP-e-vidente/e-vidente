@@ -4,6 +4,7 @@ signal verificacion_completada()
 signal verificacion_omitida()
 
 const FlowHelper := preload("res://interface/auth/EmailVerificationFlowHelper.gd")
+const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
 const FLECHA_ATRAS := preload(
 	"res://assets-sistema/interfaz/flecha-ir-para-atras-historias.png"
 )
@@ -247,8 +248,7 @@ func _configurar_entrada_codigo() -> void:
 	_line_edit_codigo.placeholder_text = ""
 	_line_edit_codigo.context_menu_enabled = false
 	_line_edit_codigo.flat = true
-	_line_edit_codigo.mouse_filter = Control.MOUSE_FILTER_STOP
-	_line_edit_codigo.focus_mode = Control.FOCUS_ALL
+	WebLineEditHelperScript.configurar(_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER)
 
 
 func _enfocar_codigo() -> void:
@@ -279,7 +279,10 @@ func _intentar_pegar_desde_portapapeles() -> void:
 
 
 func _on_digitos_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
+	if event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
+		call_deferred("_enfocar_codigo")
+		_line_edit_codigo.accept_event()
+	elif event is InputEventMouseButton:
 		var click := event as InputEventMouseButton
 		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
 			call_deferred("_enfocar_codigo")

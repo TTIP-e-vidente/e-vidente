@@ -10,6 +10,7 @@ const ProfileMailSyncHelperScript := preload(
 	"res://interface/auth/ProfileMailSyncHelper.gd"
 )
 const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
+const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
 const COLOR_TITULO_RIESGO := Color(0.72, 0.16, 0.12, 1)
 const COLOR_TITULO_NEUTRO := Color(0.180392, 0.164706, 0.121569, 1)
 
@@ -47,6 +48,7 @@ var _suprimir_marca_sucio := false
 
 func _ready() -> void:
 	_cachear_nodos_ui()
+	_configurar_inputs_touch()
 	_configurar_ui_estatica()
 	username_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
 	username_input.text_changed.connect(_marcar_perfil_online_sucio)
@@ -158,6 +160,14 @@ func _cachear_nodos_ui() -> void:
 	if not _button_save_profile.pressed.is_connected(_on_boton_guardar_perfil_presionado):
 		_button_save_profile.pressed.connect(_on_boton_guardar_perfil_presionado)
 	_form_hint_label = form_content.get_node("FormHint") as Label
+
+
+func _configurar_inputs_touch() -> void:
+	WebLineEditHelperScript.configurar(username_input)
+	WebLineEditHelperScript.configurar(birth_date_input)
+	WebLineEditHelperScript.configurar(email_input, LineEdit.KEYBOARD_TYPE_EMAIL)
+	if is_instance_valid(avatar_path_input):
+		WebLineEditHelperScript.configurar(avatar_path_input)
 
 
 func _configurar_ui_estatica() -> void:
