@@ -10,8 +10,6 @@ const ProfileMailSyncHelperScript := preload(
 	"res://interface/auth/ProfileMailSyncHelper.gd"
 )
 const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
-const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
-const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 const COLOR_TITULO_RIESGO := Color(0.72, 0.16, 0.12, 1)
 const COLOR_TITULO_NEUTRO := Color(0.180392, 0.164706, 0.121569, 1)
 
@@ -43,21 +41,13 @@ var _mail_verify_hint_label: Label
 var _button_verify_email: Button
 var _button_save_profile: Button
 var _form_hint_label: Label
-var _main_row: FlowContainer
-var _summary_panel: PanelContainer
-var _form_panel: PanelContainer
-var _form_margin: MarginContainer
-var _summary_margin: MarginContainer
 var _perfil_online_sucio := false
 var _guardando_perfil := false
 var _suprimir_marca_sucio := false
 
 func _ready() -> void:
 	_cachear_nodos_ui()
-	_configurar_inputs_touch()
 	_configurar_ui_estatica()
-	resized.connect(_ajustar_layout_movil)
-	call_deferred("_ajustar_layout_movil")
 	username_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
 	username_input.text_changed.connect(_marcar_perfil_online_sucio)
 	birth_date_input.text_changed.connect(_refrescar_vista_previa_desde_formulario)
@@ -168,30 +158,6 @@ func _cachear_nodos_ui() -> void:
 	if not _button_save_profile.pressed.is_connected(_on_boton_guardar_perfil_presionado):
 		_button_save_profile.pressed.connect(_on_boton_guardar_perfil_presionado)
 	_form_hint_label = form_content.get_node("FormHint") as Label
-	_main_row = content.get_node("MainRow") as FlowContainer
-	_summary_panel = _main_row.get_node("SummaryPanel") as PanelContainer
-	_form_panel = _main_row.get_node("FormPanel") as PanelContainer
-	_form_margin = _form_panel.get_node("MarginContainer") as MarginContainer
-	_summary_margin = _summary_panel.get_node("MarginContainer") as MarginContainer
-
-
-func _configurar_inputs_touch() -> void:
-	WebLineEditHelperScript.configurar(username_input)
-	WebLineEditHelperScript.configurar(birth_date_input)
-	WebLineEditHelperScript.configurar(email_input, LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS)
-	if is_instance_valid(avatar_path_input):
-		WebLineEditHelperScript.configurar(avatar_path_input)
-
-
-func _ajustar_layout_movil() -> void:
-	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha(self)
-	var ancho_panel := MobileUiLayoutHelperScript.clamp_ancho_contenido(size.x, 32.0, 260.0, 540.0)
-	if is_instance_valid(_summary_panel):
-		_summary_panel.custom_minimum_size.x = ancho_panel if estrecho else 280.0
-	if is_instance_valid(_form_panel):
-		_form_panel.custom_minimum_size.x = ancho_panel if estrecho else 300.0
-	MobileUiLayoutHelperScript.aplicar_margenes_uniformes(_form_margin, estrecho, 45, 18)
-	MobileUiLayoutHelperScript.aplicar_margenes_uniformes(_summary_margin, estrecho, 30, 18)
 
 
 func _configurar_ui_estatica() -> void:

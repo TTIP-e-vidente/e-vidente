@@ -1,8 +1,5 @@
 extends Control
 
-const WebLineEditHelperScript := preload("res://interface/helpers/WebLineEditHelper.gd")
-const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
-
 enum AuthMode { LOGIN, REGISTER }
 
 const MSG_LISTO_JUGAR := "Listo para jugar."
@@ -13,31 +10,24 @@ const MSG_SESION_ACTIVA := "Listo para jugar."
 const MSG_SESION_EXPIRADA := "Tu sesión expiró. Iniciá sesión de nuevo."
 const MSG_OFFLINE := "Continuando sin cuenta.\nEl progreso queda solo en este dispositivo."
 
-const ANCHO_FORMULARIO_MIN := 280.0
-const ANCHO_FORMULARIO_MAX := 420.0
-const MARGEN_FORMULARIO_HORIZONTAL := 40.0
-
 signal login_completed()
 signal play_offline_requested()
 
 signal verificacion_escena_solicitada(es_registro: bool, result: Dictionary)
 
-@onready var label_title: Label = $FormScroll/FormCenter/FormMargin/VBoxContainer/LabelTitle
-@onready var _input_username: LineEdit = $FormScroll/FormCenter/FormMargin/VBoxContainer/LineEditUsernameOrMail
-@onready var _input_password: LineEdit = $FormScroll/FormCenter/FormMargin/VBoxContainer/LineEditPassword
-@onready var _input_register_name: LineEdit = $FormScroll/FormCenter/FormMargin/VBoxContainer/LineEditRegisterName
-@onready var _input_register_mail: LineEdit = $FormScroll/FormCenter/FormMargin/VBoxContainer/LineEditRegisterMail
-@onready var _input_register_birth_date: LineEdit = $FormScroll/FormCenter/FormMargin/VBoxContainer/LineEditRegisterBirthDate
-@onready var _label_register_mail_hint: Label = $FormScroll/FormCenter/FormMargin/VBoxContainer/LabelRegisterMailHint
-@onready var _label_register_birth_hint: Label = $FormScroll/FormCenter/FormMargin/VBoxContainer/LabelRegisterBirthHint
-@onready var _button_submit: Button = $FormScroll/FormCenter/FormMargin/VBoxContainer/ButtonSubmit
-@onready var _button_switch_mode: Button = $FormScroll/FormCenter/FormMargin/VBoxContainer/ButtonSwitchMode
-@onready var _button_play_offline: Button = $FormScroll/FormCenter/FormMargin/VBoxContainer/ButtonPlayOffline
-@onready var _button_retry: Button = $FormScroll/FormCenter/FormMargin/VBoxContainer/ButtonRetryConnection
-@onready var _label_status: Label = $FormScroll/FormCenter/FormMargin/VBoxContainer/LabelStatus
-@onready var _form_scroll: ScrollContainer = $FormScroll
-@onready var _form_center: CenterContainer = $FormScroll/FormCenter
-@onready var _form_vbox: VBoxContainer = $FormScroll/FormCenter/FormMargin/VBoxContainer
+@onready var label_title: Label = $VBoxContainer/LabelTitle
+@onready var _input_username: LineEdit = $VBoxContainer/LineEditUsernameOrMail
+@onready var _input_password: LineEdit = $VBoxContainer/LineEditPassword
+@onready var _input_register_name: LineEdit = $VBoxContainer/LineEditRegisterName
+@onready var _input_register_mail: LineEdit = $VBoxContainer/LineEditRegisterMail
+@onready var _input_register_birth_date: LineEdit = $VBoxContainer/LineEditRegisterBirthDate
+@onready var _label_register_mail_hint: Label = $VBoxContainer/LabelRegisterMailHint
+@onready var _label_register_birth_hint: Label = $VBoxContainer/LabelRegisterBirthHint
+@onready var _button_submit: Button = $VBoxContainer/ButtonSubmit
+@onready var _button_switch_mode: Button = $VBoxContainer/ButtonSwitchMode
+@onready var _button_play_offline: Button = $VBoxContainer/ButtonPlayOffline
+@onready var _button_retry: Button = $VBoxContainer/ButtonRetryConnection
+@onready var _label_status: Label = $VBoxContainer/LabelStatus
 
 var _is_loading := false
 var _verificando_conexion := false
@@ -55,36 +45,11 @@ func _ready() -> void:
 	BackendSession.session_restored.connect(_on_sesion_restaurada)
 	BackendSession.session_restore_failed.connect(_on_fallo_restauracion_sesion)
 
-	_configurar_inputs_touch()
 	_establecer_modo(AuthMode.LOGIN)
 	_actualizar_estado_sesion()
 	_actualizar_ui_conexion()
-	resized.connect(_ajustar_layout_movil)
-	call_deferred("_ajustar_layout_movil")
 	_input_username.grab_focus()
 	call_deferred("_verificar_conexion_al_inicio")
-
-
-func _configurar_inputs_touch() -> void:
-	WebLineEditHelperScript.configurar(_input_username)
-	WebLineEditHelperScript.configurar(_input_password, LineEdit.KEYBOARD_TYPE_PASSWORD)
-	WebLineEditHelperScript.configurar(_input_register_name)
-	WebLineEditHelperScript.configurar(_input_register_mail, LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS)
-	WebLineEditHelperScript.configurar(_input_register_birth_date)
-
-
-func _ajustar_layout_movil() -> void:
-	if not is_instance_valid(_form_scroll) or not is_instance_valid(_form_center) or not is_instance_valid(_form_vbox):
-		return
-	MobileUiLayoutHelperScript.estilizar_scroll_discreto(_form_scroll)
-	var area := _form_scroll.size
-	_form_center.custom_minimum_size = area
-	var ancho_objetivo := clampf(
-		area.x - MARGEN_FORMULARIO_HORIZONTAL,
-		ANCHO_FORMULARIO_MIN,
-		ANCHO_FORMULARIO_MAX
-	)
-	_form_vbox.custom_minimum_size.x = ancho_objetivo
 
 
 func _establecer_modo(mode: AuthMode) -> void:

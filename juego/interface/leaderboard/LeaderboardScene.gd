@@ -14,8 +14,6 @@ extends CanvasLayer
 
 signal cerrado
 
-const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
-
 
 # ── Estados posibles de la UI ─────────────────────────────────────────────────
 
@@ -73,8 +71,6 @@ func _ready() -> void:
 
 	_preparar_fade_inicial()
 	_animar_entrada()
-	get_viewport().size_changed.connect(_ajustar_layout_movil)
-	call_deferred("_ajustar_layout_movil")
 
 
 func _exit_tree() -> void:
@@ -85,15 +81,6 @@ func _input(evento: InputEvent) -> void:
 	if evento.is_action_pressed("ui_cancel"):
 		_cerrar()
 		get_viewport().set_input_as_handled()
-
-
-func _ajustar_layout_movil() -> void:
-	if not is_instance_valid(_panel_central):
-		return
-	var viewport := get_viewport().get_visible_rect().size
-	MobileUiLayoutHelperScript.aplicar_modal_centrado(_panel_central, viewport, 600.0, 760.0)
-	if is_instance_valid(_boton_cerrar):
-		MobileUiLayoutHelperScript.asegurar_minimo_tactil(_boton_cerrar)
 
 
 # ── API pública ────────────────────────────────────────────────────────────────

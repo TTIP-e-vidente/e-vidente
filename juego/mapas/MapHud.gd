@@ -7,7 +7,6 @@ const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
 const PROFILE_RETURN_SCENE_META := "profile_return_scene"
 const RUBIK_FONT := preload("res://fonts/Rubik-VariableFont_wght.ttf")
 const RUBIK_SPRAY_FONT := preload("res://fonts/RubikSprayPaint-Regular.ttf")
-const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
 @onready var racha: Control = $HudRoot/RachaAnchor/Racha
 @onready var profile_button: Button = $HudRoot/TopRightAnchor/ProfileButton
@@ -15,11 +14,6 @@ const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLay
 
 @onready var _map_exp_numero: Label = $HudRoot/ExpMapaAnchor/VBox/ExpNumero
 @onready var _map_exp_titulo: Label = $HudRoot/ExpMapaAnchor/VBox/ExpTitle
-@onready var _hud_root: Control = $HudRoot
-@onready var _back_anchor: Control = $HudRoot/BackAnchor
-@onready var _back_button: Button = $HudRoot/BackAnchor/BackButton
-@onready var _top_right_anchor: Control = $HudRoot/TopRightAnchor
-@onready var _exp_anchor: Control = $HudRoot/ExpMapaAnchor
 
 
 func _ready() -> void:
@@ -33,40 +27,10 @@ func _ready() -> void:
 	_actualizar_hud()
 	_aplicar_fuentes_exp()
 	call_deferred("_procesar_deep_link_leaderboard")
-	get_viewport().size_changed.connect(_ajustar_layout_movil)
-	call_deferred("_ajustar_layout_movil")
 
 
 func _procesar_deep_link_leaderboard() -> void:
 	LeaderboardDeepLinkBridge.procesar_en_escena_actual(self)
-
-
-func _ajustar_layout_movil() -> void:
-	if not is_instance_valid(_hud_root):
-		return
-	var viewport := get_viewport().get_visible_rect().size
-	_hud_root.size = viewport
-	var estrecho := MobileUiLayoutHelperScript.es_pantalla_estrecha_viewport(viewport.x)
-	var margen := MobileUiLayoutHelperScript.MARGEN_PANTALLA
-	if is_instance_valid(_back_anchor):
-		_back_anchor.offset_left = margen
-		_back_anchor.offset_top = -152.0
-		_back_anchor.offset_right = margen + 72.0
-		_back_anchor.offset_bottom = -margen
-	if is_instance_valid(_back_button):
-		_back_button.offset_left = 0.0
-		_back_button.offset_top = 0.0
-		_back_button.offset_right = 0.0
-		_back_button.offset_bottom = 0.0
-		MobileUiLayoutHelperScript.configurar_boton_volver(_back_button)
-	if is_instance_valid(_top_right_anchor):
-		_top_right_anchor.offset_left = -220.0 if not estrecho else -180.0
-		_top_right_anchor.offset_top = margen
-		_top_right_anchor.offset_right = -margen
-		_top_right_anchor.offset_bottom = 84.0 if not estrecho else 72.0
-	if is_instance_valid(_exp_anchor):
-		_exp_anchor.visible = not estrecho or viewport.x >= 360.0
-		_exp_anchor.offset_top = 72.0 if estrecho else 86.0
 
 
 func _aplicar_fuentes_exp() -> void:

@@ -18,22 +18,13 @@ var _configured_node_states: Array[Dictionary] = []
 func _ready() -> void:
 	_ocultar_nodos_runtime_hasta_configurar()
 	titulo_del_nivel.modulate = Color("#42785e")
-	get_viewport().size_changed.connect(_ajustar_scroll_al_viewport)
-	call_deferred("_ajustar_scroll_al_viewport")
-
+	_ajustar_scroll_al_viewport()
 
 func _ajustar_scroll_al_viewport() -> void:
 	if contenedor_scroll == null:
 		return
-	var viewport := get_viewport().get_visible_rect().size
-	var estrecho := viewport.x < 760.0
-	var margen_lateral := 12.0 if estrecho else 57.0
-	var margen_superior := 120.0 * (viewport.y / 800.0)
-	contenedor_scroll.position = Vector2(margen_lateral, margen_superior)
-	contenedor_scroll.size = Vector2(
-		maxf(100.0, viewport.x - margen_lateral * 2.0),
-		maxf(100.0, viewport.y - margen_superior - 16.0)
-	)
+	var viewport_height: float = get_viewport().get_visible_rect().size.y
+	contenedor_scroll.size.y = maxf(100.0, viewport_height - contenedor_scroll.position.y)
 
 
 func obtener_contenedor_nodos() -> Node2D:

@@ -3,7 +3,6 @@ class_name ProfileOverlayPanel
 
 const RUBIK_FONT_PATH := "res://fonts/Rubik-VariableFont_wght.ttf"
 const StreakReminderHelperScript := preload("res://interface/auth/StreakReminderHelper.gd")
-const MobileUiLayoutHelperScript := preload("res://interface/helpers/MobileUiLayoutHelper.gd")
 
 signal resume_pressed
 signal save_pressed
@@ -17,7 +16,6 @@ signal login_pressed
 
 @onready var _overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var _session_panel: PanelContainer = $SessionPanel
-@onready var _scroll_root: ScrollContainer = $SessionPanel/ScrollContainer
 @onready var _avatar_preview: TextureRect = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarPreview
 @onready var _avatar_bg: Control = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg
 @onready var _avatar_label: Label = $SessionPanel/ScrollContainer/MarginContainer/VBoxContainer/SummaryPanel/SummaryRow/AvatarContainer/AvatarBg/CenterContainer/AvatarLabel
@@ -76,10 +74,8 @@ func _ready() -> void:
 	_reset_btn.pressed.connect(func(): reestablecer_progreso_pressed.emit())
 	if is_instance_valid(_checkbox_omitir_ranking):
 		_checkbox_omitir_ranking.toggled.connect(_al_cambiar_preferencia_omitir_ranking)
-	resized.connect(_ajustar_layout_movil)
 	_aplicar_fuentes()
 	_configurar_avatar_display()
-	call_deferred("_ajustar_layout_movil")
 
 
 func _configurar_avatar_display() -> void:
@@ -101,7 +97,6 @@ func _aplicar_fuentes() -> void:
 
 
 func mostrar_superposicion() -> void:
-	_ajustar_layout_movil()
 	refrescar()
 	visible = true
 	call_deferred("_procesar_deep_link_leaderboard")
@@ -411,26 +406,8 @@ func _formatear_estado_con_pendientes() -> String:
 	return base + "\n%d partida%s sin sincronizar" % [pending_count, plural]
 
 
-func _ajustar_layout_movil() -> void:
-	if not is_instance_valid(_session_panel):
-		return
-	MobileUiLayoutHelperScript.aplicar_panel_lateral(_session_panel, size.x)
-	if is_instance_valid(_scroll_root):
-		MobileUiLayoutHelperScript.estilizar_scroll_discreto(_scroll_root)
-	var margen := 16 if MobileUiLayoutHelperScript.es_pantalla_estrecha(self) else 26
-	var margin_container := _session_panel.get_node_or_null("ScrollContainer/MarginContainer")
-	if margin_container is MarginContainer:
-		var margins := margin_container as MarginContainer
-		margins.add_theme_constant_override("margin_left", margen)
-		margins.add_theme_constant_override("margin_right", margen)
-		margins.add_theme_constant_override("margin_top", margen)
-		margins.add_theme_constant_override("margin_bottom", margen)
-	if is_instance_valid(_close_btn):
-		MobileUiLayoutHelperScript.asegurar_minimo_tactil(_close_btn)
-
-
 func _on_entrada_fondo(event: InputEvent) -> void:
-	if MobileUiLayoutHelperScript.cerrar_si_toque_fondo(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		close_requested.emit()
 
 
@@ -461,6 +438,6 @@ func _animar_salida_deslizada() -> void:
 
 func _on_salida_deslizada_finalizada() -> void:
 	visible = false
-	_session_panel.offset_left = MobileUiLayoutHelperScript.offset_cerrado_panel_lateral(size.x)
+	_session_panel.offset_left = -646.0
 	_session_panel.offset_right = -16.0
 	_session_panel.modulate.a = 1.0

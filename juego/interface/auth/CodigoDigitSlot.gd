@@ -15,7 +15,6 @@ var _panel_style: StyleBoxFlat
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var base := get_theme_stylebox("panel") as StyleBoxFlat
 	if base != null:
 		_panel_style = base.duplicate() as StyleBoxFlat

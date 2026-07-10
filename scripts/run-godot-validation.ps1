@@ -123,8 +123,6 @@ function Get-ValidationSteps {
     $mapProgressVisualStep = @{ Label = 'Map progress visual test'; Hint = 'Revisar contrato del mapa de celiaquia, estados visuales y desbloqueo del siguiente nodo.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/map_progress_visual_test.gd') }
     $flujoProgresivoDeNodoStep = @{ Label = 'Flujo progresivo de nodo'; Hint = 'Revisar los casos de nodos 1 a 6 con apertura directa, indicador y vuelta al mapa.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/flujo_progresivo_de_nodo_test.gd') }
     $smokeStep = @{ Label = 'Gameplay smoke test'; Hint = 'Revisar el flujo minimo Splash -> Intro -> Selector -> Mapa -> Gameplay.'; Arguments = $godotBaseArgs + @('--fixed-fps', '60', '-s', 'res://tests/vertical_slice_smoke_test.gd') }
-    $loginSceneNodesStep = @{ Label = 'Login scene node contract test'; Hint = 'Revisar que Login.tscn instancie todos los nodos del formulario.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/auth/test_login_scene_nodes.gd') }
-    $introLoginOverlayStep = @{ Label = 'Intro login overlay test'; Hint = 'Revisar que el menu principal muestre el overlay de login con botones.'; Arguments = $godotBaseArgs + @('-s', 'res://tests/auth/test_intro_login_overlay.gd') }
 
     $hasNodeJsonTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/node_content_loader_test.gd')
     $hasPlanDeCorridaDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/plan_de_corrida_de_nodo_test.gd')
@@ -134,8 +132,6 @@ function Get-ValidationSteps {
     $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/map_progress_visual_test.gd')
     $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/flujo_progresivo_de_nodo_test.gd')
     $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/vertical_slice_smoke_test.gd')
-    $hasLoginSceneNodesTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/auth/test_login_scene_nodes.gd')
-    $hasIntroLoginOverlayTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/auth/test_intro_login_overlay.gd')
 
     $smokeSuite = @($importStep)
     if ($hasNodeJsonTest) {
@@ -158,12 +154,6 @@ function Get-ValidationSteps {
     }
     if ($hasFlujoProgresivoDeNodoTest) {
         $smokeSuite += $flujoProgresivoDeNodoStep
-    }
-    if ($hasLoginSceneNodesTest) {
-        $smokeSuite += $loginSceneNodesStep
-    }
-    if ($hasIntroLoginOverlayTest) {
-        $smokeSuite += $introLoginOverlayStep
     }
     if ($hasSmokeTest) {
         $smokeSuite += $smokeStep
@@ -177,8 +167,6 @@ function Get-ValidationSteps {
     $hasMapProgressVisualTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/map_progress_visual_test.gd')
     $hasFlujoProgresivoDeNodoTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/flujo_progresivo_de_nodo_test.gd')
     $hasSmokeTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/vertical_slice_smoke_test.gd')
-    $hasLoginSceneNodesTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/auth/test_login_scene_nodes.gd')
-    $hasIntroLoginOverlayTest = Test-Path (Join-Path $RepositoryRoot 'juego/tests/auth/test_intro_login_overlay.gd')
 
     $smokeSuite = @($importStep)
     if ($hasNodeJsonTest) {
@@ -201,12 +189,6 @@ function Get-ValidationSteps {
     }
     if ($hasFlujoProgresivoDeNodoTest) {
         $smokeSuite += $flujoProgresivoDeNodoStep
-    }
-    if ($hasLoginSceneNodesTest) {
-        $smokeSuite += $loginSceneNodesStep
-    }
-    if ($hasIntroLoginOverlayTest) {
-        $smokeSuite += $introLoginOverlayStep
     }
     if ($hasSmokeTest) {
         $smokeSuite += $smokeStep

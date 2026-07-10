@@ -71,6 +71,7 @@ animations = [{
 
 [node name="Intro" type="Node2D" unique_id=1475314294]
 z_index = 4
+position = Vector2(4, 0)
 script = ExtResource("1_1l6ju")
 
 [node name="FondoFicha" parent="." unique_id=1289609653 instance=ExtResource("2_7djtf")]
@@ -86,10 +87,15 @@ speed_scale = 2.0
 
 [node name="MenuBar" type="MenuBar" parent="." unique_id=2052382584]
 layout_direction = 1
-offset_left = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 388.0
 offset_top = 200.0
-offset_right = 544.0
-offset_bottom = 620.0
+offset_right = 388.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
 scale = Vector2(0.6358162, 0.6358162)
 theme_override_constants/h_separation = 414
 flat = true
@@ -110,8 +116,6 @@ scale = Vector2(1.145724, 1.1621135)
 [node name="Opciones" parent="MenuBar" unique_id=1594801136 instance=ExtResource("4_uu8qn")]
 visible = false
 layout_mode = 1
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = 19.736572
 offset_top = 163.87448
 offset_right = 562.7366
@@ -121,8 +125,6 @@ scale = Vector2(1.145724, 1.1621135)
 [node name="MiProgreso" parent="MenuBar" unique_id=1208565524 instance=ExtResource("4_uu8qn")]
 visible = false
 layout_mode = 1
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = 19.736572
 offset_top = 443.0
 offset_right = 562.7366
@@ -131,8 +133,6 @@ scale = Vector2(1.145724, 1.1621135)
 
 [node name="Salir" parent="MenuBar" unique_id=600866338 instance=ExtResource("4_uu8qn")]
 layout_mode = 1
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = 17.712952
 offset_top = 470.25183
 offset_right = 560.71295

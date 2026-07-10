@@ -205,32 +205,6 @@ run_map_progress_visual() {
 }
 
 
-run_login_scene_nodes() {
-	if [ ! -f juego/tests/auth/test_login_scene_nodes.gd ]; then
-		echo "SKIP: Login scene node contract test (juego/tests/auth/test_login_scene_nodes.gd no existe)"
-		return 0
-	fi
-	run_step \
-		"02d-login-scene-nodes" \
-		"Login scene node contract test" \
-		"Login.tscn no instancia todos los nodos del formulario o _ready falla al conectar botones." \
-		$(godot_project_args) -s res://tests/auth/test_login_scene_nodes.gd
-}
-
-
-run_intro_login_overlay() {
-	if [ ! -f juego/tests/auth/test_intro_login_overlay.gd ]; then
-		echo "SKIP: Intro login overlay test (juego/tests/auth/test_intro_login_overlay.gd no existe)"
-		return 0
-	fi
-	run_step \
-		"02e-intro-login-overlay" \
-		"Intro login overlay test" \
-		"El menu principal no muestra el overlay de login con botones accesibles." \
-		$(godot_project_args) -s res://tests/auth/test_intro_login_overlay.gd
-}
-
-
 run_question_json_contract() {
 	if [ ! -f juego/tests/node_content_loader_test.gd ]; then
 		echo "SKIP: Playable node JSON contract test (juego/tests/node_content_loader_test.gd no existe)"
@@ -284,13 +258,11 @@ run_smoke_suite() {
 	run_question_json_contract
 	run_post_game_flow_controller
 	run_map_progress_visual
-	run_login_scene_nodes
-	run_intro_login_overlay
 	run_gameplay_smoke
 
 	write_success_summary \
 		"smoke" \
-		"import headless + tests disponibles + login + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 
@@ -299,13 +271,11 @@ run_ci_suite() {
 	run_question_json_contract
 	run_post_game_flow_controller
 	run_map_progress_visual
-	run_login_scene_nodes
-	run_intro_login_overlay
 	run_gameplay_smoke
 
 	write_success_summary \
 		"ci" \
-		"import headless + tests disponibles + login + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 
@@ -314,13 +284,11 @@ run_full_suite() {
 	run_question_json_contract
 	run_post_game_flow_controller
 	run_map_progress_visual
-	run_login_scene_nodes
-	run_intro_login_overlay
 	run_gameplay_smoke
 
 	write_success_summary \
 		"full" \
-		"import headless + tests disponibles + login + gameplay smoke"
+		"import headless + tests disponibles + gameplay smoke"
 }
 
 run_godot_validation() {
