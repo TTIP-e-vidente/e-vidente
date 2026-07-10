@@ -25,6 +25,7 @@ const AYUDA_MAIL_TEXTO := (
 @onready var _line_edit_codigo: LineEdit = %LineEditCodigo
 @onready var _codigo_input_wrap: Control = %CodigoInputWrap
 @onready var _boton_verificar: Button = %BotonVerificar
+@onready var _boton_pegar_codigo: Button = %BotonPegarCodigo
 @onready var _boton_reenviar: Button = %BotonReenviar
 @onready var _boton_omitir: Button = %BotonOmitir
 @onready var _boton_ayuda_mail: Button = %BotonAyudaMail
@@ -49,6 +50,7 @@ func _ready() -> void:
 	_email_chip = _label_email.get_parent() as PanelContainer
 
 	_boton_verificar.pressed.connect(_on_verificar_presionado)
+	_boton_pegar_codigo.pressed.connect(_on_pegar_codigo_presionado)
 	_boton_reenviar.pressed.connect(_on_reenviar_presionado)
 	_boton_omitir.pressed.connect(_on_omitir_presionado)
 	_boton_ayuda_mail.pressed.connect(_on_ayuda_mail_presionado)
@@ -262,6 +264,17 @@ func _intentar_pegar_desde_portapapeles() -> void:
 		return
 	var clip := DisplayServer.clipboard_get().strip_edges()
 	if clip.is_empty():
+		# En Safari y en el visor embebido de itch.io el navegador suele
+		# bloquear la lectura automática del portapapeles (o vino vacío):
+		# avisamos para que no parezca que el pegado "no hizo nada".
+		_mostrar_mensaje(
+			(
+				"No pudimos leer el portapapeles automáticamente (algunos "
+				+ "navegadores, como Safari o itch.io, lo bloquean). "
+				+ "Escribí el código a mano."
+			),
+			false
+		)
 		return
 	var digits := _extraer_digitos_codigo(clip)
 	if digits.is_empty():
@@ -270,6 +283,16 @@ func _intentar_pegar_desde_portapapeles() -> void:
 		)
 		return
 	_reemplazar_codigo(digits)
+
+
+func _on_pegar_codigo_presionado() -> void:
+	if _is_loading or _salida_en_curso:
+		return
+	# Tocar un botón es un gesto de usuario válido en cualquier plataforma,
+	# a diferencia de Ctrl+V/Cmd+V (no existen en celulares) o del menú
+	# contextual de mantener presionado (lo desactivamos para las casillas).
+	_intentar_pegar_desde_portapapeles()
+	_enfocar_codigo()
 
 
 func _on_digitos_gui_input(event: InputEvent) -> void:
@@ -292,7 +315,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
 
-	if key_event.ctrl_pressed and key_event.keycode == KEY_V:
+	if (key_event.ctrl_pressed or key_event.meta_pressed) and key_event.keycode == KEY_V:
 		_intentar_pegar_desde_portapapeles()
 		get_viewport().set_input_as_handled()
 		return
@@ -546,6 +569,7 @@ func _iniciar_cooldown(segundos: float) -> void:
 func _establecer_cargando(cargando: bool) -> void:
 	_is_loading = cargando
 	_boton_verificar.disabled = cargando
+	_boton_pegar_codigo.disabled = cargando
 	_boton_omitir.disabled = cargando or _requiere_verificacion
 	_boton_volver.disabled = cargando or _requiere_verificacion
 	_line_edit_codigo.editable = not cargando

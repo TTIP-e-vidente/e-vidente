@@ -316,6 +316,15 @@ max_length = 6
 context_menu_enabled = false
 flat = true
 
+[node name="BotonPegarCodigo" type="Button" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=2043981744]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.259, 0.471, 0.369, 0.9)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 13
+text = "📋 Pegar código copiado"
+flat = true
+
 [node name="LabelMensaje" type="Label" parent="MarginRoot/CenterContainer/PanelCentral/VBoxPanel/MarginBody/VBoxContainer" unique_id=1661840638]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
