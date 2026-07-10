@@ -178,7 +178,7 @@ func _cachear_nodos_ui() -> void:
 func _configurar_inputs_touch() -> void:
 	WebLineEditHelperScript.configurar(username_input)
 	WebLineEditHelperScript.configurar(birth_date_input)
-	WebLineEditHelperScript.configurar(email_input, LineEdit.KEYBOARD_TYPE_EMAIL)
+	WebLineEditHelperScript.configurar(email_input, LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS)
 	if is_instance_valid(avatar_path_input):
 		WebLineEditHelperScript.configurar(avatar_path_input)
 

@@ -68,7 +68,7 @@ func _configurar_inputs_touch() -> void:
 	WebLineEditHelperScript.configurar(_input_username)
 	WebLineEditHelperScript.configurar(_input_password, LineEdit.KEYBOARD_TYPE_PASSWORD)
 	WebLineEditHelperScript.configurar(_input_register_name)
-	WebLineEditHelperScript.configurar(_input_register_mail, LineEdit.KEYBOARD_TYPE_EMAIL)
+	WebLineEditHelperScript.configurar(_input_register_mail, LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS)
 	WebLineEditHelperScript.configurar(_input_register_birth_date)
 
 

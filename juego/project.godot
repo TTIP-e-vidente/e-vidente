@@ -34,7 +34,6 @@ EmailVerificationBridge="*res://interface/auth/EmailVerificationBridge.gd"
 
 [display]
 
-window/size/viewport_width=1152
 window/size/viewport_height=800
 window/stretch/mode="viewport"
 window/stretch/aspect="expand"
