@@ -382,8 +382,14 @@ func _on_ayuda_mail_presionado() -> void:
 
 
 func _on_volver_presionado() -> void:
-	if _is_loading or _requiere_verificacion or _salida_en_curso:
+	if _is_loading or _salida_en_curso:
 		return
+	# La flecha de volver siempre tiene que sacarte de esta pantalla, incluso
+	# con verificación obligatoria: "obligatorio" solo bloquea el botón
+	# "Omitir" (que finge que ya verificaste), no la salida en sí. El
+	# outcome "omitido" con obligatorio=true ya se interpreta como fallo
+	# (interpretar_outcome), así que volver nunca te deja pasar sin verificar
+	# — solo evita quedar atrapado sin salida.
 	_salir_con_outcome("omitido")
 
 
@@ -401,6 +407,13 @@ func _process(delta: float) -> void:
 
 func _mostrar_email_usuario() -> void:
 	var mail := str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	if mail.is_empty() and BackendSession.hay_verificacion_de_login_pendiente():
+		# Login bloqueado por EMAIL_NOT_VERIFIED: sin sesión completa todavía,
+		# el mail real vive en la caché de verificación pendiente, no en la
+		# de usuario logueado.
+		mail = str(
+			BackendSession.obtener_usuario_verificacion_pendiente().get("mail", "")
+		).strip_edges()
 	if mail.is_empty():
 		_label_email.text = MAIL_PLACEHOLDER_RUNTIME
 		call_deferred("_ajustar_chip_mail")

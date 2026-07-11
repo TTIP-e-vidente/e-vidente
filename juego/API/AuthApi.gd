@@ -138,6 +138,10 @@ static func _evaluacion_con_target_mail(evaluacion: Dictionary, meta: Dictionary
 	var target := str(meta.get("target_mail", "")).strip_edges()
 	if target.is_empty():
 		target = str(AuthApi.obtener_usuario_online().get("mail", "")).strip_edges()
+	if target.is_empty() and BackendSession.hay_verificacion_de_login_pendiente():
+		target = str(
+			BackendSession.obtener_usuario_verificacion_pendiente().get("mail", "")
+		).strip_edges()
 	if not target.is_empty():
 		enriched["target_mail"] = target
 	return enriched
