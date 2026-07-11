@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1783731783|51763026';
+const CACHE_VERSION = '1783813416|45505343';
 /** @type {string} */
 const CACHE_PREFIX = 'Evidente-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
