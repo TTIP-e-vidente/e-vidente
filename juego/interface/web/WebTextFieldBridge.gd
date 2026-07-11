@@ -83,6 +83,9 @@ var _sincronizando := false
 var _tiempo_desde_reposicion := 0.0
 
 
+static var _es_tactil: Variant = null
+
+
 static func adjuntar(
 	campo: LineEdit,
 	tipo_teclado: LineEdit.VirtualKeyboardType = LineEdit.KEYBOARD_TYPE_DEFAULT,
@@ -92,10 +95,22 @@ static func adjuntar(
 		return null
 	if not is_instance_valid(campo):
 		return null
+	if not _dispositivo_tactil():
+		# En notebook/escritorio el enfoque nativo de Godot ya funciona bien:
+		# superponer el <input> ahí no aporta nada y puede interferir con el
+		# click y la edición normal del campo. Mismo chequeo que usa el motor
+		# para decidir si mostrar el teclado virtual (GodotDisplayVK.available).
+		return null
 	var puente := WebTextFieldBridge.new()
 	campo.add_child(puente)
 	puente._iniciar(campo, tipo_teclado, rect_source if rect_source != null else campo)
 	return puente
+
+
+static func _dispositivo_tactil() -> bool:
+	if _es_tactil == null:
+		_es_tactil = bool(JavaScriptBridge.eval("'ontouchstart' in window", true))
+	return _es_tactil
 
 
 static func _mapear_tipo_teclado(tipo: LineEdit.VirtualKeyboardType) -> Array:
