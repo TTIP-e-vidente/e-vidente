@@ -81,7 +81,14 @@ func _configurar_campo_tactil(
 	# como gesto de usuario. WebTextFieldBridge superpone un <input> HTML real
 	# e invisible que el navegador enfoca solo, sin ese salto. No hace nada
 	# fuera de Web.
-	WebTextFieldBridge.adjuntar(campo, tipo_teclado)
+	var puente := WebTextFieldBridge.adjuntar(campo, tipo_teclado)
+	if puente != null:
+		# El puente ya abre el teclado nativo con su propio <input>. Si
+		# dejamos virtual_keyboard_show_on_focus prendido, el motor crea
+		# ADEMÁS su propio <input>/<textarea> oculto al enfocar y le roba
+		# el foco del DOM al del puente en pleno gesto: lo tecleado no
+		# llega a ninguno de los dos. Un solo <input> real a la vez.
+		campo.virtual_keyboard_show_on_focus = false
 
 
 func _enfocar_campo_si_toque(event: InputEvent, campo: LineEdit) -> void:

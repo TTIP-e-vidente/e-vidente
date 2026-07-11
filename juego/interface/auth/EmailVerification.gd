@@ -257,7 +257,16 @@ func _configurar_entrada_codigo() -> void:
 	var rect_source: Control = (
 		_codigo_input_wrap if is_instance_valid(_codigo_input_wrap) else _line_edit_codigo
 	)
-	WebTextFieldBridge.adjuntar(_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER, rect_source)
+	var puente := WebTextFieldBridge.adjuntar(
+		_line_edit_codigo, LineEdit.KEYBOARD_TYPE_NUMBER, rect_source
+	)
+	if puente != null:
+		# Ver comentario en Login._configurar_campo_tactil: sin esto, el
+		# valor por defecto de virtual_keyboard_show_on_focus (true) hace que
+		# el motor abra ADEMÁS su propio <input> oculto al enfocar y le robe
+		# el foco del DOM al del puente, así que lo tecleado no llega a
+		# ninguno de los dos.
+		_line_edit_codigo.virtual_keyboard_show_on_focus = false
 
 
 func _enfocar_codigo() -> void:
