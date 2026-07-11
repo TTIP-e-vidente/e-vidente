@@ -598,9 +598,16 @@ func _obtener_texturas_info_por_sprite() -> Dictionary:
 		var nombre_archivo := directorio_items.get_next()
 		if nombre_archivo.is_empty():
 			break
-		if directorio_items.current_is_dir() or not nombre_archivo.ends_with(".tres"):
+		if directorio_items.current_is_dir():
 			continue
-		var item_recurso := load("res://items/%s" % nombre_archivo)
+		var nombre_recurso := (
+			nombre_archivo.trim_suffix(".remap")
+			if nombre_archivo.ends_with(".remap")
+			else nombre_archivo
+		)
+		if not nombre_recurso.ends_with(".tres"):
+			continue
+		var item_recurso := load("res://items/%s" % nombre_recurso)
 		if item_recurso == null:
 			continue
 		var textura_sprite := item_recurso.get("sprite") as Texture2D

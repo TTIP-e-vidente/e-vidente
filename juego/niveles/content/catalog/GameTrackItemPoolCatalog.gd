@@ -174,12 +174,23 @@ static func _encontrar_rutas_recursos_elemento() -> Array[String]:
 		var file_name: String = dir.get_next()
 		if file_name.is_empty():
 			break
-		if dir.current_is_dir() or not file_name.ends_with(".tres"):
+		if dir.current_is_dir():
 			continue
-		item_paths.append("%s/%s" % [ITEMS_DIR_PATH, file_name])
+		var resource_file_name := _normalizar_nombre_recurso_exportado(file_name)
+		if not resource_file_name.ends_with(".tres"):
+			continue
+		var item_path := "%s/%s" % [ITEMS_DIR_PATH, resource_file_name]
+		if not item_paths.has(item_path):
+			item_paths.append(item_path)
 	dir.list_dir_end()
 	item_paths.sort()
 	return item_paths
+
+
+static func _normalizar_nombre_recurso_exportado(file_name: String) -> String:
+	# En el editor DirAccess devuelve `item.tres`; dentro del PCK exportado puede
+	# devolver `item.tres.remap`. ResourceLoader sigue esperando la ruta original.
+	return file_name.trim_suffix(".remap") if file_name.ends_with(".remap") else file_name
 
 
 static func _obtener_ruta_recurso_elemento(item: Variant) -> String:
