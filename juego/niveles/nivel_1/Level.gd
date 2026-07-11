@@ -11,6 +11,7 @@ const LOG_PREFIX_TEACHING := "[Teaching]"
 const LOG_PREFIX_TEACHING_ASSET := "[TeachingAsset]"
 const TEACHING_FALLBACK_TEXT := "Buen trabajo. Elegiste opciones aptas para tu objetivo."
 const MAP_SCENE_PATH := "res://mapas/MapScene.tscn"
+const GameTrackCatalogScript := preload("res://niveles/GameTrackCatalog.gd")
 
 ## --- Configuración ---
 
@@ -135,10 +136,13 @@ var _teaching_card_base_scale := Vector2.ONE
 @onready var _indicador_de_progreso_de_juego = get_node_or_null("IndicadorProgresoDeJuego")
 @onready var _progress_bar = get_node_or_null("ProgressBar")
 @onready var _continuar_juego = $ContinuarJuego
-# Solo el nivel de celiaquía (nivel_1) tiene TituloNivel como instancia con Label.
-# En veganismo/veg-gf/keto (nivel_2/3/4) el título es un Sprite2D (imagen), sin Label,
-# por eso resolvemos con get_node_or_null y guardamos el acceso en _ready().
-@onready var titulo_nivel: Label = get_node_or_null("TituloNivel/Label")
+# En nivel_1 el nodo con Label se llama "TituloNivel"; en nivel_2/3/4 ese nombre
+# quedó libre para un Sprite2D vacío y el Label vive en "TituloNivel2".
+@onready var titulo_nivel: Label = (
+	get_node_or_null("TituloNivel/Label") as Label
+	if get_node_or_null("TituloNivel/Label") != null
+	else get_node_or_null("TituloNivel2/Label") as Label
+)
 
 var _activity_started_msec: int = 0
 
@@ -146,8 +150,6 @@ var _activity_started_msec: int = 0
 func _ready() -> void:
 	_activity_started_msec = Time.get_ticks_msec()
 	print("[TimeTracker] started activity_id=", str(_nodo_actual))
-	if is_instance_valid(titulo_nivel):
-		titulo_nivel.text = "Celiaquía"
 	_cargar_recursos_runtime()
 	if is_instance_valid(teaching_sprite):
 		_teaching_sprite_base_scale = teaching_sprite.scale
@@ -157,6 +159,7 @@ func _ready() -> void:
 	_conectar_objective_banner()
 	_ocultar_consigna_vieja()
 	iniciar_flujo_del_nivel()
+	_actualizar_titulo_nivel()
 	_configurar_indicador_de_progreso_de_juego()
 	configurar_retroalimentacion_de_guardado()
 
@@ -292,6 +295,14 @@ func resolver_pista_activa() -> void:
 		active_track_key = _track_key_contexto
 	else:
 		active_track_key = configured_key if not configured_key.is_empty() else DEFAULT_TRACK_KEY
+
+
+func _actualizar_titulo_nivel() -> void:
+	if not is_instance_valid(titulo_nivel):
+		return
+	titulo_nivel.text = GameTrackCatalogScript.obtener_etiqueta_resumen_pista(
+		active_track_key, "Celiaquía"
+	)
 
 
 ## --- HUD / progreso --------------------------------------------------------

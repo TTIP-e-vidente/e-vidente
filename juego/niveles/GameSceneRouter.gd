@@ -527,8 +527,12 @@ func _get_global_state(tree: SceneTree) -> Node:
 
 func _clear_active_playable_session(tree: SceneTree) -> void:
 	var global_state := _get_global_state(tree)
-	if global_state != null and global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
+	if global_state == null:
+		return
+	if global_state.has_method("limpiar_sesion_nodo_jugable_activo"):
 		global_state.call("limpiar_sesion_nodo_jugable_activo")
+	if global_state.has_method("finalizar_partida_de_nodo"):
+		global_state.call("finalizar_partida_de_nodo")
 
 # --- Transicion visual ---------------------------------------
 

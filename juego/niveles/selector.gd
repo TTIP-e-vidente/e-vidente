@@ -152,6 +152,8 @@ func _abrir_destino_boton(
 		DESTINO_PISTA:
 			if track_key.is_empty():
 				return
+			Global.finalizar_partida_de_nodo()
+			Global.limpiar_sesion_nodo_jugable_activo()
 			GameSceneRouter.go_to_track_book(get_tree(), track_key)
 
 

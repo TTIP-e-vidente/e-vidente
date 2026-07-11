@@ -30,7 +30,7 @@ const TRACK_DEFINITIONS := {
 	TRACK_CELIAQUIA: {
 		"key": TRACK_CELIAQUIA,
 		"label": "Celiaquía",
-		"summary_label": "Celiaquia",
+		"summary_label": "Celiaquía",
 		"archive_texture_path": "res://assets-sistema/interfaz/archivero-celiaquia.png",
 		"condition_texture_key": "prepara_celiaquia",
 		"teaching_key_prefixes": ["celiaquia_"],
